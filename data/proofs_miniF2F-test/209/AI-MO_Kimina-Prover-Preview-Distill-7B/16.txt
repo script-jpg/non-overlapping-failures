@@ -1,0 +1,45 @@
+-- We have $\sqrt{\log_2{6}+\log_3{6}} = \sqrt{\log_2{3}+\log_3{2}}.$
+  have : Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3 = Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3 := by
+
+    -- Because $\log_2{6} = \log_2{3}+\log_2{2} = \log_2{3}+1$ and $\log_3{6} = \log_3{2}+\log_3{3} = \log_3{2}+1.$
+    have log26 : Real.log 6 / Real.log 2 = Real.log 3 / Real.log 2 + 1 := by
+      calc
+        _ = (Real.log 3 + Real.log 2) / Real.log 2 := by
+          rw [show Real.log 6 = Real.log 3 + Real.log 2 by rw [Real.log_mul (by norm_num) (by norm_num)]; norm_num]
+        _ = (Real.log 3 / Real.log 2) + (Real.log 2 / Real.log 2) := by
+          rw [add_div]
+        _ = (Real.log 3 / Real.log 2) + 1 := by
+          rw [div_self (by norm_num)]
+    have log36 : Real.log 6 / Real.log 3 = Real.log 2 / Real.log 3 + 1 := by
+      calc
+        _ = (Real.log 2 + Real.log 3) / Real.log 3 := by
+          rw [show Real.log 6 = Real.log 2 + Real.log 3 by rw [Real.log_mul (by norm_num) (by norm_num)]; norm_num]
+        _ = (Real.log 2 / Real.log 3) + (Real.log 3 / Real.log 3) := by
+          rw [add_div]
+        _ = (Real.log 2 / Real.log 3) + 1 := by
+          rw [div_self (by norm_num)]
+
+    -- Substituting these into the original expression and simplifying gives the result.
+    rw [log26, log36]
+    ring
+
+  rw [this]
+
+  -- Also, $\log_2{3}+\log_3{2} = (\log_2{3}+\log_3{2})\cdot 1 = (\log_2{3}+\log_3{2})\cdot (\log_2{2}+\log_3{3}).$
+  have : Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3 = (Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3) * (Real.log 2 / Real.log 2 + Real.log 3 / Real.log 3) := by
+    ring
+
+  -- Because $\log_2{3}$ and $\log_3{2}$ are reciprocals, we can rewrite this as $(\log_2{3}+\log_3{2})\cdot (\log_2{3}+\log_3{2}) = (\log_2{3})^2 + 2 + (\log_3{2})^2.$
+  have : (Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3) * (Real.log 2 / Real.log 2 + Real.log 3 / Real.log 3) =
+    (Real.sqrt (Real.log 3 / Real.log 2) - Real.sqrt (Real.log 2 / Real.log 3))^2 := by
+    rw [sub_sq, mul_add, add_mul, div_pow, div_pow, one_pow, one_pow]
+    rw [mul_comm (Real.log 2 / Real.log 3), ← mul_assoc (Real.log 3 / Real.log 2)]
+    rw [div_mul, div_mul, div_self (by norm_num), div_self (by norm_num)]
+    ring
+
+  -- This gives us the desired result.
+  rw [this]
+  rw [mul_comm, sq_sqrt (by positivity), sq_sqrt (by positivity)]
+  linarith only [show Real.log 2 / Real.log 3 ≥ 0 by positivity]
+
+```

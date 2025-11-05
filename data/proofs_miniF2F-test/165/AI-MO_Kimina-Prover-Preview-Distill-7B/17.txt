@@ -1,0 +1,40 @@
+-- check the base case $n=0$
+  have hz : 11 ∣ 10 ^ 0 - (-1 : ℤ) ^ 0 := by
+    norm_num
+    <;> simp
+  -- check the case $n=1$
+  have h₁ : 11 ∣ 10 ^ 1 - (-1 : ℤ) ^ 1 := by
+    norm_num
+  -- use induction to prove the case $n=k+1$
+  have h₂ (k : ℕ) : 11 ∣ 10 ^ (k + 1) - (-1 : ℤ) ^ (k + 1) → 11 ∣ 10 ^ (k + 1 + 1) - (-1 : ℤ) ^ (k + 1 + 1) := by
+    intro h
+    rw [pow_add, pow_add]
+    norm_num
+    -- convert `10 ^ (k + 1) - (-1 : ℤ) ^ (k + 1)` to `10 ^ (k + 1) + (-1) ^ (k + 1)`
+    cases Nat.even_or_odd (k + 1) with
+    | inl h_even =>
+      -- if $n$ is even, then $(-1)^n = 1$
+      rw [Even.neg_one_pow h_even]
+      ring_nf
+      -- if $n$ is even, then $10^n - (-1)^n = 99 * (11 * k + 1)$
+      use 9 * k + 1
+      ring_nf
+      -- if $n$ is even, then $10^{n+1} + (-1)^{n+1} = 10*(10^n - (-1)^n) = 99*(11*k+1)$
+      rw [show 10 ^ (k + 1 + 1) + (-1) ^ (k + 1 + 1) = 10 * (10 ^ (k + 1) - (-1) ^ (k + 1)) by rw [pow_add, pow_add]; ring_nf; symm; assumption]
+      exact Int.mul_dvd_mul_left 10 h
+    | inr h_odd =>
+      -- if $n$ is odd, then $(-1)^n = -1$
+      rw [Odd.neg_one_pow h_odd]
+      ring_nf
+      -- if $n$ is odd, then $(-1)^{n+1} = 1$
+      rw [Even.neg_one_pow (by apply Nat.even_add_one; exact h_odd)]
+      -- if $n$ is odd, then $10^{n+1} + (-1)^{n+1} = 10^{n+1} - 1 = 9*(11*k+1)$
+      use 11 * k + 1
+      ring_nf
+      -- if $n$ is odd, then $10^{n+1} + (-1)^{n+1} = 10*(10^n - (-1)^n) + 11$
+      rw [show 10 ^ (k + 1 + 1) + (-1) ^ (k + 1 + 1) = 10 * (10 ^ (k + 1) - (-1) ^ (k + 1)) + 11 by rw [pow_add, pow_add]; ring_nf; assumption]
+      exact Int.dvd_add (Dvd.dvd.mul_left h 10) (Int.dvd_refl 11)
+  -- use `big induction` to prove the conclusion
+  exact Nat.induction_on n hz h₁ h₂
+
+```

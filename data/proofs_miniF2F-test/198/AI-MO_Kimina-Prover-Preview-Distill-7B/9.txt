@@ -1,0 +1,66 @@
+-- The key identity for triangle sides is the triangle inequality.
+  -- We will use it to bound the terms in the inequality.
+  have h triangle_ineq : a < b + c ∧ b < a + c ∧ c < a + b := by
+    exact ⟨h₃, h₂, h₁⟩
+
+  -- We can rewrite the inequality in terms of the semiperimeter
+  -- and the squared differences of the semiperimeter with each side.
+  have h c1 c2 : (a + b - c) * (a - b) ^ 2 ≤ c * (a + b + c) * (a + b - c) := by
+    calc
+    _ = (a + b - c) * (a + b + c) * (a - b) ^ 2 := by ring
+    _ ≤ (a + b - c) * (a + b + c) * (a + b - c) := by
+      have : (a + b - c) * (a - b) ^ 2 ≤ (a + b - c) * (a + b + c) := by
+        have : 0 ≤ (a + b - c) * (a - b) ^ 2 := by positivity
+        exact (mul_le_mul_iff_of_pos_left this).mpr (by linarith)
+      exact this
+    _ = _ := by ring
+
+  have h a2 : (a + c - b) * (b - c) ^ 2 ≤ a * (a + b + c) * (a + c - b) := by
+    calc
+    _ = (a + c - b) * (a + b + c) * (b - c) ^ 2 := by ring
+    _ ≤ (a + c - b) * (a + b + c) * (a + c - b) := by
+      have : (a + c - b) * (b - c) ^ 2 ≤ (a + c - b) * (a + b + c) := by
+        have : 0 ≤ (a + c - b) * (b - c) ^ 2 := by positivity
+        exact (mul_le_mul_iff_of_pos_left this).mpr (by linarith)
+      exact this
+    _ = _ := by ring
+
+  have h b2 : (b + a - c) * (c - a) ^ 2 ≤ b * (a + b + c) * (b + a - c) := by
+    calc
+    _ = (b + a - c) * (a + b + c) * (c - a) ^ 2 := by ring
+    _ ≤ (b + a - c) * (a + b + c) * (b + a - c) := by
+      have : (b + a - c) * (c - a) ^ 2 ≤ (b + a - c) * (a + b + c) := by
+        have : 0 ≤ (b + a - c) * (c - a) ^ 2 := by positivity
+        exact (mul_le_mul_iff_of_pos_left this).mpr (by linarith)
+      exact this
+    _ = _ := by ring
+
+  -- We can rewrite the inequality in terms of the semiperimeter and the squared differences
+  -- of the semiperimeter with each side.
+  have : a ^ 2 * (b + c - a) + b ^ 2 * (c + a - b) + c ^ 2 * (a + b - c) =
+         (a + b - c) * (a - b) ^ 2 + (a + c - b) * (b - c) ^ 2 + (b + a - c) * (c - a) ^ 2 :=
+   by ring
+
+  -- The three terms on the right-hand side are all non-negative.
+  have c12 : 0 ≤ (a + b - c) * (a - b) ^ 2 ∧ 0 ≤ (a + c - b) * (b - c) ^ 2 ∧
+           0 ≤ (b + a - c) * (c - a) ^ 2 := by
+    refine ⟨?_,?_,?_⟩
+    · positivity
+    · positivity
+    · positivity
+
+  -- We can rewrite the inequality in terms of the semiperimeter and the squared differences
+  -- of the semiperimeter with each side.
+  have : (a + b - c) * (a - b) ^ 2 + (a + c - b) * (b - c) ^ 2 + (b + a - c) * (c - a) ^ 2 ≤
+         c * (a + b + c) * (a + b - c) + a * (a + b + c) * (a + c - b) + b * (a + b + c) * (b + a - c) :=
+   by
+    convert this using 1
+    · ring
+    · apply Iff.not (congr_arg Iff.mp this).mp
+      rw [c12.1, c12.2.1, c12.2.2]
+
+  -- The right-hand side factors to give the desired result.
+  convert this using 1
+  ring
+
+```

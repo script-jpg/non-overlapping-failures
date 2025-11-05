@@ -1,0 +1,90 @@
+-- 由加法的三角不等式性
+  have h1 : a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a ≥ a + b + c + d := by
+
+    -- 这里用到 Cauchy-Schwarz 不等式的 Engel 形式 (or Titu's lemma)
+    have h1 : ∀ x y z w : ℝ, x ^ 2 / y + y ^ 2 / z + z ^ 2 / w + w ^ 2 / x ≥ x + y + z + w := by
+      intro x y z w
+      -- Cauchy-Schwarz 不等式 ( Titu's lemma) 的 Engel 形式
+      have h1 : (x ^ 2 / y + y ^ 2 / z + z ^ 2 / w + w ^ 2 / x) * (y + z + w + x) ≥ (x + y + z + w) ^ 2 := by
+        calc _ ≥ (x * √(y / z) - y * √(z / y)) ^ 2 + (y * √(z / w) - z * √(w / z)) ^ 2 + (z * √(w / x) - w * √(x / w)) ^ 2 + (w * √(x / y) - x * √(y / x)) ^ 2 := by
+          apply add_nonneg
+          apply add_nonneg
+          apply add_nonneg
+          apply sq_nonneg
+          apply sq_nonneg
+          apply sq_nonneg
+          apply sq_nonneg
+          -- 项非负性
+          · apply mul_nonneg
+            apply pow_two_nonneg
+            apply div_nonneg
+            · exact mul_nonneg (Real.sqrt_nonneg y) (Real.sqrt_nonneg z)
+            · apply mul_nonneg
+              · exact mul_nonneg (Real.sqrt_nonneg z) (Real.sqrt_nonneg w)
+              · exact div_nonneg (Real.sqrt_nonneg w) (Real.sqrt_nonneg x)
+          · apply mul_nonneg
+            apply pow_two_nonneg
+            apply div_nonneg
+            · exact mul_nonneg (Real.sqrt_nonneg w) (Real.sqrt_nonneg x)
+            · apply mul_nonneg
+              · exact mul_nonneg (Real.sqrt_nonneg x) (Real.sqrt_nonneg y)
+              · apply le_of_lt
+                exact div_pos (Real.sqrt_pos_of_pos x) (Real.sqrt_pos_of_pos y)
+          · apply mul_nonneg
+            apply pow_two_nonneg
+            apply div_nonneg
+            · apply mul_nonneg
+              · exact mul_nonneg (Real.sqrt_nonneg y) (Real.sqrt_nonneg z)
+              · apply le_of_lt
+                exact div_pos (Real.sqrt_pos_of_pos z) (Real.sqrt_pos_of_pos w)
+            · apply le_of_lt
+              exact div_pos (Real.sqrt_pos_of_pos w) (Real.sqrt_pos_of_pos x)
+          · apply mul_nonneg
+            apply pow_two_nonneg
+            apply div_nonneg
+            · apply le_of_lt
+              exact div_pos (Real.sqrt_pos_of_pos x) (Real.sqrt_pos_of_pos y)
+            · apply mul_nonneg
+              · apply mul_nonneg
+                · exact mul_nonneg (Real.sqrt_nonneg z) (Real.sqrt_nonneg w)
+                · apply le_of_lt
+                  exact div_pos (Real.sqrt_pos_of_pos w) (Real.sqrt_pos_of_pos x)
+              · apply le_of_lt
+                exact div_pos (Real.sqrt_pos_of_pos x) (Real.sqrt_pos_of_pos z)
+      have g1 : (y + z + w + x) > 0 := by
+        apply add_pos
+        apply add_pos
+        apply add_pos
+        · exact h₀.left
+        · exact h₀.right.left
+        · exact h₀.right.right.left
+        · exact h₀.right.right.right
+      replace h1 : (x ^ 2 / y + y ^ 2 / z + z ^ 2 / w + w ^ 2 / x) ≥ (x + y + z + w) ^ 2 / (y + z + w + x) := by
+        exact (div_le_iff₀ g1).mpr h1
+      have h2 : (x + y + z + w) ^ 2 / (y + z + w + x) ≥ x + y + z + w := by
+        have g2 : (x + y + z + w) ^ 2 / (y + z + w + x) - (x + y + z + w) = (x + y + z + w) * ((x + y + z + w) - (y + z + w + x)) / (y + z + w + x) := by
+          ring_nf
+          rw [mul_comm (x ^ 2), div_eq_mul_inv]
+          ring_nf
+          rw [← mul_assoc, mul_inv_cancel₀ g1]
+          ring_nf
+        rw [g2]
+        have g3 : (x + y + z + w) * ((x + y + z + w) - (y + z + w + x)) / (y + z + w + x) ≥ 0:= by
+          apply div_nonneg
+          · apply mul_nonneg
+            · exact h₀.left
+            · exact sub_nonneg.mpr (le_of_lt (h₀.left))
+          · apply le_of_lt
+            exact h₀.left
+        linarith
+      linarith
+    -- 对于本题，我们设 x = a, y = b, z = c, w = d
+    specialize h1 a b c d
+    -- 并将不等式具体化
+    rw [show a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a = a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a by rfl] at h1
+    rw [show a + b + c + d = a + b + c + d by rfl] at h1
+    exact h1
+
+  -- 由上述不等式可知，目标成立
+  exact h1
+```

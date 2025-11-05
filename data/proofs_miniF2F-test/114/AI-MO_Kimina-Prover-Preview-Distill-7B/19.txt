@@ -1,0 +1,54 @@
+-- We have $p(n) = n^2 - n + 41$ and $p(n+1) = (n+1)^2 - (n+1) + 41 = n^2 + n + 41$.
+  have h₂ : p n = n ^ 2 - n + 41 := h₀ n
+  have h₃ : p (n + 1) = (n + 1) ^ 2 - (n + 1) + 41 := h₀ (n + 1)
+  rw [h₂, h₃]
+
+  -- By the triangle inequality, we know that $|p(n) - p(n+1)| = |(n^2 - n + 41) - (n^2 + n + 41)| = |2n - 2| = 2n - 2$.
+  have h₄ : (n ^ 2 - n + 41) - (n ^ 2 + n + 41) = -2 * n + 2 := by
+    ring
+  have h₅ : Nat.gcd (p n) (p (n + 1)) ∣ 2 * n - 2 := by
+    have h₆ : Nat.gcd (p n) (p (n + 1)) ∣ p n := Nat.gcd_dvd_left (p n) (p (n + 1))
+    have h₇ : Nat.gcd (p n) (p (n + 1)) ∣ p (n + 1) := Nat.gcd_dvd_right (p n) (p (n + 1))
+    have h₈ : Nat.gcd (p n) (p (n + 1)) ∣ (p (n + 1) - p n) := Nat.dvd_sub' h₇ h₆
+    rw [h₄] at h₈
+    convert dvd_sub h₆ h₇ using 1
+    omega
+  have h₆ : 2 * n - 2 > 0 := by
+    by_contra! h
+    have : n = 0 ∨ n = 1 := by omega
+    rcases this with rfl | rfl
+    · simp [h₂, h₃] at h₁
+    · simp [h₂, h₃] at h₁
+  replace h₅ : Nat.gcd (p n) (p (n + 1)) ∣ n - 1 := by
+    rw [show 2 * n - 2 = 2 * (n - 1) by omega] at h₅
+    exact Nat.dvd_of_dvd_mul_right_of_gcd_one h₅ (by norm_num)
+
+  -- If $p(n)$ and $p(n+1)$ share a common factor $d > 1$, then $d$ must divide $n-1$.
+  have h₇ : ∀ d, d ∈ Nat.divisors (p n) → d ∈ Nat.divisors (n - 1) := by
+    intro d hd₁ hd₂
+    rw [Nat.mem_divisors] at hd₁ hd₂
+    obtain ⟨⟨h₆, h₇⟩, rfl⟩ := hd₁
+    have h₈ : d ∣ p (n + 1) := by
+      rw [h₃] at hd₂
+      obtain ⟨_, h₈⟩ := hd₂
+      rw [show n + 1 = n - 1 + 2 by omega]
+      exact (Nat.dvd_add_right (Nat.dvd_refl d) (Nat.dvd_mul_right d 2)).trans h₈
+    have h₉ : d ∣ (n - 1) := Nat.dvd_gcd h₇ h₈
+    exact h₉
+
+  -- Since $p(41) = 41^2 - 41 + 41 = 41^2$, $41$ is a prime factor of $p(41)$.
+  have h₈ : 41 ∈ Nat.divisors (p 41) := by
+    rw [h₀]
+    simp
+    norm_num
+
+  -- By the above fact, $41$ must divide $n - 1$.
+  have h₉ : 41 ∈ Nat.divisors (n - 1) := by
+    exact h₇ 41 h₈ h₈
+
+  -- Hence, $n - 1 \ge 41$ and $n \ge 42$.
+  rw [Nat.mem_divisors] at h₉
+  obtain ⟨h₁₀, h₁₁⟩ := h₉
+  omega
+
+```

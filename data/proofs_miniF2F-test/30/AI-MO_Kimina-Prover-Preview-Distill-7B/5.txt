@@ -1,0 +1,186 @@
+rcases h₀ with ⟨hx, hy⟩
+
+  -- Show that $x$ and $y$ are not equal
+  have hne : x ≠ y := by
+    intro h
+    simp [h] at h₁
+    have : 2 * y ^ 2 = 2 := by
+      calc
+        2 * y ^ 2 = 2 * y ^ 2 * 1 := by congr 1; exact h₁
+        _ = 2 * 1 ^ y := by nth_rw 1 [←h₁]
+        _ = 2 * 1 ^ 1 := by simp
+        _ = 2 := by simp
+    omega
+
+  -- Show that $x$ and $y$ are coprime
+  have hcoprime : x.Coprime y := by
+    -- Prove by contradiction
+    by_contra h
+    rw [Nat.not_coprime_iff_dvd_iff] at h
+    obtain ⟨p, hp, hxp, hyp⟩ := h
+    -- Show that $p$ divides $x^y$
+    have hxpx : p ∣ x ^ y := by
+      rw [hxp]
+      apply Nat.dvd_pow
+      exact hp
+    rw [h₁] at hxpx
+
+    -- Show that $p$ divides $y^x$
+    have hypy : p ∣ y ^ x := by
+      rw [hyp]
+      apply Nat.dvd_pow
+      exact hp
+    -- Show that $p$ divides $x$
+    have hpdvd_x : p ∣ x := by
+      exact Nat.dvd_trans hypy hxpx
+    -- Show that $p$ divides $y$
+    have hpdvd_y : p ∣ y := by
+      rw [←Nat.pow_dvd_pow_iff (show 2 ≤ x by omega)]
+      exact Nat.dvd_trans hpdvd_x hyp
+
+    -- Show that $p$ is not $1$
+    have hpne : p ≠ 1 := by
+      by_contra hp
+      rw [hp] at hxp
+      omega
+
+    -- Show that $p$ is positive
+    have hppos : 0 < p := by
+      exact Nat.Prime.pos hp
+
+    -- Show that $p$ is not equal to $x$
+    have hp_nodvdx : ¬p ∣ x := by
+      intro h
+      apply Nat.dvd_antisymm h
+      apply dvd_trans hpne
+      rw [hxp]
+      apply Nat.dvd_pow
+      exact hp
+    contradiction
+
+  -- Show that $x$ is a multiple of $y$
+  have hmul : ∃ k : ℕ, x = k * y := by
+    apply Nat.exists_eq_mul_left_of_not_dvd
+    exact hne
+
+  rcases hmul with ⟨k, hk⟩
+
+  -- Substitute $x = k * y$ in $x^{y^2} = y^x$
+  rw [hk] at h₁
+
+  -- Simplify the equation
+  rw [←Nat.pow_dvd_pow_iff] at h₁
+  simp  at h₁
+  norm_num at h₁
+
+  -- Show that $y$ is positive
+  have hypos : 0 < y := by
+    exact hy
+
+  -- Show that $k$ is positive
+  have h positive k : 0 < k := by
+    by_contra h
+    simp at h
+    rw [h] at hk
+    omega
+
+  -- Simplify the equation further
+  rw [show k ^ 2 * y ^ y ^ 2 = (k ^ 2) ^ y ^ 2 * y ^ (y ^ 2) by rw [Nat.mul_pow]] at h₁
+  rw [show y ^ (k * y) = y ^ (y ^ 2) ^ k by rw [←Nat.pow_mul]] at h₁
+
+  -- Show that $y^2 = k$
+  have h : k = y ^ 2 := by
+    -- Prove by contradiction
+    by_contra h
+    rw [Nat.not_eq_iff_lt_or_gt] at h
+    cases h with
+    | inl h =>
+      -- Case $k < y ^ 2$
+      have hlt : k ^ 2 < y ^ 2 ^ 2 := by
+        nth_rw 1 [←h]
+        apply Nat.pow_lt_pow_left
+        omega
+        omega
+      have hlt : k ^ 2 < y ^ 2 ^ 2 := by
+        nth_rw 1 [←h]
+        apply Nat.pow_lt_pow_left
+        omega
+        omega
+      have : k ^ 2 * y ^ y ^ 2 < y ^ 2 ^ 2 * y ^ y ^ 2 := by
+        apply Nat.mul_lt_mul_of_le_of_lt _ hlt (by omega)
+      rw [show k ^ 2 * y ^ y ^ 2 = (k ^ 2) ^ y ^ 2 * y ^ (y ^ 2) by rw [Nat.mul_pow]] at this
+      have : y ^ (y ^ 2) ^ k < y ^ (y ^ 2) ^ k := by
+        calc
+          y ^ (y ^ 2) ^ k < y ^ 2 ^ 2 * y ^ y ^ 2 := by linarith
+          _ = k ^ 2 * y ^ y ^ 2 := by rw [show k ^ 2 * y ^ y ^ 2 = (k ^ 2) ^ y ^ 2 * y ^ (y ^ 2) by rw [Nat.mul_pow]]
+          _ < y ^ (y ^ 2) ^ k := by assumption
+      exact (lt_self_iff_false _) this
+    | inr h =>
+      -- Case $y ^ 2 < k$
+      have hgt : y ^ 2 ^ 2 < k ^ 2 := by
+        rw [←Nat.pow_lt_pow_iff_left (by omega)]
+        exact h
+      have hgt : y ^ 2 ^ 2 < k ^ 2 := by
+        rw [←Nat.pow_lt_pow_iff_left (by omega)]
+        exact h
+      have : y ^ 2 ^ 2 * y ^ y ^ 2 < k ^ 2 * y ^ y ^ 2 := by
+        apply Nat.mul_lt_mul_of_le_of_lt hypos (by omega) hgt (by omega)
+      rw [show k ^ 2 * y ^ y ^ 2 = (k ^ 2) ^ y ^ 2 * y ^ (y ^ 2) by rw [Nat.mul_pow]] at this
+      have : y ^ (y ^ 2) ^ k < y ^ (y ^ 2) ^ k := by
+        calc
+          y ^ (y ^ 2) ^ k < k ^ 2 * y ^ y ^ 2 := by linarith
+          _ = (k ^ 2) ^ y ^ 2 * y ^ (y ^ 2) := by rw [show k ^ 2 * y ^ y ^ 2 = (k ^ 2) ^ y ^ 2 * y ^ (y ^ 2) by rw [Nat.mul_pow]]
+          _ < y ^ (y ^ 2) ^ k := by linarith
+      exact (lt_self_iff_false _) this
+
+  -- Substitute $k = y ^ 2$ in $x = k * y$
+  rw [h] at hk
+  ring_nf at hk
+
+  -- Simplify the equation further
+  rw [show y ^ 3 = y ^ 2 * y by ring] at hk
+  rw [show y ^ 2 * y * y ^ 2 = y ^ (2 + 1 + 2) by rw [Nat.pow_add]; ring] at hk
+  rw [show 2 + 1 + 2 = 5 by ring] at hk
+
+  -- Show that $y$ is less than $3$
+  have hhy : y < 3 := by
+    -- Prove by contradiction
+    by_contra h
+    simp at h
+    -- Show that $3 ≤ y$ and $y ≤ 3$
+    have h3 : 3 ≤ y := by
+      exact Nat.zero_le_sub_of_le hy
+    have h4 : y ≤ 3 := by
+      by_contra h
+      simp at h
+      apply Nat.exists_eq_succ_of_ne at h
+      omega
+    -- Show that $y = 3$
+    have h5 : y = 3 := by
+      linarith
+    rw [h5] at h₁
+    norm_num at h₁
+
+  -- Show that $y$ is either $1$ or $2$
+  have hy : y = 1 ∨ y = 2 := by
+    omega
+
+  -- Case $y = 1$
+  cases hy with
+  | inl hy1 =>
+    rw [hy1] at hcoprime
+    norm_num at hcoprime
+    rw [hy1] at hk
+    norm_num at hk
+    omega
+
+  -- Case $y = 2$
+  | inr hy2 =>
+    rw [hy2] at hcoprime
+    norm_num at hcoprime
+    rw [hy2] at hk
+    norm_num at hk
+    have hx : x = 16 := by
+      linarith
+    simp [hy2, hx]
+```

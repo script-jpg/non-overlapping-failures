@@ -1,0 +1,140 @@
+-- Simplify the expression to a common denominator. The expression is
+  -- $\frac{1}{4}x + \frac{1}{6}y = \frac{3}{12}x + \frac{2}{12}y = \frac{2x + 3y}{12}$
+  -- and also $\frac{1}{n}(x+y)$
+  -- Clearing denominators gives $2x + 3y = \frac{12}{n}(x+y)$
+  field_simp at h₀
+  ring_nf at h₀
+  -- Multiply both sides by 12 to get rid of fractions.
+  apply congr_arg (fun x => x * 12) at h₀
+  -- Simplify. We have
+  -- $12(\frac{1}{4}x + \frac{1}{6}y) = 12\frac{x+y}{n}$
+  -- $3x + 2y = \frac{12}{n}(x+y)$
+  simp at h₀
+  ring_nf at h₀
+
+  -- Now consider the numbers $x' = 3x$ and $y' = 2y$.
+  -- The equation becomes $x' + y' = \frac{12}{n}(x'+y')/2$
+  -- In other words, $\frac{2}{n}(x'+y') = 12$
+  -- So, $x'+y'$ is divisible by 6.
+  have dvd₁ : 6 ∣ x + y := by
+    have : 2 * (x + y) ∣ 12 * n := by
+      simp [mul_assoc]
+      rw [<-h₀]
+      apply dvd_mul_right
+
+    -- We have `2 * (x + y) | 12 * n` and we can
+    -- cancel the 2 since it is a positive integer.
+    apply Nat.Coprime.dvd_of_dvd_mul_left (by norm_num) at this
+    -- Now we have $(x + y) | 6 * n$
+    replace this : x + y ∣ 6 * n := by
+      apply Nat.dvd_trans this
+      apply dvd_mul_right
+
+    -- Now apply the lemma `Nat.dvd_gcd_mul`
+    -- to get $x + y | 6 * gcd(n, x + y)$.
+    rw [dvd_gcd_mul_right] at this
+    nth_rw 1 [Nat.gcd_comm] at this
+
+    -- Now we can finish the proof by
+    -- combining this with the hypothesis `n` to get $x + y | 6 * x + 6 * y$,
+    -- and thus $x + y | 6 * y$.
+    have : x + y ∣ 6 * x + 6 * y := by
+      apply Nat.dvd_add
+      · apply dvd_mul_left
+      · apply dvd_mul_left
+    replace this := this.trans (Nat.dvd_trans this h₀.symm)
+
+    -- Now we can conclude that $x + y | 6 * y$.
+    have Auxiliary : x + y ∣ 6 * y := by
+      have : x + y ∣ 6 * (x + y) := by
+        exact Nat.dvd_mul_right
+      apply Nat.dvd_gcd_mul_left this at this
+      apply this
+    -- Then we have $x + y | 6 * y$.
+    exact Auxiliary
+
+  -- From the equation we obtain $x + y = \frac{12}{n} (x + y) / 2$.
+  -- In other words, $x + y = 6 * (x + y) / n$.
+  -- Now we can multiply both sides by $n$ to get
+  -- $(x + y) * n = 6 * (x + y)$
+  have aux₁ : (x + y) * n = 6 * (x + y) := by
+    rw [mul_comm]
+    rw [<-Nat.mul_div_assoc _ (Nat.gcd_ne_zero_iff.mp (Nat.gcd_pos_of_pos_left y (by positivity)))]
+    rw [div_self (Nat.div_ne_zero_iff.mpr (zero_lt_of_lt <| dvd₁))]
+    -- Now we have `(x + y) * n = 6 * (x + y)`.
+    rw [<-Nat.mul_div_assoc _ (Nat.gcd_ne_zero_iff.mp (Nat.gcd_pos_of_pos_left x (by positivity)))]
+    rw [div_self (Nat.div_ne_zero_iff.mpr (zero_lt_of_lt <| dvd₁))]
+    -- Now we have the desired equation.
+    linarith only [h₀]
+
+  -- Now let's see what we can conclude.
+  -- The condition `0 < x` is clear since `x` is positive.
+  have pos₀ : 0 < x := positivity
+  -- The condition `0 < y` is clear since `y` is positive.
+  have pos₁ : 0 < y := positivity
+  -- The condition `0 < n` follows from the equation.
+  have pos₂ : 0 < n := by
+    -- It is enough to show that `n ≠ 0`.
+    apply Nat.zero_lt_of_ne_zero
+    rintro rfl
+    -- For a contradiction assume that `n = 0`.
+    -- We have `x + y = 0` from the equation `x + y = 6 * (x + y) / n`
+    -- and thus `x + y = 0`.
+    simp [pos₀, pos₁] at aux₁
+    -- Now we can conclude that `x + y = 0`
+    have xzero : x = 0 := by
+      linarith only [pos₀, pos₁, aux₁]
+    -- Contradiction.
+    simp [xzero] at pos₀
+  -- Now we can conclude that `n ≤ 6` from the equation.
+  have aux₂ : n ≤ 6 := by
+    -- It is enough to show that `n | 6`
+    apply Nat.le_of_dvd (by norm_num)
+    -- We have `n | 6 * (x + y)` from the equation.
+    apply Nat.dvd_mul_left
+    -- We can conclude that `n | 6 * (x + y) / (x + y)`
+    -- if we can show that `(x + y) | (x + y)`.
+    apply Nat.dvd_div_self
+    -- The latter condition is true since `x + y > 0`.
+    exact Nat.dvd_refl (x + y)
+    -- For a contradiction assume that `n > 6`.
+    -- We have `x + y > 0` from the previous.
+    -- Now we can conclude that `n ≤ 6` from the equation.
+    linarith only [aux₁, pos₂]
+  -- Now we can check all possible values of `n`.
+  interval_cases n
+  -- For a contradiction assume that `n = 1`.
+  · simp [pos₂] at pos₀
+    -- Now we have `x + y = 6 * (x + y)`.
+    -- Hence, `x + y = 0`, for a contradiction.
+    have xzero : x = 0 := by
+      linarith only [pos₀, pos₁]
+    simp [xzero] at pos₀
+  -- For a contradiction assume that `n = 2`.
+  · have xzero : x = 0 := by
+      linarith only [pos₀, pos₁]
+    simp [xzero] at pos₀
+  -- For a contradiction assume that `n = 3`.
+  · have xzero : x = 0 := by
+      linarith only [pos₀, pos₁]
+    simp [xzero] at pos₀
+  -- For a contradiction assume that `n = 4`.
+  · have xzero : x = 0 := by
+      linarith only [pos₀, pos₁]
+    simp [xzero] at pos₀
+  -- For a contradiction assume that `n = 5`.
+  · -- Now we have `x + y = 6 * (x + y) / 5`
+    -- and thus `x + y = 30 * (x + y)`.
+    have aux₁ := congr_arg (fun x => 5 * x) aux₁
+    simp at aux₁
+    -- Now we can conclude that `x + y = 0`, for a contradiction.
+    have xzero : x = 0 := by
+      linarith only [pos₀, pos₁, aux₁]
+    simp [xzero] at pos₀
+  -- For a contradiction assume that `n = 6`.
+  · -- Now we have `x + y = 6 * (x + y)`.
+    -- Hence, `x + y = 0`, for a contradiction.
+    have xzero : x = 0 := by
+      linarith only [pos₀, pos₁]
+    simp [xzero] at pos₀
+```

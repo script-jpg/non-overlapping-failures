@@ -1,0 +1,48 @@
+/-
+  To determine the number of solutions to the equation \(\sin \left( \frac{\pi}{2} \cos x \right) = \cos \left( \frac{\pi}{2} \sin x \right)\) in the closed interval \([0, \pi]\), we start by analyzing the trigonometric identities involved.
+  First, we use the identity \(\sin \left( \frac{\pi}{2} \cos x \right) = \cos \left( \frac{\pi}{2} \sin x \right)\). This identity can be derived from the fact that \(\sin \theta = \cos \left( \frac{\pi}{2} - \theta \right)\) and \(\cos \theta = \sin \left( \frac{\pi}{2} - \theta \right)\).
+  Next, we need to find the solutions to this equation within the interval \([0, \pi]\). We can test specific values of \(x\) to find the solutions. By testing \(x = 0\) and \(x = \pi\), we find that these values satisfy the equation.
+  To confirm that these are the only solutions, we can use the fact that the trigonometric functions are periodic and that the equation holds for these values within the interval \([0, \pi]\).
+  Thus, the only solutions to the equation are \(x = 0\) and \(x = \pi\). Therefore, the number of solutions is 2.
+  -/
+  have h₁ : S = {0, Real.pi} := by
+    ext x
+    simp only [h₀, Finset.mem_insert, Finset.mem_singleton, true_and_iff, eq_self_iff_true, and_true_iff]
+    constructor
+    · intro h
+      -- We need to show that if x satisfies the given conditions, then x must be either 0 or π.
+      have h₁ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h.2.2
+      have h₂ : 0 ≤ x := by linarith [h.1.1, h.1.2]
+      have h₃ : x ≤ Real.pi := by linarith [h.1.1, h.1.2]
+      -- Using the periodicity of trigonometric functions, we can deduce that x must be either 0 or π.
+      have h₄ : Real.cos (Real.pi / 2 * Real.sin x) = Real.sin (Real.pi / 2 * Real.cos x) := by
+        rw [← Real.sin_pi_div_two_sub]
+        congr 1
+        ring_nf
+      rw [h₄] at h₁
+      have h₅ : Real.sin (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 * Real.sin x) := by linarith
+      have h₆ : Real.cos x = Real.sin x := by
+        apply Eq.symm
+        apply Eq.symm
+        apply mul_left_cancel₀ (show Real.pi / 2 ≠ 0 by linarith [Real.pi_pos])
+        linarith
+      have h₇ : Real.cos x = 0 ∨ Real.cos x = 1 := by
+        apply or_iff_not_imp_right.2
+        intro h
+        apply mul_left_cancel₀ (sub_ne_zero.2 h)
+        nlinarith [Real.cos_sq_add_sin_sq x]
+      cases' h₇ with h₇ h₇
+      · left
+        nlinarith [Real.cos_pi_div_two_sub x, Real.sin_pi_div_two_sub x]
+      · right
+        nlinarith [Real.cos_pi_div_two_sub x, Real.sin_pi_div_two_sub x]
+    · intro h
+      -- If x is either 0 or π, then it satisfies the given conditions.
+      cases' h with h h
+      · rw [h]
+        norm_num
+      · rw [h]
+        norm_num
+  rw [h₁]
+  simp
+```

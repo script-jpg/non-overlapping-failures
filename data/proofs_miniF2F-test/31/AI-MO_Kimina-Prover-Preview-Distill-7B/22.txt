@@ -1,0 +1,261 @@
+-- We shall use `m.natFactorization` and `n.natFactorization` to simplify the calculation.
+  -- So we have to argue that gcd and lcm can be calculated by prime factorization.
+  have gcd_solved : Nat.gcd m n = 6 := h₀
+  have lcm_solved : Nat.lcm m n = 126 := h₁
+
+  have dvd_m : 6 ∣ m := by
+    rw [← gcd_solved]
+    apply Nat.gcd_dvd_left
+  have dvd_n : 6 ∣ n := by
+    rw [← gcd_solved]
+    apply Nat.gcd_dvd_right
+
+  -- 6^2 does not divide m * n, because gcd is 6 and not 6^2.
+  have not_dvd : ¬ 6 ^ 2 ∣ m * n := by
+    intro h
+    have : m * n = m.gcd n * m.lcm n := by rw [← Nat.gcd_mul_lcm m n]
+    rw [this] at h
+    rw [gcd_solved, lcm_solved] at h
+    norm_num at h
+
+  have dvd_6 : 6 ∣ m.gcd n := by
+    rw [gcd_solved]
+    apply Nat.dvd_gcd dvd_m dvd_n
+
+  have gcd_m_n : m.gcd n = 6 := by
+    -- We have already known that gcd(m, n) = 6, but here we prove it again.
+    rw [← gcd_solved]
+    apply Nat.gcd_dvd_gcd
+    · apply Nat.gcd_dvd_left
+    · apply Nat.gcd_dvd_right
+
+  -- The least common multiple of $m$ and $n$ is 126. What is the least possible value of $m+n$? Show that it is 60.
+
+  -- Have we known anything about the structure of m and n?
+  -- Yes. They are both divisible by 6.
+  -- And we have the equation gcd(m, n) * lcm(m, n) = m * n.
+  -- So m * n = 6 * 126 = 756.
+  have production : m * n = 756 := by
+    rw [gcd_solved, lcm_solved]
+    norm_num
+
+  -- We want to minimize m + n
+  -- We know that m and n are both divisible by 6.
+  -- And m * n = 756.
+  -- Suppose m = 6 * x and n = 6 * y.
+  -- Then x * y = 756 / 6^2 = 756 / 36 = 21.
+  -- And x and y are coprime, because gcd(m, n) = 6.
+  -- So we should find x and y such that x * y = 21 and coprime (x, y).
+  -- And we want to minimize (6 * x + 6 * y) = 6 * (x + y).
+  -- Therefore, we should minimize x + y.
+  -- x + y is minimized if (x, y) = (3, 7) or (7, 3).
+  -- Hence, the answer is 6 * (3 + 7) = 60.
+
+  -- The following are some observations that may help.
+  -- 1. One of m and n is divisible by 2 but not 4.
+  -- 2. One of m and n is divisible by 3 but not 9.
+  -- 3. One of m and n is divisible by 7 but not 49.
+  -- 4. None of m and n is divisible by 64.
+  -- 5. One of m and n is divisible by 2 and 7 but not 4 or 9 or 64.
+  -- 6. One of m and n is divisible by 2 or 7 but not 4 or 9 or 64.
+  -- 7. 36 does not divide m * n.
+  have observation_1 : (6).factorization m + (6).factorization n = 1 := by
+    rw [gcd_m_n]
+    -- The sum of the number of factors of 6 in m and n is 1.
+    -- Because gcd(m, n) = 6
+    apply Nat.factorization_eq_iff_dvd.dvd_add_left
+    apply Nat.Prime.factorization_dvd_of_dvd
+    · norm_num
+    · rw [gcd_m_n]
+      apply Nat.gcd_dvd_left
+
+  -- How about the structure of m and n.
+  -- We can use `m.natFactorization` and `n.natFactorization` to simplify the calculation.
+  -- We have to argue that gcd and lcm can be calculated by prime factorization.
+  have factorization_eq : ∀ (p : ℕ), Nat.Prime p → (6).factorization m + (6).factorization n = 1 → (m.natFactorization p + n.natFactorization p) = 1 := by
+    intro p prime_p
+    have : m.gcd n = 6 := by
+      rw [gcd_m_n]
+    have h := Nat.factorization_eq_iff_dvd.dvd_add_left (Nat.Prime.factorization_dvd_of_dvd prime_p this)
+    -- The sum of the number of factors of p in m and n is 1.
+    -- Because gcd(m, n) = 6 and p is a prime factor of 6.
+    rw [gcd_m_n] at h
+    rw [← Nat.factorization_eq_iff_dvd.dvd_add_left (Nat.Prime.factorization_dvd_of_dvd prime_p h)]
+    exact (6).factorization p
+
+  -- At least one of m and n is divisible by 2 but not 4.
+  have observation_2 : ((2).factorization m = 1) ∧ ((2).factorization n = 0) ∨ ((2).factorization m = 0) ∧ ((2).factorization n = 1) := by
+    -- We argue by contradiction.
+    by_contra! h
+    -- We consider the factorization of 2 in m and n.
+    have : (2).factorization m + (2).factorization n = 1 := by
+      rw [← observation_1]
+      simp
+    have h_2 : (2).factorization m = 0 ∨ (2).factorization m = 1 := by
+      -- The number of factors of 2 in m is either 0 or 1.
+      -- Because the sum of the number of factors of 2 in m and n is 1.
+      omega
+    have h_3 : (2).factorization n = 0 ∨ (2).factorization n = 1 := by
+      -- The number of factors of 2 in n is either 0 or 1.
+      -- Because the sum of the number of factors of 2 in m and n is 1.
+      omega
+    rcases h_2 with h_2 | h_2
+    · rcases h_3 with h_3 | h_3
+      · -- If the number of factors of 2 in m and n are 0 and 0, respectively,
+        -- there is a contradiction.
+        omega
+      · -- If the number of factors of 2 in m and n are 0 and 1, respectively,
+        -- there is a contradiction.
+        omega
+    · rcases h_3 with h_3 | h_3
+      · -- If the number of factors of 2 in m and n are 1 and 0, respectively,
+        -- there is a contradiction.
+        omega
+      · -- If the number of factors of 2 in m and n are 1 and 1, respectively,
+        -- there is a contradiction.
+        omega
+
+  -- How about 3?
+  -- One of m and n is divisible by 3 but not 9.
+  have observation_3 : ((3).factorization m = 1) ∧ ((3).factorization n = 0) ∨ ((3).factorization m = 0) ∧ ((3).factorization n = 1) := by
+    -- We argue by contradiction.
+    by_contra! h
+    -- We consider the factorization of 3 in m and n.
+    have : (3).factorization m + (3).factorization n = 1 := by
+      rw [← observation_1]
+      simp
+    have h_2 : (3).factorization m = 0 ∨ (3).factorization m = 1 := by
+      -- The number of factors of 3 in m is either 0 or 1.
+      -- Because the sum of the number of factors of 3 in m and n is 1.
+      omega
+    have h_3 : (3).factorization n = 0 ∨ (3).factorization n = 1 := by
+      -- The number of factors of 3 in n is either 0 or 1.
+      -- Because the sum of the number of factors of 3 in m and n is 1.
+      omega
+    rcases h_2 with h_2 | h_2
+    · rcases h_3 with h_3 | h_3
+      · -- If the number of factors of 3 in m and n are 0 and 0, respectively,
+        -- there is a contradiction.
+        omega
+      · -- If the number of factors of 3 in m and n are 0 and 1, respectively,
+        -- there is a contradiction.
+        omega
+    · rcases h_3 with h_3 | h_3
+      · -- If the number of factors of 3 in m and n are 1 and 0, respectively,
+        -- there is a contradiction.
+        omega
+      · -- If the number of factors of 3 in m and n are 1 and 1, respectively,
+        -- there is a contradiction.
+        omega
+
+  -- At least one of m and n is divisible by 7 but not 49.
+  have observation_4 : ((7).factorization m = 1) ∧ ((7).factorization n = 0) ∨ ((7).factorization m = 0) ∧ ((7).factorization n = 1) := by
+    -- We argue by contradiction.
+    by_contra! h
+    -- We consider the factorization of 7 in m and n.
+    have : (7).factorization m + (7).factorization n = 1 := by
+      rw [← observation_1]
+      simp
+    have h_2 : (7).factorization m = 0 ∨ (7).factorization m = 1 := by
+      -- The number of factors of 7 in m is either 0 or 1.
+      -- Because the sum of the number of factors of 7 in m and n is 1.
+      omega
+    have h_3 : (7).factorization n = 0 ∨ (7).factorization n = 1 := by
+      -- The number of factors of 7 in n is either 0 or 1.
+      -- Because the sum of the number of factors of 7 in m and n is 1.
+      omega
+    rcases h_2 with h_2 | h_2
+    · rcases h_3 with h_3 | h_3
+      · -- If the number of factors of 7 in m and n are 0 and 0, respectively,
+        -- there is a contradiction.
+        omega
+      · -- If the number of factors of 7 in m and n are 0 and 1, respectively,
+        -- there is a contradiction.
+        omega
+    · rcases h_3 with h_3 | h_3
+      · -- If the number of factors of 7 in m and n are 1 and 0, respectively,
+        -- there is a contradiction.
+        omega
+      · -- If the number of factors of 7 in m and n are 1 and 1, respectively,
+        -- there is a contradiction.
+        omega
+
+  -- None of m and n is divisible by 64.
+  have observation_5 : ¬ (64 ∣ m ∨ 64 ∣ n) := by
+    -- We argue by contradiction.
+    by_contra! h
+    -- We consider the factorization of 2 in m and n.
+    have : (64).factorization m + (64).factorization n = 0 := by
+      rw [factorization_eq]
+      have prime_2 : Nat.Prime 2 := by norm_num
+      have h_2 : (64).factorization m = 0 ∨ (64).factorization m = 1 := by
+        -- The number of factors of 2 in 64 is either 0 or 1.
+        -- Because the sum of the number of factors of 2 in m and n is 0.
+        omega
+      have h_3 : (64).factorization n = 0 ∨ (64).factorization n = 1 := by
+        -- The number of factors of 2 in 64 is either 0 or 1.
+        -- Because the sum of the number of factors of 2 in m and n is 0.
+        omega
+      rcases h_2 with h_2 | h_2
+      · rcases h_3 with h_3 | h_3
+        · -- If the number of factors of 2 in m and n are 0 and 0, respectively,
+          -- there is a contradiction.
+          omega
+        · -- If the number of factors of 2 in m and n are 0 and 1, respectively,
+          -- there is a contradiction.
+          omega
+      · rcases h_3 with h_3 | h_3
+        · -- If the number of factors of 2 in m and n are 1 and 0, respectively,
+          -- there is a contradiction.
+          omega
+        · -- If the number of factors of 2 in m and n are 1 and 1, respectively,
+          -- there is a contradiction.
+          omega
+    have h_2 : 64 ∣ m ∨ 64 ∣ n := h
+    rcases h_2 with h_2 | h_2
+    · apply Nat.dvd_trans (by norm_num) h_2
+    · apply Nat.dvd_trans (by norm_num) h_2
+
+  -- One of m and n is divisible by 2 or 7 but not 4 or 9 or 64.
+  have observation_6 : ((2).factorization m = 1) ∧ ((2).factorization n = 0) ∨ ((2).factorization m = 0) ∧ ((2).factorization n = 1) ∨ ((7).factorization m = 1) ∧ ((7).factorization n = 0) ∨ ((7).factorization m = 0) ∧ ((7).factorization n = 1) := by
+    -- We argue by contradiction.
+    by_contra! h
+    -- We consider the factorization of 2 in m and n.
+    have : (2).factorization m + (2).factorization n = 1 := by
+      rw [← observation_1]
+      simp
+    -- We consider the factorization of 7 in m and n.
+    have : (7).factorization m + (7).factorization n = 1 := by
+      rw [← observation_1]
+      simp
+    -- We consider the factorization of 4 in m and n.
+    have : ((4).factorization m = 0) ∧ ((4).factorization n = 0) ∨ ((4).factorization m = 0) ∧ ((4).factorization n = 1) ∨ ((4).factorization m = 1) ∧ ((4).factorization n = 0) ∨ ((4).factorization m = 1) ∧ ((4).factorization n = 1) := by
+      -- The number of factors of 4 in m and n is either 0 or 1.
+      -- Because the sum of the number of factors of 4 in m and n is 1.
+      omega
+    -- We consider the factorization of 9 in m and n.
+    have : ((9).factorization m = 0) ∧ ((9).factorization n = 0) ∨ ((9).factorization m = 0) ∧ ((9).factorization n = 1) ∨ ((9).factorization m = 1) ∧ ((9).factorization n = 0) ∨ ((9).factorization m = 1) ∧ ((9).factorization n = 1) := by
+      -- The number of factors of 9 in m and n is either 0 or 1.
+      -- Because the sum of the number of factors of 9 in m and n is 1.
+      omega
+    -- We consider the factorization of 64 in m and n.
+    have : ¬ ((64).factorization m = 0) ∧ ((64).factorization n = 0) ∨ ¬ ((64).factorization m = 0) ∧ ((64).factorization n = 1) ∨ ¬ ((64).factorization m = 1) ∧ ((64).factorization n = 0) ∨ ¬ ((64).factorization m = 1) ∧ ((64).factorization n = 1) := by
+      -- The number of factors of 64 in m and n is either 0 or 1.
+      -- Because the sum of the number of factors of 64 in m and n is 0.
+      omega
+    -- Combining all the above contradictions, we know that one of m and n is divisible by 2 or 7 but not 4 or 9 or 64.
+    omega
+
+  -- We can now write the least possible value of m + n.
+  -- We decompose the problem into two cases.
+  cases observation_6 with
+  | inl h =>
+    cases observation_3 with
+    | inl h_2 =>
+      cases observation_4 with
+      | inl h_3 =>
+        -- We are in the first case: (2).factorization m = 1 ∧ (7).factorization m = 1 ∧ (3).factorization n = 1.
+        have h_2 : (2).factorization m = 1 := h.1.1
+        have h_3 : (7).factorization m = 1 := h.1.2
+        have h_4 : (3).factorization n = 1 := h_2.2.1
+        --

@@ -1,0 +1,44 @@
+have : ∃x1 : ℝ, (abs (2 - x1) = 3) ∧ (∃x2 : ℝ, (abs (2 - x2) = 3) ∧ x1 ≠ x2) ∧ (∀ x : ℝ, abs (2 - x) = 3 → x = x1 ∨ x = x2) := by
+    -- to prove that the solution set of the equation $|2-x| = 3$ is { -1, 5 }
+    use -1
+    constructor
+    -- check that -1 is a solution
+    norm_num
+    use 5
+    constructor
+    -- check that 5 is also a solution
+    norm_num
+    -- check that -1 and 5 are distinct
+    norm_num
+    -- for any x satisfies that |2-x| = 3, x = -1 or x = 5
+    intro x
+    intro h
+    have : 2 - x ≥ -3 ∧ 2 - x ≤ 3 := by
+      rw [abs_eq] at h
+      exact ⟨h.2, h.1⟩
+    have : -1 ≤ x ∧ x ≤ 5 := by
+      constructor
+      · linarith
+      · linarith
+    have : x = -1 ∨ x = 5 := by
+      apply mul_self_eq_mul_self_iff.mp
+      ring_nf
+      rw [← pow_two, sq_eq_sq_iff_abs_eq_abs, abs_eq]
+      simp
+      exact ⟨this.1, this.2⟩
+    exact this
+  have h₁ := this
+  have h₂ : S = {-1, 5} := by
+    -- to prove that S = { -1, 5 }, we need the fact that S is a subset of { -1, 5 } and { -1, 5 } is a subset of S
+    apply Finset.ext_iff.mpr
+    intro x
+    constructor
+    · apply (h₀ x).mpr
+      apply (h₁ x).mp
+      exact Or.inl (by norm_num)
+    · apply (h₀ x).mp
+      apply (h₁ x).mpr
+      exact Or.inr (by norm_num)
+  rw [h₂, Finset.sum]
+  norm_num
+```

@@ -1,0 +1,76 @@
+-- A theorem that is useful for proving inequalities with ratios.
+  -- If $0 < b$ and $0 < d$, then $a/b + c/d \geq (a + c)/(b + d)$.
+  have h₁ : ∀ a b c d : ℝ, 0 < b → 0 < d → a / b + c / d ≥ (a + c) / (b + d) := by
+    intro a b c d hb hd
+
+    -- Note that `a / b + c / d - (a + c) / (b + d)` can be rewritten as `(ad - bc)^2/(b c d (b + d))`.
+    have h : a / b + c / d - (a + c) / (b + d) = (a * d - b * c) ^ 2 / (b * c * d * (b + d)) := by
+      field_simp
+      ring
+
+    -- Since `(ad - bc)^2` is always non-negative, and `b c d (b + d)` is positive, the whole thing is non-negative.
+    have h' : (a * d - b * c) ^ 2 ≥ 0 := by exact sq_nonneg (a * d - b * c)
+    have h'' : b * c * d * (b + d) > 0 := by positivity
+    rw [h]
+    exact div_nonneg h' (by positivity)
+
+  -- Prove the Cauchy-Schwarz inequality.
+  have h₂ (a b x y : ℝ) : (a * x + b * y) ^ 2 ≤ (a ^ 2 + b ^ 2) * (x ^ 2 + y ^ 2) := by
+    nlinarith [sq_nonneg (a * y - b * x)]
+
+  -- Prove that if $0 < a$ and $0 < b$, then $1/a + 1/b \geq 4/(a + b)$.
+  have h₃ : ∀ a b : ℝ, 0 < a → 0 < b → 1 / a + 1 / b ≥ 4 / (a + b) := by
+    intro a b ha hb
+
+    -- This can be derived from the inequality `(a - b)^2 \geq 0`
+    have h : (a - b) ^ 2 ≥ 0 := by exact sq_nonneg (a - b)
+
+    -- Note that `1/a + 1/b - 4/(a + b)` can be rewritten as `(a - b)^2/(a b (a + b))`.
+    have h' : 1 / a + 1 / b - 4 / (a + b) = (a - b) ^ 2 / (a * b * (a + b)) := by
+      field_simp
+      ring
+
+    -- Since `(a - b)^2` is always non-negative, and `a b (a + b)` is positive, the whole thing is non-negative.
+    have h'' : a * b * (a + b) > 0 := by positivity
+    rw [h']
+    exact div_nonneg h (by positivity)
+
+  -- Prove that if $0 < a$, $0 < b$, and $0 < c$, then $2/(a+b) + 2/(b+c) + 2/(c+a) \geq 9/(a+b+c)$.
+  have h₄ : ∀ a b c : ℝ, 0 < a → 0 < b → 0 < c → 2 / (a + b) + 2 / (b + c) + 2 / (c + a) ≥ 9 / (a + b + c) := by
+    intro a b c ha hb hc
+
+    -- Prove the inequality using the theorem `h₁` and the Cauchy-Schwarz inequality.
+    calc
+      2 / (a + b) + 2 / (b + c) + 2 / (c + a) = (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) * 3 := by ring
+      _ ≥ (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) * 4 := by linarith
+      _ = 4 / (a + b) + 4 / (b + c) + 4 / (c + a) := by
+        -- This step uses the fact that `1 / (a + b) + 1 / (b + c) + 1 / (c + a)` is positive, and `3 ≥ 4/1 + 4/2 + 4/3`.
+        have h' : 1 / (a + b) + 1 / (b + c) + 1 / (c + a) > 0 := by positivity
+        field_simp
+        apply (div_le_div_iff_of_pos_right (by positivity)).mp
+        linarith only [h₁ 4 4 1 1 (by positivity) (by positivity), h₁ 4 4 2 2 (by positivity) (by positivity), h₁ 4 4 3 3 (by positivity) (by positivity)]
+      _ ≥ 9 / (a + b + c) := by
+        -- The final step uses the theorem `h₃` and the Cauchy-Schwarz inequality `h₂`.
+        have h'₁ : (a + b) * (b + c) * (c + a) > 0 := by positivity
+        -- Apply the inequality `1/x + 1/y ≥ 4/(x + y)`.
+        have h'₂ := h₃ (a + b) (b + c) (by positivity) (by positivity)
+        -- Apply the inequality `1/x + 1/y ≥ 4/(x + y)`.
+        have h'₃ := h₃ (b + c) (c + a) (by positivity) (by positivity)
+        -- Apply the inequality `1/x + 1/y ≥ 4/(x + y)`.
+        have h'₄ := h₃ (c + a) (a + b) (by positivity) (by positivity)
+        -- Note that `4/(a + b) + 4/(b + c) + 4/(c + a) - 9/(a + b + c)` can be rewritten as `(a + b - c) ^ 2 / (a + b) / (b + c) / (c + a)`.
+        have h'₅ : 4 / (a + b) + 4 / (b + c) + 4 / (c + a) - 9 / (a + b + c) = (a + b - c) ^ 2 / ((a + b) * (b + c) * (c + a)) := by
+          field_simp
+          ring
+        -- Since `(a + b - c)^2` is always non-negative, and `a + b > 0`, `b + c > 0`, `c + a > 0`, the whole thing is non-negative.
+        have h'₆ : (a + b - c) ^ 2 ≥ 0 := by exact sq_nonneg (a + b - c)
+        have h'₇ : (a + b) * (b + c) * (c + a) > 0 := by positivity
+        rw [h'₅]
+        exact div_nonneg h'₆ (by positivity)
+
+  -- The main theorem can be proved using the inequality `2/(a+b) + 2/(b+c) + 2/(c+a) \geq 9/(a+b+c)`.
+  have h' := h₄ x y z h₀.left h₀.right.left h₀.right.right
+  have h'' := h₄ y z x h₀.right.left h₀.right.right h₀.left
+  have h''' := h₄ z x y h₀.right.right h₀.left h₀.right.left
+  linarith
+```

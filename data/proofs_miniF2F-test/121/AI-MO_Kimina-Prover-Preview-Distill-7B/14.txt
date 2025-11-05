@@ -1,0 +1,85 @@
+-- auxiliary lemma : if $a \equiv b \pmod{m}$, then $a + c \equiv b + c \pmod{m}$.
+  have add_mod (a b c m : ℕ) (h : a % m = b % m) : (a + c) % m = (b + c) % m := by
+    calc
+      (a + c) % m = (a % m + c % m) % m := Nat.add_mod a c m
+      _ = (b % m + c % m) % m := by rw [h]
+      _ = (b + c) % m := by apply Nat.add_mod _ c m
+
+  -- auxiliary lemma : if $a \equiv b \pmod{m}$, then $a \cdot c \equiv b \cdot c \pmod{m}$.
+  have mul_mod (a b c m : ℕ) (h : a % m = b % m) : (a * c) % m = (b * c) % m := by
+    calc
+      (a * c) % m = (a % m * c % m) % m := Nat.mul_mod a c m
+      _ = (b % m * c % m) % m := by rw [h]
+      _ = (b * c) % m := by apply Nat.mul_mod _ c m
+
+  have h1 : 2 * n % 47 = 15 := h₀
+
+  have h2 : 2 * 23 % 47 = 2 * (23 % 47) % 47 := by apply Nat.mul_mod 2 23 47
+  norm_num at h2
+
+  have h3 : 2 * (23 + 24) % 47 = 2 * 23 % 47 + 2 * 24 % 47 := by apply Nat.mul_mod 2 (23 + 24) 47
+  norm_num at h3
+
+  have h4 : 2 * (23 + 24) % 47 = 15 := by
+    calc
+      2 * (23 + 24) % 47 = 2 * 23 % 47 + 2 * 24 % 47 := h3
+      _ = 46 + 2 * 24 % 47 := by rw [h2]
+      _ = 15 := by norm_num
+
+  have h5 : 24 * 2 % 47 = 2 * 24 % 47 := by
+    calc
+      24 * 2 % 47 = (24 % 47) * (2 % 47) % 47 := by apply Nat.mul_mod
+      _ = (2 % 47) * (24 % 47) % 47 := by rw [Nat.mul_mod]
+      _ = 2 * 24 % 47 := by ring_nf
+
+  have h6 : 24 * 2 % 47 = 15 := by
+    calc
+      24 * 2 % 47 = 2 * 24 % 47 := h5
+      _ = 15 := by rw [← h4]; ring_nf
+
+  have h7 : 2 * (23 + 24) % 47 = 2 * 23 % 47 + 15 := by
+    calc
+      2 * (23 + 24) % 47 = 2 * (23 + 24) % 47 := by rfl
+      _ = 15 := h6
+
+  have h8 : 2 * 23 % 47 + 15 = 2 * 23 % 47 + 15 := by rfl
+
+  have h9 : 2 * 23 % 47 = 0 := by
+    calc
+      2 * 23 % 47 = 2 * (23 % 47) % 47 := by apply Nat.mul_mod 2 23 47
+      _ = 2 * 23 % 47 := by norm_num
+      _ = 46 := by rw [h2]
+      _ = 0 := by norm_num
+
+  have h10 : 2 * 23 = 46 := by norm_num
+
+  -- Since $2 \cdot 23 \equiv 0 \pmod{47}$, we have $2 \cdot (23 + n) \equiv 2 \cdot n \equiv 15 \pmod{47}$.
+  have h11 : 2 * (23 + n) % 47 = 15 := by
+    calc
+      2 * (23 + n) % 47 = (2 * 23 % 47 + 2 * n % 47) % 47 := by apply Nat.mul_mod _ (23 + n) 47
+      _ = (0 + 15) % 47 := by rw [h9, h1]
+      _ = 15 := by norm_num
+
+  -- By the uniqueness of the solution, we have $23 + n \equiv 23 + 31 \pmod{47}$.
+  have h12 : (23 + n) % 47 = (23 + 31) % 47 := by
+    have h12 : 2 * (23 + n) % 47 = 2 * (23 + 31) % 47 := by
+      rw [h11]
+      calc
+        2 * (23 + 31) % 47 = 2 * 54 % 47 := by rfl
+        _ = 2 * (54 % 47) % 47 := by apply Nat.mul_mod 2 54 47
+        _ = 2 * 6 % 47 := by norm_num
+        _ = 12 % 47 := by apply Nat.mul_mod 2 6 47
+        _ = 15 := by norm_num
+    apply (injOn_iff (fun x y => (2 * x % 47 = 2 * y % 47)) (by simp)).mp at h12
+    exact h12
+    -- Here, we should prove that $2 \cdot x \equiv 2 \cdot y \pmod{47}$ implies $x \equiv y \pmod{47}$.
+    -- It is true because 2 and 47 are coplime.
+    rw [← Nat.mul_mod, ← Nat.mul_mod]
+    apply Nat.mul_left_cancel (by norm_num)
+
+  -- Simplify, we have $n \equiv 31 \pmod{47}$.
+  calc
+    n % 47 = (23 + n) % 47 - 23 % 47 := by apply Nat.sub_mod
+    _ = (23 + 31) % 47 - 23 % 47 := by rw [h12]
+    _ = 31 := by norm_num
+```

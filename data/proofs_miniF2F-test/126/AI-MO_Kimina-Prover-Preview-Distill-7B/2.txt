@@ -1,0 +1,162 @@
+-- Let $K = a, L = b, M = c$ and $N = d$.
+
+  -- The given equation becomes $Kb + Ld = (L + d + K - M)(L + d + M - K)$,
+  -- or, $K(b - d + M - N) + d(N - M) = (L + d + K - M)(L + d - K + M)$.
+  rw [show a * b + c * d = a * c + b * d - (a - b) ^ 2 by ring] at *
+  iterate 2 rw [←add_assoc] at h₄
+  rw [←Nat.sub_add_comm] at h₄
+  -- By commutativity, $b \mid d$ and $a \mid c$.
+  have ha : a ∣ c := by
+    rw [←Nat.add_sub_assoc]
+    apply Nat.dvd_sub_of_add_le
+    rw [show a * c = a * b + (a - b) * c by ring]
+    apply Nat.le_add_left
+    apply Nat.mul_le_mul_left
+    linarith
+  have hb : b ∣ d := by
+    rw [←Nat.add_sub_assoc]
+    apply Nat.dvd_sub_of_add_le
+    rw [show a * c = a * b + (a - b) * c by ring]
+    apply Nat.le_add_right
+    apply Nat.mul_le_mul_left
+    linarith
+  have hd : d ∣ b := by rw [Nat.add_comm]; exact hb
+  -- Write $b = dx$ and $d = Dy$ where $x$ and $y$ are positive integers.
+  rw [dvd_iff_exists_eq_mul_right] at hb hd
+  obtain ⟨x, hx⟩ := hb
+  obtain ⟨y, hy⟩ := hd
+  rw [hx] at h₄
+  -- The given equation becomes $a * c + d * y * x = (d * y + d * d * x - c) * (d * y - a + c + d * x)$
+  -- or, $a * c = d * (a - c + d * x * y) * (d * (x + y) - (a - c) + d * x)$.
+  rw [hy] at h₄
+  have hdvd : d ∣ a * c := by
+    rw [h₄]
+    apply Nat.dvd_mul_right
+  -- Since $d$ is positive, we can conclude that $d \mid a$ or $d \mid c$.
+  rw [Nat.Prime.dvd_mul] at hdvd
+  cases' hdvd with hadvd hcdvd
+  · -- If $d \mid a$, then we can write $a = dz$.
+    rw [dvd_iff_exists_eq_mul_right] at hadvd
+    obtain ⟨z, hz⟩ := hadvd
+    -- The given equation becomes $d * c + d * y * x = (d * y + d * d * x - c) * (d * (x + y) - (d * z - c) + d * x)$
+    -- or, $d * (c + y * x) = d * (y + d * x - c + d * z + c + d * x)$
+    -- or, $c + y * x = (y + d * x - c + d * z + c + d * x)$
+    -- or, $y * x = d * (2 * x + y + z - c)$.
+    rw [hz, show a * c = d * c * z by rw [mul_assoc, mul_comm, mul_assoc]; rw [mul_assoc, mul_comm, mul_assoc]; rw [←mul_assoc, mul_comm, mul_comm]; ring] at h₄
+    rw [mul_comm, mul_assoc, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at h₄
+    rw [mul_left_inj'] at h₄
+    -- The given equation becomes $c + y * x = (y + d * x - c + d * z + c + d * x)$
+    -- or, $y * x = d * (2 * x + y + z - c)$.
+    have h₅ : y * x = d * (2 * x + y + z - c) := by
+      rw [mul_assoc, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at h₄
+      rw [mul_left_inj'] at h₄
+      rw [add_assoc, add_assoc, add_comm, add_sub_assoc, ←add_assoc, ←add_assoc, sub_add_cancel, ←Nat.Simproc.add_sub_le] at h₄
+      linarith
+    -- Since $y$ is positive, we can conclude that $d \mid x$.
+    rw [Nat.Prime.dvd_mul] at h₅
+    cases' h₅ with hxdvd hxdvd
+    · -- If $d \mid x$, then $a = dz$ and $x = dk$ for some positive integers $z$ and $k$.
+      rw [dvd_iff_exists_eq_mul_right] at hxdvd
+      obtain ⟨k, hk⟩ := hxdvd
+      -- The given equation becomes $c + d * y * k = d * (d * y + d * k - c) * (d * (k + y) - c + d * k)$
+      -- or, $c + d * y * k = d * (d * y + d * k - c) * (d * k + d * y + d * k - c)$
+      -- or, $c + d * y * k = d * (d * y + d * k - c) * (d * y + 2 * d * k - c)$
+      -- or, $c + d * y * k = d * (d * y + d * k - c) * (d * y + d * (2 * k - c))$.
+      rw [hk, show d * c = d * c * k by rw [one_mul, mul_comm, mul_assoc]; rw [←mul_assoc, mul_comm, mul_assoc]; rw [mul_assoc, mul_comm, mul_assoc]; ring] at h₄
+      have : d ∣ (c + d * y * k) := by
+        rw [h₄]
+        apply Nat.dvd_mul_right
+      rw [Nat.dvd_add] at this
+      apply Nat.Prime.dvd_mul at this
+      cases' this with hcdvd1 hcdvd2
+      · -- If $d \mid c$, then $c = d * c_1$ for some positive integer $c_1$.
+        rw [dvd_iff_exists_eq_mul_right] at hcdvd1
+        obtain ⟨c1, hcc1⟩ := hcdvd1
+        -- The given equation becomes $d * c1 * d + d * y * k = d * (d * y + d * k - d * c1) * (d * (k + y) - d * c1 + d * k)$
+        -- or, $d^2 * c1 + d * y * k = d * (d * y + d * k - d * c1) * (d * k + d * y + d * k - d * c1)$
+        -- or, $d * (d * c1 + y * k) = d * (d * (y + k - c1) + d * k * y)$
+        -- or, $d * c1 + y * k = d * (y + k - c1) + d * k * y$.
+        rw [hcc1, show d * c1 = c1 * d by ring, mul_assoc, mul_comm d, mul_assoc, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at h₄
+        rw [mul_left_inj'] at h₄
+        -- The given equation becomes $y * k = d * k * y$ or $c1 = y * k$.
+        have h₅ : c1 = y * k := by
+          rw [mul_assoc, mul_comm, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at h₄
+          rw [mul_left_inj'] at h₄
+          linarith
+        -- So, $c = d * c1 = d * y * k$.
+        rw [hcc1, h₅, mul_assoc, mul_comm, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at *
+        -- The given equation becomes $d * y * k + d * y * k = (d * y + d * k - d * y k) * (d * (k + y) - d y k + d * k)$
+        -- or, $d * y * k + d * y * k = d * y * (d * (k + y) - d * y k + d * k) + d * k * (d * (k + y) - d * y k + d * k)$
+        -- or, $2 * d * y * k = d * y * (d * k + d * y + d * k) + d * k * (d * k + d * y + d * k)$
+        -- or, $2 * d * y * k = d * y * (d * (k + y) + d * k) + d * k * (d * (k + y) + d * k)$
+        -- or, $2 * d * y * k = (d * (k + y) + d * k) * (d * y + d * k)$.
+        rw [show d * y + d * k - d * y * k = d * y + d * k - d * y * k by rfl, show d * (k + y) - d * y k + d * k = d * (k + y) - d * y * k + d * k by rfl] at h₄
+        have : d * (y * k) * 2 = (d * (k + y) + d * k) * (d * y + d * k) := by
+          rw [←h₄]
+          ring
+        -- Since $d$ is positive, we can conclude that $d \mid y$ or $d \mid k$.
+        rw [Nat.Prime.dvd_mul] at this
+        cases' this with hydvd hkvd
+        · -- If $d \mid y$, then $y = d * y1$ for some positive integer $y1$.
+          rw [dvd_iff_exists_eq_mul_right] at hydvd
+          obtain ⟨y1, hy1⟩ := hydvd
+          -- The given equation becomes $d * d * y1 * k + d * d * k * k = (d * d * k + d * d * y1 * k) * (d * d * y1 + d * d * k)$
+          -- or, $d^2 * y1 * k + d^2 * k^2 = d^2 * (k + y1 * k) * (d * y1 + d * k)$
+          -- or, $d^2 * (y1 * k + k^2) = d^2 * (k + y1 * k) * (d * y1 + d * k)$
+          -- or, $y1 * k + k^2 = (k + y1 * k) * (d * y1 + d * k)$.
+          rw [hy1, show d * y1 = y1 * d by ring, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at this
+          rw [mul_left_inj'] at this
+          -- The given equation becomes $k * y1 + k ^ 2 = k * (d * y1 + d * k) + k ^ 2 * d * y1$ or $k * (y1 - d * y1 - d * k) = k ^ 2 * (d * y1 - 1)$.
+          have h₅ : k * (y1 - d * y1 - d * k) = k ^ 2 * (d * y1 - 1) := by
+            rw [mul_assoc, mul_comm, mul_assoc, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at this
+            linarith
+          -- If $k = 0$, then $c = d * y * k = 0$, a contradiction.
+          have hkle1 : k < 1 := by
+            nlinarith
+          have hkz : k = 0 := by
+              interval_cases k
+              · linarith
+              · rfl
+          rw [hkz] at h₅
+          -- The given equation becomes $0 = d * y * 0$ or $0 = 0$.
+          -- So, $c = d * y * k = 0$, a contradiction.
+          linarith
+        · -- If $d \mid k$, then $k = d * k1$ for some positive integer $k1$.
+          rw [dvd_iff_exists_eq_mul_right] at hkvd
+          obtain ⟨k1, hk1⟩ := hkvd
+          -- The given equation becomes $d * d * y * k1 + d * d * y * d * k1 = (d * d * y + d * d * k1) * (d * d * k1 + d * d * y + d * d * k1)$
+          -- or, $d^2 * y * k1 + d^3 * y * k1 = d^2 * (y + k1) * (d * k1 + d * y + d * k1)$
+          -- or, $d^2 * y * k1 * (1 + d) = d^2 * (y + k1) * (d * k1 + d * y + d * k1)$
+          -- or, $y * k1 * (1 + d) = (y + k1) * (d * k1 + d * y + d * k1)$.
+          rw [hk1, show d * k1 = k1 * d by ring, mul_assoc, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at this
+          rw [mul_left_inj'] at this
+          -- The given equation becomes $(y * k1) * (1 + d) = (k1 + y) * (d * k1 + d * y + d * k1)$.
+          have h₅ : y * k1 * (1 + d) = (k1 + y) * (d * k1 + d * y + d * k1) := by
+            rw [mul_assoc, mul_comm, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at this
+            linarith
+          -- Since $y$ is positive, we can conclude that $d \mid 1 + k1$ or $d \mid k1$.
+          rw [Nat.Prime.dvd_mul] at h₅
+          cases' h₅ with hydvd hkvd
+          · -- If $d \mid 1 + k1$, then $1 + k1 = d * (k2 + 1)$ for some nonnegative integer $k2$.
+            rw [dvd_iff_exists_eq_mul_right] at hydvd
+            obtain ⟨k2, h2⟩ := hydvd
+            -- The given equation becomes $y * k1 * d * (k2 + 1) = (k1 + d * (k2 + 1)) * (d * k1 + d * (d * (k2 + 1)) + d * k1)$
+            -- or, $y * k1 * d * (k2 + 1) = (k1 + d * (k2 + 1)) * (2 * d * k1 + d^2 * (k2 + 1))$.
+            rw [h2, show d * k2 = k2 * d by ring, mul_assoc, mul_comm d, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc] at h₅
+            rw [mul_left_inj'] at h₅
+            -- The given equation becomes $y * k1 * (k2 + 1) = (k1 + d * (k2 + 1)) * (2 * k1 + d * (k2 + 1))$.
+            -- So, $y * k1 * (k2 + 1) = (k1 + d * (k2 + 1)) * ((k2 + 1) * (2 * k1 + d * (k2 + 1)) / k1)$.
+            -- or, $y = (k1 + d * (k2 + 1)) * ((k2 + 1) * (2 * k1 + d * (k2 + 1)) / (k1 * k2))$.
+            have h₆ : k1 ∣ (2 * k1 + d * (k2 + 1)) := by
+              rw [show 2 * k1 = k1 * 2 by ring, ←mul_assoc, mul_comm k1, mul_assoc, ←mul_assoc, mul_assoc, ←mul_assoc, mul_comm, ←mul_assoc, ←mul_assoc, mul_comm k1, ←mul_assoc]
+              rw [←Nat.Simproc.mul_sub_le, Nat.le_mul_iff_one_le_right]
+              linarith
+              apply Nat.Prime.one_le
+              exact Nat.prime_two
+            rw [Nat.Prime.dvd_mul] at h₆
+            cases' h₆ with hke hke
+            · -- If $k1 \mid k2 + 1$, then $k2 + 1 = k1 * k3$ for some positive integer $k3$.
+              rw [dvd_iff_exists_eq_mul_right] at hke
+              obtain ⟨k3, hk3⟩ := hke
+              -- The given equation becomes $y * k1 * k3 * d * (k1 * k3) = (d * k1 + d * (k1 * k3)) * (2 * d * k1 + d * (k1 * k3))$
+              -- or

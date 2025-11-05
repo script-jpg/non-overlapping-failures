@@ -1,0 +1,66 @@
+obtain ⟨x, hx⟩ := h₁
+  obtain ⟨t, ht⟩ := h₂
+
+  -- The number is both a perfect square and a perfect cube. Let the square root be x and the cube root be t.
+
+  have hx' : x ^ 2 = n := hx
+  have ht' : t ^ 3 = n := ht
+
+  have h : t ^ 3 = x ^ 2 := by
+    rw [ht', hx']
+
+  -- The number is both a perfect square and a perfect cube.
+
+  have hge : 64 ≤ n := by
+    by_cases hcases : 2 ≤ t
+    -- If t is greater than or equal to 2, then n is at least 64.
+    · have ht'' : t ^ 3 ≥ 2 ^ 3 := by
+        gcongr
+      have ht'' : t ^ 3 ≥ 8 := by
+        norm_num at ht''
+        exact ht''
+      have hx'' : x ^ 2 ≥ 4 ^ 2 := by
+        have : 2 ^ 3 ≤ x ^ 2 := by
+          rw [← h]
+          refine le_of_dvd?_?_
+          · exact Nat.dvd_pow t 3
+          · exact Nat.dvd_pow x 2
+        have : 2 ^ 3 ≤ t ^ 3 := by exact Nat.pow_le_pow_of_le_left hcases 3
+        trans t ^ 3
+        · exact this
+        · exact ht''
+      have : 4 ^ 2 ≤ x ^ 2 := by
+        gcongr
+      nlinarith
+    -- If t is 0 or 1, then it contradicts with the fact that n is greater than or equal to 10.
+    · by_cases hcases : t = 0
+      · rw [hcases] at h
+        have : t ^ 3 = 0 := by
+          simp only [hcases, Nat.zero_pow]
+        rw [this] at h
+        have : x ^ 2 = 0 := by
+          exact Nat.eq_zero_of_mul_eq_zero h
+        have : x = 0 := by
+          exact Nat.eq_zero_of_pow_eq_zero this
+        rw [this] at hx
+        have : n = 0 := by
+          exact Nat.eq_zero_of_pow_eq_zero hx
+        linarith
+      · by_cases hcases : t = 1
+        · rw [hcases] at h
+          have : t ^ 3 = 1 := by
+            simp only [hcases, Nat.one_pow]
+          rw [this] at h
+          have : x ^ 2 = 1 := by
+            exact Nat.eq_one_of_mul_eq_one_left h
+          have : x = 1 := by
+            exact Nat.eq_one_of_pow_eq_one this
+          rw [this] at hx
+          have : n = 1 := by
+            exact Nat.eq_one_of_pow_eq_one hx
+          linarith
+        · exact Nat.le_of_lt_succ hcases
+          -- If t is 0 or 1, then it contradicts with the fact that n is greater than or equal to 10.
+
+  exact hge
+```

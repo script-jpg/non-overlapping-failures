@@ -1,0 +1,85 @@
+-- We have $(a,b)=(a,a^2)$ and $(c,d)=(c,c^2)$.
+  rw [Prod.mk.injEq]
+
+  -- Now we have a = 1 - a^2, c = 1 - c^2.
+  have h₅ : a = 1 - a ^ 2 := by linarith
+  have h₆ : c = 1 - c ^ 2 := by linarith
+
+  -- Now we have a and c are the two roots of $t^2 + t - 1 = 0$.
+  have h₇ : a ^ 2 + a - 1 = 0 := by linarith
+  have h₈ : c ^ 2 + c - 1 = 0 := by linarith
+
+  -- Now we solve the quadratic equation $t^2 + t - 1 = 0$.
+  have h₉ : ∀ t : ℝ, t ^ 2 + t - 1 = 0 -> t = (-1 + √5) / 2 ∨ t = (-1 - √5) / 2 := by
+    intro t ht
+    have : t ^ 2 + t - 1 = (t - (-1 + √5) / 2) * (t - (-1 - √5) / 2) := by
+      ring_nf
+      rw [Real.sq_sqrt (by norm_num)]
+      linarith
+    rw [this] at ht
+    simp at ht
+    exact ht
+
+  -- Without loss of generality, assume that $a$ is the larger root.
+  wlog h₁₀ : a ≥ c
+  · apply this c b d a
+    all_goals linarith
+  have h₁₁ : a = (-1 + √5) / 2 ∨ a = (-1 - √5) / 2 := by
+    apply h₉
+    exact h₇
+  have h₁₂ : c = (-1 - √5) / 2 ∨ c = (-1 + √5) / 2 := by
+    apply h₉
+    exact h₈
+
+  -- Now we have four cases to consider.
+  cases h₁₁ with
+  | inl h₁₁ =>
+    cases h₁₂ with
+    | inl h₁₂ =>
+      -- This case is impossible.
+      exfalso
+      exact h₄ (by linarith)
+    | inr h₁₂ =>
+      -- This case is valid.
+      have h₁₃ : b = (-1 - √5) / 2 ∨ b = (-1 + √5) / 2 := by
+        left
+        rw [h₁₁, h₁₂]
+        ring
+      cases h₁₃ with
+      | inl h₁₃ =>
+        -- This case is valid.
+        rw [h₁₁, h₁₃, h₁₂]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+      | inr h₁₃ =>
+        -- This case is invalid.
+        exfalso
+        rw [h₁₃] at h₁₁
+        linarith
+  | inr h₁₁ =>
+    cases h₁₂ with
+    | inl h₁₂ =>
+      -- This case is valid.
+      have h₁₃ : b = (-1 + √5) / 2 ∨ b = (-1 - √5) / 2 := by
+        right
+        rw [h₁₁, h₁₂]
+        ring
+      cases h₁₃ with
+      | inl h₁₃ =>
+        -- This case is valid.
+        rw [h₁₁, h₁₂, h₁₃]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+      | inr h₁₃ =>
+        -- This case is invalid.
+        exfalso
+        rw [h₁₃] at h₁₁
+        linarith
+    | inr h₁₂ =>
+      -- This case is impossible.
+      exfalso
+      exact h₄ (by linarith)
+
+```

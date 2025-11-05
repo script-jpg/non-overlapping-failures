@@ -1,0 +1,46 @@
+-- The auxilary lemma `a` is used for applying `logb a (b ^ c) = c * logb a b`.
+  have a {a b c : ℝ} (ha : 0 < a) (hb : a ≠ 1) (hc : 0 < b) : Real.log (b ^ c) = c * Real.log b := by
+    calc
+      Real.log (b ^ c) = Real.log (Real.exp (Real.log b) ^ c) := by rw [Real.exp_log (by linarith)]
+      _ = Real.log (Real.exp (c * Real.log b)) := by rw [Real.exp_mul (Real.log b) c]
+      _ = c * Real.log b := by rw [Real.log_exp]; ring_nf
+  have ha : 0 < (40 : ℝ) := by norm_num
+  have hb : 0 < (20 : ℝ) := by norm_num
+  have hc : 0 < (80 : ℝ) := by norm_num
+  have hd : 0 < (160 : ℝ) := by norm_num
+  have he : 0 < (2 : ℝ) := by norm_num
+  have hf : (2 : ℝ) ≠ 1 := by norm_num
+  have hg : (40 : ℝ) ≠ 1 := by norm_num
+  have hi : (80 : ℝ) ≠ 1 := by norm_num
+  have hj : (160 : ℝ) ≠ 1 := by norm_num
+
+  -- Simplify the expression step by step.
+  calc
+    Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) -
+        Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20)
+      = (Real.log (2 ^ 4) + Real.log 5) / Real.log 2 / (Real.log 2 / (Real.log (2 ^ 3) * Real.log 5)) -
+          (Real.log (2 ^ 5) + Real.log 2) / Real.log 2 / (Real.log 2 / (Real.log (2 ^ 2) * Real.log 5)) := by
+        simp [a ha hf hc, a ha hf hd, a hb hf he, a hb hf hj]
+        nth_rw 1 [← Real.log_mul (by norm_num) (by norm_num), ← Real.log_mul (by norm_num) (by norm_num)]
+        nth_rw 2 [← Real.log_mul (by norm_num) (by norm_num), ← Real.log_mul (by norm_num) (by norm_num)]
+        rw [show (160 : ℝ) = 2^5 * 5 by norm_num, show (40 : ℝ) = 2^3 * 5 by norm_num]
+    _ = (4 * Real.log 2 + Real.log 5) / Real.log 2 / (Real.log 2 / (3 * Real.log 2 * Real.log 5)) -
+        (5 * Real.log 2 + Real.log 2) / Real.log 2 / (Real.log 2 / (2 * Real.log 2 * Real.log 5)) := by
+        simp [a ha hf hc, a ha hf hd, a hb hf he, a hb hf hj]
+        ring_nf
+    _ = (4 * Real.log 2 + Real.log 5) / Real.log 2 / (Real.log 2 / (3 * Real.log 2 * Real.log 5)) -
+        (5 * Real.log 2 + Real.log 2) / Real.log 2 / (Real.log 2 / (2 * Real.log 2 * Real.log 5)) := by
+      congr
+    _ = (4 * Real.log 2 + Real.log 5) * 3 * Real.log 2 * Real.log 5 / (Real.log 2 * Real.log 2) -
+        (5 * Real.log 2 + Real.log 2) * 2 * Real.log 2 * Real.log 5 / (Real.log 2 * Real.log 2) := by
+      rw [div_div (c := Real.log 2 * Real.log 2), div_div (c := Real.log 2 * Real.log 2)]
+      ring_nf
+    _ = 3 * (4 * Real.log 2 + Real.log 5) * Real.log 5 - 2 * (5 * Real.log 2 + Real.log 2) * Real.log 5 := by
+      rw [mul_div_assoc, mul_div_assoc, mul_assoc, mul_assoc, div_self (by simp [hf])]; ring_nf
+    _ = 10 * Real.log 5 := by ring_nf
+    _ = 10 * Real.log 5 / Real.log 2 - 10 * Real.log 5 / Real.log 2 := by simp [hf]; ring_nf
+    _ = 2 := by
+      rw [div_div, div_div, ← Real.log_rpow (by norm_num), ← Real.log_rpow (by norm_num), Real.log_div (by norm_num) (by norm_num)]
+      ring_nf; exact hf
+
+```

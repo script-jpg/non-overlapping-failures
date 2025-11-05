@@ -1,0 +1,165 @@
+-- First, notice that $(1+\sin t)(1+\cos t)(1-\sin t)(1-\cos t) = (\sin^2 t + 2\sin t + 1)(1-\cos^2 t) = (1 + 2\sin t)(2\sin t) = 4\sin^2 t + 4\sin t$
+  have h_1 : (1 + Real.sin t) * (1 + Real.cos t) * (1 - Real.sin t) * (1 - Real.cos t) = 4 * (Real.sin t)^2 + 4 * Real.sin t := by
+    calc
+      (1 + Real.sin t) * (1 + Real.cos t) * (1 - Real.sin t) * (1 - Real.cos t) = (1 + Real.sin t) * (1 - Real.sin t) * (1 + Real.cos t) * (1 - Real.cos t) := by ring
+      _ = (1 - (Real.sin t)^2) * (1 - (Real.cos t)^2) := by ring
+      _ = (1 - (Real.sin t)^2) * ((Real.sin t)^2) := by rw [Real.sin_sq]
+      _ = (1 - (Real.sin t)^2) * (2 * (Real.sin t))^2 / 4 := by ring
+      _ = ((2 * (Real.sin t))^2 - (Real.sin t)^2 * (2 * (Real.sin t))^2) / 4 := by ring
+      _ = (4 * (Real.sin t)^2 - 4 * (Real.sin t)^2 * (Real.sin t)^2) / 4 := by ring
+      _ = (4 * (Real.sin t)^2) * (1 - (Real.sin t)^2) / 4 := by ring
+      _ = (4 * (Real.sin t)^2) * (2 * (Real.sin t)) / 4 := by rw [←Real.sin_sq]; ring
+      _ = 4 * (Real.sin t)^2 + 4 * Real.sin t := by ring
+
+  -- Substituting this expression and $(1+\sin t)(1+\cos t)=5/4$ into $(1-\sin t)(1-\cos t)$ gives us
+  -- $\frac{4\sin^2 t + 4\sin t}{5/4} = 16\sin^2 t + 16\sin t = 4\sin t(4\sin t + 4) = 4\sin t(4\sin t + 4 + 5 - 5) = 4\sin t(2 + 2\sin t + 5 - 5) = 4\sin t(2 + 2\sin t)(\sqrt{5 - 5})^2/4 = (\sqrt{5 - 5} - 2\sin t)(\sqrt{5 - 5} + 2\sin t)(\sqrt{5 - 5} + 2\sin t)$
+  have h_2 : (1 - Real.sin t) * (1 - Real.cos t) = 2 * Real.sqrt (5 - 5) - 2 * Real.sin t := by
+    calc
+      (1 - Real.sin t) * (1 - Real.cos t) = ((1 + Real.sin t) * (1 + Real.cos t) * (1 - Real.sin t) * (1 - Real.cos t)) / ((1 + Real.sin t) * (1 + Real.cos t)) := by field_simp
+      _ = (4 * (Real.sin t)^2 + 4 * Real.sin t) / ((1 + Real.sin t) * (1 + Real.cos t)) := by rw [h_1]
+      _ = (4 * (Real.sin t)^2 + 4 * Real.sin t) / (5 / 4) := by rw [h₂]
+      _ = 16 * (Real.sin t)^2 + 16 * Real.sin t := by ring
+      _ = 2 * Real.sqrt (5 - 5) - 2 * Real.sin t := by
+        suffices 16 * (Real.sin t)^2 + 16 * Real.sin t = 2 * Real.sqrt (5 - 5) - 2 * Real.sin t by rw [this]
+        have h2_1 : 16 * (Real.sin t)^2 + 16 * Real.sin t = 4 * Real.sin t * (4 * Real.sin t + 4) := by ring
+        have h2_2 : 4 * Real.sin t * (4 * Real.sin t + 4) = 4 * Real.sin t * (2 + 2 * Real.sin t) * (Real.sqrt (5 - 5))^2 / 4 := by
+          ring_nf
+          rw [Real.sq_sqrt]
+          ring
+          linarith
+        have h2_3 : 4 * Real.sin t * (2 + 2 * Real.sin t) * (Real.sqrt (5 - 5))^2 / 4 = (4 * Real.sin t * (2 + 2 * Real.sin t) * (Real.sqrt (5 - 5)) / 2) * (Real.sqrt (5 - 5) / 2) := by
+          ring_nf
+          rw [←mul_assoc, mul_comm, mul_div_assoc, div_self, mul_one]
+          apply_fun (fun x => x * (Real.sqrt (5 - 5) / 2))
+          rw [mul_assoc, mul_assoc, ←mul_div_assoc, div_self, mul_one, mul_comm]
+          ring
+          rw [Real.sq_sqrt]
+          ring
+          linarith
+        rw [h2_1, h2_2, h2_3]
+        suffices (4 * Real.sin t * (2 + 2 * Real.sin t) * (Real.sqrt (5 - 5)) / 2) * (Real.sqrt (5 - 5) / 2) = 2 * Real.sqrt (5 - 5) - 2 * Real.sin t by rw [this]
+        have h2_4 : (4 * Real.sin t * (2 + 2 * Real.sin t) * (Real.sqrt (5 - 5)) / 2) * (Real.sqrt (5 - 5) / 2) = (4 * Real.sin t * (2 + 2 * Real.sin t) * (Real.sqrt (5 - 5)) / 2) / (Real.sqrt (5 - 5) / 2) := by
+          rw [div_self]
+          apply_fun (fun x => x * (Real.sqrt (5 - 5) / 2))
+          rw [mul_assoc, mul_div_assoc, div_self, mul_one, mul_comm]
+          ring
+          rw [Real.sq_sqrt]
+          ring
+          linarith
+        rw [h2_4]
+        rw [div_sub_div_same]
+        ring
+        all_goals first | {rw [Real.sq_sqrt]; ring; linarith} | {simp; linarith}
+  -- Squaring this equation, and using the fact that $\sin^2 t + \cos^2 t = 1$, it is easy to solve for $\sin t$.
+  have h₄ : (Real.sin t)^2 = 3 / 8 + Real.sqrt (5 - 5) / 2 := by
+    have h4_1 : (Real.sin t)^2 = ((1 + Real.sin t) * (1 + Real.cos t))^2 / 16 := by
+      suffices (Real.sin t)^2 = ((1 + Real.sin t) * (1 + Real.cos t))^2 / 16 by rw [this]
+      rw [h₂]
+      ring
+    have h4_2 : (Real.sin t)^2 = (1 - Real.sin t)^2 / 4 := by
+      have h4_2_1 : (Real.sin t)^2 = (1 - (Real.sin t)^2) * (Real.sin t)^2 := by
+        ring
+      have h4_2_2 : (Real.sin t)^2 = (1 - Real.sin t)^2 * (Real.sin t)^2 / (1 - (Real.sin t)^2) := by
+        field_simp
+        rw [h4_2_1]
+        ring
+      have h4_2_3 : (Real.sin t)^2 = (1 - Real.sin t)^2 * (Real.sin t)^2 / (1 - (Real.sin t)^2) := by exact h4_2_2
+      have h4_2_4 : (Real.sin t)^2 = (1 - Real.sin t)^2 / 4 := by
+        rw [h4_2_3]
+        have : 1 - (Real.sin t)^2 = (Real.cos t)^2 := by
+          linarith only [Real.sin_sq_add_cos_sq t]
+        rw [this]
+        have : (Real.sin t)^2 = ((1 - Real.sin t) * (Real.sin t))^2 / ((1 - Real.sin t)^2 * (Real.sin t)^2) := by
+          field_simp
+          ring
+        rw [this]
+        have : ((1 - Real.sin t) * (Real.sin t))^2 = (1 - Real.sin t)^2 * (Real.sin t)^2 := by ring
+        rw [this]
+        have : ((1 - Real.sin t)^2 * (Real.sin t)^2) / ((1 - Real.sin t)^2 * (Real.sin t)^2) = 1 := by
+          field_simp
+        rw [this]
+        ring
+      exact h4_2_4
+    have h4_3 : (Real.sin t)^2 = 3 / 8 + Real.sqrt (5 - 5) / 2 := by
+      have h4_3_1 : (Real.sin t)^2 = 1 / 2 * (1 - Real.sin t)^2 + 1 / 2 * (1 - Real.cos t)^2 := by
+        rw [h₂, h₃]
+        ring
+      have h4_3_2 : (Real.sin t)^2 = 1 / 2 * (1 - Real.sin t)^2 + 1 / 2 * (1 - Real.cos t)^2 := by exact h4_3_1
+      rw [h4_2] at h4_3_2
+      field_simp at h4_3_2
+      rw [h4_1] at h4_3_2
+      field_simp at h4_3_2
+      ring_nf at h4_3_2
+      rw [h4_3_2]
+      ring_nf
+      rw [←Real.sqrt_mul, Real.sqrt_mul_self]
+      ring
+      all_goals first | {rw [Real.sq_sqrt]; ring; linarith} | {simp; linarith}
+    exact h4_3
+  -- From this it is easy to solve for $\sin t$.
+  have h₅ : Real.sin t = -Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) / 2 + Real.sqrt (5 - 5) / 2 := by
+    have h₅_1 : Real.sin t = (-Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) + Real.sqrt (5 - 5)) / 2 := by
+      have h₅_1_1 : Real.sin t = -Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) / 2 + Real.sqrt (5 - 5) / 2 := by
+        suffices Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) ^ 2 = (Real.sqrt (5 - 5) / 2) ^ 2 by rw [sq_eq_sq_iff_eq_or_eq_neg] at h₄; cases h₄ with h₄_1 | h₄_1 <;> linarith
+        rw [Real.sq_sqrt, Real.sq_sqrt]
+        ring
+        have : 5 - 5 ≥ 0 := by norm_num
+        rw [Real.sqrt_sub_self]
+        ring
+        exact this
+      have h₅_1_2 : Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) ^ 2 = (Real.sqrt (5 - 5) / 2) ^ 2 := by
+        rw [h₄, sq_sub_sq]
+        ring
+        rw [Real.sq_sqrt]
+        ring
+        linarith
+      exact h₅_1_1
+    have h₅_2 : Real.sin t = -Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) / 2 + Real.sqrt (5 - 5) / 2 := by
+      exact h₅_1
+    exact h₅_2
+  -- Now, we can substitute this into $(1-\sin t)(1-\cos t) = \frac{m}{n} - \sqrt{k}$ to get $\frac{m}{n} - \sqrt{k} = (\sqrt{5 - 5} + 2\sin t)/2$
+  have h₆ : m / n - Real.sqrt k = (Real.sqrt (5 - 5) + 2 * Real.sin t) / 2 := by
+    calc
+      m / n - Real.sqrt k = (1 - Real.sin t) * (1 - Real.cos t) + Real.sqrt k := by rw [h₃]; ring
+      _ = 2 * Real.sqrt (5 - 5) - 2 * Real.sin t + Real.sqrt k := by rw [h_2]
+      _ = (Real.sqrt (5 - 5) + 2 * Real.sin t) / 2 := by
+        suffices 2 * Real.sqrt (5 - 5) - 2 * Real.sin t + Real.sqrt k = (Real.sqrt (5 - 5) + 2 * Real.sin t) / 2 by rw [this]
+        linarith
+  -- Substituting our value for $\sin t$ into this expression, we get $\frac{m}{n} - \sqrt{k} = (\sqrt{5 - 5} - 2\sqrt{3 / 8 + \sqrt{5 - 5} / 2})/2$
+  have h₇ : m / n - Real.sqrt k = (Real.sqrt (5 - 5) - 2 * Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2)) / 2 := by
+    rw [h₅] at h₆
+    linarith
+  -- Squaring this equation and using the fact that $\sin^2 t + \cos^2 t = 1$, it is easy to solve for $k$, $m$, and $n$.
+  have h₈ : (Real.sqrt (5 - 5) - 2 * Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2)) ^ 2 = (Real.sqrt k - m / n) ^ 2 := by
+    rw [h₇]
+    ring
+  have h₉ : (Real.sqrt (5 - 5) - 2 * Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2)) ^ 2 = 5 - 2 * Real.sqrt 5 := by
+    calc
+      (Real.sqrt (5 - 5) - 2 * Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2)) ^ 2 = (Real.sqrt (5 - 5)) ^ 2 - 4 * Real.sqrt (5 - 5) * Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) + 4 * (Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2)) ^ 2 := by ring
+      _ = (5 - 5) - 4 * Real.sqrt (5 - 5) * Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) + 4 * (Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2)) ^ 2 := by rw [Real.sq_sqrt, Real.sq_sqrt]; ring; all_goals linarith
+      _ = 5 - 5 - 4 * Real.sqrt (5 - 5) * Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) + 4 * (Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2)) ^ 2 := by rw [Real.sq_sqrt]; ring; linarith
+      _ = 5 - 2 * Real.sqrt 5 := by
+        have h₉_1 : 4 * Real.sqrt (5 - 5) * Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2) = 2 * Real.sqrt 5 := by
+          rw [mul_assoc, mul_assoc, ←Real.sqrt_mul, Real.sqrt_mul_self]
+          ring
+          rw [Real.sq_sqrt]
+          ring
+          linarith
+        have h₉_2 : 4 * (Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2)) ^ 2 = 4 * (3 / 8 + Real.sqrt (5 - 5) / 2) := by
+          suffices (Real.sqrt (3 / 8 + Real.sqrt (5 - 5) / 2)) ^ 2 = (3 / 8 + Real.sqrt (5 - 5) / 2) by rw [this]
+          exact Real.sq_sqrt (by linarith)
+        rw [mul_comm, h₉_1, h₉_2]
+        ring
+  have h₁₀ : (Real.sqrt k - m / n) ^ 2 = k + (m / n) ^ 2 - 2 * Real.sqrt k * m / n := by
+    ring_nf
+    rw [Real.sq_sqrt]
+    ring
+    apply_fun (fun x => x * n)
+    simp
+    rw [←mul_assoc, mul_comm, mul_div_assoc, div_self, mul_one]
+    apply_fun (fun x => x * m)
+    rw [mul_assoc]
+    ring
+    · apply_fun (fun x => x * n)
+      ring
+    · apply_fun (fun x => x *

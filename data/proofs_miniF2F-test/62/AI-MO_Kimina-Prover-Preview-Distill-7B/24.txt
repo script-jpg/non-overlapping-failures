@@ -1,0 +1,56 @@
+-- Compute $29^{13} - 5^{13}$ modulo 7. Show that it is 3.
+
+  -- We need to compute $29^{13} - 5^{13}$ modulo 7. Let's start by reducing the bases modulo 7.
+
+  -- $29 \equiv 1 \pmod{7}$ because $29 = 4 \cdot 7 + 1$.
+  have h1 : 29 ≡ 1 [MOD 7] := by
+    norm_num [Nat.ModEq]
+
+  -- $5 \equiv 5 \pmod{7}$ because $5 < 7$.
+  have h2 : 5 ≡ 5 [MOD 7] := by
+    norm_num [Nat.ModEq]
+
+  -- Now, by properties of modular arithmetic, $(29^{13}) \equiv (1^{13}) \pmod{7}$.
+  have h3 : 29 ^ 13 ≡ 1 ^ 13 [MOD 7] := by
+    exact Nat.ModEq.pow 13 h1
+
+  -- Similarly, $(5^{13}) \equiv (5^{13}) \pmod{7}$, which is trivial.
+  have h4 : 5 ^ 13 ≡ 5 ^ 13 [MOD 7] := by
+    exact Nat.ModEq.pow 13 h2
+
+  -- By properties of modular arithmetic, $29^{13} - 5^{13} \equiv 1^{13} - 5^{13} \pmod{7}$.
+  have h5 : 29 ^ 13 - 5 ^ 13 ≡ 1 ^ 13 - 5 ^ 13 [MOD 7] := by
+    exact Nat.ModEq.sub h3 h4
+
+  -- Now we need to compute $1^{13} - 5^{13} \pmod{7}$.
+
+  -- Notice that $1^{13} \equiv 1 \pmod{7}$ because $1^n \equiv 1 \pmod{m}$ for any $n$.
+  have h6 : 1 ^ 13 ≡ 1 [MOD 7] := by
+    norm_num [Nat.ModEq]
+
+  -- We need to compute $5^{13} \pmod{7}$. We can use Fermat's Little Theorem here.
+  -- Fermat's Little Theorem states that if $p$ is a prime and $a$ is an integer not divisible by $p$,
+  -- then $a^{p-1} \equiv 1 \pmod{p}$. In our case, $p = 7$ and $a = 5$.
+  have h7 : 5 ^ 13 ≡ 5 [MOD 7] := by
+    have h71 : 5 ^ 6 ≡ 1 [MOD 7] := by
+      norm_num [Nat.ModEq, Nat.pow_mod]
+    calc
+      5 ^ 13 = 5 ^ (6 + 6 + 1) := by rfl
+      _ = (5 ^ 6) ^ 2 * 5 := by ring
+      _ ≡ 1 ^ 2 * 5 [MOD 7] := by
+        exact Nat.ModEq.mul (Nat.ModEq.pow 2 h71) rfl
+      _ ≡ 5 [MOD 7] := by
+        norm_num [Nat.ModEq]
+
+  -- Therefore, $1^{13} - 5^{13} \equiv 1 - 5 \pmod{7}$.
+  have h8 : 1 ^ 13 - 5 ^ 13 ≡ 1 - 5 [MOD 7] := by
+    exact Nat.ModEq.sub h6 h7
+
+  -- $1 - 5 \equiv -4 \equiv 3 \pmod{7}$ because $-4 + 7 = 3$.
+  have h9 : 1 - 5 ≡ 3 [MOD 7] := by
+    norm_num [Nat.ModEq]
+
+  -- Combine the modular congruences to conclude that $29^{13} - 5^{13} \equiv 3 \pmod{7}$.
+  exact Nat.ModEq.trans (Nat.ModEq.trans h5 h8) h9
+
+```

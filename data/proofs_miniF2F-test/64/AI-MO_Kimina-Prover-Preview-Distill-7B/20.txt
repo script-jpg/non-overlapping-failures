@@ -1,0 +1,170 @@
+-- We have $f(x) = 12x + 7$ and $g(x) = 5x + 2$ whenever $x$ is a positive integer.
+  -- Let us start by defining these functions and their properties.
+  have hf (x : ℕ+) : f x = 12 * x + 7 := h₀
+  have hg (x : ℕ+) : g x = 5 * x + 2 := h₁
+  have hh (x : ℕ+) : h x = Nat.gcd (f x) (g x) := h₂
+
+  -- The function $h(x)$ is defined as the greatest common divisor of $f(x)$ and $g(x)$.
+  -- Let's calculate $h(x)$ for a general $x$.
+  have h : ∀ x, h x = Nat.gcd (12 * x + 7) (5 * x + 2) := by
+    intro x
+    rw [hh, hf, hg]
+
+  -- We want to find the sum of all possible values of $h(x)$.
+  -- To do this, we need to determine which values of $x$ produce distinct values of $h(x)$.
+  -- Let's analyze the expression $\gcd(12x+7, 5x+2)$.
+  have h4 : ∀ x, Nat.gcd (12 * x + 7) (5 * x + 2) = Nat.gcd (7 - 2 * x) (5 * x + 2) := by
+    intro x
+    have : 12 * x + 7 = 2 * (5 * x + 2) + (7 - 2 * x) := by omega
+    rw [this]
+    apply Nat.gcd_two_mul_add_right
+
+  -- The Euclidean algorithm tells us that $\gcd(a, b) = \gcd(a \bmod b, b)$.
+  -- So $\gcd(12x+7, 5x+2) = \gcd(7-2x, 5x+2)$.
+  -- Let's continue analyzing this expression.
+  have h5 : ∀ x, Nat.gcd (7 - 2 * x) (5 * x + 2) = Nat.gcd (5 * x + 2) (7 - 2 * x) := by
+    intro x
+    apply Nat.gcd_comm
+
+  -- The gcd is commutative, so we can rewrite it as $\gcd(5x+2, 7-2x)$.
+  have h6 : ∀ x, Nat.gcd (5 * x + 2) (7 - 2 * x) = Nat.gcd (12 - 5 * x) (7 - 2 * x) := by
+    intro x
+    have : 5 * x + 2 = 12 - 5 * x + (5 * x + 2) := by omega
+    rw [this]
+    apply Nat.gcd_add_mul_left_left
+
+  -- By the Euclidean algorithm again, $\gcd(5x+2, 7-2x) = \gcd(12-5x, 7-2x)$.
+  -- Notice that $12-5x$ is the remainder of $12$ divided by $5x+2$.
+  have h7 : ∀ x, Nat.gcd (12 - 5 * x) (7 - 2 * x) = Nat.gcd (5 * x + 2) (12 - 5 * x) := by
+    intro x
+    apply Nat.gcd_comm
+
+  -- The gcd is commutative, so we can rewrite it as $\gcd(5x+2, 12-5x)$.
+  have h8 : ∀ x, Nat.gcd (5 * x + 2) (12 - 5 * x) = Nat.gcd (12) (5 * x + 2) := by
+    intro x
+    have : 5 * x + 2 = 12 - (5 * x + 2) + (5 * x + 2) := by omega
+    rw [this]
+    apply Nat.gcd_sub_add_right
+
+  -- By the Euclidean algorithm again, $\gcd(5x+2, 12-5x) = \gcd(12, 5x+2)$.
+  -- Since 12 is a constant, we can simplify the expression to $\gcd(5x+2, 12)$.
+  have h9 : ∀ x, Nat.gcd (12) (5 * x + 2) = Nat.gcd (5 * x + 2) 12 := by
+    intro x
+    apply Nat.gcd_comm
+
+  -- The gcd is commutative, so we can rewrite it as $\gcd(5x+2, 12)$.
+  have h10 : ∀ x, Nat.gcd (5 * x + 2) 12 = Nat.gcd (5 * x + 2) (12 % (5 * x + 2)) := by
+    intro x
+    apply Nat.gcd_mod
+
+  -- By the Euclidean algorithm, $\gcd(5x+2, 12) = \gcd(12, 5x+2 \bmod 12)$.
+  -- Let's compute $5x+2 \bmod 12$.
+  have h11 : ∀ x, 5 * x + 2 ≡ 2 [MOD 12] := by
+    intro x
+    calc
+      5 * x + 2 ≡ 5 * x + 2 + 12 * (0 : ℕ) [MOD 12] := by simp [Nat.ModEq]
+      _ ≡ 5 * x + 2 + 12 * (x - x) [MOD 12] := by
+        rw [Nat.modEq_iff_dvd]
+        omega
+      _ ≡ 5 * x + 2 [MOD 12] := by simp
+      _ ≡ 2 [MOD 12] := by
+        rw [Nat.modEq_iff_dvd]
+        omega
+
+  -- Since $5x+2 \equiv 2 \pmod{12}$, we have $5x+2 \bmod 12 = 2$.
+  have h12 : ∀ x, 12 % (5 * x + 2) = 2 := by
+    intro x
+    have : 5 * x + 2 ≠ 0 := by
+      intro h
+      have : 5 * x = -2 := by omega
+      have : 5 * x < 0 := by omega
+      have : x < 0 := by omega
+      have : x > 0 := by positivity
+      linarith
+    rw [Nat.mod_eq_of_modEq h11]
+    have : (5 * x + 2) % 12 < 12 := by
+      apply Nat.mod_lt
+      norm_num
+    omega
+
+  -- Therefore, $\gcd(5x+2, 12) = \gcd(5x+2, 2)$.
+  have h13 : ∀ x, Nat.gcd (5 * x + 2) 12 = Nat.gcd (5 * x + 2) 2 := by
+    intro x
+    rw [h10 x, h12 x]
+
+  -- Now, let's determine the possible values of $h(x)$.
+  -- We know that $h(x) = \gcd(12x+7, 5x+2) = \gcd(5x+2, 2)$.
+  -- This means $h(x)$ can only be 1 or 2, since it divides both $5x+2$ and $2$.
+  have h14 : ∀ x, Nat.gcd (5 * x + 2) 2 = 1 ∨ Nat.gcd (5 * x + 2) 2 = 2 := by
+    intro x
+    have : Nat.gcd (5 * x + 2) 2 ∣ 2 := by
+      apply Nat.gcd_dvd_right
+    have : Nat.gcd (5 * x + 2) 2 ≠ 0 := by
+      have : 5 * x + 2 ≠ 0 := by positivity
+      apply Nat.ne_of_dvd_ne
+      · omega
+      · intro h
+        have : 5 * x + 2 = 0 := by omega
+        linarith
+    have : Nat.gcd (5 * x + 2) 2 = 1 ∨ Nat.gcd (5 * x + 2) 2 = 2 := by
+      apply (Nat.dvd_prime (Nat.prime_two)).mp
+      exact Nat.gcd_dvd_left (5 * x + 2) 2
+    assumption
+
+  -- So $h(x)$ can only be 1 or 2 for any positive integer $x$.
+  have h15 : ∀ x, h x = 1 ∨ h x = 2 := by
+    intro x
+    rw [h x]
+    have h1 := h4 x
+    have h2 := h5 x
+    have h3 := h6 x
+    have h4 := h7 x
+    have h5 := h8 x
+    have h6 := h9 x
+    have h7 := h10 x
+    have h8 := h11 x
+    have h9 := h12 x
+    have h10 := h13 x
+    have h11 := h14 x
+    rw [h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11]
+    norm_num
+
+  -- The set of possible values of $h(x)$ is therefore a subset of $\{1, 2\}$.
+  have h16 : ∀ x : ℕ+, h x ∈ (Set.range h).toFinset := by
+    intro x
+    refine ⟨h x,?_⟩
+    simp [Set.mem_range_eq_exists]
+    use x
+
+  -- To show that the sum of all possible values of $h(x)$ is 12,
+  -- we need to show that the only possible values are 1 and 2,
+  -- and that both appear in the range of $h$.
+  suffices (Set.range h).toFinset = {1, 2} by
+    simp [this, Finset.sum_insert, Finset.sum_singleton]
+  ext k
+  constructor
+  · -- We will show that if $k \in \{x \in \text{range}(h) \mid x \text{ is a positive integer}\}$,
+    -- then $k \in \{1, 2\}$.
+      intro hk
+      simp [Set.mem_range_iff_exists_lt, Set.mem_setOf_eq] at hk
+      rcases hk with ⟨x, hx, hk⟩
+      have : h x = 1 ∨ h x = 2 := h15 x
+      rw [hk] at this
+      exact this
+    -- For the converse,
+    · -- we need to show that if $k \in \{1, 2\}$,
+      intro hk
+      simp_rw [Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff] at hk
+      replace hk : k = 1 ∨ k = 2 := by
+        exact hk
+      rcases hk with (rfl | rfl)
+      · -- then $k \in \{x \in \text{range}(h) \mid x \text{ is a positive integer}\}$.
+        refine ⟨1,?_, rfl⟩
+        use 1
+        simp [h]
+      · -- then $k \in \{x \in \text{range}(h) \mid x \text{ is a positive integer}\}$.
+        refine ⟨2,?_, rfl⟩
+        use 2
+        simp [h]
+        omega
+```

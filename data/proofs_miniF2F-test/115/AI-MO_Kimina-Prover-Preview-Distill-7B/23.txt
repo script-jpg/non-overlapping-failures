@@ -1,0 +1,95 @@
+-- We will show that the set of all $4$-digit positive integers having only even digits and divisible by $5$ is precisely
+  -- \[\{1000, 1010, 1020, 1030, 1040, 1050, 1060, 1070, 1080, 1090, 1100, 1110, 1120, 1130, 1140, 1150, 1160, 1170, 1180, 1190, 1200, \ldots,\]
+  -- \[\ldots, 9000, 9010, 9020, 9030, 9040, 9050, 9060, 9070, 9080, 9090, 9100, 9110, 9120, 9130, 9140, 9150, 9160, 9170, 9180, 9190, 9200, \ldots\}.\]
+  -- In other words, it is the set of all numbers of the form $n = 1000a + 100b + 10c + d$ where $a$ is odd, $b$ is even, $c$ is even, $d$ is even, $1 \leq a \leq 9$, $0 \leq b \leq 8$, $0 \leq c \leq 8$, and $0 \leq d \leq 8$.
+  have h₁ : S = Finset.filter (fun n : ℕ ↦ 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ 5 ∣ n) (Finset.range 10000) := by
+    ext n
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_singleton, Set.mem_setOf_eq, true_and]
+    -- Break the iff into two implications.
+    constructor
+    · intro h
+      replace h : 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ 5 ∣ n := by
+        exact h₀.mp h
+      refine ⟨?_,?_,?_,?_⟩
+      · omega
+      · omega
+      · exact fun d hd => (h₀.mpr ⟨by omega, by omega, hd⟩).1
+      · exact (h₀.mpr ⟨by omega, by omega, h.2.2.1⟩).2
+    · intro h
+      refine ⟨by omega, by omega,?_, by omega⟩
+      exact (h₀.mpr ⟨by omega, by omega, h.2⟩).1
+
+  -- Use the above characterization to count the number of $4$-digit positive integers having only even digits that are divisible by $5$.
+  rw [h₁]
+  rw [Finset.card_finset_eq_toFinset_card, Finset.card_filter]
+  simp [Finset.card_range]
+
+  -- Let $a, b, c, d$ be digits and $n = 1000a + 100b + 10c + d$.
+  -- Note that $a$ cannot be $0$.
+  -- Note that $d$ must be $0$ or $5$.
+  -- Moreover, $a$ is odd, $b$ and $c$ are even, $d$ is even.
+  let f (a b c d : ℕ) : ℕ := 1000 * a + 100 * b + 10 * c + d
+  -- It suffices to show that the set of all $4$-digit positive integers having only even digits that are divisible by $5$ is precisely the set of all numbers of the form $f(a, b, c, d)$ where $a$ is odd, $b$ is even, $c$ is even, $d$ is even or $d$ is odd, $1 \leq a \leq 9$, $0 \leq b \leq 8$, $0 \leq c \leq 8$, and $0 \leq d \leq 8$.
+  suffices h : S = Finset.image f ((Finset.range 1) ∪ Finset.Icc 1 9) ×ˢ (Finset.range 5) ×ˢ (Finset.range 5) ×ˢ (Finset.range 5) by
+    -- Prove that $f$ is an injective partial function on the given domain.
+    -- It is enough to show that $f$ is injective on the set of all $4$-tuples of the form $(a, b, c, d)$ where $a$ is odd, $b$ is even, $c$ is even, $d$ is even or $d$ is odd, $1 \leq a \leq 9$, $0 \leq b \leq 8$, $0 \leq c \leq 8$, and $0 \leq d \leq 8$.
+    let S' : Finset (ℕ × ℕ × ℕ × ℕ) := ((Finset.range 1) ∪ Finset.Icc 1 9) ×ˢ (Finset.range 5) ×ˢ (Finset.range 5) ×ˢ (Finset.range 5)
+    have h₂ : Set.InjOn f S' := by
+      simp [Set.InjOn]
+      intro a b c d ha hb hc hd ha' b' c' d' ha' hb' hc' hd' h
+      replace h := h.1
+      replace h' := h'.1
+      omega
+    -- Prove that $f(a, b, c, d) \leq 9999$ whenever $a$ is odd, $b$ is even, $c$ is even, $d$ is even or $d$ is odd, $1 \leq a \leq 9$, $0 \leq b \leq 8$, $0 \leq c \leq 8$, and $0 \leq d \leq 8$.
+    have h₃ : ∀ x ∈ S', f x ≤ 9999 := by
+      intro x hx
+      simp [S'] at hx
+      obtain ⟨a, ha, b, hb, c, hc, d, hd, h⟩ := hx
+      omega
+    -- Prove that $f(a, b, c, d) \geq 1000$ whenever $a$ is odd, $b$ is even, $c$ is even, $d$ is even or $d$ is odd, $1 \leq a \leq 9$, $0 \leq b \leq 8$, $0 \leq c \leq 8$, and $0 \leq d \leq 8$.
+    have h₄ : ∀ x ∈ S', 1000 ≤ f x := by
+      intro x hx
+      simp [S'] at hx
+      obtain ⟨a, ha, b, hb, c, hc, d, hd, h⟩ := hx
+      omega
+    -- Use the above characterizations to simplify the calculation of the cardinality.
+    rw [Finset.coe_image, Finset.card_image_of_injOn h₂, Finset.card_prod, Finset.card_prod, Finset.card_prod, Finset.card_range, Finset.card_range, Finset.card_range]
+    simp only [Finset.card_univ, Nat.reduceAdd, Multiset.map_coe, Multiset.toFinset_card, Multiset.toFinset_coe, Nat.reduceMul, Multiset.map_range, Multiset.toFinset_range, Multiset.toFinset_coe, Nat.reduceAdd]
+    rw [Finset.card_image_of_injective h₃, Finset.card_image_of_injective h₄]
+    simp
+  ext x
+  simp [f]
+  constructor
+  -- Let $n = 1000a + 100b + 10c + d$ be a $4$-digit positive integer having only even digits that is divisible by $5$.
+  · intro h
+    obtain ⟨⟨h₁, h₂⟩, h₃, h₄⟩ := h
+    -- We will show that $n = f(a, b, c, d)$ for some $a, b, c, d$ satisfying the given constraints.
+    refine ⟨?_,?_,?_,?_⟩
+    -- $a$ is odd and $1 \leq a \leq 9$.
+    · simp [Nat.even_iff] at h₃
+      omega
+    -- $b$ is even and $0 \leq b \leq 8$.
+    · simp [Nat.even_iff] at h₄
+      omega
+    -- $c$ is even and $0 \leq c \leq 8$.
+    · simp [Nat.even_iff] at h₃
+      omega
+    -- $d$ is even or $d$ is odd and $0 \leq d \leq 8$.
+    · simp [Nat.even_iff] at h₄
+      omega
+  -- Let $a, b, c, d$ be such that $n = 1000a + 100b + 10c + d$ is a $4$-digit positive integer having only even digits that is divisible by $5$.
+  · intro h
+    simp [Nat.even_iff] at h
+    obtain ⟨⟨ha₁, ha₂⟩, hb₁, hc₁, hd₁, hd₂⟩ := h
+    -- We will show that $n$ is equal to $f(a, b, c, d)$ for some $a, b, c, d$ satisfying the given constraints.
+    refine ⟨?_,?_,?_,?_⟩
+    -- $a$ is odd and $1 \leq a \leq 9$.
+    · refine ⟨ha₁, by omega⟩
+    -- $b$ is even and $0 \leq b \leq 8$.
+    · refine ⟨hb₁, by omega, by omega⟩
+    -- $c$ is even and $0 \leq c \leq 8$.
+    · refine ⟨hc₁, by omega, by omega⟩
+    -- $d$ is even or $d$ is odd and $0 \leq d \leq 8$.
+    · refine ⟨hd₁, by omega⟩
+
+```

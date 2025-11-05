@@ -1,0 +1,78 @@
+-- reference: https://math.stackexchange.com/questions/4269050/show That if $p$ is a prime number, then $2^p - 1$ is divisible by $p$
+  have h2 : ∀ k > 0, 2 ^ k - 1 ∣ 2 ^ n - 1 ↔ n % k = 0 := by
+    intro k hk
+    constructor
+    · intro hk'
+      -- we have $k \mid n$, so $2^k - 1 \mid 2^n - 1$.
+      apply Nat.dvd_trans (Nat.pow_sub_one_dvd_pow _)
+      apply hk'
+    · intro hk'
+      rw [Nat.mod_eq_zero] at hk'
+      apply Nat.pow_mod
+      rw [←hk']
+      apply Nat.one_le_pow
+      norm_num
+
+  -- we have: $\forall k > 0$, $2^k - 1 \mid 2^n - 1$ if and only if $n \mid k$.
+  have h3 : ∀ k > 0, 2 ^ k - 1 ∣ 2 ^ n - 1 ↔ k ∣ n := by
+    intro k hk
+    constructor
+    · intro hk'
+      apply Nat.Prime.dvd_of_dvd_pow (Nat.prime_two) hk' hk
+    · intro hk'
+      apply Nat.dvd_trans (Nat.pow_sub_one_dvd_pow _)
+      apply hk'
+
+  -- we have: $\forall k > 0$, $2^k - 1 \mid 2^n - 1$ if and only if $n \mid k$.
+  have h4 : ∀ k > 0, 2 ^ k - 1 ∣ 2 ^ n - 1 ↔ k ∣ n := by
+    intro k hk
+    constructor
+    · intro hk'
+      rw [←Nat.prime_iff]; rw [Nat.prime_iff]; norm_num; exact h₁
+      rw [←Nat.prime_iff]; rw [Nat.prime_iff]; norm_num; exact hk
+    · intro hk'
+      apply Nat.dvd_trans (Nat.pow_sub_one_dvd_pow _)
+      apply hk'
+
+  -- Assume $n$ is not a prime number.
+  by_contra hc; push_neg at hc
+
+  -- So, $n$ is a composite number.
+  have ⟨m, hm⟩ := Nat.exists_prime_and_dvd hc
+
+  -- Choose $k = m$.
+  specialize h2 m (by positivity)
+  simp [h3] at h2
+
+  -- Now, we have $2^m - 1 \mid 2^n - 1$ and $m \mid n$.
+  replace h2 := h2.mpr ⟨h₁, dvd_refl _⟩
+
+  -- Since $2^m - 1$ is prime and $2^m - 1 \mid 2^n - 1$, then $2^m - 1 = 2^n - 1$.
+  rw [Nat.prime_dvd_prime_iff_eq] at h2
+  norm_num at h2
+
+  -- Therefore, $m = n$.
+  rw [←Nat.one_le_pow (by norm_num), ←Nat.sub_one_mul, mul_comm, ←Nat.pow_mul] at h2
+  simp at h2
+
+  -- However, we also have $m \mid n$ and $m \neq n$.
+  rw [←h2] at hm
+  replace ⟨hm, hneq⟩ := Nat.exists_prime_and_dvd hc
+
+  -- Since $m \mid n$ and $m \neq n$, we have $m < n$.
+  have hm' : m < n := by
+    rw [Nat.lt_iff_le_and_ne]
+    constructor
+    · apply Nat.le_of_dvd (by positivity) hm
+    · exact hneq
+
+  -- However, we also have $n < m$.
+  have hn : n < m := by
+    rw [h2]
+    apply Nat.pow_lt_pow_of_lt
+    · norm_num
+    · exact hm'
+
+  -- This is a contradiction.
+  linarith
+```

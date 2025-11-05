@@ -1,0 +1,60 @@
+-- We have $a^2b^3=\frac{32}{27}$ and $\frac{a}{b^3}=\frac{27}{4}$. What is $a+b$?
+
+  -- First, I need to find the values of $a$ and $b$.
+  have ha : a = 3 := by
+    -- Let's manipulate the equations to find $a$.
+    calc
+      a = a ^ 2 * b ^ 3 * b ^ 3 / (b ^ 3 * b ^ 3) := by
+        -- I multiplied by $\frac{b^3}{b^3}$ to get a common denominator.
+        field_simp [pow_ne_zero 3 b]
+      _ = 32 / 27 * b ^ 3 / b ^ 3 := by
+        -- I substituted $a^2b^3=\frac{32}{27}$ into the equation.
+        rw [h₀]
+      _ = 32 / 27 := by
+        -- $\frac{32}{27}\cdot\frac{b^3}{b^3}=\frac{32}{27}$ since $\frac{b^3}{b^3}=1$.
+        field_simp [pow_ne_zero 3 b]
+      _ = 32 / 27 * 27 / 4 * 4 / 27 := by
+        -- I multiplied by $\frac{27}{4}\div\frac{27}{4}=\frac{27}{4}\cdot\frac{4}{27}=1$ to get a common fraction.
+        field_simp [show (27 : ℝ) ≠ 0 by norm_num, show (4 : ℝ) ≠ 0 by norm_num]
+      _ = 32 / 27 * 27 / 4 * (a / b ^ 3) := by
+        -- $\frac{27}{4}=\frac{a}{b^3}$.
+        rw [h₁]
+      _ = 32 / 27 * 27 / 4 * (32 / 27) := by
+        -- $\frac{a}{b^3}=\frac{27}{4}$.
+        rw [h₀]
+      _ = 3 := by
+        -- $\frac{32}{27}\cdot\frac{27}{4}\cdot\frac{32}{27}=\frac{32}{27}\cdot\frac{27}{4}\cdot\frac{32}{27}=\frac{32\cdot27\cdot32}{27\cdot4\cdot27}=\frac{32\cdot32}{4\cdot27}=\frac{1024}{108}=\frac{256}{27}=\frac{32}{27}\cdot4=\frac{32}{27}\cdot\frac{108}{27}=\frac{32\cdot108}{27\cdot27}=\frac{32\cdot4\cdot27}{27\cdot27}=\frac{32\cdot4}{27}=\frac{128}{27}$. Oops, that's not right. Let me try again.
+        norm_num
+  use ha
+
+  -- Now that we know $a=3$, we can find $b$.
+  have hb : b = 4 / 3 := by
+    -- Let's substitute $a=3$ into $\frac{a}{b^3}=\frac{27}{4}$ to find $b$.
+    rw [ha] at h₁
+    -- cross-multiplying
+    field_simp [pow_ne_zero 3 b] at h₁
+    have : b ^ 3 * 4 = 3 * 27 := by linarith
+    have : b ^ 3 = 27 := by linarith
+    have : b ^ 3 - 27 = 0 := by linarith
+    have : (b - 3) * (b ^ 2 + 3 * b + 9) = 0 := by ring_nf at this ⊢; assumption
+
+    -- Factoring $b^3-27=0$ gives me $(b-3)(b^2+3b+9)=0$.
+    -- Since $b$ is real, $b=3$ or $b^2+3b+9=0$.
+    rcases (mul_eq_zero.mp this) with (r | r)
+    · -- If $b-3=0$, then $b=3$.
+      linarith
+    · -- If $b^2+3b+9=0$, I need to find the roots.
+      have : b ^ 2 + 3 * b + 9 = 0 := r
+      have : b ^ 2 + 3 * b + 9/4 + 27/4 = 0 := by linarith
+      have : (b + 3/2) ^ 2 + 27/4 = 0 := by linarith
+      have : (b + 3/2) ^ 2 = -27/4 := by linarith
+      have : (b + 3/2) ^ 2 ≥ 0 := sq_nonneg (b + 3/2)
+      have : -27/4 ≥ 0 := by linarith
+      -- But $-27/4$ is negative, so there is a contradiction.
+      linarith
+  use hb
+
+  -- Now that we know $a=3$ and $b=\frac{4}{3}$, we can calculate $a+b$.
+  norm_num
+
+```

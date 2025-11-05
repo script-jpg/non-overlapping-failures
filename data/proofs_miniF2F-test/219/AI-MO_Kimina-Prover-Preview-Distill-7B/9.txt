@@ -1,0 +1,151 @@
+-- set $p = 5$ in `Nat.Prime.filter_dvd_finset_sum`
+  have h : ∀ n : ℕ, ∀ p : ℕ, Nat.Prime p → p.PrimeFactors (n + 1).card ≤ p.PrimeFactors n.card := by
+    intro n p hp
+    have h := Nat.Prime.filter_dvd_finset_sum hp (by omega)
+    simp at h
+    exact h
+
+  -- prove that if $p$ is a prime number and $p\mid a-b$, then $p^k\mid a^m-b^m$
+  have h1 : ∀ p a b k m : ℕ, Nat.Prime p → p ∣ a - b → p ^ k ∣ a ^ m - b ^ m := by
+    intro p a b k m hp h
+    have : a ≡ b [MOD p] := by exact Nat.ModEq.symm (Nat.modEq_iff_dvd.mpr h)
+    have := Nat.ModEq.pow m this
+    simp at this
+    exact Nat.dvd_of_mod_eq_zero this
+
+  -- prove that if $p$ is a prime number, $p\ne 2$, $p\ne 5$, and $p\mid a+b$, then $p^k\mid ab$
+  have h2 : ∀ p a b k : ℕ, p ≠ 2 → p ≠ 5 → Nat.Prime p → p ∣ a + b → p ^ k ∣ a * b := by
+    intro p a b k hp1 hp2 hp3 h
+    have : a ≡ -b [ZMOD p] := by
+      refine Int.ModEq.symm (Int.modEq_iff_dvd.mpr?_)
+      rw [Int.dvd_neg] at h
+      exact h
+    have := Int.ModEq.pow k this
+    simp at this
+    have : a * b ≡ (-b) * b [ZMOD p] := by exact Int.ModEq.mul_left a this
+    have := Int.ModEq.symm (Int.modEq_iff_dvd.mpr this)
+    simp at this
+    exact Nat.dvd_of_mod_eq_zero this
+
+  -- set $p = 5$ in `h` and prove that $5\mid \sum_{k=0}^{2n}\binom{2n+1}{k}2^{k}$
+  have h3 : ∀ n : ℕ, 5 ∣ ∑ k ∈ Finset.range (2 * n + 1), Nat.choose (2 * n + 1) k * 2 ^ k := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      rw [Finset.sum_range_succ]
+      apply Nat.dvd_add
+      · exact ih
+      · calc
+          _ ∣ ∑ k ∈ Finset.range (2 * n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+            apply Nat.dvd_trans?_ (h _ _ (by norm_num) (by omega))
+            apply Nat.dvd_trans?_ (h1 _ _ _ _ (by norm_num) (by omega) (by norm_num) (by omega))
+            simp
+          _ = 2 * (∑ k ∈ Finset.range (2 * n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)) + (∑ k ∈ Finset.range (2 * n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)) := by
+            rw [Finset.sum_add_distrib]
+            apply Finset.sum_congr rfl
+            intro x hx
+            simp at hx
+            rw [mul_add]
+            ring_nf
+            rw [←mul_assoc, Nat.mul_sub, add_mul, Nat.sub_add_cancel]
+            apply Nat.mul_dvd_mul (by norm_num) (by omega)
+            simp
+            have : ¬2 * n + 1 + 1 = 2 * n + 1 := by
+              omega
+            simp [this]
+            rw [add_comm, ←add_assoc, Nat.add_sub_cancel]
+            apply Nat.dvd_add
+            · apply Nat.dvd_trans (h2 _ _ _ (by norm_num) (by norm_num) (by norm_num) (by omega))
+              apply Nat.dvd_trans (h1 _ _ _ (by norm_num) (by omega) (by norm_num) (by omega))
+              simp
+            · exact ih
+          _ = _ := by
+            ring_nf
+
+  -- prove that $5 \mid \sum_{k=0}^{2n+1}\binom{2n+1}{k}2^{k}$ and $5 \mid \sum_{k=0}^{2n+1}\binom{2n+1}{k}2^{-k}$
+  have h4 : ∀ n : ℕ, 5 ∣ ∑ k ∈ Finset.range (2 * n + 1), Nat.choose (2 * n + 1) k * 2 ^ (-k : ℤ) := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      rw [Finset.sum_range_succ]
+      apply Nat.dvd_add
+      · exact ih
+      · calc
+          _ ∣ ∑ k ∈ Finset.range (2 * n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (-3 * k : ℤ) := by
+            apply Nat.dvd_trans?_ (h _ _ (by norm_num) (by omega))
+            apply Nat.dvd_trans?_ (h1 _ _ _ _ (by norm_num) (by omega) (by norm_num) (by omega))
+            simp
+          _ = 2 * (∑ k ∈ Finset.range (2 * n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (-3 * k : ℤ)) + (∑ k ∈ Finset.range (2 * n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (-3 * k : ℤ)) := by
+            rw [Finset.sum_add_distrib]
+            apply Finset.sum_congr rfl
+            intro x hx
+            simp at hx
+            rw [mul_add]
+            ring_nf
+            rw [←mul_assoc, Nat.mul_sub, add_mul, Nat.sub_add_cancel]
+            apply Nat.mul_dvd_mul (by norm_num) (by omega)
+            simp
+            have : ¬2 * n + 1 + 1 = 2 * n + 1 := by
+              omega
+            simp [this]
+            rw [add_comm, ←add_assoc, Nat.add_sub_cancel]
+            apply Nat.dvd_add
+            · apply Nat.dvd_trans (h2 _ _ _ (by norm_num) (by norm_num) (by norm_num) (by omega))
+              apply Nat.dvd_trans (h1 _ _ _ (by norm_num) (by omega) (by norm_num) (by omega))
+              simp
+            · exact ih
+          _ = _ := by
+            ring_nf
+
+  -- prove that $5 \mid \sum_{k=0}^{2n+1}\binom{2n+1}{k}2^{3k}$
+  have h5 : ∀ n : ℕ, 5 ∣ ∑ k ∈ Finset.range (2 * n + 1), Nat.choose (2 * n + 1) k * 2 ^ (3 * k) := by
+    intro n
+    rw [Finset.sum_range_succ]
+    apply Nat.dvd_add
+    · rw [←mul_assoc]
+      exact h4 n
+    · exact h3 n
+
+  -- prove that $5 \mid \sum_{k=0}^{n}\binom{n+2}{2k+1}2^{3k}$, which is the final goal
+  intro n
+  rw [show 2 * (n + 1) + 1 = 2 * n + 3 by ring, show 2 * (n + 1) + 1 + 1 = 2 * n + 4 by ring, show 2 * (n + 1) + 1 + 1 + 1 = 2 * n + 5 by ring]
+  rw [show 2 * n + 3 + 1 = 2 * n + 4 by ring, show 2 * n + 4 + 1 = 2 * n + 5 by ring]
+  rw [show 2 * n + 4 + 1 = 2 * n + 5 by ring]
+  rw [show 2 * n + 5 + 1 = 2 * n + 6 by ring]
+  simp
+  rw [show 2 * n + 1 + 1 = 2 * n + 2 by ring]
+  set m := n + 1
+  have hm : n = m - 1 := by
+    rw [show m = n + 1 by omega]
+    omega
+  rw [hm]
+  simp
+  rw [show 2 * (m - 1) + 1 = 2 * m by omega]
+  rw [show 2 * m + 1 + 1 = 2 * m + 2 by ring]
+  set p := m.val
+  have hp : m = p := by
+    exact rfl
+  rw [hp]
+  simp
+  rw [show 2 * p + 1 + 1 = 2 * p + 2 by ring]
+  rw [show 2 * p + 2 + 1 = 2 * p + 3 by ring]
+  symm
+  rw [Nat.mul_sub, Nat.mul_add, Nat.mul_add, Nat.add_sub_assoc]
+  apply Nat.dvd_sub (h5 _)
+  rw [show 2 * p + 3 + 1 = 2 * p + 4 by ring]
+  have h : 2 * p + 1 + 1 = 2 * p + 2 := by
+    ring
+  rw [h]
+  symm
+  rw [show 2 * p + 2 - 1 = 2 * p + 1 by omega]
+  apply h2
+  · omega
+  · omega
+  · simp
+  · exact Nat.prime_five
+
+```

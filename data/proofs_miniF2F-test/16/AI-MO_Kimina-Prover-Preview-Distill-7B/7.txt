@@ -1,0 +1,106 @@
+-- Prove that $f$ is injective.
+  have h₂ : f.Injective := by
+    intro a b h
+    -- If $f(a) = f(b)$, then $f(f(a)) = f(f(b))$.
+    have h₂ (a b : ℕ) (h : f a = f b) : f (f a) = f (f b) := by rw [h]
+    -- Therefore, $f(a+1) = f(b+1)$.
+    have h₃ (a b : ℕ) (h : f a = f b) : f (a + 1) = f (b + 1) := by
+      have := h₁ a (by omega)
+      have := h₁ b (by omega)
+      have h₄ : f (f a) < f (a + 1) := by exact_mod_cast this
+      have h₅ : f (f b) < f (b + 1) := by exact_mod_cast this
+      have h₆ : f (f a) = f (f b) := by rw [h]
+      have h₇ : f (a + 1) = f (b + 1) := by linarith
+      exact h₇
+    -- By induction, $f(a) = f(b)$ for all $a, b \geq 1$.
+    have h₄ (a b : ℕ) (h : a = b) : f a = f b := by exact h
+    have h₅ (a b : ℕ) (h : a = b) : f (a + 1) = f (b + 1) := by exact h₃ a b h
+    have h₆ (a b : ℕ) (h : a = b) : ∀ a ≤ a, f a = f b := by
+      intro a' h'
+      induction a' with
+      | zero => rw [h]
+      | succ a' h' =>
+        by_cases h'' : a' = a
+        · rw [h'']
+        · apply h₅ (a'') h''
+          apply h'']; apply h
+    have h₇ (a b : ℕ) (h : a = b) : ∀ a ≤ a, f (a + 1) = f (b + 1) := by
+      intro a' h'
+      induction a' with
+      | zero => exact h₁ a (by omega)
+      | succ a' h' =>
+        by_cases h'' : a' = a
+        · rw [h'']
+        · apply h₅ (a'') h''
+          apply h'']; apply h
+    -- The induction basis.
+    have h₈ (a b : ℕ) (h : a = b) : f a = f b := by exact h
+    have h₉ (a b : ℕ) (h : a = b) : f (a + 1) = f (b + 1) := by exact h₅ a b h
+    induction a using Nat.strong_induction_on with
+    | h₁₀ a ih =>
+      induction b using Nat.strong_induction_on with
+      | h₁₁ b ih' =>
+        by_cases h₁₂ : a = b
+        · exact ih h₁₂
+        · by_cases h₁₃ : a = b + 1
+          · have h₁₄ : f a = f b := by
+              apply ih
+              exact h₁₃
+            have h₁₅ : f (a + 1) = f (b + 1) := by
+              apply ih'
+              · exact Nat.lt_add_one b
+              · exact h₁₂
+            exact h₉ a b h₁₂ h₁₃
+          · have h₁₄ : a = b + 1 := by omega
+            have h₁₅ : f a = f b := by
+              apply ih
+              exact h₁₄
+            have h₁₆ : f (a + 1) = f (b + 1) := by
+              apply ih'
+              · exact Nat.lt_add_one b
+              · exact h₁₂
+            exact h₉ a b h₁₂ h₁₄
+    -- We have proved that $f$ is injective.
+
+  -- Prove that $f(n+1) = f(f(n)) + 1$ for all $n \geq 1$.
+  have h₃ (n : ℕ) (h : 0 < n) : f (n + 1) = f (f n) + 1 := by
+    have h₃ (n : ℕ) (h : 0 < n) : f (n + 1) > f (f n) := by
+      exact h₁ n h
+    have h₄ (n : ℕ) (h : 0 < n) : f (f n) < f (n + 1) := by
+      exact h₁ n h
+    have h₅ (n : ℕ) (h : 0 < n) : f (n + 1) = f (f n) + 1 := by
+      have h₆ : f (n + 1) > f (f n) := h₃ n h
+      have h₇ : f (f n) < f (n + 1) := h₄ n h
+      omega
+    exact h₅ n h
+  -- We have proved that $f(n+1) = f(f(n)) + 1$ for all $n \geq 1$.
+
+  -- Prove that $f(n) = n$ for all $n \geq 1$.
+  intro n hn
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+    -- The induction basis.
+    have h₄ : n = n + 1 - 1 := by omega
+    rw [h₄]
+    have h₅ : n + 1 = n + 1 + 1 - 1 := by omega
+    rw [h₅]
+    have h₆ : f (n + 1) = f (f n) + 1 := by exact h₃ n (by omega)
+    have h₇ : f (f n) = n := by
+      -- By injectivity, $f(n) = f(f(n))$.
+      have h₈ : f n = f (f n) := by
+        have h₈ : f (n + 1) = f (f n) + 1 := by exact h₃ n (by omega)
+        have h₉ : f n = f (n + 1) - 1 := by
+          omega
+        rw [h₉, h₈]
+        omega
+      -- The induction hypothesis.
+      have h₉ : n = f n := by
+        exact ih (by omega)
+      rw [h₉] at h₈
+      exact h₈
+    -- The induction step.
+    rw [h₆, h₇]
+  -- We have proved that $f(n) = n$ for all $n \geq 1$.
+
+```

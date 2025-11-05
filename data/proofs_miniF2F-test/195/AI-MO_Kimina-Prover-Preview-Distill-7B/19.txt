@@ -1,0 +1,52 @@
+-- We have: a^2 * b^3 = 32/27
+  --          a     / b^3 = 27/4
+  -- Let's cube the second equation: a^3 / b^9 = 27^3 / 4^3
+  -- We can rewrite as: a^3 = 32/27 * b^9
+  have h₂ : a ^ 3 = 32 / 27 * b ^ 9 := by
+    have : a ^ 3 = (a / b ^ 3) ^ 3 * b ^ 9 := by ring
+    rw [this, h₁]
+    ring
+
+  -- We can also derive: a^3 = a^2 * b^3 * a / b^3 = 32/27 * 27/4 = 8
+  have h₃ : a ^ 3 = 8 := by
+    rw [pow_succ, pow_succ, h₀, h₁]
+    ring
+
+  -- So: 32/27 * b^9 = 8
+  -- Which means: b^9 = 8 * 27/32 = 9/2
+  have h₄ : b ^ 9 = 9 / 2 := by
+    rw [h₃] at h₂
+    linarith
+
+  -- We can now solve for b: b^9 = 9/2
+  -- Let's see if b=2/3 is a solution: (2/3)^9 = 2^9/3^9 = 512/19683 = 9/2 (approx)
+  have h₅ : b = 2 / 3 := by
+    have : b ^ 9 - 9 / 2 = 0 := by linarith
+    have : (b - 2 / 3) * (b ^ 8 + (2 / 3) * b ^ 7 + (2 / 3)^2 * b ^ 6 + (2 / 3)^3 * b ^ 5 +
+      (2 / 3)^4 * b ^ 4 + (2 / 3)^5 * b ^ 3 + (2 / 3)^6 * b ^ 2 + (2 / 3)^7 * b + (2 / 3)^8) = 0 := by ring_nf; linarith
+    simp only [mul_eq_zero, sub_eq_zero, pow_eq_zero_iff, OfNat.ofNat_ne_zero, false_or] at this
+    rcases this with h | h
+    · linarith
+    · have : b ^ 9 = 8 * 27 / 32 := by
+        calc
+          b ^ 9 = 9 / 2 := by linarith
+          _ = 8 * 27 / 32 := by norm_num
+      rw [this] at h₃
+      ring_nf at h₃
+
+  -- With b=2/3, we can solve for a using: a = 27/4 * b^3 = 27/4 * 8/27 = 2
+  have h₆ : a = 2 := by
+    have : b ^ 3 = 8 / 27 := by
+      calc
+        b ^ 3 = b ^ 9 / 27 := by
+          rw [h₅]
+          ring
+        _ = (9 / 2) / 27 := by rw [h₄]
+        _ = 8 / 27 := by norm_num
+    rw [h₁] at *
+    field_simp at this ⊢
+    linarith
+
+  -- So a + b = 2 + 2/3 = 8/3
+  linarith
+```

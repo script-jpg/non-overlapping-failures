@@ -1,0 +1,89 @@
+-- A number of equalities are being asserted, let's try to break up the proof.
+
+  -- We first show that the square root of 9 is 3.
+  have h_0_5 : Real.sqrt 9 = 3 := by
+    refine (Real.sqrt_eq_iff_mul_self_eq_of_pos?_).mpr?_
+    any_goals
+    norm_num
+
+  -- We then rearrange the quadratic equation into a standard form.
+  have h₄ : 2 * (x * x) + (-4) * x + (-9) = 0 := by linarith
+
+  -- Using the quadratic formula, we solve the equation.
+  have h₅ : (x - (-(-4) + Real.sqrt ((-4) ^ 2 - 4 * 2 * (-9))) / (2 * 2)) * (x - (-(-4) - Real.sqrt ((-4) ^ 2 - 4 * 2 * (-9))) / (2 * 2)) = 0 := by
+    ring_nf
+    field_simp
+    linarith
+
+  -- Specifically, we show that the roots of the equation are
+  -- $$x = \frac{4 + \sqrt{88}}{4} \quad \text{and} \quad x = \frac{4 - \sqrt{88}}{4}.$$$
+  rw [mul_eq_zero] at h₅
+  cases' h₅ with h₅ h₅
+  · rw [sub_eq_zero] at h₅
+    apply eq_of_div_eq_one
+    rify
+    linarith
+  · rw [sub_eq_zero] at h₅
+    apply eq_of_div_eq_one
+    rify
+    linarith
+
+  -- We further simplify the expression using the fact that $\sqrt{88} = 2\sqrt{22}.$
+  have h₆ : Real.sqrt 88 = 2 * Real.sqrt 22 := by
+    rw [Real.sqrt_eq_iff_mul_self_eq_of_pos]
+    norm_num
+    any_goals
+    norm_num
+  in out
+    rw [h₆] at h₅
+    rify at h₅
+    rw [h₅] at h₂
+
+  -- We show that $a = 2$ and $b = 22.$
+  have h₇ : a = 2 := by linarith
+  have h₈ : b = 22 := by
+    have h₈ : 2 + Real.sqrt 22 = (2 + Real.sqrt 22) / 2 * 2 := by
+      ring
+    rw [h₈, h₂] at h₀
+    rcases h₀ with ⟨h₀, h₀, h₀, h₀⟩
+    have h₉ : 2 ≤ (2 + Real.sqrt 22) / 2 := by
+      linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 22 by norm_num)]
+    have h₁₀ : 2 + Real.sqrt 22 ≤ 2 * 2 := by
+      linarith [Real.sqrt_le_left (show (0:ℝ) ≤ 22 by norm_num)]
+    rify
+    have h₁₁ : (2 + √22) / 2 ≡ 2 [ZMOD (2 : ℤ)] := by
+      rw [Int.modEq_iff_dvd]
+      simp
+      norm_cast
+      apply Int.dvd_sub
+      norm_cast
+      rw [← Int.fract ((2 : ℝ) + √22) / 2]
+      apply Int.fract_eq_zero_of_dvd
+      norm_cast
+      apply Int.dvd_add
+      · use 1
+        rw [Int.le_sub_one_iff_lt]
+        exact Int.lt_add_of_pos_right (Real.sqrt_pos_of_pos (by norm_num : (0:ℝ) < 22))
+      · apply Int.dvd_const
+        norm_num
+    have h₁₂ : 2 + √22 ≡ 2 [ZMOD (2 : ℤ)] := by
+      rwa [Int.modEq_iff_dvd] at h₁₁
+    replace h₁₂ : 2 + √22 ≡ 2 + 22 [ZMOD (2 : ℤ)] := by
+      apply Int.ModEq.add_right
+      norm_num
+    apply Int.ModEq.dvd at h₁₂
+    rify at h₁₂
+    rw [Int.cast_add, Int.cast_add, Int.cast_ofNat, Int.cast_ofNat] at h₁₂
+    rw [Int.cast_mul] at h₁₂
+    simp at h₁₂
+    norm_cast at h₁₂
+    rw [mul_assoc] at h₁₂
+    apply mul_right_cancel₀ at h₁₂
+    exact h₁₂
+    norm_cast
+    linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 22 by norm_num)]
+
+  -- Finally, we substitute the values of $a$ and $b$ to find the answer.
+  rw [h₇, h₈, h₃]
+  norm_num
+```

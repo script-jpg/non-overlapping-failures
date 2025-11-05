@@ -1,0 +1,67 @@
+-- The function $f$ has the property that $f(a\cdot b)=f(a)+f(b)$ for all positive rational numbers $a$ and $b$.
+  have hf_mul : ∀ x > 0, ∀ y > 0, f (x * y) = f x + f y := h₀
+
+  -- It is easy to show that $f(1)=0$.
+  have hf_one : f 1 = 0 := by
+    have h := hf_mul 1 (by norm_num) 1 (by norm_num)
+    simp at h
+    linarith
+
+  -- We show that for a prime number $p$, $f(p^k)=k\cdot f(p)$.
+  have hf_prime_pow : ∀ p, Nat.Prime p → ∀ k > 0, f (p ^ k) = k * f p := by
+    intro p hp k hk
+    induction k with
+    | zero => contradiction
+    | succ k ih =>
+      by_cases h : k = 0
+      · rw [h, pow_one]
+        simp [hf_one]
+      · have hk1 : k > 0 := by omega
+        rw [pow_succ]
+        rw [hf_mul (p ^ k) (by positivity) p (by positivity)]
+        rw [ih hk1]
+        ring
+
+  -- We show that for a prime number $p$, $f(p)=p$.
+  have hf_prime : ∀ p, Nat.Prime p → f p = p := h₁
+
+  -- Let's calculate $f(25)$. First, we have $f(5)=5$ since $5$ is a prime number.
+  have h1 : f 5 = 5 := by
+    apply hf_prime
+    norm_num
+
+  -- Then, we have $f(25)=f(5\cdot 5)=f(5)+f(5)=10$ since $f(a\cdot b)=f(a)+f(b)$ for all positive rational numbers $a$ and $b$.
+  have h2 : f 25 = 10 := by
+    rw [show (25 : ℚ) = 5 * 5 by norm_num]
+    rw [hf_mul 5 (by norm_num) 5 (by norm_num)]
+    rw [h1]
+    norm_num
+
+  -- Let's calculate $f(11)$. First, we have $f(11)=11$ since $11$ is a prime number.
+  have h3 : f 11 = 11 := by
+    apply hf_prime
+    norm_num
+
+  -- Then, we have $f(11^{-1})=-f(11)=-11$.
+  have h4 : f (11⁻¹) = -11 := by
+    have h := hf_mul (11⁻¹) (by norm_num) 11 (by norm_num)
+    simp [h3] at h
+    linarith
+
+  -- Then, we have $f(11^{-1}\cdot 25)=f(11^{-1})+f(25)=-11+10=-1$.
+  have h5 : f ((11⁻¹ : ℚ) * 25) = -1 := by
+    rw [hf_mul (11⁻¹) (by norm_num) 25 (by norm_num)]
+    rw [h4, h2]
+    norm_num
+
+  -- Since $f(x)<0$ if and only if $x<1$ when $f$ is a completely multiplicative function that takes positive values on positive rational numbers,
+  -- we have $11^{-1}\cdot 25=25/11<1$.
+  calc
+    f (25 / 11) = f ((11⁻¹ : ℚ) * 25) := by
+      congr
+      ring
+    _ < 0 := by
+      apply lt_of_lt_of_le?_ h5
+      apply f_pos_of_pos
+      norm_num
+```

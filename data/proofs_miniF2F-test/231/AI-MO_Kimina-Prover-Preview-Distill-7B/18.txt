@@ -1,0 +1,206 @@
+-- We start by constructing a sequence of real numbers $x_k$ such that $f(n) < x_k$ for all $n < k$.
+  -- This will help us to bound the search for the maximum value of $f(n)$.
+  let x : ℕ → ℝ
+    | 0 => 0
+    | k + 1 =>
+      (k + 1) ^ ((1 : ℝ) / 3) * (↑(Nat.divisors (k + 1)).card / (k + 1) ^ ((1 : ℝ) / 3))
+
+  -- We then prove that this sequence is strictly increasing.
+  have hx : StrictMono x := by
+    intro k1 k2 h
+    apply lt_of_lt_of_le
+    apply Nat.pow_lt_pow_left
+    · simp only [x]
+      apply one_lt_pow₀
+      · norm_num
+      · exact Nat.zero_lt_succ k1
+    · exact h
+    · apply Nat.pow_le_pow_left
+      · norm_num
+      · exact Nat.zero_lt_succ k1
+
+  -- We also prove that the sequence is unbounded.
+  have hxn : ¬∃ r : ℝ, ∀ k : ℕ, x k ≤ r := by
+    intro h
+    rcases h with ⟨r, hr⟩
+    have hr' := hr 0
+    have hr'' := hr 1
+    have hr''' := hr 2
+    simp only [x] at hr' hr'' hr'''
+    have : 1 ^ ((1 : ℝ) / 3) ≤ (2 : ℝ) ^ ((1 : ℝ) / 3) := by
+      apply Real.rpow_le_rpow
+      · norm_num
+      · norm_num
+      · norm_num
+    linarith
+
+  -- Consider the maximum of $x_k$ for $k ≤ N$.
+  -- Since the sequence $x_k$ is strictly increasing, this is simply $x_N$.
+  -- Notice that $f(n) < x_N$ for all $n ≤ N$.
+  have h₂ (N) : max' (x N) (image x (N - 1)) = x N := by
+    apply max'__eq_left
+    induction N with
+    | zero =>
+      simp only [Nat.zero_pred, List.max_of_eq, x]
+      apply StrictMono.lt_iff_lt hx
+      · exact Nat.zero_lt_succ 0
+      · exact Nat.zero_lt_succ 0
+    | succ N ih =>
+      rw [Nat P Nat.succ_pred]
+      apply ih
+      simp only [List.max_of_eq, x]
+      apply StrictMono.lt_iff_lt hx
+      · exact Nat.zero_lt_succ N
+      · exact Nat.zero_lt_succ N
+
+  -- Since $f(n) < x_N$ for all $n ≤ N$, and $f(N) > f(n)$ for all $n ≠ N$, we have $f(N) ≥ x_N$.
+  -- We need to show that $f(N) = x_N$.
+  have h₃ (N) : f N ≥ x N := by
+    suffices ∀ n : ℕ, f n ≤ x N by
+      have h := this N
+      have h' := h₁ N (Eq.refl _) (show 0 < N by exact Nat.zero_lt_succ N)
+      linarith
+    intro n
+    by_cases hn : n ≤ N
+    · specialize h₂ N
+      rw [←h₂]
+      apply max'_le_of_eq ih
+      specialize h₀ n (show 0 < n by exact Nat.zero_lt_succ n)
+      simpa only [←Nat.cast_div, Nat.cast_add, Nat.cast_one, List.coe_toFin, Finset.coe_filter, Finset.coe_filter', Finset.coe_image, Nat.cast_pos, List.coe_toFin, Nat.cast_pow, Nat.cast_ofNat, and_true] using h₀
+    · push_neg at hn
+      specialize h₀ n (show 0 < n by exact Nat.zero_lt_succ n)
+      apply le_of_lt
+      simp only [lt_iff_le_and_ne, Nat.cast_div, Nat.cast_pow, Nat.cast_ofNat, List.coe_toFin, Nat.cast_ne_zero, List.mem_toFin, or_false] at h₀
+      change f n < x N at h₀
+      apply lt_trans h₀
+      apply lt_of_eq_of_ne rfl fun a ↦ h₁ n (Eq.symm a) (show 0 < n by exact Nat.zero_lt_succ n)
+
+  -- Now we show that $f(N) = x_N$.
+  have h₄ (N) : f N = x N := by
+    specialize h₃ N
+    specialize h₀ N (show 0 < N by exact Nat.zero_lt_succ N)
+    simp only [←Nat.cast_div, Nat.cast_add, Nat.cast_one, List.coe_toFin, Finset.coe_filter, Finset.coe_filter', Finset.coe_image, Nat.cast_pos, List.coe_toFin, Nat.cast_pow, Nat.cast_ofNat, and_true] at h₀
+    apply eq_of_le_of_le h₀
+    apply le_of_lt
+    simp only [lt_iff_le_and_ne, Nat.cast_div, Nat.cast_pow, Nat.cast_ofNat, List.coe_toFin, List.mem_toFin, not_false_eq_true, Finset.coe_filter, Finset.coe_filter', Finset.coe_image, Nat.cast_pos, and_true]
+    exact h₁ N (Eq.refl _) (show 0 < N by exact Nat.zero_lt_succ N)
+
+  -- We show that $N = 2160$.
+  have hN : N = 2160 := by
+    -- We first show that $2160$ is the only number for which $f(n) = x_N$.
+    have hN (N x : ℕ) (h₀ : ∀ n, 0 < n → f n = (Nat.divisors n).card / n ^ ((1 : ℝ) / 3))
+      (h₁ : ∀ (n : ℕ), n ≠ N → 0 < n → f n < f N) (h₂ : max' (x N) (image x (N - 1)) = x N) (h₃ : f N ≥ x N) : N = 2160 := by
+      -- We first prove that $f(n) < x_{n+1}$ for all $n$.
+      have h₄ (n : ℕ) : f n < x (n + 1) := by
+        specialize h₁ n (Eq.symm (Eq.refl _)) (show 0 < n by exact Nat.zero_lt_succ n)
+        exact h₁
+      -- We then prove that $x_n < f(n)$ for all $n > 2160$.
+      have h₅ (n : ℕ) (h : n > 2160) : x n < f n := by
+        specialize h₄ n
+        rw [←h₄]
+        apply lt_of_lt_of_le
+        apply hx
+        exact Nat.zero_lt_succ n
+        exact Nat.zero_lt_succ n
+      -- Since $f(n) < x_{n+1}$ for all $n$, we have $f(N) < x_{N + 1}$.
+      have h₆ : f N < x (N + 1) := h₄ N
+      -- Since $x_{N+1} < f(N+1)$ and $f(N) = x_{N+1}$, we have $f(N) < f(N+1)$.
+      have h₇ : x (N + 1) < f (N + 1) := h₅ (N + 1) (show N + 1 > 2160 by exact Nat.lt_add_one_of_le h)
+      have h₈ : f N < f (N + 1) := by
+        apply lt_of_lt_of_le h₆
+        apply le_of_lt h₇
+      -- Since $f(n) < x_{n+1}$ for all $n$, we have $f(N+1) < x_{N+2}$.
+      have h₉ : f (N + 1) < x (N + 2) := h₄ (N + 1)
+      -- Since $x_{N+1} < f(N+1)$ and $f(N) = x_{N+1}$, we have $f(N) < f(N+1) < x_{N+2}$.
+      have h₁₀ : f N < x (N + 2) := by
+        apply lt_of_lt_of_le h₈
+        apply le_of_lt h₉
+      -- Since $x_{N+2} < f(N+2)$ and $f(N) = x_{N+2}$, we have $f(N) < f(N+2)$.
+      have h₁₁ : x (N + 2) < f (N + 2) := h₅ (N + 2) (show N + 2 > 2160 by exact Nat.lt_add_one_of_le h)
+      have h₁₂ : f N < f (N + 2) := by
+        apply lt_of_lt_of_le h₁₀
+        apply le_of_lt h₁₁
+      -- Since $x_n < f(n)$ for all $n > 2160$, we have $f(N+1) < x_{N+3}$.
+      have h₁₃ : f (N + 1) < x (N + 3) := h₄ (N + 1)
+      -- Since $x_{N+1} < f(N+1)$ and $f(N) = x_{N+1}$, we have $f(N) < f(N+1) < x_{N+3}$.
+      have h₁₄ : f N < x (N + 3) := by
+        apply lt_of_lt_of_le h₈
+        apply le_of_lt h₁₃
+      -- Since $x_{N+3} < f(N+3)$ and $f(N) = x_{N+3}$, we have $f(N) < f(N+3)$.
+      have h₁₅ : x (N + 3) < f (N + 3) := h₅ (N + 3) (show N + 3 > 2160 by exact Nat.lt_add_one_of_le h)
+      have h₁₆ : f N < f (N + 3) := by
+        apply lt_of_lt_of_le h₁₄
+        apply le_of_lt h₁₅
+      -- Continuing this process, we eventually get $f(N) < f(N + k)$ for all $k > 0$.
+      have h₁₇ : ∀ k > 0, f N < f (N + k) := by
+        intro k hk
+        induction' k, hk using Nat.le_induction with k hk ih
+        · exact h₈
+        · rw [Nat.add_assoc]
+          apply lt_of_lt_of_le ih
+          apply le_of_lt
+          specialize h₄ (N + k + 1)
+          simpa only [Nat.cast_add, Nat.cast_one, List.coe_toFin, Finset.coe_filter, Finset.coe_filter', Finset.coe_image, Nat.cast_pos, List.coe_toFin, Nat.cast_pow, Nat.cast_ofNat, and_true] using h₄
+      -- Since $f(n) < x_{n+1}$ for all $n$, we have $f(N + k) < x_{N + k + 1}$ for all $k > 0$.
+      have h₁₈ (k : ℕ) (hk : k > 0) : f (N + k) < x (N + k + 1) := by
+        specialize h₄ (N + k)
+        simpa only [Nat.cast_add, Nat.cast_one, List.coe_toFin, Finset.coe_filter, Finset.coe_filter', Finset.coe_image, Nat.cast_pos, List.coe_toFin, Nat.cast_pow, Nat.cast_ofNat, and_true] using h₄
+      -- Since $x_{N+k} < f(N+k)$ for all $k > 0$ and $f(N) = x_{N+k}$, we have $f(N) < f(N+k) < x_{N+k+1}$ for all $k > 0$.
+      have h₁₉ (k : ℕ) (hk : k > 0) : f N < x (N + k + 1) := by
+        apply lt_of_lt_of_le (h₁₇ k hk)
+        apply le_of_lt (h₁₈ k hk)
+      -- Since $x_{N+k} < f(N+k)$ for all $k > 0$, we have $f(N) < x_{N+k}$ for all $k > 0$.
+      have h₂₀ (k : ℕ) (hk : k > 0) : f N < f (N + k) := by
+        specialize h₁₉ k hk
+        apply lt_of_lt_of_le h₁₉
+        apply le_of_lt (h₁₈ k hk)
+      -- Since $f(N) < f(N + k)$ for all $k > 0$, we have $f(2160) < f(2160 + k)$ for all $k > 0$.
+      replace h₁₇ : ∀ k > 0, f 2160 < f (2160 + k) := by
+        intro k hk
+        specialize h₁₇ (2160 - N) (by omega)
+        rw [Nat.sub_add_cancel (by omega)] at h₁₇
+        apply h₁₇ k hk
+      -- Since $f(n) < x_{n+1}$ for all $n$, we have $f(2160 + k) < x_{2160 + k + 1}$ for all $k > 0$.
+      replace h₁₈ : ∀ k > 0, f (2160 + k) < x (2160 + k + 1) := by
+        intro k hk
+        specialize h₄ (2160 + k)
+        simpa only [Nat.cast_add, Nat.cast_one, List.coe_toFin, Finset.coe_filter, Finset.coe_filter', Finset.coe_image, Nat.cast_pos, List.coe_toFin, Nat.cast_pow, Nat.cast_ofNat, and_true] using h₄
+      -- Since $x_{N+k} < f(N+k)$ for all $k > 0$ and $f(2160) = x_{N+k}$, we have $f(2160) < f(2160+k) < x_{2160+k+1}$ for all $k > 0$.
+      replace h₁₉ : ∀ k > 0, f 2160 < x (2160 + k + 1) := by
+        intro k hk
+        specialize h₁₈ k hk
+        specialize h₁₇ k hk
+        apply lt_of_lt_of_le h₁₇
+        apply le_of_lt h₁₈
+      -- Since $x_{2160} < f(2160)$, we have $x_{2160} < f(2160)$.
+      have h₂₁ : x 2160 < f 2160 := by
+        specialize h₁ 2160 (show 2160 ≠ N by omega)
+        simpa only [ne_eq, Nat.cast_eq, List.coe_toFin, Nat.cast_one, Finset.coe_filter, Finset.coe_filter', Finset.coe_image, Nat.cast_pos, List.coe_toFin, Nat.cast_pow, Nat.cast_ofNat, and_true] using h₁
+      -- Since $f(2160) < x_{2160 + k + 1}$ for all $k > 0$, we have $f(2160) < x_{2160 + k}$ for all $k > 0$.
+      replace h₁₉ : ∀ k > 0, f 2160 < x (2160 + k) := by
+        intro k hk
+        specialize h₁₉ k hk
+        apply lt_of_lt_of_le h₁₉
+        apply le_of_lt (h₁₈ k hk)
+      -- Combining the above two statements, we have $x_{2160} < f(2160) < x_{2160 + k}$ for all $k > 0$.
+      replace h₂₁ : x 2160 < x (2160 + 1) := by
+        calc
+          x 2160 < f 2160 := h₂₁
+          _ < f (2160 + 1) := h₁₉ 1 (by omega)
+          _ < x (2160 + 1 + 1) := h₁₈ 1 (by omega)
+      -- We then show that $x_{2160} = x_{2161}$.
+      have h₂₂ : x 2160 = x (2160 + 1) := by
+        apply eq_of_le_of_le
+        apply le_of_lt h₂₁
+        apply le_of_lt (h₁₉ 1 (by omega))
+      -- Since $x_{2160} = x_{2161}$ and $x_{2160} < x_{2161}$, we have $x_{2160} = x_{2161}$.
+      have h₂₃ : x 2160 = x (2160 + 1) := by
+        apply eq_of_le_of_le
+        apply le_of_lt (h₁₈ 1 (by omega))
+        apply le_of_lt (h₁₉ 1 (by omega))
+      -- Since $x_{2160} = x_{2161}$, we have $f(2160) = x_{2161}$.
+      replace h₂₁ : f 2160 = x (2160 + 1) := by
+        apply eq_of_le_of_le
+        apply le_of_lt (h₁₈ 1 (by omega))
+        apply le_of_lt h₂₁
+      -- Since $x_{216

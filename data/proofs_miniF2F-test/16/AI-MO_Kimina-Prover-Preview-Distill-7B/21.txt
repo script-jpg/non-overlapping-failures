@@ -1,0 +1,65 @@
+-- suppose the contrary, there exists a positive integer $n$ such that $f(n) \neq n$
+  by_contra h₂
+  push_neg at h₂
+  obtain ⟨n, hn, h₂⟩ := h₂
+
+  -- show that $f$ is strictly increasing
+  have h₃ : ∀ n, 0 < n → ∀ m, 0 < m → n < m → f n < f m := by
+    intro n hn m hm hnm
+    induction h : m with
+    | zero => contradiction
+    | succ m ih =>
+      by_cases hm' : m = 0
+      · rw [hm']
+        contradiction
+      · have : m < m + 1 := by omega
+        have h₄ : f n < f (n + 1) := by apply h₁; omega
+        have h₅ : f (n + 1) < f (n + 1 + 1) := by apply h₁; omega
+        linarith
+
+  -- show that $f(n) \leq f(1)$
+  have h₄ : ∀ n, 0 < n → f n ≤ f 1 := by
+    intro n hn
+    by_cases hn' : n = 1
+    · rw [hn']
+    · have : 1 < n := by omega
+      have h₅ := h₃ 1 (by norm_num) n hn' this
+      have h₆ : ∀ k, 1 < k → f 1 < f k := by
+        intro k hk
+        induction k with
+        | zero => contradiction
+        | succ k ih =>
+          by_cases hk' : k = 1
+          · rw [hk']
+            contradiction
+          · have : k < k + 1 := by omega
+            have ih' := ih this
+            have h₇ : f k < f (k + 1) := by apply h₁; omega
+            linarith
+      have h₇ := h₆ n this
+      linarith
+
+  -- show that $f(1) \leq n$
+  have h₅ : f 1 ≤ n := by
+    by_contra h
+    push_neg at h
+    have : f 1 > n := by omega
+    have h₆ := h₄ n hn
+    linarith
+
+  -- show that $f(n) < n$
+  have h₆ : ∀ n, 0 < n → f n < n := by
+    intro n hn
+    have h₇ := h₃ n hn n hn (by omega)
+    linarith
+
+  -- show that $f(n) = n$, which is a contradiction
+  have h₇ : ∀ n, 0 < n → f n = n := by
+    intro n hn
+    have h₈ := h₆ n hn
+    have h₉ := h₂ n hn
+    linarith
+
+  contradiction
+
+```

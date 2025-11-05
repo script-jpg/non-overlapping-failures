@@ -1,0 +1,73 @@
+-- prepare a lemma to be used later
+  have lm (n : ℕ) (h : n.gcd 6 = 1) : n.gcd (6 * n + 1) = 1 ∧ n.gcd (6 * n + 3) = 1 ∧ n.gcd (6 * n + 2) = 1 := by
+    have h₄ : n.gcd (6 * n + 1) = n.gcd 1 := by
+      rw [Nat.gcd_mul_left_add_right]
+      simp
+      exact h
+    have h₅ : n.gcd (6 * n + 3) = n.gcd 3 := by
+      rw [Nat.gcd_mul_left_add_right]
+      simp
+      exact h
+    have h₆ : n.gcd (6 * n + 2) = n.gcd 2 := by
+      rw [Nat.gcd_mul_left_add_right]
+      simp
+      exact h
+    rw [h₄, h₅, h₆]
+    simp
+
+  -- Show that $k$ is odd by contradiction
+  have h₄ : Odd k := by
+    by_contra h
+    rw [Nat.not_odd_iff_even] at h
+    obtain ⟨n, hn⟩ := h
+    specialize lm n hn
+    have h₅ := hn ▸ h₁
+    have h₆ := hn ▸ h₂
+    specialize h₃ n
+    have : Even (6 * n + 2) := by
+      rw [hn, Nat.even_mul]
+      simp
+    have : (6 * n + 2).gcd (6 * n + 3) = 1 := by
+      rw [h₅, h₆]
+      simp
+    have : ¬ (6 * n + 2).gcd (6 * n + 3) = 1 := by
+      rw [Nat.not_eq_zero_iff_zero_lt, Nat.gcd_pos_iff]
+      omega
+    contradiction
+
+  -- Show that $k$ is not divisible by 3 by contradiction
+  have h₅ : ¬(3 ∣ k) := by
+    by_contra h
+    obtain ⟨n, hn⟩ := h
+    specialize lm n hn
+    have h₆ := hn ▸ h₁
+    have h₇ := hn ▸ h₃
+    simp at h₆ h₇
+    have : 3 ∣ 6 * n + 3 := by
+      rw [hn, Nat.mul_add]
+      apply Nat.dvd_add
+      norm_num
+      simp
+    have : 3 ∣ 6 * n + 1 := by
+      rw [h₆, h₇, Nat.gcd_comm]
+      simp
+    have : (6 * n + 3).gcd (6 * n + 1) = 1 := by
+      specialize h₁ n
+      exact h₁
+    rw [Nat.not_eq_zero_iff_zero_lt, Nat.gcd_pos_iff] at this
+    omega
+
+  -- Show that $k \geq 5$, again by contradiction
+  by_contra h
+  have h₆ : k = 1 ∨ k = 3 ∨ k = 5 := by
+    omega
+  rcases h₆ with (rfl | rfl | rfl)
+  -- If $k = 1$, choose $n = 1$ to get a contradiction
+  · specialize h₁ 1
+    norm_num at h₁
+  -- If $k = 3$, choose $n = 1$ to get a contradiction
+  · specialize h₁ 1
+    norm_num at h₁
+  -- If $k = 5$, done
+  · exact rfl
+```

@@ -1,0 +1,100 @@
+-- We are given a cubic polynomial with roots $\cos \frac{2\pi}7$, $\cos \frac{4\pi}7$, and $\cos \frac{6\pi}7$.
+  -- By the factor theorem, the polynomial can be written as $f(x) = (x - \cos \frac{2\pi}7)(x - \cos \frac{4\pi}7)(x - \cos \frac{6\pi}7)$
+  have h₂ (x : ℝ) : f x = (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7)) := by
+    -- rearrange to get equivalent form
+    rw [h₀]
+    revert x
+    suffices h₃ : ∀ x, (x ^ 3 + a * x ^ 2 + b * x + c) = (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7))
+    · apply funext
+      simp only [h₃]
+    -- prove by showing both roots and extrema match, essentially injectivity of polynomial function
+    ext x
+    simp only [mem_preimage, mem_setOf_eq, eq_iff_iff_eq]
+    constructor
+    · intro h₃
+      have h₄ : x ∈ ({Real.cos (2 * Real.pi / 7), Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} : Set ℝ) := by
+        rw [←h₃]
+        simp
+      simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at h₄
+      rcases h₄ with h₄ | h₄ | h₄
+      -- handle the three cases with cosine values
+      · rw [h₄]
+        ring
+      · rw [h₄]
+        ring
+      · rw [h₄]
+        ring
+    · intro h₃
+      -- We rearrange the goal to an equivalent form, and prove it by evaluating the polynomial at the three roots
+      nth_rewrite 1 [←h₃]
+      simp only [sub_eq_zero]
+      ring_nf
+      rw [h₃, h₃, h₃]
+      ring
+  -- We compute the values of $a$, $b$ and $c$ by comparing the two expressions of $f(x)$
+  have h₃ := h₂ 0
+  simp only [zero_sub, zero_pow, mul_zero, zero_add, zero_mul, add_zero, cos_two_mul, mul_comm] at h₃
+  ring_nf at h₃
+  -- We have $c = -2\cos \frac{2\pi}7\cos \frac{4\pi}7\cos \frac{6\pi}7$
+  have h₄ : 2 * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) = 1 / 2 := by
+    -- The following identity is from the double angle formula for cosine
+    have h₅ (θ : ℝ) : Real.cos (3 * θ) = 4 * Real.cos θ ^ 3 - 3 * Real.cos θ := by
+      rw [show 3 * θ = θ + θ + θ by ring]
+      rw [Real.cos_add, Real.cos_add]
+      ring_nf
+      rw [Real.cos_sq, Real.cos_sq]
+      ring
+    -- rearrange to get a cubic equation
+    replace h₅ : 8 * Real.cos θ ^ 3 - 6 * Real.cos θ - Real.cos (3 * θ) = 0 := by linarith only [h₅]
+    -- let θ = 2π / 7, and substitute x = cos θ
+    let θ := 2 * Real.pi / 7
+    have h₆ : 8 * Real.cos θ ^ 3 - 6 * Real.cos θ - Real.cos (3 * θ) = 0 := by
+      specialize h₅ θ
+      exact h₅
+    -- we get 8x³ - 6x - 1 = 0
+    have h₇ : 8 * Real.cos θ ^ 3 - 6 * Real.cos θ - 1 = 0 := by
+      calc
+        8 * Real.cos θ ^ 3 - 6 * Real.cos θ - 1 = 8 * Real.cos θ ^ 3 - 6 * Real.cos θ - Real.cos (3 * θ) := by rw [h₆]
+        _ = 0 := by rw [show 3 * θ = 6 * Real.pi / 7 by ring]
+    -- rearrange to get a cubic equation
+    replace h₇ : 2 * Real.cos θ * (4 * Real.cos θ ^ 2 - 3) = 1 := by linarith only [h₇]
+    -- let x = cos θ, we get 2cosθ(4x² - 3) = 1
+    replace h₇ : 2 * Real.cos θ * (4 * Real.cos θ ^ 2 - 3) := by rw [h₇]
+    ring_nf at h₇
+    -- if we rearrange, we get 4x³ - 3x - 1/2 = 0
+    replace h₇ : 4 * Real.cos θ ^ 3 - 3 * Real.cos θ - 1 / 2 = 0 := by linarith only [h₇]
+    -- factorize
+    have h₈ : 4 * Real.cos θ ^ 3 - 3 * Real.cos θ - 1 / 2 = (2 * Real.cos θ - 1) * (2 * Real.cos θ ^ 2 + Real.cos θ + 1 / 2) := by
+      ring
+    -- we get two possibilities
+    rw [h₈] at h₇
+    rcases mul_eq_zero.mp h₇ with h₇ | h₇
+    -- the first case is cosine θ = 1/2, which is impossible for θ = 2π / 7
+    · apply eq_of_sub_eq_zero at h₇
+      rw [h₇] at h₄
+      ring_nf at h₄
+      linarith only [h₄, Real.pi_pos]
+    -- the second case is 2cosθ² + cosθ + 1/2 = 0, from which we get the value of 2cosθcos2θcos6θ
+    · linarith only [h₇]
+  -- We get the value of $b$, by comparing the coefficient of $x$ in the two expressions of $f(x)$
+  have h₅ := h₂ 1
+  simp only [one_sub, one_pow, mul_one, one_mul, add_one, h₄, mul_comm] at h₅
+  -- we get b = 3/2 - 7cos²(2π / 7) + 3cos(2π / 7)
+  ring_nf at h₅
+  -- we get the value of $a$, by comparing the coefficient of $x$ in the two expressions of $f(x)$
+  have h₆ := h₂ (-1)
+  simp only [neg_one_sub, one_pow, mul_one, add Odd.neg_one, Even.neg_one, neg_add_cancel, h₄, mul_comm] at h₆
+  -- we get a = -3/2 - 7cos²(2π / 7) - 3cos(2π / 7)
+  ring_nf at h₆
+  -- substitute the values of $a$, $b$ and $c$, and we get abc = 1/32
+  rw [h₃, h₅, h₆]
+  ring_nf
+  rw [show 7 * (1 / 64) = 1 / 8 by linarith]
+  rw [show 3 * (1 / 8) + (1 / 2) = 1 / 4 by linarith]
+  rw [show 7 * (1 / 16) - (1 / 2) = 1 / 4 by linarith]
+  rw [show 3 * (1 / 4) + (1 / 4) = 1 by linarith]
+  rw [show 7 * (1 / 8) + (1 / 4) = 1 by linarith]
+  norm_num
+
+
+```

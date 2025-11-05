@@ -1,0 +1,90 @@
+-- We want to relate the product to the factorial of 10000.
+  rw [Finset.prod_eq_factorial_div_product_of_even_add_one]
+
+  -- First, let's find the number of factors of 2 in 10000!
+  have h2 : countNatFactors 2 10000 = 5000 := by
+    rw [countNatFactors_eq_iff_factorization]
+    have := Nat.factorization_le_pow_succ_factorization Nat.prime_two
+    rw [← Nat.factorization_two_factorial] at this
+    simp at this
+    obtain ⟨c, hc⟩ := this
+    have : c = 5000 := by
+      have : 2 ^ c ≤ 10000 := by
+        exact Nat.le_of_lt_succ <| Nat.lt_add_one_iff.mp hc
+      obtainElt := Nat.lt_of_lt_of_le (show 2 ^ 5000 < 10000 by norm_num) this
+      obtain Elt :=
+        Nat.lt_of_lt_of_le (show 2 ^ 5001 < 10000 by norm_num) this
+      obtain ⟨c', hc'⟩ := (Nat.le_congr (Finsupp.coe_le_coe.mp hc))
+      rw [Nat.factorization_two_factorial] at hc'
+      have : c' < 2 := by
+        rw [← hc']
+        exact Nat.lt_add_one_iff.mp this
+      interval_cases c'
+      all_goals norm_num
+    norm_num [this]
+
+  -- Next, let's find the number of factors of 2 in the product
+  have h1 : countNatFactors 2 (Finset.prod (Finset.filter (fun x => ¬Even x) (Finset.range 10000)) (id : ℕ → ℕ)) = 0 := by
+    rw [Finset.prod_dvd_prod_iff_dvd]
+    intro x hx
+    obtain ⟨hx, h⟩ := hx
+    obtain ⟨m, hm⟩ := Even.exists_two_nsmul x
+    rw [hm] at h
+    have : ¬ 2 ∣ m := by
+      intro hm'
+      obtain ⟨k, hk⟩ := hm'
+      rw [hk] at h
+      have : 2 ∣ 2 * k := by
+        apply Nat.dvd_mul_right
+      have := Nat.dvd_trans this h
+      norm_num at this
+    have := Nat.Prime.dvd_mul_of_dvd_ne (Nat.prime_two) (this.trans (by norm_num))
+    rw [Nat.prime_dvd_prime_iff_eq (Nat.prime_two) (Nat.prime_two)] at this
+    rw [← two_mul] at this
+    obtain ⟨k, hk⟩ := this
+    rw [hk] at h
+    have : 2 ∣ 2 ^ k := by
+      apply Nat.dvd_pow_self
+      exact Nat.Prime.dvd_mul_of_dvd_ne (Nat.prime_two) this
+    have := Nat.dvd_iff_mod_eq_zero.mp this
+    norm_num at this
+
+  have h2' : countNatFactors 2 (Finset.factorial 10000) = 5000 := by
+    exact h2
+
+  -- Since the product is 2^5000 times bigger than 10000! / 2^5000, it is equal to 10000! / 5000!
+  have h3 : Finset.prod (Finset.filter (fun x => ¬Even x) (Finset.range 10000)) (id : ℕ → ℕ) = 10000! / (2 ^ 5000 * 5000!) := by
+    rw [Finset.prod_filter]
+    have : filter (fun x => ¬Even x) (Finset.range 10000) = (Finset.range 5000).map (fun x => 2 * x + 1) := by
+      ext i
+      simp
+      constructor
+      intro ⟨⟨m, hm⟩, h⟩
+      have : Even (2 * i + 1) := by
+        apply Even.exists_two_nsmul
+        use i
+        rw [hm]
+      obtain ⟨m, hm⟩ := Even.exists_two_nsmul (2 * i + 1)
+      have : ¬ Even (i + 1) := by
+        intro hm'
+        obtain ⟨k, hk⟩ := hm'
+        rw [hk] at hm
+        have : Even 1 := by
+          rw [hm.symm]
+          exact even_two_mul (i + k)
+        norm_num at this
+      obtain ⟨m, hm⟩ := Even.exists_two_nsmul i
+      rw [hm]
+      simp
+      use m
+      rw [hm]
+      ring_nf
+    rw [this]
+    simp
+    rw [Finset.prod_map]
+    intro i hi
+    simp
+    norm_cast
+    rw [Nat.mul_div_cancel _ (by obtain ⟨k, hk⟩ := hi; rw [hk]; norm_num)]
+  exact h3
+```

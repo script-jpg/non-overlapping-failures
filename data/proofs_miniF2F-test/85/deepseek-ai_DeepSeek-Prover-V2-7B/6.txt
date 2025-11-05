@@ -1,0 +1,53 @@
+have h₂ : n ≠ 1 := by
+    intro hn
+    rw [hn] at h₁
+    norm_num at h₁
+  have h₃ : Nat.Prime n := by
+    by_contra h
+    -- If n is not prime, then it is composite or 1.
+    have h₄ : n = 0 ∨ n = 1 ∨ n > 1 := by omega
+    rcases h₄ with (h₄ | h₄ | h₄) <;> simp_all [Nat.Prime, Nat.succ_le_iff, Nat.zero_lt_one]
+    <;>
+    (try { omega }) <;>
+    (try {
+      -- If n is composite, then it has a divisor d such that 1 < d < n.
+      have h₅ : ∃ d : ℕ, d ∣ n ∧ d > 1 ∧ d < n := by
+        have h₅ := Nat.exists_dvd_of_not_prime2 (by omega : n > 1) h
+        aesop
+      rcases h₅ with ⟨d, hd, hd₁, hd₂⟩
+      have h₆ : 2 ^ n - 1 = (2 ^ d - 1) * (∑ i in Finset.range n / d, 2 ^ (d * i)) := by
+        rw [← Nat.pow_mul]
+        have h₆ : n = d * (n / d) := by
+          rw [Nat.mul_div_cancel' hd]
+        rw [h₆]
+        simp [Nat.pow_mul, Finset.sum_range_succ, Nat.mul_sub_left_distrib, Nat.mul_sub_right_distrib]
+        <;> ring_nf
+        <;> omega
+      have h₇ : 2 ^ d - 1 > 1 := by
+        have h₇ : d > 1 := by omega
+        have h₈ : 2 ^ d > 2 := by
+          calc
+            2 ^ d ≥ 2 ^ 2 := by apply Nat.pow_le_pow_of_le_right <;> omega
+            _ = 4 := by norm_num
+            _ > 2 := by omega
+        omega
+      have h₈ : 2 ^ d - 1 ∣ 2 ^ n - 1 := by
+        rw [h₆]
+        exact Nat.dvd_mul_right _ _
+      have h₉ : 2 ^ n - 1 > 2 ^ d - 1 := by
+        have h₉ : d < n := by omega
+        have h₁₀ : 2 ^ d < 2 ^ n := by
+          apply Nat.pow_lt_pow_of_lt_right
+          omega
+          omega
+        omega
+      have h₁₀ : Nat.Prime (2 ^ n - 1) := h₁
+      have h₁₁ : 2 ^ d - 1 ∣ 2 ^ n - 1 := h₈
+      have h₁₂ : 2 ^ d - 1 = 1 ∨ 2 ^ d - 1 = 2 ^ n - 1 := by
+        have h₁₃ := Nat.Prime.eq_one_or_self_of_dvd h₁₀ (2 ^ d - 1) h₁₁
+        omega
+      omega
+    }) <;>
+    omega
+  exact h₃
+```

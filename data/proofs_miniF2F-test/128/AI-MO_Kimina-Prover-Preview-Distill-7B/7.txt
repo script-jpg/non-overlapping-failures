@@ -1,0 +1,47 @@
+-- We have $\sqrt{16+16a} = 4\sqrt{1+a}$.
+  have : Real.sqrt (16 + 16 * a) = 4 * Real.sqrt (1 + a) := by
+    rw [show (16 + 16 * a) = (4^2) * (1 + a) by ring, Real.sqrt_mul, Real.sqrt_sq]
+    linarith
+
+  -- Substitute the above into the original equation to get $4\sqrt{1+a} + \sqrt{1+\sqrt{1+a}} = 6$.
+  rw [this] at h₀
+
+  -- Let $b = \sqrt{1+\sqrt{1+a}}$.
+  let b := Real.sqrt (1 + Real.sqrt (1 + a))
+  have : b = Real.sqrt (1 + Real.sqrt (1 + a)) := by rfl
+  rw [← this] at h₀
+  have : 4 * b^2 + b = 6 := by
+    rw [← pow_two (Real.sqrt (1 + a)), ← this] at h₀
+    have : (Real.sqrt (1 + a))^2 = 1 + a := by exact Real.sq_sqrt (by linarith)
+    linarith
+  have : 4 * b^2 + b - 6 = 0 := by rw [this]; ring
+
+  -- Solve the quadratic equation $4b^2 + b - 6 = 0$.
+  have : (b - 1) * (4 * b + 6) = 0 := by rw [← this]; ring
+  have hb : b = 1 ∨ b = (-6) / 4 := by
+    cases (mul_eq_zero.mp this) with
+    | inl h => left; linarith
+    | inr h => right; linarith
+
+  -- Notice that $b = \sqrt{1+\sqrt{1+a}}$ is non-negative,
+  have : b ≥ 0 := by
+    rw [Real.sqrt_nonneg]
+  have : b = 1 := by
+    cases hb with
+    | inl h => exact h
+    | inr h =>
+      have : b < 0 := by linarith
+      linarith
+
+  -- We have $\sqrt{1+\sqrt{1+a}} = 1$.
+  rw [this] at this
+  have : 1 + Real.sqrt (1 + a) = 1 := by
+    have := (Real.sqrt_eq_zero (by linarith)).mp this
+    linarith
+  have : Real.sqrt (1 + a) = 0 := by linarith
+  have : 1 + a = 0 := by
+    have := (Real.sqrt_eq_zero (by linarith)).mp this
+    linarith
+  linarith
+
+```

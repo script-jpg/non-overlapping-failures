@@ -1,0 +1,135 @@
+-- First note that $(1+\sin t)(1+\cos t)(1-\sin t)(1-\cos t) = 1/4$.
+  have h₄ : (1 + Real.sin t) * (1 + Real.cos t) * (1 - Real.sin t) * (1 - Real.cos t) = 1 / 4 := by
+    calc
+    _ = (1 + Real.sin t) * (1 - Real.sin t) * (1 + Real.cos t) * (1 - Real.cos t) := by ring
+    _ = (1 - Real.sin t ^ 2) * (1 - Real.cos t ^ 2) := by ring
+    _ = 1 - Real.sin t ^ 2 - Real.cos t ^ 2 + (Real.sin t ^ 2 * Real.cos t ^ 2) := by ring
+    _ = 1 - Real.sin t ^ 2 - Real.cos t ^ 2 + (Real.sin t * Real.cos t) ^ 2 := by ring
+    _ = 1 - (Real.sin t ^ 2 + Real.cos t ^ 2) + (Real.sin t * Real.cos t) ^ 2 := by ring
+    _ = 1 - 1 + (Real.sin t * Real.cos t) ^ 2 := by
+      rw [Real.sin_sq_add_cos_sq]
+    _ = (Real.sin t * Real.cos t) ^ 2 := by ring
+    _ = (4 * (Real.sin t * Real.cos t) ^ 2) / 4 := by ring
+    _ = ((1 + Real.sin t) * (1 + Real.cos t) * (1 - Real.sin t) * (1 - Real.cos t)) / 4 := by ring
+    _ = 1 / 4 := by rw [h₂]; norm_num
+
+  -- The first equation implies $1 - \sin t ^ 2 - \cos t ^ 2 + (Real.sin t ^ 2 * Real.cos t ^ 2) = 1 / 4$.
+  have h₅ : 1 - Real.sin t ^ 2 - Real.cos t ^ 2 + (Real.sin t ^ 2 * Real.cos t ^ 2) = 1 / 4 := by
+    calc
+    _ = (1 + Real.sin t) * (1 - Real.sin t) * (1 + Real.cos t) * (1 - Real.cos t) := by
+      ring_nf; rw [add_sq, add_sq, mul_assoc, mul_assoc, mul_comm, mul_comm, mul_assoc, mul_assoc]; ring
+    _ = ((1 + Real.sin t) * (1 + Real.cos t)) * ((1 - Real.sin t) * (1 - Real.cos t)) := by ring
+    _ = (1 / 4) * (1 / 4) := by rw [h₂, h₃]; ring
+    _ = _ := by norm_num
+
+  -- Then we can compute $\sin t \cos t = \pm \frac 1 2$.
+  have h₆ : Real.sin t * Real.cos t = 1 / 2 ∨ Real.sin t * Real.cos t = - 1 / 2 := by
+    have : (Real.sin t * Real.cos t) ^ 2 = 1 / 4 := by
+      calc
+      _ = 1 - Real.sin t ^ 2 - Real.cos t ^ 2 + (Real.sin t ^ 2 * Real.cos t ^ 2) := by rw [←h₅]; ring
+      _ = 1 - (Real.sin t ^ 2 + Real.cos t ^ 2) + (Real.sin t ^ 2 * Real.cos t ^ 2) := by ring
+      _ = 1 - 1 + (Real.sin t ^ 2 * Real.cos t ^ 2) := by
+        rw [Real.sin_sq_add_cos_sq]
+      _ = Real.sin t ^ 2 * Real.cos t ^ 2 := by ring
+      _ = (Real.sin t * Real.cos t) ^ 2 := by ring
+    have : Real.sin t * Real.cos t = 1 / 2 ∨ Real.sin t * Real.cos t = - 1 / 2 := by
+      have : (Real.sin t * Real.cos t - 1 / 2) * (Real.sin t * Real.cos t + 1 / 2) = 0 := by
+        ring_nf
+        linarith
+      cases (mul_eq_zero.mp this) with
+      | inl h => left; linarith
+      | inr h => right; linarith
+    exact this
+
+  -- But notice that $(1-\sin t)(1-\cos t) = 1/4 + \sqrt{k}$.
+  have h₇ : (1 - Real.sin t) * (1 - Real.cos t) = 1 / 4 + Real.sqrt k := by
+    rw [h₃]
+    ring
+
+  -- Then we can compute $(1-\sin t)(1-\cos t) = m / n - \sqrt{k}$.
+  have h₈ : (1 - Real.sin t) * (1 - Real.cos t) = m / n - Real.sqrt k := by
+    exact h₃
+
+  -- The only positive value of $\sqrt{k}$ is $\sqrt{2}$.
+  have h₉ : Real.sqrt k = Real.sqrt 2 := by
+    have : 0 < Real.sqrt k := by positivity
+    have : 0 < Real.sqrt 2 := by positivity
+    have : (Real.sqrt k) ^ 2 = k := by
+      exact Real.sq_sqrt (by positivity)
+    have : (Real.sqrt 2) ^ 2 = 2 := by
+      exact Real.sq_sqrt (by positivity)
+    by_cases h : k = 2
+    · rw [h]
+      exact h
+    · have : k > 2 := by omega
+      have : (Real.sqrt k) ^ 2 > (Real.sqrt 2) ^ 2 := by
+        rw [this, ‹(Real.sqrt 2) ^ 2 = 2›]
+        linarith
+      rw [‹(Real.sqrt k) ^ 2 = k›, ‹(Real.sqrt 2) ^ 2 = 2›] at this
+      linarith
+
+  -- Then we can compute $1 - \sin t ^ 2 - \cos t ^ 2 + (Real.sin t ^ 2 * Real.cos t ^ 2) = 1 - 1 + 1 / 4 = 1/4$.
+  have h₁₀ : 1 - Real.sin t ^ 2 - Real.cos t ^ 2 + (Real.sin t ^ 2 * Real.cos t ^ 2) = 1 / 4 := by
+    calc
+    _ = (Real.sin t * Real.cos t) ^ 2 := by
+      simp [add_sq, add_sq, mul_assoc, mul_assoc, mul_comm, mul_comm, mul_assoc, mul_assoc]; ring
+    _ = (1 / 2) ^ 2 := by
+      rw [h₉] at h₆
+      cases h₆ with
+      | inl h =>
+        rw [h]
+        norm_num
+      | inr h =>
+        rw [h]
+        norm_num
+    _ = 1 / 4 := by norm_num
+
+  -- So we can compute $(Real.sin t ^ 2 + Real.cos t ^ 2) = 1$.
+  have h₁₁ : Real.sin t ^ 2 + Real.cos t ^ 2 = 1 := by
+    calc
+    _ = 1 - 1 + (Real.sin t ^ 2 + Real.cos t ^ 2) := by ring
+    _ = 1 - Real.sin t ^ 2 - Real.cos t ^ 2 + (Real.sin t ^ 2 * Real.cos t ^ 2) := by ring
+    _ = 1 / 4 := by rw [h₁₀]
+    _ = 1 := by norm_num
+
+  -- So we can compute $(1 - Real.sin t) * (1 - Real.cos t) = 1 / 4 + 1 / 2 * \sqrt {2} = m / n$.
+  have h₁₂ : (1 - Real.sin t) * (1 - Real.cos t) = 1 / 4 + 1 / 2 * Real.sqrt 2 := by
+    rw [h₉] at h₈
+    linarith
+
+  have h₁₃ : 1 / 4 + 1 / 2 * Real.sqrt 2 = m / n := by
+    rw [←h₈, h₁₂]
+
+  -- The only value of $m / n$ is $1 / 4 + \sqrt{2}$.
+  have h₁₄ : m / n = 1 / 4 + Real.sqrt 2 := by
+    exact Eq.symm <| (div_eq_of_eq_div h₃).mpr h₁₃
+
+  -- The only values of $m$ and $n$ are 4 and 1.
+  have h₁₅ : m = 4 := by
+    have : m = (m / n) * n := by
+      field_simp
+    rw [this, h₁₄] at h₁₃
+    rw [show (4 : ℝ) / 4 + Real.sqrt 2 * n = 4 * (1 / 4) + Real.sqrt 2 * n by ring] at h₁₃
+    have : n = 1 := by
+      apply_fun (fun x : ℝ => x - 4 * (1 / 4)) at h₁₃
+      cases (mul_right_inj' (by norm_num : (4 : ℝ) ≠ 0)).mp (id (Eq.symm h₁₃)) with
+      | inl h => linarith
+      | inr h => linarith
+    rw [this] at h₁₃
+    linarith
+
+  have h₁₆ : n = 1 := by
+    have : n = (m / n)⁻¹ * m := by
+      field_simp
+    rw [this, h₁₄] at h₁₃
+    rw [show (4 : ℝ) / 4 + Real.sqrt 2 = (1 / 4 + Real.sqrt 2) * 4 by ring] at h₁₃
+    have : m = 4 * (1 / 4) + Real.sqrt 2 * 4 := by linarith
+    linarith
+
+  -- Then $k + m + n = 2 + 4 + 1 = 7$.
+  have h₁₇ : k = 2 := by
+    rw [h₁₅, h₁₆] at h₁₄
+    linarith
+
+  rw [h₁₅, h₁₆, h₁₇]
+```

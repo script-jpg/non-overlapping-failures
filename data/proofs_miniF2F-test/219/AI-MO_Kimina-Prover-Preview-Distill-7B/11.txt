@@ -1,0 +1,109 @@
+-- Define functions $A(n)$ and $B(n)$ for later use.
+  let A (n : ℕ) := ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)
+  let B (n : ℕ) := ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k) * 2 ^ (3 * k)
+
+  -- Prove that $A(n) + B(n) = 2^{2n+1}$ by induction.
+  have h1 : A n + B n = 2 ^ (2 * n + 1) := by
+    induction n with
+    | zero =>
+      simp [A, B]
+    | succ n ih =>
+      unfold A B
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, ih]
+      simp [A, B]
+      ring
+
+  -- Prove that $A(n) - B(n) = 5^n$ by induction.
+  have h2 : A n - B n = 5 ^ n := by
+    induction n with
+    | zero =>
+      simp [A, B]
+    | succ n ih =>
+      unfold A B
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, ih]
+      simp [A, B]
+      ring
+
+  -- Prove that $B(n+1) = 2^{3n+1} + B(n) * 4$ by induction.
+  have h3 : B (n + 1) = 2 ^ (3 * n + 1) + B n * 4 := by
+    induction n with
+    | zero =>
+      simp [B]
+      ring
+    | succ n ih =>
+      unfold B
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, ih]
+      simp [B]
+      ring
+
+  -- Prove that $A(n+1) = 2^{3n+1} + A(n) * 4$ by induction.
+  have h4 : A (n + 1) = 2 ^ (3 * n + 1) + A n * 4 := by
+    induction n with
+    | zero =>
+      simp [A]
+      ring
+    | succ n ih =>
+      unfold A
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, ih]
+      simp [A]
+      ring
+
+  -- Prove that $A(n) \equiv -B(n) \pmod{5}$ by induction.
+  have h5 : A n ≡ -B n [MOD 5] := by
+    induction n with
+    | zero =>
+      simp [A, B]
+      rfl
+    | succ n ih =>
+      unfold A B
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, ih]
+      simp [A, B]
+      calc
+        (↑(Nat.choose (2 * n + 1) (2 * n + 1)) * 2 ^ (3 * n) * 4 ^ (n + 1) + ∑ i ∈ Finset.range n, (Nat.choose (2 * n + 1) (2 * i + 1) * 2 ^ (3 * i) * 4 ^ (n + 1) + Nat.choose (2 * n + 1) (2 * i + 2) * 2 ^ (3 * i + 1) * 4 ^ n)) % 5
+          = (4 ^ (n + 1) + ∑ i ∈ Finset.range n, (Nat.choose (2 * n + 1) (2 * i + 1) * 2 ^ (3 * i) * 4 ^ (n + 1) + Nat.choose (2 * n + 1) (2 * i + 2) * 2 ^ (3 * i + 1) * 4 ^ n)) % 5 := by
+            simp [Nat.choose]
+          _ = ((4 ^ (n + 1) + ∑ i ∈ Finset.range n, (Nat.choose (2 * n + 1) (2 * i + 1) * 2 ^ (3 * i) * 4 ^ (n + 1) + Nat.choose (2 * n + 1) (2 * i + 2) * 2 ^ (3 * i + 1) * 4 ^ n)) % 5) % 5 := by
+            simp
+          _ = (4 ^ (n + 1) + ∑ i ∈ Finset.range n, (Nat.choose (2 * n + 1) (2 * i + 1) * 2 ^ (3 * i) * 4 ^ (n + 1) + Nat.choose (2 * n + 1) (2 * i + 2) * 2 ^ (3 * i + 1) * 4 ^ n)) % 5 := by
+            rw [Nat.mod_mod]
+          _ = _ := by
+            induction n with
+            | zero =>
+              simp [B]
+              rfl
+            | succ n _ =>
+              unfold B
+              rw [Finset.sum_range_succ, Finset.sum_range_succ]
+              simp [B]
+              calc
+                (↑(Nat.choose (2 * (n + 1) + 1) (2 * (n + 1) + 1)) * 2 ^ (3 * (n + 1)) * 4 ^ (n + 1) + ∑ i ∈ Finset.range (n + 1), (Nat.choose (2 * (n + 1) + 1) (2 * i + 1) * 2 ^ (3 * i) * 4 ^ (n + 1) + Nat.choose (2 * (n + 1) + 1) (2 * i + 2) * 2 ^ (3 * i + 1) * 4 ^ n)) % 5
+                    = (4 ^ (n + 1) + ∑ i ∈ Finset.range (n + 1), (Nat.choose (2 * (n + 1) + 1) (2 * i + 1) * 2 ^ (3 * i) * 4 ^ (n + 1) + Nat.choose (2 * (n + 1) + 1) (2 * i + 2) * 2 ^ (3 * i + 1) * 4 ^ n)) % 5 := by
+                      simp [Nat.choose]
+                    _ = ((4 ^ (n + 1) + ∑ i ∈ Finset.range (n + 1), (Nat.choose (2 * (n + 1) + 1) (2 * i + 1) * 2 ^ (3 * i) * 4 ^ (n + 1) + Nat.choose (2 * (n + 1) + 1) (2 * i + 2) * 2 ^ (3 * i + 1) * 4 ^ n)) % 5) % 5 := by
+                      simp
+                    _ = (4 ^ (n + 1) + ∑ i ∈ Finset.range (n + 1), (Nat.choose (2 * (n + 1) + 1) (2 * i + 1) * 2 ^ (3 * i) * 4 ^ (n + 1) + Nat.choose (2 * (n + 1) + 1) (2 * i + 2) * 2 ^ (3 * i + 1) * 4 ^ n)) % 5 := by
+                      rw [Nat.mod_mod]
+
+  -- Prove that $A(n) \equiv -B(n) \pmod{5}$ implies $A(n) \equiv -B(n) \pmod{5}$ (trivial)
+  have h6 : A n % 5 = - (B n % 5) % 5 := by
+    exact Nat.ModEq.symm (Nat.ModEq.trans (id (Nat.ModEq.symm h5)) rfl)
+
+  -- Prove that $B(n) \equiv 1 \pmod{5}$ by induction.
+  have h7 : B n % 5 = 1 % 5 := by
+    induction n with
+    | zero =>
+      simp [B]
+    | succ n ih =>
+      unfold B
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, ih]
+      simp [B]
+      try omega
+
+  -- Prove that $A(n) \equiv -B(n) \pmod{5}$ and $B(n) \equiv 1 \pmod{5}$ implies $A(n) \equiv -1 \pmod{5}$.
+  have h8 : A n % 5 = 4 % 5 := by
+    omega
+
+  -- Convert to the statement we want to prove.
+  unfold A
+  omega
+```

@@ -1,0 +1,79 @@
+-- We are working with a cubic polynomial with the given formula and its inverse image under 0 is as specified.
+
+  -- First we rewrite the cubic polynomial in product form, which is possible since we know all the roots.
+  have h₂ (x : ℝ) : f x = (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7)) := by
+    rw [h₀]
+    rw [tsub_eq_zero]
+    nth_rw 2 [mul_assoc]
+    rw [← sub_eq_zero]
+    calc
+      _ = (x ^ 3 + a * x ^ 2 + b * x + c).div (x - Real.cos (2 * Real.pi / 7)) ^ 3 := by
+        rw [tsum_finset_prod_X_sub_C_div]
+        simp [Finset.range, Fin.prod_univ_three]
+        rw [← h₁.1, h₁.2, h₁.3]
+        simp
+      _ = _ := by
+        have eq : (c : ℝ[X]) = (C (-1 * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) : ℝ[X]) := by
+          calc
+            _ = (c : ℝ[X]) - 0 := by
+              ring
+            _ = _ := by
+              apply eq_sub_of_add_eq
+              rw [h₁.1, h₁.2, h₁.3, ← prod_three_cos]
+              ring
+        rw [eq, tsum_finset_prod_X_sub_C_div, ← h₁.1, ← h₁.2, ← h₁.3, ← prod_three_cos]
+        rw [mul_assoc, mul_comm, EuclideanDomain.div_mul_div_comm]
+        simp [Finset.range, Fin.prod_univ_three]
+        ring
+        by_cases h : 0 ∈ {x_1 | -(x ^ 3 + a * x ^ 2 + b * x + c) ≠ 0}
+        · simp [h]
+        · simp [h]
+
+  -- From the product form, we can rewrite it as a sum again to find relations for a, b, c.
+  have h₃ (x : ℝ) : f x = x ^ 3 + (-(Real.cos (2 * Real.pi / 7) + -(Real.cos (4 * Real.pi / 7) + -(Real.cos (6 * Real.pi / 7)))) * x ^ 2) + ((Real.cos (2 * Real.pi / 7) * -(Real.cos (4 * Real.pi / 7) + -(Real.cos (6 * Real.pi / 7)))) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) * x + -(Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7))) := by
+    rw [h₂]
+    ring_nf
+    rw [show (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7)) = (x - Real.cos (2 * Real.pi / 7)) * ((x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7))) by ring]
+    rw [show (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7)) = x ^ 2 - (Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7)) * x + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) by ring]
+    rw [show (x - Real.cos (2 * Real.pi / 7)) * (x ^ 2 - (Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7)) * x + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) = x ^ 3 - (Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7)) * x ^ 2 + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) * x - Real.cos (2 * Real.pi / 7) * x ^ 2 + (Real.cos (2 * Real.pi / 7) * (Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7))) * x - Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) by ring]
+    ring
+
+  -- Now we can substitute the values and get equations for a, b, c.
+  have h₄ : ∀ x, x ^ 3 + (-(Real.cos (2 * Real.pi / 7) + -(Real.cos (4 * Real.pi / 7) + -(Real.cos (6 * Real.pi / 7)))) * x ^ 2) + ((Real.cos (2 * Real.pi / 7) * -(Real.cos (4 * Real.pi / 7) + -(Real.cos (6 * Real.pi / 7)))) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) * x + -(Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7))) = x ^ 3 + a * x ^ 2 + b * x + c := by
+    intro x
+    rw [← h₁.1 x, h₃ x]
+
+  -- We can now get the values of a, b, c.
+  have h₅ : 0 = -(Real.cos (2 * Real.pi / 7) + -(Real.cos (4 * Real.pi / 7) + -(Real.cos (6 * Real.pi / 7)))) := by
+    specialize h₄ 0
+    simp at h₄
+    linarith
+  have h₆ : 0 = (Real.cos (2 * Real.pi / 7) * -(Real.cos (4 * Real.pi / 7) + -(Real.cos (6 * Real.pi / 7)))) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+    specialize h₄ 1
+    simp at h₄
+    linarith
+  have h₇ : 0 = -(Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) := by
+    specialize h₄ 2
+    simp at h₄
+    linarith
+
+  -- Now we can compute a, b, c.
+  have h₈ : Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) = 1 / 2 := by
+    linarith
+  have h₉ : Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) * Real.cos (2 * Real.pi / 7) = -1 / 2 := by
+    linarith
+  have h₁₀ : Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) = 1 / 8 := by
+    linarith
+
+  -- To compute $abc$, we need to do some algebraic manipulations.
+  calc
+    _ = (-(Real.cos (2 * Real.pi / 7) + -(Real.cos (4 * Real.pi / 7) + -(Real.cos (6 * Real.pi / 7)))) * (Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) * Real.cos (2 * Real.pi / 7)) * (-(Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)))) := by
+      rw [show -(Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) = (Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) * (-1) by ring]
+      ring
+    _ = -((1 / 2) * (-1 / 2) * (1 / 8)) := by
+      rw [h₈, h₉, h₁₀]
+    _ = 1 / 32 := by
+      ring
+
+  -- Therefore, abc = 1/32.
+```

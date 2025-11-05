@@ -1,0 +1,60 @@
+-- Simplify the left summand $\log_{5^k} 3^{k^2}$
+  have h1 : ∀ k ∈ Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = k * Real.logb 5 (3 ^ 2) := by
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    have hk1 : 0 < 5 ^ k := by positivity
+    have hk2 : 0 < 3 ^ (k ^ 2 : ℕ) := by positivity
+    rw [Real.logb] at *
+    field_simp
+    left
+    ring_nf
+    rw [← Real.logb_rpow]
+    rw [mul_comm, <-Real.logb_rpow]
+    all_goals {
+      try norm_num
+      try linarith
+    }
+
+  -- Simplify the right summand $\log_{9^k} 25^k$
+  have h2 : ∀ k ∈ Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = k * Real.logb 9 25 := by
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    have hk1 : 0 < 9 ^ k := by positivity
+    have hk2 : 0 < 25 ^ k := by positivity
+    rw [Real.logb] at *
+    field_simp
+    left
+    ring_nf
+    rw [mul_assoc, <-Real.logb_rpow]
+    rw [Real.logb_rpow]
+    all_goals {
+      try norm_num
+      try linarith
+    }
+
+  -- Simplify the first sum
+  have h3 : ∑ k in Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = 210 * Real.logb 5 9 := by
+    simp [h1]
+    rw [Finset.sum_mul_distrib]
+    rw [← Finset.mul_sum]
+    simp
+
+  -- Simplify the second sum
+  have h4 : ∑ k in Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = 100 * Real.logb 9 25 := by
+    simp [h2]
+    rw [Finset.sum_mul_distrib]
+    rw [← Finset.mul_sum]
+    simp
+
+  rw [h3, h4]
+  -- Rewrite and simplify
+  rw [show 210 * Real.logb 5 9 * (100 * Real.logb 9 25) = 21000 * (Real.logb 5 9 * Real.logb 9 25) by ring]
+  rw [Real.logb_nsmul, Real.logb_nsmul]
+  rw [<-Real.logb_mul]
+  rw [show (5 : ℝ) ^ (2 * 2) * (25 : ℝ) ^ 2 = 225 ^ 2 by norm_num, show (9 : ℝ) ^ (2 * 1) = 81 by norm_num]
+  rw [Real.logb_sq, <-Real.logb_mul]
+  nth_rw 2 [show (5 : ℝ) ^ 2 = 25 by norm_num]
+  rw [Real.logb_self_eq_one, <-Real.logb_rpow]
+  all_goals norm_num
+
+```

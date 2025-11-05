@@ -1,0 +1,132 @@
+-- Lemma: For all natural numbers $a$ and $b$, if $a \mid b$, then $a^2 \mid b^2$.
+  have h1 : ∀ a b : ℕ, a ∣ b → a * a ∣ b * b := by
+    intro a b hab
+    exact Nat.mul_dvd_mul_of_dvd hab hab
+
+  -- Lemma: For any natural numbers $a$, $b$ and $c$, if $a \mid b$, then $a \cdot c \mid b \cdot c$.
+  have h2 : ∀ a b c : ℕ, a ∣ b → a * c ∣ b * c := by
+    intro a b c hab
+    exact Nat.mul_dvd_mul hab ( rfl )
+
+  -- Prove that $5^3 \nmid 4$.
+  have h3 : ¬ (5 ^ 3 : ℕ) ∣ 4 := by
+    norm_num
+
+  -- Prove that for all $a, b \in \mathbb{N}$, if $a \mid b$, then $a^2 \mid b^2$.
+  have h4 : ∀ a b : ℕ, a ∣ b → a * a ∣ b * b := by
+    intro a b hab
+    exact Nat.mul_dvd_mul hab hab
+
+  -- Prove that $2^4 \nmid 24$.
+  have h5 : ¬ (2 ^ 4 : ℕ) ∣ 24 := by
+    norm_num
+
+  -- Prove that if $a \mid b$ and $b \mid c$, then $a \mid c$.
+  have h6 : ∀ a b c : ℕ, a ∣ b → b ∣ c → a ∣ c := by
+    intro a b c hab hbc
+    exact Nat.dvd_trans hab hbc
+
+  -- how many perfect squares are divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$?
+  -- $ \textbf{(A)}\ 504\qquad\textbf{(B)}\ 672\qquad\textbf{(C)}\ 864\qquad\textbf{(D)}\ 936\qquad\textbf{(E)}\ 1008 $ Show that it is \mathrm{(B)}.
+  have h7 : ∀ x ∈ S, 1 ≤ x ∧ x ^ 2 ∣ (∏ i ∈ Finset.Icc 1 9, i!) := by
+    intro x hx
+    obtain ⟨hx1, hx2⟩ := hx
+    constructor
+    · exact hx1
+    · -- how many perfect squares are divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$?
+      exact hx2
+
+  have h8 : ∀ x ∈ S, (x ^ 2).primeFactorsList.length = 8 := by
+    intro x hx
+    specialize h7 x hx
+    rw [←prime factorsList_factorization' (by decide) (by decide)] at h7
+    rw [factorization_prod_pow_eq_self (by simp) (by simpa using h7)] at h7
+    have : (∏ x_1 ∈ x.primeFactorsList, x ^ 2) =
+      ∏ x_1 ∈ x.primeFactorsList, (x ^ 2) :=
+      eq_congr (. univ) (congrArg (·) (congrArg (·) h7))
+    rw [←this] at h7
+    simp only [List.toFinset_card', Multiset.toFinset_card, Finsupp.toFinset_card', Multiset.toFinset_card', List.toFinset_card] at h7
+    rw [←card_nodup_nodup (List.nodup_primeFactorsList) (by simp)] at h7
+    -- There are 8 distince prime numbers less than 10.
+    have : (Finset.Icc 1 9).filter (fun x => Nat.Prime x) = {2, 3, 5, 7} := by decide
+    rw [this] at h7
+    simp only [Finset.nodup_cons, Finset.nodup_singleton] at h7
+    -- The number of $x$ which is a perfect square and divides $9!$ is equal to
+    -- the number of distinct prime numbers less than 10.
+    have : {x | 1 ≤ x ∧ x ^ 2 ∣ (∏ i ∈ Finset.Icc 1 9, i!)} =
+      {1, 2, 3, 5, 6, 10, 12, 15, 18, 20, 24, 30, 36, 40, 45, 48, 54, 60, 72, 80, 90, 120, 144, 180, 240, 360, 720} := by
+      ext x
+      simp only [List.mem_cons, List.mem_singleton, Set.mem_setOf_eq, List.mem_toFinset]
+      constructor
+      · intro h
+        rcases h with ⟨hx1, hx2⟩
+        have h9 : x < 360 := by
+          rw [←hx2]
+          apply Nat.lt_of_dvd (by decide)
+          apply h2 _ _ _ hx1
+          apply Finset.dvd_prod_mem (λ x => Nat.Prime x) (by decide) (by simp)
+          exact hx1
+        interval_cases x <;> norm_num
+      · intro hx
+        constructor
+        · calc
+            1 ≤ 180 := by norm_num
+            _ = 180 := by omega
+        · decide
+    -- We can calculate the number of elements of the set directly.
+    have : ({1, 2, 3, 5, 6, 10, 12, 15, 18, 20, 24, 30, 36, 40, 45, 48, 54, 60, 72, 80, 90, 120, 144, 180, 240, 360, 720} : Finset ℕ).card = 26 := by decide
+    rw [←this] at h7
+    -- The number of elements of the set is equal to the number of distinct prime numbers less than 10.
+    have : ({1, 2, 3, 5, 6, 10, 12, 15, 18, 20, 24, 30, 36, 40, 45, 48, 54, 60, 72, 80, 90, 120, 144, 180, 240, 360, 720} : Finset ℕ).card =
+      ({p | Nat.Prime p ∧ p ≤ 9} : Finset ℕ).card := by
+      -- The set contains only square numbers.
+      have : ∀ x ∈ {1, 2, 3, 5, 6, 10, 12, 15, 18, 20, 24, 30, 36, 40, 45, 48, 54, 60, 72, 80, 90, 120, 144, 180, 240, 360, 720}, Nat.Prime x ∧ x ≤ 9 := by
+        intro x hx
+        simp only [List.mem_cons, List.mem_singleton, Set.mem_setOf_eq, List.mem_toFinset] at hx
+        rcases hx with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+        any_goals norm_num
+        all_goals tauto
+      have card_le : ({1, 2, 3, 5, 6, 10, 12, 15, 18, 20, 24, 30, 36, 40, 45, 48, 54, 60, 72, 80, 90, 120, 144, 180, 240, 360, 720} : Finset ℕ).card ≤
+        ({p | Nat.Prime p ∧ p ≤ 9} : Finset ℕ).card := by
+        apply Finset.card_le_card
+        intro x hx
+        exact this x hx
+      clear this
+      -- The set contains only square numbers.
+      have : ∀ x ∈ {p | Nat.Prime p ∧ p ≤ 9}, x ∈ {1, 2, 3, 5, 6, 10, 12, 15, 18, 20, 24, 30, 36, 40, 45, 48, 54, 60, 72, 80, 90, 120, 144, 180, 240, 360, 720} := by
+        intro x hx
+        simp only [Set.mem_setOf_eq, Nat.prime_dvd_prime_iff_eq (by decide) hx.1] at hx
+        have h9 : x < 10 := by omega
+        interval_cases x <;> norm_num
+        all_goals tauto
+      have card_ge : ({p | Nat.Prime p ∧ p ≤ 9} : Finset ℕ).card ≤ ({1, 2, 3, 5, 6, 10, 12, 15, 18, 20, 24, 30, 36, 40, 45, 48, 54, 60, 72, 80, 90, 120, 144, 180, 240, 360, 720} : Finset ℕ).card := by
+        apply Finset.card_le_card
+        intro x hx
+        exact this x hx
+      -- The number of distinct prime numbers less than 10 is 8.
+      have : ({p | Nat.Prime p ∧ p ≤ 9} : Finset ℕ).card = 8 := by
+        decide
+      rw [this] at card_ge
+      rw [this] at card_le
+      -- The number of elements of the set is equal to 8.
+      linarith
+    rw [←this] at h7
+    clear this
+    -- The number of elements of the set is equal to 8.
+    linarith
+
+  have h9 : S.card = 672 := by
+    -- The number of elements of the set is equal to 8.
+    calc
+      S.card = ∏ x ∈ S, 2 := by rw [card_eq_prod_const]; intro x hx; rw [←hx]; exact h8 x hx
+      _ = (∏ x ∈ S, (x ^ 2).primeFactorsList.length) := by rw [Finset.prod_congr]; rfl; intro x hx; rw [h8 x hx]
+      _ = ∏ x ∈ S, Nat.Prime.factorization (x ^ 2) := by rw [Finset.prod_congr]; rfl; intro x hx; rw [←h8 x hx, List.length_primeFactorsList]; apply Nat.Prime.factorization_eq_primeFactorsList (by decide) (by simp at hx; omega)
+      _ = ∏ x ∈ S, (x ^ 2).primeFactorsList.toFinset.card := by rw [Finset.prod_congr]; rfl; intro x hx; rw [List.toFinset_card', h8 x hx]
+      _ = ∏ x ∈ S, (Nat.Prime.factorization (x ^ 2)).toFinset.card := by rw [Finset.prod_congr]; rfl; intro x hx; rw [List.toFinset_card', h8 x hx]
+      _ = ∏ x ∈ S, (Nat.Prime.factorization' (x ^ 2)).card := by rw [Finset.prod_congr]; rfl; intro x hx; rw [List.toFinset_card', h8 x hx, card_nodup_nodup (Prime.primes (by decide)) (by simp; intro p1 h1 p2 h2; rw [h1] at h2; rw [←h2] at h1; exact Nat.Prime.eq_of_ne_zero h1 h2)]
+      _ = ∏ x ∈ S, (x ^ 2).primeFactorsList.length := by rw [Finset.prod_congr]; rfl; intro x hx; rw [List.length_primeFactorsList]; apply Nat.Prime.factorization_eq_primeFactorsList (by decide) (by simp at hx; omega)
+      _ = 672 := by decide
+
+  exact h9
+
+```

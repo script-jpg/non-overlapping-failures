@@ -1,0 +1,46 @@
+have hx : 0 < n ^ 3 / 4096 ^ 3 := by
+    obtain ⟨x, hx⟩ := h₁
+    calc
+      0 < x ^ 3 := by exact Nat.zero_lt_of_ne_zero (by rw [hx]; linarith)
+      _ = n ^ 3 := by rw [hx]
+      _ / 4096 ^ 3 = n ^ 3 / 4096 ^ 3 := by rw [hx]
+
+  have hx' : (0 : ℝ) < (n : ℝ) ^ 3 / (4096 : ℝ) ^ 3 := by
+    calc
+      (0 : ℝ) < (0 : ℕ) := by simp
+      _ < n ^ 3 / 4096 ^ 3 := by rel [hx]
+
+  have hmin : (4096 : ℝ) ^ 3 ≤ (n : ℝ) ^ 3 := by
+    apply (Nat.pow_le_pow_iff_left₀ (by norm_num : 3 ≠ 0)).mp
+    apply (div_le_div_iff_of_pos_right hx').mp
+    apply (le_div_iff₀ (by norm_num : (4096 : ℝ) ^ 3 ≠ 0)).mp
+    norm_num
+    exact Nat.pow_le_pow_of_le_left h₀ 3
+
+  apply (Nat.pow_le_pow_iff_left₀ (by norm_num : 3 ≠ 0)).mp at hmin
+
+  have hle:= Nat.pow_le_pow_left hmin 4096
+
+  norm_num at hle
+
+  obtain ⟨t, ht⟩ := h₂
+
+  rw [←ht] at hle
+
+  by_cases h : 4096 = n
+  · rw [h] at hle
+    exact hle
+  · obtain ⟨m, hm⟩ : ∃ m, m > 0 ∧ m < 4096 ∧ n = m := by
+      apply Nat.exists_lt_and_lt_of_not_eq h
+      omega
+    rw [hm.2.2] at hle
+    have g : m ^ 3 > 0 := by exact Nat.zero_lt_of_ne_zero (by rw [hm.2.2]; linarith)
+    have hm' : m ≤ 4095 := by exact Nat.le_sub_one_of_lt hm.2.1
+    have hmlt : m ^ 3 < 4096 ^ 3 := by
+      calc
+        m ^ 3 < 4096 ^ 3 := by exact Nat.pow_lt_pow_left hle hm.2.1
+        _ < 4096 ^ 3 := by norm_num
+    rw [←hm.1] at hmlt
+    have cont : m ^ 3 < m ^ 3 := by exact Nat.lt_of_lt_of_le hmlt (le_of_eq hm.1)
+    exact (Nat.not_lt_of_le (Nat.pow_le_pow_left hmin m)).cont cont
+```

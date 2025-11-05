@@ -1,0 +1,179 @@
+-- We want to show that there are $100$ four-digit positive integers (between $1000$ and $9999$, inclusive) 
+  -- having only even digits that are divisible by $5$.
+  -- We need to count the numbers that satisfy the following conditions:
+  -- 1. $1000 \leq n \leq 9999$
+  -- 2. All digits of $n$ are even
+  -- 3. $5 \mid n$
+
+  -- The structure of this proof is as follows:
+  -- 1. First, we will show that $1000 \leq n \land n \leq 9999 \land 5 \mid n$ 
+  --    if and only if $1000 \leq n \land n \leq 9999 \land 5 \mid n \land (\forall d \in \text{Nat.digits } n, \text{Even } d)$
+  -- 2. Then we can calculate the number of elements in the set by multiplying the number of options for each digit
+  --    The first digit has $4$ options ($2, 4, 6, 8$), the other three digits have $5$ options each ($0, 2, 4, 6, 8$),
+  --    and the last digit has $2$ options ($0, 5$). However, we have to subtract the numbers that are not divisible by $5$.
+  -- 3. We will show that the number of candidates is $100$ by checking all the cases
+
+  have h₁ : ∀ n : ℕ, n ∈ S ↔ 1000 ≤ n ∧ n ≤ 9999 ∧ 5 ∣ n ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) := by
+    intro n
+    constructor
+    · intro h
+      have h₀' := h₀ n
+      rw [h₀'] at h
+      exact h
+    · intro h
+      have h₀' := h₀ n
+      rw [h₀']
+      rcases h with ⟨h₀, h₁, h₂, h₃⟩
+      exact ⟨h₀, h₁, h₂, h₃⟩
+
+  -- Now we know that $n \in S \leftrightarrow 1000 \leq n \land n \leq 9999 \land 5 \mid n \land (\forall d \in \text{Nat.digits } n, \text{Even } d)$
+  -- We can use this to simplify our goal
+
+  have h₂ : S = {n | 1000 ≤ n ∧ n ≤ 9999 ∧ 5 ∣ n ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d)} := by
+    ext n
+    simp [h₁]
+
+  -- Now we can calculate the cardinality of this set by counting the number of elements that satisfy the conditions
+  -- We will do this by showing that the set is in bijection with a set that has $100$ elements
+
+  let f : ℕ → ℕ := fun n => 1000 + 375 * n
+  have f_inj : Set.InjOn f (Set.range 27) := by
+    intro n hn m hm h
+    simp [f] at h
+    omega
+
+  have f_0 : f 0 = 1000 := by simp [f]
+  have f_26 : f 26 = 1000 + 375 * 26 := by simp [f]
+
+  have fimg : f '' Set.range 27 = Set.Icc 1000 (1000 + 375 * 26) := by
+    ext n
+    constructor
+    · intro hn
+      rcases hn with ⟨m, hm⟩
+      rw [← hm]
+      constructor
+      · have h : ∀ n : ℕ, n ∈ Set.range 27 ↔ n ≤ 26 := by
+          intro n
+          constructor
+          · intro hn
+            exact hn
+          · intro hn
+            exact Nat.lt_add_one hn
+        rw [h] at hm
+        rw [f]
+        simp only [Set.mem_image, Set.mem_setOf_eq, exists_prop]
+        simp only [h, forall_exists_index, and_imp]
+        have hn' := hn
+        refine ⟨?_,?_⟩
+        · omega
+        · omega
+      · rcases hn with ⟨hn, _⟩
+        omega
+    · intro hn
+      simp only [Set.mem_image, Set.mem_setOf_eq, exists_prop]
+      rw [f]
+      simp only [Set.mem_Icc, and_imp]
+      have h : ∀ n : ℕ, n ∈ Set.range 27 ↔ n ≤ 26 := by
+        intro n
+        constructor
+        · intro hn
+          exact hn
+        · intro hn
+          exact Nat.lt_add_one hn
+      constructor
+      · use (n - 1000) / 375
+        have hn' := hn
+        refine ⟨?_,?_⟩
+        · have h : 1000 ≤ n := by omega
+          have h' : 1000 + 375 * ((n - 1000) / 375) ≤ n := by omega
+          exact h'
+        · have h : ((n - 1000) / 375) ≤ 26 := by omega
+          exact h
+      · refine ⟨?_,?_⟩
+        · omega
+        · rw [h]
+          omega
+
+  have h₃ : {n | 1000 ≤ n ∧ n ≤ 9999 ∧ 5 ∣ n ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d)} ∩ 
+    (Set.Icc 1000 (1000 + 375 * 26)) = {n | 1000 ≤ n ∧ n ≤ 1000 + 375 * 26 ∧ 5 ∣ n ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d)} := by
+    ext n
+    constructor
+    · intro hn
+      have h := hn.1
+      overide with
+      constructor
+      · exact h.1
+      · exact h.2.1
+      · exact h.2.2
+    · intro hn
+      have h := hn
+      overide with
+      constructor
+      · exact h.1
+      · exact ⟨h.2, h.3.1⟩
+
+  have h₄ : {n | 1000 ≤ n ∧ n ≤ 1000 + 375 * 26 ∧ 5 ∣ n ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d)} = 
+    Finset.filter (fun n => 1000 ≤ n ∧ n ≤ 1000 + 375 * 26 ∧ 5 ∣ n ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d)) 
+    (Finset.Icc (f 0) (f 26)) := by
+    ext n
+    simp [f]
+    constructor
+    · intro hn
+      overide with
+      exact hn
+    · intro hn
+      have h₀ := hn.1
+      have h₁ := hn.2
+      have h₂ := hn.3.1
+      have h₃ := hn.3.2
+      refine ⟨?_,?_,?_,?_⟩
+      · exact h₀
+      · exact h₁
+      · exact h₂
+      · exact h₃
+
+  rw [h₂, fimg, h₃, h₄, Finset.card_coe_Finset]
+
+  -- Now the goal is to show that there are $100$ elements in the set $\{n | 1000 ≤ n ∧ n ≤ 1000 + 375 * 26 ∧ 5 ∣ n ∧ (∀ d, d ∈ \text{Nat.digits } n → \text{Even } d)\}$
+  -- We will show this by counting the number of candidates and eliminating the ones that are not divisible by $5$
+
+  have h₅ : 375 * 26 = 9750 := by norm_num
+  have h₆ : 1000 + 9750 = 10750 := by norm_num
+
+  -- The first digit has $4$ options ($2, 4, 6, 8$), the other three digits have $5$ options each ($0, 2, 4, 6, 8$),
+  -- and the last digit has $2$ options ($0, 5$). However, we have to subtract the numbers that are not divisible by $5$.
+  -- Thus, the total number of elements is $4 * 5 * 5 * 5 * 2 = 100 * 5 = 500$
+  -- $500 / 5 = 100$, so there are $100$ numbers that satisfy all the conditions
+
+  have h₇ : ∃ x, x = {n | 1000 ≤ n ∧ n ≤ 1000 + 375 * 26 ∧ 5 ∣ n ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d)} :=
+    Set.exists_subset_eq h₃
+  rcases h₇ with ⟨S', hS'⟩
+
+  have h₈ : Finset.coe S' = Finset.filter (fun n => 1000 ≤ n ∧ n ≤ 1000 + 375 * 26 ∧ 5 ∣ n ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d)) 
+    (Finset.Icc (f 0) (f 26)) := by
+    ext n
+    simp [f]
+    constructor
+    · intro hn
+      refine ⟨?_,?_,?_,?_⟩
+      · exact hn.1
+      · exact hn.2.1
+      · exact hn.2.2.1
+      · exact hn.2.2.2
+    · intro hn
+      have h₀ := hn.1
+      have h₁ := hn.2
+      have h₂ := hn.3.1
+      have h₃ := hn.3.2
+      refine ⟨?_,?_⟩
+      · exact h₀
+      · exact h₁
+      · exact h₂
+      · exact h₃
+
+  rw [h₈, Finset.card_coe_Finset]
+
+  -- We can eliminate the numbers that are not divisible by $5$ and show that there are $100$ elements left
+  -- use the tactic 'native_decide' to decide the goal, since it can automatically check the truth of this proposition
+  native_decide
+```

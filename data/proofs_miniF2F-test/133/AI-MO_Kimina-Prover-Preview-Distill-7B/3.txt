@@ -1,0 +1,51 @@
+have h2 : 0 < a ^ p := by exact Nat.pow_pos h₀
+
+  -- We want to use the formula for the sum of a geometric series:
+  -- 1 + a + a^2 +... + a^(p-1) = (a^p - 1) / (a - 1) if a ≠ 1
+  -- In our case, a = 1 + 1/p, and we have p terms in our sum.
+  -- So we have: (1 + 1/p)^p = 1 + p(1/p) + p(p-1)/2! * (1/p)^2 +... + (1/p)^p
+  -- The formula is from the binomial theorem, and the inequality follows because p is a prime number and a is a positive integer.
+  have h3 : p ∣ a ^ p - a := by
+    by_cases h : a = 1
+    · rw [h]
+      simp
+    · have h2 : 1 ≤ a := by exact Nat.one_le_iff_ne_zero.mpr h
+      have h3 : 1 + (a - 1) = a := by exact Eq.symm (Nat.add_sub_of_le h2)
+      -- The key identity: (1 + 1/p)^p = 1 + p(1/p) + p(p-1)/2! * (1/p)^2 +... + (1/p)^p
+      rw [← Nat.coprime_iff_gcd_eq_one] at h₁
+      -- Show that p divides (a^p - a) by analyzing the expression algebraically
+      have h4 : p ∣ (a - 1) * (1 + (a - 1) + (a - 1) ^ 2 * (1 / p) + (a - 1) ^ 3 * (1 / p) ^ 2 + (a - 1) ^ 4 * (1 / p) ^ 3 + (1 / p) ^ 4) := by
+        apply Nat.dvd_mul_of_dvd_right
+        -- Verify that p divides the sum by showing it's a sum of terms involving p in the denominator
+        simp only [pow_one, pow_succ, Nat.reduceSub, add_mul, Nat.reduceAdd]
+        apply Nat.mul_dvd_mul_left
+        -- Show that p divides (1 + (a - 1) + (a - 1)^2 * (1/p) + (a - 1)^3 * (1/p)^2 + (a - 1)^4 * (1/p)^3 + (1/p)^4)
+        -- This is true because each term has a factor of p in the denominator
+        apply Nat.dvd_add
+        · apply Nat.dvd_add
+          · apply Nat.dvd_add
+            · apply Nat.dvd_add
+              · apply Nat.dvd_add
+                · norm_num
+                · exact Nat.dvd_rfl p ((a - 1) ^ 4)
+              · exact Nat.dvd_rfl p ((a - 1) ^ 3 * (1 / p) ^ 3)
+            · exact Nat.dvd_rfl p ((a - 1) ^ 2 * (1 / p) ^ 2)
+          · exact Nat.dvd_rfl p ((a - 1) * (1 / p))
+        · exact Nat.dvd_rfl p ((1 / p) ^ 4)
+      have h5 : a ^ p - a = (a - 1) * (1 + (a - 1) + (a - 1) ^ 2 * (1 / p) + (a - 1) ^ 3 * (1 / p) ^ 2 + (a - 1) ^ 4 * (1 / p) ^ 3 + (1 / p) ^ 4) := by
+        clear h2
+        -- This identity is derived from the binomial theorem
+        have h5 : 1 + (a - 1) = a := by exact Eq.symm (Nat.add_sub_of_le h2)
+        rw [← Nat.coprime_iff_gcd_eq_one] at h₁
+        rw [← Nat.prime_iff]
+        refine Eq.symm (Nat.eq_div_of_mul_eq_left?_ (id (Eq.symm h5)))
+        rw [← h5]
+        rify
+        simp only [Nat.cast_sub, Nat.cast_add, Nat.cast_pow, Nat.cast_mul, sub_zero, zero_sub,
+          mul_zero, add_zero, pow_zero, mul_one, div_self, one_div, isUnit_iff, ne_eq,
+          OfNat.ofNat_ne_zero, not_false_eq_true, IsUnit.div_mul_cancel]
+        exact h₁
+      rw [h5]
+      exact h4
+  exact h3
+```

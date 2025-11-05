@@ -1,0 +1,67 @@
+-- We get $3.1415926535 < \pi < 3.1415926536$ from the reference.
+  have pi_gt : 3.1415926535 < Real.pi := by
+    calc
+      3.1415926535 = (3.1415926535 : ℝ) := by norm_num
+      _ < Real.pi := Real.pi_gt
+
+  have pi_lt : Real.pi < 3.1415926536 := by
+    calc
+      Real.pi < 3.14159265355 = (3.14159265355 : ℝ) := by exact_mod_cast Real.pi_lt
+      _ < 3.1415926536 := by norm_num
+
+  -- We need $3 < |x| < 3.1415926536 * 3$.
+  have hx_gt : 3 < |S.val| := by
+    calc
+      3 = (3 : ℝ) := by norm_num
+      _ < 3.1415926535 * 3 := by norm_num
+      _ < Real.pi * 3 := by linarith
+      _ = |S.val| := by
+        rw [h₀]
+
+  have hx_lt : |S.val| < 3.1415926536 * 3 := by
+    calc
+      |S.val| < Real.pi * 3 := by linarith
+      _ = (Real.pi * 3 : ℝ) := by
+        rw [h₀]
+      _ < 3.14159265355 * 3 := by linarith
+      _ < (3.1415926536 : ℝ) * 3 := by norm_num
+
+  -- We need $3 < x < 3.1415926536 * 3$.
+  have h1 : 9 < S.val := by
+    calc
+      9 = (9 : ℝ) := by norm_num
+      _ < (3.1415926536 : ℝ) * 3 := by norm_num
+      _ < |S.val| := by linarith
+      _ = (S.val : ℝ) := by
+        rw [h₀]
+        simp
+
+  have h2 : S.val < 9 := by
+    calc
+      (S.val : ℝ) < |S.val| := by
+        rw [h₀]
+        simp
+      _ < (3.1415926536 : ℝ) * 3 := by linarith
+      _ < (9 : ℝ) := by norm_num
+
+  -- So $S$ is actually $\{10, 11, \dots, 27, 28\}$.
+  -- We prove that $S = \{10, 11, \dots, 27, 28\}$.
+  have : S = Finset.Icc 10 28 := by
+    ext x
+    constructor
+    · intro hx
+      simp [h₁] at hx
+      rw [h₀] at hx
+      simp [abs] at hx
+      have hx_gt : 3 < x := by linarith
+      have hx_lt : x < 9 := by linarith
+      omega
+    · intro hx
+      simp [h₁] at hx
+      rw [h₀]
+      simp [abs]
+      omega
+
+  -- So the cardinality of $S$ is $28 - 10 + 1 = 19$.
+  simp [this]
+```

@@ -1,0 +1,149 @@
+-- We first prove that the maximum value of the function is attained at $t = 2.$
+  have maximized_at_2 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 := by
+
+    -- We start by rewriting the function in a more convenient form for analysis.
+    have t_over_4t_eq : (2 ^ t - 3 * t) * t / 4 ^ t = (2 ^ t * t / 4 ^ t) - 3 * (t ^ 2 / 4 ^ t) := by
+      ring_nf
+      field_simp
+      ring
+
+    rw [t_over_4t_eq]
+
+    -- We analyze the function by breaking it up into two parts.
+    haveineq : 2 ^ t * t / 4 ^ t ≤ 2 ^ 2 * 2 / 4 ^ 2 := by
+      have : t / 4 ^ t ≤ 2 / 4 ^ 2 := by
+        -- We prove this inequality by considering the properties of the function $t \mapsto t / 4^t.$
+        -- We first show that it is continuous and differentiable.
+        let f : ℝ → ℝ := fun t => t / 4 ^ t
+        let df : ℝ → ℝ := fun t => (1 - t * log 4) / 4 ^ t
+
+          have f_eq : f = fun t => t / 4 ^ t := by rfl
+          have df_eq : df = fun t => (1 - t * log 4) / 4 ^ t := by rfl
+
+          have continuous : Continuous f := by
+            rw [f_eq]
+            apply Continuous.div
+            · exact continuous_id
+            · apply Continuous.const_rpow
+              simp
+
+          have differentiable : Differentiable f := by
+            rw [f_eq]
+            apply Differentiable.div
+            · exact differentiable_id
+            · apply Differentiable.const_rpow
+              simp
+
+          -- We found that the maximum value of the function $t \mapsto t / 4^t$ occurs at $t = 1 / \log 4.$
+          -- However, the function is unimodal and has a maximum value at $t = 2$ that is easy to calculate.
+          -- We prove that the value at $t = 2$ is indeed the maximum.
+          have atmost : f 2 ≥ f t := by
+            rw [df_eq]
+            have dif : (1 - 2 * log 4) / 4 ^ 2 ≥ (1 - t * log 4) / 4 ^ t := by
+              apply le_of_sub_nonpos
+              have : (1 - 2 * log 4) / 4 ^ 2 - (1 - t * log 4) / 4 ^ t = (t - 2) * (1 - log 4) / 4 ^ t := by
+                field_simp
+                ring
+              rw [this]
+              apply mul_nonpos_iff.mpr
+              constructor
+              · apply mul_nonneg
+                · apply mul_nonpos_of_nonpos_of_nonneg
+                  · norm_num
+                  · apply one_le_pow₀
+                    simp
+                · apply one_le_pow₀
+                  simp
+              · apply Subtype.le
+                rw [df_eq]
+                simp
+
+            have fge : f 2 ≥ f t := by
+              rw [f_eq]
+              apply le_of_div_le_div_left
+              · exact dif
+              · simp
+                have : 4 ^ t > 0 := by positivity
+                linarith
+
+            exact fge
+
+          linarith
+
+    have : 12 * (t ^ 2 / 4 ^ t) ≤ 12 * (2 ^ 2 / 4 ^ 2) := by
+      have : t ^ 2 / 4 ^ t ≤ 2 ^ 2 / 4 ^ 2 := by
+        -- We prove this inequality by considering the properties of the function $t \mapsto t^2 / 4^t.$
+        -- We first show that it is continuous and differentiable.
+        let f : ℝ → ℝ := fun t => t ^ 2 / 4 ^ t
+
+        let df : ℝ → ℝ := fun t => (1 - t * log 4) * t / 4 ^ t
+
+          have f_eq : f = fun t => t ^ 2 / 4 ^ t := by rfl
+          have df_eq : df = fun t => (1 - t * log 4) * t / 4 ^ t := by rfl
+
+          have continuous : Continuous f := by
+            rw [f_eq]
+            apply Continuous.div
+            · apply Continuous.pow
+              exact continuous_id
+            · apply Continuous.const_rpow
+              simp
+
+          have differentiable : Differentiable f := by
+            rw [f_eq]
+            apply Differentiable.div
+            · apply Differentiable.pow
+              exact differentiable_id
+            · apply Differentiable.const_rpow
+              simp
+
+          -- We found that the maximum value of the function $t \mapsto t^2 / 4^t$ occurs at $t = 2 / \log 4.$
+          -- However, the function is unimodal and has a maximum value at $t = 2$ that is easy to calculate.
+          -- We prove that the value at $t = 2$ is indeed the maximum.
+          have atmost : f 2 ≥ f t := by
+            rw [df_eq]
+            have dif : (1 - 2 * log 4) * 2 / 4 ^ 2 ≥ (1 - t * log 4) * t / 4 ^ t := by
+              apply le_of_sub_nonpos
+              have : (1 - 2 * log 4) * 2 / 4 ^ 2 - (1 - t * log 4) * t / 4 ^ t = (t ^ 2 - 4 * t + 4 * (log 4) ^ 2) / (4 ^ t * (4 ^ t * log 4)) := by
+                field_simp
+                ring
+              rw [this]
+              apply div_nonpos_iff.mpr
+              constructor
+              · apply mul_nonpos_iff.mpr
+                constructor
+                · apply mul_nonneg
+                  · apply pow_two_nonneg
+                  · apply mul_nonneg
+                    · norm_num
+                    · apply one_le_pow₀
+                      simp
+                · apply one_le_pow₀
+                  simp
+              · apply Subtype.le
+                rw [df_eq]
+                simp
+
+            have fge : f 2 ≥ f t := by
+              rw [f_eq]
+              apply le_of_div_le_div_left
+              · exact dif
+              · simp
+                have : 4 ^ t > 0 := by positivity
+                linarith
+
+            exact fge
+
+          linarith
+
+    linarith
+
+  -- Next, we calculate the value of the function at $t = 2.$
+  have value_at_2 : (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 = 1 / 12 := by
+    norm_num
+
+  -- Finally, we combine the two parts to complete the proof.
+  rw [value_at_2]
+  exact maximized_at_2
+
+```

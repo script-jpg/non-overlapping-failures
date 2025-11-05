@@ -1,0 +1,62 @@
+-- We will show that the solutions are $n = 500, 501, 502, 503, 504, 505.$
+  have h₁ : S = {500, 501, 502, 503, 504, 505} := by
+    -- To that end, we will show that the set of solutions is exactly the set $\{500, 501, 502, 503, 504, 505\}.$
+    ext n
+    simp only [Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff, Finset.coe_insert,
+      Finset.coe_singleton, Set.mem_range, Finset.mem_range]
+    constructor
+    · intro h
+      -- First, we will show that $n \leq 505.$
+      have h2 : n ≤ 505 := by
+        -- Since $\lfloor \sqrt{n} \rfloor$ is an integer, $n$ must be in between two consecutive squares.
+        -- As $\lfloor \sqrt{n} \rfloor = \lfloor \sqrt{n+1} \rfloor$ if and only of $n+1$ is not a square,
+        -- and $n+1000 \equiv 500 \pmod{70}$, it follows that $n \equiv 500 \pmod{70}$.
+        rcases h₀.symm (n) ▸ h with ⟨h1, h2⟩
+        have h3 : n ≥ 500 := by
+          have h3 : (n : ℝ) ≥ 500 := by
+            have h3 : (500 : ℝ) = 500 / 1 := by norm_num
+            rw [h3]
+            apply (div_le_div_iff_of_pos_right (by norm_num : (1 : ℝ) > 0)).mpr
+            linarith [Real.sqrt_le_sqrt (by norm_num : (0 : ℝ) ≤ n) (by norm_num : (0 : ℝ) ≤ 500)]
+          have h4 : (500 : ℝ) ≤ n := by
+            rw [show (500 : ℝ) = (500 : ℕ) by norm_num]
+            have h4 : (500 : ℕ) ≤ n := by
+              have h : (70 : ℝ) > 0 := by norm_num
+              by_contra! h5
+              have h6 : (70 * (n : ℝ) + 1000) / 70 < 500 := by
+                rw [div_lt_iff₀]
+                (try norm_num); linarith [h2]
+              have h7 : (70 * (n : ℝ) + 1000) / 70 = (500 : ℝ) := by linarith
+              linarith
+            exact Nat.cast_le.mp h4
+          exact h3
+        -- Also, modulo reasoning shows that $n \leq 505$.
+        have h4 : n ≤ 505 := by
+          have h : (70 * (n : ℝ) + 1000) / 70 = (n : ℝ) + 1000 / 70 := by ring
+          rw [h] at h2
+          have h5 : n + 1000 / 70 ≤ (n : ℝ) + 1000 / 70 := by exact (add_le_add_iff_right (1000 / 70)).mpr h1
+          have h6 : ((n : ℝ) + 1000 / 70) ^ 2 < (n + 1) ^ 2 := by
+            have h6 : (n + 1 : ℝ) ^ 2 = (n : ℝ) ^ 2 + 2 * (n : ℝ) + 1 := by ring
+            rw [h6]
+            have h7 : (n : ℝ) ^ 2 + 2 * (n : ℝ) + 1 - ((n : ℝ) + 1000 / 70) ^ 2 = (70 * (n : ℝ) - 499500) / 4900 := by ring
+            rw [h7]
+            have h8 : (70 * (n : ℝ) - 499500) / 4900 > 0 := by
+              apply (div_pos_iff_of_pos_right (by norm_num : (4900 : ℝ) > 0)).mpr
+              linarith [h₀.symm (n) ▸ h]
+            exact Nat.cast_lt.mp h8
+          have h7 : (n + 1000 / 70) ^ 2 ≤ ((n : ℝ) + 1000 / 70) ^ 2 := by exact (pow_le_pow_iff_left₀ (by norm_num) (add_nonneg (le_of_lt h1) (by norm_num))).mpr h5
+          have h8 : (n + 1 : ℝ) ^ 2 < (n + 1000 / 70) ^ 2 := by linarith
+          have h9 : (n + 1 : ℝ) < (n + 1000 / 70) := by
+            apply (pow_lt_pow_iff_left₀ (by norm_num) (add_nonneg (le_of_lt h1) (by norm_num))).mp h8
+          linarith
+        -- Since $n \equiv 500 \pmod{70}$ and $n \leq 505$, $n$ must be $500, 501, 502, 503, 504,$ or $505$.
+        omega
+      -- Now, we just have to check that each of these numbers is a solution.
+      interval_cases n
+      all_goals norm_num at h₀ ⊢
+    -- Now, we will show that $n \geq 500.$
+    · intro h
+      rcases h with h | h | h | h | h | h <;> (rw [h] at h₀ ⊢ ; norm_num at h₀ ⊢)
+  rw [h₁]
+  decide
+```

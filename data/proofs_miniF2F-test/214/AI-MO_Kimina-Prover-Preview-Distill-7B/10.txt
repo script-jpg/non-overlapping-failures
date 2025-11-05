@@ -1,0 +1,55 @@
+-- aux lemma, which gives the formula of the partial sum of $\sin kx$.
+  have hsin (x : ℝ) (n : ℕ) : ∑ k in Finset.Icc 1 n, Real.sin (k * x) = (Real.sin (n * x / 2) * Real.sin ((n + 1) * x / 2)) / Real.sin (x / 2) := by
+    let y := x / 2
+    have yne0 : y ≠ 0 := by
+      by_contra! yeq0
+      simp [←yeq0] at x
+      simp [x]
+    have h (n : ℕ) : Real.sin (n * y) * Real.sin ((n + 1) * y) / Real.sin y = Real.sin (n * y) * Real.sin ((n + 1) * y) / Real.sin y := by rfl
+    induction n with
+    | zero => simp; rw [←h 0]; simp [yne0]
+    | succ n ih =>
+      rw [Finset.sum_Icc_succ_top (by omega), ih]
+      field_simp [yne0]
+      have : Real.sin (n * y) * Real.cos y + Real.cos (n * y) * Real.sin y = Real.sin (n * y + y) := by rw [Real.sin_add]
+      rw [this]
+      have : (n + 1) * (n + 1 + 1) = (n + 1) * (n + 2) := by rfl
+      rw [this]
+      ring
+
+  have : ∑ k ∈ Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180) = (Real.sin (35 * (Real.pi / 180)) * Real.sin (36 * (Real.pi / 180))) / Real.sin (Real.pi / 36) := by
+    rw [hsin]
+    · push_cast; field_simp
+      ring
+    · push_cast; ring
+  rw [this] at h₁
+  clear this
+  -- We show that $\tan \frac{35\pi}{72}=\frac{\sin \frac{35\pi}{36}}{\sin \frac{\pi}{36}}$.
+  have htan : Real.tan (35 * Real.pi / 72) = (Real.sin (35 * Real.pi / 36) / Real.sin (Real.pi / 36)) := by
+    have : 35 * Real.pi / 72 = (35 * Real.pi / 36) - (Real.pi / 36) := by ring
+    rw [this, Real.tan_eq_sin_div_cos, Real.sin_sub, Real.cos_sub]
+    have : Real.sin (Real.pi / 36) * Real.cos (Real.pi / 36) + Real.cos (Real.pi / 36) * Real.sin (Real.pi / 36) = 2 * Real.sin (Real.pi / 36) * Real.cos (Real.pi / 36) := by ring
+    rw [this]
+    ring
+    · push_cast; exact pi_pos
+    · push_cast; exact pi_pos
+  -- Since $\frac{35\pi}{36}$ and $\frac{\pi}{36}$ are relatively prime, we get $m=35$ and $n=36$.
+  have h₃ : m.num = 35 ∧ m.den = 36 := by
+    rw [htan] at h₁
+    have : (Real.sin (35 * Real.pi / 36) / Real.sin (Real.pi / 36)) = (Real.sin (35 * Real.pi / 36) / Real.sin (Real.pi / 36)) := by rfl
+    replace h₁ := (div_eq_div_iff?_?_).mp h₁
+    · rw [this] at h₁
+      apply Rat.div_int_inj (by rw [←h₁]; exact pi_pos) (by norm_num) (by norm_num) (by norm_num)
+    · linarith
+    · push_cast; rw [←neg_div_neg]
+      apply Real.sin_neg (35 * Real.pi / 36)
+      apply Real.sin_pos_of_pos_of_lt_pi
+      · linarith
+      · linarith
+    · push_cast; apply Real.sin_neg (Real.pi / 36)
+      apply Real.sin_pos_of_pos_of_lt_pi
+      · linarith
+      · linarith
+  -- Hence $m+n=35+36=\boxed{177}$.
+  rw [h₃.1, h₃.2]
+```

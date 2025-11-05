@@ -1,0 +1,44 @@
+have h₂ : a ^ 3 = 8 := by linear_combination h₀
+  have h₃ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := h₁
+  have h₄ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := by linear_combination h₃
+  have h₅ : a = 2 := by
+    have h₅₀ : a ^ 3 = 8 := h₂
+    have h₅₁ : a = 2 := by
+      have h₅₂ : a ^ 3 - 8 = 0 := by linear_combination h₀
+      have h₅₃ : (a - 2) * (a ^ 2 + 2 * a + 4) = 0 := by
+        ring_nf at h₅₂ ⊢
+        linear_combination h₅₂
+      have h₅₄ : a - 2 = 0 ∨ a ^ 2 + 2 * a + 4 = 0 := eq_zero_or_eq_zero_of_mul_eq_zero h₅₃
+      cases' h₅₄ with h₅₄ h₅₄
+      · apply eq_of_sub_eq_zero h₅₄
+      · have h₅₅ : a ^ 2 + 2 * a + 4 = 0 := h₅₄
+        have h₅₆ : (a + 1) ^ 2 = -3 := by
+          nlinarith
+        have h₅₇ : (a + 1) ^ 2 ≥ 0 := by nlinarith
+        nlinarith [sq_nonneg (a + 1)]
+    exact h₅₁
+  have h₆ : b = 4 ∨ b = 4 * (-1 + Complex.I * Real.sqrt 3) / 2 ∨ b = 4 * (-1 - Complex.I * Real.sqrt 3) / 2 := by
+    have h₆₀ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := h₃
+    have h₆₁ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := by linear_combination h₄
+    have h₆₂ : (b - 4) * (b ^ 2 - 4 * b + 16) = 0 := by
+      ring_nf at h₆₁ ⊢
+      linear_combination h₆₁
+    have h₆₃ : b - 4 = 0 ∨ b ^ 2 - 4 * b + 16 = 0 := eq_zero_or_eq_zero_of_mul_eq_zero h₆₂
+    cases' h₆₃ with h₆₃ h₆₃
+    · have h₆₄ : b = 4 := by linear_combination h₆₃
+      exact Or.inl h₆₄
+    · have h₆₅ : b ^ 2 - 4 * b + 16 = 0 := h₆₃
+      have h₆₆ : b = 4 * (-1 + Complex.I * Real.sqrt 3) / 2 ∨ b = 4 * (-1 - Complex.I * Real.sqrt 3) / 2 := by
+        apply or_iff_not_imp_left.mpr
+        intro h₆₆
+        apply mul_left_cancel₀ (sub_ne_zero.mpr h₆₆)
+        rw [← sub_eq_zero]
+        ring_nf at h₆₅ ⊢
+        norm_num at h₆₅ ⊢
+        simp_all [Complex.ext_iff, pow_two, pow_three]
+        <;> ring_nf at * <;> norm_num at * <;>
+          (try constructor) <;>
+          nlinarith [Real.sqrt_nonneg 3, Real.sq_sqrt (show (0 : ℝ) ≤ 3 by norm_num)]
+      cases' h₆₆ with h₆₆ h₆₆
+      · exact Or.inr (Or.inl h₆₆)
+      · exact

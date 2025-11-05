@@ -1,0 +1,40 @@
+-- turn h₂, h₃ into a form that can be used by norm_num
+  have h₄ : x = (a + Real.sqrt b) / 2 := by rw [h₃] at h₂; exact h₂
+
+  -- show that $x = 2 + \sqrt{7} / 2$
+  have h₅ : x = 2 + Real.sqrt 7 / 2 := by
+    rw [h₄]
+    -- we have $\sqrt{b} = \sqrt{7}$
+    have hsqrt : Real.sqrt b = Real.sqrt 7 := by
+      have : b = 7 := by
+        apply Int.eq_ofNat_of_zero_le
+        apply Nat.zero_le
+        -- we can show $0 \leq b$ from the assumption
+        rcases h₀ with ⟨_, _, _, hx⟩
+        rw [← hx]
+        nlinarith
+      rw [this]
+    norm_num [hsqrt]
+
+  -- we have $a = 2c - 2$ from $x = 2 + \sqrt{7} / 2$
+  have h₆ : a = 2 * c - 2 := by
+    rw [h₅] at h₄
+    norm_num [h₃] at h₄
+    have : (Real.sqrt 7 : ℝ) = (Real.sqrt 7 : ℝ) := rfl
+    rw [this]
+    linarith
+
+  -- we can use h₀, h₃ to show $c \leq 6$
+  rcases h₀ with ⟨hx1, hx2, hx3, hx4⟩
+  have h₇ : c ≤ 6 := by
+    linarith [h₀, h₃]
+
+  -- consider different cases of $c$ based on h₇
+  interval_cases c
+
+  -- for each case, we can show $a = 2c - 2$ from h₆
+  repeat { split }
+  all_goals
+    linarith
+
+```

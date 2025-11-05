@@ -1,0 +1,97 @@
+-- we prove that $f$ is injective.
+  have h₂ : ∀ n, 0 < n → ∀ m, 0 < m → f n = f m → n = m := by
+    intro n hn m hm hnm
+    by_cases h : n = m
+    · exact h
+    · have : n < m ∨ m < n := by apply Nat.lt_or_gt_of_ne; exact Ne.symm h
+      cases this with
+      | inl h' =>
+        have : f n < f m := by
+          apply h₁ n hn
+          exact Nat.lt_add_one n
+        rw [hnm] at this
+        linarith
+      | inr h' =>
+        have : f m < f n := by
+          apply h₁ m hm
+          exact Nat.lt_add_one m
+        rw [hnm] at this
+        linarith
+
+  -- Since $f(n) < f(n+1)$, we know that $f$ is strictly increasing.
+  have h₃ : StrictMono f := by
+    intro n m hnm
+    have h₃ : ∀ k, 0 < k → f k < f (k + 1) := fun k hk => h₁ k hk
+    have : ∃ i, 0 < i ∧ i = m - n + 1 := by
+      use m - n + 1
+      exact ⟨Nat.sub_pos.mpr hnm, rfl⟩
+    rcases this with ⟨i, hi1, hi2⟩
+    have : m = n + i := by
+      rw [Nat.sub_add_cancel hnm]
+      rw [hi2]
+      ring
+    rw [this]
+    clear this
+    have : n = m - i := by
+      rw [Nat.sub_add_cancel (Nat.le_of_lt hi1)]
+      rw [hi2]
+      ring
+    rw [this]
+    clear this
+    induction i with
+    | zero =>
+      simp only [Nat.zero_add, Nat.cast_zero, zero_add, add_zero, Nat.cast_one, one_add]
+      exact h₃ 1 (by norm_num)
+    | succ i ih =>
+      rw [Nat.cast_add, Nat.cast_one, add_zero, Nat.add_one]
+      specialize h₃ (n + i) (by simp only [Nat.cast_pos]; omega)
+      trans f (n + i + 1)
+      · exact h₃
+      · exact ih
+
+  -- Since $f$ is injective, we know that $f(n) \geq n$ for all $n \geq 1$.
+  have h₄ : ∀ n, 0 < n → f n ≥ n := by
+    intro n hn
+    induction n with
+    | zero => linarith
+    | succ n ih =>
+      by_cases h : n = 0
+      · rw [h, zero_add, Nat.cast_one, one_add]
+        apply h₀
+      · have : n > 0 := by exact Nat.pos_of_ne_zero h
+        have hn : 0 < n := by exact Nat.lt_of_le_of_ne this Ne.symm h
+        have : f n ≥ n := ih hn
+        have : f (n + 1) > f n := by
+          apply h₁ n
+          exact Nat.le_add_left n 1
+        linarith
+
+  -- Since $f$ is strictly increasing, we know that $f(n) \leq n$ for all $n \geq 1$.
+  have h₅ : ∀ n, 0 < n → f n ≤ n := by
+    intro n hn
+    have h₅ : ∀ k, 0 < k → f k < f (k + 1) := fun k hk => h₁ k hk
+    have : ∃ i, 0 < i ∧ i = n := by
+      use n
+      exact ⟨Nat.pos_of_ne_zero hn, rfl⟩
+    rcases this with ⟨i, hi1, hi2⟩
+    have : n = i := hi2
+    rw [this]
+    clear this
+    have h₆ : ∀ k, 0 < k → f k ≥ k := fun k hk => h₄ k hk
+    induction i with
+    | zero =>
+      simp only [Nat.zero_add, Nat.cast_zero, zero_add, add_zero, Nat.cast_one, one_add]
+      specialize h₅ 1 (by norm_num)
+      linarith
+    | succ i ih =>
+      have : f (i + 1) ≥ i + 1 := h₆ (i + 1) (by simp only [Nat.cast_pos]; omega)
+      have : f (i + 1) < f (i + 1) + 1 := h₅ (i + 1) (by simp only [Nat.cast_pos]; omega)
+      linarith
+
+  -- Since $f(n) \geq n$ and $f(n) \leq n$, we know that $f(n) = n$ for all $n \geq 1$.
+  intro n hn
+  specialize h₄ n hn
+  specialize h₅ n hn
+  linarith
+
+```

@@ -1,0 +1,337 @@
+-- Boring lemma that I'm too Mortal to prove
+  have l_1 (f : ℝ → ℝ) (x : ℝ) (h₂ : f x ≥ 1 / 2) (h₃ : f x ^ 2 ≤ f x) : 1 / 2 + Real.sqrt (f x - f x ^ 2) ≥ 1 / 2 := by
+    calc
+      1 / 2 + Real.sqrt (f x - f x ^ 2) ≥ 1 / 2 + Real.sqrt (1 / 2) := by
+        apply add_le_add_left
+        simp
+        exact (Real.sqrt_le_left (by linarith)).mpr (by linarith)
+      _ ≥ 1 / 2 := by simp
+
+  -- Boring lemma that I'm too Mortal to prove
+  have l_2 (f : ℝ → ℝ) (x : ℝ) (h₂ : f x ≥ 1 / 2) (h₃ : f x ^ 2 ≤ f x) : 1 / 2 + Real.sqrt (f x - f x ^ 2) ≤ 1 / 2 + (f x - 1 / 2) := by
+    calc
+      1 / 2 + Real.sqrt (f x - f x ^ 2) ≤ 1 / 2 + (f x - 1 / 2) := by
+        apply add_le_add_left
+        simp
+        refine Real.sqrt_le_left?_
+        linarith
+      _ ≤ 1 / 2 + (f x - 1 / 2) := by simp
+
+  have h₂ (x : ℝ) : f x ≥ 1 / 2 := by
+    suffices ∃ n, f x = 1 / 2 + Real.sqrt (f (x - a * n) - f (x - a * n) ^ 2) from by
+      obtain ⟨n, hn⟩ := this
+      rw [hn]
+      exact (l_1 f x (by linarith) (by linarith)).mpr (by linarith)
+    use 0
+    simp
+
+  have h₃ (x : ℝ) : f x ^ 2 ≤ f x := by
+    suffices ∃ n, f x = 1 / 2 + Real.sqrt (f (x - a * n) - f (x - a * n) ^ 2) from by
+      obtain ⟨n, hn⟩ := this
+      rw [hn]
+      nth_rw 3 [add_comm]
+      refine (le_add_of_sub_left_le?_).mpr?_
+      exact (Real.sqrt_nonneg (f (x - a * n) - f (x - a * n) ^ 2)).mpr (by linarith)
+      exact (Real.sqrt_le_left (by linarith)).mpr (by linarith)
+    use 0
+    simp
+
+  have h₄ (x : ℝ) : f (x + a) ≥ 1 / 2 := by
+    exact l_1 f (x + a) (by linarith) (by linarith)
+
+  have h₅ (x : ℝ) : f (x + a) ≤ 1 / 2 + (f x - 1 / 2) := by
+    exact l_2 f (x + a) (by linarith) (by linarith)
+
+  have h₆ (x : ℝ) : f (x + a) - f x ≤ 1 / 2 - f x := by
+    linarith
+
+  have h₇ (x : ℝ) : f (x + a) - f x ≥ -1 / 2 := by
+    linarith
+
+  have h₈ (x : ℝ) : f (x + 2 * a) - f (x + a) ≤ 1 / 2 - (f (x + a) - f x) := by
+    calc
+      f (x + 2 * a) - f (x + a) ≤ 1 / 2 + (f (x + a) - 1 / 2) - f (x + a) := by
+        exact (h₅ (x + a)).trans (by linarith)
+      _ = 1 / 2 - f (x + a) + f (x + a) - f x := by ring
+      _ = 1 / 2 - f x := by ring
+
+  have h₉ (x : ℝ) : f (x + 2 * a) - f x ≤ 1 / 2 - f x := by
+    calc
+      f (x + 2 * a) - f x = (f (x + 2 * a) - f (x + a)) + (f (x + a) - f x) := by ring
+      _ ≤ 1 / 2 - f (x + a) + (f (x + a) - f x) := by
+        exact add_le_add_right (h₈ x) (f (x + a) - f x)
+      _ = 1 / 2 - f x := by ring
+
+  have h₁₀ (x : ℝ) : f (x + 2 * a) - f x ≥ -1 / 2 - f x := by
+    calc
+      f (x + 2 * a) - f x ≥ (f (x + a) - 1 / 2) - f (x + a) := by
+        exact (h₅ (x + a)).trans (by linarith)
+      _ = f (x + a) - 1 / 2 - f (x + a) + f x - f x := by ring
+      _ = -1 / 2 - f x := by ring
+
+  have h₁₁ (x : ℝ) : 0 ≤ f (x + 2 * a) - f x := by
+    linarith
+
+  -- Define the functional equation
+  let g : ℝ → ℝ := fun x => f (x + 2 * a) - f x
+
+  -- We have g(x) ≥ 0
+  have h₁₂ (x : ℝ) : 0 ≤ g x := by
+    simp [g]
+    exact h₁₁ x
+
+  -- We have g(x) ≤ -1 / 2 - f x
+  have h₁₃ (x : ℝ) : g x ≤ -1 / 2 - f x := by
+    simp [g]
+    exact h₁₀ x
+
+  -- We have g(x) ≤ 1 / 2 - f x
+  have h₁₄ (x : ℝ) : g x ≤ 1 / 2 - f x := by
+    simp [g]
+    exact h₉ x
+
+  -- We have g(x) ≥ -1 / 2 - f x
+  have h₁₅ (x : ℝ) : -1 / 2 - f x ≤ g x := by
+    simp [g]
+    exact h₇ x
+
+  -- Prove that the sequence g(0), g(1), g(2),... is decreasing
+  have h₁₆ (n : ℕ) : g 0 ≥ g n := by
+    induction n with
+    | zero =>
+      simp [g]
+      exact h₆ 0
+    | succ n hn =>
+      rw [add_comm]
+      simp [g]
+      calc
+        f (2 * a + 2 * a) - f (2 * a) ≥ -1 / 2 - f (2 * a) := by exact h₁₅ (2 * a)
+        _ ≤ -1 / 2 - (f (2 * a) - f (2 * a - a * 1)) := by
+          apply add_le_add_left
+          exact (h₆ (2 * a - a * 1)).trans (by linarith)
+        _ ≤ -1 / 2 - (f (2 * a) - f (2 * a - a * n)) := by
+          apply add_le_add_left
+          refine (le_neg_add_iff_add_le'.mpr?_).mpr (h₁₄ (2 * a - a * n))
+          rw [Nat.cast_add]
+          simp
+        _ = g n := by simp [g]
+
+  -- Prove that the sequence g(0), g(1), g(2),... is converging
+  have h₁₇ : ∀ b > 0, ∃ N > b, ∀ n ≥ N, |g n| < b := by
+    intro b hb
+    -- We have |g(n)| ≤ 1 / 2 - f(0)
+    have h₁₁ (n : ℕ) : |g n| ≤ 1 / 2 - f 0 := by
+      rw [abs_le]
+      constructor
+     . linarith
+     . simp [g]
+        exact h₆ n
+    refine ⟨1 / 2 - f 0, by linarith, fun n hn =>?_⟩
+    simp [g]
+    -- We have 1 / 2 - f(0) < b
+    refine lt_of_lt_of_le?_ (h₁₁ n)
+    apply lt_of_lt_of_le hb
+    -- We have 0 ≤ g(n)
+    exact h₁₂ n
+
+  -- Define the set L as the set of all real numbers that can be expressed as a sum of a finite number of 2 * a's
+  let L := {x | ∃ n : ℕ, x = 2 * a * n}
+
+  -- Define the relation R as a subset of L × ℝ
+  let R := {x | x ∈ L ∧ (∀ y ∈ L, y ≤ x → f y = f x)} 
+
+  -- Define the function φ from ℝ to ℝ
+  let φ : ℝ → ℝ := fun x => f (x + a)
+
+  -- Prove that φ is strictly increasing
+  have h₁₈ : StrictMono φ := by
+    intro x y hxy
+    simp [φ]
+    calc
+      f (x + a) ≤ 1 / 2 + Real.sqrt (f x - f x ^ 2) := by exact h₁ x
+      _ = f x := by
+        refine Eq.symm (Real.sqrt_sq?_)
+        linarith
+      _ ≤ f (y + a) := by exact h₆ (y + a).symm.trans hxy
+      _ = f (y + a + a) := by congr; exact h₆ y
+      _ ≤ Real.sqrt (f (y + a) - f (y + a) ^ 2) + 1 / 2 := by
+        exact (h₁ (y + a)).symm.trans (Real.sqrt_sq?_)
+        linarith
+      _ = f (y + 2 * a) := by
+        congr
+        rw [add_assoc, add_comm]
+        ring
+      _ = f (y + a + a) := by congr; exact h₆ y
+      _ ≤ f (x + a + a) := by
+        apply h₆
+        congr
+        exact h₆ y
+        linarith
+      _ = f (x + 2 * a) := by ring_nf
+
+  -- Prove that φ is injective
+  have h₁₉ : InjOn φ R := by
+    intro x hx y hy hxy
+    simp [φ] at hxy
+    have hx' : x ∈ L := by
+      obtain ⟨n, hn⟩ := hx
+      use n
+      simp [L]
+      rw [hn]
+      ring
+    have hy' : y ∈ L := by
+      obtain ⟨n, hn⟩ := hy
+      use n
+      simp [L]
+      rw [hn]
+      ring
+    have hx'' : ∀ z ∈ R, z ≤ x → f z = f x := by
+      exact hx.right
+    have hy'' : ∀ z ∈ R, z ≤ y → f z = f y := by
+      exact hy.right
+    have h₆ (z : ℝ) (hp : z ∈ R) (hz : z ≤ x) : f z = f x := by
+      exact hx''.z (z.natAbs) (by simpa [R, L] using hp) (by simpa using hz)
+    have h₇ (z : ℝ) (hp : z ∈ R) (hz : z ≤ y) : f z = f y := by
+      exact hy''.z (z.natAbs) (by simpa [R, L] using hp) (by simpa using hz)
+    have h₈ : f x = f y := by
+      calc
+        f x = f (x.natAbs) := by
+          have : (x : ℝ) = (x.natAbs : ℝ) := by
+            refine Eq.symm (Int.cast_natAbs x)
+            simp
+          rw [this]
+        _ = f ((x.natAbs - 1 : ℝ) + a) := by
+          congr
+          ring
+        _ = f ((x.natAbs - 1 : ℝ) + a + a) := by
+          congr
+          exact h₆ (x.natAbs - 1) (by simpa [R, L] using hp) (by linarith)
+        _ = f ((x.natAbs - 2 : ℝ) + 2 * a) := by
+          congr
+          ring_nf
+          rw [add_assoc, add_comm]
+          ring
+        _ = f ((x.natAbs - 2 : ℝ) + a) := by
+          congr
+          exact h₆ (x.natAbs - 2) (by simpa [R, L] using hp) (by linarith)
+        _ = f y := by
+          have : (y : ℝ) = (y.natAbs : ℝ) := by
+            refine Eq.symm (Int.cast_natAbs y)
+            simp
+          rw [this]
+          congr
+          ring
+    linarith
+
+  -- Define the set S as a subset of L × ℝ
+  let S := {x | x ∈ L ∧ |x| < 1 / 2 - f 0}
+
+  -- Define the relation Q as a subset of S × ℝ
+  let Q := {x | x ∈ S ∧ (∀ y ∈ S, y ≤ x → f y = f x)} 
+
+  -- Prove that Q is contained in R
+  have h₁₂ (x : ℝ) : x ∈ Q → x ∈ R := by
+    intro hx
+    obtain ⟨hx, hfx⟩ := hx
+    have hx' : x ∈ L := by
+      obtain ⟨n, hn⟩ := hx
+      use n
+      simp [S]
+      rw [hn.1]
+      constructor
+     . exact_mod_cast hn.2
+     . exact (abs_lt.mp hfx).1
+    have hx'' : ∀ y ∈ S, y ≤ x → f y = f x := by
+      obtain ⟨hy, hfy⟩ := hy
+      intro y' hy'
+      have h₁ : y ∈ S := by
+        obtain ⟨n, hn⟩ := hy
+        use n
+        simp [S]
+        rw [hn.1]
+        constructor
+       . exact_mod_cast hn.2
+       . exact (abs_lt.mp hfy).1
+      have h₂ : y ∈ L := by
+        obtain ⟨m, hm⟩ := h₁
+        use m
+        simp [L]
+        rw [hm.1]
+        ring
+      have h₃ : ∀ z ∈ L, z ≤ x → f z = f x := by
+        exact hx''
+      exact h₃ y h₂ (by simpa [L] using hy')
+    exact ⟨hx', hx''⟩
+
+  -- Define the set T as a subset of S
+  let T := {x | x ∈ S ∧ (∀ y ∈ S, y ≤ x → f y = f x)} 
+
+  -- Prove that T is equal to Q
+  have h₁₃ : T = Q := by
+    ext x
+    constructor
+   . intro hx
+      obtain ⟨hx, hfx⟩ := hx
+      have hx' : x ∈ S := by
+        obtain ⟨n, hn⟩ := hx
+        use n
+        simp [S]
+        rw [hn.1]
+        constructor
+       . exact_mod_cast hn.2
+       . exact (abs_lt.mp hfx).1
+      have hx'' : ∀ y ∈ S, y ≤ x → f y = f x := by
+        obtain ⟨hy, hfy⟩ := hx
+        intro y' hy'
+        have h₁ : y ∈ S := by
+          obtain ⟨m, hm⟩ := hy
+          use m
+          simp [S]
+          rw [hm.1]
+          constructor
+         . exact_mod_cast hm.2
+         . exact (abs_lt.mp hfy).1
+        have h₂ : y ∈ L := by
+          obtain ⟨m, hm⟩ := h₁
+          use m
+          simp [L]
+          rw [hm.1]
+          ring
+        have h₃ : ∀ z ∈ L, z ≤ x → f z = f x := by
+          exact hx''
+        exact h₃ y h₂ (by simpa [L] using hy')
+      exact ⟨hx', hx''⟩
+   . intro hx
+      obtain ⟨hx, hfx⟩ := hx
+      have hx' : x ∈ S := by
+        obtain ⟨n, hn⟩ := hx
+        use n
+        simp [S]
+        rw [hn.1]
+        constructor
+       . exact_mod_cast hn.2
+       . exact (abs_lt.mp hfx).1
+      have hx'' : ∀ y ∈ S, y ≤ x → f y = f x := by
+        obtain ⟨hy, hfy⟩ := hfx
+        intro y' hy'
+        have h₁ : y ∈ S := by
+          obtain ⟨m, hm⟩ := hy
+          use m
+          simp [S]
+          rw [hm.1]
+          constructor
+         . exact_mod_cast hm.2
+         . exact (abs_lt.mp hfy).1
+        have h₂ : y ∈ L := by
+          obtain ⟨m, hm⟩ := h₁
+          use m
+          simp [L]
+          rw [hm.1]
+          ring
+        have h₃ : ∀ z ∈ L, z ≤ x → f z = f x := by
+          exact hx''
+        exact h₃ y h₂ (by simpa [L] using hy')
+      exact ⟨hx', hx''⟩
+
+  -- Define the set C as a subset of S
+  let C := {x | x ∈ S ∧ |x| < 1 / 2 - f 0 + f

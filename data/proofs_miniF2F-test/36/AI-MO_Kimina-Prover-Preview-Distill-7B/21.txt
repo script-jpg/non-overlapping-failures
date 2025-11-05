@@ -1,0 +1,42 @@
+induction n using Nat.strong_induction_on with
+  | h n ih =>
+    -- We need to prove that $\forall n \geq 3, n! < n^{n-1}$
+    -- First, check the base case: $3! = 6 < 3^{3-1} = 9$
+    if n = 3 then
+      simp [Nat.factorial, Nat.pow_succ]
+    -- Assume the statement is true for some $k \geq 3$, prove it for $n = k + 1$
+    else
+      have h₁ : 3 ≤ n := by linarith
+      have h₂ : ∀ k, 3 ≤ k → k < n → k! < k ^ (k - 1) := by
+        intros k h₃ h₄
+        induction k using Nat.strong_induction_on with
+        | h₅ h₆ =>
+          if k = 3 then
+            simp [Nat.factorial, Nat.pow_succ]
+          else
+            by_cases h₇ : k < 3
+            · linarith
+            · have h₈ : k ≥ 3 := by linarith
+              exact ih (show k < n by linarith) h₈
+        -- Now we need to prove the inductive step: assume $k! < k^{k-1}$ for some $k \geq 3$, prove $(k+1)! < (k+1)^k$
+      have h₃ : n - 1 > 0 := by
+        simp
+        linarith
+      have h₄ : n! = n * (n - 1)! := by
+        rw [Nat.factorial_succ]
+        simp
+      rw [h₄]
+      have h₅ : n ^ (n - 1) < n ^ (n - 1) * n := by
+        rw [Nat.pow_succ]
+        nth_rw 2 [show n - 1 = n - 1 - 1 + 1 by simp]
+        rw [Nat.pow_succ]
+        apply Nat.mul_lt_mul_of_pos_right
+        · exact Nat.zero_lt_sub_of_lt h₁
+        · exact Nat.zero_lt_sub_of_lt h₁
+      apply Nat.lt_trans h₅
+      -- We have $n * (n-1)! < n * n^{n-1}$
+      apply Nat.mul_lt_mul_of_pos_left
+      · exact ih (show 3 ≤ n by linarith) (show n - 1 < n by simp)
+      · exact Nat.zero_lt_sub_of_lt h₁
+  -- That completes the proof
+```

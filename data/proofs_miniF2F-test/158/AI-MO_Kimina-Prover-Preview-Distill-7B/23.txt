@@ -1,0 +1,53 @@
+-- Let's first rewrite the left hand side of the inequality in a more manageable form.
+  have : a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a = (a ^ 3 + b ^ 3 + c ^ 3 + d ^ 3) / (a * b * c * d) :=
+    calc
+      a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a = (a ^ 3 * c * d + b ^ 3 * a * d + c ^ 3 * a * b + d ^ 3 * a * b) / ((a * b * c * d) * (a * b * c * d)) := by
+        field_simp
+        ring_nf
+      _ = (a ^ 3 * c * d + b ^ 3 * a * d + c ^ 3 * a * b + d ^ 3 * a * b) / ((a * b * c * d)) ^ 2 := by
+        congr
+        ring
+      _ = (a ^ 3 * c * d + b ^ 3 * a * d + c ^ 3 * a * b + d ^ 3 * a * b) / ((a * b * c * d)) ^ 2 := by
+        ring_nf
+      _ = (a ^ 3 + b ^ 3 + c ^ 3 + d ^ 3) / (a * b * c * d) := by
+        congr
+        ring_nf
+
+  -- Now we can start the proof of the inequality.
+  rw [this]
+
+  -- We split the proof in two parts:
+  -- 1. Prove that $(a ^ 3 + b ^ 3 + c ^ 3 + d ^ 3) / (a * b * c * d) \geq a + b + c + d$.
+  -- 2. Prove that $a + b + c + d \geq a + b + c + d$ (which is trivial).
+  apply le_trans
+  · -- To prove the first part, we use the AM-GM inequality:
+    -- $a^3 + b^3 + c^3 + d^3 \geq 4 \sqrt[4]{a^3 b^3 c^3 d^3}$.
+    have := Real.geom_mean_le_arith_mean4_weighted (show 0 ≤ (1 / 4 : ℝ) by norm_num) (show 0 ≤ (1 / 4 : ℝ) by norm_num) (show 0 ≤ (1 / 4 : ℝ) by norm_num) (show 0 ≤ (1 / 4 : ℝ) by norm_num) (by positivity) (by positivity) (by positivity) (by positivity) (by norm_num)
+    simp at this
+    have : (a ^ 3 + b ^ 3 + c ^ 3 + d ^ 3) / (a * b * c * d) ≥ 4 * (a * b * c * d) ^ (1 / 4 : ℝ) / (a * b * c * d) := by
+      calc
+        (a ^ 3 + b ^ 3 + c ^ 3 + d ^ 3) / (a * b * c * d) ≥ 4 * ((a ^ 3 * b ^ 3 * c ^ 3 * d ^ 3) ^ (1 / 4 : ℝ)) / (a * b * c * d) := by
+          apply (div_le_div_iff_of_pos_right (by positivity)).mpr
+          apply (div_le_div_iff_of_pos_right (by positivity)).mpr
+          apply (div_le_div_iff_of_pos_right (by positivity)).mpr
+          apply (div_le_div_iff_of_pos_right (by positivity)).mpr
+          apply Real.geom_mean_le_arith_mean4_weighted (by norm_num) (by positivity) (by positivity) (by positivity) (by positivity)
+        _ = 4 * (a * b * c * d) ^ (1 / 4 : ℝ) / (a * b * c * d) := by
+          rw [mul_comm, mul_assoc, mul_div_assoc, ← Real.mul_rpow (by positivity), ← Real.mul_rpow (by positivity), ← Real.mul_rpow (by positivity), ← Real.mul_rpow (by positivity), Real.rpow_one, mul_div_cancel₀ _ (by positivity)]
+    rw [mul_comm, mul_div_assoc, ← mul_div_mul_right _ _ (by positivity), div_self (by positivity), mul_one, ge_iff_le, mul_div_cancel₀ _ (by positivity), div_self (by positivity), mul_one]
+    -- So it suffices to prove that $4 \geq a + b + c + d$.
+    apply le_trans
+    · rw [← Real.rpow_one (a * b * c * d)]
+      -- We prove that $(a * b * c * d) ^ (1 / 4 : ℝ) \leq 1$.
+      have : (a * b * c * d) ^ (1 / 4 : ℝ) ≤ 1 := by
+        apply Real.rpow_le_one
+        · positivity
+        · norm_num
+        · apply le_of_lt
+          apply Real.lt_mul_of_one_lt_of_one_lt
+          all_goals { positivity }
+      linarith
+    -- 2. Prove that $a + b + c + d \geq a + b + c + d$ (which is trivial).
+    linarith
+
+```

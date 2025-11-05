@@ -1,0 +1,31 @@
+-- set $P(n)$ to be $12 \mid 4^{n+1} + 20$.
+  let P : ℕ → Prop := fun n => 12 ∣ 4 ^ (n + 1) + 20
+
+  -- show that $P(0)$ is true.
+  have P0 : P 0 := by
+    norm_num [P]
+
+  -- show that if $P(n)$ is true, then $P(n+1)$ is also true.
+  have Pn_to_Pn1 : ∀ n, P n → P (n + 1) := by
+    intro n
+    intro h
+    unfold P at h ⊢
+    -- we have $12 \mid 4^{n+1} + 20$ and need to show that $12 \mid 4^{(n+1)+1} + 20$.
+    -- $4^{(n+1)+1} + 20 = 4 \cdot 4^{n+1} + 20 = 3 \cdot 4^{n+1} + (4^{n+1} + 20)$.
+    have : 4 ^ ((n + 1) + 1) + 20 = 3 * 4 ^ (n + 1) + (4 ^ (n + 1) + 20) := by
+      ring
+    rw [this]
+    refine Nat.dvd_add?_ h
+    -- show that $3 \cdot 4^{n+1}$ is divisible by 12.
+    have : 12 ∣ 3 * 4 ^ (n + 1) := by
+      -- show that $12 = 3 \cdot 4$.
+      have : 12 = 3 * 4 := by norm_num
+      rw [this]
+      -- we have $4^{n+1}$ is a positive integer power of 4, so it is divisible by 4.
+      exact dvd_mul_of_dvd_right (dvd_pow_self 4 (by norm_num)) 3
+    exact this
+
+  -- by induction, we have $P(n)$ is true for all natural number $n$.
+  exact Nat.le_induction P0 Pn_to_Pn n
+
+```

@@ -1,0 +1,110 @@
+-- Lemma 1: For any natural numbers $a$, $b$, $c$, if $a$ and $b$ are coprime, and $a$ and $c$ are coprime, then $a$ and $b+c$ are coprime.
+  have lm_1 (a b c : ℕ) (h₁ : a.Coprime b) (h₂ : a.Coprime c) : a.Coprime (b + c) := by
+    rw [Nat.coprime_add_iff_right h₂, Nat.coprime_comm b c, Nat.coprime_comm a b]
+    rw [Nat.coprime_add_iff_left h₁, Nat.coprime_comm a c]
+    exact Nat.coprime_trans h₁ h₂
+
+  -- Lemma 2: For any natural numbers $a$, $b$, $c$, if $a$ and $b$ are coprime, and $a$ and $c$ are coprime, then $a$ and $bc$ are coprime.
+  have lm_2 (a b c : ℕ) (h₁ : a.Coprime b) (h₂ : a.Coprime c) : a.Coprime (b * c) := by
+    apply Nat.Coprime.mul_right h₂
+    exact h₁
+
+  -- Lemma 3: For any natural numbers $a$, $b$, if $ab$ is prime, then either $a$ is 1 or $b$ is 1.
+  have lm_3 (a b : ℕ) (h : a * b.Prime) : a = 1 ∨ b = 1 := by
+    by_cases ha : a = 0
+    · right
+      rw [ha] at h
+      have : ¬IsUnit b := by
+        by_contra hb
+        rw [hb] at h
+        simp at h
+      have : b.Prime := by exact Nat.prime_def.mp h
+      simp [this]
+    · have ha' : 0 < a := by exact Nat.zero_lt_of_ne_zero ha
+      apply Nat.Prime.left_dvd h
+      by_contra hc
+      have hc' : 0 < b := by exact Nat.zero_lt_of_ne_zero hc
+      rw [Nat.prime_dvd_prime_iff_eq h hc'] at ha
+      rw [ha] at ha'
+      simp at ha'
+      rw [←Nat.prime_def, Nat.prime_def] at h
+      have : ¬IsUnit b := by
+        by_contra hb
+        rw [hb] at h
+        simp at h
+      have : b.Prime := by exact Nat.prime_def.mp h
+      simp [this]
+
+  -- Apply the above lemmas to prove that $6n+k$ is coprime to $6n+3$, $6n+2$, and $6n+1$ for all $n$.
+  have hm {n : ℕ} : (6 * n + k).Coprime (6 * n + 3) ∧ (6 * n + k).Coprime (6 * n + 2) ∧ (6 * n + k).Coprime (6 * n + 1) := by
+    constructor
+    · exact h₁ n
+    · constructor
+      · exact h₂ n
+      · exact h₃ n
+
+  -- Since the conjunction of coprime conditions is satisfied, we can prove that $6n+k$ is coprime to their product.
+  have hm' {n : ℕ} : (6 * n + k).Coprime ((6 * n + 3) * (6 * n + 2) * (6 * n + 1)) := by
+    rcases hm with ⟨h₁, h₂, h₃⟩
+    rw [Nat.Coprime.exists_gcd_eq_one h₁ h₂, Nat.coprime_add_iff_right h₃,
+      Nat.gcd_assoc ((6 * n + 3) * (6 * n + 2) * (6 * n + 1)) ((6 * n + 3) * (6 * n + 2)) (6 * n + 1)]
+    rw [Nat.coprime_mul_left_iff_right (by simp)]
+    rw [Nat.coprime_mul_left_iff_right (by simp)]
+    exact Nat.coprime_trans h₁ (Nat.coprime_trans h₂ h₃)
+
+  -- Lemma 4: If $a$ and $b$ are coprime, and $a$ and $c$ are coprime, then $a$ and $bc$ are coprime.
+  have lm_4 (a b c : ℕ) (h₁ : a.Coprime b) (h₂ : a.Coprime c) : a.Coprime (b * c) := by
+    apply Nat.Coprime.mul_right h₂
+    exact h₁
+
+  -- Lemma 5: If $ab$ is coprime to $cd$, then $a$ is coprime to $c$ and $b$ is coprime to $d$.
+  have lm_5 (a b c d : ℕ) (h : a * b.Coprime c * d) : a.Coprime c ∧ b.Coprime d := by
+    have h₁ : a * b * d.Coprime c * d := by
+      rw [Nat.coprime_mul_left_iff_right (by simp)] at h
+      exact h
+    have h₂ : a * b.Coprime c := by
+      rw [Nat.coprime_mul_left_iff_right (by simp)] at h₁
+      exact h₁
+    have h₃ : b * d.Coprime c := by
+      apply Nat.Coprime.symm
+      apply Nat.Coprime.trans h₂
+      apply Nat.coprime_mul_left_iff_right.mpr
+      exact h
+    exact ⟨by apply Nat.Coprime.symm; apply Nat.Coprime.symm; exact h₂, by exact h₃⟩
+
+  -- Apply lemma 5 to prove that $6n+k$ is coprime to each of $6n+3$, $6n+2$, and $6n+1$ for all $n$.
+  have hm'' {n : ℕ} : (6 * n + k).Coprime (6 * n + 3) ∧ (6 * n + k).Coprime (6 * n + 2) ∧ (6 * n + k).Coprime (6 * n + 1) := by
+    constructor
+    · exact h₁ n
+    · constructor
+      · exact h₂ n
+      · exact h₃ n
+
+  -- Since the conjunction of coprime conditions is satisfied, we can prove that $6n+k$ is coprime to their product.
+  have hm''' {n : ℕ} : (6 * n + k).Coprime ((6 * n + 3) * (6 * n + 2) * (6 * n + 1)) := by
+    rcases hm'' with ⟨h₁, h₂, h₃⟩
+    rw [Nat.Coprime.exists_gcd_eq_one h₁ h₂, Nat.coprime_add_iff_right h₃,
+      Nat.gcd_assoc ((6 * n + 3) * (6 * n + 2) * (6 * n + 1)) ((6 * n + 3) * (6 * n + 2)) (6 * n + 1)]
+    rw [Nat.coprime_mul_left_iff_right (by simp)]
+    rw [Nat.coprime_mul_left_iff_right (by simp)]
+    exact Nat.coprime_trans h₁ (Nat.coprime_trans h₂ h₃)
+
+  -- Assume that $k < 5$ for contradiction.
+  by_contra hk
+  have hk' : k = 1 ∨ k = 2 ∨ k = 3 ∨ k = 4 := by omega
+
+  -- Check each case to find a contradiction.
+  rcases hk' with (rfl | rfl | rfl | rfl)
+  · -- Case $k = 1$: When $n = 1$, $6n+k = 7$ and $6n+2 = 8$, which are not coprime.
+    specialize h₂ 1
+    norm_num at h₂
+  · -- Case $k = 2$: When $n = 1$, $6n+k = 8$ and $6n+3 = 9$, which are not coprime.
+    specialize h₁ 1
+    norm_num at h₁
+  · -- Case $k = 3$: When $n = 1$, $6n+k = 9$ and $6n+2 = 8$, which are not coprime.
+    specialize h₂ 1
+    norm_num at h₂
+  · -- Case $k = 4$: When $n = 2$, $6n+k = 16$ and $6n+3 = 15$, which are not coprime.
+    specialize h₁ 2
+    norm_num at h₁
+```

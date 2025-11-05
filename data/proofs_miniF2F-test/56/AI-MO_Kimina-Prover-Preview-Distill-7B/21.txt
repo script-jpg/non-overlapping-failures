@@ -1,0 +1,51 @@
+-- Simplify the goal by breaking down the function definition
+  have h₀' : ∀ x > 0, f x = (2 ^ x) ^ 2 + (2 ^ x) * 3 ^ x + (3 ^ x) ^ 2 := by
+    intro x hx
+    calc
+      f x = 4 ^ x + 6 ^ x + 9 ^ x := h₀ x
+      _ = (2 ^ x) ^ 2 + (2 ^ x) * 3 ^ x + (3 ^ x) ^ 2 := by rw [show (4 : ℕ) = 2 ^ 2 by norm_num, show (6 : ℕ) = 2 * 3 by norm_num, show (9 : ℕ) = 3 ^ 2 by norm_num]; ring
+
+  -- Prove that 3 divides $f(2^n)$
+  have h₂' : 3 * f (2 ^ n) = (3 ^ (2 ^ n) - 1) * (3 ^ (2 ^ n) + 1) + 6 := by
+    rw [h₀' (2 ^ n) (by positivity), Nat.pow_add, Nat.pow_mul, Nat.pow_mul]
+    ring
+
+  -- Since $3 ^ (2 ^ n) - 1$ and $3 ^ (2 ^ n) + 1$ have different parity, one of them is even
+  have h₃ : 2 ∣ (3 ^ (2 ^ n) - 1) * (3 ^ (2 ^ n) + 1) := by
+    have h₃' : 2 ∣ 3 ^ (2 ^ n) - 1 ∨ 2 ∣ 3 ^ (2 ^ n) + 1 := by
+      have h₃'' : Odd (3 ^ (2 ^ n)) := by
+        apply Nat.Odd.pow
+        apply Nat.odd_iff.mpr rfl
+      apply (Nat.even_add_one_iff h₃').mp
+      apply (Nat.even_sub_one_iff h₃'').mpr
+      norm_num
+    rcases h₃' with (h₃' | h₃')
+   . apply Nat.mul_dvd_mul_right h₃'
+   . apply Nat.mul_dvd_mul_left h₃'
+
+  -- Therefore, $3 * f(2^n)$ is even, and so is $f(2^n)$
+  have h₄ : 2 ∣ 3 * f (2 ^ n) := by
+    rw [h₂']
+    apply Nat.dvd_add
+    exact h₃
+    exact dvd_refl 6
+
+  -- Since 3 and 2 are coprime, we can cancel 3 from the divisibility condition
+  have h₅ : f (2 ^ n) = 3 * ((2 ^ n) ^ 2 + (2 ^ n) * 2 ^ n + 2 ^ (2 * n)) / 3 := by
+    have : f (2 ^ n) = 3 * ((2 ^ n) ^ 2 + (2 ^ n) * 2 ^ n + 2 ^ (2 * n)) := by
+      rw [h₀' (2 ^ n) (by positivity)]
+      ring
+    rw [this]
+    omega
+
+  -- Rewrite the divisibility condition in terms of the simplified expression
+  rw [h₅]
+  rw [show ((2 ^ n) ^ 2 + (2 ^ n) * 2 ^ n + 2 ^ (2 * n)) = (2 ^ n) ^ 2 + (2 ^ n) * 2 ^ n + (2 ^ n) ^ 2 by ring]
+  rw [show (2 ^ n) ^ 2 + (2 ^ n) * 2 ^ n + (2 ^ n) ^ 2 = 2 * (2 ^ n) ^ 2 + (2 ^ n) * 2 ^ n by ring]
+  rw [show 3 * (2 * (2 ^ n) ^ 2 + (2 ^ n) * 2 ^ n) = 2 * (3 * (2 ^ n) ^ 2) + 3 * (2 ^ n) * 2 ^ n by ring]
+  rw [show 2 * (3 * (2 ^ n) ^ 2) + 3 * (2 ^ n) * 2 ^ n = 2 * (3 * (2 ^ n) ^ 2 + 3 * (2 ^ n) * 2 ^ n) by ring]
+
+  -- Show that $f(2^m)$ divides $f(2^n)$
+  apply Nat.dvd_mul_left
+
+```

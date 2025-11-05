@@ -1,0 +1,126 @@
+-- A lemma that says a lemma for solving quadratic equations
+  have eq_of_sub_eq_zero {a b c : ℝ} (h : a - b = 0) : a = b := by
+    have h' : a = b := by
+      have h'' : a - b = 0 := h
+      rw [← sub_eq_zero]
+      exact h''
+    exact h'
+
+  -- Rearrange the equation to standard form and calculate the discriminant
+  have h₄ : 2 * (x * x) + (-4) * x + (-9) = 0 := by
+    calc
+      2 * (x * x) + (-4) * x + (-9) = 2 * x ^ 2 + (-4) * x + (-9) := by rw [mul_assoc, pow_two]; simp
+      _ = 0 := by rw [h₁]; simp
+
+  have discrim_eq : discrim 2 (-4) (-9) = 4 * Real.sqrt 10 * (Real.sqrt 10) := by
+    norm_num [discrim]
+    rw [← pow_two, sqrt_mul, sqrt_mul_self]
+    norm_num
+    simp
+    simp
+
+  -- Use the quadratic formula to solve the equation and express the solution in simplified form with a square root in the numerator
+  have h₅ (h : 2 * (x * x) + (-4) * x + (-9) = 0) : (x = (4 + Real.sqrt (discrim 2 (-4) (-9))) / (2 * 2)) ∨ (x = (4 - Real.sqrt (discrim 2 (-4) (-9))) / (2 * 2)) := by
+    suffices h' : 2 * (x * x) + (-4) * x + (-9) = 0 → (x = (4 + Real.sqrt (discrim 2 (-4) (-9))) / (2 * 2)) ∨ (x = (4 - Real.sqrt (discrim 2 (-4) (-9))) / (2 * 2)) by
+      exact h' h
+    intro h'
+    have h'' := eq_of_sub_eq_zero h'
+    have h₃ : 2 * (x * x) + (-4) * x + (-9) = 2 * ((x * x) + (-4/2) * x + (-9/2)) := by ring
+    rw [h₃] at h'
+    rw [mul_assoc, quadratic_eq_zero_iff] at h'
+    set a := (-4 / 2)
+    set b := (-9 / 2)
+    rcases h' with h' | h'
+   . left
+      rw [h'.1]
+      field_simp
+      ring_nf
+      rw [discrim_eq]
+      field_simp
+      ring
+   . right
+      rw [h'.1]
+      field_simp
+      ring_nf
+      rw [discrim_eq]
+      field_simp
+      ring
+
+  -- Now we have two cases to consider for x
+  have case_x : (x = (4 + Real.sqrt (discrim 2 (-4) (-9))) / (2 * 2)) ∨ (x = (4 - Real.sqrt (discrim 2 (-4) (-9))) / (2 * 2)) := by
+    exact h₅ h₄
+
+  -- Case analysis on x
+  rcases case_x with x_eq_add | x_eq_sub
+  -- Case x = (4 + √(discrim 2 (-4) (-9)))/4
+  have add_x : x = (4 + Real.sqrt (discrim 2 (-4) (-9)))/4 := by
+    rw [x_eq_add]
+    ring
+  have add_x_val : x = (2 + Real.sqrt 10) / 2 := by
+    rw [add_x]
+    rw [discrim_eq]
+    field_simp
+    ring
+  -- This case is impossible because it makes b = 13
+  have : b = 13 := by
+    rw [h₂] at x_eq_sub
+    rw [add_x_val] at x_eq_sub
+    have : (2 + Real.sqrt 10) / 2 = (a + Real.sqrt b) / c := x_eq_sub
+    have : 2 + Real.sqrt 10 = (a + Real.sqrt b) * 2 / c := by
+      rw [← this]
+      ring
+    have : (2 + Real.sqrt 10) * c = (a + Real.sqrt b) * 2 := by
+      rw [← this]
+      ring
+    have : (2 + Real.sqrt 10) * c - (a + Real.sqrt b) * 2 = 0 := by
+      rw [← this]
+      ring
+    rw [mul_sub, mul_sub] at this
+    ring_nf at this
+    rw [pow_two, ← sqrt_mul, Real.sqrt_mul_self] at this
+    -- Simplify the equation to a * 2 = 4
+    ring_nf at this
+    simp at this
+    have : a * 2 = 4 := by
+      linarith
+    omega
+    simp
+    simp
+    omega
+  rw [this] at h₃
+  -- Case x = (4 - √(discrim 2 (-4) (-9)))/4
+  have sub_x : x = (4 - Real.sqrt (discrim 2 (-4) (-9)))/4 := by
+    rw [x_eq_sub]
+    ring
+  have sub_x_val : x = (2 - Real.sqrt 10) / 2 := by
+    rw [sub_x]
+    rw [discrim_eq]
+    field_simp
+    ring
+  -- This case is impossible because it makes b = 7
+  have : b = 7 := by
+    rw [h₂] at x_eq_add
+    rw [sub_x_val] at x_eq_add
+    have : (2 - Real.sqrt 10) / 2 = (a + Real.sqrt b) / c := x_eq_add
+    have : (2 - Real.sqrt 10) * c = (a + Real.sqrt b) * 2 := by
+      rw [← this]
+      ring
+    have : (2 - Real.sqrt 10) * c - (a + Real.sqrt b) * 2 = 0 := by
+      rw [← this]
+      ring
+    rw [mul_sub, mul_sub] at this
+    ring_nf at this
+    simp at this
+    have : a * 2 = 4 := by
+      linarith
+    omega
+    simp
+    simp
+    omega
+  rw [this] at h₃
+  -- This makes a = 1, b = 7, and c = 2, so that sum is 1 + 7 + 2 = 10
+  have : a = 1 := by omega
+  have : b = 7 := by omega
+  omega
+
+```

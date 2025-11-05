@@ -1,0 +1,294 @@
+-- First, show that {1, m, n} are linearly independent over ℚ.
+  have h₄ : (m : ℝ) ∉ Set.range (fun (x : ℚ) ↦ x * m) := by
+    intro h
+    by_contra!
+    have : m ^ 3 = 2 := h₁
+    have : m = 0 := by linarith
+    linarith
+  have h₅ : (n : ℝ) ∉ Set.range (fun (x : ℚ) ↦ x * n) := by
+    intro h
+    by_contra!
+    have : n ^ 3 = 4 := h₂
+    have : n = 0 := by linarith
+    linarith
+  have h₆ : linearlyIndependent ℝ ℚ {1, m, n} := by
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff, one_ne_zero, not_false_eq_true, and_true]
+    -- To show that $\{1, m, n\}$ are linearly independent over $\mathbb{Q}$, it suffices to show that $m$ and $n$ are irrational.
+    apply linearlyIndependent_of_not_mem
+    -- It suffices to show that $m$ is irrational.
+    apply linearlyIndependent_of_not_mem
+    -- It suffices to show that $\sqrt[3]{2}$ is irrational.
+    apply linearlyIndependent_of_not_mem
+    rintro x eq
+    simp only [Set.mem_setOf_eq] at eq
+    -- Assume that $\sqrt[3]{2} = \frac{p}{q}$.
+    by_contra! eq
+    -- We can assume that $q$ is positive.
+    wlog h : 0 < q generalizing x
+    · -- Change the sign of $q$ if necessary.
+      replace h : q < 0 := by
+        simp only [not_lt] at h
+        simp [h]
+      replace h : 0 < -q := by linarith
+      obtain ⟨p, h⟩ := @Rat.exists_natAbs_eq norm_num (q := -q) (by simpa)
+      -- Since $p ^ 3 = 2 q ^ 3$, it suffices to show that $p$ is even.
+      suffices Even p by
+        replace this : 2 ∣ p ^ 3 := by
+          rw [h₁]
+          exact Dvd.intro q (id (Eq.symm this))
+        rw [Nat.pow_dvd_pow_iff (by norm_num)] at this
+        simp only [Even.pow, even_iff_two_dvd] at this
+        -- It suffices to show that $p$ is even.
+        obtain ⟨k, hk⟩ := this
+        -- Then, $p^3 = (2k)^3 = 8k^3$.
+        rw [hk, Nat.mul_pow] at h₁
+        rw [show 8 = 2 ^ 3 by norm_num, ←Nat.pow_mul] at h₁
+        -- We get $2q^3 = 2^3k^3$.
+        replace h₁ : 2 * q ^ 3 = 2 ^ 3 * k ^ 3 := by
+          linarith
+        -- We get $q^3 = 2^2k^3$.
+        replace h₁ : q ^ 3 = 2 ^ 2 * k ^ 3 := by
+          linarith
+        -- It suffices to show that $q$ is even.
+        suffices Even q by
+          -- Change the sign of $q$ if necessary.
+          replace this : q < 0 := by
+            simp only [not_lt] at this
+            simp [this]
+          -- We can assume that $q$ is positive.
+          wlog h : 0 < -q generalizing x
+          · -- We get $\sqrt[3]{2} = \frac{-p}{-q}$.
+            replace h : q ^ 3 = (-q) ^ 3 := by
+              rw [h₁]
+              ring
+            -- It suffices to show that $-q$ is even.
+            suffices Even (-q) by
+              -- Then, $-p$ is even, and hence $p$ is even.
+              replace this : Even (-p) := by
+                rw [Even.neg_iff] at this
+                exact this.elim h
+              -- We get $p = 2k$ for some $k$.
+              obtain ⟨k, hk⟩ := this
+              -- Then, $p^3 = (2k)^3 = 8k^3$.
+              rw [hk, Nat.mul_pow] at h₁
+              rw [show 8 = 2 ^ 3 by norm_num, ←Nat.pow_mul] at h₁
+              -- We get $2q^3 = 2^3k^3$.
+              replace h₁ : 2 * q ^ 3 = 2 ^ 3 * k ^ 3 := by
+                linarith
+              -- We get $q^3 = 2^2k^3$.
+              replace h₁ : q ^ 3 = 2 ^ 2 * k ^ 3 := by
+                linarith
+              -- It suffices to show that $q$ is even.
+              suffices Even q by
+                -- Then, $q = 2k'$ for some $k'$.
+                obtain ⟨k', hk'⟩ := this
+                -- We get $q^3 = (2k')^3 = 8k'^3$.
+                rw [hk', Nat.mul_pow] at h₁
+                rw [show 8 = 2 ^ 3 by norm_num, ←Nat.pow_mul] at h₁
+                -- We get $2^2k'^3 = 2^2k^3$.
+                replace h₁ : 2 ^ 2 * k' ^ 3 = 2 ^ 2 * k ^ 3 := by
+                  linarith
+                -- We get $k'^3 = k^3$.
+                replace h₁ : k' ^ 3 = k ^ 3 := by
+                  linarith
+                -- It suffices to show that $k'$ is even.
+                suffices Even k' by
+                  -- Then, $k' = 2k''$ for some $k''$.
+                  obtain ⟨k'', hk''⟩ := this
+                  -- We get $k'^3 = (2k'')^3 = 8k''^3$.
+                  rw [hk'', Nat.mul_pow] at h₁
+                  rw [show 8 = 2 ^ 3 by norm_num, ←Nat.pow_mul] at h₁
+                  -- We get $k''^3 = k^3$.
+                  replace h₁ : k'' ^ 3 = k ^ 3 := by
+                    linarith
+                  -- It suffices to show that $k''$ is even.
+                  suffices Even k'' by
+                    -- By induction, all numbers with the form of $k, k', k'', \dots$ are even.
+                    mpr this.elim h
+                  -- It suffices to show that $k$ is even.
+                  rw [hk, Nat.mul_pow] at h₁
+                  rw [show 8 = 2 ^ 3 by norm_num, ←Nat.pow_mul] at h₁
+                  -- We get $2^2q^3 = 2^3k^3$.
+                  replace h₁ : 2 ^ 2 * q ^ 3 = 2 ^ 3 * k ^ 3 := by
+                    linarith
+                  -- We get $q^3 = 2k^3$.
+                  replace h₁ : q ^ 3 = 2 * k ^ 3 := by
+                    linarith
+                  -- It suffices to show that $q$ is even.
+                  suffices Even q by
+                    -- change the sign of $q$ if necessary.
+                    replace this : q < 0 := by
+                      simp only [not_lt] at this
+                      simp [this]
+                    -- We can assume that $q$ is positive.
+                    wlog h : 0 < -q generalizing x
+                    · -- We get $\sqrt[3]{2} = \frac{-p}{-q}$.
+                      replace h : q ^ 3 = (-q) ^ 3 := by
+                        rw [h₁]
+                        ring
+                      -- It suffices to show that $-q$ is even.
+                      suffices Even (-q) by
+                        -- Then, $-p$ is even, and hence $p$ is even.
+                        replace this : Even (-p) := by
+                          rw [Even.neg_iff] at this
+                          exact this.elim h
+                        -- We get $p = 2k$ for some $k$.
+                        obtain ⟨k, hk⟩ := this
+                        -- Then, $p^3 = (2k)^3 = 8k^3$.
+                        rw [hk, Nat.mul_pow] at h₁
+                        rw [show 8 = 2 ^ 3 by norm_num, ←Nat.pow_mul] at h₁
+                        -- We get $2q^3 = 2^3k^3$.
+                        replace h₁ : 2 * q ^ 3 = 2 ^ 3 * k ^ 3 := by
+                          linarith
+                        -- We get $q^3 = 2^2k^3$.
+                        replace h₁ : q ^ 3 = 2 ^ 2 * k ^ 3 := by
+                          linarith
+                        -- It suffices to show that $q$ is even.
+                        suffices Even q by
+                          -- Then, $q = 2k'$ for some $k'$.
+                          obtain ⟨k', hk'⟩ := this
+                          -- We get $q^3 = (2k')^3 = 8k'^3$.
+                          rw [hk', Nat.mul_pow] at h₁
+                          rw [show 8 = 2 ^ 3 by norm_num, ←Nat.pow_mul] at h₁
+                          -- We get $2^2k'^3 = 2^3k^3$.
+                          replace h₁ : 2 ^ 2 * k' ^ 3 = 2 ^ 3 * k ^ 3 := by
+                            linarith
+                          -- We get $k'^3 = k^3$.
+                          replace h₁ : k' ^ 3 = k ^ 3 := by
+                            linarith
+                          -- It suffices to show that $k'$ is even.
+                          suffices Even k' by
+                            -- By induction, all numbers with the form of $k, k', k'', \dots$ are even.
+                            mpr this.elim h
+                          -- It suffices to show that $k$ is even.
+                          suffices Even k by
+                            simp only [not_lt] at h
+                            simp [h]
+                          -- Assume that $k$ is odd.
+                          by_contra! hk
+                          -- It is impossible that $k$ is odd.
+                          replace hk : Odd k := by
+                            apply Prime.odd_of_not_even (Nat.prime_two) hk
+                          -- Then, $k = 2t + 1$ for some $t$.
+                          obtain ⟨t, ht⟩ := hk
+                          -- We get $q^3 = 2^2(2t + 1)^3$.
+                          rw [ht] at h₁
+                          rw [Nat.pow_mul, Nat.pow_add, Nat.pow_mul, Nat.pow_one] at h₁
+                          rw [show 2 ^ 2 = 4 by norm_num, Nat.mul_assoc] at h₁
+                          -- It suffices to show that $t$ is even.
+                          suffices Even t by
+                            -- Then, $2t + 1 = 2t' + 1$ for some $t'$.
+                            let t' := t / 2
+                            have ht' : t = 2 * t' := by
+                              simp [t']
+                              apply Nat.mul_div_cancel
+                              exact Even.two_dvd hk
+                            -- We get $k = 2(2t' + 1) = 4t' + 2$.
+                            have : k = 4 * t' + 2 := by
+                              rw [ht, ht']
+                              ring
+                            -- We get $k' ^ 3 = (4t' + 2)^3$.
+                            rw [this] at h₁
+                            -- It suffices to show that $t'$ is even.
+                            suffices Even t' by
+                              -- Then, $4t' + 2 = 2(2t' + 1)$.
+                              replace this : k = 2 * (2 * t' + 1) := by
+                    rw [this]
+                    ring
+                  -- Assume that $k'$ is even.
+                  else
+                    simp only [Even.neg_iff] at hk
+                    -- It is impossible that $k'$ is even.
+                    replace hk : Even (-k') := by
+                      rw [←Nat.not_odd_iff_even]
+                      exact hk.elim h
+                    -- We get $\sqrt[3]{2} = \frac{p}{-k'}$.
+                    replace h : m ^ 3 = (-k') ^ 3 := by
+                      rw [h₁, hk, neg_mul, Odd.neg_pow (Nat.odd_iff.mpr rfl)]
+                    -- It suffices to show that $-k'$ is even.
+                    suffices Even (-k') by
+                      -- change the sign of $k'$ if necessary.
+                      replace this : k' < 0 := by
+                        simp only [not_lt] at this
+                        simp [this]
+                      -- We can assume that $k'$ is positive.
+                      wlog h : 0 < -k' generalizing x
+                      · -- We get $\sqrt[3]{2} = \frac{-p}{-k'}$.
+                        replace h : (-k') ^ 3 = (-k') ^ 3 := by
+                          rw [h₁, ←hk, neg_mul, Odd.neg_pow (Nat.odd_iff.mpr rfl)]
+                        -- It suffices to show that $-k'$ is even.
+                        suffices Even (-k') by
+                          -- Then, $-p$ is even, and hence $p$ is even.
+                          replace this : Even (-p) := by
+                            rw [Even.neg_iff] at this
+                            exact this.elim h
+                          -- We get $p = 2k$ for some $k$.
+                          obtain ⟨k, hk⟩ := this
+                          -- Then, $p^3 = (2k)^3 = 8k^3$.
+                          rw [hk, Nat.mul_pow] at h₁
+                          rw [show 8 = 2 ^ 3 by norm_num, ←Nat.pow_mul] at h₁
+                          -- We get $2q^3 = 2^3k^3$.
+                          replace h₁ : 2 * q ^ 3 = 2 ^ 3 * k ^ 3 := by
+                            linarith
+                          -- We get $q^3 = 2^2k^3$.
+                          replace h₁ : q ^ 3 = 2 ^ 2 * k ^ 3 := by
+                            linarith
+                          -- It suffices to show that $q$ is even.
+                          suffices Even q by
+                            -- Then, $q = 2k'$ for some $k'$.
+                            obtain ⟨k', hk'⟩ := this
+                            -- We get $q^3 = (2k')^3 = 8k'^3$.
+                            rw [hk', Nat.mul_pow] at h₁
+                            rw [show 8 = 2 ^ 3 by norm_num, ←Nat.pow_mul] at h₁
+                            -- We get $2^2k'^3 = 2^3k^3$.
+                            replace h₁ : 2 ^ 2 * k' ^ 3 = 2 ^ 3 * k ^ 3 := by
+                              linarith
+                            -- We get $k'^3 = k^3$.
+                            replace h₁ : k' ^ 3 = k ^ 3 := by
+                              linarith
+                            -- It suffices to show that $k'$ is even.
+                            suffices Even k' by
+                              -- By induction, all numbers with the form of $k, k', k'', \dots$ are even.
+                              mpr this.elim h
+                            -- It suffices to show that $k$ is even.
+                            suffices Even k by
+                              simp only [not_lt] at h
+                              simp [h]
+                            -- Assume that $k$ is odd.
+                            by_contra! hk
+                            -- It is impossible that $k$ is odd.
+                            replace hk : Odd k := by
+                              apply Prime.odd_of_not_even (Nat.prime_two) hk
+                            -- Then, $k = 2t + 1$ for some $t$.
+                            obtain ⟨t, ht⟩ := hk
+                            -- We get $q^3 = 2^2(2t + 1)^3$.
+                            rw [ht] at h₁
+                            rw [Nat.pow_mul, Nat.pow_add, Nat.pow_mul, Nat.pow_one] at h₁
+                            rw [show 2 ^ 2 = 4 by norm_num, Nat.mul_assoc] at h₁
+                            -- It suffices to show that $t$ is even.
+                            suffices Even t by
+                              -- Then, $2t + 1 = 2t' + 1$ for some $t'$.
+                              let t' := t / 2
+                              have ht' : t = 2 * t' := by
+                    rw [ht]
+                    ring
+                  -- We get $k = 2(2t' + 1) = 4t' + 2$.
+                  rw [ht, ht'] 
+                  ring
+                -- It suffices to show that $t'$ is even.
+                suffices Even t' by
+                  -- Then, $4t' + 2 = 2(2t' + 1)$.
+                  replace this : k = 2 * (2 * t' + 1) := by
+                    rw [ht, ht']
+                    ring
+                  -- change the sign of $t'$ if necessary.
+                  wlog h : 0 < 2 * t' + 1 generalizing x
+                  · -- It suffices to show that $p$ is even.
+                    suffices Even p by
+                      -- Then, $-p$ is even, and hence $p$ is even.
+                      replace this : Even (-p) := by
+                        rw [Even.neg_iff] at this
+                        exact this.elim h
+                      -- We get $-p = 2k$ for some $k$.
+                      obtain ⟨k, hk⟩ := this
+                      -- Then, $(-p)^3

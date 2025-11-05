@@ -1,0 +1,87 @@
+-- n divides 280 and 40 divides n, so n is in the set
+  -- {1,2,4,5,7,8,10,14,20,28,35,40,50,56,70,80,100,112,140,200,280}
+  have h3 : n ∈ ({1, 2, 4, 5, 7, 8, 10, 14, 20, 28, 35, 40, 50, 56, 70, 80, 100, 112, 140, 200, 280} : Finset ℕ) := by
+    have : n ∈ Nat.divisors 280 := by
+      apply Nat.mem_divisors.mpr
+      constructor
+      · exact h₂
+      · apply Nat.dvd_gcd
+        · rw [<-Nat.gcd_comm]
+          apply Nat.gcd_dvd_left
+        · exact Nat.gcd_dvd_right
+    have : n ∈ Nat.divisors 40 := by
+      apply Nat.mem_divisors.mpr
+      constructor
+      · exact Nat.gcd_dvd_right
+      · apply Nat.dvd_gcd
+        · exact Nat.gcd_comm
+        · exact h₁
+    have : n ∈ Nat.divisors 280 ∩ Nat.divisors 40 := by
+      exact this
+    exact Set.mem_inter.mp this
+  -- the elements of the set that are coprime with 40 are {1,7,14,70}
+  -- so n is in the set {1,7,14,70}
+  have h4 : n ∈ ({1, 7, 14, 70} : Finset ℕ) := by
+    have : n ∈ ({n ∈ ({1, 2, 4, 5, 7, 8, 10, 14, 20, 28, 35, 40, 50, 56, 70, 80, 100, 112, 140, 200, 280} : Finset ℕ) | n.Coprime 40} : Finset ℕ) := by
+      simp
+      constructor
+      · exact h3
+      · apply Nat.Coprime.dvd_gcd
+        · exact h₂
+        · apply Nat.dvd_gcd
+          · exact Nat.gcd_comm
+          · exact h₁
+    exact this
+  -- elements of the set that are gcd 10 with 40 are {10,70}
+  -- so n is in the set {10,70}
+  have h5 : n ∈ ({10, 70} : Finset ℕ) := by
+    have : n ∈ ({n ∈ ({1, 7, 14, 70} : Finset ℕ) | 10 = n.gcd 40} : Finset ℕ) := by
+      simp
+      constructor
+      · exact h4
+      · repeat rw [<-Nat.gcd_comm]
+        rw [Nat.gcd_eq_iff_eq_mul_right]
+        · exact h₁
+        · simp
+        · exact h₂
+    exact this
+
+  have h6 : n = 70 := by
+    simp
+    constructor
+    · by_contra!
+      have : n < 70 := by
+        exact Nat.lt_of_le_of_ne this.symm
+      have h7 : n ∣ 70 := by
+        rw [<-Nat.gcd_comm]
+        apply Nat.gcd_dvd_right
+      have h8 : n ∈ Nat.divisors 70 := by
+        exact Nat.mem_divisors.mpr ⟨this, h7⟩
+      have h9 : n ∈ ({1, 2, 5, 7, 10, 14, 35, 70} : Finset ℕ) := by
+        have : n ∈ Nat.divisors 70 := by
+          exact h8
+        have : n ∈ Nat.divisors 70 ∩ Nat.divisors 40 := by
+          exact this
+        exact Set.mem_inter.mp this
+      have h10 : n ∈ ({14, 70} : Finset ℕ) := by
+        have : n ∈ ({n ∈ ({1, 2, 5, 7, 10, 14, 35, 70} : Finset ℕ) | n.Coprime 40} : Finset ℕ) := by
+          simp
+          constructor
+          · exact h9
+          · apply Nat.Coprime.dvd_gcd
+            · exact h₂
+            · apply Nat.dvd_gcd
+              · exact Nat.gcd_comm
+              · exact h₁
+        exact this
+      have h11 : n = 14 ∨ n = 70 := by
+        simp at h10
+        exact h10
+      rcases h11 with h12 | h13
+      · rw [h12] at h₁
+        norm_num at h₁
+      · exact h13
+    · exact h5
+  exact h6
+
+```

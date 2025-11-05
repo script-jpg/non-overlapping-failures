@@ -1,0 +1,89 @@
+-- lemma, for any positive real number $a$, we have $a ^ n \geq 0$.
+  have l₀ : ∀ a : ℝ, a > 0 → 0 ≤ a ^ n := by
+    intros a ha
+    apply pow_nonneg
+    linarith
+
+  -- We can assume that $a \leq b$.
+  wlog h₂ : a ≤ b
+  · -- If not, we can swap $a$ and $b$.
+    specialize this b a (by linarith)
+    rw [add_comm] at this
+    exact this
+
+  -- We can assume that $n \geq 1$.
+  wlog h₃ : n ≥ 1
+  · -- If not, we can use $n = 0$.
+    simp at h₃
+    specialize this a b 0 (by linarith) (by linarith)
+    simp at this
+    exact this
+
+  -- We can assume that $a \geq 1$.
+  wlog h₄ : a ≥ 1
+  · -- If not, we can use $a = 1$.
+    specialize this 1 b n (by linarith) (by linarith) (by linarith)
+    simp at this
+    exact this
+
+  -- We can assume that $b \geq 1$.
+  wlog h₅ : b ≥ 1
+  · -- If not, we can use $b = 1$.
+    specialize this a 1 n (by linarith) (by linarith) (by linarith)
+    simp at this
+    exact this
+
+  -- By the binomial theorem, $0 \leq (b - a)^n$.
+  have : 0 ≤ (b - a) ^ n := by
+    apply pow_nonneg
+    linarith
+
+  -- Notice that $(a + b)^n = (b - a)^n +... + b^n$.
+  have : (a + b) ^ n = (b - a) ^ n + ∑ x ∈ Finset.range n, Nat.choose n x * a ^ x * b ^ (n - x) := by
+    rw [← Finset.sum_add_distrib]
+    rw [Finset.sum_range_succ]
+    simp
+    rw [Nat.choose_one_right, pow_one]
+    simp
+    linarith
+
+  -- Notice that $0 \leq (b - a)^n$ and $0 \leq a^x b^{n - x}$ for all $x \in [0, n)$.
+  apply Finset.sum_le_sum
+  intros x hx
+  rw [Nat.mem_range] at hx
+  have : 0 ≤ (b - a) ^ n := by
+    apply pow_nonneg
+    linarith
+  have : 0 ≤ a ^ x := by
+    apply pow_nonneg
+    linarith
+  have : 0 ≤ b ^ (n - x) := by
+    apply pow_nonneg
+    linarith
+  exact mul_nonneg this this
+
+  -- Therefore, $(a + b)^n \geq b^n$.
+  have : (a + b) ^ n ≥ b ^ n := by
+    linarith
+
+  -- Therefore, $\frac{a + b}{2} \geq \frac{b}{2}$.
+  have : (a + b) / 2 ≥ b / 2 := by
+    linarith
+
+  -- Therefore, $(\frac{a + b}{2})^n \geq (\frac{b}{2})^n$.
+  have : ((a + b) / 2) ^ n ≥ (b / 2) ^ n := by
+    apply pow_le_pow_left
+    linarith
+    all_goals
+      linarith
+
+  -- Similarly, $(\frac{a + b}{2})^n \leq (\frac{a}{2})^n$.
+  have : ((a + b) / 2) ^ n ≤ (a / 2) ^ n := by
+    apply pow_le_pow_left
+    linarith
+    all_goals
+      linarith
+
+  -- Therefore, $(\frac{a + b}{2})^n \leq \frac{a^n + b^n}{2}$.
+  linarith
+```

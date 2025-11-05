@@ -1,0 +1,83 @@
+-- AB is a two-digit number, so $0< A \leq 9$ and $0 \leq B \leq 9$.
+  have hA : 1 ≤ a := h₀.1
+  have hA' : a ≤ 9 := h₀.2.1
+  have hB : b ≤ 9 := h₀.2.2
+
+  -- $912673 = 1000 \cdot 912 + 673$, and so the last 3 digits of $AB^3$ is 673.
+  have h₁' : (10 * a + b) ^ 3 ≡ 673 [MOD 1000] := by
+    rw [h₁]
+    exact rfl
+
+  -- Then $AB^3 \equiv 673 [MOD 1000]$
+  -- $AB \equiv 13 [MOD 25]$
+  have h₂ : (10 * a + b) ≡ 13 [MOD 25] := by
+    replace h₁' : (10 * a + b) ^ 3 % 1000 = 673 := h₁'
+    have : (10 * a + b) ^ 3 % 1000 = ((10 * a + b) % 1000) ^ 3 % 1000 := by
+      rw [Nat.pow_mod]
+    rw [this] at h₁'
+    replace h₁' : ((10 * a + b) % 1000) ^ 3 % 1000 = 673 := h₁'
+    have h₃ : (10 * a + b) % 1000 = 13 := by
+      apply Nat.ModEq.pow 3 at h₁'
+      simp [Nat.ModEq] at h₁'
+      have h₄ : (10 * a + b) % 1000 * ((10 * a + b) % 1000) ^ 2 + 673 ≡ 673 [MOD 1000] := by
+        apply Nat.ModEq.add_right
+        apply Nat.ModEq.mul_left
+        apply Nat.ModEq.pow
+        simp [Nat.ModEq]
+        exact h₁'
+      replace h₄ : (10 * a + b) % 1000 * ((10 * a + b) % 1000) ^ 2 ≡ 0 [MOD 1000] := by
+        apply Nat.ModEq.symm
+        apply Nat.modEq_zero_iff_dvd.mpr
+        apply Nat.dvd_mul_right
+      replace h₄ := Nat.ModEq.dvd h₄
+      simp [Nat.ModEq] at h₄
+      omega
+    apply Nat.ModEq.symm
+    exact h₃
+
+  -- Then $AB \equiv 13 [MOD 25]$
+  -- $10A + B \equiv 13 [MOD 25]$
+  -- $10A + B = 13 + 25k$ for some integer $k$
+  have h₃ : ∃ k : ℤ, (10 * a + b) = 13 + 25 * k := by
+    exact id (Int.modEq_iff_add_fac.mp h₂)
+
+  -- $A \leq 9$ and $0 \leq B \leq 9$, so $AB \leq 99$
+  -- $13 + 25k \leq 99$
+  -- $25k \leq 86$
+  -- $k \leq 3$
+  have h₄ : k ≤ 3 := by
+    omega
+
+  -- $AB^3 = 912673$
+  -- $10A + B = 13 + 25k$
+  -- $k \neq 0$
+  have h₅ : k ≠ 0 := by
+    omega
+
+  -- So $k = 1, 2, 3$
+  have h₆ : k = 1 ∨ k = 2 ∨ k = 3 := by
+    omega
+
+  rcases h₆ with (h₆ | h₆ | h₆)
+
+  -- $k = 1$ gives $AB = 38$, which is impossible
+  · rw [h₆] at h₃
+    have h₇ : 10 * a + b = 38 := by omega
+    have h₈ : a = 3 := by omega
+    have h₉ : b = 8 := by omega
+    omega
+
+  -- $k = 2$ gives $AB = 63$, which is impossible
+  · rw [h₆] at h₃
+    have h₇ : 10 * a + b = 63 := by omega
+    have h₈ : a = 6 := by omega
+    have h₉ : b = 3 := by omega
+    omega
+
+  -- $k = 3$ gives $AB = 88$, so $A + B = 16$
+  · rw [h₆] at h₃
+    have h₇ : 10 * a + b = 88 := by omega
+    have h₈ : a = 8 := by omega
+    have h₉ : b = 8 := by omega
+    omega
+```

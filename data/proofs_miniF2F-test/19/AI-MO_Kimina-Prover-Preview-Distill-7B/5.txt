@@ -1,0 +1,183 @@
+-- show that sqrt(1 + 2 * x) is well-defined
+  have h₀' : 0 ≤ 1 + 2 * x := by linarith
+
+  -- show that sqrt(1 + 2 * x) ≥ 0
+  have h₃ : 0 ≤ Real.sqrt (1 + 2 * x) := by apply Real.sqrt_nonneg
+
+  -- show that 1 - sqrt(1 + 2 * x) < 1
+  have h₄ : 1 - Real.sqrt (1 + 2 * x) < 1 := by
+    apply sub_lt_self
+    exact Real.sqrt_pos_of_pos (by linarith) -- show that sqrt(1 + 2x) > 0
+  -- show that 1 - sqrt(1 + 2 * x) > -1/2
+  have h₅ : -1 / 2 < 1 - Real.sqrt (1 + 2 * x) := by
+    have h₅ : Real.sqrt (1 + 2 * x) < 1 + 1 / 2 := by   -- show that sqrt(1 + 2x) < 3/2
+      have h₅ : 1 + 2 * x < (1 + 1 / 2) ^ 2 := by   -- show that 1 + 2x < (3/2)^2
+        linarith [show (1 : ℝ) + 2 * x ≥ 0 by linarith]
+      exact (Real.sqrt_lt' h₀').mpr (by linarith) -- apply Real.sqrt_lt'
+    linarith
+
+  -- show that (1 - sqrt(1 + 2 * x))^2 > 0
+  have h₆ : 0 < (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    apply sq_pos_of_neg
+    linarith
+
+  -- show that 4 * x ^ 2 ≥ 0
+  have h₇ : 0 ≤ 4 * x ^ 2 := by positivity
+
+  -- show that 2 * x + 9 > 0
+  have h₈ : 0 < 2 * x + 9 := by
+    linarith
+
+  /- We want to multiply both sides of the inequality by the square of the denominator to eliminate the fraction. Is this a valid operation? -/
+  have h₉ : 4 * x ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    have h₉ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 > 0 := by
+      apply sq_pos_of_ne_zero
+      exact h₁
+    exact (div_lt_iff₀ h₉).mp h₂
+
+  -- estimate the right-hand side
+  have h₁₀ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) :=
+    (mul_lt_mul_of_pos_left (by linarith)).mpr (sq_pos_of_neg (by linarith))
+
+  -- compare the terms
+  have h₁₁ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) = (2 * x + 9) * (1 - 2 * Real.sqrt (1 + 2 * x) + (Real.sqrt (1 + 2 * x)) ^ 2) := by ring
+  have h₁₂ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) = (2 * x + 9) - (2 * x + 9) * 2 * Real.sqrt (1 + 2 * x) + (2 * x + 9) * (Real.sqrt (1 + 2 * x)) ^ 2 := by ring
+
+  have h₁₃ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (2 * x + 9) - (2 * x + 9) * 2 * Real.sqrt (1 + 2 * x) + (2 * x + 9) * (Real.sqrt (1 + 2 * x)) ^ 2 := by
+    rw [h₁₁, h₁₂]
+    ring
+
+  -- We want to draw a conclusion by comparing the quadratic and linear terms
+  have h₁₄ : (Real.sqrt (1 + 2 * x)) ^ 2 = 1 + 2 * x := by
+    exact Real.sq_sqrt h₀'
+
+  -- We now compare the quadratic and linear terms
+  have h₁₅ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) :=
+    (mul_lt_mul_of_pos_left (by linarith)).mpr (sq_pos_of_neg (by linarith))
+
+  -- compare the terms
+  have h₁₆ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) = (2 * x + 9) - (2 * x + 9) * 2 * Real.sqrt (1 + 2 * x) + (2 * x + 9) * (Real.sqrt (1 + 2 * x)) ^ 2 := by ring
+
+  -- eliminate the square of the square root
+  have h₁₇ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (2 * x + 9) - (2 * x + 9) * 2 * Real.sqrt (1 + 2 * x) + (2 * x + 9) * (Real.sqrt (1 + 2 * x)) ^ 2 := by
+    rw [h₁₁, h₁₂]
+    ring
+
+  -- compare the terms
+  have h₁₈ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) = (2 * x + 9) - (2 * x + 9) * 2 * Real.sqrt (1 + 2 * x) + (2 * x + 9) * (Real.sqrt (1 + 2 * x)) ^ 2 := by ring
+
+  have h₁₉ : 0 ≤ 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    apply div_nonneg
+    exact h₇
+    exact h₆
+
+  -- compare the terms
+  have h₂₀ : 0 ≤ (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    apply mul_nonneg
+    linarith
+    exact h₆
+
+  -- compare the terms
+  have h₂₁ : 0 ≤ (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) := by
+    apply mul_nonneg
+    linarith
+    apply pow_two_nonneg
+
+  -- compare the quadratic and linear terms
+  have h₂₂ : (2 * x + 9) * (1 - 2 * Real.sqrt (1 + 2 * x) + (Real.sqrt (1 + 2 * x)) ^ 2) < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) + (2 * x + 9) :=
+    by
+      apply (add_lt_add_iff_right (a := (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)))) |>.mpr
+      simp [h₁₅]
+      exact h₁₅
+
+  -- eliminate the square of the square root
+  have h₂₃ : (2 * x + 9) * (1 - 2 * Real.sqrt (1 + 2 * x) + (Real.sqrt (1 + 2 * x)) ^ 2) = (2 * x + 9) - (2 * x + 9) * 2 * Real.sqrt (1 + 2 * x) + (2 * x + 9) := by
+    rw [h₁₄]
+    ring
+
+  -- draw a conclusion
+  have h₂₄ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) + (2 * x + 9) :=
+    by
+      apply (add_lt_add_iff_right (a := (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)))) |>.mpr
+      simp [h₁₅]
+      exact h₁₅
+
+  -- compare the terms
+  have h₂₅ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) = (2 * x + 9) - (2 * x + 9) * 2 * Real.sqrt (1 + 2 * x) + (2 * x + 9) * (Real.sqrt (1 + 2 * x)) ^ 2 := by ring
+
+  have h₂₆ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (2 * x + 9) - (2 * x + 9) * 2 * Real.sqrt (1 + 2 * x) + (2 * x + 9) * (Real.sqrt (1 + 2 * x)) ^ 2 := by
+    rw [h₁₁, h₁₂]
+    ring
+
+  have h₂₇ : 0 ≤ 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    apply div_nonneg
+    exact h₇
+    exact h₆
+
+  have h₂₈ : 0 ≤ (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    apply mul_nonneg
+    linarith
+    exact h₆
+
+  have h₂₉ : 0 ≤ (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) := by
+    apply mul_nonneg
+    linarith
+    apply pow_two_nonneg
+
+  -- add the two inequalities
+  have h₃₀ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) + (2 * x + 9) + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    apply add_lt_add_of_lt_of_le h₂₄ (by linarith)
+
+  -- simplify the inequality
+  have h₃₁ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 = 2 * x + 9 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    rw [h₂₆, h₂₃, h₁₃, h₁₄]
+    ring
+
+  have h₃₂ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) * (1 - Real.sqrt (1 + 2 * x)) + (2 * x + 9) + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 + (2 * x + 9) := by
+    ring
+
+  -- cancel out the common term
+  have h₃₃ : 2 * x + 9 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 + (2 * x + 9) := by
+    linarith
+
+  -- compare the terms
+  have h₃₄ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 + (2 * x + 9) = 2 * x + 9 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 + (2 * x + 9) := by
+    ring
+
+  -- simplify the inequality
+  have h₃₅ : 2 * x + 9 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 + (2 * x + 9) = 4 * x + 18 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    ring
+
+  -- combine the inequalities
+  have h₃₆ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 4 * x + 18 + 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    linarith
+
+  -- multiply both sides by (1 - sqrt(1 + 2x))^2 to eliminate the square root
+  have h₃₇ : 4 * x ^ 2 < (4 * x + 18) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    have h₃₇ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 > 0 := by
+      apply sq_pos_of_ne_zero
+      exact h₁
+    exact (div_lt_iff₀ h₃₇).mp h₃₆
+
+  -- eliminate the square of the square root
+  have h₃₈ : (4 * x + 18) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (4 * x + 18) * (1 - 2 * Real.sqrt (1 + 2 * x) + (Real.sqrt (1 + 2 * x)) ^ 2) := by ring
+
+  have h₃₉ : (4 * x + 18) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (4 * x + 18) - (4 * x + 18) * 2 * Real.sqrt (1 + 2 * x) + (4 * x + 18) * (Real.sqrt (1 + 2 * x)) ^ 2 := by
+    rw [h₃₈]
+    ring
+
+  -- substitute the value of (Real.sqrt (1 + 2 * x)) ^ 2
+  have h₄₀ : (Real.sqrt (1 + 2 * x)) ^ 2 = 1 + 2 * x := by
+    exact Real.sq_sqrt h₀'
+
+  -- simplify
+  have h₄₁ : (4 * x + 18) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (4 * x + 18) - (4 * x + 18) * 2 * Real.sqrt (1 + 2 * x) + (4 * x + 18) * (1 + 2 * x) := by
+    rw [h₃₉, h₄₀]
+
+  -- collect the linear terms
+  have h₄₂ : (4 * x + 18) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 = 4 * x + 18 + (4 * x + 18) - (4 * x + 18) * 2 * Real.sqrt (1 + 2 * x) + (4 * x + 18) * (1 + 2 * x) := by
+    rw [h₄₁]
+    ring
+
+  -- simplify
+  have h₄₃ : 4 * x + 18 + (4 * x + 18) - (4 * x + 18) * 2 * Real.sqrt (1 + 2 * x) + (4 * x + 18) * (1 + 2 * x) = 8 * x + 36 - (4 * x + 18) * 2 * Real.sqrt (1 + 2 * x) + (4 * x + 18) * (1 + 2 * x) :=

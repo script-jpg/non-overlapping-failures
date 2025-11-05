@@ -1,0 +1,97 @@
+-- We begin by simplifying the terms in the sums on individual terms on the product
+  have h (k : ℕ) : Real.logb (5 ^ k) (3 ^ k ^ 2) = 2 * k * Real.logb 5 3 := by
+    rw [Real.logb]
+    have : Real.log (5 ^ k) = k * Real.log 5 := Real.log_pow 5 (by norm_num)
+    rw [this]
+    have : Real.log (3 ^ k ^ 2) = Real.log ((3 ^ k) ^ 2) := by ring_nf
+    rw [this]
+    have : Real.log ((3 ^ k) ^ 2) = 2 * Real.log (3 ^ k) := Real.log_pow (3 ^ k) (by norm_num)
+    rw [this]
+    have : Real.log (3 ^ k) = k * Real.log 3 := Real.log_pow 3 (by norm_num)
+    rw [this]
+    ring
+
+  have h' (k : ℕ) : Real.logb (9 ^ k) (25 ^ k) = 2 * k * Real.logb 3 5 := by
+    rw [Real.logb]
+    have : Real.log (9 ^ k) = k * Real.log 9 := Real.log_pow 9 (by norm_num)
+    rw [this]
+    have : Real.log (25 ^ k) = k * Real.log 25 := Real.log_pow 25 (by norm_num)
+    rw [this]
+    have : Real.log 9 = 2 * Real.log 3 := by
+      rw [show (9 : ℝ) = 3 ^ 2 by norm_num]
+      rw [Real.log_pow 3 (by norm_num)]
+      ring
+    rw [this]
+    have : Real.log 25 = 2 * Real.log 5 := by
+      rw [show (25 : ℝ) = 5 ^ 2 by norm_num]
+      rw [Real.log_pow 5 (by norm_num)]
+      ring
+    rw [this]
+    ring
+
+  -- Thus, the sum is a sum of terms of the form $2k(\log_5 3)$ or  $2k(\log_3 5)$
+  -- either multiplied by a constant or appearing inside a sum in the product
+  -- so it makes sense to reorganize the sums to group similar terms
+  conv =>
+    lhs
+    enter [Finset.prod]
+    rw [Finset.prod_congr rfl]
+    intro i hi
+    rw [Finset.mem_Icc] at hi
+    rw [Finset.prod_Icc_succ_top (by norm_num), Finset.prod_Icc_succ_top (by norm_num)]
+    rw [h, h']
+
+  -- Now it makes sense to make the substitution $x = \log_5 3$ and $y = \log_3 5$
+  set x := Real.logb 5 3 with hx
+  set y := Real.logb 3 5 with hy
+  have : x * y = 1 := by
+    rw [hx, hy, Real.logb_mul_logb 5 3 (by norm_num) (by norm_num)]
+    calc
+      _ = Real.log 5 * Real.log 3 * 2 := by ring
+      _ = Real.log 3 * Real.log 5 * 2 := by ring
+      _ = Real.log 3 * Real.log 5 * 2 := by rfl
+      _ = Real.log 3 * Real.log 5 * 2 := by rfl
+      _ = Real.log 3 * Real.log 5 * 2 := by rfl
+      _ = _ :=?_
+    rw [← Real.log_rpow (by norm_num), ← Real.log_rpow (by norm_num)]
+    rw [Real.log_mul_logb (by norm_num) (by norm_num), ← Real.log_rpow (by norm_num)]
+    ring_nf
+
+  rw [← mul_assoc, Finset.mul_sum]
+  -- the first sum is over the expression 2k(x) for k = 1..20
+  -- and the second sum is over the expression 2k(y) for k = 1..100
+  -- both sums can be calculated with the formula sum over k of k = n(n+1)/2
+  have : ∑ k in Finset.Icc 1 20, (2 * (k : ℝ) * x) = x * 2 * (20 * 21 / 2) := by
+    rw [Finset.mul_sum, Finset.sum_Icc_eq_sum_range, Finset.sum_range_id]
+    norm_num
+  rw [this]
+  have : ∑ k in Finset.Icc 1 100, (2 * (k : ℝ) * y) = y * 2 * (100 * 101 / 2) := by
+    rw [Finset.mul_sum, Finset.sum_Icc_eq_sum_range, Finset.sum_range_id]
+    norm_num
+  rw [this]
+
+  -- so the product is x * y * 2 * 20 * 21 / 2  * 2 * 100 * 101 / 2 = 21000
+  rw [mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc]
+  rw [this, this]
+  rw [show (2 : ℝ) * 20 * 21 / 2 * 2 * 100 * 101 / 2 = 21000 by norm_num]
+  rw [mul_comm x y]
+  exact ⟨?_,?_⟩
+  · rw [hx]
+    calc
+      _ = Real.log 3 * Real.log 5 := by ring
+      _ = Real.log 3 * Real.log 5 := by rfl
+      _ = Real.log 3 * Real.log 5 := by rfl
+      _ = _ :=?_
+    rw [Real.log_rpow (by norm_num), Real.log_rpow (by norm_num)]
+    rw [Real.log_mul_logb (by norm_num) (by norm_num), ← Real.log_rpow (by norm_num)]
+    ring_nf
+  · rw [hy]
+    calc
+      _ = Real.log 5 * Real.log 3 := by ring
+      _ = Real.log 5 * Real.log 3 := by rfl
+      _ = Real.log 5 * Real.log 3 := by rfl
+      _ = _ :=?_
+    rw [Real.log_rpow (by norm_num), Real.log_rpow (by norm_num)]
+    rw [Real.log_mul_logb (by norm_num) (by norm_num), ← Real.log_rpow (by norm_num)]
+    ring_nf
+```

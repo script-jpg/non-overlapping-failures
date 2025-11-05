@@ -1,0 +1,207 @@
+-- We first prove that the roots are all distinct, in other words, the cosine values are all distinct.
+  have h₂ : Real.cos (2 * Real.pi / 7) ≠ Real.cos (4 * Real.pi / 7) := by
+    by_contra!
+    have h₂ : 2 * Real.cos (2 * Real.pi / 7) ^ 2 = 1 := by
+      calc
+        2 * Real.cos (2 * Real.pi / 7) ^ 2 = 2 * (Real.cos (4 * Real.pi / 7) ^ 2) := by rw [this]
+        _ = 2 * (2 * Real.cos (4 * Real.pi / 7) ^ 2 - 1) / 2 + 1 := by ring
+        _ = 2 * Real.cos (4 * Real.pi / 7) ^ 2 := by ring
+    rw [Real.cos_sq] at h₂
+    ring_nf at h₂
+    nlinarith [Real.pi_pos]
+  have h₃ : Real.cos (2 * Real.pi / 7) ≠ Real.cos (6 * Real.pi / 7) := by
+    by_contra!
+    have h₃ : 2 * Real.cos (2 * Real.pi / 7) ^ 2 = 1 := by
+      calc
+        2 * Real.cos (2 * Real.pi / 7) ^ 2 = 2 * (Real.cos (6 * Real.pi / 7) ^ 2) := by rw [this]
+        _ = 2 * (2 * Real.cos (6 * Real.pi / 7) ^ 2 - 1) / 2 + 1 := by ring
+        _ = 2 * Real.cos (6 * Real.pi / 7) ^ 2 := by ring
+    rw [Real.cos_sq] at h₃
+    ring_nf at h₃
+    nlinarith [Real.pi_pos]
+  have h₄ : Real.cos (4 * Real.pi / 7) ≠ Real.cos (6 * Real.pi / 7) := by
+    by_contra!
+    have h₄ : 2 * Real.cos (4 * Real.pi / 7) ^ 2 = 1 := by
+      calc
+        2 * Real.cos (4 * Real.pi / 7) ^ 2 = 2 * (Real.cos (6 * Real.pi / 7) ^ 2) := by rw [this]
+        _ = 2 * (2 * Real.cos (6 * Real.pi / 7) ^ 2 - 1) / 2 + 1 := by ring
+        _ = 2 * Real.cos (6 * Real.pi / 7) ^ 2 := by ring
+    rw [Real.cos_sq] at h₄
+    ring_nf at h₄
+    nlinarith [Real.pi_pos]
+
+  -- We prove Vieta's formulas for a cubic polynomial
+  -- If $f(x)=x^3+ax^2+bx+c$ has roots $r_1,r_2,r_3$, then $r_1+r_2+r_3=-a$, $r_1r_2+r_1r_3+r_2r_3=b$, and $r_1r_2r_3=-c$.
+  have h₅ (r₁ r₂ r₃ a b c : ℝ) (h₅ : f = fun x => x ^ 3 + a * x ^ 2 + b * x + c) (h₆ : f ⁻¹' {0} = {r₁, r₂, r₃}) :
+      r₁ + r₂ + r₃ = -a ∧ r₁ * r₂ + r₁ * r₃ + r₂ * r₃ = b ∧ r₁ * r₂ * r₃ = -c := by
+    -- We prove that the roots are distinct
+    have h₇ : r₁ ≠ r₂ := by
+      by_contra!
+      replace this : f r₁ ≠ 0 := by
+        simp [h₅, this]
+        apply h₂
+      simp [h₆] at this
+    have h₈ : r₁ ≠ r₃ := by
+      by_contra!
+      replace this : f r₁ ≠ 0 := by
+        simp [h₅, this]
+        apply h₃
+      simp [h₆] at this
+    have h₉ : r₂ ≠ r₃ := by
+      by_contra!
+      replace this : f r₂ ≠ 0 := by
+        simp [h₅, this]
+        apply h₄
+      simp [h₆] at this
+
+    -- We prove that the cubic polynomial is equal to the product $(x-r_1)(x-r_2)(x-r_3)$
+    have h₁₀ : ∀ x, f x = (x - r₁) * (x - r₂) * (x - r₃) := by
+      intro x
+      suffices h₁₀ : ∀ y, f y = (y - r₁) * (y - r₂) * (y - r₃) by
+        specialize h₁₀ x
+        exact h₁₀
+      intro y
+      -- We prove that $f(x)$ is divisible by $(x-r_1)(x-r_2)(x-r_3)$
+      have h₁₀ : (y - r₁) * (y - r₂) * (y - r₃) ∣ f y := by
+        rw [h₆]
+        apply Finset.prod_dvd_prod_of_mem
+        simp
+        intro x hx
+        simp at hx
+        rcases hx with hx | hx | hx
+        · rw [hx]; apply h₇
+        · rw [hx]; apply h₈
+        · rw [hx]; apply h₉
+      apply dvd_iff_exists_eq_mul_right.mp at h₁₀
+      obtain ⟨k, h₁₀⟩ := h₁₀
+      -- We prove that $k=1$
+      have h₁₁ : k = 1 := by
+        calc
+          k = f 0 / ((0 - r₁) * (0 - r₂) * (0 - r₃)) := by
+            rw [h₁₀]
+            simp
+          _ = c / ((-r₁) * (-r₂) * (-r₃)) := by rw [h₀]; simp
+          _ = c / (-r₁ * -r₂ * -r₃) := by ring
+          _ = -1 := by
+            simp [h₆, h₀]
+            simp [h₆, h₀] at h₁
+            rw [h₁]
+            ring
+            simp [h₆, h₀]
+            by_contra!
+            replace this : -r₁ * -r₂ * -r₃ ≠ 0 := by
+              calc
+                -r₁ * -r₂ * -r₃ = -(-r₁ * -r₂) * -r₃ := by ring
+                _ = -(-r₁ * -r₂) * -r₃ := by rw [this]
+                _ ≠ 0 := by simp
+            simp [this]
+      simp [h₁₁] at h₁₀
+      exact h₁₀
+
+    -- We substitute $x=r_1$ into the equation and prove that $r_1 + r_2 + r_3 = -a$
+    have h₁₁ : r₁ + r₂ + r₃ = -a := by
+      calc
+        r₁ + r₂ + r₃ = f 0 / (-r₁ * -r₂ * -r₃) := by
+          simp [h₆, h₀]
+          simp [h₆, h₀] at h₁
+          rw [h₁]
+          ring
+          simp [h₆, h₀]
+          by_contra!
+          replace this : -r₁ * -r₂ * -r₃ ≠ 0 := by
+            calc
+              -r₁ * -r₂ * -r₃ = -(-r₁ * -r₂) * -r₃ := by ring
+              _ = -(-r₁ * -r₂) * -r₃ := by rw [this]
+              _ ≠ 0 := by simp
+          simp [this]
+        _ = -a := by
+          rw [h₁₀]
+          simp [h₀]
+          ring
+
+    -- We substitute $x=r_2$ into the equation and prove that $r_1 * r_2 + r_1 * r_3 + r_2 * r_3 = b$
+    have h₁₂ : r₁ * r₂ + r₁ * r₃ + r₂ * r₃ = b := by
+      calc
+        r₁ * r₂ + r₁ * r₃ + r₂ * r₃ = (r₁ + r₂ + r₃) * (r₁ * r₂ + r₁ * r₃ + r₂ * r₃) - r₁ * r₂ * r₃ := by ring
+        _ = f 0 / (-r₁ * -r₂ * -r₃) := by
+          rw [h₁₀]
+          simp [h₀]
+          ring
+        _ = b := by
+          rw [h₁₀]
+          simp [h₀]
+          ring
+
+    -- We substitute $x=r_3$ into the equation and prove that $r_1 * r_2 * r_3 = -c$
+    have h₁₃ : r₁ * r₂ * r₃ = -c := by
+      calc
+        r₁ * r₂ * r₃ = f 0 / (-r₁ * -r₂ * -r₃) := by
+          rw [h₁₀]
+          simp [h₀]
+          ring
+        _ = -c := by
+          rw [h₁₀]
+          simp [h₀]
+          ring
+
+    exact ⟨h₁₁, h₁₂, h₁₃⟩
+
+  -- We use the lemma to prove the values of $a$, $b$, and $c$
+  specialize h₅ (Real.cos (2 * Real.pi / 7)) (Real.cos (4 * Real.pi / 7)) (Real.cos (6 * Real.pi / 7)) a b c
+  rw [h₀] at h₅
+  simp at h₅
+  have h₆ : f 0 = Real.cos (2 * Real.pi / 7) ^ 3 + a * Real.cos (2 * Real.pi / 7) ^ 2 + b * Real.cos (2 * Real.pi / 7) + c := by
+    simp [h₀]
+  have h₇ : f 1 = Real.cos (2 * Real.pi / 7) ^ 3 + a * Real.cos (2 * Real.pi / 7) ^ 2 + b * Real.cos (2 * Real.pi / 7) + c := by
+    simp [h₀]
+  simp at h₅ h₆ h₇
+
+  -- We prove that $a = -1/2$
+  have h₈ : a = -1 / 2 := by
+    calc
+      a = -(Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7)) := by
+        linarith only [h₅.1]
+      _ = -1 / 2 := by
+        simp [h₂, h₃, h₄]
+        nlinarith [Real.cos_sq_add_sin_sq (2 * Real.pi / 7), Real.cos_sq_add_sin_sq (4 * Real.pi / 7),
+          Real.cos_sq_add_sin_sq (6 * Real.pi / 7), Real.pi_pos]
+
+  -- We prove that $b = -3/4$
+  have h₉ : b = -3 / 4 := by
+    calc
+      b = Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) + Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+        linarith only [h₅.2.1]
+      _ = -3 / 4 := by
+        nlinarith [Real.cos_sq_add_sin_sq (2 * Real.pi / 7), Real.cos_sq_add_sin_sq (4 * Real.pi / 7),
+          Real.cos_sq_add_sin_sq (6 * Real.pi / 7), Real.pi_pos, h₈]
+
+  -- We prove that $c = 1/8$
+  have h₁₀ : c = 1 / 8 := by
+    calc
+      c = Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+        linarith only [h₅.2.2]
+      _ = 1 / 8 := by
+        have h₁₁ : Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) = Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) * (-1) / (-1) := by simp
+        rw [h₁₁]
+        calc
+          Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) * (-1) / (-1)
+            = (Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) * (-1)) / (-1) := by ring
+          _ = (Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * (-1) * Real.cos (6 * Real.pi / 7)) / (-1) := by ring
+          _ = (Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * (-1) * Real.cos (6 * Real.pi / 7) * (-1)) / (-1) * (-1) := by ring
+          _ = (Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * (1 * Real.cos (6 * Real.pi / 7))) / (-1) * (-1) := by simp
+          _ = Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) * ((-1) * (-1) / (-1) / (-1)) := by ring
+          _ = Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) * (1 / 4) := by norm_num
+          _ = 1 / 8 := by
+            rw [Real.cos_sq_add_sin_sq (2 * Real.pi / 7), Real.cos_sq_add_sin_sq (4 * Real.pi / 7), Real.cos_sq_add_sin_sq (6 * Real.pi / 7)]
+            rw [show Real.cos (2 * Real.pi / 7) ^ 2 * Real.cos (4 * Real.pi / 7) ^ 2 * Real.cos (6 * Real.pi / 7) ^ 2 = (Real.cos (2 * Real.pi / 7) ^ 2 * Real.cos (4 * Real.pi / 7) ^ 2) * Real.cos (6 * Real.pi / 7) ^ 2 := by ring]
+            rw [show Real.cos (2 * Real.pi / 7) ^ 2 * Real.cos (4 * Real.pi / 7) ^ 2 = (Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7)) ^ 2 by ring]
+            nlinarith [Real.pi_pos, Real.cos_sq_add_sin_sq (2 * Real.pi / 7), Real.cos_sq_add_sin_sq (4 * Real.pi / 7),
+              Real.cos_sq_add_sin_sq (6 * Real.pi / 7), sq_nonneg (Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7)),
+              sq_nonneg (Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)), sq_nonneg (Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)),
+              h₈, h₉, h₁₀]
+
+  -- We prove that $abc = 1/32$
+  rw [h₈, h₉, h₁₀]
+  norm_num
+
+```

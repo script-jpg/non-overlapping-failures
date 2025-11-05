@@ -1,0 +1,90 @@
+-- We are given a cubic polynomial with roots $\cos \frac{2\pi}7$, $\cos \frac{4\pi}7$, and $\cos \frac{6\pi}7$.
+  -- By the factor theorem, the polynomial can be written as $f(x) = (x - \cos \frac{2\pi}7)(x - \cos \frac{4\pi}7)(x - \cos \frac{6\pi}7)$
+  have h₂ : ∀ x, f x = (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7)) := by
+    intro x
+    rw [h₀]
+    suffices (fun x ↦ x ^ 3 + a * x ^ 2 + b * x + c) = (fun x ↦ (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7))) by
+      ext
+      simp only [Function.comp_apply, this]
+    apply Polynomial.funext
+    simp only [Set.mem_preimage, Set.mem_insert_iff, Set.mem_singleton_iff]
+    rintro (h | h | h)
+    all_goals
+      rw [h]
+      simp only [Set.mem_insert_iff, Set.mem_singleton_iff, or_self, or_false]
+      simp
+  replace h₁ : f ⁻¹' {0} = {Real.cos (2 * Real.pi / 7), Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} := by
+    exact Set.ext h₁
+
+  -- We want to compute $abc$.
+  -- By Vieta's formula, $a = -$ (sum of roots) $= -(\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7)$
+  have ha : a = - (Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7)) := by
+    have h := h₂ 0
+    simp only [zero_sub, mul_zero, add_zero, zero_add, zero_add] at h
+    linarith
+
+  -- $b = $ (sum of products of roots taken two at a time) $= \cos \frac{2\pi}7 \cos \frac{4\pi}7 + \cos \frac{2\pi}7 \cos \frac{6\pi}7 + \cos \frac{4\pi}7 \cos \frac{6\pi}7$
+  have hb : b = Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) + Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+    have h := h₂ 1
+    simp only [one_sub, mul_one, add_assoc, add_left_inj, add_right_inj] at h
+    linarith
+
+  -- $c = -$ (product of roots) $= -\cos \frac{2\pi}7 \cos \frac{4\pi}7 \cos \frac{6\pi}7$
+  have hc : c = - Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+    have h := h₂ 0
+    simp only [zero_sub, mul_zero, add_zero, zero_add, zero_add] at h
+    linarith
+
+  -- Thus, $abc = (-1)^3 \cdot (\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7) \cdot (\cos \frac{2\pi}7 \cos \frac{4\pi}7 + \cos \frac{2\pi}7 \cos \frac{6\pi}7 + \cos \frac{4\pi}7 \cos \frac{6\pi}7) \cdot \cos \frac{2\pi}7 \cos \frac{4\pi}7 \cos \frac{6\pi}7$
+  rw [ha, hb, hc]
+  ring_nf
+
+  -- We now have a formula for $abc$ in terms of cosines.
+  -- We will compute this value directly using trigonometric identities.
+  -- First, note that $\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7 = \frac12 \cot \frac{\pi}{14}$
+  have h_sum : Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) = (1 / 2) * Real.cot (Real.pi / 14) := by
+    have h₁ : Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) = 2 * Real.cos (2 * Real.pi / 7) * (Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7)) := by
+      linarith only [show Real.cos (6 * Real.pi / 7) = - Real.cos (Real.pi / 7) by rw [show 6 * Real.pi / 7 = Real.pi - Real.pi / 7 by ring, Real.cos_pi_sub]; linarith]
+    have h₂ : Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) = 2 * Real.cos (3 * Real.pi / 7) * Real.cos (Real.pi / 7) := by
+      rw [← Real.cos_add_cos]
+      ring_nf
+      repeat rw [show (2 * (Real.pi / 7) + 2 * (Real.pi / 7)) = 2 * Real.pi / 7 + (2 * Real.pi / 7) by ring]
+      linarith
+    rw [h₁, h₂]
+    have h₃ : Real.cos (2 * Real.pi / 7) * (2 * Real.cos (3 * Real.pi / 7) * Real.cos (Real.pi / 7) + 2 * Real.cos (3 * Real.pi / 7)) = (4 * Real.cos (3 * Real.pi / 7) * Real.cos (Real.pi / 7)) * Real.cos (2 * Real.pi / 7) := by
+      linarith
+    rw [h₃]
+    have h₄ : Real.cos (Real.pi / 7) * Real.cos (2 * Real.pi / 7) * Real.cos (3 * Real.pi / 7) * 2 = Real.cos (Real.pi / 7) * Real.cos (2 * Real.pi / 7) * Real.cos (3 * Real.pi / 7) * (4 * Real.cos (3 * Real.pi / 7) * Real.cos (Real.pi / 7)) / (2 * Real.cos (3 * Real.pi / 7)) := by
+      field_simp
+      linarith
+    field_simp at h₄
+    rw [h₄]
+    repeat rw [← Real.cos_sub_cos]
+    ring_nf
+    linarith only [show 7 * Real.pi / 7 = Real.pi by ring, show 5 * Real.pi / 7 = Real.pi - 2 * Real.pi / 7 by ring, show 3 * Real.pi / 7 = Real.pi - 4 * Real.pi / 7 by ring]
+
+  -- $\cos \frac{2\pi}7 \cos \frac{4\pi}7 + \cos \frac{2\pi}7 \cos \frac{6\pi}7 + \cos \frac{4\pi}7 \cos \frac{6\pi}7 = \frac12 (\cos \frac47 + \cos \frac27 + \cos \frac67) = \frac12 (\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7 + \cos \frac{8\pi}7) = \frac12 (\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7 + \cos (-\frac{6\pi}7)) = \frac12 (\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7 + \cos \frac{6\pi}7) = \frac12 (\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + 2\cos \frac{6\pi}7) = \frac12 \frac{2\cos \frac{\pi}{14}(\cos \frac{3\pi}{14} + \cos \frac{5\pi}{14} + \cos \frac{7\pi}{14})}{\cos \frac{\pi}{14}} := by
+  have h_sum_sq : Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) + Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) = (1 / 2) * (Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + 2 * Real.cos (6 * Real.pi / 7)) := by
+    linarith only [show Real.cos (6 * Real.pi / 7) = - Real.cos (Real.pi / 7) by rw [show 6 * Real.pi / 7 = Real.pi - Real.pi / 7 by ring, Real.cos_pi_sub]; linarith, show Real.cos (4 * Real.pi / 7) = - Real.cos (3 * Real.pi / 7) by rw [show 4 * Real.pi / 7 = Real.pi - 3 * Real.pi / 7 by ring, Real.cos_pi_sub]; linarith]
+
+  -- $\frac12 (\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + 2\cos \frac{6\pi}7) \cdot \cos \frac{2\pi}7 \cos \frac{4\pi}7 \cos \frac{6\pi}7 = \frac1{16} \cot \frac{\pi}{14} \cdot \frac{(\sin \frac{3\pi}7 + \sin \frac{\pi}{14} + \sin \frac{5\pi}{14}) (\sin \frac{3\pi}7 + \sin \frac{\pi}{14} - \sin \frac{5\pi}{14})}{\sin \frac{\pi}{14}} := by
+  have h_prod : Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) = (1 / 16) * Real.cot (Real.pi / 14) * (Real.sin (3 * Real.pi / 7) + Real.sin (Real.pi / 14) + Real.sin (5 * Real.pi / 14)) * (Real.sin (3 * Real.pi / 7) + Real.sin (Real.pi / 14) - Real.sin (5 * Real.pi / 14)) / Real.sin (Real.pi / 14) := by
+    have h₁ : Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) = Real.cos (2 * Real.pi / 7) * (Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) + Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) := by
+      linarith
+    rw [h₁, h_sum_sq]
+    -- We will now use the identity $\cos \frac{2\pi}7 \cdot \frac12 (\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + 2\cos \frac{6\pi}7) \cdot \cos \frac{6\pi}7 = \frac1{16} \cot \frac{\pi}{14} \cdot (\sin \frac{3\pi}7 + \sin \frac{\pi}{14} + \sin \frac{5\pi}{14}) \cdot (\sin \frac{3\pi}7 + \sin \frac{\pi}{14} - \sin \frac{5\pi}{14}) / \sin \frac{\pi}{14}$
+    calc
+      Real.cos (2 * Real.pi / 7) * ((1 / 2) * (Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + 2 * Real.cos (6 * Real.pi / 7)) * Real.cos (6 * Real.pi / 7)) = (1 / 16) * Real.cot (Real.pi / 14) * (Real.sin (3 * Real.pi / 7) + Real.sin (Real.pi / 14) + Real.sin (5 * Real.pi / 14)) * (Real.sin (3 * Real.pi / 7) + Real.sin (Real.pi / 14) - Real.sin (5 * Real.pi / 14)) / Real.sin (Real.pi / 14) := by
+        have h_abcd : ((Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) * 16) * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) = (Real.sin (3 * Real.pi / 7) + Real.sin (Real.pi / 14) + Real.sin (5 * Real.pi / 14)) * (Real.sin (3 * Real.pi / 7) + Real.sin (Real.pi / 14) - Real.sin (5 * Real.pi / 14)) * 8 * Real.cos (Real.pi / 14) * Real.sin (Real.pi / 14) * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+          calc
+            ((Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) * 16) * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) = ((Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) * 16) * (Real.cos (Real.pi - 5 * Real.pi / 14) * Real.cos (Real.pi / 2 - Real.pi / 14) * Real.cos (Real.pi / 2 - Real.pi / 14)) := by
+              rw [show 2 * Real.pi / 7 = Real.pi - 5 * Real.pi / 14 by ring, show 4 * Real.pi / 7 = Real.pi / 2 - Real.pi / 14 by ring, show 6 * Real.pi / 7 = Real.pi / 2 - Real.pi / 14 by ring]
+              rw [Real.cos_pi_sub]
+              have h₁ : Real.cos (Real.pi / 2 - Real.pi / 14) = Real.sin (Real.pi / 14) := by
+                rw [Real.cos_pi_div_two_sub]
+              rw [h₁]
+            _ = (Real.sin (3 * Real.pi / 7) + Real.sin (Real.pi / 14) + Real.sin (5 * Real.pi / 14)) * (Real.sin (3 * Real.pi / 7) + Real.sin (Real.pi / 14) - Real.sin (5 * Real.pi / 14)) * 8 * Real.cos (Real.pi / 14) * Real.sin (Real.pi / 14) * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+              rw [show 16 = 8*2 by norm_num, show 2 = 1+1 by norm_num, ← mul_assoc, mul_comm (Real.cos (6 * Real.pi / 7)), mul_assoc, ← Real.cos_pi_sub, ← Real.cos_pi_sub, show Real.pi - (Real.pi / 2 + Real.pi / 14) = Real.pi / 2 - Real.pi / 14 by ring, show Real.pi - (Real.pi / 2 - Real.pi / 14) = Real.pi / 2 + Real.pi / 14 by ring, ← Real.cos_pi_sub]
+              rw [show Real.pi / 2 + Real.pi / 14 - (Real.pi / 2 - Real.pi / 14) = Real.pi / 7 by ring, show Real.pi / 2 + Real.pi / 14 + (Real.pi / 2 - Real.pi / 14) = Real.pi - Real.pi / 7 by ring, Real.cos_pi_sub]
+              rw [mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc]
+              rw [Real.cos_sq, Real.cos_sq, Real.cos_sq, Real.cos

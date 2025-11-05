@@ -1,0 +1,58 @@
+-- Simplify the left sum.
+  have h₀ : ∀ k ∈ Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = k * Real.logb 5 3 := by
+    intro k hk
+    rw [Real.logb]
+    rw [Finset.mem_Icc] at hk
+    -- Use the inequality $\log_k m^p = p\cdot\log_k m$.
+    rw [Real.log_div_log, Real.log_div_log]
+    rw [Real.log_pow, Real.log_pow]
+    congr 1
+   . rw [mul_comm]
+    congr 2
+   . rw [mul_comm]
+    all_goals
+      (try norm_num) <;> try linarith
+
+  -- Simplify the right sum.
+  have h₁ : ∀ k ∈ Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = k * Real.logb 9 25 := by
+    intro k hk
+    rw [Real.logb]
+    rw [Finset.mem_Icc] at hk
+    -- Use the inequality $\log_k m^p = p\cdot\log_k m$.
+    rw [Real.log_div_log, Real.log_div_log]
+    rw [Real.log_pow, Real.log_pow]
+    congr 1
+   . rw [mul_comm]
+    congr 2
+   . rw [mul_comm]
+    all_goals
+      (try norm_num) <;> try linarith
+
+  -- We can now rewrite the sum using the `simp` tactic.
+  simp_rw [h₀, h₁, Finset.sum_const, Finset.card_Icc, Nat.card_Icc, Nat.add_one, tsub_one_eq_iff_lt]
+
+  -- Further simplification.
+  rw [Finset.sum_const, Finset.card_Icc, Nat.card_Icc, Nat.add_one, tsub_one_eq_iff_lt]
+  norm_num
+  rw [mul_assoc, <-Finset.sum_mul]
+  simp_rw [Finset.sum_const]
+  rw [Finset.sum_const, Finset.card_Icc, Nat.card_Icc, Nat.add_one, tsub_one_eq_iff_lt]
+
+  -- Finish the rest trivial calculations.
+  norm_num
+  rw [Real.logb_eq_iff_rpow_eq]
+  <;> norm_num
+  rw [mul_comm]
+  rw [<-Real.log_div_log, <-Real.log_div_log]
+  rw [show Real.log 9 = 2 * Real.log 3 by linarith [Real.log_rpow (by norm_num) (by norm_num)], show Real.log 25 = 2 * Real.log 5 by linarith [Real.log_rpow (by norm_num) (by norm_num)]]
+  rw [<-mul_assoc, <-mul_assoc, <-mul_assoc, <-Real.log_mul]
+  rw [Real.log_rpow (by norm_num) (by norm_num)]
+  rw [Real.log_rpow (by norm_num) (by norm_num)]
+  rw [Real.log_rpow (by norm_num) (by norm_num)]
+  norm_num
+  all_goals
+    rw [show (3 ^ 2 : ℝ) = 3 ^ (2 : ℝ) by norm_num]
+    apply Real.rpow_log
+    norm_num
+
+```

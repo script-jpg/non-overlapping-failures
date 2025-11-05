@@ -1,0 +1,283 @@
+have ha : a.num = 1 ∧ a.den = 1 := by
+    norm_num
+  obtain ⟨ha_num, ha_den⟩ := ha
+
+  have h_a_eq : a = 1 / 1 := by
+    norm_num
+    rw [← Rat.num_div_den a, ha_num, ha_den]
+    norm_num
+
+  have h_a_eq' : a = 1 := by
+    norm_num
+    rw [← Rat.num_div_den a, ha_num, ha_den]
+    norm_num
+
+  -- From the problem, we have $\lfloor x \rfloor \cdot \{x\} = a \cdot x^2$
+  -- We need to consider the case when $x \le 0$ or $x > 0$
+  -- If $x \le 0$, then $\lfloor x \rfloor \cdot \{x\} \le 0$, so $x \le 0$
+  -- If $x > 0$, then $\lfloor x \rfloor \cdot \{x\} > 0$, so $x > 0$
+  -- Thus, we can consider $x > 0$ cases only
+  have h₂ : ∀ x : ℝ, x > 0 → x ∈ S → a = 1 / 1 := by
+    intro x hx h
+    have hx' : x > 0 := hx
+    have h' : x ∈ S := h
+    have h_floor : ↑⌊x⌋ ≥ 1 := by
+      by_contra! h_floor
+      have : ↑⌊x⌋ = 0 := by linarith
+      have : x < 1 := by
+        rw [← Int.floor_eq_iff] at this
+        exact this.2
+      have : x ∈ Ico 0 1 := by
+        exact ⟨by linarith, by linarith⟩
+      have : S ∩ Ico 0 1 = ∅ := by
+        rw [Finset.inter_eq_empty]
+        by_contra! h_inter
+        have h_inter' : S ∩ Ico 0 1 ≠ ∅ := by
+          exact Finset.nonempty_iff_ne_empty.mpr h_inter
+        have h_subset : S ∩ Ico 0 1 ⊆ Ico 0 1 := by
+          exact Finset.inter_subset_right (S : Finset ℝ) (Ico 0 1)
+        have h_empty : S ∩ Ico 0 1 = ∅ := by
+          exact h_inter'
+        rw [h_empty] at h_subset
+        have h_nonempty : S ∩ Ico 0 1 ≠ ∅ := by
+          exact Finset.nonempty_iff_ne_empty.mpr h_inter
+        contradiction
+      have h_contra : x ∈ S ∩ Ico 0 1 := by
+        exact Finset.mem_inter.mpr ⟨h', this.2⟩
+      have h_inter : S ∩ Ico 0 1 = ∅ := by
+        exact this.1
+      rw [h_inter] at h_contra
+      have h_contra' : S ∩ Ico 0 1 ≠ ∅ := by
+        exact Finset.nonempty_iff_ne_empty.mpr h_inter
+      contradiction
+    have h_x_ge_1 : ↑⌊x⌋ ≥ 1 := by
+      exact h_floor
+    have h_xltx : x < 1 + ↑⌊x⌋ := by
+      rw [← Int.floor_lt]
+      exact hx'
+    -- We split the equation into cases when $x = 1 + ⌊x⌋ + (x - 1 - ⌊x⌋) = 1 + (x - 1)$ or $x = 1 + (x - 1) + 1$
+    -- The first case is for when $x - 1 ≥ 0$, or $x ≥ 1$
+    -- The second case is for when $x - 1 < 0$, or $x < 1$
+    -- When $x ≥ 1$, we have $1 + (x - 1) = x$
+    -- When $x < 1$, we have $x - 1 = 0$, or $x = 1$
+    -- So we have either $x = 1$ or $x = 1 + (x - 1)$
+    -- So the solutions are all numbers in $(1, 1 + (x - 1)]$ where $x ∈ ℤ₊$
+    -- For $a = 1$, this is $(1, 2]$
+    -- The sum of the solutions is $420$, so we have $420 ∈ (1, 2]$ or $420 ∈ (1, 2] \cap ℕ$
+    -- But $420 ∉ (1, 2]$, so $420 ∉ (1, 2] \cap ℕ$
+    -- So there must be a contradiction in the case when $a = 1$
+    -- So the answer is $1 + 1 = 2$
+    have h_cases : (x - 1 ≥ 0 ∧ x < 1) ∨ (x - 1 < 0 ∧ 1 ≤ x) := by
+      by_contra! h_cases
+      have : x - 1 ≥ 0 ∧ x - 1 < 0 := by
+        exact ⟨by linarith only [h_cases.1], by linarith only [h_cases.2]⟩
+      have : x - 1 = 0 := by
+        exact lt_of_le_of_lt this.1 this.2
+      have : x = 1 := by
+        linarith only [this]
+      have : x ≥ 1 := by
+        exact this
+      have : ¬ x ≥ 1 := by
+        rw [this]
+        linarith only [h_cases.2]
+      contradiction
+    rcases h_cases with ⟨h_xltx', h_x'⟩ | ⟨h_xltx', h_x'⟩
+    · have h_x_eq_1 : x = 1 := by
+        linarith only [h_xltx', h_x']
+      have h_a_eq : a = 1 / 1 := by
+        norm_num
+        rw [← Rat.num_div_den a, ha_num, ha_den]
+        norm_num
+      rw [h_a_eq'] at h_cases
+      have h_cases' : x ∈ ∅ := by
+        exact Finset.mem_empty.mpr h_cases
+      rw [Finset.mem_empty] at h_cases'
+      have h_contra : x ∈ S := by
+        exact h'
+      have h_contra' : x ∈ S ∩ ∅ := by
+        exact Finset.mem_inter.mpr ⟨h', h_cases'⟩
+      have h_empty : S ∩ ∅ = ∅ := by
+        exact Finset.inter_empty_left S
+      rw [h_empty] at h_contra'
+      have h_contra'' : S ∩ ∅ ≠ ∅ := by
+        exact Finset.nonempty_iff_ne_empty.mpr h_contra'
+      contradiction
+    · have h_x_ge_1 : x ≥ 1 := by
+        exact h_x'
+      have h_x_lt_1_add_floor : x - 1 < ↑⌊x⌋ := by
+        linarith only [h_xltx', h_floor]
+      have h_x_ge_1_add_floor : 1 + ↑⌊x⌋ ≤ x := by
+        linarith only [h_xltx', h_floor]
+      -- So we have either $x = 1$ or $x = 1 + (x - 1)$
+      -- So the solutions are all numbers in $(1, 1 + (x - 1)]$ where $x ∈ ℤ₊$
+      -- For $a = 1$, this is $(1, 2]$
+      -- The sum of the solutions is $420$, so we have $420 ∈ (1, 2]$
+      -- or $420 ∈ (1, 2] \cap ℕ$
+      -- But $420 ∉ (1, 2]$
+      -- So $420 ∉ (1, 2] \cap ℕ$
+      -- So there must be a contradiction in the case when $a = 1$
+      -- So the answer is $1 + 1 = 2$
+      have h_cases : (x - (1 + ↑⌊x⌋) ≥ 0 ∧ x < 1 + ↑⌊x⌋) ∨ (x - (1 + ↑⌊x⌋) < 0 ∧ 1 + ↑⌊x⌋ ≤ x) := by
+        by_contra! h_cases
+        have : x - (1 + ↑⌊x⌋) ≥ 0 ∧ x - (1 + ↑⌊x⌋) < 0 := by
+          exact ⟨by linarith only [h_cases.1], by linarith only [h_cases.2]⟩
+        have : x - (1 + ↑⌊x⌋) = 0 := by
+          exact le_of_lt_of_le this.1 this.2
+        have : x = 1 + ↑⌊x⌋ := by
+          linarith only [this]
+        have : ¬ x ≥ 1 + ↑⌊x⌋ := by
+          push_neg
+          rw [this]
+          linarith only [h_floor]
+        have : ¬ x ≥ 1 + ↑⌊x⌋ := by
+          exact this
+        have : x ≥ 1 + ↑⌊x⌋ := by
+          exact h_x_ge_1_add_floor
+        contradiction
+      rcases h_cases with ⟨h_x', h_xltx'⟩ | ⟨h_x', h_xltx'⟩
+      · have h_x_eq : x = 1 + ↑⌊x⌋ := by
+          linarith only [h_x', h_xltx']
+        have h_a_eq : a = 1 / 1 := by
+          norm_num
+          rw [← Rat.num_div_den a, ha_num, ha_den]
+          norm_num
+        rw [h_a_eq'] at h_cases
+        have h_cases' : x ∈ ∅ := by
+          exact Finset.mem_empty.mpr h_cases
+        rw [Finset.mem_empty] at h_cases'
+        have h_contra : x ∈ S := by
+          exact h'
+        have h_contra' : x ∈ S ∩ ∅ := by
+          exact Finset.mem_inter.mpr ⟨h', h_cases'⟩
+        have h_empty : S ∩ ∅ = ∅ := by
+          exact Finset.inter_empty_left S
+        rw [h_empty] at h_contra'
+        have h_contra'' : S ∩ ∅ ≠ ∅ := by
+          exact Finset.nonempty_iff_ne_empty.mpr h_contra'
+        contradiction
+      · have h_floor_eq : ↑⌊x⌋ = 42 := by
+          linarith only [h_x', h_xltx', h_x_ge_1_add_floor]
+        have h_floor_eq' : ↑⌊x⌋ = 42 := by
+          exact h_floor_eq
+        have h_floor_lt : 42 < (↑⌊x⌋ : ℝ) := by
+          norm_cast
+          rw [h_floor_eq']
+          linarith only
+        have h_floor_ge : (↑⌊x⌋ : ℝ) ≤ 42 := by
+          norm_cast
+          rw [h_floor_eq]
+          linarith only
+        have h_floor_eq'' : ↑⌊x⌋ = 42 := by
+          linarith only [h_floor_lt, h_floor_ge]
+        rw [h_floor_eq''] at h_floor_eq
+        have h_a_eq : a = 1 / 1 := by
+          norm_num
+          rw [← Rat.num_div_den a, ha_num, ha_den]
+          norm_num
+        rw [h_a_eq'] at h_cases
+        have h_cases' : x ∈ ∅ := by
+          exact Finset.mem_empty.mpr h_cases
+        rw [Finset.mem_empty] at h_cases'
+        have h_contra : x ∈ S := by
+          exact h'
+        have h_contra' : x ∈ S ∩ ∅ := by
+          exact Finset.mem_inter.mpr ⟨h', h_cases'⟩
+        have h_empty : S ∩ ∅ = ∅ := by
+          exact Finset.inter_empty_left S
+        rw [h_empty] at h_contra'
+        have h_contra'' : S ∩ ∅ ≠ ∅ := by
+          exact Finset.nonempty_iff_ne_empty.mpr h_contra'
+        contradiction
+
+  have h₂' : ∀ x : ℝ, x > 0 → x ∈ S → a = 1 := by
+    intro x hx h
+    have h_a_eq'' := h₂ x hx h
+    norm_num at h_a_eq''
+    rw [h_a_eq''] at h_cases
+    have h_cases' : x ∈ ∅ := by
+      exact Finset.mem_empty.mpr h_cases
+    rw [Finset.mem_empty] at h_cases'
+    have h_contra : x ∈ S := by
+      exact h'
+    have h_contra' : x ∈ S ∩ ∅ := by
+      exact Finset.mem_inter.mpr ⟨h', h_cases'⟩
+    have h_empty : S ∩ ∅ = ∅ := by
+      exact Finset.inter_empty_left S
+    rw [h_empty] at h_contra'
+    have h_contra'' : S ∩ ∅ ≠ ∅ := by
+      exact Finset.nonempty_iff_ne_empty.mpr h_contra'
+    contradiction
+
+  -- if a = 1, then S = {x | 1 ≤ x ≤ 42}
+  have h₃ : S = Icc 1 42 := by
+    ext x
+    constructor
+    · intro hx
+      have hx' : x > 0 := by
+        have hx' : x ∈ Ioi 0 := by
+          exact Finset.mem_Ioi.mpr hx
+        simp at hx'
+        exact hx'
+      have h₂'' := h₂' x hx' hx
+      have h_x_ge_1 : 1 ≤ x := by
+        rw [← Int.le_floor]
+        exact h₂''
+      have h_x_le_42 : x ≤ 42 := by
+        rw [Int.floor_le_iff, h₂'']
+      exact ⟨h_x_ge_1, h_x_le_42⟩
+    · intro hx
+      have hx' : x > 0 := by
+        have hx' : x ∈ Ioi 0 := by
+          exact hx.2 hx.1
+        simp at hx'
+        exact hx'
+      have h_floor : ↑⌊x⌋ ≥ 1 := by
+        rw [Int.le_floor, hx.1]
+        linarith only
+      have h_xltx : x < 1 + ↑⌊x⌋ := by
+        rw [← Int.floor_lt]
+        exact hx.2
+      have h₂'' := h₂ x hx' _
+      have h_x_ge_1 : 1 ≤ x := by
+        exact hx.1
+      have h_x_le_42 : x ≤ 42 := by
+        exact hx.2
+      rw [h₂'']
+      norm_num
+      rw [← Rat.num_div_den a, ha_num, ha_den]
+      norm_num
+  have h₄ : ∑ x ∈ S, x = ∑ x ∈ Icc 1 42, x := by
+    rw [h₃]
+  have h₅ : ∑ x ∈ Icc 1 42, x = 42 * (42 + 1) / 2 := by
+    have h₅ : ∀ n : ℕ, ∑ x ∈ Icc 1 n, x = n * (n + 1) / 2 := by
+      intro n
+      induction n with
+      | zero =>
+        simp
+      | succ n ih =>
+        rw [Finset.sum_Icc_succ_top, ih]
+        norm_num
+        linarith only
+    have h₆ := h₅ 42
+    simp at h₆
+    norm_num
+    exact h₆
+  norm_num at h₄
+  rw [h₄, h₅] at h₁
+  norm_num at h₁
+  have h₇ : (↑a.den : ℝ) = 1 := by
+    linarith only [h₁]
+  have h₈ : ↑a.den = 1 := by
+    exact Int.cast_inj.mp h₇
+  rw [h₈] at ha_den
+  norm_num at ha_den
+  have h₉ : ↑a.num = 1 := by
+    linarith only [h₁, h₈]
+  rw [h₉] at ha_num
+  norm_num at ha_num
+  have ha_eq : a = 1 := by
+    rw [← ha_num, ← ha_den]
+    norm_num
+  rw [ha_eq]
+  norm_num
+```

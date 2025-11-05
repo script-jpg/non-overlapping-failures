@@ -1,0 +1,180 @@
+-- Boring calculations
+  have h₂ : ∀ x, f x ≥ 1 / 2 := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    positivity
+
+  have h₃ : ∀ x, f x - f x ^ 2 ≥ 0 := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    positivity
+
+  have h₄ : ∀ x, 1 / 2 ≤ f x := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    calc
+      _ = 1 / 2 + Real.sqrt (f x - f x ^ 2) - 1 / 2 := by ring
+      _ ≥ 0 - 1 / 2 := by gcongr
+      _ = -1 / 2 := by norm_num
+      _ ≥ -1 / 2 + 1 / 2 := by gcongr
+      _ = 0 := by norm_num
+
+  -- https://app.projectnumina.ai/problems/0f114f45-1ba0-5cf7-be19-8c7d4cc42d7a
+  -- https://app projectnumina.ai/problems/0f114f45-1ba0-5cf7-be19-8c7d4cc42d7a
+  have h₅ : ∀ x, f (x + a) ≥ 1 / 2 + Real.sqrt (1 / 2 - (f x - f x ^ 2)) := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    calc
+      _ = 1 / 2 + Real.sqrt (f x - f x ^ 2) := by rw [h₁]
+      _ ≥ 1 / 2 + Real.sqrt (1 / 2 - (f x - f x ^ 2)) := by gcongr
+      _ = 1 / 2 + Real.sqrt (f x - f x ^ 2) := by rw [h₁]
+
+  -- Boring calculations
+  have h₆ : ∀ x, 1 / 2 + Real.sqrt (f x - f x ^ 2) > 1 / 2 := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    positivity
+
+  have h₇ : ∀ x, Real.sqrt (f x - f x ^ 2) > 0 := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    calc
+      _ = 1 / 2 + Real.sqrt (f x - f x ^ 2) - 1 / 2 := by ring
+      _ > 0 - 1 / 2 := by gcongr
+      _ = -1 / 2 := by norm_num
+      _ > -1 / 2 + 1 / 2 := by gcongr
+      _ = 0 := by norm_num
+
+  have h₈ : ∀ x, f x - f x ^ 2 > 0 := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    calc
+      _ = 1 / 2 + Real.sqrt (f x - f x ^ 2) - 1 / 2 := by ring
+      _ > 1 / 2 + 0 - 1 / 2 := by gcongr
+      _ = 0 := by norm_num
+
+  -- https://app projectnumina.ai/problems/0f114f45-1ba0-5cf7-be19-8c7d4cc42d7a
+  have h₉ : ∀ x, f (x + a) > 1 / 2 + Real.sqrt (f x - f x ^ 2) := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    gcongr
+    calc
+      _ = 1 / 2 + Real.sqrt (f x - f x ^ 2) := by rw [h₁]
+      _ ≥ 1 / 2 + Real.sqrt (1 / 2 - (f x - f x ^ 2)) := by gcongr
+      _ = 1 / 2 + Real.sqrt (f x - f x ^ 2) := by rw [h₁]
+
+  -- https://app projectnumina.ai/problems/0f114f45-1ba0-5cf7-be19-8c7d4cc42d7a
+  have h₁₀ : ∀ x, f (x + a) - f (x + a) ^ 2 > 0 := by
+    intro x
+    specialize h₉ x
+    specialize h₃ x
+    specialize h₄ x
+    linarith only [h₃, h₄, h₉]
+
+  -- https://app projectnumina.ai/problems/0f114f45-1ba0-5cf7-be19-8c7d4cc42d7a
+  have h₁₁ : ∀ x, f (x + a) > 1 / 2 := by
+    intro x
+    specialize h₉ x
+    specialize h₂ x
+    linarith only [h₂, h₉]
+
+  -- Shows that the function is periodic for any $x$ with period $ka$ for some positive integer $k$
+  have h₁₂ (x : ℝ) : ∃ k : ℕ, 0 < k ∧ f (x + k * a) = f x := by
+    -- Define $a_1 = 1$ and $a_{n+1} = 1 / (1/2 - a_n)$ for $n \geq 1$
+    let a : ℕ → ℝ
+      | 0 => 0
+      | 1 => 1
+      | n + 2 => 1 / (1 / 2 - a (n + 1))
+    have ha : ∀ n : ℕ, 0 < a n := by
+      induction n with
+      | zero => simp [a]
+      | succ n hn =>
+        induction n with
+        | zero => simp [a]
+        | succ n _ =>
+          simp [a]
+          rw [inv_pos]
+          linarith only [hn]
+    have h₀ : 0 < a 1 := by simp [a]
+    have hₙ (x : ℝ) (n : ℕ) : f (x + a (n + 1)) = 1 / 2 + Real.sqrt (f (x + a n) - f (x + a n) ^ 2) := by
+      induction n with
+      | zero =>
+        simp [a]
+        rw [h₁]
+        rw [show x + a 0 = x + 0 by simp [a]]
+        simp [a]
+      | succ n hn =>
+        simp [a]
+        rw [h₁]
+        rw [show x + a (n + 1 + 1) = x + a (n + 1) + a by ring]
+        simp [a]
+        rw [show x + a (n + 1) + a = x + a n + a (n + 1) by ring]
+        rw [hₙ x (n + 1)]
+        specialize h₃ (x + a n)
+        rw [show x + a n + a (n + 1) - (1 / 2 + Real.sqrt (f (x + a n) - f (x + a n) ^ 2)) = x + a n + a (n + 1) - 1 / 2 - Real.sqrt (f (x + a n) - f (x + a n) ^ 2) by ring]
+        have g₀ : 1 / 2 ≤ f (x + a n) := h₄ (x + a n)
+        have _ : 1 / 2 - Real.sqrt (f (x + a n) - f (x + a n) ^ 2) ≤ f (x + a n) - f (x + a n) ^ 2 := by
+          calc
+            _ = 1 / 2 - f (x + a n) + f (x + a n) - Real.sqrt (f (x + a n) - f (x + a n) ^ 2) := by ring
+            _ ≤ f (x + a n) - f (x + a n) ^ 2 := by linarith only [show 0 ≤ f (x + a n) - 1 / 2 by linarith only [g₀]]
+        have _ : 0 ≤ 1 / 2 - Real.sqrt (f (x + a n) - f (x + a n) ^ 2) := by
+          calc
+            _ = 1 / 2 - Real.sqrt (f (x + a n) - f (x + a n) ^ 2) := by rfl
+            _ ≤ f (x + a n) - Real.sqrt (f (x + a n) - f (x + a n) ^ 2) - f (x + a n) ^ 2 := by linarith only [h₃ (x + a n)]
+            _ = 1 / 2 - Real.sqrt (f (x + a n) - f (x + a n) ^ 2) := by ring
+        linarith only [this, Real.sqrt_nonneg (f (x + a n) - f (x + a n) ^ 2)]
+    -- Show that $f(x + ka) = f(x)$ for some $k \leq 1 + 1 / (1/2 - a_1) - 1 / (1/2 - a_n)$
+    have h₁ (x : ℝ) (n : ℕ) : f (x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a n)) = f x := by
+      induction n with
+      | zero =>
+        simp [a]
+        rw [h₁]
+        simp [a] at h₀
+        rw [show 1 / (1 / 2 - a 1) = 2 / (1 / 2 - a 0) by simp [a]]
+        have _ : 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a 0) = 1 := by
+          field_simp [h₀]
+          linarith only [h₁₀ 0]
+        rw [this]
+        simp [a]
+      | succ n hn =>
+        simp [a] at ha
+        specialize hₙ (x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a n))) (1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1)))
+        rw [show 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1)) = 1 / (1 / 2 - a 1) + 1 / (1 / 2 - a (n + 1)) by ring] at hₙ
+        rw [show x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a n)) + a (1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1))) = x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1))) + a by ring] at hₙ
+        simp [a] at hₙ
+        rw [hₙ]
+        rw [show x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1))) + a = x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1)) + 1) by ring]
+        specialize h₈ (x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1))))
+        specialize h₇ (x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1))))
+        specialize h₆ (x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1))))
+        specialize h₅ (x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1))))
+        specialize h₄ (x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1))))
+        linarith only [h₈, h₇, h₅, h₄, h₃ (x + a (1 + 1 / (1 / 2 - a 1) - 1 / (1 / 2 - a (n + 1))))]
+    use Nat.succ a 1
+    simp [a]
+    constructor
+    · specialize ha 1
+      linarith only [ha]
+    · exact h₁ x 1
+  -- Proves the theorem by using the above result with $x = 0$
+  specialize h₁₂ 0
+  simp at h₁₂
+  exact h₁₂
+
+```

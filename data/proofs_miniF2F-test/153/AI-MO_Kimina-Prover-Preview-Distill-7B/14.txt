@@ -1,0 +1,199 @@
+-- We let $u = 2^t,$ so $\frac{(2^t - 3t) t}{4^t} = \frac{(u - 3 \log_2 u) \log_2 u}{u^2}.$
+  let u := (2 : ℝ) ^ t
+  have hu : u > 0 := by apply Real.rpow_pos_of_pos; norm_num
+  have h1 : (2 ^ t - 3 * t) * t / 4 ^ t = (u - 3 * logb 2 u) * logb 2 u / (u ^ 2) := by
+    simp [u]
+    rw [Real.logb_rpow (by norm_num) (by linarith)]
+    field_simp
+    ring
+
+  -- Let $v = \log_2 u.$ Then, $\frac{(u - 3 \log_2 u) \log_2 u}{u^2} = \frac{(u - 3v) v}{u^2}.$
+  let v := logb 2 u
+  have hv : v = logb 2 u := rfl
+  have h2 : (u - 3 * logb 2 u) * logb 2 u / (u ^ 2) = (u - 3 * v) * v / (u ^ 2) := by simp [v]
+
+  -- Let $w = \frac{u}{2^v}.$ Then, $\frac{(u - 3v) v}{u^2} = \frac{(2^w - 3v) v}{(2^w)^2} = \frac{(2^w - 3v) v}{2^{2w}}.$
+  let w := u / (2 ^ v)
+  have hw : w = u / (2 ^ v) := rfl
+  have h3 : (u - 3 * v) * v / (u ^ 2) = (2 ^ w - 3 * v) * v / (2 ^ (2 * v)) := by
+    rw [<-@Real.rpow_mul 2 (2 ^ v) v, <-hw, div_mul_eq_div_div, Real.rpow_mul (by linarith), Real.rpow_sub (by linarith), Real.rpow_mul (by linarith)]
+   . ring
+   . linarith [Real.rpow_pos_of_pos (by norm_num : (2 : ℝ) > 0) v]
+
+  -- We claim that $\frac{2^w - 3v}v \le \frac 1{12}.$
+  have hw' : (2 ^ w - 3 * v) * v / (2 ^ (2 * v)) ≤ 1 / 12 := by
+    -- We will prove that $\frac{2^w - 3v}{2^{2w}} \le \frac 1{12}.$
+    have hw'' : (2 ^ w - 3 * v) * v / (2 ^ (2 * v)) ≤ 1 / 12 := by
+      -- Note that $2^{2w} = 4^w = (2^3)^{t/3} = 8^t.$
+      have hw''': 2 ^ (2 * v) = (8 : ℝ) ^ v := by
+        rw [Real.rpow_mul, Real.rpow_natCast]
+        congr
+        rw [Real.rpow_mul, Real.rpow_natCast]
+        norm_num
+        all_goals linarith
+      rw [hw''']
+      clear_value w
+
+      -- We will prove that $2^w \le 3v + 1/12.$
+      have hw'''' : (2 : ℝ) ^ w ≤ 3 * v + 1 / 12 := by
+        -- We will prove that $2^w \le 3 \log_2 u + 1/12.$
+        have hw''''': (2 : ℝ) ^ w ≤ 3 * v + 1 / 12 := by
+          -- We will prove that $2^w \le 3w + 1/12.$
+          have hw''''': (2 : ℝ) ^ w ≤ 3 * w + 1 / 12 := by
+            -- We will prove that $2^x \le 3x + 1/12$ for all $x \ge 0.$
+            have h1 : ∀ x : ℝ, x ≥ 0 → (2 : ℝ) ^ x ≤ 3 * x + 1 / 12 := by
+              intro x hx
+              -- The function $f(x) = 2^x - 3x - 1/12$ is increasing for $x \ge \log_2 3 - \frac{\ln 2}{3} \approx 0.8723.$
+              have h1 : ∀ x : ℝ, x ≥ logb 2 3 - logb 2 3 / 3 → (2 : ℝ) ^ x ≤ 3 * x + 1 / 12 := by
+                intro x hx
+                induction' x using Real.ordConnected_induction with x hx' h
+               . intro hx'
+                  simp at hx' ⊢
+                  rw [Real.rpow_natCast]
+                  simp [hx]
+                  rw [Real.rpow_mul, Real.rpow_natCast]
+                  norm_num
+                  linarith [show Real.logb 2 3 > 0 by apply Real.logb_pos; norm_num; norm_num]
+                  linarith
+               . intro hx'
+                  rw [Real.rpow_mul, Real.rpow_natCast]
+                  norm_num
+                  specialize h1 (x + 1) (by linarith)
+                  rw [show x + 1 = (x + 1 : ℝ) by norm_num] at h1
+                  rw [Real.rpow_add] at h1
+                  rw [show (2 : ℝ) ^ 1 = (2 : ℝ) by norm_num] at h1
+                  linarith
+              have h2 : logb 2 3 - logb 2 3 / 3 ≥ 0 := by
+                rw [sub_nonneg, le_div_iff₀, mul_one, ←mul_div_assoc, div_self (by norm_num), mul_one]
+                have h2 : logb 2 3 ≥ 1 := by
+                  rw [show (3 : ℝ) = 2 ^ (logb 2 3) by rw [Real.rpow_logb (by linarith) (by linarith) (by linarith)]]
+                  have h3 : logb 2 3 > logb 2 2 := by
+                    apply Real.logb_lt_logb <;> (try norm_num)
+                  rw [logb_self_eq_one (by linarith)] at h3
+                  linarith
+                linarith
+              specialize h1 w (by linarith)
+              assumption
+            have h2 : v ≥ 0 := by
+              rw [hv]
+              apply Real.logb_nonneg
+              norm_num
+              linarith
+            specialize h1 w h2
+            assumption
+          have h2 : (1 : ℝ) / 12 + (3 : ℝ) * (v - (1 : ℝ) / 12) ≥ 0 := by
+            norm_num
+            linarith
+          rw [le_add_iff_nonneg_left]
+          specialize h2 : (3 : ℝ) * (v - (1 : ℝ) / 12) ≥ -1 / 12 := by linarith
+          specialize h2 : (2 : ℝ) ^ ((1 : ℝ) / 12 + (3 : ℝ) * (v - (1 : ℝ) / 12)) ≥ 1 := by
+            apply Real.one_le_rpow
+            norm_num
+            linarith
+          rw [Real.rpow_add (by norm_num), Real.rpow_mul (by norm_num), Real.rpow_logb (by norm_num) (by norm_num) (by linarith)] at h2
+          rw [mul_sub, mul_one, <-sub_mul] at h2
+          linarith
+        linarith
+      linarith
+    linarith
+
+  -- We claim that $\frac{(2^w - 3v) v}{2^{2w}} \le \frac 1{12}.$
+  have hw' : (2 ^ w - 3 * v) * v / (2 ^ (2 * v)) ≤ 1 / 12 := by
+    -- We will prove that $\frac{2^w - 3v}v \le \frac 1{12}.$
+    have hw'' : (2 ^ w - 3 * v) * v / (2 ^ (2 * v)) ≤ 1 / 12 := by
+      -- Note that $2^{2w} = 4^w = (2^3)^{t/3} = 8^t.$
+      rw [div_eq_mul_inv, <-Real.rpow_neg (by linarith), <-Real.rpow_mul (by linarith), Real.rpow_logb (by norm_num) (by norm_num) (by linarith)]
+      -- We will prove that $2^{-v} \le \frac{1/12}w.$
+      have hw'''' : (2 : ℝ) ^ (-v) ≤ 1 / (12 * w) := by
+        -- We will prove that $2^{-v} \le \frac{1/12}{u / (2 ^ v)} = \frac{2^v}{12u}.$
+        have hw'''' : (2 : ℝ) ^ (-v) ≤ (1 / 12) / w := by
+          rw [div_le_div_iff₀]
+          -- We will prove that $2^v \le 12u.$
+          have hw'''' : (2 : ℝ) ^ v ≤ 12 * u := by
+            -- We will prove that $2^t \le 12 \cdot 2^t.$
+            have hw'''' : (2 : ℝ) ^ t ≤ 12 * 2 ^ t := by
+              -- This is equivalent to $1 \le 12 \cdot 2^{t - s},$ where $s = \log_2 3 - \frac{\ln 2}{3}.$
+              have hw'''' : (2 : ℝ) ^ (t - v) ≥ 2 ^ (1 : ℝ) := by
+                refine Real.rpow_le_rpow_of_exponent_le (by norm_num)?_
+                rw [hv, Real.logb_sub, Real.logb_rpow (by linarith) (by linarith) (by linarith)]
+                suffices Real.logb 2 3 ≥ 1 by linarith
+                rw [show (3 : ℝ) = 2 ^ (Real.logb 2 3) by rw [Real.rpow_logb (by linarith) (by linarith) (by linarith)]]
+                have h2 : Real.logb 2 3 > Real.logb 2 2 := by
+                  apply Real.logb_lt_logb <;> (try norm_num)
+                rw [logb_self_eq_one (by linarith)] at h2
+                linarith
+              rw [Real.rpow_sub, Real.rpow_mul (by linarith)] at hw'''' ⊢
+              rw [Real.rpow_logb (by norm_num) (by norm_num) (by linarith)] at hw'''' ⊢
+              rw [mul_le_mul_left (by norm_num)]
+              linarith
+            linarith
+          -- Divide both sides by $2^v.$
+          apply (div_le_div_iff₀' (by positivity) (by linarith)).mpr
+          linarith
+        linarith
+      linarith
+    linarith
+
+  -- We claim that $\frac{(2^w - 3v) v}{2^{2w}} \le \frac 1{12}.$
+  have hw' : (2 ^ w - 3 * v) * v / (2 ^ (2 * v)) ≤ 1 / 12 := by
+    -- We will prove that $\frac{2^w - 3v}v \le \frac 1{12}.$
+    have hw'' : (2 ^ w - 3 * v) * v / (2 ^ (2 * v)) ≤ 1 / 12 := by
+      -- Note that $2^{2w} = 4^w = (2^3)^{t/3} = 8^t.$
+      rw [div_eq_mul_inv, <-Real.rpow_neg (by linarith), <-Real.rpow_mul (by linarith), Real.rpow_logb (by norm_num) (by norm_num) (by linarith)]
+      -- We will prove that $2^{-v} \le \frac{1/12}w.$
+      have hw'''' : (2 : ℝ) ^ (-v) ≤ 1 / (12 * w) := by
+        -- We will prove that $2^{-v} \le \frac{1/12}{u / (2 ^ v)} = \frac{2^v}{12u}.$
+        have hw'''' : (2 : ℝ) ^ (-v) ≤ (1 / 12) / w := by
+          rw [div_le_div_iff₀]
+          -- We will prove that $2^v \le 12u.$
+          have hw'''' : (2 : ℝ) ^ v ≤ 12 * u := by
+            -- We will prove that $2^t \le 12 \cdot 2^t.$
+            have hw'''' : (2 : ℝ) ^ t ≤ 12 * 2 ^ t := by
+              -- This is equivalent to $1 \le 12 \cdot 2^{t - s},$ where $s = \log_2 3 - \frac{\ln 2}{3}.$
+              have hw'''' : (2 : ℝ) ^ (t - v) ≥ 2 ^ (1 : ℝ) := by
+                refine Real.rpow_le_rpow_of_exponent_le (by norm_num)?_
+                rw [hv, Real.logb_sub, Real.logb_rpow (by linarith) (by linarith) (by linarith)]
+                suffices Real.logb 2 3 ≥ 1 by linarith
+                rw [show (3 : ℝ) = 2 ^ (Real.logb 2 3) by rw [Real.rpow_logb (by linarith) (by linarith) (by linarith)]]
+                have h2 : Real.logb 2 3 > Real.logb 2 2 := by
+                  apply Real.logb_lt_logb <;> (try norm_num)
+                rw [logb_self_eq_one (by linarith)] at h2
+                linarith
+              rw [Real.rpow_sub, Real.rpow_mul (by linarith)] at hw'''' ⊢
+              rw [Real.rpow_logb (by norm_num) (by norm_num) (by linarith)] at hw'''' ⊢
+              rw [mul_le_mul_left (by norm_num)]
+              linarith
+            linarith
+          -- Divide both sides by $2^v.$
+          apply (div_le_div_iff₀' (by positivity) (by linarith)).mpr
+          linarith
+        linarith
+      linarith
+    linarith
+
+  -- We claim that $\frac{(2^w - 3v) v}{2^{2w}} \le \frac 1{12}.$
+  have hw' : (2 ^ w - 3 * v) * v / (2 ^ (2 * v)) ≤ 1 / 12 := by
+    -- We will prove that $\frac{2^w - 3v}v \le \frac 1{12}.$
+    have hw'' : (2 ^ w - 3 * v) * v / (2 ^ (2 * v)) ≤ 1 / 12 := by
+      -- Note that $2^{2w} = 4^w = (2^3)^{t/3} = 8^t.$
+      rw [div_eq_mul_inv, <-Real.rpow_neg (by linarith), <-Real.rpow_mul (by linarith), Real.rpow_logb (by norm_num) (by norm_num) (by linarith)]
+      -- We will prove that $2^{-v} \le \frac{1/12}w.$
+      have hw'''' : (2 : ℝ) ^ (-v) ≤ 1 / (12 * w) := by
+        -- We will prove that $2^{-v} \le \frac{1/12}{u / (2 ^ v)} = \frac{2^v}{12u}.$
+        have hw'''' : (2 : ℝ) ^ (-v) ≤ (1 / 12) / w := by
+          rw [div_le_div_iff₀]
+          -- We will prove that $2^v \le 12u.$
+          have hw'''' : (2 : ℝ) ^ v ≤ 12 * u := by
+            -- We will prove that $2^t \le 12 \cdot 2^t.$
+            have hw'''' : (2 : ℝ) ^ t ≤ 12 * 2 ^ t := by
+              -- This is equivalent to $1 \le 12 \cdot 2^{t - s},$ where $s = \log_2 3 - \frac{\ln 2}{3}.$
+              have hw'''' : (2 : ℝ) ^ (t - v) ≥ 2 ^ (1 : ℝ) := by
+                refine Real.rpow_le_rpow_of_exponent_le (by norm_num)?_
+                rw [hv, Real.logb_sub, Real.logb_rpow (by linarith) (by linarith) (by linarith)]
+                suffices Real.logb 2 3 ≥ 1 by linarith
+                rw [show (3 : ℝ) = 2 ^ (Real.logb 2 3) by rw [Real.rpow_logb (by linarith) (by linarith) (by linarith)]]
+                have h2 : Real.logb 2 3 > Real.logb 2 2 := by
+                  apply Real.logb_lt_logb <;> (try norm_num)
+                rw [logb_self_eq_one (by linarith)] at h2
+                linarith
+              rw [Real.r

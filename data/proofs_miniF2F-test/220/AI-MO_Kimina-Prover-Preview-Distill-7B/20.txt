@@ -1,0 +1,146 @@
+-- We use the fundamental trigonometric identity $\cos^2 x + \sin^2 x = 1.$
+  have h₂ : Real.cos x ^ 2 + Real.sin x ^ 2 = 1 := by simp
+
+  -- Since $\sec x + \tan x = \frac{22}7,$ we have $\frac{1}{\cos x}+\frac{\sin x}{\cos x}=\frac{22}7.$
+  replace h₀ : Real.cos x ≠ 0 := by
+    by_contra! h
+    rw [h] at h₀
+    norm_num at h₀
+  have h₃ : Real.cos x + Real.sin x = 22 / 7 * Real.cos x := by
+    calc
+      Real.cos x + Real.sin x = (1 / Real.cos x + Real.tan x)⁻¹ := by
+        field_simp [show Real.cos x ≠ 0 by assumption]
+        rw [Real.tan_eq_sin_div_cos]
+        field_simp
+      _ = (22 / 7)⁻¹ := by rw [h₀]
+      _ = 7 / 22 := by norm_num
+      _ = 22 / 7 * Real.cos x := by
+        field_simp
+        linarith
+
+  -- Since $\csc x + \cot x = \frac{m}n,$ we have $\frac{1}{\sin x}+\frac{\cos x}{\sin x}=\frac{m}n.$
+  have h₄ : Real.sin x ≠ 0 := by
+    by_contra! h
+    rw [h] at h₁
+    norm_num at h₁
+  replace h₁ : Real.cos x + Real.sin x = m * Real.sin x := by
+    calc
+      Real.cos x + Real.sin x = (1 / Real.sin x + 1 / Real.tan x)⁻¹ := by
+        field_simp [show Real.sin x ≠ 0 by assumption, Real.tan_eq_sin_div_cos]
+        rw [add_comm]
+        field_simp
+        ring
+      _ = m⁻¹ := by rw [h₁]
+      _ = 1 / m := by field_simp
+
+  -- We now have two equations: $1.\ \cos x + \sin x = \frac{22}7 \cos x$ and $2.\ \cos x + \sin x = \frac mn \sin x.$ Equating them gives $\frac{22}7 \cos x = \frac mn \sin x.$
+  have h₅ : 22 / 7 * Real.cos x = m * Real.sin x := by assumption
+
+  -- Using $\cos^2 x + \sin^2 x = 1,$ we can now solve for $\sin x$ and $\cos x.$
+  have h₆ : Real.cos x ^ 2 + Real.sin x ^ 2 = 1 := by assumption
+  apply congr_arg (fun x => (7 / 22 * x) ^ 2) at h₆
+  rw [h₅] at h₆
+  ring_nf at h₆
+
+  -- Now we have $\frac{484}{49} \cos^2 x = \frac{m^2}n \sin^2 x = \frac{m^2}n (1-\cos^2 x).$ Solving for $\cos^2 x$ gives $\cos^2 x = \frac{49 m^2}{49 m^2+484 n}.$
+  have h₇ : Real.cos x ^ 2 = 49 * m ^ 2 / (49 * m ^ 2 + 484 * n) := by
+    calc
+      Real.cos x ^ 2 = (49 / 49 * Real.cos x ^ 2) + (484 / 49 * Real.cos x ^ 2) - 484 / 49 * Real.cos x ^ 2 := by ring
+      _ = 49 / 49 * Real.cos x ^ 2 + (484 / 49 * Real.cos x ^ 2 - 484 / 49 * Real.cos x ^ 2) := by ring
+      _ = 49 / 49 * Real.cos x ^ 2 + (Real.cos x ^ 2 - 1) * (484 / 49) := by
+        congr
+        ring
+      _ = 49 / 49 * Real.cos x ^ 2 + (Real.cos x ^ 2 + Real.sin x ^ 2 - 1) * (484 / 49) := by
+        congr
+        ring
+      _ = 49 / 49 * Real.cos x ^ 2 + (Real.sin x ^ 2) * (484 / 49) := by
+        congr
+        ring
+      _ = 49 / 49 * Real.cos x ^ 2 + (484 / 49 * Real.cos x ^ 2 - 484 / 49 * Real.cos x ^ 2) + (484 / 49 * Real.sin x ^ 2) := by ring
+      _ = 49 / 49 * Real.cos x ^ 2 + 484 / 49 * (Real.cos x ^ 2 - Real.cos x ^ 2) + (484 / 49 * Real.sin x ^ 2) := by ring
+      _ = 49 / 49 * Real.cos x ^ 2 + 0 + (484 / 49 * Real.sin x ^ 2) := by
+        congr
+        ring
+      _ = 49 / 49 * Real.cos x ^ 2 + (484 / 49 * Real.sin x ^ 2) := by ring
+      _ = (49 * m ^ 2) / (49 * m ^ 2 + 484 * n) := by
+        congr
+        field_simp
+        linarith
+
+  -- From this we can now solve for $\frac mn = \frac{7 \cos^2 x}{\sin^2 x} = \frac{49 m^2}{49 n^2}.$
+  have h₈ : m * n = 7 ^ 2 * m ^ 2 / (49 * n ^ 2 + 49 * m ^ 2) := by
+    calc
+      m * n = m * Real.cos x ^ 2 / Real.sin x ^ 2 := by
+        field_simp [show Real.sin x ≠ 0 by assumption]
+        ring
+      _ = (7 * Real.cos x) ^ 2 / (7 * Real.sin x) ^ 2 := by
+        congr
+        ring
+      _ = (7 * Real.cos x ^ 2) / (7 * Real.sin x ^ 2) := by
+        congr
+        ring
+      _ = 7 ^ 2 * Real.cos x ^ 2 / (7 ^ 2 * Real.sin x ^ 2) := by ring
+      _ = 7 ^ 2 * Real.cos x ^ 2 / Real.sin x ^ 2 := by
+        congr
+        ring
+      _ = 7 ^ 2 * (49 * m ^ 2 / (49 * m ^ 2 + 484 * n)) / Real.sin x ^ 2 := by
+        congr
+        exact h₇
+      _ = 7 ^ 2 * (49 * m ^ 2 / (49 * m ^ 2 + 484 * n)) / (49 * n ^ 2 / (49 * m ^ 2 + 484 * n)) := by
+        congr
+        field_simp
+        ring
+      _ = 7 ^ 2 * m ^ 2 / (49 * n ^ 2 + 484 * n) := by
+        field_simp
+        ring
+      _ = 7 ^ 2 * m ^ 2 / (49 * n ^ 2 + 49 * m ^ 2) := by ring
+
+  -- Clear denominators and like terms to get $49m^2n^2 = 49m^2n^2 + 484mn^3,$ which simplifies to $0=484n^3,$ from which it follows that $n=0.$
+  clear denominators at h₈
+  have h₉ : m * n = 7 ^ 2 * m ^ 2 / (49 * n ^ 2 + 49 * m ^ 2) := by assumption
+  replace h₈ : 49 * m ^ 2 * n ^ 2 = 49 * m ^ 2 * n ^ 2 + 484 * m * n ^ 3 := by
+    calc
+      m * n * (49 * n ^ 2 + 49 * m ^ 2) = 7 ^ 2 * m ^ 2 := by linarith
+      _ = 7 ^ 2 * m ^ 2 * (1 + 484 / (49 * m ^ 2 * n ^ 2)) := by
+        field_simp
+        ring
+      _ = 7 ^ 2 * m ^ 2 * (1 + 484 * (1 / (49 * m ^ 2 * n ^ 2))) := by
+        field_simp
+      _ = 7 ^ 2 * m ^ 2 * (1 + 484 * (n ^ 2 * m ^ 2) / (49 * m ^ 2 * n ^ 2)) := by
+        field_simp
+      _ = 7 ^ 2 * m ^ 2 * (1 + 484 / 49) := by
+        rw [h₈]
+        field_simp
+        ring
+      _ = 7 ^ 2 * m ^ 2 * (49 + 484) / 49 := by
+        field_simp
+        ring
+      _ = 7 ^ 2 * m ^ 2 * 533 / 49 := by norm_num
+      _ = 49 * m ^ 2 * n ^ 2 + 484 * m * n ^ 3 := by
+        field_simp
+        linarith
+  replace h₈ : 0 = 484 * m * n ^ 3 := by linarith
+  replace h₈ : m * n = 0 := by
+    norm_num at h₈
+    exact h₈
+
+  -- From this we immediately get either $m=0$ or $n=0.$ But $m=0$ is impossible from the original equation $\csc x+\cot x=\frac mn,$ so it follows that $n=0.$
+  rw [mul_eq_zero] at h₈
+  rcases h₈ with (h₈ | h₈)
+  · norm_num [h₈] at h₁
+  · -- Similarly, $n=0$ implies $m=0,$ which is impossible from the original equation.
+    norm_num [h₈] at h₈
+    rw [h₈] at h₁
+    field_simp at h₁
+
+  -- We conclude that $m+n = 7+43 = \boxed{044}.$
+  field_simp at h₈
+  rw [h₈] at h₇
+  field_simp at h₇
+  norm_cast at h₇
+  replace h₈ : m = 7 := by omega
+  rw [h₈] at h₇
+  norm_num at h₇
+  replace h₈ : n = 43 := by omega
+  rw [h₈]
+```

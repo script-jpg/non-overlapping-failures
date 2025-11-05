@@ -1,0 +1,258 @@
+-- Note that this problem asked for the product of all positive odd integers less than $10000$.
+  -- We will instead compute the product of all positive odd integers less than or equal to $10000$.
+  -- Clearly the two products are the same since there are no odd integers between $9999$ and $10000$.
+  rw [Finset.prod_eq_mul_prod_filter]
+
+  -- Let $S$ be the set of all positive odd integers less than or equal to $10000$.
+  set S := Finset.filter (fun x => ¬Even x) (Finset.range 10000)
+
+  -- Let $f(x) = x$ for all $x \in S$.
+  let f := id ℕ
+
+  -- Then \[\prod_{x \in S} f(x) = \frac{10000!}{2^{5000} \cdot 5000!}.\]
+  have h : Finset.prod S f = 10000! / (2 ^ 5000 * 5000!) := by
+
+    -- Let $A$ be the set of all positive even integers less than or equal to $10000$.
+    set A := Finset.filter (fun x => Even x) (Finset.range 10000)
+
+    -- Let $B$ be the set of all positive odd integers less than or equal to $5000$.
+    set B := Finset.filter (fun x => ¬Even x) (Finset.range 5000)
+
+    -- Let $g(x) = x$ for all $x \in B$.
+    let g := id ℕ
+
+    -- We claim that \[\prod_{x \in A} f(x) \cdot \prod_{x \in B} g(x) = \frac{10000!}{2^{5000} \cdot 5000!}.\]
+    have h1 : (Finset.prod A f) * (Finset.prod B g) = 10000! / (2 ^ 5000 * 5000!) := by
+
+      -- It is easy to see that \[\prod_{x \in A} f(x) = \prod_{x \in B} g(x) = 2^{5000}.\]
+      have h2 : Finset.prod A f = 2 ^ 5000 := by
+        -- We can write \[\prod_{x \in A} f(x) = \prod_{x \in A} x = \prod_{x \in A} (1 \cdot x)\].
+        rw [Finset.prod_eq_mul_prod_filter]
+
+        -- Clearly $A = \{1 \cdot x | x \in B\}$.
+        have h3 : A = (fun x => 1 * x) '' B := by
+          ext a
+          simp [A, B]
+
+          -- The result is clear from simple algebraic manipulations.
+          constructor
+          · contrapose!; intro h
+            simp at h
+            obtain ⟨b, hb⟩ := h
+            use b
+            simp [hb]
+            linarith only [h]
+          · intro ⟨b, hb⟩
+            simp at hb
+            simp [hb]
+            rw [mul_comm]
+        -- So \[\prod_{x \in A} f(x) = \prod_{x \in B} g(x) = \prod_{x \in B} x = 2^{5000}.\]
+        rw [h3, Finset.prod_image (fun x y => 1 * x = 1 * y) (fun x y => y = x)]
+        simp
+        rw [Finset.prod_eq_mul_prod_filter]
+
+        -- It is easy to see that $B = \{x | x \in \{1, 2, \dots, 4999\} \land \neg Even(x)\}$.
+        set C := Finset.range 4999
+        set D := Finset.filter (fun x => ¬Even x) C
+
+        -- So \[\prod_{x \in B} g(x) = \prod_{x \in D} x\].
+        rw [show B = D by rfl]
+
+        -- It is also easy to see that $D = \{x | x \in \{1, 2, \dots, 4999\} \land x \equiv 1 \pmod 2\}$.
+        set E := Icc 1 4999
+        set F := E.filter (fun x => x ≡ 1 [MOD 2])
+
+        -- So \[\prod_{x \in D} g(x) = \prod_{x \in F} x\].
+        rw [show D = F by rfl]
+
+        -- Let $a_1, a_2, \dots, a_{2500}$ be the odd integers less than $2500$.
+        let a : Fin 2500 → ℕ := fun i => 2 * i + 1
+
+        -- It is easy to see that $F = \{a_1, a_2, \dots, a_{2500}\}$.
+        have h4 : F = (a '' Finset.range 2500) := by
+          ext x
+          simp [a, F]
+
+          -- The result is clear from simple algebraic manipulations.
+          constructor
+          · intro h
+            obtain ⟨i, hi⟩ := h
+            use i
+            simp [hi]
+            linarith only [h]
+          · intro ⟨i, hi⟩
+            simp at hi
+            use i
+            simp [hi]
+            rw [mul_comm]
+            congr
+
+        -- So \[\prod_{x \in F} g(x) = \prod_{x \in Finset.range 2500} a(x)\].
+        rw [h4, Finset.prod_image (fun x y => 2 * x + 1 = 2 * y + 1) (fun x y => y = x)]
+
+        -- It is clear that $a$ is an injection.
+        apply Finset.prod_bij (fun x y => 2 * x + 1 = 2 * y + 1)
+
+        -- So \[\prod_{x \in F} g(x) = \prod_{x \in Finset.range 2500} (2x + 1)\].
+        -- It is also clear that $2x + 1 \equiv 1 \pmod 2$.
+        have h5 : ∀ i : Fin 2500, (2 * i.val + 1) ≡ 1 [MOD 2] := by
+          intro i
+          simp [Nat.ModEq]
+          rw [Nat.add_mod, Nat.mul_mod]
+          nth_rw 2 [Nat.mod_self]
+
+        -- We claim that \[\prod_{x \in Finset.range 2500} (2x + 1) = \frac{5000!}{2^{2500}} \cdot \prod_{x \in Finset.range 2500} (x + 1).\]
+        have h6 : Finset.prod (Finset.range 2500) (fun i => (2 * i.val + 1)) = (5000! / 2 ^ 2500) * Finset.prod (Finset.range 2500) (fun i => (i + 1)) := by
+
+          -- We can write \[\prod_{x \in Finset.range 2500} (2x + 1) = \prod_{x \in Finset.range 2500} (x + 1) \prod_{x \in Finset.range 2500} (2x + 1) / \prod_{x \in Finset.range 2500} (x + 1)\].
+          rw [Finset.prod_mul_distrib (p := fun x => 2 * x + 1) (q := fun i => (i + 1))]
+
+          -- So it is enough to show that \[\prod_{x \in Finset.range 2500} (x + 1) = \frac{5000!}{2^{2500}}.\]
+          suffices Finset.prod (Finset.range 2500) (fun i => (i + 1)) = 5000! / 2 ^ 2500 by rw [this]
+
+          -- It is clear that \[\prod_{x \in Finset.range 2500} (x + 1) = \prod_{x \in Finset.range 2500} x\].
+          rw [Finset.prod_range_succ]
+
+          -- It is also clear that $\prod_{x \in Finset.range 2500} x = \frac{2500!}{2^{2500}} \cdot \prod_{x \in Finset.range 2500} (x + 1)$.
+          suffices Finset.prod (Finset.range 2500) (fun i => i + 1) = 2500! / 2 ^ 2500 by rw [this]
+
+          -- We can cancel the term $\prod_{x \in Finset.range 2500} (x + 1)$.
+          rw [Finset.prod_range_succ']
+
+          -- The goal now is to show that $2^{2500} \cdot \frac{2500!}{2^{2500}} = 2500!$.
+          rw [Nat.factorial_succ]
+          simp
+          rw [Nat.mul_div_cancel_left]
+          have h7 : ¬Odd 2500 := by
+            simp [Odd]
+            use 1250
+            linarith only [Nat.even_two]
+
+          -- The fact that $2501$ is odd will also be useful later.
+          have h8 : ¬Even 2501 := by
+            simp [Even]
+            use 1250
+            linarith only [Nat.even_two]
+
+          -- It is also clear that $2500 = 2 \cdot 1250$.
+          have h9 : 2500 = 2 * 1250 := by linarith only [Nat.two_mul]
+
+          -- It is enough to show that $2^{2500} \cdot \frac{2500!}{2^{2500}} = 2500!$.
+          suffices 2 ^ 2500 * (2500! / 2 ^ 2500) = 2500! by rw [this]
+
+          -- We can cancel the $2^{2500}$ term.
+          have h10 : 2 ^ 2500 ∣ 2500! := by
+            apply Nat.factorial_dvd_factorial
+            rw [h9]
+            simp
+
+          -- It is also clear that $2500! = 2^{2500} \cdot \frac{2500!}{2^{2500}}$.
+          rw [Nat.mul_div_cancel_left]
+
+          -- It is enough to show that $\frac{2500!}{2^{2500}} \neq 0$.
+          suffices 2500! / 2 ^ 2500 ≠ 0 by rw [← Nat.mul_div_cancel_left, this]
+
+          -- It is clear that $2500! \neq 0$.
+          have h11 : 2500! ≠ 0 := by
+            apply Nat.factorial_ne_zero
+
+          -- It is also clear that $2^{2500} \neq 0$.
+          have h12 : 2 ^ 2500 ≠ 0 := by
+            exact Nat.two_pow_ne_zero 2500
+
+          -- So $\frac{2500!}{2^{2500}} \neq 0$.
+          apply Nat.div_ne_zero h11 h12
+
+        -- We have $\prod_{x \in F} g(x) = \frac{5000!}{2^{5000}} \cdot \prod_{x \in Finset.range 2500} (x + 1)$.
+        rw [h6]
+
+        -- It is clear that $\prod_{x \in Finset.range 2500} (x + 1) = 2500!$.
+        rw [Finset.prod_range_succ']
+
+        -- So $\prod_{x \in B} g(x) = \frac{5000!}{2^{5000}} \cdot 2500!$.
+        rw [h5, Nat.mul_div_cancel_left]
+
+        -- The result is now clear.
+        rw [Finset.prod_range_succ, Finset.prod_range_succ]
+        rw [show 10000 = 2 * 5000 by linarith only [Nat.two_mul], mul_pow]
+        rw [show 5000! = 5000! / 2 ^ 5000 * 2 ^ 5000 by rw [Nat.div_mul_cancel]; exact Nat.two_pow_ne_zero 5000]
+        rw [Nat.mul_div_assoc]
+        rw [Nat.mul_div_cancel_left]
+        exact Nat.mul_comm 2
+      rw [h2, h3, mul_assoc]
+
+    -- It is also easy to see that \[\prod_{x \in A} f(x) = \prod_{x \in B} g(x) = 2^{5000}.\]
+    have h3 : Finset.prod A f = 2 ^ 5000 := by
+      rw [Finset.prod_eq_mul_prod_filter]
+
+      -- It is clear that $A = \{1 \cdot x | x \in B\}$.
+      have h4 : A = (fun x => 1 * x) '' B := by
+        ext a
+        simp [A, B]
+
+        constructor
+        · contrapose!; intro h
+          simp at h
+          obtain ⟨b, hb⟩ := h
+          use b
+          simp [hb]
+          linarith only [h]
+        · intro ⟨b, hb⟩
+          simp at hb
+          simp [hb]
+          rw [mul_comm]
+      -- So \[\prod_{x \in A} f(x) = \prod_{x \in B} g(x) = 2^{5000}.\]
+      rw [h4, Finset.prod_image (fun x y => 1 * x = 1 * y) (fun x y => y = x)]
+      simp
+      rw [Finset.prod_eq_mul_prod_filter]
+
+      -- It is easy to see that $B = \{x | x \in \{1, 2, \dots, 4999\} \land \neg Even(x)\}$.
+      set C := Finset.range 4999
+      set D := Finset.filter (fun x => ¬Even x) C
+
+      -- So \[\prod_{x \in B} g(x) = \prod_{x \in D} x\].
+      rw [show B = D by rfl]
+
+      -- It is also easy to see that $D = \{x | x \in \{1, 2, \dots, 4999\} \land x \equiv 1 \pmod 2\}$.
+      set E := Icc 1 4999
+      set F := E.filter (fun x => x ≡ 1 [MOD 2])
+
+      -- So \[\prod_{x \in D} g(x) = \prod_{x \in F} x\].
+      rw [show D = F by rfl]
+
+      -- Let $a_1, a_2, \dots, a_{2500}$ be the odd integers less than $2500$.
+      let a : Fin 2500 → ℕ := fun i => 2 * i + 1 + 5000
+
+      -- It is easy to see that $F = \{a_1, a_2, \dots, a_{2500}\}$.
+      have h4 : F = (a '' Finset.range 2500) := by
+        ext x
+        simp [a, F]
+
+        constructor
+        · intro h
+          obtain ⟨⟨i, hi1⟩, hi2⟩ := h
+          use i
+          simp [a, hi1]
+          linarith only [hi2]
+        · intro ⟨i, hi⟩
+          simp at hi
+          use i
+          simp [a, hi]
+          rw [mul_comm]
+          congr
+
+      -- So \[\prod_{x \in F} g(x) = \prod_{x \in Finset.range 2500} a(x)\].
+      rw [h4, Finset.prod_image (fun x y => 2 * x + 1 + 5000 = 2 * y + 1 + 5000) (fun x y => y = x)]
+
+      -- It is clear that $a$ is an injection.
+      apply Finset.prod_bij (fun x y => 2 * x + 1 + 5000 = 2 * y + 1 + 5000)
+
+      -- So \[\prod_{x \in F} g(x) = \prod_{x \in Finset.range 2500} (2x + 1 + 5000)\].
+      -- It is also clear that $2x + 1 + 5000 \equiv 1 \pmod 2$.
+      have h5 : ∀ i : Fin 2500, (2 * i.val + 1 + 5000) ≡ 1 [MOD 2] := by
+        intro i
+        simp [Nat.ModEq]
+        rw [Nat.add_mod, Nat.mul_mod]
+        nth_rw 2 [Nat.mod_self]
+
+      -- We claim that \[\prod_{x \in Finset.range 2500} (2x + 1 + 5000) = \frac{5000!}{2^{2500}} \cdot \prod_{x \in Finset.range 25

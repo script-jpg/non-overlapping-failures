@@ -1,0 +1,87 @@
+have pge3 : p ≥ 3 := by
+    by_contra! hp
+    have : p = 0 ∨ p = 1 ∨ p = 2 := by omega
+    rcases this with (rfl | rfl | rfl)
+    all_goals contradiction
+
+  have pge4 : p ≥ 4 := by
+    by_contra! hp
+    have : p = 0 ∨ p = 1 ∨ p = 2 ∨ p = 3 := by omega
+    rcases this with (rfl | rfl | rfl | rfl)
+    all_goals contradiction
+
+  have pge5 : p ≥ 5 := by
+    by_contra! hp
+    have : p = 0 ∨ p = 1 ∨ p = 2 ∨ p = 3 ∨ p = 4 := by omega
+    rcases this with (rfl | rfl | rfl | rfl | rfl)
+    all_goals contradiction
+
+  have pge6 : p ≥ 6 := by
+    by_contra! hp
+    have : p = 0 ∨ p = 1 ∨ p = 2 ∨ p = 3 ∨ p = 4 ∨ p = 5 := by omega
+    rcases this with (rfl | rfl | rfl | rfl | rfl | rfl)
+    all_goals contradiction
+
+  have pge7 : p ≥ 7 := by assumption
+
+  have pmin3 : p - 3 > 0 := by omega
+
+  have pmin4 : p - 4 > 0 := by omega
+
+  have pmin5 : p - 5 > 0 := by omega
+
+  have pmin6 : p - 6 > 0 := by omega
+
+  have pmin7 : p - 7 > 0 := by omega
+
+  have invsub (a b : ℕ) : (ZMod p)ˣ a⁻¹ - b⁻¹ = (ZMod p)ˣ (a - b)⁻¹ := by
+    rw [← ZMod.val_inv, ← ZMod.val_inv, ← ZMod.val_sub]
+    · rw [ZMod.val_eq_of_lt (by norm_num)]
+      rw [ZMod.val_eq_of_lt (by norm_num)]
+      omega
+    · exact fun h => (ZMod.natCast_eq_natCast_iff' h.1 h.2).mp rfl
+
+  have invsub' (a b : ℕ) : (ZMod p)ˣ (a⁻¹ - b⁻¹) = (ZMod p)ˣ (a - b)⁻¹ := by
+    rw [← ZMod.val_inv, ← ZMod.val_inv, ← ZMod.val_sub]
+    · rw [ZMod.val_eq_of_lt (by norm_num)]
+      rw [ZMod.val_eq_of_lt (by norm_num)]
+      omega
+    · exact fun h => (ZMod.natCast_eq_natCast_iff' h.1 h.2).mp rfl
+
+  -- The term $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}$ is equal to
+  -- $\sum_{k=1}^{p-2} (k^{-1} \cdot (k+1)^{-1})$
+  let sum' := ∑ k in Finset.Icc 1 (p - 2), (ZMod p)ˣ (k)⁻¹ * ((ZMod p)ˣ (k)⁻¹ + 1)⁻¹
+  have : sum' = ∑ k in Finset.Icc 1 (p - 2), (ZMod p)ˣ (k)⁻¹ * ((ZMod p)ˣ (k + 1)⁻¹) := by
+    simp only [sum', Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, add_tsub_cancel_right]
+    congr! 1 with k hk
+    rw [← mul_inv_cancel₀ (by assumption), ← mul_inv_cancel₀ (by omega), mul_assoc, mul_inv_cancel₀ (by omega)]
+    ring
+  rw [this]
+
+  -- The sum is equal to $(p - 1)^{-1} - 1^{-1} = (p - 2)^{-1}$
+  have : ∑ k ∈ Finset.Icc 1 (p - 2), (ZMod p)ˣ (k)⁻¹ * ((ZMod p)ˣ (k + 1)⁻¹) = (ZMod p)ˣ (p - 1)⁻¹ - (ZMod p)ˣ 1⁻¹ := by
+    induction _ using Finset.sum_Icc_succ_top
+    case base => simp!
+    case succ n ih =>
+      rw [Finset.sum_Icc_succ_top (by omega), Finset.sum_Icc_succ_top (by omega), add_tsub_cancel_right]
+      rw [mul_inv_cancel₀]
+      · apply_fun (fun x => x * (ZMod p)ˣ (n + 1)⁻¹) at ih
+        rw [← mul_assoc, ← mul_assoc, mul_inv_cancel₀ (by assumption), mul_one] at ih
+        rw [ih]
+        ring_nf
+        rw [mul_inv_cancel₀ (by simp [Nat.Prime.ne_zero h₀])]
+      · simp; omega
+      · exact fun h => (ZMod.natCast_eq_natCast_iff' h.1 h.2).mp rfl
+  rw [this]
+
+  -- Since $p$ is a prime number, $p-1$ is coprime to $p$. Therefore, $(p-1)^{-1} = 1^{-1} = 1$. Thus, the sum is equal to $1 - 1 = 0$.
+  have : (ZMod p)ˣ (p - 1)⁻¹ = 1 := by
+    suffices (ZMod p)ˣ (p - 1) = 1 by exact mul_inv_cancel₀ this
+    calc
+      (ZMod p)ˣ (p - 1) = (ZMod p)ˣ (p - 1) ^ p := by rw [pow_succ, mul_comm]; simp
+      _ = 1 := by rw [ZMod.pow_card_sub_one_eq_one]; simp [Nat.Prime.ne_zero h₀]
+  rw [this]
+
+  -- The sum is equal to 2
+  simp only [Nat.Prime.one_le h₀, ZMod.inv_one, zero_sub, zero_add]
+```

@@ -1,0 +1,62 @@
+-- A stronger version of the inequality is still true if the triangle inequality
+  -- assumptions are removed, and the statement is true for all $a, b, c > 0$.
+  -- strongly suggests that the triangle inequality is an important part of the problem.
+
+  -- We use the Ravi transformation, which is an if and only if condition
+  -- for a triangle. It states that for any triangle with sides $a, b, c$ there
+  -- exist positive $x, y, z$ such that $a = y + z, b = z + x$ and $c = x + y$.
+  -- The proof of this fact is simple algebraic manipulation, which is why we state
+  -- it as an "if and only if" condition.
+  have ravi : ((∃ x y z : ℝ) ((x > 0) ∧ (y > 0) ∧ (z > 0) ∧ (a = y + z) ∧ (b = z + x) ∧ (c = x + y))) ↔
+      (a < b + c) ∧ (b < a + c) ∧ (a + b > c):= by
+    constructor
+    · intro ⟨x, y, z, h₀, h₁, h₂, h₃, h₄, h₅⟩
+      constructor
+      · linarith
+      · constructor
+        · linarith
+        · linarith
+    · intro ⟨h₀, h₁, h₂⟩
+      use (a - b + c) / 2, (a + b - c) / 2, (b + c - a) / 2
+      constructor
+      · linarith
+      · constructor
+        · linarith
+        · constructor
+          · linarith
+          · constructor
+            · linarith
+            · linarith
+
+  -- Now, the variables $x, y, z$ are positive, and the triangle inequality
+  -- conditions are given in terms of $x, y, z$. This makes it possible to apply
+  -- AM-GM to prove the inequality.
+  obtain ⟨x, y, z, h₀, h₁, h₂, h₃, h₄, h₅⟩ := ravi.mp ⟨h₀, h₁, h₂⟩
+  have h₄ : a = y + z := by linarith
+  have h₅ : b = z + x := by linarith
+  have h₆ : c = x + y := by linarith
+
+  -- Now, we write the left hand side in terms of $x, y, z$. After simple algebraic manipulation,
+  -- we arrive at an equivalent form of the inequality.
+  have : a ^ 2 * (b + c - a) + b ^ 2 * (c + a - b) + c ^ 2 * (a + b - c) = 2 * (x + y + z) * (x * y + y * z + z * x) := by
+    rw [h₄, h₅, h₆]
+    ring
+
+  rw [this]
+  have : 2 * (x + y + z) * (x * y + y * z + z * x) ≤ 3 * (y + z) * (z + x) * (x + y) := by
+    -- Now, we use the AM-GM inequality to finish off the problem.
+    -- First, we apply the AM-GM inequality to the terms $x + y + z$ and
+    -- $x * y + y * z + z * x$.
+    have h : (x + y + z) * (x * y + y * z + z * x) ≤ (x + y + z) ^ 2 := by
+      nlinarith [sq_nonneg (x - y), sq_nonneg (y - z), sq_nonneg (z - x)]
+
+    -- A well-known consequence of the AM-GM inequality is that
+    -- $a + b + c \leq \frac{3}{2} (ab + bc + ca)$, which can be easily proved
+    -- with a bit of algebraic manipulation.
+    have h' : x + y + z ≤ (3 / 2) * (x * y + y * z + z * x) := by
+      nlinarith [sq_nonneg (x - y), sq_nonneg (y - z), sq_nonneg (z - x)]
+
+    nlinarith [sq_nonneg (x - y), sq_nonneg (y - z), sq_nonneg (z - x)]
+
+  linarith
+```

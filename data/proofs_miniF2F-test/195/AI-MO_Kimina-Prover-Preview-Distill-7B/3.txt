@@ -1,0 +1,88 @@
+-- We have $a^2b^3=\frac{32}{27}$ and $\frac{a}{b^3}=\frac{27}{4}$. Let's find $a+b$.
+
+  -- From $\frac{a}{b^3}=\frac{27}{4}$, we can multiply both sides by $b^3$ to get $a = \frac{27}{4}b^3$.
+  have hb : a = 27 / 4 * b ^ 3 := by
+    have : b ^ 3 ≠ 0 := by
+      intro h
+      have : a / b ^ 3 = 0 := by
+        field_simp [h]
+      linarith
+    field_simp at h₁ ⊢
+    linarith
+
+  -- Substitute $a = \frac{27}{4}b^3$ into $a^2b^3=\frac{32}{27}$.
+  rw [hb] at h₀
+  -- Now we have $\left(\frac{27}{4}b^3\right)^2b^3=\frac{32}{27}$.
+  -- Simplify: $\frac{729}{16}b^6b^3=\frac{32}{27}$.
+  -- $\frac{729}{16}b^9=\frac{32}{27}$.
+  -- Solve for $b^9$: $b^9 = \frac{32}{27} \cdot \frac{16}{729} = \frac{32 \cdot 16}{27 \cdot 729}$.
+  have h₂ : (27 / 4 * b ^ 3) ^ 2 * b ^ 3 = 32 / 27 := h₀
+  ring_nf at h₂
+
+  -- Let's simplify $\frac{729}{16}b^9=\frac{32}{27}$ to $b^9 = \frac{32 \cdot 16}{27 \cdot 729}$.
+  have h₃ : b ^ 9 = 32 * 16 / (27 * 729) := by
+    have : b ^ 9 ≠ 0 := by
+      intro h
+      have : b ^ 3 = 0 := by
+        have : b ^ 9 = 0 := by
+          linarith
+        have : b ^ 3 = 0 := by
+          have : b ^ 9 = 0 := by linarith
+          have : b ^ 3 = 0 := by
+            have : b ^ 9 = 0 := by linarith
+            nlinarith
+          linarith
+        linarith
+      have : a = 0 := by
+        rw [hb]
+        field_simp
+        linarith
+      have : a ^ 2 * b ^ 3 = 0 := by
+        rw [this, h]
+        ring
+      linarith
+    field_simp at h₂ ⊢
+    nlinarith
+
+  -- Simplify $\frac{32 \cdot 16}{27 \cdot 729}$ to $\left(\frac{2}{3}\right)^9$.
+  have h₄ : b ^ 9 = (2 / 3) ^ 9 := by
+    rw [h₃]
+    norm_num
+
+  -- Since $b^9 = \left(\frac{2}{3}\right)^9$, we have $b = \frac{2}{3}$.
+  have h₅ : b = 2 / 3 := by
+    have : b ^ 9 - (2 / 3) ^ 9 = 0 := by
+      linarith
+    have : (b - 2 / 3) * (b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8) = 0 := by
+      ring_nf at this ⊢
+      linarith
+    cases' (mul_eq_zero.mp this) with h₆ h₇
+
+    · -- If $b - \frac{2}{3} = 0$, then $b = \frac{2}{3}$.
+      linarith
+
+    · -- If $b^8 + b^7\cdot\frac{2}{3} + \cdots + \left(\frac{2}{3}\right)^8 = 0$, we need to prove that this is impossible for real numbers.
+      have h₈ : b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8 > 0 := by
+        have h₈ : b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8 = 
+          (b ^ 4 + b ^ 3 * (2 / 3) + b ^ 2 * (2 / 3) ^ 2 + b * (2 / 3) ^ 3 + (2 / 3) ^ 4) ^ 2 + 
+          3 * b ^ 7 * (2 / 3) + 3 * b ^ 6 * (2 / 3) ^ 2 + 3 * b ^ 5 * (2 / 3) ^ 3 + 3 * b ^ 4 * (2 / 3) ^ 4 + 3 * b ^ 3 * (2 / 3) ^ 5 + 3 * b ^ 2 * (2 / 3) ^ 6 + 3 * b * (2 / 3) ^ 7 := by
+          ring_nf
+        rw [h₈]
+        have h₉ : b ^ 4 + b ^ 3 * (2 / 3) + b ^ 2 * (2 / 3) ^ 2 + b * (2 / 3) ^ 3 + (2 / 3) ^ 4 ≥ 0 := by
+          nlinarith [sq_nonneg (b ^ 2), sq_nonneg (b * (2 / 3)), sq_nonneg ((2 / 3) ^ 2)]
+        have h₁₀ : 3 * b ^ 7 * (2 / 3) + 3 * b ^ 6 * (2 / 3) ^ 2 + 3 * b ^ 5 * (2 / 3) ^ 3 + 3 * b ^ 4 * (2 / 3) ^ 4 + 3 * b ^ 3 * (2 / 3) ^ 5 + 3 * b ^ 2 * (2 / 3) ^ 6 + 3 * b * (2 / 3) ^ 7 ≥ 0 := by
+          nlinarith [sq_nonneg (b ^ 3), sq_nonneg (b ^ 2 * (2 / 3)), sq_nonneg (b * (2 / 3) ^ 2), sq_nonneg ((2 / 3) ^ 3)]
+        nlinarith
+
+      linarith
+
+  -- Substitute $b = \frac{2}{3}$ into $a = \frac{27}{4}b^3$ to get $a = \frac{27}{4}\left(\frac{2}{3}\right)^3 = \frac{27}{4} \cdot \frac{8}{27} = 2$.
+  have h₆ : a = 2 := by
+    rw [h₅] at hb
+    norm_num at hb ⊢
+    linarith
+
+  -- Therefore, $a + b = 2 + \frac{2}{3} = \frac{8}{3}$.
+  rw [h₆, h₅]
+  norm_num
+```

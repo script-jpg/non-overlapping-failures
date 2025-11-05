@@ -1,0 +1,100 @@
+-- the 98 term sum is 137, and each term is 1 more than the previous one
+  -- write in the sum for k and k+1 terms, and write the sum in terms of u(k), u(k+1)
+  have h' (k : ℕ) : u (k.succ) = u k + 1 := by
+    exact h₀ k
+  -- express the sum from 0 to 97 as a term plus the sum from 1 to 97
+  have h'' (k : ℕ) {t : Finset ℕ} (h : k ∈ t) : ∑ x ∈ t, u x = u k + ∑ x ∈ (t \ {k}), u x := by
+    rw [Finset.sum_eq_add_sum_diff_singleton h]
+    ring
+  -- express the sum from 0 to 97 as the sum from 0 to 48 plus the sum from 49 to 97
+  have h'' (k : ℕ) : ∑ x ∈ Finset.range 98, u x = ∑ x ∈ Finset.range (k.succ), u x + ∑ x ∈ Finset.range (98 - (k.succ)), u (k.succ + x) := by
+    -- rewrite the sum from 0 to 97 as a term plus the sum from 1 to 97
+    rw [h'']
+    -- rewrite the sum from 1 to 97 as a term plus the sum from 2 to 96
+    rw [h'']
+    -- continue until you get to 0 + sum from k+1 to 98
+    simp [k.succ]
+  -- rewrite the sum from 0 to 97 into two parts: 0 to 48, and 49 to 98
+  have h := h'' 48
+  -- the sum from 0 to 48 has 49 terms, and each term is equal to u(2k+1) for k = 0, 1,..., 48
+  have h' : Finset.range 49 = Finset.image (fun k => 2 * k.succ) (Finset.range 49) := by
+    ext k
+    simp
+  -- the sum from 0 to 97 is 137, and the sum from 0 to 48 is sum of u(2k+1) from k = 0 to k = 48
+  rw [h', h] at h
+  -- the sum from 49 to 98 has 49 terms, and each term is equal to u(2k) for k = 0, 1,..., 48
+  have h'' (k : ℕ) : u (48 + k.succ) = u (48 + k) + 1 := by
+    exact h₀ (48 + k)
+  -- rewrite the sum from 49 to 98 as a sum over sum from 0 to 48, plus 1
+  have h'' (k : ℕ) : ∑ x ∈ Finset.range (98 - (48 + k.succ)), u (48 + k.succ + x) = ∑ x ∈ Finset.range (98 - (48 + k)), u (48 + k + x) + 1 := by
+    rw [Finset.sum_eq_add_sum_diff_singleton]
+    · rw [h'']
+      simp
+    rw [Finset.sum_eq_add_sum_diff_singleton]
+    simp
+  -- the sum from 49 to 98 is sum of u(2k) from k = 0 to k = 48
+  rw [h''] at h
+  -- the sum from 0 to 97 is sum of u(2k+1) from k = 0 to k = 48, plus sum of u(2k) from k = 0 to k = 48, equals 137
+  -- sum of u(2k+1) from k = 0 to k = 48 plus sum of u(2k) from k = 0 to k = 48 equals sum of u(k) from k = 0 to k = 97
+  have h'' : ∑ k ∈ Finset.range 49, u (2 * k.succ) + ∑ k ∈ Finset.range 49, u (2 * k.succ) = 137 := by
+    rw [← h]
+    simp [Finset.sum]
+  -- the sum from 0 to 48 is 49 * u(0) plus sum of u(2k) from k = 1 to k = 48
+  have h'' (k : ℕ) : ∑ x ∈ Finset.range (2 * k.succ + 1), u x = 2 * u 0 + ∑ x ∈ Finset.range k, u (2 * x.succ) := by
+    induction' k with k ih
+    · simp [h']
+    · rw [Finset.sum_range_succ, ih]
+      simp [h'']
+      ring
+  -- the sum from 0 to 97 is twice the sum of u(2k+1) from k = 0 to k = 48
+  have h := h'' 48
+  -- the sum from 0 to 48 is 49 * u(0) plus sum of u(2k) from k = 1 to k = 48
+  rw [h] at h
+  -- the sum from 0 to 48 is also 98 * u(0) plus sum of u(k) from k = 1 to k = 96
+  have h' : ∑ k ∈ Finset.range 49, u (2 * k.succ) = 98 * u 0 + ∑ k ∈ Finset.range 49, u (2 * k.succ) := by
+    rw [Finset.sum_eq_add_sum_diff_singleton]
+    · simp
+    · rw [Finset.sum_eq_add_sum_diff_singleton]
+      simp
+  -- the sum from 0 to 48 is 49 * u(0) plus sum of u(2k) from k = 1 to k = 48
+  -- the sum from 0 to 48 is also 98 * u(0) plus sum of u(k) from k = 1 to k = 96
+  -- so the sum of u(k) from k = 1 to k = 96 is 49 * u(0) plus sum of u(2k) from k = 1 to k = 48
+  rw [h'] at h
+  -- the sum from 1 to 96 equals the sum from 0 to 97 minus u(0)
+  have h'' (k : ℕ) : ∑ x ∈ Finset.range (98 - k.succ), u (k.succ + x) = ∑ x ∈ Finset.range (98 - k.succ), u x - u 0 := by
+    rw [Finset.sum_eq_add_sum_diff_singleton]
+    · simp
+    rw [Finset.sum_eq_add_sum_diff_singleton]
+    simp
+  -- the sum from 1 to 96 equals the sum of u(2k) from k = 0 to k = 48 plus sum of u(2k+1) from k = 0 to k = 48
+  rw [h''] at h
+  -- the sum from 0 to 48 is 49 * u(0) plus sum of u(2k) from k = 1 to k = 48
+  -- the sum from 1 to 96 is 49 * u(0) plus sum of u(2k) from k = 1 to k = 48
+  -- so the sum from 0 to 97 is twice the sum of u(2k) from k = 0 to k = 48
+  have h'' : ∑ k ∈ Finset.range 49, u (2 * k.succ) = ∑ k ∈ Finset.range 98, u k := by
+    have : ∑ k ∈ Finset.range 98, u k = ∑ k ∈ Finset.range 49, u (2 * k.succ) + ∑ k ∈ Finset.range 49, u (2 * k.succ) := by
+      rw [h]
+    rw [this]
+    linarith
+  -- the sum from 0 to 97 is 137, and it is twice the sum of u(2k) from k = 0 to k = 48
+  -- so the sum of u(2k) from k = 0 to k = 48 is 68, and the sum of u(2k+1) from k = 0 to k = 48 is 69
+  rw [h''] at h
+  have h'' : ∑ k ∈ Finset.range 49, u (2 * k.succ) = 68 := by
+    linarith
+  have h'' : ∑ k ∈ Finset.range 49, u (2 * k.succ) = 69 := by
+    linarith
+  -- the sum of u(2k+1) from k = 0 to k = 48 is the sum of u(k) from k = 1 to k = 97, minus the sum of u(2k) from k = 0 to k = 48
+  have h' (k : ℕ) : ∑ x ∈ Finset.range (2 * k.succ + 1), u x = ∑ x ∈ Finset.range (2 * k.succ + 1), u (2 * x.succ) + ∑ x ∈ Finset.range k, u (2 * x.succ + 1) := by
+    induction' k with k ih
+    · simp [h']
+    · rw [Finset.sum_range_succ, ih]
+      simp
+      rw [h'']
+      ring
+  -- the sum from 0 to 97 is the sum of u(2k) from k = 0 to k = 48, plus sum of u(2k+1) from k = 0 to k = 48
+  have h := h' 48
+  -- the sum from 0 to 97 is 137, and the sum of u(2k) from k = 0 to k = 48 is 68
+  -- so the sum of u(2k+1) from k = 0 to k = 48 is 69
+  rw [h] at h
+  linarith
+```

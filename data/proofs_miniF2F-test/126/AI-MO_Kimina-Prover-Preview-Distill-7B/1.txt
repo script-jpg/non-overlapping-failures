@@ -1,0 +1,109 @@
+-- We can rewrite the equation as : $a * c + b * d + (a - b) ^ 2 = (b + d) ^ 2 + (a - c) ^ 2$
+  have equation : (a * c + b * d) + (a - b) ^ 2 = (b + d) ^ 2 + (a - c) ^ 2 := by
+    ring_nf
+    linarith
+
+  -- So we have $(a * c + b * d) = (b + d) ^ 2 + (a - c) ^ 2 - (a - b) ^ 2$
+  have equation' : a * c + b * d = (b + d) ^ 2 + (a - c) ^ 2 - (a - b) ^ 2 := by
+    linarith
+
+  -- By triangle inequality, we have $|a - c| + |b - d| \ge |a - b - c + d|$
+  have triangle : (a - c) ^ 2 + (b - d) ^ 2 ≥ (a - b - c + d) ^ 2 := by
+    apply sq_add_sq_le_sq_add_sq
+    calc
+      a - c + (b - d) = a - b - c + d := by ring
+
+  -- So We can deduce that $a * c + b * d \ge 0$
+  have acbd_nonneg : 0 ≤ a * c + b * d := by
+    calc
+      a * c + b * d = (b + d) ^ 2 + (a - c) ^ 2 - (a - b) ^ 2 := by rw [equation']
+      _ = (b + d) ^ 2 + (a - c) ^ 2 + (- (a - b) ^ 2) := by ring
+      _ ≥ (a - b) ^ 2 + (- (a - b) ^ 2) := by linarith
+      _ = 0 := by linarith
+
+  -- So We can deduce that $a * c + b * d + (a - b) ^ 2 \ge 0$
+  have eq_nonneg : 0 ≤ a * c + b * d + (a - b) ^ 2 := by linarith
+
+  -- By triangle inequality, we have $|a - c| + |b - d| \ge |a - b - c + d|$
+  have triangle' : a * c + b * d + (a - b) ^ 2 ≥ (a - b) ^ 2 := by
+    have : 0 ≤ (a - c) ^ 2 + (b - d) ^ 2 := by linarith
+    linarith
+
+  -- So we have $a * c + b * d \ge 0$
+  have acbd_nonneg : 0 ≤ a * c + b * d := by linarith
+
+  -- By triangle inequality, we have $|a - c| + |b - d| \ge |a - b - c + d|$
+  have triangle'' : a * c + b * d + (a - b) ^ 2 ≥ (a - c) ^ 2 := by
+    have : 0 ≤ (b - d) ^ 2 + (a - b) ^ 2 := by linarith
+    linarith
+
+  -- So we have $a * b + c * d \ge a * c + b * d \ge 0$
+  have abcd_nonneg : 0 ≤ a * b + c * d := by
+    calc
+      a * b + c * d = a * c + b * d + (a - b) ^ 2 := by linarith
+      _ ≥ (a - b) ^ 2 := by linarith
+      _ ≥ 0 := by positivity
+
+  -- We can deduce that $a * b + c * d \ge 1$.
+  have abcd_nonneg' : 1 ≤ a * b + c * d := by
+    by_contra!
+    have : 0 ≤ a * b + c * d := by linarith
+    have : a * b + c * d = 0 := by linarith
+    have : a * b = 0 := by linarith
+    have : a = 0 ∨ b = 0 := by exact Nat.mul_eq_zero.mp this
+    rcases this with h | h
+   . linarith [h₀.left]
+   . linarith [h₀.right.left]
+
+  -- So it suffices to show that $a * b + c * d$ is either a square or a product of two
+  -- primes (with some conditions on the exact values of $a, b, c, d$.)
+  suffices (a * b + c * d) = e ^ 2 ∨ (a * b + c * d) = p * q
+      where e : ℕ := a - b - c + d
+      (p q : ℕ) : p ≤ a - b ∧ q ≤ c - d ∧ a - b > 0 ∧ c - d > 0 ∧ p * q = (a * b + c * d) ∧ Nat.Prime p ∧ Nat.Prime q
+      by
+    rcases this with h | h
+   . rw [h]
+      decide
+   . obtain ⟨p, q, hpq, hp, hq, h₀, h₁, h₂, h₃⟩ := h
+      have : p * q = (a * b + c * d) := by rw [hpq]
+      have : ¬Nat.Prime (a * b + c * d) := by
+        apply Nat.not_prime_mul
+        all_goals linarith
+      exact this
+
+  -- We can rewrite the equation as : $a * b + c * d = e ^ 2$
+  have : a * b + c * d = e ^ 2 := by
+    simp only [e]
+    ring_nf
+    rw [← Nat.sub_add_comm]
+    ring_nf
+    linarith
+
+  -- So it suffices to show that $a * b + c * d \ge 1$.
+  suffices 1 ≤ a * b + c * d by
+    have : a * b + c * d = e ^ 2 := by linarith
+    have : 1 ≤ e := by
+      by_contra!
+      have : e ^ 2 = 0 := by linarith
+      have : e = 0 := by linarith
+      have : a - b - c + d = 0 := by rw [this] at hpq; exact hpq
+      have : d ≥ c := by omega
+      linarith
+    use e, e
+    split_ands
+   . linarith
+   . linarith
+   . linarith
+   . linarith
+   . rw [this]
+      simp
+   . exact Nat.prime_pow (show e > 1 by linarith)
+   . exact Nat.prime_pow (show e > 1 by linarith)
+
+  -- So we have $a * c + b * d \ge 0$
+  calc
+    1 ≤ a * c + b * d := by linarith
+    _ = e ^ 2 := by linarith
+    _ ≤ a * b + c * d := by linarith
+
+```

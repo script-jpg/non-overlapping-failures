@@ -1,0 +1,70 @@
+/-
+  To determine the number of solutions to the equation \(\sin \left( \frac{\pi}2 \cos x \right) = \cos \left( \frac{\pi}2 \sin x \right)\) in the closed interval \([0, \pi]\), we need to find the values of \(x\) that satisfy this equation. We will show that there are exactly two such solutions.
+  -/
+  have h₁ : S = {0, Real.pi} := by
+    ext x
+    simp only [h₀, Finset.mem_insert, Finset.mem_singleton, true_and_iff, eq_self_iff_true,
+      and_true_iff, and_assoc]
+    constructor
+    · intro h
+      match eq_or_ne x 0 with
+      |.inl hx =>
+        rw [hx]
+        simp
+      |.inr hx =>
+        rw [← sub_eq_zero] at h
+        have h2 : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by
+          linarith [Real.sin_le_one (Real.pi / 2 * Real.cos x), Real.cos_le_one (Real.pi / 2 * Real.sin x)]
+        have h3 : Real.sin (Real.pi / 2 * Real.sin x) = Real.cos (Real.pi / 2 * Real.cos x) := by
+          rw [← Real.cos_pi_div_two_sub, ← Real.cos_pi_div_two_sub]
+          congr
+          ring
+        have h4 : Real.cos (Real.pi / 2 * Real.sin x) = Real.sin (Real.pi / 2 * Real.cos x) := by
+          rw [← Real.sin_pi_div_two_sub, ← Real.sin_pi_div_two_sub]
+          congr
+          ring
+        simp only [h2, h3, h4] at h
+        have h5 : Real.sin x = 0 ∨ Real.cos x = 0 := by
+          apply or_iff_not_imp_left.mpr
+          intro hx
+          apply mul_left_cancel₀ (sub_ne_zero.mpr hx)
+          linarith [Real.sin_sq_add_cos_sq x]
+        cases h5 with
+        | inl hx =>
+          rw [hx] at h
+          norm_num at h
+        | inr hx =>
+          rw [hx] at h
+          norm_num at h
+          exact hx
+      -- If x is not 0, then we need to show it must be π
+      intro hx
+      rw [← sub_eq_zero] at hx
+      have h2 : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by
+        linarith [Real.sin_le_one (Real.pi / 2 * Real.cos x), Real.cos_le_one (Real.pi / 2 * Real.sin x)]
+      have h3 : Real.sin (Real.pi / 2 * Real.sin x) = Real.cos (Real.pi / 2 * Real.cos x) := by
+        rw [← Real.cos_pi_div_two_sub, ← Real.cos_pi_div_two_sub]
+        congr
+        ring
+      have h4 : Real.cos (Real.pi / 2 * Real.sin x) = Real.sin (Real.pi / 2 * Real.cos x) := by
+        rw [← Real.sin_pi_div_two_sub, ← Real.sin_pi_div_two_sub]
+        congr
+        ring
+      have h5 : Real.sin x = 0 ∨ Real.cos x = 0 := by
+        apply or_iff_not_imp_left.mpr
+        intro hx
+        apply mul_left_cancel₀ (sub_ne_zero.mpr hx)
+        linarith [Real.sin_sq_add_cos_sq x]
+      cases h5 with
+      | inl hx =>
+        rw [hx] at h
+        norm_num at h
+      | inr hx =>
+        rw [hx] at h
+        norm_num at h
+    -- If x is 0 or π, then it is a solution
+    · rintro (rfl | rfl)
+      all_goals simp
+  rw [h₁]
+  simp
+```

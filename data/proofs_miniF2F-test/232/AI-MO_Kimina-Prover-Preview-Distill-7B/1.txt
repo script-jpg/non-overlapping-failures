@@ -1,0 +1,228 @@
+-- All the elements of S can be written in the form $n + \frac{p}{q}$, with $n$ an integer and $0 \le \frac{p}{q} < 1$.
+  -- Let $n$ be the integer part of elements of $S$, and $r$ be the fractional part.
+  have h₂ : ∀ x : ℝ, x ∈ S → ∃ n : ℤ, ∃ r : ℝ, x = n + r ∧ ↑r = x - ↑⌊x⌋ ∧ 0 ≤ r ∧ r < 1 := by
+    intro x hx
+    use ↑⌊x⌋
+    use x - ↑⌊x⌋
+    constructor
+    · exact hx
+    constructor
+    · exact Eq.symm (Int.le_floor_add_fract x)
+    constructor
+    · exact nonneg_of_sub_eq_floor x
+    · exact Int.fract_lt_one x
+
+  -- Then, plugging in $x = n + r$ into the equation, we get $n \cdot r = a \cdot (n + r)^2$.
+  -- Dividing both sides by $n$ (since $n \neq 0$ because $x$ is a real number), we get $r = a \cdot (n + r)^2/n$.
+  have h₃ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a.num = a.den * (x - ↑⌊x⌋) * (x - ↑⌊x⌋) * x ^ 2 / (x - ↑⌊x⌋) := by
+    intro x hx hx'
+    let n := ↑⌊x⌋
+    let r := x - ↑⌊x⌋
+    have h₃ : x = n + r := by exact Eq.symm (Int.le_floor_add_fract x)
+    have h₄ : r ≥ 0 := by exact nonneg_of_sub_eq_floor x
+    have h₅ : r < 1 := by exact Int.fract_lt_one x
+    have h₆ : r ≠ 0 := by exact sub_ne_zero_of_ne hx'
+    have : r * x ^ 2 = a * x ^ 2 / n := by
+      rw [h₃] at hx
+      rw [show ↑n * ↑r = ↑(n * r) by exact Eq.symm (Int.mul_emod_self _ _)] at hx
+      have : r * x ^ 2 = ↑(n * r) * x ^ 2 / ↑n := by
+        suffices r * x ^ 2 * ↑n = ↑n * ↑r * x ^ 2 from by exact eq_of_div_eq_div_left this
+        exact Int.mul_emod_self _ _
+      rw [this, hx]
+      exact Eq.symm (Int.mul_emod_self _ _)
+    rw [←this]
+    have : (↑n * r / ↑n) / r = (↑n + r)^2 := by
+      field_simp
+      ring
+    rw [this]
+    exact h₃
+
+  -- Then, isolating $n$ from the above equation, we get $n = \frac{r}{a \cdot r - 1}$.
+  have h₄ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a.den * ((x - ↑⌊x⌋) / (a * (x - ↑⌊x⌋) - 1)) = x - ↑⌊x⌋ := by
+    intro x hx hx'
+    let n := ↑⌊x⌋
+    let r := x - ↑⌊x⌋
+    have h₄ : x = n + r := by exact Eq.symm (Int.le_floor_add_fract x)
+    have h₅ : r ≥ 0 := by exact nonneg_of_sub_eq_floor x
+    have h₆ : r < 1 := by exact Int.fract_lt_one x
+    have h₇ : r ≠ 0 := by exact sub_ne_zero_of_ne hx'
+    have h₈ : a.den * (r / (a * r - 1)) = r := by
+      specialize h₃ x hx hx'
+      rw [h₃]
+      field_simp
+      ring
+    have h₉ : a * r - 1 ≠ 0 := by
+      intro h
+      have : a * r = 1 := by linarith only [h]
+      have : r ≤ 1 := by exact le_of_lt_succ h₆
+      have : r ≥ 0 := by exact h₅
+      have : r = 1 := by exact Eq.symm (mul_eq_one_iff_of_nonneg this.le this.le).mp h
+      rw [this] at h₆
+      exact lt_of_le_of_ne (by linarith only [h₆]) h₇
+    replace h₈ : a.den * (r / (a * r - 1)) / r = 1 := by exact eq_of_div_eq_one h₈
+    have h₁₀ : a.den * (r / (a * r - 1)) / r = a.den * (1 / (a * r - 1)) := by
+      congr
+      rw [div_eq_mul_inv]
+      rw [inv_mul_cancel₀]
+      exact h₉
+      exact h₇
+    rw [h₁₀] at h₈
+    have h₁₁ : 1 / (a * r - 1) = (a * r - 1)⁻¹ := by exact one_div (a * r - 1)
+    rw [h₁₁] at h₈
+    apply_fun (·  x - ↑⌊x⌋) at h₈
+    rw [h₄] at h₈
+    exact h₈
+
+  -- Then, we can rewrite the equation above as $n = \frac{r}{a \cdot r - 1}$.
+  have h₅ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a.den * (x - ↑⌊x⌋) / (a * (x - ↑⌊x⌋) - 1) = x - ↑⌊x⌋ := by
+    intro x hx hx'
+    specialize h₄ x hx hx'
+    rw [mul_comm] at h₄
+    exact (div_eq_iff_eq_mul h₉).mp h₄
+
+  -- So, $a \cdot r - 1$ is positive and less than $1$.
+  have h₆ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a * (x - ↑⌊x⌋) - 1 > 0 := by
+    intro x hx hx'
+    specialize h₅ x hx hx'
+    suffices a * (x - ↑⌊x⌋) - 1 ≠ 0 by exact ne_of_gt (id (_lt_of_lt_of_le (by linarith only [h₅]) this))
+
+    -- $a * r - 1$ cannot be zero, as this would imply $r = 1/a$.
+    by_contra h
+    have h₁ : a * (x - ↑⌊x⌋) - 1 = 0 := by exact h
+    have h₂ : a * (x - ↑⌊x⌋) = 1 := by linarith only [h₁]
+    have h₃ : x - ↑⌊x⌋ = 1 / a := by exact eq_of_mul_eq_one_left h₂
+    have h₄ : x - ↑⌊x⌋ ≥ 0 := by exact sub_nonneg_of_le h₅
+    have h₅ : 1 / a > 0 := by linarith only [h₃, h₄]
+    have h₆ : a > 0 := by exact inv_pos_iff.mp h₅
+    have h₇ : x - ↑⌊x⌋ ≤ 1 := by exact sub_le (by linarith only [h₆]) h₄
+    have h₈ : 1 / a ≥ 1 := by exact (inv_le_one (by positivity)).mpr h₇
+    have h₉ : a ≤ 1 := by exact inv_le_inv h₈ (by positivity)
+    have h₁₀ : a ≠ 0 := by exact Ne.symm (ne_of_lt h₆)
+    have h₁₁ : 1 / a < 1 := by exact inv_lt_one₀ h₆
+    linarith only [h₁₁, h₉]
+
+  -- Also, $r = x - \lfloor x \rfloor < 1$.
+  have h₇ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a * (x - ↑⌊x⌋) - 1 < 1 := by
+    intro x hx hx'
+    specialize h₅ x hx hx'
+    rw [mul_comm] at h₅
+    exact (div_lt_iff₀ (by linarith only [h₆ x hx hx'])).mp h₅
+
+  -- Combining the above inequalities, we have $0 < a \cdot r - 1 < 1$.
+  have h₈ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a * (x - ↑⌊x⌋) - 1 ∈ Set.Ioo 0 1 := by
+    intro x hx hx'
+    exact ⟨h₆ x hx hx', h₇ x hx hx'⟩
+
+  -- So, $a \cdot r - 1$ cannot be equal to $0$.
+  have h₉ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a * (x - ↑⌊x⌋) - 1 ≠ 0 := by
+    intro x hx hx'
+    specialize h₈ x hx hx'
+    exact ne_of_lt h₈.left
+
+  -- Then, plugging $x = n + r$ into the equation, we get $n = \frac{r}{a \cdot r - 1}$.
+  have h₁₀ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a.den * (x - ↑⌊x⌋) / (a * (x - ↑⌊x⌋) - 1) = x - ↑⌊x⌋ := by
+    intro x hx hx'
+    specialize h₅ x hx hx'
+    rw [mul_comm] at h₅
+    exact (div_eq_iff_eq_mul h₉ x hx hx').mp h₅
+
+  -- So, $a \cdot r - 1$ is positive and less than $1$.
+  have h₁₁ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a * (x - ↑⌊x⌋) - 1 > 0 := by
+    intro x hx hx'
+    specialize h₅ x hx hx'
+    rw [mul_comm] at h₅
+    exact (div_eq_iff_eq_mul h₉ x hx hx').mp h₅
+
+  -- Also, $r = x - \lfloor x \rfloor < 1$.
+  have h₁₂ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a * (x - ↑⌊x⌋) - 1 < 1 := by
+    intro x hx hx'
+    specialize h₅ x hx hx'
+    rw [mul_comm] at h₅
+    exact (div_lt_iff₀ (by linarith only [h₁₁ x hx hx'])).mp h₅
+
+  -- We have $0 < a \cdot r - 1 < 1$.
+  have h₁₃ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a * (x - ↑⌊x⌋) - 1 ∈ Set.Ioo 0 1 := by
+    intro x hx hx'
+    exact ⟨h₁₁ x hx hx', h₁₂ x hx hx'⟩
+
+  -- The function $f(x) = \frac{a.den \cdot x}{a * x^2 - x + a.den - 1}$ is strictly increasing
+  -- over the interval $(a * r - 1, \infty)$ for $x \neq \frac{-a.den + 1 \pm \sqrt{4a + 1}}{2a}$.
+  have h₁₄ : StrictMonoOn (fun x : ℝ => a.den * x / (a * x ^ 2 - x + a.den - 1)) (Ioi (a * (0 : ℝ) - 1)) := by
+    apply strictMonoOn_of_lt_add_one
+    simp only [mem_Ioi, mem_setOf_eq]
+    intro a₁ a₂ h₁₂
+    simp only [gt_iff_lt]
+    rw [←(eq_inv_inv a.den), ←(eq_inv_inv (a * a₂ ^ 2 - a₂ + a.den - 1))]
+    rw [inv_lt_inv₀]
+    · convert mul_lt_mul_of_pos_right h₁₂ (show 0 < a.den by positivity)
+      · ring
+      · apply ne_of_gt
+        apply lt_of_lt_of_le (show a * a₂ ^ 2 - a₂ + a.den - 1 ≤ a * a₂ ^ 2 - a₂ + a.den by linarith only [h₁₂])
+        linarith only [h₁₂]
+    · contrapose! h₁₂
+      · rw [inv_le_inv₀ (by linarith only [h₁₂]) (by linarith only [h₁₂])]
+        linarith only [h₁₂]
+      · linarith only [h₁₂]
+
+  -- The function $f(x) = \frac{a.den \cdot r}{a * r^2 - r + a.den - 1}$ is strictly increasing
+  -- over the interval $(a * r - 1, \infty)$ for $r \neq \frac{a.den - 1 \pm \sqrt{4a + 1}}{2a}$.
+  have h₁₅ : StrictMonoOn (fun x : ℝ => a.den * x / (a * x ^ 2 - x + a.den - 1)) (Ioi (a * (0 : ℝ) - 1)) := by
+    apply strictMonoOn_of_lt_add_one
+    simp only [mem_Ioi, mem_setOf_eq]
+    intro a₁ a₂ h₁₂
+    simp only [gt_iff_lt]
+    rw [←(eq_inv_inv a.den), ←(eq_inv_inv (a * a₂ ^ 2 - a₂ + a.den - 1))]
+    rw [inv_lt_inv₀]
+    · convert mul_lt_mul_of_pos_right h₁₂ (show 0 < a.den by positivity)
+      · ring
+      · apply ne_of_gt
+        apply lt_of_lt_of_le (show a * a₂ ^ 2 - a₂ + a.den - 1 ≤ a * a₂ ^ 2 - a₂ + a.den by linarith only [h₁₂])
+        linarith only [h₁₂]
+    · contrapose! h₁₂
+      · rw [inv_le_inv₀ (by linarith only [h₁₂]) (by linarith only [h₁₂])]
+        linarith only [h₁₂]
+      · linarith only [h₁₂]
+
+  -- Let $f(x) = \frac{a.den \cdot x}{a * x^2 - x + a.den - 1}$.
+  let f (x : ℝ) := a.den * x / (a * x ^ 2 - x + a.den - 1)
+
+  -- The function $f(x) = \frac{a.den \cdot r}{a * r^2 - r + a.den - 1}$ is strictly increasing
+  -- over the interval $(a * r - 1, \infty)$ for $r \neq \frac{a.den - 1 \pm \sqrt{4a + 1}}{2a}$.
+  have h₁₆ : StrictMonoOn f (Ioi (a * (0 : ℝ) - 1)) := by
+    apply strictMonoOn_of_lt_add_one
+    simp only [mem_Ioi, mem_setOf_eq]
+    intro a₁ a₂ h₁₂
+    simp only [gt_iff_lt]
+    rw [←(eq_inv_inv a.den), ←(eq_inv_inv (a * a₂ ^ 2 - a₂ + a.den - 1))]
+    rw [inv_lt_inv₀]
+    · convert mul_lt_mul_of_pos_right h₁₂ (show 0 < a.den by positivity)
+      · ring
+      · apply ne_of_gt
+        apply lt_of_lt_of_le (show a * a₂ ^ 2 - a₂ + a.den - 1 ≤ a * a₂ ^ 2 - a₂ + a.den by linarith only [h₁₂])
+        linarith only [h₁₂]
+    · contrapose! h₁₂
+      · rw [inv_le_inv₀ (by linarith only [h₁₂]) (by linarith only [h₁₂])]
+        linarith only [h₁₂]
+      · linarith only [h₁₂]
+
+  -- Now, we can rewrite the equation $a \cdot r - 1 = f(r)$.
+  have h₁₇ : ∀ x : ℝ, x ∈ S → x ≠ 0 → a * (x - ↑⌊x⌋) - 1 = f (x - ↑⌊x⌋) := by
+    intro x hx hx'
+    specialize h₅ x hx hx'
+    rw [←(h₅), mul_comm]
+
+  -- Since $f$ is strictly increasing, the number of solutions to the equation $a \cdot r - 1 = f(r)$
+  -- is equal to the number of solutions to the equation $r = f(r)$.
+  have h₁₈ : ∀ x ∈ S, x - ↑⌊x⌋ ∈ f ⁻¹' (a * (↑⌊x⌋ : ℝ) - 1) := by
+    intro x hx
+    specialize h₁₇ x hx hx
+    rw [←(h₁₇)]
+    exact h₁₆.mem_preimage.mp ⟨by simp only [gt_iff_lt, mem_Ioi], by simp only [le_refl]⟩
+
+  -- Then, the sum of all elements of $S$ is equal to the sum of all elements of $f ⁻¹' (a * (↑⌊x⌋ : ℝ) - 1)$.
+  have h₁₉ : (∑ k in S, k) = ∑ x ∈ f ⁻¹' (a * (↑⌊x⌋ : ℝ) - 1), x := by
+    apply Finset.sum_bij (fun x _ ↦ x - ↑⌊x⌋)
+    · intro x
+      simp only [Set.mem_setOf_eq, Set.mem_image]
+      apply h₁₈
+    · intro x y

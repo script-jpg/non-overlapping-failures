@@ -1,0 +1,47 @@
+-- auxiliary lemma : for any positive real number x, y, we have 2 * (x + y) / (x ^ (1 / 2) + y ^ (1 / 2)) ^ 2 ≤ 1 / 2 * (x ^ (1 / 2) ^ 2 + y ^ (1 / 2) ^ 2)
+  have aux {x y : ℝ} (hx : 0 < x) (hy : 0 < y) : 2 * (x + y) / (x ^ (1 / 2) + y ^ (1 / 2)) ^ 2 ≤ 1 / 2 * (x ^ (1 / 2) ^ 2 + y ^ (1 / 2) ^ 2) := by
+    -- rewrite the inequality to a more convenient form
+    rw [show 2 * (x + y) / (x ^ (1 / 2) + y ^ (1 / 2)) ^ 2 ≤ 1 / 2 * (x ^ (1 / 2) ^ 2 + y ^ (1 / 2) ^ 2) ↔ (x ^ (1 / 2) + y ^ (1 / 2)) ^ 2 ≥ 2 * (x + y) by field_simp, mul_comm]
+    -- expand the square of sum
+    rw [show (x ^ (1 / 2) + y ^ (1 / 2)) ^ 2 = (x ^ (1 / 2)) ^ 2 + (y ^ (1 / 2)) ^ 2 + 2 * (x ^ (1 / 2)) * (y ^ (1 / 2)) by ring]
+    -- use the fact that 0 < x, 0 < y to simplify the inequality
+    suffices 2 * (x ^ (1 / 2)) * (y ^ (1 / 2)) ≤ x + y by linarith
+    rw [show 2 * (x ^ (1 / 2)) * (y ^ (1 / 2)) = 2 * (x ^ (1 / 2) * y ^ (1 / 2)) by ring]
+    -- use the AM-GM inequality
+    apply mul_le_mul_of_nonneg_left (by norm_num : 2 ≤ (2 : ℝ) := by norm_num) (by positivity)
+    apply (Real.geom_mean_le_arith_mean (by norm_num : 2 ≤ (2 : ℝ) := by norm_num) (by norm_num : 0 ≤ (1 / 2 : ℝ) := by norm_num) (by positivity) (by positivity) (by linarith)).2
+
+  -- prove the original inequality
+  -- for positive real numbers a, b, c, such that $3 \leq ab+bc+ca$, show that $3/\sqrt{2} \leq a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}$
+  have h₂ : 0 < a + b := by linarith
+  have h₃ : 0 < b + c := by linarith
+  have h₄ : 0 < c + a := by linarith
+  -- simplify the inequality to a more convenient form
+  rw [show 3 / Real.sqrt 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) ↔ (Real.sqrt 2)⁻¹ * 3 ≤ (Real.sqrt 2)⁻¹ * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) by field_simp]
+  -- make a substitution to simplify the inequality
+  set x := (Real.sqrt 2)⁻¹ * a / Real.sqrt (a + b) with hx
+  set y := (Real.sqrt 2)⁻¹ * b / Real.sqrt (b + c) with hy
+  set z := (Real.sqrt 2)⁻¹ * c / Real.sqrt (c + a) with hz
+  -- simplify the inequality to the form of the auxiliary lemma
+  suffices 3 ≤ 2 * (x + y) / (x ^ 2 + y ^ 2) + 2 * (y + z) / (y ^ 2 + z ^ 2) + 2 * (z + x) / (z ^ 2 + x ^ 2) by rw [hx, hy, hz] at this ; field_simp at this ; linarith
+  -- separate into 3 inequalities
+  suffices 3 ≤ 2 * (x + y) / (x ^ 2 + y ^ 2) by linarith
+  -- apply the auxiliary lemma
+  apply le_trans (aux (by positivity) (by positivity))
+  -- make a substitution to simplify the inequality
+  set u := x ^ (1 / 2) with hu
+  set v := y ^ (1 / 2) with hv
+  -- simplify the inequality to a more convenient form
+  rw [←hu, ←hv, ←Real.rpow_natCast, ←Real.rpow_mul (by positivity), Real.sq_sqrt (by positivity)]
+  -- use the fact that 0 < u, 0 < v to simplify the inequality
+  suffices 2 * (u + v) * (u ^ 2 + v ^ 2) ≤ 3 * (u ^ 2 + v ^ 2) * (u ^ 2 + v ^ 2) by field_simp at this ; linarith
+  -- separate into 2 inequalities
+  suffices 0 ≤ 3 * (u ^ 2 + v ^ 2) * (u ^ 2 + v ^ 2) - 2 * (u + v) * (u ^ 2 + v ^ 2) by linarith
+  -- the  inequality is now a perfect square
+  rw [show 3 * (u ^ 2 + v ^ 2) * (u ^ 2 + v ^ 2) - 2 * (u + v) * (u ^ 2 + v ^ 2) = (3 * u ^ 2 + 3 * v ^ 2 - 2 * u - 2 * v) * (u ^ 2 + v ^ 2) by ring]
+  apply mul_nonneg
+  apply mul_nonneg (by norm_num : 0 ≤ (3 : ℝ) := by norm_num)
+  apply pow_two_nonneg
+  positivity
+
+```

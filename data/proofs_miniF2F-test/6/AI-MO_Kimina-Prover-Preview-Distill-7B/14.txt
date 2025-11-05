@@ -1,0 +1,197 @@
+-- some auxilary facts
+  have r0 : ∀ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i = 0 := by
+    apply Finset.sum_eq_zero_iff_of_nonneg
+    · intro i _
+      apply div_nonneg
+      · exact Real.cos_le_one (a i + m)
+      · norm_num
+    · intro i _
+      apply Real.cos_le_one
+      apply div_nonneg
+      · exact Real.cos_le_one (a i + m)
+      · norm_num
+
+  have r1 : ∀ i ∈ Finset.range k, Real.cos (a i + n) / 2 ^ i = 0 := by
+    apply Finset.sum_eq_zero_iff_of_nonneg
+    · intro i _
+      apply div_nonneg
+      · exact Real.cos_le_one (a i + n)
+      · norm_num
+    · intro i _
+      apply Real.cos_le_one
+      apply div_nonneg
+      · exact Real.cos_le_one (a i + n)
+      · norm_num
+
+  have r2 : ∀ i ∈ Finset.range k, Real.cos (a i + m) = Real.cos (a i + n) := by
+    intro i _
+    apply eq_of_sub_eq_zero
+    apply sub_eq_zero_of_eq
+    apply div_eq_div_iff?_?_ r0 i?_ r1 i
+    apply Finset.mem_range.mpr
+    exact lt_of_succ_lt h₀
+    apply Finset.mem_range.mpr
+    exact lt_of_succ_lt h₀
+
+  -- main part
+  have : ∀ i ∈ Finset.range k, Real.cos (a i + m) = Real.cos (a i + n) := by
+    intro i _
+    apply eq_of_sub_eq_zero
+    apply sub_eq_zero_of_eq
+    apply div_eq_div_iff?_?_ r0 i?_ r1 i
+    apply Finset.mem_range.mpr
+    exact lt_of_succ_lt h₀
+    apply Finset.mem_range.mpr
+    exact lt_of_succ_lt h₀
+
+  -- Since cos is periodic, we can deduce that $m-n=m_{i} \pi$ for some integers $m_{i}$. We will prove that the difference $m-n$ must be an integer multiple of $\pi$.
+  -- For this, we need the following lemma:
+  -- Given $a1, a2, \dots, ak$ and $b1, b2, \dots, bk$ with $\sum_{i=1}^k bi \neq 0$, if $\sum_{i=1}^k ai \cdot bi = 0$,
+  -- then there exists $i$ with $b_i \neq 0$ such that $a_i = \lambda b_i$ for some non-zero rational $\lambda$.
+  have lem (a : ℕ → ℝ) (b : ℕ → ℝ) (h₀ : ∃ i, b i ≠ 0) (h₁ : ∑ i ∈ Finset.range k, a i * b i = 0) : ∃ i, b i ≠ 0 ∧ ∃ (t : ℚ), t ≠ 0 ∧ a i = b i * t := by
+    obtain ⟨i, hbi⟩ := h₀
+    have h₂ : ∃ t : ℚ, t ≠ 0 ∧ a i = b i * t := by
+      use (a i / b i)
+      apply And.intro
+      · contrapose! hbi
+        rw [div_eq_zero_iff] at hbi
+        exact hbi
+      · rw [eq_div_iff_mul_eq hbi]
+        simp
+    obtain ⟨t, ht⟩ := h₂
+    use i, hbi, t
+
+  -- The sum of cos (a i + x) is equal to $y(x)$. We rewrite it in the form of $\sum_{i=1}^k \cos(a_i + x) \cdot \frac{1}{2^i}$. By the lemma above, we can deduce that there exists $i$ such that $\frac{1}{2^i} \neq 0$ and $\cos(a_i + m) = \lambda \frac{1}{2^i}$ for some rational $\lambda$.
+  -- The sum of cos (a i + x) is equal to $y(x)$. We rewrite it in the form of $\sum_{i=1}^k \cos(a_i + x) \cdot \frac{1}{2^i}$.
+  have : ∃ i ∈ Finset.range k, (y m) - (y n) = 0 := by
+    simp [h₁]
+  obtain ⟨i, hi, heq⟩ := this
+  rw [Finset.sum_sub_distrib] at heq
+  have : y m - y n = 0 := by
+    apply eq_of_sub_eq_zero
+    rw [heq]
+    norm_num
+  -- By the lemma above, we can deduce that there exists $i$ such that $\frac{1}{2^i} \neq 0$ and $\cos(a_i + m) = \lambda \frac{1}{2^i}$ for some rational $\lambda$.
+  have : ∃ i ∈ Finset.range k, (a i + m) ≠ (a i + n) := by
+    intro h
+    simp at h
+    rw [h] at heq
+    simp at heq
+    rcases heq with ⟨i, hi, hi'⟩
+    have : i ∈ Finset.range k := by exact hi
+    obtain ⟨t, ht⟩ := lem (fun i => Real.cos (a i + m)) (fun i => Real.cos (a i + n) / 2 ^ i) (by simp) h₁
+    -- The only if part of the lemma, however, the rational number $\lambda$ is not necessarily non-zero.
+    obtain ⟨b, ⟨heq, teq⟩⟩ := hi'
+    rw [div_ne_zero_iff] at heq
+    -- But the value of $t$ is non-zero by the assumption.
+    have : t ≠ 0 := by
+      contrapose! ht
+      rw [ht]
+      apply div_eq_zero_of_eq at heq
+      contrapose! heq
+      norm_num
+      rw [← one_div, div_eq_zero_iff]
+      simp
+    have : (1:ℝ) / 2 ^ i ≠ 0 := by
+      rw [div_ne_zero_iff]
+      norm_num
+      apply pow_ne_zero
+      norm_num
+    -- This is a contradiction.
+    rw [ht] at this
+    exact this ht
+    simp
+    exact hi
+  obtain ⟨i, hi, hmn⟩ := this
+  -- Now we have $\cos(a_i + m) = \lambda \frac{1}{2^i}$ for some non-zero rational $\lambda$.
+  obtain ⟨t, ht⟩ := lem (fun i => Real.cos (a i + m)) (fun i => Real.cos (a i + n) / 2 ^ i) (by simp) h₁
+  -- We prove that this $\lambda$ is an integer in two steps.
+  -- Firstly, we prove that it is rational.
+  have ht' : ∃ (t : ℚ), t ≠ 0 ∧ a i = b i * t := by
+    obtain ⟨t, ht⟩ := ht
+    apply And.intro
+    · contrapose! hbi
+      rw [div_eq_zero_iff] at hbi
+      norm_cast at hbi
+    · rw [eq_div_iff_mul_eq hbi]
+      simp
+  -- Secondly, we prove that it is an integer.
+  obtain ⟨t', ht'⟩ := ht'
+  have h₁ : ∃ (t : ℤ), t ≠ 0 ∧ a i = b i * t := by
+    obtain ⟨t, ht⟩ := ht'
+    have h₂ : (t):ℝ) = (t' : ℤ := by
+      rw [ht']
+      simp
+    have h₃ : (t' : ℤ) = t := by
+      exact Rat.intCast_inj.mp h₂
+    rw [← h₃]
+    simp
+    exact ht
+  -- Now we have $\cos(a_i + m) = t \cdot \frac{1}{2^i}$ for some non-zero integer $t$.
+  -- Since $f(m) = f(n)$, we have $\cos(a_i + m) = -\cos(a_i + n)$ for this $i$.
+  -- So $t \cdot \frac{1}{2^i} = -\cos(a_i + n)$ and $\cos(a_i + n)$ is rational.
+  have : ∃ (t : ℤ), t ≠ 0 ∧ (Real.cos (a i + m) / 2 ^ i) = t := by
+    obtain ⟨t, ht⟩ := ht
+    use t / 2 ^ i
+    apply And.intro
+    · contrapose! ht
+      apply ne_of_lt
+      apply div_pos
+      · apply Int.cast_pos.mpr
+        exact Nat.zero_lt_two
+      · norm_num
+    · rw [div_eq_div_iff] at ht
+      apply eq_of_sub_eq_zero at hmn
+      rw [ht] at hmn
+      apply eq_add_of_sub_eq at hmn
+      rw [add_comm] at hmn
+      apply eq_of_sub_eq_zero at hmn
+      have : (1:ℝ) / 2 ^ i ≠ 0 := by
+        rw [div_ne_zero_iff]
+        norm_num
+        apply pow_ne_zero
+        norm_num
+      rw [← mul_div_assoc, eq_div_iff_mul_eq] at hmn
+      rw [div_eq_div_iff] at hmn
+      norm_cast at hmn
+      rw [← @Int.cast_inj Real]
+      simp
+      exact hmn
+      norm_num
+  obtain ⟨t, ht⟩ := this
+  -- Now we have $\cos(a_i + m) = t \cdot \frac{1}{2^i}$ for some non-zero integer $t$.
+  -- Since $f(m) = f(n)$, we have $\cos(a_i + m) = -\cos(a_i + n)$ for this $i$.
+  -- So $t \cdot \frac{1}{2^i} = -\cos(a_i + n)$ and $\cos(a_i + n)$ is rational.
+  have : ∃ (t : ℤ), t ≠ 0 ∧ (Real.cos (a i + n) / 2 ^ i) = -t := by
+    use t
+    apply And.intro
+    · exact ht'
+    · rw [div_eq_div_iff] at ht
+      apply eq_of_sub_eq_zero at hmn
+      rw [ht] at hmn
+      apply eq_add_of_sub_eq_zero at hmn
+      rw [add_comm] at hmn
+      apply eq_of_sub_eq_zero at hmn
+      norm_cast at hmn
+      rw [← Real.cos_add] at hmn
+      rw [add_comm] at hmn
+      apply eq_of_sub_eq_zero at hmn
+      norm_num at hmn
+      rw [div_eq_div_iff] at hmn
+      apply eq_of_sub_eq_zero at hmn
+      norm_cast at hmn
+      rw [← @Int.cast_inj Real]
+      simp
+      exact hmn
+      norm_num
+  obtain ⟨t', ht'⟩ := this
+  -- This follows easily.
+  use -t' / 2 ^ i
+  apply And.intro
+  · norm_num
+  · rw [div_eq_div_iff]
+    ring
+    norm_num
+    apply pow_ne_zero
+    norm_num
+```

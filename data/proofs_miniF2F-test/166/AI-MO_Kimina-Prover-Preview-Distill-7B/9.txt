@@ -1,0 +1,239 @@
+-- define a function $f(x) = \frac{n - \sum_{i=1}^x a_i}{n - x}$ if $x < n$ and $\sum_{i=1}^x a_i \leq 1$ otherwise
+  let f : ℕ → NNReal := λ x => if x < n ∧ ∑ i ∈ Finset.range x, a i ≤ 1 then (n - ∑ i ∈ Finset.range x, a i) / (n - x) else 1
+
+  -- show that the function $f(x)$ is well defined
+  have hf : ∀ x, f x = (if x < n ∧ ∑ i ∈ Finset.range x, a i ≤ 1 then (n - ∑ i ∈ Finset.range x, a i) / (n - x) else 1) := by
+    intro x
+    exact rfl
+
+  -- show that $\sum_{i=1}^n f(i) = \sum_{i=1}^n a_i$
+  have h₁ : ∑ x in Finset.range n, f x = ∑ x in Finset.range n, a x := by
+    -- show that $\sum_{i=1}^n f(i) = \sum_{i=1}^n a_i$ by $f(x) = a_i$ for all $x < n$
+    simp [f, Finset.sum, hf]
+    -- induction on $n$
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      -- consider two cases $n = 0$ and $n \neq 0$
+      by_cases hn : n = 0
+      · -- when $n = 0$, the statement is obvious
+        subst hn
+        simp
+      · -- when $n \neq 0$, we have $f(0) = a_1$ and $\sum_{i=1}^{n+1} f(i) = \sum_{i=1}^n f(i) + f(n) = \sum_{i=1}^n a_i + f(n)$
+        -- show that $f(n) = \sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i$
+        have hfn : f n = ∑ i ∈ Finset.range n, a i - ∑ i ∈ Finset.range (n - 1), a i := by
+          simp [f, hn, Nat.sub_add_cancel]
+          -- show that $\sum_{i=1}^n a_i \leq 1$
+          have h₁ : ∑ i ∈ Finset.range n, a i ≤ 1 := by
+            -- show that $\sum_{i=1}^x a_i \leq 1$ for all $x < n$
+            have hsum : ∀ x < n, ∑ i ∈ Finset.range x, a i ≤ 1 := by
+              intro x hx
+              specialize hf x
+              simp [hf]
+              exact (if_pos (by linarith))
+            -- consider two cases $n = 0$ and $n \neq 0$
+            by_cases hn' : n = 0
+            · -- when $n = 0$, the statement is obvious
+              subst hn'
+              simp
+            · -- when $n \neq 0$, we have $f(0) = a_1$ and $\sum_{i=1}^{n+1} f(i) = \sum_{i=1}^n f(i) + f(n)$
+              -- $\sum_{i=1}^n f(i) = \sum_{i=1}^n a_i$ by induction
+              rw [← ih (by linarith)]
+              -- $\sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i = a_n$ when $n \neq 0$
+              rw [Finset.sum_range_succ]
+              simp
+          -- $\sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i = a_n$ when $n \neq 0$
+          rw [Finset.sum_range_succ]
+          simp
+          -- show that $f(n) = a_n$
+          have h₂ : f n = a n := by
+            simp [f, hn, Nat.sub_add_cancel]
+            -- show that $a_n \geq 0$
+            exact (if_neg (by linarith)) ▸ (if_neg (by linarith))
+          -- suffices to show that $\sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i = a_n$
+          suffices h : ∑ i ∈ Finset.range n, a i - ∑ i ∈ Finset.range (n - 1), a i = a n by
+            rw [h]
+            exact h₂
+          -- show that $\sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i = a_n$
+          have h' : (fun x => ∑ i ∈ Finset.range x, a i) n = ∑ i ∈ Finset.range n, a i := by rfl
+          have h'' : (fun x => ∑ i ∈ Finset.range x, a i) (n - 1) = ∑ i ∈ Finset.range (n - 1), a i := by rfl
+          nth_rw 1 [h']
+          nth_rw 2 [h'']
+          rw [← Finset.sum_range_succ]
+          simp
+          rw [← Finset.sum_range_succ]
+          simp
+          linarith
+        -- show that $\sum_{i=1}^{n-1} a_i \leq 1$
+        have h₂ : ∑ i ∈ Finset.range (n - 1), a i ≤ 1 := by
+          -- $\sum_{i=1}^x a_i \leq 1$ for all $x < n$
+          have hsum : ∀ x < n, ∑ i ∈ Finset.range x, a i ≤ 1 := by
+            intro x hx
+            specialize hf x
+            simp [hf]
+            exact (if_pos (by linarith))
+          -- consider two cases $n = 0$ and $n \neq 0$
+          by_cases hn' : n = 0
+          · -- when $n = 0$, the statement is obvious
+            subst hn'
+            simp
+          · -- when $n \neq 0$, we have $f(0) = a_1$ and $\sum_{i=1}^{n+1} f(i) = \sum_{i=1}^n f(i) + f(n)$
+            -- $\sum_{i=1}^n f(i) = \sum_{i=1}^n a_i$ by induction
+            specialize ih (by linarith)
+            -- $\sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i = a_n$ when $n \neq 0$
+            rw [Finset.sum_range_succ] at ih
+            simp at ih
+            -- $\sum_{i=1}^{n-1} a_i \leq \sum_{i=1}^n a_i \leq 1$
+            linarith
+        -- $\sum_{i=1}^n a_i \leq 1$
+        have h₃ : ∑ i ∈ Finset.range n, a i ≤ 1 := by
+          -- $\sum_{i=1}^x a_i \leq 1$ for all $x < n$
+          have hsum : ∀ x < n, ∑ i ∈ Finset.range x, a i ≤ 1 := by
+            intro x hx
+            specialize hf x
+            simp [hf]
+            exact (if_pos (by linarith))
+          -- consider two cases $n = 0$ and $n \neq 0$
+          by_cases hn' : n = 0
+          · -- when $n = 0$, the statement is obvious
+            subst hn'
+            simp
+          · -- when $n \neq 0$, we have $f(0) = a_1$ and $\sum_{i=1}^{n+1} f(i) = \sum_{i=1}^n f(i) + f(n)$
+            -- $\sum_{i=1}^n f(i) = \sum_{i=1}^n a_i$ by induction
+            specialize ih (by linarith)
+            -- $\sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i = a_n$ when $n \neq 0$
+            rw [Finset.sum_range_succ] at ih
+            simp at ih
+            -- $\sum_{i=1}^n a_i \leq 1$
+            linarith
+        rw [Finset.sum_range_succ]
+        -- $\sum_{i=1}^n f(i) = \sum_{i=1}^n a_i$
+        rw [ih (by linarith)]
+        -- $f(n) = \sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i \leq 1 - \sum_{i=1}^{n-1} a_i \leq 1$
+        simp [hfn, h₂, h₃]
+        linarith
+
+  -- show that $\sum_{i=1}^n f(i) \leq \sum_{i=1}^n a_i$
+  have h₂ : ∑ x in Finset.range n, f x ≤ ∑ x in Finset.range n, a x := by
+    -- suffices to show that $f(x) \leq a(x)$ for all $x < n$
+    apply Finset.sum_le_sum
+    intro x hx
+    simp at hx
+    -- consider two cases $x = 0$ and $x \neq 0$
+    by_cases hx' : x = 0
+    · -- when $x = 0$, $f(0) = a_1 \leq \sum_{i=1}^n a_i$
+      subst hx'
+      simp [f]
+      linarith [h₀]
+    · -- when $x \neq 0$, $f(x) = a_{x+1} \leq \sum_{i=1}^n a_i - \sum_{i=1}^x a_i \leq \sum_{i=1}^n a_i$
+      simp [f]
+      -- $\sum_{i=1}^{x+1} a_i \leq \sum_{i=1}^n a_i$ for $x < n$
+      have hsum : ∀ x ≤ n, ∑ i ∈ Finset.range x, a i ≤ ∑ i ∈ Finset.range n, a i := by
+        intro x hx
+        -- show that $x < n$
+        have hxn : x < n := by linarith
+        -- show that $\sum_{i=1}^x a_i \leq \sum_{i=1}^n a_i$
+        exact Finset.sum_le_sum (Finset.range_subset (by linarith)) hx
+      -- $\sum_{i=1}^x a_i \leq 1$
+      have h₁ : ∑ i ∈ Finset.range x, a i ≤ 1 := by
+        -- $\sum_{i=1}^x a_i \leq 1$ for all $x < n$
+        have hsum : ∀ x < n, ∑ i ∈ Finset.range x, a i ≤ 1 := by
+          intro x hx
+          specialize hf x
+          simp [hf]
+          exact (if_pos (by linarith))
+        -- consider two cases $n = 0$ and $n \neq 0$
+        by_cases hn' : n = 0
+        · -- when $n = 0$, the statement is obvious
+          subst hn'
+          simp
+        · -- when $n \neq 0$, we have $f(0) = a_1$ and $\sum_{i=1}^{n+1} f(i) = \sum_{i=1}^n f(i) + f(n)$
+          -- $\sum_{i=1}^n f(i) = \sum_{i=1}^n a_i$ by induction
+          specialize ih (by linarith)
+          -- $\sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i = a_n$ when $n \neq 0$
+          rw [Finset.sum_range_succ] at ih
+          simp at ih
+          -- $\sum_{i=1}^x a_i \leq \sum_{i=1}^n a_i$
+          exact hsum x (by linarith)
+      linarith
+
+  -- show that $\sum_{i=1}^n a_i \leq n$
+  have h₃ : ∑ x in Finset.range n, a x ≤ n := by
+    -- suffices to show that $a(x) \leq 1$ for all $x < n$
+    have h₁ : ∀ x < n, a x ≤ 1 := by
+      intro x hx
+      -- $a(x) \leq \sum_{i=1}^x a_i \leq 1$
+      have h₂ : ∑ i ∈ Finset.range x, a i ≤ 1 := by
+        -- $\sum_{i=1}^x a_i \leq 1$ for all $x < n$
+        have hsum : ∀ x < n, ∑ i ∈ Finset.range x, a i ≤ 1 := by
+          intro x hx
+          specialize hf x
+          simp [hf]
+          exact (if_pos (by linarith))
+        -- consider two cases $n = 0$ and $n \neq 0$
+        by_cases hn' : n = 0
+        · -- when $n = 0$, the statement is obvious
+          subst hn'
+          simp
+        · -- when $n \neq 0$, we have $f(0) = a_1$ and $\sum_{i=1}^{n+1} f(i) = \sum_{i=1}^n f(i) + f(n)$
+          -- $\sum_{i=1}^n f(i) = \sum_{i=1}^n a_i$ by induction
+          specialize ih (by linarith)
+          -- $\sum_{i=1}^n a_i - \sum_{i=1}^{n-1} a_i = a_n$ when $n \neq 0$
+          rw [Finset.sum_range_succ] at ih
+          simp at ih
+          -- $a_n \leq \sum_{i=1}^n a_i \leq 1$
+          linarith
+      specialize h₁ x hx
+      linarith
+    -- show that $\sum_{i=1}^n a_i \leq n$ by $a_i \leq 1$ for all $i < n$
+    apply Finset.sum_le_sum
+    simp
+    intro x hx
+    exact h₁ x hx
+
+  -- show that $\sum_{i=1}^n a_i = n$
+  specialize h₀
+  -- show that $\sum_{i=1}^n a_i \leq n$
+  specialize h₃
+  -- $\sum_{i=1}^n a_i = n$
+  have h₄ : ∑ x in Finset.range n, a x = n := by linarith
+  -- get $n \leq \sum_{i=1}^n a_i = n$
+  specialize h₂
+  -- $\sum_{i=1}^n a_i \leq \sum_{i=1}^n a_i$
+  simp [h₄] at h₂
+  -- $\sum_{i=1}^n a_i = n$
+  have h₅ : ∑ x in Finset.range n, a x = n := by linarith
+  rw [h₅, h₀]
+
+  -- show that $\prod_{i=1}^n a_i \leq \sum_{i=1}^n a_i = n$
+  suffices h : ∏ x ∈ Finset.range n, a x ≤ ∑ x ∈ Finset.range n, a x by
+    simp [h]
+  -- suffices to show that $a_i \leq \sum_{i=1}^n a_i$ for all $i < n$
+  apply Finset.prod_le_sum
+  intro i hi
+  simp at hi
+  -- consider two cases $i = 0$ and $i \neq 0$
+  by_cases hi' : i = 0
+  · -- when $i = 0$, $a_1 \leq \sum_{i=1}^n a_i$
+    subst hi'
+    simp
+    -- $\sum_{i=1}^n a_i \geq 1$
+    have h₁ : ∑ x ∈ Finset.range n, a x ≥ 1 := by
+      -- $\sum_{i=1}^x a_i \geq 1$ for some $x \leq n$
+      specialize h₁ 0 (by linarith)
+      simp at h₁
+      exact h₁
+    -- $a_1 \leq \sum_{i=1}^n a_i$
+    linarith
+  · -- when $i \neq 0$, $a_i \leq \sum_{i=1}^n a_i$
+    simp at hi'
+    -- $\sum_{i=1}^{i-1} a_i \leq \sum_{i=1}^n a_i$
+    have h₁ : ∑ x ∈ Finset.range i, a x ≤ ∑ x ∈ Finset.range n, a x := by
+      -- show that $i \leq n$
+      have hin : i ≤ n := by
+        simp at hi
+        exact hi
+      -- show that $\sum_{i=1}^x a_i \leq \sum_{i=1}^n a_i$ for $x \leq n$
+      exact Finset.sum_le_sum (Finset.range_subset (by linarith)) hi'
+    -- $\sum_{i=1}^x a_i \leq 1$
+    have

@@ -1,0 +1,43 @@
+-- The statement is clear when $a$ is a multiple of $p$. So we can assume that $a$ is not a multiple of $p$.
+  by_cases h₂ : p ∣ a
+  · simp [h₂]
+
+  -- Let $k$ be the remainder of $a$ modulo $p$.
+  let k := a % p
+
+  -- $k$ is a positive integer less than $p$.
+  have h₃ : 0 < k := by
+
+    -- Since $a$ is not a multiple of $p$, the remainder $k$ is not $0$.
+    have : a % p ≠ 0 := Nat.Prime.pos h₁ (by omega)
+    simp [k, this]
+
+  have h₄ : k < p := by simp [k]; exact Nat.mod_lt a (Nat.Prime.pos h₁)
+
+  -- By the definition of the remainder, we have $a = kp + r$ for some $r$.
+  have h₅ : a = k + p * (a / p) := by simp [k, Nat.div_add_mod a p]
+
+  -- The remainder $k$ is equal to $a$ modulo $p$.
+  have h₆ : a ≡ k [MOD p] := by simp [k, Nat.modEq_iff_dvd]; omega
+
+  -- By the properties of the modular arithmetic, we have $a^p \equiv k^p [MOD p]$.
+  have h₇ : a ^ p ≡ k ^ p [MOD p] := by
+    apply Nat.ModEq.pow p
+    exact h₆
+
+  -- By Fermat's little theorem, we have $k^p \equiv k [MOD p]$.
+  have h₈ : k ^ p ≡ k [MOD p] := by
+    apply Nat.ModEq.pow_self
+    exact Nat.Prime.mod_eq_one h₁
+
+  -- By the transitivity of the modular congruence, we have $a^p \equiv k [MOD p]$.
+  have h₉ : a ^ p ≡ k [MOD p] := by
+    exact Nat.ModEq.trans h₇ h₈
+
+  -- The difference $a^p - k$ is divisible by $p$.
+  have h₁₀ : p ∣ a ^ p - k := by
+    exact Nat.dvd_of_mod_eq_zero (Nat.sub_mod_eq_zero_of_mod_eq h₉)
+
+  -- The difference $a^p - a$ is divisible by $p$.
+  exact Nat.dvd_sub (by omega) h₁₀
+```

@@ -1,0 +1,22 @@
+-- using `have` to write a proof for a specific value of $n$ which can be verified true by computation
+  have h1 : (21 * n + 4).gcd (14 * n + 3) = 1 := by
+    -- `Nat.gcd` is a commutative monoid with `one` as its identity
+    Commute monoid := Commute (a := (21 * n + 4).gcd (14 * n + 3)) (b := 1)
+    rw [Commute.eq_commute monoid]
+    -- Commute monoid now holds `(21 * n + 4).gcd (14 * n + 3) = (14 * n + 3).gcd (21 * n + 4)`
+    -- We can now write a proof for a specific value of $n$ which can be verified true by computation
+    have h2 : (14 * n + 3).gcd (21 * n + 4) = 1 := by
+      -- `Nat.gcd` is a monoid homorphism
+      apply Nat.eq_one_of_coprime
+      -- simplify the expression `14 * n + 3` and `21 * n + 4` in `Nat.gcd` by `Nat.add_mod` and `Nat.mul_mod`
+      nth_rw 1 [show 14 * n = (14 * n + 3) % 78 by apply Nat.mod_eq_of_lt; omega, show 21 * n = (21 * n + 4) % 78 by apply Nat.mod_eq_of_lt; omega]
+      have h3 : (14 * n + 3) % 78 = 3 * n + 3 := by omega
+      have h4 : (21 * n + 4) % 78 = 3 * n + 4 := by omega
+      rw [h3, h4]
+      -- Now we can finish the proof by showing `3 * n + 3` and `3 * n + 4` are coprime
+      apply Nat.coprime_add_right_right
+      simp
+    exact h2
+  exact h1
+
+```

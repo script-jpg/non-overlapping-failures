@@ -1,0 +1,83 @@
+-- Simplify the left summand $\log_{5^{k}} 3^{k^{2}}$ to $\frac{2k\log 3}{k\log 5}=\frac{2\log 3}{\log 5}$.
+  have h1 {k : ℕ} (hk : 1 ≤ k) : Real.logb (5 ^ k) (3 ^ k ^ 2) = 2 * Real.log 3 / Real.log 5 := by
+    calc
+      Real.logb (5 ^ k) (3 ^ k ^ 2) = Real.log (3 ^ k ^ 2) / Real.log (5 ^ k) := by
+        field_simp [Real.logb]
+      _ = (2 * k * Real.log 3) / (k * Real.log 5) := by
+        rw [Real.log_rpow_eq_mul_log, Real.log_rpow_eq_mul_log]
+        · ring
+        · -- Show $5^k \geq 1$.
+          have : 5 ^ k ≥ 1 := by
+            apply pow_nonneg
+            norm_num
+          apply Real.log_pos
+          simp_all
+        · -- Show $3^{k^2} \geq 1$.
+          have : 3 ^ k ^ 2 ≥ 1 := by
+            apply pow_nonneg
+            norm_num
+          apply Real.log_pos
+          simp_all
+      _ = 2 * Real.log 3 / Real.log 5 := by
+        field_simp
+        ring
+
+  -- Simplify the right summand $\log_{9^{k}} 25^{k}$ to $\frac{k\log 25}{k\log 9}=\frac{\log 25}{\log 9}$.
+  have h2 {k : ℕ} (hk : 1 ≤ k) : Real.logb (9 ^ k) (25 ^ k) = Real.log 25 / Real.log 9 := by
+    calc
+      Real.logb (9 ^ k) (25 ^ k) = Real.log (25 ^ k) / Real.log (9 ^ k) := by
+        field_simp [Real.logb]
+      _ = (k * Real.log 25) / (k * Real.log 9) := by
+        rw [Real.log_rpow_eq_mul_log, Real.log_rpow_eq_mul_log]
+        · ring
+        · -- Show $9^k \geq 1$.
+          have : 9 ^ k ≥ 1 := by
+            apply pow_nonneg
+            norm_num
+          apply Real.log_pos
+          simp_all
+        · -- Show $25^k \geq 1$.
+          have : 25 ^ k ≥ 1 := by
+            apply pow_nonneg
+            norm_num
+          apply Real.log_pos
+          simp_all
+      _ = Real.log 25 / Real.log 9 := by
+        field_simp
+        ring
+
+  -- Show that the left sum is $20 \cdot \frac{2\log 3}{\log 5}$.
+  have h3 :
+      ∑ k in Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = 20 * (2 * Real.log 3 / Real.log 5) := by
+    calc
+      ∑ k in Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = ∑ k in Finset.Icc 1 20, (2 * Real.log 3 / Real.log 5) := by
+        congr
+        funext k
+        exact h1 hk
+      _ = 20 * (2 * Real.log 3 / Real.log 5) := by
+        simp
+
+  -- Show that the right sum is $100 \cdot \frac{\log 25}{\log 9}$.
+  have h4 :
+      ∑ k in Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = 100 * (Real.log 25 / Real.log 9) := by
+    calc
+      ∑ k in Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = ∑ k in Finset.Icc 1 100, (Real.log 25 / Real.log 9) := by
+        congr
+        funext k
+        exact h2 hk
+      _ = 100 * (Real.log 25 / Real.log 9) := by
+        simp
+
+  -- Put the pieces together.
+  rw [h3, h4]
+  -- Show that the product is $21000$.
+  have h5 : Real.log 25 = 2 * Real.log 5 := by
+    rw [show (25 : ℝ) = 5 ^ 2 by norm_num]
+    simp [Real.log_rpow]
+  have h6 : Real.log 9 = 2 * Real.log 3 := by
+    rw [show (9 : ℝ) = 3 ^ 2 by norm_num]
+    simp [Real.log_rpow]
+  field_simp [h5, h6]
+  ring
+
+```

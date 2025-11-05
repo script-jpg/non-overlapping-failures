@@ -1,0 +1,283 @@
+-- estimate the sum by integral
+  have integral_le_sum : ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x ≤ 1 / Real.sqrt 2 + ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k := by
+    have integral_add_sum_le : ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x + ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k ≤ 1 / Real.sqrt 2 + ∑ k in Finset.Icc (1 : ℕ) 10000, 1 / Real.sqrt k := by
+      calc ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x + ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k
+        _ ≤ ∑ k in Finset.Icc (1 : ℕ) 10000, (∫ x in (k : ℝ)..(k + 1 : ℝ), 1 / Real.sqrt x) + ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k := by
+          -- integral over [k, k+1] is the same as integral over [k, k+1)
+          apply add_le_add
+          have integral_le : ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x ≤ ∑ k in Finset.Icc (2 : ℕ) 10000, ∫ x in (k : ℝ)..(k + 1 : ℝ), 1 / Real.sqrt x := by
+            apply Finset.sum_le_sum
+            intro i _
+            apply le_of_eq
+            rw [←Real integral_Icc_succ_coe]
+            simp only [Finset.mem_Icc, Nat.cast_ofNat]
+            by_cases hi : i < 10000
+           . rw [← integral_Icc_add_Ioc (by norm_num) (by norm_num) i]
+              apply integral_add_le
+              apply integral_nonneg
+              simp
+              simp at hi
+              have i_succ_le : i + 1 ≤ 10000 := by
+                calc
+                  i + 1 ≤ 10000 - 1 + 1 := by rel [hi]
+                  _ = 10000 := by norm_num
+              apply Finset.mem_Icc.mpr
+              constructor
+             . exact integral_nonneg (fun x ↦ 1 / Real.sqrt x) (by simp)
+             . simp only [Finset.mem_Icc, Nat.cast_ofNat]
+                exact ⟨ by norm_num, i_succ_le ⟩
+           . rw [show (10000 : ℝ) = 10000.0 by norm_num]
+              simp only [Finset.mem_Icc, Nat.cast_ofNat]
+              calc
+                ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x
+                  = ∫ x in (2 : ℝ)..(10000.0 - 1.0 + 1.0 : ℝ), 1 / Real.sqrt x := by norm_num
+                _ = ∑ i ∈ Finset.Icc (2 : ℕ) 9999, ∫ x in (i : ℝ)..(i + 1 : ℝ), 1 / Real.sqrt x + ∫ x in (10000.0 - 1.0 + 1.0 : ℝ)..10000.0, 1 / Real.sqrt x := by
+                  rw [integral_Ico_add_Ioc (by norm_num) (by norm_num)]
+                  apply sum_eq_sum_Ico_add_Ioc
+                  simp
+                  norm_num
+                _ ≤ ∑ i ∈ Finset.Icc (2 : ℕ) 10000, ∫ x in (i : ℝ)..(i + 1 : ℝ), 1 / Real.sqrt x + ∫ x in (10000.0 - 1.0 + 1.0 : ℝ)..10000.0, 1 / Real.sqrt x := by
+                  apply add_le_add_right
+                  apply Finset.sum_le_sum
+                  intro i hi
+                  simp only [Finset.mem_Icc] at hi
+                  obtain ⟨hi1, hi2⟩ := hi
+                  replace hi1 : i ≤ 9999 := by
+                    omega
+                  replace hi2 : i + 1 ≤ 10000 := by
+                    omega
+                  apply le_of_eq
+                  rw [← integral_Icc_add_Ioc (by norm_num) (by norm_num) i]
+                  apply integral_add_le
+                  apply integral_nonneg
+                  simp
+                  exact hi1
+                  exact hi2
+                  simp only [Finset.mem_Icc, Nat.cast_ofNat]
+                  norm_num
+                  simp
+                  norm_num
+              _ = ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k := by
+                congr
+                funext x
+                obtain ⟨k, hk⟩ := x
+                simp only [Finset.mem_Icc, Nat.cast_ofNat] at hk
+                simp only [Finset.mem_Icc, Nat.cast_ofNat]
+                rw [← hk.2]
+                congr
+                all_goals
+                  norm_num
+                  exact hk.1
+    linarith
+  have sum_le_integral : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k ≤ ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x := by
+    calc
+      ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k
+        _ ≤ ∑ k in Finset.Icc (1 : ℕ) 10000, 1 / Real.sqrt k := by
+          apply Finset.sum_le_sum
+          intro i hi
+          simp only [Finset.mem_Icc, Nat.cast_ofNat] at hi
+          simp only [Finset.mem_Icc, Nat.cast_ofNat]
+          exact ⟨ le_refl _, hi.2 ⟩
+      _ = ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k + 1 / Real.sqrt 2 := by
+        rw [Finset.sum_Ico_add_eq_sum_Icc]
+        apply Finset.sum_congr rfl
+        intro k hk
+        simp only [Finset.mem_Ico, Finset.mem_Icc, Nat.cast_ofNat] at hk
+        obtain ⟨hk1, hk2⟩ := hk
+        omega
+      _ ≤ 1 / Real.sqrt 2 + ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x := by
+        linarith
+
+  -- estimate integral by an explicit term
+  have integral_le' : ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x ≤ 194.5 := by
+    calc
+      ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x
+        _ = ∫ x in (2 : ℝ)..100, 1 / Real.sqrt x + ∫ x in (100 : ℝ)..10000, 1 / Real.sqrt x := by
+          rw [integral_Icc_add_Icc (by norm_num) (by norm_num)]
+      _ = ∑ i ∈ Finset.Icc (2 : ℕ) 100, ∫ x in (i : ℝ)..(i + 1 : ℝ), 1 / Real.sqrt x + ∫ x in (100 : ℝ)..10000, 1 / Real.sqrt x := by
+          rw [ integral_eq_sum_of_finite (by norm_num)]
+      _ ≤ ∑ i ∈ Finset.Icc (2 : ℕ) 100, ∫ x in (i : ℝ)..(i + 1 : ℝ), 1 / Real.sqrt x + ∫ x in (100 : ℝ)..10000, 1 / Real.sqrt 100 := by
+          -- slope of 1 / √x is -1/2 * 1 / √x^3, which is increasing, so integral_le
+          apply add_le_add_right
+          apply Finset.sum_le_sum
+          intro i hi
+          simp only [Finset.mem_Icc] at hi
+          obtain ⟨hi1, hi2⟩ := hi
+          replace hi1 : (i : ℝ) ≥ 2 := by norm_cast
+          replace hi2 : (i : ℝ) ≤ 100 := by norm_cast
+          apply integral_le_of_le_of_le
+         . simp only [fun x ↦ 1 / Real.sqrt x]
+            apply integral_nonneg
+            simp
+            exact fun x hx ↦ Real.sqrt_nonneg x
+         . intro x hx
+            simp only [Finset.mem_Icc] at hx
+            simp only [fun x ↦ 1 / Real.sqrt x]
+            have le : Real.sqrt x ≥ Real.sqrt 100 := by
+              apply Real.sqrt_le_sqrt
+              simp only [mem_Icc] at hx
+              exact hx.2
+            (-(1 / 2) * (1 / Real.sqrt x ^ 3)) ≥ (-(1 / 2) * (1 / Real.sqrt 100 ^ 3)) := by
+              apply mul_le_mul_of_nonpos_left
+             . apply inv_le_inv_of_le
+               . apply pow_le_pow_left₀
+                 . norm_num
+                 . simp only [mem_Icc] at hx
+                    exact hx.2
+                 . exact le
+               . norm_num
+             . norm_num
+            (1 / Real.sqrt x ^ 3) ≤ (1 / Real.sqrt 100 ^ 3) := by
+              apply inv_le_inv_of_le
+             . apply pow_le_pow_left₀
+               . norm_num
+               . simp only [mem_Icc] at hx
+                  exact hx.2
+               . exact le
+             . norm_num
+            linarith
+         . intro x hx
+            simp only [Finset.mem_Icc] at hx
+            simp only [fun x ↦ 1 / Real.sqrt x]
+            apply integral_add_le
+            apply integral_nonneg
+            simp
+            exact fun x hx ↦ Real.sqrt_nonneg x
+         . exact le_of_eq
+            rw [←Real integral_Icc_succ_coe]
+            simp only [Finset.mem_Icc, Nat.cast_ofNat]
+            constructor
+           . exact integral_nonneg (fun x ↦ 1 / Real.sqrt x) (by simp)
+           . simp only [Finset.mem_Icc, Nat.cast_ofNat]
+              exact ⟨ by norm_num, by norm_num ⟩
+      _ = ∑ i ∈ Finset.Icc (2 : ℕ) 100, 1 / Real.sqrt ((i : ℝ) + 1) + ∫ x in (100 : ℝ)..10000, 1 / Real.sqrt x := by
+          simp
+          rw [Finset.sum_Ico_eq_sum_Icc]
+          apply Finset.sum_congr rfl
+          intro x hx
+          simp only [Finset.mem_Ico, Finset.mem_Icc, Nat.cast_ofNat] at hx
+          obtain ⟨hx1, hx2⟩ := hx
+          omega
+      _ ≤ ∑ i ∈ Finset.Icc (2 : ℕ) 100, 1 / Real.sqrt (2 + (1 : ℝ) * (i - 2)) + ∫ x in (100 : ℝ)..10000, 1 / Real.sqrt x := by
+          -- 1 / √x is convex, so integral_le
+          apply Finset.sum_le_sum
+          intro i hi
+          simp only [Finset.mem_Icc, Nat.cast_ofNat] at hi
+          simp only [Finset.mem_Icc, Nat.cast_ofNat]
+          apply le_of_eq
+          nth_rw 1 [←integral_Icc_succ_coe]
+          nth_rw 2 [←integral_Icc_succ_coe]
+          simp
+          obtain ⟨hi1, hi2⟩ := hi
+          rw [← integral_Icc_add_Ioc (by norm_num) (by norm_num) (i - 2)]
+          apply integral_le_of_le_of_le
+         . simp only [fun x ↦ 1 / Real.sqrt x]
+            apply integral_nonneg
+            simp
+            exact fun x hx ↦ Real.sqrt_nonneg x
+         . intro x hx
+            simp only [Finset.mem_Icc] at hx
+            simp only [fun x ↦ 1 / Real.sqrt x]
+            have le : Real.sqrt x ≥ Real.sqrt (2 + (1 : ℝ) * (i - 2)) := by
+              apply Real.sqrt_le_sqrt
+              simp only [mem_Icc] at hx
+              simp only [add_sub_cancel, ge_iff_le] at hi1
+              exact hx.2
+            (-(1 / 2) * (1 / Real.sqrt x ^ 3)) ≤ (-(1 / 2) * (1 / Real.sqrt (2 + (1 : ℝ) * (i - 2)) ^ 3)) := by
+              apply mul_le_mul_of_nonpos_left
+             . apply inv_le_inv_of_le
+               . apply pow_le_pow_left₀
+                 . norm_num
+                 . simp only [mem_Icc] at hx
+                    exact hx.2
+                 . exact le
+               . norm_num
+             . norm_num
+            (1 / Real.sqrt x ^ 3) ≤ (1 / Real.sqrt (2 + (1 : ℝ) * (i - 2)) ^ 3) := by
+              apply inv_le_inv_of_le
+             . apply pow_le_pow_left₀
+               . norm_num
+               . simp only [mem_Icc] at hx
+                  exact hx.2
+               . exact le
+             . norm_num
+            linarith
+         . intro x hx
+            simp only [Finset.mem_Icc] at hx
+            simp only [fun x ↦ 1 / Real.sqrt x]
+            apply integral_add_le
+            apply integral_nonneg
+            simp
+            exact fun x hx ↦ Real.sqrt_nonneg x
+         . exact le_of_eq
+            rw [←Real integral_Icc_succ_coe]
+            simp only [Finset.mem_Icc, Nat.cast_ofNat]
+            constructor
+           . exact integral_nonneg (fun x ↦ 1 / Real.sqrt x) (by simp)
+           . simp only [Finset.mem_Icc, Nat.cast_ofNat]
+              exact ⟨ by norm_num, by norm_num ⟩
+      _ = ∑ i ∈ Finset.Icc (2 : ℕ) 100, 1 / Real.sqrt (2 + (1 : ℝ) * (i - 2)) + 200 / Real.sqrt 100 := by
+          simp
+          rw [integral_Ico_eq_sub, ←integral_Icc_succ_coe, ←integral_Icc_succ_coe]
+          simp
+          norm_num
+      _ ≤ ∑ i ∈ Finset.Icc (2 : ℕ) 100, 1 / Real.sqrt (2 + (1 : ℝ) * (i - 2)) + 200 / Real.sqrt 100 := by
+        simp
+        rw [← integral_eq_sum_of_finite (by norm_num)]
+        apply Finset.sum_le_sum
+        intro i hi
+        simp only [Finset.mem_Icc, Nat.cast_ofNat] at hi
+        simp only [Finset.mem_Icc, Nat.cast_ofNat]
+        apply le_of_eq
+        nth_rw 1 [←integral_Icc_succ_coe]
+        nth_rw 2 [←integral_Icc_succ_coe]
+        apply integral_le_of_le_of_le
+       . simp only [fun x ↦ 1 / Real.sqrt x]
+          apply integral_nonneg
+          simp
+          exact fun x hx ↦ Real.sqrt_nonneg x
+       . intro x hx
+          simp only [Finset.mem_Icc] at hx
+          simp only [fun x ↦ 1 / Real.sqrt x]
+          have le : Real.sqrt x ≥ Real.sqrt (2 + (1 : ℝ) * (i - 2)) := by
+            apply Real.sqrt_le_sqrt
+            simp only [mem_Icc] at hx
+            simp only [add_sub_cancel, ge_iff_le] at hi
+            exact hx.2
+          (-(1 / 2) * (1 / Real.sqrt x ^ 3)) ≤ (-(1 / 2) * (1 / Real.sqrt (2 + (1 : ℝ) * (i - 2)) ^ 3)) := by
+            apply mul_le_mul_of_nonpos_left
+           . apply inv_le_inv_of_le
+             . apply pow_le_pow_left₀
+               . norm_num
+               . simp only [mem_Icc] at hx
+                  exact hx.2
+             . exact le
+           . norm_num
+          (1 / Real.sqrt x ^ 3) ≤ (1 / Real.sqrt (2 + (1 : ℝ) * (i - 2)) ^ 3) := by
+            apply inv_le_inv_of_le
+           . apply pow_le_pow_left₀
+             . norm_num
+             . simp only [mem_Icc] at hx
+                exact hx.2
+           . exact le
+          linarith
+       . intro x hx
+          simp only [Finset.mem_Icc] at hx
+          simp only [fun x ↦ 1 / Real.sqrt x]
+          apply integral_add_le
+          apply integral_nonneg
+          simp
+          exact fun x hx ↦ Real.sqrt_nonneg x
+       . exact le_of_eq
+          rw [←Real integral_Icc_succ_coe]
+          simp only [Finset.mem_Icc, Nat.cast_ofNat]
+          constructor
+         . exact integral_nonneg (fun x ↦ 1 / Real.sqrt x) (by simp)
+         . simp only [Finset.mem_Icc, Nat.cast_ofNat]
+            exact ⟨ by norm_num, by norm_num ⟩
+      _ = 194.5 := by norm_num
+
+  -- sum is less than 198
+  calc
+    ∑ k = 2 + ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k := by
+      rw [←Finset.sum_I

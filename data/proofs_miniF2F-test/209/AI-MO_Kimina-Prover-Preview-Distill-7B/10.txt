@@ -1,0 +1,32 @@
+-- We'll simplify the left-hand side to $\sqrt{\log_2{3}+\log_3{2}}$.
+  calc Real.sqrt (Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3)
+      = Real.sqrt (Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3) := by
+        congr 1
+        -- replace $\log_6{2}+\log_6{3}$ with $1$
+        rw [← Real.log_mul (by norm_num) (by norm_num) 2 3]
+        -- replace $\log_6{3}$ with $\log_6{6/2}$ and $\log_6{2}$ with $\log_6{6/3}$
+        rw [show (6 : ℝ) / 2 = 3 by norm_num, show (6 : ℝ) / 3 = 2 by norm_num]
+        -- simplify the expression
+        repeat rw [← Real.log_div (by norm_num) (by norm_num)]
+        -- remove the conditionals
+        norm_num
+      _ = Real.sqrt (Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3) := by
+        congr 1
+        -- simplify the expression
+        rw [← Real.log_pow, ← Real.log_pow]
+        norm_num
+      _ = Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3) := by
+        -- use the lemma $\sqrt{a+b} = \sqrt{a}+\sqrt{b}$ whose proof is straightforward.
+        have {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) : Real.sqrt (a + b) = Real.sqrt a + Real.sqrt b := by
+          rw [Real.sqrt_eq_iff_sq_eq] <;> try positivity
+          rw [← Real.sq_sqrt ha, ← Real.sq_sqrt hb, ← Real.sq_sqrt (by positivity)]
+          ring
+        rw [this]
+        refine ⟨?_,?_⟩
+        -- prove that $\log_3{2} \ge 0$
+        · rw [← Real.log_le_log (by norm_num) (by norm_num)]
+          norm_num
+        -- prove that $\log_2{3} \ge 0$
+        · rw [← Real.log_le_log (by norm_num) (by norm_num)]
+          norm_num
+```

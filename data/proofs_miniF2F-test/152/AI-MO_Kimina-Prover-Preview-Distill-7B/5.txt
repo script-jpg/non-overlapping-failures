@@ -1,0 +1,121 @@
+-- The first lemma shows the relationship of gcd and lcm of two numbers.
+  have lm (m n : ℕ) : m * n = Nat.gcd m n * Nat.lcm m n := by
+    calc
+      m * n = m * n * 1 := by rw [mul_one]
+      _ = m * n * (Nat.gcd m n / Nat.gcd m n) := by rw [Nat.div_self]; rw [Nat.gcd_pos_iff]
+      _ = (m * (Nat.gcd m n / Nat.gcd m n)) * n := by rw [mul_assoc]
+      _ = (Nat.gcd m n) * (m / Nat.gcd m n * n) := by rw [Nat.mul_div_cancel]; rw [Nat.gcd_pos_iff]
+      _ = Nat.gcd m n * Nat.lcm m n := by rw [Nat.lcm_eq_mul_div_gcd, mul_comm]
+
+  -- Using the lemma `lm`, we can discover that the product of $m$ and $n$ is $8 * 112=896$.
+  have h₃ : m * n = 8 * 112 := by
+    rw [lm m n] at *
+    rw [h₁, h₂]
+  norm_num at h₃
+
+  -- The second lemma shows if $a$ divides $b$, then $Nat.lcm a b = b$.
+  have lm' (a b : ℕ) (h : a ∣ b) : Nat.lcm a b = b := by
+    calc
+      Nat.lcm a b = b * a / Nat.gcd a b := by rw [Nat.lcm_eq_mul_div_gcd]
+      _ = a * b / a := by rw [Nat.div_self]; rw [Nat.gcd_self, Nat.mul_self_div_self]; exact h
+      _ = b := by rw [Nat.mul_div_cancel_self]; exact h
+
+  -- Using the lemma `lm'`, we can derive that $m$ divides $112$ and $n$ divides $112$.
+  have h₄ : m ∣ 112 := by
+    rw [← h₂, lm']
+    exact Nat.gcd_dvd_left m n
+  have h₅ : n ∣ 112 := by
+    rw [← h₂, lm']
+    exact Nat.gcd_dvd_right m n
+
+  -- The third lemma proves that $m$ is a multiple of 8, and $n$ is a multiple of 8.
+  have lm'' (a b : ℕ) (h₁ : a ∣ b) (h₂ : Nat.gcd a b = c) : a = c ∨ a = 0 := by
+    calc
+      a = Nat.gcd a b := by rw [Nat.gcd_eq_left]; exact h₂
+      _ = b.gcd a := by rw [Nat.gcd_comm]
+      _ = a.gcd b := by rw [Nat.gcd_comm]
+      _ = c.gcd b := by rw [h₁]
+      _ = c ∨ c = 0 := by rw [Nat.gcd_eq_left]; exact h₂
+
+  -- Using lemma `lm''`, we can derive that $m$ is a multiple of 8, and $n$ is a multiple of 8.
+  have h₆ : 8 ∣ m := by
+    have g₃ := lm'' 8 m h₄ (by rw [h₁])
+    have g₄ := lm'' 8 n (by rw [h₅]) h₁
+    rw [h₁] at g₃ g₄
+    exact g₃
+  have h₇ : 8 ∣ n := by
+    have g₃ := lm'' 8 m h₄ (by rw [h₁])
+    have g₄ := lm'' 8 n (by rw [h₅]) h₁
+    rw [h₁] at g₃ g₄
+    exact g₄
+
+  -- The fourth lemma shows the relationship of the multiple.
+  have lm''' (a c : ℕ) (h : c ∣ a) : a = c * (a / c) := by
+    apply Nat.div_mul_cancel h
+
+  -- Using the lemma `lm'''`, we can express $m$ and $n$ as multiples of 8.
+  have h₈ : m = 8 * (m / 8) := by
+    rw [lm'''] 8 m (by rw [h₆])
+  have h₉ : n = 8 * (n / 8) := by
+    rw [lm'''] 8 n (by rw [h₇])
+
+  -- The last lemma shows the relationship between the divisibility of m and n.
+  have lm'''' (a b : ℕ) (h : 0 < a) : b ∣ a → a / b = a / a.gcd b := by
+    intro h₂
+    rw [Nat.mul_div_mul_right _ h₂]
+    have h₃ := Nat.gcd_dvd_right a b
+    rw [← h₃, Nat.mul_div_assoc]
+    rw [Nat.mul_div_cancel_left _ h₃]
+
+  -- Using lemma `lm''''`, we can derive that $m / 8 = m / gcd m n$ and $n / 8 = n / gcd m n$.
+  have h₁₀ : m / 8 = m / Nat.gcd m n := by
+    rw [h₁, h₈]
+    apply lm''''
+    rw [h₁]
+    exact h₆
+  have h₁₁ : n / 8 = n / Nat.gcd m n := by
+    rw [h₁, h₉]
+    apply lm''''
+    rw [h₁]
+    exact h₇
+
+  -- By using lemma `lm` and lemma `lm''''`, we can derive that $m / 8 = n / 8$.
+  have h₁₂ : m / 8 = n / 8 := by
+    rw [← h₁₀, h₁₁, h₃]
+
+  -- Since $m / 8 = n / 8$, we have $m = n$. And we can derive that $m = 8 * (m / 8)$.
+  have h₁₃ : m = n := by omega
+  have h₁₄ : m / 8 = m / 8 := by
+    rw [h₁₃]
+
+  -- We have $m = n = 8 * (m / 8)$. And we know that $m * n = 8 * 112$.
+  have h₁₅ : m * n = 8 * 112 := h₃
+  rw [h₁₃] at h₁₅
+
+  -- We can derive that $m = 8 * (m / 8) * m / 8 = 8 * 112 / 8 = 112$.
+  have h₁₆ : m = 112 := by
+    calc
+      m = m / 8 * m := by rw [← h₁₄, h₁₈]
+      _ = 112 / 8 * m := by rw [h₁₅]
+      _ = 14 * m := by norm_num
+      _ = 14 * 8 := by rw [h₃]
+      _ = 112 := by norm_num
+
+  -- And $n = 112$.
+  have h₁₇ : n = 112 := by
+    rw [← h₁₃, h₁₆]
+
+  -- $m + n = 112 + 112 = 224$.
+  have h₁₈ : m + n = 224 := by
+    rw [h₁₆, h₁₇]
+    norm_num
+
+  -- However, we are asked to find the least possible value of $m + n$.
+  -- So we should try different values.
+  have h₁₉ : 72 ≤ m + n := by
+    omega
+
+  -- The least possible value of $m + n$ is 72, when $m = 16$ and $n = 56$.
+  exact h₁₉
+
+```

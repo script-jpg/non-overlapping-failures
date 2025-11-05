@@ -1,0 +1,41 @@
+-- We'll use induction on $n$.
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+      by_cases h' : n = 0
+      -- The base case $n = 0$ is vacuously true since $1 < 5/2$.
+      · rw [h']; norm_num
+      -- For the induction step, we assume the claim holds for $n$ and prove it for $n+1$.
+      -- If $n = 0$, the claim is true because $1 < 5/2$.
+      · have h₁ : 1 < 5 / 2 := by norm_num
+        -- If $n > 0$, we can write a product up to $n+1$ as the product up to $n$ times $(1 + 1/2^{n+1})$.
+        rw [Finset.prod_Icc_succ_top (by linarith), ih (by linarith)]
+        -- We can now apply induction hypothesis and we get
+        -- $(\prod_{k=1}^{n} (1 + 1/2^k)) < 5/2$ and $(1 + 1/2^{n+1}) < 2$.
+        -- So their product is less than $5/2 \cdot 2 = 5$.
+        have h₂ : (5 / 2 : ℝ) * (1 + (1 : ℝ) / 2 ^ (n + 1)) < 5 / 2 * 2 := by
+          nth_rw 2 [show (2 : ℝ) = (1 + (1 : ℝ) / 2) + 1 / 2 ^ (n + 1) by
+            cases Nat.ne_zero_iff_zero_lt.mpr h₀
+            rw [← Nat.one_add_one_eq_two, add_assoc]; simp
+            apply add_lt_add_right
+            rw [add_comm]
+            apply add_lt_add_left
+            norm_num
+            apply one_lt_one_add
+            apply div_pos
+            norm_num
+            apply pow_pos
+            norm_num]
+          apply (mul_lt_mul_left (by norm_num)).mpr
+          rw [← Nat.one_add_one_eq_two, add_assoc]; simp
+          apply add_lt_add_right
+          rw [add_comm]
+          apply add_lt_add_left
+          norm_num
+          apply one_lt_one_add
+          apply div_pos
+          norm_num
+          apply pow_pos
+          norm_num
+        linarith
+```

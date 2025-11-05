@@ -1,0 +1,101 @@
+have h₀' : ∀ m n, f (m + n) - f m - f n = 0 ∨ f (m + n) - f m - f n = 1 := by
+    intro m n
+    intro h
+    apply (h₀ m n).mpr
+    exact h
+
+  -- For all n, f n ≤ n * f 3 / 3.
+  have h₄ : ∀ n, f n ≤ n * f 3 / 3 := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      by_cases h : Even n
+      · by_cases h₅ : n = 0
+        · simp [h₅, h₁]
+        · have hn : Even n := h
+          have hn' : 2 ∣ n := Even.two_dvd hn
+          rcases hn with ⟨k, hk⟩
+          have hk' : n = 2 * k := hk
+          rw [hk', Nat.add_sub_cancel]
+          have : f (2 * k + 1) ≤ f (2 * k) + 1 := by
+            have h₆ := h₀' (2 * k) 1
+            rw [Nat.add_comm 1 (2 * k), Nat.sub_add_comm, ←Nat.add_assoc, Nat.add_sub_cancel] at h₆
+            omega
+          zify [ih, this]
+          push_cast
+          ring
+          omega
+      · have h₆ : ¬Even n := by simp [h]
+        have hn : Odd n := Nat.not_even_iff_odd.mp h₆
+        have hn' : 2 ∣ n - 1 := by
+          exact (Nat.two_dvd_iff (n - 1)).mpr hn
+        rcases hn' with ⟨k, hk⟩
+        have : n = 2 * k + 1 := by omega
+        rw [this, Nat.add_sub_cancel]
+        have : f (2 * k + 1) ≤ f (2 * k) + 1 := by
+          have h₆ := h₀' (2 * k) 1
+          rw [Nat.add_comm 1 (2 * k), Nat.sub_add_comm, ←Nat.add_assoc, Nat.add_sub_cancel] at h₆
+          omega
+        zify [ih, this]
+        push_cast
+        ring
+        omega
+
+  -- For all n, f n ≥ n * f 3 / 3.
+  have h₅ : ∀ n, n * f 3 / 3 ≤ f n := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      by_cases h : Even n
+      · by_cases h₅ : n = 0
+        · simp [h₅, h₁]
+        · have hn : Even n := h
+          have hn' : 2 ∣ n := Even.two_dvd hn
+          rcases hn with ⟨k, hk⟩
+          have hk' : n = 2 * k := hk
+          have h₆ : f (2 * k) ≤ f (2 * k + 1) + 1 := by
+            have h₆ := h₀' (2 * k) 1
+            rw [Nat.add_comm 1 (2 * k), Nat.sub_add_comm, ←Nat.add_assoc, Nat.add_sub_cancel] at h₆
+            omega
+          zify [ih, h₆]
+          push_cast
+          ring
+          omega
+      · have h₆ : ¬Even n := by simp [h]
+        have hn : Odd n := Nat.not_even_iff_odd.mp h₆
+        have hn' : 2 ∣ n - 1 := by
+          exact (Nat.two_dvd_iff (n - 1)).mpr hn
+        rcases hn' with ⟨k, hk⟩
+        have : n = 2 * k + 1 := by omega
+        rw [this, Nat.add_sub_cancel]
+        have : f (2 * k) ≤ f (2 * k + 1) + 1 := by
+          have h₆ := h₀' (2 * k) 1
+          rw [Nat.add_comm 1 (2 * k), Nat.sub_add_comm, ←Nat.add_assoc, Nat.add_sub_cancel] at h₆
+          omega
+        zify [ih, this]
+        push_cast
+        ring
+        omega
+
+  -- We have f(3)=1.
+  have f3_eq_1 : f 3 = 1 := by
+    have : f 9999 ≤ 9999 * f 3 / 3 := h₄ 9999
+    rw [h₃] at this
+    have : 9999 * f 3 / 3 ≤ 9999 := h₅ 9999
+    rw [h₃] at this
+    omega
+
+  -- We have f(1982)=660.
+  have f1982_eq_660 : f 1982 = 660 := by
+    have : f 1982 ≤ 1982 * f 3 / 3 := h₄ 1982
+    rw [f3_eq_1] at this
+    norm_num at this
+    have : 660 ≤ f 1982 := h₅ 1982
+    omega
+
+  exact f1982_eq_660
+```

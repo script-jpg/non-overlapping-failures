@@ -1,0 +1,87 @@
+-- Let's consider a variable $x$ and the equation $x^3 + x^2 - 2x - 1 = 0$
+  let x : ℝ := Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7)
+  have eq : x = Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7) := by rfl
+  have eq2 : x^2 = (Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7))^2 := by rw [eq]
+  have eq3 : x^3 = (Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7))^3 := by rw [eq]
+
+  -- By the angle addition formulas, we can find that $\cos{\frac{\pi}{7}}+\cos{\frac{3\pi}{7}}=\frac{\sqrt{2-\sqrt{2}}}{2}\cos{\frac{\pi}{8}}$
+  have add1 : Real.cos (Real.pi / 7) + Real.cos (3 * Real.pi / 7) = (Real.sqrt (2 - Real.sqrt 2) / 2) * Real.cos (Real.pi / 8) := by
+    have cos1 : Real.cos (Real.pi / 7) + Real.cos (3 * Real.pi / 7) = 2 * Real.cos (Real.pi / 7 + 3 * Real.pi / 14) * Real.cos (Real.pi / 7 - 3 * Real.pi / 14) := by
+      rw [← Real.cos_add_cos]
+      ring_nf
+    rw [cos1]
+    ring_nf
+    rw [show Real.pi / 7 + 3 * Real.pi / 14 = Real.pi / 2 - Real.pi / 8 by ring_nf]
+    rw [show Real.pi / 7 - 3 * Real.pi / 14 = Real.pi / 8 by ring_nf]
+    rw [Real.cos_pi_div_two_sub]
+    ring_nf
+
+  -- By the angle addition formulas, we can find that $\cos{\frac{\pi}{7}}-\cos{\frac{3\pi}{7}}=\frac{\sqrt{2-\sqrt{2}}}{2}\sin{\frac{\pi}{8}}$
+  have sub1 : Real.cos (Real.pi / 7) - Real.cos (3 * Real.pi / 7) = (Real.sqrt (2 - Real.sqrt 2) / 2) * Real.sin (Real.pi / 8) := by
+    have cos1 : Real.cos (Real.pi / 7) - Real.cos (3 * Real.pi / 7) = -2 * Real.sin (Real.pi / 7 + 3 * Real.pi / 14) * Real.sin (Real.pi / 7 - 3 * Real.pi / 14) := by
+      rw [← Real.cos_add_cos]
+      ring_nf
+      rw [show Real.pi / 7 + 3 * Real.pi / 14 = Real.pi / 2 - Real.pi / 8 by ring_nf]
+      rw [show Real.pi / 7 - 3 * Real.pi / 14 = Real.pi / 8 by ring_nf]
+      rw [Real.cos_pi_div_two_sub]
+      ring_nf
+    rw [cos1]
+    ring_nf
+    rw [show Real.pi / 7 + 3 * Real.pi / 14 = Real.pi / 2 - Real.pi / 8 by ring_nf]
+    rw [show Real.pi / 7 - 3 * Real.pi / 14 = Real.pi / 8 by ring_nf]
+    rw [Real.sin_pi_div_two_sub]
+    ring_nf
+
+  -- By the double angle formula, we can find that $\sin{\frac{\pi}{8}}=\sqrt{\frac{1-\cos{\frac{\pi}{4}}}{2}}=\frac{\sqrt{2-\sqrt{2}}}{2}$
+  have sin1 : Real.sin (Real.pi / 8) = Real.sqrt (2 - Real.sqrt 2) / 2 := by
+    have sin_eq : Real.sin (Real.pi / 8) = Real.sqrt ((1 - Real.cos (2 * (Real.pi / 8))) / 2) := by
+      rw [Real.sin_eq_sqrt_half_sub]
+      ring_nf
+      linarith
+    rw [sin_eq]
+    ring_nf
+    rw [show 2 * (Real.pi / 8) = Real.pi / 4 by ring_nf]
+    rw [Real.cos_pi_div_four]
+    ring_nf
+
+  -- Substituting the above results into $x$, we get $x=1$
+  have x_val : x = 1 := by
+    rw [eq]
+    have : (Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7))^2 = 1 := by
+      rw [eq2, eq3]
+      calc
+        (Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7))^3
+          = ((Real.cos (Real.pi / 7) + Real.cos (3 * Real.pi / 7))^2 - (Real.cos (Real.pi / 7) - Real.cos (3 * Real.pi / 7))^2) * (Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7)) + ((Real.cos (Real.pi / 7) + Real.cos (3 * Real.pi / 7)) * (Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7)) - (Real.cos (Real.pi / 7) - Real.cos (3 * Real.pi / 7)) * (Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7)))^2 := by ring_nf
+        _ = 1 := by
+          rw [add1, sub1, sin1]
+          ring_nf
+          rw [Real.sq_sqrt (by linarith [Real.pi_pos])]
+          ring_nf
+          rw [Real.sq_sqrt (by linarith [Real.pi_pos])]
+          ring_nf
+    nlinarith
+
+  -- Thus $x-1=0$
+  have x_sub : x - 1 = 0 := by
+    rw [x_val]
+    ring_nf
+
+  -- However, $x^3 + x^2 - 2x - 1 = 0$, so $x^2 = 1$
+  have x_sq : x^2 = 1 := by
+    rw [eq3]
+    nlinarith
+
+  -- So we get $x^2-1=0$
+  have x_sub_sq : x^2 - 1 = 0 := by
+    rw [x_sq]
+    ring_nf
+
+  -- Since $x-1=0$ and $x^2-1=0$, we can get that $x=1$ is the only solution
+  have x_val_eq : x = 1 := by
+    rw [← eq]
+    nlinarith
+
+  -- That is, $\cos{\frac{\pi}{7}}-\cos{\frac{2\pi}{7}}+\cos{\frac{3\pi}{7}}=\frac{1}{2}$
+  rw [x_val_eq]
+  ring_nf
+```

@@ -1,0 +1,265 @@
+-- We will use the intermediate value theorem to show that there are at least 6 solutions.
+  -- Let $f(\theta)=1-3\sin\theta+5\cos3\theta$.
+  let f (θ : ℝ) := 1 - 3 * Real.sin θ + 5 * Real.cos (3 * θ)
+
+  -- First, we observe that $f(\theta)$ has some symmetry properties.
+  have hf1 (θ : ℝ) : f θ = f (2 * Real.pi - θ) := by
+    simp [f]
+    rw [Real.sin_sub, Real.cos_sub]
+    conv =>
+      lhs
+      rw [← Real.sin_two_mul θ, ← Real.cos_two_mul θ, mul_assoc]
+    rw [mul_comm, mul_assoc, sub_neg_eq_add]
+    congr 1
+    · rw [← Real.sin_two_mul θ, ← Real.cos_two_mul θ, mul_assoc]
+      ring
+    · rw [← Real.sin_two_mul θ, ← Real.cos_two_mul θ, mul_assoc]
+      ring
+
+  have hf2 (θ : ℝ) : f θ = f (2 * Real.pi + θ) := by
+    simp [f]
+    rw [Real.sin_add, Real.cos_add]
+    conv =>
+      lhs
+      rw [← Real.sin_two_mul θ, ← Real.cos_two_mul θ, mul_assoc, add_comm]
+    rw [mul_comm, mul_assoc, add_right_comm]
+    congr 1
+    · rw [← Real.sin_two_mul θ, ← Real.cos_two_mul θ, mul_assoc]
+      ring
+    · rw [← Real.sin_two_mul θ, ← Real.cos_two_mul θ, mul_assoc]
+      ring
+
+  -- This implies that $f(\theta)=f(\theta+2\pi)$, which means that $f$ is a periodic function with period $2\pi$.
+  have hperiod : ∀ x : ℝ, f x = f (x + 2 * Real.pi) := by
+    intro x
+    calc f x = f (2 * Real.pi - x) := by rw [hf1 x]
+         _ = f (2 * Real.pi + x) := by rw [hf2 x]
+         _ = f (x + 2 * Real.pi) := by ring
+
+  -- We will show that $f(\theta)$ has at least 6 zeros in the interval $(0,2\pi]$.
+  have hlower_bound : (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc (-10) 10).ncard ≥ 6 := by
+
+    -- We know that $f(0)$ is not in the range $[-10,10]$.
+    have h0 : f 0 ∉ Set.Icc (-10) 10 := by
+      simp [f]
+      norm_num
+
+    -- We also know that $f(2\pi)$ is not in the range $[-10,10]$.
+    have h2pi : f (2 * Real.pi) ∉ Set.Icc (-10) 10 := by
+      simp [f]
+      norm_num
+
+    -- Using the intermediate value theorem, we can show that $f(\theta)$ takes all values between $-10$ and $10$ in the interval $(0,2\pi]$.
+    -- First, we show this for $\theta\in(0,\pi]$.
+    have h0_pi : ∀ a ∈ Set.Ioo 0 Real.pi, ∀ b ∈ Set.Ioo a Real.pi, (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc a b).ncard ≥ 1 := by
+      intro a ha b hb
+      simp at ha hb
+      have h0 : f 0 ∉ Set.Icc a b := by
+        simp [f]
+        linarith
+      have hpi : f Real.pi ∉ Set.Icc a b := by
+        simp [f]
+        linarith
+      have hf : ∀ x ∈ Set.Icc a b, f x ∈ Set.Icc (f (Real.pi / 2)) (f (Real.pi / 2 + Real.pi / 2)) := by
+        intro x hx
+        simp at hx
+        have hx' : x - Real.pi / 2 ∈ Set.Icc (0 : ℝ) (Real.pi / 2) := by
+          constructor
+          · linarith
+          · linarith
+        have h1 := Real intermediate_value_Icc (Real.pi / 2) (x - Real.pi / 2) hx'
+        have h2 := Real intermediate_value_Icc (x - Real.pi / 2) (Real.pi / 2 + Real.pi / 2 - x) (Set.mem_Icc.mpr ⟨by linarith, by linarith⟩)
+        rcases h1 with ⟨y, hy, h1⟩
+        rcases h2 with ⟨z, hz, h2⟩
+        have : f x = f y := by
+          rw [← h1]
+          rw [hf1]
+          rw [show 2 * Real.pi - y = x by linarith]
+          exact h2.symm
+        rw [this]
+        exact ⟨by linarith, by linarith⟩
+      apply Set.ncard_le_card at hf
+      simp [Set.ncard_Icc] at hf
+      have : (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc a b).Nonempty := by
+        apply Set.Nonempty.exists_mem.mpr
+        use f (Real.pi / 2 + (b - f (Real.pi / 2)) / 2)
+        simp
+        constructor
+        · exact ⟨by linarith, by linarith⟩
+        · rw [Set.mem_inter]
+          constructor
+          · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+      rcases this with ⟨x, hx⟩
+      have hx' : f x ∈ Set.Icc (f (Real.pi / 2)) (f (Real.pi / 2 + Real.pi / 2)) := by
+        simp
+        rw [← Set.mem_Icc]
+        exact ⟨hf x hx, hf (x + Real.pi / 2) (Set.mem_Icc.mpr ⟨by linarith, by linarith⟩)⟩
+      rcases hx' with ⟨w, hw, hx''⟩
+      rw [← hx'']
+      by_cases h : w ≤ f (Real.pi / 2)
+      · have : (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc (-10) 10).Nonempty := by
+          apply Set.Nonempty.exists_mem.mpr
+          use f (Real.pi / 2 - (f (Real.pi / 2) - w) / 2)
+          simp
+          constructor
+          · rw [Set.mem_inter]
+            constructor
+            · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+            · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · rw [← Set.mem_Icc]
+            exact ⟨by linarith, by linarith⟩
+        rcases this with ⟨x', hx'⟩
+        have hx'' : f x' ∈ Set.Icc (-10) 10 := by
+          simp at hx' ⊢
+          exact hx'.2
+        have hx''': f x' ∈ Set.Icc a b := by
+          apply Set.InjOn.mpr
+          · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+        have hx'''' : x' ∈ Set.range (fun x : ℝ ↦ f x) := by
+          exact ⟨x', hx'⟩
+        apply Set.ncard_le_card at hx''''
+        rw [Set.ncard_Icc] at hx''''
+        linarith
+      · have hw' : f (Real.pi / 2 + Real.pi / 2) ≤ w := by
+          rw [← Set.mem_Icc] at h
+          exact h.2
+        have : (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc (-10) 10).Nonempty := by
+          apply Set.Nonempty.exists_mem.mpr
+          use f (Real.pi / 2 + (w - f (Real.pi / 2)) / 2)
+          simp
+          constructor
+          · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · rw [Set.mem_inter]
+            constructor
+            · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+            · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+        rcases this with ⟨x', hx'⟩
+        have hx'' : f x' ∈ Set.Icc (-10) 10 := by
+          simp at hx' ⊢
+          exact hx'.2
+        have hx'' : f x' ∈ Set.Icc a b := by
+          apply Set.InjOn.mpr
+          · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+        have hx'''' : x' ∈ Set.range (fun x : ℝ ↦ f x) := by
+          exact ⟨x', hx'⟩
+        apply Set.ncard_le_card at hx''''
+        rw [Set.ncard_Icc] at hx''''
+        linarith
+
+    -- Now, we show the result for $\theta\in(\pi,2\pi]$.
+    have hpi : ∀ a ∈ Set.Ioo Real.pi (2 * Real.pi), ∀ b ∈ Set.Ioo a (2 * Real.pi), (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc a b).ncard ≥ 1 := by
+      intro a ha b hb
+      simp at ha hb
+      have hpi : f Real.pi ∉ Set.Icc a b := by
+        simp [f]
+        linarith
+      have h2pi : f (2 * Real.pi) ∉ Set.Icc a b := by
+        simp [f]
+        linarith
+      have hf : ∀ x ∈ Set.Icc a b, f x ∈ Set.Icc (f (Real.pi / 2 + Real.pi)) (f (Real.pi / 2 + Real.pi / 2 + Real.pi)) := by
+        intro x hx
+        simp at hx
+        have hx' : x - Real.pi ∈ Set.Icc (Real.pi / 2) Real.pi := by
+          constructor
+          · linarith
+          · linarith
+        have h1 := Real intermediate_value_Icc (x - Real.pi) (Real.pi / 2 + Real.pi - x) (Set.mem_Icc.mpr ⟨by linarith, by linarith⟩)
+        have h2 := Real intermediate_value_Icc (Real.pi / 2 + Real.pi - (x - Real.pi)) (x - Real.pi + Real.pi / 2) (Set.mem_Icc.mpr ⟨by linarith, by linarith⟩)
+        rcases h1 with ⟨y, hy, h1⟩
+        rcases h2 with ⟨z, hz, h2⟩
+        have : f x = f y := by
+          rw [← h1]
+          rw [hf1]
+          rw [show 2 * Real.pi - y = x by linarith]
+          rw [show x - Real.pi + Real.pi / 2 + Real.pi = x + Real.pi / 2 + Real.pi - (x - Real.pi) by ring]
+          rw [← h2.symm]
+        rw [this]
+        exact ⟨by linarith, by linarith⟩
+      apply Set.ncard_le_card at hf
+      simp [Set.ncard_Icc] at hf
+      have : (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc a b).Nonempty := by
+        apply Set.Nonempty.exists_mem.mpr
+        use f (Real.pi / 2 + (b - f (Real.pi / 2 + Real.pi)) / 2)
+        simp
+        constructor
+        · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+        · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+      rcases this with ⟨x, hx⟩
+      have hx' : f x ∈ Set.Icc (f (Real.pi / 2 + Real.pi)) (f (Real.pi / 2 + Real.pi / 2 + Real.pi)) := by
+        simp
+        rw [← Set.mem_Icc]
+        exact ⟨hf x hx, hf (x + Real.pi / 2) (Set.mem_Icc.mpr ⟨by linarith, by linarith⟩)⟩
+      rcases hx' with ⟨w, hw, hx''⟩
+      by_cases h : w ≤ f (Real.pi / 2 + Real.pi)
+      · have : (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc (-10) 10).Nonempty := by
+          apply Set.Nonempty.exists_mem.mpr
+          use f (Real.pi / 2 + Real.pi - (f (Real.pi / 2 + Real.pi) - w) / 2)
+          simp
+          constructor
+          · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · rw [Set.mem_inter]
+            constructor
+            · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+            · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · rw [← Set.mem_Icc]
+            exact ⟨by linarith, by linarith⟩
+        rcases this with ⟨x', hx'⟩
+        have hx'' : f x' ∈ Set.Icc (-10) 10 := by
+          simp at hx' ⊢
+          exact hx'.2
+        have hx'' : f x' ∈ Set.Icc a b := by
+          apply Set.InjOn.mpr
+          · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+        have hx'''' : x' ∈ Set.range (fun x : ℝ ↦ f x) := by
+          exact ⟨x', hx'⟩
+        apply Set.ncard_le_card at hx''''
+        rw [Set.ncard_Icc] at hx''''
+        linarith
+      · have hw' : f (Real.pi / 2 + Real.pi / 2 + Real.pi) ≤ w := by
+          rw [← Set.mem_Icc] at h
+          exact h.2
+        have : (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc (-10) 10).Nonempty := by
+          apply Set.Nonempty.exists_mem.mpr
+          use f (Real.pi / 2 + Real.pi + (w - f (Real.pi / 2 + Real.pi)) / 2)
+          simp
+          constructor
+          · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · rw [Set.mem_inter]
+            constructor
+            · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+            · simp; exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · rw [← Set.mem_Icc]
+            exact ⟨by linarith, by linarith⟩
+        rcases this with ⟨x', hx'⟩
+        have hx'' : f x' ∈ Set.Icc (-10) 10 := by
+          simp at hx' ⊢
+          exact hx'.2
+        have hx'' : f x' ∈ Set.Icc a b := by
+          apply Set.InjOn.mpr
+          · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+        have hx'''' : x' ∈ Set.range (fun x : ℝ ↦ f x) := by
+          exact ⟨x', hx'⟩
+        apply Set.ncard_le_card at hx''''
+        rw [Set.ncard_Icc] at hx''''
+        linarith
+
+    -- Now, we can combine the two results to show that $f(\theta)$ has at least 6 zeros in the interval $(0,2\pi]$.
+    have h2pi : (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc (-10) 10).ncard ≥ 6 := by
+      have : (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc (-10) 10).ncard = (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc (-10) 10).ncard := by rfl
+      rw [this]
+      calc (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc (-10) 10).ncard ≥ (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc 0 Real.pi).ncard + (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc Real.pi (2 * Real.pi)).ncard - (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc 0 Real.pi).ncard ∩ (Set.range (fun x : ℝ ↦ f x) ∩ Set.Icc Real.pi (2 * Real.pi)).ncard := by
+            simp [- Set.ext_iff]
+            apply Set.ncard_inter_le Set.ncard_eq.mpr Set.infinite_inter_of_infinite_of_subset (Set.infinite_range_of_injective (f.injective)) (Set.Icc 0 Real.pi).Infinite (Set.Icc Real.pi (2 * Real.pi)).Infinite
+            apply Set.InjOn.mpr
+            · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+            · exact Set.mem_Icc.mpr ⟨by linarith, by linarith⟩
+          _ ≥ 1 + 1 := by
+            apply Nat.add_le_add_right
+            apply Set.ncard_le_card
+            apply Set.InjOn.mpr
+            · exact Set.mem_Icc.mpr ⟨by linarith,

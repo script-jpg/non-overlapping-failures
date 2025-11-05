@@ -1,0 +1,141 @@
+-- We have $p(n) = n^2 - n + 41$ and $p(n+1) = (n+1)^2 - (n+1) + 41 = n^2 + n + 41$.
+  have h₂ : p (n + 1) = (n + 1) ^ 2 - (n + 1) + 41 := by
+    apply h₀
+  rw [h₀, h₂, show n + 1 = n + 1 by rfl, show n + 1 + 1 = n + 2 by ring] at h₁
+  -- Expanding $p(n+2)$ gives $n^2 + 3n + 43$.
+  have h₃ : (n + 2) ^ 2 - (n + 2) + 41 = n ^ 2 + 3 * n + 43 := by ring
+  rw [h₃] at h₁
+
+  -- Since $\gcd(p(n), p(n+1)) > 1$, it follows that $\gcd(n^2 - n + 41, n^2 + n + 41) > 1$.
+  -- Note that
+  -- \[
+  -- \begin{aligned}
+  -- \gcd(n^2 - n + 41, n^2 + n + 41) &= \gcd(n^2 - n + 41, (n^2 + n + 41) - (n^2 - n + 41)) \\
+  -- &= \gcd(n^2 - n + 41, 2n) \\
+  -- &= \gcd(n^2 - n + 41, 2n - (n^2 - n + 41)) \\
+  -- &= \gcd(n^2 - n + 41, -n^2 + 3n - 41) \\
+  -- &= \gcd(n^2 - n + 41, n^2 - 3n + 41) \\
+  -- &= \gcd(n^2 - n + 41 - (n^2 - 3n + 41), n^2 - 3n + 41) \\
+  -- &= \gcd(2n, n^2 - 3n + 41) \\
+  -- &= \gcd(2n, n^2 - 3n + 41 - (n-2)(2n)) \\
+  -- &= \gcd(2n, -n + 45) \\
+  -- &= \gcd(2n, n-45) \\
+  -- &= \gcd(2n - 2(n-45), n-45) \\
+  -- &= \gcd(90, n-45)
+  -- \end{aligned}
+  -- \]
+  have ⟨k, hk⟩ : n.gcd k = 1 ↔ k ≡ 1 [MOD n] := by
+    calc
+      n.gcd k = 1 ↔ n ∣ 1 := by
+        apply Nat.gcd_eq_one_iff_dvd.mp
+      _ ↔ n ∣ k - 1 := by
+        rw [Nat.dvd_sub]
+        rw [show 1 = 1 - 0 by simp, Nat.sub_zero]
+        apply Nat.dvd_refl
+      _ ↔ k ≡ 1 [MOD n] := by
+        rw [Nat.ModEq.comm, Nat.modEq_iff_dvd', Nat.sub_sub_self]
+
+  have : n.gcd (2 * n) = n := by
+    rw [Nat.gcd_eq_iff]
+    constructor
+    · intro d hd
+      obtain ⟨k, hk⟩ := hd
+      rw [show 2 * n = n * 2 by ring] at hk
+      have : n ∣ n * 2 := by
+        rw [show n * 2 = n + n by ring]
+        apply Nat.dvd_add_self_left
+      have : n ∣ d := by
+        apply Nat.dvd_trans _ this
+        apply Nat.dvd_mul_left
+      have : d ∣ n := by
+        apply Nat.dvd_gcd_iff.mp.left
+        assumption
+      apply Nat.le_of_dvd (by rw [Nat.pos_of_ne_zero (by assumption)]; exact id (Eq.symm this))
+      assumption
+    · intro hd
+      apply Nat.gcd_eq_of_dvd
+      apply Nat.dvd_trans this
+      apply Nat.dvd_mul_left
+
+  -- Then, we have
+  have h₄ : n.gcd (n ^ 2 - 3 * n + 41) = n.gcd (2 * n) := by
+    rw [← Nat.gcd_add_mul_left_right _ _ 2, ← add_assoc]
+    ring_nf
+    norm_num
+
+  -- From the above, we have $n \mid 2 \cdot 45 = 90$.
+  have h₅ : n ∣ 90 := by
+    rw [show 90 = 2 * 45 by norm_num, ← h₄, Nat.gcd_eq_iff]
+    constructor
+    · -- We have $n \mid n^2 - 3n + 41$.
+      apply Nat.dvd_trans (show n ∣ n ^ 2 - 3 * n by ring)
+      apply Nat.dvd_add
+      · apply Nat.dvd_pow_self
+      · apply Nat.dvd_mul_self
+    · -- We have $n \mid 41$.
+      apply Nat.dvd_of_mod_eq_zero
+      rw [Nat.modEq_zero_iff_dvd]
+      apply Nat.gcd_dvd_left
+      rw [h₁]
+      simp only [Nat.reduceSub, Nat.reduceAdd, exists_eq_right, forall_exists_index,
+        and_imp]
+      intro d hd
+      rw [h₁] at hd
+      have : d ∣ 41 := by
+        apply Nat.dvd_gcd_iff.mp.right
+        assumption
+      apply Nat.le_of_dvd (by norm_num)
+      assumption
+
+  -- Since $41$ is a prime number, $n = 1$ or $n = 41$.
+  have h₆ : n = 1 ∨ n = 41 := by
+    have : n ∈ Nat.divisors 90 := by
+      rw [Nat.mem_divisors]
+      constructor
+      · assumption
+      · norm_num
+    have h₇ : n ∈ Nat.primeFactors 90 := by
+      apply Nat.mem_primeFactors.mpr
+      rw [Nat.mem_primeFactors, Nat.mem_divisors]
+      constructor
+      · assumption
+      · intro p pm hp
+        have : p ≤ 90 := by
+          apply Nat.le_of_dvd (by norm_num) hp
+        rw [Nat.primeFactors_def_lt (by norm_num)]
+        interval_cases p <;> tauto
+      · norm_num
+    rw [Nat.primeFactors_def_lt (by norm_num)] at h₇
+    have : n = 1 ∨ n = 41 := by
+      have : n ∈ ({1, 2, 3, 5, 6, 9, 10, 15, 18, 22, 30, 33, 45, 55, 66, 90} : Finset ℕ) := by
+        apply h₇
+        simp only [exists_eq_right, reduceCtorEq, not_false_eq_true,
+          Nat.reduceSub, Nat.reduceMul, forall_exists_index, and_imp]
+        intro p pm hp
+        have : p ≤ 90 := by
+          apply Nat.le_of_dvd (by norm_num) hp
+        interval_cases p <;> tauto
+      have : n ∈ ({1, 41} : Finset ℕ) := by
+        have : n ∈ ({1, 2, 3, 5, 6, 9, 10, 15, 18, 22, 30, 33, 45, 55, 66, 90} : Finset ℕ). subsets := by
+          apply Finset.subset_iff.mp
+          apply Finset.coe_subset_coe.mpr
+          assumption
+        have h₈ : ({1, 2, 3, 5, 6, 9, 10, 15, 18, 22, 30, 33, 45, 55, 66, 90} : Finset ℕ) ⊆ {1, 41} := by
+          intro x hx
+          simp only [exists_eq_right, reduceCtorEq, not_false_eq_true,
+            Finset.mem_insert, Finset.mem_singleton, forall_exists_index, and_imp] at hx
+          rcases hx with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+          all_goals
+            native_decide
+        apply Finset.subset_iff.mp
+        apply Finset.coe_subset_coe.mpr
+        assumption
+      apply Finset.mem_insert.mp
+      assumption
+    assumption
+
+  -- The smallest positive integer $n$ for which $p(n)$ and $p(n+1)$ share a common factor greater than $1$ is thus 41.
+  rcases h₆ with h | h
+  · norm_num [h] at h₁
+  · exact h
+```

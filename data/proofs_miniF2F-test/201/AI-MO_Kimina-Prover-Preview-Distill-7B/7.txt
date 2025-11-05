@@ -1,0 +1,63 @@
+-- complex version of problem, using Euler's formula, $a_n+ b_ni = (e^{i \pi/3})^n (a_1 + b_1 i)$
+  let z : ℕ → ℂ := fun n => a n + Complex.I * b n
+  have hz1 (n : ℕ) : z (n + 1) = z n * (Real.sqrt 3 + Complex.I) := by
+    simp [z]; congr
+    rw [h₀, h₁]
+    ring
+    rw [mul_add, add_mul]
+    rw [Complex.I_sq]
+    ring
+  have hz0 : z 100 = 2 + Complex.I * 4 := by
+    simp [z, h₂, h₃]
+  have hz2 (n : ℕ) : z (n + 1) = z 1 * (Real.sqrt 3 + Complex.I) ^ n := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [hz1, ih, pow_succ]
+  have hz3 (n : ℕ) : z (n + 1) = (2 + Complex.I * 4) * (Real.sqrt 3 + Complex.I) ^ (n - 100) := by
+    rw [hz2, hz0]
+    ring
+
+  -- We want to calculate $a_1 + b_1$. Using the formula of Euler's formula, it is enough to calculate the modulus of $a_1 + b_1i$.
+  suffices h : Complex.abs (a 1 + Complex.I * b 1) = 1 / 2 ^ 98 by
+    rw [←Complex.abs_add_normSq_eq_sq_abs] at h
+    simp [Complex.normSq] at h
+    rw [←Complex.abs_add_normSq_eq_sq_abs]
+    convert h
+    norm_num
+
+  -- Using the formula of Euler's formula, it is enough to calculate the modulus of $a_{100} + b_{100}i$.
+  have h₄ : (Complex.abs ∘ z) 100 = Complex.abs (z 100) := by
+    exact Function.comp_apply_eq_apply _ _
+  rw [hz0, Complex.abs_add_normSq_eq_sq_abs] at h₄
+  simp [Complex.normSq] at h₄
+
+  have h₅ : (Complex.abs ∘ z) 100 = (Real.sqrt 3 + Complex.I) ^ 99 * (Complex.abs ∘ z) 1 := by
+    rw [←Complex.abs_mul]; simp
+    rw [hz2]; simp
+    congr; ring
+  rw [h₄, h₅, Complex.abs_add_normSq_eq_sq_abs] at h₅
+  simp [Complex.normSq] at h₅
+
+  -- Calculating the modulus of the complex number $(\sqrt{3} + i)$ directly.
+  have h₆ (c : ℝ) : Complex.abs (c + Complex.I * c) = (2 ^ c) * (Real.sqrt 3 / 2) := by
+    rw [Complex.abs_add_normSq_eq_sq_abs, Complex.normSq]
+    ring_nf; rw [mul_assoc, Real.sq_sqrt]
+    · ring
+    · simpa using by positivity: 0 ≤ c ^ 2
+    · simpa using by positivity: 0 ≤ c ^ 2
+
+  have h₇ : Complex.abs (Real.sqrt 3 + Complex.I) = 2 := by
+    rw [h₆, ←Real.sqrt_sq]
+    · ring
+    · positivity
+    · simp; positivity
+
+  rw [h₇, pow_succ] at h₅
+  simp at h₅
+
+  rify
+  rw [h₄, h₅]
+  field_simp
+  ring
+```

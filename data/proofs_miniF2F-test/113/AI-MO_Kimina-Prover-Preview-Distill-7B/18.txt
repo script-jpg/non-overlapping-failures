@@ -1,0 +1,110 @@
+-- The key lemma is to relate the sum to an integral.
+  -- We know that $\int_{1}^{n+1} \frac{1}{\sqrt{x}} dx \leq \sum_{k=2}^{n+1} \frac{1}{\sqrt{k}}$.
+  have keylemma (n : ℕ) : ∑ k in Finset.Icc 2 (n + 1), 1 / Real.sqrt k
+      ≥ ∫ x in (1 : ℝ).. (n + 1), 1 / Real.sqrt x := by
+    -- This is done by showing $1 / \sqrt{x}$ is monotone and applying
+    -- `Finset.sum_le_integrable`.
+    apply Finset.sum_le_integrable
+    · intro x hx
+      simp only [Finset.mem_Icc] at hx
+      have : 1 / Real.sqrt x ≥ 0 := by positivity
+      exact this
+    · intro x hx
+      simp only [Finset.mem_Icc] at hx
+      specialize Real.sqrt_le_sqrt (by norm_num)
+      simp only [one_div, le_div_iff₀] at Real.sqrt_le_sqrt
+      exact Real.sqrt_le_sqrt <| by (simp only [Nat.ofNat_nonneg]; linarith)
+    · simp only [Finset.mem_Icc, one_le_natCast]
+      intro i hi1 hi2
+      simp only [Nat.cast_add, Nat.cast_one]
+      exact ⟨by linarith, by norm_cast⟩
+    · simp [Nat.cast_add, Nat.cast_one, le_add_iff_nonneg_right]
+      exact ⟨by norm_num, ⟨by norm_num, by norm_num⟩⟩
+
+  -- And we know that $\sum_{k=2}^{n+1} \frac{1}{\sqrt{k}} \leq \int_{1}^{n} \frac{1}{\sqrt{x}} dx$.
+  have keylemma' (n : ℕ) : ∑ k in Finset.Icc 2 n, 1 / Real.sqrt k
+      ≤ ∫ x in (1 : ℝ).. (n : ℝ), 1 / Real.sqrt x := by
+    -- This is done by showing $1 / \sqrt{x}$ is monotone and applying
+    -- `Finset.integrable_le_sum`.
+    apply Finset.integrable_le_sum
+    · intro x hx
+      simp only [Finset.mem_Icc] at hx
+      have : 1 / Real.sqrt x ≥ 0 := by positivity
+      exact this
+    · intro x hx
+      simp only [Finset.mem_Icc] at hx
+      specialize Real.sqrt_le_sqrt (by norm_num)
+      simp only [one_div, div_le_div_iff₀] at Real.sqrt_le_sqrt
+      exact Real.sqrt_le_sqrt <| by (simp only [Nat.ofNat_nonneg]; linarith)
+    · simp only [Finset.mem_Icc, le_add_iff_nonneg_right]
+      exact ⟨by norm_num, by norm_num⟩
+    · simp [Nat.cast_ofNat]
+      intro i hi1 hi2
+      simp only [Nat.cast_add, Nat.cast_one]
+      exact ⟨by linarith, by norm_cast⟩
+
+  -- We know that $\int_{1}^{n+1} \frac{1}{\sqrt{x}} dx = 2\sqrt{n+1} - 2$.
+  have integral_eq (n : ℕ) : ∫ x in (1 : ℝ).. (n + 1), 1 / Real.sqrt x = 2 * Real.sqrt (n + 1) - 2 := by
+    -- This is done by applying the fundamental theorem of calculus.
+    -- `Real.sqrt` is differentiable on $(0, \infty)$ and its derivative
+    -- is $1 / (2\sqrt{x})$.
+    have :=integral_const_mul_rpow_deriv (show 0 ≤ (1 : ℝ) by norm_num)
+      (show 1 ≠ (2 : ℝ) by norm_num)
+    simp only [Nat.ofNat_nonneg, Real.sqrt_eq_rpow, Nat.cast_ofNat]
+    -- The primitive of $1 / \sqrt{x}$ is $2\sqrt{x}$.
+    rw [← antideriv_of_deriv this, Real.sqrt_eq_rpow]
+    norm_num
+    -- Then, fundamental theorem of calculus says
+    -- $\int_{1}^{n+1} \frac{1}{\sqrt{x}} dx = 2\sqrt{n+1} - 2\sqrt{1} = 2\sqrt{n+1} - 2$.
+    iterate 2 rw [← Real.sqrt_sq (show 0 ≤ (1 : ℝ) by norm_num)]
+    iterate 2 rw [← Real.sqrt_mul (show 0 ≤ (1 : ℝ) by norm_num)]
+    simp only [Nat.cast_add, Nat.cast_one, one_mul]
+    ring
+
+  -- And $\int_{1}^{n} \frac{1}{\sqrt{x}} dx = 2\sqrt{n} - 2$.
+  have integral_eq' (n : ℕ) : ∫ x in (1 : ℝ).. (n : ℝ), 1 / Real.sqrt x = 2 * Real.sqrt n - 2 := by
+    -- This is done by applying the fundamental theorem of calculus.
+    -- `Real.sqrt` is differentiable on $(0, \infty)$ and its derivative
+    -- is $1 / (2\sqrt{x})$.
+    have :=integral_const_mul_rpow_deriv (show 0 ≤ (1 : ℝ) by norm_num)
+      (show 1 ≠ (2 : ℝ) by norm_num)
+    simp only [Nat.ofNat_nonneg, Real.sqrt_eq_rpow, Nat.cast_ofNat]
+    -- The primitive of $1 / \sqrt{x}$ is $2\sqrt{x}$.
+    rw [← antideriv_of_deriv this, Real.sqrt_eq_rpow]
+    norm_num
+    -- Then, fundamental theorem of calculus says
+    -- $\int_{1}^{n} \frac{1}{\sqrt{x}} dx = 2\sqrt{n} - 2\sqrt{1} = 2\sqrt{n} - 2$.
+    iterate 2 rw [← Real.sqrt_sq (show 0 ≤ (1 : ℝ) by norm_num)]
+    iterate 2 rw [← Real.sqrt_mul (show 0 ≤ (1 : ℝ) by norm_num)]
+    simp only [Nat.cast_ofNat, one_mul]
+    ring
+
+  -- When $n = 10000$, we have
+  -- $\int_{1}^{10000} \frac{1}{\sqrt{x}} dx = 2\sqrt{10000} - 2 = 200 - 2 = 198$.
+  have integral_eq_10000 : ∫ x in (1 : ℝ).. (10000 : ℝ), 1 / Real.sqrt x = 198 := by
+    rw [integral_eq']
+    norm_num
+
+  -- So, $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} \leq \int_{1}^{10000} \frac{1}{\sqrt{x}} dx = 198$.
+  have sum_le_198 : ∑ k in Finset.Icc 2 10000, 1 / Real.sqrt k ≤ 198 := by
+    rw [← integral_eq_10000]
+    apply le_of_eq
+    exact Eq.symm (keylemma' 10000)
+
+  -- Because $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} > \int_{1}^{10001} \frac{1}{\sqrt{x}} dx = 2\sqrt{10001} - 2 > 198$, we
+  -- have $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} > 198$.
+  have sum_gt_198 : 198 < ∑ k in Finset.Icc 2 10000, 1 / Real.sqrt k := by
+    have : 198 < ∫ x in (1 : ℝ).. (10001 : ℝ), 1 / Real.sqrt x := by
+      rw [integral_eq]
+      -- We can show that $2\sqrt{10001} - 2 > 198$ by showing that
+      -- $2\sqrt{10001} > 200$ or $\sqrt{10001} > 100$.
+      have : Real.sqrt (10001 : ℝ) > 100 := by
+        -- This is done by showing that $100^2 < 10001$.
+        have : (100 : ℝ) ^ 2 < (10001 : ℝ) := by norm_num
+        exact (Real.lt_sqrt_of_sq_lt this).mpr (by norm_num)
+      linarith
+    apply lt_of_lt_of_le this sum_le_198
+
+  -- Therefore, we have proved that $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} < 198$.
+  linarith
+```

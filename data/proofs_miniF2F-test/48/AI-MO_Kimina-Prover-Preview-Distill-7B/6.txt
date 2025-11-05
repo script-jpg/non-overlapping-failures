@@ -1,0 +1,182 @@
+-- m^3-2=0
+  have hm : m ^ 3 - 2 = 0 := by
+    rw [h₁]
+    ring
+  -- n^3-4=0
+  have hn : n ^ 3 - 4 = 0 := by
+    rw [h₂]
+    ring
+
+  -- $m^3-2=0$ implies $m$ is irrational.
+  have irrational_m : Irrational m := by
+    rw [irrational_iff_ne_rational]
+    intro r
+    by_contra h
+    -- if $m$ is rational,
+    -- then we can write $m = \frac{p}{q}$ for some integer $p$ and non-zero integer $q$.
+    rw [Rat.cast_div] at h
+    rcases h with ⟨p, q, hq, heq⟩
+    -- then $m^3 = \frac{p^3}{q^3}$
+    apply_fun (· ^ 3) at heq
+    -- and $p^3 = 2 q^3$.
+    rw [pow_three, div_pow, ← heq] at hm
+    norm_cast at hm
+    -- However, $p^3 = 2 q^3$ implies that $p^3$ is even
+    have even_p3 : Even (p ^ 3) := by
+      rw [← hm]
+      exact dvd_mul_of_dvd_right (by norm_cast) q ^ 3
+    -- which implies that $p$ is even
+    have even_p : Even p := by
+      by_contra h
+      simp at h
+      have : Odd (p ^ 3) := by
+        refine Odd.pow h?_
+        exact Nat.odd_iff.mpr h
+      rw [← hm] at this
+      exact Nat.not_even_iff_odd.2 this h
+    -- and we can write $p = 2 r$ for some integer $r$.
+    rw [even_iff_two_dvd] at even_p
+    rcases even_p with ⟨r, hr⟩
+    -- then $p^3 = 8 r^3$ and $8 r^3 = 2 q^3$
+    rw [hr, pow_three, mul_pow, show 8 = 2 * 4 by norm_num, mul_assoc] at hm
+    -- which implies that $4 r^3 = q^3$
+    have rify : (4 : ℤ) * r ^ 3 = q ^ 3 := by
+      qify at hm ⊢
+      linarith
+    -- So $q^3$ is divisible by $4$ and $q$ is divisible by $4$.
+    have even_q : Even (q ^ 3) := by
+      rw [← rify]
+      exact dvd_mul_of_dvd_right (by norm_cast) r ^ 3
+    have even_q3 : Even q := by
+      by_contra h
+      simp at h
+      have : Odd (q ^ 3) := by
+        refine Odd.pow h?_
+        exact Nat.odd_iff.mpr h
+      rw [← rify] at this
+      exact Nat.not_even_iff_odd.2 this h
+    -- However, $q$ is odd or even?
+    have : Even (q ^ 2) ∨ Odd (q ^ 2) := by
+      by_contra h
+      simp at h
+      have : ¬Odd (q ^ 2) := by
+        exact Nat.not_odd_iff_even.2 h
+      have : Odd (q ^ 2) := by
+        refine Odd.pow h q
+        apply Nat.odd_iff.mpr h
+      exact this.elim?_?_
+      · exact Nat.not_odd_iff_even.2 h
+      · exact Nat.odd_iff.2 this
+    cases this with
+    | inl h_even =>
+      -- If $q^2$ is even, then $q$ is even, which is a contradiction.
+      have : Even q := by
+        exact Nat.even_pow.mp h_even
+      exact this.elim?_?_
+      · exact h_even
+      · exact Nat.not_even_iff_odd.2 this hq
+    | inr h_odd =>
+      -- If $q^2$ is odd, then it is odd in $q$, which is a contradiction.
+      have : Odd q := by
+        exact Nat.odd_pow.mp h_odd
+      exact this.elim?_?_
+      · exact h_odd
+      · exact Nat.not_odd_iff_even.2 this hq
+
+  -- Because $m$ is irrational, $m \neq 0$.
+  have m_neq_zero : m ≠ 0 := by
+    by_contra h
+    rw [h] at irrational_m
+    exact irrational_m ⟨1, by norm_num, by norm_num⟩
+
+  -- $m^3 = 2$ implies $m^2 = \frac{2}{m}$
+  have h_m2 : m ^ 2 = 2 / m := by
+    field_simp
+    rw [← h₁]
+    ring_nf
+
+  -- $n^3 = 4$ implies $n^2 = \frac{4}{n}$
+  have h_n2 : n ^ 2 = 4 / n := by
+    field_simp
+    rw [← h₂]
+    ring_nf
+
+  -- 1, m, n are linearly independent over $\mathbb{Q}$
+  -- So 1 + bm + cn = 0 implies a = b = c = 0
+  have hbc : (a : ℝ) = 0 ∧ b = 0 ∧ c = 0 := by
+    by_contra h
+    rw [Complex.ext_iff] at h
+    simp at h
+    rcases h with ⟨h1, h2⟩
+    rcases h with ⟨h1, h3⟩
+    -- Assume that $a \neq 0$, $b \neq 0$, or $c \neq 0$
+    rcases h with ⟨ha, hb, hc⟩ | ⟨ha, hb, hc⟩ | ⟨ha, hb, hc⟩
+    · -- If $a \neq 0$
+      -- 1 + bm + cn = 0 implies m = (-b - c n) / a
+      have eq_m : m = (-b - c * n) / a := by
+        field_simp
+        linarith
+      -- Substituting $m = \frac{-b - cn}{a}$ into $m^2 = \frac{2}{m}$
+      rw [eq_m] at h_m2
+      -- yields $a^2 = (-b - cn)^2 / a^2 = 2 a / (-b - cn)$
+      field_simp at h_m2
+      ring_nf at h_m2
+      -- Multiplying both sides by $-b - cn$ gives $a^2 (-b - cn) = 2 a$
+      rw [show a ^ 2 * (-b - c * n) = 2 * a by linarith] at h_m2
+      -- So $a ((-b - cn) a - 2) = 0$
+      have : a * ((-b - c * n) * a - 2) = 0 := by
+        linarith
+      -- However, $a \neq 0$ and $(-b - cn) a - 2 \neq 0$
+      exact Nat.not_mul_eq_zero ha (by linarith) h_m2
+    · -- If $b \neq 0$
+      -- 1 + bm + cn = 0 implies n = (-a - cm) / b
+      have eq_n : n = (-a - c * m) / b := by
+        field_simp
+        linarith
+      -- Substituting $n = \frac{-a - cm}{b}$ into $n^2 = \frac{4}{n}$
+      rw [eq_n] at h_n2
+      -- yields $b^2 = (-a - cm)^2 / b^2 = 4 b / (-a - cm)$
+      field_simp at h_n2
+      ring_nf at h_n2
+      -- Multiplying both sides by $-a - cm$ gives $b^2 (-a - cm) = 4 b$
+      rw [show b ^ 2 * (-a - c * m) = 4 * b by linarith] at h_n2
+      -- So $b ((-a - cm) b - 4) = 0$
+      have : b * ((-a - c * m) * b - 4) = 0 := by
+        linarith
+      -- However, $b \neq 0$ and $(-a - cm) b - 4 \neq 0$
+      exact Nat.not_mul_eq_zero hb (by linarith) h_n2
+    · -- If $c \neq 0$
+      -- 1 + bm + cn = 0 implies c = (-a - bm) / n
+      have eq_c : c = (-a - b * m) / n := by
+        field_simp
+        linarith
+      -- Substituting $c = \frac{-a - bm}{n}$ into $n^2 = \frac{4}{n}$
+      rw [eq_c] at h_n2
+      -- yields $n^3 = (-a - bm)^2 = 4$, which contradicts $n^3 = 4$
+      field_simp at h_n2
+      ring_nf at h_n2
+      -- So $n^3 - (-a - bm)^2 = 0$
+      have : n ^ 3 - (-a - b * m) ^ 2 = 0 := by
+        linarith
+      -- However, $n^3 = 4$ and $(-a - bm)^2 \geq 0$ makes it impossible
+      have : n ^ 3 - (-a - b * m) ^ 2 < 0 := by
+        rw [show (-a - b * m) ^ 2 = (a + b * m) ^ 2 by ring]
+        suffices (n ^ 3 : ℝ) < (a + b * m) ^ 2 by
+          rw [le_neg_iff_add_nonpos_right]
+          exact sq_nonneg (n ^ 3)
+          linarith
+        rw [pow_two]
+        have : (n ^ 3) ^ 2 < (a + b * m) ^ 2 := by
+          rw [← pow_mul, sq_lt_sq]
+          linarith
+          linarith
+          linarith
+        exact pow_lt_sqrt_sq this (a + b * m)
+      linarith
+
+  -- As a result, $a = b = c = 0$
+  obtain ⟨ha, hb⟩ := hbc
+  obtain ⟨hb, hc⟩ := hb
+  exact ⟨ha, hb, hc⟩
+
+```

@@ -1,0 +1,58 @@
+-- figure out a+b=1 and x^2+y^2=1.
+  -- x^2+y^2=(x+y)^2-2xy=1-2xy=1 so xy=0
+  -- that's why a*c=0.
+
+  have h₀ : a * c = 0 := by
+    have h₅ : a * c + b * d = 0 := by
+      calc
+        _ = (a ^ 2 + d ^ 2) := by rw [h₀, h₂]; ring
+        _ = ((a + c) ^ 2 - 2 * a * c) := by
+          rw [Nat.cast_pow, Nat.cast_pow]
+          ring
+        _ = 1 - 2 * a * c := by
+          rw [h₁, h₃, Nat.cast_sub (by linarith), add_sq, Nat.cast_sub (by linarith)]
+          ring
+        _ = 0 := by ring
+    have h₆ : a * c + a * d = 0 := by
+      calc
+        _ = a * (c + d) := by ring
+        _ = a * 1 := by rw [h₃]
+        _ = a := by ring
+    have h₇ : a * c + c * d = 0 := by
+      calc
+        _ = c * (a + d) := by ring
+        _ = c * 1 := by rw [add_comm, h₁]
+        _ = c := by ring
+    linarith
+
+  -- figures out a=0 and c=0 by a*c=0.
+  have h₀ : a = 0 ∨ c = 0 := Nat.cast_mul_eq_zero.mp h₀
+  cases h₀ with
+  | inl h₀ =>
+    -- if a=0, then b=1. and from c^2+d^2=1 and c+d=1, we have d=1 and c=0.
+    have h₁ : b = 1 := by
+      calc
+        _ = a ^ 2 + b := by rw [add_sq, Nat.cast_pow, h₀]; ring
+        _ = 1 := by rw [h₀, h₁]
+    have h₂ : c = 0 := by
+      have : c * (c + d) = c * 1 := by rw [h₃, h₁]
+      rw [mul_right_inj' (by linarith)] at this
+      linarith
+    -- substitute a=0 and c=0 into target equation.
+    rw [h₀, h₁, h₂, show d = 1 by linarith]
+    norm_num
+  | inr h₀ =>
+    -- if c=0, then d=1. and from a^2+b^2=1 and a+b=1, we have b=1 and a=0.
+    have h₁ : c = 0 := by assumption
+    have h₂ : b = 1 := by
+      calc
+        _ = a ^ 2 + b := by rw [add_sq, Nat.cast_pow, h₁]; ring
+        _ = 1 := by rw [h₀, h₁]
+    have h₃ : a = 0 := by
+      have : a * (a + b) = a * 1 := by rw [h₃, h₂]
+      rw [mul_right_inj' (by linarith)] at this
+      linarith
+    -- substitute a=0 and c=0 into target equation.
+    rw [h₀, h₂, h₁, show d = 1 by linarith]
+    norm_num
+```

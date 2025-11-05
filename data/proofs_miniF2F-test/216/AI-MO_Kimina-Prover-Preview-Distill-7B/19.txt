@@ -1,0 +1,202 @@
+-- We start by reasoning about the properties of the system of equations.
+
+  -- Define $S$ as the set of all triples $(x,y,z)$ such that $x^2+y^2+z^2=1$.
+  let S := {(x,y,z) : ℝ×ℝ×ℝ | x^2 + y^2 + z^2 = 1}
+
+  -- Define $S'$ as the set of all triples $(x,y,z)$ in $S$ such that $x \leq 0$, $y \leq 0$, and $z \leq 0$.
+  let S' := {p : ℝ×ℝ×ℝ | p ∈ S ∧ p.1 ≤ 0 ∧ p.2.1 ≤ 0 ∧ p.2.2 ≤ 0}
+
+  -- We aim to show that the only solution to the system is $(0,0,0)$, which is in $S'$.
+  suffices show (x = 0 ∧ y = 0 ∧ z = 0) by
+    simp [show (0 : ℝ) = 0 ∧ (0 : ℝ) = 0 ∧ (0 : ℝ) = 0 by rfl] at this
+    exact this
+
+  -- First, we show that the set of coefficients satisfies certain properties.
+  have h_{1,1} : 0 < a 0 + a 1 + a 2 := by exact h₄
+  have h_{2,1} : 0 < a 3 + a 4 + a 5 := by exact h₅
+  have h_{3,1} : 0 < a 6 + a 7 + a 8 := by exact h₆
+
+  -- Next, we show that the system has a unique solution.
+  have ⟨u, hu⟩ : ∃ u : ℝ, u = (a 0 + a 3 + a 6) / 3 := by
+    use (a 0 + a 3 + a 6) / 3
+  have ⟨v, hv⟩ : ∃ v : ℝ, v = (a 1 + a 4 + a 7) / 3 := by
+    use (a 1 + a 4 + a 7) / 3
+  have ⟨w, hw⟩ : ∃ w : ℝ, w = (a 2 + a 5 + a 8) / 3 := by
+    use (a 2 + a 5 + a 8) / 3
+
+  -- We prove that the sum of the coefficients is positive.
+  have hw' : 0 < w := by
+    obtain rfl : w = (a 2 + a 5 + a 8) / 3 := by rw [hw]
+    have : 0 < a 2 + a 5 + a 8 := by exact h₆
+    positivity
+  have hv' : 0 < v := by
+    obtain rfl : v = (a 1 + a 4 + a 7) / 3 := by rw [hv]
+    have : 0 < a 1 + a 4 + a 7 := by exact h₅
+    positivity
+  have hu' : 0 < u := by
+    obtain rfl : u = (a 0 + a 3 + a 6) / 3 := by rw [hu]
+    have : 0 < a 0 + a 3 + a 6 := by exact h₄
+    positivity
+
+  -- We show that the solution lies in $S'$.
+  have h_sol_in_S : (x, y, z) ∈ S' := by
+    -- We prove that x² + y² + z² = 1.
+    have h₁ : (x * a 0 + y * a 1 + z * a 2) + (x * a 3 + y * a 4 + z * a 5) +
+        (x * a 6 + y * a 7 + z * a 8) = 0 := by linarith
+    have h₂ : a 0 + a 1 + a 2 = u * 3 := by linarith
+    have h₃ : a 3 + a 4 + a 5 = v * 3 := by linarith
+    have h₄ : a 6 + a 7 + a 8 = w * 3 := by linarith
+    have : x * (a 0 + a 3 + a 6) + y * (a 1 + a 4 + a 7) + z * (a 2 + a 5 + a 8) =
+      3 * (x * u + y * v + z * w) := by linarith
+    have h₅ : x * u + y * v + z * w = 0 := by linarith
+    have : u * (x ^ 2 + y ^ 2 + z ^ 2) = u * x ^ 2 + u * y ^ 2 + u * z ^ 2 := by ring
+    have : v * (x ^ 2 + y ^ 2 + z ^ 2) = v * x ^ 2 + v * y ^ 2 + v * z ^ 2 := by ring
+    have : w * (x ^ 2 + y ^ 2 + z ^ 2) = w * x ^ 2 + w * y ^ 2 + w * z ^ 2 := by ring
+    have h₆ : x * a 0 + y * a 1 + z * a 2 +
+        (x * a 3 + y * a 4 + z * a 5) + (x * a 6 + y * a 7 + z * a 8) =
+        u * (x ^ 2 + y ^ 2 + z ^ 2) + v * (x ^ 2 + y ^ 2 + z ^ 2) + w * (x ^ 2 + y ^ 2 + z ^ 2) := by
+      linarith
+    have h₇ : u * (x ^ 2 + y ^ 2 + z ^ 2) + v * (x ^ 2 + y ^ 2 + z ^ 2) + w * (x ^ 2 + y ^ 2 + z ^ 2) = 0 := by
+      linarith
+    have : x ^ 2 + y ^ 2 + z ^ 2 ≠ 0 := by
+      by_contra h
+      simp [h] at h₇
+      linarith
+    have h₈ : u * x ^ 2 + u * y ^ 2 + u * z ^ 2 + v * x ^ 2 + v * y ^ 2 + v * z ^ 2 + w * x ^ 2 +
+        w * y ^ 2 + w * z ^ 2 = 0 := by linarith
+    have h₉ : x ^ 2 + y ^ 2 + z ^ 2 = 1 := by
+      -- Using the Cauchy-Schwarz inequality, we show that $(x,y,z)^2 = 1$.
+      have h₁₀ : (u * x + v * y + w * z) ^ 2 ≤ (u * u + v * v + w * w) * (x ^ 2 + y ^ 2 + z ^ 2) := by
+        linarith [sq_nonneg (u * y + v * z + w * x - u * x - v * y - w * z)]
+      have h₁₁ : (x * a 0 + y * a 1 + z * a 2) + (x * a 3 + y * a 4 + z * a 5) +
+          (x * a 6 + y * a 7 + z * a 8) = 0 := by linarith
+      rw [show x * a 0 + y * a 1 + z * a 2 + (x * a 3 + y * a 4 + z * a 5) +
+          (x * a 6 + y * a 7 + z * a 8) = x * u + y * v + z * w by linarith] at h₁₁
+      rw [h₅] at h₁₁
+      have h₁₂ : (x * u + y * v + z * w) ^ 2 = 0 := by linarith
+      apply pow_eq_zero at h₁₂
+      simp at h₁₂
+      have h₁₃ : (u * x + v * y + w * z) ^ 2 ≤ (u * u + v * v + w * w) * (x ^ 2 + y ^ 2 + z ^ 2) := by
+        linarith [sq_nonneg (u * y + v * z + w * x - u * x - v * y - w * z)]
+      have h₁₄ : u * x + v * y + w * z = 0 := by linarith
+      have h₁₅ : u * u + v * v + w * w = u * (x ^ 2 + y ^ 2 + z ^ 2) + v * (x ^ 2 + y ^ 2 + z ^ 2) +
+          w * (x ^ 2 + y ^ 2 + z ^ 2) := by ring
+      rw [h₁₅] at h₁₃
+      have h₁₆ : (u * (x ^ 2 + y ^ 2 + z ^ 2) + v * (x ^ 2 + y ^ 2 + z ^ 2) + w * (x ^ 2 + y ^ 2 + z ^ 2)) *
+          (x ^ 2 + y ^ 2 + z ^ 2 - 1) = 0 := by
+        linarith
+      simp at h₁₆
+      cases h₁₆ with
+      | inl h₁₇ =>
+        -- If $u * (x ^ 2 + y ^ 2 + z ^ 2) + v * (x ^ 2 + y ^ 2 + z ^ 2) + w * (x ^ 2 + y ^ 2 + z ^ 2) = 0$, then $x ^ 2 + y ^ 2 + z ^ 2 = 1$.
+        have h₁₈ : u * (x ^ 2 + y ^ 2 + z ^ 2) + v * (x ^ 2 + y ^ 2 + z ^ 2) + w * (x ^ 2 + y ^ 2 + z ^ 2) = 0 := by
+          linarith
+        rw [show u * (x ^ 2 + y ^ 2 + z ^ 2) + v * (x ^ 2 + y ^ 2 + z ^ 2) + w * (x ^ 2 + y ^ 2 + z ^ 2) =
+          u * x ^ 2 + u * y ^ 2 + u * z ^ 2 + v * x ^ 2 + v * y ^ 2 + v * z ^ 2 + w * x ^ 2 + w * y ^ 2 + w * z ^ 2 by ring] at h₁₈
+        linarith
+      | inr h₁₇ =>
+        -- If $x ^ 2 + y ^ 2 + z ^ 2 - 1 = 0$, then $x ^ 2 + y ^ 2 + z ^ 2 = 1$.
+        linarith
+    simp [S]
+    refine ⟨h₉,?_⟩
+    -- We prove that x ≤ 0, y ≤ 0, and z ≤ 0.
+    refine ⟨?_,?_⟩
+    · -- Assume x > 0, then we derive a contradiction.
+      by_contra h
+      simp at h
+      have h' : 0 < x := by linarith
+      have h'' : 0 < x * u := by
+        apply mul_pos
+        assumption
+        exact hu'
+      have h''' : 0 < x * u * (x ^ 2 + y ^ 2 + z ^ 2) := by
+        apply mul_pos
+        assumption
+        exact h''
+      have : x * (u * x ^ 2 + v * y ^ 2 + w * z ^ 2) = x * u * (x ^ 2 + y ^ 2 + z ^ 2) := by ring
+      rw [show x * u * (x ^ 2 + y ^ 2 + z ^ 2) = 0 by linarith] at this
+      -- We derive a contradiction from $x * (u * x ^ 2 + v * y ^ 2 + w * z ^ 2) = 0$.
+      have h'''' : x * (u * x ^ 2 + v * y ^ 2 + w * z ^ 2) = 0 := by linarith
+      have h''''' : x * u * x ^ 2 + x * v * y ^ 2 + x * w * z ^ 2 = 0 := by linarith
+      have h'''''' : x * u * x ^ 2 ≥ 0 := by
+        apply mul_nonneg
+        linarith
+        apply pow_two_nonneg
+      have h''''''' : x * v * y ^ 2 ≥ 0 := by
+        apply mul_nonneg
+        linarith
+        apply pow_two_nonneg
+      have h'''''''' : x * w * z ^ 2 ≥ 0 := by
+        apply mul_nonneg
+        linarith
+        apply pow_two_nonneg
+      have h''''''''' : x * u * x ^ 2 + x * v * y ^ 2 + x * w * z ^ 2 ≥ 0 := by linarith
+      linarith
+    · -- Assume y > 0, then we derive a contradiction.
+      by_contra h
+      simp at h
+      have h' : 0 < y := by linarith
+      have h'' : 0 < y * v := by
+        apply mul_pos
+        assumption
+        exact hv'
+      have h''' : 0 < y * v * (x ^ 2 + y ^ 2 + z ^ 2) := by
+        apply mul_pos
+        assumption
+        exact h''
+      have : y * (u * x ^ 2 + v * y ^ 2 + w * z ^ 2) = y * v * (x ^ 2 + y ^ 2 + z ^ 2) := by ring
+      rw [show y * v * (x ^ 2 + y ^ 2 + z ^ 2) = 0 by linarith] at this
+      -- We derive a contradiction from $y * (u * x ^ 2 + v * y ^ 2 + w * z ^ 2) = 0$.
+      have h'''' : y * (u * x ^ 2 + v * y ^ 2 + w * z ^ 2) = 0 := by linarith
+      have h''''' : y * u * x ^ 2 + y * v * y ^ 2 + y * w * z ^ 2 = 0 := by linarith
+      have h'''''' : y * v * y ^ 2 ≥ 0 := by
+        apply mul_nonneg
+        linarith
+        apply pow_two_nonneg
+      have h''''''' : y * w * z ^ 2 ≥ 0 := by
+        apply mul_nonneg
+        linarith
+        apply pow_two_nonneg
+      have h'''''''' : y * u * x ^ 2 + y * v * y ^ 2 + y * w * z ^ 2 ≥ 0 := by linarith
+      linarith
+    · -- Assume z > 0, then we derive a contradiction.
+      by_contra h
+      simp at h
+      have h' : 0 < z := by linarith
+      have h'' : 0 < z * w := by
+        apply mul_pos
+        assumption
+        exact hw'
+      have h''' : 0 < z * w * (x ^ 2 + y ^ 2 + z ^ 2) := by
+        apply mul_pos
+        assumption
+        exact h''
+      have : z * (u * x ^ 2 + v * y ^ 2 + w * z ^ 2) = z * w * (x ^ 2 + y ^ 2 + z ^ 2) := by ring
+      rw [show z * w * (x ^ 2 + y ^ 2 + z ^ 2) = 0 by linarith] at this
+      -- We derive a contradiction from $z * (u * x ^ 2 + v * y ^ 2 + w * z ^ 2) = 0$.
+      have h'''' : z * (u * x ^ 2 + v * y ^ 2 + w * z ^ 2) = 0 := by linarith
+      have h''''' : z * u * x ^ 2 + z * v * y ^ 2 + z * w * z ^ 2 = 0 := by linarith
+      have h'''''' : z * u * x ^ 2 ≥ 0 := by
+        apply mul_nonneg
+        linarith
+        apply pow_two_nonneg
+      have h''''''' : z * v * y ^ 2 ≥ 0 := by
+        apply mul_nonneg
+        linarith
+        apply pow_two_nonneg
+      have h'''''''' : z * u * x ^ 2 + z * v * y ^ 2 + z * w * z ^ 2 ≥ 0 := by linarith
+      linarith
+
+  -- We show that $x = 0$, $y = 0$, and $z = 0$.
+  have h_x : x = 0 := by
+    -- Assume $x \neq 0$, then $x \geq 0$.
+    by_contra h
+    simp at h
+    have h' : 0 < x := by linarith
+    -- We derive a contradiction from the properties of the system and the positivity of $x, y, z$.
+    have : x * (a 0 + a 3 + a 6) > 0 := by
+      apply mul_pos
+      assumption
+      linarith
+    linarith
+  have h_y : y = 0 := by

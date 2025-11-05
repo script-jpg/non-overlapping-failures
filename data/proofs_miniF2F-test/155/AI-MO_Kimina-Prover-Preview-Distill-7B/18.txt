@@ -1,0 +1,250 @@
+-- We will prove that the solutions are $\tfrac{2\pi}{5}$, $\tfrac{4\pi}{5}$, $\tfrac{6\pi}{5}$,
+  -- $\tfrac{8\pi}{5}$, and $\tfrac{12\pi}{5}$.
+  have h₁ : S = { 2 * Real.pi / 5, 4 * Real.pi / 5, 6 * Real.pi / 5, 8 * Real.pi / 5, 12 * Real.pi / 5 } := by
+
+    -- We will prove set equality by set inclusion in both directions.
+    ext x
+    constructor
+
+    -- First, let's prove that if $x \in S$, then $x$ is in the set $\tfrac{2\pi}{5}$, $\tfrac{4\pi}{5}$,
+    -- $\tfrac{6\pi}{5}$, $\tfrac{8\pi}{5}$, or $\tfrac{12\pi}{5}$.
+    · intro hx
+      -- Let's analyze the equation $\tan(2x) = \cos(\tfrac{x}{2})$.
+      have hx₁ : 0 ≤ x := by
+        exact (h₀ x).1 hx
+      have hx₂ : x ≤ 2 * Real.pi := by
+        exact (h₀ x).2.1 hx
+      have hx₃ : Real.tan (2 * x) = Real.cos (x / 2) := by
+        exact (h₀ x).2.2 hx
+
+      -- We will prove that $x = \tfrac{2\pi}{5}$, $\tfrac{4\pi}{5}$, $\tfrac{6\pi}{5}$,
+      -- $\tfrac{8\pi}{5}$, or $\tfrac{12\pi}{5}$.
+      have hx₄ : x = 2 * Real.pi / 5 ∨ x = 4 * Real.pi / 5 ∨ x = 6 * Real.pi / 5 ∨ x = 8 * Real.pi / 5 ∨ x = 12 * Real.pi / 5 := by
+
+        -- $\tan(2x) = \frac{\sin(2x)}{\cos(2x)}$
+        have htan : Real.tan (2 * x) = Real.sin (2 * x) / Real.cos (2 * x) := by
+          rw [Real.tan_eq_sin_div_cos]
+
+        -- Rewrite the equation $\tan(2x) = \cos(\tfrac{x}{2})$ as $\sin(2x) = \cos(\tfrac{x}{2}) \cos(2x)$
+        rw [htan] at hx₃
+        have hsin : Real.sin (2 * x) = Real.cos (x / 2) * Real.cos (2 * x) := by
+          exact hx₃.mul_right (by simp)
+
+        -- Using the double angle formula $\sin(2x) = 2\sin(x)\cos(x)$, we get $2\sin(x)\cos(x) = \cos(\tfrac{x}{2}) \cos(2x)$
+        have hsin₂ : Real.sin (2 * x) = 2 * Real.sin x * Real.cos x := by
+          rw [Real.sin_two_mul]
+
+        rw [hsin₂] at hsin
+
+        -- Case 1: $\cos(x) = 0$
+        by_cases hcosx : Real.cos x = 0
+        · -- If $\cos(x) = 0$, then $x = \tfrac{\pi}{2} + k\pi$ for some integer $k$.
+          have hx₅ : x = Real.pi / 2 + ↑(⌊x / Real.pi - 1 / 2⌋ : ℤ) * Real.pi := by
+            exact Real.cos_eq_zero_iff.1 hcosx
+          rw [hx₅] at hx₁ hx₂
+          have hx₆ : (⌊x / Real.pi - 1 / 2⌋ : ℤ) ≥ 0 := by
+            have : x / Real.pi - 1 / 2 ≥ 0 := by
+              calc
+                x / Real.pi - 1 / 2 = (⌊x / Real.pi - 1 / 2⌋ : ℝ) := by
+                  apply Int.floor_eq_iff.1
+                  constructor
+                  · exact hx₁
+                  · exact hx₂
+                _ ≥ 0 := by
+                  apply sub_nonneg.mpr
+                  apply div_le_mul Real.pi_pos hx₂
+                  simp
+                  exact Int.floor_le
+          have hx₇ : (⌊x / Real.pi - 1 / 2⌋ : ℤ) < 2 := by
+            have : x / Real.pi - 1 / 2 < 2 := by
+              calc
+                x / Real.pi - 1 / 2 ≤ 2 * Real.pi / Real.pi - 1 / 2 := by
+                  apply div_le_div_right Real.pi_pos
+                  exact hx₂
+                _ = 2 - 1 / 2 := by
+                  rw [mul_div_cancel₀ _ (by simp)]
+                _ < 2 := by simp
+            apply Int.sub_lt_iff.mp
+            apply Int.lt_floor_add_one
+            norm_cast
+          have hx₈ : (⌊x / Real.pi - 1 / 2⌋ : ℤ) = 0 ∨ (⌊x / Real.pi - 1 / 2⌋ : ℤ) = 1 := by
+            omega
+          rcases hx₈ with (hx₈ | hx₈)
+          · -- If $\lfloor x / \pi - 1 / 2 \rfloor = 0$, then $x = \tfrac{\pi}{2}$
+            have hx₉ : x = Real.pi / 2 := by
+              rw [hx₈] at hx₅
+              simp at hx₅
+              exact hx₅
+            rw [hx₉]
+            norm_num
+            rw [mul_div_cancel₀ _ (by simp)]
+            norm_num
+          · -- If $\lfloor x / \pi - 1 / 2 \rfloor = 1$, then $x = \tfrac{3\pi}{2}$
+            have hx₁₀ : x = 3 * Real.pi / 2 := by
+              rw [hx₈] at hx₅
+              simp at hx₅
+              exact hx₅
+            rw [hx₁₀]
+            norm_num
+            rw [mul_div_cancel₀ _ (by simp)]
+            norm_num
+        · -- Case 2: $\cos(2x) = 0$
+          by_cases hcos2x : Real.cos (2 * x) = 0
+          · -- If $\cos(2x) = 0$, then $2x = \tfrac{\pi}{2} + k\pi$ for some integer $k$.
+            have hx₁₀ : 2 * x = Real.pi / 2 + ↑(⌊(2 * x) / Real.pi - 1 / 2⌋ : ℤ) * Real.pi := by
+              exact Real.cos_eq_zero_iff.1 hcos2x
+            rw [hx₁₀] at hx₁ hx₂
+            have hx₁₁ : (⌊(2 * x) / Real.pi - 1 / 2⌋ : ℤ) ≥ 0 := by
+              have : (2 * x) / Real.pi - 1 / 2 ≥ 0 := by
+                calc
+                  (2 * x) / Real.pi - 1 / 2 = (⌊(2 * x) / Real.pi - 1 / 2⌋ : ℝ) := by
+                    apply Int.floor_eq_iff.1
+                    constructor
+                    · exact hx₁
+                    · exact hx₂
+                  _ ≥ 0 := by
+                    apply sub_nonneg.mpr
+                    apply div_le_mul Real.pi_pos hx₂
+                    simp
+                    exact Int.floor_le
+            have hx₁₂ : (⌊(2 * x) / Real.pi - 1 / 2⌋ : ℤ) < 2 := by
+              have : (2 * x) / Real.pi - 1 / 2 < 2 := by
+                calc
+                  (2 * x) / Real.pi - 1 / 2 ≤ (2 * Real.pi) / Real.pi - 1 / 2 := by
+                    apply div_le_div_right Real.pi_pos
+                    exact hx₂
+                  _ = 2 - 1 / 2 := by
+                    rw [mul_div_cancel₀ _ (by simp)]
+                  _ < 2 := by simp
+              apply Int.sub_lt_iff.mp
+              apply Int.lt_floor_add_one
+              norm_cast
+            have hx₁₃ : (⌊(2 * x) / Real.pi - 1 / 2⌋ : ℤ) = 0 ∨ (⌊(2 * x) / Real.pi - 1 / 2⌋ : ℤ) = 1 := by
+              omega
+            rcases hx₁₃ with (hx₁₃ | hx₁₃)
+            · -- If $\lfloor (2x) / \pi - 1 / 2 \rfloor = 0$, then $2x = \tfrac{\pi}{2}$
+              have hx₁₄ : 2 * x = Real.pi / 2 := by
+                rw [hx₁₃] at hx₁₀
+                simp at hx₁₀
+                exact hx₁₀
+              have hx₁₅ : x = Real.pi / 4 := by
+                linarith
+              rw [hx₁₅]
+              norm_num
+              have : 1 = 4 * Real.pi / 4 := by
+                rw [mul_comm 4]
+                simp
+              rw [this]
+              exact Eq.symm (div_eq_of_eq_mul right_ne_zero.mpr rfl)
+            · -- If $\lfloor (2x) / \pi - 1 / 2 \rfloor = 1$, then $2x = \tfrac{3\pi}{2}$
+              have hx₁₆ : 2 * x = 3 * Real.pi / 2 := by
+                rw [hx₁₃] at hx₁₀
+                simp at hx₁₀
+                exact hx₁₀
+              have hx₁₇ : x = 3 * Real.pi / 4 := by
+                linarith
+              rw [hx₁₇]
+              norm_num
+              have : 3 = 12 * Real.pi / 4 := by
+                rw [mul_comm 4]
+                simp
+                ring
+              rw [this]
+              exact Eq.symm (div_eq_of_eq_mul right_ne_zero.mpr rfl)
+          · -- Case 3: $\cos(x) \neq 0$ and $\cos(2x) \neq 0$
+            have hcosx' : Real.cos x ≠ 0 := by
+              exact hcosx
+            have hcos2x' : Real.cos (2 * x) ≠ 0 := by
+              exact hcos2x
+            have eq1 : 2 * Real.sin x * Real.cos x = Real.cos (x / 2) * Real.cos (2 * x) := by
+              exact hsin
+            have eq2 : 2 * Real.sin x * Real.cos x / (Real.cos (x / 2) * Real.cos (2 * x)) = 1 := by
+              exact eq1.symm.trans (by simp)
+            have eq3 : 2 * (Real.sin x / Real.cos (x / 2)) * (Real.cos x / Real.cos (2 * x)) = 1 := by
+              rw [mul_div_assoc, mul_div_assoc, eq2]
+            have cos2xne0 : Real.cos (2 * x) ≠ 0 := by
+              exact hcos2x'
+            have cosxne0 : Real.cos x ≠ 0 := by
+              exact hcosx'
+            have half-angle formula: Real.cos x = 2 * Real.cos (x / 2) ^ 2 - 1 := by
+              have : x = (x / 2) * 2 := by
+                ring
+              rw [this, Real.cos_two_mul]
+            rw [half-angle formula] at eq3
+            have eq4 : 2 * (Real.sin x / Real.cos (x / 2)) * ((2 * Real.cos (x / 2) ^ 2 - 1) / Real.cos (2 * x)) = 1 := by
+              exact eq3.symm.trans (by simp)
+            have eq5 : 2 * Real.sin x * (2 * Real.cos (x / 2) ^ 2 - 1) / (Real.cos (2 * x) * Real.cos (x / 2)) = 1 := by
+              exact eq4.symm.trans (by simp)
+            have eq6 : 2 * Real.sin x * (2 * Real.cos (x / 2) ^ 2 - 1) = Real.cos (2 * x) * Real.cos (x / 2) := by
+              exact eq5.symm.trans (by simp)
+            have eq7 : 2 * Real.sin x * (2 * Real.cos (x / 2) ^ 2 - 1) - Real.cos (2 * x) * Real.cos (x / 2) = 0 := by
+              exact eq6.symm.trans (by simp)
+            have eq8 : (4 * Real.cos (x / 2) ^ 2 - 2) * Real.cos (x / 2) ^ 2 - 2 * Real.cos (x / 2) ^ 2 - Real.cos (2 * x) * Real.cos (x / 2) = 0 := by
+              nlinarith
+            have eq9 : (4 * Real.cos (x / 2) ^ 2 - 2) * Real.cos (x / 2) ^ 2 - 2 * Real.cos (x / 2) ^ 2 - Real.cos (2 * x) * Real.cos (x / 2) = (Real.cos (x / 2) - 1) * (Real.cos (x / 2) + 1) * (4 * Real.cos (x / 2) ^ 2 + 2 * Real.cos (x / 2) + 1) - 2 * Real.cos (x / 2) ^ 2 - Real.cos (2 * x) * Real.cos (x / 2) := by
+              nlinarith
+            have eq10 : (Real.cos (x / 2) - 1) * (Real.cos (x / 2) + 1) * (4 * Real.cos (x / 2) ^ 2 + 2 * Real.cos (x / 2) + 1) - 2 * Real.cos (x / 2) ^ 2 - Real.cos (2 * x) * Real.cos (x / 2) = 0 := by
+              rw [eq9] at this
+              exact this
+            have hne : Real.cos (x / 2) - 1 ≠ 0 := by
+              by_contra h
+              have : Real.cos (x / 2) = 1 := by
+                linarith
+              have : x / 2 = 2 * Real.pi * (⌊x / (2 * Real.pi)⌋ : ℤ) := by
+                exact Real.cos_eq_one_iff.1 h
+              have : x / 2 ≥ 0 := by
+                linarith
+              have : ⌊x / (2 * Real.pi)⌋ ≥ 0 := by
+                exact Int.floor_nonneg.mpr this
+              have : ⌊x / (2 * Real.pi)⌋ < 2 := by
+                have : x / (2 * Real.pi) < 2 := by
+                  calc
+                    x / (2 * Real.pi) ≤ 2 * Real.pi / (2 * Real.pi) := by
+                      apply div_le_div_right (by simp)
+                      exact hx₂
+                    _ = 1 := by
+                      rw [mul_comm]
+                      simp
+                    _ < 2 := by simp
+                apply Int.lt_floor_add_one
+                norm_cast
+              have : ⌊x / (2 * Real.pi)⌋ = 0 ∨ ⌊x / (2 * Real.pi)⌋ = 1 := by
+                omega
+              rcases this with (h | h)
+              · -- If $\lfloor x / (2\pi) \rfloor = 0$, then $x = 0$
+                have hx₁₁ : x = 0 := by
+                  rw [h] at this
+                  simp at this
+                  exact this
+                rw [hx₁₁] at hx
+                norm_num at hx
+              · -- If $\lfloor x / (2\pi) \rfloor = 1$, then $x = 2\pi$
+                have hx₁₁ : x = 2 * Real.pi := by
+                  rw [h] at this
+                  simp at this
+                  exact this
+                rw [hx₁₁] at hx
+                norm_num at hx
+            have hne₁ : Real.cos (x / 2) + 1 ≠ 0 := by
+              by_contra h
+              have : Real.cos (x / 2) = -1 := by
+                linarith
+              have : x / 2 = Real.pi * (⌊x / Real.pi - 1 / 2⌋ : ℤ) := by
+                exact Real.cos_eq_neg_one_iff.1 h
+              have hx₁₁ : x / 2 ≥ 0 := by
+                linarith
+              have hx₁₂ : ⌊x / Real.pi - 1 / 2⌋ ≥ 0 := by
+                exact Int.floor_nonneg.mpr hx₁₁
+              have hx₁₃ : ⌊x / Real.pi - 1 / 2⌋ < 2 := by
+                have : x / Real.pi - 1 / 2 < 2 := by
+                  calc
+                    x / Real.pi - 1 / 2 ≤ 2 * Real.pi / Real.pi - 1 / 2 := by
+                    apply div_le_div_right Real.pi_pos
+                    exact hx₂
+                  _ = 2 - 1 / 2 := by
+                    rw [mul_div_cancel₀ _ (by simp)]
+                  _ < 2 := by simp
+                apply Int.sub_lt_iff.mp
+                apply Int.lt_floor_add_one
+                norm_cast
+              have hx₁₄ : ⌊x / Real.pi - 1 / 2

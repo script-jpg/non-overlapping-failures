@@ -1,0 +1,116 @@
+-- prove that $f(x) \geq 15$
+  have : 15 ≤ f x := by
+    rw [h₂]
+    -- $|x - p| \geq 0$
+    have : 0 ≤ abs (x - p) := abs_nonneg (x - p)
+    -- $|x - 15| \geq 0$
+    have : 0 ≤ abs (x - 15) := abs_nonneg (x - 15)
+    -- $|x - p - 15| \geq 0$
+    have : 0 ≤ abs (x - p - 15) := abs_nonneg (x - p - 15)
+    -- $|x - p| + |x - 15| + |x - p - 15| \geq 0$
+    have : 0 ≤ abs (x - p) + abs (x - 15) + abs (x - p - 15) := by linarith
+    -- $f(x) \geq 15$ is equivalent to $|x - p| + |x - 15| + |x - p - 15| \geq 15$
+    have : 15 ≤ abs (x - p) + abs (x - 15) + abs (x - p - 15) := by linarith
+    -- so $f(x) \geq 15$
+    exact this
+
+  -- in fact, $f(x) = 15$ because $|x-p-15| = |x-15| - |x-p|$
+  have : f x = 15 := by
+    rw [h₂]
+    -- $|x-p-15| = |x-15-p| = ||x-15|-p|$
+    have h5 : abs (x - p - 15) = abs (abs (x - 15) - p) := by
+      have : x - p - 15 = x - 15 - p := by ring
+      rw [this]
+      apply abs_sub_comm
+    -- $|x-p-15| = ||x-15|-p| \geq ||x-15|-15|$
+    have h6 : abs (x - p - 15) ≥ abs (abs (x - 15) - 15) := by
+      apply abs_le_abs
+      have : -15 ≤ x - 15 := by linarith
+      apply this
+      linarith
+    -- $|x-15| \geq |15-p|$
+    have h4 : abs (x - 15) ≥ abs (15 - p) := by
+      apply abs_le_abs
+      apply le_of_sub_nonneg
+      apply le_of_lt
+      apply h₀.right
+    -- $|x-15| - p \geq |15-p| - p$
+    have h3 : abs (x - 15) - p ≥ abs (15 - p) - p := by
+      apply sub_le_sub_right
+      apply h4
+    -- $||x-15|-p| \geq ||15-p|-p|$
+    have h2 : abs (abs (x - 15) - p) ≥ abs (abs (15 - p) - p) := by
+      apply abs_le_abs
+      apply le_of_sub_nonneg
+      apply le_of_lt
+      apply h3
+    -- $|x-p| + ||15-p|-p| \geq |x-p| + |15-2p|$
+    have h1 : abs (x - p) + abs (abs (15 - p) - p) ≥ abs (x - p) + abs (15 - 2 * p) := by
+      have : abs (15 - p) - p = 15 - 2 * p := by
+        apply abs_of_nonneg
+        apply le_of_sub_nonneg
+        apply le_of_lt
+        apply h₀.right
+      rw [this]
+      apply abs_le_abs
+      apply le_of_sub_nonneg
+      apply le_of_lt
+      apply h2
+    -- $|x-p-15| + ||x-15|-p| \geq |x-p-15| + |15-2p|$
+    have h3' : abs (x - p - 15) + abs (abs (x - 15) - p) ≥ abs (x - p - 15) + abs (15 - 2 * p) := by
+      apply add_le_add
+      exact h6
+      apply h1
+    -- $|x-p-15| + |15-2p| \geq 15-|x-p-15| + |x-p-15| = 15$
+    have h4' : abs (x - p - 15) + abs (15 - 2 * p) ≥ 15 := by
+      have : abs (15 - 2 * p) = abs (2 * p - 15) := by
+        rw [← abs_neg]
+        have : abs (2 * p - 15) = abs (15 - 2 * p) := by
+          apply abs_sub_comm
+        rw [this]
+        apply abs_mul
+        simp
+        apply le_of_lt
+        apply h₀.right
+      rw [this]
+      have : abs (x - p - 15) + abs (2 * p - 15) ≥ abs (x - p - 15) + abs (x - p + 15) := by
+        have : 2 * p - 15 ≤ x - p + 15 := by
+          linarith
+        apply add_le_add_of_le_of_le
+        apply abs_le_abs
+        apply le_of_sub_nonneg
+        apply le_of_lt
+        apply h3
+        apply abs_le_abs
+        apply le_of_sub_nonneg
+        apply le_of_lt
+        linarith
+      have h4'' : abs (x - p - 15) + abs (x - p + 15) = 30 := by
+        have : x - p - 15 ≤ 0 := by linarith
+        have : x - p + 15 ≥ 0 := by linarith
+        rw [abs_of_nonpos this, abs_of_nonneg this]
+        linarith
+      linarith
+    -- so $|x-p-15| + ||x-15|-p| \geq 15$
+    have h5' : abs (x - p - 15) + abs (abs (x - 15) - p) ≥ 15 := by
+      apply le_trans
+      exact h3'
+      apply h4'
+    -- $|x-p| + ||x-15|-p| = |x-p| + |x-15-p| = |x-p-15| + |x-15| = |x-p-15| + |x-15-p|$
+    have h2' : abs (x - p) + abs (abs (x - 15) - p) = abs (x - p - 15) + abs (x - 15) := by
+      have : abs (x - 15) - p = x - 15 - p := by
+        apply abs_of_nonneg
+        linarith
+      rw [this]
+      have : abs (x - p) = x - p := by
+        apply abs_of_nonneg
+        linarith
+      rw [this]
+      ring
+    -- so $|x-p-15| + |x-15| \geq 15$
+    linarith
+
+  -- so $f(x) = 15$
+  linarith
+
+```

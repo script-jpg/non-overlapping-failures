@@ -1,0 +1,313 @@
+obtain ⟨x, hx⟩ := h₁
+  obtain ⟨t, ht⟩ := h₂
+
+  -- The conditions $n>1$ and $n=a^3=b^4$ imply $2\leq a$ and $2\leq b$.
+  have : 2 ≤ x := by
+    by_contra!
+    have : x ^ 3 < 2 ^ 3 := by
+      apply Nat.pow_lt_pow_of_le_of_lt this
+      exact Nat.zero_le x
+    have : x ^ 3 < 8 := by
+      apply Nat.lt_of_lt_of_le
+      norm_num
+      exact Nat.pow_le_pow_of_le_left this 3
+    have : n < 8 := by
+      apply Nat.lt_of_lt_of_le
+      rw [hx]
+      exact Nat.trans (id (Nat.lt_irrefl _)) this
+    have : n ≠ 0 := by
+      omega
+    have : n = 1 := by
+      omega
+    absurd this
+    exact h₀
+  have : 2 ≤ t := by
+    by_contra!
+    have : t ^ 4 < 2 ^ 4 := by
+      apply Nat.pow_lt_pow_of_le_of_lt this
+      exact Nat.zero_le t
+    have : t ^ 4 < 16 := by
+      apply Nat.lt_of_lt_of_le
+      norm_num
+      exact Nat.pow_le_pow_of_le_left this 4
+    have : n < 16 := by
+      apply Nat.lt_of_lt_of_le
+      rw [ht]
+      exact Nat.trans (id (Nat.lt_irrefl _)) this
+    have : n ≠ 0 := by
+      omega
+    have : n = 1 := by
+      omega
+    absurd this
+    exact h₀
+
+  -- Since $n$ is a perfect cube and a perfect fourth power,
+  --  there exists a positive integer $a$ such that $n=a^3 b^3$ for some integer $b$,
+  --  and there exists a positive integer $c$ such that $n=c^4 d^2$ for some integer $d$.
+  --  Moreover, we can choose $a$ and $c$ to be positive integers.
+  have h₃ : ∀ a b : ℕ, a ^ 3 = n → b ^ 4 = n → 4096 ≤ n := by
+    intro a b ha hb
+    -- Since $a^3 = b^4$, we can write $a^3 = c^4$ by letting $c = b$.
+    have : b ^ 4 = b ^ 3 * b := by
+      rw [Nat.pow_succ]
+    rw [ha, this] at hb
+    -- Since $b^3 \neq 1$, we have $2 \leq b$.
+    have : 2 ≤ b := by
+      by_contra!
+      have : b ^ 3 < 2 ^ 3 := by
+        apply Nat.pow_lt_pow_of_le_of_lt this
+        exact Nat.zero_le b
+      have : b ^ 3 < 8 := by
+        apply Nat.lt_of_lt_of_le
+        norm_num
+        exact Nat.pow_le_pow_of_le_left this 3
+      have : b ^ 3 * b < 8 * 2 := by
+        apply Nat.mul_lt_mul_of_lt_of_le
+        exact Nat.lt_trans (id (Nat.lt_irrefl _)) this
+        exact Nat.zero_le b
+      have : b ^ 3 * b < 16 := by
+        apply Nat.lt_of_lt_of_le
+        norm_num
+        exact Nat.trans (id (Nat.lt_irrefl _)) this
+      have : b ^ 4 < 16 := by
+        rw [← hb]
+        exact Nat.trans (id (Nat.lt_irrefl _)) this
+      have : b ^ 4 ≠ 0 := by
+        omega
+      have : b ^ 4 = 1 := by
+        omega
+      absurd this
+      exact Nat.one_le_pow₀ b
+    -- Since $b$ is a perfect cube, there exists a positive integer $c$ such that $b = c^3$.
+    have ⟨c, hc⟩ : ∃ c, b = c ^ 3 := by
+      have h₀ : 2 ≤ b := this
+      have h₁ : b ≠ 1 := by
+        omega
+      apply Nat.exists_eq_cube h₁
+    obtain ⟨c, hc⟩ := hc
+    -- Since $b = c^3$, $c$ cannot be zero.
+    have : c ≠ 0 := by
+      by_contra!
+      have : c ^ 3 = 0 := by
+        rw [this] at hc
+        exact hc
+      have : b = 0 := by
+        rw [hc] at hc
+        exact hc
+      have : b ≠ 0 := by
+        omega
+      contradiction
+    -- Since $b^4 = c^4 d^2$, $c^4 d^2$ is a perfect fourth power.
+    --  Therefore, $c$ and $d$ must be even numbers.
+    have ⟨d, hd⟩ : ∃ d, c ^ 4 * d ^ 2 = b ^ 4 := by
+      use b
+      rw [← Nat.pow_mul]
+      apply Nat.pow_left_inj
+      exact hc
+      by_contra! h₂
+      have : c ^ 4 * d ^ 2 < c ^ 4 := by
+        apply Nat.mul_lt_mul_of_lt_of_le
+        apply Nat.pow_lt_pow_of_le_of_lt h₂
+        exact Nat.zero_le d
+        exact Nat.zero_le c
+      have : c ^ 4 * d ^ 2 < c ^ 4 * 1 := by
+        apply Nat.lt_of_lt_of_le this
+        exact Nat.mul_le_mul_left (c ^ 4) (Nat.zero_le d)
+      have : c ^ 4 * d ^ 2 < c ^ 4 := by
+        apply Nat.lt_of_lt_of_le this
+        exact Nat.zero_lt_one
+      have : b ^ 4 < b ^ 4 := by
+        apply Nat.lt_of_lt_of_le this
+        rw [hb]
+        apply Nat.lt_of_lt_of_le (id (Nat.lt_irrefl _))
+        exact Nat.one_le_pow₀ c
+      absurd this
+      exact Nat.zero_lt_one
+    obtain ⟨d, hd⟩ := hd
+    have h₃ : 2 ≤ c := by
+      by_contra!
+      have : c ^ 3 < 2 ^ 3 := by
+        apply Nat.pow_lt_pow_of_le_of_lt this
+        exact Nat.zero_le c
+      have : c ^ 3 < 8 := by
+        apply Nat.lt_of_lt_of_le
+        norm_num
+        exact Nat.pow_le_pow_of_le_left this 3
+      have : c ^ 3 * c < 8 * 2 := by
+        apply Nat.mul_lt_mul_of_lt_of_le
+        exact Nat.lt_trans (id (Nat.lt_irrefl _)) this
+        exact Nat.zero_le c
+      have : c ^ 3 * c < 16 := by
+        apply Nat.lt_of_lt_of_le
+        norm_num
+        exact Nat.trans (id (Nat.lt_irrefl _)) this
+      have : c ^ 4 < 16 := by
+        rw [← hc] at this
+        exact Nat.trans (id (Nat.lt_irrefl _)) this
+      have : c ^ 4 ≠ 0 := by
+        omega
+      have : c ^ 4 = 1 := by
+        omega
+      absurd this
+      exact Nat.one_le_pow₀ c
+    have h₄ : 2 ≤ d := by
+      by_contra!
+      have : d ^ 2 < 2 ^ 2 := by
+        apply Nat.pow_lt_pow_of_le_of_lt this
+        exact Nat.zero_le d
+      have : d ^ 2 < 4 := by
+        apply Nat.lt_of_lt_of_le
+        norm_num
+        exact Nat.pow_le_pow_of_le_left this 2
+      have : d ^ 2 * c ^ 4 < 4 * 8 := by
+        apply Nat.mul_lt_mul_of_lt_of_le
+        exact Nat.lt_trans (id (Nat.lt_irrefl _)) this
+        exact Nat.zero_le c
+      have : d ^ 2 * c ^ 4 < 32 := by
+        apply Nat.lt_of_lt_of_le
+        norm_num
+        exact Nat.trans (id (Nat.lt_irrefl _)) this
+      have : d ^ 2 * c ^ 4 < 64 := by
+        apply Nat.lt_of_lt_of_le
+        norm_num
+        exact Nat.trans (id (Nat.lt_irrefl _)) this
+      have : d ^ 2 * c ^ 4 < 2 ^ 6 := by
+        apply Nat.lt_of_lt_of_le this
+        exact Nat.trans (id (Nat.lt_irrefl _)) (Nat.one_le_pow₀ d)
+      have : d ^ 2 * c ^ 4 < (2 ^ 3) ^ 2 := by
+        apply Nat.lt_of_lt_of_le this
+        exact Nat.trans (id (Nat.lt_irrefl _)) (Nat.one_le_pow₀ d)
+      have : d ^ 2 * c ^ 4 ≠ (2 ^ 3) ^ 2 := by
+        apply Nat.ne_of_lt
+        apply Nat.lt_of_lt_of_le this
+        exact Nat.trans (id (Nat.lt_irrefl _)) (Nat.zero_lt_one)
+      have : d ^ 2 * c ^ 4 = (2 ^ 3) ^ 2 := by
+        omega
+      absurd this
+      exact Nat.one_le_pow₀ d
+    -- Since $c$ and $d$ are even numbers, let $c = 2 e$ and $d = 2 f$.
+    have ⟨e, he⟩ : ∃ e, c = 2 * e := by
+      have h₀ : 2 ≤ c := h₃
+      have h₁ : c ≠ 0 := by
+        by_contra!
+        have : c ^ 3 = 0 := by
+          rw [this] at hc
+          exact hc
+        have : c = 0 := by
+          apply Nat.pow_eq_zero hc
+          exact Nat.zero_le c
+        contradiction
+      apply Nat.exists_eq_two_mul h₀ h₁
+    obtain ⟨e, he⟩ := he
+    have ⟨f, hf⟩ : ∃ f, d = 2 * f := by
+      have h₀ : 2 ≤ d := h₄
+      have h₁ : d ≠ 0 := by
+        by_contra!
+        have : d ^ 2 = 0 := by
+          rw [this] at hd
+          exact hd
+        have : d = 0 := by
+          apply Nat.pow_eq_zero hd
+          exact Nat.zero_le d
+        contradiction
+      apply Nat.exists_eq_two_mul h₀ h₁
+    obtain ⟨f, hf⟩ := hf
+    -- Substituting $c = 2 e$ and $d = 2 f$ into $b^4 = c^4 d^2$,
+    --  we get $b^4 = 16 e^4 f^2$.
+    rw [he, hf] at hd
+    have hd₀ : b ^ 4 = 16 * e ^ 4 * f ^ 2 := by
+      calc
+        b ^ 4 = (c ^ 3) ^ 4 := by rw [hc]
+        _ = c ^ 12 := by rw [Nat.pow_mul]
+        _ = (2 * e) ^ 12 := by rw [he]
+        _ = 2 ^ 12 * e ^ 12 := by rw [Nat.mul_pow]
+        _ = 4096 * e ^ 12 := by rw [show 2 ^ 12 = 4096 by norm_num]
+        _ = 4096 * (e ^ 2) ^ 6 := by rw [show e ^ 12 = (e ^ 2) ^ 6 by rw [← Nat.pow_mul]; norm_num]
+        _ = 4096 * (e ^ 2) ^ 4 * (e ^ 2) ^ 2 := by rw [show (e ^ 2) ^ 6 = (e ^ 2) ^ 4 * (e ^ 2) ^ 2 by rw [← Nat.pow_add]]
+        _ = 4096 * e ^ 8 * f ^ 2 := by rw [show (e ^ 2) ^ 4 = e ^ 8 by rw [← Nat.pow_mul]; norm_num, hf]
+    -- Since $b$ is a perfect fourth power, $e$ and $f$ must be perfect fourth powers.
+    have h₅ : ∃ g, e = g ^ 4 := by
+      have h₀ : 2 ≤ e := by
+        have : 2 ≤ c := h₃
+        rw [he] at this
+        omega
+      apply Nat.exists_eq_cube h₀
+    obtain ⟨g, hg⟩ := h₅
+    have h₆ : ∃ h, f = h ^ 4 := by
+      have h₀ : 2 ≤ f := by
+        have : 2 ≤ d := h₄
+        rw [hf] at this
+        omega
+      apply Nat.exists_eq_cube h₀
+    obtain ⟨h, hh⟩ := h₆
+    -- Substituting $e = g^4$ and $f = h^4$ into $b^4 = 4096 e^4 f^2$,
+    --  we get $b^4 = 4096 (g^4)^4 (h^4)^2 = 4096 g^8 h^8 = 4096 (g h)^8$.
+    rw [hg, hh] at hd₀
+    have hd₁ : b ^ 4 = 4096 * (g * h) ^ 8 := by
+      calc
+        b ^ 4 = 4096 * (2 * g ^ 4) ^ 4 * (2 * h ^ 4) ^ 2 := by rw [hd₀]
+        _ = 4096 * (2 ^ 4 * (g ^ 4) ^ 4) * (2 ^ 2 * (h ^ 4) ^ 2) := by rw [Nat.mul_pow, Nat.pow_mul, Nat.pow_mul]
+        _ = 4096 * (16 * (g ^ 16)) * (4 * (h ^ 8)) := by rw [show (2 ^ 4 = 16) by norm_num, show (2 ^ 2 = 4) by norm_num, ← Nat.pow_mul, ← Nat.pow_mul]
+        _ = 4096 * (16 * 4) * (g ^ 16 * h ^ 8) := by rw [Nat.mul_assoc, Nat.mul_comm, Nat.mul_assoc]
+        _ = 4096 * (4 * 16) * (g ^ 8 * h ^ 8) := by rw [Nat.mul_assoc, Nat.mul_comm, ← Nat.mul_assoc, Nat.mul_assoc]
+        _ = 4096 * (4 * 16) * ((g * h) ^ 8) := by rw [← Nat.mul_pow]
+        _ = 4096 * 64 * ((g * h) ^ 8) := by rw [show 4 * 16 = 64 by norm_num]
+        _ = 4096 * (64 * (g * h) ^ 8) := by rw [Nat.mul_assoc]
+        _ = 4096 * (16 ^ 4 * (g * h) ^ 8) := by rw [show 64 = 16 ^ 4 by norm_num]
+        _ = 4096 * ((g * h) ^ 2) ^ 8 := by rw [show 16 ^ 4 = (16 ^ 2) ^ 2 by rw [← Nat.pow_mul]; norm_num, ← Nat.pow_mul]
+        _ = 4096 * (g * h) ^ 8 := by rw [show (16 ^ 2) ^ 2 = 16 ^ 4 by rw [← Nat.pow_mul]; norm_num, ← Nat.mul_pow]
+    -- Therefore, $b^4$ is a multiple of $4096$ and so is $n$.
+    have hn : 4096 ∣ n := by
+      rw [hx]
+      rw [hd₁]
+      apply Nat.dvd_mul_left
+    -- Since $4096 > 1$, $4096$ is a positive integer, so $4096 \leq n$.
+    apply Nat.le_of_dvd h₀ hn
+
+  -- Now we need to deal with the case when one of $x$ or $t$ is zero or one.
+  have : x ≠ 0 := by
+    by_contra!
+    have : x ^ 3 = 0 := by
+      rw [this] at hx
+      exact hx
+    have : n = 0 := by
+      rw [this] at hx
+      exact hx
+    have : n ≠ 0 := by
+      omega
+    contradiction
+  have : x ≠ 1 := by
+    by_contra!
+    have : x ^ 3 = 1 := by
+      rw [this] at hx
+      exact hx
+    have : n = 1 := by
+      rw [this] at hx
+      exact hx
+    have : n ≠ 1 := by
+      exact h₀
+    contradiction
+  have : t ≠ 0 := by
+    by_contra!
+    have : t ^ 4 = 0 := by
+      rw [this] at ht
+      exact ht
+    have : n = 0 := by
+      rw [this] at ht
+      exact ht
+    have : n ≠ 0 := by
+      omega
+    contradiction
+  have : t ≠ 1 := by
+    by_contra!
+    have : t ^ 4 = 1 := by
+      rw [this] at ht
+      exact ht
+    have : n = 1 := by
+      rw [this] at ht
+      exact ht
+    have : n ≠ 1 := by
+      exact h₀
+    contradiction
+
+  -- Since $n$ is a perfect cube and a perfect

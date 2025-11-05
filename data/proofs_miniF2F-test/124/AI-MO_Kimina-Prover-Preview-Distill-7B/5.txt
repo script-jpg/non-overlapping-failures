@@ -1,0 +1,207 @@
+-- Let $a$ and $b$ be real numbers.
+
+  -- We need to show that $\frac{|a+b|}{1+|a+b|} \leq \frac{|a|}{1+|a|} + \frac{|b|}{1+|b|}$.
+
+  -- First, consider the case where $a+b = 0$.
+
+  by_cases h : a + b = 0
+
+  · -- In this case, the inequality can be simplified as $|a| = |b|$.
+
+    simp [h]
+
+    -- Since $|a| = |b|$, the inequality holds.
+
+    linarith [abs_nonneg a, abs_nonneg b]
+
+  · -- Now, consider the case where $a+b \neq 0$.
+
+    -- Let $x = |a|$ and $y = |b|$.
+
+    let x := abs a
+
+    let y := abs b
+
+    -- We can rewrite the inequality in terms of $x$ and $y$.
+
+    suffices abs (a + b) / (1 + abs (a + b)) ≤ x / (1 + x) + y / (1 + y) by
+
+      -- By substituting $x = |a|$ and $y = |b|$, we get the original inequality.
+
+      simp [x, y] at this
+
+      exact this
+
+    -- Note that $|a+b| \leq |a| + |b|$, so $|a+b| \leq x + y$.
+
+    have h1 : abs (a + b) ≤ x + y := by
+
+      -- This is a direct application of the triangle inequality.
+
+      simp [x, y]
+
+      exact abs_add a b
+
+    -- So it suffices to show that $\frac{x+y}{1+x+y} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+
+    suffices (x + y) / (1 + x + y) ≤ x / (1 + x) + y / (1 + y) by
+
+      -- Since $|a+b| \leq x + y$, we have $\frac{|a+b|}{1+|a+b|} \leq \frac{x+y}{1+x+y}$.
+
+      -- Therefore, it suffices to show that $\frac{x+y}{1+x+y} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+
+      have h2 : 1 + x + y ≤ 1 + abs (a + b) := by
+
+        -- This is because $|a+b| \leq x + y$.
+
+        linarith [h1]
+
+      have h3 : 1 + abs (a + b) ≠ 0 := by
+
+        -- Since $a+b \neq 0$, we have $|a+b| > 0$.
+
+        have : 0 < abs (a + b) := by positivity
+
+        -- Therefore, $1 + |a+b| > 1 > 0$.
+
+        linarith
+
+      have h4 : 1 + x + y ≠ 0 := by
+
+        -- Since $x = |a| \geq 0$ and $y = |b| \geq 0$, we have $1 + x + y \geq 1 > 0$.
+
+        have : 0 ≤ x := by exact abs_nonneg a
+
+        have : 0 ≤ y := by exact abs_nonneg b
+
+        -- So $1 + x + y \geq 1 > 0$.
+
+        linarith
+
+      -- By substituting $1 + |a+b| \geq 1 + x + y > 0$ into the inequality, we get $\frac{|a+b|}{1+|a+b|} \leq \frac{x+y}{1+x+y}$.
+
+      have h5 : abs (a + b) / (1 + abs (a + b)) ≤ (x + y) / (1 + x + y) := by
+
+        -- This is because $|a+b| \leq x + y$ and $1 + |a+b| \geq 1 + x + y > 0$.
+
+        apply (div_le_div_iff (by linarith) (by linarith)).mpr
+
+        linarith [h1]
+
+      -- So it suffices to show that $\frac{x+y}{1+x+y} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+
+      linarith [h5]
+
+    -- Now, consider the case where $x+y = 0$.
+
+    by_cases h' : x + y = 0
+
+    · -- In this case, we have $x = |a| = 0$ and $y = |b| = 0$.
+
+      simp [h'] at *
+
+      -- So $|a| = 0$ and $|b| = 0$.
+
+      have : abs a = 0 := by
+
+        -- Since $x = |a|$ and $x = 0$, we have $|a| = 0$.
+
+        simp [x] at *
+
+        exact h'
+
+      have : abs b = 0 := by
+
+        -- Since $y = |b|$ and $y = 0$, we have $|b| = 0$.
+
+        simp [y] at *
+
+        exact h'
+
+      -- Therefore, $a = 0$ and $b = 0$.
+
+      have : a = 0 := by exact abs_eq_zero.mp this
+
+      have : b = 0 := by exact abs_eq_zero.mp this
+
+      -- So $a = 0$ and $b = 0$.
+
+      simp [this, ‹b = 0›]
+
+    · -- Finally, consider the case where $x+y \neq 0$.
+
+      -- We need to show that $\frac{x+y}{1+x+y} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+
+      have h2 : 0 ≤ x := by exact abs_nonneg a
+
+      have h3 : 0 ≤ y := by exact abs_nonneg b
+
+      have h4 : 0 < x + y := by positivity
+
+      -- Note that $x+y < 1 + x + y$.
+
+      have h5 : x + y < 1 + x + y := by linarith
+
+      -- So $\frac{x+y}{1+x+y} < 1$.
+
+      have h6 : (x + y) / (1 + x + y) < 1 := by
+
+        -- This is because $x+y < 1+x+y$ and $1+x+y > 0$.
+
+        apply (div_lt_iff (by linarith)).mpr
+
+        linarith
+
+      -- So it suffices to show that $\frac{x}{1+x} + \frac{y}{1+y} \geq 1$.
+
+      suffices 1 ≤ x / (1 + x) + y / (1 + y) by
+
+        linarith [this, h6]
+
+      -- Note that $\frac{x}{1+x} + \frac{y}{1+y} - 1 = \frac{xy}{(1+x)(1+y)}$.
+
+      have h7 : x / (1 + x) + y / (1 + y) - 1 = x * y / ((1 + x) * (1 + y)) := by
+
+        -- This can be verified by algebraic manipulation.
+
+        field_simp
+
+        ring
+
+      -- So it suffices to show that $\frac{xy}{(1+x)(1+y)} \geq 0$.
+
+      suffices 0 ≤ x * y / ((1 + x) * (1 + y)) by
+
+        linarith [h7, this]
+
+      -- Note that $x = |a| \geq 0$ and $y = |b| \geq 0$.
+
+      have h8 : 0 ≤ x := by exact abs_nonneg a
+
+      have h9 : 0 ≤ y := by exact abs_nonneg b
+
+      -- So $xy \geq 0$, $(1+x) > 0$, and $(1+y) > 0$.
+
+      have h10 : 0 ≤ x * y := by exact mul_nonneg h8 h9
+
+      have h11 : 0 < 1 + x := by
+
+        -- Since $x \geq 0$, we have $1 + x \geq 1 > 0$.
+
+        linarith [h8]
+
+      have h12 : 0 < 1 + y := by
+
+        -- Since $y \geq 0$, we have $1 + y \geq 1 > 0$.
+
+        linarith [h9]
+
+      -- So $(1+x)(1+y) > 0$.
+
+      have h13 : 0 < (1 + x) * (1 + y) := by positivity
+
+      -- So $\frac{xy}{(1+x)(1+y)} \geq 0$.
+
+      exact div_nonneg h10 h13
+
+```

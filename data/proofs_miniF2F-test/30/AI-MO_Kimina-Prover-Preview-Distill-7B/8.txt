@@ -1,0 +1,349 @@
+rcases h₀ with ⟨hx, hy⟩
+
+  -- Show that $x < y^2$.
+  have h₂ : x < y ^ 2 := by
+    have h₂ : x ^ y ^ 2 > x ^ 1 := by
+      apply Nat.pow_lt_pow_left
+     . exact h₁.1
+     . exact hy
+    rw [Nat.pow_one] at h₂
+    apply (Nat.pow_lt_pow_iff_right hx).mp at h₂
+    exact h₂
+
+  -- Show that $y < x^2$.
+  have h₃ : y < x ^ 2 := by
+    have h₃ : y ^ x > y ^ 1 := by
+      apply Nat.pow_lt_pow_left
+     . exact h₁.2
+     . exact hx
+    rw [Nat.pow_one] at h₃
+    apply (Nat.pow_lt_pow_iff_right hy).mp at h₃
+    exact h₃
+
+  -- Consider the prime factorization of $x$ and $y$.
+  by_cases h₄ : x = 1
+ . -- If $x = 1$, then $y = 1$.
+    simp [h₄] at h₁
+    tauto
+
+ . -- If $x > 1$, then $x$ has a prime divisor $p$.
+    have h₅ : ∃ p : ℕ, p.Prime ∧ p ∣ x := by
+      have h₅ : x ≠ 1 := by
+        omega
+      exact Nat.exists_prime_and_dvd h₅
+
+    rcases h₅ with ⟨p, h₅, h₆⟩
+
+    have h₇ : p ∣ y ^ x := by
+      apply Nat.dvd_trans h₆
+      apply Nat.pow_dvd_pow
+
+    have h₈ : p ∣ y := by
+      by_contra!
+      apply Nat.Prime.not_dvd_pow_of_not_dvd at this
+      simp [this] at h₇
+
+    -- We have $p \mid x$ and $p \mid y$, so $p \mid x + y$.
+    have h₉ : p ∣ x + y := by
+      apply Nat.dvd_add
+     . exact h₆
+     . exact h₈
+
+    -- Show that $p^2 \mid x + y$.
+    replace h₉ : p ^ 2 ∣ x + y := by
+      have h₉ : p ∣ (x + y) ^ 2 := by
+        apply Nat.dvd_trans h₉
+        apply Nat.pow_dvd_pow
+
+      have h₁₀ : p ∣ p ^ 2 := by
+        exact Nat.dvd_pow_self h₅ (by omega)
+
+      apply Nat.Coprime.dvd_of_dvd_mul_left at h₉
+      exact h₉
+
+    -- We have $p^2 \mid x^2 - y^2$.
+    have h₁₀ : p ^ 2 ∣ x ^ 2 - y ^ 2 := by
+      apply Nat.dvd_sub (by exact Nat.pow_le_pow_of_le_left h₃ _) h₉
+
+    -- We have $p^2 \mid x^2$, so $p^2 \mid y^2$ and $p \mid y$.
+    replace h₁₀ : p ^ 2 ∣ y ^ 2 := by
+      have h₁₀ : p ^ 2 ∣ x ^ 2 := by
+        apply Nat.dvd_trans h₁₀
+        apply Nat.pow_dvd_pow
+
+      apply Nat.Coprime.dvd_of_dvd_mul_left at h₁₀
+      exact h₁₀
+
+    replace h₈ : p ∣ y ^ 2 := by
+      apply Nat.dvd_trans h₈
+      apply Nat.pow_dvd_pow
+
+    have h₁₁ : p ∣ y := by
+      by_contra!
+      apply Nat.Prime.not_dvd_pow_of_not_dvd at this
+      simp [this] at h₈
+
+    -- We have $p^2 \mid x^2$ and $p^2 \mid y^2$, so $p^2 \mid x^2 + y^2$.
+    have h₁₂ : p ^ 2 ∣ x ^ 2 + y ^ 2 := by
+      apply Nat.dvd_add
+     . exact h₁₀
+     . exact h₁₁
+
+    -- We have $p^2 \mid x^2 - y^2$ and $p^2 \mid x^2 + y^2$, so $p^2 \mid 2x^2$.
+    have h₁₃ : p ^ 2 ∣ 2 * x ^ 2 := by
+      have h₁₃ : p ^ 2 ∣ (x ^ 2 + y ^ 2) + (x ^ 2 - y ^ 2) := by
+        apply Nat.dvd_add
+       . exact h₁₂
+       . exact h₁₀
+
+      have h₁₄ : p ^ 2 ∣ (x ^ 2 + y ^ 2) - (x ^ 2 - y ^ 2) := by
+        apply Nat.dvd_sub (by exact Nat.pow_le_pow_of_le_left h₃ _)
+        exact h₁₁
+
+      apply Nat.dvd_of_dvd_add at h₁₃
+      apply Nat.dvd_of_dvd_sub at h₁₄
+      exact Nat.dvd_add h₁₄ h₁₃
+
+    -- We have $p \mid 2$.
+    have h₁₄ : p ∣ 2 := by
+      have h₁₄ : p ^ 2 ∣ 2 * x ^ 2 := by
+        exact h₁₃
+
+      have h₁₅ : p ∣ 2 * x ^ 2 := by
+        apply Nat.dvd_trans h₁₄
+        apply Nat.pow_dvd_pow
+
+      apply Nat.Prime.dvd_mul h₅ at h₁₅
+      rcases h₁₅ with h₁₅ | h₁₅
+
+     . -- If $p \mid 2$, then $p = 2$.
+        exact h₁₅
+
+     . -- If $p \mid x^2$, then $p \mid x$, a contradiction.
+        apply Nat.Prime.dvd_of_dvd_pow h₅ at h₁₆
+        exact h₁₆ h₆
+
+    -- We have $p = 2$.
+    replace h₁₄ : p = 2 := by
+      exact Nat.Prime.eq_of_dvd_of_lt h₅ h₁₄ (by norm_num)
+
+    -- We have $2 \mid 2$, which is trivial.
+    have h₁₅ : 2 ∣ 2 := by
+      exact Nat.dvd_refl 2
+
+    -- We have $2 \mid x$, so $x = 2x_0$ for some natural number $x_0$.
+    replace h₁₄ : 2 ∣ x := by
+      apply h₁₄
+      omega
+
+    replace h₁₄ : ∃ x₀ : ℕ, x = 2 * x₀ := by
+      exact h₁₄
+
+    rcases h₁₄ with ⟨x₀, h₁₄⟩
+
+    -- Substitute $x = 2x_0$ into $x^2 = y^p$.
+    rw [h₁₄] at h₁
+    replace h₁ : 2 ^ x₀ * y ^ 2 = y ^ (2 * x₀) := by
+      rw [h₁₄, <-Nat.pow_mul] at h₁
+      exact h₁
+
+    -- We have $2 \mid y$.
+    have h₁₆ : 2 ∣ y := by
+      by_contra!
+      apply Nat.Prime.odd_of_ne_two at this
+      have h₁₆ : Even (y ^ 2) := by
+        exact Nat.even_pow' (by omega) this
+      have h₁₇ : ¬Even (y ^ 2) := by
+        rw [h₁₄, Nat.even_mul]
+        simp
+        exact Nat.not_even_iff_odd.mpr this
+
+      contradiction
+
+    -- Write $y = 2y_0$ for some natural number $y_0$.
+    replace h₁₆ : ∃ y₀ : ℕ, y = 2 * y₀ := by
+      exact h₁₆
+
+    rcases h₁₆ with ⟨y₀, h₁₆⟩
+
+    -- Substitute $y = 2y_0$ into $x^2 = y^p$.
+    rw [h₁₆] at h₁
+    replace h₁ : (2 * x₀) ^ 2 = (2 * y₀) ^ (2 * x₀) := by
+      exact h₁
+
+    -- We have $x_0$ is even.
+    have h₁₇ : 2 ∣ x₀ := by
+      have h₁₇ : 2 ∣ (2 * x₀) ^ 2 := by
+        apply Nat.dvd_pow
+        apply Nat.dvd_mul_left
+
+      have h₁₈ : 2 ∣ (2 * y₀) ^ (2 * x₀) := by
+        apply Nat.dvd_pow
+        apply Nat.dvd_mul_left
+
+      have h₁₉ : 2 ∣ (2 * x₀) := by
+        apply Nat.dvd_of_dvd_pow at h₁₇
+        exact h₁₇
+
+      exact Nat.Prime.dvd_of_dvd_mul_left (by norm_num) h₁₉
+
+    -- Write $x_0 = 2x_1$ for some natural number $x_1$.
+    replace h₁₇ : ∃ x₁ : ℕ, x₀ = 2 * x₁ := by
+      exact h₁₇
+
+    rcases h₁₇ with ⟨x₁, h₁₇⟩
+
+    -- Substitute $x_0 = 2x_1$ into $x^2 = y^p$.
+    rw [h₁₇] at h₁
+    replace h₁ : (2 * (2 * x₁)) ^ 2 = (2 * y₀) ^ (2 * (2 * x₁)) := by
+      exact h₁
+
+    -- Simplify the equation.
+    simp at h₁
+    have h₁₈ : 2 * y₀ ^ (2 * (2 * x₁)) * 2 ^ (4 * x₁) = 2 ^ (4 * x₁) * y₀ ^ (4 * x₁) * 2 * y₀ ^ (2 * x₁) := by
+      ring_nf
+
+    have h₁₉ : 2 * x₁ * y₀ ^ (2 * (2 * x₁)) * 2 ^ (4 * x₁) = 2 * x₁ * y₀ ^ (4 * x₁) * 2 * y₀ ^ (2 * x₁) := by
+      rw [<-h₁₈]
+      ring_nf
+
+    -- We have $2x_1y_0^{4x_1}2^{4x_1} = 2x_1y_0^{4x_1}2^{2x_1}y_0^{2x_1}$.
+    have h₁₂ : 2 * x₁ * y₀ ^ (4 * x₁) * 2 ^ (4 * x₁) = 2 * x₁ * y₀ ^ (4 * x₁) * 2 ^ (2 * x₁) * y₀ ^ (2 * x₁) := by
+      rw [h₁₉]
+
+    -- We have $2^{4x_1} = 2^{2x_1}y_0^{2x_1}$.
+    have h₁₃ : 2 ^ (4 * x₁) = 2 ^ (2 * x₁) * y₀ ^ (2 * x₁) := by
+      apply Nat.mul_right_cancel (by omega) at h₁₂
+      exact h₁₂
+
+    -- We have $2^{2x_1}y_0^{2x_1} \mid 2^{4x_1}$.
+    have h₁₄ : 2 ^ (2 * x₁) * y₀ ^ (2 * x₁) ∣ 2 ^ (4 * x₁) := by
+      apply Nat.dvd_mul_left
+
+    -- We have $2^{2x_1}y_0^{2x_1} \mid 2^{2x_1}$.
+    replace h₁₄ : 2 ^ (2 * x₁) * y₀ ^ (2 * x₁) ∣ 2 ^ (2 * x₁) := by
+      apply Nat.dvd_trans h₁₄
+      apply Nat.pow_dvd_pow
+
+    -- We have $y_0^{2x_1} \mid 1$.
+    have h₁₅ : y₀ ^ (2 * x₁) ∣ 1 := by
+      apply Nat.Coprime.dvd_of_dvd_mul_left
+      apply Nat.Coprime.pow_left
+      apply Nat.Coprime.pow_left
+      apply Nat.coprime_two_right
+      exact h₁₄
+
+    -- We have $y_0^{2x_1} = 1$.
+    replace h₁₅ : y₀ ^ (2 * x₁) = 1 := by
+      apply Nat.dvd_antisymm h₁₅
+     . exact Nat.one_dvd _
+     . exact Nat.pow_dvd_pow _ h₁₅
+
+    -- We have $y_0 = 1$.
+    have h₁₆ : y₀ = 1 := by
+      by_contra!
+      apply Nat.le_of_lt at this
+      have h₁₇ : 2 * x₁ ≠ 0 := by
+        omega
+
+      have h₁₈ : y₀ ^ (2 * x₁) > 1 := by
+        apply Nat.one_lt_pow₀ (by omega) h₁₇
+
+      rw [h₁₅] at h₁₈
+      tauto
+
+    -- We have $x_0 = 2$.
+    have h₁₇ : x₁ = 1 := by
+      by_contra!
+      apply Nat.le_of_lt at this
+      have h₁₈ : x₁ > 0 := by
+        omega
+
+      have h₁₉ : 2 * x₁ > 2 := by
+        apply Nat.lt_mul_of_pos_right (by norm_num)
+        exact h₁₈
+
+      have h₁₁ : 2 ^ (2 * x₁) > 2 ^ 2 := by
+        apply Nat.pow_lt_pow_right (by norm_num)
+        exact h₁₉
+
+      have h₁₂ : 2 ^ (2 * x₁) * 2 ^ (4 * x₁) > 2 ^ 2 * 2 ^ 2 := by
+        apply Nat.mul_lt_mul_right (by positivity)
+        exact h₁₁
+
+      have h₁₃ : 2 ^ (4 * x₁) > 2 ^ 2 := by
+        nth_rewrite 2 [<-@Nat.pow_add 2 _ _ (4 * x₁)]
+        apply Nat.lt_pow_self (by norm_num)
+        omega
+
+      have h₁₄ : 2 ^ (2 * x₁) * 2 ^ (4 * x₁) > 2 ^ (4 * x₁) := by
+        apply Nat.mul_lt_mul_right (by positivity)
+        exact h₁₃
+
+      have h₁₅ : 2 ^ (2 * x₁) * 2 ^ (4 * x₁) > 2 ^ (4 * x₁) * 2 := by
+        apply Nat.lt_mul_of_pos_right
+       . exact h₁₄
+       . norm_num
+
+      have h₁₆ : 2 ^ (2 * x₁) * 2 ^ (4 * x₁) > 2 ^ (4 * x₁) * 2 ^ 1 := by
+        apply Nat.lt_mul_of_pos_right
+       . exact h₁₅
+       . norm_num
+
+      have h₁₇ : 2 ^ (2 * x₁) * 2 ^ (4 * x₁) > 2 ^ (4 * x₁) * 2 ^ (2 * x₁) := by
+        apply Nat.lt_of_lt_of_le
+       . exact h₁₆
+       . apply Nat.mul_le_mul_right
+          exact h₁₃
+
+      rw [<-h₁₈] at h₁₇
+      tauto
+
+    -- We have $x = 4$.
+    have h₁₈ : x₀ = 2 := by
+      rw [h₁₇] at h₁₄
+      exact h₁₄
+
+    have h₁₉ : x = 4 := by
+      omega
+
+    -- We have $4 = y^2$.
+    have h₂₀ : y ^ 2 = 4 := by
+      rw [<-h₁₄, h₁₈, h₁₉]
+      ring_nf
+
+    -- We have $y = 2$.
+    have h₂₁ : y = 2 := by
+      by_contra!
+      have h₂₁ : y > 2 := by
+        omega
+
+      have h₂₂ : y ^ 2 > 4 := by
+        have h₂₂ : y ^ 2 > 2 ^ 2 := by
+          apply Nat.pow_lt_pow_right (by norm_num)
+          exact h₂₁
+        omega
+
+      rw [h₂₀] at h₂₂
+      tauto
+
+    -- We have $x = 16$.
+    have h₂₂ : x = 16 := by
+      rw [h₁₉, h₂₁] at h₁
+      omega
+
+    -- We have $y = 2$.
+    have h₂₃ : y = 2 := by
+      exact h₂₁
+
+    -- We have $(x, y) = (16, 2)$.
+    exact Or.inr (Or.inl ⟨h₂₂, h₂₃⟩)
+
+ . -- If $x = 0$, then $y = 1$.
+    replace h₄ : x = 0 := by
+      omega
+
+    simp [h₄] at h₁
+    tauto
+
+ . -- If $y = 0$, then $x = 1$.

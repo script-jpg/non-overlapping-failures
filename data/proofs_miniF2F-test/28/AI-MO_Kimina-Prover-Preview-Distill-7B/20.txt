@@ -1,0 +1,56 @@
+-- Let's begin by analyzing the problem. We have:
+  -- 1. A positive number x satisfying 2x^2 = 4x + 9
+  -- 2. x can be written in the form (a + √b)/c with a, b, c positive integers
+  -- 3. We need to find a + b + c
+
+  have : 2 * x ^ 2 - (4 * x + 9) = 0 := by linarith
+
+  -- Rearranging the equation: 2x^2 - 4x - 9 = 0
+  have : 2 * (x * x) + (-4) * x + (-9) = 0 := by linarith
+
+  -- This is a quadratic equation in x. Let's use the quadratic formula:
+  -- If ax^2 + bx + c = 0, then x = (-b ± √(b^2 - 4ac)) / 2a
+  -- Here: a = 2, b = -4, c = -9
+  have : x = (4 + Real.sqrt ((-4) ^ 2 - 4 * 2 * (-9))) / (2 * 2) ∨ x = (4 - Real.sqrt ((-4) ^ 2 - 4 * 2 * (-9))) / (2 * 2) := by
+
+    -- Using the quadratic formula
+    have : 2 * (x * x) + (-4) * x + (-9) = 2 * (x - (4 + Real.sqrt ((-4) ^ 2 - 4 * 2 * (-9))) / (2 * 2)) * (x - (4 - Real.sqrt ((-4) ^ 2 - 4 * 2 * (-9))) / (2 * 2)) := by
+      ring_nf
+      rw [Real.sq_sqrt (by norm_num)]
+      ring_nf
+    rw [this] at this
+    rcases mul_eq_zero.mp this with h | h
+   . left
+      linarith
+   . right
+      linarith
+
+  -- Simplifying the expression
+  simp at this
+  have : (4 + Real.sqrt 88) / 4 = (2 + Real.sqrt 22) / 2 := by
+    field_simp
+    ring_nf
+    rw [Real.sqrt_eq_iff_sq_eq] <;> norm_num
+    <;> ring_nf <;> norm_num
+  rw [this] at this
+
+  -- Comparing with the given form (a + √b)/c
+  have : (2 + Real.sqrt 22) / 2 = (a + Real.sqrt b) / c := by
+    rcases this with h | h
+   . rw [h]
+      tauto
+   . rw [h] at h₂
+      linarith
+  have : a = 2 := by linarith
+  have : c = 2 := by linarith
+
+  -- Since a = 2 and c = 2, we have b = 22
+  have : b = 22 := by
+    suffices b = (Real.sqrt 22) ^ 2 from Nat.cast_inj.mp this
+    rw [← Real.sq_sqrt (by norm_num)]
+    linarith
+
+  -- Therefore, a + b + c = 2 + 22 + 2 = 26
+  linarith
+
+```

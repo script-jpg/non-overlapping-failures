@@ -1,0 +1,95 @@
+-- Some useful facts of log arithmetics
+  have log_arith (x y a b : ℝ) (hxy : x = y ^ a) (hy : y ≠ 1) : Real.log x = a * Real.log y := by
+    rw [hxy]
+    simp [Real.log_rpow hy]
+  have log_arith' (x y a b : ℝ) (hxy : x = y ^ a) (hy : y ≠ 0) (hy' : y ≠ 1) : Real.log x = a * Real.log y := by
+    rw [hxy]
+    simp [Real.log_rpow hy', hy]
+  have log_inv (x : ℝ) (hx : x ≠ 0) : Real.log (1 / x) = -Real.log x := by simp [Real.log_inv hx]
+  have log_mul (x y : ℝ) (hx : x ≠ 0) (hy : y ≠ 0) : Real.log (x * y) = Real.log x + Real.log y := Real.log_mul (by simp [hx]) (by simp [hy])
+  have log_rpow (x : ℝ) (hx : x > 0) (r : ℝ) : Real.log (x ^ r) = r * Real.log x := Real.log_rpow x hx r
+  have log_of_rpow (x : ℝ) (hx : x > 0) (r : ℝ) (h : x ^ r = y) : Real.log x = Real.log y / r := by
+    symm
+    nth_rw 1 [← h]
+    rw [log_rpow hx (by simp)]
+    field_simp
+
+  -- Let's start by extracting the two inequalities from h₀
+  rcases h₀ with ⟨hx, hy⟩
+
+  -- Applying log to both sides of h₂
+  have h₃ : Real.log x + Real.log y = Real.log 64 := by
+    rw [← h₂]
+    exact log_mul x y (by simp [hx]) (by simp [hy])
+
+  -- Rewrite h₃ using a division operation
+  have h₄ : Real.log x / Real.log 2 = Real.log 64 / Real.log y := by
+    field_simp
+    field_simp at h₃
+    linarith only [h₃]
+
+  -- Manipulate h₄ to get a more useful form
+  have h₅ : Real.log x / Real.log 2 = Real.log 16 / Real.log y := by
+    nth_rw 2 [← h₄]
+    rw [← Real.log_rpow (by norm_num) (by norm_num) (5:ℝ)]
+    norm_num
+    rw [mul_comm]
+  have h₆ : Real.log y / Real.log 2 = Real.log 16 / Real.log x := by
+    calc
+      Real.log y / Real.log 2 = 1 / (Real.log 2 / Real.log y) := by field_simp
+      _ = 1 / (Real.log 16 / Real.log y) / Real.log 2 := by congr; rw [div_eq_iff]; norm_num; -- Use hypothesis h₄
+      _ = Real.log 16 / Real.log x := by field_simp; ring
+  have h₇ : Real.log x / Real.log 2 = Real.log 16 / Real.log y := h₄
+
+  -- Let's write down what we have
+  have h₈ : Real.log 64 = 6 * Real.log 2 := by
+    calc
+      Real.log 64 = Real.log (2 ^ (6:ℝ)) := by norm_num
+      _ = 6 * Real.log 2 := by rw [log_rpow (by norm_num) (by norm_num) (6:ℝ)]; norm_num
+  have h₉ : Real.log 16 = 4 * Real.log 2 := by
+    calc
+      Real.log 16 = Real.log (2 ^ (4:ℝ)) := by norm_num
+      _ = 4 * Real.log 2 := by rw [log_rpow (by norm_num) (by norm_num) (4:ℝ)]; norm_num
+  have h₁₀ : Real.log 2 ≠ 0 := by
+    have h₁₁ : 0 < Real.log 2 := by
+      apply Real.log_pos
+      norm_num
+    linarith only [h₁₁]
+
+  -- Derive a relationship between log x and log y
+  have h₁₁ : Real.log y = 4 * Real.log x := by
+    rw [h₈, h₉] at h₆
+    field_simp at h₆
+    rw [div_eq_iff₀] at h₆
+    linarith only [h₆]
+    exact h₁₀
+
+  -- Derive a relationship between log y and log x
+  have h₁₂ : Real.log x = (Real.log y) / 4 := by
+    rw [h₈, h₉] at h₇
+    field_simp at h₇
+    rw [div_eq_iff₀] at h₇
+    linarith only [h₇]
+    exact h₁₀
+
+  -- Express log x in terms of log y
+  have h₁₃ : Real.log x = Real.log y / 4 := by exact h₁₂
+
+  -- Write the target expression in terms of log y
+  have h₁₄ : (Real.log (x / y) / Real.log 2) ^ 2 = (Real.log y / Real.log 2 - Real.log y / Real.log y) ^ 2 := by
+    rw [Real.log_div (by simp [hx]) (by simp [hy])]
+    rw [h₁₃]
+    simp
+
+  -- Simplify the expression
+  have h₁₅ : (Real.log y / Real.log 2 - Real.log y / Real.log y) ^ 2 = (Real.log y / Real.log 2 - 1) ^ 2 := by
+    have : Real.log y / Real.log y = 1 := by field_simp
+    rw [this]
+
+  -- Final steps
+  rw [h₁₄, h₁₅]
+  rw [h₈, h₉]
+  field_simp
+  rw [h₁₁]
+  linarith only [h₁₁, h₁₀]
+```

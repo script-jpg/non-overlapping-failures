@@ -1,0 +1,269 @@
+constructor
+
+  -- sufficiency
+ . intro hf
+    -- By setting $a = b = 0$, we get $f(0) = 0$.
+    have f_zero : f 0 = 0 := by
+      have h := hf 0 0
+      simp at h
+      exact h
+
+    -- By setting $b = 0$, we get $f(2a) = f(f(a))$.
+    have f_2a (a : ℤ) : f (2 * a) = f (f a) := by
+      have h := hf a 0
+      simp [f_zero] at h
+      exact h
+
+    -- By setting $a = 0$, we get $2f(b) = f(f(b))$.
+    have f_f_b (b : ℤ) : 2 * f b = f (f b) := by
+      have h := hf 0 b
+      simp [f_zero] at h
+      exact h
+
+    -- By setting $a = -b$, we get $f(f(b)) = 2f(b) + f(-2b)$
+    have f_f_b' (b : ℤ) : f (f b) = 2 * f b + f (f (-b)) := by
+      have h := hf (-b) b
+      simp [mul_comm] at h
+      exact h
+
+    -- By setting $b = -a$, we get $f(f(a - a)) = 2f(a) + f(2a - 2a)$, i.e., $f(f(a)) = 2f(a) + f(0)$
+    have f_f_a (a : ℤ) : f (f a) = 2 * f a + f 0 := by
+      have h := hf (-a) a
+      simp [mul_comm, f_zero] at h
+      exact h
+
+    -- From the above equation, we have $f(f(a)) = 2f(a)$
+    have f_f_a' (a : ℤ) : f (f a) = 2 * f a := by
+      linarith [f_f_a a, f_zero]
+
+    -- From the above equation, we have $2f(a) = f(f(a)) = 2f(f(a)) = 2f(f(f(a))) =... = 2^n f(f(...f(a)...))$
+    have f_eq_2_pow_mul_f (a n : ℕ) : f a = 2 ^ n * f (f ^ n a) := by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        rw [pow_succ, mul_assoc, ← ih, f_f_a']
+
+    -- By setting $a = 0$ and $b = a$, we get $f(f(a)) = 2f(a) + f(0)$
+    have f_f_a'' (a : ℤ) : f (f a) = 2 * f a := by
+      have h := hf 0 (a)
+      simp [f_zero] at h
+      exact h
+
+    -- From the above equation, we have $f(f(a)) = 2f(a)$
+    have f_f_a' (a : ℤ) : f (f a) = 2 * f a := by
+      linarith [f_f_a'' a, f_zero]
+
+    -- So we have $2f(a) = 2^n f(f(...f(a)...))$
+    have f_eq_2_pow_mul_f' (a n : ℕ) : f a = 2 ^ n * f (f ^ n a) := by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        rw [pow_succ, mul_assoc, ← ih, f_f_a']
+
+    -- By setting $n = a$, we get $f(a) = 2^a f(f(...f(a)...))$
+    have f_eq_2_pow_mul_f'' (a : ℕ) : f a = 2 ^ a * f (f ^ a a) := by
+      specialize f_eq_2_pow_mul_f' a a
+      simp at f_eq_2_pow_mul_f'
+      exact f_eq_2_pow_mul_f'
+
+    -- By setting $n = -a$, we get $f(-a) = 2^{-a} f(f(...f(-a)...))$
+    have f_eq_2_pow_mul_f''' (a : ℕ) : f (-a) = 2 ^ (-a) * f (f ^ (-a) (-a)) := by
+      specialize f_eq_2_pow_mul_f' (-a) a
+      simp at f_eq_2_pow_mul_f'
+      exact f_eq_2_pow_mul_f'
+
+    -- For any integer $n > 0$, we have $f(-n) = -f(n)$
+    have f_neg (n : ℕ) : f (-n) = - f n := by
+      induction' n with n ih
+     . simp [f_neg]
+     . calc
+          f (-(n + 1)) = f (-(n + 1)) + f (-n) - f (-n) := by ring_nf
+          _ = - f (n + 1) + f (-n) - f (-n) := by rw [ih]
+          _ = - f (n + 1) := by ring_nf
+
+    -- From the above equation, we have $f(-a) = -2^a f(f(...f(a)...))$
+    have f_neg_eq_neg_2_pow_mul_f'' (a : ℕ) : f (-a) = - 2 ^ a * f (f ^ a a) := by
+      specialize f_eq_2_pow_mul_f'' a
+      specialize f_eq_2_pow_mul_f''' a
+      rw [f_neg_eq_neg_2_pow_mul_f'''] at f_eq_2_pow_mul_f''
+      linarith
+
+    -- From the above two equations, we have $2^a f(f(...f(a)...)) = -2^a f(f(...f(-a)...))$
+    have f_f_neg (a : ℕ) : 2 ^ a * f (f ^ a a) = - (2 ^ a * f (f ^ a (-a))) := by
+      rw [← f_eq_2_pow_mul_f'', ← f_neg_eq_neg_2_pow_mul_f'']
+
+    -- From the above equation, we have $f(f(n)) = -f(f(-n))$
+    have f_f_neg (a : ℕ) : f (f a) = - f (f (-a)) := by
+      specialize f_f_neg a
+      simp at f_f_neg
+      exact f_f_neg
+
+    -- We can show that $f(f(a)) = -f(-a)$
+    have f_f_neg' (a : ℤ) : f (f a) = - f (-a) := by
+      if ha : 0 ≤ a then
+        specialize f_f_neg (a.natAbs)
+        zify at f_f_neg
+        simp [abs_of_nonneg ha] at f_f_neg
+        exact f_f_neg
+      else
+        specialize f_f_neg (-(a.natAbs))
+        zify at f_f_neg
+        simp [abs_of_nonneg (show 0 ≤ -(a.natAbs) by linarith [ha])] at f_f_neg
+        exact f_f_neg
+
+    -- We can show that $f(-f(a)) = -f(a)$
+    have f_neg_f (a : ℤ) : f (- f a) = - f a := by
+      have h := f_f_neg' a
+      rw [h, ← neg_neg (f (f a))] at h
+      exact h
+
+    -- We can show that $f(2a) = -f(-2a)$
+    have f_2a_neg (a : ℤ) : f (2 * a) = - f (- (2 * a)) := by
+      specialize f_2a a
+      specialize f_neg (2 * a)
+      linarith
+
+    -- We can show that $f(f(a)) = -f(-f(a))$
+    have f_f_neg_f (a : ℤ) : f (f a) = - f (- (f a)) := by
+      specialize f_f_neg' a
+      specialize f_neg_f a
+      linarith
+
+    -- We can show that $f(-f(a)) = -f(f(a))$
+    have f_neg_f_f (a : ℤ) : f (- (f a)) = - f (f a) := by
+      specialize f_f_neg_f a
+      rw [neg_neg] at f_f_neg_f
+      exact f_f_neg_f
+
+    -- We can show that $f(-f(a)) = f(f(-a))$
+    have f_neg_f_f_neg (a : ℤ) : f (- (f a)) = f (f (-a)) := by
+      trans - f (f a)
+     . exact f_neg_f_f a
+     . exact symm (f_f_neg' a)
+
+    -- We can show that $f(f(-a)) = -f(-f(-a))$
+    have f_f_neg_neg_f (a : ℤ) : f (f (-a)) = - f (- (f (-a))) := by
+      specialize f_f_neg' (-a)
+      specialize f_neg_f (-a)
+      rw [f_f_neg_neg_f, f_neg_f] at f_f_neg'
+      linarith
+
+    -- We can show that $f(-f(-a)) = -f(-f(a))$
+    have f_neg_f_neg_f (a : ℤ) : f (- (f (-a))) = - f (- f a) := by
+      trans - f (- f a)
+     . rw [neg_neg]
+        exact f_neg_f_neg_f a
+     . specialize f_f_neg_neg_f a
+        linarith
+
+    -- So we have $f(-f(a)) = -f(-f(-a)) = -(-f(-f(a))) = f(-f(a))$
+    have f_neg_f_eq (a : ℤ) : f (- f a) = f (- f a) := by
+      trans - f (- f a)
+     . specialize f_neg_f_neg_f a
+        rw [f_f_neg_neg_f, f_neg_f_neg_f]
+        linarith
+     . exact f_neg_f_neg_f a
+
+    -- For any integer $n > 0$, we have $f(n) = n * f(1)$
+    have f_of_pos (n : ℕ) : f n = n * f 1 := by
+      induction' n with n ih
+     . simp
+     . calc
+          f (n + 1) = f (n + 1) + f n - f n := by ring_nf
+          _ = 2 * f (n + 1) - f n := by rw [hf (n + 1) n, add_comm]
+          _ = 2 * f (n + 1) - n * f 1 := by rw [ih]
+          _ = (n + 1) * f 1 := by linarith
+
+    -- For any integer $n > 0$, we have $f(-n) = -n * f(1)$
+    have f_of_neg (n : ℕ) : f (-n) = - n * f 1 := by
+      specialize f_neg n
+      specialize f_of_pos n
+      rw [f_neg, mul_comm (f 1), mul_comm n, f_of_pos]
+
+    -- For any integer $z$, we have $f(z) = z * f(1)$
+    have f_of_z (z : ℤ) : f z = z * f 1 := by
+      if h : 0 ≤ z then
+        specialize f_of_pos z.natAbs
+        have ha : z = z.natAbs := by
+          exact Eq.symm (Int.natAbs_of_nonneg h)
+        rw [ha, f_of_pos]
+        simp
+      else
+        specialize f_of_neg (-z.natAbs)
+        have ha : z = @Neg.neg ℤ z.natAbs := by
+          have : z = - z.natAbs := by
+            rw [← Int.natAbs_of_nonneg (show 0 ≤ -z by linarith [h])]
+            ring_nf
+          rw [this]
+          simp
+        rw [ha, f_of_neg]
+        simp
+
+    -- We can show that $f(1) = 0 \or \exists c, f(z) = 2z + c$
+    have : f 1 = 0 ∨ ∃ c, ∀ z, f z = 2 * z + c := by
+
+      -- Set $a = 1$ and $b = 0$ in the original equation
+      have h := hf 1 0
+      simp [f_zero] at h
+
+      -- We have $f(2) = 2f(1)$
+      have f_2 : f 2 = 2 * f 1 := by
+        specialize f_2a 1
+        simp [f_zero] at f_2a
+        linarith
+
+      -- We have $2f(1) = f(f(1))$
+      have f_f_1 : 2 * f 1 = f (f 1) := by
+        specialize f_f_1 1
+        linarith
+
+      -- We have $f(f(1)) = 2f(f(1))$
+      have f_f_f_1 : f (f 1) = 2 * f (f 1) := by
+        specialize f_f_b (f 1)
+        rw [f_f_1] at f_f_b
+        exact f_f_b
+
+      -- So we have $2f(1) = 2f(f(1))$
+      have : 2 * f 1 = 2 * f (f 1) := by
+        linarith [f_f_f_1]
+
+      -- So we have $f(1) = f(f(1))$
+      have f_1_eq_f_f_1 : f 1 = f (f 1) := by
+        linarith
+
+      -- We have $f(f(1)) = 2f(f(f(1)))$
+      have f_f_f_1' : f (f 1) = 2 * f (f (f 1)) := by
+        specialize f_f_b' (f 1)
+        exact f_f_b'
+
+      -- So we have $2f(1) = 2f(f(f(1)))$
+      have : 2 * f 1 = 2 * f (f (f 1)) := by
+        linarith [f_f_f_1', f_1_eq_f_f_1]
+
+      -- So we have $f(1) = f(f(f(1)))$
+      have f_1_eq_f_f_f_1 : f 1 = f (f (f 1)) := by
+        linarith
+
+      -- We can show that $f(1) = 0$
+      by_cases h : f 1 = 0
+     . left
+        exact h
+     . right
+        use f 1
+        intro z
+        specialize f_of_z z
+        rw [f_of_z, h, zero_mul]
+
+    -- So the original equation is equivalent to $f(z) = 0 \or \exists c, f(z) = 2z + c$
+    simp [this]
+
+  -- necessity
+ . intro hf
+    rcases hf with hf | ⟨c, hf⟩
+   . intro a b
+      rw [hf, hf, hf]
+      ring_nf
+   . rw [hf, hf, hf]
+      ring_nf
+
+```

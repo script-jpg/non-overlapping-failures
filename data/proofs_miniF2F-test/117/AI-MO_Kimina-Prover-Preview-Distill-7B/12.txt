@@ -1,0 +1,334 @@
+-- A small technical lemma for the solution.
+  have lm : 5 ≤ k ↔ ∀ (n : ℕ), 6 ∣ n → (6 * n + k).natAbs.Prime := by
+    constructor
+    · intro h
+      have h' := h
+      -- Simplify the goal by using existing hypothesis.
+      intro n hn
+      have : 6 ∣ 6 * n := by simp
+      have : 6 ∣ 6 * n + k - (6 * n + k) := by simp
+      rw [Nat.dvd_sub, Nat.gcd_self, Nat.gcd_sub_self, Nat.Prime.gcd_eq_one_iff, Prime.gcd_eq_one_iff]
+      -- Remove the absolute value.
+      have : (6 * n + k).natAbs = 6 * n + k := by
+        rw [Nat.cast_natAbs]
+        simp
+      rw [this]
+      exact h'
+    · intro h
+      -- We need to prove that 6n + k is relatively prime to 6n + 1, 6n + 2, 6n + 3.
+      -- First introduce n, m, and r, s, t.
+      intro n
+      let m := n.natAbs
+      let r := n / 6
+      let s := n % 6
+      -- We have 6n = 6 * 6 * r + 6 * s.
+      have : 6 * n = 6 * (6 * r + s) := by
+        rw [Nat.mul_div_add_mod, mul_add, Nat.mul_add_mod, Nat.mul_mod, Nat.mod_self, add_zero]
+      rw [this]
+      -- Let m = n / 6, s = n % 6, and r = s / 6. Then n = 6 * m + r.
+      have : 6 * m = n.natAbs - r := by
+        rw [Nat.mul_div, Nat.sub_eq_iff_eq_add, Nat.add_comm, Nat.mul_comm, Nat.mod_self, Nat.sub_self, Nat.zero_mul, add_zero]
+      have : 6 * (6 * m + r) = n.natAbs + (6 * r) := by
+        rw [Nat.mul_add, Nat.mul_comm, Nat.sub_eq_iff_eq_add, Nat.add_comm, Nat.mul_comm, Nat.mod_self, Nat.sub_self, Nat.zero_mul, add_zero]
+      rw [this]
+      -- We have n = 6 * (6 * m + r) - 6 * r.
+      have : 6 * (6 * m + r) - 6 * r = n.natAbs := by
+        rw [Nat.sub_sub]
+        simp
+        rw [Nat.cast_natAbs]
+        simp
+      rw [this]
+      -- We have 6 ∣ n - (6 * m + r).
+      have : 6 ∣ n - (6 * m + r) := by
+        rw [Nat.dvd_sub, Nat.dvd_mul, Nat.dvd_add]
+        simp
+        apply dvdq_of_mod_eq_zero
+        simp
+      -- We have 6 ∣ n - (6 * m + r) + 6 * r.
+      have : 6 ∣ n - (6 * m + r) + 6 * r := by
+        rw [Nat.dvd_add]
+        simp
+        apply dvdq_of_mod_eq_zero
+        simp
+        rw [Nat.dvd_sub]
+        simp
+        simp
+        exact Nat.dvd_mul_right 6 r
+      -- Now we split the goal into two cases.
+      cases Nat.even_or_odd s with
+      | inl hs =>
+        -- If s is even, we have the following observations.
+        -- 1. 6 ∣ 6 * m + s
+        have : 6 ∣ 6 * m + s := by
+          rw [Nat.dvd_add]
+          simp
+          apply dvdq_of_mod_eq_zero
+          rw [Nat.modEq_zero_iff_dvd]
+          -- We have s ∣ 6 * r.
+          have : s ∣ 6 * r := by
+            rw [Nat.dvd_add]
+            simp
+            apply dvdq_of_mod_eq_zero
+            simp
+            rw [Nat.dvd_sub]
+            simp
+            simp
+            exact Nat.dvd_mul_right 6 r
+          rw [hs]
+          apply (even_iff_two_dvd s).mp
+          rw [Nat.dvd_sub]
+          simp
+          simp
+          exact Nat.dvd_mul_right 6 r
+        -- 2. 6 ∣ 6 * m + r
+        have : 6 ∣ 6 * m + r := by
+          rw [Nat.dvd_add]
+          simp
+          apply dvdq_of_mod_eq_zero
+          rw [Nat.modEq_zero_iff_dvd]
+          apply dvdq_of_mod_eq_zero
+          rw [hs, Nat.modEq_zero_iff_dvd]
+          exact Nat.dvd_mul_right 6 r
+        -- 3. 6 ∣ 6 * m + s + k
+        -- 4. 6 ∣ 6 * m + r + k
+        have : 6 ∣ (6 * m + s) + k := by
+          apply Nat.dvd_add
+          assumption
+          exact h₂ (m * 6 + s)
+        have : 6 ∣ (6 * m + r) + k := by
+          apply Nat.dvd_add
+          assumption
+          exact h₁ (m * 6 + r)
+        -- Now we split the goal into three cases, corresponding to three different values of (r % 6).
+        cases Nat.modEq_iff_dvd.mpr (Nat.mod_lt (s + k) 6) with
+        | inl h =>
+          -- Case 1 : s + k = 6 * t for some t.
+          -- We have (6 * m + s) + k = 6 * (t + m) + r.
+          have : 6 ∣ (6 * m + s) + k := by
+            apply Nat.dvd_add
+            assumption
+            exact h₂ (m * 6 + s)
+          have : 6 ∣ (6 * m + r) + k := by
+            apply Nat.dvd_add
+            assumption
+            exact h₁ (m * 6 + r)
+          -- Now we split the goal into two cases, corresponding to two different values of (r % 3).
+          cases Nat.modEq_iff_dvd.mpr (Nat.mod_lt (r + k) 3) with
+          | inl h' =>
+            -- Case 1.1 : r + k = 3 * l for some l.
+            -- We have (6 * m + s) + k = 3 * (2 * (l + m) + r).
+            have : 3 ∣ (6 * m + s) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * (l + m) + r)
+            have : 3 ∣ (6 * m + r) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * m + r)
+            apply Nat.Prime.dvd_gcd
+            assumption
+            assumption
+          | inr h' =>
+            -- Case 1.2 : r + k = 3 * l + 1 for some l.
+            -- We have (6 * m + s) + k = 3 * (2 * (l + m) + r + 1).
+            have : 3 ∣ (6 * m + s) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * (l + m) + r + 1)
+            have : 3 ∣ (6 * m + r) + k := by
+              apply Nat.dvd_add
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * m + r + 1)
+            apply Nat.Prime.dvd_gcd
+            assumption
+            assumption
+        | inr h =>
+          -- Case 2 : s + k = 6 * t + 1 for some t.
+          have : 6 ∣ (6 * m + s) + k := by
+            apply Nat.dvd_add
+            assumption
+            exact h₂ (m * 6 + s)
+          have : 6 ∣ (6 * m + r) + k := by
+            apply Nat.dvd_add
+            assumption
+            exact h₁ (m * 6 + r)
+          -- Now we split the goal into two cases, corresponding to two different values of (r % 3).
+          cases Nat.modEq_iff_dvd.mpr (Nat.mod_lt (r + k) 3) with
+          | inl h' =>
+            -- Case 2.1 : r + k = 3 * l for some l.
+            -- We have (6 * m + s) + k = 3 * (2 * m + s + l).
+            have : 3 ∣ (6 * m + s) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * m + s + l)
+            have : 3 ∣ (6 * m + r) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * (l + m) + r)
+            apply Nat.Prime.dvd_gcd
+            assumption
+            assumption
+          | inr h' =>
+            -- Case 2.2 : r + k = 3 * l + 1 for some l.
+            -- We have (6 * m + s) + k = 3 * (2 * m + s + l + 1).
+            have : 3 ∣ (6 * m + s) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * m + s + l + 1)
+            have : 3 ∣ (6 * m + r) + k := by
+              apply Nat.dvd_add
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * (l + m) + r + 1)
+            apply Nat.Prime.dvd_gcd
+            assumption
+            assumption
+      | inr hs =>
+        -- If s is odd, we have the following observations.
+        -- 1. 6 ∣ 6 * m + s
+        have : 6 ∣ 6 * m + s := by
+          rw [Nat.dvd_add]
+          simp
+          apply dvdq_of_mod_eq_zero
+          rw [Nat.modEq_zero_iff_dvd]
+          -- We have s ∣ 6 * r.
+          have : s ∣ 6 * r := by
+            rw [Nat.dvd_add]
+            simp
+            apply dvdq_of_mod_eq_zero
+            simp
+            rw [Nat.dvd_sub]
+            simp
+            simp
+            exact Nat.dvd_mul_right 6 r
+          rw [hs]
+          apply (odd_iff_two_dvd_add_one s).mp
+          rw [Nat.dvd_sub]
+          simp
+          simp
+          exact Nat.dvd_mul_right 6 r
+        -- 2. 6 ∣ 6 * m + r + 1
+        have : 6 ∣ 6 * m + r + 1 := by
+          rw [Nat.dvd_add]
+          simp
+          apply dvdq_of_mod_eq_zero
+          rw [Nat.modEq_zero_iff_dvd]
+          apply dvdq_of_mod_eq_zero
+          rw [hs, Nat.modEq_zero_iff_dvd]
+          exact Nat.dvd_mul_right 6 r
+        -- 3. 6 ∣ 6 * m + s + k
+        -- 4. 6 ∣ 6 * m + r + 1 + k
+        have : 6 ∣ (6 * m + s) + k := by
+          apply Nat.dvd_add
+          assumption
+          exact h₂ (m * 6 + s)
+        have : 6 ∣ (6 * m + r + 1) + k := by
+          apply Nat.dvd_add
+          assumption
+          exact h₁ (m * 6 + r + 1)
+        -- Now we split the goal into three cases, corresponding to three different values of (r % 6).
+        cases Nat.modEq_iff_dvd.mpr (Nat.mod_lt (s + k) 6) with
+        | inl h =>
+          -- Case 1 : s + k = 6 * t for some t.
+          -- We have (6 * m + s) + k = 6 * (t + m) + r.
+          have : 6 ∣ (6 * m + s) + k := by
+            apply Nat.dvd_add
+            assumption
+            exact h₂ (m * 6 + s)
+          have : 6 ∣ (6 * m + r + 1) + k := by
+            apply Nat.dvd_add
+            assumption
+            exact h₁ (m * 6 + r + 1)
+          -- Now we split the goal into two cases, corresponding to two different values of (r % 3).
+          cases Nat.modEq_iff_dvd.mpr (Nat.mod_lt (r + 1 + k) 3) with
+          | inl h' =>
+            -- Case 1.1 : r + 1 + k = 3 * l for some l.
+            -- We have (6 * m + s) + k = 3 * (2 * m + s + l).
+            have : 3 ∣ (6 * m + s) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * m + s + l)
+            have : 3 ∣ (6 * m + r + 1) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * (l + m) + r + 1)
+            apply Nat.Prime.dvd_gcd
+            assumption
+            assumption
+          | inr h' =>
+            -- Case 1.2 : r + 1 + k = 3 * l + 1 for some l.
+            -- We have (6 * m + s) + k = 3 * (2 * m + s + l + 1).
+            have : 3 ∣ (6 * m + s) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * m + s + l + 1)
+            have : 3 ∣ (6 * m + r + 1) + k := by
+              apply Nat.dvd_add
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * (l + m) + r + 2)
+            apply Nat.Prime.dvd_gcd
+            assumption
+            assumption
+        | inr h =>
+          -- Case 2 : s + k = 6 * t + 1 for some t.
+          have : 6 ∣ (6 * m + s) + k := by
+            apply Nat.dvd_add
+            assumption
+            exact h₂ (m * 6 + s)
+          have : 6 ∣ (6 * m + r + 1) + k := by
+            apply Nat.dvd_add
+            assumption
+            exact h₁ (m * 6 + r + 1)
+          -- Now we split the goal into two cases, corresponding to two different values of (r % 3).
+          cases Nat.modEq_iff_dvd.mpr (Nat.mod_lt (r + 1 + k) 3) with
+          | inl h' =>
+            -- Case 2.1 : r + 1 + k = 3 * l for some l.
+            -- We have (6 * m + s) + k = 3 * (2 * (l + m) + r).
+            have : 3 ∣ (6 * m + s) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * (l + m) + r)
+            have : 3 ∣ (6 * m + r + 1) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * m + r + 1)
+            apply Nat.Prime.dvd_gcd
+            assumption
+            assumption
+          | inr h' =>
+            -- Case 2.2 : r + 1 + k = 3 * l + 1 for some l.
+            -- We have (6 * m + s) + k = 3 * (2 * m + s + l + 1).
+            have : 3 ∣ (6 * m + s) + k := by
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * m + s + l + 1)
+            have : 3 ∣ (6 * m + r + 1) + k := by
+              apply Nat.dvd_add
+              apply Nat.dvd_trans
+              assumption
+              exact Nat.dvd_mul_right 3 (2 * (l + m) + r + 2)
+            apply Nat.Prime.dvd_gcd
+            assumption
+            assumption
+
+  -- Now we split the goal into two cases.
+  by_cases h : k < 6
+  -- For the case k < 6, we have k = 1, 2, 3, 4.
+  · interval_cases k
+    -- For each of these values of k, we can find a value of n such that gcd (6n + k) (6n + 3) > 1.
+    -- We use n = 1, 3, 5, 1 respectively.
+    · specialize h₁ 1
+      norm_num at h₁
+    · specialize h₁ 3
+      norm_num at h₁
+    · specialize h₁ 5
+      norm_num at h₁
+    · specialize h₁ 1
+      norm_num at h₁
+  -- For the case k > 6, we want to find a prime number p such that p - k ≡ 0 (mod 6).
+  · apply Nat.le_of_not_lt at h
+    apply Nat.exists_prime_gt
+    -- We use the fact that (6 * k - 1) % 5 ≠ 0, so it's not the case that 5 is prime.
+    -- We need to argue that 6 * k - 1

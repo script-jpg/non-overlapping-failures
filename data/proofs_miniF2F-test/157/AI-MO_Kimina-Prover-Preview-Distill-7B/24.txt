@@ -1,0 +1,165 @@
+-- We have two goals to prove:
+  -- 1. The set $S$ is finite
+  -- 2. The cardinality of $S$ is 2
+  suffices S.finite ∧ S.card = 2 by simp [this.2, this.1]
+
+  -- Prove that $S$ is finite by showing it is closed and bounded
+  have : S.Closure = S := by
+    ext x
+    simp [h₀]
+    constructor
+    · intro ⟨⟨h₀, h₁⟩, h₂⟩
+      refine ⟨?_,?_⟩
+     . exact h₀
+     . exact h₁
+    · intro ⟨h₀, h₁⟩
+      refine ⟨⟨h₀, h₁⟩,?_⟩
+      rw [← Real.cos_pi_div_two_sub]
+      rw [← Real.sin_pi_div_two_sub]
+      rw [← Real.sin_pi_div_two_sub, ← Real.cos_pi_div_two_sub]
+      convert h₂ using 1
+     . ring
+     . ring
+  rw [this] at h₀
+  have h₁ : S isClosed := by
+    apply Set.isClosed_closure
+  have h₂ : S isBdd := by
+    simp [ bounded]
+    by_contra!
+    by_cases h : 0 ∈ S
+   . obtain ⟨h₃, h₄⟩ := h₀ h
+      linarith [Real.pi_pos]
+   . simp at h
+      apply this.mpr
+      use 1
+      constructor
+     . use 42
+        linarith [Real.pi_pos]
+     . linarith [Real.pi_pos]
+  have h₃ : Fintype S := by
+    exact Set.fintype_of_isClosed_isBdd h₁ h₂
+
+  -- Prove that the cardinality of $S$ is 2
+  have h₄ : S.card = 2 := by
+    -- We have two solutions: $x = \pi/2$ and $x = 3\pi/2$
+    -- Let's show that any solution must be one of these two
+    have h₅ : ∀ x : ℝ, x ∈ S → x = Real.pi / 2 ∨ x = (3 * Real.pi / 2) := by
+      intro x hx
+      simp [h₀] at hx
+      rcases hx with ⟨h₀, h₁, h₂⟩
+
+      -- We have the equation $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$
+      -- Use the identity $\cos x = \sin (\pi/2 - x)$ to rewrite it as $\sin \left( \frac{\pi}2 \cos x\right)=\sin \left( \frac{\pi}2 - \frac{\pi}2 \sin x\right)$
+      have h₃ : Real.sin (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 - Real.pi / 2 * Real.sin x) := by
+        rw [Real.sin_pi_div_two_sub]
+        rw [Real.sin_pi_div_two_sub, h₂]
+        rw [Real.cos_pi_div_two_sub, Real.cos_pi_div_two_sub]
+        simp
+      -- Using the property of sine function, we have two cases:
+      -- 1. $\frac{\pi}2 \cos x = \frac{\pi}2 - \frac{\pi}2 \sin x + 2\pi n$
+      -- 2. $\frac{\pi}2 \cos x = \pi - (\frac{\pi}2 - \frac{\pi}2 \sin x) + 2\pi n$
+      cases Real.sin_eq_sin_iff.mp h₃ with
+      | inl h₃ =>
+        -- Simplifying the first case: $\frac{\pi}2 \cos x = \frac{\pi}2 - \frac{\pi}2 \sin x + 2\pi n$
+        -- We get $\cos x + \sin x = 1 + 2\pi n$
+        -- Since $\cos x \in [-1, 1]$ and $\sin x \in [-1, 1]$, we must have $\cos x = 1$ and $\sin x = 0$
+        -- This occurs when $x = 2\pi n$, but this is not in $[0, \pi]$
+        have h₄ : Real.cos x + Real.sin x = 1 := by
+          linarith [Real.cos_sq_add_sin_sq x]
+        have h₅ : Real.cos x = 1 ∧ Real.sin x = 0 := by
+          constructor
+         . nlinarith [Real.cos_sq_add_sin_sq x, h₄]
+         . nlinarith [Real.cos_sq_add_sin_sq x, h₄]
+        obtain ⟨h₅, h₆⟩ := h₅
+        obtain ⟨n, hn⟩ := Real.cos_eq_one_iff.mp h₅
+        rw [hn] at h₆
+        have : n = 0 := by
+          by_contra!
+          by_cases h : 0 < n
+         . have : 2 * Real.pi * n > 0 := by positivity
+            linarith [h₆, this]
+         . replace h : n < 0 := by omega
+            have : 2 * Real.pi * n < 0 := by positivity
+            linarith [h₆, this]
+        rw [this] at hn
+        symm at hn
+        rw [hn] at h₀
+        replace h₀ : x = 0 := by linarith [Real.pi_pos]
+        rw [h₀] at h₁
+        linarith [Real.pi_pos]
+      | inr h₃ =>
+        -- Simplifying the second case: $\frac{\pi}2 \cos x = \pi - (\frac{\pi}2 - \frac{\pi}2 \sin x) + 2\pi n$
+        -- We get $\cos x + \sin x = 1 + 2\pi n$
+        -- Since $\cos x \in [-1, 1]$ and $\sin x \in [-1, 1]$, we must have $\cos x = -1$ and $\sin x = 0$
+        -- This occurs when $x = \pi + 2\pi n$, but this is not in $[0, \pi]$
+        -- If the original equation is in the form of $\sin(a) = \cos(b)$, then we can write it as $\sin(a) = \sin(\frac{\pi}{2} - b)$
+        -- Using the identity $\sin(x) = \sin(y)$, we have two cases:
+        -- 1. $x = y + 2\pi n$
+        -- 2. $x = \pi - y + 2\pi n$
+        cases Real.sin_eq_sin_iff.mp h₃ with
+        | inl h₃ =>
+          -- Simplifying the first case: $\frac{\pi}2 \cos x = \frac{\pi}2 + 2\pi n$
+          -- We get $\cos x = 1 + 4\pi n$
+          -- Since $\cos x \in [-1, 1]$, we must have $n = 0$ and $\cos x = 1$
+          -- This occurs when $x = 2\pi n$, but this is not in $[0, \pi]$
+          have h₄ : Real.cos x = 1 := by
+            linarith [Real.cos_sq_add_sin_sq x]
+          obtain ⟨h₅, h₆⟩ := Real.cos_eq_one_iff.mp h₄
+          obtain ⟨n, hn⟩ := h₅
+          rw [hn] at h₆
+          have : n = 0 := by
+            by_contra!
+            by_cases h : 0 < n
+           . have : 2 * Real.pi * n > 0 := by positivity
+              linarith [h₆, this]
+           . replace h : n < 0 := by omega
+              have : 2 * Real.pi * n < 0 := by positivity
+              linarith [h₆, this]
+          rw [this] at hn
+          symm at hn
+          rw [hn] at h₀
+          replace h₀ : x = 0 := by linarith [Real.pi_pos]
+          rw [h₀] at h₁
+          linarith [Real.pi_pos]
+        | inr h₃ =>
+          -- Simplifying the second case: $\frac{\pi}2 \cos x = \pi - \frac{\pi}2 + 2\pi n$
+          -- We get $\cos x = -1 + 4\pi n$
+          -- Since $\cos x \in [-1, 1]$, we must have $n = 0$ and $\cos x = -1$
+          -- This occurs when $x = \pi + 2\pi n$, which is $\pi$ when $n = 0$, and is in $[0, \pi]$
+          have h₄ : Real.cos x = -1 := by
+            linarith [Real.cos_sq_add_sin_sq x]
+          obtain ⟨h₅, h₆⟩ := Real.cos_eq_neg_one_iff.mp h₄
+          obtain ⟨n, hn⟩ := h₅
+          rw [hn] at h₆
+          have : n = 0 := by
+            by_contra!
+            by_cases h : 0 < n
+           . have : 2 * Real.pi * n > 0 := by positivity
+              linarith [h₆, this]
+           . replace h : n < 0 := by omega
+              have : 2 * Real.pi * n < 0 := by positivity
+              linarith [h₆, this]
+          rw [this] at hn
+          symm at hn
+          rw [hn] at h₀
+          replace h₀ : x = Real.pi := by linarith [Real.pi_pos]
+          rw [h₀] at h₁
+          linarith [Real.pi_pos]
+
+    -- So $S = \{\pi/2, 3\pi/2\}$
+    have h₆ : S = {Real.pi / 2, (3 * Real.pi / 2)} := by
+      ext x
+      simp [h₀]
+      constructor
+     . exact h₅ x this
+     . rintro (rfl | rfl)
+        all_goals
+        constructor <;> linarith [Real.pi_pos]
+
+    -- So the cardinality of $S$ is 2
+    rw [h₆]
+    simp
+
+  -- Finish the proof
+  exact ⟨h₃, h₄⟩
+```

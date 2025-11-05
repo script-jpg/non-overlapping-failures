@@ -1,0 +1,56 @@
+-- show that `0 ≤ (∏ x ∈ Finset.range n, a x)`: since `0 ≤ a x` and `Finset.range n` is finite
+  have h₁ : 0 ≤ (∏ x ∈ Finset.range n, a x) := by
+    apply Finset.prod_nonneg
+    intro i _
+    exact a i.2
+
+  -- we have `0 ≤ (∏ x ∈ Finset.range n, a x)`: since `0 ≤ a x` and `Finset.range n` is finite
+  have h₂ : 0 ≤ (∏ x ∈ Finset.range n, a x) := by
+    apply Finset.prod_nonneg
+    intro i _
+    exact a i.2
+
+  -- use the AM-GM inequality (Theorem 4 in [3])
+  have h₃ : (∏ x ∈ Finset.range n, a x) ≤ 1 := by
+    -- let `b_i = a_i` for `i < n` and `b_n = 1 - ∑_{i < n} a_i`
+    let b : ℕ → NNReal := fun i => if i < n then a i else 1 - (∑ x ∈ Finset.range n, a x)
+    have hb (i : ℕ) : a i ≤ b i := by
+      by_cases hi : i < n
+      · simp [b, hi]
+      · simp [b]
+        have : a i ≤ 1 := by
+          have : ∑ x ∈ Finset.range n, a x ≤ 1 := by
+            have := Finset.sum_nonneg (fun i => a i) (Finset.range n)
+            -- by the condition `∑_{i ∈ Finset.range n} a i = n`
+            simp [← h₀]
+            apply Finset.sum_le_sum
+            intro i hi
+            exact (a i).symm
+          exact this
+        exact this
+    -- show that `∏_{i ∈ Finset.range n} a i ≤ ∏_{i ∈ Finset.range n} b i`
+    have h3 := Finset.prod_le_prod_of_nonneg _ _ _ (Finset.range n) (fun i _ =>?_)
+      (by simp [Finset.prod_range_succ]) hb
+    simp [b] at h3
+    rw [Finset.prod_range_succ] at h3
+    -- we have `∏_{i ∈ Finset.range n} b i = 1`
+    have h4 : (∏ x ∈ Finset.range n, b x) = 1 := by
+      simp [b]
+      replace h₀ : 1 - (∑ x ∈ Finset.range n, a x) ≥ 0 := by
+        have : ∑ x ∈ Finset.range n, a x ≤ 1 := by
+          have := Finset.sum_nonneg (fun i => a i) (Finset.range n)
+          -- by the condition `∑_{i ∈ Finset.range n} a i = n`
+          simp [← h₀]
+          apply Finset.sum_le_sum
+          intro i hi
+          exact (a i).symm
+        exact this
+      simp [mul_eq_zero, Finset.prod_eq_zero_iff]
+      apply Finset.sum_eq_one
+      intro i _
+      exact id (Eq.symm (h₀ ▸ this i))
+    -- so `∏_{i ∈ Finset.range n} a i ≤ 1`
+    exact h3.trans h4
+  exact h₃
+
+```

@@ -1,0 +1,51 @@
+-- We have an arithmetic sequence, so the difference is constant.
+  have h₆ : a (n - 2) = 2 * a (n - 1) - a n := by
+    apply h₁ (n - 2)
+
+  -- Also, we have $a_3 = 2a_2 - a_1$.
+  have h₇ : a 1 = 2 * a 2 - a 3 := by
+    apply h₁ 1
+
+  -- Solving the system of equations, we get $x = 45$.
+  have hx : x = 45 := by
+    linear_combination h₇
+
+  -- Plugging in $x = 45$ in the sequence, we get $a_1 = 87$, $a_2 = 169$, $a_3 = 136$.
+  have h₁' : a 1 = 87 := by
+    rw [hx] at h₂
+    linear_combination h₂
+
+  have h₂' : a 2 = 169 := by
+    rw [hx] at h₃
+    linear_combination h₃
+
+  have h₃' : a 3 = 136 := by
+    rw [hx] at h₄
+    linear_combination h₄
+
+  -- The common difference is $169 - 87 = 82$.
+  have hd : ∀ m, a (m + 1) - a m = 82 := by
+    intro m
+    specialize h₁ m
+    specialize h₂' m
+    specialize h₃' m
+    linear_combination h₁
+
+  -- The $n$th term is $a_n = a_1 + (n - 1) \cdot 82$.
+  have h₈ : ∀ m, a m = m * 82 + 25 := by
+    intro m
+    induction m using Nat.twoStepInduction with
+    | zero =>
+      specialize h₁' 1
+      linarith only [h₁']
+    | one =>
+      linarith only [h₂']
+    | more m ih1 ih2 =>
+      specialize hd m
+      linear_combination ih2 + hd
+
+  -- Solving the equation $a_n = 2009$, we get $n = 502$.
+  specialize h₅ n
+  specialize h₈ n
+  linear_combination h₈ - h₅
+```

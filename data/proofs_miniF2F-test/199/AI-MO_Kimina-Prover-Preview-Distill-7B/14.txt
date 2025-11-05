@@ -1,0 +1,107 @@
+have h₄ : (k - t) ∣ (m * (k - t)) := by
+    apply Nat.dvd_mul_left
+
+  have h₅ : (k - t) ∣ n := by
+    apply Nat.dvd_of_dvd_mul_right_of_gcd_one
+    · rw [Nat.gcd_comm]
+      rw [←Nat.Prime.coprime_iff_not_dvd h₀.1 h₀.2]
+      zify
+      rw [Int.sub_emod]
+      simp
+      rw [Int.subNatNat_of_le]
+      omega
+    · convert h₄ using 1
+      ring
+
+  have h₆ : k - t = 1 ∨ k - t = m ∨ k - t = n ∨ k - t = m * n := by
+    apply Nat.dvd_prime.mp
+    apply h₅
+
+  rcases h₆ with h₆ | h₆ | h₆ | h₆
+  · -- case 1 : k - t = 1
+    zify at h₆
+    rw [←sub_eq_iff_eq_add, Nat.add_one_sub_one] at h₆
+    simp [h₆] at h₂ h₃
+    zify at h₂ h₃
+    rw [Int.sub_emod] at h₂ h₃
+    rw [Int.emod_self, Int.emod_self] at h₂ h₃
+    have h₇ : m = 2 := by linarith
+    have h₈ : n = 1 := by linarith
+    simp [h₇, h₈]
+    norm_num
+  · -- case 2 : k - t = m
+    zify at h₆
+    rw [←sub_eq_iff_eq_add, Nat.add_one_sub_one] at h₆
+    simp [h₆] at h₂ h₃
+    zify at h₂ h₃
+    rw [Int.sub_emod] at h₂ h₃
+    rw [Int.emod_self, Int.emod_self] at h₂ h₃
+    have h₇ : n = t + 1 := by linarith
+    simp [h₇] at h₃
+    have : t = 1 := by
+      have : t ∣ m := by rw [h₃]; apply Nat.dvd_mul_left
+      rw [h₀.1] at this
+      simp at this
+      omega
+    simp [this] at h₇
+    have : k = m + 1 := by linarith
+    simp [this, h₇, h₈]
+    linarith
+  · -- case 3 : k - t = n
+    zify at h₆
+    rw [←sub_eq_iff_eq_add, Nat.add_one_sub_one] at h₆
+    simp [h₆] at h₂ h₃
+    zify at h₂ h₃
+    rw [Int.sub_emod] at h₂ h₃
+    rw [Int.emod_self, Int.emod_self] at h₂ h₃
+    have h₇ : m = k + 1 := by linarith
+    simp [h₇] at h₂
+    have : t = n - 1 := by
+      rw [←sub_eq_iff_eq_add] at h₃
+      omega
+    simp [this] at h₃
+    have : n ≠ 1 := by
+      intro h
+      simp [h] at h₃
+      have : t = 0 := by linarith
+      simp [this] at h₃
+      have : k = 0 := by linarith
+      simp [this] at h₂
+      omega
+    have : t ^ (n - 1) ≠ 0 := by exact pow_ne_zero (by omega)
+    rw [h₃] at this
+    have : n ^ (n - 1) ≠ 0 := by exact pow_ne_zero (by omega)
+    have : (n + 1) ^ n ≠ 0 := by exact pow_ne_zero (by omega)
+    have : (n + 2) ^ (n - 1) ≠ 0 := by exact pow_ne_zero (by omega)
+    simp [h₈] at h₂
+    rcases h₀ with ⟨h₀, h₀⟩
+    have : ¬n = 2 := by
+      intro h
+      rw [h] at h₃
+      have : t = 1 := by linarith
+      simp [this] at h₃
+      have : k = 1 := by linarith
+      simp [this] at h₂
+      omega
+    tauto
+  · -- case 4 : k - t = m * n
+    zify at h₆
+    simp [h₆] at h₂ h₃
+    zify at h₂ h₃
+    rw [Int.sub_emod] at h₂ h₃
+    have h₇ : m = t + 1 := by linarith
+    have h₈ : n = k + 1 := by linarith
+    simp [h₇, h₈] at h₃
+    rcases h₀ with ⟨h₀, h₀⟩
+    have h₉ : ¬t = 0 := by
+      intro h
+      simp [h] at h₃
+      have : k = 0 := by linarith
+      simp [this] at h₂
+      have : m = 0 := by linarith
+      simp [this] at h₀
+      omega
+    have h₁₀ : t < m := by linarith
+    have : t ^ 2 < m * n := by apply mul_lt_mul_of_pos_right?_ h₀.2; linarith
+    linarith
+```

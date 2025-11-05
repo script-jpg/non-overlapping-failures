@@ -1,0 +1,213 @@
+-- aux lemma that can be proved by using `Finset.sum_range_succ` and `Real.sin_add`
+  have l₁ : ∀ n : ℕ, ∑ k ∈ Finset.Icc 1 (n + 1), Real.sin (5 * k * Real.pi / 180) = (∑ k ∈ Finset.Icc 1 n, Real.sin (5 * k * Real.pi / 180)) + Real.sin (5 * (n + 1) * Real.pi / 180) := by
+    intro n
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    simp only [Finset.mem_Icc, add_add]
+    intro h
+    linarith
+  -- aux lemma that can be proved by using `Finset.sum_range_succ` and `Real.sin_add`
+  have l₂ : ∀ n : ℕ, ∑ k ∈ Finset.Icc 1 (n + 1), Real.sin (5 * (Real.pi / 180) * (n + 1) + Real.pi / 2) = (∑ k ∈ Finset.Icc 1 n, Real.sin (5 * (Real.pi / 180) * (n + 1) + Real.pi / 2)) + Real.sin (5 * (Real.pi / 180) * (n + 1) + Real.pi / 2) := by
+    intro n
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    simp only [Finset.mem_Icc, add_add]
+    intro h
+    linarith
+  -- Using the formula for geometric series and the identity $\tan \theta=\frac{\sin \theta}{\cos \theta},$ we get
+  have : ∑ k ∈ Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180) = Real.sin (5 * (Real.pi / 180) * 35 + Real.pi / 2) / Real.cos (5 * (Real.pi / 180) * 35) := by
+    have : 35 = (34 + 1 : ℕ) := by norm_num
+    rw [this, l₂ 34, ← Real.tan_eq_sin_div_cos, add_comm]
+    rw [div_eq_iff, mul_comm, Real.tan_eq_sin_div_cos, <-l₁, <-Finset.sum_range_succ]
+    simp only [Finset.mem_Icc, add_add]
+    intro _
+    exact rfl
+  -- Since $\cos \theta=\sin \theta$ if and only if $\theta=\frac{\pi}{4} + n\frac{\pi}{2}$ for some $n \in \mathbb{Z}$, we get
+  have : Real.cos (5 * (Real.pi / 180) * 35) = Real.sin (m * Real.pi / 180) ↔ 5 * (Real.pi / 180) * 35 = (m * Real.pi / 180) + ↑m.num * Real.pi / 2 ∧ Even (↑m.num) ∨ 5 * (Real.pi / 180) * 35 = (m * Real.pi / 180) + ↑m.den * Real.pi / 2 ∧ Odd (↑m.den) := by
+    rw [Real.cos_eq_sin_iff]
+    norm_cast
+    have : (m.num : ℝ) / m.den < 90 := by
+      qify
+      exact h₂
+    constructor
+    · intro h
+      rcases h with ⟨h, n, h₀⟩
+      have h₁ : (n : ℝ) = (n : ℤ) := by
+        exact rfl
+      rw [<-h₀, Real.sin_add] at h
+      qify at h
+      rw [Real.sin_eq_mul_cos, <-div_div, mul_comm, <-mul_div_assoc] at h
+      rw [div_eq_iff] at h
+      norm_cast at h
+      simp only [Int.cast_mul, Int.cast_ofNat, Int.cast_add, Int.cast_numNat, Int.cast_one] at h
+      have h' : (5 * (↑m.num : ℝ) * Real.pi / 180 + ↑m.num * Real.pi / 2) % Real.pi = (↑m.num * Real.pi / 2) % Real.pi := by
+        rw [<-h, Nat.cast_add, Nat.cast_mul, add_assoc, <-mul_add, mul_comm, <-mul_assoc, mul_assoc]
+        norm_num
+      rw [Real.modEq_iff] at h'
+      rcases h' with ⟨k, hk⟩
+      rw [mul_assoc, mul_comm, <-mul_assoc, mul_right_inj'] at hk
+      norm_cast at hk
+      have : (k : ℤ) = (k : ℕ) := by
+        exact rfl
+      have hk : (↑m.num : ℝ) * ((↑k : ℤ) : ℝ) = (↑m.num : ℝ) * ↑k := by
+        norm_cast
+      rw [<-mul_assoc, mul_comm, <-mul_assoc, mul_assoc] at hk
+      norm_cast at hk
+      have : m.num * k ≡ m.num * 0 [ZMOD m.den] := by
+        simp only [Int.ModEq, Int.emod, zero_mul]
+        rw [<-Nat.cast_modEq_iff]
+        exact Dvd.intro_left (m.den) (id (Eq.symm hk))
+      have := Int.ModEq.dvd this
+      norm_cast at this
+      have : m.num * k ≡ 0 [ZMOD m.den] := by
+        exact Int.ModEq.symm this
+      have := Int.ModEq.dvd this
+      norm_cast at this
+      have dvd : m.den ∣ m.num * k := by
+        exact Int.dvd_of_emod_eq_zero this
+      have hms : m.num * m.den ∣ m.num * k := by
+        exact Dvd.dvd.mul_left dvd m.num
+      rw [mul_comm, mul_assoc] at hms
+      apply mul_right_inj' at hms
+      norm_cast at hms
+      exact hms
+    · intro h
+      rcases h with ⟨h, n, h₀⟩
+      have h₁ : (n : ℝ) = (n : ℤ) := by
+        exact rfl
+      have : (5 * (↑m.den : ℝ) * Real.pi / 180 + ↑m.den * Real.pi / 2) % Real.pi = (↑m.den * Real.pi / 2) % Real.pi := by
+        nth_rw 1 [<-h]
+        rw [add_comm]
+        nth_rw 3 [add_comm]
+        rw [<-Real.add_mul, <-mul_assoc, mul_assoc, mul_comm (5 * Real.pi / 180), <-mul_assoc, mul_assoc, mul_right_inj']
+        norm_num
+      rw [Real.modEq_iff] at this
+      rcases this with ⟨k, hk⟩
+      rw [mul_assoc, mul_comm, <-mul_assoc, mul_assoc] at hk
+      norm_cast at hk
+      have : (k : ℤ) = (k : ℕ) := by
+        exact rfl
+      have hk : (↑m.den : ℝ) * ((↑k : ℤ) : ℝ) = (↑m.den : ℝ) * ↑k := by
+        norm_cast
+      rw [<-mul_assoc, mul_comm, <-mul_assoc, mul_assoc] at hk
+      norm_cast at hk
+      have : m.den * k ≡ m.den * 0 [ZMOD m.num] := by
+        simp only [Int.ModEq, Int.emod, zero_mul]
+        rw [<-Nat.cast_modEq_iff]
+        exact Dvd.intro_left (m.num) (id (Eq.symm hk))
+      have := Int.ModEq.dvd this
+      norm_cast at this
+      have : m.den * k ≡ 0 [ZMOD m.num] := by
+        exact Int.ModEq.symm this
+      have := Int.ModEq.dvd this
+      norm_cast at this
+      have dvd : m.num ∣ m.den * k := by
+        exact Int.dvd_of_emod_eq_zero this
+      have hms : m.num * m.den ∣ m.den * k := by
+        exact Dvd.dvd.mul_left dvd m.den
+      rw [mul_comm, mul_assoc] at hms
+      apply mul_right_inj' at hms
+      norm_cast at hms
+      rw [mul_assoc]
+      exact hms
+  have : 5 * (Real.pi / 180) * 35 = (m * Real.pi / 180) + ↑m.num * Real.pi / 2 ∧ Even (↑m.num) := by
+    apply And.intro
+    · intro h
+      have : Real.cos (5 * (Real.pi / 180) * 35) ≠ 0 := by
+        have : Real.cos (5 * (Real.pi / 180) * 35) = Real.sin (m * Real.pi / 180) := by
+          rw [h]
+          rw [Real.sin_add]
+          apply ne_of_gt
+          apply Real.sin_pos_of_pos_of_lt_pi
+          linarith
+          linarith
+        rw [this]
+        apply Real.sin_ne_zero_of_ne_pi
+        linarith
+      rw [this, <-div_div, mul_comm, <-mul_div_assoc]
+      nth_rw 1 [div_self this]
+      rw [mul_comm]
+      exact h
+    · have := this.1
+      rcases this with ⟨h, n, h₀⟩
+      have h₁ : (n : ℝ) = (n : ℤ) := by
+        exact rfl
+      rw [<-h, Real.sin_add] at h₀
+      qify at h₀
+      rw [Real.sin_eq_mul_cos, <-div_div, mul_comm, <-mul_div_assoc] at h₀
+      rw [div_eq_iff] at h₀
+      norm_cast at h₀
+      simp only [Int.cast_mul, Int.cast_ofNat, Int.cast_add, Int.cast_numNat, Int.cast_one] at h₀
+      have h' : (5 * (↑m.num : ℝ) * Real.pi / 180 + ↑m.num * Real.pi / 2) % Real.pi = (↑m.num * Real.pi / 2) % Real.pi := by
+        rw [<-h₀, add_comm, <-mul_add, mul_comm, <-mul_assoc, mul_right_inj']
+        norm_num
+      rw [Real.modEq_iff] at h'
+      rcases h' with ⟨k, hk⟩
+      have : k = 0 := by
+        by_contra!
+        have : 0 < k := by
+          exact this
+        have : (π : ℝ) > 0 := by
+          linarith
+        have : (↑m.num : ℝ) > 0 := by
+          qify
+          exact h₀
+        have : (↑m.num : ℝ) * Real.pi / 2 > 0 := by
+          linarith
+        have : (↑m.num : ℝ) * (Real.pi / 2) % Real.pi < Real.pi := by
+          apply Real.emod_lt_of_pos
+          apply Real.pi_pos
+        linarith
+      simp only [Nat.cast_ofNat, OfNat.ofNat_ne_zero, not_false_eq_true, zero_mul, Int.cast_zero, mul_left_inj'] at hk
+      rw [<-hk, show (0 : ℤ) = 0 + 0 by norm_num, add_zero]
+  have : (5 * (Real.pi / 180) * 35 + Real.pi / 2) = (m * Real.pi / 180) + ↑m.den * Real.pi / 2 ∧ Odd (↑m.den) := by
+    have := this.2
+    rcases this with ⟨h, n, h₀⟩
+    have h₁ : (n : ℝ) = (n : ℤ) := by
+      exact rfl
+    have h₂ : (↑m.den : ℝ) ≠ 0 := by
+      by_contra!
+      rw [this] at h₀
+      simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true] at this
+      norm_cast at this
+    have h₃ : Real.cos (5 * (Real.pi / 180) * 35) ≠ 0 := by
+      rw [h]
+      apply Real.sin_ne_zero_of_ne_pi
+      linarith
+    rw [h₃, <-div_div, mul_comm, <-mul_div_assoc]
+    nth_rw 1 [div_self h₃]
+    rw [mul_comm]
+    exact h
+  have : 5 * (Real.pi / 180) * 35 + Real.pi / 2 = (m * Real.pi / 180) + ↑m.num * Real.pi / 2 + ↑m.den * Real.pi / 2 := by
+    linarith
+  have : 5 * (Real.pi / 180) * 35 + Real.pi / 2 - ((m * Real.pi / 180) + ↑m.num * Real.pi / 2 + ↑m.den * Real.pi / 2) = 0 := by
+    rw [this]
+    ring
+  have : (5 * (Real.pi / 180) * 35 + Real.pi / 2 - ((m * Real.pi / 180) + ↑m.num * Real.pi / 2 + ↑m.den * Real.pi / 2)) = (m.num - m.den) * Real.pi / 2 := by
+    ring
+  have : (m.num - m.den) * Real.pi / 2 = 0 := by
+    rw [<-this, <-mul_assoc, mul_comm, sub_eq_add_neg, add_zero, neg_mul, Real.pi_ne_zero]
+    linarith
+  have : m.num - m.den = 0 := by
+    apply (mul_eq_zero.mp this).resolve_right
+    exact Real.pi_ne_zero
+  rw [this]
+  simp only [Nat.cast_sub, Nat.cast_ofNat, Nat.cast_one, tsub_eq_zero_of_le] at h₀
+  have : Even (↑m.num) := by
+    rcases this.1 with ⟨h, n, h₀⟩
+    use n - 1
+    rw [Nat.even_iff]
+    rw [h, Nat.add_sub_cancel, Nat.sub_add_cancel]
+    exact Nat.two_mul_le _
+  have : Odd (↑m.den) := by
+    rcases this.2 with ⟨h, n, h₀⟩
+    use n - 1
+    rw [Nat.odd_iff]
+    rw [h, Nat.add_sub_cancel, Nat.sub_add_cancel]
+    exact Nat.two_mul_le _
+  have : m.num = m.den := by
+    by_contra h
+    have : ¬m.num = m.den := by
+      exact Ne.symm h
+    contradiction
+  rw [this, <-Nat.cast_inj]
+  exact h₀
+```

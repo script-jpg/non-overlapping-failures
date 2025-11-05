@@ -1,0 +1,71 @@
+-- A lemma that later use several times: if a < b and b < c, then a < c.
+  have lm (a b c : ℝ) (h₀ : a < b) (h₁ : b < c) : a < c := by
+    linarith
+
+  -- A lemma to convert rational inequalities to integers
+  have numeralize (a b c : ℝ) (h : a < b) (h₀ : 0 ≤ a) (h₁ : 0 < b) : ((↑a : ℚ) : ℝ) < ((↑b : ℚ) : ℝ) := by
+    set a' := (a - ↑a) with ha'
+    set b' := (b - ↑b) with hb'
+    set c' := (a - ↑a) + (b - ↑b) with hc'
+    have : a' < c' := by
+      apply lt_of_sub_neg
+      <;> linarith
+    rw [←hc'] at this
+    have : a' + (↑a : ℝ) < c' + (↑a : ℝ) := by
+      apply lt_of_add_lt_add_right
+      assumption
+    rw [←ha', ←hb'] at this
+    norm_cast at this
+    have : (↑a : ℝ) < (↑(a + b) : ℚ) := by
+      apply lt_of_le_of_lt
+     . assumption
+     . norm_cast
+    have : a < a + b := by linarith
+    have : a + b < a + b + c := by linarith
+    linarith
+
+  -- If x is a positive number such that 2x^2 = 4x + 9, then x = (2 + √13)/2
+  have unique_x : x = (2 + Real.sqrt 13) / 2 := by
+    have : 2 * (x * x) = 4 * x + 9 := by
+      rw [← h₁]
+      ring
+    have : 2 * (x * x) - 4 * x - 9 = 0 := by
+      rw [← this]; ring
+    have : 2 * (x * x) - 4 * x + 2 = 11 := by
+      rw [← this]; ring
+    have : 2 * (x * x) - 4 * x + 2 = (x - (2 + Real.sqrt 13) / 2) * (2 * x - (2 - Real.sqrt 13) / 2) := by
+      ring_nf
+      rw [Real.sq_sqrt]
+      repeat linarith
+    rw [this] at this
+    have : (x - (2 + Real.sqrt 13) / 2) * (2 * x - (2 - Real.sqrt 13) / 2) = 0 := by
+      linarith
+    have : x = (2 + Real.sqrt 13) / 2 ∨ 2 * x = (2 - Real.sqrt 13) / 2 := by
+      apply mul_eq_zero.mp
+      assumption
+    rcases this with h | h
+   . assumption
+   . have : x = (2 - Real.sqrt 13) / 4 := by
+        linarith
+      rw [this] at h₀
+      have : Real.sqrt 13 < 2 := by
+        rw [Real.sqrt_lt]
+        repeat linarith
+      linarith
+
+  -- Prove that 13 is a prime number
+  have prime_13 : Nat.Prime 13 := by
+    norm_num
+
+  -- If x is a positive number such that 2x^2 = 4x + 9, then x = (2 + √13)/2 where 2, 13, 4 are positive integers and 2, 13 are coprime
+  have x_decomposes : x = (2 + Real.sqrt 13) / 2 ∧ Nat.Coprime 2 13 := by
+    constructor
+   . exact unique_x
+   . exact Nat.coprime_two_right.mpr prime_13
+
+  -- Prove the final result
+  obtain ⟨⟨h₀, h₁⟩, h₂⟩ := x_decomposes
+  simp_all
+  linarith
+
+```

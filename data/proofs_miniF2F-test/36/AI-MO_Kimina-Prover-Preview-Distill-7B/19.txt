@@ -1,0 +1,56 @@
+induction n, h₀ using Nat.le_induction with
+
+  -- base case $n = 3$
+  | base =>
+    simp [Nat.factorial, Nat.pow_succ]
+
+  -- inductive step: Assume the result holds for $n$, prove it for $n+1$
+  | succ n h₀ ih =>
+    -- Note that $n+1 \mid n+1!$, so $n+1 \mid (n+1)! - (n+1)$
+    have h₁ : n + 1 ∣ (n + 1) * n! - (n + 1) := by
+      use n! - 1
+      apply Nat.mul_sub_right_distrib
+      rw [Nat.sub_add_cancel]
+      · apply Nat.one_le_pow
+        simp
+      · exact Nat.factorial_pos n
+
+    -- Hence $(n+1)! - (n+1) \neq 0$
+    have h₂ : (n + 1) * n! - (n + 1) ≠ 0 := by
+      intro h
+      have : (n + 1) ∣ 0 := by
+        rw [←h]
+        exact Nat.dvd_sub_self_right (n + 1) (n + 1 * n!)
+      rw [Nat.dvd_zero] at this
+      contradiction
+
+    -- So $(n+1)! > (n+1)$
+    have h₃ : (n + 1) * n! > n + 1 := by
+      apply Nat.eq_add_of_sub_eq at h₁
+      rw [Nat.add_comm] at h₁
+      apply Nat.add_right_cancel h₁
+
+    -- By the inductive hypothesis, we know that $n! < n^{n-1}$
+    have h₄ : n! < n ^ (n - 1) := ih
+
+    -- So $(n+1)! = (n+1) \cdot n! < (n+1) \cdot n^{n-1} < (n+1) \cdot n^n = (n+1)^n \cdot n$
+    have h₅ : (n + 1) * n! < (n + 1) * n ^ (n - 1) := by
+      apply Nat.mul_lt_mul_of_pos_left h₄
+      apply Nat.one_lt_pow
+      simp
+      exact Nat.zero_lt_of_lt h₀
+
+    -- Finally, we can compare $(n+1)!$ and $(n+1)^n$
+    have h₆ : (n + 1) * n ^ (n - 1) < (n + 1) ^ n := by
+      rw [Nat.one_pow]
+      apply Nat.mul_lt_mul_of_pos_left
+      apply Nat.pow_lt_pow_iff_right
+      · exact Nat.succ_le_of_lt h₀
+      · exact Nat.zero_lt_of_lt h₀
+      · apply Nat.one_lt_pow
+        simp
+        exact Nat.zero_lt_of_lt h₀
+
+    linarith
+
+```

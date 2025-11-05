@@ -1,0 +1,54 @@
+-- -- Let $a$ and $b$ be real numbers such that $a^2+b^2=1$. Show that $ab+\lvert a-b\rvert \leq 1$.
+  -- first, wlog, assume that $a \geq b$, so that $|a - b| = a - b$.
+  wlog h : a ≥ b
+ . -- in the other case, we just swap the name of a and b.
+    specialize this b a (by linarith only [h₀])
+    ring_nf at this ⊢
+    exact this
+
+  -- now, we have $|a - b| = a - b$.
+  have r0 : abs (a - b) = a - b := by
+    simp [abs_of_nonneg h]
+
+  -- to simplify the inequality, we cancel the $ab$ term on both sides.
+  suffices a * b + abs (a - b) - a * b ≤ 1 - a * b by linarith only [this]
+  rw [r0]
+
+  -- now, we need to prove that $a - b \leq 1 - ab$.
+  -- rearrange terms, that is, $a + ab - b \leq 1$.
+  -- factorize the left side, that is, $(1 + b)(a - b) \leq 1$.
+  have r1 : (1 + b) * (a - b) ≤ 1 := by
+
+    -- let's try to find an inequality connecting a, b and 1.
+    -- by the condition, we have $a^2 + b^2 = 1$, and by the fact that
+    -- $2ab \leq a^2 + b^2$ for any real numbers, we have $2ab \leq 1$.
+    have r2 : 2 * a * b ≤ 1 := by
+      have : (a - b) ^ 2 ≥ 0 := by positivity
+      linarith only [this]
+
+    -- since $b^2 \leq 1$, we have $|b| \leq 1$.
+    have r3 : abs b ≤ 1 := by
+      have : b ^ 2 ≤ 1 := by
+        have t1 : a ^ 2 ≥ 0 := by positivity
+        linarith only [t1, h₀]
+      apply abs_le.mpr
+      constructor
+     . linarith only [this]
+     . linarith only [this]
+
+    -- the inequality we find is $(1 + b)(a - b) \leq 1$, where the left side
+    -- is exactly $a - b + (1 + b)(a - b)$.
+    calc _ = (1 - b) * (1 + b) := by ring
+         _ ≤ (1 - b) * 1 := by
+            -- have $1 + b \geq 0$, and $1 - b \geq 0$.
+            have : 1 + b ≥ 0 := by linarith only [r3]
+            have : 1 - b ≥ 0 := by linarith only [r3]
+            apply mul_le_mul_of_nonneg_left
+           . linarith only [this]
+           . linarith only [this]
+         _ = 1 - b := by ring
+         _ ≤ 1 := by linarith only [r3]
+
+  linarith only [r1]
+
+```

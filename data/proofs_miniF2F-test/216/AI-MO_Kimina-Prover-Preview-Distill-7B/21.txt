@@ -1,0 +1,242 @@
+-- Let $X = \max \{ |x|, |y|, |z| \}$.
+  let X := max (max |x| |y|) |z|
+
+  -- Since $X$ is the maximum of $|x|$, $|y|$, and $|z|$, we have $X \geq |x|$, $X \geq |y|$, and $X \geq |z|$.
+  have hX_ge_x : X ≥ |x| := max_le_max_left (max |x| |y|) |z| |x|
+  have hX_ge_y : X ≥ |y| := le_max_left (max |x| |y|) |z| |y|
+  have hX_ge_z : X ≥ |z| := le_max_left (max |x| |y|) |z| |z|
+
+  -- We can also achieve $X \geq 0$.
+  have hX_ge_0 : X ≥ 0 := by
+    simp [X]
+    apply max_nonneg
+    apply max_nonneg
+    all_goals simp
+
+  -- Since $X \geq |x|$, $X \geq |y|$, and $X \geq |z|$, we have $x \leq X$, $y \leq X$, and $z \leq X$.
+  have hX_ge_x' : X ≥ x := by
+    cases' abs_cases x with hx hx
+    · simp [hx, hX_ge_0]
+    · simp [hx, hX_ge_z]
+  have hX_ge_y' : X ≥ y := by
+    cases' abs_cases y with hy hy
+    · simp [hy, hX_ge_0]
+    · simp [hy, hX_ge_z]
+  have hX_ge_z' : X ≥ z := by
+    cases' abs_cases z with hz hz
+    · simp [hz, hX_ge_0]
+    · simp [hz, hX_ge_z]
+
+  -- We prove that $X \leq 0$.
+  have hX_le_0 : X ≤ 0 := by
+    -- We know that $a_i \cdot x \leq |a_i \cdot x|$ for all $i$.
+    have h₁₀ : ∀ i : ℕ, i ∈ Finset.range 9 → a i * x ≤ |a i * x| := by
+      intro i hi
+      exact le_abs_self (a i * x)
+
+    -- We know that $|a_i \cdot x| = |a_i| \cdot |x|$ for all $i$.
+    have h₁₁ : ∀ i : ℕ, i ∈ Finset.range 9 → |a i * x| = |a i| * |x| := by
+      intro i hi
+      exact abs_mul (a i) x
+
+    -- We bound $x$ by $X$ and know that $|a_i| \leq |a_i| \cdot X$ because $X \geq |a_i|$.
+    have h₁₂ : ∀ i : ℕ, i ∈ Finset.range 9 → |a i| * X ≥ |a i| * |x| := by
+      intro i hi
+      apply mul_le_mul_of_nonneg_left
+      · apply abs_le_abs
+      · exact hX_ge_x' (by simp [hi])
+
+    -- We do the same for $y$ and $z$.
+    have h₁₃ : ∀ i : ℕ, i ∈ Finset.range 9 → |a i| * X ≥ |a i| * |y| := by
+      intro i hi
+      apply mul_le_mul_of_nonneg_left
+      · apply abs_le_abs
+      · exact hX_ge_y' (by simp [hi])
+
+    have h₁₄ : ∀ i : ℕ, i ∈ Finset.range 9 → |a i| * X ≥ |a i| * |z| := by
+      intro i hi
+      apply mul_le_mul_of_nonneg_left
+      · apply abs_le_abs
+      · exact hX_ge_z' (by simp [hi])
+
+    -- We use the inequality $|a_i \cdot x| \geq 0$ for all $i$.
+    have h₁₅ : ∀ i : ℕ, i ∈ Finset.range 9 → 0 ≤ |a i * x| := by
+      intro i hi
+      exact le_abs_self (a i * x)
+
+    -- We use the triangle inequality for absolute values.
+    have h₁₆ : |x + y + z| ≤ |x| + |y| + |z| := by
+      apply abs_add (x + y) z
+
+    -- We use the property of absolute value for inequalities.
+    have h₁₇ : |x + y + z| ≥ ||x| - |y| - |z|| := by
+      apply abs_add
+
+    -- Since $X \geq |x|$, $X \geq |y|$, and $X \geq |z|$, we have $|x| - |y| - |z| \leq X - X - X = 0$.
+    have h₁₈ : |x| - |y| - |z| ≤ 0 := by
+      calc
+        |x| - |y| - |z| ≤ X - X - X := by rel [hX_ge_x', hX_ge_y', hX_ge_z']
+        _ = 0 := by ring
+
+    -- Since $|x + y + z| \geq ||x| - |y| - |z||$ and $|x| - |y| - |z| \leq 0$, we have $|x + y + z| \geq 0$.
+    have h₁₉ : 0 ≤ |x + y + z| := by
+      calc
+        0 ≤ ||x| - |y| - |z|| := by apply abs_nonneg
+        _ ≤ |x + y + z| := by apply le_of_le_of_le (abs_sub (x + y) z) h₁₇
+
+    -- We know that $|x + y + z| \geq 0$, but we have no information about $x + y + z$.
+    -- However, we know that $|x + y + z| \geq 0$ and $|x| - |y| - |z| \leq 0$.
+    -- We also know that $|a_i \cdot x| \geq 0$ for all $i$.
+    -- We will use these facts to prove that $X \leq 0$.
+
+    -- We use the facts that $|a_i \cdot x| \geq 0$ for all $i$.
+    have h₁₈ : ∀ i : ℕ, i ∈ Finset.range 9 → 0 ≤ |a i * x| := by
+      intro i hi
+      exact h₁₅ i hi
+
+    -- We use the triangle inequality for absolute values for the coefficients.
+    have h₁₉ : |a 0 + a 1 + a 2| ≤ |a 0| + |a 1| + |a 2| := by
+      apply abs_add (a 0 + a 1) a 2
+
+    have h₂₀ : |a 3 + a 4 + a 5| ≤ |a 3| + |a 4| + |a 5| := by
+      apply abs_add (a 3 + a 4) a 5
+
+    have h₂₁ : |a 6 + a 7 + a 8| ≤ |a 6| + |a 7| + |a 8| := by
+      apply abs_add (a 6 + a 7) a 8
+
+    -- We use the property of absolute value for inequalities for the coefficients.
+    have h₁₂₁ : |a 0 + a 1 + a 2| ≥ ||a 0| - |a 1| - |a 2|| := by
+      apply abs_add
+
+    have h₁₂₂ : |a 3 + a 4 + a 5| ≥ ||a 3| - |a 4| - |a 5|| := by
+      apply abs_add
+
+    have h₁₂₃ : |a 6 + a 7 + a 8| ≥ ||a 6| - |a 7| - |a 8|| := by
+      apply abs_add
+
+    -- We know that $a_{11}$, $a_{22}$, $a_{33}$ are positive numbers.
+    -- So $|a_{11}| = a_{11}$, $|a_{22}| = a_{22}$, and $|a_{33}| = a_{33}$.
+    have h₂₂ : ∀ i : ℕ, i ∈ Finset.range 3 → |a (2 * i)| = a (2 * i) := by
+      intro i hi
+      simp at hi
+      have h25 : 2 * i ∈ Finset.range 9 := by
+        simp
+        omega
+      have h26 : |a (2 * i)| ≥ 0 := by
+        exact abs_nonneg (a (2 * i))
+      have h27 : a (2 * i) ≥ 0 := by
+        cases' i with i i
+        · simp
+          exact h₀.1
+        · simp
+          exact h₀.2.1
+      exact abs_of_nonneg h27
+
+    -- We know that the remaining coefficients are negative numbers.
+    -- So $|a_{12}| = -a_{12}$, $|a_{13}| = -a_{13}$, $|a_{21}| = -a_{21}$, $|a_{23}| = -a_{23}$, $|a_{31}| = -a_{31}$, and $|a_{32}| = -a_{32}$.
+    have h₂₃ : ∀ i : ℕ, i ∈ Finset.range 3 → |a (2 * i + 1)| = -a (2 * i + 1) := by
+      intro i hi
+      simp at hi
+      have h28 : 2 * i + 1 ∈ Finset.range 9 := by
+        simp
+        omega
+      have h29 : |a (2 * i + 1)| ≥ 0 := by
+        exact abs_nonneg (a (2 * i + 1))
+      have h30 : a (2 * i + 1) ≤ 0 := by
+        cases' i with i i
+        · simp
+          exact h₁.1
+        · simp
+          exact h₁.2.1
+      exact abs_of_nonpos h30
+
+    -- We know that in each equation, the sum of the coefficients is positive.
+    -- $a_{11} + a_{12} + a_{13} > 0$
+    have h₂₄ : a 0 + a 1 + a 2 > 0 := by
+      exact h₄
+
+    -- $a_{21} + a_{22} + a_{23} > 0$
+    have h₂₅ : a 3 + a 4 + a 5 > 0 := by
+      exact h₅
+
+    -- $a_{31} + a_{32} + a_{33} > 0$
+    have h₂₆ : a 6 + a 7 + a 8 > 0 := by
+      exact h₆
+
+    -- We bound $|a_{11}x_1 + a_{12}x_2 + a_{13}x_3| \leq |a_{11}||x_1| + |a_{12}||x_2| + |a_{13}||x_3|$.
+    have h₂₇ : |a 0 * x + a 1 * y + a 2 * z| ≤ |a 0 * x| + |a 1 * y| + |a 2 * z| := by
+      apply abs_add
+
+    -- $|a_{11}||x_1| \leq |a_{11}|X$ because $|x_1| \leq X$.
+    have h₂₈ : |a 0 * x| ≤ |a 0| * X := by
+      rw [h₁₁ 0 (by simp)]
+      apply mul_le_mul_of_nonneg_left
+      · apply abs_le_abs
+      · exact hX_ge_x' (by simp)
+
+    -- $|a_{12}||x_2| \leq |a_{12}|X$ because $|x_2| \leq X$.
+    have h₂₉ : |a 1 * y| ≤ |a 1| * X := by
+      rw [h₁₁ 1 (by simp)]
+      apply mul_le_mul_of_nonneg_left
+      · apply abs_le_abs
+      · exact hX_ge_y' (by simp)
+
+    -- $|a_{13}||x_3| \leq |a_{13}|X$ because $|x_3| \leq X$.
+    have h₃₀ : |a 2 * z| ≤ |a 2| * X := by
+      rw [h₁₁ 2 (by simp)]
+      apply mul_le_mul_of_nonneg_left
+      · apply abs_le_abs
+      · exact hX_ge_z' (by simp)
+
+    -- So $|a_{11}x_1 + a_{12}x_2 + a_{13}x_3| \leq |a_{11}|X + |a_{12}|X + |a_{13}|X$.
+    have h₃₁ : |a 0 * x + a 1 * y + a 2 * z| ≤ |a 0| * X + |a 1| * X + |a 2| * X := by
+      linarith only [h₂₇, h₂₈, h₂₉, h₃₀]
+
+    -- Since $a_{11} + a_{12} + a_{13} > 0$ and $X \geq 0$, we have $|a_{11}||x_1| + |a_{12}||x_2| + |a_{13}||x_3| \leq (a_{11} + a_{12} + a_{13}) \cdot X$.
+    have h₃₂ : |a 0 * x + a 1 * y + a 2 * z| ≤ (a 0 + a 1 + a 2) * X := by
+      calc
+        |a 0 * x + a 1 * y + a 2 * z| ≤ |a 0| * X + |a 1| * X + |a 2| * X := by exact h₃₁
+        _ = (|a 0| + |a 1| + |a 2|) * X := by ring
+        _ ≤ (a 0 + a 1 + a 2) * X := by
+          apply mul_le_mul_of_nonneg_right
+          · apply abs_le_abs
+          · exact hX_ge_0
+
+    -- Since $a_{11}x_1 + a_{12}x_2 + a_{13}x_3 = 0$, we have $|a_{11}x_1 + a_{12}x_2 + a_{13}x_3| = 0$.
+    have h₃₃ : |a 0 * x + a 1 * y + a 2 * z| = 0 := by
+      rw [h₇]
+      exact abs_eq_zero.mpr (by simp)
+
+    -- So $(a_{11} + a_{12} + a_{13}) \cdot X \geq 0$.
+    have h₃₄ : (a 0 + a 1 + a 2) * X ≥ 0 := by
+      linarith only [h₃₂, h₃₃]
+
+    -- Since $a_{11} + a_{12} + a_{13} > 0$, we have $X \geq 0$.
+    have h₃₅ : X ≥ 0 := by
+      apply (mul_nonneg_iff_of_pos_left h₂₄).mp h₃₄
+
+    -- We have $X \leq 0$ and $X \geq 0$, so $X = 0$.
+    have h₃₆ : X = 0 := by
+      linarith only [h₃₅, h₁₈]
+
+    -- Since $X = 0$, we have $|x| \leq X = 0$, $|y| \leq X = 0$, and $|z| \leq X = 0$.
+    have h₃₇ : |x| ≤ 0 := by
+      apply hX_ge_x'
+    have h₃₈ : |y| ≤ 0 := by
+      apply hX_ge_y'
+    have h₃₉ : |z| ≤ 0 := by
+      apply hX_ge_z'
+
+    -- Since $|x| \leq 0$, $|y| \leq 0$, and $|z| \leq 0$, we have $x = 0$, $y = 0$, and $z = 0$.
+    have hx_eq_0 : x = 0 := by
+      cases' abs_cases x with hx hx
+      · simp [hx] at h₃₇
+      · simp [hx] at h₃₇
+    have hy_eq_0 : y = 0 := by
+      cases' abs_cases y with hy hy
+      · simp [hy] at h₃₈
+      · simp [hy] at h₃₈
+    have hz_eq_0 : z = 0 := by
+      cases' abs_cases z with hz hz
+      · simp [hz] at h₃₉
+      · simp [hz] at h₃₉

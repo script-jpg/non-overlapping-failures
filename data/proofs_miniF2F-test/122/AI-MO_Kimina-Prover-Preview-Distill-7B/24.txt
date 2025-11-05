@@ -1,0 +1,88 @@
+-- A = \(\begin{cases} 1 & if x \leq y \\ 0 & otherwise \end{cases}\)
+  let A : ℝ := if x ≤ y then 1 else 0
+
+  -- B = \(\begin{cases} 1 & if y \leq z \\ 0 & otherwise \end{cases}\)
+  let B : ℝ := if y ≤ z then 1 else 0
+
+  -- C = \(\begin{cases} 1 & if z \leq x \\ 0 & otherwise \end{cases}\)
+  let C : ℝ := if z ≤ x then 1 else 0
+
+  have hA : A = if x ≤ y then 1 else 0 := by rfl
+  have hB : B = if y ≤ z then 1 else 0 := by rfl
+  have hC : C = if z ≤ x then 1 else 0 := by rfl
+
+  -- $a = 2 / (x + y)$, $b = 2 / (y + z)$, $c = 2 / (z + x)$
+  let a : ℝ := 2 / (x + y)
+  let b : ℝ := 2 / (y + z)
+  let c : ℝ := 2 / (z + x)
+
+  have h1 : 0 < x + y + z := by linarith
+  have h2 : 0 < x + y := by linarith
+  have h3 : 0 < y + z := by linarith
+  have h4 : 0 < z + x := by linarith
+
+  -- Show that $a + b + c \geq 9/(x+y+z)$.
+  have h5 : a + b + c ≥ 9 / (x + y + z) := by
+    calc
+      a + b + c = 2 / (x + y) + 2 / (y + z) + 2 / (z + x) := by rfl
+      _ ≥ 9 / (x + y + z) := by
+        -- Rewrite the expression using the Cauchy-Schwarz inequality.
+        rw [div_le_div_iff (by positivity) (by positivity)]
+        -- Simplify the inequality to an equivalent form.
+        ring_nf
+        -- Prove the inequality by cases based on the values of x, y, z.
+        by_cases hA' : x ≤ y <;> by_cases hB' : y ≤ z <;> by_cases hC' : z ≤ x <;> {
+          simp [hA, hB, hC] at *
+          cases' A with A A <;> cases' B with B B <;> cases' C with C C <;> {
+            simp [A, B, C] at *
+            done
+          }
+        }
+  
+
+  -- Show that $a + b + c \geq 2*\sqrt{2}*\sqrt{2}/\sqrt{(x+y)*(y+z)}$.
+  have h6 : a + b + c ≥ 2 * √2 * (√2 / √((x + y) * (y + z))) := by
+    calc
+      a + b + c = 2 / (x + y) + 2 / (y + z) + 2 / (z + x) := by rfl
+      _ ≥ 2 * √2 * (√2 / √((x + y) * (y + z))) := by
+        -- Rewrite the inequality using the Cauchy-Schwarz inequality in a product form.
+        rw [ge_iff_le, mul_le_mul_left (by positivity), div_le_div_iff (by positivity) (by positivity)]
+        ring_nf
+        -- Prove the inequality by cases based on the values of x, y, z.
+        by_cases hA' : x ≤ y <;> by_cases hB' : y ≤ z <;> by_cases hC' : z ≤ x <;> {
+          simp [hA, hB, hC] at *
+          cases' A with A A <;> cases' B with B B <;> cases' C with C C <;> {
+            simp [A, B, C] at *
+            done
+          }
+        }
+  
+
+  -- Show that $\sqrt{2}*\sqrt{2}/\sqrt{(x+y)*(y+z)} \geq 9/(x+y+z)$.
+  have h7 : √2 * (√2 / √((x + y) * (y + z))) ≥ 9 / (x + y + z) := by
+    calc
+      √2 * (√2 / √((x + y) * (y + z))) = √2 * √2 / √((x + y) * (y + z)) := by field_simp
+      _ = 2 / √((x + y) * (y + z)) := by rw [Real.mul_self_sqrt]; positivity
+      _ ≥ 2 / ((x + y) + (y + z)) / 2 := by
+        -- Use the inequality \(sqrt(a) * sqrt(b) \leq (a + b)/2\) for positive reals.
+        have h9 : √((x + y) * (y + z)) ≤ (x + y) + (y + z) := by
+          have h9 : √((x + y) * (y + z)) ≤ ((x + y) + (y + z)) / 2 := by
+            apply Real.sq_le_sq₀
+            positivity
+            positivity
+            rw [mul_le_mul_left (by norm_num : 0 < (2 : ℝ))]
+            apply add_le_add
+            exact sq_le_sq₀ (by positivity) (by positivity)
+            exact sq_le_sq₀ (by positivity) (by positivity)
+          linarith
+        -- Simplify the division operation.
+        rw [ge_iff_le, div_le_div_iff (by positivity) (by positivity)]
+        -- Transform the inequality into a multiplication form.
+        gcongr
+        linarith
+      _ = 9 / (x + y + z) := by ring_nf
+  
+  -- Combine the inequalities to complete the proof.
+  linarith
+
+```

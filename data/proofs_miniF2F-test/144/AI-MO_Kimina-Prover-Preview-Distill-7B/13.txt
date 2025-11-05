@@ -1,0 +1,63 @@
+-- A lemma to simplify $\left|z^2+1\right|^2$.
+  have h_61 (z : ℂ) : Complex.normSq (z ^ 2 + 1) = Complex.normSq z ^ 2 + 2 * Complex.normSq z + 1 := by
+    simp [Complex.normSq]
+    ring
+
+  -- Using `Complex.ext_iff`, simplify the equation to a real equation.
+  have hz.re_im := Complex.ext_iff.mp h₀
+  simp [Complex.normSq, Complex.normSq_add, Complex.normSq_pow] at hz.re_im
+  symm at hz.re_im
+  let hz' := hz.re_im
+
+  -- Using the lemma `h_61` to simplify the equation.
+  rw [h_61] at hz'
+  symm at hz'
+
+  -- Using `nlinarith` to solve the equation.
+  set a := z.re
+  set b := z.im
+  rw [Complex.re_add_im z, Real.sq_sqrt (by simp)] at hz'
+  replace hz' : 2 * (a ^ 2 + b ^ 2) * (6 - a) + (a ^ 2 + b ^ 2) * (a ^ 2 + b ^ 2 + 2 * a + 8) + a * b * 8 + 31 = 0 := by
+    ring_nf at hz'
+    exact hz'
+  replace hz' : (a ^ 2 + b ^ 2) * (-a ^ 2 - b ^ 2 - 8 * a - 15) + a * b * 8 + 31 = 0 := by
+    linarith only [hz']
+  replace hz' : a ^ 2 + b ^ 2 ≠ 0 := by
+    by_contra! hz'
+    subst hz'
+    simp at hz'
+    subst z.re z.im
+    simp at h₀
+    let h := h₀
+    symm at h
+    nlinarith only [h, sq_nonneg z, sq_nonneg (z + 2)]
+
+  -- If $z$ is a real number, the problem is trivial.
+  by_cases hz : z.im = 0
+  · simp [hz] at hz'
+    by_cases hz' : z.re < 0
+    · simp [hz'] at hz
+      rw [hz.1]
+      simp [hz.2]
+      ring_nf
+      nlinarith only [sq_nonneg (z.re - 2), sq_nonneg (z.re + 3)]
+    · simp [hz'] at hz
+      rw [hz.1]
+      simp [hz.2]
+      ring_nf
+      nlinarith only [sq_nonneg (z.re - 2), sq_nonneg (z.re + 3)]
+  -- Therefore, just assume that $z$ is not a real number and do the algebraic manipulation.
+  simp at hz'
+  rw [show a ^ 2 + b ^ 2 = (a - 2) ^ 2 + (b + 3) ^ 2 - 13 by ring] at hz'
+  replace hz' : (a - 2) ^ 2 + (b + 3) ^ 2 = 13 := by
+    linarith only [hz']
+  replace hz' : (a - 2) ^ 2 = 13 - (b + 3) ^ 2 := by
+    linarith only [hz']
+  rw [show 2 * (a ^ 2 + b ^ 2) * (6 - a) + (a ^ 2 + b ^ 2) * (a ^ 2 + b ^ 2 + 2 * a + 8) = 2 * (a ^ 2 + b ^ 2) * (15 - (b + 3) ^ 2) by ring] at hz'
+  rw [show 2 * (a ^ 2 + b ^ 2) * (15 - (b + 3) ^ 2) + (a ^ 2 + b ^ 2) * (a ^ 2 + b ^ 2 + 2 * a + 8) = (a ^ 2 + b ^ 2) * (64 - a * 8) by ring] at hz'
+  simp [hz'] at hz'
+  simp [hz'.1]
+  ring_nf
+  nlinarith only [sq_nonneg (z.re - 2 * z.im), sq_nonneg (z.re + 3), sq_nonneg (z.im + 2)]
+
+```

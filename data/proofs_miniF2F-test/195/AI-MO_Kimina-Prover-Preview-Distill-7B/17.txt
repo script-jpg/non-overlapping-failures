@@ -1,0 +1,70 @@
+-- We have $a^2b^3=\frac{32}{27}$ and $\frac{a}{b^3}=\frac{27}{4}$. Let's find $a+b$.
+
+  -- First, let's understand what we're given:
+  -- h₀: a^2 * b^3 = 32/27
+  -- h₁: a / b^3 = 27/4
+
+  have h2 : a^2 * b^3 = 32 / 27 := h₀
+  have h3 : a / b^3 = 27 / 4 := h₁
+
+  -- To find $a + b$, we need to determine the values of $a$ and $b$.
+
+  -- From h3, we have $a = \frac{27}{4} b^3$.
+  have h4 : a = 27 / 4 * b^3 := by
+    have : b^3 ≠ 0 := by
+      intro h
+      rw [h] at h3
+      norm_num at h3
+    field_simp at h3
+    linarith
+
+  -- Substitute $a = \frac{27}{4} b^3$ into h2:
+  -- $\left(\frac{27}{4} b^3\right)^2 \cdot b^3 = \frac{32}{27}$
+  -- $\frac{729}{16} b^6 \cdot b^3 = \frac{32}{27}$
+  -- $\frac{729}{16} b^9 = \frac{32}{27}$
+  have h5 : (27 / 4 * b^3)^2 * b^3 = 32 / 27 := by
+    rw [← h4]
+    exact h2
+
+  ring_nf at h5
+
+  -- We get $b^9 = \frac{32 \cdot 16}{27 \cdot 729} = \frac{512}{19683} = \frac{512}{19683}$
+  have h6 : b^9 = 512 / 19683 := by
+    nlinarith
+
+  -- Notice that $\frac{512}{19683} = \frac{2^9}{3^9}$, so $b^9 = \frac{2^9}{3^9}$.
+  have h7 : b^9 = (2 / 3)^9 := by
+    norm_num
+    linarith
+
+  -- This means $b = \frac{2}{3}$ since we're dealing with real numbers and the ninth root is unique for real numbers.
+  have h8 : b = 2 / 3 := by
+    have h9 : b^9 - (2 / 3)^9 = 0 := by
+      rw [h7]
+      ring
+    have h10 : (b - 2 / 3) * (b^8 + b^7 * (2 / 3) + b^6 * (2 / 3)^2 + b^5 * (2 / 3)^3 + b^4 * (2 / 3)^4 + b^3 * (2 / 3)^5 + b^2 * (2 / 3)^6 + b * (2 / 3)^7 + (2 / 3)^8) = 0 := by
+      ring_nf
+      nlinarith
+    cases' (mul_eq_zero.mp h10) with h11 h12
+    · -- If $b - \frac{2}{3} = 0$, then $b = \frac{2}{3}$.
+      linarith
+    · -- Otherwise, all the other terms must sum to zero, which is impossible for real numbers.
+      nlinarith [sq_nonneg (b^4 + b^3 * (2 / 3) + b^2 * (2 / 3)^2 + b * (2 / 3)^3 + (2 / 3)^4), sq_nonneg (b^3 + b^2 * (2 / 3) + b * (2 / 3)^2 + (2 / 3)^3), sq_nonneg (b^2 + b * (2 / 3) + (2 / 3)^2), sq_nonneg (b + (2 / 3)), sq_nonneg (b - (2 / 3)), sq_nonneg (b^4 - b^3 * (2 / 3) + b^2 * (2 / 3)^2 - b * (2 / 3)^3 + (2 / 3)^4)]
+
+  -- Now that we have $b = \frac{2}{3}$, we can find $a$ using $a = \frac{27}{4} b^3$.
+  have h13 : a = 27 / 4 * (2 / 3)^3 := by
+    rw [h8] at h4
+    exact h4
+
+  norm_num at h13
+
+  -- So $a = 27/4 \cdot \frac{8}{27} = 2$.
+  have h14 : a = 2 := by
+    norm_num at h13
+    linarith
+
+  -- Therefore, $a + b = 2 + \frac{2}{3} = \frac{6}{3} + \frac{2}{3} = \frac{8}{3}$.
+  rw [h14, h8]
+  norm_num
+
+```

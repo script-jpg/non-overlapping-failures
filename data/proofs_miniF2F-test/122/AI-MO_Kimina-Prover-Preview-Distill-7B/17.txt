@@ -1,0 +1,75 @@
+-- The green identity.
+  have green : 0 < x + y := by
+    linarith
+  have : 0 < x + y + z := by
+    linarith
+  have green' : 0 < y + z := by
+    linarith
+  have green'' : 0 < z + x := by
+    linarith
+  -- The red identity.
+  have red : 1 / (x + y) + 1 / (y + z) + 1 / (z + x) ≤ 9 / (2 * (x + y + z)) := by
+    -- Step 1: Use the AM-GM inequality to prove a key identity.
+    have step1 : (x + y) * (y + z) * (z + x) ≤ 8 * ((x + y + z) ^ 3 / 27) := by
+      calc
+        -- The AM-GM inequality states that for non-negative reals, the arithmetic mean is greater than or equal to the geometric mean.
+        -- Here we apply it to the three terms: (x+y), (y+z), (z+x).
+        _ = (x + y) * (y + z) * (z + x) := by rfl
+        _ ≤ ((x + y) + (y + z) + (z + x)) ^ 3 / 27 := by
+          -- The AM-GM inequality in triple form.
+          -- Note that we have equality when x = y = z.
+          apply geom_mean_le_arith_mean3_weighted
+          · rfl
+          · rfl
+          · positivity
+          · positivity
+          · positivity
+          · (by linarith)
+        _ = _ := by
+          -- Algebraic simplification.
+          ring
+    -- Step 2: Use the result from Step 1 to derive the desired inequality.
+    calc
+      _ = ((x + y) * (y + z) * (z + x)) / ((x + y) * (y + z) * (z + x)) * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by
+        -- Divide by product of three terms.
+        field_simp
+      _ ≤ (8 * ((x + y + z) ^ 3 / 27)) / ((x + y) * (y + z) * (z + x)) * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by
+        -- Apply the inequality from Step 1.
+        apply div_le_div_of_nonneg_right
+        · linarith
+        · positivity
+      _ = ((2 * (x + y + z)) ^ 3 / (27 * ((x + y) * (y + z) * (z + x)))) * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by
+        -- Algebraic simplification.
+        ring
+      _ ≤ ((2 * (x + y + z)) ^ 3 / (27 * ((x + y) * (y + z) * (z + x)))) * (9 / (2 * (x + y + z))) := by
+        -- Apply the AM-GM inequality in the other direction.
+        -- Note that we have equality when (x+y) = (y+z) = (z+x), which follows from x = y = z.
+        apply mul_le_mul_of_nonneg_left
+        · apply div_le_div_of_nonneg_right
+          · apply pow_le_pow_left₀
+            · linarith
+            · linarith
+            · norm_num
+          · positivity
+        · positivity
+      _ = 9 / 2 * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) / 3 := by
+        -- Algebraic simplification.
+        field_simp
+        ring
+      _ = _ := by
+        -- Final algebraic simplification.
+        ring
+  -- Step 3: Use the result from Step 2 to prove the final result.
+  calc
+    _ = 2 / (x + y) + 2 / (y + z) + 2 / (z + x) := by ring
+    _ = 2 * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by ring
+    _ ≥ 2 * (9 / (2 * (x + y + z))) := by
+      -- Apply the inequality from Step 2.
+      apply mul_le_mul_of_nonneg_left
+      · linarith
+      · positivity
+    _ = _ := by
+      -- Final algebraic simplification.
+      field_simp
+      ring
+```

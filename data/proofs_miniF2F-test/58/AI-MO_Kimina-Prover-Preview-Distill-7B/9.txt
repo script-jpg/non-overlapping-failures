@@ -1,0 +1,114 @@
+have h (m n) : f (m + n) - f m - f n = 0 ∨ f (m + n) - f m - f n = 1 := by
+    exact h₀ m n (by simp)
+
+  have h' (m n) : f (m + n) = f m + f n ∨ f (m + n) = f m + f n + 1 := by
+    rcases h m n with h | h
+   . left; exact Nat.eq_add_of_sub_eq h
+   . right; exact Nat.eq_add_of_sub_eq h
+
+  -- From the above it follows that $f(n)$ is equal to $n(f(3)-f(2))=n(f(3))$ for $n\geq 3$.
+  have h'' (n : ℕ) : n ≥ 3 → f n = n * (f 3 - f 2) := by
+    intro hn
+    -- Proof by induction.
+    induction n using Nat.strong_induction_on with
+    | h n ih =>
+      cases n with
+      | zero => tauto
+      | succ n =>
+        cases n with
+        | zero =>
+          norm_num
+          simp [h₁]
+        | succ n =>
+          cases n with
+          | zero =>
+            norm_num
+            simp [h₂]
+          | succ n =>
+            have : f (n + 3) = f (n + 2) + f 3 ∨ f (n + 3) = f (n + 2) + f 3 + 1 := by
+              apply h' (n + 2) 1
+              simp
+            cases this with
+            | inl h =>
+              have : f (n + 2) = f (n + 1) + f 2 ∨ f (n + 2) = f (n + 1) + f 2 + 1 := by
+                apply h' (n + 1) 1
+                simp
+              cases this with
+              | inl h' =>
+                have : f (n + 1) = n * (f 3) ∨ f (n + 1) = n * (f 3) + 1 := by
+                  apply ih (n + 1) (by linarith)
+                  simp
+                cases this with
+                | inl h'' =>
+                  rw [h, h', h'']
+                  simp
+                  ring
+                | inr h'' =>
+                  rw [h, h', h'']
+                  simp
+                  ring
+              | inr h' =>
+                have : f (n + 1) = (n + 1) * f 3 ∨ f (n + 1) = (n + 1) * f 3 + 1 := by
+                  apply ih (n + 1) (by linarith)
+                  simp
+                cases this with
+                | inl h'' =>
+                  rw [h, h', h'']
+                  simp
+                  ring
+                | inr h'' =>
+                  rw [h, h', h'']
+                  simp
+                  ring
+            | inr h =>
+              have : f (n + 2) = f (n + 1) + f 2 + 1 ∨ f (n + 2) = f (n + 1) + f 2 + 1 + 1 := by
+                apply h' (n + 1) 1
+                simp
+              cases this with
+              | inl h' =>
+                have : f (n + 1) = n * (f 3) ∨ f (n + 1) = n * (f 3) + 1 := by
+                  apply ih (n + 1) (by linarith)
+                  simp
+                cases this with
+                | inl h'' =>
+                  rw [h, h', h'']
+                  simp
+                  ring
+                | inr h'' =>
+                  rw [h, h', h'']
+                  simp
+                  ring
+              | inr h' =>
+                have : f (n + 1) = (n + 1) * f 3 ∨ f (n + 1) = (n + 1) * f 3 + 1 := by
+                  apply ih (n + 1) (by linarith)
+                  simp
+                cases this with
+                | inl h'' =>
+                  rw [h, h', h'']
+                  simp
+                  ring
+                | inr h'' =>
+                  rw [h, h', h'']
+                  simp
+                  ring
+
+  -- Since $f(9999)=3333$, we have $9999(f(3))=3333$.
+  have h'' 9999 : f 9999 = 9999 * (f 3 - f 2) := by
+    apply h'' (9999) (by norm_num)
+  rw [h₁] at h'' 9999
+  norm_num at h'' 9999
+
+  -- From this we deduce that $f(3)=1$.
+  have f3 : f 3 = 1 := by
+    omega
+
+  -- Then we get $f(1982)=660$.
+  have f1982 : f 1982 = 660 := by
+    have : f 1982 = 1982 * (f 3 - f 2) := by
+      apply h'' 1982 (by norm_num)
+    rw [f3, h₁] at this
+    norm_num at this
+    exact this
+
+  exact f1982
+```

@@ -1,0 +1,49 @@
+/- The points $(a_{n + 1}, b_{n + 1})$ can be seen as the image of $(a_n, b_n)$ under the linear map
+  $\begin{pmatrix} \sqrt{3} & -1 \\ 1 & \sqrt{3} \end{pmatrix}$ -/
+  let M : ℝ → ℝ := fun x => (Real.sqrt 3 * x.1 - x.2, Real.sqrt 3 * x.2 + x.1)
+
+  -- This map is - well, let's see
+  have hM : ∀ n, (a (n + 1), b (n + 1)) = M (a n, b n) := by
+    intro n
+    apply Prod.ext <;> simp [M, h₀ n, h₁ n]
+
+  -- We can iterate this map, then
+  have hM' {n : ℕ} {x : ℝ × ℝ} : M n x = (x.1 * (Real.sqrt 3) ^ n - x.2 * (-1) ^ n,
+         x.2 * (Real.sqrt 3) ^ n + x.1 * (-1) ^ n) := by
+    induction' n with n ih
+    · simp [M]
+    · simp [M, ih]
+      ring
+
+  -- so, if we start with some point $(a_1, b_1)$, then $(a_{100}, b_{100})$ is
+  have h₄ : (a 100, b 100) = M 99 (a 1, b 1) := by
+    rw [hM 99, ←hM 98, hM 97, hM 96, hM 95, hM 94, hM 93, hM 92, hM 91, hM 90, hM 89, hM 88, hM 87, hM 86, hM 85, hM 84, hM 83, hM 82, hM 81, hM 80, hM 79, hM 78, hM 77, hM 76, hM 75, hM 74, hM 73, hM 72, hM 71, hM 70, hM 69, hM 68, hM 67, hM 66, hM 65, hM 64, hM 63, hM 62, hM 61, hM 60, hM 59, hM 58, hM 57, hM 56, hM 55, hM 54, hM 53, hM 52, hM 51, hM 50, hM 49, hM 48, hM 47, hM 46, hM 45, hM 44, hM 43, hM 42, hM 41, hM 40, hM 39, hM 38, hM 37, hM 36, hM 35, hM 34, hM 33, hM 32, hM 31, hM 30, hM 29, hM 28, hM 27, hM 26, hM 25, hM 24, hM 23, hM 22, hM 21, hM 20, hM 19, hM 18, hM 17, hM 16, hM 15, hM 14, hM 13, hM 12, hM 11, hM 10, hM 9, hM 8, hM 7, hM 6, hM 5, hM 4, hM 3, hM 2, hM 1, hM₀]
+    ring
+
+  rw [h₄] at h₂ h₃
+
+  -- This formula can be simplified by multiplying with a constant
+  let c := √3 ^ 99 + I ^ 99
+  let d := √3 ^ 99 - I ^ 99
+  have : (a 1, b 1) = (c * (a 100 - I * b 100), d * (a 100 + I * b 100)) := by
+    simp [c, d]
+    apply Prod.ext <;> simp [hM' 99, h₂, h₃]
+
+  simp only [h₂, h₃] at this
+
+  -- We can compute the constant
+  have : c * d = 2 ^ 99 := by
+    simp [c, d, ←Complex.I_sq]
+    calc
+      (↑√3) ^ 99 + (I ^ 2) ^ 99
+        = (↑√3) ^ 99 + (-1) ^ 99 := by congr; simp
+      _ = (√3 ^ 2) ^ 49 * √3 + (-1) ^ 99 := by congr
+      _ = (3) ^ 49 * √3 + (-1) ^ 99 := by simp
+      _ = 2 ^ 99 := by ring_nf; norm_num
+
+  -- So, simplifying, we can see that
+  simp [this] at *
+  norm_cast at *
+  rw [←Complex.I_sq] at *
+  <;> linarith
+```

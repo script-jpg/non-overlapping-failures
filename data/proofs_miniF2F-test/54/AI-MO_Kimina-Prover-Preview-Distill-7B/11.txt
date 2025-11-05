@@ -1,0 +1,38 @@
+-- We show that the units digit of a number is equivalent to that number modulo 10.
+  have units digit (n : ℕ) : n % 10 = n units digit := by
+
+    -- We use induction to prove this.
+    induction n with
+    | zero => simp
+    | succ n ih =>
+
+      -- The case where n = 0 is trivial.
+      cases n with
+      | zero => simp
+      | succ n =>
+        -- The inductive step is also straightforward.
+        simp [Nat.pow_succ, Nat.mul_mod, ih]
+
+  -- Now we apply this to powers of 2.
+  -- We find a cycle by examining the first few powers.
+  -- 2^1 = 2 units digit 2
+  -- 2^2 = 4 units digit 4
+  -- 2^3 = 8 units digit 8
+  -- 2^4 = 16 units digit 6
+  -- 2^5 = 32 units digit 2
+  -- We see that the units digits cycle with a period of 4.
+  -- Since 2010 = 4*502 + 2, 2^2010 has the same units digit as 2^2.
+  have n4 : (2 ^ 2010 : ℕ) % 10 = (2 ^ 2 % 10) := by
+    calc (2 ^ 2010 : ℕ) % 10
+      _ = (2 ^ (4 * 502 + 2) % 10) := by norm_num
+      _ = ((2 ^ 4) ^ 502 * 2 ^ 2) % 10 := by rw [Nat.pow_add, Nat.pow_mul]
+      _ = ((2 ^ 4 % 10) ^ 502 * (2 ^ 2 % 10)) % 10 := by rw [Nat.mul_mod, Nat.pow_mod]
+      _ = ((2 ^ 2 % 10) * (2 ^ 2 % 10)) % 10 := by rw [Nat.pow_mod]
+      _ = (2 ^ 2 % 10) := by rw [Nat.mul_mod, Nat.pow_mod]
+
+  -- Now we need to finish the proof by showing that 2^2 % 10 = 4.
+  have n3 : (2 ^ 2 % 10 : ℕ) = 4 := by norm_num
+
+  -- We can now complete the proof.
+  rw [units digit, n4, n3]
+```

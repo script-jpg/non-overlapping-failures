@@ -1,0 +1,109 @@
+-- 证明中使用到的引理
+  -- 1. AM-GM不等式: 对于任意正实数x,y, 均有x^2 + y^2 ≥ 2xy
+  have h1 : ∀ x y : ℝ, x > 0 → y > 0 → x ^ 2 + y ^ 2 ≥ 2 * x * y := by
+    intro x y hx hy
+    suffices (x - y) ^ 2 ≥ 0 by
+      linarith
+    positivity
+
+  -- 2. AM-GM不等式: 对于任意正实数x,y,z,w, 均有x^2 + y^2 + z^2 + w^2 ≥ 4xyzw
+  have h2 : ∀ x y z w : ℝ, x > 0 → y > 0 → z > 0 → w > 0 → x ^ 2 + y ^ 2 + z ^ 2 + w ^ 2 ≥ 4 * x * y * z * w := by
+    intro x y z w hx hy hz hw
+    have hxy := h1 x y hx hy
+    have hzw := h1 z w hz hw
+    have hx2y2 := h1 (x ^ 2 + y ^ 2) (z ^ 2 + w ^ 2) (by positivity) (by positivity)
+    linarith
+
+  -- 3. 对于任意正实数x,y, 均有x^3 + y^3 ≥ xy(x+y)
+  have h3 : ∀ x y : ℝ, x > 0 → y > 0 → x ^ 3 + y ^ 3 ≥ x * y * (x + y) := by
+    intro x y hx hy
+    have hxy := h1 x y hx hy
+    have hx3 := h1 (x ^ 2) x (by positivity) (by positivity)
+    have hy3 := h1 (y ^ 2) y (by positivity) (by positivity)
+    linarith
+
+  -- 4. 对于任意正实数x,y,z, 均有x^4 + y^4 + z^4 ≥ xyz(x+y+z)
+  have h4 : ∀ x y z : ℝ, x > 0 → y > 0 → z > 0 → x ^ 4 + y ^ 4 + z ^ 4 ≥ x * y * z * (x + y + z) := by
+    intro x y z hx hy hz
+    have hx2y2 := h2 x y z z (by positivity) (by positivity) (by positivity)
+    have hy2z2 := h2 y z x x (by positivity) (by positivity) (by positivity)
+    have hx2z2 := h2 x z y y (by positivity) (by positivity) (by positivity)
+    linarith
+
+  obtain ⟨ha, hb, hc, hd⟩ := h₀
+
+  have h := h4 a b c ha hb hc
+  have h' := h4 b c d hb hc hd
+  have h'' := h4 c d a hc hd ha
+  have h''' := h4 d a b hd ha hb
+
+  -- 通过组合不等式得到最终结果
+  calc
+    a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a
+    _ = ((a ^ 2 + b ^ 2) + (c ^ 2 + d ^ 2)) * (a + b + c + d) / (a * b * c * d) := by
+      field_simp
+      ring
+    _ ≥ (2 * a * b + 2 * c * d) * (a + b + c + d) / (a * b * c * d) := by
+      have h₁ : a ^ 2 + b ^ 2 ≥ 2 * a * b := by linarith [h1 a b ha hb]
+      have h₂ : c ^ 2 + d ^ 2 ≥ 2 * c * d := by linarith [h1 c d hc hd]
+      have h₃ : a ^ 2 + b ^ 2 + c ^ 2 + d ^ 2 ≥ 2 * a * b + 2 * c * d := by linarith
+      have h₄ : (a ^ 2 + b ^ 2) + (c ^ 2 + d ^ 2) ≥ 2 * a * b + 2 * c * d := by linarith
+      calc
+        ((a ^ 2 + b ^ 2) + (c ^ 2 + d ^ 2)) * (a + b + c + d) / (a * b * c * d)
+        _ ≥ (2 * a * b + 2 * c * d) * (a + b + c + d) / (a * b * c * d) := by
+          apply div_le_div_of_nonneg_right
+          linarith
+          positivity
+    _ = (2 * a * b + 2 * c * d) * (a + b + c + d) / (a * b * c * d) := by
+      congr
+      ring
+    _ ≥ (2 * a * b + 2 * c * d) * (a + b + c + d) / (a * b * c * d) := by
+      rfl
+    _ = (2 * (a * b) + 2 * (c * d)) * (a + b + c + d) / (a * b * c * d) := by
+      ring
+    _ ≥ (2 * (a * b) + 2 * (c * d)) * (a + b + c + d) / (a * b * c * d) := by
+      rfl
+    _ = (2 * (a * b) + 2 * (c * d)) * (a + b + c + d) / (a * b * c * d) := by
+      congr
+      ring
+    _ ≥ a * b * (a + b) * (a + b + c + d) / (a * b * c * d) := by
+      have h₁ : 2 * (a * b) * (a + b) ≥ a * b * (a + b) * (a + b) := by
+        have : a * b * (a + b) * (a + b) ≤ (2 * a * b) * (a + b) := by
+          apply (mul_le_mul_iff_of_pos_left (by positivity)).mpr
+          linarith [h3 a b ha hb]
+        linarith
+      have h₂ : 2 * (c * d) * (c + d) ≥ c * d * (c + d) * (c + d) := by
+        have : c * d * (c + d) * (c + d) ≤ (2 * c * d) * (c + d) := by
+          apply (mul_le_mul_iff_of_pos_left (by positivity)).mpr
+          linarith [h3 c d hc hd]
+        linarith
+      have h₃ : 2 * (a * b) * (a + b) + 2 * (c * d) * (c + d) ≥ a * b * (a + b) * (a + b + c + d) / (a * b * c * d) * (a * b * c * d) := by
+        have h₄ : 2 * (a * b) * (a + b) + 2 * (c * d) * (c + d) ≥ a * b * (a + b) * (a + b) + c * d * (c + d) * (c + d) := by linarith
+        calc
+          2 * (a * b) * (a + b) + 2 * (c * d) * (c + d)
+          _ ≥ a * b * (a + b) * (a + b) + c * d * (c + d) * (c + d) := by linarith
+          _ ≥ a * b * (a + b) * (a + b + c + d) / (a * b * c * d) * (a * b * c * d) := by
+            apply le_of_mul_le_mul_right
+           . positivity
+           . linarith
+      linarith
+    _ = (a + b) * (a + b + c + d) := by
+      field_simp
+      ring
+    _ ≥ (a + b) * (a + b + c + d) := by
+      rfl
+    _ = a * b * (a + b + c + d) / (a * b * c * d) * (a * b * c * d) := by
+      ring
+    _ ≥ a * b * (a + b + c + d) / (a * b * c * d) * (a * b * c * d) := by
+      apply le_of_mul_le_mul_right
+     . positivity
+     . linarith
+    _ = a * b * (a + b + c + d) / (a * b * c * d) * (a * b * c * d) := by
+      rfl
+    _ ≥ a * b * (a + b + c + d) / (a * b * c * d) * (a * b * c * d) := by
+      rfl
+    _ = a + b + c + d := by
+      field_simp
+      ring
+
+```

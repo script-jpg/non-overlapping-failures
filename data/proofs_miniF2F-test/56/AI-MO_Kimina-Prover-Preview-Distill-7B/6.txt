@@ -1,0 +1,61 @@
+-- A notation for $f(2^x)$.
+  let g (x : ℕ) := f (2 ^ x)
+
+  -- A simple lemma that shows up in proofs of both inequalities.
+  have lem_1 (a b : ℕ) (h : a ≤ b) : 2 ^ a ≤ 2 ^ b :=
+    (Nat.pow_le_pow_iff_right (by norm_num)).mpr h
+
+  -- A simple lemma about natural logarithms.
+  have lem_2 (a b : ℕ) (h : a ≤ b) : a * 2 ≤ b * 2 := by
+    exact Nat.mul_le_mul_right 2 h
+
+  -- We show that $f(2^m)$ divides $f(2^n)$ by showing that $f(2^m)$ divides $f(2^n)$.
+  have : g m ∣ g n := by
+    apply Nat.dvd_of_mod_eq_zero
+    rw [g, h₀, h₀]
+    -- We claim that $4^{2^m} - 4^{2^n}$, $6^{2^m} - 6^{2^n}$, and $9^{2^m} - 9^{2^n}$ are all divisible by $2^{2^m}$.
+    apply Nat.sub_mod_eq_zero_of_mod_eq
+    have h₁ : 4 ^ (2 ^ m) - 4 ^ (2 ^ n) ≡ 0 [MOD 2 ^ (2 ^ m)] := by
+      -- This is true because $2^{2m} = 4^m$ and $4^m \mid 4^n$ as $m \leq n$.
+      symm
+      have : 2 ^ (2 ^ m) ∣ 4 ^ (2 ^ n) := by
+        rw [show 4 ^ (2 ^ n) = (2 ^ 2) ^ (2 ^ n) by norm_num]
+        rw [← Nat.pow_mul]
+        apply Nat.pow_dvd_pow _ (by omega)
+      exact Nat.modEq_zero_iff_dvd.mpr this
+    have h₂ : 6 ^ (2 ^ m) - 6 ^ (2 ^ n) ≡ 0 [MOD 2 ^ (2 ^ m)] := by
+      -- This is true because $2^{2m} = 6^m/3^m$ and $6^m \mid 6^n$ as $m \leq n$.
+      symm
+      have : 2 ^ (2 ^ m) ∣ 6 ^ (2 ^ n) := by
+        have : 6 ^ (2 ^ n) = 2 ^ (2 ^ n) * 3 ^ (2 ^ n) := by norm_num
+        rw [this]
+        have : 2 ^ (2 ^ m) ∣ 2 ^ (2 ^ n) := by
+          apply Nat.pow_dvd_pow _ (lem_1 (2 ^ m) (2 ^ n) (Nat.pow_le_pow_iff_right (by norm_num))).mpr (by omega)
+        exact Nat.mul_dvd_mul_left this (3 ^ (2 ^ n))
+      exact Nat.modEq_zero_iff_dvd.mpr this
+    have h₃ : 9 ^ (2 ^ m) - 9 ^ (2 ^ n) ≡ 0 [MOD 2 ^ (2 ^ m)] := by
+      -- This is true because $2^{2m} = 9^m/(-3)^m$ and $9^m \mid 9^n$ as $m \leq n$.
+      symm
+      have : 2 ^ (2 ^ m) ∣ 9 ^ (2 ^ n) := by
+        have : 9 ^ (2 ^ n) = 2 ^ (2 ^ n) * (2 ^ 2) ^ (2 ^ n) := by norm_num
+        rw [this]
+        have : 2 ^ (2 ^ m) ∣ 2 ^ (2 ^ n) := by
+          apply Nat.pow_dvd_pow _ (lem_1 (2 ^ m) (2 ^ n) (Nat.pow_le_pow_iff_right (by norm_num))).mpr (by omega)
+        exact Nat.mul_dvd_mul_left this ((2 ^ 2) ^ (2 ^ n))
+      exact Nat.modEq_zero_iff_dvd.mpr this
+    -- Since $a - b \equiv 0 \pmod n$, we have $a \equiv b \pmod n$.
+    have h₁ := Nat.ModEq.dvd h₁
+    have h₂ := Nat.ModEq.dvd h₂
+    have h₃ := Nat.ModEq.dvd h₃
+    -- We have $f(2^n) \equiv f(2^m) \pmod{f(2^m)}$, so $f(2^m) \mid f(2^n)$.
+    have : (4 ^ (2 ^ m) + 6 ^ (2 ^ m) + 9 ^ (2 ^ m)) % g m = (4 ^ (2 ^ n) + 6 ^ (2 ^ n) + 9 ^ (2 ^ n)) % g m := by
+      simp [Nat.add_mod, h₁, h₂, h₃]
+    rw [Nat.add_mod, Nat.add_mod, Nat.add_mod, Nat.add_mod, Nat.add_mod, Nat.add_mod, h₁, h₂, h₃] at this
+    exact this
+
+  -- Now we prove the main result by using the lemma above.
+  calc
+    g m ∣ g n := this
+    _   = f (2 ^ n) := by rfl
+
+```

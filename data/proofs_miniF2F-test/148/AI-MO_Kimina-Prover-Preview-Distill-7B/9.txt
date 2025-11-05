@@ -1,0 +1,59 @@
+-- We shall prove that $D_n$ is even when $n$ is $0$ modulo $3$, odd when $n$ is $1$ modulo $3$,
+  -- and even when $n$ is $2$ modulo $3$.
+  let parities : ℕ → (Nat parity) × (Nat parity) × (Nat parity)
+    | n => ((Nat.even_iff d n).mp (Nat.even_iff d 0).mp h₀,
+    (Nat.even_iff d n).mp (Nat.even_iff d 1).mp h₁,
+    (Nat.even_iff d n).mp (Nat.even_iff d 2).mp h₂)
+
+  -- We shall do this by induction. First, the base cases.
+  have h₀ : parities 0 = (False, True, False) := by
+    simp [parities]
+    suffices d 0 = 0 by rw [h₀] at this
+    exact this
+  have h₁ : parities 1 = (True, False, True) := by
+    simp [parities]
+    suffices d 1 = 0 by rw [h₁] at this
+    exact this
+  have h₂ : parities 2 = (False, True, False) := by
+    simp [parities]
+    suffices d 2 = 1 by rw [h₂] at this
+    exact this
+
+  -- For the induction step, we assume that the statement is true for $n$, and prove it for $n+1$.
+  have h₃ : ∀ n, parities (n + 3) = (parities n.1, parities n.2.1, parities n.2.2) := by
+    intro n
+    simp [parities]
+    rw [Nat.even_iff] at *
+    have h₃ := h₃ n (by linarith)
+
+    -- Applying the induction hypothesis to the three terms $D_{n+2}$, $D_{n+1}$, $D_n$.
+    have h₄ := ind n (by linarith) (by simp)
+    have h₅ := ind (n + 1) (by linarith) (by simp)
+    have h₆ := ind (n + 2) (by linarith) (by simp)
+
+    rw [add_comm, add_comm 2, h₃, h₄, h₅, h₆]
+    norm_num
+    have : add_pred (n + 2) = n + 3 := by rw [Nat.add_sub_cancel]
+    rw [this]
+
+    -- This close the induction.
+
+  -- Using the induction, we conclude the result by computing the parities of
+  -- $2021, 2022, 2023$, which are $2021 \equiv 2 \pmod 3$, $2022 \equiv 0 \pmod 3$, $2023 \equiv 1 \pmod 3$.
+  have h₄ : parities 2021 = (False, True, False) := by
+    have : 2021 = 3 * 673 + 2 := by norm_num
+    rw [this, h₃]
+    simp [h₀, h₁, h₂]
+  have h₅ : parities 2022 = (True, False, True) := by
+    have : 2022 = 3 * 674 := by norm_num
+    rw [this, h₃]
+    simp [h₀, h₁, h₂]
+  have h₆ : parities 2023 = (False, True, False) := by
+    have : 2023 = 3 * 674 + 1 := by norm_num
+    rw [this, h₃]
+    simp [h₀, h₁, h₂]
+
+  -- The result follows.
+  rw [h₄, h₅, h₆]
+  simp
+```

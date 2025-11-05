@@ -1,0 +1,121 @@
+-- -- First, we know that 8 is a divisor of both m and n.
+  have h₃ : 8 ∣ m := by
+    rw [← h₁]
+    apply Nat.gcd_dvd_left
+  have h₄ : 8 ∣ n := by
+    rw [← h₁]
+    apply Nat.gcd_dvd_right
+
+  -- Then, we know that m = 8x and n = 8y for some positive integers x and y.
+  have h₅ : 0 < m / 8 := by
+    refine Nat.div_pos?_?_
+    exact Nat.gcd_pos_of_pos_left n h₃
+    exact Nat.gcd_pos_of_pos_right m h₄
+  have h₆ : 0 < n / 8 := by
+    refine Nat.div_pos?_?_
+    exact Nat.gcd_pos_of_pos_left n h₃
+    exact Nat.gcd_pos_of_pos_right m h₄
+  have h₇ : m / 8 ∣ 112 / 8 := by
+    rw [show 112 / 8 = Nat.lcm m n / 8 by rw [h₂], Nat.div_div_eq_div_mul]
+    apply Nat.div_dvd_div
+    exact Nat.gcd_dvd_right m n
+    exact Nat.gcd_pos_of_pos m n
+  have h₈ : n / 8 ∣ 112 / 8 := by
+    rw [show 112 / 8 = Nat.lcm m n / 8 by rw [h₂], Nat.div_div_eq_div_mul]
+    apply Nat.div_dvd_div
+    exact Nat.gcd_dvd_left m n
+    exact Nat.gcd_pos_of_pos m n
+
+  -- The least common multiple of m and n is 112. What is the least possible value of m + n?
+  -- Let's first show that x and y are coprime.
+  have h₉ : Nat.gcd (m / 8) (n / 8) = 1 := by
+    -- Assume not, then there is a prime divisor p of both x and y.
+    by_contra! h₁₀
+    rw [Nat.gcd_eq_iff_prime_dvd] at h₁₀
+    obtain ⟨p, hp, h₆, h₇⟩ := h₁₀
+    -- We claim that p ∣ m and p ∣ n, which contradicts the fact that gcd of m and n is 8.
+    have h₁₁ : p ∣ m := by
+      rw [show m = m / 8 * 8 by rw [Nat.div_mul_cancel h₃]]
+      exact Nat.Prime.dvd_mul hp.left (show p ∣ 8 by exact h₇)
+    have h₁₂ : p ∣ n := by
+      rw [show n = n / 8 * 8 by rw [Nat.div_mul_cancel h₄]]
+      exact Nat.Prime.dvd_mul hp.left (show p ∣ 8 by exact h₇)
+    have h₁₃ := Nat.dvd_gcd h₁₁ h₁₂
+    rw [h₁] at h₁₃
+    -- As p divides 8, it can only be 2, which contradicts the fact that gcd of m and n is 8.
+    replace h₆ : p = 2 := by
+      rw [show 8 = 2 ^ 3 by norm_num]
+      apply Nat.Prime.dvd_of_dvd_pow at h₁₃
+      rw [Nat.dvd_prime_pow] at h₁₃
+      obtain ⟨k, h₁₃⟩ := h₁₃
+      interval_cases k
+      · rw [show 2 = 1 * 2 by norm_num] at h₁₃
+        rw [Nat.Prime.ne_one hp] at h₁₃
+        contradiction
+      · assumption
+      · rw [show 2 ^ 3 = 2 * 2 * 2 by norm_num] at h₁₃
+        rw [Nat.Prime.dvd_mul hp] at h₁₃
+        apply Nat.Prime.dvd_of_dvd_pow at h₁₃
+        rw [Nat.dvd_prime_pow] at h₁₃
+        obtain ⟨k, h₁₃⟩ := h₁₃
+        interval_cases k
+        · rw [show 2 = 1 * 2 by norm_num] at h₁₃
+          rw [Nat.Prime.ne_one hp] at h₁₃
+          contradiction
+        · norm_num at h₁₃
+        · rw [Nat.prime_two] at hp
+          contradiction
+    have h₁₄ : p ∣ 8 := by
+      rw [h₆] at h₁₃
+      exact h₁₃
+    rw [h₆, Nat.prime_two] at h₁₄
+    contradiction
+
+  -- We have x * y = 14.
+  have h₁₀ : (m / 8) * (n / 8) = 14 := by
+    rw [show 14 = 112 / 8 by norm_num]
+    rw [← h₂]
+    rw [show m / 8 * n / 8 = (m * n) / (8 * 8) by rw [Nat.div_mul_div_comm]]
+    rw [show 8 * 8 = Nat.gcd m n * Nat.lcm m n by rw [h₁, h₂]]
+    rw [← Nat.gcd_mul_lcm]
+    ring
+
+  -- The least possible value of x + y is 7.
+  have h₁₁ : 7 ≤ m / 8 + n / 8 := by
+    -- Assume not, then there is a counterexample x + y < 7.
+    by_contra! h₁₁
+    -- As x < 7 and x > 0, it must be 1, 2, 3, 4, 5, or 6.
+    have h₁₂ : m / 8 < 7 := by
+      linarith
+    have h₁₃ : 0 < m / 8 := by
+      exact h₅
+    have h₁₄ : m / 8 ∈ ({1, 2, 3, 4, 5, 6} : Finset ℕ) := by
+      simp only [Finset.mem_insert, Finset.mem_singleton]
+      omega
+    -- Because x and y are coprime, the product x * y ≤ 7.
+    have h₁₅ : (m / 8) * (n / 8) ≤ 7 := by
+      calc
+        (m / 8) * (n / 8) ≤ (m / 8) * 7 := by
+          apply Nat.mul_le_mul_left
+          linarith
+        _ = (m / 8) * (1 + 2 + 3 + 4 + 5 + 6) := by
+          rw [show 7 = 1 + 2 + 3 + 4 + 5 + 6 by norm_num]
+        _ ≤ (m / 8) * (m / 8 + n / 8) := by
+          apply Nat.mul_le_mul_right
+          omega
+        _ = (m / 8) * (n / 8) + (m / 8) ^ 2 := by
+          linarith
+        _ ≤ 7 := by
+          omega
+    -- As x * y = 14, it is a contradiction.
+    linarith
+
+  -- Thus, m + n = 8 * (m / 8 + n / 8) ≥ 8 * 7 = 56.
+  have h₁₂ : 8 * (m / 8 + n / 8) ≤ 8 * 7 := by
+    apply Nat.mul_le_mul_right
+    linarith
+  have h₁₃ : 8 * (m / 8 + n / 8) = m + n := by
+    linarith
+  linarith
+
+```

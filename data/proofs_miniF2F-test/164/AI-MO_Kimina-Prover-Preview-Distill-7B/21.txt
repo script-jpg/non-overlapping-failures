@@ -1,0 +1,110 @@
+-- some auxilary facts
+  have h_log_2_ne_0 : Real.log 2 ≠ 0 := by
+    apply ne_of_gt
+    apply Real.log_pos
+    norm_num
+  have h_log_ne_0 : Real.log x ≠ 0 := by
+    apply ne_of_gt
+    apply Real.log_pos
+    apply lt_of_le_of_ne (zero_le x) (by simpa using h₀.1)
+    intro hx
+    rw [hx] at h_log_2_ne_0
+    norm_num at h_log_2_ne_0
+  have h_log_y_ne_0 : Real.log y ≠ 0 := by
+    apply ne_of_gt
+    apply Real.log_pos
+    apply lt_of_le_of_ne (zero_le y) (by simpa using h₀.2)
+    intro hy
+    rw [hy] at h_log_2_ne_0
+    norm_num at h_log_2_ne_0
+
+  -- Change nes to algebraic equations
+  have h₃ : Real.log y ^ 2 = (Real.log 2) ^ 2 * Real.log x ^ 2 := by
+    rw [h₁]
+    field_simp [h_log_2_ne_0, h_log_ne_0, h_log_y_ne_0]
+
+  have h₄ : Real.log (x * y) = Real.log x + Real.log y := by
+    rw [Real.log_mul (by norm_num) (by norm_num)]
+  have h₅ : Real.log (x * y) = Real.log 64 := by rw [h₂]
+  have h₆ : Real.log x + Real.log y = Real.log 64 := by linarith
+
+  have h₇ : Real.log 64 = Real.log 2 ^ 2 * Real.log 2 := by
+    have : (64 : ℝ) = 2 ^ 6 := by norm_num
+    rw [this, Real.log_pow]
+    ring
+  have h₈ : Real.log 2 ^ 2 * Real.log 2 = Real.log 2 ^ 3 := by ring
+
+  rw [h₇, h₈] at h₆
+  rw [add_comm] at h₆
+
+  -- Solve for $\log{x}$ or $\log{y}$ and substitute
+  have h₉ : (Real.log y - Real.log 2 * Real.log x) * (Real.log y + Real.log 2 * Real.log x) =
+      0 := by
+    ring_nf
+    linarith only [h₆, h₃]
+
+  rw [mul_eq_zero] at h₉
+  rcases h₉ with (h₉ | h₉)
+
+  -- Case $\log y - 2\log 2\log x = 0$
+ .
+    have h₁₀ : Real.log 2 * Real.log 2 = Real.log 2 ^ 2 := by ring
+    have h₁₁ : Real.log x * Real.log 2 = Real.log 2 * Real.log x := by ring
+    have h₁₂ : Real.log 2 * Real.log x = Real.log x * Real.log 2 := by ring
+    have h₁₃ : Real.log x ^ 2 = (Real.log x) ^ 2 := by ring
+    have h₁₄ : Real.log x ^ 3 = (Real.log x) ^ 3 := by ring
+
+    rw [h₁₀, ← h₉] at h₃
+    rw [h₁₁, h₁₂, h₁₃, h₁₄] at h₆ h₇ h₈
+
+    have h₁₅ : Real.log x = (Real.log 2) ^ 2 := by linarith
+    have h₁₆ : Real.log x ^ 2 = (Real.log 2) ^ 4 := by rw [h₁₅]; ring
+    have h₁₇ : Real.log x ^ 3 = (Real.log 2) ^ 6 := by rw [h₁₅]; ring
+
+    have h₁₈ : Real.log (x / y) = Real.log x - Real.log y := by
+      rw [Real.log_div (by norm_num) (by norm_num)]
+    have h₁₉ : Real.log (x / y) = -2 * Real.log 2 := by
+      rw [h₁₈, h₁₅] at h₉
+      linarith only [h₉, h₁₇]
+
+    have h₂₀ : (Real.log (x / y) / Real.log 2) ^ 2 = 2 ^ 4 := by
+      rw [h₁₉, h₁₅]
+      field_simp [h_log_ne_0, h_log_2_ne_0]
+      rw [mul_comm, ← mul_assoc, mul_one, ← pow_mul, mul_comm]
+      simp
+      rw [add_comm, ← add_mul, mul_comm, mul_comm]
+      simp
+    norm_num at h₂₀
+    linarith only [h₂₀]
+
+  -- Case $\log{y}+2\log{2}\log{x} = 0$
+ .
+    have h₁₀ : Real.log 2 * Real.log 2 = Real.log 2 ^ 2 := by ring
+    have h₁₁ : Real.log x * Real.log 2 = Real.log 2 * Real.log x := by ring
+    have h₁₂ : Real.log 2 * Real.log x = Real.log x * Real.log 2 := by ring
+    have h₁₃ : Real.log x ^ 2 = (Real.log x) ^ 2 := by ring
+    have h₁₄ : Real.log x ^ 3 = (Real.log x) ^ 3 := by ring
+
+    rw [h₁₀, ← h₉] at h₃
+    rw [h₁₁, h₁₂, h₁₃, h₁₄] at h₆ h₇ h₈
+
+    have h₁₅ : Real.log x = -2 * (Real.log 2) ^ 2 := by linarith
+    have h₁₆ : Real.log x ^ 2 = (-2 * Real.log 2 ^ 2) ^ 2 := by rw [h₁₅]
+    have h₁₇ : Real.log x ^ 3 = (-2 * Real.log 2 ^ 2) ^ 3 := by rw [h₁₅]
+
+    have h₁₈ : Real.log (x / y) = Real.log x - Real.log y := by
+      rw [Real.log_div (by norm_num) (by norm_num)]
+    have h₁₉ : Real.log (x / y) = -4 * Real.log 2 := by
+      rw [h₁₈, h₁₅] at h₉
+      linarith only [h₉, h₁₇]
+
+    have h₂₀ : (Real.log (x / y) / Real.log 2) ^ 2 = (2 * 2) ^ 2 := by
+      rw [h₁₉, h₁₅]
+      field_simp [h_log_ne_0, h_log_2_ne_0]
+      rw [mul_comm, ← mul_assoc, mul_one, ← pow_mul, mul_comm]
+      simp
+      rw [add_comm, ← add_mul, mul_comm, mul_comm]
+      simp
+    norm_num at h₂₀
+    linarith only [h₂₀]
+```

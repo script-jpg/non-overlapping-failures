@@ -1,0 +1,227 @@
+have h₅ (a b : ℝ) (hapos : 0 < a) (hb : b ^ 2 < a) : 0 < a - b ^ 2 := by
+    calc
+      0 < a := hapos
+      _ < a - b ^ 2 := by linarith
+  -- We show that $x^2 \neq 0$.
+  have hxsq_nezero : x ^ 2 ≠ 0 := by
+    by_contra hxsqzero
+    have : x ^ 2 < 0 := by calc
+      x ^ 2 < y ^ 2 := h₄
+      _ < 0 := by exact hxsqzero
+    exact (sq_nonneg x) this
+  -- We show that $y^2 \neq 0$.
+  have hysq_nezero : y ^ 2 ≠ 0 := by
+    by_contra hysqzero
+    have : y ^ 2 < 0 := by calc
+      y ^ 2 < x ^ 2 := (h₄.symm).trans (sq_pos_of_ne_zero hxsq_nezero)
+      _ < 0 := by exact hysqzero
+    exact (sq_nonneg y) this
+  -- We show that $x$ is not equal to $0$.
+  have hx_nezero : x ≠ 0 := by
+    by_contra hxzero
+    have : x ^ 2 = 0 := by calc
+      x ^ 2 = x * x := by ring
+      _ = 0 * 0 := by rw [hxzero]
+      _ = 0 := by ring
+    have : x ^ 2 ≠ 0 := hxsq_nezero
+    contradiction
+  -- We show that $y$ is not equal to $0$.
+  have hy_nezero : y ≠ 0 := by
+    by_contra hyzero
+    have : y ^ 2 = 0 := by calc
+      y ^ 2 = y * y := by ring
+      _ = 0 * 0 := by rw [hyzero]
+      _ = 0 := by ring
+    have : y ^ 2 ≠ 0 := hysq_nezero
+    contradiction
+  -- Show that $x^2$ is positive.
+  have hx2_pos : 0 < x ^ 2 := by
+    exact sq_pos_of_ne_zero hx_nezero
+  -- Show that $y^2$ is positive.
+  have hy2_pos : 0 < y ^ 2 := by
+    exact sq_pos_of_ne_zero hy_nezero
+  -- Show that $y^2-x^2$ is positive.
+  have hy2mx2_pos : 0 < y ^ 2 - x ^ 2 := by
+    exact (h₅ _ _ hx2_pos) h₄
+  -- Show that $x^4=5x^2-6$.
+  have h₆ : x ^ 4 = 5 * x ^ 2 - 6 := by
+    calc
+      x ^ 4 = f x := by rw [h₀]
+      _ = g x := by rw [h₂]
+      _ = 5 * x ^ 2 - 6 := by rw [h₁]
+  -- Show that $y^4=5y^2-6$.
+  have h₇ : y ^ 4 = 5 * y ^ 2 - 6 := by
+    calc
+      y ^ 4 = f y := by rw [h₀]
+      _ = g y := by rw [h₃]
+      _ = 5 * y ^ 2 - 6 := by rw [h₁]
+  -- Show that $x^4-5x^2+6=0$.
+  have h₈ : x ^ 4 - 5 * x ^ 2 + 6 = 0 := by
+    calc
+      x ^ 4 - 5 * x ^ 2 + 6 = (x ^ 4) - 5 * x ^ 2 + 6 := by ring
+      _ = 5 * x ^ 2 - 6 - 5 * x ^ 2 + 6 := by rw [h₆]
+      _ = 0 := by ring
+  -- Show that $y^4-5y^2+6=0$.
+  have h₉ : y ^ 4 - 5 * y ^ 2 + 6 = 0 := by
+    calc
+      y ^ 4 - 5 * y ^ 2 + 6 = (y ^ 4) - 5 * y ^ 2 + 6 := by ring
+      _ = 5 * y ^ 2 - 6 - 5 * y ^ 2 + 6 := by rw [h₇]
+      _ = 0 := by ring
+  -- Show that $x^2$ is a root of $t^2-5t+6$.
+  have h₁₀ : (x ^ 2) ^ 2 - 5 * (x ^ 2) + 6 = 0 := by
+    calc
+      (x ^ 2) ^ 2 - 5 * (x ^ 2) + 6 = (x ^ 4) - 5 * x ^ 2 + 6 := by ring
+      _ = 0 := by rw [h₈]
+  -- Show that $y^2$ is a root of $t^2-5t+6$.
+  have h₁₁ : (y ^ 2) ^ 2 - 5 * (y ^ 2) + 6 = 0 := by
+    calc
+      (y ^ 2) ^ 2 - 5 * (y ^ 2) + 6 = (y ^ 4) - 5 * y ^ 2 + 6 := by ring
+      _ = 0 := by rw [h₉]
+  -- Show that $x^2=1$ or $x^2=6$.
+  have h₁₂ : x ^ 2 = 1 ∨ x ^ 2 = 6 := by
+    have : (x ^ 2) ^ 2 - 5 * (x ^ 2) + 6 = 0 := h₁₀
+    have : (x ^ 2 - 1) * (x ^ 2 - 6) = 0 := by
+      ring_nf
+      rw [this]
+      ring
+    cases (mul_eq_zero.mp this) with
+    | inl h => left; linarith
+    | inr h => right; linarith
+  -- Show that $y^2=1$ or $y^2=6$.
+  have h₁₃ : y ^ 2 = 1 ∨ y ^ 2 = 6 := by
+    have : (y ^ 2) ^ 2 - 5 * (y ^ 2) + 6 = 0 := h₁₁
+    have : (y ^ 2 - 1) * (y ^ 2 - 6) = 0 := by
+      ring_nf
+      rw [this]
+      ring
+    cases (mul_eq_zero.mp this) with
+    | inl h => left; linarith
+    | inr h => right; linarith
+  -- Consider the cases $x^2=1$ or $x^2=6$.
+  cases h₁₂ with
+  | inl hx2_eq_1 =>
+    -- If $x^2=1$, then $y^2$ cannot be 1 since $y^2 > x^2$.
+    have : y ^ 2 = 1 := by
+      exact Or.inl (by tauto)
+    have : y ^ 2 = x ^ 2 := by
+      rw [hx2_eq_1]
+      exact this
+    have : y ^ 2 = x ^ 2 := by
+      linarith
+    have : y = x ∨ y = -x := sq_eq_sq_iff_eq_or_eq_neg.mp this
+    cases this with
+    | inl hy_eq_x =>
+      -- If $y=x$, contradicts $y^2 > x^2$.
+      have : y ^ 2 = x ^ 2 := by
+        rw [hy_eq_x]
+        ring
+      have : y ^ 2 < x ^ 2 := by
+        linarith
+      have : y ^ 2 < y ^ 2 := by
+        linarith
+      have : y ^ 2 < y ^ 2 := by
+        exact lt_of_lt_of_le this (le_of_eq this)
+      have : y ^ 2 < y ^ 2 := by
+        exact lt_irrefl this
+      contradiction
+    | inr hy_eq_neg_x =>
+      -- If $y=-x$, contradicts $y^2 > x^2$.
+      have : y ^ 2 = x ^ 2 := by
+        rw [hy_eq_neg_x]
+        ring
+      have : y ^ 2 < x ^ 2 := by
+        linarith
+      have : y ^ 2 < y ^ 2 := by
+        linarith
+      have : y ^ 2 < y ^ 2 := by
+        exact lt_of_lt_of_le this (le_of_eq this)
+      have : y ^ 2 < y ^ 2 := by
+        exact lt_irrefl this
+      contradiction
+  | inr hx2_eq_6 =>
+    -- If $x^2=6$, then $y^2$ cannot be 6 since $y^2 > x^2$.
+    have : y ^ 2 = 6 := by
+      exact Or.inr (by tauto)
+    have : y ^ 2 = x ^ 2 := by
+      rw [hx2_eq_6]
+      exact this
+    have : y = x ∨ y = -x := sq_eq_sq_iff_eq_or_eq_neg.mp this
+    cases this with
+    | inl hy_eq_x =>
+      -- If $y=x$, contradicts $y^2 > x^2$.
+      have : y ^ 2 = x ^ 2 := by
+        rw [hy_eq_x]
+        ring
+      have : y ^ 2 < x ^ 2 := by
+        linarith
+      have : y ^ 2 < y ^ 2 := by
+        linarith
+      have : y ^ 2 < y ^ 2 := by
+        exact lt_of_lt_of_le this (le_of_eq this)
+      have : y ^ 2 < y ^ 2 := by
+        exact lt_irrefl this
+      contradiction
+    | inr hy_eq_neg_x =>
+      -- If $y=-x$, then $y^2=x^2$, contradicts $y^2 > x^2$.
+      have : y ^ 2 = x ^ 2 := by
+        rw [hy_eq_neg_x]
+        ring
+      have : y ^ 2 < x ^ 2 := by
+        linarith
+      have : y ^ 2 < y ^ 2 := by
+        linarith
+      have : y ^ 2 < y ^ 2 := by
+        exact lt_of_lt_of_le this (le_of_eq this)
+      have : y ^ 2 < y ^ 2 := by
+        exact lt_irrefl this
+      contradiction
+  -- We get that $y^2=6$ and $x^2=1$.
+  -- So $m=6$ and $n=1$.
+  -- Thus $m-n=6-1=5$.
+  have hy2_eq_6 : y ^ 2 = 6 := by
+    cases h₁₃ with
+    | inl hy2_eq_1 =>
+      have : y ^ 2 = x ^ 2 := by
+        rw [hy2_eq_1]
+        exact (sq_eq_sq_iff_eq_or_eq_neg.mp hx2_eq_6).symm
+      have : y = x ∨ y = -x := sq_eq_sq_iff_eq_or_eq_neg.mp this
+      cases this with
+      | inl hy_eq_x =>
+        have : y ^ 2 = x ^ 2 := by
+          rw [hy_eq_x]
+          ring
+        linarith
+      | inr hy_eq_neg_x =>
+        have : y ^ 2 = x ^ 2 := by
+          rw [hy_eq_neg_x]
+          ring
+        linarith
+    | inr hy2_eq_6 =>
+      exact hy2_eq_6
+  have hx2_eq_1 : x ^ 2 = 1 := by
+    cases h₁₂ with
+    | inl hx2_eq_1 =>
+      exact hx2_eq_1
+    | inr hx2_eq_6 =>
+      have : y ^ 2 = x ^ 2 := by
+        rw [hx2_eq_6]
+        exact hy2_eq_6
+      have : y = x ∨ y = -x := sq_eq_sq_iff_eq_or_eq_neg.mp this
+      cases this with
+      | inl hy_eq_x =>
+        have : y ^ 2 = x ^ 2 := by
+          rw [hy_eq_x]
+          ring
+        linarith
+      | inr hy_eq_neg_x =>
+        have : y ^ 2 = x ^ 2 := by
+          rw [hy_eq_neg_x]
+          ring
+        linarith
+  -- We get that $y^2=6$ and $x^2=1$.
+  -- So $m=6$ and $n=1$.
+  -- Thus $m-n=6-1=5$.
+  calc
+    y ^ 2 - x ^ 2 = 6 - 1 := by rw [hy2_eq_6, hx2_eq_1]
+    _ = 5 := by norm_num
+```

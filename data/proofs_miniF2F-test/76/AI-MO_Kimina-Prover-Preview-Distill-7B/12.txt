@@ -1,0 +1,215 @@
+-- The condition is equivalent to saying that there exists a integer $k$ such that $k \leq \sqrt{n} < k+1$ and $n+1000 = 70k$.
+  have h₁ : ∀ n : ℕ, 0 < n ∧ (↑n + (1000 : ℝ)) / 70 = Int.floor (Real.sqrt n) ↔
+      ∃ k : ℤ, k ≤ Real.sqrt n ∧ Real.sqrt n < k + 1 ∧ (↑n + 1000) / 70 = (k : ℝ), by
+    intro n
+    constructor
+    · intro hn
+      rcases hn with ⟨hn, h⟩
+      -- Since $n$ is a positive integer, it is clear that $70 \mid n+1000$ implies that $n+1000 \geq 70$.
+      have h₂ : 70 ∣ (n + 1000 : ℤ) := by
+        norm_cast at h
+        rw [←@Int.cast_div]
+        apply Int.cast_inj.mp
+        simpa using h
+      have hn' : 70 ≤ (n + 1000 : ℤ) := by
+        apply (Int.le_cast_iff (a := (n + 1000 : ℤ))).mpr
+        simp [h₂]
+      -- Let $k = \lfloor \sqrt{n} \rfloor$. The problem asks us to show that there exists such a integer $k$.
+      set k := Int.floor (Real.sqrt n) with hk
+      use k
+      -- By definition, $k \leq \sqrt{n} < k+1$.
+      refine ⟨?_,?_,?_⟩
+      · exact Int.floor_le _
+      · exact lt_floor_add_one _
+      · -- Since $n+1000 = 70k$, dividing by 70 gives that $k = \frac{n+1000}{70}$
+        field_simp
+        norm_cast at h
+        rw [show (↑n + 1000 : ℤ) = (↑n + (1000 : ℝ)) by simp] at h
+        exact h
+    · -- The other way around
+      rintro ⟨k, hle, hlt, h⟩
+      -- Since $k \leq \sqrt{n}$, we have $k^2 \leq n$.
+      have h' : (k : ℝ) ^ 2 ≤ Real.sqrt n ^ 2 := by
+        nlinarith [hle, Real.sqrt_nonneg n]
+      rw [Real.sq_sqrt (by positivity)] at h'
+      -- Since $\sqrt{n} < k+1$, we have $n < (k+1)^2$.
+      have h'' : Real.sqrt n ^ 2 < ((k : ℝ) + 1) ^ 2 := by
+        nlinarith [hlt, Real.sqrt_nonneg n]
+      rw [Real.sq_sqrt (by positivity)] at h''
+      -- Combining these, we have $k^2 \leq n < (k+1)^2$.
+      -- This shows that $\lfloor \sqrt{n} \rfloor = k$.
+      refine ⟨by simp,?_⟩
+      rify
+      -- All that is left is to show that $70 \mid n+1000$.
+      suffices 70 ∣ (n + 1000 : ℤ) by
+        norm_cast at this
+        exact this
+      -- This follows from the assumption that $70 \mid n+1000$ and $\frac{n+1000}{70} = k = \lfloor \sqrt{n} \rfloor$.
+      convert_to ((↑n + 1000) / 70 : ℤ) = k
+      · field_simp [h]
+        norm_cast
+      · rw [h]
+        simp
+
+  -- From now on, we assume that $S = \{ n \in \mathbb{N} \mid n > 0 \land \frac{n+1000}{70} = \lfloor \sqrt{n} \rfloor \} = \{ n \in \mathbb{N} \mid \exists k \in \mathbb{Z}, k \leq \sqrt{n} < k+1 \land \frac{n+1000}{70} = k \}$.
+  have hS : S = Finset.filter (fun n : ℕ => 0 < n ∧ (↑n + 1000) / 70 = Int.floor (Real.sqrt n)) ℕ := by
+    simp [Set.mem_setOf, h₀]
+  rw [hS]
+  -- We will show that $S = \{ 30, 31, 32, 40, 41, 42 \}$.
+  have hS : S = {30, 31, 32, 40, 41, 42} := by
+    rw [Finset.filter, Finset.card]
+    congr
+    -- We need to show that the set $S$ is precisely $\{ 30, 31, 32, 40, 41, 42 \}$.
+    -- We will show that if $n$ is an element of $S$, meaning that $0 < n$ and
+    -- $\frac{n+1000}{70} = \lfloor \sqrt{n} \rfloor$, then $n$ is in $\{ 30, 31, 32, 40, 41, 42 \}$.
+    -- To that end, we will show that if $n$ is a positive integer such that
+    -- $\frac{n+1000}{70} = \lfloor \sqrt{n} \rfloor$, then $n$ is in $\{ 30, 31, 32, 40, 41, 42 \}$.
+    ext n
+    simp
+    constructor
+    · intro hn
+      -- Since $n$ is a positive integer, it is clear that $70 \mid n+1000$ implies that $n+1000 \geq 70$.
+      have h₂ : 70 ∣ (n + 1000 : ℤ) := by
+        norm_cast at hn
+        rw [←@Int.cast_div]
+        apply Int.cast_inj.mp
+        simpa using hn
+      have hn' : 70 ≤ (n + 1000 : ℤ) := by
+        apply (Int.le_cast_iff (a := (n + 1000 : ℤ))).mpr
+        simp [h₂]
+      -- Let $k = \lfloor \sqrt{n} \rfloor$. The problem asks us to show that there exists such a integer $k$.
+      set k := Int.floor (Real.sqrt n) with hk
+      -- Since $n+1000 = 70k$, we have $k = \frac{n+1000}{70}$
+      have h' : (↑n + 1000 : ℝ) / 70 = k := by
+        rify at hk
+        rw [←hk]
+        field_simp
+        norm_cast at hn
+        rw [show (↑n + 1000 : ℤ) = (↑n + (1000 : ℝ)) by simp] at hn
+        exact hn
+      -- We claim that $k \leq \sqrt{n} < k+1$.
+      have h'' : k ≤ Real.sqrt n ∧ Real.sqrt n < k + 1 := by
+        rw [←hk]
+        exact floor_le_sqrt n
+      -- Since $k \leq \sqrt{n}$, we have $k^2 \leq n$.
+      have hle : (k : ℝ) ^ 2 ≤ Real.sqrt n ^ 2 := by
+        nlinarith [h''.left, Real.sqrt_nonneg n]
+      rw [Real.sq_sqrt (by positivity)] at hle
+      -- Since $\sqrt{n} < k+1$, we have $n < (k+1)^2$.
+      have hlt : Real.sqrt n ^ 2 < ((k : ℝ) + 1) ^ 2 := by
+        nlinarith [h''.right, Real.sqrt_nonneg n]
+      rw [Real.sq_sqrt (by positivity)] at hlt
+      -- Combining these, we have $k^2 \leq n < (k+1)^2$.
+      -- This shows that $\lfloor \sqrt{n} \rfloor = k$.
+      -- We will show that $n$ is in $\{ 30, 31, 32, 40, 41, 42 \}$.
+      -- From $k^2 \leq n < (k+1)^2$, we have $k^2 \leq n < k^2 + 2k + 1$.
+      have h₃ : k ^ 2 ≤ n ∧ n < k ^ 2 + 2 * k + 1 := by
+        constructor
+        · rify
+          exact hle
+        · rify
+          exact hlt
+      -- Since $n$ is a integer, we have $k^2 \leq n < k^2 + 2k + 1$.
+      -- This implies that $n = k^2 + r$ for some integer $0 \leq r \leq 2k$.
+      have h₄ : ∃ r : ℕ, r ≤ 2 * k := by
+        use (n - k ^ 2).toNat
+        simp
+        rw [Nat.toNat_le]
+        -- Since $n < k^2 + 2k + 1$, we have $n - k^2 < 2k + 1$.
+        -- Since $n > 0$, we have $n - k^2 \geq 0$.
+        refine ⟨?_,?_⟩
+        · omega
+        · calc
+            _ ≤ (n : ℝ) := by norm_cast; simp
+            _ < _ := by norm_cast
+      -- For each $0 \leq r \leq 2k$, we have $n = k^2 + r$.
+      rcases h₄ with ⟨r, hr⟩
+      rw [show n = k ^ 2 + r by omega]
+      -- Then, $n+1000 = 70k$ implies that $k^2 + r + 1000 = 70k$.
+      rify at h'
+      rw [show (↑n + 1000 : ℤ) = (↑n + (1000 : ℝ)) by simp] at hn
+      have h'' : k ^ 2 + r + (1000 : ℝ) = 70 * k := by
+        rify
+        rw [←hk]
+        field_simp
+        norm_cast
+        linarith
+      -- Then, rearranging the terms, we have $r = 70k - k^2 - 1000$.
+      have h₅ : r = 70 * k - k ^ 2 - 1000 := by
+        rify
+        linarith
+      -- Since $0 \leq r$, we have $70k - k^2 - 1000 \geq 0$.
+      -- This implies that $k^2 - 70k + 1000 \leq 0$.
+      have h₆ : k ^ 2 - 70 * k + 1000 ≤ 0 := by
+        rify
+        omega
+      -- We claim that $30 \leq k \leq 42$.
+      have h₇ : 30 ≤ k ∧ k ≤ 42 := by
+        constructor
+        · -- The inequality $k^2 - 70k + 1000 \leq 0$ implies that $k \leq 42$.
+          nlinarith
+        · -- The inequality $k^2 - 70k + 1000 \leq 0$ implies that $k \geq 30$.
+          nlinarith
+      -- Since $k$ is an integer, we have $30 \leq k \leq 42$.
+      interval_cases k
+      -- For each $30 \leq k \leq 42$, we have $k^2 \leq n < k^2 + 2k + 1$.
+      -- And for each $30 \leq k \leq 42$, we have $r = 70k - k^2 - 1000$.
+      -- We check each case and show that $n = 30, 31, 32, 40, 41, 42$.
+      all_goals
+        interval_cases r
+        all_goals
+          norm_cast at h''
+          omega
+    · intro hn
+      -- For each $n \in \{ 30, 31, 32, 40, 41, 42 \}$, we check that $0 < n$ and
+      -- $\frac{n+1000}{70} = \lfloor \sqrt{n} \rfloor$.
+      simp at hn
+      rcases hn with (rfl | rfl | rfl | rfl | rfl | rfl)
+      -- For $n = 30$, $0 < 30$ is clear, and $\frac{30+1000}{70} = 15$.
+      -- We check that $\lfloor \sqrt{30} \rfloor = 5$.
+      · norm_num
+        rw [Int.floor_eq_iff]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      -- For $n = 31$, $0 < 31$ is clear, and $\frac{31+1000}{70} = 15$.
+      -- We check that $\lfloor \sqrt{31} \rfloor = 5$.
+      · norm_num
+        rw [Int.floor_eq_iff]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      -- For $n = 32$, $0 < 32$ is clear, and $\frac{32+1000}{70} = 15$.
+      -- We check that $\lfloor \sqrt{32} \rfloor = 5$.
+      · norm_num
+        rw [Int.floor_eq_iff]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      -- For $n = 40$, $0 < 40$ is clear, and $\frac{40+1000}{70} = 16$.
+      -- We check that $\lfloor \sqrt{40} \rfloor = 6$.
+      · norm_num
+        rw [Int.floor_eq_iff]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      -- For $n = 41$, $0 < 41$ is clear, and $\frac{41+1000}{70} = 16$.
+      -- We check that $\lfloor \sqrt{41} \rfloor = 6$.
+      · norm_num
+        rw [Int.floor_eq_iff]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      -- For $n = 42$, $0 < 42$ is clear, and $\frac{42+1000}{70} = 16$.
+      -- We check that $\lfloor \sqrt{42} \rfloor = 6$.
+      · norm_num
+        rw [Int.floor_eq_iff]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+  rw [hS]
+  -- Now, all that is left is to show that $\{ 30, 31, 32, 40, 41, 42 \}.card = 6$.
+  -- This is true because the set $\{ 30, 31, 32, 40, 41, 42 \}$ has $6$ elements.
+  rw [Finset.card]
+  simp
+```

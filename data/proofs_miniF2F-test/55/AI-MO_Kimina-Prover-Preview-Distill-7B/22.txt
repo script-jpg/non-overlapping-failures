@@ -1,0 +1,29 @@
+-- We use induction on $n$ to prove this.
+  induction n with
+  -- The base case $n = 0$ is trivial.
+  | zero =>
+    simp
+  -- For the induction step, we assume the claim holds for $n$ and prove it for $n + 1$.
+  | succ n ih =>
+    rw [Finset.sum_range_succ, ih]
+    -- We add $n^3$ to both sides of the equation.
+    simp only [add_tsub_cancel_right]
+    -- The left side becomes $\sum_{k=0}^{n}k^3 = \sum_{k=0}^{n-1}k^3 + n^3$.
+    -- The right side is $\left(\sum_{k=0}^{n-1}k + n\right)^2 = \left(\sum_{k=0}^{n-1}k\right)^2 + 2n\sum_{k=0}^{n-1}k + n^2$.
+    -- By the induction hypothesis, this is $\sum_{k=0}^{n-1}k^3 + 2n\sum_{k=0}^{n-1}k + n^2$.
+    rw [add_sq]
+    -- So it suffices to show that $n^3 = 2n\sum_{k=0}^{n-1}k + n^2$.
+    -- This is true because $\sum_{k=0}^{n-1}k = \frac{n(n-1)}{2}$.
+    have : ∑ k in Finset.range n, k = (n * (n - 1) / 2) := by
+      rw [Finset.sum_range_id]
+    rw [this]
+    -- After substituting this closed formula, a simple computation shows that
+    -- $n^3 = 2n\sum_{k=0}^{n-1}k + n^2$.
+    -- So the claim holds for $n + 1$.
+    ring_nf
+    nth_rw 2 [show n * 2 = n + n by ring]
+    rw [Nat.add_mul]
+    nth_rw 3 [show n * 2 = n + n by ring]
+    rw [Nat.add_mul]
+    ring
+```

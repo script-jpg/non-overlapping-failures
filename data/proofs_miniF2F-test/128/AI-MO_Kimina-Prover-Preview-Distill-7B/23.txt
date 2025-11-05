@@ -1,0 +1,108 @@
+-- We have $\sqrt{16+16a} = 4\sqrt{1+a}$.
+  have : Real.sqrt (16 + 16 * a) = 4 * Real.sqrt (1 + a) := by
+    rw [Real.sqrt_eq_iff_eq_sq] <;> nlinarith
+
+  -- Hence, $\sqrt{4+\sqrt{16+16a}} = \sqrt{4+4\sqrt{1+a}}$.
+  have : Real.sqrt (4 + Real.sqrt (16 + 16 * a)) = Real.sqrt (4 + 4 * Real.sqrt (1 + a)) := by
+    rw [this]
+
+  -- Isolate the square root term.
+  have : Real.sqrt (4 + 4 * Real.sqrt (1 + a)) = 6 - Real.sqrt (1 + Real.sqrt (1 + a)) := by
+    linarith
+
+  -- Square both sides.
+  have : (Real.sqrt (4 + 4 * Real.sqrt (1 + a))) ^ 2 = (6 - Real.sqrt (1 + Real.sqrt (1 + a))) ^ 2 := by
+    rw [this]
+
+  -- Simplify both sides.
+  rw [Real.sq_sqrt (by positivity)] at this
+  ring_nf at this
+  rw [add_assoc, Real.sq_sqrt (by positivity)] at this
+  ring_nf at this
+
+  -- Hence, we get $4 + 4\sqrt{1+a} = 36 - 12\sqrt{1+\sqrt{1+a}} + 1 + \sqrt{1+\sqrt{1+a}}$.
+  -- Or, $4\sqrt{1+a} = 33 - 12\sqrt{1+\sqrt{1+a}} + \sqrt{1+\sqrt{1+a}}$.
+  have : 4 * Real.sqrt (1 + a) = 33 - 12 * Real.sqrt (1 + Real.sqrt (1 + a)) + Real.sqrt (1 + Real.sqrt (1 + a)) := by
+    linarith
+
+  -- Let $y = \sqrt{1+\sqrt{1+a}}$.
+  let y := Real.sqrt (1 + Real.sqrt (1 + a))
+  have : 4 * (y ^ 2 - 1) = 33 - 12 * y + y := by
+    simp [y]
+    rw [add_assoc, Real.sq_sqrt (by positivity)]
+    linarith
+
+  -- Simplifying, we get $4y^2 + 12y - 37 = 0$.
+  have : 4 * y ^ 2 + 12 * y - 37 = 0 := by
+    linarith
+
+  -- Solving the quadratic equation, we get $y = \frac{-12 \pm \sqrt{12^2 - 4*4*(-37)}}{2*4} = \frac{-12 \pm \sqrt{800}}{8} = \frac{-12 \pm 20\sqrt{2}}{8}$.
+  -- We take the positive solution, so $y = \frac{-6 + 10\sqrt{2}}{4}$.
+  have : y = (-6 + 10 * Real.sqrt 2) / 4 := by
+    have : discrim 4 12 (-37) = (20 * Real.sqrt 2) * (20 * Real.sqrt 2) := by
+      rw [discrim]; norm_num
+      ring_nf
+      rw [Real.sq_sqrt (by positivity)]
+      norm_num
+    rw [quadratic_eq_zero_iff (by norm_num) this, mul_assoc, ← pow_two]
+    simp [y]
+    nlinarith
+
+  -- Isolate the square root term.
+  have : 10 * Real.sqrt 2 = 24 + 4 * Real.sqrt (1 + a) := by
+    simp [y] at this
+    linarith
+
+  -- Square both sides.
+  have : (10 * Real.sqrt 2) ^ 2 = (24 + 4 * Real.sqrt (1 + a)) ^ 2 := by
+    rw [this]
+
+  -- Simplify both sides.
+  ring_nf at this
+  rw [Real.sq_sqrt (by positivity)] at this
+  ring_nf at this
+
+  -- Hence, we get $100 = 576 + 192\sqrt{1+a} + 16(1+a)$.
+  -- Or, $192\sqrt{1+a} = -476 - 16a$.
+  have : 192 * Real.sqrt (1 + a) = -476 - 16 * a := by
+    linarith
+
+  -- Square both sides.
+  have : (192 * Real.sqrt (1 + a)) ^ 2 = (-476 - 16 * a) ^ 2 := by
+    rw [this]
+
+  -- Simplify both sides.
+  ring_nf at this
+  rw [Real.sq_sqrt (by positivity)] at this
+  ring_nf at this
+
+  -- Hence, we get $36864(1+a) = 226976 + 150592a + 256a^2$.
+  -- Or, $256a^2 - 137280a + 189120 = 0$.
+  have : 256 * a ^ 2 - 137280 * a + 189120 = 0 := by
+    linarith
+
+  -- Dividing by 16, we get $16a^2 - 8580a + 11820 = 0$.
+  have : 16 * a ^ 2 - 8580 * a + 11820 = 0 := by
+    linarith
+
+  -- We can factor this as $(8a-84)(2a-141) = 0$.
+  have : (8 * a - 84) * (2 * a - 141) = 0 := by
+    linarith
+
+  -- Hence, $a = 84/8 = 10.5$ or $a = 141/2 = 70.5$.
+  simp [mul_eq_zero] at this
+  rcases this with h | h
+
+  -- Suppose $a = 84/8 = 10.5$.
+  · have : a = 84 / 8 := by
+      linarith
+    norm_num at this
+    subst this
+    norm_num at h₀
+  -- This does not satisfy the equation, thus $a \ne 10.5$ and we must have $a = 70.5$.
+  · have : a = 141 / 2 := by
+      linarith
+    norm_num at this
+    subst this
+    norm_num at h₀
+```

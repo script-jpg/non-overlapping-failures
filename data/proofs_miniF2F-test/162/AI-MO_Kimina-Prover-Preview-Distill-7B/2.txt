@@ -1,0 +1,70 @@
+-- According to the reference answer, we prove it in two cases, 0 < x and x ≤ 0.
+  by_cases hx : 0 < x
+
+  -- Case 1: 0 < x
+  -- We start with n = 1 and prove it by induction.
+  let P: ℕ → Prop := fun n => 1 + n * x ≤ (1 + x) ^ n
+  have one_nsmul_le_pow : P 1 := by simp [P]
+  have hms : 1 < n := by
+    refine Nat.one_lt_iff_ne_zero_and_ne_one.mpr?_
+    constructor
+    any_goals exact h₁.ne'
+  have h1 : (1 : ℝ) + 1 * x ≤ (1 + x) ^ 1 := by norm_num
+  have h2 : (1 : ℝ) + n * x ≤ (1 + x) ^ n := by
+    have ind: ∀m, 1 ≤ m → P m := by
+      intro m hm
+      induction m with
+      | zero => norm_num
+      | succ m ih =>
+        by_cases hm' : m = 0
+        -- When m = 0, we use the fact that 1 < n to take the right branch.
+        · simp [hm']; exact h1
+        -- When m > 0, we use the inductive hypothesis.
+        · have : 1 ≤ m := by exact Nat.one_le_iff_ne_zero.mpr hm'
+          have ind_hypothesis := ih this
+          have : (1 + x) ^ m * (1 + x) = (1 + x) ^ (m + 1) := by
+            rw [pow_succ]
+          rw [this]
+          have : (1 + m * x) * (1 + x) ≤ (1 + x) ^ m * (1 + x) := by
+            rw [pow_succ]
+            -- According to the reference answer, we prove it by induction.
+            have : (1 + m * x) * (1 + x) = 1 + (1 + m * x) * x := by ring
+            rw [this]
+            -- We split into cases 0 < x and x ≤ 0.
+            by_cases hx' : 0 < x
+            -- Case 1: 0 < x
+            · have : (1 + m * x) * x ≤ x ^ m * x := by
+                refine mul_le_mul_of_nonneg_left?_?_ hx'
+                · apply pow_nonneg (le_of_lt hx')
+                · simp
+              rw [pow_succ]
+              linarith
+            -- Case 2: x ≤ 0
+            · simp at hx'
+              have : (1 + m * x) * x ≤ 0 := by
+                refine mul_nonpos_of_nonneg_of_nonpos?_?_
+                · apply mul_nonneg (by linarith)
+                  exact pow_nonneg (le_of_lt hx')
+                · linarith
+              linarith
+          linarith
+      apply ind (n + 1)?_
+      any_goals linarith
+    apply ind hms
+  -- Case 2: x ≤ 0
+  -- We directly use the Bernoulli's inequality to prove it.
+  have neg_one_lt : -1 < -x := by linarith
+  have h1 : (1 : ℝ) + n * (-x) ≤ (1 + -x) ^ n := by
+    have Bernoulli := Real.one_add_mul_le_pow (a := -x) (by linarith) n
+    rw [neg_neg, one_add_neg, one_add_neg, neg_sub, neg_neg] at Bernoulli
+    exact Bernoulli
+  -- We turn the attention back to the original goal.
+  rw [← neg_mul, mul_pow] at h1
+  rw [← Real.rpow_natCast] at h1
+  have : (1 + -x) ^ n = (1 + (-x)) ^ n := by simp
+  rw [this]
+  -- We finish the proof by linarith.
+  linarith
+
+
+```

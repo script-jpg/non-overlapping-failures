@@ -1,0 +1,161 @@
+-- aux lemma, given $n > 0$, $\sum_{k=1}^n \sin{k\theta}$ equals to $\frac{\sin{\frac{n+1}2 \theta}}{\sin{\frac{\theta}{2}}}$.
+  have h₃ (n : ℕ) (h₃ : 0 < n) : ∑ i ∈ Finset.Icc 1 n, Real.sin (i * θ) = Real.sin ((n + 1) * θ / 2) / Real.sin (θ / 2) := by
+    have h (p : ℝ) (q : ℝ) (h₃ : p ≠ 0) : (∑ i ∈ Finset.range p, Real.sin (i * θ + q)) = Real.sin (p * q / 2) / Real.sin (p * θ / 2 + q) := by
+      induction p with
+      | zero => simp; exact h₃
+      | succ p ih =>
+        rw [Finset.sum_range_succ, ih]
+        rw [Real.sin_add, Real.cos_add, mul_add, Real.sin_sub, Real.cos_sub, mul_sub, <-Real.sin_pi_sub]
+        ring_nf
+        rw [<-Real.sin_add] at ih ⊢
+        ring_nf
+        rw [Real.cos_sq, Real.sin_sq, add_sq, Real.sin_sq, <-Real.sin_sub, <-Real.cos_sub]
+        ring_nf
+        rw [Real.sin_pi_div_two, Real.cos_pi_div_two]
+        simp only [and_imp]
+        exact h₃
+    convert h ((n + 1) * θ / 2) (θ / 2) (by exact Ne.symm (ne_of_lt (mul_pos (by norm_num) (by assumption)))))
+    · ring_nf
+    · ring_nf
+    · rw [div_mul, div_mul]
+      have : θ / 2 ≠ 0 := by
+        by_contra! h₃
+        have := (Real.sin_eq_zero_iff_of_lt_of_lt (by assumption) (by assumption)).mp h₃
+        norm_num at this
+      exact this
+
+  have h₄ (n : ℕ) (h₄ : 0 < n) : ∑ i ∈ Finset.Icc 1 n, Real.sin (i * θ) = Real.sin ((n + 1) * θ / 2) / Real.sin (θ / 2) := by
+    convert h₃ n (by assumption) using 1
+    · ring_nf
+    · ring_nf
+
+  -- aux lemma, given $n > 0$ and $b \neq 0$, $\sum_{k=1}^n \sin{(a+k \theta)}$ equals to $\frac{\sin{\frac{n+1}2 (a+(n-1)\theta)}}{\sin{\frac{\theta}{2}}}$.
+  have h₅ (a : ℝ) (b : ℝ) (n : ℕ) (h₅ : 0 < n) (h₆ : b ≠ 0) : (∑ k ∈ Finset.Icc 1 n, Real.sin (a + k * b)) = Real.sin ((n + 1) * (a + (n - 1) * b) / 2) / Real.sin (b / 2) := by
+    have h (p : ℕ) (q : ℝ) (h₇ : 0 < p) (h₈ : q ≠ 0) : (∑ i ∈ Finset.range p, Real.sin (a + i * q)) = Real.sin (p * a + p * (p - 1) * q / 2) / Real.sin (p * q / 2 + a) := by
+      induction p with
+      | zero => simp; exact Nat.lt_one_iff.mp h₇
+      | succ p ih =>
+        rw [Finset.sum_range_succ, ih]
+        rw [Real.sin_add, mul_add, Real.cos_add, mul_add, add_assoc, <-Real.sin_pi_sub, <-Real.sin_add]
+        ring_nf
+        rw [<-Real.sin_add]
+        ring_nf
+        rw [Real.cos_sq, Real.sin_sq, add_sq, Real.sin_sq, <-Real.sin_sub, <-Real.cos_sub]
+        ring_nf
+        rw [Real.sin_pi_div_two, Real.cos_pi_div_two]
+        simp only [and_imp]
+        exact h₈
+    convert h ((n + 1) * b) (a + b) (by assumption) (by assumption) using 1
+    · rw [mul_add, mul_add, <-mul_assoc, mul_comm, mul_assoc, <-mul_add, <-mul_assoc, mul_assoc]
+      ring_nf
+    · rw [mul_add, mul_add, <-mul_assoc]
+      ring_nf
+    · rw [ne_eq, mul_eq_zero, add_eq_zero_iff_eq_neg]
+      exact h₆
+    · rw [div_mul, div_mul]
+      have : Real.sin (b / 2) ≠ 0 := by
+        by_contra! h₃
+        have := (Real.sin_eq_zero_iff_of_lt_of_lt (by assumption) (by assumption)).mp h₃
+        norm_num at this
+      exact this
+
+  -- aux lemma, given $a$, $b$ and $n$ where $n > 0$, $\sum_{k=1}^n \sin{(a+(b+k-1)\theta)}$ is equal to $\frac{\sin{\frac{n+1}2 (2a+(2b+n-2)\theta)}}{\sin{\frac{\theta}{2}}}$.
+  have h₆ (a : ℝ) (b : ℝ) (n : ℕ) (h₆ : 0 < n) : ∑ i ∈ Finset.Icc 1 n, Real.sin (a + (b + i - 1) * θ) = Real.sin ((n + 1) * (2 * a + (2 * b + n - 2) * θ) / 2) / Real.sin (θ / 2) := by
+    convert h₅ a (b + 1) n h₆ (by norm_num) using 1
+    · ring_nf
+    · ring_nf
+
+  have h₇ (a : ℝ) (b : ℝ) (n : ℕ) (h₇ : 0 < n) : ∑ i ∈ Finset.Icc 1 n, Real.sin (a + (b - i + 1) * θ) = Real.sin ((n + 1) * (2 * a + (2 * b - n + 2) * θ) / 2) / Real.sin (θ / 2) := by
+    have h (p : ℕ) (q : ℝ) (h₈ : 0 < p) (h₉ : q ≠ 0) : (∑ k ∈ Finset.range p, Real.sin (a + (b - k + 1) * q)) = Real.sin (p * a + p * (p - 1) * q / 2) / Real.sin (p * q / 2 + a) := by
+      induction p with
+      | zero => simp; exact Nat.lt_one_iff.mp h₈
+      | succ p ih =>
+        rw [Finset.sum_range_succ, ih]
+        rw [Real.sin_add, mul_add, Real.cos_add, mul_add, sub_add_cancel, <-Real.sin_pi_sub, <-Real.sin_add]
+        ring_nf
+        rw [<-Real.sin_add]
+        ring_nf
+        rw [Real.cos_sq, Real.sin_sq, add_sq, Real.sin_sq, <-Real.sin_sub, <-Real.cos_sub]
+        ring_nf
+        rw [Real.sin_pi_div_two, Real.cos_pi_div_two]
+        simp only [and_imp]
+        exact h₉
+    convert h ((n + 1) * θ) (a + (n - 1) * θ) (by assumption) (by norm_num) using 1
+    · rw [mul_add, mul_add, mul_assoc]
+      ring_nf
+    · rw [mul_add, mul_add, mul_assoc]
+      ring_nf
+    · rw [ne_eq, mul_eq_zero, add_eq_zero_iff_eq_neg]
+      exact h₇
+    · rw [div_mul, div_mul]
+      have : Real.sin (θ / 2) ≠ 0 := by
+        by_contra! h₃
+        have := (Real.sin_eq_zero_iff_of_lt_of_lt (by assumption) (by assumption)).mp h₃
+        norm_num at this
+      exact this
+
+  set θ := Real.pi / 180 * 5 with hθ
+  have hθ_pos : 0 < θ := by
+    rw [hθ]
+    positivity
+  have hθ_val : θ = Real.pi / 180 * 5 := by
+    exact hθ
+  have θ_eq_180_div_36 : θ = Real.pi / 36 := by
+    rw [hθ]
+    ring_nf
+
+  rw [←hθ_val] at h₁
+  have : 5 * (↑35 : ℝ) = (35 : ℝ) * 5 := by
+    norm_cast
+  rw [this, h₄ 35 hθ_pos] at h₁
+  have : (35 + 1 : ℝ) = 36 := by
+    norm_num
+  rw [this, hθ_eq_pi_div_36] at h₁
+  have h₅ : (Real.sin (Real.pi * 35 / 18) / Real.sin (Real.pi / 36)) = (Real.sin (Real.pi * 36 / 18) / Real.sin (Real.pi / 36)) := by
+    rw [h₁]
+  rw [show (Real.pi * 36 / 18) = Real.pi * 2 by ring_nf] at h₅
+  rw [<-Real.sin_pi_sub] at h₅
+  rw [Real.sin_pi_mul_div_two] at h₅
+  have h₆ : Real.sin (Real.pi / 36) ≠ 0 := by
+    have : 0 < Real.sin (Real.pi / 36) := by
+      apply Real.sin_pos_of_pos_of_lt_pi
+      · exact hθ_pos
+      · exact lt_trans (by norm_num) (div_lt_div_of_pos_left (by norm_num) (by norm_num))
+    linarith only [this]
+  have : Real.sin (Real.pi * 35 / 18) = (Real.sin (Real.pi * 2) * Real.sin (Real.pi / 36)) / Real.sin (Real.pi / 36) := by
+    rw [h₅]
+    field_simp
+  rw [this]
+  have h₈ : Real.sin (Real.pi / 36) ≠ 0 := by
+    exact h₆
+  simp only [div_mul_cancel₀ _ h₈]
+  rw [Real.sin_pi_mul_div_two]
+
+  have h₇ : (35 : ℝ) + 1 = 36 := by
+    norm_num
+  rw [h₇]
+  have h₈ : (35 : ℝ) * 5 = 175 := by
+    norm_num
+  rw [h₈]
+  rw [hθ_eq_pi_div_36]
+  have : (Real.pi * 175 / 18) = (Real.pi * (36 * 4 + 31) / 18) := by
+    ring_nf
+  rw [this]
+  have : (36 * 4 + 31 : ℝ) / 18 = (36 / 18) * 4 + (31 / 18) := by
+    ring_nf
+  rw [this]
+  have : (Real.pi * (36 / 18) * 4) = (2 * Real.pi * 4) := by
+    ring_nf
+    rw [hpi]
+    ring_nf
+  rw [this]
+  have : Real.sin (2 * Real.pi * 4) = 0 := by
+    apply Real.sin_eq_zero_of_exists_nsmul
+    use 4
+    ring_nf
+  rw [this]
+  norm_num
+  exact h₈
+  exact h₆
+
+```

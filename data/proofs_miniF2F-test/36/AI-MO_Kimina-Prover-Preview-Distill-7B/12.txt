@@ -1,0 +1,82 @@
+-- check the base case
+
+  induction n with
+
+  | zero => linarith
+
+  | succ n ih =>
+
+
+    cases n with
+
+    -- when $n = 1$, $n! = 1 < 3^{3-1} = 9$
+
+    | zero =>
+      norm_num
+
+    -- when $n = 2$, $n! = 2 < 4^{4-1} = 64$
+
+    | succ n =>
+      cases n with
+
+      -- when $n = 3$, $n! = 6 < 8^{8-1} = 512$
+
+      | zero =>
+        norm_num
+
+      -- when $n \geq 4$, we have $n! = n \cdot (n-1)! < n \cdot n^{n-2} < n \cdot (n+1)^{n-2} = (n+1)^{n-1}$
+
+      | succ n =>
+        have : n + 1 + 1 = n + 2 := by linarith
+
+        rw [Nat.factorial_succ, Nat.pow_succ, Nat.mul_comm]
+
+        have ih := ih (by linarith)
+
+        rw [this] at ih
+
+        have : (n + 2) ^ (n + 1) < n * (n + 2) ^ (n - 1) := by
+
+          have : (n + 2) ^ 2 < n * (n + 2) ^ (n - 1) * (n + 2) := by
+
+            rw [Nat.pow_succ]
+
+            have : (n + 2) * (n + 2) ^ (n - 1) < n * (n + 2) ^ (n - 1) * (n + 2) := by
+
+              apply Nat.mul_lt_mul_of_pos_right
+
+              rw [Nat.pow_succ]
+
+              apply Nat.lt_add_of_pos_right
+
+              norm_num
+
+              apply Nat.factorial_pos
+
+              norm_num
+
+            exact this
+
+          exact that
+
+        have : n * (n + 2) ^ (n - 1) < n * (n + 1) ^ (n - 1) := by
+
+          have : (n + 2) ^ (n - 1) < (n + 1) ^ (n - 1) := by
+
+            apply Nat.pow_lt_pow_left_of_lt
+
+            norm_num
+
+            apply Nat.le_add_right_of_le
+
+            norm_num
+
+            apply Nat.factorial_pos
+
+            norm_num
+
+          exact mul_lt_mul_of_pos_left this (by linarith)
+
+        exact that
+
+```

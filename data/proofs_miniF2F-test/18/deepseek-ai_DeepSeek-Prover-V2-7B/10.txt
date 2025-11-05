@@ -1,0 +1,42 @@
+have h₂ : n ≠ 0 := by linarith
+  have h₃ : (16 : ℝ) = 2 ^ 4 := by norm_num
+  have h₄ : (4 : ℝ) = 2 ^ 2 := by norm_num
+  rw [h₃, h₄] at h₁
+  field_simp [Real.logb, Real.log_rpow, Real.log_pow, mul_assoc, mul_comm, mul_left_comm] at h₁
+  ring_nf at h₁
+  norm_num at h₁
+  have h₅ : n ≠ 0 := by linarith
+  have h₆ : n ≠ 1 := by
+    intro h
+    rw [h] at h₁
+    norm_num at h₁
+  have h₇ : n > 1 := by
+    apply Nat.one_lt_iff_ne_zero_and_ne_one.mpr
+    exact ⟨h₂, h₆⟩
+  norm_num at h₁
+  have h₈ : n = 2 ^ 24 := by
+    have h₉ : Real.log n ≠ 0 := Real.log_ne_zero_of_pos_of_ne_one (by positivity) (by
+      aesop)
+    have h₁₀ : Real.log n > 0 := Real.log_pos (by
+      norm_num; nlinarith)
+    field_simp at h₁
+    have h₁₁ : Real.log n = 24 * Real.log 2 := by
+      nlinarith [Real.log_pos (by norm_num : (1 : ℝ) < 2), Real.log_pos (by norm_num : (1 : ℝ) < 4)]
+    have h₁₂ : n = 2 ^ 24 := by
+      have h₁₃ : Real.log n = 24 * Real.log 2 := by linarith
+      have h₁₄ : Real.log n = Real.log (2 ^ 24) := by
+        rw [h₁₃]
+        simp [Real.log_rpow]
+        <;> ring_nf
+        <;> norm_num
+        <;> linarith
+      have h₁₅ : n = 2 ^ 24 := by
+        apply Real.log_injOn_pos (Set.mem_Ioi.mpr (by positivity)) (Set.mem_Ioi.mpr (by positivity))
+        rw [h₁₄]
+      exact_mod_cast h₁₅
+    exact h₁₂
+  have h₉ : List.sum (Nat.digits 10 n) = 13 := by
+    rw [h₈]
+    norm_num
+    <;> rfl
+  exact h₉

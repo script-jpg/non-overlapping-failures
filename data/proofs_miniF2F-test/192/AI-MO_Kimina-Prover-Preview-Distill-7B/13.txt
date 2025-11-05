@@ -1,0 +1,73 @@
+-- The first three terms of an arithmetic sequence are $2x - 3$, $5x - 11$, and $3x + 1$ respectively.
+  -- The $n$th term of the sequence is $2009$. What is $n$?
+
+  -- $\textbf{(A)}\ 255 \qquad \textbf{(B)}\ 502 \qquad \textbf{(C)}\ 1004 \qquad \textbf{(D)}\ 1506 \qquad \textbf{(E)}\ 8037$ Show that it is 502.
+
+  -- We need to find the value of $n$ such that $a_n = 2009$ in this arithmetic sequence.
+
+  -- Let's analyze the given conditions:
+
+  -- The sequence is arithmetic, so the difference between consecutive terms is constant
+  have h₆ : a 2 - a 1 = a 3 - a 2 := by
+    specialize h₁ 1
+    norm_num at h₁
+    linarith
+
+  -- Substitute the given values for the first three terms:
+  rw [h₂, h₃, h₄] at h₆
+  -- This gives us: $(5x - 11) - (2x - 3) = (3x + 1) - (5x - 11)$
+  -- Simplifying: $3x - 8 = -2x + 12$
+  -- Solving for $x$: $3x + 2x = 12 + 8$
+  -- $5x = 20$
+  -- $x = 4$
+  have hx : x = 4 := by
+    linarith
+
+  -- Now that we have $x = 4$, we can find the first term and the common difference of the sequence:
+  -- $a_1 = 2(4) - 3 = 8 - 3 = 5$
+  have a₁ : a 1 = 5 := by
+    rw [h₂, hx]
+    norm_num
+
+  -- $a_2 = 5(4) - 11 = 20 - 11 = 9$
+  -- So the common difference $d = a_2 - a_1 = 9 - 5 = 4$
+  have d : a 2 - a 1 = 4 := by
+    rw [h₃, h₂, hx]
+    norm_num
+
+  -- The general formula for the $n$th term of an arithmetic sequence is $a_n = a_1 + (n - 1) \cdot d$
+  have h₇ : ∀ n, a (n + 1) = a n + 4 := by
+    intro n
+    specialize h₁ n
+    specialize d_eq (n + 1)
+    linarith
+
+  -- Let's prove the formula for the $n$th term by induction:
+  have h₈ : ∀ n, a (n + 1) = 5 + 4 * n := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+      linarith
+    | succ n ih =>
+      rw [h₇ (n + 1), ih]
+      ring
+
+  -- Now we need to find $n$ such that $a_n = 2009$
+  -- Using our formula: $a_n = 5 + 4 \cdot (n - 1) = 2009$
+  -- $5 + 4n - 4 = 2009$
+  -- $4n + 1 = 2009$
+  -- $4n = 2008$
+  -- $n = 502$
+  have : a n = 5 + 4 * (n - 1) := by
+    specialize h₈ (n - 1)
+    rw [Nat.sub_add_cancel] at h₈
+    linarith
+
+  rw [this] at h₅
+  have : (n : ℝ) = 502 := by
+    linarith
+
+  exact Nat.cast_inj.mp this
+
+```

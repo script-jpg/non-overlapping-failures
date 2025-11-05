@@ -1,0 +1,235 @@
+-- From the given equation, we can derive that $f(x)$ is positive for all $x$.
+  have hf_pos : ∀ x, 0 < f x := by
+    intro x
+    have h₁' : f x - f x ^ 2 ≥ 0 := by
+      have h₁'' := h₁ (x - a)
+      rw [show x - a + a = x by linarith] at h₁''
+      have : 1 / 2 + Real.sqrt (f (x - a) - f (x - a) ^ 2) ≥ 1 / 2 by
+        apply add_le_add_left
+        apply Real.sqrt_nonneg
+      linarith
+    nlinarith
+
+  -- We can also show that $f(x)$ is bounded above by 1 for all $x$.
+  have hf_le_one : ∀ x, f x ≤ 1 := by
+    intro x
+    have h₁' : f x - f x ^ 2 ≥ 0 := by
+      have h₁'' := h₁ (x - a)
+      rw [show x - a + a = x by linarith] at h₁''
+      have : 1 / 2 + Real.sqrt (f (x - a) - f (x - a) ^ 2) ≥ 1 / 2 by
+        apply add_le_add_left
+        apply Real.sqrt_nonneg
+      linarith
+    nlinarith
+
+  -- Let's define the functional equation.
+  let h₂ (x : ℝ) : f (x + a) - f x = 1 / 2 + Real.sqrt (f x - f x ^ 2) - f x := by
+    simp only [add_sub_cancel_right, sub_self, add_zero]
+    exact h₁ x
+
+  -- We can show that $f(x + \frac{a}{2}) = f(x)$ for all $x$.
+  have half_period : ∀ x, f (x + a / 2) = f x := by
+    intro x
+    have h₂' := h₂ (x + a / 2)
+    have : f (x + a / 2 + a) = f (x + a / 2) := by
+      rw [show x + a / 2 + a = x + (3 : ℝ) * a / 2 by linarith]
+      have h₂'' := h₂ (x + a)
+      have : f (x + a / 2 + a) = 1 / 2 + Real.sqrt (f (x + a) - f (x + a) ^ 2) + (f (x + a) - f (x + a) ^ 2) := by
+        linarith
+      rw [this]
+      have h₁' := h₁ (x + a / 2)
+      have : 1 / 2 + Real.sqrt (f (x + a / 2) - f (x + a / 2) ^ 2) ≥ 1 / 2 := by
+        apply add_le_add_left
+        apply Real.sqrt_nonneg
+      have : f (x + a / 2 + a) ≥ 1 / 2 + Real.sqrt (f (x + a / 2) - f (x + a / 2) ^ 2) := by
+        linarith
+      have : f (x + a / 2 + a) ≤ 1 / 2 + Real.sqrt (f (x + a / 2) - f (x + a / 2) ^ 2) := by
+        have hf₁ : f (x + a) ≤ 1 := by
+          apply hf_le_one
+        have hf₂ : f (x + a) - f (x + a) ^ 2 ≥ 0 := by
+          nlinarith
+        have hf₃ : f (x + a / 2) ≤ 1 := by
+          apply hf_le_one
+        have hf₄ : f (x + a / 2) - f (x + a / 2) ^ 2 ≥ 0 := by
+          nlinarith
+        have hf₅ : Real.sqrt (f (x + a / 2) - f (x + a / 2) ^ 2) ≥ Real.sqrt (f (x + a) - f (x + a) ^ 2) := by
+          apply Real.sqrt_le_sqrt
+          linarith
+        linarith
+      linarith
+    have h₁'' := h₁ (x + a / 2)
+    rw [show x + a / 2 + a = x + (3 : ℝ) * a / 2 by linarith] at this
+    have : f (x + a / 2 + a) = 1 / 2 + Real.sqrt (f (x + a / 2) - f (x + a / 2) ^ 2) + (f (x + a / 2) - f (x + a / 2) ^ 2) := by
+      linarith
+    rw [this] at this
+    have : 1 / 2 + Real.sqrt (f (x + a / 2) - f (x + a / 2) ^ 2) + (f (x + a / 2) - f (x + a / 2) ^ 2) = 1 / 2 + Real.sqrt (f (x + a / 2) - f (x + a / 2) ^ 2) + (f x - f x ^ 2) := by
+      linarith
+    rw [this]
+    have : f (x + a) - f x = 1 / 2 + Real.sqrt (f x - f x ^ 2) - f x := by
+      exact h₂ x
+    rw [this]
+    linarith
+
+  -- The function $f$ is injective on the interval $[0, \frac{a}{2}]$.
+  have h₃ : ∀ x ∈ Set.Icc 0 (a / 2), ∀ y ∈ Set.Icc 0 (a / 2), f x = f y → x = y := by
+    intro x hx y hy hxy
+    have hx₁ : 0 ≤ x := hx.1
+    have hx₂ : x ≤ a / 2 := hx.2
+    have hy₁ : 0 ≤ y := hy.1
+    have hy₂ : y ≤ a / 2 := hy.2
+    set t := x - y
+    have t₀ : x = y + t := by simp [t]
+    have t₁ : -y ≤ x := by linarith
+    have t₂ : x - y ≤ a / 2 - y := by linarith
+    have t₃ : -y ≤ a / 2 := by linarith
+    have t₄ : x - y ≥ -a / 2 := by linarith
+    have t₅ : x - y ≤ a / 2 := by linarith
+    have h₅ : f (y + t) = f y := by
+      exact hxy
+    have h₆ : f (y + t) - f y = 0 := by
+      linarith
+    have h₇ : f (y + t) - f y = 1 / 2 + Real.sqrt (f y - f y ^ 2) - f y := by
+      exact h₂ y
+    rw [h₇] at h₆
+    have h₈ : Real.sqrt (f y - f y ^ 2) = f y - 1 / 2 := by
+      linarith
+    have h₉ : f (y + t) ≥ 1 / 2 := by
+      have hf₁ : f y ≤ 1 := by
+        apply hf_le_one
+      have hf₂ : f y - f y ^ 2 ≥ 0 := by
+        nlinarith
+      have hf₃ : f (y + t) ≥ 1 / 2 + Real.sqrt (f y - f y ^ 2) := by
+        linarith
+      linarith
+    have h₁₀ : f y - 1 / 2 ≥ 0 := by
+      linarith
+    have h₁₁ : (Real.sqrt (f y - f y ^ 2)) ^ 2 = (f y - 1 / 2) ^ 2 := by
+      rw [h₈]
+    have h₁₂ : f y - f y ^ 2 = (f y - 1 / 2) ^ 2 := by
+      have : 0 ≤ f y - f y ^ 2 := by
+        nlinarith
+      have : 0 ≤ (f y - 1 / 2) ^ 2 := by
+        apply sq_nonneg
+      apply Real.sq_sqrt this
+    have h₁₃ : (f y - 1 / 2) ^ 2 = f y - 1 / 2 := by
+      linarith
+    have h₁₄ : (f y - 1 / 2) * (f y - 1 / 2 - 1) = 0 := by
+      linarith
+    have h₁₅ : f y - 1 / 2 = 0 ∨ f y - 1 / 2 - 1 = 0 := by
+      exact mul_eq_zero.mp h₁₄
+    rcases h₁₅ with (h₁₅ | h₁₅)
+   .    -- Assume that $f(y) = \frac{1}{2}$.
+      have h₁₆ : f y = 1 / 2 := by
+        linarith
+      have h₁₇ : Real.sqrt (f y - f y ^ 2) = 0 := by
+        rw [h₁₆]
+        norm_num
+      rw [h₁₇] at h₈
+      linarith
+   .    -- Assume that $f(y) = \frac{1}{2} + 1$.
+      have h₁₆ : f y = 1 / 2 + 1 := by
+        linarith
+      have h₁₇ : f (y + t) = 1 / 2 + 1 := by
+        linarith
+      have h₁₈ : f (y + t) ≤ 1 := by
+        apply hf_le_one
+      linarith
+
+  -- Since $f$ is injective on $[0, \frac{a}{2}]$, it's also injective on $[m a, m a + \frac{a}{2}]$ for all $m \in \mathbb{N}$.
+  have h₄ {m : ℕ} : ∀ x ∈ Set.Icc (m * a) (m * a + a / 2), ∀ y ∈ Set.Icc (m * a) (m * a + a / 2), f x = f y → x = y := by
+    intro m m x hx y hy hxy
+    have hx₁ : m * a ≤ x := hx.1
+    have hx₂ : x ≤ m * a + a / 2 := hx.2
+    have hy₁ : m * a ≤ y := hy.1
+    have hy₂ : y ≤ m * a + a / 2 := hy.2
+    set t := x - y
+    have t₀ : x = y + t := by simp [t]
+    have t₁ : -y ≤ x := by linarith
+    have t₂ : x - y ≤ a / 2 := by linarith
+    have t₃ : -y ≤ a / 2 := by linarith
+    have t₄ : x - y ≤ a / 2 := by linarith
+    have t₅ : x - y ≥ -a / 2 := by linarith
+    have h₅ : f (y + t) = f y := by
+      exact hxy
+    have h₆ : f (y + t) - f y = 0 := by
+      linarith
+    have h₇ : f (y + t) - f y = 1 / 2 + Real.sqrt (f y - f y ^ 2) - f y := by
+      exact h₂ y
+    rw [h₇] at h₆
+    have h₈ : Real.sqrt (f y - f y ^ 2) = f y - 1 / 2 := by
+      linarith
+    have h₉ : f (y + t) ≥ 1 / 2 := by
+      have hf₁ : f y ≤ 1 := by
+        apply hf_le_one
+      have hf₂ : f y - f y ^ 2 ≥ 0 := by
+        nlinarith
+      have hf₃ : f (y + t) ≥ 1 / 2 + Real.sqrt (f y - f y ^ 2) := by
+        linarith
+      linarith
+    have h₁₀ : f y - 1 / 2 ≥ 0 := by
+      linarith
+    have h₁₁ : (Real.sqrt (f y - f y ^ 2)) ^ 2 = (f y - 1 / 2) ^ 2 := by
+      rw [h₈]
+    have h₁₂ : f y - f y ^ 2 = (f y - 1 / 2) ^ 2 := by
+      have : 0 ≤ f y - f y ^ 2 := by
+        nlinarith
+      have : 0 ≤ (f y - 1 / 2) ^ 2 := by
+        apply sq_nonneg
+      apply Real.sq_sqrt this
+    have h₁₃ : (f y - 1 / 2) ^ 2 = f y - 1 / 2 := by
+      linarith
+    have h₁₄ : (f y - 1 / 2) * (f y - 1 / 2 - 1) = 0 := by
+      linarith
+    have h₁₅ : f y - 1 / 2 = 0 ∨ f y - 1 / 2 - 1 = 0 := by
+      exact mul_eq_zero.mp h₁₄
+    rcases h₁₅ with (h₁₅ | h₁₅)
+   .    -- Assume that $f(y) = \frac{1}{2}$.
+      have h₁₆ : f y = 1 / 2 := by
+        linarith
+      have h₁₇ : Real.sqrt (f y - f y ^ 2) = 0 := by
+        rw [h₁₆]
+        norm_num
+      rw [h₁₇] at h₈
+      linarith
+   .    -- Assume that $f(y) = \frac{1}{2} + 1$.
+      have h₁₆ : f y = 1 / 2 + 1 := by
+        linarith
+      have h₁₇ : f (y + t) = 1 / 2 + 1 := by
+        linarith
+      have h₁₈ : f (y + t) ≤ 1 := by
+        apply hf_le_one
+      linarith
+
+  -- Since $f$ is injective on $[m a, m a + \frac{a}{2}]$ for all $m \in \mathbb{N}$, it's injective on $\bigcup_{m=0}^{\infty} [m a, m a + \frac{a}{2}]$.
+  have h₅ : ∀ x ∈ Set.Ici 0, ∀ y ∈ Set.Ici 0, f x = f y → x = y := by
+    intro x hx y hy hxy
+    have hx' : ∀ n : ℕ, x ∈ Set.Icc (n * a) (n * a + a / 2) → x = y := by
+      intro n hx''
+      have n_zero : 0 ≤ n := by
+        obtain ⟨n', hx'⟩ := hx''
+        exact n'
+      have hx''' : x ∈ Set.Icc (n' * a) (n' * a + a / 2) := by
+        exact hx''
+      have : x ∈ Set.Ici (n' * a) := by
+        exact hx'
+      have : x ∈ Set.Ici 0 := by
+        exact hx
+      apply h₄ n' at this
+      apply this hx''' y
+      exact hy
+      exact hxy
+    rcases hx with ⟨n, hx⟩
+    rcases hy with ⟨m, hm⟩
+    have hx' := hx' n hx
+    have hm' := h₄ m (⟨hm, by linarith⟩) x hx' y hy hxy
+    exact hm'
+  use 0
+  simp
+  intro x
+  symm
+  apply h₅ x hx x
+  exact hx
+  exact h₅ x hx x
+  exact hx
+
+```

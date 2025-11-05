@@ -1,0 +1,32 @@
+have h₁ : ∀ n ∈ S, 2010 ≤ n ∧ n ≤ 2019 := by
+    intro n hn
+    exact (h₀ n).mp hn
+
+  have h₂ : ∀ n ∈ S, ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+    intro n hn
+    exact (h₀ n).mp hn
+
+  have h₃ : ∑ k in S, k = 2016 := by
+    calc
+      ∑ k in S, k = ∑ k in S, 2016 - 2016 + k := by rw [Finset.sum_congr]; rfl; intros; ring
+      _ = ∑ k in S, 2016 + ∑ k in S, -2016 + k := by rw [Finset.sum_add_distrib]
+      _ = 2016 + ∑ k in S, (-2016 + k) := by rw [Finset.sum_add_distrib]; ring_nf; rfl
+      _ = 2016 + ∑ k in S, (k - 2016) := by rw [Finset.sum_add_distrib]; simp; rfl
+      _ = 2016 := by
+        rw [Finset.sum_congr]
+        · intro n hn
+          exact (h₀ n).mp hn
+        · intro n hn
+          simp at hn
+          obtain ⟨hn, m, hm, hn'⟩ := h₂ n hn
+          obtain ⟨hn, m', hm', hn'⟩ := h₂ n hn
+          have : m = m' := by
+            rw [←hn', ←hn]
+            exact Nat.divisors_eq_of_sum_divisors_eq hm.symm hn'
+          simp [this] at hn'
+          exact hn'
+        · rfl
+
+  exact h₃
+
+```

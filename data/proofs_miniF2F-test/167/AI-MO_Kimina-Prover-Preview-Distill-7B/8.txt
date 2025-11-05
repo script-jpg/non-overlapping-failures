@@ -1,0 +1,91 @@
+-- lemma to simplify $(x + (n : ℝ))⁻¹$
+  have l (x : ℝ) (n : ℕ) : (x + (n : ℝ))⁻¹ = 1 / (x + n) := by norm_cast
+
+  -- define the sequence
+  let x : ℕ → ℝ := fun n => (∏ i in Finset.range n, (1 + 1 / (x i + (i : ℝ)))⁻¹)⁻¹
+  let a : ℝ := x 0
+
+  -- for all $n$, show that $x_n > 0$
+  have H n : 0 < x n := by
+    induction' n using Nat.strong_induction_on with n ih
+    cases n
+    case zero => simp [x]
+    case succ n =>
+      simp [x]
+      rw [Finset.prod_range_succ, ih _ (by omega)]
+      apply one_lt_mul_of_pos_of_lt
+      · simp; omega
+      · simp; apply add_pos; assumption; simp
+        omega
+
+  -- for all $n$, show that $x_{n+1} > x_n$
+  have H' n : x n < x (n + 1) := by
+    induction' n using Nat.strong_induction_on with n ih
+    simp [x]
+    rw [Finset.prod_range_succ, ih _ (by omega)]
+    apply mul_lt_mul_of_pos_left
+    · simp; apply add_pos; assumption; norm_num
+    · simp [add_mul]
+
+  -- for all $n$, show that $x_n < 1$
+  have H'' n : x n < 1 := by
+    induction' n using Nat.strong_induction_on with n ih
+    cases n
+    case zero => simp [x]
+    case succ n =>
+      simp [x]
+      rw [Finset.prod_range_succ, ih _ (by omega)]
+      nth_rw 2 [ l _ (n : ℝ) ]
+      apply one_lt_inv_inv_of_lt_of_pos
+      · apply add_pos; assumption
+      · apply one_lt_inv_of_lt
+        apply add_pos; assumption
+        norm_num
+
+  -- show that $a$ is the answer
+  use a
+  constructor
+  · -- show that $a$ satisfies the conditions
+    intro n' n'pos
+    specialize H n'pos
+    specialize H' n'pos
+    specialize H'' n'pos
+    constructor
+    · exact H
+    · constructor
+      · exact H'
+      · exact H''
+  · -- show that if $x$ satisfies the conditions, then $x = a$
+    intro x x conditions
+    have : ∀ n, 0 < x n ∧ x n < x (n + 1) ∧ x (n + 1) < 1 := by
+      intro n
+      induction' n using Nat.strong_induction_on with n ih
+      cases n
+      case zero => simp [x]
+      case succ n =>
+        specialize conditions (n + 1) (by linarith)
+        simp [x] at conditions
+        constructor
+        · exact conditions.1
+        · constructor
+          · exact conditions.2.1
+          · exact conditions.2.2
+    specialize this x 0 (by linarith)
+    have aux : ∀ n, x n = (∏ i in Finset.range n, (1 + 1 / (x i + (i : ℝ)))⁻¹)⁻¹ := by
+      intro n
+      induction' n using Nat.strong_induction_on with n ih
+      cases n
+      case zero => simp
+      case succ n =>
+        simp
+        rw [Finset.prod_range_succ, ih _ (by omega)]
+        apply eq_inv_inv
+        simp; omega
+    specialize aux x 0 (by linarith)
+    rw [←aux] at this
+    have : ∏ i ∈ Finset.range x 0, (1 + 1 / (x i + (i : ℝ))) = ∏ i ∈ Finset.range x 0, (1 + 1 / (x i + (i : ℝ)))⁻¹⁻¹ := by
+      apply Finset.prod_inv
+    simp [this] at this
+    exact fun a ↦ this a
+
+```

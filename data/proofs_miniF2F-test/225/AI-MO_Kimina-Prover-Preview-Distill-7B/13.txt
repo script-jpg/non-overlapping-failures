@@ -1,0 +1,129 @@
+have h₃ : m < 2005 := by
+    by_contra! h
+    have : m * n ≥ 2005 * 2005 := by
+      apply mul_le_mul
+     . exact h
+     . exact h
+     . exact Nat.zero_lt_of_lt h₀
+     . exact Nat.zero_lt_of_lt h₁
+    linarith
+  have h₄ : n < 2005 := by
+    by_contra! h
+    have : m * n ≥ 2005 * 2005 := by
+      apply mul_le_mul
+     . exact h₀
+     . exact h
+     . exact Nat.zero_lt_of_lt h₁
+     . exact Nat.zero_lt_of_lt h
+    linarith
+
+  -- The number 2005 is not a square, so neither m nor n is 1.
+
+  have h₅ : ¬(Nat.sqrt m = Nat.sqrt n) := by
+    by_contra!
+    have : m = n := by rw [Nat.sqrt_inj (by linarith) (by linarith), this]
+    have h : m > 1 := by
+      by_contra!
+      have : m = 1 := by omega
+      contradiction
+    have h' : n > 1 := by
+      by_contra!
+      have : n = 1 := by omega
+      contradiction
+    have : m * n > m * n := by
+      calc
+        m * n > 1 * n := Nat.mul_lt_mul_right h n
+        _ = n := by rw [Nat.one_mul]
+        _ > 1 := by assumption
+        _ = m := by assumption
+        _ > 1 := by assumption
+        _ < m * n := by assumption
+    linarith
+  have h₆ : ¬(m = 2005) := by
+    by_contra!
+    have : m * n = 2005 * n := by rw [this]
+    have : n = 1 := by
+      by_contra!
+      have : n > 1 := by omega
+      have : 2005 * n > 2005 * 1 := Nat.mul_lt_mul_left 2005 this
+      linarith
+    contradiction
+  have h₇ : ¬(n = 2005) := by
+    by_contra!
+    have : m * n = m * 2005 := by rw [this]
+    have : m = 1 := by
+      by_contra!
+      have : m > 1 := by omega
+      have : m * 2005 > 1 * 2005 := Nat.mul_lt_mul_right this 2005
+      linarith
+    contradiction
+  have h₈ : ¬(m = 1) := by
+    by_contra!
+    contradiction
+  have h₉ : ¬(n = 1) := by
+    by_contra!
+    contradiction
+
+  -- If one of the numbers is 2005, then the other number must be 1.
+
+  have h₁₀ : (m = 2005 ∧ n = 1) ∨ (m = 1 ∧ n = 2005) ∨ (m ≠ 2005 ∧ n ≠ 1) := by
+    by_contra!
+    rcases h₁₀ with ⟨hm, hn⟩
+    have : n = 2005 := by
+      calc
+        n = m * n / m := by rw [Nat.div_mul_cancel (by linarith)]
+        _ = 2005 / m := by rw [h₂, hm]
+        _ = 1 := by rw [h₁₀]; norm_num
+    contradiction
+
+  rcases h₁₀ with ⟨hm, hn⟩ | ⟨hm, hn⟩ | ⟨hm, hn⟩
+ . -- The case where m = 2005 and n = 1.
+    have : m = 2005 := by omega
+    have : n = 1 := by omega
+    contradiction
+ . -- The case where m = 1 and n = 2005.
+    have : m = 1 := by omega
+    have : n = 2005 := by omega
+    contradiction
+ . -- The case where m ≠ 2005 and n ≠ 1.
+    have h₁₀ : m * n = 2005 := by assumption
+    have h₁₁ : m ≠ 1 := by assumption
+    have h₁₂ : n ≠ 1 := by assumption
+    have h₁₃ : m ∣ 2005 := by rw [←h₁₀]; apply Nat.dvd_mul_right
+    have h₁₄ : n ∣ 2005 := by rw [←h₁₀]; apply Nat.dvd_mul_left
+    have h₁₅ : m ≠ 2005 := by assumption
+    have h₁₆ : n ≠ 2005 := by assumption
+
+    -- The number 2005 = 5 * 401, so it has only four divisors: 1, 5, 401, 2005.
+    have h₁₇ : m = 5 ∨ m = 401 ∨ m = 2005 := by
+      rw [show Nat.divisors 2005 = {1, 5, 401, 2005} by decide, Nat.mem_divisors] at h₁₃
+      simp at h₁₃
+      omega
+    have h₁₈ : n = 5 ∨ n = 401 ∨ n = 2005 := by
+      rw [show Nat.divisors 2005 = {1, 5, 401, 2005} by decide, Nat.mem_divisors] at h₁₄
+      simp at h₁₄
+      omega
+
+    -- If m ≠ 2005 and n ≠ 1, then m = 5 or 401 and n = 5 or 401.
+    rcases h₁₇ with (h₁₇ | h₁₇ | h₁₇)
+   . -- The case where m = 5.
+      have h₁₈ : n = 401 := by
+        calc
+          n = m * n / m := by rw [Nat.div_mul_cancel (by linarith)]
+          _ = 2005 / 5 := by rw [h₁₀, h₁₇]
+          _ = 401 := by norm_num
+      have : m + n = 5 + 401 := by rw [h₁₇, h₁₈]
+      norm_num at this
+      exact this
+   . -- The case where m = 401.
+      have h₁₈ : n = 5 := by
+        calc
+          n = m * n / m := by rw [Nat.div_mul_cancel (by linarith)]
+          _ = 2005 / 401 := by rw [h₁₀, h₁₇]
+          _ = 5 := by norm_num
+      have : m + n = 401 + 5 := by rw [h₁₇, h₁₈]
+      norm_num at this
+      exact this
+   . -- The case where m = 2005.
+      contradiction
+```

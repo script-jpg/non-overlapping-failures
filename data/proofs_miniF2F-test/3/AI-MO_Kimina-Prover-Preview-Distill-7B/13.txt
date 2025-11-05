@@ -1,0 +1,52 @@
+-- Simplify the problem to showing that
+  -- $\prod_{a \in \{0, 1, 2,..., 9999\} \cap \{\text{odd}\}} (a + 1) = \frac{10000!}{2^{5000} \cdot 5000!}$
+  suffices prod_oddUnder_10000! :=
+    Finset.prod (Finset.filter (fun x => ¬Even x) (Finset.range 10000)) (id : ℕ → ℕ) =
+      10000! / (2 ^ 5000 * 5000!)
+  simp only [even_iff_two_dvd] at prod_oddUnder_10000!
+
+  -- Simplify the problem to showing that
+  -- $\prod_{a \in \{0, 1, 2,..., 9999\} \cap \{\text{odd}\}} (a + 1) = \frac{9999! + 1}{2^{5000}}$
+  suffices prod_oddUnder_10000! :=
+    Finset.prod (Finset.filter (fun x => ¬Even x) (Finset.range 10000)) (id : ℕ → ℕ) =
+      10000! / (2 ^ 5000 * 5000!)
+  suffices prod_oddUnder_10000! :=
+    (Finset.filter (fun x => ¬Even x) (Finset.range 10000)) = Finset.Icc 0 9999 \ {x_1 | x_1 ∈ Finset.Icc 0 9999 ∧ Even x_1}
+  · rw [prod_filter, prod_Icc_succ_top]
+    rw [Nat.even_iff] at prod_oddUnder_10000!
+    simp only [Finset.mem_filter, Finset.mem_Icc, Nat.reduceCtorEq, and_imp]
+    refine prod_oddUnder_10000! (fun x hx =>?_)
+    rcases hx with ⟨hx1, hx2⟩
+    contrapose! hx2
+    apply Nat.not_dvd_of_pos_of_lt (show 0 < 2 by norm_num)
+    rw [Nat.lt_iff_add_one_le]
+    set m := (x / 2) with hm
+    have hm1 : x = 2 * m := by rw [hm, Nat.mul_div_cancel]; apply Nat.even_iff.mp; exact hx2
+    rw [hm1]
+    refine Nat.le_of_mul_le_mul_left (show 0 \leq 2 by norm_num)?_
+    exact Nat.lt_add_one (m + 1)
+
+  -- Show that the product of all positive odd integers less than $10000$
+  -- is equal to the product of all positive odd integers less than $10000$.
+  refine (Finset.prod_congr (by rfl)?_).symm
+  -- Show that the product of all positive odd integers less than $10000$
+  -- is equal to the product of all positive odd integers less than $10000$.
+  intro a ha
+  by_cases h : a < 5000
+  · rw [show a + 1 = 2 * (a / 2) + 1 by omega]
+    refine Nat.mul_left_cancel (show 2 ≠ 0 by norm_num)?_
+    -- Show that $a + 1$ is odd.
+    refine Nat.odd_iff.mpr?_
+    rw [Nat.even_iff]
+    omega
+  · -- Show that $a + 1$ is even.
+    have h1 : a + 1 = 2 * (a / 2) + 1 := by omega
+    rw [show a + 1 = 2 * (a - 5000) + 5000 by omega]
+    -- Show that $a - 5000$ is odd.
+    refine Nat.mul_left_cancel (show 2 ≠ 0 by norm_num).symm?_
+    -- Apply the inductive hypothesis.
+    refine prod_oddUnder_10000! (a - 5000)?_ (by omega)
+    -- Show that $a - 5000 < 5000$.
+    omega
+
+```

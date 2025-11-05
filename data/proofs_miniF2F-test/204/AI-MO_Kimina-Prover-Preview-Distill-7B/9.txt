@@ -1,0 +1,39 @@
+-- First, we note that the set of integer solutions is bounded by $-3\pi \leq x \leq 3\pi$.
+  have h₁ : ∀ x : ℤ, x ∈ S → -3 * Real.pi ≤ x ∧ x ≤ 3 * Real.pi := by
+    intro x hx
+    specialize h₀ x
+    rw [h₀] at hx
+    simp at hx
+    have h₂ : x ≤ 3 * Real.pi := by
+      calc
+        x ≤ ↑(abs x) := by simp [abs_of_nonneg]
+        _ < 3 * Real.pi := hx
+    have h₃ : -3 * Real.pi ≤ x := by
+      calc
+        -3 * Real.pi < -↑(abs x) := by linarith [Real.pi_gt_three]
+        _ ≤ x := by simp [abs_of_nonpos]
+    exact ⟨h₃, h₂⟩
+
+  -- Therefore, we can decide by case analysis on the integer values in this range.
+  let S₃ := { x ∈ S | x ≤ 3 * Real.pi }
+  let S₂ := { x ∈ S | -3 * Real.pi ≤ x }
+  have hS₁ : S = S₂ ∪ S₃ := by ext x; simp [S₂, S₃]; tauto
+  have hS₃ : S₃ = S ∩ (Iic (3 * Real.pi)) := by ext x; simp [S₃]; tauto
+  have hS₂ : S₂ = S ∩ (Ici (-3 * Real.pi)) := by ext x; simp [S₂]; tauto
+  have h₄ : S₂.card = S.card := by
+    rw [hS₂, Finset.card_inter_Ici]
+    simp only [hS₁, Finset.card_union_inter_of_inter_eq_empty]
+    rw [Finset.inter_comm, Finset.inter_eq_inter_self_right]
+    exact Set.disjoint_iff_inter_eq_empty.mpr rfl
+  have h₅ : S₃.card = S.card := by
+    rw [hS₃, Finset.card_inter_Iic]
+    simp only [hS₁, Finset.card_union_inter_of_inter_eq_empty]
+    rw [Finset.inter_comm, Finset.inter_eq_inter_self_right]
+    exact Set.disjoint_iff_inter_eq_empty.mpr rfl
+
+  -- To show that the cardinality of the set of integer solutions is 19, we use the
+  -- `decide` tactic, which can compute arithmetic facts by case analysis and
+  -- `linarith` reasoning (c.f. `Finsupp.coe_inj`, `Finsupp.mem_support_iff`, and
+  -- `Mathlib.Tactic.Nontrivial`).
+  decide
+```

@@ -1,0 +1,209 @@
+-- We can rewrite the equation as $3x^2 y^2 + y^2 - 30x^2 - 517 = 0$.
+  have h₁ : 3 * (x ^ 2 * y ^ 2) + y ^ 2 - 30 * x ^ 2 - 517 = 0 := by
+    linarith only [h₀]
+
+  -- We can rewrite the equation as $y^2 (3x^2 + 1) - 30x^2 - 517 = 0$.
+  have h₂ : y ^ 2 * (3 * x ^ 2 + 1) - 30 * x ^ 2 - 517 = 0 := by
+    linarith only [h₁]
+
+  -- We can rewrite the equation as $y^2 (3x^2 + 1) = 30x^2 + 517$.
+  have h₃ : y ^ 2 * (3 * x ^ 2 + 1) = 30 * x ^ 2 + 517 := by
+    linarith only [h₂]
+
+  -- We can rewrite the equation as $y^2 (3x^2 + 1) - (30x^2 + 517) = 0$.
+  have h₄ : y ^ 2 * (3 * x ^ 2 + 1) - (30 * x ^ 2 + 517) = 0 := by
+    linarith only [h₃]
+
+  -- Let's show that $3x^2 + 1$ and $y^2$ have no common factor.
+  have h₅ : Nat.Coprime (3 * x ^ 2 + 1) (y ^ 2) := by
+    -- We can rewrite the equation as $3x^2 + 1 = 30x^2 + 517 / y^2$.
+    have h₅ : 3 * x ^ 2 + 1 = (30 * x ^ 2 + 517) / y ^ 2 := by
+      rw [←h₄]
+      apply Int.ediv_eq_of_eq_mul_right
+      · apply pow_two_dvd_pow
+      · omega
+    -- If a prime number divides both $3x^2 + 1$ and $y^2$,
+    -- it divides $30x^2 + 517$ and $3x^2 + 1$.
+    apply Nat.coprime_of_dvd
+    rintro p hp dvd
+    -- It also divides $27x^2$ and $517$.
+    have h₆ : p ∣ 27 * x ^ 2 := by
+      calc
+        p ∣ 3 * x ^ 2 + 1 := by apply dvd_trans; norm_num; apply dvd
+        _ ∣ 30 * x ^ 2 + 517 := by apply dvd
+        _ ∣ 27 * x ^ 2 + (30 * x ^ 2 + 517) := by apply dvd_add
+        _ = 517 + (30 * x ^ 2) := by ring
+        _ ∣ 27 * x ^ 2 := by apply dvd_add; apply dvd_trans; norm_num; apply dvd; norm_num
+    have h₇ : p ∣ 517 := by
+      apply dvd_trans
+      · apply dvd
+      · calc
+          p ∣ 27 * x ^ 2 := by assumption
+          _ ∣ 27 * x ^ 2 + 517 := by apply dvd_add
+          _ = 27 * x ^ 2 + (30 * x ^ 2 + 517) := by ring
+          _ ∣ 517 := by apply dvd_sub_left
+    -- A prime number dividing both $27x^2$ and $517$ divides $x$ and $517$.
+    have h₈ : p ∣ x ^ 2 := by
+      calc
+        p ∣ 27 * x ^ 2 := by assumption
+        _ ∣ 27 * x ^ 2 * p := by apply dvd_mul_left
+        _ = 27 * (x ^ 2 * p) := by ring
+        _ ∣ x ^ 2 * p := by apply dvd_mul_left
+        _ ∣ x ^ 2 := by apply Nat.dvd_of_dvd_mul_right; omega
+    rw [Nat.Prime.dvd_mul] at h₈
+    rw [Nat.Prime.dvd_mul] at h₈
+    rw [Nat.Prime.dvd_mul] at h₈
+    -- A prime number dividing both $517$ and $3x^2 + 1$ divides $517$ and $30x^2 + 517$.
+    have h₉ : p ∣ 30 * x ^ 2 + 517 := by
+      calc
+        p ∣ 3 * x ^ 2 + 1 := by assumption
+        _ ∣ 30 * x ^ 2 + 517 := by apply dvd
+    have h₁₀ : p ∣ 29 * x ^ 2 := by
+      calc
+        p ∣ 30 * x ^ 2 + 517 := by assumption
+        _ ∣ 29 * x ^ 2 + (30 * x ^ 2 + 517) := by apply dvd_add
+        _ = 29 * x ^ 2 + 517 := by ring
+        _ ∣ 29 * x ^ 2 := by apply dvd_sub_left; apply dvd
+    -- It divides $29x^2$ and $x^2$.
+    have h₁₁ : p ∣ x ^ 2 := by
+      apply Nat.dvd_trans
+      · apply dvd
+      · exact h₈
+    -- It divides $29$.
+    have h₁₂ : p ∣ 29 := by
+      apply Nat.dvd_of_dvd_mul_right at h₁₀
+      exact h₁₀
+      omega
+    -- A prime number dividing both $29$ and $517$ divides $29$ and $517$.
+    have h₁₃ : p ∣ 517 := by
+      apply Nat.dvd_of_dvd_mul_right at h₇
+      exact h₇
+      omega
+    -- In fact, $29$ divides $517$.
+    have h₁₄ : 29 ∣ 517 := by
+      apply dvd_trans
+      · apply dvd
+      · exact h₁₂
+    -- We can get $29 \mid 517$ and $29 \mid 29$.
+    have h₁₅ : 29 ∣ 29 := by
+      apply dvd_refl
+    -- Subtracting them, we get $29 \mid 517 - 29$.
+    have h₁₆ : 29 ∣ 517 - 29 := by
+      apply Nat.dvd_sub
+      omega
+      exact h₁₄
+    -- A prime number dividing both $517$ and $3x^2 + 1$ divides $3x^2 + 1$.
+    have h₁₇ : p ∣ 3 * x ^ 2 + 1 := by
+      apply Nat.dvd_of_dvd_mul_left
+      calc
+        p ∣ 30 * x ^ 2 + 517 := by assumption
+        _ = 3 * x ^ 2 + (27 * x ^ 2 + 517) := by ring
+        _ ∣ 27 * x ^ 2 + 517 := by apply dvd_add; apply dvd_trans; norm_num; apply dvd; norm_num
+        _ = 3 * x ^ 2 + 1 + 516 := by ring
+        _ ∣ 3 * x ^ 2 + 1 := by apply dvd_add; apply dvd; norm_num
+    -- It divides $29$ and $3x^2 + 1$.
+    have h₁₈ : p ∣ 3 * x ^ 2 + 1 := by
+      assumption
+    -- It divides $29$ and $3 * x ^ 2 + 1$.
+    have h₁₉ : p ∣ 29 ∧ p ∣ 3 * x ^ 2 + 1 := by
+      exact ⟨h₁₂, h₁₈⟩
+    rcases h₁₉ with ⟨hp₁, hp₂⟩
+    -- A prime number dividing both $29$ and $3 * x ^ 2 + 1$ divides $3 * x ^ 2 + 1$ and $517$.
+    have h₂₀ : p ∣ 3 * x ^ 2 + 1 ∧ p ∣ 517 := by
+      exact ⟨hp₂, h₁₃⟩
+    -- It divides $517 - (3 * x ^ 2 + 1)$.
+    have h₂₁ : p ∣ 517 - (3 * x ^ 2 + 1) := by
+      apply Nat.dvd_sub
+      omega
+      exact h₂₀.left
+    -- Simplifying, we get $29 \mid 3 * x ^ 2 + 1$.
+    have h₂₂ : 29 ∣ 3 * x ^ 2 + 1 := by
+      apply Nat.dvd_trans
+      · apply dvd
+      · exact h₂₁
+    -- A prime number dividing both $29$ and $3 * x ^ 2 + 1$ divides $29$ and $3 * x ^ 2 + 1$.
+    have h₂₃ : 29 ∣ 3 * x ^ 2 + 1 := by
+      apply Nat.dvd_of_dvd_mul_left at h₂₂
+      exact h₂₂
+      omega
+    -- It divides $3 * x ^ 2 + 1 - 29 * x ^ 2$.
+    have h₂₄ : 29 ∣ 3 * x ^ 2 + 1 - 29 * x ^ 2 := by
+      apply Nat.dvd_sub
+      omega
+      exact h₂₃
+    -- Simplifying, we get $29 \mid 841$.
+    have h₂₅ : 29 ∣ 841 := by
+      calc
+        29 ∣ 3 * x ^ 2 + 1 - 29 * x ^ 2 := by assumption
+        _ = 3 * x ^ 2 + 1 - 29 * x ^ 2 + 841 - 841 := by ring
+        _ = 841 := by ring
+    -- $29$ does not divide $841$.
+    have h₂₆ : ¬ 29 ∣ 841 := by
+      decide
+    -- We get a contradiction.
+    contradiction
+
+  -- Therefore, we can apply Int.mul_eq_zero.
+  rw [Int.mul_eq_zero] at h₃
+  -- So, either $y^2 = 0$ or $30x^2 + 517 = 0 \bmod {3x^2 + 1}$.
+  rcases h₃ with h | h
+  -- If $y^2 = 0$, then $30x^2 + 517 = 0$ and $3x^2 + 1 = 1$.
+ . have h₆ : 30 * x ^ 2 + 517 = 0 := by
+      rw [h] at h₄
+      linarith only [h₄]
+    -- $30x^2 + 517 = 0$ is impossible.
+    have h₇ : 30 * x ^ 2 + 517 > 0 := by
+      apply add_pos
+      apply mul_nonneg
+      · norm_num
+      · apply pow_two_nonneg
+      · norm_num
+    linarith only [h₇, h₆]
+  -- Let's focus on the other case.
+ . -- We have $y^2 = 517 / (3x^2 + 1)$.
+    have h₇ : y ^ 2 = 517 / (3 * x ^ 2 + 1) := by
+      rw [h₄, h]
+      apply Int.ediv_eq_of_eq_mul_right
+      · apply pow_two_dvd_pow
+      · omega
+    -- We can deduce that $3x^2 + 1$ divides $517$.
+    have h₈ : 3 * x ^ 2 + 1 ∣ 517 := by
+      rw [←h₇]
+      apply Int.dvd_mul_right
+    -- Therefore, it divides $517$.
+    have h₉ : (3 * x ^ 2 + 1) ∣ 517 := by
+      exact h₈
+    -- We can get $|3x^2 + 1| \leq 517$.
+    have h₁₀ : |3 * x ^ 2 + 1| ≤ 517 := by
+      apply abs_le_of_dvd
+      · exact h₉
+      · omega
+    have h₁₁ : 3 * x ^ 2 + 1 ≤ 517 := by
+      apply abs_le_of_dvd at h₁₀
+      linarith only [h₁₀]
+    -- $3x^2$ is nonnegative.
+    have h₁₂ : 3 * x ^ 2 ≥ 0 := by
+      apply mul_nonneg
+      · norm_num
+      · apply pow_two_nonneg
+    -- Therefore, $3x^2 + 1 \geq 1$.
+    have h₁₃ : 3 * x ^ 2 + 1 ≥ 1 := by
+      omega
+    -- We get $3x^2 + 1 = 1$.
+    have h₁₄ : 3 * x ^ 2 + 1 = 1 := by
+      omega
+    -- Therefore, $x = 0$.
+    have h₁₅ : x = 0 := by
+      linarith only [h₁₄]
+    -- Therefore, $y^2 = 517$.
+    have h₁₆ : y ^ 2 = 517 := by
+      rw [h₁₅] at h₇
+      simp at h₇
+      exact h₇
+    -- $517$ is not a square.
+    have h₁₇ : ¬ ∃ y : ℤ, y ^ 2 = 517 := by
+      decide
+    -- We get a contradiction.
+    obtain h₁₈ := h₁₇ ⟨y, h₁₆⟩
+    contradiction
+```

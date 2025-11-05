@@ -1,0 +1,98 @@
+-- We will prove that $\sqrt{\log_2{6}+\log_3{6}} = \sqrt{\log_2{3}}+\sqrt{\log_3{2}}$.
+  -- $\log_2{6} = \frac{\log{6}}{\log{2}}$ and $\log_3{6} = \frac{\log{6}}{\log{3}}$
+  rw [Real.sqrt (Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3)]
+
+  -- $\log{6} = \log{2} + \log{3}$
+  have h : Real.log 6 = Real.log 2 + Real.log 3 := by
+    have : (6 : ℝ) = 2 * 3 := by norm_num
+    rw [this, Real.log_mul (by linarith) (by linarith)]
+    -- $\log{2} + \log{3} = \log{2} + \log{3}$
+    done
+  rw [h, add_div, div_add]
+
+  -- $\frac{\log{2}+\log{3}}{\log{2}} = 1 + \frac{\log{3}}{\log{2}}$ and
+  -- $\frac{\log{2}+\log{3}}{\log{3}} = \frac{\log{2}}{\log{3}} + 1$
+  -- So, $\frac{\log{2}+\log{3}}{\log{2}} + \frac{\log{2}+\log{3}}{\log{3}} = 1 + \frac{\log{3}}{\log{2}} + \frac{\log{2}}{\log{3}} + 1 = 2 + \frac{\log{3}}{\log{2}} + \frac{\log{2}}{\log{3}}$
+  have h1 : (Real.log 2 + Real.log 3) / Real.log 2 = Real.log 3 / Real.log 2 + 1 := by
+    -- $\frac{\log{2}+\log{3}}{\log{2}} = 1 + \frac{\log{3}}{\log{2}}$
+    field_simp
+    done
+  have h2 : (Real.log 2 + Real.log 3) / Real.log 3 = Real.log 2 / Real.log 3 + 1 := by
+    -- $\frac{\log{2}+\log{3}}{\log{3}} = \frac{\log{2}}{\log{3}} + 1$
+    field_simp
+    done
+
+  -- Substituting this into the goal, we get
+  -- $\sqrt{2 + \frac{\log{3}}{\log{2}} + \frac{\log{2}}{\log{3}}} = \sqrt{\frac{\log{3}}{\log{2}} + 1} + \sqrt{\frac{\log{2}}{\log{3}} + 1}$
+  rw [h1, h2]
+
+  -- Let $a = \log{2}$ and $b = \log{3}$. Then, $\frac{a}{b} + \frac{b}{a} = \frac{a^2+b^2}{ab}$
+  let a := Real.log 2
+  let b := Real.log 3
+  have h3 : a / b + b / a = (a ^ 2 + b ^ 2) / (a * b) := by
+    field_simp
+    ring
+
+  -- So, $\sqrt{2 + \frac{a^2+b^2}{ab}} = \sqrt{\frac{a^2}{b} + 1} + \sqrt{\frac{b^2}{a} + 1}$
+  -- Or, equivalently, $\sqrt{\frac{2ab+a^2+b^2}{ab}} = \sqrt{\frac{ab+b^2}{b}} + \sqrt{\frac{ab+a^2}{a}}$
+  -- Which becomes $\sqrt{\frac{(a+b)^2}{ab}} = \sqrt{\frac{(b+a)^2}{b}} + \sqrt{\frac{(a+b)^2}{a}}$
+  -- So, $\frac{a+b}{\sqrt{ab}} = \frac{a+b}{\sqrt{b}} + \frac{a+b}{\sqrt{a}}$
+  -- Or, $\frac{1}{\sqrt{ab}} = \frac{1}{\sqrt{b}} + \frac{1}{\sqrt{a}}$
+  -- Multiply both sides by $\sqrt{ab}$ to get $1 = \sqrt{a} + \sqrt{b}$
+  suffices 1 = Real.sqrt a + Real.sqrt b by
+    have := this
+    field_simp at this
+    rw [h3] at this
+    have : a * b ≠ 0 := by
+      simp [a, b]
+      apply mul_ne_zero
+      · exact ne_of_gt (Real.log_pos (by norm_num : (2 : ℝ) > 1))
+      · exact ne_of_gt (Real.log_pos (by norm_num : (3 : ℝ) > 1))
+    have : (a * b) / b = a := by field_simp
+    rw [this]
+    have : (a * b) / a = b := by field_simp
+    rw [this]
+    done
+
+  -- Now, to prove that $1 = \sqrt{a} + \sqrt{b}$ where $a = \log{2}$ and $b = \log{3}$,
+  -- it is enough to show that $(\sqrt{a} - \sqrt{b})^2 = 0$
+  suffices (Real.sqrt a - Real.sqrt b) ^ 2 = 0 by
+    have := this
+    simp at this
+    linarith
+
+  -- $(\sqrt{a} - \sqrt{b})^2 = a + b - 2\sqrt{ab} = \log{2} + \log{3} - 2\sqrt{\log{2}\log{3}} = \log{2} + \log{3} - 2\sqrt{\log{6}} = \ldots = 0$
+  have h4 : (Real.sqrt a - Real.sqrt b) ^ 2 = 0 := by
+    calc _ = a + b - 2 * Real.sqrt (a * b) := by rw [sub_sq, mul_assoc, Real.sq_sqrt, Real.sq_sqrt]; all_goals positivity
+         _ = Real.log 2 + Real.log 3 - 2 * Real.sqrt (Real.log 2 * Real.log 3) := by simp [a, b]
+         _ = Real.log 2 + Real.log 3 - 2 * Real.sqrt (Real.log 6) := by rw [h]
+         _ = Real.log 2 + Real.log 3 - 2 * Real.sqrt (Real.log 2 + Real.log 3) := by rw [h]
+         _ = 0 := by
+            -- Let $a = \log{2}$ and $b = \log{3}$. Then, $2\sqrt{ab} = 2\sqrt{a^2+2ab+b^2-ab} = 2\sqrt{(a+b)^2-ab} = 2\sqrt{(a+b)^2 - (a^2+b^2)} = 2|a+b|\sqrt{1-\frac{a^2+b^2}{(a+b)^2}} = 2|a+b|\sqrt{1-\frac{\log{2}+\log{3}}{(\log{2}+\log{3})^2}} = 2|a+b|\sqrt{\frac{(a+b)^2-(\log{2}+\log{3})}{(a+b)^2}} = 2|a+b|\frac{\sqrt{(a+b)^2-(\log{2}+\log{3})}}{a+b} = 2\sqrt{(a+b)^2-(\log{2}+\log{3})}$
+            let a := Real.log 2
+            let b := Real.log 3
+            have h5 : 2 * Real.sqrt a * Real.sqrt b = 2 * Real.sqrt (a * b) := by
+              field_simp
+            have h6 : (Real.sqrt a - Real.sqrt b) ^ 2 = (Real.sqrt a) ^ 2 + (Real.sqrt b) ^ 2 - 2 * Real.sqrt a * Real.sqrt b := by ring
+            rw [h5] at h6
+            rw [h6, Real.sq_sqrt, Real.sq_sqrt]
+            field_simp
+            rw [a, b, h]
+            -- $2\sqrt{\log{2}\log{3}} = 2\sqrt{\log{6}}$
+            have : 0 < Real.log 2 * Real.log 3 := by
+              simp
+              apply mul_pos
+              · apply Real.log_pos; norm_num
+              · apply Real.log_pos; norm_num
+            rw [Real.sqrt_mul this]
+            -- $2\sqrt{\log{6}} = 2\sqrt{\log{2}+\log{3}}$
+            rw [h]
+            -- $(\sqrt{\log{2}+\log{3}})^2 = \log{2}+\log{3}$
+            rw [Real.sq_sqrt]
+            rw [←h]
+            simp
+            apply add_pos
+            · apply Real.log_pos; norm_num
+            · apply Real.log_pos; norm_num
+  exact h4
+```

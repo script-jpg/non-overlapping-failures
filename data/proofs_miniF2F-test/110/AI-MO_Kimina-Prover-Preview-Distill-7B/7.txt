@@ -1,0 +1,59 @@
+obtain ⟨ha, hb⟩ := h₀
+
+  -- The arithmetic mean of $a$ and $b$ is greater than or equal to their geometric mean.
+  have h : (a + b) / 2 - Real.sqrt (a * b) ≥ 0 := by
+    -- It is enough to show that $(\sqrt{a} - \sqrt{b})^2 \geq 0$.
+    have h : (Real.sqrt a - Real.sqrt b) ^ 2 ≥ 0 := sq_nonneg (Real.sqrt a - Real.sqrt b)
+    rw [sub_sq, Real.sq_sqrt (le_of_lt ha), Real.sq_sqrt (le_of_lt hb)] at h
+    rw [←Real.sqrt_mul (le_of_lt ha)] at h
+    linarith only [h]
+
+  -- The arithmetic mean of $a$ and $b$ is less than or equal to their quadratic mean.
+  have h' : (a + b) / 2 ≤ ((a - b) ^ 2 + (a + b) ^ 2) / 8 := by
+    -- It is enough to show that $a(a-b)^2 \geq 0$.
+    have h : a * (a - b) ^ 2 ≥ 0 := mul_nonneg (le_of_lt ha) (sq_nonneg _)
+    linarith only [h]
+
+  -- The arithmetic mean of $a$ and $b$ is less than or equal to their harmonic mean.
+  have h'' : (a + b) / 2 ≤ 2 / ((1 / a + 1 / b) / 2) := by
+    -- It is enough to show that $4ab \leq (a+b)^2$, or equivalently, $(a-b)^2 \geq 0$.
+    have h : (a - b) ^ 2 ≥ 0 := sq_nonneg (a - b)
+    rw [div_le_div_iff₀ (by norm_num; linarith only [ha]) (by norm_num; linarith only [hb])]
+    linarith only [h]
+
+  -- The quadratic mean of $a$ and $b$ is greater than or equal to their arithmetic mean.
+  have hqgea : ((a - b) ^ 2 + (a + b) ^ 2) / 8 ≥ (a + b) / 2 := by
+    have h : (a - b) ^ 2 ≥ 0 := sq_nonneg (a - b)
+    linarith only [h]
+
+  -- The harmonic mean of $a$ and $b$ is less than or equal to their geometric mean.
+  have hhmge : 2 / ((1 / a + 1 / b) / 2) ≥ (Real.sqrt a * Real.sqrt b) := by
+    -- It is enough to show that $\frac{4}{ab} \geq \frac{4}{(\sqrt{ab})^2}$.
+    have h : 1 / a + 1 / b ≥ (Real.sqrt a * Real.sqrt b)⁻¹ := by
+      -- It is enough to show that $(\sqrt{a} - \sqrt{b})^2 \geq 0$.
+      have h : (Real.sqrt a - Real.sqrt b) ^ 2 ≥ 0 := sq_nonneg (Real.sqrt a - Real.sqrt b)
+      rw [div_le_div_iff₀ (by norm_num; linarith only [ha]) (by norm_num; linarith only [hb])]
+      rw [Real.sq_sqrt (le_of_lt ha), Real.sq_sqrt (le_of_lt hb)] at h
+      rw [mul_inv_cancel₀ (by linarith only [ha, hb]), ←Real.sqrt_mul (le_of_lt ha)] at h
+      linarith only [h]
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    linarith only [h]
+
+  -- The harmonic mean of $a$ and $b$ is less than or equal to $\frac{(a-b)^2}{8b}$.
+  have hhmle : 2 / ((1 / a + 1 / b) / 2) ≤ (a - b) ^ 2 / (8 * b) := by
+    -- It is enough to show that $b(a-b)^2 \geq 0$.
+    have h : b * (a - b) ^ 2 ≥ 0 := mul_nonneg (le_of_lt hb) (sq_nonneg _)
+    -- It is enough to show that $(\sqrt{a} - \sqrt{b})^2 \geq 0$.
+    have h' : (Real.sqrt a - Real.sqrt b) ^ 2 ≥ 0 := sq_nonneg (Real.sqrt a - Real.sqrt b)
+    rw [div_le_div_iff₀ (by positivity) (by positivity), Real.sq_sqrt (le_of_lt ha)] at h'
+    have h'' : √a * √b * ((Real.sqrt a - Real.sqrt b) ^ 2) ≤ (a - b) ^ 2 := by
+      rw [mul_assoc, mul_comm ((Real.sqrt a - Real.sqrt b) ^ 2), mul_assoc, ←sq_sub_sq]
+      rw [Real.sq_sqrt (le_of_lt ha)]
+      linarith only [h']
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    linarith only [h'']
+
+  -- The result follows from the inequalities above.
+  linarith only [h, h', h'', hqgea, hhmle]
+
+```

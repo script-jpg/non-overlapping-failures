@@ -1,0 +1,281 @@
+-- We will use the intermediate value theorem to show that there are exactly
+  -- 6 solutions to the equation $1 - 3\sin\theta + 5\cos3\theta = 0$ in the
+  -- interval $(0, 2\pi]$.
+
+  -- Let $f(\theta) = 1 - 3\sin\theta + 5\cos3\theta$.
+
+  let f (θ : ℝ) := 1 - 3 * Real.sin θ + 5 * Real.cos (3 * θ)
+
+  -- We will show that $f(\theta) = 0$ has 6 solutions in $(0, 2\pi]$.
+
+  -- First of all, $\cos(3\theta) = 4\cos^3\theta - 3\cos\theta$, so $f(\theta)$
+  -- is a cubic polynomial in $\cos\theta$.
+
+  have hf (θ : ℝ) : f θ = 1 - 3 * Real.sin θ + 5 * (4 * Real.cos θ ^ 3 - 3 * Real.cos θ) := by
+    simp [Real.cos_three_mul]
+
+  -- Let $a < b$ be two consecutive zeros of $f$. We will show that $f$ has
+  -- at most 2 solutions in $(a, b]$.
+
+  have h {a b : ℝ} (hab : a < b) (h₀ : f a = 0) (h₁ : f b = 0) : S.ncard ≤ 6 := by
+
+    -- We will show that $f(\theta) = 0$ has at most 2 solutions in $(a, b]$.
+
+    -- First of all, we can write $f(\theta) = 1 - 3\sin\theta + 5\cos3\theta = 0$
+    -- iff $\sin\theta = \frac{1 + 5\cos3\theta}{3}$.
+
+    have h₂ : ∀ θ ∈ (Icc a b).toFinset, 0 < θ ∧ θ ≤ 2 * Real.pi ∧
+      1 - 3 * Real.sin θ + 5 * Real.cos (3 * θ) = 0 ↔
+      0 < θ ∧ θ ≤ 2 * Real.pi ∧ Real.sin θ = (1 + 5 * Real.cos (3 * θ)) / 3 := by
+      intro θ hθ
+      constructor <;> intro h
+      · constructor
+        · exact h.1
+        · constructor
+          · exact h.2.1
+          · linarith
+      · constructor
+        · exact h.1
+        · constructor
+          · exact h.2.1
+          · linarith
+    simp_rw [h₂] at h₀ h₁
+
+    -- Second, we write $\cos(3\theta) = 4\cos^3\theta - 3\cos\theta$ and let
+    -- $x = \cos\theta$. We get a cubic equation in $x$: $0 = 1 - 3\sqrt{1 - x^2} +
+    -- 5(4x^3 - 3x)$.
+
+    let x := Real.cos θ
+    have h₃ : 0 = 1 - 3 * Real.sqrt (1 - x^2) + 5 * (4 * x^3 - 3 * x) := by
+      rw [Real.cos_three_mul, Real.sin_sq θ] at h₀
+      linarith
+    have h₄ : 0 = 80 * x^3 - 45 * x - 3 * Real.sqrt (1 - x^2) + 1 := by
+      linarith
+
+    -- We let $y = \sqrt{1 - x^2}$. Since $f$ is differentiable, $y$ is
+    -- differentiable at $x$, with derivative $y' = \frac{-x}{y}$.
+
+    let y := Real.sqrt (1 - x^2)
+    have h₅ : 0 = 80 * x^3 - 45 * x - 3 * y + 1 := by
+      exact h₄
+    have h₆ : 0 = 240 * x^2 - 45 - 3 * (y / x) := by
+      calc
+        0 = (80 * x^3 - 45 * x - 3 * y + 1) * x / Real.sqrt (1 - x^2) := by
+          rw [h₅, mul_zero, mul_one, sub_self]
+          apply Real.sqrt_ne_zero'.mpr
+          nlinarith
+        _ = (80 * x^3 - 45 * x - 3 * Real.sqrt (1 - x^2) + 1) * x / Real.sqrt (1 - x^2) := by
+          simp only [y]
+        _ = 1 * x / Real.sqrt (1 - x^2) := by
+          rw [h₄, mul_zero]
+        _ = x / Real.sqrt (1 - x^2) := by
+          ring
+
+    -- We multiply both sides of the equation by $x$ to get a cubic equation
+    -- in $x$.
+
+    have h₇ : 0 = 240 * x^3 - 45 * x - 3 * y := by
+      calc
+        0 = (240 * x^2 - 45 - 3 * (y / x)) * x := by
+          ring_nf
+          rw [mul_assoc, mul_comm, mul_div_cancel₀ _ (ne_of_lt hab)]
+          ring
+        _ = 240 * x^3 - 45 * x - 3 * y := by
+          ring_nf
+
+    -- Now we can eliminate $y$ and get a cubic equation in $x$.
+
+    have h₈ : 0 = 80 * x^3 - 45 * x - 3 * x * Real.sqrt (1 - x^2) + 1 :=
+      calc
+        0 = 240 * x^3 - 45 * x - 3 * y := by exact h₇
+        _ = 240 * x^3 - 45 * x - 3 * x * Real.sqrt (1 - x^2) := by
+          congr 1
+          rw [h₅]
+          ring
+        _ = 80 * x^3 - 45 * x - 3 * x * Real.sqrt (1 - x^2) + 160 * x^3 := by
+          ring
+        _ = 80 * x^3 - 45 * x - 3 * x * Real.sqrt (1 - x^2) + 1 := by
+          rw [show (160 * x^3 : ℝ) = 1 by nlinarith]
+
+    -- The derivative of $f$ is $f'(\theta) = -3\cos\theta - 15\sin3\theta$.
+
+    let f' := fun θ => -3 * Real.cos θ - 15 * Real.sin (3 * θ)
+
+    -- The derivative of $f$ at $\theta$ is equal to $-3\cos\theta - 15\sin3\theta$.
+
+    have hf' : ∀ θ ∈ (Icc a b).toFinset, f.deriv θ = -3 * Real.cos θ - 15 * Real.sin (3 * θ) := by
+      intro θ hθ
+      rw [funext hf, Real.deriv_sin, Real.deriv_cos, Real.deriv_const, mul_comm 3,
+        Real.deriv_mul, deriv_id'', mul_comm 3, Real.deriv_mul, deriv_id'', mul_comm 3,
+        Real.deriv_mul, deriv_id'']
+      simp [hθ, mul_zero, mul_one, zero_mul, add_zero, differentiableAt_id', differentiableAt_sin,
+        differentiableAt_cos, differentiableAt_const, add_zero, add_zero]
+      -- The derivatives of $\sin$ and $\cos$ are $0$ at points where they are
+      -- constant.
+
+      all_goals
+        try (simp [Real.deriv_sin]; nlinarith)
+
+      all_goals
+        try (simp [Real.deriv_cos]; nlinarith)
+
+      -- The derivatives of $\sin$ and $\cos$ are $0$ at points where they are
+      -- constant.
+
+      all_goals
+        try (simp; nlinarith)
+
+    -- The derivative of $f$ at $\theta$ is zero iff $\cos\theta = 5\sin3\theta$.
+
+    have h₉ : ∀ θ ∈ (Icc a b).toFinset, f.deriv θ = 0 ↔ Real.cos θ = 5 * Real.sin (3 * θ) := by
+      intro θ hθ
+      simp [hf', add_eq_zero_iff_eq_neg]
+      constructor <;> intro h
+      · calc
+          Real.cos θ = -(-3 * Real.cos θ) := by simp
+          _ = -(-3 * Real.cos θ + 15 * Real.sin (3 * θ)) := by rw [h]
+          _ = 5 * Real.sin (3 * θ) := by ring
+      · calc
+          -3 * Real.cos θ - 15 * Real.sin (3 * θ) = -3 * (Real.cos θ + 5 * Real.sin (3 * θ)) := by ring
+          _ = -3 * 0 := by rw [h]
+          _ = 0 := by simp
+
+    -- We will show that if $\theta$ is a solution of $f'(\theta) = 0$ and
+    -- $f(\theta) = 0$, then $\theta$ is a solution of the polynomial equation
+    -- $P(x) = 0$, where $P = X^3 - 3X - 5$.
+
+    have h₁₀ : ∀ θ ∈ (Icc a b).toFinset, f θ = 0 ∧ f.deriv θ = 0 ↔
+      Real.sin θ = 1 ∧ (Real.cos θ + 5 * Real.sin (3 * θ)) = 0 := by
+      intro θ hθ
+      constructor <;> intro h
+      · simp [h₃, h₉] at h
+        exact h
+      · simp [h₃, h₉]
+        exact h
+
+    -- Let $P = \mathbb{R}[X]$. We will show that $P$ has a root at $\cos\theta$.
+
+    let P := Polynomial.X^3 - 3 * Polynomial.X - 5
+
+    -- We will show that $P(\cos\theta) = 0$.
+
+    have h₁₁ : ∀ θ ∈ (Icc a b).toFinset, f θ = 0 ∧ f.deriv θ = 0 → P.eval (Real.cos θ) = 0 := by
+      intro θ hθ
+      specialize h₁₀ θ hθ
+      replace h₁₀ := h₁₀.2
+      rw [h₁₀]
+      -- We have $\sin^2\theta + \cos^2\theta = 1$.
+
+      have h₁₁ : (Real.sin θ)^2 + (Real.cos θ)^2 = 1 := by
+        exact Real.sin_sq_add_cos_sq θ
+
+      -- We have $\sin^2\theta = 1 - \cos^2\theta$.
+
+      replace h₁₁ : (Real.sin θ)^2 = 1 - (Real.cos θ)^2 := by
+        linarith
+
+      -- We have $\sin\theta = (1 + 5\cos3\theta)/3$.
+
+      have h₁₂ : Real.sin θ = (1 + 5 * Real.cos (3 * θ)) / 3 := by
+        linarith
+
+      -- We have $\cos^2(3\theta) = (1 + 5\cos\theta)^2/9$.
+
+      have h₁₃ : (Real.cos (3 * θ))^2 = (1 + 5 * Real.cos θ)^2 / 9 := by
+        calc
+          (Real.cos (3 * θ))^2 = 1 - (Real.sin (3 * θ))^2 := by
+            have := Real.sin_sq_add_cos_sq (3 * θ)
+            linarith
+          _ = 1 - (1 - (Real.cos θ)^2) * 25 / 9 := by
+            rw [h₁₂]
+            ring
+          _ = (1 + 5 * Real.cos θ)^2 / 9 := by
+            ring
+
+      -- We have $\cos(3\theta) = 4\cos^3\theta - 3\cos\theta$.
+
+      have h₁₄ := Real.cos_three_mul θ
+
+      -- We have $\cos^3\theta = (1 + 5\cos(3\theta))/8$.
+
+      have h₁₅ : (Real.cos θ)^3 = (1 + 5 * Real.cos (3 * θ)) / 8 := by
+        linarith
+
+      -- We have $\cos^2\theta(1 + 5\cos\theta)^2 = 9$.
+
+      have h₁₆ : (Real.cos θ)^2 * (1 + 5 * Real.cos θ)^2 = 9 := by
+        calc
+          (Real.cos θ)^2 * (1 + 5 * Real.cos θ)^2 = (1 - (Real.cos θ)^2) * 25 * (Real.cos θ)^2 := by
+            rw [←h₁₃]
+            ring
+          _ = (1 + 5 * Real.cos θ)^2 / 9 * 25 * (Real.cos θ)^2 := by
+            rw [h₁₄]
+          _ = 9 := by
+            rw [h₁₅]
+            ring
+
+      -- We have $\cos^2\theta(1 + 5\cos\theta)^2 - 9 = 0$.
+
+      have h₁₇ : (Real.cos θ)^2 * (1 + 5 * Real.cos θ)^2 - 9 = 0 := by
+        linarith
+
+      -- We have $P(\cos\theta) = 0$.
+
+      calc
+        P.eval (Real.cos θ) = (Real.cos θ)^3 - 3 * (Real.cos θ) - 5 := by
+          simp [P]
+        _ = (Real.cos θ)^2 * (Real.cos θ) - 3 * (Real.cos θ) - 5 := by
+          ring
+        _ = (Real.cos θ)^2 * (1 + 5 * Real.cos θ)^2 - 9 := by
+          ring
+        _ = 0 := by
+          exact h₁₇
+
+    -- We know that $\cos(\theta) = 5\sin(3\theta)$ and $\sin^2\theta + \cos^2\theta = 1$.
+
+    have h₁₂ : ∀ θ ∈ (Icc a b).toFinset, f θ = 0 ∧ f.deriv θ = 0 →
+      (Real.cos θ - 5 * Real.sin (3 * θ)) * (Real.cos θ + 5 * Real.sin (3 * θ)) = 0 := by
+      intro θ hθ
+      specialize h₉ θ hθ
+      rw [h₉] at hθ
+      cases hθ with
+      | inl h =>
+        left
+        linarith
+      | inr h =>
+        right
+        linarith
+
+    -- We know that $\cos(\theta) = 5\sin(3\theta)$, $\sin^2\theta + \cos^2\theta = 1$,
+    -- and $P(\cos\theta) = 0$.
+
+    have h₁₃ : ∀ θ ∈ (Icc a b).toFinset, f θ = 0 ∧ f.deriv θ = 0 → (Real.cos θ)^3 - 3 * (Real.cos θ) - 5 = 0 :=
+      fun θ hθ => h₁₁ θ hθ
+        (h₁₂ θ hθ)
+
+    -- Let $Q = P(X) - P(\cos\theta)$. We know that $Q(\cos\theta) = 0$.
+
+    let Q := P - P.eval (Real.cos θ)
+
+    -- We will show that $Q$ has a root at $\cos(\theta + 2\pi/3)$.
+
+    have h₁₄ : (Real.cos (θ + 2 * Real.pi / 3))^3 - 3 * (Real.cos (θ + 2 * Real.pi / 3)) - 5 = 0 :=
+      calc
+        (Real.cos (θ + 2 * Real.pi / 3))^3 - 3 * (Real.cos (θ + 2 * Real.pi / 3)) - 5
+          = P.eval (Real.cos (θ + 2 * Real.pi / 3)) := by
+            simp [P, Q]
+            rw [h₁₃, sub_self]
+        _ = 0 := by
+          apply Polynomial.IsRoot.sub
+          · exact h₀
+          · exact h₁₁ θ hθ
+
+    -- We know that $\cos(\theta + 2\pi/3) = -\cos\theta/2 + \sqrt{3}\sin\theta/2$.
+
+    have h₁₅ : Real.cos (θ + 2 * Real.pi / 3) = - Real.cos θ / 2 + Real.sqrt 3 * Real.sin θ / 2 :=
+      Real.cos_add (θ + Real.pi / 2) (Real.pi / 3)
+
+    -- We know that $\cos(\theta + 2\pi/3) = -\cos\theta/2 - \sqrt{3}\sin\theta/2$ or
+    -- $\cos(\theta + 2\pi/3) = -\cos\theta/2 + \sqrt{3}\sin\theta/2$.
+
+    have h₁₆ : Real.cos (θ + 2 * Real.pi / 3) = - Real.cos θ / 2 + Real

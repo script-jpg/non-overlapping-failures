@@ -1,0 +1,71 @@
+-- Show that if $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$, then $x^2 + 18x + 30 \geq 0$.
+  have h₀' : ∀ x : ℝ, f x = 0 → x ^ 2 + 18 * x + 30 ≥ 0 := by
+    intro x hx
+    rw [h₀] at hx
+    have : Real.sqrt (x ^ 2 + 18 * x + 45) ≥ 0 := Real.sqrt_nonneg (x ^ 2 + 18 * x + 45)
+    linarith only [hx, this]
+
+  -- Show that if $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$, then $x^2 + 18x + 30 \leq 0$.
+  have h₁' : ∀ x : ℝ, f x = 0 → x ^ 2 + 18 * x + 30 ≤ 0 := by
+    intro x hx
+    rw [h₀] at hx
+    have : Real.sqrt (x ^ 2 + 18 * x + 45) ≥ 0 := Real.sqrt_nonneg (x ^ 2 + 18 * x + 45)
+    linarith only [hx, this]
+
+  -- Show that if $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$, then $x^2 + 18x + 30 = 0$.
+  have h₂ : ∀ x : ℝ, f x = 0 → x ^ 2 + 18 * x + 30 = 0 := by
+    intro x hx
+    specialize h₀' x hx
+    specialize h₁' x hx
+    linarith only [h₀', h₁']
+
+  -- Show that if $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$, then $x^2 + 18x + 45 = 0$.
+  have h₃ : ∀ x : ℝ, f x = 0 → x ^ 2 + 18 * x + 45 = 0 := by
+    intro x hx
+    specialize h₂ x hx
+    rw [h₀] at hx
+    linarith only [hx, h₂]
+
+  -- Show that the [[roots]] of $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$ are the same as the roots of $x^2 + 18x + 45 = 0$.
+  have h₄ : Fintype (f ⁻¹' {0}) = Fintype { x | x ^ 2 + 18 * x + 45 = 0 } := by
+    symm
+    apply Fintype.eq
+    -- Rewrite the image of f into {0}.
+    ext x
+    simp [h₀]
+    constructor
+    · intro hx
+      specialize h₃ x hx
+      exact h₃
+    · intro hx
+      specialize h₃ x hx
+      rw [h₃]
+      simp
+
+  -- Show that { x | x ^ 2 + 18 * x + 45 = 0 } is a Fintype.
+  have h₅ : Fintype { x | x ^ 2 + 18 * x + 45 = 0 } := by
+    apply Set.Fintype.restrict
+    exact Set.fintype_univ
+
+  -- Show that the product of the roots of x^2 + 18x + 45 = 0 is 020.
+  have h₆ : (∏ x in { x | x ^ 2 + 18 * x + 45 = 0 }.toFinset, x) = 20 := by
+    have h₆ : { x | x ^ 2 + 18 * x + 45 = 0 } = {-15, -3} := by
+      ext x
+      simp
+      constructor
+      · intro hx
+        rw [show x ^ 2 + 18 * x + 45 = (x + 15) * (x + 3) by ring] at hx
+        rcases mul_eq_zero.mp hx with hx | hx
+        · left; linarith only [hx]
+        · right; linarith only [hx]
+      · rintro (rfl | rfl)
+        all_goals
+          rw [show (-15) ^ 2 + 18 * (-15) + 45 = (-15 + 15) * (-15 + 3) by ring]
+          simp
+    rw [h₆]
+    simp [Finset.prod_pair]
+
+  -- Since the roots of x^2 + 18x + 30 = 2 * sqrt (x^2 + 18x + 45) are the same as the roots of x^2 + 18x + 45 = 0, the product of the roots of x^2 + 18x + 30 = 2 * sqrt (x^2 + 18x + 45) is 020.
+  rw [h₄, h₅, h₆]
+
+```

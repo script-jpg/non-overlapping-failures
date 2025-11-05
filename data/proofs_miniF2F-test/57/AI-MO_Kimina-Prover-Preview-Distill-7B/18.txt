@@ -1,0 +1,361 @@
+have hp : 2 ≤ p := by omega
+  have hq : 2 ≤ q := by omega
+  have hr : 2 ≤ r := by omega
+
+  have hpqr : 2 * 2 * 2 ∣ p * q * r - 1 := by
+    rw [←Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofNat_mul,
+        ←Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofnat_mul]
+    convert h₁ using 1
+   . convert congrArg (Int.ofNat ·) h₁
+      simp
+   . norm_num
+
+  have hpq : 2 * 2 ∣ p * q - 1 := by
+    rw [←Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul]
+    convert h₁ using 1
+   . convert congrArg (Int.ofNat ·) h₁
+      simp
+   . norm_num
+
+  have hpr : 2 * 2 ∣ p * r - 1 := by
+    rw [←Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul]
+    convert h₁ using 1
+   . convert congrArg (Int.ofNat ·) h₁
+      simp
+   . norm_num
+
+  have hqp : 2 * 2 ∣ q * r - 1 := by
+    rw [←Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul]
+    convert h₁ using 1
+   . convert congrArg (Int.ofNat ·) h₁
+      simp
+   . norm_num
+
+  have hlogp : 1 ≤ p.log 2 := by
+    rw [←Int.log_eq_one_iff, Int.lt_log]
+    (norm_num).trans (by omega)
+
+  have hlogq : 1 ≤ q.log 2 := by
+    rw [←Int.log_eq_one_iff, Int.lt_log]
+    (norm_num).trans (by omega)
+
+  have hlogr : 1 ≤ r.log 2 := by
+    rw [←Int.log_eq_one_iff, Int.lt_log]
+    (norm_num).trans (by omega)
+
+  have hp2 : p.log 2 = 1 ∨ p.log 2 ≥ 2 := by omega
+
+  have hpn : p = 2 ∨ p > 2 := by
+    rcases hp2 with hp2 | hp2
+   . left; convert hp2
+   . right; convert Nat.lt_of_add_lt_add_right hp2
+      simp
+
+  have hpn' : p = 2 ∨ p > 2 ∧ p ≠ 2 := by
+    rcases hpn with hpn | hpn
+   . tauto
+   . right; exact hpn
+      by_contra h
+      rw [h] at hpn
+      omega
+
+  rcases hpn' with hpn' | ⟨hpge2, hpne2⟩
+
+  -- If $p = 2$, then $(q - 1) (r - 1) \mid qr - 1$.
+
+  have hs1 : (q - 1) * (r - 1) ∣ q * r - 1 := by
+    rw [←Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul,
+        ←Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofnat_mul, Int.ofnat_mul,
+        hpn', Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_sub (by omega),
+        Int.ofnat_mul, Int.ofnat_mul, ←Int.ofnat_sub (by omega), Int.ofnat_mul,
+        ←hs1]
+    norm_num
+
+  -- Show that $4 \mid q (r - 1)$.
+
+  have hs2 : 4 ∣ q * (r - 1) := by
+    rw [←Int.ofNat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+        ←Int.ofnat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+        hpn', Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_sub (by omega),
+        Int.ofnat_mul, Int.ofnat_mul, ←Int.ofnat_sub (by omega), Int.ofnat_mul,
+        ←hs1]
+    norm_num
+    rw [Int.ofnat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+        ←Int.ofnat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+        hpn', Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_sub (by omega),
+        Int.ofnat_mul, Int.ofnat_mul, ←Int.ofnat_sub (by omega), Int.ofnat_mul,
+        ←hs1]
+    norm_num
+
+  -- Show further that $4 \mid q$.
+
+  have hs3 : 4 ∣ q := by
+    rcases hs2 with ⟨k, hk⟩
+    have : 4 ∣ k * (r - 1) := by
+      rw [←hk, mul_assoc]
+      apply dvd_mul_right
+
+    rcases this with ⟨k', hk'⟩
+    have : 4 ∣ k' ∨ 2 ∣ k' := by
+      refine Int.dvd_or_dvd_of_dvd_mul_right?_ hk'
+      norm_num
+
+    rcases this with hs | hs
+   . exact ⟨k', hs⟩
+   . have : 2 ∣ (k' * (r - 1)) := by
+        rw [←hk, mul_assoc]
+        apply dvd_mul_right
+      have : 2 ∣ r - 1 := by
+        apply Nat.dvd_of_mul_dvd_mul_left (by omega) at this
+        exact this
+      linarith [show 2 ≤ r by omega, this]
+
+  -- By the above, we have $2 \mid q$ and $2 \mid r - 1$.
+
+  have hs4 : 2 ∣ q := by
+    omega
+
+  have hs5 : 2 ∣ r - 1 := by
+    rcases hs2 with ⟨k, hk⟩
+    have : 4 ∣ k * (r - 1) := by
+      rw [←hk, mul_assoc]
+      apply dvd_mul_right
+
+    rcases this with ⟨k', hk'⟩
+    have : 4 ∣ k' ∨ 2 ∣ k' := by
+      refine Int.dvd_or_dvd_of_dvd_mul_right?_ hk'
+      norm_num
+
+    rcases this with hs | hs
+   . have : 4 ∣ r - 1 := ⟨k', hs⟩
+      omega
+   . have : 2 ∣ (k' * (r - 1)) := by
+        rw [←hk, mul_assoc]
+        apply dvd_mul_right
+      have : 2 ∣ r - 1 := by
+        apply Nat.dvd_of_mul_dvd_mul_left (by omega) at this
+        exact this
+      exact this
+
+  -- Show that $q$ is even.
+
+  have heven : Even q := by
+    exact Int.dvd_iff_even.mp hs4
+
+  -- Since $q$ is even, $1 < q$ and $2 \mid q - 1$, a contradiction.
+
+  have hqge2 : 2 ≤ q := by omega
+  have hqodd : Odd (q - 1) := by
+    have : Even (q - 2) := by
+      apply Nat.even_sub'.mpr
+      omega
+    apply Nat.Odd.add_one this
+
+  have hqodd' : ¬Odd (q - 1) := by
+    rw [Int.not_odd_iff_even]
+    exact Int.dvd_iff_even.mp hs5
+
+  contradiction
+
+  -- Now let's consider the case $p > 2$.
+
+  rcases hpge2 with hpge2' | hpge2''
+
+  -- If $p > 2$, then $(p - 1) \mid (r - 1)$.
+
+  have hs1 : (p - 1) ∣ r - 1 := by
+    rw [←Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul,
+        ←Int.ofNat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+        hpge2', Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_sub (by omega),
+        Int.ofnat_mul, Int.ofnat_mul, ←Int.ofnat_sub (by omega), Int.ofnat_mul,
+        ←hs1]
+    norm_num
+
+  -- Show that $2 \mid (r - 1)$.
+
+  have hs2 : 2 ∣ r - 1 := by
+    rcases hs1 with ⟨k, hk⟩
+    have : 2 ∣ k * (r - 1) := by
+      rw [←hk, mul_assoc]
+      apply dvd_mul_right
+
+    rcases this with ⟨k', hk'⟩
+    have : 2 ∣ k' ∨ 2 ∣ k' := by
+      refine Int.dvd_or_dvd_of_dvd_mul_right?_ hk'
+      norm_num
+
+    rcases this with hs | hs
+   . have : 2 ∣ r - 1 := ⟨k', hs⟩
+      omega
+   . have : 2 ∣ k' := by
+        have : 2 ∣ k' * (r - 1) := by
+          rw [←hk, mul_assoc]
+          apply dvd_mul_right
+        apply Nat.dvd_of_mul_dvd_mul_left (by omega) at this
+        exact this
+      have : 2 ∣ r - 1 := by
+        apply Nat.dvd_of_mul_dvd_mul_left (by omega) at this
+        exact this
+      omega
+
+  -- Show that $4 \mid (r - 1)$.
+
+  have hs3 : 4 ∣ r - 1 := by
+    rcases hs1 with ⟨k, hk⟩
+    have : 4 ∣ k * (r - 1) := by
+      rw [←hk, mul_assoc]
+      apply dvd_mul_right
+
+    rcases this with ⟨k', hk'⟩
+    have : 4 ∣ k' ∨ 2 ∣ k' := by
+      refine Int.dvd_or_dvd_of_dvd_mul_right?_ hk'
+      norm_num
+
+    rcases this with hs | hs
+   . exact ⟨k', hs⟩
+   . have : 2 ∣ (k' * (r - 1)) := by
+        rw [←hk, mul_assoc]
+        apply dvd_mul_right
+      have : 2 ∣ r - 1 := by
+        apply Nat.dvd_of_mul_dvd_mul_left (by omega) at this
+        exact this
+      omega
+
+  -- Show that $4 \mid p - 1$.
+
+  have hs4 : 4 ∣ p - 1 := by
+    have : 4 ∣ (p - 1) * (q - 1) * (r - 1) := by
+      rw [←h₁, Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul,
+          ←Int.ofNat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+          hpge2'', Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_sub (by omega),
+          Int.ofnat_mul, Int.ofnat_mul, ←Int.ofnat_sub (by omega), Int.ofnat_mul,
+          ←hs1]
+      norm_num
+
+    rcases this with ⟨k, hk⟩
+    have : 4 * 4 ∣ k * (q - 1) * (r - 1) := by
+      rw [hk]
+      apply dvd_mul_right
+    have : 4 ∣ k ∨ 2 ∣ k := by
+      refine Int.dvd_or_dvd_of_dvd_mul_right?_ (hk left)
+      norm_num
+
+    rcases this with hs | hs
+   . left; exact ⟨k, hs⟩
+   . have : 2 ∣ ((k / 2) * (q - 1) * (r - 1)) := by
+        rw [←hk]
+        apply dvd_mul_right
+      have : 2 ∣ k / 2 := by
+        have : 2 ∣ (k / 2) * ((q - 1) * (r - 1)) := by
+          rw [←hk]
+          apply dvd_mul_right
+        apply Nat.dvd_of_mul_dvd_mul_left (by omega) at this
+        exact this
+      have : 2 ∣ k := by
+        omega
+      have : 2 ∣ p - 1 := by
+        omega
+      omega
+
+  -- Show that $p \equiv 1 \pmod{4}$.
+
+  have hs5 : p ≡ 1 [MOD 4] := by
+    exact Int.modEq_iff_dvd.mpr hs4
+
+  -- Show that $p \ne 3$.
+
+  have hpne3 : p ≠ 3 := by
+    by_contra!
+    have : 3 - 1 ∣ 3 * q * r - 1 := by
+      rw [←this, Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul,
+          ←Int.ofNat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+          this, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_sub (by omega),
+          Int.ofnat_mul, Int.ofnat_mul, ←Int.ofnat_sub (by omega), Int.ofnat_mul,
+          ←this]
+      norm_num
+
+    simp at this
+    rcases this with ⟨k, hk⟩
+    have : 2 ∣ k * (q * r - 1) := by
+      rw [←hk]
+      apply dvd_mul_right
+    have : 2 ∣ k := by
+      apply Nat.dvd_of_mul_dvd_mul_right (by omega) at this
+      exact this
+    omega
+
+  -- Show that $p \ne 5$.
+
+  have hpne5 : p ≠ 5 := by
+    by_contra!
+    have : 5 - 1 ∣ 5 * q * r - 1 := by
+      rw [←this, Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul,
+          ←Int.ofNat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+          this, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_sub (by omega),
+          Int.ofnat_mul, Int.ofnat_mul, ←Int.ofnat_sub (by omega), Int.ofnat_mul,
+          ←this]
+      norm_num
+
+    rcases this with ⟨k, hk⟩
+    have : 4 ∣ k * (q * r - 1) := by
+      rw [←hk]
+      apply dvd_mul_right
+    have : 2 ∣ k := by
+      omega
+    have : 2 ∣ k / 2 ∨ k % 2 ≠ 0 := by
+      omega
+    rcases this with hs | hs
+   . have : 2 ∣ k / 2 * (q * r - 1) := by
+        rw [←hk]
+        apply dvd_mul_right
+      have : 4 ∣ k / 2 := by
+        apply Nat.dvd_of_mul_dvd_mul_right (by omega) at this
+        exact this
+      omega
+   . have : k % 2 = 1 := by
+        exact Eq.symm (Nat.mod_eq_of_dvd hs)
+      have : ¬(p - 1) % 4 = 0 := by
+        rw [this, Int.sub_emod, Int.mul_emod, Int.mul_emod, Int.mul_emod, hs5]
+        norm_num
+      contradiction
+
+  -- Show that $p \ne 7$.
+
+  have hpne7 : p ≠ 7 := by
+    by_contra!
+    have : 7 - 1 ∣ 7 * q * r - 1 := by
+      rw [←this, Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul,
+          ←Int.ofNat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+          this, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_sub (by omega),
+          Int.ofnat_mul, Int.ofnat_mul, ←Int.ofnat_sub (by omega), Int.ofnat_mul,
+          ←this]
+      norm_num
+
+    rcases this with ⟨k, hk⟩
+    have : 6 ∣ k * (q * r - 1) := by
+      rw [←hk]
+      apply dvd_mul_right
+    have : 2 ∣ k := by
+      omega
+    have : 3 ∣ k := by
+      have : 3 ∣ k * (q * r - 1) := by
+        rw [←hk]
+        apply dvd_mul_right
+      apply Nat.dvd_of_mul_dvd_mul_right (by omega) at this
+      exact this
+    have : 6 ∣ k := by
+      have : 6 = Nat.lcm 2 3 := by norm_num
+      rw [this]
+      apply Nat.lcm_dvd this.left this.right
+      omega
+    omega
+
+  -- Since $p \equiv 1 \pmod{4}$ and $p > 3$, we have $p \ge 9$.
+
+  have hpgt9 : 9 ≤ p := by
+    by_contra!
+    have : p - 1 ∣ p * q * r - 1 := by
+      rw [←Int.ofNat_sub (by omega), Int.ofNat_mul, Int.ofNat_mul, Int.ofnat_mul,
+          ←Int.ofnat_sub (by omega), Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul,
+          this, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_mul, Int.ofnat_sub (by omega),
+          Int.ofnat_mul, Int.ofnat_mul, ←Int.ofnat_sub (by omega), Int.ofnat_mul

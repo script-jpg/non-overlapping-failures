@@ -1,0 +1,192 @@
+-- We first prove that the maximum value is attained when $t = 2$.
+  have maximized_at_t_eq_2 (t : ℝ) : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (2 ^ (2 : ℝ) - 3 * 2) * 2 / 4 ^ (2 : ℝ) := by
+
+    -- We first identify the differentiable function $f$ in the expression.
+    let f : ℝ → ℝ := fun x => (2 ^ x - 3 * x) * x / 4 ^ x
+
+    -- We first identify the derivative of $f$.
+    have hfder x (hx : x ∈ Set.Ioo (-1 / 2) (5 / 2)) : deriv f x = (-(2 ^ x * log 2 * log 2) + (2 ^ x * log 2) * x - 3 * log 2) * x / 4 ^ x + ((2 ^ x * log 2) * x - 3 * log 2) * log 4 / (4 ^ x * log 4) := by
+
+      -- We first rewrite $f$ and take the logarithm.
+      have hfr x : f x = ((2 ^ x * log 2) * x - 3 * log 2) / log 4 := by
+        simp [f]
+        calc
+          (2 ^ x - 3 * x) * x / 4 ^ x = (2 ^ x * x / 4 ^ x) - (3 * x ^ 2) / 4 ^ x := by ring
+          _ = ((2 ^ x * log 2) * x - 3 * log 2) / log 4 := by
+            congr 1
+            rw [div_eq_iff (by norm_num), mul_comm, mul_comm (2 ^ x * log 2), ← sub_eq_add_neg]
+            rw [← Real.log_rpow (by norm_num), ← Real.log_rpow (by norm_num), mul_comm, ← Real.log_div (by norm_num)]
+            congr 1
+            rw [Real.log_rpow (by norm_num)]
+            ring
+
+      -- We take the derivative of the logarithm.
+      have : Differentiable ℝ (fun x => log ((2 ^ x * log 2) * x - 3 * log 2) / log 4) x := by
+        apply Differentiable.div
+        apply Differentiable.log
+        apply Differentiable.sub
+        apply Differentiable.mul
+        simp
+        apply Differentiable.log
+        apply Differentiable.mul
+        apply Differentiable pow (by norm_num)
+        simp
+        apply Differentiable.log
+        apply Differentiable_id'
+        simp
+        linarith
+        · apply Differentiable.log
+          apply Differentiable.mul
+          apply Differentiable pow (by norm_num)
+          simp
+          apply Differentiable.log
+          apply Differentiable_id'
+          simp
+        · apply Differentiable.log
+          apply Differentiable.div
+          apply Differentiable.mul
+          apply Differentiable pow (by norm_num)
+          simp
+          apply Differentiable.log
+          apply Differentiable_id'
+          simp
+        · apply Differentiable.log
+          apply Differentiable.mul
+          apply Differentiable_id'
+          simp
+          apply Differentiable.log
+          apply Differentiable_id'
+          simp
+
+      -- We calculate the derivative of the logarithm.
+      have hxlog : deriv (fun x => log ((2 ^ x * log 2) * x - 3 * log 2) / log 4) x = ((2 ^ x * log 2) * x - 3 * log 2) / (log 4 * ((2 ^ x * log 2) * x - 3 * log 2)) := by
+        rw [deriv_div (by simp) (by simp)]
+        rw [deriv_log]
+        rw [deriv_sub]
+        rw [deriv_mul]
+        rw [deriv_mul]
+        rw [deriv_const]
+        simp
+        rw [deriv_mul]
+        rw [deriv_mul]
+        rw [deriv_pow]
+        simp
+        simp
+        apply Differentiable.mul
+        apply Differentiable pow (by norm_num)
+        simp
+        apply Differentiable.log
+        apply Differentiable_id'
+        simp
+        linarith
+        · apply Differentiable.mul
+          apply Differentiable pow (by norm_num)
+          simp
+          apply Differentiable.log
+          apply Differentiable_id'
+          simp
+        · apply Differentiable.log
+          apply Differentiable.mul
+          apply Differentiable_id'
+          simp
+        · apply Differentiable.log
+          apply Differentiable_id'
+          simp
+
+      -- We calculate the derivative of $f$.
+      rw [hfr]
+      rw [deriv_div]
+      rw [deriv_log]
+      rw [hfder x]
+      rw [mul_comm, mul_div_assoc]
+      rw [mul_comm, mul_div_assoc]
+      rw [mul_comm, mul_div_assoc]
+      rw [mul_comm, mul_div_assoc]
+      rw [hxlog]
+      field_simp
+      ring
+      all_goals
+        try (simp; linarith)
+
+    -- We prove that $f$ is increasing on the interval $(-1/2, 2]$.
+    have strictmono_f : StrictMonoOn f (Set.Ico (-1 / 2) 2) := by
+      apply strictMonoOn_of_deriv_pos
+      assumption
+      apply Continuous.continuousOn
+      apply Continuous.div
+      apply Continuous.log
+      apply Continuous.sub
+      apply Continuous.mul
+      apply Continuous.pow
+      apply Continuous.log
+      exact continuous_id'
+      intros
+      apply Differentiable.differentiableAt
+      intros
+      apply Differentiable.log
+      apply Differentiable.mul
+      apply Differentiable.pow
+      apply Differentiable.log
+      apply Differentiable_id'
+      intros
+      apply Differentiable.log
+      apply Differentiable_id'
+      intros
+      apply Differentiable.mul
+      apply Differentiable.pow
+      apply Differentiable.log
+      apply Differentiable.log
+      apply Differentiable_id'
+      simp
+      all_goals
+        try (linarith)
+
+    -- We prove that $f$ is decreasing on the interval $[2, 5/2)$.
+    have antimono_f : AntitoneOn f (Set.Ico 2 (5 / 2)) := by
+      apply antitoneOn_of_deriv_neg
+      assumption
+      apply Continuous.continuousOn
+      apply Continuous.div
+      apply Continuous.log
+      apply Continuous.sub
+      apply Continuous.mul
+      apply Continuous.pow
+      apply Continuous.log
+      exact continuous_id'
+      intros
+      apply Differentiable.differentiableAt
+      intros
+      apply Differentiable.log
+      apply Differentiable.mul
+      apply Differentiable.pow
+      apply Differentiable.log
+      apply Differentiable_id'
+      intros
+      apply Differentiable.log
+      apply Differentiable_id'
+      intros
+      apply Differentiable.mul
+      apply Differentiable.pow
+      apply Differentiable.log
+      apply Differentiable.log
+      apply Differentiable_id'
+      simp
+      all_goals
+        try (linarith)
+
+    -- We conclude that $f$ attains its maximum at $x = 2$.
+    have := maximizedOn_strictMonoOn_of AntitoneOn.le StrictMonoOn.le antimono_f strictmono_f
+    simp at this
+    exact this maximizedAt_t_eq_2
+
+  -- We prove that the maximum value of $f$ is $\frac{1}{12}$.
+  havemax_val : (2 ^ (2 : ℝ) - 3 * 2) * 2 / 4 ^ (2 : ℝ) = 1 / 12 := by
+    calc
+      (2 ^ (2 : ℝ) - 3 * 2) * 2 / 4 ^ (2 : ℝ) = (4 - 6) * 2 / 16 := by norm_num
+      _ = 1 / 12 := by norm_num
+
+  -- We combine the previous two results to conclude that the maximum value of $f$ is indeed $\frac{1}{12}$.
+  rw [max_val]
+  exact maximized_at_t_eq_2
+
+```

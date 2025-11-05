@@ -1,0 +1,40 @@
+have h : ((a + b) / 2) ^ n ≤ (a ^ n + b ^ n) / 2 := by
+    rcases h₀ with ⟨ha, hb⟩
+    -- The arithmetic mean of two numbers is less than or equal to the mean of their $n$-th powers.
+    -- We can assume that $a \geq b$.
+    wlog h : a ≥ b
+    · simp at h
+      rw [add_comm a b, div_comm, ←add_comm (a := a ^ n) (b := b ^ n), div_comm]
+      exact this b a n ⟨hb, ha⟩ (by linarith)
+    · -- Prove the induction hypothesis: $\forall k \leq n, (\frac{a+b}{2})^k \leq \frac{a^k+b^k}{2}$
+      have h' : ∀ k : ℕ, ((a + b) / 2) ^ k ≤ (a ^ k + b ^ k) / 2 := by
+        intro k
+        induction k with
+        | zero =>
+          simp
+        | succ k ih =>
+          -- Case $k = 0$: Trivial
+          -- Case $k > 0$: Using induction hypothesis, $ (\frac{a+b}{2})^{k+1} \leq \frac{a^{k+1}+b^{k+1}}{2}$
+          rw [pow_add]
+          calc
+            ((a + b) / 2) ^ k * ((a + b) / 2) ≤ ((a ^ k + b ^ k) / 2) * ((a + b) / 2) := by rel [ih]
+            _ = (a ^ k * (a + b) + b ^ k * (a + b)) / 2 / 2 := by ring_nf
+            _ = (a ^ k * a + a ^ k * b + b ^ k * a + b ^ k * b) / 2 / 2 := by ring_nf
+            _ = (a ^ (k + 1) + b ^ (k + 1) + (a ^ k * b + b ^ k * a)) / 2 / 2 := by ring_nf
+            _ ≤ (a ^ (k + 1) + b ^ (k + 1)) / 2 / 2 := by
+              -- Using the fact that $a ^ k * b + b ^ k * a \geq 0$
+              apply div_le_div_of_nonneg_right
+              · apply add_nonneg
+                · apply mul_nonneg
+                  · exact pow_nonneg ha (k + 1)
+                  · exact hb
+                · apply mul_nonneg
+                  · exact ha
+                  · exact pow_nonneg hb (k + 1)
+              · norm_num
+            _ = (a ^ (k + 1) + b ^ (k + 1)) / 2 := by ring_nf
+      exact h' n
+
+  exact h
+
+```

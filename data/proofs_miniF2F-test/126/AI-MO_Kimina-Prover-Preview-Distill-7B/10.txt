@@ -1,0 +1,347 @@
+-- Show that $a + b - c + d$ is positive.
+  have h₅ : 0 < a + b - c + d := by
+    linarith only [h₃, h₂, h₁]
+
+  -- Show that $b + d + c - a$ is positive.
+  have h₆ : 0 < b + d + c - a := by
+    linarith only [h₃, h₂, h₁]
+
+  -- Prove that $b + d + c - a$ is not greater than $a + b - c + d$.
+  have h₇ : ¬b + d + c - a > a + b - c + d := by
+    by_contra! h₇
+    linarith only [h₇, h₄]
+
+  rw [mul_comm] at h₄; apply Nat.eq_mul_of_mul_eq at h₄
+  rcases h₄ with ⟨q, h₄⟩
+
+  -- Prove that $a + b - c + d$ is not greater than $q$.
+  have h₈ : a + b - c + d ≤ q := by
+    nlinarith only [h₄, h₅, h₆, h₇]
+
+  -- Show that $q$ is positive.
+  have h₉ : 0 < q := by
+    nlinarith only [h₄, h₅, h₆, h₇]
+
+  -- Prove that $q$ is not equal to $1$.
+  have h₁₀ : q ≠ 1 := by
+    by_contra! h₁₀
+    simp [h₁₀] at h₄
+    omega
+
+  -- Show that $b + d + c - a$ is not equal to $1$.
+  have h₁₁ : b + d + c - a ≠ 1 := by
+    by_contra! h₁₁
+    simp [h₁₁] at h₄
+    omega
+
+  -- Prove that $q$ is not equal to $b + d + c - a$.
+  have h₁₂ : q ≠ b + d + c - a := by
+    by_contra! h₁₂
+    rw [h₁₂] at h₄
+    linarith only [h₄, h₉, h₁₁, h₇]
+
+  -- Show that $q$ is not equal to $a + b - c + d$.
+  have h₁₃ : q ≠ a + b - c + d := by
+    by_contra! h₁₃
+    rw [h₁₃] at h₄
+    linarith only [h₄, h₉, h₁₁, h₇]
+
+  -- Prove that $q$ is not less than $a + b - c + d$.
+  have h₁₄ : q ≥ a + b - c + d := by
+    nlinarith only [h₄, h₅, h₆, h₇]
+
+  -- Show that $a * b + c * d$ is not equal to $q$.
+  have h₁₅ : a * b + c * d ≠ q := by
+    by_contra! h₁₅
+    have : a * b * (a * b + c * d) = a * b * q := by
+      rw [h₁₅]
+    rw [mul_comm, mul_assoc, h₄, mul_assoc, mul_comm c d, mul_assoc, h₁₅] at this
+    have : 0 < a * b := by
+      apply Nat.mul_pos
+      all_goals linarith only [h₁]
+    have : 0 < c * d := by
+      apply Nat.mul_pos
+      all_goals linarith only [h₁]
+    apply Nat.mul_left_cancel this at this
+    omega
+
+  -- Show that $a * b + c * d$ is not equal to $1$.
+  have h₁₆ : a * b + c * d ≠ 1 := by
+    by_contra! h₁₆
+    have : a * b * (a * b + c * d) = a * b := by
+      rw [h₁₆]
+      ring
+    rw [mul_comm, mul_assoc, h₄, mul_assoc, mul_comm c d, mul_assoc, h₁₆] at this
+    have : 0 < a * b := by
+      apply Nat.mul_pos
+      all_goals linarith only [h₁]
+    apply Nat.mul_left_cancel this at this
+    omega
+
+  -- Prove that $a * b + c * d$ is not a prime number.
+  show ¬Nat.Prime (a * b + c * d)
+  rw [Nat.prime_iff]
+  simp [h₁₆]
+  intro m mpos hm
+  -- Show that $m$ is not equal to $1$.
+  have h₁₇ : m ≠ 1 := by
+    by_contra! h₁₇
+    rw [h₁₇] at hm
+    omega
+
+  -- Prove that $m$ is not equal to $a * b + c * d$.
+  have h₁₈ : m ≠ a * b + c * d := by
+    by_contra! h₁₈
+    rw [h₁₈] at hm
+    omega
+
+  -- Show that $m$ is not equal to $q$.
+  have h₁₉ : m ≠ q := by
+    by_contra! h₁₉
+    rw [h₁₉] at hm
+    omega
+
+  -- Prove that $a * b * m = m * q$.
+  have h₂₀ : a * b * m = m * q := by
+    rw [h₄, hm]
+
+  -- Show that $a * b = q$.
+  have h₂₁ : a * b = q := by
+    apply Nat.eq_of_mul_eq_mul_left at h₂₀
+    exact h₂₀
+    exact h₉
+
+  -- Prove that $a * b - q$ is non-negative.
+  have h₂₂ : 0 ≤ a * b - q := by
+    rw [h₂₁]
+    omega
+
+  -- Show that $a * b - q$ is not equal to $0$.
+  have h₂₃ : a * b - q ≠ 0 := by
+    by_contra! h₂₃
+    have : a * b = q := by
+      omega
+    trivial
+
+  -- Prove that $a * b - q$ is positive.
+  have h₂₄ : 0 < a * b - q := by
+    omega
+
+  -- Show that $a * b + c * d - q$ is positive.
+  have h₂₅ : 0 < a * b + c * d - q := by
+    simp [h₂₁]
+    omega
+
+  -- Prove that $a * b + c * d - q$ is not equal to $1$.
+  have h₂₆ : a * b + c * d - q ≠ 1 := by
+    by_contra! h₂₆
+    simp [h₂₁] at h₂₆
+    omega
+
+  -- Show that $m$ is less than $a * b + c * d - q$.
+  have h₂₇ : m < a * b + c * d - q := by
+    -- Assume that $m$ is greater or equal to $a * b + c * d - q$.
+    by_contra! h₂₇
+    -- Show that $m$ is equal to $a * b + c * d - q$.
+    have h₂₈ : m = a * b + c * d - q := by
+      omega
+    -- Rewrite the assumption `h₂₇` to `a * b + c * d - q ≤ m`.
+    replace h₂₇ : a * b + c * d - q ≤ m := by
+      omega
+    -- Show that $a * b + c * d - q$ is less than $m$.
+    have h₂₉ : a * b + c * d - q < m := by
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Prove that $m$ is less than $a * b$.
+  have h₂₈ : m < a * b := by
+    -- Assume that $m$ is greater or equal to $a * b$.
+    by_contra! h₂₈
+    -- Show that $m$ is equal to $a * b$.
+    have h₂₉ : m = a * b := by
+      omega
+    -- Rewrite the assumption `h₂₈` to `a * b ≤ m`.
+    replace h₂₈ : a * b ≤ m := by
+      omega
+    -- Show that $m$ is less than $a * b$.
+    have h₃₀ : m < a * b := by
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Show that $a * b + c * d - q$ is less than $m$.
+  have h₂₉ : a * b + c * d - q < m := by
+    -- Assume that $a * b + c * d - q$ is greater or equal to $m$.
+    by_contra! h₂₉
+    -- Show that $a * b + c * d - q$ is equal to $m$.
+    have h₃₀ : a * b + c * d - q = m := by
+      omega
+    -- Rewrite the assumption `h₂₉` to `m ≤ a * b + c * d - q`.
+    replace h₂₉ : m ≤ a * b + c * d - q := by
+      omega
+    -- Show that $m$ is less than $a * b + c * d - q$.
+    have h₃₁ : m < a * b + c * d - q := by
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Prove that $a * b$ is less than $q$.
+  have h₃₀ : a * b < q := by
+    -- Assume that $a * b$ is greater or equal to $q$.
+    by_contra! h₃₀
+    -- Show that $a * b$ is equal to $q$.
+    have h₃₁ : a * b = q := by
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Show that $a * b + c * d - q$ is less than $q$.
+  have h₃₁ : a * b + c * d - q < q := by
+    -- Assume that $a * b + c * d - q$ is greater or equal to $q$.
+    by_contra! h₃₁
+    -- Show that $a * b + c * d - q$ is equal to $q$.
+    have h₃₂ : a * b + c * d - q = q := by
+      omega
+    -- Show that $a * b$ is equal to $0$.
+    have h₃₃ : a * b = 0 := by
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Prove that $a * b + c * d - q$ is equal to $m$.
+  have h₃₂ : a * b + c * d - q = m := by
+    -- Assume that $a * b + c * d - q$ is greater or equal to $m$.
+    by_contra! h₃₂
+    -- Show that $a * b + c * d - q$ is equal to $m$.
+    replace h₃₂ : a * b + c * d - q = m := by
+      omega
+    -- Assume that $m$ is greater or equal to $a * b + c * d - q$.
+    by_contra! h₃₃
+    -- Show that $m$ is equal to $a * b + c * d - q$.
+    replace h₃₃ : m = a * b + c * d - q := by
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Show that $a * b + c * d$ is not a prime number.
+  show ¬Nat.Prime (a * b + c * d)
+  rw [Nat.prime_iff]
+  simp [h₁₆]
+  -- Assume that $a * b + c * d$ is a prime number.
+  intro p ppos hp
+  -- Show that $p$ is not equal to $1$.
+  have h₃₃ : p ≠ 1 := by
+    by_contra! h₃₃
+    rw [h₃₃] at hp
+    omega
+
+  -- Assume that $p$ is a prime number and $p$ divides $a * b + c * d$.
+  have h₃₄ : ¬p ∣ (a * b + c * d) := by
+    -- Show that $p$ is not equal to $a * b + c * d$.
+    by_contra! h₃₄
+    -- Show that $p$ divides $a * b + c * d$.
+    replace h₃₄ : p ∣ a * b + c * d := by
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Show that $p$ is not equal to $a * b$.
+  have h₃₅ : p ≠ a * b := by
+    by_contra! h₃₅
+    -- Show that $p$ divides $a * b$.
+    have h₃₆ : p ∣ a * b := by
+      exact Dvd.intro c d h₃₅
+    -- Show that $p$ divides $a * b + c * d$.
+    have h₃₇ : p ∣ a * b + c * d := by
+      calc
+        p ∣ a * b := h₃₆
+        _ = a * b + c * d := by ring
+    -- This is a contradiction.
+    omega
+
+  -- Show that $p$ is not equal to $c * d$.
+  have h₃₆ : ¬p ∣ c * d := by
+    intro h₃₆
+    -- Show that $p$ divides $a * b + c * d$.
+    have h₃₇ : p ∣ a * b + c * d := by
+      calc
+        p ∣ c * d := h₃₆
+        _ = a * b + c * d := by rw [h₄]; ring
+    -- This is a contradiction.
+    omega
+
+  -- Show that $c * d$ is not equal to $q$.
+  have h₃₇ : c * d ≠ q := by
+    -- Assume that $c * d$ is equal to $q$.
+    by_contra! h₃₇
+    -- Show that $a * b + c * d - q$ is equal to $0$.
+    have h₃₈ : a * b + c * d - q = 0 := by
+      calc
+        a * b + c * d - q = a * b + c * d - c * d := by rw [h₃₇]
+        _ = a * b := by ring
+        _ = q := by linarith only [h₂₁]
+    -- This is a contradiction.
+    omega
+
+  -- Show that $c * d$ is less than $q$.
+  have h₃₈ : c * d < q := by
+    -- Assume that $c * d$ is greater or equal to $q$.
+    by_contra! h₃₈
+    -- Show that $c * d$ is equal to $q$.
+    have h₃₉ : c * d = q := by
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Show that $c * d$ is positive.
+  have h₃₉ : 0 < c * d := by
+    apply Nat.mul_pos
+    all_goals linarith only [h₁]
+
+  -- Prove that $c * d$ is not a prime number.
+  show ¬Nat.Prime (c * d)
+  rw [Nat.prime_iff]
+  simp [h₃₉]
+  intro q qpos hq
+  -- Show that $q$ is not equal to $1$.
+  have h₄₀ : q ≠ 1 := by
+    by_contra! h₄₀
+    rw [h₄₀] at hq
+    omega
+
+  -- Show that $q$ is not equal to $c * d$.
+  have h₄₁ : q ≠ c * d := by
+    intro h₄₁
+    -- Show that $q$ divides $c * d$.
+    have h₄₂ : q ∣ c * d := by
+      exact Dvd.intro a b h₄₁
+    -- Show that $q$ divides $a * b + c * d$.
+    have h₄₃ : q ∣ a * b + c * d := by
+      calc
+        q ∣ c * d := h₄₂
+        _ = a * b + c * d := by rw [h₄₁]; ring
+    -- This is a contradiction.
+    omega
+
+  -- Show that $c * d$ is less than $q$.
+  have h₄₂ : c * d < q := by
+    -- Assume that $c * d$ is greater or equal to $q$.
+    by_contra! h₄₂
+    -- Show that $c * d$ is equal to $q$.
+    have h₄₃ : c * d = q := by
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Prove that $c * d$ is not a prime number.
+  apply Nat.not_prime_of_dvd_of_lt h₄₁ at hq
+  exact hq
+  · exact h₄₁
+  · exact h₄₂
+
+  · linarith only [h₄₁, h₄₂]
+  · linarith only [h₄₁, h₄₂]
+
+
+```

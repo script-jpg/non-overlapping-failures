@@ -1,0 +1,74 @@
+-- We prove that $3x^2 y^2 = 588$ by showing that $x^2 y^2 = 196$.
+
+  have h₁ : x ^ 2 * y ^ 2 = 196 := by
+
+    -- We rearrange the equation to $y^2 (1 + 3x^2) = 30x^2 + 517$.
+
+    replace h₀ : y ^ 2 * (1 + 3 * x ^ 2) = 30 * x ^ 2 + 517 := by
+      linarith only [h₀]
+
+    -- We deduce that $y^2 \mid 30x^2 + 517$.
+
+    have h₁ : y ^ 2 ∣ 30 * x ^ 2 + 517 := ⟨1 + 3 * x ^ 2, h₀.symm⟩
+
+    -- We show that $y^2 \mid 30x^2$.
+
+    have h₂ : y ^ 2 ∣ 30 * x ^ 2 := by
+      apply Dvd.dvd.mul_left
+      apply dvd_pow_self
+      simp
+
+    -- We show that $y^2 \mid 517$.
+
+    have h₃ : y ^ 2 ∣ 517 := by
+      apply Dvd.dvd.add_right h₂
+      exact h₁
+
+    -- Since $517 = 7 \times 73$ and $y^2$ is a square, we deduce that $y^2 \in \{1, 7^2\}$.
+
+    have h₄ : y ^ 2 ∈ ({1, 7 ^ 2} : Finset ℕ) := by
+      apply Int.mem_divisors.mpr
+      apply Nat.divisors_subset at h₃
+      simp at h₃
+      convert h₃ using 1
+      · simp
+      · simp
+
+    -- We check that $y^2 = 49$ is not possible because $30x^2 + 517 = 30 \times 7 + 517 = 777$ and
+    -- $777 \neq 49 \times k^2$ for any integer $k$.
+
+    have h₅ : y ^ 2 ≠ 7 ^ 2 := by
+      by_contra! h₅
+      have h₆ : 15 * x ^ 2 + 517 = 49 * (x ^ 2 + 1) := by
+        linarith only [h₀, h₅]
+      have h₇ : IsCoprime (15 : ℤ) (49 : ℤ) := by
+        norm_num
+      have h₈ : 15 ∣ 49 * (x ^ 2 + 1) := by
+        apply dvd_mul_of_dvd_left
+        apply Int.dvd_iff_dvd_of_dvd_add h₆
+        apply dvd_pow_self
+        simp
+      have h₉ : 15 ∣ 49 := by
+        apply dvd_of_dvd_mul_right_of_gcd_one h₈
+        apply h₇
+      norm_num at h₉
+
+    -- We conclude that $y^2 = 1$ and $30x^2 = 516$, giving $x^2 = 17.2$, which is impossible.
+
+    have h₆ : y ^ 2 = 1 := by
+      simp at h₄
+      omega
+
+    have h₇ : 30 * x ^ 2 = 516 := by
+      linarith only [h₀, h₆]
+
+    have h₈ : x ^ 2 = 17 := by
+      nlinarith only [h₇]
+
+    rw [h₈, h₆] at h₀
+    nlinarith only [h₀]
+
+  -- We substitute $x^2 y^2 = 196$ into the equation to get $3 \times 196 = 588$.
+
+  linarith only [h₁]
+```

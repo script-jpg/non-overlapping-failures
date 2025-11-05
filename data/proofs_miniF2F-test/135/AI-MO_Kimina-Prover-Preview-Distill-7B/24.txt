@@ -1,0 +1,59 @@
+/- The "sum" typeclass will be used to formalize the definition of an arithmetic progression.
+    The idea is that the sum of the first $n$ terms of an arithmetic progression is equal to
+    the sum of the first and last terms, multiplied by the number of terms, divided by 2. -/
+  let sum' (n : ℕ) (u : ℕ → ℚ) : ℚ := (u 0 + u (n - 1)) * n / 2
+
+  /- The sum of the first $n$ terms of an arithmetic progression is equal to the sum of the
+    first and last terms, multiplied by the number of terms, divided by 2. -/
+  have h' {n : ℕ} {u : ℕ → ℚ} (hn : u (n - 1) = u 0 + (n - 1) * 1) : (∑ k in Finset.range n, u k.succ) = sum' n u := by
+    -- Induction on n
+    induction n with
+    | zero => simp [sum']
+    | succ n ih =>
+      rw [Finset.sum_range_succ, ih]
+      simp [sum', u, hn]
+      ring
+
+  /- Find the value of $a_2+a_4+a_6+a_8+\ldots+a_{98}$ if $a_1$, $a_2$, $a_3\ldots$ is an
+    [[arithmetic progression]] with common difference 1, and $a_1+a_2+a_3+\ldots+a_{98}=137$.
+    Show that it is 093. -/
+  have hsum : sum' 98 u = 137 := by
+    rw [h'] (by rfl)
+    exact h₁
+
+  have hdup : (∑ k ∈ Finset.range 49, u (2 * k.succ)) = 93 := by
+    /- Sum the even indices and odd indices separately. -/
+    let sum_even' (n : ℕ) (u : ℕ → ℚ) : ℚ := (u 0 + u (2 * n - 1)) * n / 2
+    let sum_odd' (n : ℕ) (u : ℕ → ℚ) : ℚ := (u 1 + u (2 * n - 2)) * n / 2
+
+    /- The sum of the first $n$ even indices equals the sum of the first and last terms,
+      multiplied by the number of terms, divided by 2. -/
+    have hsum_even : sum' 98 u = sum_even' 49 u + sum_odd' 49 u := by
+      rw [h', h']
+      simp
+      ring
+
+    /- The sum of the first $n$ odd indices equals the sum of the first and last terms,
+      multiplied by the number of terms, divided by 2. -/
+    have hsum_odd : sum' 98 u = sum_even' 49 u + sum_odd' 49 u := by
+      rw [h', h']
+      simp
+      ring
+
+    /- Since the common difference is 1, the sum of the last 49 terms equals the sum
+      of the first 49 terms plus 49. -/
+    have hsum_odd eq : sum_odd' 49 u = sum_even' 49 u + 49 := by
+      simp [sum_odd', sum_even']
+      rw [h₀, add_assoc, h₀, <-add_assoc, add_comm, <-add_assoc]
+      norm_cast
+      rw [eq]
+      norm_num
+      ring
+
+    -- Eliminate the sum of the first 49 terms
+    rw [hsum_even, hsum_odd] at hsum
+    rw [hsum_odd] at hsum
+    linarith only [hsum]
+
+  exact hdup
+```

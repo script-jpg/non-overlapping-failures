@@ -1,0 +1,126 @@
+-- Solving the System of Equations
+
+  -- From h₀: 3a - b - c - d = 0
+  -- From h₁: -a + 4b - c - d = 0
+  -- From h₂: -a - b + 2c - d = 0
+  -- From h₃: 8a + 10b + 6c = 24
+  -- > We can write this as a matrix equation: A * x = b, where A is the 4x4 matrix of coefficients, x is the vector of variables, and b is the vector of constants.
+
+  let A : Matrix (Fin 4) (Fin 4) ℚ :=!![
+    [3, -1, -1, -1],
+    [-1, 4, -1, -1],
+    [-1, -1, 2, -1],
+    [0, 0, 0, 0]
+  ]
+  let x : Matrix (Fin 4) 1 ℚ :=!![
+    a,
+    b,
+    c,
+    d
+  ]
+  let b : Matrix (Fin 4) 1 ℚ :=!![
+    0,
+    0,
+    0,
+    24
+  ]
+  have eq : A * x = b := by
+    simp [A, x, b]
+    repeat rw [Matrix.mul_apply]
+    simp
+    repeat rw [← Finset.sum]
+    simp
+    fin_cases h
+    any_goals simp
+    all_goals linarith
+
+  -- > Solving this system, we get the solution x = [ 24/23, 180/751, 12/23, 1368/751 ]
+  let x' : Matrix (Fin 4) 1 ℚ :=!![
+    24/23,
+    180/751,
+    12/23,
+    1368/751
+  ]
+  have eq' : A * x' = b := by
+    simp [A, x', b]
+    repeat rw [Matrix.mul_apply]
+    simp
+    repeat rw [← Finset.sum]
+    simp
+    fin_cases h
+    any_goals simp
+    all_goals norm_num
+
+  -- We can prove that x = x' is the unique solution
+  have f : ( rows A ) * 1 → b := fun i => (b := b  i).symm
+  have f_eq : ∀ i ∈ Finset.range 4, f i = i := by
+    intro i hi
+    simp at hi
+    fin_cases i
+    any_goals simp [f]
+  have p : permutation (Fin 4) := by exact cyclePermutation (show 4 ≠ 0 by norm_num)
+  have p_eq : p = ( 0 1 2 3 ) := by show p = (0 1 2 3); simp [p, cyclePermutation]; rfl
+  have q : cospan (Fin 4) Fin 4 := cospan p
+  have q_eq : q = [ 0, 1, 2, 3 ] := by show q = [0, 1, 2, 3]; simp [q, cospan, p, cyclePermutation]; rfl
+  have r : cospan (Fin 4) Fin 4 := cospan f
+  have r_eq : r = [ 24/23, 180/751, 12/23, 1368/751 ] := by show r = [24/23, 180/751, 12/23, 1368/751]; simp [r, cospan, f]; rfl
+
+  -- Now we can use the theorem:
+  have r_uniq : r = x' := by
+    rw [← q_eq, ← p_eq]
+    apply cospan_injective
+    apply Permutation.injective q
+    intro i hi
+    fin_cases i
+    any_goals simp [r_eq]
+  have x_eq_r : x = r := by
+    rw [← q_eq]
+    apply Eq.trans _ r_uniq
+    apply cospan_injective
+    apply Permutation.injective q
+    intro i hi
+    fin_cases i
+    any_goals simp
+
+  -- > Thus, we have a = 24/23, b = 180/751, c = 12/23, and d = 1368/751.
+  have a_eq : a = 24/23 := by
+    simp [x_eq_r]
+    simp [x]
+    rw [← Finset.sum]
+    simp
+    fin_cases h
+    any_goals simp [r_eq]
+  have b_eq : b = 180/751 := by
+    simp [x_eq_r]
+    simp [x]
+    rw [← Finset.sum]
+    simp
+    fin_cases h
+    any_goals simp [r_eq]
+  have c_eq : c = 12/23 := by
+    simp [x_eq_r]
+    simp [x]
+    rw [← Finset.sum]
+    simp
+    fin_cases h
+    any_goals simp [r_eq]
+  have d_eq : d = 1368/751 := by
+    simp [x_eq_r]
+    simp [x]
+    rw [← Finset.sum]
+    simp
+    fin_cases h
+    any_goals simp [r_eq]
+
+  -- > Since 1368/751 = 12/23 * 2 * 30/23, the sum of the numerator and denominator is 12 + 23 + 30 = 28.
+  rw [d_eq]
+  have : (1368 : ℚ) = 12 * (751 / 23) := by norm_num
+  rw [this]
+  have : (751 : ℚ) = (751 / 23) * 23 := by norm_num
+  rw [this]
+  rw [← Rat.num_div_den]
+  have : (751 : ℚ) / 23 ≠ 0 := by norm_num
+  field_simp
+  norm_num
+  rfl
+```

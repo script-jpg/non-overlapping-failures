@@ -1,0 +1,109 @@
+-- Show that $f(x, x) = x$ for all positive integers $x$.
+  have h₀' : ∀ x, 0 < x → f x x = x := by
+    intro x hx
+    exact h₀ x hx
+
+  -- Show that $f(x, y) = f(y, x)$ for all positive integers $x$ and $y$.
+  have h₁' : ∀ x y, 0 < x ∧ 0 < y → f x y = f y x := by
+    intro x y hx hy
+    exact h₁ x y hx hy
+
+  -- Show that $(x+y)f(x, y) = yf(x, x+y)$ for all positive integers $x$ and $y$.
+  have h₂' : ∀ x y, 0 < x ∧ 0 < y → (↑x + ↑y) * f x y = y * f x (x + y) := by
+    intro x y hx hy
+    exact h₂ x y hx hy
+
+  -- Define a new function $g(x, y) = f(x, x+y)$ for all positive integers $x$ and $y$.
+  let g (x y : ℕ) := f x (x + y)
+
+  -- Show that $g(x, y) = g(y, x)$ for all positive integers $x$ and $y$.
+  have h₃ : ∀ x y, 0 < x ∧ 0 < y → g x y = g y x := by
+    intro x y hx hy
+    simp [g]
+    specialize h₁' x y hx hy
+    exact h₁'
+
+  -- Show that $(x+y)g(x, y) = xg(y, x)$ for all positive integers $x$ and $y$.
+  have h₄ : ∀ x y, 0 < x ∧ 0 < y → (↑x + ↑y) * g x y = x * g y (x + y) := by
+    intro x y hx hy
+    simp [g]
+    specialize h₂' x y hx hy
+    exact h₂'
+
+  -- Show that $g(x, x) = x$ for all positive integers $x$.
+  have h₅ : ∀ x, 0 < x → g x x = x := by
+    intro x hx
+    simp [g]
+    exact h₀' x hx
+
+  -- Define a new function $h(x, y) = g(x, x+y) - g(x+y, x+y)$ for all positive integers $x$ and $y$.
+  let h (x y : ℕ) := g x (x + y) - g (x + y) (x + y)
+
+  -- Show that $h(x, y) = h(y, x)$ for all positive integers $x$ and $y$.
+  have h₆ : ∀ x y, 0 < x ∧ 0 < y → h x y = h y x := by
+    intro x y hx hy
+    simp [h]
+    specialize h₃ x y hx hy
+    linarith
+
+  -- Show that $xh(x, y) = yh(y, x)$ for all positive integers $x$ and $y$.
+  have h₇ : ∀ x y, 0 < x ∧ 0 < y → (↑x) * h x y = (↑y) * h y x := by
+    intro x y hx hy
+    simp [h]
+    specialize h₄ x y hx hy
+    linarith
+
+  -- Show that $h(x, x) = 0$ for all positive integers $x$.
+  have h₈ : ∀ x, 0 < x → h x x = 0 := by
+    intro x hx
+    simp [h]
+    specialize h₅ x hx
+    linarith
+
+  -- Simplify the expression $h(x, y)$.
+  have h₉ : ∀ x y, 0 < x ∧ 0 < y → h x y = 0 := by
+    intro x y hx hy
+    specialize h₆ x y hx hy
+    specialize h₇ x y hx hy
+    rw [h₅ (x + y) (by linarith)] at h₇
+    rw [h₅ x hx] at h₆
+    have h₁₀ : (↑x + ↑y) * h x y = 0 := by
+      rw [h₇]
+      ring
+    have h₁₁ : x * h x y = 0 := by
+      have h₁₂ : (↑x + ↑y) * h x y = x * h x y + y * h y x := by
+        linarith
+      rw [h₁₂] at h₁₀
+      rw [h₆] at h₁₀
+      linarith
+    have h₁₃ : x * h x y = 0 := by
+      linarith
+    have h₁₄ : h x y = 0 := by
+      apply (mul_eq_zero.mp h₁₃).resolve_left
+      linarith
+    exact h₁₄
+
+  -- Simplify the expression $g(x, y)$.
+  have h₁₀ : ∀ x y, 0 < x ∧ 0 < y → g x (x + y) = x * g y (x + y) := by
+    intro x y hx hy
+    specialize h₄ x y hx hy
+    rw [h₅ y hy] at h₄
+    linarith
+
+  -- Calculate $g(14, 52) = 364$.
+  have h₁₁ : g 14 52 = 364 := by
+    have h₁₂ : g 14 52 = 14 * g 38 52 := h₁₀ 14 38 (by linarith) (by linarith)
+    have h₁₃ : g 38 52 = 38 * g 14 52 := h₁₀ 38 14 (by linarith) (by linarith)
+    have h₁₄ : g 14 52 = 14 * (38 * g 14 52) := by
+      linarith
+    have h₁₅ : g 14 52 = 0 := by
+      linarith
+    linarith
+
+  -- Calculate $f(14, 52) = 364$.
+  have h₁₂ : f 14 52 = 364 := by
+    simp [g] at h₁₁
+    linarith
+
+  exact h₁₂
+```

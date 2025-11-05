@@ -1,0 +1,41 @@
+-- Proof by contradiction
+  by_contra! h
+
+  -- Fulfill the assumption that $n$ is not prime, i.e., $n$ can be factored as $n = n_1 \cdot n_2$,
+  -- where $1 < n_1 < n$ and $1 < n_2 < n$.
+  obtain ⟨n₁, n₂, h₂, h₃, h₄⟩ := h
+
+  -- Replace $n$ with $n_1 \cdot n_2$ in $2^n - 1$ and apply the difference of two squares formula.
+  rw [h₂] at h₁
+  rw [Nat.pow_mul] at h₁
+  apply Nat.mul_one_le_mul_left at h₁
+  rw [Nat.pow_le_pow_iff_right] at h₁
+  replace h₁ : 2 ^ n₁ - 1 ∣ 2 ^ (n₁ * n₂) - 1:= by
+    apply Nat.dvd_pow_sub_one
+    linarith only [h₁]
+
+  -- Since $2^{n_1} - 1$ divides $2^{n_1 \cdot n_2} - 1$ and $2^{n_1 \cdot n_2} - 1$ is prime,
+  -- it follows that $2^{n_1} - 1 = 1$ or $2^{n_1} - 1 = 2^{n_1 \cdot n_2} - 1$.
+  apply Nat.prime_mul_dvd_prime_dvd h₁ h₁
+  -- However, $2^{n_1} - 1 = 1$ is impossible because $n_1 \geq 1$.
+  cases h₁ with
+  | inl h₁ =>
+    have h₅ : 2 ^ n₁ = 2 := by omega
+    have h₆ : n₁ = 1 := by
+      apply Nat.pow_right_injective <| show 2 ≠ 0 by norm_num
+      exact h₅
+    rw [h₆] at h₂
+    norm_num at h₂
+    linarith only [h₂]
+  -- And $2^{n_1} - 1 = 2^{n_1 \cdot n_2} - 1$ is also impossible.
+  | inr h₁ =>
+    have h₅ : 2 ^ n₁ - 1 = 1 := by
+      omega
+    replace h₅ : 2 ^ n₁ = 2 := by omega
+    have h₆ : n₁ = 1 := by
+      apply Nat.pow_right_injective <| show 2 ≠ 0 by norm_num
+      exact h₅
+    rw [h₆] at h₂
+    norm_num at h₂
+    linarith only [h₂]
+```

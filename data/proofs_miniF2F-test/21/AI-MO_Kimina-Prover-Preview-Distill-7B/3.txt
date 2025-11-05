@@ -1,0 +1,99 @@
+-- We prove that for any two integers $x$ and $y$, $x^5 \ne y^2 + 4$.
+  -- First, consider the case when $x$ is even.
+  by_cases hx_even : Even x
+  · -- If $x$ is even, then $5x$ is divisible by $4$.
+    have hx5_mod4 : 4 ∣ x ^ 5 := by
+      have : x % 4 = 0 := by
+        simp [Int.even_iff, Nat.even_iff] at hx_even
+        omega
+      calc
+        _ ∣ (x ^ 2) ^ 2 := by apply dvd_pow; apply dvd_pow; norm_num
+        _ ∣ _ := by
+          rw [show x ^ 5 = (x ^ 2) ^ 2 * x by ring]
+          apply dvd_mul_of_dvd_left
+          -- suffices to show that 4 divides x^2
+          apply Int.dvd_of_emod_eq_zero
+          rw [show x ^ 2 = x % 4 * (x ^ 2 / (x % 4)) by omega]
+          apply Int.mul_dvd_mul_right
+          -- If $x$ is even, then $5x$ is divisible by $4$.
+          omega
+    -- Thus $x^5 = 4k$ for some $k$.
+    rcases hx5_mod4 with ⟨k, hk⟩
+    rw [hk] at *
+    -- We have $4k = y^2 + 4$, which implies $y^2 = 4(k - 1)$.
+    have hy_mod4 : (y ^ 2) % 4 = 0 := by
+      have : (4 * (k - 1)) % 4 = 0 := by
+        rw [show 4 * (k - 1) = 4 * ((k - 1) : ℤ) by ring]
+        apply Int.mul_emod_self_left
+      have : y ^ 2 = 4 * (k - 1) := by omega
+      rw [this]
+      apply Int.mul_emod_self_right
+    -- This means $4$ divides $y^2$.
+    have hy_dvd4 : 4 ∣ y ^ 2 := by
+      have : (4 * (k - 1)) % 4 = 0 := by
+        rw [show 4 * (k - 1) = 4 * ((k - 1) : ℤ) by ring]
+        apply Int.mul_emod_self_left
+      have : y ^ 2 = 4 * (k - 1) := by omega
+      rw [this]
+      apply Int.mul_dvd_mul_right
+      norm_num
+    -- This is a contradiction.
+    have hy_mod4' : (y ^ 2) % 4 = 1 ∨ (y ^ 2) % 4 = 0 ∨ (y ^ 2) % 4 = 1 := by
+      have := Int.even_or_odd y
+      rcases this with (⟨z, hz⟩ | ⟨z, hz⟩)
+      · -- If $y$ is even, then $y = 2z$ for some $z$.
+        rw [hz]
+        ring_nf
+        omega
+      · -- If $y$ is odd, then $y = 2z + 1$ for some $z$.
+        rw [hz]
+        ring_nf
+        omega
+    omega
+
+  · -- Now we consider the case when $x$ is odd.
+    simp at hx_even
+    -- If $x$ is odd, then $x = 2k + 1$ for some $k$.
+    rcases hx_even with ⟨k, hk⟩
+    rw [hk] at *
+    ring_nf at *
+    -- We have $x^5 = 4(5k^4 + 10k^3 + 10k^2 + 5k + 1)$.
+    have hx5_mod4 : 4 ∣ x ^ 5 := by
+      rw [show x ^ 5 = 4 * (5 * k ^ 4 + 10 * k ^ 3 + 10 * k ^ 2 + 5 * k + 1) by ring]
+      apply dvd_mul_of_dvd_left
+      apply Int.dvd_const
+    -- Thus $x^5 = 4k$ for some $k$.
+    rcases hx5_mod4 with ⟨t, ht⟩
+    rw [ht] at *
+    -- We have $4t = y^2 + 4$, which implies $y^2 = 4(t - 1)$.
+    have hy_mod4 : (y ^ 2) % 4 = 0 := by
+      have : (4 * (t - 1)) % 4 = 0 := by
+        rw [show 4 * (t - 1) = 4 * ((t - 1) : ℤ) by ring]
+        apply Int.mul_emod_self_left
+      have : y ^ 2 = 4 * (t - 1) := by omega
+      rw [this]
+      apply Int.mul_emod_self_right
+    -- This means $4$ divides $y^2$.
+    have hy_dvd4 : 4 ∣ y ^ 2 := by
+      have : (4 * (t - 1)) % 4 = 0 := by
+        rw [show 4 * (t - 1) = 4 * ((t - 1) : ℤ) by ring]
+        apply Int.mul_emod_self_left
+      have : y ^ 2 = 4 * (t - 1) := by omega
+      rw [this]
+      apply Int.mul_dvd_mul_right
+      norm_num
+    -- This is a contradiction.
+    have hy_mod4' : (y ^ 2) % 4 = 1 ∨ (y ^ 2) % 4 = 0 ∨ (y ^ 2) % 4 = 1 := by
+      have := Int.even_or_odd y
+      rcases this with (⟨z, hz⟩ | ⟨z, hz⟩)
+      · -- If $y$ is even, then $y = 2z$ for some $z$.
+        rw [hz]
+        ring_nf
+        omega
+      · -- If $y$ is odd, then $y = 2z + 1$ for some $z$.
+        rw [hz]
+        ring_nf
+        omega
+    omega
+
+```

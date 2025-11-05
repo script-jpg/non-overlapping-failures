@@ -1,0 +1,40 @@
+-- The following identities are derived from the change of base formula:
+  -- $\log_a b = \frac{\log_c b}{\log_c a}$ for arbitrary $c > 0, c \neq 1$.
+  have id1 {a b c : ℝ} (ha : a ≠ 1) (hb : b ≠ 0) (hc : c ≠ 0) (h : a ≠ 0) : Real.log b / Real.log a = Real.log_c b / Real.log_c a := by
+    field_simp [Real.log_div_log_eq_log_div_log, ha, hb, hc, h]
+
+  have id2 {a b c : ℝ} (ha : a ≠ 1) (hb : b ≠ 0) (hc : c ≠ 0) (h : a ≠ 0) : Real.log a / Real.log c = Real.log_b a / Real.log_b c := by
+    field_simp [Real.log_div_log_eq_log_div_log, ha, hb, hc, h]
+
+  -- $\log_a b = \frac{1}{\log_b a}$.
+  have id3 {a b : ℝ} (ha : a ≠ 1) (hb : b ≠ 1) : Real.log_b a = Real.log a / Real.log b := by
+    field_simp [Real.log_div_log_eq_log_div_log, ha, hb, show Real.log b ≠ 0 by intro h; apply hb; linear_combination h]
+
+  -- Simplify the first term.
+  have term1 : Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) = Real.log 80 * Real.log 40 / (Real.log 2 * Real.log 2) := by
+    field_simp
+
+  -- Simplify the second term.
+  have term2 : Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20) = Real.log 160 * Real.log 20 / (Real.log 2 * Real.log 2) := by
+    field_simp
+
+  -- Combine the terms and simplify.
+  calc
+    Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) -
+        Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20)
+      = Real.log 80 * Real.log 40 / (Real.log 2 * Real.log 2) -
+        Real.log 160 * Real.log 20 / (Real.log 2 * Real.log 2) := by rw [term1, term2]
+    _ = (Real.log 80 * Real.log 40 - Real.log 160 * Real.log 20) / (Real.log 2 * Real.log 2) := by ring
+    _ = (Real.log 80 * Real.log 40 - Real.log 160 * Real.log 20) / (Real.log 2 * Real.log 2) := by rfl
+    _ = 2 := by
+      -- Note that 80 = 16 * 5 = 2^4 * 5 and 40 = 8 * 5 = 2^3 * 5.
+      have eq1 : (80 : ℝ) = 2^4 * 5 := by norm_num
+      have eq2 : (40 : ℝ) = 2^3 * 5 := by norm_num
+      -- Note that 160 = 32 * 5 = 2^5 * 5 and 20 = 4 * 5 = 2^2 * 5.
+      have eq3 : (160 : ℝ) = 2^5 * 5 := by norm_num
+      have eq4 : (20 : ℝ) = 2^2 * 5 := by norm_num
+      rw [eq1, eq2, eq3, eq4]
+      ring_nf
+      field_simp [Real.log_mul, Real.log_pow, show Real.log 2 ≠ 0 by intro h; apply Aesop; linear_combination h]
+      ring
+```

@@ -1,0 +1,130 @@
+-- We have a diophantine equation. Let's move all the terms to the LHS.
+  have h₁ : y ^ 2 + 3 * (x ^ 2 * y ^ 2) - 30 * x ^ 2 - 517 = 0 := by linarith only [h₀]
+
+  -- We are working on the equation $y^2 + 3x^2 y^2 = 30x^2 + 517$. Let's factor it.
+  -- Move the $3x^2 y^2$ term to the RHS: $y^2 = 30x^2 + 517 - 3x^2 y^2$
+  -- Factor $x^2$ out of the RHS: $y^2 = 30x^2 + 517 - 3x^2 y^2$
+  -- Factor $y^2$ out of the RHS: $y^2 + 3x^2 y^2 = 30x^2 + 517$
+  have h₂ : (y ^ 2 - 1) * (3 * x ^ 2 - 1) = 516 := by
+    calc (y ^ 2 - 1) * (3 * x ^ 2 - 1)
+      _ = 3 * x ^ 2 * y ^ 2 - y ^ 2 - 3 * x ^ 2 + 1 := by linarith only
+      _ = 3 * x ^ 2 * y ^ 2 - (y ^ 2 + 3 * x ^ 2) + 1 := by linarith only
+      _ = 3 * x ^ 2 * y ^ 2 - (30 * x ^ 2 + 517) + 1 := by rw [h₁]
+      _ = 3 * x ^ 2 * y ^ 2 - 30 * x ^ 2 - 516 := by linarith only
+      _ = (3 * x ^ 2 * y ^ 2 - 3 * x ^ 2 * y ^ 2) - 516 := by linarith only
+      _ = 0 - 516 := by rw [show 3 * x ^ 2 * y ^ 2 - 3 * x ^ 2 * y ^ 2 = 0 by linarith only]
+      _ = -516 := by linarith only
+      _ = - (3 * x ^ 2 * y ^ 2 - 3 * x ^ 2 * y ^ 2) := by linarith only
+      _ = - (3 * x ^ 2 * y ^ 2 - (y ^ 2 + 3 * x ^ 2 * y ^ 2)) := by linarith only
+      _ = - (- (30 * x ^ 2 + 517) + (y ^ 2 + 3 * x ^ 2 * y ^ 2)) := by rw [h₁]
+      _ = 30 * x ^ 2 + 517 - (y ^ 2 + 3 * x ^ 2 * y ^ 2) := by linarith only
+      _ = 30 * x ^ 2 + 517 - 30 * x ^ 2 - 517 := by linarith only
+      _ = 0 := by linarith only
+   -- The equation is now factored. Let's analyze the factors.
+  rw [show y ^ 2 - 1 = (y - 1) * (y + 1) by ring_nf] at h₂
+  rw [show 3 * x ^ 2 - 1 = 3 * (x ^ 2 - 1/3) by ring_nf] at h₂
+  -- We have $(y - 1) (y + 1) 3 (x ^ 2 - 1/3) = 516$. We know that $x$ and $y$ are integers, so the factor $3 (x ^ 2 - 1/3)$ must also be an integer. We can conclude that $(y - 1) (y + 1) = 516 / (3 (x ^ 2 - 1/3))$ is an integer.
+  have h₃ : (y - 1) * (y + 1) = 516 / (3 * (x ^ 2 - 1/3)) := by
+    calc (y - 1) * (y + 1)
+      _ = (y ^ 2 - 1) * (3 * x ^ 2 - 1) / (3 * (x ^ 2 - 1/3)) := by
+        congr
+        rw [show 3 * x ^ 2 - 1 = 3 * (x ^ 2 - 1/3) by ring_nf]
+        rw [show y ^ 2 - 1 = (y - 1) * (y + 1) by ring_nf]
+        rw [mul_comm]
+        rw [mul_div_assoc]
+        · ring
+        · apply Or.inl
+          exact Ne.symm (OfNat.zero_ne_ofNat (3 * (x ^ 2 - 1 / 3)))
+      _ = 516 / (3 * (x ^ 2 - 1/3)) := by rw [h₂]
+  -- The product of two integers $(y - 1)$ and $(y + 1)$ is an integer, so the right-hand side must also be an integer. For that to hold, x must be such that $3x^2 - 1$ divides 516. We can write a function to find all such x, then check each of them to see if they satisfy the original equation.
+  have h₄ : (3 * x ^ 2 - 1) ∣ 516 := by
+    use (y - 1) * (y + 1)
+    rw [h₃]
+    exact (Int.ediv_mul_cancel (a := (516 : ℤ)) (b := (3 * (x ^ 2 - 1/3) : ℤ)))).symm
+  -- Now that we have a finitely many candidate x, we can check each of them to see if they satisfy the original equation.
+  have h₅ : x ^ 2 ≤ 252 := by
+    have h₅ : 3 * x ^ 2 ≤ 516 := by
+      calc 3 * x ^ 2 = 3 * x ^ 2 - 1 + 1 := by group
+           _ ≤ 516/(3 * (x ^ 2 - 1/3)) + 1 := by
+             apply Int.add_le_add_right
+             apply Int.ediv_le_of_le_mul
+             · linarith only
+             · linarith only [h₄]
+           _ = 517 := by linarith only
+    linarith only [h₅]
+  have h₆ : x ^ 2 ≥ 0 := sq_nonneg x
+  interval_cases x ^ 2
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (0 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (1 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (2 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (3 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (4 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (5 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (6 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (7 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (8 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (9 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (10 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (11 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (12 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (13 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (14 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (15 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (16 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (17 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (18 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (19 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (20 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (21 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (22 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (23 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (24 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (25 - 1/3)) by omega
+    contradiction
+  · suffices (y - 1) * (y + 1) = 516 / (3 * (252 - 1/3)) by omega
+    norm_num
+    use 14
+    norm_num
+  -- The only value that works is $x^2 = 21$. We can plug this into the original equation to find $y^2 = 4$.
+  have h₇ : (y - 1) * (y + 1) = 14 * 16 := by
+    norm_num at h₃
+    suffices (y - 1) * (y + 1) = 14 * 16 by assumption
+    rw [h₃]
+    norm_num
+  have h₈ : y ^ 2 = 4 := by
+    suffices y ^ 2 - 1 = 14 * 16 + 1 by omega
+    suffices y ^ 2 - 1 = 225 by omega
+    calc y ^ 2 - 1 = (y - 1) * (y + 1) := by ring
+               _ = 14 * 16 := by rw [h₇]
+               _ = 225 := by norm_num
+  -- Therefore $3x^2 y^2 = 3 * 21 * 4 = \boxed{588}$.
+  calc 3 * (x ^ 2 * y ^ 2) = 3 * (21 * 4) := by rw [h₄, h₈]
+                      _ = 3 * 84 := by norm_num
+                      _ = 252 := by norm_num
+                      _ = 588 := by linarith only
+```

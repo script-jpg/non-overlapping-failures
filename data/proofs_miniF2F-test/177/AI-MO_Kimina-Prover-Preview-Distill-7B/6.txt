@@ -1,0 +1,115 @@
+constructor
+
+  -- sufficiency
+  · intro hf
+    -- by setting $a = 0$, we get $f(f(b)) = f(2a) + 2f(b)$
+    have h (a b : ℤ) : f (f (a + b)) = f (2 * a) + 2 * f b := by rw [hf a b]
+
+    -- by setting $b = 0$, we get $f(f(a)) = f(2a) + 2f(0)$
+    have h' (a : ℤ) : f (f a) = f (2 * a) + 2 * f 0 := by rw [h a 0]
+
+    -- $f$ is an even function
+    have hf_even : ∀ a : ℤ, f a = f (-a) := by
+      intro a
+      have := h' a
+      have := h' (-a)
+      simp at this
+      linear_combination this
+
+    -- $f(2a) = 2f(a) - 2f(0)$
+    have hf' (a : ℤ) : f (2 * a) = 2 * f a - 2 * f 0 := by
+      have h'' := h a 0
+      rw [hf_even a] at h''
+      linear_combination h''
+
+    -- $f$ is linear function
+    have hf'' : ∃ c : ℤ, ∀ a : ℤ, f a = 2 * a + c := by
+      -- decide $f(0)$
+      have f0 : f 0 = 0 ∨ ∃ c : ℤ, ∀ a : ℤ, f a = 2 * a + c := by
+        apply Or.elim (hf 0 0)
+        · intro hf0
+          use 0
+          intro a
+          rw [hf0, hf']
+          ring
+        · intro ⟨c, hc⟩
+          exact hc 0
+      -- fix $f(0)$ and prove $f$ is linear function
+      obtain ⟨f0, f0'⟩ := f0
+      use f0
+      intro a
+      induction a using Int.induction_on with
+      | hz => simp
+      | hp i hi =>
+        intro hif
+        have hfi : f (2 * i) = 2 * f i - 2 * f 0 := by rw [hf']
+        rw [hfi, hi]
+        ring
+      | hn i hi =>
+        intro hif
+        have hfi : f (-i) = -2 * f i + 2 * f 0 := by
+          rw [hf'']
+          simp
+          rw [← hf_even i]
+          ring
+        rw [hfi, hi]
+        ring
+
+    -- change form of $f(f(a)) = f(2a) + 2f(0)$
+    rw [hf''] at h'
+    obtain ⟨c, h'⟩ := hf''
+
+    -- if $c = 0$, then $f(f(a)) = f(2a)$
+    -- we prove $f(a) = 0$ or $f(a) = 2a + c$
+    by_cases hc : c = 0
+    · simp [hc] at h'
+      intro a
+      have := h' a
+      obtain (h' | ⟨c', h'⟩) := this
+      · left; exact h'
+      · right; exact h'
+
+    -- if $c ≠ 0$, then $f$ is surjective
+    have f_surjective : ∀ a : ℤ, ∃ b : ℤ, f b = a := by
+      intro a
+      use (a - c) / 2
+      rw [h']
+      ring_nf
+      omega
+
+    -- if $f$ is surjective, then $f$ is injective
+    have f_injective : Function.Injective f := by
+      intro a b hab
+      have hab' : f (f a) = f (f b) := by rw [hab]
+      have a_exists : ∃ a', f a' = a := f_surjective a
+      have b_exists : ∃ b', f b' = b := f_surjective b
+      obtain ⟨a', ha'⟩ := a_exists
+      obtain ⟨b', hb'⟩ := b_exists
+      rw [ha'] at hab'
+      rw [hb'] at hab'
+      linear_combination hab'
+
+    -- if $f$ is injective, then $f(a) = 2a + c$ is impossible
+    -- we prove this by contradiction
+    · intro a
+      by_contra h'
+      rw [h'] at h'
+      obtain ⟨b, hf0⟩ := f_surjective 0
+      obtain (h | ⟨c', h⟩) := h'
+      · rw [hf0] at h
+        omega
+      · have h'' := h b
+        rw [h', hf0] at h''
+        omega
+
+  -- necessity
+  · intro hf
+    obtain (h | ⟨c, h⟩) := hf
+    · intro a b
+      simp [h]
+      ring
+    · intro a b
+      simp [h]
+      ring
+
+```

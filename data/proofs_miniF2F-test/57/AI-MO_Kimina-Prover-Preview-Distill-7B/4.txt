@@ -1,0 +1,267 @@
+-- Let $a = p - 1$, $b = q - 1$, $c = r - 1$.
+  let a := p - 1
+  let b := q - 1
+  let c := r - 1
+
+  -- Then, we have $p = a + 1$, $q = b + 1$, $r = c + 1$.
+  have hp : p = a + 1 := by rfl
+  have hq : q = b + 1 := by rfl
+  have hr : r = c + 1 := by rfl
+
+  -- We can rewrite $(p - 1) (q - 1) (r - 1)$ divides $pqr - 1$ as $abc | (a + 1)(b + 1)(c + 1) - 1$.
+  rw [show p * q * r - 1 = (a + 1) * (b + 1) * (c + 1) - 1 by rw [hp, hq, hr]] at h₁
+
+  -- Expanding the expression, we get $abc | (a + 1)(b + 1)(c + 1) - 1$.
+  -- Then, we get $abc | abc + ab + ac + bc + a + b + c$.
+  have : a * b * c ∣ a * b * c + a * b + a * c + b * c + a + b + c := by
+    apply Int.dvd_add
+    · apply Int.dvd_add
+      · apply Int.dvd_add
+        · apply Int.dvd_mul
+          · ring
+          · exact id (Int.dvd_mul.int_mul_left a b)
+        · apply Int.dvd_mul
+          · ring
+          · exact Int.dvd_mul.int_mul_left a c
+      · apply Int.dvd_mul
+        · ring
+        · exact Int.dvd_mul.int_mul_left b c
+    · apply dvd_refl
+
+  rw [Int.dvd_add_right this] at h₁
+
+  -- So, $abc | ab + ac + bc + a + b + c$.
+  -- We have $a, b, c$ are positive.
+  have ha : 0 < a := by
+    simp [a]
+    linarith
+  have hb : 0 < b := by
+    simp [b]
+    linarith
+  have hc : 0 < c := by
+    simp [c]
+    linarith
+
+  -- We have $a + b + c \leq ab + ac + bc$.
+  have habc : a + b + c ≤ a * b + a * c + b * c := by
+    -- Because we have $a \geq 1$, $b \geq 1$, $c \geq 1$,
+    -- $ab \geq a$, $ac \geq a$, $bc \geq b$.
+    have ha' : a * b ≥ a := by
+      rw [Int.le_mul_iff_one_le_right]
+      · linarith
+      · linarith
+    have hb' : a * c ≥ a := by
+      rw [Int.le_mul_iff_one_le_right]
+      · linarith
+      · linarith
+    have hc' : b * c ≥ b := by
+      rw [Int.le_mul_iff_one_le_right]
+      · linarith
+      · linarith
+    linarith
+
+  -- Then, we have $ab + ac + bc + a + b + c \leq ab + ac + bc + ab + ac + bc = 2(ab + ac + bc)$.
+  have hab2 : a * b + a * c + b * c + a + b + c ≤ 2 * (a * b + a * c + b * c) := by linarith
+
+  -- So, $abc | 2(ab + ac + bc)$.
+  replace h₁ : a * b * c ∣ 2 * (a * b + a * c + b * c) := by
+    apply Int.dvd_trans h₁
+    apply Int.dvd_mul_left
+
+  -- We have $abc \leq 2(ab + ac + bc)$.
+  have habc : a * b * c ≤ 2 * (a * b + a * c + b * c) := by
+    apply Int.le_of_dvd
+    · positivity
+    · exact h₁
+
+  -- We have $ab + ac + bc \leq 6abc$.
+  have habc' : a * b + a * c + b * c ≤ 6 * a * b * c := by
+    -- Because we have $a + b + c \leq 6abc$.
+    have h₂ : a + b + c ≤ 6 * a * b * c := by
+      -- Because we have $a \leq 6abc$, $b \leq 6abc$, $c \leq 6abc$.
+      have ha'' : a ≤ 6 * a * b * c := by
+        rw [Int.le_mul_iff_one_le_right]
+        · linarith
+        · positivity
+      have hb'' : b ≤ 6 * a * b * c := by
+        rw [Int.le_mul_iff_one_le_right]
+        · linarith
+        · positivity
+      have hc'' : c ≤ 6 * a * b * c := by
+        rw [Int.le_mul_iff_one_le_right]
+        · linarith
+        · positivity
+      linarith
+    linarith
+
+  -- Let $d = \gcd(a, b)$, $e = \gcd(c, d)$.
+  let d := Int.gcd a b
+  let e := Int.gcd c d
+
+  -- We have $a = d \cdot x$ and $b = d \cdot y$ for some positive integers $x$ and $y$.
+  have h₃ : a = d * Int.gcd a b := by omega
+  have h₄ : b = d * Int.gcd b b := by omega
+
+  -- We have $c = e \cdot y$ and $d = e \cdot z$ for some positive integers $y$ and $z$.
+  have h₅ : c = e * Int.gcd c d := by omega
+  have h₆ : d = e * Int.gcd d d := by omega
+
+  -- So, $ab = d \cdot e \cdot x \cdot y$ and $ac = d \cdot e \cdot x \cdot z$ and $bc = d \cdot e \cdot y \cdot z$.
+  have hab : a * b = d * e * (Int.gcd a b * Int.gcd b b) := by
+    rw [h₃, h₄, mul_assoc]
+  have hac : a * c = d * e * (Int.gcd a b * Int.gcd c d) := by
+    rw [h₃, h₅, mul_assoc, h₄, h₆]
+    ring
+  have hbc : b * c = d * e * (Int.gcd b b * Int.gcd c d) := by
+    rw [h₄, h₅, mul_assoc]
+
+  -- Then, we have $a * b * c = d^2 * e^2 * x * y * z$ and $ab + ac + bc = d * e * (x * y + x * z + y * z)$.
+  have habc : a * b * c = d^2 * e^2 * (Int.gcd a b * Int.gcd b b * Int.gcd c d) := by
+    rw [h₃, h₄, h₅]
+    ring
+  have hab2 : a * b + a * c + b * c = d * e * (Int.gcd a b * (Int.gcd b b * Int.gcd c d) + Int.gcd c d * (Int.gcd a b * Int.gcd b b) + Int.gcd b b * Int.gcd c d) := by
+    rw [hab, hac, hbc, mul_assoc, mul_assoc, ←mul_add, mul_assoc, ←mul_add]
+
+  -- So, $d^2 \cdot e^2 \cdot x \cdot y \cdot z \leq 6 \cdot d \cdot e \cdot (x \cdot y + x \cdot z + y \cdot z)$.
+  rw [habc, hab2] at habc'
+  have : d * e ≤ 6 := by
+    -- Simplifying, we get $d \cdot e \cdot (d \cdot e \cdot x \cdot y \cdot z - 6 \cdot (x \cdot y + x \cdot z + y \cdot z)) \leq 0$.
+    have h₇ : d * e * (d * e * (Int.gcd a b * Int.gcd b b * Int.gcd c d) - 6 * (Int.gcd a b * (Int.gcd b b * Int.gcd c d) + Int.gcd c d * (Int.gcd a b * Int.gcd b b) + Int.gcd b b * Int.gcd c d)) ≤ 0 := by
+      linarith
+    -- Because $d, e$ are positive, we have $d \cdot e \cdot (d \cdot e \cdot x \cdot y \cdot z - 6 \cdot (x \cdot y + x \cdot z + y \cdot z)) \leq 0$.
+    have h₈ : d * e > 0 := by positivity
+    -- So, we have $d \cdot e \cdot x \cdot y \cdot z - 6 \cdot (x \cdot y + x \cdot z + y \cdot z) \leq 0$.
+    have h₉ : d * e * (d * e * (Int.gcd a b * Int.gcd b b * Int.gcd c d) - 6 * (Int.gcd a b * (Int.gcd b b * Int.gcd c d) + Int.gcd c d * (Int.gcd a b * Int.gcd b b) + Int.gcd b b * Int.gcd c d)) ÷ (d * e) ≤ 0 := by
+      exact Int.ediv_nonpos_of_nonpos_of_dvd h₇ (by positivity)
+    -- Simplifying, we get $d \cdot e \cdot x \cdot y \cdot z - 6 \cdot (x \cdot y + x \cdot z + y \cdot z) \leq 0$.
+    have h₁₀ : d * e * (d * e * (Int.gcd a b * Int.gcd b b * Int.gcd c d) - 6 * (Int.gcd a b * (Int.gcd b b * Int.gcd c d) + Int.gcd c d * (Int.gcd a b * Int.gcd b b) + Int.gcd b b * Int.gcd c d)) ÷ (d * e) = d * e * (Int.gcd a b * Int.gcd b b * Int.gcd c d) - 6 * (Int.gcd a b * (Int.gcd b b * Int.gcd c d) + Int.gcd c d * (Int.gcd a b * Int.gcd b b) + Int.gcd b b * Int.gcd c d) := by
+      rw [mul_div_cancel_left₀ _ (by positivity)]
+    rw [h₁₀] at h₉
+    linarith
+
+  -- Because $d, e$ are positive, we have $d \cdot e \leq 6$.
+  have hde : d * e ≤ 6 := by
+    linarith
+
+  -- We have $d \cdot e \geq 2$.
+  have hde2 : 2 ≤ d * e := by
+    -- Because we have $a \leq 6abc$, $b \leq 6abc$, $c \leq 6abc$.
+    have h₂ : a ≤ 6 * a * b * c := by
+      rw [Int.le_mul_iff_one_le_right]
+      · linarith
+      · positivity
+    have h₃ : b ≤ 6 * a * b * c := by
+      rw [Int.le_mul_iff_one_le_right]
+      · linarith
+      · positivity
+    have h₄ : c ≤ 6 * a * b * c := by
+      rw [Int.le_mul_iff_one_le_right]
+      · linarith
+      · positivity
+    -- So, we have $abc \leq 6^3(abc)^3$.
+    have h₅ : a * b * c ≤ 6^3 * (a * b * c)^3 := by
+      rw [←mul_le_mul_left (6 ^ 3)]
+      nth_rewrite 1 [←mul_assoc, mul_assoc, mul_assoc]
+      apply Int.le_of_dvd
+      positivity
+      rw [←mul_assoc, mul_assoc, mul_assoc]
+      exact h₁
+    -- Because $abc \neq 0$, we have $1 \leq 6^3(abc)^2$.
+    have h₆ : 1 ≤ 6^3 * (a * b * c)^2 := by
+      apply Int.le_of_dvd
+      positivity
+      apply pow_dvd_pow
+      apply Int.dvd_mul_left
+    rw [Int.le_pow_iff_le_of_nonneg] at h₆
+    apply h₆
+    · positivity
+    · norm_num
+
+  -- So, we have $d \cdot e = 2, 3, 4, 5, 6$.
+  have : d * e = 2 ∨ d * e = 3 ∨ d * e = 4 ∨ d * e = 5 ∨ d * e = 6 := by
+    interval_cases h₁₀ : h₁₀
+    · rw [h₁₀] at hde2
+      linarith
+    · rw [h₁₀] at hde2
+      linarith
+    · rw [h₁₀] at hde2
+      linarith
+    · rw [h₁₀] at hde2
+      linarith
+    · rw [h₁₀] at hde2
+      linarith
+    · rw [h₁₀] at hde
+      linarith
+    · linarith
+    · linarith
+    · linarith
+    · linarith
+
+  -- Consider the case "de = 2".
+  rcases this with de_2 | de_3 | de_4 | de_5 | de_6
+  · -- Consider the case "d = 1 and e = 2".
+    have hde1 : d = 1 := by
+      have : d ≤ 2 := by
+        apply Int.le_of_dvd
+        positivity
+        exact de_2
+      interval_cases d <;> tauto
+    have heq2 : e = 2 := by
+      rw [hde1] at de_2
+      linarith
+    -- We have $a = 1 \cdot x$, $b = 1 \cdot y$, $c = 2 \cdot z$.
+    have h₇ : a = 1 * Int.gcd a b := by
+      rw [h₃, hde1]
+    have h₈ : b = 1 * Int.gcd b b := by
+      rw [h₄, hde1]
+    have h₉ : c = 2 * Int.gcd c d := by
+      rw [h₅, hde1, heq2]
+    -- So, $a = x$, $b = y$, $c = 2 \cdot z$.
+    have ha' : a = Int.gcd a b := by
+      rw [h₇]
+      simp
+    have hb' : b = Int.gcd b b := by
+      rw [h₈]
+      simp
+    have hc' : c = 2 * Int.gcd c d := by
+      rw [h₉]
+    -- We have $x \mid 2 \cdot x \cdot y \cdot z$,
+    have h1 : a ∣ a * b * c := by
+      apply Int.dvd_mul_left
+    rw [ha'] at h1
+    -- we have $y \mid 2 \cdot x \cdot y \cdot z$,
+    have h2 : b ∣ a * b * c := by
+      apply Int.dvd_mul_right
+      apply Int.dvd_mul_left
+    rw [hb'] at h2
+    -- and $2 \cdot z \mid 2 \cdot x \cdot y \cdot z$.
+    have h3 : 2 * c ∣ a * b * c := by
+      apply Int.mul_dvd_mul_left
+      apply Int.dvd_mul_right
+      apply Int.dvd_mul_left
+    rw [hc'] at h3
+    -- So, $x \mid 2 \cdot x \cdot y \cdot z$ implies that $x \mid 2 \cdot y \cdot z$.
+    have h4 : a ∣ 2 * (b * c) := by
+      apply Int.dvd_trans h1
+      apply Int.dvd_mul_right
+      apply Int.dvd_mul_left
+    rw [ha'] at h4
+    -- Similarly, $y \mid 2 \cdot x \cdot y \cdot z$ implies that $y \mid 2 \cdot x \cdot z$.
+    have h5 : b ∣ 2 * (a * c) := by
+      apply Int.dvd_trans h2
+      apply Int.dvd_mul_left
+      apply Int.dvd_mul_right
+    rw [hb'] at h5
+    -- And, $2 \cdot z \mid 2 \cdot x \cdot y \cdot z$ implies that $z \mid x \cdot y$.
+    have h6 : 2 * c ∣ 2 * (a * b) := by
+      apply Int.dvd_trans h3
+      apply Int.dvd_mul_left
+      apply Int.dvd_mul_right
+    rw [hc'] at h6
+    -- So, we have $y \mid 2 \cdot x \cdot z$ and $z \mid x \cdot y$.
+    replace h5 : b ∣ 2 * a * c := by
+      linarith
+    replace h6 : 2 * c ∣ 2 * a * b := by
+      linarith
+    rw [hb'] at h5 h6
+    -- Because $y$ and $

@@ -1,0 +1,68 @@
+have step1 : S = {2016} := by
+    ext n
+    simp only [h₀, Finset.mem_singleton, Finset.mem_filter, Finset.mem_range, true_and]
+    constructor
+    -- First direction: if n is in S, then n must be 2016.
+    · intro h
+      rcases h with ⟨h1, h2, m, h3, h4⟩
+      have h5 : n = 2016 := by
+        have h6 : n ≤ 2019 := h2
+        have h7 : 2010 ≤ n := h1
+        interval_cases n <;> norm_num at * <;>
+        (try omega) <;>
+        (try {
+          have h8 : m ≤ 4032 := by
+            have h9 : ∑ p in Nat.divisors m, p = n := h4
+            have h10 : n ≤ 2019 := by linarith
+            have h11 : ∑ p in Nat.divisors m, p ≤ 2019 := by omega
+            have h12 : m ≤ 4032 := by
+              by_contra h13
+              have h14 : m ≥ 4033 := by linarith
+              have h15 : ∑ p in Nat.divisors m, p ≥ 4033 := by
+                have h16 : ∃ p, p ∈ Nat.divisors m := by
+                  use 1
+                  simp [Nat.divisors]
+                  <;> omega
+                obtain ⟨p, hp⟩ := h16
+                have h17 : p ∣ m := by simp_all [Nat.mem_divisors]
+                have h18 : p ≥ 1 := Nat.pos_of_ne_zero (by aesop)
+                have h19 : p ≤ m := Nat.le_of_dvd (by omega) h17
+                have h20 : ∑ p in Nat.divisors m, p ≥ p := by
+                  apply Finset.single_le_sum (fun x _ => Nat.zero_le x) hp
+                nlinarith
+              nlinarith
+            omega
+          interval_cases m <;> norm_num at * <;>
+          (try omega) <;>
+          (try {
+            simp_all (config := {decide := true})
+            <;> aesop
+          })
+          <;>
+            aesop
+        }) <;>
+        aesop
+      aesop
+    -- Second direction: if n is 2016, then n is in S.
+    · intro h
+      rw [h]
+      have h1 : 2010 ≤ 2016 := by norm_num
+      have h2 : 2016 ≤ 2019 := by norm_num
+      have h3 : ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = 2016 := by
+        use 2024
+        constructor
+        -- Show that the number of divisors of 2024 is 4
+        ·
+          rw [Nat.divisors]
+          decide
+        -- Show that the sum of the divisors of 2024 is 2016
+        ·
+          rw [Nat.divisors]
+          norm_num
+          <;> rfl
+      aesop
+  have step2 : (∑ k in S, k) = 2016 := by
+    rw [step1]
+    norm_num
+    <;> rfl
+  exact step2

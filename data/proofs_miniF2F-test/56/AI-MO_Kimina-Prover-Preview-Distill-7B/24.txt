@@ -1,0 +1,91 @@
+-- A trivial lemma that powers of integers are positive
+  have powpos {a : ℕ} (ha : a > 0) : a ^ n > 0 := by exact Nat.pos_pow_of_pos n ha
+
+  -- A lemma that helps compare powers of integers
+  have pow2ltpow (a : ℕ) (ha : a > 0) (h : 1 < n) : a ^ n < a ^ n * a ^ (n - 1) := by
+    rw [Nat.pow_succ, Nat.mul_lt_mul_right]
+    apply Nat.pow_pos (by linarith)
+    linarith
+
+  -- A lemma about division of sums of powers
+  have lemmasumdiv (a b c : ℕ) (h₁ : 1 < a) (h₂ : c > 0) (h₃ : b > 0) (h₄ : b < a ^ (c - 1)) :
+      a ^ b + a ^ c ∣ a ^ (c - 1) + a ^ (b + c - 1) := by
+    -- Rewrite the division as multiplication
+    rw [dvd_iff_mul_div_eq_nat]
+    -- Key inequality to prove
+    have h₅ : a ^ (b + c - 1) < a ^ (c - 1) * a ^ b := by
+      calc
+        _ = a ^ (b + c - 1) * a ^ (c - b) := by
+          apply Nat.mul_self
+          apply Nat.pow_pos
+          linarith
+        _ < a ^ (b + c - 1) * a ^ (c - 1) := by
+          apply Nat.mul_lt_mul_of_pos_left
+          apply Nat.pow_pos
+          linarith
+          apply Nat.zero_lt_sub_of_lt
+          linarith
+        _ = a ^ (c - 1) * a ^ b := by
+          rw [←Nat.pow_add, ←Nat.add_sub_assoc]
+          apply Nat.add_sub_of_le
+          linarith
+    -- Prove that the division equals a^b + a^c
+    have h₆ : a ^ (c - 1) + a ^ (b + c - 1) = (a ^ b + a ^ c) * a ^ (c - b) := by
+      calc
+        _ = a ^ (c - 1) * a ^ b + a ^ (b + c - 1) * a ^ (c - b) := by
+          rw [←Nat.mul_self, h₅]
+          calc
+            _ = a ^ (c - 1) * a ^ b + a ^ (b + c - 1) * a ^ (c - b) := by
+              rw [←Nat.pow_add, ←Nat.add_sub_assoc]
+              apply Nat.add_sub_of_le
+              linarith
+            _ = a ^ (c - 1) * a ^ b + a ^ (c - 1) * a ^ b := by
+              rw [h₄, Nat.pow_sub, Nat.add_sub_cancel, Nat.pow_add]
+              apply Nat.add_sub_of_le
+              linarith
+            _ = _ := by ring
+        _ = (a ^ b + a ^ c) * a ^ (c - b) := by ring
+    -- Apply the lemma
+    rw [h₆]
+    nlinarith
+
+  -- Apply the divisibility lemma to our specific case
+  have lm := lemmasumdiv (4 ^ m) (6 ^ m) (9 ^ m) (by linarith) (by linarith) (by linarith) (by linarith)
+
+  -- Key inequality for division
+  have ineq : (4 + 6 + 9 : ℕ) * (4 ^ m + 6 ^ m + 9 ^ m) < 4 ^ (m + 1) + 6 ^ (m + 1) + 9 ^ (m + 1) := by
+    -- Simplify the inequality
+    rw [Nat.pow_add, Nat.pow_add] at lm
+    have lm' := Nat.mul_lt_mul_of_pos_left lm (show 0 < 4 ^ m + 6 ^ m + 9 ^ m by linarith)
+    calc
+      _ = 13 * (4 ^ m + 6 ^ m + 9 ^ m) := by norm_num
+      _ < (4 ^ m + 6 ^ m + 9 ^ m) * (4 ^ m + 6 ^ m + 9 ^ m) := by nlinarith
+      _ < (4 ^ m + 6 ^ m + 9 ^ m) * (4 ^ (m + 1) + 6 ^ (m + 1) + 9 ^ (m + 1)) := by nlinarith
+      _ = _ := by
+        rw [Nat.mul_assoc, Nat.mul_add, Nat.mul_add, Nat.pow_add, Nat.pow_add]
+        nlinarith
+
+  -- Prove the main theorem using the divisibility lemma and our inequality
+  calc
+    _ ∣ 4 ^ (2 ^ n) + 6 ^ (2 ^ n) + 9 ^ (2 ^ n) := by
+      apply Nat.dvd_trans
+      -- Apply the lemma for division of sums of powers
+      apply Nat.dvd_add
+      apply Nat.dvd_add
+      apply lm
+      linarith
+      apply lm
+      linarith
+      linarith
+    _ = f (2 ^ n) := by rw [h₀]
+
+  apply Nat.le_of_dvd
+  -- Show that f(2^m) is positive
+  have le : 0 < f (2 ^ m) := by
+    rw [h₀]
+    apply Nat.pos_pow_of_pos
+    linarith
+  linarith
+
+
+```

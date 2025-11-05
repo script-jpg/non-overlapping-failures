@@ -1,0 +1,28 @@
+-- According to the reference answer, we use induction on $n$ to prove the inequality.
+  induction n, h₁ using Nat.le_induction with
+  -- induction on $n$ with the induction hypothesis `h₁ : n ≤ m`
+  | base =>
+    -- $n = 0$
+    rename_i n
+    simp only [Nat.zero_le, zero_lt_one, pow_one, nsmul_eq_mul, zero_mul, add_zero]
+  -- the case when $n$ is a successor
+  | succ n h₁ ih =>
+    -- we should prove $(1+nx)\leq (1+x)^n$ and $0\leq x$ to apply `Real.one_le_add`, `rpow_add`, and `rpow_mul`.
+    have h₂ : 0 ≤ x := by linarith
+    rw [Nat.succ_le, ih h₂]
+    -- we should prove $1+n*x+x\leq (1+x)^{n+1}$.
+    -- According to the reference answer, we have $(1+x)^{n+1} = (1+x)^n (1+x)^1$.
+    rw [rpow_succ]
+    -- Apply `mul_le_mul` with $1\leq 1$ from `Real.one_le_add` and $(1+n*x)\leq (1+x)^n$ from `ih h₂`.
+    apply mul_le_mul
+    · exact le_refl _
+    · linarith only [h₀]
+    · exact ih h₂
+    · apply add_nonneg
+      · apply rpow_nonneg
+        linarith
+      · exact h₂
+    -- According to the reference answer, we should prove $0\leq (1+x)^n$ to use `rpow_add`.
+    · apply rpow_nonneg
+      linarith
+```

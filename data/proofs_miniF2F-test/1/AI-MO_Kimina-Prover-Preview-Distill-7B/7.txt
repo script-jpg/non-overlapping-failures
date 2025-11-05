@@ -1,0 +1,36 @@
+-- proof by contradiction
+  by_contra h
+  -- we derive a congruence relation modulo 7
+  have h1 (x y : ℤ) : 4 * x ^ 3 - 7 * y ^ 3 ≡ 4 * x ^ 3 [ZMOD 7] := by
+    rw [Int.modEq_iff_dvd]
+    intro h
+    -- it suffices to show that $4x^3$ and $2003$ leave the same remainder when divided by $7
+    have h2 : 7 ∣ 4 * x ^ 3 - 2003 := by
+      rw [← h]
+      exact Int.dvd_sub_self_left.mpr h
+    apply Int.dvd_iff_emod_eq_zero.mp at h2
+    rw [← h2, Int.sub_eq_zero]
+    apply Int.modEq_zero_iff_dvd.mpr
+    exact h2
+  -- therefore, $4x^3$ and $2003$ leave the same remainder when divided by $7
+  have h2 : 4 * x ^ 3 ≡ 2003 [ZMOD 7] := by
+    have h2a : 4 * x ^ 3 ≡ 4 * x ^ 3 - 7 * y ^ 3 [ZMOD 7] := by
+      exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm h1 x y)) h)
+    have h2b : 4 * x ^ 3 - 7 * y ^ 3 ≡ 2003 [ZMOD 7] := by
+      exact Int.ModEq.symm (Int.ModEq.trans h h2a)
+    exact Int.ModEq.trans h2a h2b
+  -- we arrive at a contradiction
+  have h3 : 4 * x ^ 3 % 7 = 2003 % 7 := by
+    exact Int.ModEq.emod x y
+  norm_num at h3
+  have h4 : 4 * x ^ 3 % 7 = 6 := by
+    exact h3
+  -- it is impossible that $4x^3$ leaves remainder $6$ when divided by $7
+  have h5 : 4 * x ^ 3 % 7 = 0 ∨ 4 * x ^ 3 % 7 = 1 ∨ 4 * x ^ 3 % 7 = 2 ∨ 4 * x ^ 3 % 7 = 4 := by
+    have h5a : x % 7 = 0 ∨ x % 7 = 1 ∨ x % 7 = 2 ∨ x % 7 = 3 ∨ x % 7 = 4 ∨ x % 7 = 5 ∨ x % 7 = 6 := by
+      apply Int.emod_eq_of_lt
+      norm_num
+    rcases h5a with (h5a | h5a | h5a | h5a | h5a | h5a | h5a) <;> (simp [h5a, pow_three, Int.mul_emod, Int.sub_emod, Int.add_emod])
+  -- we arrive at a contradiction
+  omega
+```

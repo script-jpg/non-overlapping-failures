@@ -1,0 +1,93 @@
+-- First, note that $f(1) = 0$ must hold if $f$ is to have the properties stated above.
+  have h_f1 : f 1 = 0 := by
+    have h := h₀ 1 1 (by norm_num) (by norm_num)
+    simp at h
+    linarith
+
+  -- For every prime $p$, $f(p) = p$.
+  have h_fp : ∀ p, Nat.Prime p → f p = p := h₁
+
+  -- For any rational number $q = \frac{a}{b}$, we have $f(a) = f(q) + f(b)$.
+  have h_fq (q a b : ℚ) (ha : a > 0) (hb : b > 0) (hq : q = a / b) : f a = f q + f b := by
+    rw [hq]
+    have h := h₀ (a / b) b (by positivity) (by positivity)
+    simp at h
+    exact h
+
+  -- For every prime $p$, $f(p^n) = n\cdot f(p) = n\cdot p$.
+  have h_fp_pow (p n : ℕ) (hp : Nat.Prime p) : f (p ^ n) = n * p := by
+    induction n with
+    | zero => simp [h_f1]
+    | succ n ih =>
+      rw [pow_succ]
+      simp [h_nat_zpow_succ]
+      rw [h_fq (p ^ n) (n := p) (by positivity) (by positivity) (by positivity)]
+      rw [ih, h_fp hp, mul_comm]
+
+  -- For every prime $p$, $f(1/p) = -f(p) = -p$.
+  have h_f1_div_p (p : ℕ) (hp : Nat.Prime p) : f (1 / p : ℚ) = -p := by
+    have h_f1_div_p := h_fq (1 / p) (n := p) (by positivity) (by positivity) (by positivity)
+    have h_f_p := h_fp hp
+    rw [one_div, h_f_p] at h_f1_div_p
+    linarith
+
+  -- For every prime $p$, $f(p^{-1}) = -f(p) = -p$.
+  have h_fp_inv (p : ℕ) (hp : Nat.Prime p) : f ((p : ℚ)⁻¹) = -p := by
+    have h := h_f1_div_p (p := p) (by assumption)
+    simp at h
+    exact h
+
+  -- For a rational number $q = \frac{a}{b}$ with $a = p_1^{\alpha_1}\cdot... \cdot p_k^{\alpha_k}$ and
+  -- $b = q_1^{\beta_1}\cdot... \cdot q_m^{\beta_m}$, the function $f$ evaluated at $q$ yields
+  -- $f(q) = \sum_{i=1}^k \alpha_i\cdot p_i - \sum_{j=1}^m \beta_j\cdot q_j$.
+  have h_fq (q : ℚ) : q ≠ 0 → ∃ a b : ℤ, a > 0 ∧ b > 0 ∧ q = a / b ∧ f q = f a + f b := by
+    intro hq
+    obtain ⟨a, b, ha, hb, hq⟩ := q
+    have h_fq := h_fq (a : ℚ) ha hb hq
+    use a.natAbs, b.natAbs
+    have h_f_natAbs : f (a.natAbs : ℚ) = f (a : ℚ) := by
+      rw [h_natAbs_of_nonneg (by positivity)]
+      apply congrArg
+      exact Rat.natAbs_cast_id a
+    have h_f_natAbs' : f (b.natAbs : ℚ) = f (b : ℚ) := by
+      rw [h_natAbs_of_nonneg (by positivity)]
+      apply congrArg
+      exact Rat.natAbs_cast_id b
+    use by positivity, by positivity, by simp [hq]
+    rw [h_fq, h_f_natAbs, h_f_natAbs']
+    simp [hq, h_f1]
+
+  -- This means that $f(\frac{a}{b}) = f(a) - f(b)$ for all positive integers $a$ and $b$.
+  have h_fq' (q : ℚ) : q ≠ 0 → f q = f q.num - f q.den := by
+    intro hq
+    obtain ⟨a, b, ha, hb, hq⟩ := q
+    have h_fq := h_fq (a : ℚ) ha hb hq
+    use a, b
+    simp [hq, h_fq]
+    linarith
+
+  -- Therefore, $f(\frac{a}{b}) < 0$ if and only if $f(a) < f(b)$.
+  have h_fq_neg (q : ℚ) : q ≠ 0 → f q < 0 ↔ f q.num < f q.den := by
+    intro hq
+    rw [h_fq' hq]
+    constructor
+   . intro h
+      linarith
+   . intro h
+      linarith
+
+
+  -- We have: $f(25/11) = f(25) - f(11) = 2\cdot f(5) - f(11) = 2\cdot 5 - 11 = -1 < 0$.
+  simp only [h_f1_div_p,
+    ← h_fp_pow,
+    h_nat_pow_succ,
+    h_fq_neg,
+    Rat.num_div_den,
+    Int.isUnit_iff.mp,
+    Nat.reduceAbs,
+    Int.toNat_of_nonneg (by norm_num),
+    Nat.cast_ofNat, true_and,
+    hq,
+    true_and]
+  norm_num
+```

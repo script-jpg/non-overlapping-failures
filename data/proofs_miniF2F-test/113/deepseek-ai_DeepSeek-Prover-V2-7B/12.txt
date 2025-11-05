@@ -1,0 +1,20 @@
+have h : ∀ n : ℕ, 2 ≤ n → (∑ k in Finset.Icc (2 : ℕ) n, 1 / Real.sqrt k) < 198 := by
+    intro n hn
+    induction' n with n ih
+    · simp_all
+    · cases n with
+      | zero => simp_all
+      | succ n =>
+        cases n with
+        | zero => simp_all [Finset.sum_Icc_succ_top, Nat.div_eq_of_lt] <;> norm_num
+        | succ n =>
+          simp_all [Finset.sum_Icc_succ_top, Nat.div_eq_of_lt] <;>
+            norm_num [Real.sqrt_lt, Nat.cast_lt] at * <;>
+            refine' lt_trans (add_lt_add_right ih _) _ <;>
+            norm_num [Nat.cast_lt] at * <;>
+            apply lt_of_sub_pos <;>
+            field_simp <;>
+            nlinarith [Real.sqrt_nonneg (n + 1 + 1), Real.sqrt_nonneg (n + 1),
+              Real.sq_sqrt (show (0 : ℝ) ≤ n + 1 + 1 by positivity),
+              Real.sq_sqrt (show (0 : ℝ) ≤ n + 1 by positivity)]
+  exact h 10000 (by norm_num)

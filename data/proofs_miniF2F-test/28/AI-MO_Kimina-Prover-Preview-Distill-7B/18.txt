@@ -1,0 +1,81 @@
+-- A number of the form $(a + \sqrt{b}) / c$ is a root of the quadratic equation $2x^2 - 4x - 9 = 0$ if and only if $a = 2$, $b = 5$, $c = 2$.
+  have h : 2 * x ^ 2 - 4 * x - 9 = 0 := by linarith
+
+  have h₄ : 2 * (a + Real.sqrt b) ^ 2 - 4 * (a + Real.sqrt b) - 9 = 0 := by
+    rw [h₂] at h
+    exact h
+
+  ring_nf at h₄
+  rw [Real.sq_sqrt (by positivity)] at h₄
+  ring_nf at h₄
+
+  have h₅ : Real.sqrt b * a * 4 + a * a * 2 - a * 4 - (a * 9 + b * 2) = 0 := by
+    rw [<-h₄]
+    ring_nf
+
+  have h₆ : a * (Real.sqrt b * 4 + 2 * a - 4) - (a * 9 + b * 2) = 0 := by
+    rw [<-h₅]
+    ring_nf
+
+  have h₇ : a * 9 + b * 2 = a * (Real.sqrt b * 4 + 2 * a - 4) := by
+    rw [<-h₆]
+    ring_nf
+
+  have h₈ : a ∣ (a * (Real.sqrt b * 4 + 2 * a - 4)) := by
+    apply Nat.dvd_mul_right
+
+  rw [<-h₇] at h₈
+
+  -- Since $a$ and $b$ are coprime, and $a$ is nonzero, $a$ must be 1 or 2.
+  have h₉ : a = 1 ∨ a = 2 := by
+    apply Nat.le_of_dvd (by positivity)
+    rw [h₈]
+    apply Nat.dvd_add_left
+    apply Nat.dvd_add_right
+    apply dvd_trans (Nat.dvd_mul_right a)
+    apply dvd_trans (by rw [<-h₇]; exact Nat.dvd_mul_left (a * 9) (by positivity))
+
+  rcases h₉ with (h₉ | h₉)
+  · -- Suppose a = 1.
+    -- Now, since $1$ and $b$ are coprime, and $1$ is positive, $b = 5$.
+    have h₁₀ : b = 5 := by
+      apply Nat.le_of_dvd (by positivity)
+      rw [h₈, h₉]
+      try norm_num
+      rw [<-h₇]
+      rw [h₉]
+      apply Nat.dvd_add_right
+      apply dvd_trans (Nat.dvd_mul_right 9)
+      apply dvd_trans (by rw [<-h₇]; exact Nat.dvd_mul_left (9 + b * 2) (by positivity))
+
+    rw [h₉, h₁₀, h₈]
+    norm_num
+  · -- Suppose a = 2.
+    -- Now, since $2$ and $b$ are coprime, and $2$ is positive, $b = 17$.
+    have h₁₀ : b = 17 := by
+      apply Nat.le_of_dvd (by positivity)
+      rw [h₈, h₉]
+      try norm_num
+      rw [<-h₇]
+      rw [h₉]
+      apply Nat.dvd_add_right
+      apply dvd_trans (Nat.dvd_mul_right 2)
+      apply dvd_trans (by rw [<-h₇]; exact Nat.dvd_mul_left (4 + b * 2) (by positivity))
+
+    have h₁₁ : 5 < b := by
+      rw [h₁₀]
+      norm_num
+
+    rw [h₉, h₁₀, h₈]
+    suffices a + b + c ≤ 25 + 17 + 2 by linarith
+    calc
+      a + b + c ≤ 2 + 17 + 2 := by gcongr <;> simp [h₈]
+      _ ≤ 25 + 17 + 2 := by norm_num
+
+    apply Nat.le_of_dvd (by positivity)
+    rw [h₇]
+    rw [h₈, h₉]
+    try norm_num
+    rw [h₁₀]
+    norm_num
+```

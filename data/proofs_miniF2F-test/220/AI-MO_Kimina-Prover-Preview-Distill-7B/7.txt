@@ -1,0 +1,123 @@
+have h₀' : Real.cos x ≠ 0 := by
+    intro h
+    simp [Real.cos_eq_zero_iff] at h
+    rw [h] at h₀
+    norm_num at h₀
+
+  have h₁' : Real.sin x ≠ 0 := by
+    intro h
+    simp [Real.sin_eq_zero_iff] at h
+    rw [h] at h₀
+    norm_num at h₀
+
+  have : 1 / Real.cos x + Real.tan x = 22 / 7 := h₀
+  have : 1 / Real.sin x + 1 / Real.tan x = m := h₁
+
+  have : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := Real.sin_sq_add_cos_sq x
+
+  -- We will transform h₀ and h₁ to get two equations in terms of Real.sin x and Real.cos x.
+  -- Then we will solve for Real.sin x and Real.cos x.
+  have h₀ : Real.cos x ^ 2 + Real.sin x ^ 2 = 22 / 7 * Real.cos x := by
+    field_simp at this
+    linarith
+
+  have h₁ : Real.sin x ^ 2 + Real.cos x ^ 2 = m * Real.sin x := by
+    field_simp at this
+    linarith
+
+  -- Now we have two equations:
+  -- Real.sin x ^ 2 + Real.cos x ^ 2 = 22 / 7 * Real.cos x
+  -- Real.sin x ^ 2 + Real.cos x ^ 2 = m * Real.sin x
+  -- So `22 / 7 * Real.cos x = m * Real.sin x`
+  have h₂ : 22 / 7 * Real.cos x = m * Real.sin x := by
+    linarith
+
+  -- So `Real.cos x = (m / (22 / 7)) * Real.sin x`
+  have h₂ : Real.cos x = (m / (22 / 7)) * Real.sin x := by
+    field_simp
+    linarith
+
+  -- Substitute this in `Real.sin x ^ 2 + Real.cos x ^ 2 = 1`
+  have h₃ : Real.sin x ^ 2 + (m / (22 / 7)) ^ 2 * Real.sin x ^ 2 = 1 := by
+    rw [h₂] at this
+    linarith
+
+  have h₃ : (1 + (m / (22 / 7)) ^ 2) * Real.sin x ^ 2 = 1 := by
+    linarith
+
+  have : 1 + (m / (22 / 7)) ^ 2 ≠ 0 := by
+    intro h
+    have : m / (22 / 7) = 0 := by
+      linarith
+    have : m = 0 := by
+      field_simp at this
+      linarith
+    rw [this] at h₁
+    norm_num at h₁
+
+  -- So `Real.sin x ^ 2 = 1 / (1 + (m / (22 / 7)) ^ 2)`
+  have h₄ : Real.sin x ^ 2 = 1 / (1 + (m / (22 / 7)) ^ 2) := by
+    field_simp
+    linarith
+
+  -- So `Real.sin x = (1 / (1 + (m / (22 / 7)) ^ 2)) ^ (1 / 2)`
+  have h₅ : Real.sin x = (1 / (1 + (m / (22 / 7)) ^ 2)) ^ (1 / 2 : ℝ) := by
+    have : 0 ≤ Real.sin x := by
+      by_contra h
+      push_neg at h
+      have : Real.sin x ^ 2 = 0 := by
+        linarith
+      rw [this] at h₃
+      norm_num at h₃
+    have : 0 ≤ Real.sin x ^ 2 := by
+      exact pow_two_nonneg _
+    have : Real.sin x ^ 2 = 1 / (1 + (m / (22 / 7)) ^ 2) := by
+      linarith
+    rw [← this]
+    apply Real.rpow_left_inj?_?_?_
+    positivity
+    norm_num
+    positivity
+
+  -- Substitute this in `h₂`
+  have h₆ : Real.cos x = (m / (22 / 7)) * (1 / (1 + (m / (22 / 7)) ^ 2)) ^ (1 / 2 : ℝ) := by
+    rw [h₅] at h₂
+    exact h₂
+
+  have h₇ : Real.cos x ^ 2 = (m / (22 / 7)) ^ 2 * (1 / (1 + (m / (22 / 7)) ^ 2)) := by
+    rw [h₆]
+    ring
+
+  have h₇ : Real.cos x ^ 2 = 1 / (1 + (m / (22 / 7)) ^ 2) := by
+    linarith
+
+  -- So `1 / (1 + (m / (22 / 7)) ^ 2) = (m / (22 / 7)) ^ 2 * (1 / (1 + (m / (22 / 7)) ^ 2))`
+  have h₈ : 1 / (1 + (m / (22 / 7)) ^ 2) = (m / (22 / 7)) ^ 2 * (1 / (1 + (m / (22 / 7)) ^ 2)) := by
+    linarith
+
+  have h₈ : 1 = (m / (22 / 7)) ^ 2 := by
+    field_simp at h₈
+    linarith
+
+  have : (m / (22 / 7)) ^ 2 = 1 := by
+    linarith
+  have : m / (22 / 7) = 1 ∨ m / (22 / 7) = -1 := by
+    exact sq_eq_one_iff.mp this
+
+  rcases this with (h | h)
+ . -- If `m / (22 / 7) = 1`, then `m = 22 / 7`.
+    have h₉ : m = 22 / 7 := by
+      field_simp at h
+      linarith
+    norm_cast at h₉
+    rw [h₉]
+    norm_num
+ . -- If `m / (22 / 7) = -1`, then `m = -22 / 7`.
+    have h₉ : m = -22 / 7 := by
+      field_simp at h
+      linarith
+    norm_cast at h₉
+    rw [h₉]
+    norm_num
+
+```

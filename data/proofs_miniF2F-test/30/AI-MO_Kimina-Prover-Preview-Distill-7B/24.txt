@@ -1,0 +1,273 @@
+rcases h₀ with ⟨hx, hy⟩
+
+  -- Show that $x$ and $y$ are not equal.
+  have h₂ : x ≠ y := by
+    intro h
+    simp [h] at h₁
+    have : 2 * x ≠ 1 := by linarith
+    have : x = 1 := by
+      calc
+        x = x * 2 / 2 := by rw [Nat.mul_div_cancel]; norm_num
+        _ = 1 := by rw [h₁]; omega
+    simp [this] at h₁
+
+  -- Show that $x < y$ or $y < x$.
+  have h₃ : x < y ∨ y < x := by
+    by_contra h
+    simp at h
+    have : x = y := by omega
+    contradiction
+
+  rcases h₃ with h₃ | h₃
+
+  -- If $x < y$, show that $x$ is even.
+  · have h₄ : Even x := by
+      by_contra h
+      simp at h
+      have : x ^ y ^ 2 > y ^ x := by
+        calc
+          x ^ y ^ 2 > x ^ x := by apply (Nat.pow_lt_pow_iff_right x).mpr; linarith
+          _ ≥ y ^ x := by apply Nat.pow_le_pow_of_le_left; omega
+      simp [h₁] at this
+
+      have h₅ : x > y := by
+        apply (Nat.pow_lt_pow_iff_right y).mp
+        simp [h₁]
+        omega
+
+      simp [h₅] at h₃
+    obtain ⟨x', hx'⟩ := h
+
+    -- If $x$ is even, show that $y$ is a multiple of $x/2$.
+    have h₆ : ∃ k : ℕ, y = x' * k := by
+      obtain ⟨c, h₆⟩ := Nat.even_iff.mp h₄
+      use c
+      simp [h₆] at h₁
+      linarith
+
+    rcases h₆ with ⟨k, hk⟩
+
+    -- Substitute $y = x' * k$ into $x^{y^2} = y^x$.
+    have h₇ : x' ^ (x' * k) ^ 2 = (x' * k) ^ x' := by
+      calc
+        x' ^ (x' * k) ^ 2 = x ^ y ^ 2 := by rw [hx', hk]
+        _ = y ^ x := by rw [h₁]
+        _ = (x' * k) ^ x' := by rw [hx', mul_pow]
+
+    have h₈ : x' ^ 2 * k ^ 2 = x' * k := by
+      calc
+        x' ^ 2 * k ^ 2 = (x' * k) ^ 2 := by rw [mul_pow]
+        _ = x' ^ (x' * k) ^ 2 := by rw [h₇]
+        _ = x' ^ x' := by rw [pow_mul]
+        _ = x' := by rw [pow_one]
+
+    have h₉ : x' ^ 2 * k ^ 2 > x' := by
+      calc
+        x' ^ 2 * k ^ 2 > x' ^ 2 := by apply (Nat.mul_lt_mul_left (by omega)).mpr; apply Nat.pow_pos; omega
+        _ ≥ x' := by apply Nat.pow_le_pow_of_le_left; omega
+
+    simp [h₈] at h₉
+
+    -- Show that $x' * k < x'^2 * k^2$.
+    have h₁₀ : x' * k < x' ^ 2 * k ^ 2 := by
+      calc
+        x' * k < x' ^ 2 := by apply Nat.mul_lt_mul_left; omega
+        _ ≤ x' ^ 2 * k ^ 2 := by apply Nat.mul_le_mul; omega; omega
+
+    simp [h₈] at h₁₀
+
+    -- Show that $x'$ is a multiple of $k$.
+    have h₁₁ : ∃ l : ℕ, x' = k * l := by
+      apply exists_nat_mul_left_of_dvd
+      apply Nat.dvd_of_mul_dvd_mul_left (by omega) h₉
+
+    rcases h₁₁ with ⟨l, hl⟩
+
+    -- Substitute $x' = k * l$ into $x'^2 * k^2 = x' * k$.
+    have h₁₂ : k ^ 2 * l ^ 2 * k ^ 2 = k * l * k := by
+      calc
+        k ^ 2 * l ^ 2 * k ^ 2 = (k * l) ^ 2 * k ^ 2 := by rw [mul_pow, hl]
+        _ = x' ^ 2 * k ^ 2 := by rw [hx', hl]
+        _ = x' := by rw [h₇, pow_one]
+        _ = k * l * k := by rw [hl]
+
+    -- Show that $k * l * k < k ^ 2 * l ^ 2 * k ^ 2$.
+    have h₁₃ : k * l * k < k ^ 2 * l ^ 2 * k ^ 2 := by
+      calc
+        k * l * k < k ^ 2 * l ^ 2 := by apply Nat.mul_lt_mul_left; apply Nat.pow_pos; omega
+        _ ≤ k ^ 2 * l ^ 2 * k ^ 2 := by apply Nat.mul_le_mul; omega; omega
+
+    simp [h₁₂] at h₁₃
+
+    -- Show that $k$ is a multiple of $l$.
+    have h₁₄ : ∃ m : ℕ, k = l * m := by
+      apply exists_nat_mul_left_of_dvd
+      apply Nat.dvd_of_mul_dvd_mul_left (by omega) h₁₃
+
+    rcases h₁₄ with ⟨m, hm⟩
+
+    -- Substitute $k = l * m$ into $k * l < k ^ 2 * l ^ 2$.
+    have h₁₅ : l * m * l < (l * m) ^ 2 * l ^ 2 := by
+      calc
+        l * m * l < l ^ 2 * m ^ 2 * l ^ 2 := by apply Nat.mul_lt_mul_left; apply Nat.pow_pos; omega
+        _ =  (l * m) ^ 2 * l ^ 2 := by rw [mul_pow]
+
+    -- Show that $l$ is a multiple of $m$.
+    have h₁₆ : ∃ n : ℕ, l = m * n := by
+      apply exists_nat_mul_left_of_dvd
+      apply Nat.dvd_of_mul_dvd_mul_left (by omega) h₁₅
+
+    rcases h₁₆ with ⟨n, hn⟩
+
+    -- Substitute $l = m * n$ into $x' = k * l$ and $k = l * m$.
+    -- We now have $x' = m * n * m * l = m^2 * n * l$.
+    -- Replace $y$ by $x' * k = m^2 * n * l * (l * m) = m^3 * n * l^2$.
+    have h₁₇ : (m * n * m * (l * m)) ^ (l * m) = (m ^ 3 * n * l ^ 2) ^ (m * l) := by
+      calc
+        (m * n * m * (l * m)) ^ (l * m) = (m * n * (m * l)) ^ (l * m) := by ring_nf
+        _ = (m * n) ^ (l * m) * (m * l) ^ (l * m) := by rw [mul_pow, mul_pow]
+        _ = (m ^ l * n ^ l) * (m ^ l * l ^ l) := by rw [mul_pow, mul_pow, mul_pow]
+        _ = (m ^ l * m ^ l * n ^ l * l ^ l) := by ring_nf
+        _ = (m ^ (l + l) * n ^ l * l ^ l) := by rw [Nat.pow_add, mul_assoc]
+        _ = ((m ^ l * n ^ l * l ^ l) * m ^ l) := by ring_nf
+        _ = ((m ^ l * (n ^ l * l ^ l)) * m ^ l) := by ring_nf
+        _ = ((m ^ l * m ^ l * n ^ l * l ^ l) * m ^ l) := by rw [Nat.pow_add, mul_assoc]
+        _ = (m ^ l * m ^ l * (n ^ l * l ^ l * m ^ l)) := by ring_nf
+        _ = (m ^ l * m ^ l * m ^ l * (n ^ l * l ^ l)) := by ring_nf
+        _ = (m ^ (l + l + l) * n ^ l * l ^ l) := by rw [Nat.pow_add, mul_assoc]
+        _ = (m ^ (42 - 15) * n ^ l * l ^ l) := by rw [←Nat.pow_add_one, Nat.pow_add, Nat.pow_add, Nat.pow_add]; omega
+        _ = (m ^ 27 * n ^ l * l ^ l) := by norm_num
+        _ = (m ^ 3 * n * l ^ l) ^ (m * l) := by rw [mul_pow, mul_pow, mul_pow]; congr; ring_nf; ring_nf; ring_nf; omega
+
+    -- Note that $l$ and $m$ are nonzero.
+    have h₁₈ : l ≠ 0 := by
+      by_contra h₁₈
+      simp [h₁₈] at hn
+      simp [h₁₈] at hm
+      simp [h₁₈] at h₁
+      simp [h₁] at hx'
+
+    have h₁₉ : m ≠ 0 := by
+      by_contra h₁₉
+      simp [h₁₉] at hn
+      simp [h₁₉] at h₁
+      simp [h₁] at hx'
+
+    -- Now we have $x' = m^2 * n * l$ and $y = x' * k = m^2 * n * l * (l * m) = m^3 * n * l^2$.
+    -- We also have $x' > y$ which is a contradiction.
+    have h₂₀ : x' > y := by
+      calc
+        x' = m ^ 27 * n ^ l * l ^ l := by rw [h₁₇]; ring_nf; rw [pow_one, ←mul_assoc, mul_one, ←mul_assoc]
+        _ = m ^ 27 * l ^ l * n ^ l * l ^ l := by ring_nf
+        _ > m ^ 27 * l ^ l * n ^ l := by apply Nat.mul_lt_mul_left; apply Nat.pow_pos; omega; omega; omega
+        _ = y := by rw [h₁, h₆, h₇, h₁₀, mul_comm, ←mul_assoc]
+
+    simp [h₃] at h₂₀
+    simp [h₂₀] at h₁
+
+  -- If $y < x$, show that $y$ is even.
+  · have h₄ : Even y := by
+      by_contra h
+      simp at h
+      have : y ^ x ^ 2 > x ^ y := by
+        calc
+          y ^ x ^ 2 > y ^ y := by apply (Nat.pow_lt_pow_iff_right y).mpr; linarith
+          _ ≥ x ^ y := by apply Nat.pow_le_pow_of_le_left; omega
+      simp [h₁] at this
+
+      have h₅ : y > x := by
+        apply (Nat.pow_lt_pow_iff_right x).mp
+        simp [h₁]
+        omega
+
+      have : ¬ x > y := by omega
+      simp at this
+      have : x = y := by omega
+      contradiction
+
+    obtain ⟨y', hy'⟩ := h
+
+    -- If $y$ is even, show that $x$ is a multiple of $y/2$.
+    have h₆ : ∃ k : ℕ, x = y' * k := by
+      obtain ⟨c, h₆⟩ := Nat.even_iff.mp h₄
+      use c
+      simp [h₆] at h₁
+      linarith
+
+    rcases h₆ with ⟨k, hk⟩
+
+    -- Substitute $x = y' * k$ into $x^{y^2} = y^x$.
+    have h₇ : (y' * k) ^ y' ^ 2 = (y' * k) ^ (y' * k) := by
+      calc
+        (y' * k) ^ y' ^ 2 = x ^ y' ^ 2 := by rw [hk]
+        _ = y ^ x := by rw [h₁]
+        _ = (y' * k) ^ (y' * k) := by rw [hk]
+
+    have h₈ : y' ^ 2 * k ^ 2 = y' * k := by
+      calc
+        y' ^ 2 * k ^ 2 = (y' * k) ^ 2 := by rw [mul_pow]
+        _ = (y' * k) ^ y' ^ 2 := by rw [←h₇]
+        _ = y' ^ 2 := by rw [pow_one]
+        _ = y' := by rw [pow_one]
+
+    have h₉ : y' ^ 2 * k ^ 2 > y' := by
+      calc
+        y' ^ 2 * k ^ 2 > y' ^ 2 := by apply (Nat.mul_lt_mul_left (by omega)).mpr; apply Nat.pow_pos; omega
+        _ ≥ y' := by apply Nat.pow_le_pow_of_le_left; omega
+
+    simp [h₈] at h₉
+
+    -- Show that $y' * k < y'^2 * k^2$.
+    have h₁₀ : y' * k < y' ^ 2 * k ^ 2 := by
+      calc
+        y' * k < y' ^ 2 := by apply Nat.mul_lt_mul_left; omega
+        _ ≤ y' ^ 2 * k ^ 2 := by apply Nat.mul_le_mul; omega; omega
+
+    simp [h₈] at h₁₀
+
+    -- Show that $y'$ is a multiple of $k$.
+    have h₁₁ : ∃ l : ℕ, y' = k * l := by
+      apply exists_nat_mul_left_of_dvd
+      apply Nat.dvd_of_mul_dvd_mul_left (by omega) h₉
+
+    rcases h₁₁ with ⟨l, hl⟩
+
+    -- Substitute $y' = k * l$ into $y'^2 * k^2 = y' * k$.
+    have h₁₂ : k ^ 2 * l ^ 2 * k ^ 2 = k * l * k := by
+      calc
+        k ^ 2 * l ^ 2 * k ^ 2 = (k * l) ^ 2 * k ^ 2 := by rw [mul_pow, hl]
+        _ = y' ^ 2 * k ^ 2 := by rw [h₇, hl]
+        _ = y' := by rw [h₈, pow_one]
+        _ = k * l * k := by rw [hl]
+
+    -- Show that $k * l * k < k ^ 2 * l ^ 2 * k ^ 2$.
+    have h₁₃ : k * l * k < k ^ 2 * l ^ 2 * k ^ 2 := by
+      calc
+        k * l * k < k ^ 2 * l ^ 2 := by apply Nat.mul_lt_mul_left; apply Nat.pow_pos; omega
+        _ ≤ k ^ 2 * l ^ 2 * k ^ 2 := by apply Nat.mul_le_mul; omega; omega
+
+    simp [h₁₂] at h₁₃
+
+    -- Show that $k$ is a multiple of $l$.
+    have h₁₄ : ∃ m : ℕ, k = l * m := by
+      apply exists_nat_mul_left_of_dvd
+      apply Nat.dvd_of_mul_dvd_mul_left (by omega) h₁₃
+
+    rcases h₁₄ with ⟨m, hm⟩
+
+    -- Substitute $k = l * m$ into $y' = k * l$ and $k = l * m$.
+    -- We now have $y' = l * m * l * m = l^2 * m^2$.
+    -- Replace $x$ by $y' * k = l^2 * m^2 * (l * m) = l^3 * m^3$.
+    have h₁₅ : (l * m * l * (l * m)) ^ (l * m) = (l ^ 3 * m ^ 3) ^ (l * m) := by
+      calc
+        (l * m * l * (l * m)) ^ (l * m) = (l * m * l) ^ (l * m) * (l * m) ^ (l * m) := by rw [mul_pow, mul_pow]
+        _ = (l * m) ^ (l * m) * (l * m) ^ (l * m) := by rw [mul_assoc]
+        _ = (l ^ l * m ^ l) * (l ^ l * m ^ l) := by rw [mul_pow, mul_pow]
+        _ = (l ^ (l + l) * m ^ (l + l)) := by rw [Nat.pow_add, mul_assoc, Nat.pow_add, mul_assoc]
+        _ = (l ^ 2 * m ^ 2) ^ (l * m) := by ring_nf
+        _ = (l ^ 2 * m ^ 2) ^ (l * m) := by ring_nf
+        _ = (l ^ 3 * m ^ 3) ^ (l * m) := by rw [mul_pow, mul_pow]; congr; ring_nf; ring_nf; ring_nf; omega
+
+    -- Note that $l$ and $m$ are nonzero.
+    have h₁₆ : l ≠ 0 := by
+      by_contra h₁₆

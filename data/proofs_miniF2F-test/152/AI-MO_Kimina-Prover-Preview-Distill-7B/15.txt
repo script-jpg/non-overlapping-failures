@@ -1,0 +1,206 @@
+-- -- The greatest common divisor of positive integers $m$ and $n$ is 8.
+  -- -- The least common multiple of $m$ and $n$ is 112. What is the least possible value of $m+n$? Show that it is 72.
+
+  have dvd_m : 8 ∣ m := by apply Nat.gcd_dvd_left; linarith
+  have dvd_n : 8 ∣ n := by apply Nat.gcd_dvd_right; linarith
+  -- Since gcd(m, n) = 8, we can write m = 8m' and n = 8n' for some positive integers m' and n'.
+  obtain ⟨m', hm'⟩ := dvd_m
+  obtain ⟨n', hn'⟩ := dvd_n
+  have m_pos : 0 < m' := by
+    rw [hm'] at h₀
+    apply Nat.pos_of_mul_pos_left
+    exact h₀.1
+  have n_pos : 0 < n' := by
+    rw [hn'] at h₀
+    apply Nat.pos_of_mul_pos_left
+    exact h₀.2
+
+  have lcm_m_n: 112 = m.lcm n := by rw [h₂]; norm_num
+  have m_in_terms_of_m': m = 8 * m' := by rw [hm']; ring
+  have n_in_terms_of_n': n = 8 * n' := by rw [hn']; ring
+
+  rw [m_in_terms_of_m', n_in_terms_of_n'] at lcm_m_n
+  rw [Nat.lcm] at lcm_m_n
+  rw [mul_assoc, Nat.lcm] at lcm_m_n
+  rw [mul_right_comm m', mul_right_comm n'] at lcm_m_n
+  rw [Nat.lcm] at lcm_m_n
+
+  -- -- What is the least possible value of $m+n$? Show that it is 72.
+
+  have : m'.lcm n' = 14 := by
+    have : m'.lcm n' * (m' * n') = 112 * 8 * 8 := by rw [←lcm_m_n]; ring
+    have : m'.lcm n' * (m' * n') = 112 * 8 := by rw [mul_assoc, this]; ring
+    have : m'.lcm n' * (m' * n') = 112 * (m' * n') := by rw [mul_comm]; norm_num
+    -- Since m' and n' are positive, we can divide both sides by m' * n' to get m'.lcm n' = 112.
+    have : m'.lcm n' = 112 := by
+      apply Nat.eq_of_mul_eq_mul_right (n := m' * n') (by linarith)
+      linarith
+    -- But this is impossible because m' and n' are positive and m'.lcm n' is less than 112.
+    linarith
+
+  -- We know that m' and n' are positive integers and m'.lcm n' = 14.
+  -- So {m', n'} = {14, 1} or {7, 2} or {2, 7} or {1, 14}.
+  have : {m', n'} = {14, 1} ∨ {m', n'} = {7, 2} ∨ {m', n'} = {2, 7} ∨ {m', n'} = {1, 14} := by
+    -- Suppose {m', n'} = {a, b} for some positive integers a and b.
+    rw [Set.ext_iff] at *
+    intro a ha b hb h
+    -- Then a = m' and b = n' or a = n' and b = m'.
+    rcases ha with ha | hb
+    · rcases hb with hb | hb
+      -- Suppose a = m' and b = n'.
+      · rw [ha, hb] at h
+        -- Then a.lcm b = 14.
+        simp at h
+        -- So a * b = 14 * 12.
+        have : a * b = 14 * 12 := by
+          calc
+            a * b = a * b * (a.lcm b) := by simp [Nat.mul_lcm]
+            _ = 14 * (a * b) := by rw [h]
+            _ = 14 * 12 := by ring
+        -- So a + b ≥ 2 * √(a * b) = 28.
+        have : a + b ≥ 28 := by
+          calc
+            a + b ≥ 2 * (a * b).sqrt := by apply two_mul_le_add; simp [ha, hb]
+            _ = 2 * 14 := by congr; norm_num
+            _ = 28 := by norm_num
+        -- This is a contradiction.
+        linarith
+      -- Suppose a = n' and b = m'.
+      · rw [ha, hb] at h
+        -- Then a.lcm b = 14.
+        simp at h
+        -- So a * b = 14 * 12.
+        have : a * b = 14 * 12 := by
+          calc
+            a * b = b * a := by ring
+            _ = a * b * (a.lcm b) := by simp [Nat.mul_lcm]
+            _ = 14 * (a * b) := by rw [h]
+            _ = 14 * 12 := by ring
+        -- So a + b ≥ 2 * √(a * b) = 28.
+        have : a + b ≥ 28 := by
+          calc
+            a + b ≥ 2 * (a * b).sqrt := by apply two_mul_le_add; simp [ha, hb]
+            _ = 2 * 14 := by congr; norm_num
+            _ = 28 := by norm_num
+        -- This is a contradiction.
+        linarith
+    · rcases hb with hb | hb
+      -- Suppose a = m' and b = n'.
+      · rw [ha, hb] at h
+        -- Then a.lcm b = 14.
+        simp at h
+        -- So a * b = 14 * 12.
+        have : a * b = 14 * 12 := by
+          calc
+            a * b = a * b * (a.lcm b) := by simp [Nat.mul_lcm]
+            _ = 14 * (a * b) := by rw [h]
+            _ = 14 * 12 := by ring
+        -- So a + b ≥ 2 * √(a * b) = 28.
+        have : a + b ≥ 28 := by
+          calc
+            a + b ≥ 2 * (a * b).sqrt := by apply two_mul_le_add; simp [ha, hb]
+            _ = 2 * 14 := by congr; norm_num
+            _ = 28 := by norm_num
+        -- This is a contradiction.
+        linarith
+      -- Suppose a = n' and b = m'.
+      · rw [ha, hb] at h
+        -- Then a.lcm b = 14.
+        simp at h
+        -- So a * b = 14 * 12.
+        have : a * b = 14 * 12 := by
+          calc
+            a * b = b * a := by ring
+            _ = a * b * (a.lcm b) := by simp [Nat.mul_lcm]
+            _ = 14 * (a * b) := by rw [h]
+            _ = 14 * 12 := by ring
+        -- So a + b ≥ 2 * √(a * b) = 28.
+        have : a + b ≥ 28 := by
+          calc
+            a + b ≥ 2 * (a * b).sqrt := by apply two_mul_le_add; simp [ha, hb]
+            _ = 2 * 14 := by congr; norm_num
+            _ = 28 := by norm_num
+        -- This is a contradiction.
+        linarith
+
+  -- Now {m', n'} = {14, 1} or {7, 2} or {2, 7} or {1, 14}.
+  rcases this with h | h | h | h
+  -- If {m', n'} = {14, 1}, then m' = 14 and n' = 1 or m' = 1 and n' = 14.
+  · -- If m' = 14 and n' = 1, then m = 8 * m' = 112 and n = 8 * n' = 8.
+    rw [Set.ext_iff] at h
+    obtain ⟨hm', hn'⟩ | ⟨hn', hm'⟩ := h
+    · rw [hm', hn'] at m_in_terms_of_m' n_in_terms_of_n'
+      -- Then m + n = 112 + 8 = 120.
+      have : m + n = 120 := by
+        calc
+          m + n = 8 * 14 + 8 * 1 := by rw [hm', hn']
+          _ = 120 := by norm_num
+      -- This is a contradiction.
+      linarith
+    · rw [hn', hm'] at m_in_terms_of_m' n_in_terms_of_n'
+      -- Then m + n = 8 + 112 = 120.
+      have : m + n = 120 := by
+        calc
+          m + n = 8 * 1 + 8 * 14 := by rw [hn', hm']
+          _ = 120 := by norm_num
+      -- This is a contradiction.
+      linarith
+  · -- If {m', n'} = {7, 2}, then m' = 7 and n' = 2 or m' = 2 and n' = 7.
+    rw [Set.ext_iff] at h
+    obtain ⟨hm', hn'⟩ | ⟨hn', hm'⟩ := h
+    · rw [hm', hn'] at m_in_terms_of_m' n_in_terms_of_n'
+      -- Then m + n = 56 + 16 = 72.
+      have : m + n = 72 := by
+        calc
+          m + n = 8 * 7 + 8 * 2 := by rw [hm', hn']
+          _ = 72 := by norm_num
+      -- This is the least possible value of m + n.
+      linarith
+    · rw [hn', hm'] at m_in_terms_of_m' n_in_terms_of_n'
+      -- Then m + n = 16 + 56 = 72.
+      have : m + n = 72 := by
+        calc
+          m + n = 8 * 2 + 8 * 7 := by rw [hn', hm']
+          _ = 72 := by norm_num
+      -- This is the least possible value of m + n.
+      linarith
+  · -- If {m', n'} = {2, 7}, then m' = 2 and n' = 7 or m' = 7 and n' = 2.
+    rw [Set.ext_iff] at h
+    obtain ⟨hm', hn'⟩ | ⟨hn', hm'⟩ := h
+    · rw [hm', hn'] at m_in_terms_of_m' n_in_terms_of_n'
+      -- Then m + n = 16 + 56 = 72.
+      have : m + n = 72 := by
+        calc
+          m + n = 8 * 2 + 8 * 7 := by rw [hm', hn']
+          _ = 72 := by norm_num
+      -- This is the least possible value of m + n.
+      linarith
+    · rw [hn', hm'] at m_in_terms_of_m' n_in_terms_of_n'
+      -- Then m + n = 56 + 16 = 72.
+      have : m + n = 72 := by
+        calc
+          m + n = 8 * 7 + 8 * 2 := by rw [hn', hm']
+          _ = 72 := by norm_num
+      -- This is the least possible value of m + n.
+      linarith
+  · -- If {m', n'} = {1, 14}, then m' = 1 and n' = 14 or m' = 14 and n' = 1.
+    rw [Set.ext_iff] at h
+    obtain ⟨hm', hn'⟩ | ⟨hn', hm'⟩ := h
+    · rw [hm', hn'] at m_in_terms_of_m' n_in_terms_of_n'
+      -- Then m + n = 8 + 112 = 120.
+      have : m + n = 120 := by
+        calc
+          m + n = 8 * 1 + 8 * 14 := by rw [hm', hn']
+          _ = 120 := by norm_num
+      -- This is a contradiction.
+      linarith
+    · rw [hn', hm'] at m_in_terms_of_m' n_in_terms_of_n'
+      -- Then m + n = 112 + 8 = 120.
+      have : m + n = 120 := by
+        calc
+          m + n = 8 * 14 + 8 * 1 := by rw [hn', hm']
+          _ = 120 := by norm_num
+      -- This is a contradiction.
+      linarith
+</;> aesop
+```

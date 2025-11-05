@@ -1,0 +1,43 @@
+-- The greatest common divisor of $m$ and $n$ is 6. So $m = 6x$ and $n = 6y$ for some positive integers $x$ and $y$.
+  have h₂ : ∃ m₁ n₁ : ℕ, m = 6 * m₁ ∧ n = 6 * n₁ ∧ Nat.gcd m₁ n₁ = 1 := by
+    use m / 6, n / 6
+    simp [h₀, Nat.gcd_div]
+    omega
+
+  -- The least common multiple of $m$ and $n$ is 126. So $126 = m \cdot n / \gcd(m,n) = 6x \cdot 6y / 6 = 6xy$.
+  have h₃ : Nat.lcm m n = 6 * (m / 6) * (n / 6) := by
+    rw [h₀, Nat.lcm, Nat.div_mul_cancel, Nat.div_mul_cancel, mul_assoc, Nat.mul_div_assoc]
+    have : (6 : ℕ).gcd m₁ = 1 := by
+      have : m = 6 * m₁ := h₂.right.left
+      rw [this] at h₀
+      exact Nat.Coprime.gcd_eq_one_iff.mp (Nat.Coprime.pow_left 1 (6 := 6) h₀)
+    rw [Nat.mul_comm, Nat.mul_div_assoc, this, mul_assoc, Nat.mul_div_assoc, mul_comm]
+    omega
+
+  have h₄ : 6 * (m / 6) * (n / 6) = 126 := by
+    rw [← h₃, h₁]
+
+  -- $6xy = 126$, so $xy = 21$.
+  have h₅ : (m / 6) * (n / 6) = 21 := by
+    omega
+
+  -- The positive integer solutions to $xy = 21$ are $(x, y) = (1, 21), (3, 7), (7, 3), (21, 1)$.
+  have h₆ : (m / 6) = 1 ∧ (n / 6) = 21 ∨ (m / 6) = 3 ∧ (n / 6) = 7 ∨ (m / 6) = 7 ∧ (n / 6) = 3 ∨ (m / 6) = 21 ∧ (n / 6) = 1 := by
+    have h₆ : (m / 6) * (n / 6) = 21 := h₅
+    have h₇ : (m / 6) ≤ 21 := by
+      have : (m / 6) * (n / 6) = 21 := h₅
+      nlinarith
+    have h₈ : (n / 6) ≤ 21 := by
+      have : (m / 6) * (n / 6) = 21 := h₅
+      nlinarith
+    interval_cases (m / 6) <;> interval_cases (n / 6) <;> omega
+
+  -- $m + n \geq 60$.
+  rcases h₆ with ⟨h₆, h₇⟩ | ⟨h₆, h₇⟩ | ⟨h₆, h₇⟩ | ⟨h₆, h₇⟩ <;> rw [h₆, h₇] at h₂ <;> simp [h₂] <;> omega
+
+  -- When $m = 6$ and $n = 126$, $m + n = 132$.
+  -- When $m = 18$ and $n = 42$, $m + n = 60$.
+  -- When $m = 42$ and $n = 18$, $m + n = 60$.
+  -- When $m = 126$ and $n = 6$, $m + n = 132$.
+  -- So $m + n$ is at least 60.
+```

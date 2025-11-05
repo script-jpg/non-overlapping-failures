@@ -1,0 +1,184 @@
+have h₁ : ∑ k in S, k = ∑ k in S, k := rfl
+
+  -- We will now show that the set of nice numbers in the range 2010 to 2019 is {1836, 2016}.
+  have h₂ : S = {1836, 2016} := by
+    ext n
+    -- A number n is in the set if and only if it is in the range and there exists a positive integer m with exactly four positive divisors summing to n.
+    simp [h₀]
+    constructor
+    · intro h
+      -- We first show that the only nice numbers in the range are 1836 and 2016.
+      rcases h with ⟨⟨h₁, h₂⟩, m, h₃, h₄⟩
+      -- We drop the assumption that n is in the set for a moment and focus on the other direction.
+      simp
+      -- We show that m must be a product of two distinct primes or the cube of a prime.
+      have h₅ : m = p ^ 3 ∨ m = p * q := by
+        by_contra h
+        -- If m is not a product of two distinct primes or the cube of a prime, then it must have a prime divisor with multiplicity at least 2.
+        replace h : ∃ p : ℕ, p.Prime ∧ p ∣ m ∧ 2 ≤ multiplicity m p := by
+          rw [← Nat.not_coprime_iff_exists_prime_dvd]
+          rw [Nat.coprime_iff_gcd_eq_one] at h₃
+          have h₃' := h₃.symm
+          rcases h₃' with ⟨p, hp, h₃''⟩
+          have h₄ : 2 ≤ multiplicity m p := by
+            suffices multiplicity m p > 1 by omega
+            rw [Nat.multiplicity_pos_iff]
+            exact h₃''
+            exact hp
+          exact ⟨p, hp, h₃'', h₄⟩
+        rcases h with ⟨p, hp, h₃, h₄⟩
+        -- We show that all prime divisors must have multiplicity at most 3.
+        have h₅ (q : ℕ) (hq : q.Prime) (h₆ : q ∣ m) : multiplicity m q ≤ 3 := by
+          -- Assume for contradiction that there is a prime q with multiplicity m q ≥ 4.
+          by_contra h
+          rw [Nat.not_le] at h
+          -- Then q^4 divides m.
+          replace h : q ^ 4 ∣ m := by
+            rw [Nat.pow_dvd_pow_iff]
+            exact h
+            omega
+          -- So q^4 ≤ m.
+          replace h : q ^ 4 ≤ m := by
+            rw [Nat.le_of_dvd]
+            exact h
+            exact hq
+          -- We show that q must be 2 or 3.
+          have hq' : q = 2 ∨ q = 3 := by
+            -- Since q is prime and q^4 ≤ m, we have q ≤ 3.
+            have hq'' : q ≤ 3 := by
+              rw [Nat.le_comm, Nat.pow_le_pow_iff₀] at h
+              exact h
+              omega
+            replace hq'' : q = 2 ∨ q = 3 := by
+              interval_cases q
+              all_goals exact hq
+            exact hq''
+          -- We check both cases and show they lead to contradictions.
+          rcases hq' with hq' | hq'
+          · -- If q = 2, then 16 ∣ m, but 16 > m, a contradiction.
+            rw [hq'] at h₆
+            replace h₆ : 2 ^ 4 ∣ m := by
+              rw [← hq']
+              exact h₆
+            replace h₆ : 2 ^ 4 ≤ m := by
+              rw [Nat.le_of_dvd]
+              exact h₆
+              exact hq'
+            omega
+          · -- If q = 3, then 81 ∣ m, but 81 > m, a contradiction.
+            rw [hq'] at h₆
+            replace h₆ : 3 ^ 4 ∣ m := by
+              rw [← hq']
+              exact h₆
+            replace h₆ : 3 ^ 4 ≤ m := by
+              rw [Nat.le_of_dvd]
+              exact h₆
+              exact hq'
+            omega
+        -- Now we show that m must be a cube or a product of two primes.
+        have h₆ := h₅ p hp h₃
+        replace h₅ : m = p ^ 3 ∨ m = p ^ 2 * q ∨ m = p * q ^ 2 := by
+          rcases h₆ with h₆ | h₆
+          · tauto
+          · -- If m = p^2 * q, then m = p * (p * q).
+            right
+            left
+            rw [h₆, Nat.pow_succ]
+            ring
+          · -- If m = p * q^2, then m = q * (p * q).
+            right
+            right
+            rw [h₆, Nat.pow_succ]
+            ring
+        -- We now show that m must be a cube or a product of two primes.
+        rcases h₅ with h₅ | h₅
+        · tauto
+        · -- If m = p^2 * q, then p * (p * q) = n.
+          rw [h₅] at h₄
+          rw [← Nat.add_comm] at h₄
+          nth_rw 2 [← Nat.add_assoc] at h₄
+          -- Then p * (p * q) = n.
+          replace h₄ : p * (p * q) = n := by
+            rw [h₄, Nat.add_comm, Nat.add_assoc]
+            omega
+          -- We show that p must be 1, 2 or 3.
+          have h₇ : p = 1 ∨ p = 2 ∨ p = 3 := by
+            -- Because p is prime and p^2 ≤ m, we have p ≤ 3.
+            have h₇ (p' : ℕ) (hp' : p'.Prime) (h₈ : p' ^ 2 ≤ m) : p' ≤ 3 := by
+              rw [Nat.le_comm, Nat.pow_le_pow_iff₀] at h₈
+              exact h₈
+              omega
+            have hq' : q ≥ 2 := by
+              by_contra h
+              simp at h
+              rw [h] at h₅
+              omega
+            have h₈ : p ≤ 3 := by
+              specialize h₇ p hp h₅
+              exact h₇
+            have hp' : p ≥ 1 := by
+              exact Nat.one_le_of_lt hp
+            omega
+          -- We check all possible values of p and show they lead to contradictions.
+          rcases h₇ with h₇ | h₇ | h₇
+          · -- If p = 1, then m = 1 * (1 * q) = 1 * q = q, but n is in the range 2010 to 2019.
+            rw [h₇] at h₅
+            omega
+          · -- If p = 2, then m = 2 * (2 * q) = 4 * q, but 4 * q > 2019 > n.
+            rw [h₇] at h₅
+            omega
+          · -- If p = 3, then m = 3 * (3 * q) = 9 * q, but 9 * q > 2019 > n.
+            rw [h₇] at h₅
+            omega
+    · intro h
+      -- We now show that if n is 1836 or 2016, then it is in the set.
+      simp at h
+      rcases h with h | h
+      · -- If n = 1836, then m = 14417.
+        suffices ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = 1836 by
+          rcases this with ⟨m, h₃, h₄⟩
+          rw [h] at h₃ h₄
+          exact ⟨⟨by omega, by omega⟩, m, h₃, h₄⟩
+        use 14417
+        -- We show that 14417 is a product of two distinct primes.
+        have h₁ : Nat.Prime 14417 := by rw [Nat.prime_def_lt]; norm_num
+        have h₂ : Nat.Prime 2083 := by rw [Nat.prime_def_lt]; norm_num
+        have h₃ : Nat.divisors 14417 = {1, 14417, 2083, 27859} := by
+          rw [Nat.divisors_eq_iff_prime]
+          push_neg
+          split_ands
+          all_goals omega
+        have h₄ : (Nat.divisors 14417).card = 4 := by
+          rw [h₃]
+          simp
+        have h₅ : ∑ p in Nat.divisors 14417, p = 1836 := by
+          rw [h₃]
+          simp
+          norm_num
+        exact ⟨h₄, h₅⟩
+      · -- If n = 2016, then m = 1008.
+        suffices ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = 2016 by
+          rcases this with ⟨m, h₃, h₄⟩
+          rw [h] at h₃ h₄
+          exact ⟨⟨by omega, by omega⟩, m, h₃, h₄⟩
+        use 1008
+        -- We show that 1008 is not a product of two distinct primes or the cube of a prime.
+        have h₃ : Nat.divisors 1008 = {1, 2, 3, 4, 6, 7, 8, 9, 12, 14, 16, 18, 21, 24, 28, 32, 36, 42, 48, 56, 63, 72, 84, 96, 112, 126, 144, 168, 224, 252, 336, 504, 1008} := by
+          rw [Nat.divisors_eq_iff_prime]
+          push_neg
+          split_ands
+          all_goals omega
+        have h₄ : (Nat.divisors 1008).card = 32 := by
+          rw [h₃]
+          simp
+        have h₅ : ∑ p in Nat.divisors 1008, p = 2016 := by
+          rw [h₃]
+          simp
+          norm_num
+        exact ⟨h₄, h₅⟩
+
+  -- Now we compute the sum of all nice numbers in the set.
+  rw [h₂] at h₁
+  simp at h₁ ⊢
+  omega
+```

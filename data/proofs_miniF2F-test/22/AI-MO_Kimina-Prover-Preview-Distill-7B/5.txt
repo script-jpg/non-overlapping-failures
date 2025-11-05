@@ -1,0 +1,63 @@
+-- suppose $x_i = a_{i+1}^2$ for all $i$
+  let x (i : ℕ) := a (i + 1) ^ 2
+
+  -- suppose $y_i = a_{i+1}^2 * a_{i+2}$ for all $i$
+  let y (i : ℕ) := a (i + 1) ^ 2 * a (i + 2)
+
+  -- notice that when $i < 99$, $y_i = x_i * a_{i+2}$
+  have hy (i : ℕ) (hi : i < 99) : y i = x i * a (i + 2) := by
+    simp [y, x]
+    calc
+      _ = a (i + 1) ^ 2 * a (i + 2) := by ring
+      _ = a (i + 1) ^ 2 * a (i + 2) := by ring
+
+  -- then $y_i = x_i * a_{i+2} < x_i * 1 = x_i$, when $i < 99$
+  have hineq (i : ℕ) (hi : i < 99) : y i < x i := by
+    rw [hy i hi]
+    have : a (i + 2) < 1 := by
+      -- $a_{100}^2 = x_{99}$
+      have : a 100 ^ 2 = x 99 := by
+        simp [x]
+        rw [←h₀]
+        simp
+        ring
+      rw [this]
+      -- $x_{99} = \sum_{i=0}^{99} x_i - \sum_{i=1}^{98} x_i = x_{99} + x_{100} - x_{99} = x_{100}$
+      have : x 99 = ∑ i ∈ Finset.range 100, x i - ∑ i ∈ Finset.range 99, x i := by
+        rw [←Finset.sum_range_succ']
+        simp
+      rw [this]
+      have : a 1 ^ 2 + ∑ i ∈ Finset.range 98, x (i + 1) ≤ 1 := by
+        have : a 1 ^ 2 + ∑ i ∈ Finset.range 98, x (i + 1) + x 99 = 1 := by
+          rw [←h₀]
+          simp
+          ring_nf
+        linarith
+      linarith
+    nlinarith [sq_nonneg (a (i + 1)), this]
+
+  -- $y_i < x_i$ implies $\sum_{i=0}^{98} y_i < \sum_{i=0}^{98} x_i$
+  have hsum : ∑ i in Finset.range 99, y i < ∑ i in Finset.range 99, x i := by
+    apply Finset.sum_lt_sum_of_ne
+    · intro i _
+      exact hineq i (by linarith)
+    · intro i _
+      simp [y]
+
+  -- then we can prove the inequality
+  calc
+    _ = ∑ i in Finset.range 99, y i + a 100 ^ 2 * a 1 := by simp [y]; rw [←h₀]; simp; ring
+    _ < ∑ i in Finset.range 99, x i + a 100 ^ 2 * a 1 := by exact add_lt_add_left hsum (a 100 ^ 2 * a 1)
+    _ = ∑ i in Finset.range 99, x i + x 99 := by
+      congr
+      have : a 100 ^ 2 = x 99 := by
+        simp [x]
+        rw [←h₀]
+        simp
+        ring
+      rw [this]
+    _ = ∑ i ∈ Finset.range 100, x i := by
+      rw [←Finset.sum_range_succ']
+      simp
+    _ = 1 := by rw [h₀]
+```

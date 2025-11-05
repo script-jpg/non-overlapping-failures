@@ -1,0 +1,69 @@
+-- let's first change the log base of x/2 to base 2.
+  have h₃ : Real.log (x / y) / Real.log 2 = Real.log x / Real.log 2 - Real.log y / Real.log 2 := by
+    field_simp [Real.log_div]
+  rw [h₃]
+
+  -- now we try to express log x / log 2 and log y / log 2 in terms of log 2.
+  have h₄ : Real.log x / Real.log 2 = Real.log 16 / Real.log y := by assumption
+
+  -- log 16 = log 2^4 = 4 log 2
+  have h₅ : Real.log 16 = 4 * Real.log 2 := by
+    calc
+      Real.log 16 = Real.log (2^4) := by norm_num
+      _ = 4 * Real.log 2 := by simp [Real.log_pow]
+
+  -- it follows that
+  have h₆ : Real.log x / Real.log 2 = 4 * Real.log 2 / Real.log y := by rw [h₅] at h₄; assumption
+  have h₇ : Real.log x = 4 * (Real.log 2)^2 / Real.log y := by
+    field_simp [Real.log_ne_zero_iff] at h₆ ⊢
+    assumption
+  have h₈ : Real.log y ≠ 0 := by
+    intro h
+    have : Real.log y = Real.log 1 := by rw [h]; norm_num
+    have : y = 1 := by apply Real.log_injOn_pos (by norm_num) (by norm_num) this
+    exact h₀.right (this.symm)
+
+  -- it follows that
+  have h₉ : Real.log x / Real.log 2 = 4 * Real.log 2 / Real.log y := by assumption
+  have h₁₀ : Real.log x / Real.log 2 - Real.log y / Real.log 2 = 4 * Real.log 2 / Real.log y - Real.log y / Real.log 2 := by rw [h₉]
+  rw [h₁₀]
+
+  -- we can multiply both sides by real log y to cancel it
+  have h₁₁ : Real.log x / Real.log 2 - Real.log y / Real.log 2 = -4 * (Real.log 2)^2 / (Real.log y) * (Real.log y / Real.log 2) := by
+    field_simp [h₈]
+    rw [h₇]
+    ring
+  rw [h₁₁]
+
+  -- log y / log 2 = log_2(y)
+  have h₁₂ : Real.log y / Real.log 2 = Real.logb 2 y := by
+    field_simp [Real.logb]
+  rw [h₁₂]
+
+  -- we can multiply both sides by real log 2 to cancel it
+  have h₁₃ : Real.log x / Real.log 2 - Real.log y / Real.log 2 = -4 * (Real.log 2)^2 / Real.log y * (Real.log y / Real.log 2) := by assumption
+  field_simp [h₈] at h₁₃
+  have h₁₄ : Real.log x / Real.log 2 - Real.log y / Real.log 2 = -4 * Real.log 2 := by linarith
+  rw [h₁₄]
+  -- now we just calculate the final result
+  calc
+    (-4 * Real.log 2)^2 = 16 * (Real.log 2)^2 := by ring
+    _ = 16 * (Real.log 4) := by
+      have h₁₅ : (Real.log 2)^2 = Real.log 4 := by
+        calc
+          (Real.log 2)^2 = (Real.log 2^1)^2 := by rw [Real.log_rpow (by norm_num) (by norm_num)]
+          _ = (Real.log 2)^2 := by norm_num
+          _ = (Real.log (2^2)) / 2 := by rw [Real.log_rpow (by norm_num) (by norm_num)]; ring
+          _ = Real.log 4 := by norm_num
+      rw [h₁₅]
+    _ = 16 * (Real.log (2^2)) / 2 := by rw [Real.log_rpow (by norm_num) (by norm_num)]
+    _ = 16 * (2 * Real.log 2) / 2 := by rw [Real.log_rpow (by norm_num) (by norm_num)]
+    _ = 16 * 2 * Real.log 2 / 2 := by ring
+    _ = 16 * Real.log 2 := by ring
+    _ = 20 := by
+      have : Real.log 2 = Real.log (4/2) := by norm_num
+      rw [this]
+      have : Real.log (4/2) = Real.log 4 - Real.log 2 := by rw [Real.log_div (by norm_num) (by norm_num)]
+      rw [this]
+      ring
+```

@@ -1,0 +1,234 @@
+-- Without loss of generality, we can assume that $a \geq b \geq c$.
+  wlog h : a ≥ b ∧ b ≥ c with H
+  {
+    clear h
+    -- Permutation of variables doesn't change the inequality.
+    simp [le_total a b, le_total b c, le_total c a] at h ⊢
+    by_cases hmid : a ≥ c
+   .
+      specialize H hmid (by linarith)
+      ring_nf at H ⊢
+      linarith
+   .
+      specialize H (by linarith) hmid
+      ring_nf at H ⊢
+      linarith
+}
+
+  -- We can assume that $a \geq c$ because the inequality is left-right symmetric.
+  wlog h : a ≥ c with H
+  {
+    clear h
+    by_cases hmid : a ≥ b
+   .
+      specialize H hmid (by linarith)
+      ring_nf at H ⊢
+      linarith
+   .
+      specialize H (by linarith) hmid
+      ring_nf at H ⊢
+      linarith
+  }
+
+  -- It suffices to assume that $c = 0$ because the inequality is homogeneous.
+  wlog h : c = 0 with H
+  {
+    clear h
+    -- Substituting $c = 0$ into the inequality.
+    subst c
+    simp at h₁ h₂ h₃
+    ring_nf at H ⊢
+    -- Prove that $0 \leq a ^ 3 * b - a * b ^ 2$.
+    suffices 0 ≤ a ^ 3 * b - a * b ^ 2 by linarith
+    -- The previous assumption that $a \geq b \geq c$ is now unnecessary.
+    wlog h : b ≥ 0 with H
+    {
+      clear h
+      by_cases hmid : a ≥ 0
+     .
+        specialize H hmid (by linarith)
+        ring_nf at H
+        exact H
+     .
+        specialize H (by linarith) hmid
+        ring_nf at H
+        linarith
+    }
+    -- Prove that $0 \leq a ^ 3 * b$ and $0 \leq a * b ^ 2$.
+    have hab : 0 ≤ a * b := by
+      simp [h₀.left, h₀.right.left]
+    have ha : 0 ≤ a ^ 3 := by
+      simp [h₀.left]
+    have hb : 0 ≤ b ^ 2 := by
+      simp [h₀.right.left]
+    -- The product of non-negative real numbers are non-negative.
+    calc
+      a ^ 3 * b - a * b ^ 2 = a ^ 3 * b - a * b * b := by ring
+      _ ≥ 0 := by
+        have hleft := mul_nonneg ha hb
+        have hright := mul_nonneg (mul_nonneg ha h₀.left) h₀.right.left
+        linarith
+  }
+
+  -- Now we can assume that $0 < a \leq b \leq c$.
+  -- The problem is left-right symmetric, so we can assume that $a \leq c$.
+  -- It suffices to assume that $b = 0$ because the inequality is homogeneous.
+  wlog h : b = 0 with H
+  {
+    clear h
+    -- Substituting $b = 0$ into the inequality.
+    subst b
+    ring_nf at H ⊢
+    -- Prove that $0 \leq a ^ 2 * c - c ^ 2 * a$.
+    suffices 0 ≤ a ^ 2 * c - c ^ 2 * a by linarith
+    -- The previous assumption that $a \geq c$ is now unnecessary.
+    wlog h : c ≥ 0 with H
+    {
+      clear h
+      by_cases hmid : a ≥ 0
+     .
+        specialize H hmid (by linarith)
+        ring_nf at H
+        exact H
+     .
+        specialize H (by linarith) hmid
+        ring_nf at H
+        linarith
+    }
+    -- Prove that $0 \leq a ^ 2 * c$ and $0 \leq c ^ 2 * a$.
+    have hac : 0 ≤ a * c := by
+      simp [h₀.left, h₀.right.left]
+    have ha : 0 ≤ a ^ 2 := by
+      simp [h₀.left]
+    have hc : 0 ≤ c ^ 2 := by
+      simp [h₀.right.left]
+    -- The product of non-negative real numbers are non-negative.
+    calc
+      a ^ 2 * c - c ^ 2 * a = a ^ 2 * c - a * c ^ 2 := by ring
+      _ ≥ 0 := by
+        have hleft := mul_nonneg ha hc
+        have hright := mul_nonneg (mul_nonneg ha h₀.left) (mul_nonneg h₀.right.left h₀.right.right)
+        linarith
+  }
+
+  -- Now $a \geq c$ and $b = 0$.
+  -- The inequality simplifies to $0 \leq a ^ 3 - a c ^ 2$.
+  -- It suffices to prove that $0 \leq a \land 0 \leq a ^ 2 - c ^ 2$.
+  suffices 0 ≤ a ∧ 0 ≤ a ^ 2 - c ^ 2 by
+    ring_nf
+    linarith
+
+  constructor
+ .
+    -- Firstly, $0 \leq a$ is already given by `h₀.left`.
+    exact h₀.left
+ .
+    -- We can assume that $c > 0$ because the inequality is left-right symmetric.
+    wlog h : c > 0 with H
+    {
+      clear h
+      -- When $c = 0$, the inequality is trivially satisfied.
+      simp [h₀, h]
+    }
+    -- We can assume that $a > 0$ because the inequality is left-right symmetric.
+    wlog h : a > 0 with H
+    {
+      clear h
+      -- When $a = 0$, the inequality is trivially satisfied.
+      simp [h₀, h]
+    }
+    -- It suffices to prove that $0 \leq a ^ 2 - c ^ 2$.
+    suffices 0 ≤ a ^ 2 - c ^ 2 by
+      ring_nf at this ⊢
+      linarith
+    -- The original inequality $0 \leq a ^ 3 - a c ^ 2$ is equivalent to $0 \leq a(a ^ 2 - c ^ 2)$.
+    suffices 0 ≤ a * (a ^ 2 - c ^ 2) by linarith
+    -- It suffices to prove that $0 \leq a ^ 2 - c ^ 2$.
+    suffices 0 ≤ a ^ 2 - c ^ 2 by
+      exact mul_nonneg (by linarith) this
+    -- The problem is left-right symmetric, so we can assume $a \geq c$.
+    wlog h : a ≥ c with H
+    {
+      clear h
+      -- The previous assumption that $a \geq c$ is now unnecessary.
+      wlog h : c ≥ a with H
+      {
+        clear h
+        -- The problem is left-right symmetric, so we can assume $a \geq c$.
+        specialize H (by linarith) (by linarith)
+        ring_nf at H ⊢
+        linarith
+      }
+      -- It suffices to prove that $0 \leq c ^ 2 - a ^ 2$.
+      suffices 0 ≤ c ^ 2 - a ^ 2 by linarith
+      -- The original inequality $0 \leq c ^ 3 - c a ^ 2$ is equivalent to $0 \leq c(c ^ 2 - a ^ 2)$.
+      suffices 0 ≤ c * (c ^ 2 - a ^ 2) by linarith
+      -- It suffices to prove that $0 \leq c ^ 2 - a ^ 2$.
+      suffices 0 ≤ c ^ 2 - a ^ 2 by
+        exact mul_nonneg (by linarith) this
+      -- Trivially true because $a \geq c$ and $c > 0$.
+      exact sq_sub_sq_nonneg (by linarith) h₀.right.left
+    }
+    -- Now $a \geq c$ and $0 < c$.
+    -- It suffices to prove that $0 \leq c ^ 2 - a ^ 2$.
+    suffices 0 ≤ c ^ 2 - a ^ 2 by linarith
+    -- The original inequality $0 \leq c ^ 3 - c a ^ 2$ is equivalent to $0 \leq c(c ^ 2 - a ^ 2)$.
+    suffices 0 ≤ c * (c ^ 2 - a ^ 2) by linarith
+    -- It suffices to prove that $0 \leq c ^ 2 - a ^ 2$.
+    suffices 0 ≤ c ^ 2 - a ^ 2 by
+      exact mul_nonneg (by linarith) this
+    -- We can assume that $c = 1$ because the inequality is homogeneous.
+    wlog h : c = 1 with H
+    {
+      clear h
+      -- Substituting $c = 1$ into the inequality.
+      subst c
+      simp at h₁ h₂ h₃
+      -- Prove that $0 \leq a ^ 3 - a$.
+      suffices 0 ≤ a ^ 3 - a by linarith
+      -- The previous assumption that $a \geq c$ is now unnecessary.
+      wlog h : a ≥ 1 with H
+      {
+        clear h
+        -- The problem is left-right symmetric, so we can assume $a \geq c$.
+        wlog h : 1 ≥ a with H
+        {
+          clear h
+          -- The problem is left-right symmetric, so we can assume $a \geq c$.
+          specialize H (by linarith) (by linarith)
+          ring_nf at H ⊢
+          linarith
+        }
+        -- It suffices to prove that $0 \leq a ^ 3 - a$.
+        suffices 0 ≤ a ^ 3 - a by linarith
+        -- The original inequality $0 \leq a ^ 3 - a$ is equivalent to $0 \leq a(a ^ 2 - 1)$.
+        suffices 0 ≤ a * (a ^ 2 - 1) by linarith
+        -- It suffices to prove that $0 \leq a ^ 2 - 1$.
+        suffices 0 ≤ a ^ 2 - 1 by
+          exact mul_nonneg (by linarith) this
+        -- Trivially true because $a \geq 1$.
+        exact sq_nonneg (a - 1)
+      }
+      -- Now $1 \leq a$ and $0 < a$.
+      -- It suffices to prove that $0 \leq a ^ 2 - 1$.
+      suffices 0 ≤ a ^ 2 - 1 by
+        ring_nf at this ⊢
+        linarith
+      -- It is equivalent to $(a-1)^2 \geq 0$.
+      suffices 0 ≤ (a - 1) ^ 2 by linarith
+      -- True because squares are non-negative.
+      exact sq_nonneg (a - 1)
+    }
+    -- Now $a \geq c$ and $0 < c$ are the remaining assumptions.
+    -- It suffices to prove that $0 \leq c ^ 2 - a ^ 2$.
+    suffices 0 ≤ c ^ 2 - a ^ 2 by linarith
+    -- The original inequality $0 \leq c ^ 3 - a ^ 2 * c$ is equivalent to $0 \leq c(c ^ 2 - a ^ 2)$.
+    suffices 0 ≤ c * (c ^ 2 - a ^ 2) by linarith
+    -- It suffices to prove that $0 \leq c ^ 2 - a ^ 2$.
+    suffices 0 ≤ c ^ 2 - a ^ 2 by
+      exact mul_nonneg (by linarith) this
+    -- Trivially true because $a \geq c$ and $0 < c$.
+    apply sq_sub_sq_nonneg
+   . linarith
+   . linarith
+```

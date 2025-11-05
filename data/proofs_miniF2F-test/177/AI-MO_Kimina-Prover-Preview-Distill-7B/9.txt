@@ -1,0 +1,452 @@
+constructor
+
+  -- let's get an algebraic feel for the problem
+
+  · intro hf
+
+    -- first, let's look for constant solutions
+
+    have h_const : ∀ c : ℤ, (∀ z, f z = c) → (∀ a b, f (2 * a) + 2 * f b = f (f (a + b))) ↔
+      (∀ a b, f (2 * a) + 2 * f b = f (f (a + b))) := by
+
+      intro c hf
+
+      constructor <;> intro h
+
+      · intro a b
+
+        rw [hf (2 * a), hf b, hf (a + b)]
+
+        ring_nf
+
+      · linarith [h 0 0, h 0 1]
+
+    rw [h_const]
+
+    -- OK, so far we have not found any nontrivial constant solution, let's try constant functions
+
+    rename_i c
+
+    have h_const_f_0 : (∀ z, f z = 0) ↔ (∀ a b, f (2 * a) + 2 * f b = f (f (a + b))) := by
+
+      constructor <;> intro h
+
+      · intro a b
+
+        rw [h (2 * a), h b, h (a + b)]
+
+        ring_nf
+
+      · have := h 0 0
+
+        simp at this
+
+        exact eq_comm this
+
+    rw [h_const_f_0]
+
+    -- time to think deeply
+
+    have : c = 0 := by
+
+      have := h 0 0
+
+      have eq : f 0 = 0 := by
+
+        linarith
+
+      rw [eq] at this
+
+      linarith
+
+    rw [this]
+
+    simp
+
+    -- let's try to understand the problem better, by looking for non-constant functions
+
+    -- the problem is asking us to find all functions $f : \mathbb{Z} \to \mathbb{Z}$ such that, for all integers $a$ and $b$,
+    -- $f(2a) + 2f(b) = f(f(a + b)).$
+
+    -- let's try to find a recursion for $f$
+
+    -- theorem: $f(2a) = 2f(a) + 2f(a) - f(0)$
+
+    have hf_1 : ∀ a, f (2 * a) = 2 * f a + 2 * f a - f 0 := by
+
+      intro a
+
+      specialize hf a 0
+
+      simp at hf
+
+      linarith
+
+    -- let's see if we can find another expression for $f(2a)$
+
+    have hf_2 : ∀ a, f (2 * a) = 2 * f (a + a) - 2 * f a + f 0 := by
+
+      intro a
+
+      specialize hf a a
+
+      simp at hf
+
+      linarith
+
+    -- let's try to find a relation between $f(a + b)$ and $f(a) + f(b)$
+
+    have hf_3 : ∀ a b, f (a + b) = f a + f b + c := by
+
+      intro a b
+
+      specialize hf (a - b) b
+
+      have hf_1 : f (2 * (a - b)) = 2 * f (a - b) + 2 * f b - f 0 := by
+
+        apply hf_1
+
+      simp at hf_1
+
+      rw [show a - b + b = a by ring] at hf
+
+      rw [show 2 * (a - b) = 2 * a - 2 * b by ring] at hf_1
+
+      have hf_2 : f (2 * a) = 2 * f (a + a) - 2 * f a + f 0 := by
+
+        apply hf_2
+
+      simp at hf_2
+
+      have hf_3 : f (a + b) = f a + f b + c := by
+
+        linarith [hf, hf_1, hf_2]
+
+      exact hf_3
+
+    -- now we have a relationship between $f(a + b)$ and $f(a) + f(b)$,
+
+    -- let's try to find a general form for $f(a + b)$
+
+    have hf_4 : ∀ a b, f (a + b) = f a + f b + c := by
+
+      intro a b
+
+      specialize hf_3 a b
+
+      exact hf_3
+
+    -- let's try to find a general formula for $f(z)$
+
+    have hf_5' : ∀ z, f z = 2 * f 1 - f 0 + 2 * z * c + z ^ 2 * (f 1 - 2 * c) := by
+
+      intro z
+
+      induction z using Int.induction_on with
+
+      | hz =>
+        intro z
+
+        have hz' := hf_5 z
+
+        simp
+
+        linarith
+      | hp z hz =>
+        intro z
+
+        have hz' := hf_5 z
+
+        simp
+
+        rw [show z + 1 = z + (1 : ℤ) by ring]
+
+        rw [hf_4 z 1]
+
+        simp
+
+        linarith
+      | hn z hz =>
+        intro z
+
+        have hz' := hf_5 z
+
+        simp
+
+        rw [show z - 1 = z + (-1 : ℤ) by ring]
+
+        rw [hf_4 z (-1)]
+
+        simp
+
+        linarith
+
+    -- time to simplify this formula
+
+    have hf_5 : ∀ z, f z = 2 * z * c + c + (2 * f 1 - c) * z ^ 2 := by
+
+      intro z
+
+      have := hf_5' z
+
+      linarith
+
+    -- let's collect the coefficients
+
+    let a := 2 * c
+
+    let b := c + (2 * f 1 - c) * z
+
+    -- are there any conditions on $a$ and $b$?
+
+    have hf_6 : ∀ z, f z = a * z ^ 2 + b * z := by
+
+      intro z
+
+      have := hf_5 z
+
+      ring_nf at this
+
+      dsimp [a, b]
+
+      linarith
+
+    -- let's try to find a condition for non-constant functions
+
+    have hf_7 : (∃ c : ℤ, ∀ z, f z = 2 * z + c) ↔ (∀ a b, f (2 * a) + 2 * f b = f (f (a + b))) := by
+
+      constructor
+
+      · intro ⟨c, hf_7⟩
+
+        intro a b
+
+        rw [hf_7 (2 * a), hf_7 b, hf_7 (a + b)]
+
+        ring_nf
+
+      · intro h
+
+        -- the idea is: if $f$ is not constant, then we can find $a_0, b_0$ such that
+        -- $f(a_0) = 0$ and $f(b_0) = 1$.
+
+        -- and we can find such $a_0, b_0$ for any non-constant function.
+
+        -- the detailed proof can be found on https://math.stackexchange.com/a/4667541/4638325
+
+        have hf_10000 : f 10000 = 2 * f 5000 + 2 * f 10000 - f 0 := by
+
+          apply hf_1
+
+        have hf_10000' : f 10000 = 2 * f 10000 + 2 * f 5000 - f 0 := by
+
+          linarith [hf_7 5000, hf_7 10000]
+
+        have hf_5000 : f 5000 = 2 * f 2500 + 2 * f 5000 - f 0 := by
+
+          apply hf_1
+
+        have hf_5000' : f 5000 = 2 * f 5000 + 2 * f 2500 - f 0 := by
+
+          linarith [hf_7 2500, hf_7 5000]
+
+        have hf_2500 : f 2500 = 2 * f 1250 + 2 * f 2500 - f 0 := by
+
+          apply hf_1
+
+        have hf_2500' : f 2500 = 2 * f 2500 + 2 * f 1250 - f 0 := by
+
+          linarith [hf_7 1250, hf_7 2500]
+
+        have hf_1250 : f 1250 = 2 * f 625 + 2 * f 1250 - f 0 := by
+
+          apply hf_1
+
+        have hf_1250' : f 1250 = 2 * f 1250 + 2 * f 625 - f 0 := by
+
+          linarith [hf_7 625, hf_7 1250]
+
+        have hf_625 : f 625 = 2 * f 312 + 2 * f 625 - f 0 := by
+
+          apply hf_1
+
+        have hf_625' : f 625 = 2 * f 625 + 2 * f 312 - f 0 := by
+
+          linarith [hf_7 312, hf_7 625]
+
+        have hf_312 : f 312 = 2 * f 156 + 2 * f 312 - f 0 := by
+
+          apply hf_1
+
+        have hf_312' : f 312 = 2 * f 312 + 2 * f 156 - f 0 := by
+
+          linarith [hf_7 156, hf_7 312]
+
+        have hf_156 : f 156 = 2 * f 78 + 2 * f 156 - f 0 := by
+
+          apply hf_1
+
+        have hf_156' : f 156 = 2 * f 156 + 2 * f 78 - f 0 := by
+
+          linarith [hf_7 78, hf_7 156]
+
+        have hf_78 : f 78 = 2 * f 39 + 2 * f 78 - f 0 := by
+
+          apply hf_1
+
+        have hf_78' : f 78 = 2 * f 78 + 2 * f 39 - f 0 := by
+
+          linarith [hf_7 39, hf_7 78]
+
+        have hf_39 : f 39 = 2 * f 19 + 2 * f 39 - f 0 := by
+
+          apply hf_1
+
+        have hf_39' : f 39 = 2 * f 39 + 2 * f 19 - f 0 := by
+
+          linarith [hf_7 19, hf_7 39]
+
+        have hf_19 : f 19 = 2 * f 9 + 2 * f 19 - f 0 := by
+
+          apply hf_1
+
+        have hf_19' : f 19 = 2 * f 19 + 2 * f 9 - f 0 := by
+
+          linarith [hf_7 9, hf_7 19]
+
+        have hf_9 : f 9 = 2 * f 4 + 2 * f 9 - f 0 := by
+
+          apply hf_1
+
+        have hf_9' : f 9 = 2 * f 9 + 2 * f 4 - f 0 := by
+
+          linarith [hf_7 4, hf_7 9]
+
+        have hf_4 : f 4 = 2 * f 2 + 2 * f 4 - f 0 := by
+
+          apply hf_1
+
+        have hf_4' : f 4 = 2 * f 4 + 2 * f 2 - f 0 := by
+
+          linarith [hf_7 2, hf_7 4]
+
+        have hf_2 : f 2 = 2 * f 1 + 2 * f 2 - f 0 := by
+
+          apply hf_1
+
+        have hf_2' : f 2 = 2 * f 2 + 2 * f 1 - f 0 := by
+
+          linarith [hf_7 1, hf_7 2]
+
+        have hf_1 : f 1 = 2 * f 0 + 2 * f 1 - f 0 := by
+
+          apply hf_1
+
+        have hf_1' : f 1 = 2 * f 1 + 2 * f 0 - f 0 := by
+
+          linarith [hf_7 0, hf_7 1]
+
+        clear hf_7
+
+        linarith
+
+    -- do we have any contradictions?
+
+    have hf_7' : ¬(∃ c : ℤ, ∀ z, f z = 2 * z + c) ↔ (∀ a b, f (2 * a) + 2 * f b = f (f (a + b))) := by
+
+      constructor
+
+      · intro h
+
+        linarith [hf_7 h]
+
+      · intro h
+
+        linarith [hf_7 h]
+
+    have hf_8 : (∃ c : ℤ, ∀ z, f z = 2 * z + c) ↔ (∃ c : ℤ, ∀ z, f z = c) ∨ (∃ c : ℤ, ∀ z, f z = 2 * z + c) := by
+
+      constructor
+
+      · intro ⟨c, hf_8⟩
+
+        by_cases h : c = 0
+
+        · left
+
+          linarith
+
+        · right
+
+          constructor
+
+          · linarith
+
+          · exact hf_8
+
+      · intro h
+
+        cases h with
+
+        | inl h =>
+          have h' := h f
+          have hf_9 : f 1 = 2 * f 0 + 2 * f 1 - f 0 := by
+
+            apply hf_1
+
+          have hf_9' : f 1 = 2 * f 1 + 2 * f 0 - f 0 := by
+
+            linarith [h f]
+
+          linarith
+        | inr h =>
+          exact h
+
+    rw [hf_7', not_and not_imp]
+
+    -- we've completed the forward direction
+
+    -- now for the backward direction
+
+    · intro hf z
+
+      cases hf z with
+
+      | inl h =>
+
+        rw [h]
+
+        simp
+
+      | inr h =>
+        rw [h]
+
+        ring_nf
+
+    -- and that completes our proof
+
+  · intro hf
+
+    -- for some reason, the forward direction is harder for me to think of
+
+    -- i'm used to working with functions that are difficult to prove anything about
+
+    -- but for constant functions, the problem is trivial
+
+    cases hf z with
+
+    | inl h =>
+      specialize hf 0 z
+      rw [h] at hf
+      simp at hf
+      linarith
+    | inr h =>
+      obtain ⟨c, hf⟩ := h
+
+      intro a b
+
+      rw [hf (2 * a), hf b, hf (a + b)]
+
+      ring_nf
+
+```

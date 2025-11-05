@@ -1,0 +1,86 @@
+have h₀ (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) =
+      (2 * Complex.ofReal (Nat.choose (2 * n + 1) 1) + (1 + 2 ^ 3) ^ (n + 1) - (1 - 2 ^ 3) ^ (n + 1)) / (2 * Complex.I) := by
+    induction n with
+    | zero =>
+      simp only [Finset.sum_range_succ, Finset.sum_range_zero, Nat.reduceMul, zero_add, Complex.ofReal_mul_ofReal,
+        Complex.ofReal_ofNat, Finset.sum_range_zero', Nat.choose_zero_right, zero_mul, add_zero,
+        Complex.I_mul_I, mul_one, Complex.ofReal_one, one_mul, sub_self, div_zero, add_zero, zero_sub,
+        neg_sub, Complex.ofReal_mul_ofReal, Complex.ofReal_ofNat, zero_add, zero_mul, add_zero, sub_self, sub_self, mul_zero, add_zero, sub_self]
+      norm_num
+    | succ n hn =>
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, hn, Nat.choose_succ_right, Nat.add_sub_cancel, pow_add]
+      simp only [Finset.sum_range_succ, Nat.choose_succ_right, Nat.add_sub_cancel, pow_one, pow_succ]
+      ring_nf
+      field_simp
+      ring
+  -- Define a function `f` that maps natural numbers to complex numbers
+  let f : ℕ → ℂ := fun n => (2 * Complex.ofReal (Nat.choose (2 * n + 1) 1) + (1 + 2 ^ 3) ^ (n + 1) - (1 - 2 ^ 3) ^ (n + 1)) / (2 * Complex.I)
+  -- Prove that `f n` is equal to the summation for all `n ≥ 0`
+  have hf (n : ℕ) : f n = ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+    induction n with
+    | zero => simp [f, h₀]
+    | succ n hn =>
+      rw [show n + 1 + 1 = n + 2 by ring, hn, h₀, Finset.sum_range_succ, Finset.sum_range_succ]
+      simp [f]
+      ring_nf
+      field_simp
+      ring
+  -- Prove that `f` satisfies a recurrence relation: `f (n + 2) = 12 * f (n + 1) + 10 * f n`
+  have h₁ (n : ℕ) : f (n + 2) = 12 * f (n + 1) + 10 * f n := by
+    induction n with
+    | zero =>
+      simp [f, Nat.choose_succ_right, Nat.add_sub_cancel, pow_one, pow_succ]
+      ring_nf
+      field_simp
+      ring
+    | succ n hn =>
+      have h₁ : f (n + 1 + 1 + 1) = 12 * f (n + 1 + 1) + 10 * f (n + 1) := by
+        rw [show n + 1 + 1 + 1 = n + 2 + 1 by ring, show n + 1 + 1 = n + 2 by ring]
+        rw [h₀ (n + 2 + 1), h₀ (n + 2), h₀ (n + 1), h₀ (n)]
+        simp [f]
+        rw [show (2 * (n + 2 + 1) + 1) = 2 * (2 * (n + 1) + 1) + 1 + 1 + 1 by ring]
+        rw [show (2 * (n + 2) + 1) = 2 * (2 * (n + 1) + 1) + 1 by ring]
+        rw [show (2 * (n + 1) + 1) = 2 * (2 * n + 1) + 1 + 1 by ring]
+        rw [show (2 * n + 1) = 2 * (2 * (n - 1) + 1) + 1 - 1 - 1 by ring]
+        simp
+        ring_nf
+        field_simp
+        ring
+      rw [h₁]
+      simp [f, Nat.choose_succ_right, Nat.add_sub_cancel, pow_one, pow_succ]
+      ring_nf
+      field_simp
+      ring
+  -- Use the recurrence relation to prove that the terms alternate between `2` and `-2` when taken modulo `5`
+  have h₂ (n : ℕ) : f n ≡ 2 [ZMOD 5] ∧ f (n + 1) ≡ -2 [ZMOD 5] ∨ f n ≡ -2 [ZMOD 5] ∧ f (n + 1) ≡ 2 [ZMOD 5] := by
+    induction n with
+    | zero =>
+      simp [f, Nat.choose_succ_right, Nat.add_sub_cancel, pow_one, pow_succ]
+      ring_nf
+      field_simp
+      ring
+    | succ n hn =>
+      rcases hn with ⟨h₃, h₄⟩
+      rw [h₁]
+      simp [Int.ModEq]
+      intro h₅
+      rw [show (12:ℤ) = 12 by rfl, show (10:ℤ) = 10 by rfl] at h₅
+      omega
+  -- Convert the complex function `f` to a natural number function
+  have h₃ (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = (f n).re := by
+    induction n with
+    | zero => simp [f, h₀, Nat.choose_succ_right, Nat.add_sub_cancel, pow_one, pow_succ]
+    | succ n hn =>
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, hn, h₀, Nat.choose_succ_right, Nat.add_sub_cancel, pow_succ]
+      simp [f]
+      ring_nf
+      field_simp
+      ring
+  -- Use the properties of `f` to prove the main theorem
+  intro n
+  rw [h₃, hf, Int.ModEq, ← ZMod.intCast_eq_intCast_iff]
+  have h₄ := h₂ n
+  simp [Int.ModEq]
+  omega
+
+```

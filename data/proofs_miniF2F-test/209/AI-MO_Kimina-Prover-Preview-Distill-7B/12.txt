@@ -1,0 +1,156 @@
+-- We start by setting up the theorem statement. We want to prove that the square root of the sum of log_2(6) and log_3(6) equals the sum of sqrt(log_2(3)) and sqrt(log_3(2)).
+
+  set a := Real.log 2
+  set b := Real.log 3
+  set c := Real.log 6
+  set d := Real.log 2
+  set e := Real.log 3
+  set f := Real.log 6
+
+  -- Note: We've defined a, b, c, d, e, f as real numbers representing the logarithms of 2, 3, 6, 2, 3, 6 respectively. This is to make the proof cleaner.
+
+  -- log_2(6) = log(6)/log(2) = c/a
+  have h2 (h : 2 ≠ 0) : Real.log 6 / Real.log 2 = c / a := by
+    rw [←h]
+    field_simp
+
+  -- log_3(6) = log(6)/log(3) = c/b
+  have h3 (h : 3 ≠ 0) : Real.log 6 / Real.log 3 = c / b := by
+    rw [←h]
+    field_simp
+
+  -- sqrt(x + y) = sqrt(x) + sqrt(y)
+  have h4 : Real.sqrt (c / a + c / b) = Real.sqrt (c / d) + Real.sqrt (c / e) := by
+
+    -- We need to show that the square root of the sum of log_2(6) and log_3(6) equals the sum of sqrt(log_2(3)) and sqrt(log_3(2)).
+    -- log_2(3) = log(3)/log(2) = b/a
+    have h5 (h : 2 ≠ 0) : Real.log 3 / Real.log 2 = b / a := by
+      rw [←h]
+      field_simp
+
+    -- log_3(2) = log(2)/log(3) = a/b
+    have h6 (h : 3 ≠ 0) : Real.log 2 / Real.log 3 = a / b := by
+      rw [←h]
+      field_simp
+
+    -- log(6) = log(2*3) = log(2) + log(3) = a + b
+    have h7 : Real.log 6 = Real.log 2 + Real.log 3 := by
+      rw [show (6 : ℝ) = 2 * 3 by norm_num]
+      exact Real.log_mul (by linarith) (by linarith)
+
+    -- log(2) > 0 (since 2 > 1)
+    have h8 : Real.log 2 > 0 := by
+      apply Real.log_pos
+      linarith
+
+    -- log(3) > 0 (since 3 > 1)
+    have h9 : Real.log 3 > 0 := by
+      apply Real.log_pos
+      linarith
+
+    -- log(6) > 0 (since 6 > 1)
+    have h10 : Real.log 6 > 0 := by
+      apply Real.log_pos
+      linarith
+
+    -- log(2) ≠ 0 (since 2 ≠ 1)
+    have h11 : Real.log 2 ≠ 0 := by
+      intro h
+      have : Real.log 2 = 0 := by linarith
+      have : (2 : ℝ) = 1 := by
+        rw [←Real.exp_log 2]
+        rw [this]
+        simp
+      linarith
+
+    -- log(3) ≠ 0 (since 3 ≠ 1)
+    have h12 : Real.log 3 ≠ 0 := by
+      intro h
+      have : Real.log 3 = 0 := by linarith
+      have : (3 : ℝ) = 1 := by
+        rw [←Real.exp_log 3]
+        rw [this]
+        simp
+      linarith
+
+    -- log(6) ≠ 0 (since 6 ≠ 1)
+    have h13 : Real.log 6 ≠ 0 := by
+      intro h
+      have : Real.log 6 = 0 := by linarith
+      have : (6 : ℝ) = 1 := by
+        rw [←Real.exp_log 6]
+        rw [this]
+        simp
+      linarith
+
+    -- Show that the square root of the sum of log_2(6) and log_3(6) equals the sum of sqrt(log_2(3)) and sqrt(log_3(2)).
+    have h14 : c / a + c / b = c / d + c / e := by
+      -- log_2(6) + log_3(6) = c/a + c/b
+      rw [h2 (by linarith), h3 (by linarith)]
+
+      -- sqrt(x + y) = sqrt(x) + sqrt(y) when x = c/a, y = c/b
+      rw [h5 (by linarith), h6 (by linarith)]
+
+      -- x = c/a, y = c/b, and x + y = (c + c) / (a + b)
+      have h15 : c / d + c / e = (c + c) / (a + b) := by
+        rw [h5 (by linarith), h6 (by linarith)]
+        ring
+
+      -- x + y = (c + c) / (a + b) = (2c) / (a + b)
+      rw [h15]
+      rw [show c + c = 2 * c by ring]
+      rw [←mul_div_assoc]
+
+      -- a + b ≠ 0 (since 2 > 1 and 3 > 1)
+      have h16 : a + b ≠ 0 := by
+        apply ne_of_gt
+        apply add_pos
+        · exact h8
+        · exact h9
+
+      -- c / (a + b) = c / a + c / b (i.e., log_a(b) + log_b(a) = log_(a^2)(b^2))
+      rw [div_eq_div_iff h16 (by linarith)]
+      ring_nf
+
+      -- sqrt((a + b) * c^2 / (a * b)) = sqrt((a + b) * c^2 / a / b)
+      rw [div_mul_div_comm (by linarith) (by linarith)]
+      simp only [mul_comm b c, mul_comm a c, mul_assoc a b c]
+
+      -- sqrt((a + b) * c^2 / (a * b)) = sqrt((a + b) / (a * b)) * c
+      rw [sqrt_div' (by linarith)]
+      rw [sqrt_mul' (by linarith)]
+
+      -- (a + b) / (a * b) = 1/a + 1/b = log_2(3) + log_3(2)
+      rw [h5 (by linarith), h6 (by linarith)]
+      field_simp
+
+    -- finish the proof
+    rw [h14]
+
+  -- simplify the theorem statement
+  rw [h4]
+  rw [h2 (by linarith), h3 (by linarith)]
+  field_simp [show Real.log 2 ≠ 0 by intro h; have : Real.log 2 = 0 := by linarith; have : (2 : ℝ) = 1 := by
+    rw [←Real.exp_log 2]
+    rw [this]
+    simp
+  linarith]
+  field_simp [show Real.log 3 ≠ 0 by intro h; have : Real.log 3 = 0 := by linarith; have : (3 : ℝ) = 1 := by
+    rw [←Real.exp_log 3]
+    rw [this]
+    simp
+  linarith]
+  rw [h7]
+  nth_rw 2 [show Real.log 2 + Real.log 3 = Real.log 2 + Real.log 3 by rfl]
+  rw [←Real.log_mul (by linarith) (by linarith)]
+  symm
+  rw [Real.log_mul (by linarith) (by linarith)]
+  -- log_2(3) * log_3(2) = log(3)/log(2) * log(2)/log(3) = 1
+  have h15 : Real.log 3 / Real.log 2 * (Real.log 2 / Real.log 3) = 1 := by
+    field_simp
+  simp [h15]
+  ring
+  all_goals
+    exact Real.log_pos (by linarith)
+
+```

@@ -1,0 +1,59 @@
+-- Prove that $f(n)$ is less than $f(256)$ for all $n \ne 256$:
+  have h₂ : ∀ n, n ≠ 256 → 0 < n → f n < f 256 := by
+    intro n ne₀ gt₀
+    specialize h₁ n ne₀ gt₀
+    rw [h₀] at h₁ ⊢
+    exact h₁
+
+  -- Compute that $f(256) = 3 / 4$ by using the fact that $256 = 2 ^ 8$ and
+  -- the divisor function $d(n)$ is multiplicative and $d(2 ^ 8) = 9$:
+  have h₃ : f 256 = 3 / 4 := by
+    rw [h₀]
+    rw [show Nat.divisors 256 = {1, 2, 4, 8, 16, 32, 64, 128, 256} by decide]
+    simp
+    norm_num
+
+  -- Prove that $256$ is the unique positive integer $N$ such that $f(N) > f(n)$
+  -- for all positive integers $n \ne N$:
+  have h₄ : ∀ n, 0 < n → f n ≤ f 256 := by
+    by_contra! h₄
+    intro n hn
+    by_cases ne₂₅₆ : n = 256
+    · rw [ne₂₅₆]
+      simp
+    · h₂ n ne₂₅₆ hn
+      linarith only [h₂, h₄]
+
+  -- Write an auxiliary lemma that proves any natural number $n$ less than $10 ^ 5$ is
+  -- less than $256 ^ 3$:
+  have h₅ : ∀ n, n < 10 ^ 5 → n < 256 ^ 3 := by
+    intros n lt₀
+    by_contra! h₅
+    have : 10 ^ 5 ≤ n := by linarith only [h₅]
+    linarith only [this, lt₀]
+
+  -- Prove that $256$ is the unique positive integer $N$ such that $f(N) > f(n)$
+  -- for all positive integers $n \ne N$ by contradiction:
+  have h₆ : 256 = N := by
+    by_contra! h₆
+    have ne₂₅₆ : 256 ≠ N := by
+      rw [h₆]
+      simp
+    specialize h₄ N
+    specialize h₁ N ne₂₅₆ (by simp)
+    specialize h₂ N ne₂₅₆ (by simp)
+    linarith only [h₁, h₂, h₃, h₄]
+
+  -- Write $N$ in base $10$:
+  rw [←h₆] at h₇
+  apply Nat.ofDigits_digits at h₇
+  simp at h₇
+
+  -- Compute the sum of the digits of $N$:
+  calc
+    Nat.digits 10 N = [6, 5, 2] := by rw [h₇]
+    _ ∑ = 6 + 5 + 2 := by simp
+    _ = 13 := by simp
+    _ = 9 := by simp
+
+```

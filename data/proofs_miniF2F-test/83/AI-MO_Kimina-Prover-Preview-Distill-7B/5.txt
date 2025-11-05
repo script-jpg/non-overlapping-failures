@@ -1,0 +1,93 @@
+-- Let $a_{1}=1$, and $a_{n+1}=\left(1+\frac{1}{2^{n+1}}\right)\left(1+\frac{1}{2^{n}}\right) a_{n}$
+  -- for $n \geq 1$.
+  -- It is enough to prove that $a_{n}<2$ for every $n \geq 1$.
+  let a : ℕ → ℝ := fun n => (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k)
+  have (n : ℕ) : a (n + 1) = (1 + (1 : ℝ) / 2 ^ (n + 1)) * a n := by
+    rw [ [def]
+    rw [Finset.prod_Icc_succ_top (by linarith)]
+    ring
+
+  -- We will show that $a_{n}<2$ for every $n \geq 1$ by induction.
+  have induction' (n : ℕ) : a n < 2 := by
+    induction n with
+    | zero => simp [a]; norm_num
+    | succ n ih =>
+      rw [show n + 1 + 1 = n + 2 by ring, [this]]
+      rw [show (1 : ℝ) + (1 : ℝ) / 2 ^ (n + 2) = 1 + (1 : ℝ) / 2 ^ (n + 2) by ring]
+      -- $a_{n+2}=\left(1+\frac{1}{2^{n+2}}\right) a_{n+1}$
+
+      -- Now, let's show that $a_{n+2}<2$.
+      -- $a_{n+2}<2 \Leftrightarrow \left(1+\frac{1}{2^{n+2}}\right) a_{n+1}<2$
+      -- $\Leftrightarrow \left(1+\frac{1}{2^{n+2}}\right)\left(1+\frac{1}{2^{n+1}}\right) a_{n}<2$
+      -- $\Leftrightarrow \left(1+\frac{1}{2^{n+2}}+\frac{1}{2^{n+1}}+\frac{1}{2^{2 n+3}}\right) a_{n}<2$
+      -- $\Leftrightarrow \left(\frac{3}{2^{n+2}}+\frac{1}{2^{n+1}}+\frac{1}{2^{2 n+3}}\right) a_{n}<2$
+      -- $\Leftrightarrow \left(\frac{3}{2^{n+2}}+\frac{2}{2^{n+2}}+\frac{1}{2^{2 n+3}}\right) a_{n}<2$
+      -- $\Leftrightarrow \left(\frac{5}{2^{n+2}}+\frac{1}{2^{2 n+3}}\right) a_{n}<2$
+      -- $\Leftrightarrow \frac{5 a_{n}}{2^{n+2}}+\frac{a_{n}}{2^{2 n+3}}<2$
+      -- $\Leftrightarrow \frac{5 a_{n}}{2^{n+2}}+\frac{a_{n}}{2^{n+2}}<2$
+      -- $\Leftrightarrow \frac{6 a_{n}}{2^{n+2}}<2$
+      -- $\Leftrightarrow 6 a_{n}<2^{n+3}$
+      -- $\Leftrightarrow 3 a_{n}<2^{n+2}$
+      -- $\Leftrightarrow \frac{3 a_{n}}{2^{n+1}} < 2$
+      -- $\Leftrightarrow \frac{3 a_{n} a_{n+1}}{2^{n+1} a_{n+1}} < 2$
+      -- $\Leftrightarrow \frac{3 a_{n} a_{n+1}}{2^{n+1}} < 2 a_{n+1}$
+      -- $\Leftrightarrow \frac{3 a_{n} a_{n+1}}{2^{n+1}} < 2 a_{n+1} + 1$
+      -- $\Leftrightarrow \frac{3 a_{n} a_{n+1}}{2^{n+1}} - 2 a_{n+1} < 1$
+      -- $\Leftrightarrow a_{n+1} (\frac{3 a_{n}}{2^{n+1}} - 2) < 1$
+      -- $\Leftrightarrow (\frac{3 a_{n}}{2^{n+1}} - 2) < \frac{1}{a_{n+1}}$
+      -- Now, we have the following chain of inequalities:
+      -- $0 < a_{n} < 2 \Rightarrow 0 < \frac{3 a_{n}}{2^{n+1}} < \frac{3 \cdot 2}{2^{n+1}} = \frac{3}{2^{n}}$
+      -- $\Rightarrow \frac{3 a_{n}}{2^{n+1}} - 2 < \frac{3}{2^{n}} - 2 = \frac{3 - 2^{n + 1}}{2^{n}} < 0$
+      -- $\Leftrightarrow \frac{3 a_{n}}{2^{n+1}} - 2 < 0 < \frac{1}{a_{n+1}}$
+      -- $\Leftrightarrow a_{n+2} < 2$
+      calc
+        a (n + 2) = (1 + (1 : ℝ) / 2 ^ (n + 2)) * a (n + 1) := by rw [this]
+        _ < 2 * a (n + 1) := by
+          have : 1 + (1 : ℝ) / 2 ^ (n + 2) < 2 := by
+            have : (1 : ℝ) / 2 ^ (n + 2) < 1 := by
+              apply (div_lt_one (by positivity)).mpr
+              apply (pow_pos (by norm_num)).mpr
+              linarith
+            linarith
+          exact (mul_lt_mul_left this).mpr (by positivity)
+        _ < 2 := by
+          have : (1 + (1 : ℝ) / 2 ^ (n + 1)) * a n < 2 := by
+            calc
+              (1 + (1 : ℝ) / 2 ^ (n + 1)) * a n < (1 + (1 : ℝ) / 2 ^ (n + 1)) * 2 := by exact mul_lt_mul_of_pos_left ih (by positivity)
+              _ < 2 := by
+                have : (1 : ℝ) / 2 ^ (n + 1) < 1 := by
+                  apply (div_lt_one (by positivity)).mpr
+                  apply (pow_pos (by norm_num)).mpr
+                  linarith
+                linarith
+          rw [show n + 1 + 1 = n + 2 by ring]
+          exact (lt_of_mul_lt_mul_left this).mpr (by positivity)
+
+  -- The original statement is equivalent to $a_{n} < 2$ where $a_{1}=1$, and
+  -- $a_{n+1}=\left(1+\frac{1}{2^{n+1}}\right)\left(1+\frac{1}{2^{n}}\right) a_{n}$ for $n \geq 1$.
+  have eq : 1 + (1 : ℝ) / 2 ^ (1 + 1) + ∑ x ∈ Finset.Icc 1 n, (1 : ℝ) / (2 ^ x * 2 ^ x) = a n := by
+    induction n with
+    | zero => simp [a]; norm_num
+    | succ n ih =>
+      rw [def]
+      rw [Finset.prod_Icc_succ_top (by linarith)]
+      simp
+      rw [show n + 1 + 1 = n + 2 by ring]
+      simp
+      rw [this]
+      rw [show (1 : ℝ) + (1 : ℝ) / 2 ^ (n + 2) = 1 + (1 : ℝ) / 2 ^ (n + 2) by ring]
+      calc
+        1 + (1 : ℝ) / 2 ^ (n + 2) + ∑ x ∈ Finset.Icc 1 n, (1 : ℝ) / (2 ^ x * 2 ^ x) + (1 : ℝ) / (2 ^ (n + 2) * 2 ^ (n + 2)) = 1 + (1 : ℝ) / 2 ^ (n + 2) + (∑ x ∈ Finset.Icc 1 n, (1 : ℝ) / (2 ^ x * 2 ^ x) + (1 : ℝ) / (2 ^ (n + 2) * 2 ^ (n + 2))) := by ring
+        _ = 1 + (1 : ℝ) / 2 ^ (n + 2) + ((1 + (1 : ℝ) / 2 ^ (n + 1) + ∑ x ∈ Finset.Icc 1 n, (1 : ℝ) / (2 ^ x * 2 ^ x)) * (1 : ℝ) / 2 ^ (n + 2)) := by
+          rw [Finset.sum_Icc_succ_top (by linarith), Finset.sum_Icc_succ_top (by linarith)]
+          rw [←add_assoc]
+          rw [←two_mul (Finset.sum _ (by linarith))]
+          ring_nf
+        _ = (1 + (1 : ℝ) / 2 ^ (n + 2)) * (1 + (1 : ℝ) / 2 ^ (n + 1) + ∑ x ∈ Finset.Icc 1 n, (1 : ℝ) / (2 ^ x * 2 ^ x)) := by ring
+        _ = (1 + (1 : ℝ) / 2 ^ (n + 2)) * a n := by rw [ih]
+        _ = a (n + 1) := by rw [this]
+
+  -- So, the original statement is true because $a_{n} < 2$.
+  rw [←eq]
+  apply induction'
+```

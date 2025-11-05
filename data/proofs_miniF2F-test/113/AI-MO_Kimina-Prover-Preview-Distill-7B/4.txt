@@ -1,0 +1,90 @@
+-- First, notice that if we can show that $\sum_{k=2}^\infty \frac{1}{\sqrt{k}} < 198$, then we can conclude that $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} < 198$.
+  suffices ∑ k in Finset.Icc 2 ∞, 1 / Real.sqrt k < 198 by
+    -- Because $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} < \sum_{k=2}^\infty \frac{1}{\sqrt{k}} < 198$.
+    simpa
+
+  -- To show that $\sum_{k=2}^\infty \frac{1}{\sqrt{k}} < 198$, notice that $\sum_{k=2}^\infty \frac{1}{\sqrt{k}} < \sum_{k=2}^\infty \frac{1}{\sqrt{k(k-1)}}$.
+  suffices ∑ k in Finset.Icc 2 ∞, 1 / Real.sqrt (k : ℤ) < 198 by
+    -- Because $\sum_{k=2}^\infty \frac{1}{\sqrt{k}} < \sum_{k=2}^\infty \frac{1}{\sqrt{k(k-1)}} < 198$.
+    simpa
+
+  -- And $\sum_{k=2}^\infty \frac{1}{\sqrt{k(k-1)}}$ is a telescoping sum.
+  have h : ∑ k in Finset.Icc 2 ∞, 1 / Real.sqrt (k : ℤ) = ∑ k in Finset.Icc 2 ∞, ((1 : ℝ) / √(k - 1) - 1 / √k) := by
+    -- We can sum over $\mathbb{N}$, and the terms would be the same.
+    have : ∑ k in Finset.Icc 2 ∞, 1 / Real.sqrt (k : ℤ) = ∑ k in Finset.Icc 2 ∞, 1 / Real.sqrt (k : ℕ) := by
+      simp only [Int.cast_ofNat]
+    rw[this]
+    -- It is a telescoping sum, because if we denote $H_n = \sum_{k=1}^n \frac{1}{\sqrt{k}}$, then $\sum_{k=1}^n \frac{1}{\sqrt{k(k-1)}} = H_n - 1$.
+    have : ∑ k in Finset.Icc 2 ∞, 1 / Real.sqrt (k : ℕ) = ∑ k in Finset.Icc 2 ∞, ((1 : ℝ) / √(k - 1) - 1 / √k) := by
+      -- It is a standard telescoping sum.
+      let f : ℕ → ℝ := fun n => 1 / √n
+      have : ∀ k ∈ Finset.Icc 2 ∞, 1 / Real.sqrt (k : ℕ) = f (k - 1) - f k := by
+        intro k hk
+        simp only [Finset.mem_Icc] at hk
+        simp only [f]
+        -- It is a standard manipulation of the telescoping sum.
+        have h1 : (k : ℝ) - 1 = (k - 1 : ℕ) := by
+          simp only [Nat.cast_sub]
+          linarith
+        rw[Real.sqrt_eq_iff_eq_sq] <;> (try norm_num) <;> (try linarith)
+      rw[Finset.sum_bij (· - 1) (fun k => 1 / √(k - 1) - 1 / √k) (fun i j ↦ i - j = 1) (fun k hk ↦ this k hk)]
+      · have : ∃r, ↑(2 : ℕ) - 1 = r + 1 := by
+          apply Nat.sub_one_lt_iff.mpr
+          simp only [Nat.cast_ofNat]
+        rcases this with ⟨r, hr⟩
+        simp only [Finset.mem_Icc, Finset.mem_Ico] at hr
+        use r
+        simpa using hr
+      · -- It is a standard telescoping sum.
+        intro k
+        simp only [Finset.mem_Icc] at hr
+        simp only [f, this, Nat.cast_sub]
+        rw[← Nat.cast_id, ← Nat.cast_add, Nat.cast_inj]
+        linarith
+    rw[this]
+
+  -- So we only need to show that $\sum_{k=2}^\infty \left( \frac{1}{\sqrt{k-1}} - \frac{1}{\sqrt{k}} \right) < 198$.
+  rw[h]
+
+  -- Notice that $\sum_{k=2}^N \left( \frac{1}{\sqrt{k-1}} - \frac{1}{\sqrt{k}} \right) = 1 - \frac{1}{\sqrt{N}}$.
+  have (N : ℕ) : ∑ k in Finset.Icc 2 N, ((1 : ℝ) / √(k - 1) - 1 / √k) = 1 - 1 / √N := by
+    -- It is a standard telescoping sum.
+    induction N with
+    | zero =>
+      -- The base case.
+      simp only [add_zero, Finset.Icc_eq_empty_of_lt, Finset.sum_empty, zero_add]
+      symm
+      apply (div_eq_iff (by norm_num)).mpr
+      rw[← Real.sqrt_eq_iff_eq_sq] <;> (try norm_num) <;> (try linarith)
+    | succ N ih =>
+      -- The inductive step.
+      rw[Finset.sum_Icc_succ_top (by linarith), Finset.sum_Icc_succ_top (by linarith), ih]
+      ring_nf
+      rw[← Real.sqrt_eq_iff_eq_sq] <;> (try norm_num) <;> (try linarith)
+
+  -- So $\sum_{k=2}^\infty \left( \frac{1}{\sqrt{k-1}} - \frac{1}{\sqrt{k}} \right) = 1 - \lim_{N \to \infty} \frac{1}{\sqrt{N}} = 1$.
+  have : ∑ k in Finset.Icc 2 ∞, ((1 : ℝ) / √(k - 1) - 1 / √k) = 1 := by
+    rw[Finset.sum_eq_sInf]
+    -- It is a standard fact that $\lim_{N \to \infty} \frac{1}{\sqrt{N}} = 0$.
+    have : ∀ b : ℕ, 1 / Real.sqrt (b : ℕ) ≤ 1 := by
+      intro b
+      apply (div_le_one (by norm_num)).mpr
+      apply Real.sqrt_le_left (by norm_num)
+    simp only [Set.mem_setOf_eq, implies_true, and_true, isUnit_one, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, IsUnit.inv_mul_self, one_mul]
+    intro b
+    -- It is a standard fact that $\lim_{N \to \infty} \frac{1}{\sqrt{N}} = 0$.
+    have : Real.sqrt (b : ℕ) ≥ Real.sqrt 1 := by
+      apply Real.sqrt_le_sqrt
+      simp only [Nat.cast_le, one_le_ofNat]
+    replace this : Real.sqrt (b : ℕ) > 0 := by
+      apply Real.sqrt_pos_of_pos (by norm_num)
+    apply lt_of_le_of_lt
+    · exact this
+    · apply one_lt_inv_of_lt
+      · exact this
+      · norm_num
+
+  -- So $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} < 198$.
+  rw[this]
+  norm_num
+```

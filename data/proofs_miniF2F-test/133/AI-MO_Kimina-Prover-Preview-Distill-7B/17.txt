@@ -1,0 +1,47 @@
+-- The first lemma : if $p$ is a prime number, then $p$ divides $p!$.
+  have factp : p ∣ p.factorial := by
+    exact dvd_factorial (by linarith) h₁
+
+  -- The second lemma : if $p$ is a prime number and $b$ is an integer such that $p$ does
+  -- not divide $b$, then $p$ divides $b ^ {p - 1} - 1$.
+  have small_fermat : ∀ b, ¬ p ∣ b → p ∣ b ^ (p - 1) - 1 := by
+    intro b hb
+    have : b ^ p = b * b ^ (p - 1) := by
+      rw [pow_succ]
+      ring
+    rw [this]
+
+    -- We have $p$ divides $p!$, and $p$ does not divide $b$, so $p$ divides
+    -- $b ^ p - (p! / p) * b$.
+    have : p ∣ (p.factorial / p) * b := by
+      refine dvd_mul_of_dvd_left?_ b
+      refine dvd_div_of_dvd?_
+      exact dvd_trans factp (pow_dvd_pow _ (by linarith))
+
+    -- $p$ divides $b ^ p - (p! / p) * b$ and $p$ divides $p!$, so $p$ divides
+    -- $b ^ p - (p! / p) * b - (p! / p) * b = $ $b ^ p - 2 * (p! / p) * b$.
+    have : p ∣ b ^ p - 2 * (p.factorial / p) * b := by
+      exact (Nat.dvd_sub_iff_right this).mpr factp
+
+    -- $p$ divides $b ^ p - 2 * (p! / p) * b$ and $p$ divides $2 * (p! / p) * b$,
+    -- so $p$ divides $b ^ p - 2 * (p! / p) * b + 2 * (p! / p) * b = b ^ p$.
+    have : p ∣ b ^ p - 2 * (p.factorial / p) * b + 2 * (p.factorial / p) * b := by
+      exact Nat.dvd_add ((Nat.dvd_sub_iff_right this).mpr factp) (dvd_mul_left _ _)
+
+    -- By the above proposition, $p$ divides $b ^ p$ implies $p$ divides $b ^ {p - 1} - 1$.
+    exact Nat.dvd_of_dvd_mul_left (by positivity) this
+
+  -- We need to consider the cases when $a$ is divisible by $p$ and when $a$ is not.
+  by_cases h : p ∣ a
+
+  -- If $p$ divides $a$, then $p$ divides $a ^ p$ and $p$ divides $a ^ p - a$.
+  · apply dvd_sub (dvd_pow h) (dvd_trans h h₀)
+
+  -- If $p$ does not divide $a$, then by the second lemma above, $p$ divides $a ^ {p - 1} - 1$.
+  · have := small_fermat a h
+
+    -- Multiplying both sides of $p$ divides $a ^ {p - 1} - 1$ by $a$ gives that $p$ divides
+    -- $a ^ p - a$.
+    exact Nat.dvd_mul_left a ((Nat.dvd_sub_iff_right (dvd_pow_self h₁ (a := a ^ (p - 1)))).mp this)
+
+```

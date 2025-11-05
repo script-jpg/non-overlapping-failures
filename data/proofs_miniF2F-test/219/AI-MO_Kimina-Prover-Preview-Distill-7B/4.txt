@@ -1,0 +1,115 @@
+-- pretty odd, doesn't seem to have a pattern
+  -- try some examples:
+  -- n=0: 1
+  -- n=1: 1*1 + 3*8 = 25
+  -- n=2: 1*1 + 3*8 + 5*64 = 361
+  -- n=3: 1*1 + 3*8 + 5*64 + 7*512 = 4225
+  -- n=4: 1*1 + 3*8 + 5*64 + 7*512 + 9*4096 = 43201
+  -- n=5: 1*1 + 3*8 + 5*64 + 7*512 + 9*4096 + 11*32768 = 396025
+  -- yes, still not divisible by 5, now prove it!
+
+  -- set up the lemma for clear denominator
+  have l_1 (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = 2 * ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)  / 2 := by
+    simp [Nat.mod_eq_add_mod, Nat.add_mod, Nat.mul_mod, Nat.mod_mod]
+
+  -- extract denominator
+  have l_2 (n : ℕ) : 2 ∣ ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 := by
+    induction' n with n ih
+    · simp [Finset.sum_range_succ]
+    · rw [Finset.sum_range_succ]
+      rw [Nat.mul_div_assoc]
+      simp [Nat.mul_mod, pow_succ]
+      rw [Nat.mod_eq_add_mod, Nat.add_mod, Nat.mul_mod, Nat.mod_mod]
+      rw [ih, Nat.mul_div_assoc]
+      apply Nat.mod_eq_of_modEq?_ rfl
+      rw [Nat.mul_mod, Nat.mod_mod]
+      norm_num
+      ring_nf
+
+  -- divide denominator in half and multiply
+  have l_3 (n : ℕ) : 2 * (∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2) = ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+    simp [Nat.mod_eq_add_mod, Nat.add_mod, Nat.mul_mod, Nat.mod_mod]
+
+  -- prepare to use induction
+  have l_4 (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2 = ∑ k in Finset.range n, Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2 + Nat.choose (2 * n + 1) (2 * n + 1) * 2 ^ (3 * n) / 2 / 2 := by
+    rw [Finset.sum_range_succ, Finset.mem_range_self, add_comm]
+    simp [Nat.mul_div_assoc]
+    ring_nf
+    simp [Nat.mul_div_assoc]
+    ring_nf
+
+  -- extract the last term
+  have l_5 (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 = ∑ k in Finset.range n, Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 + Nat.choose (2 * n + 1) (2 * n + 1) * 2 ^ (3 * n) / 2 := by
+    rw [Finset.sum_range_succ, Finset.mem_range_self, add_comm]
+    simp [Nat.mul_div_assoc]
+    ring_nf
+    simp [Nat.mul_div_assoc]
+    ring_nf
+  
+  -- cancel the division to prepare for induction
+  have l_6 (n : ℕ) : 2 * (∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2) = 2 * (∑ k in Finset.range n, Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2 + Nat.choose (2 * n + 1) (2 * n + 1) * 2 ^ (3 * n) / 2 / 2) := by
+    rw [l_4, l_5]
+  
+  -- clear denominator and apply induction hypothesis
+  have l_7 (n : ℕ) : 2 * (∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2) = 2 * (∑ k in Finset.range n, Nat.choose (2 * k + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2 + 1) := by
+    apply Nat induction (n := n) 
+    · simp [Finset.sum_range_succ, Nat.mul_div_assoc]
+    · rw [Finset.sum_range_succ, Finset.mem_range_self, add_comm]
+      simp [Nat.mul_div_assoc]
+      ring_nf
+      rw [Nat.mul_div_assoc]
+      ring_nf
+      simp [Nat.mul_div_assoc]
+      ring_nf
+  
+  -- now we sum up the series, and the sum equals 2 * (sum of half terms + 1), we show this is not divisible by 5 then the original sum is not divisible by 5
+  have l_8 (n : ℕ) : 2 * (∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2) = 2 * (∑ k in Finset.range n, Nat.choose (2 * k + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2) + 2 := by
+    simp [Finset.sum_range_succ, Nat.mul_div_assoc]
+    ring_nf
+    simp [Nat.mul_div_assoc]
+    ring_nf
+    simp [Nat.mul_div_assoc]
+    ring_nf
+  
+  -- the sum of half terms is always a positive integer, then the original sum is even
+  have l_9 (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2 > 0 := by
+    apply Nat.lt_of_sub_ne_zero
+    apply Nat.ne_of_gt
+    apply Finset.sum_pos
+    · simp
+    · intro x hx
+      simp at hx
+      apply Nat.zero_lt_of_ne_zero
+      apply Nat.choose_pos
+      linarith
+      linarith
+      simp
+    · simp
+  rw [l_1]
+  -- if 5 divides the sum, then it must be equal to 0
+  by_contra! h
+  -- the sum equals 2*(sum/2 + 1), the sum/2 + 1 must be even, and the sum/2 must be odd
+  have l_10 : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2 = 2 * (∑ k in Finset.range n, Nat.choose (2 * k + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2) + 1 := by
+    linarith
+  -- the sum/2 + 1 must be even, and the sum/2 must be odd
+  have l_11 : ∑ k in Finset.range n, Nat.choose (2 * k + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2 = (∑ k in Finset.range n, Nat.choose (2 * k + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2) := by
+    linarith
+  have l_12 : (∑ k in Finset.range n, Nat.choose (2 * k + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2) % 2 = 1 := by
+    rw [l_10, Nat.add_mod, Nat.mul_mod, Nat.mod_self, Nat.zero_mul, Nat.zero_mod, Nat.one_mul]
+    rw [Nat.odd_iff, Nat.add_comm, Nat.add_mod, Nat.mod_self, Nat.zero_add, Nat.not_even_iff_odd, Nat.odd_iff]
+    apply Nat.odd_mul_right
+    rw [Nat.odd_iff, Nat.add_comm, Nat.add_mod, Nat.mod_self, Nat.zero_add, Nat.not_even_iff_odd, Nat.odd_iff]
+    apply Nat.odd_mul_right
+    rw [Nat.odd_iff, Nat.add_comm, Nat.add_mod, Nat.mod_self, Nat.zero_add, Nat.not_even_iff_odd, Nat.odd_iff]
+    apply Nat.odd_pow
+    linarith
+  have l_13 : (∑ k in Finset.range n, Nat.choose (2 * k + 1) (2 * k + 1) * 2 ^ (3 * k) / 2 / 2) % 2 = 0 := by
+    rw [l_11, Nat.add_mod, Nat.mul_mod, Nat.mod_self, Nat.zero_mul, Nat.zero_mod, Nat.one_mul]
+    rw [Nat.even_iff, Nat.add_comm, Nat.add_mod, Nat.mod_self, Nat.zero_add, Nat.not_odd_iff_even, Nat.even_iff]
+    apply Nat.even_mul_right
+    rw [Nat.even_iff, Nat.add_comm, Nat.add_mod, Nat.mod_self, Nat.zero_add, Nat.not_odd_iff_even, Nat.even_iff]
+    apply Nat.even_pow
+    linarith
+  -- the assumption is wrong and the theorem holds
+  omega
+```

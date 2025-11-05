@@ -1,0 +1,35 @@
+-- Proof by contradiction
+  by_contra! h
+
+  -- Lemma: If $n = n_1 \cdot n_2$ where $n_1, n_2 > 0$, then $2^n - 1 = (2^{n_1} - 1)(2^{n_1 \cdot n_2 - n_1} + 2^{n_1 \cdot n_2 - 2n_1} + \cdots + 2^{n_1} + 1)$
+  have h2 {n₁ n₂ : ℕ} (h : n = n₁ * n₂) (hn₁ : 0 < n₁) (hn₂ : 0 < n₂) : 2 ^ n - 1 = (2 ^ n₁ - 1) * ∑ i in Finset.Ico 0 n₂, 2 ^ (n₁ * i) := by
+    rw [h]
+    induction n₂ with
+    | zero => simp
+    | succ n₂ ih =>
+      rw [Finset.sum_Ico_succ_top (by omega), pow_mul, ← add_mul, ih, pow_mul, mul_assoc, mul_comm]
+      ring_nf
+      rw [← pow_add, add_comm]
+
+  -- Since $n$ is not prime, we can write $n = n_1 \cdot n_2$ where $n_1, n_2 > 0$ and $n_2 < n$
+  have h3 : ∃ n₁ n₂, n = n₁ * n₂ ∧ 0 < n₁ ∧ 0 < n₂ ∧ n₂ < n := by
+    rcases h with ⟨n₁, n₂, hhn, hn₁, hn₂⟩ | ⟨n₁, n₂, hhn, hn₁, hn₂⟩
+    · exact ⟨n₂, n₁, by nlinarith, by omega, by omega, by nlinarith⟩
+    · exact ⟨n₁, n₂, by nlinarith, by omega, by omega, by nlinarith⟩
+
+  -- We prove that $2^n - 1$ is not prime, which contradicts our assumption
+  have h4 : ¬ Nat.Prime (2 ^ n - 1) :
+      ∃ n₁ n₂, n = n₁ * n₂ ∧ 0 < n₁ ∧ 0 < n₂ ∧ n₂ < n ∧ Nat.Prime (2 ^ n - 1) := by
+    use n₂, n₁
+    rw [Nat.mem_divisors, Nat.mem_divisors]
+    refine ⟨?_, by omega, by omega, by nlinarith, h₁⟩
+    rw [Nat.div_id_eq]
+    nlinarith
+
+  simp at h4
+
+  -- The contradiction is complete
+  rcases h4 with ⟨n₁, n₂, hhn, hn₁, hn₂, hn₂n, h₁⟩
+  exact h hn₁ hn₂ hn₂n h₁
+
+```

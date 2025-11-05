@@ -1,0 +1,89 @@
+-- We want to compute the product of all positive odd integers less than $10000$.
+  -- We first note that this product can be expressed as $\dfrac{10000!}{2^{5000} \cdot 5000!}$$.
+  have : Fact (Nat.Prime 2) : Nat.Prime 2 := by norm_num
+
+  -- To see this, consider the $2$-adic valuation of both sides.
+  have h2 ((n : ℕ) : Finset ℕ) : ¬Even n → 2_val n = n.factorization 2 := by
+    intro hn
+    rw [Nat.ord_proj_eq_ord_nine]
+    · have : n / 2 ∣ n := by exact Nat.div_dvd_of_mod_eq_zero hn
+      have := Nat.factorization_mul this (show ¬Even (n / 2) by intro h; apply hn; exact even_iff_two_dvd.mp h)
+      simp at this
+      have : (n / 2).factorization 2 = 0 := by
+        intro m hm
+        rw [Nat.factorization_eq_zero_iff] at hm
+        apply hm
+        exact even_iff_two_dvd.mp hn
+      rw [Nat.factorization_mul (by exact Nat.not_prime_zero (by norm_num)) this]
+      simp
+    · exact Even.two_dvd n
+
+  -- More precisely, the product of all positive odd integers less than $10000$ is
+  -- $$\prod_{\substack{n < 10000 \\ n \ odd}} n = \dfrac{10000!}{\prod_{\substack{n < 10000 \\ n \ even}} n} = \dfrac{10000!}{2^{5000} \cdot 5000!}$$
+  have h2_card (f : ℕ → ℕ) (a : ℕ) : ¬Even (f a) →
+      2 ^ (a + 1) ∣ a.factorial →
+      2 ^ (a + 1) * ∏ x ∈ Finset.filter (fun x => ¬Even x) (Finset.range a), f x ∣ a.factorial / (2 ^ (a + 1) * (∏ x ∈ Finset.filter (fun x => ¬Even x) (Finset.range a), f x))) := by
+    intro h_even h_div
+    have h_prod : ∏ x ∈ Finset.filter (fun x => ¬Even x) (Finset.range a), f x ∣ a.factorial / 2 ^ (a + 1) := by
+      apply Nat.mul_dvd_mul_left
+      apply Nat.dvd_div_of_mul_dvd
+      exact Nat.pow_dvd_pow 2 h_div
+      exact h_even
+    have h : 2 ^ (a + 1) * ∏ x ∈ Finset.filter (fun x => ¬Even x) (Finset.range a), f x ∣ a.factorial / (2 ^ (a + 1) * (∏ x ∈ Finset.filter (fun x => ¬Even x) (Finset.range a), f x))) := by
+      apply Nat.mul_dvd_mul_left
+      apply Nat.dvd_div_of_mul_dvd
+      rw [Nat.mul_comm]
+      exact h_prod
+      apply Odd.odd_of_not_even
+      exact h_even
+    exact h
+
+  -- We verify that $\prod_{\substack{n < 10000 \\ n \ odd}} n = \dfrac{10000!}{2^{5000} \cdot 5000!}$.
+  have h2_prod ((n : ℕ) : Finset ℕ) : ¬Even n →
+      n.card = 5000 →
+      (fun (p : ℕ × ℕ) => p.1) '' n = Finset.range 5000 →
+      ∏ x ∈ n, x = n.factorial / (2 ^ 5000 * 5000!) := by
+    intro h_even hn h_image
+    have h_card : Nat.card n = 5000 := by exact hn
+    have h2 even_n : 2 ^ (n.card + 1) ∣ n.factorial := by
+      rw [Nat.card_eq_succ_iff]
+      have h2 := @Nat.pow_dvd_mul n 2 (n.card - 1) (by rw [Nat.sub_add_cancel]; exact hn)
+      have h3 : 2 ^ (n.card - 1 + 1) ∣ n.factorial := by
+        rw [Nat.add_sub_cancel, Nat.pow_succ]
+        exact h2
+      have h4 : 2 ^ (n.card + 1) ∣ 2 ^ (n.card - 1 + 1) := by
+        apply Nat.pow_dvd_pow _ (by rw [Nat.sub_add_cancel]; exact hn)
+      exact Nat.dvd_trans h4 h3
+    have h2' := h2_card (fun x => x) n h_even h2
+    have h2'' : ∏ x ∈ n, x = n.factorial / 2 ^ (n.card + 1) * (∏ x ∈ n, x) := by
+      nth_rw 1 [←Finset.prod n (fun x => x)]
+      exact Eq.symm (Finset.prod_div_mul n (fun x => x) h2_card)
+    rw [h2''] at h2'
+    have h2''' : 2 ^ (n.card + 1) * (∏ x ∈ n, x) = n.factorial := by
+      exact (div_eq_iff_eq_mul h2').mp rfl
+    rw [h2'''] at h2'
+    exact h2'
+  rw [eq_comm]
+  -- Then, we evaluate this product to get our final answer.
+  have h_eval : ∏ x ∈ Finset.filter (fun x => ¬Even x) (Finset.range 10000), (fun (p : ℕ × ℕ) => p.1) x = 5000! := by
+    rw [Finset.prod_congr (Eq.refl _) (fun x _ => Nat.odd_iff.2 (⟨x.1 / 2 - 1, by calc x.1 = 2 * (x.1 / 2) + 1 := by rw [Nat.even_iff] at x.2; exact x.2; simp; apply Nat.le_mul_self; simp)]
+      (fun x _ => Nat.even_iff.2 (⟨x.1 / 2, by calc x.1 = 2 * (x.1 / 2) + 1 := by rw [Nat.even_iff] at x.2; exact x.2; simp; apply Nat.le_mul_self; simp⟩)))
+    · rw [←Finset.sum_add_distrib]
+      have h_sum : ∑ x ∈ Finset.range 5000, x = 5000 * 4999 / 2 := by
+        rw [Finset.sum_range_id, Nat.mul_comm]
+        simp
+      have h_card : Nat.card (Finset.range 5000) = 5000 := by
+        simp
+      rw [h_sum, h_card]
+      norm_num
+    · intro x hx
+      simp at hx
+      obtain ⟨a, ha⟩ := (Nat.exists_eq_add_of_le' hx.2).mp hx.1
+      rw [←ha.2]
+      exact ⟨a / 2 - 1, by calc a / 2 - 1 < a / 2 := by apply Nat.sub_lt; exact Nat.le_mul_self a; norm_num
+          _ ≤ a / 2 + 1 := by apply Nat.le_add_right; exact Nat.le_mul_self a; norm_num⟩
+  rw [h_eval]
+  simp
+  rw [Nat.odd_iff]
+  exact ⟨⟨5000! / 2 ^ 5000, by simp⟩, by simp⟩
+```

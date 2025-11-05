@@ -1,0 +1,83 @@
+-- We have coprime conditions on $n^2 - n + 41$ and $n^2 + 3n + 41$.
+  have : n ^ 6 + n ^ 5 + n ^ 4 - n ^ 3 - n ^ 2 - n + 41 = n ^ 2 * (n ^ 4 + 3 * n ^ 2 + 41) - (n ^ 2 - n + 41) := by ring
+  have : 41 * (n ^ 4 + n ^ 2 + 1) = (n ^ 2 - n + 41) * (n ^ 2 + 3 * n + 41) - (n ^ 2 - n + 41) := by ring
+
+    -- We need to show that if $1 < (p(n), p(n+1))$, then $41 \leq n$. We have two expressions
+    -- $n^2 - n + 41 = (n+1)^2 - (n+1) + 41 - 2n$ and $n^2 - n + 41 = (n-8)^2 - (n-8) + 41 - 16(n-8)$.
+
+  by_contra! h
+
+    -- If $1 < (n^2 - n + 41, n^2 + 3n + 41)$, then they share a prime factor $p$. And $41 < p$
+    -- because $41$ is prime and $41 \nmid n^2 - n + 41$. So $p \in \{n, n+1, n-8, (n-8)^2 + 3n - 23\}$
+    -- by the four expressions above. And $p \notin \{n, n+1, n-8\}$ because $p > 1$ and $p \nmid n^2 - n + 41$.
+    obtain ⟨p, h1, h2, hnp, h4⟩ : ∃ p : ℕ, p.Prime ∧ p ∣ n ^ 2 - n + 41 ∧ p ∣ n ^ 2 + 3 * n + 41 ∧ 1 < p := by
+      obtain ⟨⟨p, h1⟩, h2⟩ := Nat.exists_prime_and_dvd h₁
+      have h3 : p ∣ n ^ 2 - n + 41 := by
+        rw [<-h₀, <-h₀] at h2
+        convert h2 using 1
+        ring
+      have h4 : p ∣ n ^ 2 + 3 * n + 41 := by
+        rw [<-h₀, <-h₀] at h2
+        convert h2 using 1
+        ring
+      have h5 : 1 < p := by
+        rw [h1]
+        exact Nat.Prime.one_lt h1
+      exact ⟨p, h1, h3, h4, h5⟩
+
+    -- $p \mid (n+1)^2 - (n+1) + 41 - (n^2 - n + 41) = 2n + 41$
+    have h3 : p ∣ 2 * n + 41 := by
+      have c1 : p ∣ (n + 1) ^ 2 - (n + 1) + 41 := by
+        rw [<-h₀]
+        convert h2 using 1
+        ring
+      have c2 := Nat.dvd_sub' h3 c1
+      rw [<-h₀, <-h₀] at c2
+      convert c2 using 1
+      ring
+
+    -- $p \mid (n-8)^2 + 3n - 23 - (n^2 - n + 41) = 4n - 23$
+    have h4 : p ∣ 4 * n - 23 := by
+      have c1 : p ∣ (n - 8) ^ 2 - (n - 8) + 41 := by
+        rw [<-h₀]
+        convert h3 using 1
+        ring
+      have c2 := Nat.dvd_sub' h4 c1
+      rw [<-h₀, <-h₀] at c2
+      convert c2 using 1
+      ring
+
+    -- $p \mid 4n - 23 - 2(2n + 41) = 105$
+    have h5 : p ∣ 105 := by
+      have c1 : p ∣ 2 * (2 * n + 41) := by
+        rw [<-h3]
+        exact Nat.dvd_mul_left (2 * n + 41) 2
+      have c2 := Nat.dvd_sub' h4 c1
+      convert c2 using 1
+      ring
+
+    -- Since $p \mid 105$, $p \in \{3, 5, 7, 11, 13, 17, 21, 31, 35, 61, 105\}$
+    have h6 : p ∈ ({3, 5, 7, 11, 13, 17, 21, 31, 35, 61, 105} : Finset ℕ) := by
+      have c1 : p ≤ 105 := by
+        exact Nat.le_of_dvd (by norm_num) h5
+      have c2 : p ∈ ({3, 5, 7, 11, 13, 17, 21, 31, 35, 61, 105} : Finset ℕ) :=
+        Nat.mem_divisors.mpr ⟨h5, by norm_num; norm_num; c1⟩
+      exact c2
+
+    -- However, $p > 41$ since $41 \nmid n^2 - n + 41$ (as $41 \nmid n$), and therefore $p \notin
+    -- \{3, 5, 7, 11, 13, 17, 21, 31, 35, 61, 105\}$, a contradiction.
+    have h7 : p ∉ ({3, 5, 7, 11, 13, 17, 21, 31, 35, 61, 105} : Finset ℕ) := by
+      intro contra
+      by_contra!
+      have : p ∣ n := by
+        rw [<-h₀]
+        exact Nat.dvd_add h3 (Nat.dvd_refl n ^ 2)
+      have : p ∣ 41 := by
+        exact (Nat.Prime.dvd_mul h1).mp this
+      have : p = 41 := by
+        exact (Nat.prime_dvd_prime_iff_eq h1 rfl).mp this
+      rw [this] at contra
+      simp at contra
+    contradiction
+
+```

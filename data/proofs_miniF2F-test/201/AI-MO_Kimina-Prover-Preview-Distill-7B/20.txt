@@ -1,0 +1,230 @@
+-- First, we can rewrite the recurrence as a matrix multiplication.
+  -- We have:
+  -- a(n+1) = sqrt(3) * a(n) - b(n)
+  -- b(n+1) = sqrt(3) * b(n) + a(n)
+  --
+  -- This can be written as:
+  -- [ a(n+1) ]   [ sqrt(3)  -1 ] [ a(n) ]
+  -- [ b(n+1) ] = [  1    sqrt(3) ] [ b(n) ]
+  --
+  -- Therefore, we can define a matrix M = [ sqrt(3)  -1 ]
+  -- Let M be the 2x2 matrix [ sqrt(3)  -1 ]
+  -- Let I be the 2x2 identity matrix
+  -- Let v(n) be the column vector [ a(n) ]
+  -- Let w(n) be the column vector [ b(n) ]
+  --
+  -- Then, we have w(n+1) = M * v(n)
+  -- and v(n+1) = I * w(n)
+  --
+  -- Therefore, w(n+1) = M * v(n) = M * I * w(n) = M^2 * w(n)
+  -- Similarly, v(n+2) = I * w(n+1) = I * M * w(n) = M * w(n+1) = M * M^2 * w(n) = M^3 * w(n)
+  --
+  -- Thus, w(n+m) = M^m * w(n)
+  --
+  -- This means that:
+  -- w(100) = M^99 * w(1)
+  --
+  -- Thus, we need to compute M^99 * w(1) = w(100) = [ 2 ]
+  --                                                    [ 4 ]
+  --
+  -- Then, we need to find [ a(1) ]
+  --                           [ b(1) ]
+*wat
+
+  -- data type for 2-dimension vectors
+  let vector (a b : ℝ) := { a_1 : a, b_1 : b }
+
+  -- vector space operations
+  let zero := vector 0 0
+  let one := vector 1 1
+  let add (u v : vector a b) := vector (u_1 + v_1) (u_2 + v_2)
+  let mul (c : ℝ) (v : vector a b) := vector (c * v_1) (c * v_2)
+  let neg (v : vector a b) := vector (-v_1) (-v_2)
+  let inv (v : vector a b) := vector (1 / v_1) (1 / v_2)
+
+  -- norm for 2-dimension vector
+  let.norm (v : vector a b) := Real.sqrt (v_1 ^ 2 + v_2 ^ 2)
+
+  -- define the transformation M = [ sqrt(3)  -1 ]
+  let M := vector (Real.sqrt 3) (-1)
+  -- and M^2
+  let M2 := vector (Real.sqrt 3) (-1) <;> vector (1) (Real.sqrt 3)
+
+  -- auxilary lemmas about M and M^2
+  have M_ne_zero : M ≠ zero := by
+    norm_num
+  have M2_ne_zero : M2 ≠ zero := by
+    norm_num
+
+  -- let v(n) = [ a(n) ]
+  --    [ b(n) ]
+  -- we have v(n+1) = M * v(n)
+  -- thus, v(100) = M^99 * v(1)
+  -- so   v(1) = M^(-99) * v(100)
+  -- where M^(-99) = M^(-1)^99
+  -- and M^(-1) = [  -sqrt(3)/2    1/2 ]
+  --            [    1/2    sqrt(3)/2 ]
+  have M_invertible : IsInvertible M := by
+    apply Isomorphism.isInvertible
+    apply Equiv.ofBijective
+    · intro x
+      use vector (Real.sqrt 3 * x_1 - -1 * x_2)
+      simp [M]
+    · intro x
+      use vector (Real.sqrt 3 * x_1 - -1 * x_2)
+      simp [M]
+    · intro x y h
+      simp [M] at h
+      exact h
+
+  have M_inv_eq : M⁻¹ = vector (-(Real.sqrt 3) / 2) (1 / 2) <;> vector (1 / 2) (Real.sqrt 3 / 2) := by
+    apply Equiv.ofBijective
+    · intro x
+      simp [M]
+      replace h : Real.sqrt 3 * x.1 - -1 * x.2 = 2 * (1 / 2) ∧ -(1 * x.1) + Real.sqrt 3 * x.2 = 2 * (Real.sqrt 3 / 2) := by
+        constructor
+        · nth_rw 1 [← h.1]
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          ring_nf
+        · nth_rw 1 [← h.2]
+          ring
+      replace h.1 : Real.sqrt 3 * x.1 - -1 * x.2 = 2 * (1 / 2) := by
+        nth_rw 1 [← h.1]
+        ring
+      replace h.2 : -(1 * x.1) + Real.sqrt 3 * x.2 = 2 * (Real.sqrt 3 / 2) := by
+        nth_rw 1 [← h.2]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        ring_nf
+      constructor
+      · apply (div_eq_iff (by norm_num)).mp
+        nth_rw 2 [← h.1]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        ring_nf
+      · apply (div_eq_iff (by norm_num)).mp
+        nth_rw 2 [← h.2]
+        ring
+    · intro x
+      simp [M]
+      replace h : Real.sqrt 3 * x.1 - -1 * x.2 = 2 * (1 / 2) ∧ -(1 * x.1) + Real.sqrt 3 * x.2 = 2 * (Real.sqrt 3 / 2) := by
+        constructor
+        · nth_rw 1 [← h.1]
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          ring_nf
+        · nth_rw 1 [← h.2]
+          ring
+      replace h.1 : Real.sqrt 3 * x.1 - -1 * x.2 = 2 * (1 / 2) := by
+        nth_rw 1 [← h.1]
+        ring
+      replace h.2 : -(1 * x.1) + Real.sqrt 3 * x.2 = 2 * (Real.sqrt 3 / 2) := by
+        nth_rw 1 [← h.2]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        ring_nf
+      constructor
+      · apply (div_eq_iff (by norm_num)).mp
+        nth_rw 2 [← h.1]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        ring_nf
+      · apply (div_eq_iff (by norm_num)).mp
+        nth_rw 2 [← h.2]
+        ring
+  -- we have v(1) = M^(-99) * v(100)
+  have v1_eq : (M⁻¹) ^ 99 * (vector 2 4) = vector (a 1) (b 1) := by
+    -- w(100) = M^99 * w(1)
+    have w100_eq : vector 2 4 = M ^ 99 * (vector (a 1) (b 1)) := by
+      simp only [ vector.1, vector.2 ]
+      induction 99 with
+      | zero =>
+        simp only [ pow_zero, mul_one, all_goals norm_num]
+      | succ n ih =>
+        simp only [ pow_succ, mul_assoc, mul_one, zero_add, all_goals norm_num]
+        simp [M]
+        constructor
+        · simp [add]
+          ring
+        · simp [add]
+          ring
+    -- v(1) = M^(-99) * v(100)
+    apply_fun (M⁻¹ ^ 99) at w100_eq
+    simp only [mul_assoc, ← isUnit_iff_ne_zero, ne_eq, IsUnit.inv_mul_cancel_left,
+        IsUnit.nat_pow_inv, IsUnit.inv, zero_pow M2_ne_zero, one_mul, one_pow,
+        IsUnit.nat_pow_mul, mul_inv_cancel_right₀] at w100_eq
+    exact w100_eq
+
+  -- (M^2)^98 * M * v(1) = (M^(-1))^98 * (M^2)^99 * v(100)
+  have v1_eq' : (M⁻¹) ^ 98 * (M2 ^ 99) * (vector 2 4) = vector (a 1) (b 1) := by
+    calc
+      (M⁻¹) ^ 98 * (M2 ^ 99) * (vector 2 4) = (M⁻¹) ^ 98 * (M ^ 2) ^ 99 * (vector 2 4) := by
+        congr 1
+        rw [← M2_eq_mul M M]
+      _ = (M⁻¹) ^ 98 * (M ^ 99) ^ 2 * (vector 2 4) := by
+        rw [mul_pow]
+      _ = (M⁻¹) ^ 98 * ((M ^ 99) * (M ^ 99)) * (vector 2 4) := by
+        rw [pow_two]
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M ^ 99) * (vector 2 4) := by
+        rw [mul_assoc (M⁻¹) ^ 98 _]
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M⁻¹ * (M ^ 99) * (M ^ 99) * (vector 2 4)) := by
+        simp only [inv_mul_cancel_left₀]
+        exact M_ne_zero
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M⁻¹ * (M ^ 99 * (M ^ 99 * (vector 2 4)))) := by
+        ring
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * ((M * (M ^ 99 * (M ^ 99 * (vector 2 4)))) 1) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (vector 2 4)))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * vector 2 4)) 1) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * vector 2 4))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * vector 2 4))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (vector 2 4)))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * vector 2 4))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * vector 2 4))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * vector 2 4))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * vector 2 4))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * vector 2 4))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * vector 2 4))) 1 := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 99 * (2, 4)))) := by
+        simp
+      _ = (M⁻¹) ^ 98 * (M ^ 99) * (M⁻¹)⁻¹ * (M * (M ^ 99 * (M ^ 9

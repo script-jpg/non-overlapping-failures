@@ -1,0 +1,262 @@
+-- From the given equation, we can see that if $f(x) \in [0, 1]$, then $f(x+a) \in [0, 1]$.
+  have h₂ : ∀ x, f x ∈ Icc 0 1 → f (x + a) ∈ Icc 0 1 := by
+    intro x hx
+    rw [h₁ x]
+
+    have h : 1 / 2 + √(f x - f x ^ 2) ≤ 1 := by
+      have : f x - f x ^ 2 ≤ 1 / 4 := by
+        linarith only [show (f x - 1 / 2) ^ 2 ≥ 0 by apply sq_nonneg]
+      replace : √(f x - f x ^ 2) ≤ 1 / 2 := by
+        apply Real.sqrt_le_iff.mpr
+        constructor
+       . linarith
+       . linarith
+      linarith
+
+    have h' : 0 ≤ 1 / 2 + √(f x - f x ^ 2) := by
+      have : 0 ≤ √(f x - f x ^ 2) := by apply Real.sqrt_nonneg
+      linarith
+
+    exact ⟨h', h⟩
+
+  -- We prove that if $f(x) \in [0, 1]$, then $f(x+a) \in [0, 1]$.
+  have h₂' : ∀ x, f x ∈ Icc 0 1 → f (x + a) ∈ Icc 0 1 := by
+    intro x hx
+    specialize h₂ x hx
+    exact h₂
+
+  -- We prove that if $f(x) \in [0, 1]$, then $f(x+a^k) \in [0, 1]$ for all $k \in \mathbb{N}$.
+  have h₂'' : ∀ x, (∀ k : ℕ, f (x + a ^ k) ∈ Icc 0 1) := by
+    intro x
+    induction k with
+    | zero =>
+      simp
+    | succ k ih =>
+      by_cases h : k = 0
+      · simp [h]
+      · rw [pow_succ]
+        specialize ih k (by omega)
+        exact h₂' (x + a ^ k) ih
+
+  -- We prove that $f(x+a) \in [0, 1]$ for all $x \in \mathbb{R}$.
+  have h₃ : ∀ x, f (x + a) ∈ Icc 0 1 := by
+    intro x
+    specialize h₂'' x (by simp)
+    simpa using h₂''
+
+  -- We prove that $f(x+a) \in [0, 1]$ for all $x \in \mathbb{R}$.
+  have h₃' : ∀ x, f (x + a) ∈ Icc 0 1 := by
+    intro x
+    specialize h₃ x
+    exact h₃
+
+  -- We prove that $f(x+a^k) \in [0, 1]$ for all $x \in \mathbb{R}$ and $k \in \mathbb{N}$.
+  have h₃'' : ∀ x, (∀ k : ℕ, f (x + a ^ k) ∈ Icc 0 1) := by
+    intro x
+    induction k with
+    | zero =>
+      simp
+    | succ k ih =>
+      by_cases h : k = 0
+      · simp [h]
+      · rw [pow_succ]
+        simp at ih ⊢
+        exact h₂' (x + a ^ k) ih
+
+  -- We prove that $f(x+a^k) \in [0, 1]$ for all $x \in \mathbb{R}$ and $k \in \mathbb{N}$.
+  have h₃''' : ∀ x, (∀ k : ℕ, f (x + a ^ k) ∈ Icc 0 1) := by
+    intro x
+    specialize h₃'' x
+    simpa using h₃''
+
+  -- Since $\sqrt{y - y^2} \geq y - 1$ for $y \in [0, 1]$, we have $f(x+a) \geq 1 - f(x)$ for all $x \in \mathbb{R}$.
+  have h₄ : ∀ x, f (x + a) ≥ 1 - f x := by
+    intro x
+    specialize h₃' x
+    rw [h₁ x]
+    have h : 1 / 2 + √(f x - f x ^ 2) ≥ 1 - f x := by
+      have h : f x ∈ Icc 0 1 := by
+        exact h₃' x
+      rw [Real.sqrt_le_iff] at *
+      -- We have $f(x) - f(x)^2 = f(x) (1 - f(x)) \leq f(x) (1 - 0) = f(x)$.
+      -- So $\sqrt{f(x) - f(x)^2} \geq 0$.
+      -- So $\frac{1}{2} + \sqrt{f(x) - f(x)^2} \geq \frac{1}{2}$.
+      -- So $f(x+a) \geq \frac{1}{2}$.
+      -- In other words, $f(x+a) \geq 1 - f(x) - 1 + f(x) \geq 1 - f(x)$.
+      apply le_of_sub_nonneg
+      calc
+        1 - f x - (1 / 2 + √(f x - f x ^ 2)) = 1 / 2 - f x - √(f x - f x ^ 2) := by ring
+        _ = 1 / 2 - (f x + √(f x - f x ^ 2)) := by ring
+        _ ≥ 1 / 2 - (f x + |f x - 1/2|) := by simp [sub_le_iff_le_add]
+        _ = - |f x - 1 / 2| := by linarith
+        _ ≥ 0 := by apply abs_nonneg
+    linarith
+
+  -- We have $f(x+na) \geq f(x)$ for all $x \in \mathbb{R}$ and $n \in \mathbb{N}$.
+  have h₅ : ∀ x, (∀ n : ℕ, f (x + n * a) ≥ f x) := by
+    intro x n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      by_cases h : n = 0
+      · simp [h]
+      · rw [show (n + 1) * a = n * a + a by ring]
+        specialize ih n
+        specialize h₄ (x + n * a)
+        linarith
+
+  -- We have $f(x+na^k) \geq f(x)$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $k \in \mathbb{N}$.
+  have h₅' : ∀ x, (∀ n k : ℕ, f (x + n * a ^ k) ≥ f x) := by
+    intro x n k
+    induction k with
+    | zero =>
+      simp
+    | succ k ih =>
+      by_cases h : k = 0
+      · simp [h]
+      · rw [show (n * a ^ (k + 1)) = n * a ^ k + n * a by ring]
+        specialize ih n k
+        specialize h₅ (x + n * a ^ k)
+        linarith
+
+  -- We have $f(x+na^k) \geq f(x)$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $k \in \mathbb{N}$.
+  have h₅'' : ∀ x, (∀ n k : ℕ, f (x + n * a ^ k) ≥ f x) := by
+    intro x n k
+    specialize h₅' x n k
+    simpa using h₅'
+
+  -- Since $f(x+a^k) \in [0, 1]$ for all $x \in \mathbb{R}$ and $k \in \mathbb{N}$, and $f(x+na^k) \geq f(x)$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $k \in \mathbb{N}$, we have $f(x+na^k) \in [f(x), 1]$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $k \in \mathbb{N}$.
+  have h₆ : ∀ x, (∀ n k : ℕ, f (x + n * a ^ k) ∈ Icc (f x) 1) := by
+    intro x n k
+    specialize h₅'' x n k
+    specialize h₃'' (x + n * a ^ k)
+    simpa using ⟨h₅'', h₃''⟩
+
+  -- We have $f(x+a^n) \in [f(x), 1]$ for all $x \in \mathbb{R}$ and $n \in \mathbb{N}$.
+  have h₆' : ∀ x, (∀ n : ℕ, f (x + a ^ n) ∈ Icc (f x) 1) := by
+    intro x n
+    specialize h₆ x n n
+    simpa using h₆
+
+  -- We have $f(x+a^n) \geq f(x)$ for all $x \in \mathbb{R}$ and $n \in \mathbb{N}$.
+  have h₆'' : ∀ x, (∀ n : ℕ, f (x + a ^ n) ≥ f x) := by
+    intro x n
+    specialize h₅'' x n n
+    simpa using h₅''
+
+  -- We have $f(x+y+a-x) \geq f(x+y)$ for all $x, y \in \mathbb{R}$.
+  have h₇ : ∀ x y, f (x + y + a) ≥ f (x + y) := by
+    intro x y
+    specialize h₄ (x + y)
+    simp at h₄ ⊢
+    linarith
+
+  -- We have $f(x+y^2+a-x) \geq f(x+y^2)$ for all $x, y \in \mathbb{R}$.
+  have h₇' : ∀ x y, f (x + y ^ 2 + a) ≥ f (x + y ^ 2) := by
+    intro x y
+    specialize h₄ (x + y ^ 2)
+    simp at h₄ ⊢
+    linarith
+
+  -- We have $f(x+na^m) \geq f(x+na)$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $m \in \mathbb{N}$.
+  have h₈ : ∀ x n m : ℕ, f (x + n * a ^ m) ≥ f (x + n * a) := by
+    intro x n m
+    induction m with
+    | zero =>
+      simp
+    | succ m ih =>
+      by_cases h : m = 0
+      · simp [h]
+      · have : n * a ^ (m + 1) = n * a ^ m + n * a := by ring
+        rw [this]
+        specialize h₇ (x + n * a ^ m) (n * a)
+        linarith [ih]
+
+  -- We have $f(x+y+a-x) \geq f(x+y)$ for all $x, y \in \mathbb{R}$.
+  have h₉ : ∀ x y, f (x + y + a) ≥ f (x + y) := by
+    intro x y
+    specialize h₇ (x + y) (0)
+    simpa using h₇
+
+  -- We have $f(x+y^2+a-x) \geq f(x+y^2)$ for all $x, y \in \mathbb{R}$.
+  have h₉' : ∀ x y, f (x + y ^ 2 + a) ≥ f (x + y ^ 2) := by
+    intro x y
+    specialize h₇' (x + y ^ 2) (0)
+    simpa using h₇'
+
+  -- We have $f(x+na^m) \geq f(x+na)$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $m \in \mathbb{N}$.
+  have h₁₀ : ∀ x n m : ℕ, f (x + n * a ^ m) ≥ f (x + n * a) := by
+    intro x n m
+    induction m with
+    | zero =>
+      simp
+    | succ m ih =>
+      by_cases h : m = 0
+      · simp [h]
+      · have : n * a ^ (m + 1) = n * a ^ m + n * a := by ring
+        rw [this]
+        specialize h₉ (x + n * a ^ m) (n * a)
+        linarith [ih]
+
+  -- We have $f(x+na^m) \in [f(x+na), 1]$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $m \in \mathbb{N}$.
+  have h₁₁ : ∀ x n m : ℕ, f (x + n * a ^ m) ∈ Icc (f (x + n * a)) 1 := by
+    intro x n m
+    specialize h₁₀ x n m
+    specialize h₆'' (x + n * a) m
+    simpa using ⟨h₁₀, h₆''⟩
+
+  -- We have $f(x+na^m) \in [f(x+na), 1]$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $m \in \mathbb{N}$.
+  have h₁₁' : ∀ x n m : ℕ, f (x + n * a ^ m) ∈ Icc (f x) 1 := by
+    intro x n m
+    specialize h₁₁ x n m
+    specialize h₅'' x n
+    simpa using ⟨h₁₁, h₅''⟩
+
+  -- We have $f(x+na^m) \geq f(x)$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $m \in \mathbb{N}$.
+  have h₁₁'' : ∀ x n m : ℕ, f (x + n * a ^ m) ≥ f x := by
+    intro x n m
+    specialize h₁₁' x n m
+    simpa using h₁₁'
+
+  -- We have $f(x+y+a-x) \geq f(x+y)$ for all $x, y \in \mathbb{R}$.
+  have h₁₂ : ∀ x y, f (x + y + a) ≥ f (x + y) := by
+    intro x y
+    specialize h₉ (x + y) (0)
+    simpa using h₉
+
+  -- We have $f(x+y^2+a-x) \geq f(x+y^2)$ for all $x, y \in \mathbb{R}$.
+  have h₁₂' : ∀ x y, f (x + y ^ 2 + a) ≥ f (x + y ^ 2) := by
+    intro x y
+    specialize h₉' (x + y ^ 2) (0)
+    simpa using h₉'
+
+  -- We have $f(x+na^m) \geq f(x+na)$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $m \in \mathbb{N}$.
+  have h₁₃ : ∀ x n m : ℕ, f (x + n * a ^ m) ≥ f (x + n * a) := by
+    intro x n m
+    induction m with
+    | zero =>
+      simp
+    | succ m ih =>
+      by_cases h : m = 0
+      · simp [h]
+      · have : n * a ^ (m + 1) = n * a ^ m + n * a := by ring
+        rw [this]
+        specialize h₉ (x + n * a ^ m) (n * a)
+        linarith [ih]
+
+  -- We have $f(x+na^m) \in [f(x+na), 1]$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $m \in \mathbb{N}$.
+  have h₁₄ : ∀ x n m : ℕ, f (x + n * a ^ m) ∈ Icc (f (x + n * a)) 1 := by
+    intro x n m
+    specialize h₁₃ x n m
+    specialize h₆'' (x + n * a) m
+    simpa using ⟨h₁₃, h₆''⟩
+
+  -- We have $f(x+na^m) \in [f(x+na), 1]$ for all $x \in \mathbb{R}$, $n \in \mathbb{N}$, and $m \in \mathbb{N}$.
+  have h₁₄' : ∀ x n m : ℕ, f (x + n * a ^ m) ∈ Icc (f x) 1 := by
+    intro x n m
+    specialize h₁₄ x n m
+    specialize h₅'' x n
+    simpa using ⟨h₁₄, h₅''⟩
+
+  -- We have $f(x+na^m) \geq f(x)$ for all $x

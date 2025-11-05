@@ -1,0 +1,48 @@
+-- We have $\frac 12 + \frac 13 + \frac 17 + \frac 1n = \frac {41 + 2n}{42n}$ is an integer.
+  have h₂ : (41 + 2 * n) = (42 * n) / n := by
+    rw [div_eq_iff (by positivity), ← h₁]
+    ring
+
+  -- Therefore, $n$ divides $42n$, which is obvious.
+  have h₃ : n ∣ 42 * n := by
+    exact Dvd.intro_left (p := 42) rfl
+
+  -- By the above, we have $n \mid 2n$, because $n \mid 42n$ and $n \mid 41n$.
+  have h₄ : n ∣ 2 * n := by
+    rw [show 2 * n = 42 * n - 41 * n by ring]
+    apply Nat.dvd_sub (G := n)
+    · assumption
+    · apply Nat.dvd_mul_left
+
+  -- We have $n \mid 41n$, because $n \mid 42n$.
+  have h₅ : n ∣ 41 * n := by
+    apply Nat.dvd_sub (G := n)
+    · apply Nat.dvd_mul_left
+    · assumption
+
+  -- We have $n \mid (41n - 2n)$, which is equal to $39n$.
+  have h₆ : n ∣ 39 * n := by
+    apply Nat.dvd_sub (G := n)
+    · apply Nat.dvd_mul_left
+    · exact h₅
+
+  -- We have $n \mid 39$, because $n \mid 39n$ and $n \mid 42n$.
+  have h₇ : n ∣ 39 := by
+    rw [show 39 = 42 - 3 by ring]
+    apply Nat.dvd_sub (G := n)
+    · apply Nat.dvd_mul_left
+    · assumption
+
+  -- We have $n \mid (42 - 39)$, which is $3$.
+  have h₈ : n ∣ 3 := by
+    apply Nat.dvd_gcd h₃ h₇
+
+  -- Therefore, $n = 1$ or $n = 3$.
+  have h₉ : n = 1 ∨ n = 3 := by
+    apply (Nat.dvd_prime (by norm_num)).mp h₈
+
+  -- The answer is obviously $\boxed{E}$.
+  obtain h | h := h₉
+  · norm_num [h] at h₁
+  · norm_num [h] at h₁
+```

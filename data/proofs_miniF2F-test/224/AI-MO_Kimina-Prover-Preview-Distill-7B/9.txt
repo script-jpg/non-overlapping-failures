@@ -1,0 +1,76 @@
+-- We will find a common denominator and then a polynomial equation that x must satisfy.
+  -- Since x must satisfy the polynomial equation, we will then show that 0 < x, x^2 - 10x - 29 ≠ 0,
+  -- x^2 - 10x - 45 ≠ 0, x^2 - 10x - 69 ≠ 0, and that x = 13 is the only positive solution.
+
+  -- We have 1/(x^2 - 10x - 29) + 1/(x^2 - 10x - 45) - 2/(x^2 - 10x - 69) = 0.
+  -- Let's find a common denominator:
+  have h₅ : (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 45) - (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) +
+    2 * (x ^ 2 - 10 * x - 45) * (x ^ 2 - 10 * x - 69) = 0 := by
+    field_simp [h₁, h₂, h₃] at h₄
+    linarith only [h₄]
+
+  -- Since addition is commutative, we can re-arrange the terms in the numerator:
+  have h₆ : (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 45) + 2 * (x ^ 2 - 10 * x - 45) * (x ^ 2 - 10 * x - 69) -
+    (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) = 0 := by
+    linarith only [h₅]
+
+  -- Now, we can factor out (x^2 - 10x - 45) from the first two terms:
+  have h₇ : (x ^ 2 - 10 * x - 45) * ((x ^ 2 - 10 * x - 29) + 2 * (x ^ 2 - 10 * x - 69)) -
+    (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) = 0 := by
+    linarith only [h₆]
+
+  -- And finally, we can factor the entire expression:
+  have h₈ : (x ^ 2 - 10 * x - 45) * (x ^ 2 - 10 * x - 29 + 2 * x ^ 2 - 20 * x - 138) -
+    (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) = 0 := by
+    linarith only [h₇]
+
+  -- Simplifying the x^4 expression that appears in the numerator:
+  have h₉ : (x ^ 2 - 10 * x - 45) * (3 * x ^ 2 - 30 * x - 167) -
+    (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) = 0 := by
+    linarith only [h₈]
+
+  -- Clearing the parentheses:
+  have h₁₀ : (x ^ 2 - 10 * x - 45) * (3 * x ^ 2 - 30 * x - 167) - (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) =
+    3 * x ^ 4 - 30 * x ^ 3 - 167 * x ^ 2 - 30 * x ^ 3 + 300 * x ^ 2 + 1670 * x - 167 * x ^ 2 + 1670 * x + 11757 -
+    (x ^ 4 - 20 * x ^ 3 + 161 * x ^ 2 - 20 * x ^ 2 + 200 * x - 2007) := by
+    ring
+
+  -- Simplifying the polynomial equation:
+  have h₁₁ : 2 * x ^ 4 - 40 * x ^ 3 + 36 * x ^ 2 + 3340 * x + 13566 = 0 := by
+    linarith only [h₁₀, h₉]
+
+  -- We can factor the polynomial equation as:
+  have h₁₂ : (x - 13) * (2 * x ^ 3 - 24 * x ^ 2 - 244 * x - 1044) = 0 := by
+    ring_nf at h₁₁ ⊢
+    linarith only [h₁₁]
+
+  -- x - 13 = 0 or 2x^3 - 24x^2 - 244x - 1044 = 0.
+  cases' (mul_eq_zero.mp h₁₂) with h₁₃ h₁₄
+
+  -- If x - 13 = 0, then x = 13. This is the solution we're looking for.
+  · linarith only [h₁₃]
+
+  -- We can factor 2x^3 - 24x^2 - 244x - 1044 = 0 as 2(x - 13)(x^2 - x - 54) = 0.
+  · have h₁₅ : 2 * (x - 13) * (x ^ 2 - x - 54) = 0 := by
+      ring_nf at h₁₄ ⊢
+      linarith only [h₁₄]
+    simp_rw [mul_eq_zero] at h₁₅
+
+    -- Either x - 13 = 0, or x^2 - x - 54 = 0.
+    cases' h₁₅ with h₁₆ h₁₇
+
+    -- x - 13 = 0, we get x = 13.
+    · linarith only [h₁₆]
+
+    -- x^2 - x - 54 = 0, we can use the quadratic formula to find that
+    -- x = (1 ± √(1 + 4 * 54)) / 2 = (1 ± √217) / 2, which is not a real number.
+    · have h₁₈ : x ^ 2 - x - 54 = 0 := by
+        linarith only [h₁₇]
+      have h₁₉ : x ^ 2 - x - 54 > 0 := by
+        calc
+          _ > 20 ^ 2 - 20 - 54 := by nlinarith only [h₀]
+          _ = 216 := by ring
+          _ > 0 := by norm_num
+      nlinarith only [h₁₈, h₁₉]
+
+```

@@ -1,0 +1,157 @@
+-- The greatest common divisor of positive integers $m$ and $n$ is 6.
+  -- The least common multiple of $m$ and $n$ is 126.
+  -- What is the least possible value of $m+n$? Show that it is 60.
+
+  have h₂ : m.lcm n = 126 := by
+    exact Nat.le_antisymm h₁ (Nat.lcm_le m n)
+
+  have h₃ : 0 < m := by
+    by_contra! h
+    have : m = 0 := by
+      exact Nat.eq_zero_of_le_zero h
+    rw [this] at h₀
+    have : n.gcd 0 = n := by
+      exact Nat.gcd_zero_right n
+    rw [this] at h₀
+    have : n = 6 := by
+      exact (Nat.gcd_eq_left_iff h₀).mp rfl
+    rw [this] at h₂
+    have : n.lcm 0 = 0 := by
+      exact Nat.lcm_zero_right n
+    rw [this] at h₂
+    linarith
+
+  have h₄ : 0 < n := by
+    by_contra! h
+    have : n = 0 := by
+      exact Nat.eq_zero_of_le_zero h
+    rw [this] at h₀
+    have : m.gcd 0 = m := by
+      exact Nat.gcd_zero_left m
+    rw [this] at h₀
+    have : m = 6 := by
+      exact (Nat.gcd_eq_right_iff h₀).mp rfl
+    rw [this] at h₂
+    have : m.lcm 0 = 0 := by
+      exact Nat.lcm_zero_left m
+    rw [this] at h₂
+    linarith
+
+  -- We need the following lemma:
+  have h₅ : m.gcd n * m.lcm n = m * n := by
+    exact Nat.gcd_mul_lcm m n
+
+  -- Since $m.gcd(n) * m.lcm(n) = m * n$, we have $6 * 126 = m * n$.
+  have h₆ : m * n = 6 * 126 := by
+    rw [h₀, h₁] at h₅
+    exact h₅
+
+  -- Thus $m \mid 6 * 126$.
+  have h₇ : m ∣ 6 * 126 := by
+    rw [←h₆]
+    exact Nat.dvd_mul_right m n
+
+  -- We have $6 \mid m$.
+  have h₈ : 6 ∣ m := by
+    have : 6 = m.gcd n := by
+      exact h₀.symm
+    rw [this]
+    exact Nat.gcd_dvd_left m n
+
+  -- Since $6 \mid m$ and $m \mid 6 * 126$, we have $m \mid 6 * 126 / 6 = 126$.
+  have h₉ : m ∣ 126 := by
+    have : m ∣ 6 * 126 / 6 := by
+      exact Nat.dvd_div_of_dvd h₇ (by linarith)
+    have : 6 * 126 / 6 = 126 := by
+      exact (Nat.mul_div_cancel_left 6 (by linarith)).symm
+    rw [this] at this
+    exact this
+
+  -- Since $m \mid 126$, we can write $m = d * 126 / m$ for some positive integer $d$.
+  have h₁₀ : m = (126 / m) * m := by
+    exact Eq.symm (Nat.div_mul_cancel h₃)
+
+  have : 126 / m * m ∣ 6 * 126 := by
+    apply Nat.mul_dvd_mul_left
+    exact h₉
+  rw [h₁₀] at this
+
+  -- Since $m * n = 6 * 126$, we have $n = 6 * 126 / m = 6 * 126 / (126 / m * m) = 6 * m / 126 * 126$.
+  have h₁₁ : n = 6 * m / 126 * 126 := by
+    rw [h₁₀] at h₆
+    have : m * n = (126 / m * m) * n := by
+      rw [h₁₀]
+    have : 126 / m * m * n = 6 * 126 := by
+      exact (Nat.mul_assoc m n (126 / m)).mp h₆
+    have : 126 / m * (m * n) = 6 * 126 := by
+      exact (Nat.mul_assoc (126 / m) m n).mp h₆
+    rw [this] at h₁₂
+    have : 126 / m ≠ 0 := by
+      refine Nat.ne_of_gt?_
+      exact Nat.div_pos h₃ (Nat.zero_lt_of_ne_zero h₃)
+    field_simp at h₁₂ ⊢
+    exact h₁₂
+
+  -- Since $n = 6 * m / 126 * 126$, we have $126 \mid n$.
+  have h₁₂ : 126 ∣ n := by
+    rw [h₁₁]
+    exact Nat.dvd_mul_right 126 (6 * m / 126)
+
+  -- Since $m \mid 126$ and $126 \mid n$, we have $m \mid n$.
+  have h₁₃ : m ∣ n := by
+    have : m ∣ 126 := by
+      exact h₉
+    have : 126 ∣ n := by
+      exact h₁₂
+    exact Nat.dvd_trans h₃ this
+
+  -- Since $m \mid n$, we can write $n = m * k$ for some positive integer $k$.
+  have h₁₄ : n = m * (n / m) := by
+    exact Eq.symm (Nat.mul_div_cancel h₄)
+
+  -- Since $n = m * k$, we have $m + n = m + m * k = m * (1 + k)$.
+  -- Since $m \mid 126$, we have $m \le 126$.
+  -- Since $n = m * k \le 126$, we have $m * (1 + k) \le 126$.
+  -- Thus $m \le 126$ and $1 + k \le 126 / m$.
+  have h₁₅ : m ≤ 126 := by
+    exact Nat.le_of_dvd (by linarith) h₉
+
+  have h₁₆ : 1 + (n / m) ≤ 126 / m := by
+    have : m * (1 + (n / m)) = m + n := by
+      rw [h₁₄]
+      ring
+    have : m + n ≤ 126 := by
+      rw [←h₆]
+      exact Nat.mul_le_mul_left m (Nat.gcd_le_right m n)
+    rw [this] at h₁₇
+    have : 126 / m ≠ 0 := by
+      refine Nat.ne_of_gt?_
+      exact Nat.div_pos h₃ (Nat.zero_lt_of_ne_zero h₃)
+    have : m * (1 + (n / m)) ≤ 126 / m * m := by
+      exact Nat.mul_le_mul_right m h₁₇
+    rw [h₁₈] at this
+    exact Nat.le_of_mul_le_mul_right this (Nat.ne_of_gt h₁₇)
+
+  -- Since $m \le 126$ and $1 + k \le 126 / m$, we have $m * (1 + k) \le 126$.
+  have h₁₇ : m * (1 + (n / m)) ≤ 126 := by
+    have : m * (1 + (n / m)) ≤ 126 / m * m := by
+      exact Nat.mul_le_mul_right m h₁₆
+    have : 126 / m * m = 126 := by
+      exact (Nat.mul_div_cancel' h₃).symm
+    rw [this] at this
+    exact this
+
+  -- Since $m + n = m * (1 + k)$ and $m * (1 + k) \le 126$, we have $m + n \le 126$.
+  have h₁₈ : m + n ≤ 126 := by
+    rw [h₁₄]
+    exact h₁₇
+
+  have h₁₉ : m + n ≥ 60 := by
+    by_contra! h
+    have : m + n ≤ 59 := by
+      exact Nat.le_of_lt_succ h
+    linarith
+
+  exact h₁₉
+
+```

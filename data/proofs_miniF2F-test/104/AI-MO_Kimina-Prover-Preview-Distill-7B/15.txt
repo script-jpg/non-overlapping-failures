@@ -1,0 +1,213 @@
+have pge3 : p ≥ 3 := by
+    exact Nat.Prime.two_le h₀
+
+  have pge4 : p ≥ 4 := by
+    exact Nat.le_of_lt_succ h₁
+
+  have pge5 : p ≥ 5 := by
+    exact Nat.le_of_lt_succ h₀
+
+  have pmodp : p ≡ 0 [MOD p] := by
+    exact Nat.ModEq.refl p
+
+  have psub1modp : p - 1 ≡ -1 [MOD p] := by
+    rw [Nat.sub_add_cancel p pge3]
+    exact Nat.ModEq.refl 1
+
+  -- Notice that if $p \ge 7$ is a prime number, then $p \equiv 1, 2, 3, 4, \text{or } 5 \pmod{6}.$
+  -- If $p \equiv 1 \pmod{6},$ then $2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 2 \cdot 3 \cdot 4 \cdot (-1) \cdot (-2) \equiv 4 \pmod{p}.$
+  -- If $p \equiv 2 \pmod{6},$ then $2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 2 \cdot 3 \cdot 4 \cdot (-2) \cdot (-3) \equiv 0 \pmod{p}.$
+  -- If $p \equiv 3 \pmod{6},$ then $2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 2 \cdot 3 \cdot 4 \cdot (-3) \cdot (-4) \equiv 0 \pmod{p}.$
+  -- If $p \equiv 4 \pmod{6},$ then $2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 2 \cdot 3 \cdot 4 \cdot (-4) \cdot (-5) \equiv 4 \pmod{p}.$
+  -- If $p \equiv 5 \pmod{6},$ then $2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 2 \cdot 3 \cdot 4 \cdot (-5) \cdot (-6) \equiv 0 \pmod{p}.$
+  -- As a result, if $p \equiv 1 \pmod{6}$ or $p \equiv 4 \pmod{6},$ then $6 \mid 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 4 \pmod{p}.$
+  -- Thus, if $p \equiv 1 \pmod{6}$ or $p \equiv 4 \pmod{6},$ $p \mid 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 4 \pmod{p}.$
+  have sixdiv2x3x4x5x6 : 6 ∣ 2 * 3 * 4 * 5 * 6 := by
+    decide
+
+  have auxmodp : (∏ k in Finset.Icc 1 6, k : ZMod p) ≡ 2 * 3 * 4 * 5 * 6 [ZMOD p] := by
+    rw [Finset.prod_Icc_succ_top (by norm_num), Finset.prod_Icc_succ_top (by norm_num),
+      Finset.prod_Icc_succ_top (by norm_num), Finset.prod_Icc_succ_top (by norm_num),
+      Finset.prod_Icc_succ_top (by norm_num), Finset.prod_singleton]
+    rfl
+
+  -- Evaluate each term in the sum and simplify.
+  have : (∑ k in Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) =
+    2 + ∑ k in Finset.Icc 7 p, ((k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ * (k - 6) * (k - 5) * (k - 3) * (k - 2)) := by
+    -- Break the sum into two parts.
+    rw [Finset.sum_eq_add_sum_diff_of_subset (by
+      intro k hk
+      simp only [Finset.mem_Icc] at hk
+      omega
+    )]
+    simp only [Finset.mem_Icc, Nat.cast_sub, Nat.cast_one]
+    set q := p - 6
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    set b := p - 5
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    set c := p - 4
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    set d := p - 3
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    set e := p - 2
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    simp only [ZMod.inv_coe, add_tsub_cancel_right, psub1modp, tsub_zero, pmodp,
+      mul_inv_mod, zero_mul, add_zero, mul_one, nsmul_eq_mul, mul_comm, mul_assoc, mul_inv_mod,
+      Nat.cast_id, add_sub_cancel_right, show 1 ≤ p by omega, Nat.cast_sub,
+      Nat.cast_ofNat, sub_pos.mpr, Nat.one_lt_ofNat, Nat.reduceSub, tsub_eq_iff_eq_add,
+      add_comm]
+    -- If $p \equiv 1 \pmod{6}$ or $p \equiv 4 \pmod{6},$ by a straightforward computation using quadratic reciprocity, we get $$\sum_{k=1}^{p-2} k^{-1}(k+1)^{-1} \equiv 2 \pmod{p}.$$ 
+    -- If $p \equiv 1 \pmod{6}$ or $p \equiv 4 \pmod{6},$ the above sum is equal to 2.
+    by_cases h : (6 ∣ p - 1) ∨ (6 ∣ p - 4)
+    · replace h := h.elim (fun h =>?_) (fun h =>?_)
+      -- If $p \equiv 1 \pmod{6},$ then $6 \mid p - 1.$
+      · apply_fun (fun x => x + 1) at h
+        -- Notice that if $p \equiv 1 \pmod{6},$ then $2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 2 \cdot 3 \cdot 4 \cdot (-1) \cdot (-2) \equiv 4 \pmod{p}.$
+        have : (∏ k in Finset.Icc 1 6, k : ZMod p) ≡ 4 [ZMOD p] := by
+          rw [auxmodp, Nat.cast_sub, Nat.cast_one, Nat.mul_sub, Nat.sub_eq_iff_eq_add]
+          rw [Nat.mul_eq_mul_left_iff, add_comm, Nat.sub_add_cancel]
+          exact h
+          omega
+        -- As a result, if $p \equiv 1 \pmod{6},$ then $6 \mid 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 4 \pmod{p}.$
+        have aux := Nat.dvd_of_mod_eq_zero (Nat.sub_dvd_mul_of_dvd_right this (show 6 ∣ 4 by omega))
+        -- Therefore, $p \mid 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 4 \pmod{p}.$
+        replace aux := Nat.dvd_of_mul_left_dvd aux
+        rw [show (4 : ZMod p) = 2 + 2 by exact rfl] at aux
+        rw [add_assoc, ← mul_add] at aux
+        -- We get $\sum_{k=1}^{p-2} k^{-1}(k+1)^{-1} \equiv 2 \pmod{p}.$ 
+        have aux' : 2 ≡ 2 + ∑ k ∈ Finset.Icc 7 p, ((k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ * (k - 6) * (k - 5) * (k - 3) * (k - 2)) [ZMOD p] := by
+          apply Nat.ModEq.add_left
+          apply Nat.ModEq.eq
+          apply Nat.modEq_zero_iff_dvd.mpr
+          rw [Nat.cast_sub, Nat.cast_id, Nat.mul_sub, Nat.sub_eq_iff_eq_add]
+          rwa [add_comm, Nat.sub_add_cancel]
+        exact aux'
+      · -- If $p \equiv 4 \pmod{6},$ then $6 \mid p - 4.$
+        -- A straightforward computation using quadratic reciprocity gives us that the sum in question is 2.
+        apply_fun (fun x => x + 4) at h
+        -- Notice that if $p \equiv 4 \pmod{6},$ then $2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 2 \cdot 3 \cdot 4 \cdot (-2) \cdot (-3) \equiv 0 \pmod{p}.$
+        have : (∏ k in Finset.Icc 1 6, k : ZMod p) ≡ 0 [ZMOD p] := by
+          rw [auxmodp, Nat.cast_sub, Nat.cast_one, Nat.mul_sub, Nat.sub_eq_iff_eq_add]
+          rw [Nat.mul_eq_mul_left_iff, add_comm, Nat.sub_add_cancel]
+          exact h
+          omega
+        -- As a result, if $p \equiv 4 \pmod{6},$ then $6 \mid 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 0 \pmod{p}.$
+        have aux := Nat.dvd_of_mod_eq_zero (Nat.sub_dvd_mul_of_dvd_right this (show 6 ∣ 0 by omega))
+        -- Therefore, $p \mid 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 0 \pmod{p}.$
+        replace aux := Nat.dvd_of_mul_left_dvd aux
+        rw [show (0 : ZMod p) = 2 + (-2) by exact rfl] at aux
+        rw [add_assoc, ← mul_add] at aux
+        exact aux
+    · -- If $p \equiv 2 \pmod{6}$ or $p \equiv 5 \pmod{6},$ then $6 \mid p - 2$ or $6 \mid p - 5.$
+      -- In these cases, the sum in question is equal to 2.
+      have hmod6 : p ≡ 2 [MOD 6] ∨ p ≡ 5 [MOD 6] := by
+        clear * - h
+        -- If $p \equiv 0, 3 \pmod{6},$ then $p \mid 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 0 \pmod{p}.$
+        have : (6 ∣ p - 1) ∨ (6 ∣ p - 4) := by
+          clear * - h
+          -- Use a case analysis on $p \pmod{6}.$
+          mod_cases h : p % 6
+          · left
+            rw [Nat.modEq_iff_dvd] at h
+            exact h
+          · right
+            rw [Nat.modEq_iff_dvd] at h
+            exact h
+          · apply_fun (fun x => x - 3) at h
+            -- If $p \equiv 3 \pmod{6},$ then $p - 3 \mid p! \equiv 0 \pmod{p}.$
+            replace h := Nat.sub_modEq_zero_iff_dvd.mp h
+            rw [Nat.sub_add_cancel] at h
+            have := Nat.dvd_of_mod_eq_zero h
+            trivial
+          · apply_fun (fun x => x - 3) at h
+            -- If $p \equiv 4 \pmod{6},$ then $p - 4 \mid p! \equiv 0 \pmod{p}.$
+            replace h := Nat.sub_modEq_zero_iff_dvd.mp h
+            rw [Nat.sub_add_cancel] at h
+            have := Nat.dvd_of_mod_eq_zero h
+            trivial
+          · left
+            rw [Nat.modEq_iff_dvd] at h
+            exact h
+          · right
+            rw [Nat.modEq_iff_dvd] at h
+            exact h
+        clear * - h
+        -- A case analysis on $p \pmod{6}$ shows that if $p \equiv 2 \pmod{6}$ or $p \equiv 5 \pmod{6},$ then $6 \mid 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 0 \pmod{p}.$
+        mod_cases h : p % 6
+        · -- If $p \equiv 2 \pmod{6},$ then $p - 2 \mid p! \equiv 0 \pmod{p}.$
+          replace h := Nat.modEq_iff_dvd.mp h
+          apply_fun (fun x => x + 2) at h
+          replace h := Nat.sub_add_cancel h
+          have := Nat.dvd_of_mod_eq_zero h
+          trivial
+        · -- If $p \equiv 3 \pmod{6},$ then $p - 3 \mid p! \equiv 0 \pmod{p}.$
+          replace h := Nat.modEq_iff_dvd.mp h
+          apply_fun (fun x => x + 3) at h
+          replace h := Nat.sub_add_cancel h
+          have := Nat.dvd_of_mod_eq_zero h
+          trivial
+        · -- If $p \equiv 4 \pmod{6},$ then $p - 4 \mid p! \equiv 0 \pmod{p}.$
+          replace h := Nat.modEq_iff_dvd.mp h
+          apply_fun (fun x => x + 4) at h
+          replace h := Nat.sub_add_cancel h
+          have := Nat.dvd_of_mod_eq_zero h
+          trivial
+        · -- If $p \equiv 5 \pmod{6},$ then $p - 5 \mid p! \equiv 0 \pmod{p}.$
+          replace h := Nat.modEq_iff_dvd.mp h
+          apply_fun (fun x => x + 5) at h
+          replace h := Nat.sub_add_cancel h
+          have := Nat.dvd_of_mod_eq_zero h
+          trivial
+        · -- If $p \equiv 0 \pmod{6},$ then $p - 6 \mid p! \equiv 0 \pmod{p}.$
+          replace h := Nat.modEq_iff_dvd.mp h
+          apply_fun (fun x => x + 6) at h
+          replace h := Nat.sub_add_cancel h
+          have := Nat.dvd_of_mod_eq_zero h
+          trivial
+        · -- If $p \equiv 1 \pmod{6},$ then $p - 1 \mid p! \equiv 0 \pmod{p}.$
+          replace h := Nat.modEq_iff_dvd.mp h
+          apply_fun (fun x => x + 1) at h
+          replace h := Nat.sub_add_cancel h
+          have := Nat.dvd_of_mod_eq_zero h
+          trivial
+    rw [this]
+    exact Nat.eq_add_of_sub_eq (id (Eq.symm aux))
+
+  rw [this]
+
+  -- Notice that if $p \equiv 2 \pmod{6}$ or $p \equiv 5 \pmod{6},$ then $2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 0 \pmod{p}.$
+  have pmod6 : p ≡ 2 [MOD 6] ∨ p ≡ 5 [MOD 6] := by
+    clear * - h
+    -- If $p \equiv 0, 3 \pmod{6},$ then $p \mid 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \equiv 0 \pmod{p}.$
+    have : (6 ∣ p - 1) ∨ (6 ∣ p - 4) := by
+      clear * - h
+      -- Use a case analysis on $p \pmod{6}.$
+      mod_cases h : p % 6
+      · left
+        rw [Nat.modEq_iff_dvd] at h
+        exact h
+      · right
+        rw [Nat.modEq_iff_dvd] at h
+        exact h
+      · apply_fun (fun x => x - 3) at h
+        -- If $p \equiv 3 \pmod{6},$ then $p - 3 \mid p! \equiv 0 \pmod{p}.$
+        replace h := Nat.sub_modEq_zero_iff_dvd.mp h
+        rw [Nat.sub_add_cancel] at h
+        have := Nat.dvd_of_mod_eq_zero h
+        trivial
+      · apply_fun (fun x => x - 3) at h
+        -- If $p \equiv 4 \pmod{6},$ then $p - 4 \mid p! \equiv 0 \pmod{p}.$
+        replace h := Nat.sub_modEq_zero_iff_dvd.mp h
+        rw [Nat.sub_add_cancel] at h
+        have := Nat.dvd_of_mod_eq_zero h
+        trivial
+      · left
+        rw [Nat.modEq_iff_dvd] at h
+        exact h
+      · right
+        rw [Nat.modEq_iff_dvd] at h
+        exact h
+    -- In these cases, the sum in question is equal to 2.
+    have hmod6 : p ≡ 2 [MOD 6] ∨ p ≡ 5 [MOD 6] := by
+      clear * - h
+      -- A case analysis on $p \pmod{6}$ shows that if $p

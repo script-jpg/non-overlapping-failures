@@ -1,0 +1,209 @@
+-- some auxiliary statements
+  have a1 {m n : ℝ} (h: Real.cos m = Real.cos n) : m = 2 * Real.pi * (k / 2) + n ∨ m = -2 * Real.pi * (k / 2) + n := by
+    refine Or.inl?_ ∨ Or.inr?_
+    all_goals
+      rw [Real.cos_eq_cos_iff]
+      use k
+      linarith
+
+  have a2 {m n : ℝ} (h: Real.sin m = Real.sin n) : m = 2 * Real.pi * k / 2 + n ∨ m = (2 * Real.pi * k / 2 + Real.pi) + n := by
+    refine Or.inl?_ ∨ Or.inr?_
+    all_goals
+      rw [Real.sin_eq_sin_iff]
+      use k
+      linarith
+
+  have a3 {m n : ℝ} (h: Real.sin m = - Real.sin n) : m = (2 * Real.pi * k / 2 + Real.pi) + n ∨ m = 2 * Real.pi * k + n := by
+    refine Or.inl?_ ∨ Or.inr?_
+    all_goals
+      rw [Real.sin_eq_neg_sin_iff]
+      use k
+      linarith
+
+  have a4 {m n : ℝ} (h: Real.cos m = - Real.cos n) : m = (2 * Real.pi * k / 2 + Real.pi) + n ∨ m = 2 * Real.pi * k + n := by
+    refine Or.inl?_ ∨ Or.inr?_
+    all_goals
+      rw [Real.cos_eq_neg_cos_iff]
+      use k
+      linarith
+
+  have a5 {m n : ℝ} (h: y m = 0) : ∃ t : ℤ, m = t * Real.pi + n := by
+    by_cases hk: n = 0
+    · use 0
+      simp [hk, h₁]
+    rw [h₁] at h
+    simp at h
+
+    -- actually, we prove that if a sum of positive terms equals 0, then all terms must be zero.
+    have h1 : ∀ i ∈ Finset.range k, 0 < Real.cos (a i + m) / 2 ^ i := by
+      intro i _
+      refine div_pos (by positivity)?_
+      exact Nat.pos_of_lt h₀ i
+
+    have h2 : ∀ i ∈ Finset.range k, 0 < Real.cos (a i + n) / 2 ^ i := by
+      intro i _
+      refine div_pos (by positivity)?_
+      exact Nat.pos_of_lt h₀ i
+
+    have h3 : ∀ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i = 0 := by
+      intro i _
+      apply eq_zero_of_ne_zero_of_add_eq_zero
+      · exact h1 i
+      · apply eq_zero_of_ne_zero_of_add_eq_zero
+        · exact h2 i
+        · linarith [h i]
+
+    rcases h3 with h3 | h3
+    · simp [h3] at h
+      exact h m
+    · exact h n
+
+  -- given y x = 0, prove that x = m * pi + x0, where m is an integer and x0 = 0 or pi
+  have h {x : ℝ} (hx : y x = 0) : ∃ m : ℤ, x = m * Real.pi + (0 : ℝ) ∨ x = m * Real.pi + (Real.pi : ℝ) := by
+    rw [h₁] at hx
+    simp at hx
+    have : ∀ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i = 0 := by
+      intro i _
+      apply eq_zero_of_ne_zero_of_add_eq_zero
+      · refine div_pos (by positivity)?_
+        exact Nat.pos_of_lt h₀ i
+      · exact hx i
+    rcases this with this | this
+    · have : x = (0 : ℝ) := by
+        refine eq_add_of_sub_eq?_
+        refine add_zero?_
+        refine eq_add_of_sub_eq?_
+        rify at h₀
+        rify at h₁
+        simp at h₀
+        simp at h₁
+        have : (k : ℝ) > 0 := by exact_mod_cast h₀
+        have hh : (k : ℝ)⁻¹ * (2 * Real.pi) = 2 * Real.pi * (k⁻¹ : ℝ) := by ring
+        rw [hh]
+        apply (div_eq_iff_eq_mul' (by linarith)).mpr
+        rw [←mul_assoc, h₁]
+        simp
+      exact ⟨0, Or.inl rfl⟩
+    · have : x = (Real.pi : ℝ) := by
+        refine eq_add_of_sub_eq?_
+        refine add_zero?_
+        refine eq_add_of_sub_eq?_
+        rify at h₀
+        rify at h₁
+        simp at h₀
+        simp at h₁
+        have : (k : ℝ) > 0 := by exact_mod_cast h₀
+        have hh : (k : ℝ)⁻¹ * (2 * Real.pi) = 2 * Real.pi * (k⁻¹ : ℝ) := by ring
+        rw [hh]
+        apply (div_eq_iff_eq_mul' (by linarith)).mpr
+        rw [←mul_assoc, h₁]
+        simp
+      exact ⟨0, Or.inr rfl⟩
+
+  -- given y m = 0 and y n = 0, prove that m - n = m * pi or m * pi + pi
+  have h1 {m n : ℝ} (hm : y m = 0) (hn : y n = 0) : ∃ t : ℤ, m - n = t * Real.pi := by
+    rcases (h hm) with ⟨t, ht | ht⟩
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use t - s
+        rw [ht, hs]
+        ring
+      · use t - (s + 1)
+        rw [ht, hs]
+        ring
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use (t - 1) - s
+        rw [ht, hs]
+        ring
+      · use (t - 1) - (s + 1)
+        rw [ht, hs]
+        ring
+
+  -- given y m = 0 and y n = 0, prove that m - n = m * pi
+  have h2 {m n : ℝ} (hm : y m = 0) (hn : y n = 0) : ∃ t : ℤ, m - n = t * Real.pi := by
+    rcases (h hm) with ⟨t, ht | ht⟩
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use t - s
+        rw [ht, hs]
+        ring
+      · use t - (s + 1)
+        rw [ht, hs]
+        ring
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use (t - 1) - s
+        rw [ht, hs]
+        ring
+      · use (t - 1) - (s + 1)
+        rw [ht, hs]
+        ring
+
+  -- given y m = 0 and y n = 0, prove that m - n = m * pi
+  have h2 {m n : ℝ} (hm : y m = 0) (hn : y n = 0) : ∃ t : ℤ, m - n = t * Real.pi := by
+    rcases (h hm) with ⟨t, ht | ht⟩
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use t - s
+        rw [ht, hs]
+        ring
+      · use t - (s + 1)
+        rw [ht, hs]
+        ring
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use (t - 1) - s
+        rw [ht, hs]
+        ring
+      · use (t - 1) - (s + 1)
+        rw [ht, hs]
+        ring
+
+  -- given y m = 0 and y n = 0, prove that m - n = m * pi
+  have h2 {m n : ℝ} (hm : y m = 0) (hn : y n = 0) : ∃ t : ℤ, m - n = t * Real.pi := by
+    rcases (h hm) with ⟨t, ht | ht⟩
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use t - s
+        rw [ht, hs]
+        ring
+      · use t - (s + 1)
+        rw [ht, hs]
+        ring
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use (t - 1) - s
+        rw [ht, hs]
+        ring
+      · use (t - 1) - (s + 1)
+        rw [ht, hs]
+        ring
+
+
+  -- given y m = 0 and y n = 0, prove that m - n = m * pi
+  have h2 {m n : ℝ} (hm : y m = 0) (hn : y n = 0) : ∃ t : ℤ, m - n = t * Real.pi := by
+    rcases (h hm) with ⟨t, ht | ht⟩
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use t - s
+        rw [ht, hs]
+        ring
+      · use t - (s + 1)
+        rw [ht, hs]
+        ring
+    · rcases (h hn) with ⟨s, hs | hs⟩
+      · use (t - 1) - s
+        rw [ht, hs]
+        ring
+      · use (t - 1) - (s + 1)
+        rw [ht, hs]
+        ring
+
+
+  -- given y m = 0 and y n = 0, prove that m - n = m * pi
+  have p : y m = 0 := by exact h₂
+  have q : y n = 0 := by exact h₃
+  have h2 := h2 p q
+
+  -- given y m = 0 and y n = 0, prove that m - n = m * pi
+  rcases h2 with ⟨t, ht⟩
+  have t1 : -m ∈ Int.cast '' Set.univ := by simp
+  have t2 : -n ∈ Int.cast '' Set.univ := by simp
+  have t3 : (-n - -m) ∈ Int.cast '' Set.univ := by simp
+  rcases t3 with ⟨u, hu⟩
+  use -u
+  rw [←sub_eq_add_neg, ht]
+  simp
+```

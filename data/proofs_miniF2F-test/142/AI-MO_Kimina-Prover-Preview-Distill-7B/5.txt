@@ -1,0 +1,135 @@
+-- Lemma: For any positive integer $n$, the product $1!\cdot 2!\cdot 3!\cdot\hdots\cdot
+  -- n!$ is divisible by $k!$ for all $k\le n$.
+  have h1 : ∀ n : ℕ, ∀ k : ℕ, k ≤ n → (k!) ∣ ∏ i in Finset.Icc 1 n, i! := by
+    intro n k hk
+    have := Finset.prod_factorial_le n k
+    apply Finset.prod_dvd_prod_of_subset
+    · intro i hi
+      simp at hi
+      obtain ⟨a, ha⟩ := hi
+      constructor
+      · exact Nat.succ_le_of_lt a
+      · rw [ha]
+        exact Nat.le_add_right 1 a
+    · exact Finset.subset_univ (show k ≤ n by omega)
+
+  -- use the lemma to proof the set S is {1, 1!, 2!,..., 9!}
+  have h2 : S = (Finset.Icc 1 9).image (fun x => x!) := by
+    ext k
+    constructor
+    · intro hk
+      simp [←Finset.mem_image] at hk
+      obtain ⟨i, hi, hi1⟩ := hk
+      rw [←hi1] at hi
+      have : 0 < i := by
+        by_contra h
+        simp at h
+        rw [h] at hi
+        simp at hi
+      have : i ≤ 9 := by
+        by_contra h
+        simp at h
+        have := hk.2
+        specialize h1 9 i (by omega)
+        have : ¬ (i!) ∣ (9!) := by
+          rw [Nat.dvd_iff_mod_eq_zero]
+          have : (i!) % (9!) = (i!) := by
+            apply Nat.mod_eq_of_lt
+            apply Nat.lt_factorial
+            · exact this
+            · omega
+          rw [this]
+          have : 0 < (i!) := by exact Nat.factorial_pos i
+          omega
+        exact this h1
+      simp [hi, this]
+    · intro hk
+      simp [←Finset.mem_image] at hk
+      obtain ⟨a, ha, hka⟩ := hk
+      constructor
+      · exact Nat.factorial_pos a
+      · let i := a!.natAbs
+        have : (i!) ∣ ∏ k_1 in Finset.Icc 1 9, k_1! := by
+          apply Nat.dvd_trans
+          · apply h1
+            exact a.natAbs_le_of_le Factorial.monotone
+          · rw [←hka]
+            congr
+        have : 0 < i := by
+          by_contra h
+          simp at h
+          rw [h] at hka
+          simp at hka
+        have : i ≤ 9 := by
+          by_contra h
+          simp at h
+          have : ¬ (i!) ∣ (9!) := by
+            rw [Nat.dvd_iff_mod_eq_zero]
+            have : (i!) % (9!) = (i!) := by
+              apply Nat.mod_eq_of_lt
+              apply Nat.lt_factorial
+              · exact this
+              · omega
+            rw [this]
+            have : 0 < (i!) := by exact Nat.factorial_pos i
+            omega
+          exact this h1
+        use i
+        constructor
+        · exact Nat.factorial_pos i
+        · have : Finset.Icc 1 9 = Finset.Icc 1 a.natAbs := by
+            constructor
+            · apply Finset.eq_of_subset_of_card_le
+              · intro i hi
+                simp at hi
+                obtain ⟨a, ha⟩ := hi
+                rw [←ha]
+                exact Nat.le_factorial a i
+              · simp [ha]
+                calc
+4119520238422027238082843045279245104984461958830340802485464288629339836016983013200683466329569242789124882895530828368000000000000000
+          _ ≤ 41195202384220272380828430452792451049844619588303408024854642886293398360169830132006834663295692427891248828955308283680000000000000000 := by
+            apply Finset.card_le_card
+            · simp [ha]
+              exact Nat.le_of_lt_succ (Nat.factorial_pos a)
+            · simp [ha]
+              calc
+                1 = ∏ x ∈ Finset.Icc 1 1, x! := by simp
+                _ ≤ ∏ x ∈ Finset.Icc 1 a.natAbs, x! := by
+                  apply Finset.prod_le_prod_of_subset_of_nonneg
+                  · simp [ha]
+                    exact Nat.le_of_lt_succ (Nat.factorial_pos a)
+                  · intro _ _
+                    simp [ha]
+                    exact rfl
+        · rw [←hka, hka]
+          exact Nat.dvd_mul_left (a!) (a!.natAbs)
+
+  -- The number of perfect squares is the number of unique prime factors of the product.
+  -- This product has unique prime factors {p | p is prime and p ≤ 97}
+  have h3 : S.card = Nat.card (Finset.Icc 1 9).image (fun x => x!) := by
+    rw [h2]
+    exact Nat.card_image_of_injective _ (fun x y h => by
+      simp [factorial_eq_factorial_iff] at h
+      replace h := Nat.le_of_lt_succ h
+      exact h)
+
+  rw [h3]
+  have : Nat.card (Finset.Icc 1 9).image (fun x => x!) = 672 := by
+    -- The number of unique prime factors {p | p is prime and p ≤ 97} is 672.
+    rw [Nat.card_eq_fintype_card]
+    let S := Finset.Icc 1 9
+    let f := fun x => x!
+    have : LinearOrderedRing.card (f '' S) = 672 := by
+      have : DecidablePred (p : ℕ) (h : p ∈ S) := by
+        suffices f '' S = Finset.image f S from
+          (Nat.card_eq_fintype_card image:= this)
+        apply Finset.coe_image
+      rw [Finset.card_image_of_injective _ (fun x y h => by
+        simp [factorial_eq_factorial_iff] at h
+        replace h := Nat.le_of_lt_succ h
+        exact h)]
+      exact Nat.factorial_injective
+    exact this
+  exact this
+```

@@ -1,0 +1,191 @@
+-- We can rewrite the equation in the following form
+  -- $ac + bd = (a + b + c - d)(a + b - c + d)$
+  have h₅ : a * c + b * d = (a + b + c - d) * (a + b - c + d) := by
+    rw [<-h₄]
+    ring_nf
+
+  -- By rearranging the terms, we can also write the equation in the following form
+  -- $(a + b)(c + d) = (a + b + c - d)(a + b - c + d)$
+  have h₆ : (a + b) * (c + d) = (a + b + c - d) * (a + b - c + d) := by
+    rw [<-h₅]
+    ring_nf
+
+  -- We can even write it in the following form
+  -- $(b + d + a - c)(b + d + c - a) = (a + b + c - d)(a + b - c + d)$
+  have h₇ : (b + d + a - c) * (b + d + c - a) = (a + b + c - d) * (a + b - c + d) := by
+    rw [<-h₆]
+    ring_nf
+
+  -- Let's define the following expressions
+  set D := b + d + a - c with h₈
+  set B := a + b - c + d with h₉
+  set C := b + d + c - a with h₁₀
+  set A := a + b + c - d with h₁₁
+
+  -- The original equation can be written as $D \cdot B = C \cdot A$.
+  have h₁₂ : D * B = C * A := by
+    rw [h₈, h₉, h₁₀, h₁₁]
+    exact h₇
+
+  -- We can also note that $A - B = C - D = a + b - c + d - (b + d + a - c) = 2(c - d)$
+  have h₁₃ : A - B = 2 * (c - d) := by
+      rw [h₁₁, h₉]
+      omega
+  have h₁₄ : C - D = 2 * (c - d) := by
+      rw [h₁₀, h₈]
+      omega
+
+  -- By rearranging the terms, we can also write the equation in the following form
+  -- $(A - B)(C - D) = AC - BD$
+  have h₁₅ : (A - B) * (C - D) = A * C - B * D := by
+    rw [h₁₃, h₁₄, h₁₂]
+    ring_nf
+
+  -- And this can be rewritten as
+  -- $(A - B)(C - D) - AC + BD = 0$
+  have h₁₆ : (A - B) * (C - D) - A * C + B * D = 0 := by
+    rw [h₁₅]
+    ring_nf
+
+  -- Expanding the left-hand side, we get the following expression
+  -- $BD - AC - A - B - C + D + AC - BD = 0$
+  have h₁₇ : B * D - A * C - A - B - C + D + A * C - B * D = 0 := by
+    rw [<-h₁₆]
+    ring_nf
+
+  -- Rearranging the terms, we can also write it as
+  -- $(B + D - A - C)(D + A - B - C) = 0$
+  have h₁₈ : (B + D - A - C) * (D + A - B - C) = 0 := by
+    rw [<-h₁₇]
+    ring_nf
+
+  -- We can simplify the first part, $B + D - A - C = (a + b - c + d) + (b + d + a - c) - (a + b + c - d) - (b + d + c - a)$
+  -- to $2(a - c + b + d) = 2(A - C)$
+  have h₁₉ : B + D - A - C = 2 * (A - C) := by
+      rw [h₈, h₁₁, h₁₀, h₉]
+      omega
+
+  -- The second part can be simplified to $-2(C - A)$
+  have h₂₀ : D + A - B - C = -2 * (C - A) := by
+      rw [h₁₁, h₉, h₁₀, h₈]
+      omega
+
+  -- Thus, we have $2(A - C) \cdot (-2)(C - A) = 0$
+  -- Thus, we have $(A - C)(C - A) = 0$
+  have h₂₁ : (A - C) * (C - A) = 0 := by
+    rw [h₁₉, h₂₀] at h₁₈
+    linarith only [h₁₈]
+
+  -- Since the left-hand side is the product of a number and its negative, it is zero
+  have h₂₂ : (A - C) * (C - A) = -(A - C) * (A - C) := by
+    ring
+
+  -- Thus, $-(A - C) \cdot (A - C) = 0$
+  have h₂₃ : -(A - C) * (A - C) = 0 := by
+    rw [h₂₂] at h₂₁
+    exact h₂₁
+
+  -- The only way this can happen is if $A = C$
+  have h₂₄ : A = C := by
+    have h₂₄ : (A - C) * (A - C) = 0 := by
+      linarith only [h₂₃]
+    have h₂₅ : A - C = 0 := by
+      simp at h₂₄
+      exact h₂₄
+    linarith only [h₂₅]
+
+  -- But this means that $a + b + c - d = b + d + c - a$
+  rw [h₁₁, h₁₀] at h₂₄
+  -- which means that $a + b - c + d = b + d + c - a$
+  -- which means that $a + b - c + d - b - d - c + a = 0$
+  -- which means that $2(a - c + b + d) = 0$
+  -- which means that $a - c + b + d = 0$
+  -- which means that $a + b + c + d = 2(c + d)$
+  have h₂₅ : (a + b + c - d) - (b + d + c - a) = 0 := by
+    linarith only [h₂₄]
+  have h₂₆ : a + b + c - d - b - d - c + a = 0 := by
+    linarith only [h₂₅]
+  have h₂₇ : 2 * (a - c + b + d) = 0 := by
+    linarith only [h₂₆]
+  have h₂₈ : a - c + b + d = 0 := by
+    linarith only [h₂₇]
+  have h₂₉ : a + b + c + d = 2 * (c + d) := by
+    linarith only [h₂₈]
+
+  -- We can substitute this into the expression
+  -- $km + ln = (k + l - m + n)(-k + l + m + n)$
+  rw [<-h₂₉] at h₄
+  -- to get $km + ln = (k + l - m + n) (-(k + l - m + n) + 2n)$
+  -- which means that $km + ln = -(k + l - m + n)^2 + 2n(k + l - m + n)$
+  have h₃₀ : a * c + b * d = (a - c + b + d) * (a + b - c + d) := by
+    rw [<-h₄]
+    ring_nf
+
+  -- which means that $km + ln = 2n(k + l - m + n) - (k + l - m + n)^2$
+  rw [h₂₅] at h₃₀
+  -- which means that $km + ln + (k + l - m + n)^2 = 2n(k + l - m + n)$
+  have h₃₁ : a * c + b * d + (a + b - c + d) ^ 2 = 2 * (c + d) * (a + b - c + d) := by
+    linarith only [h₃₀]
+
+  -- which means that $(a + b + c + d)^2 = 4n^2(k + l - m + n)^2$
+  have h₃₂ : (a + b + c + d) ^ 2 = 4 * (c + d) ^ 2 * (a + b - c + d) ^ 2 := by
+    rw [<-h₂₉]
+    ring_nf
+    -- and this means that $km + ln + (k + l - m + n)^2$ is a multiple of $2n(k + l - m + n)$
+    -- which means that $km + ln$ is a multiple of $2n(k + l - m + n)$
+    -- which means that $km + ln$ is a multiple of $2n$ and a multiple of $(k + l - m + n)$
+    -- which means that $km + ln$ is a multiple of $2n(k + l - m + n)$
+    <;> linarith only [h₃₁]
+
+  -- We can also note that $km + ln = (k + l)(m + n) - (k + n)(m + l)$
+  have h₃₃ : a * c + b * d = (a + b + c + d) * (a + b - c - d) := by
+    ring_nf
+    rw [<-h₄]
+    ring_nf
+
+  -- which means that $(k + l)(m + n) - (k + n)(m + l)$ is a multiple of $2n(k + l - m + n)$
+  rw [h₃₃] at h₃₂
+  -- which means that $(k + l)(m + n) - (k + n)(m + l) - 4n^2(k + l - m + n)^2$ is equal to zero
+  have h₃₄ : (a + b + c + d) * (a + b - c - d) - 4 * (c + d) ^ 2 * (a + b - c + d) ^ 2 = 0 := by
+    linarith only [h₃₂]
+
+  -- which means that $(k + l)(m + n) - (k + n)(m + l) - 4n^2(k + l - m + n)^2$ is equal to zero
+  -- which means that $(k + l)(m + n) - (k + n)(m + l) - (2n(k + l - m + n))^2$ is equal to zero
+  have h₃₅ : (a + b + c + d) * (a + b - c - d) - (2 * (c + d) * (a + b - c + d))^2 = 0 := by
+    ring_nf
+    rw [<-h₃₄]
+    ring_nf
+
+  -- which means that $(k + n)(m + l) + (2n(k + l - m + n))^2$ is equal to $(k + l)(m + n)$
+  have h₃₆ : (a + b + c + d) * (a + b - c - d) = (2 * (c + d) * (a + b - c + d))^2 + (a + b + c + d) * (a + b - c - d) - (a + b + c + d) * (a + b - c - d) := by
+    ring
+  rw [<-h₃₅] at h₃₆
+  -- which means that $(k + n)(m + l) + (2n(k + l - m + n))^2$ is equal to $(k + l)(m + n)$
+  -- which means that $(k + l)(m + n) - (k + n)(m + l)$ is equal to $(2n(k + l - m + n))^2$
+  have h₃₇ : (a + b + c + d) * (a + b - c - d) = (2 * (c + d) * (a + b - c + d))^2 := by
+    linarith only [h₃₆]
+
+  -- which means that $(k + l)(m + n) - (k + n)(m + l)$ is equal to $(2n(k + l - m + n))^2$
+  -- thus, it is a perfect square
+  have h₃₈ : (a + b + c + d) * (a + b - c - d) = (2 * (c + d) * (a + b - c + d))^2 := by
+    linarith only [h₃₇]
+
+  -- which means that $(k + l)(m + n) = (k + n)(m + l) + (2n(k + l - m + n))^2$
+  -- which means that $(k + l)(m + n) - (k + n)(m + l)$ is equal to $(2n(k + l - m + n))^2$
+  have h₃₉ : (a + b + c + d) * (a + b - c - d) - (a + b + c + d) * (a + b - c - d) = 0 := by
+    ring
+  rw [h₃₈] at h₃₉
+  -- which means that $(2n(k + l - m + n))^2$ is equal to zero
+  -- which means that $k + l - m + n$ is equal to zero
+  have h₄₀ : 2 * (c + d) * (a + b - c + d) = 0 := by
+    linarith only [h₃₉]
+  have h₄₁ : c + d = 0 ∨ a + b - c + d = 0 := by
+    simp at h₄₀
+    exact h₄₀
+
+  -- However, all variables are positive, so this is a contradiction
+  rcases h₄₁ with h₄₁ | h₄₁
+  · linarith only [h₄₁, h₀.right.right.left, h₀.right.right.right]
+  · linarith only [h₄₁, h₀.right.left, h₀.right.right.left]
+
+```

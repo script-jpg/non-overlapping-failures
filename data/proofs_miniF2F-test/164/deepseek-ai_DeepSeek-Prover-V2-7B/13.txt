@@ -1,0 +1,72 @@
+have h₃ : y ≠ 0 := by
+    intro h
+    rw [h] at h₂
+    norm_num at h₂
+  have h₄ : x ≠ 0 := by
+    intro h
+    rw [h] at h₂
+    norm_num at h₂
+  have h₅ : Real.log 16 = 4 * Real.log 2 := by
+    rw [show (16 : ℝ) = 2 ^ 4 by norm_num]
+    field_simp [Real.log_rpow]
+  have h₆ : Real.log x = 4 * Real.log 2 * (Real.log y) / Real.log y := by
+    field_simp [h₅] at h₁ ⊢
+    <;> ring_nf at * <;> nlinarith
+  
+  have h₇ : Real.log y ≠ 0 := by
+    intro h
+    have : y = 1 := by
+      rw [← Real.exp_log (by aesop : y > 0)]
+      simp [h]
+      <;> aesop
+    aesop
+  
+  have h₈ : Real.log x = 4 * Real.log 2 := by
+    field_simp [h₅, h₇] at h₆ ⊢
+    <;> ring_nf at * <;>
+    (try simp_all) <;>
+    (try aesop) <;>
+    (try linarith) <;>
+    (try nlinarith)
+    <;>
+    (try
+      nlinarith [Real.log_pos (by norm_num : (1 : ℝ) < 2),
+        Real.log_pos (by norm_num : (1 : ℝ) < 64),
+        Real.log_pos (by norm_num : (1 : ℝ) < 4)])
+    <;>
+    aesop
+  
+  have h₉ : x = 2 ^ 4 := by
+    have h₉ : Real.log x = 4 * Real.log 2 := h₈
+    have h₁₀ : x > 0 := by
+      by_contra h
+      have : x ≤ 0 := by linarith
+      have : Real.log x ≤ 0 := Real.log_nonpos (by nlinarith) (by nlinarith)
+      nlinarith [Real.log_pos (by norm_num : (1 : ℝ) < 2), Real.log_pos (by norm_num : (1 : ℝ) < 64)]
+    have h₁₁ : Real.log x = Real.log ((2 : ℝ) ^ 4) := by
+      have h₁₂ : Real.log ((2 : ℝ) ^ 4) = 4 * Real.log 2 := by
+        rw [Real.log_pow]
+        <;> ring
+        <;> norm_num
+      linarith
+    have h₁₂ : x = (2 : ℝ) ^ 4 := by
+      apply Real.log_injOn_pos (Set.mem_Ioi.mpr (by positivity)) (Set.mem_Ioi.mpr (by positivity))
+      linarith
+    linarith
+  
+  have h₁₀ : y = 2 := by
+    have h₁₀ : x * y = 64 := h₂
+    rw [h₉] at h₁₀
+    norm_num at h₁₀
+    have h₁₁ : y = 2 := by
+      nlinarith [sq_pos_of_ne_zero (show (2 : ℝ) ≠ 0 by norm_num)]
+    linarith
+  
+  have h₁₁ : (Real.log (x / y) / Real.log 2) ^ 2 = 20 := by
+    have h₁₂ : x / y = 2 ^ 4 / 2 := by
+      rw [h₉, h₁₀]
+      <;> ring
+      <;> norm_num
+      <;> aesop
+    rw [h₁₂]
+    have h₁₃ : Real.log ((2 ^ 4

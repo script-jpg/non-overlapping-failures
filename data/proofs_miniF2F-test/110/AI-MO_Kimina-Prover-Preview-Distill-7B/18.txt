@@ -1,0 +1,79 @@
+obtain ⟨ha, hb⟩ := h₀
+
+  -- Let $t = \sqrt{a} - \sqrt{b}$, then $t \geq 0$.
+  let t := Real.sqrt a - Real.sqrt b
+  have ht : 0 ≤ t := by
+    simp [t]
+    positivity
+
+  -- $t^2 = a + b - 2\sqrt{ab}$.
+  have h2 : t ^ 2 = a + b - 2 * Real.sqrt (a * b) := by
+    simp only [t, Nat.ofNat_nonneg, Real.sq_sqrt, mul_assoc]
+    ring_nf
+
+  -- Because $t \geq 0$, $t^2 \geq 0$.
+  have h3 : 0 ≤ t ^ 2 := by
+    positivity
+
+  -- Then $a + b - 2\sqrt{ab} \geq 0$.
+  have h4 : 0 ≤ a + b - 2 * Real.sqrt (a * b) := by
+    linarith only [h2, h3]
+
+  -- $\frac{a+b}{2} - \sqrt{ab} \leq \frac{(a-b)^2}{8b}$ is equivalent to $0 \leq \frac{(a-b)^2}{8b} - \frac{a+b}{2} + \sqrt{ab}$.
+  suffices 0 ≤ (a - b) ^ 2 / (8 * b) - (a + b) / 2 + Real.sqrt (a * b) by
+    linarith only [this]
+
+  -- It is equivalent to $0 \leq t^2$.
+  have h5 : 0 ≤ t ^ 2 / (8 * b) - t + Real.sqrt (a * b) := by
+    simp only [t, Nat.ofNat_nonneg, div_mul_eq_mul_div, mul_self_sqrt, mul_pos, zero_le_div_iff,
+      zero_mul, card_pos, zero_sub, add_zero, neg_add_cancel, div_self, zero_div, mul_zero,
+      card_eq_zero, neg_zero, zero_sub, add_zero, zero_add, zero_div, div_zero, mul_comm,
+      ←mul_assoc, card_mul, neg_mul, neg_neg]
+    ring_nf
+    rw [le_div_iff₀]
+    rw [←mul_assoc]
+    gcongr
+    exact h2
+   . positivity
+   . simp only [ne_eq, card_eq_zero, not_false_eq_true]
+   . simp only [ne_eq, card_eq_zero, not_false_eq_true]
+
+  -- It is equivalent to $0 \leq (\frac{t}{2} - 1)^2$.
+  have h6 : 0 ≤ (t / 2 - 1) ^ 2 := by
+    gcongr
+    positivity
+
+  -- Because $0 \leq (\frac{t}{2} - 1)^2 = \frac{t^2}{4} - t + 1$, $0 \leq \frac{t^2}{8b} - t + \sqrt{ab}$.
+  calc
+    0 ≤ (t / 2 - 1) ^ 2 := by assumption
+    _ = t ^ 2 / (4 * b) - t + 1 := by
+      congr 2
+      ring_nf
+      rw [pow_two]
+      ring_nf
+    _ = t ^ 2 / (8 * b) * 2 - t + Real.sqrt (a * b) := by
+      congr 1
+      rw [mul_assoc, ←mul_assoc, ←sq, mul_comm, ←mul_assoc, ←mul_assoc]
+      field_simp
+      left
+      ring_nf
+      rw [mul_assoc, mul_comm, ←mul_assoc, mul_assoc]
+      gcongr
+      exact h2
+     . rw [show (a:ℝ) = √a^2 by simp, show (b:ℝ) = √b^2 by simp]
+        rw [←pow_two, ←pow_two]
+        gcongr
+        ring_nf
+        rw [pow_two, pow_two]
+        gcongr
+        linarith only [h5]
+     . suffices √b ≠ 0 by
+          field_simp
+          linarith only [h5]
+        rw [show √b = 0 ↔ b = 0 by simp]
+        linarith only [h₀.right]
+    _ = (a - b) ^ 2 / (8 * b) - (a + b) / 2 + Real.sqrt (a * b) := by
+      congr 1
+      ring_nf
+
+```

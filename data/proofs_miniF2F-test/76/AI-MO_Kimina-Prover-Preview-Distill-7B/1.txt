@@ -1,0 +1,210 @@
+-- The condition is rather complicated, do not try to manipulate it naively.
+  -- Write out the definition of the floor function to eliminate the floor.
+  have h₁ (n : ℕ) : 0 < n ∧ (↑n + (1000 : ℝ)) / 70 = Int.floor (Real.sqrt n) ↔
+      ∃ k : ℤ, (∃ m : ℕ, (m : ℝ) + 1 < Real.sqrt n) ∧
+      (k = Int.floor (Real.sqrt n)) ∧
+      (↑n + (1000 : ℝ)) / 70 = k ∧ 70 ∣ (n + 1000) ∧ 0 < n ∧ n ≤ 5050 := by
+    -- If the integers k and n satisfy the equation, then k satisfies the condition.
+    constructor
+    · intro ⟨h₁, h₂⟩
+      use (Int.floor (Real.sqrt n))
+      refine ⟨⟨?_,?_⟩,?_,?_⟩
+     . contrapose h₁
+        rw [not_lt] at h₁
+        rw [Real.le_sqrt (by linarith)]
+        norm_cast at h₁
+        norm_cast
+     . exact Int.floor_le (Real.sqrt n)
+     . rw [← h₂]
+        norm_cast
+        rw [Int.floor_le]
+        apply le_of_lt
+        apply lt_of_le_of_ne
+       . rw [Real.lt_sqrt]
+          norm_cast
+          omega
+       . contrapose h₁
+          rify at h₁
+          rw [show (↑(k : ℝ) + 1) = ↑(↑k + 1) by norm_cast] at h₁
+          rw [Real.sqrt_eq_iff_eq_sq] at h₁
+          norm_cast at h₁
+          norm_cast
+          omega
+     . suffices : 70 ∣ (n + 1000)
+        · exact Nat.zero_lt_of_ne_zero this
+        rw [← h₂]
+        norm_cast
+     . omega
+    -- If the integers k and n satisfy the condition, then k satisfies the equation.
+    · intro ⟨⟨h₁, h₂⟩, h₃, h₄, h₅⟩
+      rcases h₂ with ⟨m, h₃⟩
+      rw [Int.cast_add, Int.le_floor] at h₁
+      rw [Int.cast_add, Int.floor_le] at h₂
+      norm_cast at h₁ h₂
+      rw [Int.le_iff_lt_or_eq] at h₁
+      rcases h₁ with h₁ | h₁
+      · refine ⟨?_,?_⟩
+       . linarith
+       . rw [Int.cast_div (by norm_cast) (by norm_cast)]
+          norm_cast
+          refine Int.eq_of_ofNat_eq_of_lt h₄ (by omega)
+      · refine ⟨?_,?_⟩
+       . linarith
+       . rw [Int.cast_div (by norm_cast) (by norm_cast)]
+          norm_cast
+          rw [h₃]
+          refine Int.eq_of_ofNat_eq_of_lt (by omega) (by omega)
+  -- Write the condition of the set in a more useful form.
+  simp_rw [h₁] at h₀
+  have h₂ : S = Finset.filter (fun n : ℕ ↦ ∃ k : ℤ, (∃ m : ℕ, (m : ℝ) + 1 < Real.sqrt n) ∧
+      (k = Int.floor (Real.sqrt n)) ∧
+      (↑n + (1000 : ℝ)) / 70 = k ∧ 70 ∣ (n + 1000) ∧ 0 < n ∧ n ≤ 5050) ℕ := by
+    ext n
+    simp [h₀]
+  -- We will use a finset version of the floor function.
+  let k_floor : ℤ → ℕ := fun x ↦ ⌊x⌋
+
+  -- All the solutions are in $[1, 5050]$, so the set is finite.
+  have h₃ : S ⊆ Finset.Icc 0 5050 := by
+    intro n
+    simp [h₂]
+    intro h
+    rcases h with ⟨⟨m, h₁⟩, h₂, h₃, h₄, h₅, h₆⟩
+    rw [← h₃] at h₁
+    simp at h₁
+    exact h₁
+  -- We know that $n = k^2 + i$ for some $i \in [-1000, 1000]$, so there are only $2000$ possible values of $n$.
+  -- It is time to write the solution.
+  suffices : S = Finset.filter (fun n : ℕ ↦ 70 ∣ (n + 1000) ∧ 0 < n ∧ n ≤ 5050) ℕ
+  · rw [this, Finset.filter_filter]
+    rfl
+    -- There are only six possible values of $n$.
+    suffices : Finset.filter (fun n : ℕ ↦ 70 ∣ (n + 1000) ∧ 0 < n ∧ n ≤ 5050) ℕ = {700, 714, 728, 758, 772, 796}
+    · rw [this, Finset.card]
+      simp
+    -- It is enough to show that the filter set is a subset of the solution set.
+    suffices : Finset.filter (fun n : ℕ ↦ 70 ∣ (n + 1000) ∧ 0 < n ∧ n ≤ 5050) ℕ ⊆ {700, 714, 728, 758, 772, 796}
+    · rw [Finset.card]
+      apply Finset.card_le_card
+      simp [this]
+    -- We will do this in three steps.
+    -- First, show that the filter set is a subset of {700, 714, 728, 758, 772, 796, 820, 844, 868, 902, 926, 974, 1022, 1070, 1094, 1142, 1166, 1222, 1274, 1298, 1354, 1378, 1442, 1466, 1534, 1558, 1622, 1674, 1698, 1762, 1786, 1858, 1894, 1966, 1990, 2062, 2086, 2158, 2182, 2254, 2278, 2356, 2380, 2458, 2482, 2562, 2586, 2662, 2686, 2758, 2782, 2854, 2878, 2962, 2986, 3058, 3082, 3162, 3186, 3262, 3286, 3358, 3382, 3462, 3486, 3556, 3580, 3662, 3686, 3762, 3786, 3856, 3880, 3962, 3986, 4054, 4078, 4156, 4180, 4262, 4286, 4358, 4382, 4462, 4486, 4558, 4582, 4662, 4686, 4762, 4786, 4858, 4882, 4962, 4986, 5050}
+    · intro n
+      simp
+      intro hn
+      rcases hn with ⟨h₁, h₂, h₃⟩
+      omega
+    -- Second, show that the above set is a subset of {700, 714, 728, 758, 772, 796, 820, 844, 868, 902, 926, 974, 1022, 1070, 1094, 1142, 1166, 1222, 1274, 1298, 1354, 1378, 1442, 1466, 1534, 1558, 1622, 1674, 1698, 1762, 1786, 1858, 1894, 1966, 1990, 2062, 2086, 2158, 2182, 2254, 2278, 2356, 2380, 2458, 2482, 2562, 2586, 2662, 2686, 2758, 2782, 2854, 2878, 2962, 2986, 3058, 3082, 3162, 3186, 3262, 3286, 3358, 3382, 3462, 3486, 3556, 3580, 3662, 3686, 3762, 3786, 3856, 3880, 3962, 3986, 4054, 4078, 4156, 4180, 4262, 4286, 4358, 4382, 4462, 4486, 4558, 4582, 4662, 4686, 4762, 4786, 4858, 4882, 4962, 4986, 5050}
+    · intro n
+      simp
+      intro hn
+      rcases hn with ⟨h₁, h₂, h₃⟩
+      omega
+    -- Third, show that the above set is a subset of {700, 714, 728, 758, 772, 796}.
+    · intro n
+      simp
+      intro hn
+      rcases hn with ⟨h₁, h₂, h₃⟩
+      omega
+
+  -- Now we have the condition in a more useful form.
+  -- We will solve the equation naively.
+  -- First, show that n = k^2 + i for some i ∈ [-1000, 1000].
+  have h₄ (n : ℕ) (h : 1 ≤ n ∧ n ≤ 5050) : ∃ k : ℤ, ∃ m : ℕ, (m : ℝ) + 1 < Real.sqrt n ∧ (↑n + (1000 : ℝ)) / 70 = ↑(k : ℝ) + (↑m : ℝ) := by
+    rcases h with ⟨h₁, h₂⟩
+    -- We have k = ⌊√(n-1000)⌋.
+    use (Int.floor (Real.sqrt (n - 1000)))
+    use (Int.floor (Real.sqrt (n - 1000)))
+    refine ⟨?_,?_⟩
+   . -- We have √(n-1000) > m+1.
+      suffices : n - 1000 > (m : ℝ) * (m + 1)
+     . apply Real.lt_sqrt_of_sq_lt
+        simp [this]
+      suffices : m * (m + 1) < n - 1000
+     . linarith
+      suffices : m  < Real.sqrt (n - 1000)
+     . refine Int.mul_lt_of_lt_of_le (by linarith) this
+      apply Int.lt_floor
+      simp
+      linarith
+   . -- We have √(n-1000) ≤ m+1.
+      rw [Real.sqrt_le_left]
+      simp
+      refine Int.floor_le (n - 1000 + (1 : ℝ)/4)?_
+      linarith
+      simp
+      linarith
+  -- Now we need to deal with the equation n+1000 = 70 * k.
+  -- We have ⌊√n⌋ = k-1.
+  have h₅ (n : ℕ) (h : 122 ≤ n ∧ n ≤ 488) : ¬ (∃ k : ℤ, ∃ m : ℕ, (m : ℝ) + 1 < Real.sqrt n ∧ ((↑n : ℝ) + 1000) / 70 = (↑k : ℝ) + (↑m : ℝ)) := by
+    rcases h with ⟨h₁, h₂⟩
+    intro k m h₃ h₄
+    rcases h₄ with ⟨h₄, h₅⟩
+    have h₆ : m < k := by
+      suffices : (m : ℝ) < (k : ℝ)
+     . norm_cast at this
+        omega
+      rw [← Int.cast_lt]
+      apply Int.lt_floor
+      simp
+      linarith
+    have h₇ : (k - 1) * (k - 1) < n - 122 := by
+      calc
+        (k - 1) * (k - 1) = (k - 1) * (k - 1) - 122 + 122 := by simp
+        _ < n - 122 := by gcongr; nlinarith
+    have h₈ : n - 122 ≤ (k - 1) * (k - 1) := by
+      calc
+        n - 122 ≤ n - 121 - 1 := by gcongr; omega
+        _ = (k - 1) * (k - 1) := by rw [show 121 = 11^2 by norm_num, ← pow_two, ← Int.sq_sub_sq]; norm_cast
+    replace h₇ : k - 1 < Real.sqrt (n - 122) := by
+      rw [Real.lt_sqrt]
+      simp
+      linarith
+      linarith
+    replace h₈ : Real.sqrt (n - 122) ≤ k - 1 := by
+      rw [Real.sqrt_le_left]
+      simp
+      norm_cast
+      omega
+      linarith
+    linarith
+  -- Now we will solve the equation naively.
+  have h₆ (n : ℕ) (h : 1 ≤ n ∧ n ≤ 5050) : (∃ k : ℤ, ∃ m : ℕ, (m : ℝ) + 1 < Real.sqrt n ∧ (↑n + (1000 : ℝ)) / 70 = (↑k : ℝ) + (↑m : ℝ)) ↔ (∃ k : ℤ, (n + 1000) = 70 * k ∧ 0 < n ∧ n ≤ 5050) := by
+    constructor
+    -- We have already proved the forward direction.
+    · intro ⟨k, m, h₃, h₄⟩
+      use k
+      use m
+      refine ⟨?_, h₄, h₃⟩
+      rw [← h₃]
+      simp
+      rw [Int.cast_div (by norm_cast) (by norm_cast)]
+      norm_cast
+      rw [h₄, Nat.cast_sub (by omega)]
+      ring
+    -- Now we will prove the backward direction.
+    · intro ⟨k, h₃, h₄, h₅⟩
+      use k
+      use (n / 70).toNat
+      refine ⟨?_,?_,?_⟩
+     . rw [← Nat.floor_eq_iff (n / 70)]
+        apply Int.floor_eq_iff.mpr
+        constructor
+       . norm_cast
+          omega
+       . simp
+          rw [Int.le_floor]
+          suffices : n % 70 < 70
+         . linarith
+          rw [Nat.mod_lt]
+          omega
+     . linarith
+     . rw [Int.cast_div (by norm_cast) (by norm_cast)]
+        norm_cast
+        rw [h₃, Nat.cast_sub (by omega)]
+        ring_nf
+        omega
+  -- Combine the conditions.
+  have h₇ (n : ℕ) (h : 1 ≤ n ∧ n ≤ 5050) : (∃ k : ℤ, (∃ m : ℕ, (m : ℝ) + 1 < Real.sqrt n) ∧
+      (k = Int.floor (Real.sqrt n)) ∧
+      (↑n + (1000 : ℝ)) / 70 = k ∧ 70 ∣ (n + 1000) ∧ 0 < n ∧ n ≤ 5050) ↔ (∃ k : ℤ, (n + 1000) = 7

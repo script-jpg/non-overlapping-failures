@@ -1,0 +1,44 @@
+-- We use induction on $n$ to prove this equality.
+  induction n with
+  -- The base case $n = 0$ is trivial.
+  | zero =>
+    simp
+  -- For the induction step, we assume the claim holds for $n$ and prove it for $n + 1$.
+  | succ n ih =>
+    rw [Finset.sum_range_succ, ih]
+    -- We need to show that $\sum_{k=0}^{n}k^3 = \left(\sum_{k=0}^{n}k\right)^2$.
+    -- By induction hypothesis, $\sum_{k=0}^{n-1}k^3 = \left(\sum_{k=0}^{n-1}k\right)^2$.
+    -- So we need to show that $(n^3 + (\sum_{k=0}^{n-1}k)^2) = (n + (\sum_{k=0}^{n-1}k))^2$.
+    simp [add_sq]
+    -- By simple algebra, $(n^3 + (\sum_{k=0}^{n-1}k)^2) = (n + (\sum_{k=0}^{n-1}k))^2$.
+    -- So the remaining goal is $n^3 = n^2 + 2n(\sum_{k=0}^{n-1}k) + (\sum_{k=0}^{n-1}k)^2$.
+    rw [add_pow_two, pow_two, add_pow_two, ← add_assoc, add_right_cancel_iff, add_comm]
+    rw [Finset.sum_range_succ]
+    -- Now the goal is $n^3 = n^2 + 2n(\sum_{k=0}^{n-1}k) + (\sum_{k=0}^{n-1}k)^2$.
+    -- We simplify the goal by using $\sum_{k=0}^{n-1}k = \frac{(n-1)n}{2}$.
+    have h1 : (∑ k ∈ Finset.range n, k) = ((n - 1) * n / 2) := by
+      rw [Finset.sum_range_id]
+    -- Now the goal is $n^3 = n^2 + 2n(\frac{(n-1)n}{2}) + (\frac{(n-1)n}{2})^2$.
+    rw [h1]
+    -- We need some lemmas to work on ring_nf.
+    have : ((n - 1) * n / 2) * 2 = (n - 1) * n := by
+      rw [Nat.mul_div_cancel', Nat.mul_sub, Nat.mul_one]
+      omega
+    have : ((n - 1) * n / 2) ^ 2 * 4 = ((n - 1) * n) ^ 2 := by
+      rw [Nat.mul_div_cancel', Nat.mul_sub, Nat.mul_one]
+      omega
+    -- Now the goal is $n^3 = n^2 + (n-1)n^2 + \frac{(n-1)^2n^2}{4}$.
+    -- We need to show that $n^3 = n^2 + (n-1)n^2 + \frac{(n-1)^2n^2}{4}$.
+    rw [this]
+    have : n ^ 3 = n ^ 2 + (n - 1) * n ^ 2 + (n - 1) ^ 2 * n ^ 2 / 4 := by
+      -- We can show that $n^3 = n^2 + (n-1)n^2 + \frac{(n-1)^2n^2}{4}$ by simple algebra.
+      rw [add_assoc]
+      nth_rw 2 [add_assoc]
+      rw [← Nat.add_sub_assoc]
+      have : n ^ 3 - n ^ 2 - (n - 1) * n ^ 2 = (n - 1) ^ 2 * n ^ 2 / 4 := by
+        rw [Nat.sub_sub, Nat.sub_add_eq]
+        omega
+      exact Nat.add_eq_of_sub_eq this
+    exact this
+
+```

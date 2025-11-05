@@ -1,0 +1,51 @@
+-- Define $a_n$ and $b_n$ as functions from $\mathbb{N}$ to $\mathbb{R}$.
+  have h4 : ∀ n, (a (n + 1), b (n + 1)) = (Real.sqrt 3 * a n - b n, Real.sqrt 3 * b n + a n) := by
+    intro n
+    apply Prod.ext <;> simp [h₀, h₁]
+
+  -- Define $f_n = a_n + b_n i$ as a function from $\mathbb{N}$ to $\mathbb{C}$.
+  let f : ℕ → ℂ := fun n => a n + (I:ℂ) * b n
+
+  -- Show that $f_{n+1} = \sqrt{3} f_n$.
+  have h5 : ∀ n, f (n + 1) = Real.sqrt 3 * f n := by
+    intro n
+    calc f (n + 1)
+      _ = a (n + 1) + I * b (n + 1) := by rfl
+      _ = (Real.sqrt 3 * a n - b n) + I * (Real.sqrt 3 * b n + a n) := by rw [h4 n]
+      _ = Complex.ext_iff.mpr ⟨by ring, by ring⟩
+      _ = Complex.ext_iff.mpr ⟨by ring, by ring⟩
+      _ = Complex.ext_iff.mpr ⟨by ring, by ring⟩
+      _ = Real.sqrt 3 * (a n + I * b n) := by ring
+
+  -- Show that $f_{100} = 2 + 4i$.
+  have h6 : f 100 = 2 + I * 4 := by
+    rw [f]
+    simp [h₂, h₃]
+
+  -- Show that $f_1 = \frac{2 + 4i}{(\sqrt{3})^{99}}$.
+  have h7 : f 1 = (2 + I * 4) / (Real.sqrt 3) ^ 99 := by
+    calc f 1
+      _ = f 100 / (Real.sqrt 3) ^ 99 := by field_simp; rw [h5]; simp; rw [show 100 = 99 + 1 by norm_num, pow_add]; field_simp
+      _ = (2 + I * 4) / (Real.sqrt 3) ^ 99 := by rw [h6]
+
+  -- Show that $f_1 = a_1 + b_1 i$.
+  have h8 : f 1 = a 1 + I * b 1 := by rfl
+
+  -- Combine the above results to show that $a_1 + b_1 = \frac{1}{2^{97}}$.
+  rw [h8] at h7
+  have h9 : a 1 + b 1 = (2 + 4) / (Real.sqrt 3) ^ 99 := by
+    apply_fun Complex.re at h7
+    simp at h7
+    exact h7
+
+  rw [h9]
+  have h10 : (2 + 4 : ℝ) = 1 / (2 ^ 98) * (Real.sqrt 3) ^ 99 := by
+    nth_rw 1 [show (1 : ℝ) = (1 / (2 ^ 98) : ℝ) * (2 ^ 98) by simp]
+    rw [mul_pow]
+    field_simp
+    rw [show (2 ^ 98 : ℝ) = (2 ^ (98 : ℕ) : ℝ) by norm_cast]
+    simp
+
+  rw [h10]
+  simp
+```

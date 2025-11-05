@@ -1,0 +1,42 @@
+-- We show that a₁²a₂ + a₂²a₃ +... + a₉₉²a₁₀⁰ + a₁⁰⁰²a₁ ≤ 12/25 by proving that 25(a₁²a₂ +... + a₉₉²a₁₀⁰ + a₁⁰⁰²a₁) ≤ 12(a₁² +... + a₉₉² + a₁₀⁰²)
+  have h₁ : 25 * (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + 25 * (a 100 ^ 2 * a 1) ≤ 12 * (Finset.sum (Finset.range 100) (fun x => a (x + 1) ^ 2)) := by
+    -- We write the sum as a²b + ab² +...
+    have h₁ (k : ℕ) : (∑ x in Finset.range k, a (x + 1) ^ 2 * a (x + 2)) + a (k + 1) ^ 2 * a 1 = (a 1 ^ 2 * a 2 + a 2 ^ 2 * a 3 +... + a k ^ 2 * a (k + 1)) + a (k + 1) ^ 2 * a 1 := by
+      simp [Finset.sum_range_succ]
+    -- We notice that if x, y, z are nonnegative numbers, we have 2xy + 2yz ≤ x² + 2y² + z² + y² + z² = (x² + y² + z²) + 2(y² + z²)
+    have h₂ (x y z : NNReal) : 2 * x * y + 2 * y * z ≤ x ^ 2 + 2 * y ^ 2 + z ^ 2 + (y ^ 2 + z ^ 2) := by
+      rw [show 2 * x * y + 2 * y * z = 2 * (x * y + y * z) by ring, <-sq_le_sq₀ (by positivity) (by positivity), add_sq, sq, sq, sq, sq, <-add_assoc]
+      linarith only [show 0 ≤ (x - z) ^ 2 by positivity]
+    -- We generalize the previous inequality to k variables, which gives us a sum of squares on the right-hand side
+    have h₂ (k : ℕ) (f : ℕ → NNReal) (hk : k ≥ 1) : ∑ x ∈ Finset.range k, (2 * f x ^ 2 + f x * f (x + 1)) ≤ 2 * (Finset.sum (Finset.range k) (fun x => f x ^ 2)) + (Finset.sum (Finset.range k) (fun x => f (x + 1) ^ 2)) := by
+      induction k with
+      | zero => contradiction
+      | succ k ih =>
+        by_cases hk : k = 0
+        · simp [hk]
+        · rw [Finset.sum_range_succ, ih (by linarith)]
+          simp [Finset.mem_range] at hk
+          specialize h₂ (f k) (f (k + 1)) (f (k + 2)) (by positivity) (by positivity) (by positivity)
+          rw [show (f (k + 2) ^ 2 + (f (k + 1) ^ 2 + f (k + 2) ^ 2)) = f (k + 2) ^ 2 + f (k + 1) ^ 2 + f (k + 2) ^ 2 by ring]
+          linarith only [h₂]
+    -- We apply the previous inequality to the sum we want to bound
+    have h₃ : ∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2) + a 100 ^ 2 * a 1 ≤ ∑ x in Finset.range 100, a x ^ 2 + ∑ x in Finset.range 100, a (x + 1) ^ 2 := by
+      specialize h₂ 100 a (by linarith)
+      rw [Finset.sum_range_succ] at h₂
+      linarith only [h₂]
+    -- We bound the sum of squares using the given hypotheses
+    have h₄ : ∑ x in Finset.range 100, a x ^ 2 ≤ 1 := by
+      rw [Finset.sum_range_succ]
+      linarith only [h₀]
+    have h₅ : ∑ x in Finset.range 100, a (x + 1) ^ 2 ≤ 1 := by
+      simp [Finset.mem_range]
+      exact h₀
+    linarith only [h₃, h₄, h₅]
+
+  -- We show that 12/25 is an upper bound for the given sum
+  have h₂ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 12 / 25 := by
+    by_contra! h₂
+    linarith only [h₁, h₂]
+
+  exact h₂
+```

@@ -1,0 +1,25 @@
+-- According to the reference answer, we need to prove a more general form of induction
+  have moreGeneralInduction {P : ℕ → Prop} (h₀ : P 0) (h₁ : ∀ n, P n → P n + 1) : ∀ n, P n := by
+    intro n
+    induction n using Nat.strong_induction_on with
+    | h n ih =>
+      specialize h₁ n ih
+      exact h₁
+
+  -- Now we prove the form of induction given in the reference answer
+  have h₀ : ∀ n : ℕ, (1 + ↑n * x) ≤ (1 + x) ^ (n : ℕ) := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      -- Apply the induction hypothesis
+      specialize ih (by linarith)
+      specialize moreGeneralInduction h₀ h₁
+      specialize moreGeneralInduction (1 + ↑n * x) x
+      -- Combine the two inequalities
+      rw [Nat.add_one, Nat.cast_add] at this
+      exact this
+
+  exact h₀ n
+```

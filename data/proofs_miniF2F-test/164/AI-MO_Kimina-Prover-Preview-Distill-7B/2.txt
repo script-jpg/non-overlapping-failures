@@ -1,0 +1,60 @@
+-- define log_2(x) = log_x(16)
+  have h₃ : Real.log x / Real.log 2 = Real.log 16 / Real.log y := by
+    exact h₁
+
+  -- fix y = 2 for simplicity
+  have h₄ : Real.log 2⁻¹ * Real.log y = Real.log 16 := by
+    calc
+      Real.log 2⁻¹ * Real.log y = (Real.log 2 / Real.log x) * Real.log y := by rw [← h₃]; field_simp
+      _ = Real.log 16 := by ring_nf; rw [← h₃]; field_simp
+
+  -- then x = 4
+  have h₅ : Real.log x * Real.log 4 = Real.log 16 := by
+    calc
+      Real.log x * Real.log 4 = Real.log 2 * Real.log x * (Real.log 2 * Real.log 2)⁻¹ := by field_simp
+      _ = Real.log 2 * (Real.log x / Real.log 2) * Real.log 2 := by ring
+      _ = Real.log 2 * Real.log y * Real.log 2 := by rw [h₃]
+      _ = Real.log 2 * Real.log 2 * Real.log 2 := by rw [← h₄]
+      _ = Real.log 2 ^ 3 := by ring
+      _ = Real.log 2 * Real.log 2 * Real.log 8 := by rw [show (8 : ℝ) = 2 ^ 3 by norm_num, Real.log_pow]; simp; norm_num
+      _ = Real.log 2 * Real.log 2 * Real.log (2 ^ 3) := by norm_num
+      _ = Real.log 2 * Real.log 2 * (3 * Real.log 2) := by rw [Real.log_pow]; simp; norm_num
+      _ = 3 * (Real.log 2 * Real.log 2 * Real.log 2) := by ring
+      _ = Real.log 2 * Real.log 2 * Real.log 16 := by rw [h₄]
+      _ = Real.log x * Real.log y := by rw [h₃]
+      _ = Real.log x * Real.log 4 := by rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]; simp; norm_num
+  have hx : x = 4 := by
+    calc
+      x = (x * y) / y := by field_simp
+      _ = 64 / y := by rw [h₂]
+      _ = 2 ^ (6 / (Real.log 2 * Real.log y)) := by rw [show (64 : ℝ) = 2 ^ (6 : ℝ) by norm_num, Real.rpow_mul, show (6 : ℝ) = (6 : ℝ) / (Real.log 2 * Real.log y) * (Real.log 2 * Real.log y) by field_simp, div_mul_cancel₀ 6]; norm_num; ac_rfl; norm_num
+      _ = 2 ^ (6 / (Real.log 2 * Real.log 4)) := by rw [h₄]
+      _ = 2 ^ (6 / (Real.log 2 * Real.log 2 * Real.log 2)) := by rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]; simp; norm_num
+      _ = 2 ^ (6 / (Real.log 2 * Real.log 2 * Real.log 2)) := by ac_rfl
+      _ = 2 ^ (6 / (Real.log 2 * Real.log 2 * Real.log 2)) := by ac_rfl
+      _ = 4 := by rw [show (4 : ℝ) = 2 ^ (2 : ℝ) by norm_num, Real.rpow_mul, div_mul_cancel₀ 2]; norm_num; ac_rfl; norm_num
+
+  -- compute the result
+  calc
+    (Real.log (x / y) / Real.log 2) ^ 2 = (Real.log (x / y) ^ 2) / (Real.log 2 ^ 2) := by field_simp
+    _ = (Real.log x ^ 2 - 2 * Real.log x * Real.log y + Real.log y ^ 2) / (Real.log 2 ^ 2) := by rw [Real.log_div (by linarith only [hx, h₂]) (by linarith only [h₂]), ← sq, ← sq, sub_sq]; ring_nf
+    _ = (Real.log x ^ 2 - 2 * Real.log x * Real.log y + Real.log y ^ 2) / (Real.log 2 ^ 2) := by ac_rfl
+    _ = ((Real.log x * Real.log 4) / (Real.log 2 ^ 2)) := by rw [h₅]; field_simp; norm_num; rw [← sub_mul, ← pow_two, show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow, ← sub_mul, ← pow_two, show (2 : ℝ) = 2 ^ 1 by norm_num, Real.log_pow]; ring_nf; ac_rfl; norm_num
+    _ = ((Real.log x * Real.log y) / (Real.log 2 ^ 2)) := by rw [h₄]
+    _ = ((Real.log x / Real.log 2) * Real.log y / Real.log 2) := by field_simp
+    _ = ((Real.log 16 / Real.log y) * Real.log y / Real.log 2) := by rw [h₃]
+    _ = Real.log 16 / Real.log 2 := by field_simp
+    _ = (Real.log 2 ^ 4) / Real.log 2 := by rw [show (16 : ℝ) = 2 ^ 4 by norm_num, Real.log_pow]; simp; norm_num
+    _ = Real.log 2 ^ 3 := by rw [← pow_succ', show (4 : ℝ) = (4 : ℝ) - 1 + 1 by norm_num, ← Nat.sub_add_cancel]; simp; norm_num
+    _ = (Real.log 2 * Real.log 2 * Real.log 2) := by ring
+    _ = (Real.log (2 * 2) * Real.log 2) ^ 2 := by rw [← Real.log_mul (by norm_num) (by norm_num), show (4 : ℝ) = (2 * 2) by norm_num, ← Real.log_mul (by norm_num) (by norm_num)]; ring_nf
+    _ = (Real.log (2 ^ 2) * Real.log 2) ^ 2 := by rw [show (2 : ℝ) * 2 = 2 ^ 2 by norm_num]
+    _ = (2 * Real.log 2 * Real.log 2) ^ 2 := by rw [Real.log_pow]; simp; norm_num
+    _ = 4 * (Real.log 2 * Real.log 2) ^ 2 := by ring_nf
+    _ = 4 * (Real.log 2 ^ 2 * Real.log 2 ^ 2) := by ring_nf
+    _ = 4 * ((Real.log 2 ^ 2) * Real.log 2 ^ 2) := by ac_rfl
+    _ = 4 * (Real.log 2 ^ (2 + 2)) := by rw [← pow_add]; ac_rfl
+    _ = 4 * Real.log 2 ^ 4 := by ring_nf
+    _ = 20 := by rw [show (4 * Real.log 2 ^ 4 = 20) by rw [← @Real.log_mul (2 ^ 2) (2 ^ 2) (by norm_num) (by norm_num)]; simp; norm_num; ring_nf, show (4 * Real.log 2 ^ 4 = 20) by rw [show (4 : ℝ) = (20 : ℝ) / (5 * Real.log 2 ^ 2) * (5 * Real.log 2 ^ 2) by field_simp; ring_nf], show (20 : ℝ) = (20 : ℝ) / (5 * Real.log 2 ^ 2) * (5 * Real.log 2 ^ 2) by field_simp; ring_nf, show (4 * Real.log 2 ^ 4 = 20) by rw [show (4 : ℝ) = (20 : ℝ) * (1 / 5) * Real.log 2 ^ 2 * Real.log 2 ^ 2 by field_simp; ring_nf], show (20 : ℝ) = (20 : ℝ) * (1 / 5) * 5 by field_simp; ring_nf]
+  -- done
+```

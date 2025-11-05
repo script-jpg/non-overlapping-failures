@@ -1,0 +1,100 @@
+have hp : Fact (Nat.Prime p) := ⟨h₀⟩
+
+  have h2 : (2 : ZMod p) ≠ 0 := by
+    by_contra!
+    have : (2 : ZMod p) = 0 := by assumption
+    have : (2 : ℕ) = 0 := by
+      exact ZMod.natCast_zmod_eq_zero_iff_dvd 2 p.natAbs
+        ▸ this
+    norm_num at this
+
+  have h3 : (3 : ZMod p) ≠ 0 := by
+    by_contra!
+    have : (3 : ZMod p) = 0 := by assumption
+    have : (3 : ℕ) = 0 := by
+      exact ZMod.natCast_zmod_eq_zero_iff_dvd 3 p.natAbs
+        ▸ this
+    norm_num at this
+
+  -- thelemea : $(k+1)^{-1} = k^{-1} + 1 + k^{-1} + k^{-2} + \cdots + k^{-1}.$
+  havethm{m: ℕ}(k : ZMod p)(hm : (k : ZMod p) ≠ 0): (k + 1)⁻¹ = k⁻¹ + 1 + k⁻¹ + k⁻² +... + k⁻¹ := by
+    -- Rewrite $(k+1)^{-1}$ as $(k+1)^{-1} \cdot 1$
+    calc
+      _ = (k + 1)⁻¹ * 1 := by
+        simp only [one_mul]
+      -- Multiply $(k+1)^{-1}$ by $(k^{-1}+1)$, which is equal to 1
+      _ = (k + 1)⁻¹ * (k⁻¹ + 1) := by
+        congr
+        refine eq_of_ne (w := k)
+        exact Ne.symm (ZMod.ne_zero_iff_ne_zero.mpr hm)
+      -- Distribute $(k+1)^{-1}$ over $(k^{-1}+1)$
+      _ = (k + 1)⁻¹ * k⁻¹ + (k + 1)⁻¹ * 1 := by
+        simp only [add_mul]
+      -- Simplify the second term
+      _ = (k + 1)⁻¹ * k⁻¹ + (k + 1)⁻¹ := by
+        simp only [one_mul]
+      -- Apply the recursive formula $(k+1)^{-1} = k^{-1} + 1 + k^{-2} + \cdots + k^{-1}$
+      _ = k⁻¹ + 1 + k⁻¹ + k⁻² +... + k⁻¹ := by
+        rw [add_assoc]
+        congr
+        -- Use induction to prove the formula for $(k+1)^{-1}$
+        apply Finset.induction_on
+        · simp
+        · intro m ih
+          rw [←add_assoc]
+          rw [Finset.sum_Icc_succ_top (by omega) (by omega), ih]
+          simp only [add_assoc]
+          rw [add_comm]
+
+  -- Transform the sum into a telescoping series
+  havethm{m: ℕ}(k : ZMod p)(hm : (k : ZMod p) ≠ 0): k⁻¹ * (k + 1)⁻¹ = 1 - (k + 1)⁻¹ := by
+    -- Use the lemma and simplify
+    rw [this thm (k : ZMod p) hm]
+    ring
+
+  -- flip the summation interval
+  havethm: ∑ k ∈ Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = ∑ k ∈ Finset.Icc (p - 2) 1, ((k : ZMod p) + 1)⁻¹ * (k : ZMod p)⁻¹ := by
+    apply Finset.sum_flip
+
+  rw [this]
+
+  -- the sum = 1 - 2⁻¹ + 2⁻¹ - 3⁻¹ + 3⁻¹ - 4⁻¹ + \cdots + (p-1)⁻¹ - p⁻¹
+  havethm: ∑ k ∈ Finset.Icc (p - 2) 1, ((k : ZMod p) + 1)⁻¹ * (k : ZMod p)⁻¹ = 1 - p⁻¹ := by
+    calc
+      _ = ∑ k ∈ Finset.Icc (p - 2) 1, ((k : ZMod p) + 1)⁻¹ * (k : ZMod p)⁻¹ + 1 - 1 := by
+        simp only [add_sub_cancel_right]
+      _ = ∑ k ∈ Finset.Icc (p - 2) 1, (1 - (k + 1)⁻¹) + 1 - 1 := by
+        congr
+        -- Apply the transformation lemma
+        apply Finset.sum_congr rfl
+        intro k hk
+        congr
+        exact this thm (k : ZMod p) (Finset.mem_Icc.mp hk)
+      _ = 1 - p⁻¹ := by
+        -- Compute the sum using the formula for a telescoping series
+        rw [Finset.sum_Icc_succ_top (by omega) (by omega)]
+        simp only [one_mul, sub_add_cancel, add_sub_cancel_right, Finset.Icc_eq_empty_of_lt]
+        simp only [Nat.cast_sub, Nat.cast_add, Nat.cast_one, IsUnit.inv_coe_zmod_eq, coe_natCast,
+          Nat.cast_ofNat, IsUnit.inv_inv, IsUnit.inv_one]
+        -- Show that p is a unit
+        have: (p : ZMod p) ≠ 0 := by
+          refine ZMod.ne_zero_iff_ne_zero.mpr?_
+          zify
+          simp only [Nat.cast_sub, Nat.cast_ofNat, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true]
+          -- Use omega to prove that p ≠ 0
+          omega
+        exact ZMod.inv p p.sub_one
+    congr
+    refine eq_of_ne (w := p)
+    -- Show that p is not zero
+    exact Nat.not_eq_zero_of_lt h₁
+
+  -- Substitute the sum
+  rw [this]
+
+  -- Simplify the expression
+  rw [ZMod.inv_eq_mul_inv, ←mul_assoc, mul_one, ZMod.inv_eq_mul_inv]
+  simp only [Nat.cast_sub, Nat.cast_one]
+  -- Complete the proof
+  exact ZMod.natCast_zmod_eq_zero_iff_dvd _ (by omega)
+```

@@ -1,0 +1,311 @@
+have h₁ : ∑ k in S, k = ∑ k in S, k := rfl
+
+  -- Here, we prove that S is actually the set of numbers satisfying the given conditions.
+  -- We prove this in two directions.
+  have h₂ :
+      ∀ n,
+        (∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n) ↔
+        (2010 ≤ n ∧ n ≤ 2019 ∧ ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n) := by
+    intro n
+    constructor
+    -- First, we prove that the set of numbers satisfying the given conditions
+    -- is a subset of the set of numbers in our set.
+    · intro ⟨m, h₁, h₂⟩
+      have h₃ : 2010 ≤ n := by
+        -- Define p as the smallest prime divisor of m.
+        let p := Nat.find (fun x => x ≠ 1 ∧ x ∣ m) 2
+        have h₃ : p = Nat.find (fun x => x ≠ 1 ∧ x ∣ m) 2 := rfl
+        rw [h₃]
+        -- We prove that p is a prime number.
+        have h₄ : p.Prime := by
+          rw [Nat.prime_def]
+          have h₄ : ∀ n, n ∣ m → 1 < n → p ≤ n := by
+            intro n hn hn'
+            have h₄ : n ≠ 1 := by
+              exact Nat.ne_of_gt hn'
+            have h₅ : n ∣ m := hn
+            have h₆ : n ≠ 1 := by
+              exact Nat.ne_of_gt h₄
+            have h₇ : p ∣ m := Nat.dvd_trans h₅ hn
+            have h₈ : p ∣ n := Nat.Prime.dvd_of_dvd_pow h₄ h₇
+            exact Nat.le_of_dvd h₅ h₈
+          exact Nat.find_spec (fun x => x ≠ 1 ∧ x ∣ m) 2 (by norm_num) h₄
+        -- We prove that the second smallest prime divisor of m is not less than p.
+        have h₅ : Nat.find (fun x => x ≠ 1 ∧ x ∣ m) 3 ≥ p := by
+          rw [Nat.find_le_iff]
+          simp
+          intro n hn hn' h₉
+          by_contra!
+          have h₁₀ : n ≠ 1 := by
+            exact Nat.ne_of_gt hn'
+          have h₁₁ : n ∣ m := hn
+          have h₁₂ : n ≠ 1 := by
+            exact Nat.ne_of_gt h₁₀
+          have h₁₃ : n ∣ m := hn
+          have h₁₄ : n ≥ 2 := by
+            exact Nat.le_of_dvd (by norm_num) h₁₃
+          have h₁₅ : p ≥ 3 := by
+            have h₁₅ : p ≠ 2 := by
+              have h₁₅ : p.Prime := h₄
+              exact Nat.Prime.ne_two h₁₅
+            have h₁₆ : p > 2 := by
+              exact Nat.lt_of_le_of_ne h₁₅ h₁₄.symm
+            exact Nat.lt_of_le_of_ne h₁₆
+          have h₁₆ : p ∣ n := Nat.Prime.dvd_of_dvd_pow h₁₄ h₁₃
+          have h₁₇ : p ≤ n := by
+            exact Nat.le_of_dvd h₁₆ h₁₅
+          have h₁₈ : n ≤ 3 := by
+            omega
+          have h₁₉ : p > 3 := by
+            have h₁₉ : p ∣ 3 := by
+              rw [h₁₈]
+              exact Nat.dvd_refl 3
+            have h₂₀ : p ≤ 3 := by
+              exact Nat.le_of_dvd (by norm_num) h₁₉
+            exact Nat.lt_of_le_of_ne h₂₀ h₁₅
+          contradiction
+        have h₆ : Nat.find (fun x => x ≠ 1 ∧ x ∣ m) 4 ≥ p := by
+          rw [Nat.find_le_iff]
+          simp
+          intro n hn hn' h₁₀
+          by_contra!
+          have h₁₁ : n ≠ 1 := by
+            exact Nat.ne_of_gt hn'
+          have h₁₂ : n ∣ m := hn
+          have h₁₃ : n ≠ 1 := by
+            exact Nat.ne_of_gt h₁₁
+          have h₁₄ : n ∣ m := hn
+          have h₁₅ : n ≥ 2 := by
+            exact Nat.le_of_dvd (by norm_num) h₁₃
+          have h₁₆ : p ∣ m := Nat.dvd_trans h₁₄ h₁₂
+          have h₁₇ : p ∣ n := Nat.Prime.dvd_of_dvd_pow h₁₅ h₁₃
+          have h₁₈ : p ≤ n := by
+            exact Nat.le_of_dvd h₁₇ h₁₆
+          have h₁₉ : n ≤ 4 := by
+            omega
+          have h₂₀ : p > 4 := by
+            have h₂₀ : p ∣ 4 := by
+              rw [h₁₉]
+              exact Nat.dvd_refl 4
+            have h₂₁ : p ≤ 4 := by
+              exact Nat.le_of_dvd (by norm_num) h₂₀
+            exact Nat.lt_of_le_of_ne h₂₁
+          contradiction
+        have h₇ : (Nat.divisors m).card ≥ 4 := by
+          rw [Nat.card_divisors]
+          simp
+          exact Nat.divisors m ⊆ Nat.divisors m \ {1}
+          intro n hn hn'
+          simp at hn
+          obtain ⟨hn, hn'⟩ := hn
+          rw [hn, Nat.dvd_iff_mod_eq_zero] at hn'
+          norm_num at hn'
+          have h₇ : n ∣ m := hn
+          have h₈ : n ≠ 1 := by
+            exact Nat.ne_of_gt hn'
+          have h₉ : n ∣ m := by
+            exact h₈.trans h₇
+          have h₁₀ : n ≥ 2 := by
+            exact Nat.le_of_dvd (by norm_num) h₉
+          have h₁₁ : n ≥ 3 := by
+            by_contra!
+            have h₁₁ : n = 2 := by
+              omega
+            rw [h₁₁] at hn
+            norm_num at hn
+            have h₁₂ : 2 ∣ m := hn
+            have h₁₃ : 2 ∣ 2 := by
+              exact Nat.dvd_refl 2
+            have h₁₄ := Nat.dvd_trans h₁₂ h₁₃
+            rw [show Nat.divisors 2 = {1, 2} by rfl] at h₁₄
+            simp at h₁₄
+            exact h₈ h₁₄
+          have h₁₂ : n ∣ m := by
+            exact h₁₁.trans h₇
+          have h₁₃ : n ≥ 4 := by
+            by_contra!
+            have h₁₁ : n = 3 := by
+              omega
+            rw [h₁₄] at hn
+            norm_num at hn
+            have h₁₅ : 3 ∣ m := hn
+            have h₁₆ : 3 ∣ 3 := by
+              exact Nat.dvd_refl 3
+            have h₁₇ := Nat.dvd_trans h₁₅ h₁₆
+            rw [show Nat.divisors 3 = {1, 3} by rfl] at h₁₇
+            simp at h₁₇
+            exact h₁₀ h₁₇
+          rw [show Nat.divisors m = Nat.divisors m \ {1} ∪ {1} by rfl] at h₃
+          rw [show Nat.divisors m = Nat.divisors m \ {1} ∪ {1} by rfl] at h₄
+          rw [show Nat.divisors m = Nat.divisors m \ {1} ∪ {1} by rfl] at h₅
+          rw [show Nat.divisors m = Nat.divisors m \ {1} ∪ {1} by rfl] at h₆
+          have h₁₈ : Nat.divisors m \ {1} ≠ ∅ := by
+            simp
+            by_contra!
+            have h₁₈ : Nat.divisors m = {1} := by
+              omega
+            rw [Nat.divisors_eq_singleton_iff] at h₁₈
+            exact False.elim (h₁₈ h₀)
+          have h₁₉ : Nat.divisors m \ {1} ⊆ Finset.univ := by
+            simp
+          have h₂₀ : Nat.divisors m \ {1} ≤ 4 := by
+            have h₂₀ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+              intro n hn
+              simp at hn
+              obtain ⟨hn, hn'⟩ := hn
+              rw [hn, Nat.dvd_iff_mod_eq_zero] at hn'
+              norm_num at hn'
+              have h₂₀ : n ∣ m := hn
+              have h₂₁ : n ≠ 1 := by
+                exact Nat.ne_of_gt hn'
+              have h₂₂ : n ∣ m := by
+                exact h₂₁.trans h₂₀
+              have h₂₃ : n ≥ 2 := by
+                exact Nat.le_of_dvd (by norm_num) h₂₂
+              have h₂₄ : n ≤ 4 := by
+                omega
+              exact Finset.mem_Icc.mpr ⟨h₂₃, h₂₄⟩
+            rw [Finset.le_iff_subset] at h₂₀
+            intro n hn
+            simp at hn
+            have h₂₁ : n ∈ Nat.divisors m \ {1} := by
+              simp
+              exact hn
+            have h₂₂ : n ∈ Finset.univ := by
+              exact h₂₀ h₂₁
+            exact h₂₂
+          have h₂₁ : Nat.divisors m \ {1} ≤ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₀
+          have h₂₂ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₁
+          have h₂₃ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₂
+          rw [Finset.coe_Icc] at h₂₃
+          rw [Finset.coe_Icc]
+          simp
+          have h₂₄ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₃
+          have h₂₅ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₄
+          have h₂₆ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₅
+          have h₂₇ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₆
+          have h₂₈ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₇
+          have h₂₉ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₈
+          have h₃₀ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+            exact Finset.le_iff_subset h₂₉
+          suffices h : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 by
+            exact Finset.coe_inj.mp h
+          exact h₃₀
+        have h₈ : n ≥ 5 := by
+          by_contra!
+          have h₈ : n ≤ 4 := by
+            omega
+          have h₉ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          have h₁₀ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          have h₁₁ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          have h₁₂ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          have h₁₃ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          have h₁₄ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          have h₁₅ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          have h₁₆ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          have h₁₇ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          have h₁₈ : n ∈ Finset.Icc 2 4 := by
+            simp
+            omega
+          simp at h₁₈
+          have h₁₉ : 5 ≤ n := by
+            exact Nat.le_of_not_lt h₁₈
+          linarith
+        have h₉ : ∃ p', p' ∈ Nat.divisors m \ {1} ∧ p' ≥ 5 ∧ p' ∈ Finset.Icc 2 4 := by
+          use n
+          simp
+          constructor
+          exact h₈
+          constructor
+          exact h₉
+          simp
+          omega
+        rcases h₉ with ⟨p', hp', hp''', hp'''⟩
+        rw [show Nat.divisors m = Nat.divisors m \ {1} ∪ {1} by rfl] at h₂
+        simp at h₂
+        have h₁₀ : p' ∈ Nat.divisors m := by
+          exact hp'.trans (by simp)
+        have h₁₁ : p' ∣ m := by
+          exact Nat.dvd_of_mem_divisors h₁₀
+        have h₁₂ : p' ≠ 1 := by
+          exact Nat.ne_of_gt hp'
+        have h₁₃ : p' ∣ m := by
+          exact h₁₁
+        have h₁₄ : p' ≥ 5 := by
+          exact hp'''
+        have h₁₅ : p' ∈ Finset.Icc 2 4 := by
+          exact hp''''
+        have h₁₆ : p' ∣ m := by
+          exact h₁₃
+        have h₁₇ : p' ≥ 5 := by
+          exact h₁₄
+        have h₁₈ : p' ∈ Finset.Icc 2 4 := by
+          exact h₁₅
+        have h₁₉ : p' ∣ m := by
+          exact h₁₆
+        have h₂₀ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          suffices h : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 by
+            exact h
+          apply Finset.le_iff_subset.mpr
+          intro n hn
+          simp at hn
+          have h₂₁ : n ∈ Nat.divisors m := by
+            exact hn
+          have h₂₂ : n ≠ 1 := by
+            exact Nat.ne_of_gt hn'
+          have h₂₃ : n ∣ m := by
+            exact Nat.dvd_trans h₂₂ h₂₁
+          have h₂₄ : n ≥ 2 := by
+            exact Nat.le_of_dvd (by norm_num) h₂₃
+          have h₂₅ : n ≤ 4 := by
+            omega
+          exact Finset.mem_Icc.mpr ⟨h₂₄, h₂₅⟩
+        have h₂₁ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₀
+        have h₂₂ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₁
+        have h₂₃ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₂
+        have h₂₄ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₃
+        have h₂₅ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₄
+        have h₂₆ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₅
+        have h₂₇ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₆
+        have h₂₈ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₇
+        have h₂₉ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₈
+        have h₃₀ : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 := by
+          exact Finset.le_iff_subset h₂₉
+        suffices h : Nat.divisors m \ {1} ⊆ Finset.Icc 2 4 by
+          exact

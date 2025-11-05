@@ -1,0 +1,177 @@
+-- Start by setting up the induction on n
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+      -- Ensure the positivity of $n$
+      induction n with
+      | zero =>
+          norm_num
+      | succ n =>
+          -- Define $A_n = \prod_{k=1}^{n} (1 + 1/2^k)$
+          set Aₙ := ∏ k in Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / 2 ^ k
+          -- Define $B_n = \prod_{k=1}^{n} (1 + 1/2^{k+1})$
+          set Bₙ := ∏ k in Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / 2 ^ (k + 1)
+          -- Define $C_n = \prod_{k=1}^{n} (1 + 1/2^k)$
+          set Cₙ := ∏ k in Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / 2 ^ k
+          -- Prove $A_n = 2^{n+1} * B_n$
+          have hAₙ : Aₙ = 2 ^ (n + 1) * Bₙ := by
+            rw [Finset.prod_Icc_succ_top (by linarith), Finset.prod_Icc_succ_top (by linarith)]
+            ring_nf
+            rw [Finset.prod_Icc_succ_top (by linarith)]
+            ring
+          -- Prove $B_n < 1$
+          have hBₙ : Bₙ < 1 / 2 := by
+            -- Notice that $B_n = (1 + 1/2^2)(1 + 1/2^3)...(1 + 1/2^{n+1})$
+            -- and each term is less than or equal to $1 + 1/2^{k+1}$
+            -- We can compare with the geometric series
+            have h : Bₙ < ∏ k in Finset.Icc 1 (n + 1), (1 : ℝ) + (1 : ℝ) * (1 / 2) ^ (k + 1) := by
+              apply Finset.prod_lt_prod
+              · intro i hi
+                simp at hi
+                -- Prove $1 + 1/2^{i+1} < 1 + 1/2^{k+1}$ when $i > k$
+                suffices h : (1 : ℝ) / 2 ^ (i + 1) < (1 : ℝ) / 2 ^ (k + 1) by linarith
+                rw [lt_div_iff₀]
+                · apply pow_lt_pow_right₀
+                  · linarith
+                  · linarith
+                  · linarith
+                · apply one_div_lt_one_div_of_lt
+                  · apply pow_pos
+                    linarith
+                  · linarith
+              · simp
+                linarith
+            rw [← Finset.prod_Icc_succ_top (by linarith)] at h
+            rw [Finset.prod_Icc_succ_top (by linarith), Finset.prod_Icc_succ_top (by linarith)] at h
+            rw [Finset.prod_Icc_succ_top (by linarith)] at h
+            -- Show that the product is less than geometric series sum
+            have h' : ∏ k ∈ Finset.Icc 1 (2 ^ (n + 1)), (1 : ℝ) + (1 : ℝ) * (1 / 2) ^ (k + 1) < ∑ i ∈ Finset.Icc 1 (2 ^ (n + 1)), (1 : ℝ) * (1 / 2) ^ i := by
+              apply Finset.prod_lt_sum
+              · intro i hi
+                simp at hi
+                -- Prove $(1 + 1/2^{k+1}) < (1 + 1/2^k)$
+                suffices h : (1 : ℝ) / 2 ^ (k + 1) < (1 : ℝ) / 2 ^ k by linarith
+                rw [div_lt_div_iff₀]
+                · apply pow_lt_pow_right₀
+                  · linarith
+                  · linarith
+                  · linarith
+                · apply one_div_lt_one_div_of_lt
+                  · apply pow_pos
+                    linarith
+                  · linarith
+              · simp
+            apply lt_trans h' at h
+            -- Show that the sum is less than $1/2$
+            have h'' : ∑ i ∈ Finset.Icc 1 (2 ^ (n + 1)), (1 : ℝ) * (1 / 2) ^ i < 1 / 2 := by
+              -- It's a geometric series sum
+              have h : ∑ i ∈ Finset.Icc 1 (2 ^ (n + 1)), (1 : ℝ) * (1 / 2) ^ i = (1 / 2) * (1 - (1 / 2) ^ (2 ^ (n + 1))) / (1 - 1 / 2) := by
+                rw [Finset.sum_mul_left]
+                rw [Finset.sum_range_eq_sub₀]
+                · ring
+                · rw [Finset.sum_range_succ']
+                  simp
+                  rw [mul_assoc, Finset.mul_sum]
+                  apply Finset.sum_congr rfl
+                  intro x _
+                  ring
+                · simp
+            rw [h] at h
+            rw [show (1 : ℝ) / 2 ^ (2 ^ (n + 1)) = ((1 : ℝ) / 2) ^ (2 ^ (n + 1)) by ring] at h
+            rw [show (1 : ℝ) / 2 - ((1 : ℝ) / 2) ^ (2 ^ (n + 1)) = (1 : ℝ) / 2 * (1 - ((1 : ℝ) / 2) ^ (2 ^ (n + 1))) by ring] at h
+            rw [show 1 / 2 * ((1 : ℝ) / 2) ^ (2 ^ (n + 1)) / (1 - 1 / 2) = (1 / 2) * ((1 / 2) ^ (2 ^ (n + 1)) / (1 - 1 / 2)) by ring] at h
+            -- It suffices to show that $(1 / 2) ^ (2 ^ (n + 1)) / (1 - 1 / 2) < 1$
+            suffices h : ((1 : ℝ) / 2) ^ (2 ^ (n + 1)) / (1 - 1 / 2) < 1 by linarith
+            rw [div_lt_iff₀]
+            · rw [show (1 : ℝ) / 2 ^ (2 ^ (n + 1)) = ((1 : ℝ) / 2) ^ (2 ^ (n + 1)) by ring]
+              apply pow_lt_one₀
+              · linarith
+              · apply pow_pos
+                linarith
+              · linarith
+            · linarith
+            · apply one_div_lt_one_div_of_lt
+              · norm_num
+              · apply pow_pos
+                linarith
+            · linarith
+          -- Prove $A_n < 2^{n+1} * (1/2 + 1/2)$
+          have hAₙ' : Aₙ < 2 ^ (n + 1) * (1 / 2 + 1 / 2) := by
+            rw [hAₙ]
+            apply mul_lt_mul_of_pos_left
+            · exact hBₙ
+            · apply Real.rpow_pos_of_pos
+              linarith
+          -- Show that $A_n < 2^{n+1} * (1/2 + 1/2)$ contradicts with the inductive hypothesis
+          have h : (5 : ℝ) / 2 < 2 ^ (n + 1) * (1 / 2 + 1 / 2) := by
+            -- It's obvious for $n >= 2$
+            by_cases hn : n = 0
+            · rw [hn]
+              norm_num
+            · have h : 2 ^ (n + 1) * (1 / 2 + 1 / 2) = 2 ^ n * 2 * (1 / 2 + 1 / 2) := by ring
+              rw [h]
+              -- It's obvious for $n >= 1$
+              by_cases hn' : n = 1
+              · rw [hn']
+                norm_num
+              · have h : 2 ^ n * 2 * (1 / 2 + 1 / 2) = 2 ^ (n - 1) * 4 * (1 / 2 + 1 / 2) := by
+                  rw [← Nat.pow_succ']
+                  rw [show 2 = 1 + 1 by simp, add_mul, one_mul]
+                  ring
+                rw [h]
+                -- It's obvious for $n >= 2$
+                have h : n - 1 >= 1 := by
+                  refine Nat.sub_one_le_of_le?_ hn
+                  linarith
+                have h' : 2 ^ (n - 1) ≥ 2 := by
+                  apply Nat.le_self_pow
+                  · linarith
+                  · exact h
+                linarith
+          -- Finish the rest trivial goals
+          linarith
+          apply Finset.prod_nonneg
+          intro i _
+          apply add_nonneg
+          · apply one_nonneg
+          · apply div_nonneg
+            · apply one_nonneg
+            · apply pow_nonneg
+              linarith
+          linarith
+          simp
+          -- Inductive step: prove $(\prod_{k=1}^{n+1} (1 + 1/2^k)) < 5/2$
+          have hprod : ∏ k ∈ Finset.Icc 1 (n + 1), (1 + (1 : ℝ) / 2 ^ k) < 5 / 2 := by
+            -- Use the inductive hypothesis and the fact that $(1 + 1/2^{n+1}) < 2$
+            have h : (5 : ℝ) / 2 < 5 / 2 := by
+              linarith
+            have h' : ∏ k ∈ Finset.Icc 1 (n + 1), (1 + (1 : ℝ) / 2 ^ k) < (∏ k ∈ Finset.Icc 1 (n + 1), (1 + (1 : ℝ) / 2 ^ k)) * (1 + (1 : ℝ) / 2 ^ (n + 1)) := by
+              apply Finset.prod_lt_prod
+              · intro i hi
+                simp at hi
+                linarith
+              · simp
+            apply lt_of_lt_of_le h h'
+            -- Prove $5/2 ≤ A_{n+1}$
+            have hAₙ : ∏ k ∈ Finset.Icc 1 ((n + 1) + 1), 1 + (1 : ℝ) / 2 ^ k = Aₙ * (1 + (1 : ℝ) / 2 ^ (n + 1)) := by
+              rw [Finset.prod_Icc_succ_top (by linarith)]
+              rw [Finset.prod_Icc_succ_top (by linarith)]
+              rw [Finset.prod_Icc_succ_top (by linarith)]
+              ring
+            -- It's obvious that $5/2 ≤ A_{n+1}$
+            suffices hAₙ' : 5 / 2 ≤ Aₙ * (1 + (1 : ℝ) / 2 ^ (n + 1)) by linarith
+            rw [hAₙ]
+            apply mul_le_mul_of_nonneg_left
+            · norm_num
+            · apply Finset.prod_nonneg
+              intro i _
+              apply add_nonneg
+              · apply one_nonneg
+              · apply div_nonneg
+                · apply one_nonneg
+                · apply pow_nonneg
+                  linarith
+              · linarith
+          exact hprod
+
+```

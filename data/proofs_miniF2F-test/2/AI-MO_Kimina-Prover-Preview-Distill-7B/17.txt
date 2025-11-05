@@ -1,0 +1,101 @@
+-- Let $x$, $y$ and $z$ all exceed $1$ and let $w$ be a positive number such that $\log_x w = 24$, $\log_y w = 40$ and $\log_{xyz} w = 12$. Find $\log_z w$. Show that it is 060.
+
+  -- We need to prove that $\log_z w = 60$.
+
+  have hz : 0 < Real.log z := by
+    -- First, we need to prove that $z > 1$ implies $0 < \log z$.
+    suffices 0 < Real.log z by
+      exact this
+    -- Assume the contrary, that is, $0 \geq \log z$.
+    by_contra!
+    -- We have $\log z \leq 0$.
+    have : Real.log z ≤ 0 := by
+      linarith
+    -- By properties of logarithm, we have $z \leq 1$.
+    have : z ≤ 1 := by
+      by_contra h
+      push_neg at h
+      have : 1 < z := by
+        exact h
+      have : 0 < Real.log z := by
+        exact Real.log_pos this
+      linarith
+    -- However, we assume that $z > 1$, so we get a contradiction.
+    linarith
+
+  have hw' : 0 < Real.log w := by
+    -- First, we need to prove that $w > 1$ implies $0 < \log w$.
+    suffices 0 < Real.log w by
+      exact this
+    -- Assume the contrary, that is, $0 \geq \log w$.
+    by_contra!
+    -- We have $\log w \leq 0$.
+    have : Real.log w ≤ 0 := by
+      linarith
+    -- By properties of logarithm, we have $w \leq 1$.
+    have : w ≤ 1 := by
+      by_contra h
+      push_neg at h
+      have : 1 < w := by
+        exact h
+      have : 0 < Real.log w := by
+        exact Real.log_pos this
+      linarith
+    -- However, we assume that $w > 1$, so we get a contradiction.
+    linarith
+
+  -- By change of base formula, we have $\log_x w = \frac{\log w}{\log x} = 24$, $\log_y w = \frac{\log w}{\log y} = 40$ and $\log_{xyz} w = \frac{\log w}{\log (x y z)} = 12$.
+  -- So we have $\log w = 24 \log x$, $\log w = 40 \log y$ and $\log w = 12 \log (x y z)$.
+  rw [Real.log_div_log_eq_iff (by linarith) (by linarith), Real.log_div_log_eq_iff (by linarith) (by linarith), Real.log_div_log_eq_iff (by simp; linarith) (by simp; linarith)] at h0 h1 h2
+
+  -- By properties of logarithm, we have $\log (x y z) = \log x + \log y + \log z$.
+  have h3 : Real.log (x * y * z) = Real.log x + Real.log y + Real.log z := by
+    rw [Real.log_mul (by linarith) (by simp; linarith), Real.log_mul (by linarith) (by simp; linarith)]
+    ring
+  rw [h3] at h2
+
+  -- We get $12 \log x + 12 \log y + 12 \log z = 60 \log w$.
+  have h4 : 12 * Real.log x + 12 * Real.log y + 12 * Real.log z = 60 * Real.log w := by
+    linarith
+  -- We get $12 \log x + 12 \log y + 12 \log z = 60 \log w$.
+  have h5 : 12 * Real.log x + 12 * Real.log y + 12 * Real.log z = 60 * Real.log w := by
+    linarith
+  -- Dividing both sides by $\log w$, we get $\frac{12 \log x + 12 \log y + 12 \log z}{\log w} = 60$.
+  have h6 : (12 * Real.log x + 12 * Real.log y + 12 * Real.log z) / Real.log w = 60 := by
+    rw [h5]
+    field_simp
+  -- By properties of division, we have $\frac{12 \log x + 12 \log y + 12 \log z}{\log w} = \frac{12 \log x}{\log w} + \frac{12 \log y}{\log w} + \frac{12 \log z}{\log w}$.
+  rw [div_add_div_add_div _ _ _] at h6
+  -- By change of base formula, we have $\frac{12 \log x}{\log w} = 12 \log_x w = 12 \times 24 = 288$, $\frac{12 \log y}{\log w} = 12 \log_y w = 12 \times 40 = 480$ and $\frac{12 \log z}{\log w} = 12 \log_z w$.
+  rw [mul_comm (Real.log x), mul_comm (Real.log y), h0, mul_comm (Real.log z), mul_comm (Real.log w)] at h6
+  rw [Real.log_div_log_eq_iff (by linarith) (by linarith), Real.log_div_log_eq_iff (by linarith) (by linarith), Real.log_div_log_eq_iff (by linarith) (by linarith)] at h6
+  -- So we get $12 \log_z w = 60 - 288 - 480 = 60 - 768 = -708$.
+  have h7 : 12 * Real.log z / Real.log w = -708 := by
+    linarith
+  -- Dividing both sides by 12, we get $\log_z w = -708 / 12 = -59$.
+  have h8 : Real.log z / Real.log w = -59 := by
+    linarith
+  -- However, we know that $\log_z w = \frac{\log w}{\log z}$, so we get $-59 = \frac{\log w}{\log z}$.
+  rw [Real.log_div_log_eq_iff (by linarith) (by linarith)] at h8
+  -- By properties of division, we have $\log w = -59 \log z$.
+  have h9 : Real.log w = -59 * Real.log z := by
+    linarith
+  -- But we also have $\log w = 60 \log z$ from h2.
+  have h10 : Real.log w = 60 * Real.log z := by
+    linarith
+  -- So we get $-59 \log z = 60 \log z$.
+  have h11 : -59 * Real.log z = 60 * Real.log z := by
+    linarith
+  -- Adding $59 \log z$ to both sides, we get $0 = 119 \log z$.
+  have h12 : 0 = 119 * Real.log z := by
+    linarith
+  -- Since $z > 1$, we have $\log z \neq 0$.
+  have h13 : Real.log z ≠ 0 := by
+    exact Real.log_ne_zero_of_pos_of_ne_one hw' (by linarith)
+  -- Dividing both sides by $\log z$, we get $0 = 119$ which is a contradiction.
+  have h14 : 0 = 119 := by
+    apply (mul_eq_mul_right h13).mp
+    linarith
+  -- However, we know that $119 \neq 0$, so we get a contradiction.
+  linarith
+```

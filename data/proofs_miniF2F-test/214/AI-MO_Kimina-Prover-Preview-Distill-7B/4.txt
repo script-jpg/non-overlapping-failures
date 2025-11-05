@@ -1,0 +1,203 @@
+-- aux lemma, sum of sin equal tan
+  have l_sum_sin_eq_tan {n : ℕ} (h : 1 ≤ n) : ∑ k in Finset.Icc 1 n, Real.sin (k * 180 / n + 90) = Real.tan (n + 1) * 180 / (2 * n) := by
+    induction n with
+    | zero => linarith
+    | succ n ih =>
+      by_cases h' : n < 1
+      · simp at h'
+        simp [h']
+      · have : 1 ≤ n := by omega
+        rw [Finset.sum_Icc_succ_top (by omega), ih (by omega)]
+        simp [h']
+        rw [add_tan]
+        have : (1 : ℝ) / n > 0 := by positivity
+        field_simp [h']
+        ring
+        simp
+        linarith
+
+  -- aux lemma, tan is injective on $(-90, 90)$ degrees
+  have l_tan.injective OnegtPi_div_two_lt_of_lt (h : (n : ℝ) ∈ Set.Ioo (-(1 : ℝ) * Real.pi / 2) (1 : ℝ) * Real.pi / 2)) : ∀ x ∈ Set.Ioo (-90) 90, tan x = tan n → x = n := by
+    intro x hx tan_eq
+    have h_lt_pi_div_two : n < Real.pi / 2 := by
+      convert h.2 using 1
+      simp
+    have h_lt_pi : n < Real.pi := by linarith
+    have hx1 : -90 < x := hx.1
+    have hx2 : x < 90 := hx.2
+    have h1 : -(1 : ℝ) * Real.pi / 2 < x := by
+      have : -(1 : ℝ) * Real.pi / 2 < -90 := by
+        linarith [Real.pi_gt_three]
+      linarith
+    have h2 : x < (1 : ℝ) * Real.pi / 2 := by
+      have : 90 < (1 : ℝ) * Real.pi / 2 := by
+        linarith [Real.pi_gt_three]
+      linarith
+    have : tan x = tan n := by assumption
+    have : x = n := by
+      have hx : x ∈ Set.Ioo (-1 * Real.pi / 2) (1 * Real.pi / 2) := by
+        simp
+        constructor <;> linarith
+      have hn : n ∈ Set.Ioo (-1 * Real.pi / 2) (1 * Real.pi / 2) := by
+        simp
+        constructor <;> linarith
+      exact Real.injOn_tan hx hn this
+    assumption
+
+  -- aux lemma, tan is positive on $(-90, 90)$ degrees
+  have l_tan_pos_on_Ioo (x : ℝ) (hx : x ∈ Set.Ioo (-90) 90) : 0 < tan x := by
+    have hx1 : -90 < x := hx.1
+    have hx2 : x < 90 := hx.2
+    have hx3 : tan x > 0 := by
+      apply tan_pos_of_pos_of_lt_pi_div_two
+      · linarith
+      · linarith
+    assumption
+
+  -- aux lemma, tan is negative on $(-180, -90)$ degrees
+  have l_tan_neg_on_Ioo (x : ℝ) (hx : x ∈ Set.Ioo (-180) (-90)) : tan x < 0 := by
+    have hx1 : -180 < x := hx.1
+    have hx2 : x < -90 := hx.2
+    have hx3 : tan x < 0 := by
+      apply tan_neg_of_neg_of_lt_neg_pi_div_two
+      · linarith
+      · linarith
+    assumption
+
+  -- aux lemma, sin summation formula for degrees
+  have l_sum_sin (n : ℕ) (hn : 0 < n) : ∑ k in Finset.Icc 1 n, Real.sin (k * 5 * Real.pi / 180) = 5 * Real.pi / (180 * 2 * n) * (Real.tan (n + 1) * 180 / 180 - Real.tan (1 - n) * 180 / 180) := by
+    induction n with
+    | zero => linarith
+    | succ n ih =>
+      by_cases hn' : n < 1
+      · simp at hn'
+        simp [hn']
+        field_simp
+        ring
+        simp
+        linarith
+      · have : 1 ≤ n := by omega
+        rw [Finset.sum_Icc_succ_top (by omega), ih (by omega)]
+        simp
+        have id1 : (1 : ℝ) / n > 0 := by positivity
+        have id2 : (1 : ℝ) * Real.pi / n > 0 := by positivity
+        have id3 : (1 : ℝ) * Real.pi / (2 * n) > 0 := by positivity
+        field_simp [id1, id2, id3]
+        ring
+        have ht1 : Real.tan (n + 1) * 180 / (2 * n) > 0 := by
+          apply div_pos
+          · apply mul_pos
+            · simp
+            · exact l_tan_pos_on_Ioo (n + 1) (by constructor <;> linarith)
+          · simp
+        have ht2 : Real.tan (1 - n) * 180 / (2 * n) > 0 := by
+          apply div_pos
+          · apply mul_pos
+            · simp
+            · exact l_tan_pos_on_Ioo (1 - n) (by constructor <;> linarith)
+          · simp
+        linarith
+
+  -- aux lemma, sin summation formula for degrees with proven positivity
+  have l_sum_sin_pos (n : ℕ) (hn : 0 < n) : 0 < ∑ k in Finset.Icc 1 n, Real.sin (k * 5 * Real.pi / 180) := by
+    apply Finset.sum_pos
+    · simp
+    · intro k hk1 hk2
+      apply Real.sin_pos_of_pos_of_lt_pi
+      · linarith
+      · have : 5 * (↑n : ℝ) ≥ 5 := by
+          apply Nat.cast_le.mpr
+          assumption
+        have : 5 * (↑n : ℝ) / 180 ≥ 5 / 180 := by
+          apply div_le_div_of_nonneg_left
+          · assumption
+          · simp
+          · simp
+        have : 5 * (↑n : ℝ) / 180 > 0 := by positivity
+        linarith
+
+  -- aux lemma, tan is positive on $(-90, 90)$ degrees
+  have l_tan_pos_on_Ioo' (x : ℝ) (hx : x ∈ Set.Ioo (-90) 90) : 0 < tan x := by
+    have hx1 : -90 < x := hx.1
+    have hx2 : x < 90 := hx.2
+    have hx3 : tan x > 0 := by
+      apply tan_pos_of_pos_of_lt_pi_div_two
+      · linarith
+      · linarith
+    assumption
+
+  -- Since $\sum_{k=1}^{35}\sin 5k=\tan \frac mn,$ where angles are measured in degrees, we have $\frac{5 \cdot 36}{180} = \frac{5}{2} = \tan \frac mn.$
+  have l_tan_eq (m : ℚ) (h : 0 < m) : (m.num : ℝ) / m.den < 90 → 0 < tan (m * Real.pi / 180) := by
+    intro h'
+    have : tan (m * Real.pi / 180) > 0 := by
+      apply tan_pos_of_pos_of_lt_pi_div_two
+      · have : 0 < (m : ℝ) * Real.pi / 180 := by
+          apply div_pos
+          · apply mul_pos
+            · linarith
+            · exact Real.pi_pos
+          · simp
+        linarith
+      · linarith
+    assumption
+
+  -- By the lemma `l_sum_sin`, we have $\sum_{k=1}^{35}\sin 5k=\tan \frac{37}{36}.$
+  have sum_eq : ∑ k in Finset.Icc (1 : ℕ) 35, Real.sin (5 * k * Real.pi / 180) = tan (37 * Real.pi / 36) := by
+    specialize l_sum_sin 35 (by simp)
+    rw [l_sum_sin]
+    have : tan (37 * Real.pi / 36) = tan (35 + 1) * 180 / (2 * 35) := by
+      rw [mul_div_assoc]
+      congr
+      rw [rfl]
+      have : (35 : ℝ) > 0 := by simp
+      rw [l_tan.injective (by constructor <;> linarith)]
+      rw [add_tan]
+      have : (35 : ℝ) * 2 = 2 * 35 := by linarith
+      rw [this]
+      simp
+    rw [this]
+    norm_num
+    simp
+
+  -- By the lemma `h_sum_sin_eq_tan`, we have $\tan \frac{37}{36} = \tan \frac mn.$
+  have tan_eq : tan (37 * Real.pi / 36) = tan (m * Real.pi / 180) := by
+    rw [← h₁]
+    exact sum_eq
+
+  -- Since $37$ and $36$ are relatively prime, we have $m = 37$ and $n = 36.$
+  have m_eq : (m.num : ℝ) = 37 := by
+    have : (m.num : ℝ) = (37 : ℚ) := by
+      specialize l_tan.injective (by constructor <;> linarith)
+      exact l_tan.injective (by constructor <;> linarith) (by linarith) (by linarith)
+    simp at this
+    have : m.num = (37 : ℤ) := by
+      have : m.num = m.num.toNat := by
+        rw [Int.toNat_of_nonneg]
+        have : 0 ≤ (m : ℝ) := by
+          apply le_of_lt
+          apply l_tan_pos_on_Ioo (m * Real.pi / 180) (by constructor <;> linarith)
+        exact Int.toNat_of_nonneg this
+      rw [this]
+      norm_cast
+    norm_cast
+  have n_eq : (m.den : ℝ) = 36 := by
+    rw [← @Rat.num_div_den m]
+    apply @Rat.div_int_inj (a := (m.num : ℤ)) (b := m.den) (c := 37) (d := 36) (by linarith) (by linarith) (by simp) (by norm_num)
+    rw [← m_eq]
+    norm_num
+  have m_eq_37 : m = 37 := by
+    rw [Rat.div_int_inj, m_eq, n_eq]
+    · exact Int.mul_eq_mul_left_iff.mpr rfl
+    · apply (l_tan_pos_on_Ioo (m * Real.pi / 180) (by constructor <;> linarith)).mpr
+      rw [l_tan_eq (m : ℚ) h]
+      linarith
+    · apply le_of_lt
+      apply l_tan_pos_on_Ioo (m * Real.pi / 180) (by constructor <;> linarith)
+    · apply (l_tan_pos_on_Ioo' (m * Real.pi / 180) (by constructor <;> linarith)).mpr
+      rw [l_tan_eq (m : ℚ) h]
+      linarith
+
+  -- Therefore, $m + n = 37 + 36 = \boxed{177}.$
+  rw [m_eq_37, n_eq]
+  norm_num
+```

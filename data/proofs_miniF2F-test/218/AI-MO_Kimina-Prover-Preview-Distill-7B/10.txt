@@ -1,0 +1,75 @@
+-- We show that $2^k \equiv 2^{k \bmod 3} \pmod{7}$.
+  have lem_1 {k : ℕ} (hk : k % 3 = 0 ∨ k % 3 = 1 ∨ k % 3 = 2) : 2 ^ k % 7 = 2 ^ (k % 3) % 7 := by
+    rcases hk with hk | hk | hk
+    · rw [Nat.pow_mod]
+      simp only [Nat.reduceMod, Nat.reducePow]
+    · rw [Nat.pow_mod]
+      simp only [Nat.reduceMod, Nat.reducePow]
+    · rw [Nat.pow_mod]
+      simp only [Nat.reduceMod, Nat.reducePow]
+
+  -- We show that $2^{3k} \equiv 1 \pmod{7}$.
+  have lem_2 {k : ℕ} : 2 ^ (3 * k) % 7 = 1 := by
+    rw [Nat.pow_mod]
+    simp only [Nat.reduceMod, Nat.reducePow]
+
+  -- We show that $1 + 2 + 2^2 + 2^3 + \dots + 2^{100} \equiv 3 \pmod{7}$.
+  have : (∑ k in Finset.range 101, 2 ^ k) % 7 = 3 := by
+    -- We group the terms of the sum $1 + 2 + 2^2 + 2^3 + \dots + 2^{100}$ using the pattern $1 + 2 + 2^2$.
+    -- We show that the sum of each group is $3 \pmod{7}$.
+    simp_rw [Finset.sum_range_succ']
+    have h₀ : 2 ^ 0 % 7 = 1 := by norm_num
+    have h₁ : 2 ^ 1 % 7 = 2 := by norm_num
+    have h₂ : 2 ^ 2 % 7 = 4 := by norm_num
+    have h₃ : 2 ^ 3 % 7 = 1 := by norm_num
+    have h₄ : 2 ^ 4 % 7 = 2 := by norm_num
+    have h₅ : 2 ^ 5 % 7 = 4 := by norm_num
+    have h₆ : 2 ^ 6 % 7 = 1 := by norm_num
+    have h₇ : 2 ^ 7 % 7 = 2 := by norm_num
+    have h₈ : 2 ^ 8 % 7 = 4 := by norm_num
+    -- We show that the sum of each group of three consecutive terms is $3 \pmod{7}$.
+    calc
+      (2 ^ 0 % 7 + 2 ^ 1 % 7 + 2 ^ 2 % 7 + 2 ^ 3 % 7 + 2 ^ 4 % 7 + 2 ^ 5 % 7 + 2 ^ 6 % 7 + 2 ^ 7 % 7 + 2 ^ 8 % 7 + (Finset.sum Finset.range 9 (fun k => 2 ^ k % 7)))
+        % 7 = (1 + 2 + 4 + 1 + 2 + 4 + 1 + 2 + 4 + (Finset.sum Finset.range 9 (fun k => 2 ^ k % 7)))
+        % 7 := by rw [h₀, h₁, h₂, h₃, h₄, h₅, h₆, h₇, h₈]
+      _ = (9 + (Finset.sum Finset.range 9 (fun k => 2 ^ k % 7))) % 7 := by norm_num
+      _ = (2 + (Finset.sum Finset.range 9 (fun k => 2 ^ k % 7)) % 7) % 7 := by norm_num
+      _ = (2 + 0) % 7 := by
+        congr
+        ext k
+        split_ifs with hk
+        · rw [h₃] at hk
+          replace hk : k % 3 = 0 := by
+            omega
+          rw [lem_1]
+          simp only [Finset.mem_range, Nat.reduceLeDiff, zero_lt_one, Nat.one_mod, pow_zero]
+          right
+          omega
+        · rw [h₄] at hk
+          replace hk : k % 3 = 1 := by
+            omega
+          rw [lem_1]
+          simp only [Finset.mem_range, Nat.reduceLeDiff, zero_lt_one, Nat.one_mod, pow_zero]
+          left
+          omega
+        · rw [h₅] at hk
+          replace hk : k % 3 = 2 := by
+            omega
+          rw [lem_1]
+          simp only [Finset.mem_range, Nat.reduceLeDiff, zero_lt_one, Nat.one_mod, pow_zero]
+          right
+          omega
+      _ = 2 % 7 := by norm_num
+      _ = 2 := by norm_num
+
+    -- We show that there are $34$ groups of three consecutive terms.
+    -- The sum of all the terms is equal to $34 \cdot 3 + (1 + 2 + 4) = 102 + 7 = 109$.
+    have : (Finset.sum Finset.range 9 (fun k => 2 ^ k % 7)) % 7 = 0 := by
+      rw [Finset.sum_range_succ', Finset.sum_range_succ', Finset.sum_range_succ']
+      norm_num
+    omega
+
+  -- We show that the sum of all the terms is equal to $3 \pmod{7}$.
+  exact this
+
+```

@@ -1,0 +1,76 @@
+-- $1 + 1/2^k > 0$
+  have r1 : ∀ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k > 0 := by
+    intro k hk
+    positivity
+
+  -- prove that $(\prod_{k=1}^{n} (1 + 1/2^k)) < \prod_{k=1}^{n} (1 + 1/2^{n - k + 1})$
+  have r2 : (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k) < (∏ k ∈ Finset.Icc 1 n, 1 + 1 / 2 ^ (n - k + 1)) := by
+    -- for each $k$ in $1 \ldots n$, $(1 + 1/2^k) < (1 + 1/2^{n - k + 1})$
+    have r2 : ∀ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k < 1 + 1 / 2 ^ (n - k + 1) := by
+      intro k hk
+      -- $1/2^k$ is strictly antitone
+      have t1 : 1 / 2 ^ k > 1 / 2 ^ (n - k + 1) := by
+        apply one_div_lt_one_div_of_lt
+        · rw [Nat.pow_lt_pow_iff_right (by norm_num)]
+          calc
+            1 - k ≥ 0 := by apply Nat.sub_le (by linarith)
+            _ ≥ 1 := by norm_num
+            _ > n - k := by apply Nat.lt_sub_of_add_lt; linarith
+        · norm_num
+      linarith
+    -- so we have that $(\prod_{k=1}^{n} (1 + 1/2^k)) < (\prod_{k=1}^{n} (1 + 1/2^{n - k + 1}))$
+    exact Finset.prod_lt_prod_of_fiberwise_lt r2
+
+  -- notice that $(1 + 1/2^{n - k + 1}) = (1 + 1/2^{k - 1})$ when $n - k + 1 = k - 1$, or $k = n - k + 1$
+  -- solve the equation, we get $k = \frac{n + 1}{2}$
+  have r3 : ∀ k ∈ Finset.Icc 1 n, 1 + 1 / 2 ^ (n - k + 1) = 1 + 1 / 2 ^ (k - 1) := by
+    intro k hk
+    have t1 : n - k + 1 = k - 1 := by
+      have : n - k + 1 = ((n + 1) - k) + 1 - 1 := by
+        rw [Nat.sub_add_eq]
+        simp
+        linarith
+      rw [this, Nat.sub_add_eq, Nat.sub_add_eq]
+      rw [Nat.sub_add_eq]
+      calc
+        n - k + 1 ≥ 1 := by simp; exact Nat.le_sub_of_add_le (by linarith)
+        _ ≥ _ := by exact Nat.le_sub_one_of_lt (by linarith)
+    rw [t1]
+
+  -- so $(\prod_{k=1}^{n} (1 + 1/2^{n - k + 1})) = (\prod_{k=1}^{n} (1 + 1/2^{k - 1}))$
+  have r4 : (∏ k ∈ Finset.Icc 1 n, 1 + 1 / 2 ^ (n - k + 1)) = (∏ k ∈ Finset.Icc 1 n, 1 + 1 / 2 ^ (k - 1)) := by
+    apply Finset.prod_congr rfl
+    intro k hk
+    exact r3 k hk
+
+  -- let $k = m - 1$, $(\prod_{k=1}^{n} (1 + 1/2^{k - 1})) = (\prod_{m=2}^{n+1} (1 + 1/2^{m - 1}))$
+  have r5 : (∏ k ∈ Finset.Icc 1 n, 1 + 1 / 2 ^ (k - 1)) = (∏ m ∈ Finset.Icc 2 (n + 1), 1 + 1 / 2 ^ (m - 1)) := by
+    apply Finset.prod_bijective
+    · intro m hm
+      use m - 1
+      simp at hm ⊢
+      omega
+    · intro m1 hm1 m2 hm2 h12
+      simp at hm1 hm2 h12 ⊢
+      omega
+    · intro m hm
+      simp at hm ⊢
+      exact rfl
+    · intro m1 hm1 m2 hm2 h12
+      simp at hm1 hm2 h12 ⊢
+      exact rfl
+
+  -- $(\prod_{m=2}^{n+1} (1 + 1/2^{m - 1})) = \frac{(\prod_{m=1}^{n+1} (1 + 1/2^{m - 1}))}{(1 + 1/2^{1 - 1})} = \frac{(\prod_{m=1}^{n+1} (1 + 1/2^{m - 1}))}{2}$
+  have r6 : (∏ m ∈ Finset.Icc 2 (n + 1), 1 + 1 / 2 ^ (m - 1)) = (∏ m ∈ Finset.Icc 1 (n + 1), 1 + 1 / 2 ^ (m - 1)) / 2 := by
+    rw [Finset.prod_Icc_succ_top (by norm_num), Finset.prod_Icc_succ_top (by norm_num)]
+    simp
+    rw [mul_div_cancel_right₀]
+    norm_num
+
+  -- we have $(\prod_{k=1}^{n} (1 + 1/2^k)) < 5/2$
+  -- so $(\prod_{k=1}^{n} (1 + 1/2^k)) < 5/2$
+  rw [r4, r5, r6] at r2
+  calc
+    (∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k) < 2 * (5 / 2) / 2 := by linarith
+    _ = 5 / 2 := by norm_num
+```

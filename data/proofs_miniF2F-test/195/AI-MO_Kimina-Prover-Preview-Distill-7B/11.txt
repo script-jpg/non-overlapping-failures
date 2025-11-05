@@ -1,0 +1,87 @@
+-- We have $a^2b^3=\frac{32}{27}$ and $\frac{a}{b^3}=\frac{27}{4}$. Let's find $a+b$.
+
+  -- First, let's understand what we're given:
+  -- $a^2b^3 = \frac{32}{27}$
+  -- $\frac{a}{b^3} = \frac{27}{4}$
+
+  have h₂ : a ≠ 0 := by
+    intro h
+    rw [h] at h₁
+    norm_num at h₁
+
+  have h₃ : b ^ 3 ≠ 0 := by
+    intro h
+    rw [h] at h₁
+    norm_num at h₁
+
+  -- From $\frac{a}{b^3}=\frac{27}{4}$, we have $a = \frac{27}{4}b^3$.
+
+  have h₄ : a = 27 / 4 * b ^ 3 := by
+    field_simp at h₁
+    linarith
+
+  -- Substitute $a = \frac{27}{4}b^3$ into $a^2b^3=\frac{32}{27}$:
+  -- $\left(\frac{27}{4}b^3\right)^2b^3 = \frac{32}{27}$
+
+  have h₅ : (27 / 4 * b ^ 3) ^ 2 * b ^ 3 = 32 / 27 := by
+    rw [← h₄]
+    exact h₀
+
+  -- Simplify the left side:
+  -- $\left(\frac{27}{4}b^3\right)^2b^3 = \frac{27^2}{4^2}b^6b^3 = \frac{27^2}{4^2}b^9$
+
+  have h₆ : (27 / 4 * b ^ 3) ^ 2 * b ^ 3 = (27 / 4) ^ 2 * b ^ 9 := by
+    ring_nf
+
+  -- So we have $\frac{27^2}{4^2}b^9 = \frac{32}{27}$
+
+  rw [h₆] at h₅
+
+  -- Let's calculate $\frac{27^2}{4^2} = \frac{729}{16}$
+
+  norm_num at h₅
+
+  -- So $\frac{729}{16}b^9 = \frac{32}{27}$
+
+  -- Solving for $b^9$: $b^9 = \frac{32/27}{729/16} = \frac{32 \cdot 16}{27 \cdot 729} = \frac{512}{19683} = \frac{512}{19683}$
+
+  have h₇ : b ^ 9 = 512 / 19683 := by
+    linarith
+
+  -- Notice that $512 = 2^9$ and $19683 = 3^9$, so $b^9 = \frac{2^9}{3^9}$
+
+  have h₈ : b ^ 9 = (2 / 3) ^ 9 := by
+    rw [h₇]
+    norm_num
+
+  -- Since $b^9 = \left(\frac{2}{3}\right)^9$ and the function $f(x) = x^9$ is injective for real numbers (as it's strictly increasing), we have $b = \frac{2}{3}$
+
+  have h₉ : b = 2 / 3 := by
+    have h : b ^ 9 - (2 / 3) ^ 9 = 0 := by
+      linarith
+    have h_factor : (b - 2 / 3) * (b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8) = 0 := by
+      ring_nf at h ⊢
+      linarith
+    cases' (mul_eq_zero.mp h_factor) with h_b h_sum
+    · -- If $b - \frac{2}{3} = 0$, then $b = \frac{2}{3}$
+
+      linarith
+    · -- Consider the sum $S = b^8 + b^7 \cdot \frac{2}{3} + b^6 \cdot \left(\frac{2}{3}\right)^2 + b^5 \cdot \left(\frac{2}{3}\right)^3 + b^4 \cdot \left(\frac{2}{3}\right)^4 + b^3 \cdot \left(\frac{2}{3}\right)^5 + b^2 \cdot \left(\frac{2}{3}\right)^6 + b \cdot \left(\frac{2}{3}\right)^7 + \left(\frac{2}{3}\right)^8$
+
+      have h_pos : b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8 > 0 := by
+        -- All terms are positive since $b^9 = \frac{512}{19683} > 0$ implies $b \neq 0$ and thus $b > 0$ (as $b^9$ is positive)
+        nlinarith [sq_nonneg (b ^ 4), sq_nonneg (b ^ 3 - 2 / 3), sq_nonneg (b ^ 2), sq_nonneg (b - 2 / 3), sq_nonneg (b ^ 4 - 2 / 3), sq_nonneg (b ^ 2 - 2 / 3), sq_nonneg (b - 2 / 3), sq_nonneg (b ^ 4 - 2 / 3), sq_nonneg (b - 2 / 3), sq_nonneg (b ^ 2 - 2 / 3), sq_nonneg (b ^ 4 - 2 / 3), sq_nonneg (b ^ 2 - 2 / 3)]
+      linarith
+
+  -- Now that we have $b = \frac{2}{3}$, we can find $a$ using $a = \frac{27}{4}b^3$:
+  -- $a = \frac{27}{4} \cdot \left(\frac{2}{3}\right)^3 = \frac{27}{4} \cdot \frac{8}{27} = \frac{8}{4} = 2$
+
+  have h₁₀ : a = 2 := by
+    rw [h₄, h₉]
+    norm_num
+
+  -- So $a + b = 2 + \frac{2}{3} = \frac{6}{3} + \frac{2}{3} = \frac{8}{3}$
+
+  rw [h₁₀, h₉]
+  norm_num
+```

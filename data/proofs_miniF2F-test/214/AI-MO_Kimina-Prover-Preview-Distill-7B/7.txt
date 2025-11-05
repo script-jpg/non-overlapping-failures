@@ -1,0 +1,157 @@
+-- aux lemma that can be proved by expanding $\cos (i+1)-\cos i$
+  have l_1 (i : ℕ) : Real.cos ((i + 1 : ℕ) * Real.pi / 180) - Real.cos (i * Real.pi / 180) =
+      Real.sin (i * Real.pi / 180) * Real.sin (Real.pi / 180) := by
+    rw [← Real.cos_sub_cos]
+    ring_nf
+    simp
+    ring_nf; rw [Real.sin_pi_div_two]; ring_nf
+    all_goals positivity
+
+  -- aux lemma that can be proved by expanding $\sin (i+1)-\sin i$
+  have l_2 (i : ℕ) : Real.sin ((i + 1 : ℕ) * Real.pi / 180) - Real.sin (i * Real.pi / 180) =
+      Real.cos (i * Real.pi / 180) * Real.cos (Real.pi / 180) - Real.sin (i * Real.pi / 180) :=
+    by rw [← Real.sin_sub_sin]; rw [← Real.cos_pi_div_two]; ring_nf
+    rw [add_comm, ← sub_add, ← Real.cos_sub_cos]; ring_nf
+    simp; ring_nf; rw [Real.sin_pi_div_two]; ring_nf
+    all_goals positivity
+
+  -- aux lemma that can be proved by expanding $\cos (i+2)-\cos i$
+  have l_3 (i : ℕ) : Real.cos ((i + 2 : ℕ) * Real.pi / 180) - Real.cos (i * Real.pi / 180) =
+      Real.sin (i * Real.pi / 180 + Real.pi / 180) * Real.sin (2 * Real.pi / 180) := by
+    rw [← Real.cos_sub_cos]
+    ring_nf
+    simp
+    ring_nf; rw [Real.sin_pi_div_two]; ring_nf
+    all_goals positivity
+
+  -- aux lemma that can be proved by expanding $\sin (i+2)-\sin i$
+  have l_4 (i : ℕ) : Real.sin ((i + 2 : ℕ) * Real.pi / 180) - Real.sin (i * Real.pi / 180) =
+      Real.cos (i * Real.pi / 180 + Real.pi / 180) * Real.cos (2 * Real.pi / 180) - Real.sin (i * Real.pi / 180) :=
+    by rw [← Real.sin_sub_sin]; rw [← Real.cos_pi_div_two]; ring_nf
+    rw [add_comm, ← sub_add, ← Real.cos_sub_cos]; ring_nf
+    simp; ring_nf; rw [Real.sin_pi_div_two]; ring_nf
+    all_goals positivity
+
+  -- aux lemma that can be proved by expanding $\cos (i+m)-\cos i$
+  have l_5 (i : ℕ) (m : ℕ) : Real.cos ((i + m : ℕ) * Real.pi / 180) - Real.cos (i * Real.pi / 180) =
+      Real.sin (i * Real.pi / 180 + Real.pi / 180 * (m - 1)) * Real.sin (Real.pi / 180 * m) :=
+    by cases m with
+    | zero => simp
+    | succ m =>
+      simp
+      rw [add_assoc, ← add_assoc, ← sub_add, ← Real.cos_sub_cos]
+      ring_nf
+      simp
+      ring_nf; rw [Real.sin_pi_div_two]; ring_nf
+      all_goals positivity
+
+  -- aux lemma that can be proved by expanding $\sin (i+m)-\sin i$
+  have l_6 (i : ℕ) (m : ℕ) : Real.sin ((i + m : ℕ) * Real.pi / 180) - Real.sin (i * Real.pi / 180) =
+      Real.cos (i * Real.pi / 180 + Real.pi / 180 * (m - 1)) * Real.cos (Real.pi / 180 * m) - Real.sin (i * Real.pi / 180) :=
+    by cases m with
+    | zero => simp
+    | succ m =>
+      simp
+      rw [add_assoc, ← add_assoc, ← sub_add, ← Real.sin_sub_sin]
+      ring_nf
+      simp
+      ring_nf; rw [Real.sin_pi_div_two]; ring_nf
+      all_goals positivity
+
+  -- By l_5, we can prove that $\sum_{k=1}^{35}\sin 5k = \frac {\cos 10 - \cos 36} {\sin 10} = \frac {\sin 20}{\sin 10} = 2\cos 10 = \tan 80$
+  have r_1 : ∑ k in Finset.Icc (1 : ℕ) 35, Real.sin (5 * k * Real.pi / 180) = (Real.cos (10 * Real.pi / 180) - Real.cos (36 * Real.pi / 180)) / Real.sin (10 * Real.pi / 180) := by
+    have : 36 = 10 + 26 := by norm_num
+    rw [this]
+    have : 35 = 10 + 25 := by norm_num
+    rw [this]
+    have : 30 = 10 + 20 := by norm_num
+    rw [this]
+    have : 25 = 10 + 15 := by norm_num
+    rw [this]
+    have : 20 = 10 + 10 := by norm_num
+    rw [this]
+    simp
+    rw [Finset.sum_add_distrib]
+    rw [add_comm, ← Finset.sum_add_distrib]
+    rw [add_comm, ← Finset.sum_add_distrib]
+    rw [add_comm, ← Finset.sum_add_distrib]
+    rw [add_comm, ← Finset.sum_add_distrib]
+    rw [← Finset.sum_add_distrib]
+    simp
+    group
+    rw [l_5 10 26]
+    rw [l_5 10 25]
+    rw [l_5 10 20]
+    rw [l_5 10 15]
+    rw [l_5 10 10]
+    simp
+    rw [l_6 10 10]
+    rw [l_6 10 15]
+    rw [l_6 10 20]
+    rw [l_6 10 25]
+    rw [l_6 10 26]
+    simp
+    group
+    rw [l_6 10 0]
+    rw [l_5 10 0]
+    simp
+    ring_nf
+    rw [Real.sin_add, Real.cos_add]
+    simp
+    ring_nf
+    all_goals positivity
+
+  rw [r_1] at h₁
+  rw [h₁] at h₀
+  -- Since $\tan 80 = \tan (360 - 280) = -\tan 280 = -\tan (180 - 100) = \tan 100,$ we have $\frac mn = 100.$
+  have r_2 : m * Real.pi / 180 = 100 * Real.pi / 180 := by
+    have : Real.tan (100 * Real.pi / 180) = Real.tan (10 * Real.pi / 180) := by
+      symm
+      rw [← Real.tan_sub_pi]
+      ring_nf
+    rw [this, ← h₁] at h₀
+    have : m * Real.pi / 180 = 100 * Real.pi / 180 + (m - 100) * Real.pi / 180 := by ring_nf
+    rw [this, Real.tan_add_int_mul_pi] at h₀
+    have : (-100 : ℤ) * Real.pi / 180 = -(100 * Real.pi / 180) := by ring_nf
+    rw [this] at h₀
+    have : (m - 100 : ℤ) = (m - 100 : ℚ) := by simp
+    rw [this] at h₀
+    have h_1 : m - 100 = 0 := by
+      have := h₀
+      by_contra h
+      have : -(100 : ℚ) < 0 := by norm_num
+      have : (m - 100 : ℚ) < (0 : ℚ) := by
+        rw [h₀]
+        apply add_neg_lt_add_of_left_lt
+        assumption
+        assumption
+      have : (m - 100 : ℚ) < 0 := by
+        apply lt_trans this
+        norm_num
+      have : (m - 100 : ℚ) < (m - 100 : ℤ) := by
+        exact (Rat.lt_intCast (m - 100)).mpr this
+      have : (m - 100 : ℤ) < (m - 100 : ℤ) := by
+        exact lt_of_lt_of_le this
+        exact Int.cast_le.mpr this
+      exact lt_irrefl (m - 100 : ℤ) this
+    have : m = 100 := by
+      apply eq_of_sub_eq_zero
+      exact h_1
+    rw [this]
+  -- We have $m = 100$ and $n = 9,$ so $m + n = 109.$
+  have r_3 : m.num = 100 := by
+    rw [r_2]
+    symm
+    rw [← Rat.num_div_den m]
+    field_simp
+    rw [h₀]
+    norm_num
+  have r_4 : m.den = 9 := by
+    rw [r_2]
+    symm
+    rw [← Rat.num_div_den m]
+    field_simp
+    rw [h₀]
+    norm_num
+  rw [r_3, r_4]
+```

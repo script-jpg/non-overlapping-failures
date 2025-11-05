@@ -1,0 +1,230 @@
+-- Prove that for any number $x$, the sum of the floor of $x$ and the fractional part of $x$ is equal to $x$.
+  have h_floor_add_fract (x : ℝ) : ↑⌊x⌋ + (x - ↑⌊x⌋) = x := by
+    calc
+      _ = ↑⌊x⌋ + x - ↑⌊x⌋ := by ring
+      _ = x := by simp
+
+  -- Prove that the fractional part of any number $x$ is non-negative and less than 1.
+  have h_fract_nonneg (x : ℝ) : 0 ≤ (x - ↑⌊x⌋) := by
+    linarith only [h_floor_add_fract x, Nat.floor_le x]
+
+  have h_fract_lt_one (x : ℝ) : (x - ↑⌊x⌋) < 1 := by
+    linarith only [h_floor_add_fract x, Nat.lt_floor_add_one x]
+
+  -- Show that 0 is in the set S.
+  have h₀_mem : (0 : ℝ) ∈ S := by
+    simp only [h₀, Finset.mem_singleton]
+    arithmetic
+
+  -- Prove that if $x$ is in the set S, then $x$ is non-negative.
+  have h_nonneg (x : ℝ) (hx : x ∈ S) : 0 ≤ x := by
+    simp only [h₀] at hx
+    -- Assume $x < 0$ and derive a contradiction.
+    by_contra! hx_neg
+    have h_f : ↑⌊x⌋ < 0 := by
+      calc
+        _ ≤ x := Nat.floor_le x
+        _ < 0 := hx_neg
+    have h_fr : (x - ↑⌊x⌋) < 0 := by
+      calc
+        _ < 1 := h_fract_lt_one x
+        _ < 0 := hx_neg
+    rw [← h_floor_add_fract x] at hx_neg
+    rw [mul_neg_iff] at hx_neg
+    -- Consider the case where $x < 0$ and $\lfloor x \rfloor \geq 0$ (impossible).
+    cases hx_neg with
+    | inl h =>
+      have h_f : 0 ≤ ↑⌊x⌋ := by simp only [Int.le_floor]; positivity
+      linarith only [h_f, h_f]
+    -- Consider the case where $x < 0$ and $\lfloor x \rfloor < 0$ (impossible).
+    | inr h =>
+      have h_f : 0 > ↑⌊x⌋ := by simp only [Int.floor_lt]; linarith only [hx_neg]
+      linarith only [h_f, h_f]
+ 
+
+
+  -- Prove that for any number $x$, the floor of $x$ is less than $x+1$.
+  have h_floor_lt_add_one (x : ℝ) : ↑⌊x⌋ < x + 1 := by
+    calc
+      _ ≤ x := Nat.floor_le x
+      _ < x + 1 := by linarith only [x_lt_add_one x]
+
+  -- Prove that if $x$ is in the set S, then $x^2$ is non-negative.
+  have h_nonneg_sq (x : ℝ) (hx : x ∈ S) : 0 ≤ x ^ 2 := by
+    simp only [h₀] at hx
+    rw [← h_floor_add_fract x] at hx
+    nlinarith only [hx, h_nonneg x hx]
+
+  -- Prove that if $x$ is in the set S, then $x$ is greater than or equal to $\lfloor x \rfloor$.
+  have h_ge_floor (x : ℝ) (hx : x ∈ S) : ↑⌊x⌋ ≤ x := by
+    simp only [h₀] at hx
+    rw [← h_floor_add_fract x] at hx
+    nlinarith only [hx, h_nonneg_sq x hx]
+
+  -- Prove that if $x$ is in the set S, then $x$ is less than $\lfloor x \rfloor + 1$.
+  have h_lt_floor_add_one (x : ℝ) (hx : x ∈ S) : x < ↑⌊x⌋ + 1 := by
+    simp only [h₀] at hx
+    rw [← h_floor_add_fract x] at hx
+    nlinarith only [hx, h_nonneg_sq x hx]
+
+
+  -- Prove that if $x$ is in the set S, then $x$ is non-negative and less than $a^{-1}$.
+  have h_le_one_div_a (x : ℝ) (hx : x ∈ S) : x ≤ (1 : ℝ) / a := by
+    simp only [h₀] at hx
+    -- If $a \le 0$, then $x \le 0$ (from the equation $\lfloor x \rfloor \cdot \{x\} = a \cdot x^2$), however, $x \ge 0$ (from the previous lemma), thus $x=0$.
+    by_cases ha : a ≤ 0
+    · -- If $a \le 0$, then $x \le 0$.
+      have h_a : ↑a ≤ (0 : ℝ) := by norm_cast
+      have h_x : x ≤ (0 : ℝ) := by
+        nlinarith only [h_a, h_nonneg_sq x hx, hx]
+      -- However, $x \ge 0$ (from the previous lemma), thus $x=0$.
+      have h_x_eq_0 : x = 0 := by linarith only [h_nonneg x hx, h_x]
+      simp [h_x_eq_0]
+      -- Therefore, $0 \le a^{-1}$.
+      positivity
+    · -- If $a > 0$, then $x \le a^{-1}$.
+      simp at ha
+      -- Since $a > 0$, $a \cdot x^2 > 0$.
+      have h_a_pos : 0 < a := by linarith only [ha]
+      have h_prod_pos : 0 < ↑⌊x⌋ * (x - ↑⌊x⌋) := by
+        nlinarith only [h_a_pos, h_nonneg_sq x hx, hx]
+      -- Therefore, $0 < x - \lfloor x \rfloor$.
+      have h_fr_pos : 0 < (x - ↑⌊x⌋) := by
+        nlinarith only [h_prod_pos]
+      -- Therefore, $\lfloor x \rfloor < x$ (from $0 < x - \lfloor x \rfloor$).
+      have h_f_lt_x : ↑⌊x⌋ < x := by linarith only [h_fr_pos]
+      -- Therefore, $\lfloor x \rfloor < a^{-1}$ (from $x < \lfloor x \rfloor + 1$ and $0 < a^{-1}$).
+      have h_f_lt_one_div_a : ↑⌊x⌋ < (1 : ℝ) / a := by
+        calc
+          _ < x := by exact h_f_lt_x
+          _ ≤ (1 : ℝ) / a := by
+            -- Since $a > 0$, $x \le a^{-1}$.
+            rw [div_le_iff₀ (by linarith only [ha])] <;> nlinarith only [ha, h_nonneg_sq x hx, hx]
+      -- Therefore, $x \le a^{-1}$ (from $x \ge \lfloor x \rfloor$ and $\lfloor x \rfloor < a^{-1}$).
+      exact (le_trans (Int.le_floor x) h_f_lt_one_div_a).trans h_nonneg x hx
+
+
+  -- Define a function $h$ that maps each element in $S$ to a non-negative real number.
+  let h : S → ℝ := fun x => x * x - ↑⌊x⌋ * (x - ↑⌊x⌋)
+
+  -- Prove that $h$ is non-negative for any $x \in S$.
+  have h_nonneg (x : ℝ) (hx : x ∈ S) : 0 ≤ h x := by
+    simp only [h]
+    -- Since $x \in S$, $x \ge 0$ and $x \le a^{-1}$, so $0 \le x \le a^{-1}$.
+    have h_x_nonneg : 0 ≤ x := by exact h_nonneg x hx
+    have h_x_le_one_div_a : x ≤ (1 : ℝ) / a := by
+      exact h_le_one_div_a x hx
+    -- Since $x \ge 0$ and $x \le a^{-1}$, $0 \le x \cdot x - \lfloor x \rfloor \cdot \{x\}$.
+    nlinarith only [h_x_nonneg, h_x_le_one_div_a, h_floor_add_fract x, Nat.floor_le x, x_lt_add_one x,
+      h_nonneg_sq x hx, h_fract_nonneg x, mul_self_nonneg (x - ↑⌊x⌋),
+      sq_nonneg (↑⌊x⌋), sq_nonneg (x - ↑⌊x⌋)]
+
+  -- Prove that $h$ is injective on $S$.
+  have h_inj : Set.InjOn h S := by
+    -- Assume $h(x) = h(y)$ for $x, y \in S$.
+    intro x hx y hy hxy
+    simp only [h] at hxy
+    -- From the definitions, $x \cdot x - \lfloor x \rfloor \cdot \{x\} = y \cdot y - \lfloor y \rfloor \cdot \{y\}$.
+    have h_eq : x * x - ↑⌊x⌋ * (x - ↑⌊x⌋) = y * y - ↑⌊y⌋ * (y - ↑⌊y⌋) := by
+      exact hxy
+    -- Rearrange the equation to get $(x - y)(x + y - \lfloor x \rfloor + \lfloor y \rfloor) = 0$.
+    have h_eq' : (x - y) * (x + y - (↑⌊x⌋ - ↑⌊y⌋)) = 0 := by
+      ring_nf
+      linarith only [h_eq]
+    -- From the previous lemmas, $\lfloor x \rfloor - \lfloor y \rfloor \le 0$.
+    have h_f : ↑⌊x⌋ ≤ ↑⌊y⌋ := by
+      have h_f_x_le_x : ↑⌊x⌋ ≤ x := by
+        exact h_ge_floor x hx
+      have h_f_y_le_y : ↑⌊y⌋ ≤ y := by
+        exact h_ge_floor y hy
+      linarith only [h_f_x_le_x, h_f_y_le_y, hxy]
+    -- From the previous lemmas, $x - y \neq 0$ (if $x = y$, then $x \cdot x - \lfloor x \rfloor \cdot \{x\} = 0$, which is impossible).
+    have h_diff_nonzero : x - y ≠ 0 := by
+      by_contra! h_diff_zero
+      have h_x : x = y := by linarith only [h_diff_zero]
+      have h_y : y = 0 := by
+        -- If $x = y$, then $y \in S$ implies $y = 0$.
+        rw [h_y_eq_zero]
+        -- However, $x = y = 0$ contradicts $x \neq 0$ (from $x \in S$).
+        have h_x_eq_0 : x = 0 := by
+          exact (h₀_mem.trans (by simp)).trans h_y
+        simp only [h_x_eq_0, h_y_eq_zero] at h_diff_zero
+      -- However, $x \neq 0$ (from the previous lemma).
+      have h_x_ne_0 : x ≠ 0 := by
+        have h_x_ge_0 : 0 ≤ x := by
+          exact h_nonneg x hx
+        -- If $x = 0$, then $x \le 0$ (from $x \in S$), so $x = 0$.
+        have h_x_le_0 : x ≤ (0 : ℝ) := by
+          exact (h_nonneg_sq x hx).trans h_x_ge_0
+        -- Therefore, $x = 0$.
+        have h_eq_0 : x = 0 := by linarith only [h_x_le_0, h_x_ge_0]
+        -- However, $x \neq 0$ (from the previous lemma).
+        exact h_x_eq_0 h_eq_0
+      -- Contradiction!
+      exact h_x_ne_0 h_x
+    -- Therefore, $x + y - \lfloor x \rfloor + \lfloor y \rfloor = 0$.
+    have h_sum_eq_zero : x + y - (↑⌊x⌋ - ↑⌊y⌋) = 0 := by
+      exact eq_zero_of_ne_zero_of_mul_left_eq_zero h_diff_nonzero h_eq'
+    -- Simplify, we get $x + y = \lfloor x \rfloor - \lfloor y \rfloor$.
+    have h_sum_eq : x + y = ↑⌊x⌋ - ↑⌊y⌋ := by
+      linarith only [h_sum_eq_zero]
+    -- From the bounds of $x$ and $y$, we have $0 \le x + y < 2$.
+    have h_bound : 0 ≤ x + y ∧ x + y < 2 := by
+      constructor
+      · linarith only [h_nonneg x hx, h_nonneg y hy]
+      · linarith only [h_lt_floor_add_one x hx, h_lt_floor_add_one y hy]
+    -- However, $x + y = \lfloor x \rfloor - \lfloor y \rfloor$ implies that $\lfloor x \rfloor - \lfloor y \rfloor$ is both non-negative and less than 2, so $\lfloor x \rfloor - \lfloor y \rfloor = 0$.
+    have h_f : (↑⌊x⌋ - ↑⌊y⌋) ≤ (0 : ℝ) ∧ (↑⌊x⌋ - ↑⌊y⌋) < (2 : ℝ) := by
+      constructor
+      · linarith only [h_f, Int.floor_le y]
+      · linarith only [h_f, Int.floor_le y, h_sum_eq]
+    have h_f_eq_0 : (↑⌊x⌋ - ↑⌊y⌋) = (0 : ℝ) := by
+      linarith only [h_bound.1, h_bound.2, h_f.1, h_f.2]
+    -- Therefore, $x + y = 0$.
+    rw [h_f_eq_0] at h_sum_eq
+    -- Since $x \ge 0$ and $y \ge 0$, $x = y = 0$.
+    have h_x_eq_0 : x = (0 : ℝ) := by
+      linarith only [h_nonneg x hx, h_nonneg y hy, h_sum_eq]
+    have h_y_eq_0 : y = (0 : ℝ) := by
+      linarith only [h_nonneg x hx, h_nonneg y hy, h_sum_eq]
+    -- However, $x \neq 0$ (from the previous lemma).
+    have h_x_ne_0 : x ≠ 0 := by
+      have h_x_ge_0 : 0 ≤ x := by
+        exact h_nonneg x hx
+      -- If $x = 0$, then $x \le 0$ (from $x \in S$), so $x = 0$.
+      have h_x_le_0 : x ≤ (0 : ℝ) := by
+        exact (h_nonneg_sq x hx).trans h_x_ge_0
+      -- Therefore, $x = 0$.
+      have h_eq_0 : x = 0 := by linarith only [h_x_le_0, h_x_ge_0]
+      -- However, $x \neq 0$ (from the previous lemma).
+      exact h_x_eq_0 h_eq_0
+    -- Contradiction!
+    exact h_x_ne_0 h_x_eq_0
+
+  -- Prove that $h(x) = h(y)$ implies $x = y$ for $x, y \in S$.
+  have h_inj' : Set.InjOn h S := by
+    exact h_inj.injective
+
+  -- Apply the lemma `Set.InjOn.injective` to $h$ and $S$.
+  apply Set.InjOn.injective at h_inj'
+  -- Simplify the goal and use the previous lemma.
+  simp [h] at h_inj'
+  -- Since $h$ is injective, we have $x = y$ for $x, y \in S$ if $h(x) = h(y)$.
+  exact h_inj'
+
+  -- Define a new function $f$ that maps each element in $S$ to a real number.
+  let f : S → ℝ := fun x => (x - ↑⌊x⌋) * (x - ↑⌊x⌋)
+
+  -- Prove that $f$ is non-negative for any $x \in S$.
+  have f_nonneg (x : ℝ) (hx : x ∈ S) : 0 ≤ f x := by
+    simp only [f]
+    -- Since $x \in S$, $x \ge 0$ and $x \le a^{-1}$, so $0 \le x \le a^{-1}$.
+    have h_x_nonneg : 0 ≤ x := by exact h_nonneg x hx
+    have h_x_le_one_div_a : x ≤ (1 : ℝ) / a := by
+      exact h_le_one_div_a x hx
+    -- Since $x \ge 0$ and $x \le a^{-1}$, $0 \le (x - \lfloor x \rfloor) \cdot (x - \lfloor x \rfloor)$.
+    nlinarith only [h_x_nonneg, h_x_le_one_div_a, h_floor_add_fract x, Nat.floor_le x, x_lt_add_one x,
+      h_nonneg_sq x hx, h_fract_nonneg x, sq_nonneg (x - ↑⌊x⌋)]
+
+  -- Prove that $f(x) = 0$ if and only if $x \in \mathbb{Z}$.
+  have f_eq_0_iff_mem_int (x : ℝ) (hx : x ∈ S) : f x = 0 ↔ x ∈

@@ -1,0 +1,144 @@
+-- $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 < \frac{12}{25}$
+  have h₁ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 12 / 25 := by
+    -- [1] Set up the problem. Define the series $\\{a_n\\}$ and the condition $\\sum_{n=0}^{99} a\_{n+1}^2 = 1$.
+    have h₁ : 1 = (∑ x in Finset.range 100, a (x + 1) ^ 2) := by rw [h₀]
+    -- [2] Apply Cauchy-Schwarz inequality to $\\sum_{n=0}^{98} a\_{n+1}^2 a\_{n+2}$.
+    have h₂ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) ≤ (∑ x in Finset.range 99, a (x + 1) ^ 2) * (∑ x in Finset.range 99, a (x + 2) ^ 2) := by
+      apply Finset.sum_mul_sum_le_sq_sum
+    -- [3] Apply Cauchy-Schwarz inequality to $\\sum_{n=0}^{99} a\_{n+2}^2$.
+    have h₃ : (∑ x in Finset.range 100, a (x + 2) ^ 2) ≥ (∑ x in Finset.range 99, a (x + 2) ^ 2) := by
+      apply Finset.sum_le_sum_of_subset_of_nonneg
+      · apply Finset.subset_univ
+      · intro _ _ _; simp
+    have h₄ : 0 ≤ a 100 ^ 2 := by exact Nat.square_nonneg (a 100)
+    rw [Finset.sum_range_succ] at h₀
+    -- [4] Apply Cauchy-Schwarz inequality to $\\sum_{n=0}^{99} a\_{n+1}^2 a\_{n+2}$.
+    have h₅ : √((∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1) ≤ √((∑ x in Finset.range 99, a (x + 1) ^ 2) * ((∑ x in Finset.range 99, a (x + 2) ^ 2) + a 100 ^ 2)) := by
+      calc √((∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1)
+        ≤ √((∑ x in Finset.range 99, a (x + 1) ^ 2) * ((∑ x in Finset.range 99, a (x + 2) ^ 2) + a 100 ^ 2)) := by
+          apply Real.sqrt_le_sqrt
+          have h₆ : 0 ≤ ∑ x in Finset.range 99, a (x + 2) ^ 2 + a 100 ^ 2 := by
+            apply Finset.sum_nonneg
+            intro _ _ _; simp
+          have h₇ : 0 ≤ ∑ x in Finset.range 99, a (x + 1) ^ 2 := by
+            apply Finset.sum_nonneg
+            intro _ _ _; simp
+          exact add_nonneg (mul_nonneg h₇ h₆) h₄
+          clear h₆ h₇
+          -- √((∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1)
+          -- ≤ √((∑ x in Finset.range 99, a (x + 1) ^ 2) * ((∑ x in Finset.range 99, a (x + 2) ^ 2) + a 100 ^ 2))
+          apply Real.sqrt_le_sqrt
+          apply add_le_add
+          · apply Finset.sum_mul_le_sum_mul
+            intro i hi
+            apply le_of_lt
+            simp at hi ⊢
+            exact ⟨by linarith, by linarith⟩
+          · simp
+            apply Finset.sum_le_sum_of_subset_of_nonneg
+            · apply Finset.subset_univ
+            · intro _ _ _; simp
+      · rw [Real.sqrt_mul (Finset.sum_nonneg (fun _ ↦ a (100 + ·) ^ 2) (by simp))] at h₅
+        rw [Real.sqrt_mul (by simp)] at h₅
+        rw [mul_le_mul_right (add_nonneg (Finset.sum_nonneg (fun _ ↦ a (100 + ·) ^ 2) (by simp)) (a 1 ^ 2) (by simp))] at h₅
+        -- [5] Apply the fact that $\\sum_{n=0}^{99} a\_{n+1}^2 = 1$.
+        rw [h₀] at h₅
+        have h₆ : (∑ x in Finset.range 99, a (x + 2) ^ 2) + a 100 ^ 2 = ∑ x in Finset.range 100, a (x + 2) ^ 2 := by
+          rw [←Finset.sum_range_succ]
+          rw [←Finset.range_eq_Ico]
+          rw [←Finset.range_eq_Ico]
+          apply Finset.sum_congr rfl
+          intro x hx
+          simp at hx ⊢
+          rw [add_comm]
+        rw [h₆] at h₅
+        -- [6] Apply the Cauchy-Schwarz inequality to get $\\sum_{n=0}^{98} a\_{n+1}^2 a\_{n+2} \leq \\sum_{n=0}^{99} a\_{n+1}^2 \cdot \\sum_{n=0}^{99} a\_{n+2}^2$.
+        have h₇ : √((∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1) ≤ √((∑ x in Finset.range 100, a (x + 1) ^ 2) * (∑ x in Finset.range 100, a (x + 2) ^ 2)) := by
+          rw [h₀]
+          apply Real.sqrt_le_sqrt
+          apply Finset.sum_mul_le_sum_mul
+          · intro i hi
+            apply le_of_lt
+            simp at hi ⊢
+            exact ⟨by linarith, by linarith⟩
+          · simp
+            intro _ _ _; simp
+        -- [7] Show that $\\sum_{n=0}^{99} a\_{n+2}^2 \leq 1$.
+        have h₈ : (∑ x in Finset.range 100, a (x + 2) ^ 2) ≤ 1 := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg
+          · apply Finset.subset_univ
+          · intro _ _ _; simp
+        -- [8] Use the non-negativity of the squared terms to get an upper bound for the entire expression.
+        have h₉ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 ≤ 12 / 25 := by
+          rw [Real.sqrt_le_iff] at h₇
+          · have h₁₀ : (∑ x in Finset.range 100, a (x + 1) ^ 2) * (∑ x in Finset.range 100, a (x + 2) ^ 2) ≤ (1 : NNReal) * (1 : NNReal) := by
+              rw [mul_le_mul_left (by simp)]
+              apply Finset.sum_mul_le_sum_mul
+              · intro i hi
+                apply le_of_lt
+                simp at hi ⊢
+                exact ⟨by linarith, by linarith⟩
+              · simp
+                intro _ _ _; simp
+              · apply Finset.sum_nonneg
+                intro _ _ _; simp
+            have h₁₁ : (1 : NNReal) * (1 : NNReal) = (1 : NNReal) := by simp
+            rw [h₁₁, h₁] at h₁₀
+            simp at h₁₀
+            have h₁₂ : a 1 ^ 2 + ∑ x in Finset.range 99, a (x + 1) ^ 2 = 1 := by
+              rw [←Finset.sum_range_succ]
+              rw [←Finset.range_eq_Ico]
+              rw [←Finset.range_eq_Ico]
+              apply Finset.sum_congr rfl
+              intro x hx
+              simp at hx ⊢
+              rw [add_comm]
+            have h₁₃ : ∑ x in Finset.range 99, a (x + 1) ^ 2 = 1 - a 1 ^ 2 := by linarith
+            rw [h₁₃] at h₁₀
+            have h₁₄ : (1 - a 1 ^ 2) * (∑ x in Finset.range 100, a (x + 2) ^ 2) ≤ (1 - a 1 ^ 2) * 1 := by
+              rw [mul_le_mul_left (sub_nonneg.mpr h₈)]
+              linarith
+            have h₁₅ : (1 - a 1 ^ 2) * 1 = (1 - a 1 ^ 2 : NNReal) := by simp
+            rw [h₁₅] at h₁₄
+            have h₁₆ : (1 - a 1 ^ 2 : NNReal) + a 1 ^ 2 = (1 : NNReal) := by simp
+            have h₁₇: a 1 ^ 2 ≤ (1 : NNReal) := by
+              apply Finset.sum_le_sum_of_subset_of_nonneg
+              · apply Finset.subset_univ
+              · intro _ _ _; simp
+            linear_combination (1 - (a 1 ^ 2 * 25 / 12)) * h₁₄ + (a 1 ^ 2 * 25 / 12) * h₁₇ + (1 - a 1 ^ 2) * h₁
+            -- (1 - a 1 ^ 2 * 25 / 12) * ((1 - a 1 ^ 2) * (∑ x ∈ Finset.range 100, a (x + 2) ^ 2)) ≤ (1 - a 1 ^ 2 * 25 / 12) * 1
+            -- + (a 1 ^ 2 * 25 / 12) * a 1 ^ 2 ≤ (1 - a 1 ^ 2 * 25 / 12) * 1 + (a 1 ^ 2 * 25 / 12) * 1
+            --  = 1
+            --  ≤ 1 - a 1 ^ 2 + a 1 ^ 2 = (1 : NNReal)
+            apply add_le_add
+            · apply mul_le_mul_of_nonneg_left h₁₄
+              apply le_of_lt
+              apply lt_trans (sub_pos.mpr h₈)
+              apply add_pos
+              · simp
+              · apply pow_pos
+                linarith
+            · simp
+              apply mul_le_mul_of_nonneg_left h₁₇
+              apply le_of_lt
+              apply pow_pos
+              linarith
+          · rw [Real.sqrt_pos]
+            apply add_pos
+            · apply Finset.sum_pos
+              · apply Finset.univ_nonempty
+              · intro i _ _
+                apply pow_pos
+                linarith
+            · simp
+              apply pow_pos
+              linarith
+        linarith
+    -- Prove the final goal.
+    have h₇ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 ≤ 12 / 25 := by
+      apply le_trans h₉
+      apply (div_le_div_iff_of_pos_right (by simp)).mp
+      norm_num
+    linarith
+  exact h₁
+```

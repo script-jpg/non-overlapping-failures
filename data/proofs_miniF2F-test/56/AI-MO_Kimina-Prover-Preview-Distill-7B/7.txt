@@ -1,0 +1,295 @@
+-- Some basic facts for later use:
+  have hmpos : 0 < m := h₁.left
+  have hnpos : 0 < n := h₁.right
+  have hmin : m ≤ n := h₂
+  have hmkneq : m ≠ 0 := by exact Nat.pos_iff_ne_zero.mp hmpos
+  have hmkneq' : m ≠ 1 := by
+    intro h
+    rw [h] at hmin
+    linarith
+  have hmkneq'' : m ≠ m - 1 := by
+    intro h
+    have : m = 1 := by omega
+    contradiction
+  have hmkneq''': 2 ^ m ≠ 0 := by exact Nat.two_pow_ne_zero m
+  have hmkneq'''' : 2 ^ m ∣ 2 ^ n := by exact Nat.pow_dvd_pow_iff_le_right.mpr hmin
+  have hmkneq''''' : 2 ^ n ≠ 0 := by exact Nat.two_pow_ne_zero n
+
+  -- For positive integers $a$ and $b$, if $a$ divides $b$, then for any positive integer $k$,
+  -- $a^k$ divides $b^k$.
+  have h₃ {a b : ℕ} (ha : 0 < a) (hb : 0 < b) (hdvd : a ∣ b) (hk : 0 < k) :
+      a ^ k ∣ b ^ k := by
+    exact Nat.pow_dvd_pow_of_dvd hdvd hk
+
+  -- For positive integers $a$, $b$ and $k$, if $a$ divides $b$, then $a^k$ divides $b^k$.
+  have h₄ {a b k : ℕ} (ha : 0 < a) (hb : 0 < b) (hdvd : a ∣ b) (hk : 0 < k) :
+      a ^ k ∣ b ^ k := by
+    exact Nat.pow_dvd_pow_of_dvd hdvd hk
+
+  -- For positive integers $a$, $b$ and $k$, if $a$ divides $b$, then $a^k$ divides $b^k$.
+  have h₅ {a b k : ℕ} (ha : 0 < a) (hb : 0 < b) (hdvd : a ∣ b) : a ^ k ∣ b ^ k := by
+    exact Nat.pow_dvd_pow_of_dvd hdvd k
+
+  -- Let $k$ be a positive integer. Then $4^k+9^k$ is less than $6^k+4^k$.
+  have h₆ {k : ℕ} (hk : 0 < k) : 4 ^ k + 9 ^ k < 6 ^ k + 4 ^ k := by
+    rcases hk with hk | hk
+    · rw [hk]
+      norm_num
+    rw [Nat.pos_iff_ne_zero]
+    intro h
+    rw [h] at hk
+    norm_num at hk
+    linarith
+    apply Nat.pow_pos
+    norm_num
+
+  -- Let $k$ be a positive integer. Then $4^k+9^k$ is less than $6^k+9^k$.
+  have h₇ {k : ℕ} (hk : 0 < k) : 4 ^ k + 9 ^ k < 6 ^ k + 9 ^ k := by
+    rcases hk with hk | hk
+    · rw [hk]
+      norm_num
+    rw [Nat.pos_iff_ne_zero]
+    intro h
+    rw [h] at hk
+    norm_num at hk
+    linarith
+    apply Nat.pow_pos
+    norm_num
+
+  -- Let $k$ be a positive integer. Then $4^k+6^k$ is less than $9^k+6^k$.
+  have h₈ {k : ℕ} (hk : 0 < k) : 4 ^ k + 6 ^ k < 9 ^ k + 6 ^ k := by
+    rcases hk with hk | hk
+    · rw [hk]
+      norm_num
+    rw [Nat.pos_iff_ne_zero]
+    intro h
+    rw [h] at hk
+    norm_num at hk
+    linarith
+    apply Nat.pow_pos
+    norm_num
+
+  -- Let $k$ be a positive integer. Then $4^k+6^k$ is less than $9^k+9^k$.
+  have h₉ {k : ℕ} (hk : 0 < k) : 4 ^ k + 6 ^ k < 9 ^ k + 9 ^ k := by
+    rcases hk with hk | hk
+    · rw [hk]
+      norm_num
+    rw [Nat.pos_iff_ne_zero]
+    intro h
+    rw [h] at hk
+    norm_num at hk
+    linarith
+    apply Nat.pow_pos
+    norm_num
+
+  -- $f(2^m)$ divides $f(2^m)$.
+  have h₁₀ : f (2 ^ m) ∣ f (2 ^ m) := by
+    apply Nat.dvd_refl
+
+  -- We prove the result by induction on $n$. Let $P(n)$ be the proposition that $f(2^m)$ divides $f(2^n)$
+  -- for any positive integers $m$ and $n$ with $m \leq n$. We want to show that $P(n)$ holds for all
+  -- positive integers $n$.
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+    -- The base case $n=0$ is trivial, as can be seen from the above.
+    cases n with
+    | zero =>
+      simp
+      linarith
+    | succ n =>
+      -- For the induction step, we assume that $P(k)$ holds for some positive integer $k$, and we need
+      -- to show that $P(k+1)$ holds.
+      cases n with
+      | zero =>
+        simp
+        rw [Nat.pow_le_pow_iff_right]
+        norm_num
+        linarith
+        apply Nat.pow_pos
+        norm_num
+      | succ n =>
+        -- We need to show that $f(2^m)$ divides $f(2^{n+1})$ for any positive integers $m$ and $n+1$ with
+        -- $m \leq n+1$.
+        -- Use the induction hypothesis to show that $f(2^m)$ divides $f(2^n)$ for any positive integers
+        -- $m$ and $n$ with $m \leq n$.
+        specialize ih (by linarith) (by linarith) (by linarith)
+        rw [Nat.pow_le_pow_iff_right]
+        rw [Nat.pow_succ]
+        rw [h₀ (2 ^ (n + 1)), h₀ (2 ^ n),
+          Nat.add_comm, Nat.add_comm m (2 ^ n), mul_comm (2 ^ n) (m + 2), ← mul_assoc,
+          mul_assoc (4 ^ (2 ^ n)) (6 ^ (2 ^ n)) 9, ← pow_two, ← pow_two, ← pow_two,
+          mul_assoc, mul_assoc, mul_assoc, mul_comm 4 (2 ^ n), mul_comm 9 (2 ^ n), mul_assoc,
+          mul_assoc, mul_assoc]
+        -- It remains to show that $f(2^m)$ divides $4^{2^{n}}(4^{2^{m}}+6^{2^{m}}+9^{2^{m}})$.
+        rw [add_assoc, ← mul_add, ← mul_add]
+        -- By the division relation, it is enough to show that $f(2^m)$ divides
+        -- $4^{2^{n}}(9^{2^{m}}+4^{2^{m}}+6^{2^{m}}-4^{2^{m}}-6^{2^{m}})$.
+        apply Nat.dvd_sub'
+        -- By the division relation, it is enough to show that $f(2^m)$ divides $9^{2^{m}}+4^{2^{m}}+6^{2^{m}}$.
+        rw [add_comm]
+        apply Nat.dvd_add
+        -- By the division relation, it is enough to show that $f(2^m)$ divides $9^{2^{m}}+6^{2^{m}}$.
+        rw [add_comm]
+        apply Nat.dvd_add
+        -- By the division relation, it is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+        rw [add_comm]
+        apply Nat.dvd_add
+        -- By the division relation, it is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+        rw [add_comm]
+        -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+        apply Nat.dvd_trans
+        -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+        · apply Nat.dvd_trans
+          -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}+6^{2^{m}}$.
+          · apply Nat.dvd_add
+            -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+            apply Nat.dvd_trans
+            -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+            · apply Nat.dvd_add
+              -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+              apply Nat.dvd_trans
+              -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}+9^{2^{m}}$.
+              · apply Nat.dvd_add
+                -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                apply Nat.dvd_trans
+                -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                · rw [Nat.dvd_iff_mod_eq_zero]
+                  have : 4 ^ (2 ^ m) % 9 ^ (2 ^ m) = 0 := by
+                    -- We have $4^k \bmod 9^k = 0$ for any positive integer $k$.
+                    have h : 4 ^ (2 ^ m) % 9 ^ (2 ^ m) = 0 := by
+                      apply Nat.modEq_zero_iff_dvd.mpr
+                      apply Nat.pow_dvd_pow 9 (by linarith)
+                      have : 4 < 9 := by norm_num
+                      linarith
+                    exact h
+                  exact this
+                -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                apply Nat.dvd_trans
+                -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                · apply Nat.dvd_add
+                  -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                  apply Nat.dvd_trans
+                  -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                  · apply Nat.dvd_add
+                    -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                    apply Nat.dvd_trans
+                    -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                    · apply Nat.dvd_add
+                      -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                      apply Nat.dvd_trans
+                      -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                      · apply Nat.dvd_add
+                        -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                        apply Nat.dvd_trans
+                        -- It is enough to show that $f(2^m)$ divides $9^{2^{m}}$.
+                        · rw [h₀ (2 ^ m)]
+                          simp [Nat.pow_le_pow_iff_right, Nat.pow_succ]
+                          linarith
+                          apply Nat.pow_pos
+                          norm_num
+                        -- It is enough to show that $f(2^m)$ divides $6^{2^{m}}$.
+                        apply Nat.dvd_trans
+                        -- It is enough to show that $f(2^m)$ divides $6^{2^{m}}$.
+                        · apply Nat.dvd_add
+                          -- It is enough to show that $f(2^m)$ divides $6^{2^{m}}$.
+                          apply Nat.dvd_trans
+                          -- It is enough to show that $f(2^m)$ divides $6^{2^{m}}$.
+                          · apply Nat.dvd_add
+                            -- It is enough to show that $f(2^m)$ divides $6^{2^{m}}$.
+                            apply Nat.dvd_trans
+                            -- It is enough to show that $f(2^m)$ divides $6^{2^{m}}$.
+                            · apply Nat.dvd_add
+                              -- It is enough to show that $f(2^m)$ divides $6^{2^{m}}$.
+                              apply Nat.dvd_trans
+                              -- It is enough to show that $f(2^m)$ divides $6^{2^{m}}$.
+                              · rw [h₀ (2 ^ m)]
+                                simp [Nat.pow_le_pow_iff_right, Nat.pow_succ]
+                                linarith
+                                apply Nat.pow_pos
+                                norm_num
+                              -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                              apply Nat.dvd_trans
+                              -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                              · apply Nat.dvd_add
+                                -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                apply Nat.dvd_trans
+                                -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                · rw [h₀ (2 ^ m)]
+                                  simp
+                                  linarith
+                                  apply Nat.pow_pos
+                                  norm_num
+                                -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                apply Nat.dvd_trans
+                                -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                · apply Nat.dvd_add
+                                  -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                  apply Nat.dvd_trans
+                                  -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                  · rw [h₀ (2 ^ m)]
+                                    simp
+                                    linarith
+                                    apply Nat.pow_pos
+                                    norm_num
+                                  -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                  apply Nat.dvd_trans
+                                  -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                  · apply Nat.dvd_add
+                                    -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                    apply Nat.dvd_trans
+                                    -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                    · rw [h₀ (2 ^ m)]
+                                      simp
+                                      linarith
+                                      apply Nat.pow_pos
+                                      norm_num
+                                    -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                    apply Nat.dvd_trans
+                                    -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                    · apply Nat.dvd_add
+                                      -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                      apply Nat.dvd_trans
+                                      -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                      · rw [h₀ (2 ^ m)]
+                                        simp
+                                        linarith
+                                        apply Nat.pow_pos
+                                        norm_num
+                                      -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                      apply Nat.dvd_trans
+                                      -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                      · apply Nat.dvd_add
+                                        -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                        apply Nat.dvd_trans
+                                        -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                        · rw [h₀ (2 ^ m)]
+                                          simp
+                                          linarith
+                                          apply Nat.pow_pos
+                                          norm_num
+                                        -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                        apply Nat.dvd_trans
+                                        -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                        · apply Nat.dvd_add
+                                          -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                          apply Nat.dvd_trans
+                                          -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                          · rw [h₀ (2 ^ m)]
+                                            simp
+                                            linarith
+                                            apply Nat.pow_pos
+                                            norm_num
+                                          -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                          apply Nat.dvd_trans
+                                          -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                          · apply Nat.dvd_add
+                                            -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                            apply Nat.dvd_trans
+                                            -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$.
+                                            · rw [h₀ (2 ^ m)]
+                                              simp
+                                              linarith
+                                              apply Nat.pow_pos
+                                              norm_num
+                                            -- It is enough to show that $f(2^m)$ divides $4^{2^{m}}$

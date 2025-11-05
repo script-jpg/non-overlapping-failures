@@ -1,0 +1,30 @@
+-- We will show that $a_100 \equiv 3 \pmod 4$ by computing the remainder of the first 100 terms
+  -- of the Fibonacci sequence modulo 4.
+
+  -- Let $b_i = a_i \pmod 4$ for $i \in \mathbb{N}$.
+  let b (i : ℕ) := a i % 4
+
+  -- We will show that $b_i$ is periodic with period 60.
+  have h₃ : ∀ i, b (i + 60) = b i := by
+    intro i
+
+    -- We can show this by computing the first 60 terms of $b_i$, or we can use a more conceptual
+    -- approach by noting that each term of $b_i$ only depends on the previous two terms.
+    -- Since there are only finitely many possible pairs of consecutive terms, the sequence must
+    -- eventually become periodic. A little work shows that the period is in fact 60.
+    have h (i : ℕ) : b (i + 60) = b i := by
+      induction' i with i ih
+      · simp [b, h₀, h₁]
+      · rw [h₂, ih, h₂, Nat.add_mod (a (i + 60)) (a (i + 59)) 4,
+          Nat.add_mod (a (i + 59)) (a (i + 58)) 4]
+
+    induction' i with i ih
+    · exact h i
+    · rw [h (i + 1), Nat.add_mod (a (i + 1)) (a i) 4, ih]
+
+  -- Now we compute the remainder of $a_100$ modulo 4.
+  calc a 100 % 4 = b 100 := by rfl
+             _ = b (100 % 60) := by rw [h₃ 100]
+             _ = b 40 := by norm_num
+             _ = 3 := by simp [b, h₀, h₁]; rfl
+```

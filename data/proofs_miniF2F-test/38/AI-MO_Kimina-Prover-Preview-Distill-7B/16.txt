@@ -1,0 +1,52 @@
+-- We have r = (2010-2009) = 1
+  have r : Nat = 1 := by simp
+
+  -- Compute the length of the sequence
+  have s_length : Finset.card (Finset.Icc 2010 4018) = 2009 := by
+    simp
+    -- calculate cardinality
+    have : 4018 - 2010 + 1 = 2009 := by simp
+    rw [←this]
+    exact Nat.card_Icc 2010 4018
+
+  -- Compute S = r * (sum of sequence) = 1 * (2010 + 2011 +... + 4018)
+  have s_eq : s = r * (∑ k ∈ Finset.Icc 2010 4018, k) := by simp [h₀]
+
+  -- Show that S % 2009 = 0
+  calc
+    s % 2009 = r * (∑ k ∈ Finset.Icc 2010 4018, k) % 2009 := by rw [s_eq]
+    _ = 1 * (∑ k ∈ Finset.Icc 2010 4018, k) % 2009 := by rw [r]
+    _ = 0 := by
+      -- The sum of numbers from 2010 to 4018 modulo 2009 is 0
+      have : (∑ k ∈ Finset.Icc 2010 4018, k) % 2009 = 0 := by
+        calc
+          (∑ k ∈ Finset.Icc 2010 4018, k) % 2009 = (∑ k ∈ Finset.range 2009, (2009 + k)) % 2009 := by
+            -- The sum of numbers from 2010 to 4018 is the sum of numbers from 0 to 2008 shifted by 2009
+            have h : Finset.Icc 2010 4018 = Finset.range 2009 + 2009 := by
+              ext x
+              simp
+              omega
+            rw [h]
+            rw [Finset.sum_add_distrib]
+            simp
+            apply Finset.sum_congr rfl
+            intro x _
+            rw [add_comm]
+          _ = (∑ k ∈ Finset.range 2009, (1 + k)) % 2009 := by
+            -- The sum of numbers from 0 to 2008 is the same as the sum of numbers from 1 to 2009
+            rw [Finset.sum_add_distrib]
+            simp
+            congr
+            ext x
+            rw [Nat.add_comm]
+            simp
+            omega
+          _ = 0 := by
+            -- The sum of numbers from 1 to 2009 modulo 2009 is 0
+            rw [Finset.sum_add_distrib]
+            simp
+            rw [Finset.sum_range_id]
+            simp
+      rw [this]
+      simp
+```

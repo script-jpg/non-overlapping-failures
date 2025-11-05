@@ -1,0 +1,159 @@
+-- We will prove that the solution set is exactly $\{\pi/2, 3\pi/2, 5\pi/2, 7\pi/2, 9\pi/2\}$.
+  suffices S = {Real.pi / 2, 3 * Real.pi / 2, 5 * Real.pi / 2, 7 * Real.pi / 2, 9 * Real.pi / 2} by
+    rw [this, Finset.card_insert_of_not_mem, Finset.card_insert_of_not_mem, Finset.card_insert_of_not_mem,
+    Finset.card_insert_of_not_mem, Finset.card_singleton]
+    all_goals norm_num
+
+  ext x
+  simp only [Finset.mem_insert, Finset.mem_singleton, Set.mem_setOf_eq, h₀, and_imp]
+  constructor
+  · -- If $x$ is a solution, then $x = \pi/2 + k\pi$ for $k = 0,1,2,3,4$.
+    rintro ⟨hx₁, hx₂, hx₃⟩
+
+    -- We have $\cos(x/2) \neq 0$, because $\tan(2x)$ is defined.
+    have hx₄ : Real.cos (x / 2) ≠ 0 := by
+      by_contra! h
+      simp [h] at hx₃
+
+    -- We have $x \neq 0$.
+    have hx₅ : x ≠ 0 := by
+      by_contra! h
+      subst x
+      norm_num at hx₁
+      linarith only [hx₂, hx₁]
+
+    -- We have $x \neq 2\pi$.
+    have hx₆ : x ≠ 2 * Real.pi := by
+      by_contra! h
+      subst x
+      norm_num at hx₂
+      linarith only [hx₂, hx₁]
+
+    -- We have $\tan(2x) = \frac{\sin(2x)}{\cos(2x)} = \frac{2\sin(x)\cos(x)}{\cos(2x)}$.
+    have hx₇ : Real.tan (2 * x) = 2 * Real.sin x * Real.cos x / Real.cos (2 * x) := by
+      rw [Real.tan_eq_sin_div_cos, Real.sin_two_mul, Real.cos_two_mul]
+
+    -- We have $\cos(2x) = 2\cos^2(x) - 1$.
+    have hx₈ : Real.cos (2 * x) = 2 * Real.cos x ^ 2 - 1 := by
+      rw [Real.cos_two_mul]
+
+    -- We have $\sin^2(x) + \cos^2(x) = 1$.
+    have hx₉ : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := by
+      exact Real.sin_sq_add_cos_sq x
+
+    -- Let's do case analysis according to the signs of $\cos(x)$ and $\cos(2x)$.
+    by_cases hx₁₀ : 0 < Real.cos x
+    · by_cases hx₁₁ : 0 < Real.cos (2 * x)
+      · -- In this case, we have $\cos(x) > 0$ and $\cos(2x) > 0$.
+        -- So $0 < \cos(x) < 1$ and $0 < 2\cos^2(x) - 1 < 1$.
+        -- So $\cos^2(x) > \frac{1}{2}$.
+        have hx₁₂ : 1 / 2 < Real.cos x ^ 2 := by
+          have hx₁₂ : 0 < Real.cos x ^ 2 := by
+            exact mul_pos hx₁₀ hx₁₀
+          have hx₁₃ : Real.cos x ^ 2 < 2 * Real.cos x ^ 2 - 1 := by
+            linarith only [hx₁₁, hx₈]
+          linarith only [hx₁₂, hx₁₃]
+        -- So $\cos(x) > \frac{1}{\sqrt{2}}$.
+        have hx₁₃ : 1 / Real.sqrt 2 < Real.cos x := by
+          rw [lt_div_iff (by positivity), ← sq_lt_sq₀ (by positivity) (by positivity)]
+          simp
+          linarith only [hx₁₂]
+        -- This means that $x \in (-\frac{\pi}{4}, \frac{\pi}{4})$.
+        have hx₁₄ : x < Real.pi / 2 := by
+          by_contra! hx₁₄
+          nlinarith only [hx₁₃, Real.cos_sq_add_sin_sq x, Real.cos_le_one x]
+        -- But we have $x \notin (-\frac{\pi}{4}, \frac{\pi}{4})$.
+        -- Because $\cos(\frac{\pi}{4}) = \frac{1}{\sqrt{2}}$ and $\cos$ is strictly decreasing on $[0, \pi]$.
+        have hx₁₅ : x > Real.pi / 2 - Real.pi := by
+          by_contra! hx₁₅
+          nlinarith only [hx₁₃, Real.cos_sq_add_sin_sq x, Real.cos_le_one x]
+        linarith only [hx₁₄, hx₁₅]
+
+      · -- In this case, we have $\cos(x) > 0$ and $\cos(2x) < 0$.
+        -- So $0 < \cos(x) < 1$ and $0 < 2\cos^2(x) - 1 < 1$.
+        -- So $\cos^2(x) > \frac{1}{2}$.
+        have hx₁₂ : 1 / 2 < Real.cos x ^ 2 := by
+          have hx₁₂ : 0 < Real.cos x ^ 2 := by
+            exact mul_pos hx₁₀ hx₁₀
+          have hx₁₃ : 2 * Real.cos x ^ 2 - 1 < 0 := by
+            linarith only [hx₁₁, hx₈]
+          linarith only [hx₁₂, hx₁₃]
+        -- So $\cos(x) > \frac{1}{\sqrt{2}}$.
+        have hx₁₃ : 1 / Real.sqrt 2 < Real.cos x := by
+          rw [lt_div_iff (by positivity), ← sq_lt_sq₀ (by positivity) (by positivity)]
+          simp
+          linarith only [hx₁₂]
+        -- This means that $x \in (-\frac{\pi}{4}, \frac{\pi}{4})$.
+        have hx₁₄ : x < Real.pi / 2 := by
+          by_contra! hx₁₄
+          nlinarith only [hx₁₃, Real.cos_sq_add_sin_sq x, Real.cos_le_one x]
+        -- But we have $x \notin (-\frac{\pi}{4}, \frac{\pi}{4})$.
+        -- Because $\cos(\frac{\pi}{4}) = \frac{1}{\sqrt{2}}$ and $\cos$ is strictly decreasing on $[0, \pi]$.
+        have hx₁₅ : x > Real.pi / 2 - Real.pi := by
+          by_contra! hx₁₅
+          nlinarith only [hx₁₃, Real.cos_sq_add_sin_sq x, Real.cos_le_one x]
+        linarith only [hx₁₄, hx₁₅]
+
+    · by_cases hx₁₁ : 0 < Real.cos (2 * x)
+      · -- In this case, we have $\cos(x) < 0$ and $\cos(2x) > 0$.
+        -- Impossible, because $\cos^2(x) > \frac{1}{2}$ would contradict with $\cos^2(x) < \frac{1}{2}$.
+        have hx₁₂ : Real.cos x ^ 2 < 1 / 2 := by
+          have hx₁₂ : Real.cos x ^ 2 > 1 / 2 := by
+            have hx₁₃ : 0 < 2 * Real.cos x ^ 2 - 1 := by linarith only [hx₁₁, hx₈]
+            linarith only [hx₁₃]
+          linarith only [hx₁₂, hx₁₀]
+        linarith only [hx₁₁, hx₁₂]
+
+      · -- In this case, we have $\cos(x) < 0$ and $\cos(2x) < 0$.
+        -- So $\cos^2(x) > \frac{1}{2}$.
+        have hx₁₂ : 1 / 2 < Real.cos x ^ 2 := by
+          have hx₁₂ : 0 < Real.cos x ^ 2 := by
+            exact mul_neg_of_neg_of_pos hx₁₀ (by positivity)
+          have hx₁₃ : 2 * Real.cos x ^ 2 - 1 < 0 := by
+            linarith only [hx₁₁, hx₈]
+          linarith only [hx₁₂, hx₁₃]
+        -- So $\cos(x) < -\frac{1}{\sqrt{2}}$.
+        have hx₁₃ : Real.cos x < - 1 / Real.sqrt 2 := by
+          rw [lt_div_iff (by positivity), ← sq_lt_sq₀ (by positivity) (by positivity)]
+          simp
+          linarith only [hx₁₂]
+        -- This means that $x \in (-\frac{3\pi}{4}, -\frac{\pi}{4})$.
+        have hx₁₄ : x < 3 * Real.pi / 2 := by
+          by_contra! hx₁₄
+          nlinarith only [hx₁₃, Real.cos_sq_add_sin_sq x, Real.cos_le_one x]
+        -- But we have $x \notin (-\frac{3\pi}{4}, -\frac{\pi}{4})$.
+        -- Because $\cos(-\frac{\pi}{4}) = -\frac{1}{\sqrt{2}}$ and $\cos$ is strictly increasing on $[\pi, 2\pi]$.
+        have hx₁₅ : x > 3 * Real.pi / 2 - Real.pi := by
+          by_contra! hx₁₅
+          nlinarith only [hx₁₃, Real.cos_sq_add_sin_sq x, Real.cos_le_one x]
+        linarith only [hx₁₄, hx₁₅]
+
+  · -- If $x = \pi/2 + k\pi$ for $k = 0,1,2,3,4$, then $x$ is a solution.
+    rintro (hx | hx | hx | hx | hx)
+    · -- When $x = \pi/2$, $\tan(2x) = \tan(\pi) = 0$ and $\cos(x/2) = \cos(\pi/4) = \frac{\sqrt{2}}{2}$.
+      subst x
+      norm_num
+      rw [Real.tan_int_mul_pi, Real.cos_eq_sqrt_div_two]
+      field_simp
+    · -- When $x = 3\pi/2$, $\tan(2x) = \tan(3\pi) = 0$ and $\cos(x/2) = \cos(3\pi/4) = -\frac{\sqrt{2}}{2}$.
+      subst x
+      norm_num
+      rw [Real.tan_int_mul_pi, Real.cos_eq_neg_sqrt_div_two]
+      field_simp
+    · -- When $x = 5\pi/2$, $\tan(2x) = \tan(5\pi) = 0$ and $\cos(x/2) = \cos(5\pi/4) = -\frac{\sqrt{2}}{2}$.
+      subst x
+      norm_num
+      rw [Real.tan_int_mul_pi, Real.cos_eq_neg_sqrt_div_two]
+      field_simp
+    · -- When $x = 7\pi/2$, $\tan(2x) = \tan(7\pi) = 0$ and $\cos(x/2) = \cos(7\pi/4) = \frac{\sqrt{2}}{2}$.
+      subst x
+      norm_num
+      rw [Real.tan_int_mul_pi, Real.cos_eq_sqrt_div_two]
+      field_simp
+    · -- When $x = 9\pi/2$, $\tan(2x) = \tan(9\pi) = 0$ and $\cos(x/2) = \cos(9\pi/4) = \frac{\sqrt{2}}{2}$.
+      subst x
+      norm_num
+      rw [Real.tan_int_mul_pi, Real.cos_eq_sqrt_div_two]
+      field_simp
+
+```

@@ -1,0 +1,316 @@
+-- Define the function f(t) = (2^t - 3t) * t / 4^t.
+  let f := fun t : ℝ => (2 ^ t - 3 * t) * t / 4 ^ t
+
+  -- Show that f(t) has the same value at t and -t, so f is symmetric about the y-axis.
+  have h_symm : ∀ t : ℝ, f t = f (-t) := by
+    intro t
+    unfold f
+    -- Simplify the expression using properties of exponents.
+    rw [mul_comm, <-Real.rpow_neg, mul_comm, <-Real.rpow_add, mul_comm]
+    congr
+   . ring
+   . ring_nf
+   . exact (Real.logb_eq_iff_rpow_eq (by norm_num) (by norm_num) (by intro x; simp [x] at *)).mpr (by ring_nf)
+
+  -- Since f(t) = f(-t), the maximum value of f(t) on the whole real line is the maximum value of f(t) on the half-line t ≥ 0.
+  have h_max : IsGreatest {a : ℝ | ∃ t : ℝ, f t = a} (IsGreatest {a : ℝ | ∃ t : ℝ, f t = a} (1 / 12) (by use 3; norm_num [f])) := by
+    constructor
+   . -- First, show that 1/12 is in the set.
+      use 3
+      norm_num [f]
+   . -- Then, show that 1/12 is an upper bound.
+      intro a h
+      rcases h with ⟨t, ht⟩
+      -- WLOG, assume that t ≥ 0.
+      wlog t_nonneg : t ≥ 0
+     . -- If t < 0, then f(t) = f(-t), and we can consider -t instead of t.
+        -- Extract the negative t from the hypothesis.
+        obtain ⟨t, ht⟩ := ht
+        -- WLOG, assume that t ≥ 0.
+        wlog t_nonneg : t ≥ 0
+       . -- The goal is the same for t and -t.
+          convert this (-t) (by linarith) using 1
+         . congr
+            exact h_symm t
+         . rw [ht]
+            linarith
+       . -- Now t is non-negative.
+          simp at t_nonneg
+          -- We know that t^2 ≤ 4^t, so the function is non-negative for t ≥ 0.
+          have h_t_sq_le_4_pow_t : t ^ 2 ≤ (4 : ℝ) ^ t := by
+            apply Real.rpow_le_rpow_of_exponent_le
+           . norm_num
+           . norm_num
+           . exact t_nonneg
+          have h_f_nonneg : 0 ≤ f t := by
+            unfold f
+            rw [div_nonneg_iff]
+           . apply mul_nonneg
+             . apply pow_two_nonneg
+             . linarith
+           . norm_num
+          -- We know that f(t) ≤ 1/12 for t ≥ 0.
+          calc
+            a = f t := by rw [ht]
+            _ ≤ 1 / 12 := by
+              -- We know that 2^t ≤ 4^t, so 2^t - 3t ≤ 4^t - 3t, and the function is decreasing for large t.
+              have h_2_pow_t_le_4_pow_t : (2 : ℝ) ^ t ≤ (4 : ℝ) ^ t := by
+                apply Real.rpow_le_rpow_of_exponent_le
+               . norm_num
+               . norm_num
+               . exact t_nonneg
+              -- The function is decreasing for large t.
+              have h_f_le_1_div_12 : f t ≤ 1 / 12 := by
+                unfold f
+                have h : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (1 / 12 : ℝ) := by
+                  -- We can split the goal into 3 cases.
+                  by_cases h1 : t ≤ 3
+                 . -- When 0 ≤ t ≤ 3, we can verify that 2^t - 3t ≤ 4^t - 3t, so the function is non-negative.
+                    have h2 : (1 / 12 : ℝ) ≥ 0 := by norm_num
+                    -- The goal is equivalent to (2^t - 3t) * t ≤ 4^t / 12.
+                    suffices (2 ^ t - 3 * t) * t ≤ (4 ^ t / 12 : ℝ) by exact (div_le_iff₀ h2).mpr this
+                    -- Simplify the expression using properties of exponents.
+                    rw [←Real.rpow_add, mul_comm, sub_mul, mul_assoc, Real.rpow_mul, div_eq_mul_inv]
+                    simp
+                    -- Simplify the expression using properties of logarithm.
+                    rw [Real.logb_rpow]
+                    simp
+                    -- Use the fact that log2(4) = 2.
+                    have h_log2_4 : Real.logb 2 4 = 2 := by
+                      rw [Real.logb_eq_iff_rpow_eq (by norm_num) (by norm_num) (by norm_num)]
+                      norm_num
+                    -- We can use log2(4) = 2 to simplify the expression.
+                    rw [h_log2_4]
+                    -- Simplify the expression using properties of logarithm.
+                    rw [<-Real.logb_mul, Real.logb_rpow]
+                    field_simp
+                    linarith
+                    all_goals
+                      positivity
+                 . -- When 3 < t ≤ 4, we can verify that 4^t - 3t ≤ 4^t, so the function is decreasing.
+                    have h2 : (2 ^ t - 3 * t) * t ≤ (2 ^ t - 3 * 3) * 3 := by
+                      apply mul_le_mul_of_nonneg_left
+                     . linarith
+                     . linarith
+                    have h3 : (2 ^ 3 - 3 * 3) * 3 = 0 := by norm_num
+                    -- The function is decreasing on the interval (3, 4].
+                    have h4 : (2 ^ t - 3 * 3) * 3 ≤ (4 ^ t - 3 * 3) * 3 := by
+                      apply mul_le_mul_of_nonneg_left
+                     . linarith
+                     . linarith
+                    linarith
+                 . -- When 4 < t, we can verify that 4^t - 3t ≤ 4^t, so the function is decreasing.
+                    have h2 : (2 ^ t - 3 * t) * t ≤ (4 ^ t - 3 * t) * t := by
+                      apply mul_le_mul_of_nonneg_right
+                     . linarith
+                     . linarith
+                    have h3 : (4 ^ t - 3 * t) * t < (4 ^ t - 3 * 4) * 4 := by
+                      replace h4 : 4 < t := by linarith
+                      rw [<-Real.rpow_add, mul_comm, Real.rpow_mul]
+                      simp
+                      rw [<-Real.logb_mul, Real.logb_rpow]
+                      field_simp
+                      -- Use the fact that log2(4) = 2 to simplify the expression.
+                      have h_log2_4 : Real.logb 2 4 = 2 := by
+                        rw [Real.logb_eq_iff_rpow_eq (by norm_num) (by norm_num) (by norm_num)]
+                        norm_num
+                      rw [h_log2_4]
+                      -- Simplify the expression using properties of logarithm.
+                      rw [Real.logb_rpow]
+                      simp
+                      linarith
+                      all_goals
+                        positivity
+                    linarith
+                linarith
+              linarith
+          linarith
+
+  -- Now we have the maximum value of f(t) on the half-line t ≥ 0 is 1/12.
+  -- Use the condition to prove that the maximum value of f(t) on the whole real line is 1/12.
+  let tₙ := 1
+  -- Perform an induction to show that t_n = 1 for all n.
+  have h_tₙ : ∀ n : ℕ, tₙ = 1 := by
+    intro n
+    induction n with
+    | zero => rfl
+    | succ n ih =>
+      unfold tₙ at ih ⊢
+      rw [ih]
+      simp
+
+  have h_f critical : IsGreatest {a : ℝ | ∃ t : ℝ, f t = a} (1 / 12) (by use 3; norm_num [f])
+ . -- We will show that the set of values of f(t) is equal to the set of values of f(3 + 2 * tₙ), so the maximum value is the same.
+    have h_set : {a : ℝ | ∃ t : ℝ, f t = a} = {a : ℝ | ∃ t : ℝ, f (3 + 2 * tₙ) = a} := by
+      -- We can suppose that t ≥ 0.
+      ext a
+      simp
+      constructor
+     . -- We will show that if f(t) = a for some real t, then f(3 + 2tₙ) = a.
+        rintro ⟨t, ht⟩
+        -- We can suppose that t ≥ 0.
+        wlog t_nonneg : t ≥ 0
+       . -- If t < 0, then f(t) = f(-t), and we can consider -t instead of t.
+          -- Extract the negative t from the hypothesis.
+          obtain ⟨t, ht⟩ := ht
+          -- WLOG, suppose that t ≥ 0.
+          wlog t_nonneg : t ≥ 0
+         . -- The goal is the same for t and -t.
+            convert this (-t) (by linarith) using 1
+           . congr
+              exact h_symm t
+           . rw [ht]
+              linarith
+         . -- Now t is non-negative.
+            simp at t_nonneg
+            -- We know that f(t) ≤ 1/12 for t ≥ 0.
+            have h_f_nonneg : 0 ≤ f t := by
+              unfold f
+              rw [div_nonneg_iff]
+             . apply mul_nonneg
+               . apply pow_two_nonneg
+               . linarith
+             . norm_num
+            -- We know that f(3 + 2tₙ) ≤ 1/12 for all tₙ ≥ 0.
+            have h_f_le_1_div_12 : f (3 + 2 * tₙ) ≤ 1 / 12 := by
+              unfold tₙ
+              norm_num
+              apply Real.rpow_le_rpow_of_exponent_le
+             . norm_num
+             . norm_num
+             . linarith
+            -- The function value at 3 + 2tₙ is non-negative.
+            have h_fₙ_nonneg : 0 ≤ f (3 + 2 * tₙ) := by
+              unfold f
+              rw [div_nonneg_iff]
+             . apply mul_nonneg
+               . apply pow_two_nonneg
+               . linarith
+             . norm_num
+            -- The value a is between f(t) and f(3 + 2tₙ).
+            suffices (f (3 + 2 * tₙ)) ≤ a ∧ a ≤ f t by exact ⟨_, this.2⟩
+           . -- We know that f(3 + 2tₙ) ≤ a.
+              linarith
+           . -- We know that a ≤ f(t).
+              linarith
+     . -- We will show that if f(3 + 2tₙ) = a for some real tₙ, then f(t) = a for some real t.
+        rintro ⟨tₙ, htₙ⟩
+        -- Extract the real value tₙ from the hypothesis.
+        obtain ⟨tₙ, htₙ⟩ := htₙ
+        -- We can suppose that tₙ ≥ 0.
+        wlog tₙ_nonneg : tₙ ≥ 0
+       . -- If tₙ < 0, then f(3 + 2tₙ) = f(3 - 2tₙ), and we can consider -tₙ instead of tₙ.
+          -- Extract the negative tₙ from the hypothesis.
+          obtain ⟨tₙ, htₙ⟩ := htₙ
+          -- WLOG, suppose that tₙ ≥ 0.
+          wlog tₙ_nonneg : tₙ ≥ 0
+         . -- The goal is the same for tₙ and -tₙ.
+            convert this (-tₙ) (by linarith) using 1
+           . congr
+              calc
+                f (3 + 2 * (-tₙ)) = f (-tₙ + 3) := by ring_nf
+                _ = f (-tₙ + 3) := by rw [h_symm]
+                _ = f (3 - 2 * tₙ) := by ring_nf
+         . -- Now tₙ is non-negative.
+            simp at tₙ_nonneg
+            -- We know that f(3 + 2tₙ) ≤ 1/12 for tₙ ≥ 0.
+            have h_fₙ_nonneg : 0 ≤ f (3 + 2 * tₙ) := by
+              unfold f
+              rw [div_nonneg_iff]
+             . apply mul_nonneg
+               . apply pow_two_nonneg
+               . linarith
+             . norm_num
+            -- We know that f(t) ≤ 1/12 for all t ≥ 0.
+            have h_f_le_1_div_12 : f t ≤ 1 / 12 := by
+              apply Real.rpow_le_rpow_of_exponent_le
+             . norm_num
+             . norm_num
+             . exact t_nonneg
+            -- The function value at t is non-negative.
+            have h_f_nonneg : 0 ≤ f t := by
+              unfold f
+              rw [div_nonneg_iff]
+             . apply mul_nonneg
+               . apply pow_two_nonneg
+               . linarith
+             . norm_num
+            -- The value a is between f(3 + 2tₙ) and f(t).
+            suffices (f (3 + 2 * tₙ)) ≤ a ∧ a ≤ f t by exact ⟨this.1,..⟩
+           . -- We know that f(3 + 2tₙ) ≤ a.
+              linarith
+           . -- We know that a ≤ f(t).
+              linarith
+        -- We can suppose that tₙ ≥ 0.
+        simp at tₙ_nonneg
+        rw [h_tₙ] at htₙ
+        -- Let t = 3 + 2tₙ, the goal is trivial.
+        use (3 + 2 * tₙ)
+        calc
+          f (3 + 2 * tₙ) = f tₙ := by simp [tₙ]
+          _ = a := by rw [htₙ]
+
+    -- The maximum value of f(t) on the whole real line is the same as the maximum value of f(3 + 2tₙ) for all n, which is 1/12.
+    convert h_f using 1
+   . unfold Set.mem_setOf
+      use 3 + 2 * tₙ
+      rw [h_tₙ]
+      simp
+   . simp
+      intro a h
+      rw [h_set] at h
+      simp at h
+      obtain ⟨t, ht⟩ := h
+      -- WLOG, suppose that t ≥ 0.
+      wlog t_nonneg : t ≥ 0
+     . -- If t < 0, then f(t) = f(-t), and we can consider -t instead of t.
+        -- Extract the negative t from the hypothesis.
+        obtain ⟨t, ht⟩ := h
+        -- WLOG, suppose that t ≥ 0.
+        wlog t_nonneg : t ≥ 0
+       . -- The goal is the same for t and -t.
+          convert this (-t) (by linarith) using 1
+         . congr
+            exact h_symm t
+         . rw [ht]
+            linarith
+       . -- Now t is non-negative.
+          simp at t_nonneg
+          -- We know that f(t) ≤ 1/12 for t ≥ 0.
+          have h_f_nonneg : 0 ≤ f t := by
+            unfold f
+            rw [div_nonneg_iff]
+           . apply mul_nonneg
+             . apply pow_two_nonneg
+             . linarith
+           . norm_num
+          -- We know that f(3 + 2tₙ) ≤ 1/12 for all tₙ ≥ 0.
+          have h_f_le_1_div_12 : f (3 + 2 * tₙ) ≤ 1 / 12 := by
+            unfold tₙ
+            norm_num
+            apply Real.rpow_le_rpow_of_exponent_le
+           . norm_num
+           . norm_num
+           . linarith
+          -- The function value at 3 + 2tₙ is non-negative.
+          have h_fₙ_nonneg : 0 ≤ f (3 + 2 * tₙ) := by
+            unfold f
+            rw [div_nonneg_iff]
+           . apply mul_nonneg
+             . apply pow_two_nonneg
+             . linarith
+           . norm_num
+          -- The value a is between f(t) and f(3 + 2tₙ).
+          suffices (f (3 + 2 * tₙ)) ≤ a ∧ a ≤ f t by exact ⟨_, this.2⟩
+         . -- We know that f(3 + 2tₙ) ≤ a.
+            linarith
+         . -- We know that a ≤ f(t).
+            linarith
+      -- We can suppose that t ≥ 0.
+      simp at t_nonneg
+      -- We already know that f(t) ≤ 1/12.
+      specialize h_max h
+      -- We already know that 1/12 ≤ f(t) for some t, so the maximum value is 1/12.
+      linarith
+
+```

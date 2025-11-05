@@ -1,0 +1,246 @@
+have ha : a.num = a * a.den := by
+    norm_cast
+    -- For a rational number $a$, it is true that $a = \frac{a.den}{a.num}$.
+    rw [← Rat.num_div_den a]
+    -- Multiplying both sides by $a.num$ gives $a * a.num = a.den$.
+    field_simp [Rat.num_ne_zero a]
+
+  -- To ensure that any $x$ we examine is non-zero, we prove that if $x = 0$, then $x \notin S$.
+  have hx : ∀ x : ℝ, x = 0 → x ∉ S := by
+    intro x hx
+    by_contra! hk
+    subst x
+    -- If $x = 0$, then the equation simplifies to $0 = a * 0$, which is false because $a \neq 0$.
+    simp [h₀] at hk
+    exact ha.right (by simpa using hk)
+
+  -- We consider any $x \in S$.
+  have h₂ : ∀ x : ℝ, x ∈ S → a * x^2 - x + a.den = 0 := by
+    intro x hx
+    rw [h₀] at hx
+    -- Rearrange the equation to collect constant terms.
+    rw [← sub_eq_zero] at hx
+    ring_nf at hx
+    rw [pow_two] at hx
+    -- Multiply both sides by $x.num$ to eliminate the denominator.
+    rw [← mul_div_assoc (x.num : ℝ) _ (by simpa), ← mul_assoc, mul_comm, mul_assoc] at hx
+    rw [div_self hx] at hx
+    -- Multiply both sides by $x.num^2 * x.den$ to eliminate the denominator.
+    have : (x.num : ℝ) ^ 2 * x.den ≠ 0 := by
+      norm_cast
+      rw [← Nat.cast_pos]
+      exact Nat.pos_num_num x.num
+    rw [mul_right_inj' this] at hx
+    -- Rearrange the equation to collect constant terms.
+    rw [← sub_eq_zero] at hx
+    ring_nf at hx
+    -- Factor the equation.
+    rw [show a * x ^ 2 * x.num ^ 2 * x.den - x * x.num ^ 2 * x.den + a.den * x.num ^ 2 * x.den = (a * x * x.num - x.num) ^ 2 by ring] at hx
+    -- Since $x \neq 0$, the term $x.num \neq 0$.
+    have : x.num ≠ 0 := by
+      by_contra! hk
+      rw [hk] at hx
+      simp at hx
+    -- Therefore, $a * x * x.num - x.num = 0$.
+    have : a * x * x.num - x.num = 0 := by
+      apply pow_eq_zero 
+      exact hx
+    -- Rearrange the equation to isolate $a * x$.
+    rw [← sub_eq_zero, mul_sub, mul_comm, mul_assoc, ← mul_sub] at this
+    have : x.num * (a * x - 1) = 0 := by
+      ring_nf at this ⊢
+      exact this
+    -- Since the left term is non-zero, the right term must be zero.
+    simp [this, mul_comm] at this
+    -- Rearrange to isolate $a * x$.
+    rw [← add_zero (a * x), ← sub_eq_zero] at this
+    rw [mul_assoc, mul_comm, mul_assoc, ← mul_assoc, this]
+    norm_num
+
+  -- Using the quadratic formula, we find that the solutions to the equation are
+  -- $x = \frac{1 \pm \sqrt{1 - 4 a * a.den}}{2 a}$.
+  have h₃ (x : ℝ) : a * x^2 - x + a.den = 0 → x = (1 + √(1 - 4 * a * a.den)) / (2 * a) ∨ x = (1 - √(1 - 4 * a * a.den)) / (2 * a) := by
+    intro hx
+    have : a * x^2 - x + a.den = (x - (1 + √(1 - 4 * a * a.den)) / (2 * a)) * (x - (1 - √(1 - 4 * a * a.den)) / (2 * a)) := by
+      ring_nf
+      rw [sq_sqrt]
+      · ring
+      · apply mul_nonneg
+        apply add_nonneg
+        norm_num
+        simp
+        apply sqrt_nonneg
+      · norm_num
+    rw [this] at hx
+    -- If a product of two terms is zero, then at least one of the terms must be zero.
+    simp at hx
+    cases hx with
+    | inl hx =>
+      left
+      -- Solve for $x$ from the first factor.
+      field_simp at hx
+      nth_rw 2 [pow_two] at hx
+      rw [← sqrt_mul, sqrt_eq_iff_eq_sq, mul_self_sqrt] at hx
+      · exact hx
+      · apply le_of_lt
+        rw [← Nat.cast_pos]
+        exact Nat.pos_num_num (1 - 4 * a * a.den)
+      · apply sqrt_nonneg
+    | inr hx =>
+      right
+      -- Solve for $x$ from the second factor.
+      field_simp at hx
+      nth_rw 2 [pow_two] at hx
+      rw [← sqrt_mul, sqrt_eq_iff_eq_sq, mul_self_sqrt] at hx
+      · exact hx
+      · apply le_of_lt
+        rw [← Nat.cast_pos]
+        exact Nat.pos_num_num (1 - 4 * a * a.den)
+      · apply sqrt_nonneg
+
+  -- We show that the solutions are actually rational numbers.
+  have h₄ (x : ℝ) : a * x^2 - x + a.den = 0 → x ∈ Set.range Rat.cast := by
+    intro hx
+    rcases h₃ x hx with hx | hx
+    · -- Consider the first solution.
+      have : (1 + √(1 - 4 * a * a.den)) / (2 * a) = (1 + |√(1 - 4 * a * a.den)|) / (2 * a) := by
+        rw [abs_of_nonneg]
+        apply add_nonneg
+        norm_num
+        apply sqrt_nonneg
+      rw [this, abs_of_nonneg] at hx
+      apply div_nonneg
+      apply add_nonneg
+      norm_num
+      apply sqrt_nonneg
+      norm_num
+      rw [← Nat.cast_pos]
+      exact Nat.pos_num_num a.den
+    · -- Consider the second solution.
+      have : (1 - √(1 - 4 * a * a.den)) / (2 * a) = (1 - |√(1 - 4 * a * a.den)|) / (2 * a) := by
+        rw [abs_of_nonneg]
+        apply sub_nonneg.mpr
+        apply sqrt_le_sqrt
+        apply mul_nonneg
+        apply add_nonneg
+        norm_num
+        apply sqrt_nonneg
+      rw [this, abs_of_nonneg] at hx
+      apply div_nonneg
+      apply sub_nonneg.mpr
+      apply sqrt_le_sqrt
+      apply mul_nonneg
+      apply add_nonneg
+      norm_num
+      apply sqrt_nonneg
+      norm_num
+      rw [← Nat.cast_pos]
+      exact Nat.pos_num_num a.den
+
+  -- Now we show that in fact, all the solutions are rational numbers.
+  have h₅ : S ⊆ Set.range Rat.cast := by
+    intro x hx
+    apply h₄
+    exact h₂ x hx
+
+  -- We make use of the fact that the sum of the roots of a quadratic equation $ax^2 + bx + c = 0$ is $-b/a$.
+  have h₆ (x₁ x₂ : ℝ) (hx₁ : x₁ ∈ S) (hx₂ : x₂ ∈ S) (hx₁' : x₁ ≠ x₂) : x₁ + x₂ = -(-1 / (a * (1 : ℝ))) := by
+    rw [h₀] at hx₁ hx₂
+    -- Eliminate the denominator.
+    have h₁ := congr_arg (λ x : ℝ => x * x₁.num * x₂.num * a.den) hx₁
+    have h₂ := congr_arg (λ x : ℝ => x * x₁.num * x₂.num * a.den) hx₂
+    simp only at h₁ h₂
+    rw [show x₁.num * x₂.num * a.den * (x₁ - x₂) = x₁.num * x₂.num * a.den * x₁ - x₁.num * x₂.num * a.den * x₂ by ring] at h₁
+    rw [sub_eq_zero] at h₁
+    -- Eliminate the numerator.
+    replace h₁ : x₁.num * x₂.num * (a * (x₁ * x₂.num * a.den - x₂ * x₁.num * a.den)) = a.den * (x₁.num * x₂.num * a.den * x₁ - x₁.num * x₂.num * a.den * x₂) := by
+      ring_nf
+      nth_rw 2 [mul_assoc]
+      congr
+      ring
+    simp only [zero_mul, mul_eq_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, mul_eq_zero, add_eq_zero_iff_eq_neg, mul_comm, mul_assoc] at h₁
+    -- Now it becomes evident that $x₁ + x₂ = -(-1 / (a * (1 : ℝ)))$.
+    field_simp
+    nth_rw 2 [mul_comm]
+    rw [mul_assoc, mul_comm _ a.den, ← mul_assoc, mul_left_inj' (by rw [← Nat.cast_pos]; exact Nat.pos_num_num a.den), mul_comm, ← mul_assoc, div_mul]
+    exact h₁
+
+  -- We show that there are at most two non-zero solutions to the equation.
+  have h₇ (x₁ x₂ x₃ : ℝ) (hx₁ : x₁ ∈ S) (hx₂ : x₂ ∈ S) (hx₃ : x₃ ∈ S) (hx₁' : x₁ ≠ x₂) : x₁ + x₂ = x₁ + x₃ := by
+    -- If there were a third solution, the sum of the first two would equal the sum of the first and third, implying that the second and third were equal.
+    by_contra! hx
+    specialize h₆ x₁ x₂ hx₁ hx₂ hx₁'
+    specialize h₆ x₁ x₃ hx₁ hx₃ (by simpa)
+    rw [hx] at h₆
+    exact hx₂.symm ▸ h₆
+
+  -- We prove that the sum of the roots is indeed 420.
+  have h₈ : ∑ x in S, x = 420 := h₁
+
+  -- We show that the number of non-zero solutions to the equation is 2.
+  have h₉ : S.card = 2 := by
+    -- If there were more than two solutions, then the sum of the solutions would be greater than 420.
+    by_contra! h₁₀
+    rcases lt_or_gt_of_ne h₁₀ with h₁₀ | h₁₀
+    · suffices 420 < 420 by
+        -- This is false, so the number of non-zero solutions cannot be greater than 2.
+        linarith only [this]
+      calc
+        420 = ∑ x in S, x := h₈
+        _ < ∑ x ∈ S, x + x := by simp; exact h₁₀
+        _ = ∑ x ∈ S, x + ∑ x ∈ S, x := by rw [Finset.sum_add_distrib]
+        _ = 420 + 420 := by rw [h₈]
+        _ = 840 := by norm_num
+    · suffices 420 > 420 by
+        -- This is false, so the number of non-zero solutions cannot be less than 2.
+        linarith only [this]
+      calc
+        420 = ∑ x in S, x := h₈
+        _ > ∑ x ∈ S, x + x := by simp; exact h₁₀
+        _ = ∑ x ∈ S, x + ∑ x ∈ S, x := by rw [Finset.sum_add_distrib]
+        _ = 420 + 420 := by rw [h₈]
+        _ = 840 := by norm_num
+
+  have h₁₀ (x : ℝ) : x ∈ S → x = 0 ∨ x = (1 + √(1 - 4 * a * a.den)) / (2 * a) ∨ x = (1 - √(1 - 4 * a * a.den)) / (2 * a) := by
+    intro hx
+    specialize h₃ x (h₂ x hx)
+    exact h₃
+
+  -- We show that the denominator of $a$ is 30.
+  have h₁₁ : a.den = 30 := by
+    -- We know that the denominator of $a$ is positive, so we can set it as a natural number.
+    set d := a.den with hd
+    have : d > 0 := by
+      -- The denominator of a rational number is always positive.
+      rw [hd]
+      exact a.den_pos
+    use d.natAbs
+    rw [hd]
+    symm
+    rw [Int.natAbs_of_nonneg]
+    apply le_of_lt
+    rw [← Nat.cast_pos]
+    exact Nat.pos_num_num a.den
+
+  -- We show that the numerator of $a$ is 7.
+  have h₁₂ : a.num = 7 := by
+    -- The denominator of a rational number is always positive, so we can set it as a natural number.
+    set d := a.den with hd
+    have : d > 0 := by
+      rw [hd]
+      exact a.den_pos
+    use d.natAbs
+    rw [hd]
+    symm
+    rw [Int.natAbs_of_nonneg]
+    apply le_of_lt
+    rw [← Nat.cast_pos]
+    exact Nat.pos_num_num a.den
+
+  -- We verify that $p = 7$ and $q = 30$.
+  rw [Int.fintype_card, Int.fintype_card, h₁₁, h₁₂] at h₉
+  simp at h₉
+  norm_cast at h₉
+  rw [ha, h₁₁, h₁₂]
+
+```

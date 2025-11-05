@@ -1,0 +1,36 @@
+-- We need to show that for all natural numbers $n$, $\sum_{k=0}^{n-1}k^3 = \left(\sum_{k=0}^{n-1}k\right)^2$.
+  -- We use induction on $n$.
+  induction n with
+  | zero =>
+    simp
+  | succ n ih =>
+    rw [Finset.sum_range_succ, Finset.sum_range_succ]
+    -- Using the induction hypothesis, we have $\sum_{k=0}^{n-1}k^3 = \left(\sum_{k=0}^{n-1}k\right)^2$.
+    rw [ih]
+    -- It suffices to show that $(n^2 + (n - 1)^2 +... + 1^2) * 3 = (n^2 + (n - 1)^2 +... + 1)^2$.
+    -- We need to rewrite the LHS and RHS.
+    rw [show (n:ℤ) ^ 2 + ((n:ℤ) - 1) ^ 2 + ((n:ℤ) - 2) ^ 2 + (1:ℤ) ^ 2 =
+      (∑ k ∈ Finset.range n, k ^ 2) + (n:ℤ) ^ 2 by simp; rw [Finset.sum_range_succ]; ring_nf,
+      show (∑ k ∈ Finset.range n, k) * 3 = (∑ k ∈ Finset.range n, k ^ 2) + (∑ k ∈ Finset.range n, k) by rw [Finset.sum_range_succ]; ring_nf]
+    -- Now we need to show that $(n^2 + (n - 1)^2 +... + 1^2) * 3 = (n^2 + (n - 1)^2 +... + 1)^2$.
+    -- It is possible by induction.
+    apply Int.mul_left_cancel (by decide)
+    rw [show (n:ℤ) ^ 2 + ((n:ℤ) - 1) ^ 2 + ((n:ℤ) - 2) ^ 2 + (1:ℤ) ^ 2 -
+      (∑ k ∈ Finset.range n, k ^ 2) = (n:ℤ) * n - (∑ k ∈ Finset.range n, k) by rw [Finset.sum_range_succ]; ring_nf]
+    rw [show (∑ k ∈ Finset.range n, k) * 3 - (∑ k ∈ Finset.range n, k ^ 2) =
+      (∑ k ∈ Finset.range n, k) * 2 - (∑ k ∈ Finset.range n, k ^ 2) + (∑ k ∈ Finset.range n, k) by ring_nf]
+    suffices (n:ℤ) * n - (∑ k ∈ Finset.range n, k) = (∑ k ∈ Finset.range n, k) * 2 - (∑ k ∈ Finset.range n, k ^ 2) by rw [this]
+    clear ih
+    -- Subtract $n^2$ on both sides.
+    suffices (n:ℤ) * n - ((∑ k ∈ Finset.range n, k) + (n:ℤ) * n) = (∑ k ∈ Finset.range n, k) * 2 - (∑ k ∈ Finset.range n, k ^ 2) - (n:ℤ) * n by rw [this]
+    clear ih
+    -- Simplify the LHS and RHS.
+    rw [show (n:ℤ) * n - ((∑ k ∈ Finset.range n, k) + (n:ℤ) * n) = -(∑ k ∈ Finset.range n, k) - (n:ℤ) * n + (n:ℤ) * n by ring_nf,
+      show (∑ k ∈ Finset.range n, k) * 2 - (∑ k ∈ Finset.range n, k ^ 2) - (n:ℤ) * n = (∑ k ∈ Finset.range n, k) * 2 - ((∑ k ∈ Finset.range n, k ^ 2) + (n:ℤ) * n) by ring_nf]
+    -- It suffices to show that $(n^2 + (n - 1)^2 +... + 1^2) + n^2 = (n^2 + (n - 1)^2 +... + 1) + n^2$.
+    -- It is true.
+    apply Int.neg_inj
+    simp
+    rw [Finset.sum_range_succ]
+    ring_nf
+```

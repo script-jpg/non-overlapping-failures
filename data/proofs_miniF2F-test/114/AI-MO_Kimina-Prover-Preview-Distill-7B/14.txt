@@ -1,0 +1,83 @@
+-- We have
+  -- p(n) = n^2 - n + 41
+  -- p(n+1) = (n+1)^2 - (n+1) + 41 = n^2 + n + 41
+  have h₂ : p (n + 1) = n ^ 2 + n + 41 := by
+    rw [h₀ (n + 1)]
+    ring
+
+  -- The gcd of p(n) and p(n+1) must divide the difference of p(n+1) and p(n).
+  -- That is, gcd(p(n), p(n+1)) | p(n+1) - p(n) = 2n
+  have h₃ (a b : ℕ) (h : a = b ^ 2 - b + 41) : Nat.gcd a (a + b) ∣ 2 * b := by
+    rw [h]
+    have : (b ^ 2 - b + 41) + b = b ^ 2 + 41 := by omega
+    rw [this]
+    apply Nat.dvd_sub'
+    have : (b ^ 2 + 41) - (b ^ 2 - b + 41) = b := by omega
+    rw [this]
+    apply Nat.gcd_dvd_left
+  simp only [h₂] at h₃
+
+  -- Assume the gcd of p(n) and p(n+1) is greater than 1.
+  -- It must divide n^2 - n + 41 and 2n, and thus divide 2n - 2n^2 + 2n = 4n - 2n^2
+  -- = n(4 - 2n) = n(2 - n)(2 + n)
+  have h₄ (h : 1 < Nat.gcd (n ^ 2 - n + 41) (n ^ 2 + n + 41)) : n * (2 + n) * (2 - n) ≠ 0 := by
+    by_contra! hn
+    have : (n ^ 2 - n + 41) ∣ n * (2 + n) * (2 - n) := by
+      calc
+        (n ^ 2 - n + 41) ∣ Nat.gcd (n ^ 2 - n + 41) (n ^ 2 + n + 41) := Nat.gcd_dvd_left
+        _ = 1 := by omega
+    have : n ∣ n * (2 + n) * (2 - n) := by
+      calc
+        n ∣ (n ^ 2 - n + 41) := by
+          apply Nat.dvd_of_mod_eq_zero
+          rw [h₀ n]
+          ring_nf
+          apply Nat.mod_eq_of_lt
+          omega
+        _ ∣ n * (2 + n) * (2 - n) := by
+          apply Nat.dvd_mul_left
+    have : n ∣ 4 * n - 2 * n ^ 2 := by
+      have : n ∣ n * (2 + n) * (2 - n) := by
+        apply Nat.dvd_trans
+       . exact this
+       . ring
+      apply Nat.dvd_sub_left
+      ring_nf
+      linarith
+    have : n ∣ 0 := by
+      convert this
+      ring_nf
+      nth_rw 1 [← zero_add 4]
+      rw [← Nat.sub_add_comm]
+      omega
+    rw [this] at hn
+    omega
+
+  -- If a natural number n satisfies n(2 - n)(2 + n) = 0,
+  -- then n = 0 or n = 2 or n = -2.
+  have h₅ (hn : n * (2 + n) * (2 - n) = 0) : n = 0 ∨ n = 2 ∨ n = -2 := by
+    rcases Nat.mul_eq_zero.mp hn with h | h
+   . rcases Nat.mul_eq_zero.mp h with h | h
+     . tauto
+     . omega
+   . omega
+
+  -- The smallest positive integer n for which p(n) and p(n+1) share a common factor greater than 1 is 41.
+  -- We prove that n = 41 is a solution, and show that no smaller positive integer is a solution.
+  rcases Nat.lt_or_ge n 41 with h | h
+ . have : n = 0 ∨ n = 1 ∨ n = 2 ∨ n = 3 ∨ n = 4 ∨ n = 5 ∨ n = 6 ∨ n = 7 ∨ n = 8 ∨ n = 9 ∨ n = 10 ∨ n = 11 ∨ n = 12 ∨ n = 13 ∨ n = 14 ∨ n = 15 ∨ n = 16 ∨ n = 17 ∨ n = 18 ∨ n = 19 ∨ n = 20 ∨ n = 21 ∨ n = 22 ∨ n = 23 ∨ n = 24 ∨ n = 25 ∨ n = 26 ∨ n = 27 ∨ n = 28 ∨ n = 29 ∨ n = 30 ∨ n = 31 ∨ n = 32 ∨ n = 33 ∨ n = 34 ∨ n = 35 ∨ n = 36 ∨ n = 37 ∨ n = 38 ∨ n = 39 ∨ n = 40 := by omega
+    rcases this with h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h
+    all_goals
+      subst n
+      norm_num
+      try { tauto }
+      all_goals
+        have : 1 = 1 := by
+          decide
+        omega
+ . subst n
+    norm_num
+    rw [h₀ 41, h₀ 42]
+    norm_num
+
+```

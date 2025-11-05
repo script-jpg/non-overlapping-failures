@@ -1,0 +1,199 @@
+-- To show that $a = b = c = 0$, we will prove each variable must be zero.
+
+  -- First, let's show that $b = 0$.
+
+  -- To that end, let's show that $n = 2m$.
+
+  have claim1 : (n : ℝ) = 2 * m := by
+    have claim11 : (n ^ 3 : ℝ) = 4 := by
+      exact_mod_cast h₂
+    have claim12 : (2 * m) ^ 3 = 8 * m ^ 3 := by
+      ring_nf
+    rw [h₁] at claim12
+    norm_num at claim12
+    rw [claim11] at claim12
+    have claim13 : n ^ 3 - (2 * m) ^ 3 = 0 := by
+      exact_mod_cast claim12
+    have claim14 : (n - 2 * m) * (n ^ 2 + 2 * m * n + 4 * m ^ 2) = 0 := by
+      ring_nf at claim13 ⊢
+      linarith only [claim13]
+    have claim15 : (n - 2 * m) = 0 ∨ (n ^ 2 + 2 * m * n + 4 * m ^ 2) = 0 := by
+      exact mul_eq_zero.mp claim14
+
+    rcases claim15 with claim15 | claim15
+    · -- case 1: n - 2m = 0
+      exact_mod_cast claim15
+    · -- case 2: n^2 + 2m * n + 4m^2 = 0
+      have claim16 : (n + m) ^ 2 + 3 * m ^ 2 = 0 := by
+        linarith only [claim15]
+      have claim17 : n + m = 0 := by
+        have claim171 : (n + m) ^ 2 ≥ 0 := by
+          exact sq_nonneg (n + m)
+        have claim172 : 3 * m ^ 2 ≥ 0 := by
+          norm_num
+          exact sq_nonneg m
+        have claim173 : (n + m) ^ 2 = 0 ∧ 3 * m ^ 2 = 0 := by
+          apply add_eq_zero_iff_of_nonneg
+          exact claim171
+          exact claim172
+          exact claim171
+        split_ands at claim173
+        exact claim173.1
+      have claim18 : n = -m := by
+        exact_mod_cast claim17
+      rw [claim18] at claim11
+      have claim19 : m ^ 3 = 0 := by
+        linarith only [claim11]
+      have claim20 : m = 0 := by
+        have claim201 : m ^ 3 > 0 := by
+          exact Odd.pow_pos (by decide) h₀.1
+        linarith only [claim201, claim19]
+      exact False.elim (h₀.1 claim20)
+  norm_cast at claim1
+  -- Now, let's show that $b = 0$.
+
+  have claim2 : b = 0 := by
+    have claim21 : (m ^ 3 : ℝ) = 2 := by
+      exact_mod_cast h₁
+    have claim22 : (n ^ 3 : ℝ) = 4 := by
+      exact_mod_cast h₂
+    have claim23 : (a : ℝ) + b * m + c * n = 0 := by
+      exact_mod_cast h₃
+    field_simp at claim1
+    rw [claim1] at claim23
+    replace claim23 : a + (b * m + c * (2 * m)) = 0 := by
+      linarith only [claim23]
+    replace claim23 : (a : ℝ) + m * (b + 2 * c) = 0 := by
+      ring_nf at claim23 ⊢
+      linarith only [claim23]
+    have claim24 : (a / m : ℝ) + (b + 2 * c) = 0 := by
+      field_simp
+      linarith only [claim23]
+    have claim25 : a / m = 0 := by
+      field_simp
+      have claim251 : ¬m = 0 := by
+        exact Ne.symm (ne_of_lt h₀.1)
+      have claim252 : a / m ≥ 0 := by
+        apply div_nonneg
+        exact zero_le_a
+        exact claim251
+      have claim253 : ¬a / m ≥ 0 := by
+        have claim2531 : a / m < 0 := by
+          apply lt_of_le_of_ne
+          exact div_nonneg zero_le_a (by exact_mod_cast h₀.1)
+          exact Ne.symm (ne_of_lt h₀.1)
+        exact lt_of_le_of_ne claim2531 (id (Ne.symm claim251))
+      contradiction
+    replace claim24 : (a / m : ℝ) + (b + 2 * c) = 0 := by
+      linarith only [claim24]
+    rw [claim25] at claim24
+    ring_nf at claim24 ⊢
+    field_simp at claim24
+    have claim26 : (b + 2 * c) ^ 2 ≥ 0 := by
+      exact sq_nonneg (b + 2 * c)
+    have claim27 : (2 * m ^ 2) ^ 2 ≥ 0 := by
+      apply sq_nonneg
+    have claim28 : (a / m) ^ 2 = 0 := by
+      rw [claim25]
+      ring
+    have claim29 : (b + 2 * c) ^ 2 = 0 ∧ (2 * m ^ 2) ^ 2 = 0 := by
+      apply And.intro
+      · linarith only [claim28, claim26]
+      · linarith only [claim27]
+    have claim30 : b + 2 * c = 0 ∧ 2 * m ^ 2 = 0 := by
+      apply And.intro
+      · exact pow_eq_zero claim29.1
+      · exact pow_eq_zero claim29.2
+    have claim31 : b = 0 := by
+      linarith only [claim30.1]
+    exact claim31
+  -- Now, let's show that $m^2 = 0$.
+
+  have claim3 : (m ^ 2 : ℝ) = 0 := by
+    have claim31 : (m ^ 3 : ℝ) = 2 := by
+      exact_mod_cast h₁
+    have claim32 : (a : ℝ) = -b * m - c * n := by
+      linarith only [h₃]
+    have claim33 : (m ^ 2 : ℝ) = 0 ∨ (m ^ 2 : ℝ) > 0 := by
+      exact sq_nonneg_iff.
+    rcases claim33 with claim33 | claim33
+    · exact claim33
+    · -- m^2 > 0 -> m^2 * (b + c) = 0 -> b + c = 0 -> b = -c
+      have claim34 : (m ^ 2 : ℝ) > 0 := by
+        exact_mod_cast claim33
+      have claim35 : b + c = 0 := by
+        have claim351 : (m ^ 2 : ℝ) * (b + c) = 0 := by
+          rw [claim33] at claim32
+          linarith only [claim32]
+        have claim352 : (m ^ 2 : ℝ) ≠ 0 := by
+          exact ne_of_gt claim34
+        exact eq_zero_of_ne_zero_of_mul_left_eq_zero claim351 claim352
+      have claim36 : b = -c := by
+        linarith only [claim35]
+      rw [claim36] at claim23
+      have claim37 : (a : ℝ) = -(b + 2 * c) * m := by
+        linarith only [claim23]
+      have claim38 : (a / m : ℝ) = -(b + 2 * c) := by
+        field_simp
+        linarith only [claim37]
+      have claim39 : (a / m : ℝ) = 0 := by
+        field_simp
+        have claim391 : ¬m = 0 := by
+          exact Ne.symm (ne_of_lt h₀.1)
+        have claim392 : a / m ≥ 0 := by
+          apply div_nonneg
+          exact zero_le_a
+          exact claim391
+        have claim393 : ¬a / m ≥ 0 := by
+          have claim3931 : a / m < 0 := by
+            apply lt_of_le_of_ne
+            exact div_nonneg zero_le_a (by exact_mod_cast h₀.1)
+            exact Ne.symm (ne_of_lt h₀.1)
+          exact lt_of_le_of_ne claim3931 (id (Ne.symm claim391))
+        contradiction
+      rw [claim39] at claim38
+      ring_nf at claim38
+      field_simp at claim38
+      have claim39 : b * (1 - m ^ 2) = 0 := by
+        linarith only [claim38]
+      simp at claim39
+      have claim40 : b = 0 ∨ 1 - m ^ 2 = 0 := by
+        exact mul_eq_zero.mp claim39
+      rcases claim40 with claim40 | claim40
+      · exact Or.inl claim40
+      · -- m^2 = 1 -> m = 1 or m = -1 -> contradiction
+        have claim41 : m ^ 2 = 1 := by
+          linarith only [claim40]
+        have claim42 : m = 1 ∨ m = -1 := by
+          exact sq_eq_one_iff.mp claim41
+        rcases claim42 with claim42 | claim42
+        · -- m = 1
+          rw [claim42] at h₁
+          ring_nf at h₁
+          linarith only [h₁]
+        · -- m = -1
+          rw [claim42] at h₁
+          ring_nf at h₁
+          linarith only [h₁]
+  -- Now, let's show that $m = 0$.
+
+  have claim4 : m = 0 := by
+    have claim41 : m ^ 2 = 0 := by
+      exact_mod_cast claim3
+    exact pow_eq_zero claim41
+  -- Now, let's show that $a = 0$ and $c = 0$.
+
+  have claim5 : c = 0 := by
+    have claim51 : n = 2 * m := by
+      exact_mod_cast claim1
+    have claim52 : (a : ℝ) = 0 := by
+      rw [h₃, claim51, claim4]
+      ring
+    exact_mod_cast claim52
+  have claim6 : a = 0 := by
+    exact_mod_cast claim5
+  -- Finally, let's show that $b = 0$ and $c = 0$.
+
+  refine ⟨claim6, claim2, claim5⟩
+
+```

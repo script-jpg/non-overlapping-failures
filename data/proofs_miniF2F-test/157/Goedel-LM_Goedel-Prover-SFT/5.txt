@@ -1,0 +1,47 @@
+/-
+  To determine the number of solutions to the equation \(\sin\left(\frac{\pi}{2} \cos x\right) = \cos\left(\frac{\pi}{2} \sin x\right)\) in the closed interval \([0, \pi]\), we need to analyze the trigonometric identities that satisfy the equation. The key identity is:
+  \[
+  \sin\left(\frac{\pi}{2} \cos x\right) = \cos\left(\frac{\pi}{2} \sin x\right)
+  \]
+  This identity can be derived from the properties of the sine and cosine functions and the fact that \(\sin(\theta) = \cos\left(\frac{\pi}{2} - \theta\right)\). Specifically, we have:
+  \[
+  \sin\left(\frac{\pi}{2} \cos x\right) = \cos\left(\frac{\pi}{2} - \frac{\pi}{2} \cos x\right) = \cos\left(\frac{\pi}{2} \sin x\right)
+  \]
+  This shows that the solutions to the equation are symmetrically distributed around the line \(x = \frac{\pi}{2}\). Given that the interval \([0, \pi]\) is symmetric around \(x = \frac{\pi}{2}\), the number of solutions is 2.
+  -/
+  -- We need to show that the set S has exactly two elements.
+  have : S = {Real.pi / 4, 3 * Real.pi / 4} := by
+    ext x
+    simp only [h₀, Finset.mem_insert, Finset.mem_singleton, true_and_iff, eq_self_iff_true,
+      and_true_iff]
+    constructor
+    · intro h
+      -- Given an element x in S, we need to show it must be either π/4 or 3π/4.
+      have h' : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h.2.2
+      -- Use the trigonometric identity sin(π/2 * cos x) = cos(π/2 * sin x).
+      have h'' : Real.pi / 2 * Real.cos x = Real.pi / 2 * Real.sin x ∨
+          Real.pi / 2 * Real.cos x + Real.pi / 2 = Real.pi / 2 * Real.sin x := by
+        apply eq_or_eq_neg_of_abs_eq
+        rw [← Real.sin_pi_div_two_sub]
+        congr 1
+        ring_nf
+        rw [← Real.sin_pi_div_two_sub]
+        congr 1
+        ring
+      -- Solve for x in each case.
+      cases' h'' with h'' h''
+      · left
+        nlinarith [Real.cos_le_one (Real.pi / 2 * Real.cos x), Real.sin_le_one (Real.pi / 2 * Real.sin x)]
+      · right
+        nlinarith [Real.cos_le_one (Real.pi / 2 * Real.cos x), Real.sin_le_one (Real.pi / 2 * Real.sin x)]
+    · intro h
+      -- Given x is either π/4 or 3π/4, we need to show it satisfies the conditions.
+      cases' h with h h
+      · rw [h]
+        norm_num
+      · rw [h]
+        norm_num
+  -- Rewrite S as {π/4, 3π/4} and compute the cardinality.
+  rw [this]
+  simp
+```

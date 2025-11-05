@@ -1,0 +1,215 @@
+-- We will use the intermediate value theorem to show that there are exactly
+  -- 6 values of $\theta$ in the interval $0<\theta\le 2\pi$ that satisfy $1-3\sin\theta+5\cos3\theta = 0$.
+  suffices P : ∀ x : ℝ, 0 < x ∧ x ≤ 2 * Real.pi ∧ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) = 0 ↔
+    x ∈ (Finset.Ioc (12 * Real.pi / 7) (18 * Real.pi / 7)) ∪
+    (Finset.Ioc (24 * Real.pi / 7) (30 * Real.pi / 7)) ∪
+    (Finset.Ioc (36 * Real.pi / 7) (42 * Real.pi / 7)) ∪
+    (Finset.Ioc (48 * Real.pi / 7) (54 * Real.pi / 7)) ∪
+    (Finset.Ioc (60 * Real.pi / 7) (66 * Real.pi / 7)) ∪
+    (Finset.Ioc (72 * Real.pi / 7) (78 * Real.pi / 7))
+ . rewrite [h₀]
+    rw [this]
+    rw [Finset.coe_Ioc, Finset.coe_Ioc, Finset.coe_Ioc, Finset.coe_Ioc, Finset.coe_Ioc, Finset.coe_Ioc]
+    repeat rw [Finset.card_union_of_disjoint]
+    rw [Finset.card_Ioc, Finset.card_Ioc, Finset.card_Ioc, Finset.card_Ioc, Finset.card_Ioc, Finset.card_Ioc]
+    all_goals norm_num
+    intro x
+    intro hx
+    intro hx'
+    apply Finset.disjoint_iff_ne.mpr at hx'
+    all_goals
+      apply Finset.mem_Ioc.mpr at hx
+      apply Finset.mem_Ioc.mpr at hx'
+      linarith
+
+  -- We start by transforming the equation $1-3\sin\theta+5\cos3\theta = 0$ into an equation
+  -- involving only $\sin \theta$.
+  have implication (x : ℝ) : 0 < x ∧ x ≤ 2 * Real.pi ∧ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) = 0 ↔
+      0 < x ∧ x ≤ 2 * Real.pi ∧ 1 - 3 * Real.sin x + 5 * (1 - 3 * Real.sin x)^2 = 0 := by
+    apply Iff.intro
+    all_goals intro hx
+   . rw [Real.cos_three_mul]
+      nlinarith
+   . rw [show (1 - 3 * Real.sin x + 5 * (1 - 3 * Real.sin x)^2 = 0) ↔
+          1 - 3 * Real.sin x + 5 * (1 - 3 * Real.sin x)^2 + 0 = 0 by simp]
+      rw [add_zero]
+      nlinarith
+
+  -- We will show that the equation $1 - 3 \sin \theta + 5 (1 - 3 \sin \theta)^2 = 0$ has exactly
+  -- six solutions in the interval $0 < \theta \le 2 \pi$.
+  rw [implication]
+  suffices P : ∀ x : ℝ, 0 < x ∧ x ≤ 2 * Real.pi ∧ 1 - 3 * Real.sin x + 5 * (1 - 3 * Real.sin x)^2 = 0 ↔
+      x ∈ (Finset.Ioc (12 * Real.pi / 7) (18 * Real.pi / 7)) ∪
+      (Finset.Ioc (24 * Real.pi / 7) (30 * Real.pi / 7)) ∪
+      (Finset.Ioc (36 * Real.pi / 7) (42 * Real.pi / 7)) ∪
+      (Finset.Ioc (48 * Real.pi / 7) (54 * Real.pi / 7)) ∪
+      (Finset.Ioc (60 * Real.pi / 7) (66 * Real.pi / 7)) ∪
+      (Finset.Ioc (72 * Real.pi / 7) (78 * Real.pi / 7))
+ . rewrite [h₀]
+    rw [P]
+    rw [Finset.coe_Ioc, Finset.coe_Ioc, Finset.coe_Ioc, Finset.coe_Ioc, Finset.coe_Ioc, Finset.coe_Ioc]
+    repeat rw [Finset.card_union_of_disjoint]
+    rw [Finset.card_Ioc, Finset.card_Ioc, Finset.card_Ioc, Finset.card_Ioc, Finset.card_Ioc, Finset.card_Ioc]
+    all_goals norm_num
+    intro x
+    intro hx
+    intro hx'
+    apply Finset.disjoint_iff_ne.mpr at hx'
+    all_goals
+      apply Finset.mem_Ioc.mpr at hx
+      apply Finset.mem_Ioc.mpr at hx'
+      linarith
+
+  -- The function $f(x) = 1 - 3 \sin x + 5 (1 - 3 \sin x)^2$ is periodic with period $2 \pi$.
+  let f (x : ℝ) := 1 - 3 * Real.sin x + 5 * (1 - 3 * Real.sin x)^2
+  have f_periodic (x : ℝ) : f (x + 2 * Real.pi) = f x := by
+    unfold f
+    rw [Real.sin_add_two_pi]
+    simp
+
+  -- Let $g(x) = f(x) - 2 = 1 - 3 \sin x + 5 (1 - 3 \sin x)^2 - 2$.
+  let g (x : ℝ) := f x - 2
+  -- The function $g(x) = f(x) - 2 = 1 - 3 \sin x + 5 (1 - 3 \sin x)^2 - 2$ is periodic with period $2 \pi$.
+  have g_periodic (x : ℝ) : g (x + 2 * Real.pi) = g x := by
+    unfold g
+    rw [f_periodic]
+
+  -- We will show that $g(x) = 0$ has exactly one solution in each of the intervals
+  -- $(\frac{12\pi}{7},\frac{18\pi}{7})$, $(\frac{24\pi}{7},\frac{30\pi}{7})$,
+  -- $(\frac{36\pi}{7},\frac{42\pi}{7})$, $(\frac{48\pi}{7},\frac{54\pi}{7})$,
+  -- $(\frac{60\pi}{7},\frac{66\pi}{7})$,
+  -- $(\frac{72\pi}{7},\frac{78\pi}{7})$.
+  -- We start by showing that $g(x) = 0$ has a unique solution in
+  -- $(\frac{12\pi}{7},\frac{18\pi}{7})$.
+  have P1 : ∀ x : ℝ, x ∈ (Finset.Ioc (12 * Real.pi / 7) (18 * Real.pi / 7)) ↔
+      0 < x ∧ x ≤ 2 * Real.pi ∧ g x = 0 ∧
+      (x = (12 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) ∨
+       x = (18 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi)) := by
+    intro x
+    constructor
+    -- We will show that if $x \in (\frac{12\pi}{7},\frac{18\pi}{7})$,
+    -- then $0 < x < 2\pi$ and $g(x) = 0$ if and only if
+    -- $x = \frac{12\pi}{7} + \arcsin(\frac{1}{2} + \sqrt{\frac{11}{48}}) + 2\pi$
+    -- or $x = \frac{18\pi}{7} - \arcsin(\frac{1}{2} + \sqrt{\frac{11}{48}}) + 2\pi$.
+    · intro hx
+      rw [Finset.mem_Ioc] at hx
+      suffices P : x = (12 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) ∨
+          x = (18 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi)
+     . refine ⟨hx.1, hx.2,?_⟩
+        rw [P]
+        rcases P with P | P
+       . left; exact P
+       . right; exact P
+      rcases hx with ⟨hx, hx'⟩
+      have hx'' (k : ℤ) : x = (12 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) +
+          k * (2 * Real.pi) ∨ x = (18 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) +
+          k * (2 * Real.pi) := by
+        have hx'' : x = (12 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) ∨
+            x = (18 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) +
+            k * (2 * Real.pi) := by
+          refine (Real.injOn_arcsin?_?_).mp?_
+         . positivity
+         . nlinarith
+         . rw [← hx, ← hx']
+            congr 1
+            ring
+        rcases hx'' with hx'' | hx''
+       . left; exact hx''
+       . right; exact hx''
+      have hx''' : x = (12 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) ∨
+          x = (18 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) := by
+        rcases hx'' (0 : ℤ) with hx'' | hx''
+       . exact hx''
+       . simp at hx''
+          push_cast at hx''
+          linarith
+      exact hx'''
+    -- Now we will show that if $0 < x<2\pi$ and $g(x) = 0$,
+    -- then $x \in (\frac{12\pi}{7},\frac{18\pi}{7})$.
+   . intro hx
+      rcases hx with ⟨hx1, hx2, hx3, hx4⟩
+      rcases hx4 with P | P
+     . refine ⟨?_,?_⟩
+       . positivity
+       . nlinarith
+     . refine ⟨?_,?_⟩
+       . rw [P]
+          ring_nf
+          nlinarith
+       . rw [P]
+          ring_nf
+          nlinarith
+
+  -- We will show that $g(x) = 0$ has a unique solution in
+  -- $(\frac{24\pi}{7},\frac{30\pi}{7})$.
+  have P2 : ∀ x : ℝ, x ∈ (Finset.Ioc (24 * Real.pi / 7) (30 * Real.pi / 7)) ↔
+      0 < x ∧ x ≤ 2 * Real.pi ∧ g x = 0 ∧
+      (x = (24 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) ∨
+       x = (30 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi)) := by
+    intro x
+    constructor
+    -- We will show that if $x \in (\frac{24\pi}{7},\frac{30\pi}{7})$,
+    -- then $0 < x < 2\pi$ and $g(x) = 0$ if and only if
+    -- $x = \frac{24\pi}{7} + \arcsin(\frac{1}{2} + \sqrt{\frac{11}{48}}) + 2\pi$
+    -- or $x = \frac{30\pi}{7} - \arcsin(\frac{1}{2} + \sqrt{\frac{11}{48}}) + 2\pi$.
+    · intro hx
+      rw [Finset.mem_Ioc] at hx
+      suffices P : x = (24 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) ∨
+          x = (30 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi)
+     . refine ⟨hx.1, hx.2,?_⟩
+        rw [P]
+        rcases P with P | P
+       . left; exact P
+       . right; exact P
+      rcases hx with ⟨hx, hx'⟩
+      have hx'' (k : ℤ) : x = (24 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) +
+          k * (2 * Real.pi) ∨ x = (30 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) +
+          k * (2 * Real.pi) := by
+        have hx'' : x = (24 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) ∨
+            x = (30 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) +
+            k * (2 * Real.pi) := by
+          refine (Real.injOn_arcsin?_?_).mp?_
+         . positivity
+         . nlinarith
+         . rw [← hx, ← hx']
+            congr 1
+            ring
+        rcases hx'' with hx'' | hx''
+       . left; exact hx''
+       . right; exact hx''
+      have hx''' : x = (24 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) ∨
+          x = (30 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) := by
+        rcases hx'' (0 : ℤ) with hx'' | hx''
+       . exact hx''
+       . simp at hx''
+          push_cast at hx''
+          linarith
+      exact hx'''
+    -- Now we will show that if $0 < x<2\pi$ and $g(x) = 0$,
+    -- then $x \in (\frac{24\pi}{7},\frac{30\pi}{7})$.
+   . intro hx
+      rcases hx with ⟨hx1, hx2, hx3, hx4⟩
+      rcases hx4 with P | P
+     . refine ⟨?_,?_⟩
+       . positivity
+       . nlinarith
+     . refine ⟨?_,?_⟩
+       . rw [P]
+          ring_nf
+          nlinarith
+       . rw [P]
+          ring_nf
+          nlinarith
+
+  -- We will show that $g(x) = 0$ has a unique solution in
+  -- $(\frac{36\pi}{7},\frac{42\pi}{7})$.
+  have P3 : ∀ x : ℝ, x ∈ (Finset.Ioc (36 * Real.pi / 7) (42 * Real.pi / 7)) ↔
+      0 < x ∧ x ≤ 2 * Real.pi ∧ g x = 0 ∧
+      (x = (36 * Real.pi / 7 + Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi) ∨
+       x = (42 * Real.pi / 7 - Real.arcsin (1 / 2 + Real.sqrt (11 / 48)) + 2 * Real.pi)) := by
+    intro x
+    constructor
+    -- We will show that if $x \in (\frac{36\pi}{7},\frac{42\pi}{7})$,
+    -- then $0 < x < 2\pi$ and $g(x) = 0$ if and only if
+    -- $x = \frac{36\pi}{7} + \arcsin(\frac{1}{2} + \sqrt{\frac{11}{48}}) + 2\pi$
+    -- or $x = \frac{42\pi}{7} - \arcsin(\frac{1}{2} + \sqrt{\frac{11}{48}}) + 2\pi$

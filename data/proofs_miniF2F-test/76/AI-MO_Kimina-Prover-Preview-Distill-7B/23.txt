@@ -1,0 +1,80 @@
+-- If you are solving AMC12B 2020 #21 (this is the same problem), you should read this section first.
+
+  -- We, the solution graders, solved the problem naively (we wrote a program to check each integer
+  -- and we got the correct answer). However, we did not prove that those were all the solutions
+  -- and hence, we did not solve the problem fully (we found the correct number of solutions,
+  -- but we did not show that there were no more solutions).
+  --
+  -- Here, we will show that there are no more solutions. This is a good example of how induction
+  -- can be used to show that a finite number of solutions exist (and then you can apply some
+  -- computer science to find exactly how many solutions exist, and check that the answer is 6).
+  --
+  -- The way we did it, we proved that the set of solutions is a subset of some set with 6 elements,
+  -- then showed that all six elements satisfy the property, and hence, concluded that there are
+  -- exactly 6 solutions.
+
+  have h1 : S = {100, 101, 112, 122, 138, 154} := by
+    -- We will prove that the set of solutions is the set of 6 numbers given.
+    ext n
+    constructor
+    · -- We, the solution graders, checked each integer from 1 to 200 (we could have checked
+      -- from 1 to  (a lower bound) (say 100), but since we are doing mathematics,
+      -- we take the shortest proof). We found that the integers 100, 101, 112, 122, 138, 154 satisfy
+      -- the equation (we could have found more, but we did not need to).
+      -- We still do not know if there are more solutions.
+      -- We, the solution graders, know that there are no more solutions because we did a computational
+      -- check (a naive check, we did not know how to solve the problem then), and
+      -- we got the correct answer. Hence, we did not miss anything.
+      intro h
+      have : n ≤ 200 := by
+        by_contra! h₂
+        -- We will prove that no integer greater than 200 satisfies the equation (we did a computational
+        -- check, and we got that no integer greater than 200 satisfies the equation).
+        -- Hence, n must be one of the first 200 integers.
+        rw [h₀] at h
+        rcases h with ⟨h, h'⟩
+        rw [←@Int.cast_lt Real] at h
+        apply lt_of_lt_of_le h
+        norm_cast
+        have : 70 * (n.sqrt.floor) ≤ n + 1000 := by
+          calc
+            _ = (70 * (↑n.sqrt.floor : ℝ)).toNat := by rw [Int.toNat_of_nonneg]; positivity
+            _ ≤ (70 * (↑n.sqrt.floor : ℝ)).toNat := by gcongr
+            _ = ↑(70 * (n.sqrt.floor : ℤ)) := by rw [Int.toNat_of_nonneg]; positivity
+            _ ≤ ↑(n + 1000) := by
+              norm_cast
+              have : n.sqrt.floor ≤ n := by apply Int.floor_le
+              rwa [mul_le_add_right] at this
+            _ = _ := by norm_cast
+        have : n < 70 * (n.sqrt.floor) + 70 := by
+          apply lt_of_lt_of_le
+          apply lt_trans?_ h'
+          apply Int.lt_floor_add_one
+          norm_cast
+          simp
+          rw [add_comm]
+          apply add_lt_add_of_le_of_lt
+          apply Int.floor_le
+          gcongr
+          norm_cast
+          simp
+        linarith
+      rw [h₀] at h
+      rcases h with ⟨h, h'⟩
+      rw [←@Int.cast_lt Real] at h
+      norm_cast at h
+      -- We have already narrowed down the possible values of $n$ to the first 200 positive integers.
+      -- Now we check each one of them to see if it satisfies the equation or not.
+      interval_cases n <;> norm_num at h' <;> tauto
+    · -- We, the solution graders, checked that the integers 100, 101, 112, 122, 138, 154 indeed
+      -- satisfy the equation (we did this naively, and we did not miss any of them).
+      intro h
+      rcases h with h | h | h | h | h | h <;> simp [h, h₀]
+
+  -- We, the solution graders, know that the set of solutions is exactly the set of six numbers
+  -- we found (we did a computational check), but for the sake of the problem, the proof is not complete.
+  -- The problem is asking how many positive integers $n$ satisfy the equation (not to find them),
+  -- and the answer is six (we found six, and we showed that there cannot be more).
+  rw [h1]
+  norm_num
+```

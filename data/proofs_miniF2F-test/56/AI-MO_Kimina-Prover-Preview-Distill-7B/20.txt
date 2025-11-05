@@ -1,0 +1,54 @@
+-- Some basic calculations.
+  have h₃ : m = 0 ∨ m = 1 ∨ 2 ≤ m := by omega
+  have h₄ : n = 0 ∨ n = 1 ∨ 2 ≤ n := by omega
+
+  -- The proof splits into two cases.
+  rcases h₃ with h₃ | h₃ | h₃ <;> rcases h₄ with h₄ | h₄ | h₄ <;> subst m n <;> simp [h₀] <;> norm_num
+
+  -- Case 1: $m = 0$. We need to show $f(1) \mid f(2^n)$.
+  · norm_num
+    suffices ∀ k : ℕ, 1 + 2 ^ k ∣ 1 + 2 ^ (k + 1) by intro h; specialize h n; exact h
+    -- This is true because $1 + 2 ^ (k + 1) = (1 + 2 ^ k) * 2 - 1$.
+    intro k
+    obtain ⟨c, hc⟩ : 1 + 2 ^ k ∣ 2 * (1 + 2 ^ k) - 1 := by
+      use 2 ^ k - 1
+      rw [Nat.mul_sub_right_distrib, pow_succ]
+      simp
+      rw [<-Nat.sub_add_comm]
+      · exact Nat.le_mul_of_pos_left (2 ^ k) 2
+      · exact hc
+    calc
+      1 + 2 ^ k ∣ 2 * (1 + 2 ^ k) - 1 := hc
+      _   ∣         2 * (1 + 2 ^ k)      := by exact Nat.dvd_trans this (Nat.dvd_mul_left _ _)
+      _   ∣    2 * (1 + 2 ^ k) + 1     := by exact Nat.dvd_add this (by norm_num)
+      _   =        1 + 2 ^ (k + 1)      := by rw [<-Nat.sub_add_comm]; ring_nf; exact hc
+
+  -- Case 2: $m = 1$. We need to show $f(2) \mid f(2^n)$.
+  · norm_num
+    rw [add_assoc]
+    suffices ∀ k : ℕ, 13 ∣ 13 * 2 ^ k + 5 ^ (k + 1) by intro h; specialize h n; exact h
+    -- This is true because $f(2 ^ n) = 13 * 2 ^ n + 5 ^ (n + 1)$.
+    intro k
+    calc
+      13 ∣ 13 * 2 ^ k := by exact Nat.dvd_mul_left 13 (2 ^ k)
+      _ ∣    13 * 2 ^ k + 5 ^ (k + 1) := by exact Nat.dvd_add this (Nat.dvd_mul_left _ _)
+
+  -- Case 3: $m \geq 2$. We need to show $f(2 ^ m) \mid f(2 ^ n)$.
+  · norm_num
+    rw [add_assoc]
+    suffices ∀ k : ℕ, 1 + 2 ^ (k + 1) ∣ 1 + 2 ^ (k + 2) by intro h; specialize h (n - m); ring_nf at h; exact h
+    -- This is true because $1 + 2 ^ (k + 2) = (1 + 2 ^ (k + 1)) * 2 - 1$.
+    intro k
+    obtain ⟨c, hc⟩ : 1 + 2 ^ (k + 1) ∣ 2 * (1 + 2 ^ (k + 1)) - 1 := by
+      use 2 ^ (k + 1) - 1
+      rw [Nat.mul_sub_right_distrib, pow_succ]
+      simp
+      rw [<-Nat.sub_add_comm]
+      · exact Nat.le_mul_of_pos_left (2 ^ (k + 1)) 2
+      · exact hc
+    calc
+      1 + 2 ^ (k + 1) ∣ 2 * (1 + 2 ^ (k + 1)) - 1 := hc
+      _   ∣         2 * (1 + 2 ^ (k + 1))      := by exact Nat.dvd_trans this (Nat.dvd_mul_left _ _)
+      _   ∣    2 * (1 + 2 ^ (k + 1)) + 1     := by exact Nat.dvd_add this (by norm_num)
+      _   =        1 + 2 ^ (k + 2)          := by rw [<-Nat.sub_add_comm]; ring_nf; exact hc
+```

@@ -1,0 +1,122 @@
+-- Firstly, we show that a = -3/7
+  have ha : a = -3 / 7 := by
+    -- Since P has roots cos 2π/7, cos 4π/7, cos 6π/7, we have P(x) = (x - cos 2π/7)(x - cos 4π/7)(x - cos 6π/7)
+    have h₂ : ∀ x, f x = (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7)) := by
+      intro x
+      rw [h₀]
+      simp only [h₁, Finset.mem_preimage, Finset.mem_insert, Finset.mem_singleton,
+        Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff]
+      constructor
+      · intro h
+        apply_fun (· - (x ^ 3 + c)) at h
+        simp only at h
+        rcases h with h | h
+        · exact h
+        · linarith
+      · intro h
+        apply_fun (· + (x ^ 3 + c)) at h
+        simp only at h
+        rcases h with h | h
+        · exact h
+        · linarith
+    -- Expand and we get a = -(cos 2π/7 + cos 4π/7 + cos 6π/7)
+    have h₃ := eq_neg_of_add_eq_zero_left (h₁ ▸ h₀)
+    simp only at h₃
+    have h₄ : a = -Real.cos (2 * Real.pi / 7) - Real.cos (4 * Real.pi / 7) - Real.cos (6 * Real.pi / 7) := by
+      linear_combination h₃
+    rw [h₄]
+    -- We can derive that cos 2π/7 + cos 4π/7 + cos 6π/7 = 3/2 * cos 2π/7
+    have h₅ : -Real.cos (2 * Real.pi / 7) - Real.cos (4 * Real.pi / 7) - Real.cos (6 * Real.pi / 7) = 3 / 2 * Real.cos (2 * Real.pi / 7) := by
+      -- Use the fact that cos 4π/7 = -cos 3π/7 and cos 6π/7 = -cos π/7
+      rw [show Real.cos (4 * Real.pi / 7) = - Real.cos (3 * Real.pi / 7) by rw [←Real.cos_pi_sub]; ring_nf]
+      rw [show Real.cos (6 * Real.pi / 7) = - Real.cos (Real.pi / 7) by rw [←Real.cos_pi_sub]; ring_nf]
+      -- We get cos 2π/7 + cos 4π/7 + cos 6π/7 = -cos π/7 - cos 3π/7 + cos 2π/7
+      rw [←Real.cos_2pi_div_seven, ←Real.cos_2pi_div_seven, ←Real.cos_2pi_div_seven]
+      simp only [show 2 * Real.pi / 7 = Real.pi - 5 * Real.pi / 7 by ring_nf, Real.cos_pi_sub]
+      -- Use the identity cos π/7 + cos 2π/7 + cos 3π/7 = 1/2
+      have h₆ : Real.cos (Real.pi / 7) + Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7) = 1 / 2 := by
+        have h₆ : Real.cos (Real.pi / 7) + Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7) = 1 / 2 := by
+          have h₇ := Real.cos_arccos (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
+          have g (θ : ℝ) (h₈ : 0 ≤ θ) (h₉ : θ ≤ π) : Real.cos (θ + arccos (Real.cos θ)) = Real.cos θ := by
+            rw [Real.cos_add_arccos (by linarith) (by linarith)]
+            ring_nf
+          have h₁₀ := g (Real.pi / 7) (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
+          have h₁₁ := g (2 * Real.pi / 7) (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
+          have h₁₂ := g (3 * Real.pi / 7) (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
+          iterate 3 rw [h₁₀, h₁₁, h₁₂] at h₇
+          rw [show 3 * Real.pi / 7 + 2 * Real.pi / 7 + Real.pi / 7 = 2 * Real.pi by ring_nf, Real.cos_two_pi] at h₇
+          linarith
+        exact h₆
+      linarith
+    rw [h₅]
+    -- We can derive that cos 2π/7 = 3/2 * cos 2π/7 - 3/14
+    have h₇ : 3 / 2 * Real.cos (2 * Real.pi / 7) = 3 / 2 * Real.cos (2 * Real.pi / 7) - 3 / 14 + 3 / 14 := by
+      linarith
+    rw [h₇]
+    -- Use the fact that cos 2π/7 = 3/2 * cos 2π/7 - 3/14
+    have h₈ : 3 / 2 * Real.cos (2 * Real.pi / 7) - 3 / 14 = (Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7)) / 2 := by
+      rw [show 4 * Real.pi / 7 = 2 * Real.pi / 7 + Real.pi / 7 by ring_nf, ←Real.cos_add]
+      rw [show 6 * Real.pi / 7 = 2 * Real.pi / 7 + 2 * Real.pi / 7 + Real.pi / 7 by ring_nf, ←Real.cos_add]
+      rw [show Real.cos (2 * Real.pi / 7) * (1 + Real.cos (Real.pi / 7) * 2) = Real.cos (2 * Real.pi / 7) * (1 + (Real.cos (Real.pi / 7) * 2)) by ring_nf]
+      rw [Real.cos_two_mul, Real.cos_two_mul]
+      ring_nf
+      rw [show Real.cos (Real.pi / 7) ^ 3 * 8 = (Real.cos (Real.pi / 7) * 2) ^ 3 by ring_nf]
+      rw [show Real.cos (Real.pi / 7) * 2 = 2 * Real.cos (Real.pi / 7) by ring_nf]
+      rw [show (Real.cos (Real.pi / 7) * 2) ^ 3 = (2 * Real.cos (Real.pi / 7)) ^ 3 by ring_nf]
+      rw [Real.cos_pi_div_seven_ne_zero]
+      linarith
+    rw [h₈]
+    simp only [h₄]
+    linarith
+
+  -- Then, we show that b = 3/28
+  have hb : b = 3 / 28 := by
+    -- Use Vieta's identity
+    have h₅ := eq_neg_of_add_eq_zero_left (h₁ ▸ h₀)
+    simp only at h₅
+    -- We can derive that P(1) = 1 + a + b + c = 0
+    have h₆ : 1 + a + b + c = 0 := by
+      symm
+      rw [h₀ 1]
+      simp only [h₁, Finset.mem_preimage, Finset.mem_insert, Finset.mem_singleton,
+        Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff]
+      use (1 - Real.cos (2 * Real.pi / 7)) * (1 - Real.cos (4 * Real.pi / 7)) * (1 - Real.cos (6 * Real.pi / 7))
+      rw [mul_assoc, h₅]
+      ring_nf
+    -- We can derive that P(-1) = -1 + a - b + c = 0
+    have h₇ : -1 + a - b + c = 0 := by
+      symm
+      rw [h₀ (-1)]
+      simp only [h₁, Finset.mem_preimage, Finset.mem_insert, Finset.mem_singleton,
+        Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff]
+      use (1 + Real.cos (2 * Real.pi / 7)) * (1 + Real.cos (4 * Real.pi / 7)) * (1 + Real.cos (6 * Real.pi / 7))
+      rw [mul_assoc, h₅]
+      ring_nf
+    rw [ha] at h₆ h₇
+    -- Subtract the two equations
+    have h₈ : -2 + 2 * b = 0 := by
+      linarith
+    linarith
+
+  -- Then, we show that c = -1/7
+  have hc : c = -1 / 7 := by
+    -- Use Vieta's identity
+    have h₆ := eq_neg_of_add_eq_zero_left (h₁ ▸ h₀)
+    simp only at h₆
+    -- We can derive that P(1) = 1 + a + b + c = 0
+    have h₇ : 1 + a + b + c = 0 := by
+      symm
+      rw [h₀ 1]
+      simp only [h₁, Finset.mem_preimage, Finset.mem_insert, Finset.mem_singleton,
+        Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff]
+      use (1 - Real.cos (2 * Real.pi / 7)) * (1 - Real.cos (4 * Real.pi / 7)) * (1 - Real.cos (6 * Real.pi / 7))
+      rw [mul_assoc, h₆]
+      ring_nf
+    rw [ha, hb] at h₇
+    linarith
+
+  -- Finally, we compute abc
+  rw [ha, hb, hc]
+  norm_num
+
+```

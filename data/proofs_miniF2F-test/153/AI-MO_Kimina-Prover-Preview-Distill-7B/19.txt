@@ -1,0 +1,149 @@
+-- We first assume $t > 0.$
+  by_cases h : t > 0
+  · -- We consider the function $f(t) = \frac{(2^t - 3t) \cdot t}{4^t}.$
+    let f : ℝ → ℝ := fun t => (2 ^ t - 3 * t) * t / 4 ^ t
+
+    -- We want to find the maximum value of $f(t)$ on $(0, \infty).$
+    -- To do this, we consider the derivative of $f(t)$ and find its zeros.
+    let f' : ℝ → ℝ := fun t => (2 ^ t * (t + 1) * (t - 3) + t ^ 2 * 2 ^ t * 2) / (4 ^ t * 4 ^ t)
+
+    -- Because $4^t = (2^2)^t = 2^{2t} = 2^t \cdot 2^t,$ we have
+    -- $2^t \cdot 4^t = 2^t \cdot 2^t \cdot 2^t = 2^{3t}.$
+    have h1 : f' t = 0 ↔ (2^t * (t + 1) * (t - 3) + t^2 * 2^t * 2) = 0 := by
+      have h1 : 4 ^ t = 2 ^ t * 2 ^ t := by
+        symm
+        rw [← Real.rpow_add (by linarith)]
+        ring
+      have h2 : 4 ^ t * 4 ^ t = 2 ^ t * 2 ^ t * 2 ^ t := by
+        rw [h1]
+        ring
+      rw [h2]
+      field_simp
+      ring
+
+    -- Because $2^t > 0,$ we have $2^t \cdot (t + 1) \cdot (t - 3) = -t^2 \cdot 2^t \cdot 2.$
+    -- Dividing both sides by $2^t,$ we get $(t + 1) \cdot (t - 3) = -t^2 \cdot 2.$
+    have h2 : f' t = 0 ↔ (t + 1) * (t - 3) = -t^2 * 2 := by
+      have h2 : 2^t > 0 := by
+        apply Real.rpow_pos_of_pos (by linarith)
+      constructor
+      · intro h
+        apply_fun (fun x => x * 2^t) at h
+        simp [h1] at h
+        linear_combination h
+      · intro h
+        apply_fun (fun x => x / 2^t) at h
+        simp [h1]
+        field_simp
+        linear_combination h
+
+    -- Expanding the left-hand side, we have $t^2 - 2t - 3 = -2t^2.$
+    -- Or, $3t^2 - 2t - 3 = 0.$
+    have h3 : f' t = 0 ↔ 3 * t^2 - 2 * t - 3 = 0 := by
+      have h3 : (t + 1) * (t - 3) = t^2 - 2 * t - 3 := by linear_combination (t + 1) * (t - 3)
+      rw [h3] at h2
+      constructor
+      · intro h
+        linear_combination h
+      · intro h
+        linear_combination h
+
+    -- Now, we will show that $f(t)$ is increasing on $(0, 1)$ and decreasing on $(1, \infty).$
+    -- To do this, we need to show that $(0, 1)$ is an interval of increase for $f(t)$ and $(1, \infty)$ is an interval of decrease for $f(t).$
+    -- To do this, we need to show that $f'(t) > 0$ for all $t \in (0, 1)$ and $f'(t) < 0$ for all $t \in (1, \infty).$
+    have h4 : StrictMonoOn f (Set.Ioc 0 1) := by
+      -- First, we show that $f'(t) > 0$ for all $t \in (0, 1).$
+      have h4 : ∀ t ∈ interiorOn (Set.Ioc 0 1) → f' t > 0 := by
+        intro t ht
+        simp at ht
+        have h4 : 3 * t^2 - 2 * t - 3 < 0 := by nlinarith
+        rw [h3]
+        nlinarith
+      -- A continuous function is strictly monotone on an interval if its derivative is positive on the interior of the interval.
+      apply strictMonoOn_of_deriv_pos (convex_Ioc 0 1)
+      · apply Continuous.continuousOn
+        apply Continuous.div
+        · apply Continuous.mul
+          · apply Continuous.sub
+            · exact continuousOn_pow t 2
+            · exact continuousOn_const 3
+          · exact continuousOn_const t
+        · apply Continuous.pow
+          exact continuousOn_const 2
+      · exact h4
+      · apply interiorOn_Ioc
+        all_goals
+          simp
+
+    have h5 : StrictAntiOn f (Set.Ici 1) := by
+      -- First, we show that $f'(t) < 0$ for all $t \in (1, \infty).$
+      have h5 : ∀ t ∈ interiorOn (Set.Ici 1) → f' t < 0 := by
+        intro t ht
+        simp at ht
+        have h5 : 3 * t^2 - 2 * t - 3 > 0 := by nlinarith
+        rw [h3]
+        nlinarith
+      -- A continuous function is strictly antimonotone on an interval if its derivative is negative on the interior of the interval.
+      apply strictAntiOn_of_deriv_neg (convex_Ici 1)
+      · apply Continuous.continuousOn
+        apply Continuous.div
+        · apply Continuous.mul
+          · apply Continuous.sub
+            · exact continuousOn_pow t 2
+            · exact continuousOn_const 3
+          · exact continuousOn_const t
+        · apply Continuous.pow
+          exact continuousOn_const 2
+      · exact h5
+      · apply interiorOn_Ici
+        all_goals
+          simp
+
+    -- This means that the maximum value of $f(t)$ on $(0, \infty)$ is $f(1) = \frac{1}{12}.$
+    have h5 : f 1 = 1 / 12 := by
+      simp [f]
+      norm_num
+    have h6 : ∀ t > 0, f t ≤ f 1 := by
+      intro t ht
+      -- If $t \in (0, 1], f(t)$ is increasing on $(0, 1].$
+      by_cases ht' : t ≤ 1
+      · specialize h4.le ht (by simp; constructor; exact ht; exact ht')
+        simp [h5] at h4
+        exact h4
+      -- If $t > 1, f(t)$ is decreasing on $(1, \infty).$
+      have ht'' : t ≥ 1 := by
+        by_contra!
+        have : t = 1 := by linarith
+        simp at this
+        linarith
+      specialize h5.le ht (by simp; constructor; exact ht'; exact ht'')
+      exact h5
+    -- From the inequality in the problem, we know that $\frac{(2^t - 3t) \cdot t}{4^t} \le \frac{1}{12}.$
+    -- So, the maximum value is $\frac{1}{12}.$
+    intro t
+    specialize h6 t
+    simp [f] at h6
+    exact h6
+
+  -- Now, we consider the case $t ≤ 0.$
+  · push_neg at h
+    -- We need to show that $\frac{(2^t - 3t) \cdot t}{4^t} \le \frac{1}{12}.$
+    -- Since $t ≤ 0,$ $2^t - 3t ≤ 2^t ≤ 1.$
+    have h1 : (2 ^ t - 3 * t) * t ≤ 1 / 12 * (4 ^ t) := by
+      nlinarith [Real.rpow_le_rpow_of_exponent_le (show 1 ≤ (4 : ℝ) by norm_num) h (show 0 ≤ (t : ℝ) by linarith)]
+
+    -- Since $4^t > 0,$ we can divide both sides by $4^t.$
+    have h2 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ 1 / 12 * (4 ^ t) / 4 ^ t := by
+      apply div_le_div_of_nonneg_right
+      · exact h1
+      · positivity
+
+    -- $\frac{1}{12} \cdot \frac{4^t}{4^t} = \frac{1}{12}.$
+    have h3 : 1 / 12 * (4 ^ t) / 4 ^ t = 1 / 12 := by
+      field_simp
+      positivity
+
+    linarith
+
+
+```

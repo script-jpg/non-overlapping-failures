@@ -1,0 +1,48 @@
+-- First, notice that $(1+\sin t)(1+\cos t)(1-\sin t)(1-\cos t) = (\sin^2 t + \sin t + \cos t + 1)(1 - \sin t - \cos t + \sin^2 t) = (1 - \sin t - \cos t + 2\sin t \cos t)(1 - \sin t - \cos t + \sin t \cos t) = (1 - \sin t - \cos t)^2 (1 + \sin t \cos t)^2.$
+  have h₄ : (1 + Real.sin t) * (1 + Real.cos t) * ((1 - Real.sin t) * (1 - Real.cos t)) = (1 - Real.sin t - Real.cos t)^2 * (1 + Real.sin t * Real.cos t)^2 := by
+    ring
+  rw [h₂, h₃] at h₄
+
+  -- Also, $(1+\sin t)(1+\cos t)(1-\sin t)(1-\cos t) = (\sin t + 1)(\cos t + 1)(\sin t - 1)(\cos t - 1) = (\sin^2 t - 1)(\cos^2 t - 1) = -\sin^2 t \cos^2 t.$
+  have h₅ : (1 + Real.sin t) * (1 + Real.cos t) * ((1 - Real.sin t) * (1 - Real.cos t)) = - Real.sin t ^ 2 * Real.cos t ^ 2 := by
+    calc
+      (1 + Real.sin t) * (1 + Real.cos t) * ((1 - Real.sin t) * (1 - Real.cos t))
+        = (Real.sin t + 1) * (Real.cos t + 1) * (Real.sin t - 1) * (Real.cos t - 1) := by ring
+      _ = (Real.sin t ^ 2 - 1) * (Real.cos t ^ 2 - 1) := by ring
+      _ = _ := by ring
+  rw [h₅] at h₄
+
+  -- Let's analyze the equation $(1 - \sin t - \cos t)^2 (1 + \sin t \cos t)^2 = -\sin^2 t \cos^2 t.$
+  -- The left hand side is non-negative, so the right hand side must be non-negative as well.
+  have h₆ : 0 ≤ (1 - Real.sin t - Real.cos t)^2 * (1 + Real.sin t * Real.cos t)^2 := by
+     apply mul_nonneg
+    · apply pow_two_nonneg
+    · apply pow_two_nonneg
+  have h₇ : -Real.sin t ^ 2 * Real.cos t ^ 2 ≤ 0 := by
+    nlinarith
+  -- However, we can show that the right hand side is positive.
+  have h₈ : -Real.sin t ^ 2 * Real.cos t ^ 2 > 0 := by
+    by_contra! h₈
+    have : Real.sin t ^ 2 * Real.cos t ^ 2 = 0 := by linarith
+    have : Real.sin t ^ 2 = 0 ∨ Real.cos t ^ 2 = 0 := by
+      rw [mul_eq_zero] at this
+      exact this
+    cases this with
+    | inl this =>
+      have this' : Real.sin t = 0 := by
+        rw [← pow_eq_zero this]
+      have : (1 + Real.sin t) * (1 + Real.cos t) = 0 := by
+        rw [this']
+        ring
+      linarith
+    | inr this =>
+      have this' : Real.cos t = 0 := by
+        rw [← pow_eq_zero this]
+      have : (1 + Real.sin t) * (1 + Real.cos t) = 0 := by
+        rw [this']
+        ring
+      linarith
+  -- We arrive at a contradiction.
+  linarith
+
+```

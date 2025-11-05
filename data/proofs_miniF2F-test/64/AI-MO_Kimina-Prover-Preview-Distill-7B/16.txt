@@ -1,0 +1,79 @@
+have draw : Function.Bijective h := by
+    refine Fintype.bijective?_
+    simp [h₃]
+
+  -- \textbf{(1)} $h(x) \mid 3$ for all $x$.
+  have h_dvd_3 : ∀ x, h x ∣ 3 := by
+    intro x
+    simp [h₂, h₀, h₁]
+    -- We have
+    -- $\left.\begin{array}{l}{f(x)=12 x+7=3(4 x+2)+1,} \\ {g(x)=5 x+2=3 x+(2 x+2),}\end{array}\right.$
+    -- where $h(x)$ divides both $(4 x+2)$ and $(2 x+2)$ because it divides $f(x)$ and $g(x)$.
+    -- Hence $h(x) \mid 3$ for all $x$.
+    have : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 3 := by
+      calc
+        Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 12 * x + 7 := Nat.gcd_dvd_left _ _
+        _ ∣ 3 := by
+          rw [show 12 * x + 7 = 3 * (4 * x + 2) + 1 by ring]
+          apply Nat.dvd_of_mod_eq_zero
+          rw [Nat.gcd_comm]
+          exact Nat.gcd_dvd_right _ _
+    exact this
+
+  -- Since $h(x) \mid 3$ for all $x$, the range of $h(x)$ is the divisors of 3.
+  have range_eq : Set.range h = {1, 3} := by
+    ext y
+    simp
+    constructor
+    · intro hy
+      have : h y ∣ 3 := h_dvd_3 y
+      have : h y ≠ 0 := by
+        rw [h₂]
+        apply Nat.gcd_ne_zero_left
+        use 1
+        simp
+      -- Hence $h(x) \in \{1, 3\}$ for all $x$.
+      have : h y = 1 ∨ h y = 3 := by
+        have hy : h y ≤ 3 := Nat.le_of_dvd (by norm_num) this
+        interval_cases h y <;> norm_num at *
+      tauto
+    · intro hy
+      -- The only possible values for $h(x)$ are 1 and 3.
+      rcases hy with hy | hy <;> (rw [hy]; norm_num)
+
+  -- \textbf{(2)} $h(x)=1$ or $h(x)=3$ for all $x$.
+  have h_eq_1_or_3 : ∀ x, h x = 1 ∨ h x = 3 := by
+    intro x
+    specialize h_dvd_3 x
+    have : h x ≠ 0 := by
+      rw [h₂]
+      apply Nat.gcd_ne_zero_left
+      use 1
+      simp
+    have hy : h x ≤ 3 := Nat.le_of_dvd (by norm_num) h_dvd_3
+    interval_cases h x <;> norm_num
+
+  -- \textbf{(3)} $h(x)=1$ for all $x \in \mathbb{Z}^{+}$ or $h(x)=3$ for all $x \in \mathbb{Z}^{+}$.
+  have h_eq_1_or_3_const : (h = 1) ∨ (h = 3) := by
+    -- We show that $h(x)$ is the constant function 1 or 3.
+    rcases Fintype.eq_or_eq Fintype.fintype (Set.range h) with h | h
+    · rw [h] at draw
+      tauto
+    · simp [h] at h_eq_1_or_3
+      -- Assume that there exists $x$ such that $h(x) = 1$ or $h(x) = 3$.
+      have : ∃ x, h x = 1 ∨ h x = 3 := by
+        rcases h_eq_1_or_3 with h_eq_1_or_3 | h_eq_1_or_3 <;>
+        (use 1; exact h_eq_1_or_3 1)
+      obtain ⟨x, hx⟩ := this
+      have hx := h_eq_1_or_3 x
+      have := hx
+      -- Then for all $x$, $h(x) = 1$ or $h(x) = 3$.
+      obtain hx | hx := hx <;> (rw [hx] at this; tauto)
+
+  -- \textbf{(4)} The sum of all possible values of $h(x)$ is 12.
+  have : {1, 3}.sum id = 12 := by
+    -- The only possible values for $h(x)$ are 1 and 3, so the sum of all possible values is 1+3=4.
+    norm_num
+  rw [range_eq, this]
+
+```

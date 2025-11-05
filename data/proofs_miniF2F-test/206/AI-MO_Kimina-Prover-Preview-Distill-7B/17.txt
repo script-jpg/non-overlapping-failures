@@ -1,0 +1,218 @@
+-- First, we need the following lemma, which is actually the key to solving the problem.
+  -- Let $x$ be a real number and $n$ be a positive integer.
+  -- Then $f(x+na) = 1/2 + \sqrt{f(x+(n-1)a) - f(x+(n-1)a)^2}$.
+  have lm (x : ℝ) (n : ℕ) (hn : 0 < n) : f (x + n * a) = 1 / 2 + Real.sqrt (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2) := by
+    -- Induction on $n$.
+    induction n with
+    | zero => contradiction -- $n$ is positive.
+    | succ n ih =>
+      by_cases h : n = 0
+      · -- The case $n = 1$.
+        simp [h]
+        exact h₁ x
+      · -- For the inductive step, we use the fact that
+        -- $f(x+na) - f(x+na)^2 = f(x+(n-1)a) - f(x+(n-1)a)^2$.
+        have h' : f (x + n * a) - f (x + n * a) ^ 2 = f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2 := by
+          calc
+            f (x + n * a) - f (x + n * a) ^ 2 = (1 / 2 + Real.sqrt (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2)) - (1 / 2 + Real.sqrt (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2)) ^ 2 := by rw [ih]
+            _ = (1 / 2 + Real.sqrt (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2)) - ((1 / 2) ^ 2 + 2 * (1 / 2) * Real.sqrt (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2) + (Real.sqrt (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2)) ^ 2) := by ring
+            _ = (1 / 2 + Real.sqrt (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2)) - (1 / 2 ^ 2 + 2 * (1 / 2) * Real.sqrt (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2) + (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2)) := by rw [Real.sq_sqrt]; positivity
+            _ = f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2 := by ring
+        calc
+          f (x + (n + 1) * a) = 1 / 2 + Real.sqrt (f (x + (n - 1) * a) - f (x + (n - 1) * a) ^ 2) := by rw [h₁, h']
+          _ = 1 / 2 + Real.sqrt (f (x + n * a) - f (x + n * a) ^ 2) := by rw [ih]; positivity
+
+  -- The lemma is proved.
+  -- Now we are able to show that $f$ is continuous.
+  have continuous : Continuous f := by
+    -- According to the [Mathlib API documentation](https://lean4-lang.org/api/latest/Mathlib.html#continuous functions),
+    -- it is enough to show that $f$ is continuous at every point $x$.
+    apply Continuous.continuous
+    intro x
+    -- By the lemma, $f(x+na) = 1/2 + \sqrt{f(x+(n-1)a) - f(x+(n-1)a)^2}$.
+    -- Let $y = x + (n-1)a$ and $z = y + a = x + na$.
+    -- Then $f(z) = 1/2 + \sqrt{f(y) - f(y)^2}$.
+    -- So $f$ is continuous at $z$ if $f$ is continuous at $y$.
+    -- By making $y$ approach $x$, we see that $f$ is continuous at $x$.
+    apply Continuous.of_add_right a
+    intro y
+    rw [← @sub_eq_zero f (1 / 2 + Real.sqrt (f y - f y ^ 2))]
+
+    have continuous_sqrt : Continuous Real.sqrt := by
+      continuity
+    refine Continuous.congr (continuous_sqrt)?_
+    rw [sub_eq_zero]
+    -- Now, it is enough to show that $f(y) - f(y)^2$ is continuous at $y$
+    -- to apply Continuous.add_right or Continuous.sub_right.
+    apply Continuous.add_right
+    -- By the lemma, $f(y) - f(y)^2 = f(x+na) - f(x+na)^2$.
+    -- So it is enough to show that $f(x+na)$ is continuous at $x$.
+    -- By making $n$ approach $0$, we see that $f(x)$ is continuous at $x$.
+    apply Continuous.pow
+    -- And $f(x)$ is continuous by the lemma.
+    apply Continuous.continuous
+    intro x
+    -- Just set $n = 1$ in the lemma.
+    specialize lm x 1 (by linarith)
+    simp at lm
+    exact lm
+
+  -- We have shown that $f$ is continuous.
+  -- Now we use the lemma to show that $f(x+a) - f(x)^2 = 1/4 - 1/4$.
+  have h₂ (x : ℝ) : f (x + a) - f x ^ 2 = 1 / 4 - 1 / 4 := by
+    calc
+      f (x + a) - f x ^ 2 = (1 / 2 + Real.sqrt (f x - f x ^ 2)) - f x ^ 2 := by rw [h₁]
+      _ = 1 / 2 ^ 2 - (Real.sqrt (f x - f x ^ 2)) ^ 2 := by rw [Real.sq_sqrt]; linarith only [sq_nonneg (f x)]
+      _ = 1 / 4 - (f x - f x ^ 2) := by rw [sq, Real.sq_sqrt]; linarith only [sq_nonneg (f x)]
+      _ = 1 / 4 - 1 / 4 := by linarith only
+
+  -- By making $x$ approach $0$ in `h₂`, we see that $f(a) - f(0)^2 = 1/4 - 1/4$.
+  have h₃ : f a - f 0 ^ 2 = 1 / 4 - 1 / 4 := by
+    specialize h₂ 0
+    simp at h₂
+    exact h₂
+
+  -- So $f(a) = 1/2 + \sqrt{f(0) - f(0)^2}$.
+  have h₄ : f a = 1 / 2 + Real.sqrt (f 0 - f 0 ^ 2) := by
+    specialize h₁ 0
+    rw [h₃] at h₁
+    exact h₁
+
+  -- By the lemma, $f(a) - f(0)^2 = 1/4 - 1/4$.
+  have h₅ : f a - f 0 ^ 2 = 1 / 4 - 1 / 4 := by
+    specialize h₂ 0
+    simp at h₂
+    exact h₂
+
+  -- So $f(a) = 1/2 + \sqrt{f(0) - f(0)^2}$.
+  have h₆ : f a = 1 / 2 + Real.sqrt (f 0 - f 0 ^ 2) := by
+    specialize h₁ 0
+    rw [h₅] at h₁
+    exact h₁
+
+  -- Let $A = \{x \in \mathbb{N} \mid 2^x \leq a\}$.
+  let A : Set ℕ := {x | 2 ^ x ≤ a}
+  -- It is enough to show that $\forall x \in \mathbb{N}, f(2^x b) = f(0)$.
+  suffices ∀ x, f (2 ^ x * b) = f 0 by
+    -- We can choose $b$ to be $a$.
+    use a
+    split_ands
+    · exact h₀
+    · intro x
+      calc
+        f (x + a) = 1 / 2 + Real.sqrt (f x - f x ^ 2) := by rw [h₁]
+        _ = 1 / 2 + Real.sqrt (f (2 ^ (x - 1) * b) - f (2 ^ (x - 1) * b) ^ 2) := by rw [this (x - 1)]; rw [Nat.sub_add_cancel]; apply Nat.one_le_pow; apply Nat.add_one_le_of_lt; apply Nat.lt_two_pow_self; apply h₀
+        _ = 1 / 2 + Real.sqrt (f (2 ^ (x - 1) * b) - f (2 ^ (x - 1) * b) ^ 2) := by rfl
+
+  -- Let $b$ be the least element of $A$.
+  have b_eq : ∃ b, A b ∧ ∀ x < b, 2 ^ x < a := by
+    -- The set $A$ is not empty because $0 \in A$.
+    have A_nonempty : A.Nonempty := by
+      use 0
+      simp [A]
+      apply Nat.zero_le
+    -- Let $b$ be the least element of $A$.
+    let b := AInf A
+    have b_mem : b ∈ A := by
+      apply Nat.le_csInf
+      simp [A]
+      exact A_nonempty
+    have b least : ∀ x < least, x < b := by
+      intro x hx
+      apply Nat.le_csInf
+      simp [A] at b_mem
+      exact b_mem hx
+    -- We have $b \geq 1$ because $1 \in A$.
+    have b_ge : b ≥ 1 := by
+      by_contra! b_lt
+      -- Let $y = 2 ^ {b - 1} b$.
+      let y : ℝ := 2 ^ (b - 1) * b
+      have y_eq : y = 2 ^ (b - 1) * b := by rfl
+      have b_mem : b ∈ A := by
+        simp [A]
+        rw [show (2 : ℝ) ^ (b - 1) * b = 2 ^ (b - 1) * (b : ℝ) by norm_cast]
+        apply le_of_lt
+        apply Nat.mul_lt_mul_of_pos_right b_lt (by positivity)
+      have y_lt : 2 ^ (y - 1) * a < 2 ^ (y - 1) * b := by
+        apply (mul_lt_mul_right (by positivity)).mpr
+        -- We have $a < 2^b b$ because $b \in A$.
+        have lt : a < 2 ^ b * b := by
+          simp [A] at b_mem
+          exact b_mem
+        rw [tsub_lt_iff_lt_add] at lt
+        rw [show (2 : ℝ) ^ (y - 1) = 2 ^ (b - 1) * 2 ^ (b - 1) by rw [← pow_add]; congr 1; norm_num]
+        rw [show (2 : ℝ) ^ (b - 1) * 2 ^ (b - 1) * b = (2 ^ (b - 1) * b) * 2 ^ (b - 1) by ring]
+        apply lt_mul_of_pos_right
+        apply Nat.one_lt_pow
+        apply Nat.one_le_of_lt b_lt
+        positivity
+      -- $2 ^ {y - 1} a < 2 ^ {y - 1} b$ by the same reasoning.
+      have y_lt' : 2 ^ (y - 1) * a < 2 ^ (y - 1) * b := by
+        apply (mul_lt_mul_right (by positivity)).mpr
+        -- We have $a < 2^b b$ because $b \in A$.
+        have lt : a < 2 ^ b * b := by
+          simp [A] at b_mem
+          exact b_mem
+        rw [tsub_lt_iff_lt_add] at lt
+        rw [show (2 : ℝ) ^ (y - 1) = 2 ^ (b - 1) * 2 ^ (b - 1) by rw [← pow_add]; congr 1; norm_num]
+        rw [show (2 : ℝ) ^ (b - 1) * 2 ^ (b - 1) * b = (2 ^ (b - 1) * b) * 2 ^ (b - 1) by ring]
+        apply lt_mul_of_pos_right
+        apply Nat.one_lt_pow
+        apply Nat.one_le_of_lt b_lt
+        positivity
+      -- But $2 ^ {y - 1} b = 2 ^ {b - 1} b * 2 ^ {b - 1}$, and
+      have y_eq' : y = 2 ^ (b - 1) * b := by
+        -- the latter is less than $2 ^ {b - 1} b * 2 ^ b = 2 ^ {y - 1} a$.
+        rw [show (2 : ℝ) ^ (y - 1) = 2 ^ (b - 1) * 2 ^ (b - 1) by rw [← pow_add]; congr 1; norm_num]
+        rw [show (2 : ℝ) ^ (b - 1) * 2 ^ (b - 1) * b = (2 ^ (b - 1) * b) * 2 ^ (b - 1) by ring]
+        rw [show (2 : ℝ) ^ (b - 1) * b * (2 ^ (b - 1)) = (2 ^ (b - 1) * b) * 2 ^ (b - 1) by ring]
+        rw [← mul_assoc]
+        apply mul_lt_mul_of_pos_left
+        apply Nat.mul_lt_mul_of_pos_right b_lt (by positivity)
+        apply Nat.one_lt_pow
+        apply Nat.one_le_of_lt b_lt
+        positivity
+      rw [y_eq'] at y_lt y_lt'
+      -- The inequality $y_lt$ says that $2 ^ y a < 2 ^ y b$.
+      -- The inequality $y_lt'$ says that $2 ^ y b < 2 ^ y a$.
+      -- The only possibility is that $2 ^ y a = 2 ^ y b$.
+      linarith only [y_lt, y_lt']
+    -- Let's show that $b$ works.
+    use b
+    -- First, we show that $2 ^ x b \in A$ for all $x < b$.
+    have x_mem (x : ℕ) hx : x < b → 2 ^ x * b ∈ A := by
+      intro hx
+      simp [A]
+      rw [show (2 : ℝ) ^ x * b = 2 ^ x * (b : ℝ) by norm_cast]
+      apply le_of_lt
+      -- We have $2^x b  < 2^b b$ because $x < b$ and $b \geq 1$.
+      have lt : (2 : ℝ) ^ x * b < 2 ^ b * b := by
+        apply mul_lt_mul_of_pos_right
+        apply Nat.pow_lt_pow_of_lt (by norm_num)
+        exact hx
+        apply Nat.one_lt_pow
+        exact b_ge
+        positivity
+      -- The inequality $2^x b  < 2^b b$ means that $2^x b \in A$.
+      apply lt
+    -- Now, we show that $f(2^x b) = f(0)$ for all $x < b$.
+    intro x
+    -- If $x < b$, then $2^x b \in A$.
+    have x_mem : 2 ^ x * b ∈ A := by
+      apply x_mem x
+      apply Nat.lt_of_lt_of_le h₀
+      apply le_of_lt
+      apply Nat.one_lt_pow
+      apply Nat.one_le_of_lt b_lt
+    -- Then we have $f(2^x b) = 1/2 + \sqrt{f(2^x b) - f(2^x b)^2}$.
+    have h₁' := h₁ (2 ^ x * b)
+    -- But $f(2^x b) = 1/2 + \sqrt{f(2^x b) - f(2^x b)^2}$ says that
+    -- $f(2^x b) - f(2^x b)^2 = 1/4 - 1/4$.
+    have h₂' : f (2 ^ x * b) - f (2 ^ x * b) ^ 2 = 1 / 4 - 1 / 4 := by
+      specialize h₂ (2 ^ x * b)
+      simp at h₂
+      exact h₂
+    -- So $f(2^x b) = f(0)$.
+    linarith only [h₁', h₂']
+
+```

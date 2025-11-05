@@ -1,0 +1,111 @@
+have h₂ : x ^ y ^ 2 = y ^ x := by
+    exact h₁
+
+  have h₃ : x = 1 ∨ x = y ^ 2 := by
+    by_cases h₃ : x = 1
+    · tauto
+    · have h₄ : y ∣ x := by
+        exact Nat.dvd_of_mod_eq_zero (id (Nat.ModEq.symm (Nat.modEq_of_dvd h₃ x)))
+      have h₅ : x ≠ 1 := by
+        exact Nat.ne_of_gt (id (Nat.pos_of_ne_zero h₃))]
+      have h₆ : y ^ 2 ∣ x := by
+        apply (Nat.Prime.pow_dvd_iff_dvd x y).mp (id (Nat.Prime.pow_dvd_of_dvd h₄ x))
+      have h₇ : y ^ 2 ≤ x := by
+        exact Nat.le_of_dvd h₅ h₆
+      have h₈ : x = y ^ 2 := by
+        apply Nat.le_antisymm h₇
+        have h₉ : x ≤ y ^ 2 := by
+          apply Nat.le_of_dvd (id (Nat.pos_of_ne_zero h₅)) h₆
+        exact h₉
+      tauto
+
+  rcases h₃ with h₃ | h₃
+
+  -- case $x = 1$
+  · have h₄ : y ^ x = 1 := by
+      rw [h₃, pow_one]
+    have h₅ : x ^ y ^ 2 = 1 := by
+      rw [h₁] at h₄
+      exact h₄
+    rw [h₃] at h₅
+    simp at h₅
+    have h₆ : y ^ 2 = 1 := by
+      tauto
+    have h₇ : y = 1 := by
+      exact Nat.eq_one_of_mul_eq_one_left h₆
+    have h₈ : x = 1 := by
+      exact h₃
+    left
+    exact Prod.ext h₈ h₇
+
+  -- case $x = y ^ 2$
+  · have h₄ : x ^ y ^ 2 = y ^ (y ^ 2) := by
+      rw [h₃]
+    have h₅ : y ^ x = y ^ (y ^ 2) := by
+      rw [h₁, h₄]
+    have h₆ : y ^ (y ^ 2) ≠ 1 := by
+      by_contra h₆
+      have h₇ : y = 1 := by
+        exact Nat.eq_one_of_pow_eq_one_right h₆
+      rw [h₇] at h₃
+      simp at h₃
+      tauto
+    have h₇ : x = y ^ 2 := by
+      exact Nat.pow_right_injective (id (Nat.pos_of_ne_zero h₆)) h₅
+    rw [h₇] at h₁
+    have h₈ : y ^ (y ^ 2) = (y ^ 2) ^ y := by
+      rw [← Nat.pow_mul]
+      rw [← h₁]
+      ring
+    have h₉ : y ^ (y ^ 2) = y ^ (2 * y) := by
+      rw [h₈]
+      rw [mul_comm]
+    have h₁₀ : (y ^ 2) ^ y ≠ 1 := by
+      by_contra h₁₀
+      have h₁₁ : y = 1 := by
+        exact Nat.eq_one_of_pow_eq_one_right h₁₀
+      rw [h₁₁] at h₃
+      simp at h₃
+      tauto
+    have h₁₁ : 2 * y = y ^ 2 := by
+      exact Nat.pow_right_injective (id (Nat.pos_of_ne_zero h₁₀)) h₉
+    have h₁₂ : y = 2 ∨ y = 3 := by
+      have h₁₂ : y ≤ 3 := by
+        by_contra h₁₂
+        have h₁₃ : y ^ 2 > 2 * y := by
+          calc
+            y ^ 2 = y * y := by ring
+            _ > y * 2 := by nlinarith only [h₁₂]
+            _ = 2 * y := by ring
+        have h₁₄ : y ^ 2 = 2 * y := by
+          exact Nat.eq_of_lt_of_le (Nat.lt_of_le_of_ne h₁₁ h₁₃) h₁₁
+        tauto
+      interval_cases y <;> tauto
+
+    rcases h₁₂ with h₁₂ | h₁₂
+
+    -- case $y = 2$
+    · have h₁₃ : x = 2 ^ 2 := by
+        rw [h₇, h₁₂]
+    · have h₁₃ : x = 16 := by
+        simp at h₁₃
+        exact h₁₃
+      have h₁₄ : x = 16 := by
+        exact h₁₃
+      right
+      left
+      exact Prod.ext h₁₄ h₁₂
+
+    -- case $y = 3$
+    · have h₁₃ : x = 3 ^ 2 := by
+        rw [h₇, h₁₂]
+    · have h₁₃ : x = 27 := by
+        simp at h₁₃
+        exact h₁₃
+      have h₁₄ : x = 27 := by
+        exact h₁₃
+      right
+      right
+      exact Prod.ext h₁₄ h₁₂
+
+```

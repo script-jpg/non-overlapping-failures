@@ -1,0 +1,231 @@
+-- Assume $2^n - 1$ is a prime number.
+  -- We need to show that $n$ is prime.
+
+  -- As a corollary of Euler's theorem, if $n$ is an odd prime, then $2^{n-1} \equiv 1 \pmod{n}$.
+  have Euler Corollary (h2 : Odd n) : 2 ^ (n - 1) ≡ 1 [MOD n] := by
+    apply Nat.ModEq.pow_totient
+    · apply Nat.totient_prime
+      · linarith only [h2]
+      · linarith only [h₀]
+    · zify
+      apply Nat.cast_inj.mp
+      rw [Nat.cast_pow, Nat.cast_pow]
+      · push_cast; linarith only [h2]
+      · intro m mlt n
+        rw [Nat.factorization_le_iff_dvd (by linarith only [h₀])] at mlt
+        rw [Nat.factorization_eq_iff_dvd (by linarith only [h₀])] at *
+        simp only [Nat.factorization_def, Finsupp.coe_smul, nsmul_eq_mul, Nat.cast_mul, Nat.cast_ofNat, Pi.natCast_def, Nat.cast_id, Pi.add_apply, Pi.mul_apply, Pi.ofNat_apply]
+        norm_num
+        linarith only [mlt]
+
+  -- If $n = 2^k$ for some natural number $k$, then $2^n - 1$ is not prime.
+  have h2 (k : ℕ) : ¬Nat.Prime (2 ^ (2 ^ k) - 1) := by
+    -- Notice that $(2^k - 1)$ divides $(2^{k}-1)^m$ for all $m$.
+    have h3 : 2 ^ (2 ^ k) - 1 ∣ (2 ^ (2 ^ k) - 1) ^ 2 := by
+      apply Nat.dvd_pow
+      · apply Nat.le_self_pow
+        · linarith only [h₀]
+        · norm_num
+    -- However, $(2^k - 1)^2 = (2^k - 1)(2^k - 1)$, and $(2^k - 1)$ is greater than one.
+    -- This suggests that $(2^k - 1)$ is not prime.
+    have h4 : 1 < 2 ^ (2 ^ k) - 1 := by
+      apply Nat.one_lt_pow
+      · norm_num
+      · linarith only [h₀]
+    have h5 : 2 ^ (2 ^ k) - 1 ≠ 1 := by
+      linarith only [h4]
+    rw [←Nat.prime_def]
+    intro m mne1 mdiv
+    -- By the fundamental theorem of arithmetic, every natural number greater than 1 has a unique prime factorization.
+    have h6 : (2 ^ (2 ^ k) - 1) ^ 2 = (2 ^ (2 ^ k) - 1) * (2 ^ (2 ^ k) - 1) := by
+      rw [Nat.mul_self]
+    -- If some prime number $p$ divides $(2^k - 1)^2$, then $p$ divides $(2^k - 1)$.
+    have h7 : ∀ p : ℕ, p ≠ 1 → p ∣ (2 ^ (2 ^ k) - 1) ^ 2 → p ∣ 2 ^ (2 ^ k) - 1 := by
+      intro p pne1 pdiv
+      rw [h6] at pdiv
+      apply Nat.Prime.dvd_mul (Nat.prime_iff.mp (by norm_num)).mp at pdiv
+      apply Nat.Prime.dvd_of_dvd_pow (Nat.prime_iff.mp (by norm_num)) at pdiv
+      exact pdiv
+    -- Using these facts, we can derive a contradiction.
+    rcases m.ne_one.mpr (Nat.prime_def.mp h5) with ⟨p, hp, pdvd⟩
+    have := h7 p (by linarith only [hp]) pdvd
+    rw [Nat.prime_def] at hp
+    have pdvd' := pdiv
+
+    -- First, we show that $p$ divides $2^{k}$.
+    have h8 : p ∣ 2 ^ k := by
+      apply Nat.Prime.dvd_of_dvd_pow (Nat.prime_iff.mp (by norm_num)) at pdvd'
+      exact pdvd'
+    rw [Nat.Prime.dvd_pow_iff_dvd (Nat.prime_iff.mp (by norm_num))] at h8
+
+    -- Second, we show that $2^k$ divides $2^p$.
+    have h9 : 2 ^ k ∣ 2 ^ p := by
+      apply Nat.pow_dvd_pow_iff_le_right
+      · norm_num
+      · exact Nat.le_of_dvd (by linarith only [h₀]) h8
+
+    -- Third, we show that $2^p$ divides $(2^k)^2$.
+    have h10 : 2 ^ p ∣ (2 ^ k) ^ 2 := by
+      apply Nat.pow_dvd_pow_iff_le_right
+      · norm_num
+      · apply Nat.le_mul_of_pos_right
+        · exact Nat.pos_pow_of_pos k (by norm_num)
+        · norm_num
+
+    -- We have $(2^k)^2 = (2^k - 1)(2^k + 1)$.
+    have h11 : (2 ^ k) ^ 2 = (2 ^ k - 1) * (2 ^ k + 1) := by
+      rw [Nat.mul_sub, Nat.mul_add, Nat.pow_two]
+      ring
+
+    -- This suggests that $2^p$ is less than or equal to $(2^k - 1)(2^k + 1)$, which is less than $2^{2k}$.
+    have h12 : 2 ^ p ≤ (2 ^ k - 1) * (2 ^ k + 1) := by
+      apply Nat.le_of_dvd
+      · apply Nat.mul_pos
+        · apply Nat.sub_pos_of_lt (by linarith only [h₀])
+        · apply Nat.add_pos_left (by norm_num)
+      · apply Nat.pow_le_pow_right
+        · linarith only [h₀]
+        · norm_num
+    rw [h11] at h12
+
+    -- However, $2^p$ is greater than $2^{k}$, which suggests that $2^p$ is greater than $2^{2k}$.
+    have h13 : 2 ^ p > 2 ^ k := by
+      apply Nat.lt_of_lt_of_le
+      · apply Nat.pow_lt_pow_right
+        · linarith only [h₀]
+        · norm_num
+      · exact Nat.le_of_dvd (by linarith only [h₀]) h8
+    have h14 : 2 ^ p < 2 ^ (k + k) := by
+      suffices 2 ^ p < 2 ^ (2 * k) from by
+        apply Nat.pow_lt_pow_iff_right (by norm_num) at this
+        rw [mul_comm] at this
+        exact this
+      apply Nat.lt_of_lt_of_le
+      · apply Nat.pow_lt_pow_right
+        · linarith only [h₀]
+        · norm_num
+      · apply Nat.le_of_dvd
+        · apply Nat.pow_le_pow_right
+          · linarith only [h₀]
+          · norm_num
+        · linarith only [h₀]
+
+    -- This is a contradiction.
+    linarith only [h12, h13, h14]
+
+  -- Now we consider the case when $n$ is a power of two.
+  have h3 (k : ℕ) : 2 ^ (2 ^ k) - 1 ≠ 1 := by
+    suffices 2 ^ (2 ^ k) ≠ 1 by
+      apply Nat.sub_ne_zero.mpr
+      linarith only [this]
+    apply Nat.ne_of_gt
+    apply Nat.one_lt_pow
+    · norm_num
+    · linarith only [k]
+  have h4 (k : ℕ) : 0 < 2 ^ (2 ^ k) - 1 := by
+    apply Nat.zero_lt_sub_of_lt
+    apply Nat.one_lt_pow
+    · norm_num
+    · linarith only [k]
+
+  -- We show that if $2^n - 1$ is prime, then $n$ cannot be a power of two.
+  have h5 : ¬∃ k, n = 2 ^ k := by
+    by_contra! h
+    rcases h with ⟨k, hk⟩
+    have hk' : 2 ^ n - 1 = 2 ^ (2 ^ k) - 1 := by
+      rw [hk]
+    rw [hk'] at h₁
+    absurd h2 k
+    linarith only [h₁, h3 k, h4 k]
+
+  -- We prove the converse of the previous statement.
+  have h6 : ∀ m, ¬Nat.Prime (2 ^ m - 1) → 2 ∣ m := by
+    intro m h1
+    -- If $2^m - 1$ is not prime, then $m$ cannot be a power of two.
+    by_contra! h2
+    -- If $m$ is not a power of two, then it has an odd prime factor.
+    obtain ⟨p, hp, h3⟩ := Nat.exists_prime_and_dvd h2
+    replace h3 := h3 2
+    -- We show that $2^m - 1$ is divisible by $2^p - 1$.
+    have h4 : 2 ^ p - 1 ∣ 2 ^ m - 1 := by
+      apply Nat.one_lt_pow
+      · norm_num
+      · exact Nat.Prime.one_lt hp
+    rw [←Nat.prime_def] at h₁
+    intro h5
+    -- Since $2^p - 1$ is less than $2^m - 1$, it cannot be equal to one.
+    have h6 : 2 ^ p - 1 ≠ 1 := by
+      by_contra! h7
+      rw [h7] at h5
+      apply Nat.one_lt_pow
+      · norm_num
+      · linarith only [h₀]
+    rcases m.ne_one.mpr h₁ with ⟨q, hq, h5⟩
+    -- If some prime $q$ divides $2^m - 1$, then $q$ also divides $2^p - 1$.
+    have h7 : ∀ q : ℕ, q ≠ 1 → q ∣ 2 ^ m - 1 → q ∣ 2 ^ p - 1 := by
+      intro q qne1 qdiv
+      have ⟨s, hs⟩ := h5 q qne1 qdiv
+      rw [hs] at h4
+      apply Nat.Prime.dvd_of_dvd_mul (Nat.prime_iff.mp (by norm_num)) at h4
+      apply Nat.Prime.dvd_of_dvd_mul (Nat.prime_iff.mp (by norm_num)) at h4
+      exact h4
+    -- This suggests that $2^p - 1$ is greater than one, which is a contradiction.
+    rcases q.ne_one.mpr h6 with ⟨s, hs, h8⟩
+    have h9 : 2 ^ p - 1 ∣ 2 ^ p - 1 := by
+      apply Nat.dvd_refl
+    have h10 : 2 ^ p - 1 = 1 := by
+      apply Nat.eq_one_of_dvd_one h8 h9
+    have h11 : 2 ^ p - 1 ≠ 1 := by
+      by_contra! h12
+      rw [h12] at h8
+      apply Nat.one_lt_pow
+      · norm_num
+      · linarith only [h2]
+    contradiction
+
+  -- We have shown that if $2^n - 1$ is prime, then $n$ cannot be a power of two.
+  -- In other words, if $n$ is a power of two, then $2^n - 1$ is not prime.
+  have h7 : ¬∃ k, k ≥ 1 ∧ n = 2 ^ k := by
+    by_contra! h
+    rcases h with ⟨k, ⟨hge1, hk⟩⟩
+    have hk' : 2 ^ n - 1 = 2 ^ (2 ^ k) - 1 := by
+      rw [hk]
+    rw [hk'] at h₁
+    absurd h2 k
+    linarith only [h₁, h3 k, h4 k]
+
+  -- We now show that if $n$ is not prime, then $2^n - 1$ is not prime.
+  have h8 : ∀ m, n ∣ m → n < m → 2 ∣ m → ¬Nat.Prime (2 ^ m - 1) := by
+    intro m h1 h2 h3
+    -- We show that $2^m - 1$ is divisible by $2^n - 1$.
+    have h4 : 2 ^ n - 1 ∣ 2 ^ m - 1 := by
+      apply Nat.one_lt_pow
+      · norm_num
+      · exact Nat.Prime.one_lt h₁
+    -- If $2^m - 1$ is prime, then $2^m - 1$ is equal to one.
+    by_contra! h5
+    rw [Nat.prime_def] at h5
+    rcases m.ne_one.mpr h5 with ⟨p, hp, h6⟩
+    have h7 : 2 ^ m - 1 ∣ 2 ^ m - 1 := by
+      apply Nat.dvd_refl
+    have h8 : 2 ^ m - 1 = 1 := by
+      apply Nat.eq_one_of_dvd_one h6 h7
+    have h9 : 2 ^ m - 1 ≠ 1 := by
+      by_contra! h10
+      rw [h10] at h6
+      apply Nat.one_lt_pow
+      · norm_num
+      · linarith only [h2]
+    contradiction
+
+  -- We have shown that if $n$ is not prime, then $2^n - 1$ is not prime.
+  -- Therefore, if $2^n - 1$ is prime, then $n$ must be prime.
+  by_contra! h
+  -- If $n$ is not prime, then there exists a natural number $m$ such that $n ∣ m$ and $n < m$.
+  have h2 := Nat.exists_dvd_of_not_prime2 h h₀
+  rcases h2 with ⟨m, ⟨h1, h2⟩⟩
+  have h3 := h8 m h1 h2 h3
+  absurd h3
+  linarith only [h2pownm1prime_nprime]
+
+```

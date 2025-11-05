@@ -1,0 +1,115 @@
+-- A lemma that is similar to the problem statement but with a general $k$.
+  have lm (k : ℕ) (hk : 1 < k) : k ∣ 41 * (1 + k) - (1 + k) ^ 2 ↔ 1 < k ∧ k ∣ 41 := by
+    constructor
+    · intro h
+      -- If $k$ divides $41 \cdot (1 + k) - (1 + k)^2$,
+      -- then $k$ divides $41 \cdot (1 + k) - (1 + k)^2 + (1 + k)^2$
+      -- and thus $k$ divides $1 + 40k$.
+      have h' : k ∣ 41 * (1 + k) - (1 + k) ^ 2 + (1 + k) ^ 2 := by
+        apply Nat.dvd_add
+        apply Nat.dvd_trans h
+        apply Dvd.dvd.mul_right
+        norm_num
+      rw [Nat.sub_add_cancel (by nlinarith)] at h'
+      -- We have $41 \cdot (1 + k) - (1 + k)^2 + (1 + k)^2 = 1 + 40k$.
+      have : 41 * (1 + k) - (1 + k) ^ 2 + (1 + k) ^ 2 = 1 + 40 * k := by
+        ring
+      rw [this] at h'
+      -- By contradiction, we show that $k$ divides $41$.
+      have h'' : k ∣ 1 + 40 * k - 40 * k := by
+        apply Nat.dvd_sub (by nlinarith)
+        apply Nat.dvd_trans h'
+        apply Dvd.dvd.mul_right
+        norm_num
+      norm_num at h''
+      -- Then we can conclude that $k$ divides $41$.
+      exact Nat.dvd_of_dvd_sub h''
+    · rintro ⟨h₁, h₂⟩
+      -- If $1 < k$ and $k$ divides $41$,
+      -- then $k$ divides $41 \cdot (1 + k) - (1 + k)^2$.
+      calc
+        k ∣ 41 := h₂
+        _ ∣ 41 * (1 + k) := by
+          apply Dvd.dvd.mul_right
+          apply Nat.dvd_refl
+        _ = 41 * (1 + k) - (1 + k) ^ 2 + (1 + k) ^ 2 := by
+          rw [Nat.sub_add_cancel (by nlinarith)]
+        _ ∣ _ := by
+          apply Nat.dvd_add
+          · exact Nat.dvd_trans h₁ (Dvd.dvd.mul_right (by norm_num))
+          · apply Dvd.dvd.pow
+            exact Nat.dvd_refl (1 + k)
+
+  -- We show that $41$ divides $p(n)$ and $p(n+1)$ if and only if $41$ divides $n$.
+  have h (hn : ℕ) : 41 ∣ p hn ∧ 41 ∣ p (hn + 1) ↔ 41 ∣ hn := by
+    rw [h₀]
+    simp
+    constructor
+    · rintro ⟨h₁, _⟩
+      -- If $41$ divides $p(n)$ and $41$ divides $p(n+1)$,
+      -- then $41$ divides $n$ according to the lemma.
+      norm_num at h₁ ⊢
+      rw [show 41 * (1 + hn) - (1 + hn) ^ 2 = 41 * (41 - hn) by ring] at h₁
+      exact Nat.dvd_of_dvd_mul_left (show 41 > 0 by norm_num) h₁
+    · intro h₁
+      -- If $41$ divides $n$ then $41$ divides $p(n)$ and $41$ divides $p(n+1)$.
+      -- It can be directly calculated.
+      rw [show hn = 41 * (hn / 41) by exact Nat.mul_div_cancel hn h₁]
+      simp
+      rw [show hn + 1 = 41 * (hn / 41) + 1 by exact Eq.symm (Nat.mul_div_add_mod hn 41)]
+      simp
+
+  -- We show that $p(n)$ and $p(n+1)$ share a common factor greater than $1$ if and only if $41$ divides $n$.
+  have h' (hn : ℕ) : Nat.gcd (p hn) (p (hn + 1)) > 1 ↔ 41 ∣ hn := by
+    constructor
+    · intro h₁
+      -- If $p(n)$ and $p(n+1)$ share a common factor greater than $1$,
+      -- then that common factor is $41$ according to the lemma.
+      have h₂ : Nat.gcd (p hn) (p (hn + 1)) > 1 := h₁
+      have h₃ : 1 < Nat.gcd (p hn) (p (hn + 1)) := by exact h₁
+      obtain ⟨p, ⟨hp₁, hp₂⟩⟩ := Nat.exists_prime_and_dvd h₃
+      have hp₃ : p ∣ 41 ^ 2 := by
+        apply Nat.dvd_trans _ hp₂
+        rw [show Nat.gcd (p hn) (p (hn + 1)) ^ 2 = (p hn).gcd (p (hn + 1)) * (p hn).gcd (p (hn + 1)) by exact rfl]
+        apply Nat.dvd_mul_left
+        have h₄ : p ∣ hn := by
+          apply Nat.prime_iff.mp hp₁
+          exact Nat.gcd_dvd_left (p hn) (p (hn + 1))
+        rw [show (p hn).gcd (p (hn + 1)) = p by exact Nat.dvd_antisymm hp₂ hp₁]
+        exact Nat.dvd_trans h₄ (Nat.dvd_mul_right p (p (hn + 1)))
+      rw [Nat.Prime.dvd_pow_iff_dvd (Nat.prime_iff.mp hp₁) (show 2 ≠ 0 by norm_num)] at hp₃
+      -- Then $p$ divides $41$ and $p$ divides $n$.
+      have hp₄ : p ∣ 41 := by
+        apply Nat.dvd_of_dvd_mul_right_of_gcd_one hp₃
+        have h₅ : p ∣ hn := by
+          apply Nat.prime_iff.mp hp₁
+          rw [h₀] at hp₂
+          rw [Nat.dvd_add_iff_left (show p ∣ p hn by apply Nat.dvd_trans hp₂; apply Nat.dvd_refl)] at hp₂
+          exact hp₂
+        nth_rw 2 [show (41 * hn + 41) * 41 = 41 * (41 * hn + 41) by ring] at hp₃
+        apply Nat.dvd_of_dvd_mul_left_of_gcd_one (show p > 0 by exact Nat.Prime.pos hp₁) at hp₃
+        exact Nat.dvd_add hp₃ h₅
+      -- $p$ can be replaced with $41$.
+      rw [Nat.dvd_prime (Nat.prime_iff.mp hp₁)] at hp₄
+      -- Now $41$ divides $41$ and $41$ divides $n$.
+      cases hp₄ with
+      | inl h₆ => rw [h₆] at hp₃; contradiction
+      | inr h₆ => rw [h₆] at hp₄; exact hp₄
+    · intro h₁
+      -- If $41$ divides $n$, then $41$ divides $p(n)$ and $41$ divides $p(n+1)$ so the proof proceeds as above.
+      rw [h₀]
+      simp
+      rw [show hn = 41 * (hn / 41) by exact Nat.mul_div_cancel hn h₁]
+      simp
+      rw [show hn + 1 = 41 * (hn / 41) + 1 by exact Eq.symm (Nat.mul_div_add_mod hn 41)]
+      simp
+      exact Nat.gcd_greatest (Nat.dvd_mul_right 41 (41 * (hn / 41))) (Nat.dvd_mul_right 41 (41 * (hn / 41) + 1)) (Nat.dvd_mul_left (41 * (hn / 41 + 1)) 41)
+
+  -- Combining the two propositions, we complete the proof.
+  have h'' : 1 < Nat.gcd (p n) (p (n + 1)) ↔ 41 ≤ n := by
+    rw [h']
+    exact Nat.le_div_iff_mul_le (show 41 > 0 by norm_num)
+  rw [h''] at h₁
+  exact h₁
+
+```

@@ -1,0 +1,87 @@
+-- We have $p(n) = n^2 - n + 41$ and $p(n+1) = (n+1)^2 - (n+1) + 41 = n^2 + n + 41$.
+  have h₂ : p (n + 1) = (n + 1) ^ 2 - (n + 1) + 41 := by
+    apply h₀
+  rw [h₀, h₂, Nat.gcd_comm]
+
+  -- Suppose that $d$ is a common divisor of $p(n)$ and $p(n+1)$.
+  -- Then $d$ also divides $p(n+1) - p(n) = 2n$.
+  have h₃ (d : ℕ) (hd₁ : d ∣ p n) (hd₂ : d ∣ p (n + 1)) : d ∣ 2 * n := by
+    rw [h₀, h₂]
+    apply Nat.dvd_sub'
+   . ring_nf
+   . ring_nf
+   . apply Nat.dvd_add
+     . apply Nat.dvd_trans hd₂
+        norm_num
+     . apply Nat.dvd_trans hd₁
+        norm_num
+
+  -- Let $d = \gcd(p(n), p(n+1))$.
+  let d := Nat.gcd (p n) (p (n + 1))
+  have hd₁ : d ∣ p n := Nat.gcd_dvd_left
+  have hd₂ : d ∣ p (n + 1) := Nat.gcd_dvd_right
+  have hd₃ : d ∣ 2 * n := h₃ d hd₁ hd₂
+
+  -- We have $d \mid n$, because $d$ divides $2n$ and $d$ is odd (as it divides $41$ which is odd).
+  have hd₄ : d ∣ n := by
+    apply Nat.Coprime.dvd_of_dvd_mul_left (Nat.coprime_two_left.mpr (by
+      -- We have $d \mid 41$, because $d$ is a common divisor of $p(n)$ and $p(n+1)$.
+      have hd₅ : d ∣ 41 := by
+        rw [h₀, h₂]
+        apply Nat.dvd_add
+       . apply Nat.dvd_trans hd₁
+          norm_num
+       . apply Nat.dvd_trans hd₂
+          norm_num
+      -- Since $41$ is prime, we have $d = 1$ or $d = 41$.
+      rw [Nat.dvd_prime (by norm_num)] at hd₅
+      -- We have $d \neq 1$, because $p(n)$ and $p(n+1)$ share a common factor greater than $1$.
+      have hd₆ : d ≠ 1 := by
+        intro h
+        rw [h] at hd₁
+        exact Nat.eq_one_of_dvd_one hd₁
+      -- We get $d = 41$.
+      simp [hd₆] at hd₅
+      exact hd₅
+    ) ) hd₃
+  have hd₅ : 2 * n ≠ 0 := by
+    -- We have $2n \neq 0$ because $n$ is positive.
+    omega
+  -- Since $d \mid n$ and $d \neq 1$, we have $d \geq n$.
+  have hd₆ : d ≥ n := by
+    apply Nat.le_of_dvd hd₅
+    omega
+  -- Since $d \mid p(n)$ and $d \neq 1$, we have $d \geq p(n)$.
+  have hd₇ : d ≥ p n := by
+    apply Nat.le_of_dvd (Nat.Prime.one_lt (Nat.prime_iff.mp (by norm_num)))
+    exact hd₁
+
+  -- We get $n \geq p(n)$.
+  have hn : n ≥ p n := by
+    apply Nat.le_trans hd₆ hd₇
+
+  -- A calculation shows that $p(n) = n^2 - n + 41 \geq 41n$ for $n \leq 40$.
+  -- Meanwhile, $n \geq 41n$ only when $n = 0$.
+  have hn' : 41 ≤ n := by
+    by_contra! h_contra
+    have hn'' : n < 41 := by
+      omega
+    have hn''' : p n < 41 * n := by
+      calc
+        p n = n ^ 2 - n + 41 := h₀ n
+        _ ≥ n ^ 2 := by omega
+        _ ≥ 41 * n := by nlinarith
+    -- This means that $n \geq 41n$.
+    have hn'''' : n ≥ 41 * n := by
+      calc
+        n = d - n := by apply Nat.sub_eq_of_eq_add; rw [hn]; apply Nat.le_of_dvd hd₅; omega
+        _ = 41 * n - n := by rw [Nat.sub_add_eq, h₀ n, h₂]; nth_rw 1 [← Nat.add_zero 41]; rw [← add_sub_assoc, Nat.add_sub_cancel_left]; apply Nat.le_of_dvd hd₆
+        _ ≥ 41 * n := by omega
+    -- Meanwhile, $n \geq 41n$ only when $n = 0$.
+    have hn'''''' : n = 0 := by
+      omega
+    -- This is a contradiction.
+    omega
+  exact hn'
+
+```

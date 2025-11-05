@@ -1,0 +1,56 @@
+-- do the induction on n
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+    -- transform the conclusion to suitable form
+    rw [pow_add_one]
+    rw [Nat.pow_mod]
+    have t0 : 2 ^ (n + 1) + 1 ∣ 3 ^ 2 ^ n - 1 := by
+      -- do the transformation to $3 ^ 2 ^ n - 1 = (3 ^ 2 ^ (n - 1) - 1) * (3 ^ 2 ^ (n - 1) + 1) + 2 ^ (n + 1)$
+      have t1 : 2 ^ (n + 1) ∣ 3 ^ 2 ^ (n - 1) - 1 := by
+        cases n with
+        | zero => simp at h₀
+        | succ m =>
+          rw [<- Nat.pow_add_one] at ih
+          rw [Nat.pow_mod]
+          simp only [Nat.pow_one, Nat.reduceAdd]
+          rw [Nat.add_sub_assoc]
+          apply Nat.dvd_trans (by norm_num) ih
+      have t2 : 3 ^ 2 ^ n - 1 = (3 ^ 2 ^ (n - 1) - 1) * (3 ^ 2 ^ (n - 1) + 1) + 2 ^ (n + 1) := by
+        cases n with
+        | zero => simp at h₀
+        | succ m =>
+          rw [<- Nat.pow_add_one] at ih
+          rw [Nat.pow_mod]
+          simp only [Nat.pow_one, Nat.reduceAdd]
+          rw [Nat.add_sub_assoc]
+          nth_rw 1 [tactics:=ih]
+          rw [Nat.mul_mod]
+          simp only [Nat.mod_self, Nat.zero_mul, Nat.one_mul, Nat.mod_succ_eq_self]
+          rw [Nat.add_mod]
+          simp only [Nat.mod_self, Nat.zero_add, Nat.add_one_mod]
+      apply Nat.dvd_add t1
+      rw [t2]
+      apply Nat.dvd_mul_left
+    -- calculate the remainder of $3 ^ 2 ^ n - 1$ from $2 ^ (n + 3)$
+    have t1 : (3 ^ 2 ^ n - 1) % 2 ^ (n + 3) = 2 ^ (n + 1) + 1 := by
+      apply Nat.div_add_mod
+    have t2 : 2 ^ (n + 1) + 1 = 2 ^ (n + 2) / 2 + 2 := by
+      rw [pow_add_one]
+      rw [<- Nat.mul_right_inj (by norm_num)]
+      ring_nf
+      rw [<- Nat.pow_add_one]
+      rw [Nat.addCommut]
+      simp only [Add.left_inj]
+      rw [Nat.sub_add_cancel]
+      simp only [zero_add, Nat.add_one_le]
+      linarith
+    rw [t1, t2]
+    nth_rw 1 [<- Nat.pow_add_one]
+    rw [Nat.mul_mod]
+    simp only [Nat.mod_self, Nat.zero_mul, Nat.one_mul, Nat.mod_succ_eq_self]
+    rw [Nat.add_mod]
+    simp only [Nat.mod_self, Nat.zero_add, Nat.add_one_mod]
+    linarith
+
+```

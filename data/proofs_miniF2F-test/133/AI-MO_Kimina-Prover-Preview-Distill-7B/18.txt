@@ -1,0 +1,33 @@
+-- The first lemma is a generalization of Fermat's Little Theorem.
+  have H (d : ℕ) (h₀ : 0 < d) (h₁ : Nat.Prime p) : p ∣ d ^ p - d := by
+    -- We use induction on d.
+    induction d with
+    | zero => linarith
+    | succ d ih =>
+      -- The base case is trivial.
+      cases d with
+      | zero => simp
+      -- For the inductive step, we use the identity
+      -- $(d + 1)^p - (d + 1) = (d^p - d) + (d^p - 1) + \binom{p}{1}(d^p - d)$
+      -- and the induction hypothesis.
+      | succ d =>
+        have {e : ℕ} (h : e > 0) : (e + 1) ^ p - (e + 1) = (e ^ p - e) + (e ^ p - 1) + Nat.choose p 1 * (e ^ p - e) := by
+          rw [Nat.add_sub_add_right, Nat.add_sub_cancel, <-Nat.add_sub_assoc, Nat.add_sub_cancel]
+          rw [Nat.choose_one_right]
+          ring
+        rw [this]
+        -- The induction hypothesis ih gives $p \mid e^p - e$.
+        -- The first summand is divisible by $p$ by the induction hypothesis.
+        -- The second summand is divisible by $p$ since $p \mid p!$ and $\binom{p}{1} = p$.
+        -- The third summand is divisible by $p$ by the induction hypothesis.
+        apply Nat.dvd_add
+        · apply Nat.dvd_add
+          · exact ih
+          · rw [Nat.sub_add_cancel]
+            simp
+            exact Nat.Prime.dvd_choose_self h₁
+        · exact ih
+
+  -- When $d = a$, we get the desired result.
+  exact H a h₀ h₁
+```

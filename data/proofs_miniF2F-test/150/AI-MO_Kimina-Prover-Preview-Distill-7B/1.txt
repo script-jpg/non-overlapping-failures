@@ -1,0 +1,65 @@
+-- The goal is to prove that $a * b * c = 720$.
+  -- First, we need to find the values of $a$, $b$, and $c$.
+  -- We have the following equations:
+  -- $a(b+c) = 152$
+  -- $b(c+a) = 162$
+  -- $c(a+b) = 170$
+
+  -- Note that $a = \frac{152}{b+c}$, $b = \frac{162}{c+a}$, and $c = \frac{170}{a+b}$.
+  -- We also have $a+b+c = \frac{152}{b+c} + \frac{162}{c+a} + \frac{170}{a+b}$.
+
+  -- Let's try to find the value of $a+b+c$.
+  have h₄ : a + b + c = 42  := by
+    -- $a+b+c = \frac{152}{b+c} + \frac{162}{c+a} + \frac{170}{a+b}$
+    calc
+      a + b + c = a * (b + c) / (b + c) + b * (c + a) / (c + a) + c * (a + b) / (a + b) := by
+        field_simp [h₀.left.ne, h₀.right.left.ne, h₀.right.right.ne]
+        ring
+      _ = 152 / (b + c) + 162 / (c + a) + 170 / (a + b) := by rw [h₁, h₂, h₃]
+      _ = 42 := by
+        -- We know that $b + c = \frac{152}{a}, c + a = \frac{162}{b}, a + b = \frac{170}{c}$. Therefore, we can rewrite the right-hand side as:
+        calc
+          152 / (b + c) + 162 / (c + a) + 170 / (a + b) = 152 / (152 / a) + 162 / (162 / b) + 170 / (170 / c) := by
+            congrm?_ +?_ +?_
+            · rw [div_div_div_cancel_right₀ h₁ (by simp [h₀.left.ne])]
+            · rw [div_div_div_cancel_right₀ h₂ (by simp [h₀.right.left.ne])]
+            · rw [div_div_div_cancel_right₀ h₃ (by simp [h₀.right.right.ne])]
+          _ = a + b + c := by field_simp [h₀.left.ne, h₀.right.left.ne, h₀.right.right.ne]
+          _ = 42 := by linarith
+
+  -- Now we know that $a+b+c = 42$, we can find the values of $a$, $b$, and $c$.
+  have h₅ : a = 12    := by
+    calc
+      a = (a * (b + c)) / (b + c) := by field_simp [h₀.left.ne, h₀.right.left.ne, h₀.right.right.ne]; ring
+      _ = 152 / (b + c) := by rw [h₁]
+      _ = 152 / (42 - a) := by rw [show b + c = 42 - a by linarith]
+      _ = 12 := by
+        ring_nf
+        nlinarith [h₀.left, h₀.right.left, h₀.right.right]
+
+
+  have h₆ : b = 18    := by
+    calc
+      b = (b * (c + a)) / (c + a) := by field_simp [h₀.left.ne, h₀.right.left.ne, h₀.right.right.ne]; ring
+      _ = 162 / (c + a) := by rw [h₂]
+      _ = 162 / (42 - b) := by rw [show c + a = 42 - b by linarith]
+      _ = 18 := by
+        ring_nf
+        nlinarith [h₀.left, h₀.right.left, h₀.right.right]
+
+
+  have h₇ : c = 24    := by
+    calc
+      c = (c * (a + b)) / (a + b) := by field_simp [h₀.left.ne, h₀.right.left.ne, h₀.right.right.ne]; ring
+      _ = 170 / (a + b) := by rw [h₃]
+      _ = 170 / (42 - c) := by rw [show a + b = 42 - c by linarith]
+      _ = 24 := by
+        ring_nf
+        nlinarith [h₀.left, h₀.right.left, h₀.right.right]
+
+
+  -- Finally, we substitute the values of $a$, $b$, and $c$ into $abc$.
+  calc
+    a * b * c = 12 * 18 * 24 := by rw [h₅, h₆, h₇]
+    _ = 720 := by norm_num
+```

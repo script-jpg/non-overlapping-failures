@@ -1,0 +1,61 @@
+-- Notice that if we increase any of the exponents in the prime factorization of $n$ by $1$, we
+  -- increase the value of $f(n)$ by a factor of $1 / \sqrt[3]{p} + \epsilon$, where $\epsilon$ is small
+  -- for small primes $p$. Since $N$ maximizes $f(n)$, it cannot have any prime factors $p > 30$,
+  -- since increasing a prime $p > 30$ would give a factor of $1 / \sqrt[3]{p} < 1 / \sqrt[3]{30} \approx
+  -- 0.63$, and therefore we would have $f(N) \cdot (1 / \sqrt[3]{p}) < 1$, which is not possible.
+  have hN_prime_factors {p k : ℕ} (hp : p.Prime) (hk : k > 0) :
+      (N / p ^ k).divisors.card / ((N / p ^ k).natAbs) ^ ((1 : ℝ) / 3) < p ^ (-1 : ℝ) / 3 + (1 / 3) :=
+    calc
+      -- Show that the ratio of the number of divisors is at most $2 k + 1$.
+      (N / p ^ k).divisors.card / ((N / p ^ k).natAbs) ^ ((1 : ℝ) / 3)
+        ≤ (2 * k + 1) / ((N / p ^ k).natAbs) ^ ((1 : ℝ) / 3) := by
+          rw [Nat.card_divisors]
+          set m := N / p ^ k with hm
+          set q := p with hq
+          set d := k with hd
+          set s := Finset.range (d + 1) with hs
+          have hs' : (Finset.Ico 0 d).Nonempty := by
+            refine Finset.nonempty_Ico.mpr?_
+            exact Nat.zero_lt_of_ne_zero hk
+          rw [← Finset.card_prod (α := id) hs']
+          have (i : ℕ) (_ : i ∈ Finset.Ico 0 d) : m / q ^ i ∈ (m).divisors := by
+            simp
+            apply Nat.div_dvd_div_of_dvd
+            exact Nat.pow_dvd_pow q d
+            simp
+            exact Nat.Prime.dvd_pow_iff_dvd (Nat.prime_iff.mp hp) (by omega)
+          have (i : ℕ) (_ : i ∈ Finset.Ico 0 d) : (m / q ^ i).natAbs = m / q ^ i := by
+            rw [Nat.div_eq_iff_eq_mul_right]
+            exact Nat.pow_dvd_pow q d
+            simp
+            exact Nat.Prime.ne_zero hp
+          simp only [Nat.cast_div, Nat.cast_natAbs, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one,
+            id_eq, Set.mem_setOf_eq, forall_exists_index, and_imp]
+          with i hi1 hi2
+          simp only [Finset.mem_Ico] at hi1 hi2
+          apply Nat.le_of_dvd
+          · exact Nat.pos_div_of_dvd (Nat.Prime.pos hp) (Nat.pos_pow_of_pos k p)
+          · apply Nat.dvd_mul_left
+            simp only [Nat.cast_div, Nat.cast_natAbs, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one,
+              id_eq, Set.mem_setOf_eq, forall_exists_index, and_imp]
+            rw [← Nat.pow_div, Nat.le_div_iff_mul_le]
+            have : q ^ d ∣ m := by
+              exact Nat.dvd_trans (Nat.pow_dvd_pow q d) (Nat.pos_dvd_of_dvd (Nat.Prime.pos hp) (Nat.dvd_of_mem_divisors _))
+            apply Nat.mem_divisors.mpr
+            exact ⟨this, Nat.pos_div_of_dvd (Nat.Prime.pos hp) (Nat.pos_pow_of_pos k p)⟩
+            simp only [Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one, id_eq, Set.mem_setOf_eq,
+              forall_exists_index, and_imp]
+            rw [← Nat.pow_div, Nat.le_div_iff_mul_le]
+            · have : q ^ i ∣ m := by exact Nat.dvd_trans (Nat.pow_dvd_pow q i) (Nat.pos_dvd_of_dvd (Nat.Prime.pos hp) (Nat.dvd_of_mem_divisors _))
+              apply Nat.mem_divisors.mpr
+              exact ⟨this, Nat.pos_div_of_dvd (Nat.Prime.pos hp) (Nat.pos_pow_of_pos k p)⟩
+            · exact Nat.pow_dvd_pow q i
+            · exact Nat.pos_pow_of_pos i p
+            · exact Nat.pos_div_of_dvd (Nat.Prime.pos hp) (Nat.pos_pow_of_pos k p)
+          -- Let $n = q ^ d / m$, we have $f(n) = (2 d + 1) / (m / q ^ d) ^ {1 / 3}$.
+          have hw (i : ℕ) (_ : i ∈ Finset.Ico 0 d) : (m / q ^ i).natAbs / (N / p ^ k) ^ ((1 : ℝ) / 3) = q ^ (-1 : ℝ) / 3 * (2 * i + 1) := by
+            rw [abs_of_nonneg (by positivity), Nat.cast_div, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one, div_div_eq_div_mul]
+            norm_num
+            rw [mul_comm, ← mul_assoc, div_mul_cancel₀]
+            · simp [q, d]
+              suffices (2 * i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (i + 1) * (

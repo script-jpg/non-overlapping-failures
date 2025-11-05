@@ -1,0 +1,60 @@
+-- pretty clearly, the alternating sum is always odd, let's prove that before proving the whole sum is odd
+  have f {n : ℕ} (h : n > 0) : ∑ k in Finset.range n, Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) ≡ 1 [MOD 2] := by
+    induction n with
+    | zero => contradiction
+    | succ n ih =>
+      by_cases hn : n = 0
+      · simp [hn]
+      · have : ∃ k, n = k + 1 := by omega
+        rcases this with ⟨k, hk⟩
+        rw [hk, Finset.sum_range_succ, ih]
+        simp [Nat.choose]
+        ring_nf
+        have : k ≥ 1 := by omega
+        replace this : k + 1 ≥ 1 := by omega
+        replace this : k + 1 - 1 = k := by omega
+        rw [this]
+        suffices h : Odd (Nat.choose (2 * k + 1) 1 * 2 ^ (3 * k)) by exact Odd.add_odd_right this h
+        simp [Nat.choose]
+
+  have f' {n : ℕ} (h : n > 0) : ∑ k in Finset.range n, Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) + Nat.choose (2 * n + 1) (2 * n + 1) * 2 ^ (3 * n) ≡ 0 [MOD 2] := by
+    rw [Finset.sum_range_succ]
+    apply Nat.ModEq.add rfl
+    suffices h : Even (Nat.choose (2 * n + 1) (2 * n + 1) * 2 ^ (3 * n)) by exact even_iff_two_dvd.mp h
+    simp [Nat.choose]
+
+  -- and now the main one, the sum is always odd, even when n = 0
+  have f'' {n : ℕ} (h : n > 0) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) ≡ 1 [MOD 2] := by
+    by_cases hn : n = 0
+    · simp [hn]
+    · have : ∃ k, n = k + 1 := by omega
+      rcases this with ⟨k, hk⟩
+      have : k ≥ 0 := by omega
+      rw [hk, Finset.sum_range_succ, f' (by omega)]
+      simp
+      tauto
+
+  -- the sum is odd, therefore it cannot be divisible by 5, which implies the desired result
+  have f''' {n : ℕ} (h : n > 0) : ¬5 ∣ ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+    rw [Nat.not_dvd_iff_mod_ne_zero]
+    push_neg
+    by_contra h'
+    have : ∃ t : ℕ, ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = 5 * t := by
+      use (∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)) / 5
+      rw [Nat.div_mul_cancel]
+      exact h'
+    rcases this with ⟨t, ht⟩
+    have hdvd : 2 ∣ ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+      rw [ht]
+      exact Nat.dvd_mul t 5
+    have h'' := f'' (by omega)
+    rw [ht] at h''
+    have : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) ≡ 1 [MOD 2] := by exact h''
+    have : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) ≡ 0 [MOD 2] := by
+      rw [Nat.modEq_zero_iff_dvd]
+      exact hdvd
+    rw [Nat.ModEq] at this h''
+    omega
+  exact f''' (by omega)
+
+```

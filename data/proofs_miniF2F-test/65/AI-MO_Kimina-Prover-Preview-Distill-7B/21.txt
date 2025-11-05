@@ -1,0 +1,67 @@
+-- Just use log rules and simplify
+  have h1: Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) =
+      Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) := rfl
+  have h2: Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20) =
+      Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20) := rfl
+
+  calc
+    Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) -
+      Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20) = (Real.log 80 * Real.log 40) / (Real.log 2 * Real.log 2) -
+        (Real.log 160 * Real.log 20) / (Real.log 2 * Real.log 2) := by
+          simp only [div_eq_mul_inv, mul_div_assoc, ←mul_div_assoc, mul_inv_cancel_right₀]
+          rw [mul_div_mul_comm]
+          ring
+          -- Use the fact that log a ^ 2 = log a * log a
+          apply Real.log_mul_log
+          apply Real.log_mul_log
+          apply Real.log_pos
+          norm_num
+          apply Real.log_pos
+          norm_num
+          -- Use the fact that log 40 and log 20 are positive, because 40>1 and 20>1
+          apply Real.log_pos
+          norm_num
+          apply Real.log_pos
+          norm_num
+        -- Use the fact that log 80 and log 160 are positive, because 80>1 and 160>1
+    _ = (Real.log 80 * Real.log 40 - Real.log 160 * Real.log 20) / (Real.log 2 * Real.log 2) := by
+          ring
+    _ = (Real.log 80 * Real.log 40 - Real.log 160 * Real.log 20) / (Real.log 2 * Real.log 2) := by rfl
+    _ = 2 := by
+      -- Simplify the equation
+      have h3: Real.log 40 = Real.log (2^3 * 5) := by norm_num
+      have h4: Real.log 80 = Real.log (2^4 * 5) := by norm_num
+      have h5: Real.log 20 = Real.log (2^2 * 5) := by norm_num
+      have h6: Real.log 160 = Real.log (2^5 * 5) := by norm_num
+
+      -- Use the logarithm property: log (a * b) = log a + log b
+      rw [h3, h4, h5, h6]
+      simp only [Real.log_mul, Real.log_pow, Real.log_pow]
+      -- Use the fact that log 2 and log 5 are positive, because 2>1 and 5>1
+      have h7: Real.log 2 > 0 := by
+        apply Real.log_pos
+        norm_num
+      have h8: Real.log 5 > 0 := by
+        apply Real.log_pos
+        norm_num
+
+      -- Simplify the equation
+      rw [←mul_add, ←mul_add, ←mul_add]
+      -- Use the fact that log 2 * log 2 > 0
+      have h9: Real.log 2 * Real.log 2 > 0 := by
+        apply mul_pos
+        exact h7
+        exact h7
+      -- Simplify the equation
+      field_simp
+      ring
+      -- Some calculations
+      rw [←h7, ←h8, ←h7, ←h8, ←h7, ←h8, ←h7, ←h8]
+      norm_num
+      linarith
+      -- Use the fact that log 2 * log 2 > 0 again
+      apply mul_pos
+      exact h9
+      linarith
+
+```

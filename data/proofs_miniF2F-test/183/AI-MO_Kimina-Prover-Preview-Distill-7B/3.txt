@@ -1,0 +1,56 @@
+have hf (x) : f x = (x + 9) ^ 2 - 21 ^ 2 := by
+    calc
+      _ = x ^ 2 + (18 * x + 30) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by rw [h₀]
+      _ = x ^ 2 + (18 * x + 30) - 2 * Real.sqrt ((x + 9) ^ 2) := by norm_num; ring_nf
+      _ = x ^ 2 + (18 * x + 30) - 2 * (x + 9) := by simp [Real.sqrt_sq_eq_abs]; cases x + 9 with
+        | inl h => rw [abs_of_nonneg h]; ring
+        | inr h => rw [abs_of_nonpos h]; ring
+      _ = (x + 9) ^ 2 - 21 ^ 2 := by ring
+
+  -- Show that the roots of f are the roots of $(x + 9)^2 - 21^2 = 0$.
+  have h₂ : (f ⁻¹' {0}) = (fun x => (x + 9) ^ 2 - 21 ^ 2) ⁻¹' {0} := by
+    ext x
+    simp [h₀, hf]
+
+  -- Show that the roots of $(x + 9)^2 - 21^2 = 0$ are -30 and 12.
+  have h₃ : (fun x => (x + 9) ^ 2 - 21 ^ 2) ⁻¹' {0} = {-30, 12} := by
+    ext x
+    simp
+    constructor
+    · intro h
+      rw [sub_eq_zero] at h
+      have : (x + 9) ^ 2 = 21 ^ 2 := by
+        calc
+          _ = (x + 9) ^ 2 - 21 ^ 2 + 21 ^ 2 := by ring
+          _ = 0 + 21 ^ 2 := by rw [h]
+          _ = 21 ^ 2 := by ring
+      rw [sq_eq_sq_iff_abs_eq_abs, abs_eq_abs] at this
+      cases this with
+      | inl this =>
+        right
+        linarith
+      | inr this =>
+        left
+        linarith
+    · intro h
+      cases h with
+      | inl h =>
+        rw [h]
+        simp
+      | inr h =>
+        rw [h]
+        simp
+
+  -- Show that the product of the roots of f is 020.
+  rw [h₂, h₃, Fintype.prod_insert]
+  repeat rw [Fintype.prod_singleton]
+  norm_num
+
+  -- Show that -30 and 12 are indeed roots of f.
+  · rw [h₀]
+    simp
+    norm_num
+  · rw [h₀]
+    simp
+    norm_num
+```

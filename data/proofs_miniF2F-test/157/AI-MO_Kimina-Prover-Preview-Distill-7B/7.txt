@@ -1,0 +1,151 @@
+-- Prove that the solution set is {π/2, 3π/2}.
+  have h₁ : S = {Real.pi / 2, Real.pi * 3 / 2} := by
+    ext x
+    constructor
+    · -- First, prove that if x is in the solution set, then x = π/2 or x = 3π/2.
+      intro hx
+      rw [h₀] at hx
+      rcases hx with ⟨hx, hx₁, hx₂⟩
+      have hx₂ := hx₂
+      rw [h₀] at hx₂
+      simp at hx hx₂
+      rcases hx with ⟨hx, hx⟩
+      clear hx
+      have hpi : 0 < Real.pi := by
+        exact Real.pi_pos
+      have hsin : -1 ≤ Real.sin x ∧ Real.sin x ≤ 1 := by
+        exact And.intro (Real.neg_one_le_sin x) (Real.sin_le_one x)
+      have hcos : -1 ≤ Real.cos x ∧ Real.cos x ≤ 1 := by
+        exact And.intro (Real.neg_one_le_cos x) (Real.cos_le_one x)
+      have hsinpi : -Real.pi / 2 ≤ Real.pi / 2 * Real.sin x := by
+        nlinarith
+      have hsinpi' : Real.pi / 2 * Real.sin x ≤ Real.pi / 2 := by
+        nlinarith
+      have hcospi : -Real.pi / 2 ≤ Real.pi / 2 * Real.cos x := by
+        nlinarith
+      have hcospi' : Real.pi / 2 * Real.cos x ≤ Real.pi / 2 := by
+        nlinarith
+      have hsinalpha : -1 ≤ Real.sin (Real.pi / 2 * Real.cos x) ∧ Real.sin (Real.pi / 2 * Real.cos x) ≤ 1 := by
+        exact And.intro (Real.neg_one_le_sin (Real.pi / 2 * Real.cos x)) (Real.sin_le_one (Real.pi / 2 * Real.cos x))
+      have hsinalpha' : -1 ≤ Real.cos (Real.pi / 2 * Real.sin x) ∧ Real.cos (Real.pi / 2 * Real.sin x) ≤ 1 := by
+        exact And.intro (Real.neg_one_le_cos (Real.pi / 2 * Real.sin x)) (Real.cos_le_one (Real.pi / 2 * Real.sin x))
+      -- Let α = π/2 cos x and β = π/2 sin x.
+      let α := Real.pi / 2 * Real.cos x
+      let β := Real.pi / 2 * Real.sin x
+      -- From the problem, we have sin α = cos β.
+      have h : Real.sin α = Real.cos β := by
+        rw [show Real.sin α = Real.sin (Real.pi / 2 * Real.cos x) by rfl, show Real.cos β = Real.cos (Real.pi / 2 * Real.sin x) by rfl]
+        exact hx₂
+      -- We want to prove that x = π/2 or x = 3π/2, which is equivalent to proving that α = π/4 or β = -π/4.
+      suffices α = Real.pi / 4 ∨ β = -Real.pi / 4 by
+        rcases this with (h | h)
+        · left
+          rw [show Real.pi / 4 = Real.pi / 2 * 1 / 2 by ring]
+          nth_rewrite 1 [← h]
+          simp [α]
+          field_simp
+          rw [← hsin]
+          exact Real.sin_pi_div_four
+        · right
+          rw [show -Real.pi / 4 = -Real.pi / 2 * 1 / 2 by ring]
+          nth_rewrite 1 [← h]
+          simp [β]
+          field_simp
+          rw [← hcos]
+          show cos (-Real.pi / 4) = cos (Real.pi * 3 / 2)
+          -- We have cos (-π/4) = cos (2π - π/4) = cos (7π/4)
+          have (x : ℝ) : cos (2 * Real.pi - x) = cos x := by
+            have (x : ℝ) : 2 * Real.pi - x = (2 * Real.pi - x) := rfl
+            rw [this]
+            exact Real.cos_two_pi_sub x
+          rw [show Real.pi * 3 / 2 = 2 * Real.pi - Real.pi / 4 by ring, this]
+          exact Real.cos_pi_div_four
+      -- We have α = π/2 - β.
+      have h' : α + β = Real.pi / 2 := by
+        simp [α, β]
+        rw [show Real.pi / 2 * Real.cos x + Real.pi / 2 * Real.sin x = Real.pi / 2 * (Real.cos x + Real.sin x) by ring, mul_right_inj' (by linarith), Real.cos_sq_add_sin_sq x]
+        rw [show Real.pi / 2 * (Real.cos x + Real.sin x) = Real.pi / 2 * Real.cos x + Real.pi / 2 * Real.sin x by ring]
+      -- Let γ = α - β.
+      let γ := α - β
+      have hγ : γ = α + β - 2 * β := by
+        simp [γ]
+        ring
+      rw [h'] at hγ
+      have hγ : γ = Real.pi / 2 - 2 * β := by
+        exact hγ
+      have hγpos : 0 < γ := by
+        simp [γ]
+        linarith [hsin, hcos]
+      have hγlt : γ < Real.pi := by
+        simp [γ]
+        linarith [hsin, hcos]
+      have hsinγ : Real.sin γ = Real.sin α * Real.cos β - Real.cos α * Real.sin β := by
+        exact Real.sin_sub α β
+      have hsinγ' : Real.sin γ = 0 := by
+        rw [hsinγ, h]
+        simp [Real.cos_sq_add_sin_sq β]
+        nth_rewrite 1 [show Real.cos β ^ 2 = 1 - Real.sin β ^ 2 by linarith [Real.cos_sq_add_sin_sq β]]
+        rw [show Real.sin β ^ 2 = 1 - Real.cos β ^ 2 by linarith [Real.cos_sq_add_sin_sq β]]
+        ring
+      have hγeq : γ = 0 ∨ γ = Real.pi := by
+        have (x : ℝ) (hx : 0 ≤ x ∧ x ≤ Real.pi) (hxsin : Real.sin x = 0) : x = 0 ∨ x = Real.pi := by
+          rcases hx with ⟨hx, hx'⟩
+          have (n : ℕ) : (n : ℝ) = 0 ∨ (n : ℝ) = Real.pi := by
+            exact (Real.natCast_eq_zero_or_eq_pi_iff_of_sin_eq_zero hx hx').mp hxsin
+          have (n : ℕ) : (n : ℝ) = 0 ∨ (n : ℝ) = Real.pi := by
+            apply this
+            constructor
+            · exact (Nat.cast_nonneg n).mpr hx
+            · exact hx'
+          apply this
+          exact hxsin
+        have ⟨n, hn⟩ := Int.floor_eq_zero.mpr (Int.le_floor.mpr (by refine ⟨by linarith, by linarith [Real.pi_gt_three]⟩))
+        nth_rewrite 2 [← Int.cast_zero] at hn
+        rw [Int.cast_inj] at hn
+        have : (n : ℝ) = 0 ∨ (n : ℝ) = Real.pi := by
+          apply this
+          constructor
+          · exact Int.floor_nonneg.mpr hn
+          · exact Int.floor_le_of_lt (by linarith [Real.pi_gt_three])
+        rcases this with (h | h)
+        · rw [h]
+          simp
+        · rw [h]
+          exact Eq.symm (Real.pi_ne_zero)
+      have γne : γ ≠ 0 := by
+        simp [γ]
+        intro h
+        linarith [hsin, hcos]
+      have γne' : γ ≠ Real.pi := by
+        simp [γ]
+        intro h
+        linarith [hsin, hcos]
+      tauto
+    · -- Now, we prove that if x = π/2 or x = 3π/2, then it is a solution.
+      intro hx
+      rw [h₀]
+      simp at hx
+      constructor
+      · by_cases hx' : x = Real.pi / 2
+        · -- If x = π/2, then sin x = 1 and cos x = 0.
+          rw [hx']
+          simp
+        · -- If x = 3π/2, then sin x = -1 and cos x = 0.
+          rw [hx]
+          simp
+          ring
+      · by_cases hx' : x = Real.pi / 2
+        · -- If x = π/2, then sin x = 1 and cos x = 0.
+          rw [hx']
+          simp
+          ring
+        · -- If x = 3π/2, then sin x = -1 and cos x = 0.
+          rw [hx]
+          simp
+          ring
+
+  -- Now, we have the solution set S = {π/2, 3π/2}, so the answer is 2.
+  rw [h₁]
+  simp
+
+```

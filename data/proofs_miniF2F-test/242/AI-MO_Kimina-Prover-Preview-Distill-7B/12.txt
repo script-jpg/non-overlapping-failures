@@ -1,0 +1,104 @@
+have h₂ : 3 ∣ 4 + (n + 6) + (n + 8) := by
+    calc
+      3 ∣ n + 6 + (n + 8) := by
+        apply Nat.dvd_add
+        apply Nat.dvd_add
+        rwa[show 3 = 3 * 1 by norm_num]
+        exact h₁
+        apply Nat.dvd_add
+        rwa[show 3 = 3 * 1 by norm_num]
+        exact h₁
+      _ ∣ 4 + (n + 6) + (n + 8) := by exact Nat.dvd_add_left (3 * 1) (n + 6 + (n + 8))
+
+  calc
+    (n + 4 + (n + 6) + (n + 8)) % 9 = (9 + (n + 4 + (n + 6) + (n + 8) - 9)) % 9 := by
+      rw[Nat.add_sub_cancel]
+      have : 9 ≤ n + 4 + (n + 6) + (n + 8) := by
+        have : 9 ≤ 3 * n := by linarith
+        have : 3 * n ≤ n + 4 + (n + 6) + (n + 8) := by omega
+        exact Nat.le_trans this (show 9 ≤ 3 * n by linarith)
+      exact Nat.mod_eq_of_modEq_add_sub this rfl
+    _ = 9 % 9 + ((n + 4 + (n + 6) + (n + 8)) - 9) % 9 := by exact Nat.mod_add_mod (9 + (n + 4 + (n + 6) + (n + 8) - 9)) 9
+    _ = 0 + ((n + 4 + (n + 6) + (n + 8)) - 9) % 9 := by simp
+    _ = ((n + 4 + (n + 6) + (n + 8)) - 9) % 9 := by rw[add_zero]
+    _ = ((n + 4 + (n + 6) + (n + 8)) % 9 - 9 % 9) % 9 := by exact Nat.sub_mod_mod (n + 4 + (n + 6) + (n + 8)) 9 9
+    _ = ((n + 4 + (n + 6) + (n + 8)) % 9 - 0) % 9 := by simp
+    _ = ((n + 4 + (n + 6) + (n + 8)) % 9 - 0) % 9 := by simp
+    _ = (n + 4 + (n + 6) + (n + 8)) % 9 := by exact Nat.sub_mod_eq_sub_mod (n + 4 + (n + 6) + (n + 8)) 9 0
+
+  have : (n + 4 + (n + 6) + (n + 8)) % 9 = (4 + (n + 6) + (n + 8)) % 9 := by
+    calc
+      (n + 4 + (n + 6) + (n + 8)) % 9 = (3 * n + 18) % 9 := by
+        rw[add_assoc, add_assoc, Nat.add_sub_cancel, add_comm]
+        have : n + 4 = 3 * n + 1 := by omega
+        rw[this]
+        have : 3 * n + 1 + (n + 6) + (n + 8) = 3 * n + 1 + (3 * n + 6 + (n + 8)) := by
+          apply Nat.add_assoc
+          have : 6 = 3 * 2 := by norm_num
+          rw[this]
+          apply Nat.dvd_add_left
+          exact h₁
+        rw[this]
+        have : 3 * n + 1 + (3 * n + 6 + (n + 8)) = (3 * n + 1) + (3 * n + (n + 6) + (n + 8)) := by
+          apply Nat.add_assoc
+          apply Nat.dvd_add_left
+          exact h₁
+        rw[this]
+      _ = (3 * n + (18 + (n + 6) + (n + 8))) % 9 := by
+        rw[Nat.add_assoc, Nat.add_comm]
+        have : 18 = 3 * 6 := by norm_num
+        rw[this]
+        apply Nat.add_mul_left_cancel
+      _ = (3 * n + (3 * 6 + (n + 6) + (n + 8))) % 9 := by
+        rw[Nat.add_assoc]
+      _ = (3 * n + (3 * 6 + (3 * n + 6 + (n + 8)))) % 9 := by
+        rw[add_assoc, Nat.add_comm]
+        have : 6 = 3 * 2 := by norm_num
+        rw[this]
+        apply Nat.dvd_add_left
+        exact h₁
+      _ = (3 * n + (3 * (6 + n) + (n + 8))) % 9 := by
+        rw[Nat.add_assoc, Nat.add_comm]
+        apply Nat.add_left_cancel
+      _ = (3 * n + (3 * (6 + n) + (3 * n + 8))) % 9 := by
+        rw[add_assoc, Nat.add_comm]
+        apply Nat.dvd_add_left
+        exact h₁
+      _ = (3 * n + (3 * (n + 6) + (3 * n + 8))) % 9 := by
+        rw[Nat.add_assoc]
+      _ = (3 * n + (3 * (n + 6) + (3 * (n + 8))) % 9 := by
+        rw[add_assoc]
+        have : 8 = 3 * 2 + 2 := by norm_num
+        rw[this]
+        apply Nat.add_mul_left_cancel
+      _ = (4 + (n + 6) + (n + 8)) % 9 := by
+        rw[add_assoc, add_assoc, Nat.add_sub_cancel]
+        apply Nat.add_left_cancel
+        omega
+
+  rw[this]
+  have : (3 * (n + 6) + (3 * (n + 8))) % 9 = (3 * (n + 6) + (3 * (n + 8) % 9)) % 9 := by
+    exact Nat.mod_add_mod (3 * (n + 6) + (3 * (n + 8))) 9 9
+  rw[this]
+  have : (3 * (n + 8) % 9) = (3 * (n + 8 % 3) % 9) := by
+    repeat rw[Nat.mul_mod]
+  rw[this]
+  have : (n + 8 % 3) = (n + 2) := by
+    rw[show 8 % 3 = 2 by norm_num]
+  rw[this]
+  have : (3 * (n + 2) % 9) = (3 * (n + 2) % 9) := rfl
+  rw[this]
+  have : ∃ k_1, 9 = 3 * k_1 := by
+    use 3
+    norm_num
+  rcases this with ⟨k_1, hk_1⟩
+  rw[hk_1]
+  have : (3 * (n + 2) % (3 * k_1)) = (3 * (n + 2) % 3) % k_1 := by
+    exact Nat.mod_mul_right_mod_eq_mod_mul_mod (3 * (n + 2)) k_1 3
+  rw[this]
+  have : (3 * (n + 2) % 3) = 0 := by
+    apply Nat.modEq_zero_iff_dvd.mpr
+    exact Nat.dvd_mul_right 3 (n + 2)
+  rw[this]
+  simp
+```

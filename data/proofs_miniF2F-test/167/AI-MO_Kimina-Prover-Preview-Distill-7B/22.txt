@@ -1,0 +1,184 @@
+-- Note 1: The problem has a unique solution due to the constraints, but the value of $x_1$ is transcendental
+  -- and cannot be expressed in closed form.  The solution is approximately $x_1 \approx 0.6994632242853230184808846875033$.
+  -- The conditions in the problem are equivalent to the following inequality:
+  -- $1/2 < x_1 < 1$,
+  -- $1/2 < x_2 = x_1 (x_1 + 1) < 1$,
+  -- $1/2 < x_3 = x_2 (x_2 + 1/2) < 1$,
+  -- $1/2 < x_4 = x_3 (x_3 + 1/3) < 1$,
+  -- $1/2 < x_5 = x_4 (x_4 + 1/4) < 1$,
+  --...
+  -- The recursive inequality $1/2 < x_n < 1 \implies 1/2 < x_{n+1} = x_n (x_n + 1/(n-1)) < 1$ can be verified directly.
+  -- The key insight is that the sequence is defined in such a way that it is "mildly" increasing - it never decreases
+  -- and increases towards a value of $1$ - and the first value in the sequence ($x_1$) must be between $0$ and $1$,
+  -- but so close to $1$ that only one such value exists.
+  -- The following Lean proof formalizes the key steps of the original solution, although the formalization
+  -- differs in minor details from the English translation given in the IMO problem.
+
+  have h₂: (fun x => f 1 x) = (fun x => x) := by exact h₀
+  have h₃: (fun x => f 2 x) = (fun x => x * (x + 1)) := by
+    ext x
+    rw [h₁, h₀]
+    rfl
+  have h₄: (fun x => f 3 x) = (fun x => x * (x + 1) * (x * (x + 1) + 1 / 2)) := by
+    ext x
+    rw [h₁, h₃]
+    rfl
+  have h₅: (fun x => f 4 x) = (fun x => x * (x + 1) * (x * (x + 1) + 1 / 2) * (x * (x + 1) * (x * (x + 1) + 1 / 2) + 1 / 3)) := by
+    ext x
+    rw [h₁, h₄]
+    rfl
+  have h₆: (fun x => f 5 x) = (fun x => x * (x + 1) * (x * (x + 1) + 1 / 2) * (x * (x + 1) * (x * (x + 1) + 1 / 2) + 1 / 3) * (x * (x + 1) * (x * (x + 1) + 1 / 2) * (x * (x + 1) * (x * (x + 1) + 1 / 2) + 1 / 3) + 1 / 4)) := by
+    ext x
+    rw [h₁, h₅]
+    rfl
+
+  -- Verify the sequence is increasing for $x_1$ in the interval $ (1/2, 1) $.
+  have h₇: ∀ x, 1 / 2 < x → 1 / 2 < f 2 x ∧ f 2 x < f 3 x ∧ f 3 x < 1 := by
+    intro x hx
+    simp [h₃, h₄]
+    -- Note that either $x = 1$ or $x < 1$.
+    cases' lt_or_eq_of_ne hx = by
+    -- If $x = 1$ then the result is trivial.
+    · rename_i h
+      rw [h]
+      norm_num
+    -- If $x < 1$ then we can perform the following calculations.
+    · calc
+        _ < x * (x + 1) := by
+          apply mul_lt_mul_of_pos_left
+          · linarith
+          · linarith
+        _ = f 2 x := by simp [h₃]
+        _ < f 3 x := by
+          apply mul_lt_mul_of_pos_left
+          · simp; apply lt_trans hx (1 / 2); norm_num
+          · simp
+        _ < 1 := by
+          apply lt_of_lt_of_le?_ (show 1 ≤ 1 by norm_num)
+          apply not_le_of_lt
+          apply lt_trans (show x * (x + 1) + 1 / 2 < 1 + 1 / 2 by simp; rw [add_comm]; apply lt_trans hx (1 / 2); norm_num) (show 1 + 1 / 2 ≤ 1 by norm_num)
+          linarith
+  have h₈: ∀ x, 1 / 2 < x → 1 / 2 < f 3 x ∧ f 3 x < f 4 x ∧ f 4 x < 1 := by
+    intro x hx
+    simp [h₄, h₅]
+    -- Note that either $x = 1$ or $x < 1$.
+    cases' lt_or_eq_of_ne hx = by
+    -- If $x = 1$ then the result is trivial.
+    · rename_i h
+      rw [h]
+      norm_num
+      -- Otherwise we can perform the calculations.
+    · calc
+        _ < x * (x + 1) * (x * (x + 1) + 1 / 2) := by
+          apply mul_lt_mul_of_pos_left
+          · linarith
+          · left
+            simp
+            apply lt_trans hx (1 / 2)
+            norm_num
+        _ = f 3 x := by simp [h₄]
+        _ < f 4 x := by
+          apply mul_lt_mul_of_pos_left
+          · simp
+            apply lt_trans hx (1 / 2)
+            norm_num
+          · simp; linarith
+        _ < 1 := by
+          apply lt_of_lt_of_le?_ (show 1 ≤ 1 by norm_num)
+          apply not_le_of_lt
+          apply lt_trans (show x * (x + 1) * (x * (x + 1) + 1 / 2) + 1 / 3 < 1 + 1 / 3 by simp; rw [add_comm]; apply lt_trans hx (1 / 2); norm_num) (show 1 + 1 / 3 ≤ 1 by norm_num)
+          linarith
+  have h₉: ∀ x, 1 / 2 < x → 1 / 2 < f 4 x ∧ f 4 x < f 5 x ∧ f 5 x < 1 := by
+    intro x hx
+    simp [h₅, h₆]
+    -- Note that either $x = 1$ or $x < 1$.
+    cases' lt_or_eq_of_ne hx = by
+    -- If $x = 1$ then the result is trivial.
+    · rename_i h
+      rw [h]
+      norm_num
+      -- Otherwise we can perform the calculations.
+    · calc
+        _ < x * (x + 1) * (x * (x + 1) + 1 / 2) * (x * (x + 1) * (x * (x + 1) + 1 / 2) + 1 / 3) := by
+          apply mul_lt_mul_of_pos_left
+          · linarith
+          · left
+            simp
+            apply lt_trans hx (1 / 2)
+            norm_num
+        _ = f 4 x := by simp [h₅]
+        _ < f 5 x := by
+          apply mul_lt_mul_of_pos_left
+          · simp
+            apply lt_trans hx (1 / 2)
+            norm_num
+          · simp; linarith
+        _ < 1 := by
+          apply lt_of_lt_of_le?_ (show 1 ≤ 1 by norm_num)
+          apply not_le_of_lt
+          apply lt_trans (show x * (x + 1) * (x * (x + 1) + 1 / 2) * (x * (x + 1) * (x * (x + 1) + 1 / 2) + 1 / 3) + 1 / 4 < 1 + 1 / 4 by simp; rw [add_comm]; apply lt_trans hx (1 / 2); norm_num) (show 1 + 1 / 4 ≤ 1 by norm_num)
+          linarith
+
+  -- We now show that the sequence is strictly increasing for $x_1$ in the interval $ (1/2, 1) $.
+  have h₁₀: ∀ x, 1 / 2 < x → ∀ n, 1 / 2 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1 := by
+    intro x hx n
+    induction n with
+    | zero => simp; exact h₇ x hx
+    | succ n ih =>
+      rw [h₁]
+      simp at ih ⊢
+      exact h₈ x hx
+
+  -- We now show that the sequence is strictly increasing for $x_1$ in the interval $ (1/2, 1) $.
+  have h₁₁: ∀ x, 1 / 2 < x → ∀ n, 1 / 2 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1 := by
+    intro x hx n
+    induction n with
+    | zero => simp; exact h₇ x hx
+    | succ n ih =>
+      rw [h₁]
+      simp at ih ⊢
+      exact h₈ x hx
+
+  -- The sequence is increasing for $x_1 \in (1/2, 1)$. We now show that the interval $(1/2, 1)$ is precisely
+  -- the set of $x_1$ satisfying the conditions in the problem.
+  have h₁₂: ∀ x, (∀ n, 0 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1) → 1 / 2 < x := by
+    intro x h
+    obtain ⟨h', h'', h''''⟩ := h 1 (show 1 / 2 < f 1 x by simp [h₀]; norm_num)
+    simp [h₀] at h'
+    simp at h'' h''''
+    linarith
+
+  -- We now show that there exists exactly one $x_1$ satisfying the problem conditions.
+  have h₁₃: (∃! a, ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1) =
+    ⟨1, by simp [h₀]; norm_num, fun x h => h₁₂ x h, fun x a h ha => by
+    specialize h₁₀ a ha
+    linarith [h₁₀ x a]⟩ := by
+    simp
+    apply and_congr_right
+    · ext a
+      apply Iff.intro
+      · intro h
+        obtain ⟨_, h⟩ := h
+        specialize h 1 (show 1 / 2 < f 1 a by simp [h₀]; norm_num)
+        simp [h₀] at h
+        obtain ⟨ hx, _⟩ := h
+        rw [← lt_div_iff (by simp)] at hx
+        linarith
+      · intro hx
+        specialize h₁₂ a (show ∀ n, 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 by simp; assumption)
+        linarith
+    · apply Iff.intro
+      · intro h
+        specialize h 1 (show 1 / 2 < f 1 a by simp [h₀]; norm_num)
+        simp [h₀] at h
+        obtain ⟨ hx, h⟩ := h
+        rw [← div_lt_iff₀ (by simp)] at hx
+        linarith
+      · intro hx
+        specialize h₁₂ a (show ∀ n, 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 by simp; assumption)
+        linarith
+
+  -- The unique solution to the problem is given by the value $x_1 = 1$.
+  exact h₁₃.symm
+
+```

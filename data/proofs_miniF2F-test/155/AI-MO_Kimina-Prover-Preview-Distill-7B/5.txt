@@ -1,0 +1,100 @@
+-- We will prove that the solution set is $\{\pi/2,\frac{3\pi}{4},\pi,\frac{3\pi}{2},\frac{7\pi}{4}\}$.
+  suffices S = {Real.pi / 2, 3 * Real.pi / 4, Real.pi, 3 * Real.pi / 2, 7 * Real.pi / 4} by
+    rw [this, Finset.card_insert_of_not_mem, Finset.card_insert_of_not_mem, Finset.card_insert_of_not_mem,
+        Finset.card_insert_of_not_mem, Finset.card_singleton]
+    all_goals
+      rw [Real.pi_pos]
+      linarith
+
+  ext x
+  rw [h₀, Finset.mem_insert, Finset.mem_singleton]
+  -- Since both functions are periodic, we only need to find solutions on $[0,\pi]$.
+  have h₁ : x = Real.pi / 2 ∨ x = 3 * Real.pi / 4 ∨ x = Real.pi ∨ x = 3 * Real.pi / 2 ∨ x = 7 * Real.pi / 4 ∨ x ∈ ({x} : Finset ℝ) \ {Real.pi / 2, 3 * Real.pi / 4, Real.pi, 3 * Real.pi / 2, 7 * Real.pi / 4} := by
+    have h₁ : x ∈ Finset.Icc 0 (2 * Real.pi) := ⟨by linarith, by apply le_of_lt; linarith⟩
+    have h₂ : x ∈ Finset.Icc 0 (Real.pi) ∨ x ∈ Finset.Icc Real.pi (2 * Real.pi) := by
+      rw [Finset.mem_Icc, Finset.mem_Icc]
+      rcases h₁ with ⟨h₁, h₂⟩
+      by_cases h₃ : x ≤ Real.pi
+      · left; constructor <;> linarith
+      · right; constructor <;> linarith
+    rcases h₂ with h₂ | h₂
+    · have h₃ : x ∈ Finset.Icc 0 (Real.pi) := Finset.mem_Icc.mpr ⟨by linarith, by linarith⟩
+      have h₄ : x = Real.pi / 2 ∨ x = 3 * Real.pi / 4 ∨ x = Real.pi := by
+        decide
+      tauto
+    · have h₃ : x ∈ Finset.Icc Real.pi (2 * Real.pi) := Finset.mem_Icc.mpr ⟨by linarith, by linarith⟩
+      have h₄ : x = 3 * Real.pi / 2 ∨ x = 7 * Real.pi / 4 := by
+        decide
+      tauto
+
+  simp at h₁
+  constructor
+  · -- First, we verify that these values are actual solutions.
+    intro h
+    rcases h with h | h | h | h | h | h
+    · -- $x=\pi/2$
+      rw [h, Real.tan_pi_div_two, Real.cos_pi_div_four, Real.cos_pi_div_two]
+      norm_num
+    · -- $x=3\pi/4$
+      rw [h, Real.tan_three_pi_div_four, Real.cos_three_pi_div_eight, Real.cos_pi_div_four]
+      field_simp
+      ring_nf
+      rw [Real.sqrt_sq, Real.pi_pos]
+      linarith
+    · -- $x=\pi$
+      rw [h, Real.tan_pi_div_two, Real.cos_pi_div_two]
+      norm_num
+    · -- $x=3\pi/2$
+      rw [h, Real.tan_three_pi_div_four, Real.cos_three_pi_div_two, Real.cos_pi_div_two]
+      norm_num
+    · -- $x=7\pi/4$
+      rw [h, Real.tan_three_pi_div_four, Real.cos_seven_pi_div_eight, Real.cos_pi_div_four]
+      field_simp
+      ring_nf
+      rw [Real.sqrt_sq, Real.pi_pos]
+      linarith
+    · -- $x\neq\pi/2,3\pi/4,\pi,3\pi/2,7\pi/4$
+      exfalso
+      obtain ⟨h, h₀, h₁, h₂, h₃⟩ := h₁
+      interval_cases x <;> try tauto
+
+  · -- Now, we verify that each solution is in $[0,2\pi]$.
+    intro h
+    rcases h with h | h | h | h | h | h
+    · rw [h]
+      constructor
+      · exact ⟨by linarith, by apply le_of_lt; linarith⟩
+      · rw [Real.pi_pos]
+        linarith
+    · rw [h]
+      constructor
+      · exact ⟨by linarith, by apply le_of_lt; linarith⟩
+      · have h₃ : Real.pi > 0 := Real.pi_pos
+        calc
+          Real.cos (Real.pi / 2 / 2) = Real.cos (Real.pi / 4) := by ring_nf
+          _ > 0 := by apply Real.cos_pos_of_mem_Ioo; constructor <;> linarith
+    · rw [h]
+      constructor
+      · exact ⟨by linarith, by linarith⟩
+      · rw [Real.pi_pos]
+        linarith
+    · rw [h]
+      constructor
+      · exact ⟨by linarith, by apply le_of_lt; linarith⟩
+      · rw [Real.pi_pos]
+        linarith
+    · rw [h]
+      constructor
+      · exact ⟨by linarith, by apply le_of_lt; linarith⟩
+      · have h₃ : Real.pi > 0 := Real.pi_pos
+        calc
+          Real.cos (3 * Real.pi / 2 / 2) = Real.cos (3 / 4 * Real.pi) := by ring_nf
+          _ > 0 := by apply Real.cos_pos_of_mem_Ioo; constructor <;> linarith
+    · rw [h]
+      constructor
+      · exact ⟨by linarith, by apply le_of_lt; linarith⟩
+      · have h₃ : Real.pi > 0 := Real.pi_pos
+        calc
+          Real.cos (7 * Real.pi / 4 / 2) = Real.cos (7 / 8 * Real.pi) := by ring_nf
+          _ > 0 := by apply Real.cos_pos_of_mem_Ioo; constructor <;> linarith
+```

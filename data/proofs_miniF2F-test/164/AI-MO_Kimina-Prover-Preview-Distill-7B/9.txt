@@ -1,0 +1,51 @@
+-- let's set up the basic framework for the solution
+  rcases h₀ with ⟨hx, hy⟩
+  have h₃ : x > 0 := by positivity
+  have h₄ : y > 0 := by positivity
+  have h₅ : Real.log x ≠ 0 := by
+    apply Real.log_ne_zero_of_pos_of_ne_one <;> (try norm_num) <;> linarith
+  have h₆ : Real.log y ≠ 0 := by
+    apply Real.log_ne_zero_of_pos_of_ne_one <;> (try norm_num) <;> linarith
+
+  -- auxiliary: we will need some basic manipulations of logs
+  have h₇ : Real.log 16 = 4 * Real.log 2 := by
+    rw [show (16 : ℝ) = 2 ^ 4 by norm_num]
+    simp [Real.log_pow]
+  have h₈ : Real.log (x / y) = Real.log x - Real.log y := by
+    rw [Real.log_div h₃ h₄]
+
+  -- turn the logarithm equation into an exponent equation: x^y = 16^x
+  have h₉ : x ^ Real.log y = 16 ^ Real.log x := by
+    apply_fun (Real.log ·) at h₁
+    convert h₁ using 1
+    rw [div_eq_iff (by rw [Real.log_two]; positivity), h₇]
+    apply Real.log_injOn_pos
+    all_goals
+      try simp
+      try positivity
+    apply Or.inl
+    rw [Real.log_ne_zero_of_pos_of_ne_one]
+    all_goals try linarith
+
+  -- factor out x^y from x^y * y^y = 16^x * y^y = (16y)^x
+  have h₁₀ : (x ^ Real.log y) * (y ^ Real.log y) = (16 ^ x) * (y ^ Real.log y) := by
+    rw [h₉]
+  replace h₁₀ : (x * y) ^ Real.log y = (16 ^ x) * (y ^ Real.log y) := by
+    rw [← Real.mul_rpow h₃ h₄]
+    exact h₁₀
+  replace h₁₀ : (x * y) ^ Real.log y = ((16 * y) ^ Real.log x) := by
+    rw [← Real.rpow_mul (by linarith), h₉]
+    rw [mul_pow, ← Real.rpow_mul (by positivity), mul_comm, ← Real.rpow_mul (by positivity)]
+
+  -- if a^b = c^b, then either a = c or b = 0 (logarithm is injective)
+  apply_fun (Real.log ·) at h₁₀
+  convert h₁₀ using 1
+  rw [Real.log_rpow_eq_mul_log_of_pos (by positivity), Real.log_rpow_eq_mul_log_of_pos (by positivity)]
+  simp
+  rw [h₈, add_comm, ← sub_eq_add_neg]
+  have : Real.log y ≠ Real.log x := by
+    intro h
+    rw [h] at h₉
+    simp [h₃, h₄] at h₉
+  exact ⟨by linarith, by linarith⟩
+```

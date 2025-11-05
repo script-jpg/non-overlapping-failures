@@ -1,0 +1,82 @@
+-- 2 ^ 1 - 1 = 1, which is not prime.
+  have h1 : 1 < n := by
+    by_contra! hneg
+    have : 2 ^ n - 1 = 1 := by
+      simp only [hneg, Nat.pow_one, Nat.sub_self]
+    rw [this] at h₁
+    exact Nat.not_prime_one h₁
+
+  -- Assume that $n$ is not prime.
+  by_contra! hcom
+  rw [Nat.not_prime_iff_exists_dvd_lt (by linarith)] at hcom
+
+  -- Let $n = a \cdot b$ where $1 < a < n$ and $1 < b < n$.
+  obtain ⟨a, b, hab⟩ := hcom
+  rw [hab] at h₁
+
+  -- By the properties of the power, we have $2^{a \cdot b} - 1 = (2^a - 1)(2^{a \cdot (b - 1)} + 2^{a \cdot (b - 2)} + \cdots + 2^a + 1)$.
+  have h2 : 2 ^ (a * b) - 1 = (2 ^ a - 1) * (2 ^ (a * (b - 1)) + 2 ^ (a * (b - 2)) + ∑ k in Finset.range a, 2 ^ (a * (b - 1) - k)) := by
+    rw [pow_mul]
+    have : 2 ^ a - 1 ∣ 2 ^ (a * b) - 1 := by
+      rw [← Nat.modEq_iff_dvd']
+      have : 2 ^ (a * b) % (2 ^ a - 1) = 1 := by
+        rw [Nat.pow_mod]
+        simp only [Nat.reduceSub, Nat.one_mod, Nat.zero_add, Finset.univ_sum_range_succ, pow_zero]
+        rw [Finset.sum_range_succ]
+        simp only [Nat.add_sub_cancel_right]
+        rw [Nat.mul_sub, pow_mul]
+        simp only [Nat.one_mod, Nat.succ_mul, Nat.reduceSub, Nat.mul_one, add_zero, pow_zero]
+        apply Nat.dvd_mul_right
+      apply Nat.modEq_iff_dvd'
+      simp only [this, Nat.sub_add_cancel, Nat.one_mod, Nat zero_add, Finset.univ_sum_range_succ, pow_zero, mul_one]
+      rw [Finset.sum_range_succ]
+      simp only [Nat.add_sub_cancel_right]
+      rw [Nat.mul_sub, pow_mul]
+      simp only [Nat.one_mod, Nat.succ_mul, Nat.reduceSub, Nat.mul_one, add_zero, pow_zero]
+      apply Nat.dvd_mul_right
+    rcases this with ⟨k, hk⟩
+    use k
+    rw [← hk]
+    ring
+
+  -- Since $2 ^ {a \cdot b} - 1 = (2^a - 1) \cdot m$, we have $2 ^ a - 1 \mid 2 ^ {a \cdot b} - 1$.
+  have h3 : 2 ^ a - 1 ∣ 2 ^ (a * b) - 1 := by
+    rw [h2]
+    apply Nat.dvd_mul_right
+
+  -- Since $2 ^ a - 1 \mid 2 ^ {a \cdot b} - 1$ and $2 ^ {a \cdot b} - 1$ is prime, we have $2 ^ a - 1 = 1$ or $2 ^ a - 1 = 2 ^ {a \cdot b} - 1$.
+  have h4 : 2 ^ a - 1 = 1 ∨ 2 ^ a - 1 = 2 ^ (a * b) - 1 := by
+    refine (Nat.dvd_prime h₁).mp h3
+
+  -- $2 ^ a - 1 = 1$ is impossible.
+  have h5 : 2 ^ a - 1 ≠ 1 := by
+    by_contra! heq
+    have : a = 1 := by
+      by_contra!
+      have : 2 ^ a ≥ 2 := by
+        exact Nat.le_self_pow (by norm_num) this
+      linarith
+    rw [this] at hab
+    have : b = 1 := by
+      linarith
+    rw [this] at hab
+    linarith
+
+  -- Therefore, $2 ^ a - 1 = 2 ^ {a \cdot b} - 1$.
+  have h6 : 2 ^ a - 1 = 2 ^ (a * b) - 1 := by
+    cases h4 with
+    | inl h7 => exfalso; exact h5 h7
+    | inr h8 => exact h8
+
+  -- Then, $a \cdot b = a$.
+  have h7 : a * b = a := by
+    apply Nat.pow_right_injective (by linarith) (by rw [h6]; linarith)
+
+  -- $a \cdot b = a$ is impossible.
+  have h8 : b = 1 := by
+    nlinarith
+
+  -- It is a contradiction.
+  rw [h8] at hab
+  linarith
+```

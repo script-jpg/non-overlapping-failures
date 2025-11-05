@@ -1,0 +1,78 @@
+-- We need to count the numbers between 1000 and 9999 (inclusive) with all even digits that are divisible by 5.
+  have h₁ : S = {n | 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ 5 ∣ n} := by
+    ext n
+    simp [h₀]
+
+  -- Notice that if a number ends in 0 or 5, then it is divisible by 5. Since we only have even digits, we can only end in 0.
+  have h₂ (n : ℕ) : (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ 5 ∣ n ↔ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ n % 10 = 0 := by
+    constructor
+    · intro ⟨h₁, h₂⟩
+      refine ⟨h₁,?_⟩
+      have h : n % 10 = 0 ∨ n % 10 = 5 := by
+        omega
+      rcases h with (h | h)
+      · exact h
+      · exfalso
+        have h : ¬Even 5 := by decide
+        exact h h
+    · intro ⟨h₁, h₂⟩
+      exact ⟨h₁, (by omega)⟩
+
+  -- Define a bijection between two sets: one of the form 1000 ≤ n ≤ 9999 with all even digits and ending in 0, and the other the whole set.
+  let φ : {n | 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ n % 10 = 0} → S := fun n ↦ n
+
+  -- Show that the function is indeed a bijection.
+  have h₃ : Set.InjOn φ {n | 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ n % 10 = 0} := by
+    intro n hn m hm h₄
+    exact h₄
+  have h₄ : φ.Injective := by
+    intro n m h₅ h₆ h₇
+    exact h₅
+  have h₅ : φ.image {n | 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ n % 10 = 0} = S := by
+    ext n
+    simp [φ]
+    constructor
+    · intro hn
+      have hn' : 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ 5 ∣ n := by
+        obtain ⟨hn₁, hn₂, hneven, hn5⟩ := hn
+        exact ⟨hn₁, hn₂, hneven, by omega⟩
+      exact hn'
+    · intro hn
+      obtain ⟨hn₁, hn₂, hneven, hn5⟩ := hn
+      have hn' : 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ n % 10 = 0 := by
+        refine ⟨hn₁, hn₂, hneven,?_⟩
+        omega
+      exact hn'
+
+  -- Show that the two sets have the same cardinality.
+  have h₆ : {n | 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ n % 10 = 0}.card = S.card := by
+    apply Set.ncard_congr (fun n _ ↦ φ n)
+    · exact h₃
+    · simp [h₄, h₅]
+
+  -- Now we have reduced the problem to counting the numbers between 1000 and 9999 with all even digits ending in 0.
+  have h₇ : {n | 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ n % 10 = 0} = Finset.filter (fun n ↦ 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ n % 10 = 0) (Finset.Icc 0 9999) := by
+    ext n
+    simp
+    omega
+
+  -- We can count the numbers directly.
+  have h₈ : (Finset.filter (fun n ↦ 1000 ≤ n ∧ n ≤ 9999 ∧ (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ n % 10 = 0) (Finset.Icc 0 9999)).card = 100 := by
+    simp
+    have h₉ : (Finset.Icc 0 9999) = (Finset.Icc 0 9) ×ˢ (Finset.Icc 0 9) ×ˢ (Finset.Icc 0 9) ×ˢ (Finset.Icc 0 9) := by
+      ext x
+      simp
+      constructor
+      · intro ⟨a, b, c, d⟩
+        omega
+      · intro ⟨a, b, c, d⟩
+        omega
+    rw [h₉]
+    simp [Finset.filter]
+    rfl
+
+  rw [h₁] at h₆
+  rw [h₆.symm]
+  rw [h₇]
+  simp [h₈]
+```

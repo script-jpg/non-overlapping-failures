@@ -1,0 +1,168 @@
+-- auxiliary lemma : for positive real number x,y, we have √(xy) ≤ 1/2 (x+y)
+  have auxle {x y : ℝ} (hx : 0 < x) (hy : 0 < y) : Real.sqrt (x * y) ≤ 1 / 2 * (x + y) := by
+    have : 0 ≤ (1 / 2 * (x + y)) ^ 2 := by positivity
+    rw [Real.sq_sqrt (by positivity)] at this
+    rw [← mul_pow, sq_le_sq₀ (by positivity) (by positivity)] at this
+    nth_rw 2 [← mul_one (x*y)] at this
+    rw [mul_assoc, mul_assoc] at this
+    rw [← add_mul, ← sub_mul, mul_nonneg (by linarith) (by linarith)] at this
+    rw [← sq_sub_sq (by linarith) (by linarith)] at this
+    exact this
+
+  have : 0 < a + b := by linarith
+  have : 0 < b + c := by linarith
+  have : 0 < c + a := by linarith
+
+  -- Apply the lemma to $a^2$ and $b^2$, we get $ab \leq \frac{1}{2}\left(a^2 + b^2\right)$
+  have aux₁ : a * b ≤ 1 / 2 * (a ^ 2 + b ^ 2) := by
+    convert auxle (by linarith) (by linarith)
+    ring
+
+  -- Apply the lemma to $b^2$ and $c^2$, we get $bc \leq \frac{1}{2}\left(b^2 + c^2\right)$
+  have aux₂ : b * c ≤ 1 / 2 * (b ^ 2 + c ^ 2) := by
+    convert auxle (by linarith) (by linarith)
+    ring
+
+  -- Apply the lemma to $c^2$ and $a^2$, we get $ca \leq \frac{1}{2}\left(c^2 + a^2\right)$
+  have aux₃ : c * a ≤ 1 / 2 * (c ^ 2 + a ^ 2) := by
+    convert auxle (by linarith) (by linarith)
+    ring
+
+  -- Hence, $ab + bc + ca \leq \frac{1}{2}\left(a^2 + b^2 + b^2 + c^2 + c^2 + a^2\right) = a^2 + b^2 + c^2$
+  have aux₄ : a * b + b * c + c * a ≤ a ^ 2 + b ^ 2 + c ^ 2 := by linarith
+
+  -- For positive real numbers x,y we have $\frac{xy}{z} \leq \frac{1}{2}\left(\frac{x^2}{z} + \frac{y^2}{z}\right)$
+  have aux₅ {x y z : ℝ} (hz : 0 < z) : x * y / z ≤ 1 / 2 * (x ^ 2 / z + y ^ 2 / z) := by
+    convert auxle (by positivity) (by positivity)
+    field_simp
+
+  -- Apply this to $a^2$ and $b^2$, we get $\frac{a^2b^2}{a^2+b^2} \leq \frac{1}{2}\left(\frac{a^4}{a^2+b^2} + \frac{b^4}{a^2+b^2}\right)$
+  have aux₆ : a ^ 2 * b ^ 2 / (a ^ 2 + b ^ 2) ≤ 1 / 2 * (a ^ 4 / (a ^ 2 + b ^ 2) + b ^ 4 / (a ^ 2 + b ^ 2)) := by
+    convert aux₅ (by positivity)
+    ring
+
+  -- Apply this to $b^2$ and $c^2$, we get $\frac{b^2c^2}{b^2+c^2} \leq \frac{1}{2}\left(\frac{b^4}{b^2+c^2} + \frac{c^4}{b^2+c^2}\right)$
+  have aux₇ : b ^ 2 * c ^ 2 / (b ^ 2 + c ^ 2) ≤ 1 / 2 * (b ^ 4 / (b ^ 2 + c ^ 2) + c ^ 4 / (b ^ 2 + c ^ 2)) := by
+    convert aux₅ (by positivity)
+    ring
+
+  -- Apply this to $c^2$ and $a^2$, we get $\frac{c^2a^2}{c^2+a^2} \leq \frac{1}{2}\left(\frac{c^4}{c^2+a^2} + \frac{a^4}{c^2+a^2}\right)$
+  have aux₈ : c ^ 2 * a ^ 2 / (c ^ 2 + a ^ 2) ≤ 1 / 2 * (c ^ 4 / (c ^ 2 + a ^ 2) + a ^ 4 / (c ^ 2 + a ^ 2)) := by
+    convert aux₅ (by positivity)
+    ring
+
+  -- Then, we get
+  -- $\begin{aligned} \frac{a}{\sqrt{a+b}} + \frac{b}{\sqrt{b+c}} + \frac{c}{\sqrt{c+a}} & ≥ \frac{ab}{\sqrt{ab(a^2+b^2)}} + \frac{bc}{\sqrt{bc(b^2+c^2)}} + \frac{ca}{\sqrt{ca(c^2+a^2)}} \\ & ≥ \frac{ab}{\sqrt{2(a^2+b^2)}} + \frac{bc}{\sqrt{2(b^2+c^2)}} + \frac{ca}{\sqrt{2(c^2+a^2)}} \\ & ≥ \frac{ab}{\sqrt{2(a^2+b^2)}} + \frac{bc}{\sqrt{2(b^2+c^2)}} + \frac{ca}{\sqrt{2(c^2+a^2)}} \\ & ≥ \frac{\sqrt{ab}}{\sqrt{2}} + \frac{\sqrt{bc}}{\sqrt{2}} + \frac{\sqrt{ca}}{\sqrt{2}} \\ & = \frac{\sqrt{ab} + \sqrt{bc} + \sqrt{ca}}{\sqrt{2}} \end{aligned}$
+  have : 3 * √2 / 2 * (a / √(a + b) + b / √(b + c) + c / √(c + a)) ≥ 3 * √2 / 2 * (a ^ 2 / √(a ^ 2 + b ^ 2) + b ^ 2 / √(b ^ 2 + c ^ 2) + c ^ 2 / √(c ^ 2 + a ^ 2)) := by
+    apply mul_le_mul_of_nonneg_left
+    · -- $3 \sqrt{2} / 2 > 0$
+      positivity
+    · -- $\frac{a}{\sqrt{a+b}} + \frac{b}{\sqrt{b+c}} + \frac{c}{\sqrt{c+a}} ≥ \frac{a^2}{\sqrt{a^2+b^2}} + \frac{b^2}{\sqrt{b^2+c^2}} + \frac{c^2}{\sqrt{c^2+a^2}}$
+      apply mul_le_mul_of_nonneg_left
+      · -- $\frac{a}{\sqrt{a+b}} ≥ \frac{a^2}{\sqrt{a^2+b^2}}$
+        apply div_le_div_of_nonneg_left
+        · -- $a \sqrt{a^2 + b^2} ≥ a^2 \sqrt{a+b}$
+          apply mul_le_mul_of_nonneg_left
+          · -- $a \sqrt{a^2 + b^2} ≥ a \sqrt{2ab} = \sqrt{a^2 \cdot 2ab} = \sqrt{2a^3b}$
+            apply (mul_le_mul_left (by positivity)).mpr
+            rw [show (a * Real.sqrt (a ^ 2 + b ^ 2)) ^ 2 = a ^ 2 * (a ^ 2 + b ^ 2) by field_simp; ring, show (a ^ 2 * Real.sqrt (2 * a * b)) ^ 2 = a ^ 4 * (2 * a * b) by field_simp; ring]
+            have : a ^ 2 + b ^ 2 ≥ 2 * a * b := by
+              calc
+                _ = (a - b) ^ 2 := by ring
+                _ ≥ 0 := by positivity
+            convert sq_le_sq₀ (by positivity) (by positivity) this
+            ring
+          · -- $\sqrt{a^2 \cdot 2ab} ≥ a^2$
+            rw [show (a ^ 2 * Real.sqrt (2 * a * b)) ^ 2 = a ^ 4 * (2 * a * b) by field_simp; ring]
+            have : (a ^ 2) ^ 2 ≤ 2 * a * b := by
+              calc
+                _ = (a ^ 2 - b) ^ 2 := by ring
+                _ ≥ 0 := by positivity
+            convert sq_le_sq₀ (by positivity) (by positivity) this
+            ring
+        · -- $\sqrt{a^2 + b^2} ≥ \sqrt{a+b}$
+          apply Real.sqrt_le_sqrt
+          positivity
+      · -- $\frac{b}{\sqrt{b+c}} ≥ \frac{b^2}{\sqrt{b^2+c^2}}$
+        apply div_le_div_of_nonneg_left
+        · -- $b \sqrt{b^2 + c^2} ≥ b^2 \sqrt{b+c}$
+          apply mul_le_mul_of_nonneg_left
+          · -- $b \sqrt{b^2 + c^2} ≥ b \sqrt{2bc} = \sqrt{b^3c \cdot 2b} = \sqrt{2b^4c}$
+            apply (mul_le_mul_left (by positivity)).mpr
+            rw [show (b * Real.sqrt (b ^ 2 + c ^ 2)) ^ 2 = b ^ 2 * (b ^ 2 + c ^ 2) by field_simp; ring, show (b ^ 2 * Real.sqrt (2 * b * c)) ^ 2 = b ^ 4 * (2 * b * c) by field_simp; ring]
+            have : b ^ 2 + c ^ 2 ≥ 2 * b * c := by
+              calc
+                _ = (b - c) ^ 2 := by ring
+                _ ≥ 0 := by positivity
+            convert sq_le_sq₀ (by positivity) (by positivity) this
+            ring
+          · -- $\sqrt{b^4 \cdot 2bc} ≥ b^2$
+            rw [show (b ^ 2 * Real.sqrt (2 * b * c)) ^ 2 = b ^ 4 * (2 * b * c) by field_simp; ring]
+            have : (b ^ 2) ^ 2 ≤ 2 * b * c := by
+              calc
+                _ = (b ^ 2 - c) ^ 2 := by ring
+                _ ≥ 0 := by positivity
+            convert sq_le_sq₀ (by positivity) (by positivity) this
+            ring
+        · -- $\sqrt{b^2 + c^2} ≥ \sqrt{b+c}$
+          apply Real.sqrt_le_sqrt
+          positivity
+      · -- $\frac{c}{\sqrt{c+a}} ≥ \frac{c^2}{\sqrt{c^2+a^2}}$
+        apply div_le_div_of_nonneg_left
+        · -- $c \sqrt{c^2 + a^2} ≥ c^2 \sqrt{c+a}$
+          apply mul_le_mul_of_nonneg_left
+          · -- $c \sqrt{c^2 + a^2} ≥ c \sqrt{2ca} = \sqrt{c^3a \cdot 2c} = \sqrt{2c^4a}$
+            apply (mul_le_mul_left (by positivity)).mpr
+            rw [show (c * Real.sqrt (c ^ 2 + a ^ 2)) ^ 2 = c ^ 2 * (c ^ 2 + a ^ 2) by field_simp; ring, show (c ^ 2 * Real.sqrt (2 * c * a)) ^ 2 = c ^ 4 * (2 * c * a) by field_simp; ring]
+            have : c ^ 2 + a ^ 2 ≥ 2 * c * a := by
+              calc
+                _ = (c - a) ^ 2 := by ring
+                _ ≥ 0 := by positivity
+            convert sq_le_sq₀ (by positivity) (by positivity) this
+            ring
+          · -- $\sqrt{c^4 \cdot 2ca} ≥ c^2$
+            rw [show (c ^ 2 * Real.sqrt (2 * c * a)) ^ 2 = c ^ 4 * (2 * c * a) by field_simp; ring]
+            have : (c ^ 2) ^ 2 ≤ 2 * c * a := by
+              calc
+                _ = (c ^ 2 - a) ^ 2 := by ring
+                _ ≥ 0 := by positivity
+            convert sq_le_sq₀ (by positivity) (by positivity) this
+            ring
+        · -- $\sqrt{c^2 + a^2} ≥ \sqrt{c+a}$
+          apply Real.sqrt_le_sqrt
+          positivity
+    · -- $\frac{a^2}{\sqrt{2(a^2+b^2)}} + \frac{b^2}{\sqrt{2(b^2+c^2)}} + \frac{c^2}{\sqrt{2(c^2+a^2)}} ≥ \frac{\sqrt{2a^2b^2}}{\sqrt{2(a^2+b^2)}} + \frac{\sqrt{2b^2c^2}}{\sqrt{2(b^2+c^2)}} + \frac{\sqrt{2c^2a^2}}{\sqrt{2(c^2+a^2)}}$
+      apply mul_le_mul_of_nonneg_left
+      · -- $\frac{a^2}{\sqrt{2(a^2+b^2)}} ≥ \frac{\sqrt{2a^2b^2}}{\sqrt{2(a^2+b^2)}}$
+        apply div_le_div_of_nonneg_left
+        · -- $a^2 \sqrt{2(a^2+b^2)} ≥ \sqrt{2} \sqrt{a^2 \cdot a^2b^2} = \sqrt{2} \cdot a \sqrt{a^2b^2}$
+          apply (mul_le_mul_left (by positivity)).mpr
+          rw [show (a ^ 2 * Real.sqrt (2 * (a ^ 2 + b ^ 2))) ^ 2 = a ^ 4 * 2 * (a ^ 2 + b ^ 2) by field_simp; ring, show (√2 * a * Real.sqrt (a ^ 2 * b ^ 2)) ^ 2 = 2 * a ^ 2 * (a ^ 2 * b ^ 2) by field_simp; ring]
+          rw [show a ^ 4 * 2 * (a ^ 2 + b ^ 2) - 2 * a ^ 2 * (a ^ 2 * b ^ 2) = 2 * a ^ 2 * (a ^ 2 + b ^ 2 - a ^ 2 * b ^ 2) by ring]
+          have : a ^ 2 + b ^ 2 ≥ a ^ 2 * b ^ 2 := by
+            calc
+              _ = a ^ 2 + b ^ 2 - a ^ 2 * b ^ 2 + a ^ 2 * b ^ 2 := by ring
+              _ ≥ 0 + a ^ 2 * b ^ 2 := by
+                apply add_le_add
+                · -- $a^2 + b^2 - a^2 * b^2 = a^2(1 - b^2) + b^2 ≥ 0 + b^2$
+                  calc
+                    _ = a ^ 2 * (1 - b ^ 2) + b ^ 2 := by ring
+                    _ ≥ 0 + b ^ 2 := by
+                      apply add_le_add
+                      · -- $a^2(1-b^2) ≥ 0$
+                        apply mul_nonneg (by positivity) (by nlinarith)
+                      · -- $b^2 ≥ 0$
+                        positivity
+                · -- $a^2 * b^2 ≥ 0$
+                  positivity
+              _ = a ^ 2 * b ^ 2 := by ring
+          convert sq_le_sq₀ (by positivity) (by positivity) this
+          ring
+        · -- $\sqrt{2} \sqrt{a^2 \cdot a^2b^2} = \sqrt{2} \cdot a \sqrt{a^2b^2}$
+          rw [show √2 * a * Real.sqrt (a ^ 2 * b ^ 2) = a * √2 * Real.sqrt (a ^ 2 * b ^ 2) by ring]
+          rw [mul_comm]
+          nth_rw 2 [mul_assoc]
+          rw [show (a * Real.sqrt (a ^ 2 * b ^ 2)) ^ 2 = a ^ 2 * (a ^ 2 * b ^ 2) by field_simp; ring]
+          rw [show a ^ 2 * (a ^ 2 * b ^ 2) = a ^ 4 * b ^ 2 by ring]
+          have : a ^ 2 * b ^ 2 ≥ 0 := by positivity
+          rw [show a ^ 4 * b ^ 2 = (a ^ 2 * b ^ 1) ^ 2

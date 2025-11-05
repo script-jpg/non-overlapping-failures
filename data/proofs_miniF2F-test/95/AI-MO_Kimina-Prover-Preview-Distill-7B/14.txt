@@ -1,0 +1,85 @@
+-- The least positive integer $n$ such that $80325$ divides $n!$ is 17.
+  -- We show that it is 17.
+
+  -- The prime factorization of 80325 is $3^3 \cdot 5^2 \cdot 7 \cdot 17$.
+  have h₂ : 80325 = 3^3 * 5^2 * 7 * 17 := by norm_num
+
+  -- We need to show that 17 is the smallest number such that $80325$ divides $n!$.
+  -- We will show that $80325$ divides $17!$ but does not divide $n!$ for $n < 17$.
+  have h₃ : 17 ≤ n := by
+
+    -- We need to show that $80325$ divides $17!$ but does not divide $n!$ for $n < 17$.
+    -- We will show that $80325$ divides $17!$.
+    have h₄ : 80325 ∣ Nat.factorial 17 := by
+      rw [h₂]
+      -- We need to show that $3^3 \cdot 5^2 \cdot 7 \cdot 17$ divides $17!$.
+      -- We will show that $17!$ has at least 3 factors of 3, 2 factors of 5, 1 factor of 7, and 1 factor of 17.
+      have h₅ : 3^3 ∣ Nat.factorial 17 := by
+        -- The number of factors of 3 in $17!$ is $\left\lfloor \frac{17}{3} \right\rfloor + \left\lfloor \frac{17}{3^2} \right\rfloor + \left\lfloor \frac{17}{3^3} \right\rfloor = 5 + 1 + 0 = 6$.
+        have h₆ : Nat.factorization 3 Nat.factorial 17 ≥ 3 := by
+          calc
+            Nat.factorization 3 Nat.factorial 17 ≥ Nat.factorization 3 (3 * 3) + Nat.factorization 3 (Nat.factorial (17 - 3)) := Nat.factorization_ge_of_dvd (by decide) (Nat.dvd_factorial (by decide) (by decide))
+            _ ≥ Nat.factorization 3 (3 * 3) + 0 := by simp
+            _ ≥ 2 + 0 := by simp
+            _ ≥ 3 := by decide
+        exact Nat.dvd_of_factorization_ge h₆
+      have h₆ : 5^2 ∣ Nat.factorial 17 := by
+        -- The number of factors of 5 in $17!$ is $\left\lfloor \frac{17}{5} \right\rfloor + \left\lfloor \frac{17}{5^2} \right\rfloor + \left\lfloor \frac{17}{5^3} \right\rfloor = 3 + 0 + 0 = 3$.
+        have h₇ : Nat.factorization 5 Nat.factorial 17 ≥ 2 := by
+          calc
+            Nat.factorization 5 Nat.factorial 17 ≥ Nat.factorization 5 (5 * 5) + Nat.factorization 5 (Nat.factorial (17 - 5)) := Nat.factorization_ge_of_dvd (by decide) (Nat.dvd_factorial (by decide) (by decide))
+            _ ≥ Nat.factorization 5 (5 * 5) + 0 := by simp
+            _ ≥ 2 + 0 := by simp
+            _ ≥ 2 := by decide
+        exact Nat.dvd_of_factorization_ge h₇
+      have h₇ : 7 ∣ Nat.factorial 17 := by
+        -- The number of factors of 7 in $17!$ is $\left\lfloor \frac{17}{7} \right\rfloor + \left\lfloor \frac{17}{7^2} \right\rfloor + \left\lfloor \frac{17}{7^3} \right\rfloor = 2 + 0 + 0 = 2$.
+        have h₈ : Nat.factorization 7 Nat.factorial 17 ≥ 1 := by
+          calc
+            Nat.factorization 7 Nat.factorial 17 ≥ Nat.factorization 7 (7 * 7) + Nat.factorization 7 (Nat.factorial (17 - 7)) := Nat.factorization_ge_of_dvd (by decide) (Nat.dvd_factorial (by decide) (by decide))
+            _ ≥ Nat.factorization 7 (7 * 7) + 0 := by simp
+            _ ≥ 1 + 0 := by simp
+            _ ≥ 1 := by decide
+        exact Nat.dvd_of_factorization_ge h₈
+      have h₈ : 17 ∣ Nat.factorial 17 := by
+        -- The number of factors of 17 in $17!$ is $\left\lfloor \frac{17}{17} \right\rfloor = 1$.
+        have h₉ : Nat.factorization 17 Nat.factorial 17 ≥ 1 := by
+          calc
+            Nat.factorization 17 Nat.factorial 17 ≥ Nat.factorization 17 17 + Nat.factorization 17 (Nat.factorial (17 - 17)) := Nat.factorization_ge_of_dvd (by decide) (Nat.dvd_factorial (by decide) (by decide))
+            _ ≥ 1 + Nat.factorization 17 (Nat.factorial 0) := by simp
+            _ ≥ 1 + 0 := by simp
+            _ ≥ 1 := by decide
+        exact Nat.dvd_of_factorization_ge h₉
+      exact Nat.Coprime.mul_dvd_of_dvd_of_dvd (by decide) h₅ (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by decide) h₆ (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by decide) h₇ h₈)
+
+    -- We need to show that $80325$ does not divide $n!$ for $n < 17$.
+    by_contra! h₄
+    have h₅ : n < 17 := by linarith
+
+    -- We will show that $80325$ does not divide $n!$ for $n < 17$.
+    -- The prime factor 17 of 80325 does not appear in $n!$ for $n < 17$.
+    have h₆ : 17 ∣ n! → False := by
+      intro h₇
+      have h₈ : 17 ∣ n! := h₇
+      have h₉ : ¬ 17 ∣ n! := by
+        have h₁₀ : n < 17 := by linarith
+        have h₁₁ : Nat.factorization 17 n! = 0 := by
+          simp [Nat.factorization]
+          exact Nat.zero_add_one_ne_zero 16 (by simp)
+        have h₁₂ : 17 ∣ n! := h₈
+        exact (Nat.Prime.not_dvd_of_lt (by decide)).h (by decide) h₁₁ h₁₂
+      contradiction
+
+    -- We will show that $80325$ divides $n!$ implies that $17$ divides $n!$ which is a contradiction.
+    have h₇ : 17 ∣ n! := by
+      have h₈ : 3^3 * 5^2 * 7 * 17 ∣ n! := by
+        exact (Nat.dvd_of_mul_dvd_mul_left (by decide) h₁).trans h₀
+      have h₉ : 17 ∣ n! := by
+        have h₁₀ : 17 ∣ 3^3 * 5^2 * 7 * 17 := by decide
+        exact Nat.dvd_trans h₁₀ h₈
+      exact h₉
+
+    -- We get a contradiction.
+    exact h₆ h₇
+  exact h₃
+```

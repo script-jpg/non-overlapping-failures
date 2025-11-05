@@ -1,0 +1,44 @@
+-- A lemma that might be of some independent interest:
+  -- If $m$ and $n$ are natural numbers with $1 \leq m$, then $m$ and $n$ are coprime if and only if $m$ and $n - m$ are coprime.
+  have h2 : ∀ n m : ℕ, 1 ≤ m → (Nat.gcd m n = 1 ↔ Nat.gcd m (n - m) = 1) := by
+    intro n m h
+    constructor
+    · intro h₁
+      rw [Nat.gcd_sub_self_right (by omega)] at h₁
+      exact h₁
+    · intro h₂
+      rw [Nat.gcd_sub_self_right (by omega), Nat.gcd_comm] at h₂
+      exact h₂
+
+  -- Using the lemma above, we can show that $p(n)$ and $p(n + 1)$ are coprime for $n < 40$ by checking that $p(n)$ and $p(n + 1) - p(n) = 2n - 1$ are coprime. Thus, the smallest possible value of $n$ is $41$.
+  have h3 : ∀ n : ℕ, n < 40 → (Nat.gcd (p n) (p (n + 1)) = 1) := by
+    intro n h
+    rw [h₀, h₀]
+    simp
+    have : 2 * n - 1 + (n ^ 2 - n + 41) = n ^ 2 + 41 := by omega
+    rw [this]
+    clear this
+    -- Since $n < 40$, we have $n \leq 39$, so $2n - 1 \leq 79$.
+    -- Thus $2n - 1$ and $n^2 + 41$ are coprime.
+    apply Nat.coprime_of_lt_prime
+    · omega
+    · intro m hm hm' thetain
+      -- Since $2n - 1$ and $n^2 + 41$ are coprime, it cannot be the case that $m = 2n - 1$.
+      by_contra! hm''
+      have : m ≤ 79 := by
+        rw [hm''] at hm
+        omega
+      have : 40 ≤ n := by omega
+      have : m ≥ 79 := by
+        rw [hm''] at thetain
+        omega
+      linarith
+
+  -- Thus, the smallest possible value of $n$ is $41$.
+  by_contra! h
+  simp at h
+  specialize h3 40 (by omega)
+  have : 41 ≤ n := by omega
+  exact h3 (by omega)
+
+```

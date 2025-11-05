@@ -1,0 +1,83 @@
+-- First, we substitute $x=0$ to get the constant term.
+  have h1 := h₀ 0
+  simp at h1
+  -- We get $-24 = -8 \cdot 3$, which confirms the constant term on the right hand side.
+  -- Next, substitute $x=1$ to get the sum of coefficients.
+  have h2 := h₀ 1
+  simp at h2
+  -- We get $10 - 1 - 24 = (a \cdot 1 - 8)(b \cdot 1 + 3)$, i.e. $-15 = (a-8)(b+3)$.
+  -- Next, substitute $x=-1$ to get another equation.
+  have h3 := h₀ (-1)
+  simp at h3
+  -- We get $10 - (-1) - 24 = (a \cdot (-1) - 8)(b \cdot (-1) + 3)$, i.e. $-13 = (-a-8)(-b+3)$.
+  -- We now have two equations:
+  -- $$(a-8)(b+3) = -15$$
+  -- $$(-a-8)(-b+3) = -13$$
+  -- Multiply out the equations:
+  -- $$(a-8)(b+3) = ab + 3a - 8b - 24 = -15$$
+  -- $$(-a-8)(-b+3) = ab - 3a + 8b - 24 = -13$$
+  have h4 : a * b + 3 * a - 8 * b = 9 := by linarith only [h2]
+  have h5 : a * b - 3 * a + 8 * b = 11 := by linarith only [h3]
+
+  -- We add the two equations to eliminate $a$:
+  -- $$(ab + 3a - 8b) + (ab - 3a + 8b) = 9 + 11$$
+  -- We get $2ab = 20$, so $ab = 10$.
+  have h6 : a * b = 10 := by linarith only [h4, h5]
+
+  -- We subtract the two equations to eliminate $b$:
+  -- $$(ab + 3a - 8b) - (ab - 3a + 8b) = 9 - 11$$
+  -- We get $6a - 16b = -2$, so $3a - 8b = -1$.
+  have h7 : 3 * a - 8 * b = -1 := by linarith only [h4, h5]
+
+  -- Now we have a system of equations:
+  -- $ab = 10$ and $3a - 8b = -1$.
+  -- We want to solve for $a$ and $b$.
+  -- From the first equation, we get $a = \frac{10}{b}$.
+  -- Substituting into the second equation:
+  -- $3 \cdot \frac{10}{b} - 8b = -1$
+  -- Multiplying through by $b$ to clear the fraction:
+  -- $30 - 8b^2 = -b$
+  -- Rearranging:
+  -- $8b^2 - b - 30 = 0$
+  have h8 : 8 * b ^ 2 - b - 30 = 0 := by
+    zify
+    have : ((a : ℤ) : ℤ)(b : ℤ) = 10 := by
+      norm_cast
+      linarith only [h6]
+    rw [←@Int.mul_ediv_cancel _ _ _ a b this] at h7
+    norm_cast at h7
+    linarith only [h7]
+
+  -- Solve for $b$ using the quadratic formula:
+  -- $b = \frac{1 \pm \sqrt{1 + 4 \cdot 8 \cdot 30}}{2 \cdot 8} = \frac{1 \pm \sqrt{961}}{16} = \frac{1 \pm 31}{16}$
+  -- This gives us two possible solutions:
+  -- $b = \frac{1 + 31}{16} = \frac{32}{16} = 2$
+  -- $b = \frac{1 - 31}{16} = \frac{-30}{16} = -\frac{15}{8}$
+  -- Since $b$ must be an integer, we discard $b = -\frac{15}{8}$ and get $b = 2$.
+  have h9 : b = 2 := by
+    have : discrim (8 : ℤ) (-1) (-30) = 961 := by
+      simp [discrim]
+      linarith only []
+    rw [quadratic_eq_zero_iff (by simp) this b] at h8
+    norm_num at h8
+    rcases h8 with h8 | h8
+   . -- We get $b = 2$.
+      exact h8
+   . -- We get $b = -\frac{15}{8}$, which is not an integer.
+      have : (b : ℤ) = -15 := by
+        norm_cast at h8
+        linarith only [h8]
+      omega
+
+  -- Substitute $b = 2$ into $ab = 10$ to get $a = 5$.
+  zify at h9
+  have h10 : ((a : ℤ) : ℤ) = 5 := by
+    norm_cast at h6
+    rw [h9] at h6
+    linarith only [h6]
+
+  -- Finally, compute $ab + b = 5 \cdot 2 + 2 = 10 + 2 = 12$.
+  rw [h10, h9]
+  norm_num
+
+```

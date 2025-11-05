@@ -1,0 +1,97 @@
+-- Let $n = 3^{17} + 3^{10}$. It is known that $11$ divides into $n+1$. If $n$ can be written in base $10$ as $ABCACCBAB$, where $A,B,C$ are distinct digits such that $A$ and $C$ are odd and $B$ is not divisible by $3$, find $100A + 10B + C$. Show that it is 129.
+  -- [A, B, C].Pairwise (· ≠ ·) := {A, B, C} has cardinality 3.
+  have h₇ : [A, B, C].length = 3 := by
+    simp [List.length_eq_three_iff]
+    refine ⟨⟨?_, h₂⟩, h₂,?_⟩
+    exact Ne.symm (NeZero.ne' 3)
+
+  -- {A, B, C} has cardinality 3.
+  have h₈ : (Finset.Icc 0 9).card 3 = 3 := by
+    simp
+
+  -- (A, B, C) is a permutation of [0, 1, 2,..., 9] with exactly 3 digits.
+  have h₉ : (Finset.image (fun x => x) (Finset.Icc 0 9)).card 3 = 3 := by
+    simp
+
+  -- Now we need to show that A, B, and C are 1, 2, and 9 respectively.
+  suffices (A, B, C) = (1, 2, 9) from by simp [this]
+
+  -- We can simplify the problem under the local conditions.
+  have h₁₀ : A < 10 := by
+    simp [h₃]
+
+  have h₁₁ : B < 10 := by
+    simp [h₃]
+
+  have h₁₂ : C < 10 := by
+    simp [h₃]
+
+  have h₁₃ : A ≠ 0 := by
+    by_contra! h
+    rw [h] at h₆
+    simp at h₆
+    specialize h₁₀ (by omega)
+
+    rcases h₆ with h₆ | h₆ | h₆ <;> simp [h₆] at h₃
+
+  have h₁₄ : C ≠ 0 := by
+    simp [h₃]
+
+  have _ : (Nat.digits 10 n).length = 9 := by
+    simp [h₆]
+
+  have h₁₅ : Nat.log 10 n = 8 := by
+    simp only [Nat.log_eq_iff (by norm_num)]
+    rw [h₀]
+    norm_num
+
+  -- From the length of the digits of n in base 10, it follows that A * 10^8 ≤ n < A * 10^9.
+  have h₁₆ : ∀ d ∈ Nat.digits 10 n, d < 10 := by
+      intro d hd
+      simp [Nat.digits] at hd
+      omega
+
+  have h₁₇ : (∀ d ∈ Nat.digits 10 n, d < 10) := by
+    exact h₁₆
+
+  have h₁₈ : ∃ d, d ∈ Nat.digits 10 n ∧ d = 1 := by
+    by_contra! h
+    simp at h
+    simp [h₀] at h
+    norm_num at h
+
+    rcases h with h | h | h | h | h | h | h | h | h <;> simp [h] at h₆
+
+  have h₁₉ : Nat.digits 10 n = [1, 2, 9, 1, 2, 9, 1, 2, 9] := by
+    -- From the conditions, we know that A, B, C are 1, 2, 9. It is not difficult to find out which is which.
+    have : List.eq_of_sublist_eq_nil (show [1, 2, 9] ++ [1, 2, 9] ++ [1, 2, 9] ++ [1, 2, 9] = [1, 2, 9] ++ [1, 2, 9] ++ [1, 2, 9] ++ [1, 2, 9] by simp) (by omega) (by specialize h₁₈ (Nat.digits 10 n) (by simpa using h₆); omega) := by
+      simpa [h₆] using h₁₈
+    rw [h₀] at this
+    simpa [Nat.digits, Nat.digitsAux] using this
+
+  -- Hence, we have A = 1, B = 2, C = 9.
+  have h₂₀ : A = 1 := by
+    specialize h₁₉
+    simp [h₆] at h₁₉
+    apply List.eq_iff_getElem.mp at h₁₉
+    simp at h₁₉
+    omega
+
+  have h₂₁ : B = 2 := by
+    specialize h₁₉
+    simp [h₆] at h₁₉
+    apply List.eq_iff_getElem.mp at h₁₉
+    simp at h₁₉
+    omega
+
+  have h₂₂ : C = 9 := by
+    specialize h₁₉
+    simp [h₆] at h₁₉
+    apply List.eq_iff_getElem.mp at h₁₉
+    simp at h₁₉
+    omega
+
+  -- And the final answer is 100A + 10B + C = 129.
+  omega
+
+```

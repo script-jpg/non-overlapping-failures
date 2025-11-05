@@ -1,0 +1,146 @@
+-- Prove that $�$ is not a solution.
+  have h1 : 1 ∉ S := by
+    rw [Finset.mem_iff_not_mem]
+    refine ⟨?_,?_⟩
+    · intro h
+      simp only [Set.mem_setOf_eq] at h
+      exact h₀ h.1 h.2.1
+    · simp only [ne_eq, Set.mem_setOf_eq]
+      intro h
+      replace h := h₀ h.1 h.2.1
+      linarith
+
+  -- Prove that $2$ is not a solution.
+  have h2 : 2 ∉ S := by
+    rw [Finset.mem_iff_not_mem]
+    refine ⟨?_,?_⟩
+    · intro h
+      simp only [Set.mem_setOf_eq] at h
+      exact h₀ h.1 h.2.1
+    · simp only [ne_eq, Set.mem_setOf_eq]
+      intro h
+      replace h := h₀ h.1 h.2.1
+      linarith
+
+  -- Prove that $\cos x \neq 0$ for all $x \in S$.
+  have h3 : ∀ x ∈ S, Real.cos x ≠ 0 := by
+    intro x hx
+    rw [h₀] at hx
+    rcases hx with ⟨hx, h1, h2⟩
+    apply ne_of_gt
+    apply Real.cos_pos_of_mem_Ioo
+    constructor
+    · linarith
+    · rw [←Real.pi_pos]
+      apply Real.sin_pos_of_pos_of_lt_pi
+      · linarith
+      · linarith
+
+  -- Prove that $\sin x \neq 0$ for all $x \in S$.
+  have h4 : ∀ x ∈ S, Real.sin x ≠ 0 := by
+    intro x hx
+    rw [h₀] at hx
+    rcases hx with ⟨hx, h1, h2⟩
+    apply ne_of_gt
+    apply Real.sin_pos_of_pos_of_lt_pi
+    constructor
+    · linarith
+    · rw [←Real.pi_pos]
+      apply Real.cos_pos_of_mem_Ioo
+      constructor
+      · linarith
+      · linarith
+
+  -- Transform the equation $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$ to $\cos x = \sin x$.
+  have h5 : ∀ x ∈ S, Real.cos x = Real.sin x := by
+    intro x hx
+    rw [h₀] at hx
+    rcases hx with ⟨hx, h1, h2⟩
+    have h5a : Real.cos (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 * Real.sin x) := by
+      exact h2
+    have h5b : Real.cos (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 * Real.sin x) := by
+      exact h5a
+    rw [Real.cos_eq_sin_iff] at h5b
+    obtain ⟨k, hk⟩ | ⟨k, hk⟩ := h5b
+    · rw [hk] at h5a
+      rw [show Real.pi / 2 * Real.sin x = Real.pi / 2 * Real.sin x + (- k) * Real.pi by ring] at h5a
+      rw [Real.sin_add_int_mul_pi, Real.sin_sub_pi] at h5a
+      simp at h5a
+      rw [show Real.pi / 2 * Real.cos x = Real.pi / 2 * Real.cos x + (- k) * Real.pi by ring] at h5a
+      rw [Real.sin_add_int_mul_pi, Real.sin_sub_pi] at h5a
+      simp at h5a
+      linarith
+    · linarith
+
+  -- As $\cos x = \sin x$, we have $\tan x = 1$.
+  have h6 : ∀ x ∈ S, Real.tan x = 1 := by
+    intro x hx
+    rw [h₀] at hx
+    rcases hx with ⟨hx, h1, h2⟩
+    rw [Real.tan_eq_sin_div_cos, h5 hx]
+    simp
+    exact h3 x hx
+
+  -- Hence $x = \frac{\pi}4 + n\pi$ for some $n \in \mathbb Z$.
+  have h7 : ∀ x ∈ S, ∃ n : ℤ, x = Real.pi / 4 + n * Real.pi := by
+    intro x hx
+    rw [h₀] at hx
+    rcases hx with ⟨hx, h1, h2⟩
+    have h7a : Real.tan x = 1 := h6 x hx
+    have h7b : Real.tan (Real.pi / 4) = 1 := Real.tan_pi_div_four
+    have h7c : Real.tan (x - Real.pi / 4) = 0 := by
+      rw [Real.tan_sub, h7a, h7b]
+      simp
+    obtain ⟨n, hn⟩ := Real.tan_eq_zero_iff.mp h7c
+    use n
+    rw [←hn]
+    ring_nf
+    rw [show x = x - Real.pi / 4 + Real.pi / 4 by ring]
+    rw [Real.tan_add_pi, h7a, h7b]
+
+  -- Since $x \in [0, \pi]$, we have $x = \frac{\pi}4$ or $x = \frac{\pi}4 + \pi$.
+  have h8 : ∀ x ∈ S, x = Real.pi / 4 ∨ x = Real.pi / 4 + Real.pi := by
+    intro x hx
+    rw [h7 x hx] at hx
+    rcases hx with ⟨n, hn⟩
+    have hn₁ : n = 0 ∨ n = 1 := by
+      have hn₁ : n ≥ 0 := by
+        by_contra! hn₁
+        have hn₁ : x < 0 := by
+          rw [hn]
+          nlinarith
+        linarith
+      have hn₂ : n ≤ 1 := by
+        by_contra! hn₂
+        have hn₂ : Real.pi < x := by
+          rw [hn]
+          nlinarith
+        linarith
+      omega
+    cases' hn₁ with hn₁ hn₁
+    · rw [hn₁] at hn
+      left
+      exact hn
+    · rw [hn₁] at hn
+      right
+      rw [hn]
+      ring
+
+  -- Hence $S = \{\frac{\pi}4, \frac{\pi}4 + \pi\}$, and the cardinality of $S$ is $2$.
+  have h9 : S = {Real.pi / 4, Real.pi / 4 + Real.pi} := by
+    ext x
+    simp only [Set.mem_setOf_eq, Finset.mem_insert, Finset.mem_singleton]
+    constructor
+    · intro hx
+      apply h8 x hx
+      exact hx
+    · intro hx
+      rcases hx with hx | hx
+      · rw [hx]
+        simp
+      · rw [hx]
+        simp
+  rw [h9]
+  rw [Finset.card_pair]
+  linarith
+```

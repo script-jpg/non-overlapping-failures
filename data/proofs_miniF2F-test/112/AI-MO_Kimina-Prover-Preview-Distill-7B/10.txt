@@ -1,0 +1,33 @@
+-- Simplify the left summand $\log_{5^k} 3^{k^2}$ to get $k\cdot\log_5 3$.
+  have h1 {k : ℕ} (hk : k ∈ Finset.Icc 1 20) : Real.logb (5 ^ k) (3 ^ k ^ 2) = k * Real.logb 5 3 := by
+    rw [Real.logb] at *
+    field_simp [hk]
+    ring
+  -- Simplify the right summand $\log_{9^k} 25^k$ to get $k\cdot\log_9 25$.
+  have h2 {k : ℕ} (hk : k ∈ Finset.Icc 1 100) : Real.logb (9 ^ k) (25 ^ k) = k * Real.logb 9 25 := by
+    rw [Real.logb] at *
+    field_simp [hk]
+    ring
+  -- Simplify the left sum to get $\left(\frac{21}{2}\right)\cdot(\log_5 3)^2$.
+  have h3 : ∑ k in Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = (21 / 2) * (Real.logb 5 3)^2 := by
+    calc
+      _ = ∑ k in Finset.Icc 1 20, (k * Real.logb 5 3) := by rw [Finset.sum_congr]; rfl; intros; rw [h1]; ring
+      _ = (∑ k in Finset.Icc 1 20, k) * Real.logb 5 3 := by rw [Finset.sum_mul]; rfl
+      _ = 210 * Real.logb 5 3 := by rw [Finset.sum_Icc_succ_top]; norm_num
+      _ = (21 / 2) * (Real.logb 5 3)^2 := by ring_nf; rw [Real.logb_self_eq_one (by norm_num)]; ring
+  -- Simplify the right sum to get $100\cdot\log_9 25$.
+  have h4 : ∑ k in Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = 100 * Real.logb 9 25 := by
+    calc
+      _ = ∑ k in Finset.Icc 1 100, (k * Real.logb 9 25) := by rw [Finset.sum_congr]; rfl; intros; rw [h2]; ring
+      _ = (∑ k in Finset.Icc 1 100, k) * Real.logb 9 25 := by rw [Finset.sum_mul]; rfl
+      _ = 5050 * Real.logb 9 25 := by rw [Finset.sum_Icc_succ_top]; norm_num
+      _ = 100 * Real.logb 9 25 := by ring
+  -- Prove that $\log_9 25 = 2\cdot\log_3 5$.
+  have h5 : Real.logb 9 25 = 2 * Real.logb 3 5 := by
+    rw [Real.logb] at *
+    field_simp; ring
+  -- Substitute the simplified expressions into the goal.
+  rw [h3, h4, h5]
+  -- Evaluate the numerical expression.
+  ring
+```

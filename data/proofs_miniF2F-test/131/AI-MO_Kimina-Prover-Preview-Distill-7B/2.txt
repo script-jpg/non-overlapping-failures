@@ -1,0 +1,270 @@
+-- First, note that $f(1)=0$ must hold because f(1)=f(1*1)=f(1)+f(1), which implies f(1)=0.
+  have h_f1 : f 1 = 0 := by
+    have : f 1 = f (1 * 1) := by norm_num
+    rw [h₀ 1 (by norm_num) 1 (by norm_num)] at this
+    linarith
+
+  -- Next, note that for any prime $p$, we have $f(p^n)=nf(p)=np$ for any positive integer $n$ because $f(p^n)=f(p\cdot p^{n-1})=f(p)+f(p^{n-1})=\cdots=nf(p)$
+  have h_fp : ∀ p, Nat.Prime p → ∀ n : ℕ, f (p ^ n) = n * p := by
+    intro p hp
+    intro n
+    induction n with
+    | zero =>
+      simp
+      rw [h_f1]
+      norm_num
+    | succ n ih =>
+      rw [pow_succ, h₀ (p ^ n) (by apply Nat.pos_pow_of_pos (by norm_num)) p (by norm_num), ih, h₁ p hp]
+      ring
+
+  -- Moreover, f(-1)=-1 must hold because f(-1) = f((-1)\*(-1)) = 2f(-1), so f(-1) = 0. But f(-1) cannot be 0, so f(-1) = -1.
+  have h_fneg1 : f (-1) = -1 := by
+    have : f (-1) = f ((-1) * (-1)) := by norm_num
+    rw [h₀ (-1) (by norm_num) (-1) (by norm_num)] at this
+    have neg1_ne_zero : (-1 : ℚ) ≠ 0 := by norm_num
+    rw [←_mul_left_inj' neg1_ne_zero] at this
+    linarith
+
+  -- More generally, f(-p)=f(-1)f(p)=-f(p)=-p for any prime p.
+  have h_fnegp (p : ℚ) (hp : Nat.Prime p) : f (-p) = -f p := by
+    have : f (-p) = f (-1) * f p := by
+      rw [←h₀ (-1) (by norm_num) p (by simp [hp])]
+      rw [←mul_assoc]
+      have : f (-1) = -1 := by exact h_fneg1
+      rw [this]
+      ring
+    rw [h_fneg1] at this
+    linarith
+
+  have h_fnegp' (p : ℚ) (hp : Nat.Prime p) : f (-p) = -p := by
+    have := h_fnegp p hp
+    rw [h₁ p hp] at this
+    exact this
+
+  -- A similar argument shows that $f(-1/n) = -f(1/n) = -f(1) / n = -1/n$ for any positive integer $n$.
+  have h_f_neg_div (n : ℕ) : f (-((1 : ℚ) / n)) = -f ((1 : ℚ) / n) := by
+    have : f (-((1 : ℚ) / n)) = f (-1) * f ((1 : ℚ) / n) := by
+      rw [←h₀ (-1) (by norm_num) ((1 : ℚ) / n) (by simp)]
+      rw [←mul_left_inj' (by norm_num)]
+      linarith
+    rw [h_fneg1] at this
+    linarith
+
+  have h_f_neg_div' (n : ℕ) : f (-((1 : ℚ) / n)) = -1 / ↑n := by
+    have := h_f_neg_div n
+    have h_f1 : f (1 / (n : ℚ)) = 1 / (n : ℚ) := by
+      have : f (1 / (n : ℚ)) = f (1) - f n := by
+        suffices f ((1 : ℚ) / n) = f 1 - f n by
+          rw [this, h_f1]
+        rw [←h₀ (1 : ℚ) (by norm_num) n (by simp)]
+        rw [mul_comm]
+        exact h_f1
+      rw [this, h_f1, h₁ n (by simp)]
+      ring
+    rw [h_f1] at this
+    linarith
+
+  -- Now, let's consider the primes under 30: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29.
+  -- Using the multiplicative property of f, we can compute the value of f for each of these primes and their powers.
+  -- For each of these primes p, we have f(p^(-1)) = -f(p) = -p.
+  have h_p_prime : ∀ p, Nat.Prime p → f p = p := by
+    intro p hp
+    have := h₁ p hp
+    linarith
+
+  -- And for the primes p > 30, we can use the multiplicative property of f to show that f(p^(-1)) = -f(p) = -p.
+  have h_p_neg_30 : ∀ p, 30 < p → Nat.Prime p → f p = p := by
+    intro p hp hp2
+    have h₃₀lt_p : (30 : ℚ) < p := by exact_mod_cast hp
+    have : f p = p := by
+      apply eq_of_le_of_le
+      have : f p ≤ p := by
+        have h_f_le_f_sq : f p ≤ f (p^2) := by
+          suffices f p ≤ f (p * p) by
+            suffices f (p * p) = f p + f p by linarith
+            rw [h₀ p (by norm_num) p (by norm_num)]
+            exact_mod_cast add_le_add_right (f p) (f p)
+          apply h₀
+          all_goals linarith
+        rw [←h₀ p (by norm_num) p (by norm_num)]
+        exact h_f_le_f_sq
+      have : f p ≥ p := by
+        suffices f (-p) ≤ f (-1) by linarith
+        apply h_f_negp
+        exact hp2
+      linarith
+    linarith
+
+  -- Using the multiplicative property of f, we can further compute f for each prime power.
+  -- For example, f(2^3)=f(2)+f(2^2)=f(2)+f(2)+f(2)=3f(2)=3×2=6.
+  have h_p_pow (p : ℚ) (hp : Nat.Prime p) (n : ℕ) : f (p^n) = n * f p := by
+    induction n with
+    | zero =>
+      simp
+      rw [h_f1]
+      norm_num
+    | succ n ih =>
+      rw [pow_succ, h₀ (p ^ n) (by apply Nat.pos_pow_of_pos (by norm_num)) p (by norm_num), ih, h_p_prime p hp]
+      ring
+
+  -- More generally, f(-p^n)=f(-1)f(p^n)=-f(p^n)=-np.
+  have h_fnegp_pow (p : ℚ) (hp : Nat.Prime p) (n : ℕ) : f (-p^n) = -n * f p := by
+    have : f (-p^n) = f (-1) * f (p^n) := by
+      rw [←h₀ (-1) (by norm_num) (p^n) (by simp [hp])]
+      rw [←mul_assoc]
+      rw [h_fneg1]
+      ring
+    rw [h_p_pow p hp n] at this
+    linarith
+
+  -- For example, f(3^2)=f(3)+f(3)=2×3=6.
+  have h_p_pow_2 (p : ℚ) (hp : Nat.Prime p) (n : ℕ) : f (p^n) = n * p := by
+    have := h_p_pow p hp n
+    rw [h_p_prime p hp] at this
+    exact this
+
+  -- More generally, f(-p^n)=f(-1)f(p^n)=-f(p^n)=-np.
+  have h_fnegp_pow_2 (p : ℚ) (hp : Nat.Prime p) (n : ℕ) : f (-p^n) = -n * p := by
+    have : f (-p^n) = f (-1) * f (p^n) := by
+      rw [←h₀ (-1) (by norm_num) (p^n) (by simp [hp])]
+      rw [←mul_assoc]
+      rw [h_fneg1]
+      ring
+    rw [h_p_pow_2 p hp n] at this
+    linarith
+
+  -- The key insight is that for a positive rational number x = p1^k1 * p2^k2 *... * pn^kn
+  -- where p1, p2,..., pn are distinct primes and k1, k2,..., kn are positive integers,
+  -- we have f(x) = f(p1^k1) + f(p2^k2) +... + f(pn^kn) = k1*p1 + k2*p2 +... + kn*pn.
+  have h_f_of_pos_rat (x : ℚ) (hx : x > 0) : f x = (if x = 1 then 0 else -2 * x) + 2 * x := by
+    -- first split the positive rational number x into a product of fractions and integers
+    have h_x : x = ((x.num : ℚ) / (x.den : ℚ)) := by
+      field_simp
+      exact hx
+    have h_x_num : (x.num : ℚ) > 0 := by exact_mod_cast hx
+    have h_x_den : (x.den : ℚ) > 0 := by
+      intro h
+      rw [show (0 : ℚ) = 0 / x.den by simp] at h
+      rw [div_right_inj'] at h
+      exact_mod_cast h
+    have h_x_f : f x = f ((x.num : ℚ) / (x.den : ℚ)) := by
+      rw [h_x]
+    -- now consider the case when x = 1
+    by_cases h_x_eq_1 : x = 1
+    · rw [h_x_eq_1, h_f1]
+      norm_num
+    -- and when x ≠ 1
+    · rw [h_x_f]
+      -- decompose x.num into a product of prime powers
+      have h_num : x.num = x.primeFactorsList.map (fun p => p ^ p.factorization x.num).prod := by
+        rw [←ArithmeticFunction.sigma_zero x.num]
+        have h_ne_1 : x.num ≠ 1 := by
+          refine Nat.ne_one_iff_exists_prime_dvd.mpr?_
+          exact Nat.exists_prime_and_dvd (x.num)
+        exact eq_prod_factorization (x.num) (by exact h_ne_1)
+      -- decompose x.den into a product of prime powers
+      have h_den : x.den = x.primeFactorsList.map (fun p => p ^ p.factorization x.den).prod := by
+        rw [←ArithmeticFunction.sigma_zero x.den]
+        have h_ne_1 : x.den ≠ 1 := by
+          refine Nat.ne_one_iff_exists_prime_dvd.mpr?_
+          exact Nat.exists_prime_and_dvd (x.den)
+        exact eq_prod_factorization (x.den) (by exact h_ne_1)
+      -- iterate over all the primes in x.primeFactorsList
+      let p : ℕ := x.primeFactorsList[0]
+      have hp : Nat.Prime p := by exact Nat.prime_iff_mem_primeFactorsList.mpr (by simp)
+      have hp2 : p ∈ x.primeFactorsList := by exact List.mem_primeFactorsList (x.ne_one_iff_pos.le hx).mp (fun h => by simp [h])
+      have h_p : f (p ^ p.factorization x.num) = p * p.factorization x.num := by
+        by_cases h : x.num = p ^ p.factorization x.num
+        · rw [h, h_p_pow p hp (p.factorization x.num)]
+          ring
+        · rw [h_p_pow p hp (p.factorization x.num), h₁ p hp, h, h₁ p hp]
+          ring
+      -- establish two auxillary facts about x den and x.num
+      have h_den' : x.den ≠ 0 := by exact Nat.den_ne_zero x
+      have h_num' : x.num ≠ 0 := by exact Nat.num_ne_zero x
+      -- establish a fact that x.den and x.num are coprime
+      have h_coprime : x.num.Coprime x.den := by exact Nat.coprime_num_den x
+      have h_f_of_pos_fract : ∀ n : ℕ, n ≠ 0 → (f (n : ℚ) = n * (1 : ℚ) ∧ 0 < (n : ℚ)) ↔ n = 1 := by
+        intro n hn
+        constructor
+        · intro ⟨hfn, hfn'⟩
+          have hfn : (f n) = (n : ℚ) := by
+            rw [hfn]
+            exact_mod_cast hfn'
+          have : f n ≥ 0 := by
+            suffices f n ≥ 1 by linarith
+            rw [hfn]
+            exact_mod_cast hfn'
+          apply eq_of_le_of_le this (f n).le
+          rw [hfn]
+          exact_mod_cast hfn'
+        · intro hn
+          rw [hn]
+          constructor
+          · exact h_f1
+          · exact Mod_cast.pos_of_ne_zero hn
+      -- now we can write f(x) as a sum of f(p * q) and f(p/q)
+      have h_f_of_pos_int : f (x.num) = ((x.num : ℚ) / x.den) := by
+        apply h_f_of_pos_fract
+        exact h_num'
+      split_ifs with h_num_eq_1
+      · rw [h_num_eq_1] at h_num
+        rw [h_f_of_pos_int]
+        norm_num
+        simp [h_num_eq_1, hx]
+      · rw [h_num, h_x]
+        -- simplify the term(q / p) to -2 * (q / p) and 2 * (q / p)
+        rw [show ((x.den : ℚ) / x.num) = ((x.den : ℚ) / x.num * 2) / 2 by norm_num, ←mul_div_assoc, div_right_inj']
+        rw [show x.num / x.den = x.num * (1 / x.den) by ring, h_f_of_pos_int, h_f_of_pos_fract]
+        · ring
+        · refine ContinuousAt.div?_?_ (by exact continuousAt_id' )
+          · exact continuousAt_const
+          · exact continuousAt_id'
+        · refine ContinuousAt.mul?_?_ (by exact continuousAt_id')
+          · exact continuousAt_const
+          · exact continuousAt_id'
+        · exact Mod_cast.pos_of_ne_zero h_num'
+        · exact Mod_cast.pos_of_ne_zero h_den'
+        · exact h_coprime
+
+  -- Since 11 is a prime number, we have f(11)=11.
+  have h_f_11 : f 11 = 11 := by exact h₁ 11 (by norm_num)
+
+  -- Since 2 is a prime number, we have f(2)=2.
+  have h_f_2 : f 2 = 2 := by exact h₁ 2 (by norm_num)
+
+  -- Since 3 is a prime number, we have f(3)=3.
+  have h_f_3 : f 3 = 3 := by exact h₁ 3 (by norm_num)
+
+  -- Since 5 is a prime number, we have f(5)=5.
+  have h_f_5 : f 5 = 5 := by exact h₁ 5 (by norm_num)
+
+  -- Since 7 is a prime number, we have f(7)=7.
+  have h_f_7 : f 7 = 7 := by exact h₁ 7 (by norm_num)
+
+  -- Since 11 is a prime number, we have f(11)=11.
+  have h_f_11 : f 11 = 11 := by exact h₁ 11 (by norm_num)
+
+  -- Since 23 is a prime number, we have f(23)=23.
+  have h_f_23 : f 23 = 23 := by exact h₁ 23 (by norm_num)
+
+  -- Since 29 is a prime number, we have f(29)=29.
+  have h_f_29 : f 29 = 29 := by exact h₁ 29 (by norm_num)
+
+  -- Since 31 is a prime number, we have f(31)=31.
+  have h_f_31 : f 31 = 31 := by exact h₁ 31 (by norm_num)
+
+  -- Since 17 is a prime number, we have f(17)=17.
+  have h_f_17 : f 17 = 17 := by exact h₁ 17 (by norm_num)
+
+  -- Since 17 is a prime number, we have f(13)=13.
+  have h_f_13 : f 13 = 13 := by exact h₁ 13 (by norm_num)
+
+  -- Since 19 is a prime number, we have f(19)=19.
+  have h_f_19 : f 19 = 19 := by exact h₁ 19 (by norm_num)
+
+  -- Since 11 is a prime number, we have f(11)=11.
+  have h_f_11 : f 11 = 11 := by exact h₁ 11 (by norm_num)
+
+  -- Since 7 is a prime number, we have f(7)=7.
+  have h_f_7 : f 7 =

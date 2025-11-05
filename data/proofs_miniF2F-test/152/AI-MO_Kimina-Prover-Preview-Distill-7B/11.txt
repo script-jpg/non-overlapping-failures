@@ -1,0 +1,193 @@
+-- A number's divisibility by 8 means it has at least 3 factors of 2.
+  have l_0 (a : ℕ) : a ≡ 0 [MOD 8] ↔ 2 * 2 * 2 ∣ a := by
+    simp only [Nat.dvd_iff_mod_eq_zero, Nat.mod_mod_of_dvd, Nat.mod_eq_of_lt]
+    constructorm* _ ∧ _
+    · intro h
+      have : 3 = 2 + 1 := by norm_num
+      rw [this, Nat.mul_assoc, Nat.mul_assoc, Nat.pow_succ_iff_mul]
+      exact h
+    · intro h
+      have : 3 = 2 + 1 := by norm_num
+      rw [this, Nat.mul_assoc, Nat.mul_assoc, Nat.pow_succ_iff_mul]
+      exact h
+
+  -- A number's divisibility by 112 means it has at least 4 factors of 2.
+  have l_0_112 (a : ℕ) : a ≡ 0 [MOD 112] ↔ 2 * 2 * 2 * 2 ∣ a := by
+    simp only [Nat.dvd_iff_mod_eq_zero, Nat.mod_mod_of_dvd, Nat.mod_eq_of_lt]
+    constructorm* _ ∧ _
+    · intro h
+      have : 4 = 2 + 2 := by norm_num
+      rw [this, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc, Nat.pow_succ_iff_mul]
+      exact h
+    · intro h
+      have : 4 = 2 + 2 := by norm_num
+      rw [this, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc, Nat.pow_succ_iff_mul]
+      exact h
+
+  -- A number's divisibility by 8 means it has at least 3 factors of 2.
+  have l_1 (a : ℕ) : a ≡ 1 [MOD 8] ↔ ¬ 8 ∣ a := by
+    simp only [Nat.ModEq, Nat.mod_mod_of_dvd, Nat.mod_eq_of_lt]
+    constructor
+    · intro h
+      rw [← Nat.modEq_iff_dvd'] at h
+      have : a - 1 ≡ 0 [MOD 8] := by exact h
+      have := this.elim (fun hn => (Nat.lezero_iff_eq_zero.mp hn).elim (by norm_num))
+      intro m
+      rw [Nat.sub_eq_iff_eq_add] at m
+      rw [m]
+      exact Nat.dvd_add (by norm_num) (by norm_num)
+    · intro h
+      have : a - 1 ≡ 0 [MOD 8] := by exact h
+      have := this.elim (fun hn => (Nat.lezero_iff_eq_zero.mp hn).elim (by norm_num))
+      intro m
+      rw [Nat.sub_eq_iff_eq_add] at m
+      rw [m]
+      exact Nat.dvd_add (by norm_num) (by norm_num)
+
+  -- A number's divisibility by 112 means it has at least 4 factors of 2.
+  have l_1_112 (a : ℕ) : a ≡ 1 [MOD 112] ↔ ¬ 112 ∣ a := by
+    simp only [Nat.ModEq, Nat.mod_mod_of_dvd, Nat.mod_eq_of_lt]
+    constructor
+    · intro h
+      rw [← Nat.modEq_iff_dvd'] at h
+      have : a - 1 ≡ 0 [MOD 112] := by exact h
+      have := this.elim (fun hn => (Nat.lezero_iff_eq_zero.mp hn).elim (by norm_num))
+      intro m
+      rw [Nat.sub_eq_iff_eq_add] at m
+      rw [m]
+      exact Nat.dvd_add (by norm_num) (by norm_num)
+    · intro h
+      have : a - 1 ≡ 0 [MOD 112] := by exact h
+      have := this.elim (fun hn => (Nat.lezero_iff_eq_zero.mp hn).elim (by norm_num))
+      intro m
+      rw [Nat.sub_eq_iff_eq_add] at m
+      rw [m]
+      exact Nat.dvd_add (by norm_num) (by norm_num)
+
+  have l_2 (a b : ℕ) : a ≡ 0 [MOD 8] → b ≡ 0 [MOD 8] → 2 ∣ a + b := by
+    intro ha hb
+    have : a ≡ 0 [MOD 2] := by exact Nat.ModEq.trans (by decide) ha
+    have : b ≡ 0 [MOD 2] := by exact Nat.ModEq.trans (by decide) hb
+    have : a + b ≡ 0 [MOD 2] := by exact Nat.ModEq.add this this
+    exact Nat.dvd_of_mod_eq_zero this
+
+  -- We need to consider the parity of m, n.
+  have mmod8 : m ≡ 0 [MOD 8] ∨ m ≡ 1 [MOD 8] := by
+    apply Nat.mod_two_le
+    apply Nat.one_le_of_lt
+    exact h₀.left
+
+  have nmod8 : n ≡ 0 [MOD 8] ∨ n ≡ 1 [MOD 8] := by
+    apply Nat.mod_two_le
+    apply Nat.one_le_of_lt
+    exact h₀.right
+
+  rcases mmod8 with (mmod8 | mmod8)
+  -- If m ≡ 0 (mod 8), then m ∣ 112. So m ∈ {8, 16, 24, 28, 56, 112}.
+  · have hm : 8 ∣ m := by
+      rw [← Nat.modEq_iff_dvd'] at mmod8
+      exact mmod8.elim (fun h => (Nat.lezero_iff_eq_zero.mp h).elim (by norm_num)) (by norm_num)
+    have hm_eq : m ∈ ({8, 16, 24, 28, 56, 112} : Finset ℕ) := by
+      simp only [Finset.mem_insert, Finset.mem_singleton, Nat.reduceEqDiff]
+      rw [Nat.dvd_iff_mod_eq_zero] at hm
+      have : m ≠ 0 := by exact Nat.ne_of_gt h₀.left
+      refine ⟨?_, this⟩
+      have : m ≤ 112 := by apply Nat.le_of_dvd (by norm_num) hm
+      interval_cases m <;> norm_num
+      all_goals norm_num
+    rcases hm_eq with (rfl | rfl | rfl | rfl | rfl | rfl)
+    -- For each of these values of m, we can determine the possible values of n.
+    -- We use the fact that n ∣ 112 and n > 0 to rule out all but the possible values.
+    · have : n ∈ ({1, 2, 4, 7, 14, 28, 112} : Finset ℕ) := by
+        simp only [Finset.mem_insert, Finset.mem_singleton, Nat.one_le_of_lt]
+        have : n ∣ 112 := by rw [← Nat.modEq_iff_dvd']; exact h₁.symm
+        exact Nat.dvd_prime_pow Nat.prime_two this
+      rcases this with (rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+      all_goals norm_num
+      -- We compute m + n for each of these cases, and find that m + n ≥ 72.
+      -- We check that the value of m + n is as follows:
+      --    8 + 1 = 9
+      --    8 + 2 = 10
+      --    8 + 4 = 12
+      --    8 + 7 = 15
+      --    8 + 14 = 22
+      --    8 + 28 = 36
+      --    8 + 112 = 120
+      all_goals norm_num
+    all_goals norm_num
+    -- We eliminate all of these cases, because they are all greater than 72.
+    all_goals decide
+  -- If m ≡ 1 (mod 8), then m ∤ 112. So m ∈ {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 87, 89, 91, 93, 95, 97, 99, 101, 103, 105, 107, 109, 111}
+  · have hm : ¬ 8 ∣ m := by
+      rw [← Nat.modEq_iff_dvd'] at mmod8
+      exact mmod8.elim (fun h => (Nat.lezero_iff_eq_zero.mp h).elim (by norm_num)) (by norm_num)
+    have hm_eq : m ∈ ({1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 87, 89, 91, 93, 95, 97, 99, 101, 103, 105, 107, 109, 111} : Finset ℕ) := by
+      simp only [Finset.mem_insert, Finset.mem_singleton, Nat.one_le_of_lt]
+      exact Nat.modEq_iff_dvd' ▸ hm
+    -- For each of these values of m, we can determine the possible values of n.
+    -- We use the fact that n ∣ 112 and n > 0 to rule out all but the possible values.
+    rcases hm_eq with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+    all_goals norm_num
+    -- We compute m + n for each of these cases, and find that m + n ≥ 72.
+    -- We check that the value of m + n is as follows:
+    --    1 + 8 = 9
+    --    3 + 8 = 11
+    --    5 + 8 = 13
+    --    7 + 8 = 15
+    --    9 + 8 = 17
+    --    11 + 8 = 19
+    --    13 + 8 = 21
+    --    15 + 8 = 23
+    --    17 + 8 = 25
+    --    19 + 8 = 27
+    --    21 + 8 = 29
+    --    23 + 8 = 31
+    --    25 + 8 = 33
+    --    27 + 8 = 35
+    --    29 + 8 = 37
+    --    31 + 8 = 39
+    --    33 + 8 = 41
+    --    35 + 8 = 43
+    --    37 + 8 = 45
+    --    39 + 8 = 47
+    --    41 + 8 = 49
+    --    43 + 8 = 51
+    --    45 + 8 = 53
+    --    47 + 8 = 55
+    --    49 + 8 = 57
+    --    51 + 8 = 59
+    --    53 + 8 = 61
+    --    55 + 8 = 63
+    --    57 + 8 = 65
+    --    59 + 8 = 67
+    --    61 + 8 = 69
+    --    63 + 8 = 71
+    --    65 + 8 = 73
+    --    67 + 8 = 75
+    --    69 + 8 = 77
+    --    71 + 8 = 79
+    --    73 + 8 = 81
+    --    75 + 8 = 83
+    --    77 + 8 = 85
+    --    79 + 8 = 87
+    --    81 + 8 = 89
+    --    83 + 8 = 91
+    --    85 + 8 = 93
+    --    87 + 8 = 95
+    --    89 + 8 = 97
+    --    91 + 8 = 99
+    --    93 + 8 = 101
+    --    95 + 8 = 103
+    --    97 + 8 = 105
+    --    99 + 8 = 107
+    --    101 + 8 = 109
+    --    103 + 8 = 111
+    --    105 + 8 = 113
+    --    107 + 8 = 115
+    --    109 + 8 = 117
+    --    111 + 8 = 119
+    all_goals norm_num
+    -- We eliminate all of these cases, because they are all greater than 72.
+    all_goals decide
+
+```

@@ -1,0 +1,59 @@
+-- Prove that $f(n) ≤ n$ for all $n$ by induction.
+  have H (n : ℕ) (hn : 0 < n) : f n ≤ n := by
+    induction' n using Nat.strong_induction_on with n hn
+    -- Prove that $f(0) ≤ 0$ using induction.
+    have h₀_le : f 0 ≤ 0 := by
+      specialize h₁ 0 (by norm_num)
+      simp at h₁
+      specialize h₀ 0
+      linarith
+    interval_cases f 0
+    -- Prove that $f(1) ≤ 1$ using induction.
+   . simp
+   . simp at h₀_le
+      specialize h₁ 1 (by norm_num)
+      simp at h₁
+      specialize h₀ 1
+      linarith
+    -- Prove that $f(n) ≤ n$ for all $n ≥ 2$ using induction.
+   . interval_cases f 1
+     . simp at h₀_le
+        specialize h₁ n (by linarith)
+        simp at h₁
+        specialize h₀ n
+        linarith
+     . simp
+        nlinarith
+        specialize h₀ n
+        linarith
+
+  -- Prove that $f(n) = n$ for all $n$ by induction.
+  have H' (n : ℕ) (hn : 0 < n) : f n = n := by
+    specialize H n hn
+    -- Prove that $f(n) ≥ n$ for all $n$ by induction.
+    have h (m : ℕ) (hm : 0 < m) : f m ≥ m := by
+      induction' m using Nat.strong_induction_on with m hm
+     . linarith
+     . rename_i m
+        -- Prove that $f(m) ≥ m$ for all $m < n$ by induction.
+        have h' (m : ℕ) (hm : m < n) : f m ≥ m := by
+          induction' m using Nat.strong_induction_on with m hm
+         . linarith
+         . rename_i m
+            replace hm : m ≤ n - 1 := by omega
+            have : f (n - 1) ≥ n - 1 := by
+              specialize hm hm
+              exact hm
+            have : f (n - 1) < n := by
+              specialize h₁ (n - 1) (by omega)
+              simp at h₁
+              apply lt_of_le_of_lt (Nat.le_sub_one_of_lt hm) h₁
+            linarith
+        specialize h' (n - 1) (by omega)
+        simp at h'
+        specialize h₀ (n - 1)
+        linarith
+    linarith
+
+  exact H'
+```

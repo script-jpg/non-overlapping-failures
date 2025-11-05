@@ -1,0 +1,69 @@
+-- gcd x y * lcm x y = x * y
+  have key := Nat.gcd_mul_lcm m n
+
+  rw [h₀, h₁] at key
+
+  -- m * n = 6 * 126 = 756
+  have h : m * n = 756 := by
+    linarith
+
+  -- Let $x = m / 6$ and $y = n / 6$.  According to the problem, $x$ and $y$ are relatively prime.
+  let x := m / 6
+  let y := n / 6
+
+  -- x * y = 756 / 6 = 126
+  have hxy : x * y = 126 := by
+    calc
+      x * y = m * n / (6 * 6) := by simp [x, y]; ring
+      _ = 756 / 36 := by rw [h]
+      _ = 126 := by norm_num
+
+  -- Such $x$ and $y$ with the given constraints would contradict each other, unless one of them is 1.
+  have h : x = 1 ∨ y = 1 := by
+    by_contra h'
+    -- Assume on the contrary that both $x$ and $y$ are greater than 1.
+    push_neg at h'
+    -- Then, x * y > 126, contradiction.
+    have : x * y > 126 := by
+      calc
+        x * y = x * y / 6 * 6 := by simp [x, y]; ring
+        _ > 126 / 6 * 6 := by rw [h]; apply Nat.div_lt_div; norm_num
+        _ = 126 := by norm_num
+    linarith
+
+  -- Without loss of generality, assume that $x$ is the one that is 1.
+  wlog h' : x = 1
+  · have h' : y = 1 := by
+      symm
+      exact h'
+    rw [h', show m = 6 * x by simp [x], show n = 6 * y by simp [y]] at h₀
+    rw [h', show m = 6 * x by simp [x], show n = 6 * y by simp [y]] at h₁
+    exact this x y hxy (by rw [h']; norm_num)
+
+  -- Now, we have $m = 6$ and $n = 6 * y$, where $y$ is some positive integer.
+  have : m = 6 := by
+    show m = 6 * 1
+    simp [x] at h'
+    rw [←h']
+    simp [x]
+  rw [this] at h₀ h₁
+  have : n = 6 * y := by
+    omega
+  rw [this] at h₀ h₁
+
+  -- y is one of the following prime numbers: 2, 3, 7, 9, 14, 18.
+  have h : y = 2 ∨ y = 3 ∨ y = 7 ∨ y = 9 ∨ y = 14 ∨ y = 18 := by
+    have h : y ∣ 126 := by
+      rw [←hxy]
+      apply Nat.dvd_mul_left
+    have h' : y ≤ 126 := by
+      exact Nat.le_of_dvd (by norm_num) h
+    interval_cases y <;> tauto
+
+  -- Any of these values for $y$ would give us a value of $n$ that is less than 60.
+  rcases h with h | h | h | h | h | h <;> (rw [h]; simp)
+
+  -- Hence, $m + n ≥ 6 + 126 = 132 > 60$.
+  rw [this] at hxy
+  linarith
+```

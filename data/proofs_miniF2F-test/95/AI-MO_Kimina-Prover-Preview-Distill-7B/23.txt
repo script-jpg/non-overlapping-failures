@@ -1,0 +1,257 @@
+-- We need to use the definition of divisibility.
+  apply Nat.le_of_dvd (Nat.factorial_pos n) at h₁
+
+  -- It is enough to show that the number of times that 17 appears in the prime factorisation
+  -- of $n!$ is at least 1.
+  suffices h : 17 : ℕ ∈ (n!).factorization.erase 17 ∧ 17 ∈ (n!).factorization with h'
+  · have : 17 ^ 2 ∣ n! := by
+      rw [Nat.pow_dvd_iff]
+      calc _ ∣ 17 * 17 := by norm_num
+             _ ∣ n! := h₁
+   -- It is enough to show that the number of times that 17 appears in the prime factorisation
+   -- of $n!$ is at least 2.
+      apply Nat.le_of_dvd (Nat.factorial_pos n) at this
+      suffices h : 2 ≤ (n!).factorization 17 with h'
+      · rw [Nat.mul_dvd_iff_left (by norm_num)] at this
+        rw [Nat.pow_dvd_iff]
+        calc _ ∣ 2 * 17 := by assumption
+               _ ∣ n! := this
+        exact Nat.prime_iff.mp rfl
+      · apply le_of_lt
+        apply Nat.lt_factorization_iff_lt_pow (by assumption) |>.mp
+        calc _ < 17 ^ 2 := by norm_num
+               _ ∣ n! := this
+  -- Evidently, the number of times that 17 appears in the prime factorisation
+  -- of $n!$ is 1 if $n = 17$.
+  have : 17 ∈ (17!).factorization.erase 17 ∧ 17 ∈ (17!).factorization := by
+    constructor
+    · rw [Nat.factorization_erase]
+      rw [Nat.factorization_eq_primeFactors, Nat.primeFactors_prime]
+      exact rfl
+    · native_decide
+  -- It is enough to show that, for all $n < 17$, $80325$ does not divide $n!$.
+  suffices h : ∀ n < 17, 17 ∣ n! → False by
+    have : 17 ∣ n! := by
+      apply (Nat.factorial_dvd_factorial (by assumption)).trans
+      apply Nat.dvd_trans h₁
+      apply Nat.dvd_trans (show (17 ^ 2).natAbs ∣ 80325 by norm_num)
+      norm_num
+    apply h n (by linarith) this
+  -- Let $n$ be a natural number such that $n < 17$ and $17 ∣ n!$.
+  intro n hn h
+  -- We need to show that $17 ^ 2 ∣ n!$.
+  apply Nat.le_of_dvd (Nat.factorial_pos n) at h
+  rw [Nat.factorization_eq_primeFactors, Nat.primeFactors_prime, primeFactors_factorial] at h
+  -- Then, the number of times that 17 appears in the prime factorisation
+  -- of $n!$ is 1, so, it is enough to show that $17 ∣ n!$ implies that the number of times that 17 appears in the prime factorisation
+  -- of $n!$ is at least 1.
+  suffices h : 17 : ℕ ∈ (n!).factorization with h'
+  · rw [Nat.factorization_eq_primeFactors, Nat.primeFactors_prime, primeFactors_factorial] at h
+    apply le_of_lt
+    apply Nat.lt_iff_add_one_le.mp
+    have : 17 ^ 1 ∣ n! := by
+      calc _ ∣ 17 := by norm_num
+           _ ∣ n! := h
+    apply Nat.le_of_dvd (Nat.factorial_pos n) at this
+    suffices h : 17 ^ 2 ∣ n! with h'
+    · apply Nat.le_of_dvd (Nat.factorial_pos n) at h
+      rw [Nat.factorization_eq_primeFactors, Nat.primeFactors_prime, primeFactors_factorial] at h
+      apply le_of_lt
+      apply Nat.lt_iff_add_one_le.mp
+      have : 17 ^ 2 ∣ n! := by
+        calc _ ∣ 17 ^ 1 := by norm_num
+             _ ∣ n! := h
+      apply Nat.le_of_dvd (Nat.factorial_pos n) at this
+      exact this
+    · apply Nat.exists_prime_gt
+      norm_num
+  -- Since $17 ∣ n!$, it is enough to show that 17 is not a prime power factor of $n!$.
+  suffices h : ¬(17 : ℕ) ∈ (n!).factorization with h'
+  · apply h
+    rw [Nat.factorization_eq_primeFactors, Nat.primeFactors_prime, primeFactors_factorial]
+    simp only [Nat.reducePow, Set.mem_insert_iff, Multiset.mem_toFinset]
+    constructor
+    · intro h
+      rw [Nat.factorization_eq_primeFactors, Nat.primeFactors_prime, primeFactors_factorial] at h
+      have : 17 ^ 1 ∣ n! := by
+        calc _ ∣ 17 := by norm_num
+             _ ∣ n! := h
+      apply Nat.le_of_dvd (Nat.factorial_pos n) at this
+      suffices h : 17 ^ 2 ∣ n! with h'
+      · apply Nat.le_of_dvd (Nat.factorial_pos n) at h
+        rw [Nat.factorization_eq_primeFactors, Nat.primeFactors_prime, primeFactors_factorial] at h
+        apply le_of_lt
+        apply Nat.lt_iff_add_one_le.mp
+        have : 17 ^ 2 ∣ n! := by
+          calc _ ∣ 17 ^ 1 := by norm_num
+               _ ∣ n! := h
+        apply Nat.le_of_dvd (Nat.factorial_pos n) at this
+        exact this
+      · apply Nat.exists_prime_gt
+        norm_num
+    · suffices h : 17 ∣ n! by
+        contrapose! h
+        norm_num
+      apply Nat.dvd_trans h₁
+      apply Nat.dvd_trans (show (17 ^ 2).natAbs ∣ 80325 by norm_num)
+      norm_num
+  -- We have that $17 ∣ n!$ but, by Wilson's theorem, $(17 - 1)! ≡ -1 \quad (\bmod 17)$, so, 17 does not divide $(17 - 1)!$.
+  have : ¬(17 : ℕ) ∣ (n!) := by
+    -- Assume, for the sake of contradiction, that $17 ∣ n!$.
+    by_contra!
+    -- It is enough to show that $17 ∣ (p - 1)!$ for any prime number $p$.
+    suffices h : ∀ p : ℕ, Nat.Prime p → 17 ∣ p → 17 ∣ (p - 1)! with h'
+    · specialize h 17 (by norm_num) (by norm_num)
+      contrapose! h
+      norm_num
+    -- Let $p$ be a prime number such that $17 ∣ p$.
+    intro p hp hp'
+    -- It is enough to show that $17 ∣ p - 1$.
+    suffices h : 17 ∣ p - 1 with h'
+    · rw [Nat.Prime.one_lt hp] at h
+      calc _ < 1 := by norm_num
+           _ ≤ _ := by exact h
+    · clear * - hp hp'
+      -- Since $17 ∣ p$, $17$ and $p$ are not coprime.
+      have : Nat.Prime coprime_iff_not_dvd hp <|> False := by
+        constructor
+        · intro hp'
+          rw [Nat.coprime_iff_gcd_eq_one] at hp'
+          rw [Nat.dvd_prime hp, Nat.dvd_prime hp'] at hp
+          have := Nat.dvd_gcd hp hp'
+          rw [Nat.dvd_one] at this
+          simp only [reduceIte, reduceLeDiff,
+            False_or, or_false,← and_imp] at this
+          exact this
+        · intro h
+          rw [Nat.coprime_iff_gcd_eq_one]
+          rw [Nat.dvd_prime hp, Nat.dvd_prime hp'] at h
+          have := Nat.dvd_gcd hp hp'
+          rw [Nat.dvd_one] at this
+          rw [Nat.Prime.gcd_eq_one_iff_not_dvd hp hp'] at this
+          exact this
+      simp only [not_and, not_not] at this
+      -- By Wilson's theorem, $(p - 1)! ≡ -1 \quad (\bmod p)$.
+      have h := (Nat.Prime.wilsons_lemma hp).symm
+      -- A better version of the same fact is available in Mathlib.
+      -- From the classical proof of Wilson's theorem, we have
+      -- $p ^ ((p - 1) / 2) ≡ (-1) ^ ((p + 1) / 2) \quad (\bmod p)$.
+      have h' : p ^ ((p - 1) / 2) ≡ (-1) ^ ((p + 1) / 2) [ZMOD p] := by
+        calc _ ≡ (p - 1).factorial [ZMOD p] := by
+          rw [Nat.prime_iff_fac_equiv_neg_one hp]
+          rw [Nat.sub_eq_iff_eq_add (by omega)]
+          rw [show p + 1 - 1 = p by omega]
+          simp only [Nat.reduceSub, reduceAdd]
+          exact (Nat.Prime.wilsons_lemma hp).symm
+        _ ≡ _ := by
+          rw [Nat.modEq_iff_dvd, ← even_iff_two_dvd]
+          rw [← even_iff_two_dvd]
+          rw [← Even.neg_pow_eq_neg_pow, ← Int.modEq_iff_dvd]
+          rw [Int.modEq_iff_dvd]
+          push_cast
+          rw [Nat.cast_sub (by omega)]
+          norm_cast
+          rw [show 1 - p = -(p - 1) by omega, Int.neg_pow, Int.neg_dvd]
+          norm_cast
+          rw [Nat.modEq_iff_dvd, Nat.dvd_sub]
+          push_cast
+          rw [Nat.cast_sub (by omega)]
+          norm_cast
+          suffices h : p - 1 + 1 = p + 1 - 1 + 1 - 1 with h'
+          · rw [h]
+            norm_num
+          · rw [Nat.sub_succ]
+            simp only [reduceAdd, reduceSub]
+    -- Let's show, moreover, that $17 ∣ p - 1$.
+    suffices h : 17 ∣ p - 1 with h'
+    · -- To that end, it is enough to show that the number of times that 17 appears in the prime factorisation
+      -- of $p!$ is at least 1.
+      suffices h : 17 : ℕ ∈ (p!).factorization with h'
+      · rw [Nat.factorization_eq_primeFactors, Nat.primeFactors_prime, primeFactors_factorial] at h
+        apply le_of_lt
+        apply Nat.lt_iff_add_one_le.mp
+        have : 17 ^ 1 ∣ p! := by
+          calc _ ∣ 17 := by norm_num
+               _ ∣ p! := h
+        apply Nat.le_of_dvd (Nat.factorial_pos p) at this
+        suffices h : 17 ^ 2 ∣ p! with h'
+        · apply Nat.le_of_dvd (Nat.factorial_pos p) at h
+          rw [Nat.factorization_eq_primeFactors, Nat.primeFactors_prime, primeFactors_factorial] at h
+          apply le_of_lt
+          apply Nat.lt_iff_add_one_le.mp
+          have : 17 ^ 2 ∣ p! := by
+            calc _ ∣ 17 ^ 1 := by norm_num
+                 _ ∣ p! := h
+          apply Nat.le_of_dvd (Nat.factorial_pos p) at this
+          exact this
+        · apply Nat.exists_prime_gt
+          norm_num
+      · -- It is enough to show that $17 ∣ p$ and $17 ∣ (p - 1)!$.
+        suffices h : 17 ∣ (p - 1)! with h'
+        · apply Nat.dvd_trans h
+          -- $17 ∣ n!$ by assumption.
+          exact h₁
+        · exact h
+    -- Notice that, for all prime numbers $p$ other than 17, $17 ∣ (p - 1)!$ if and only if $17 ∣ p$.
+    have h : ∀ p : ℕ, p ≠ 17 → (17 ∣ p → 17 ∣ (p - 1)!) := by
+      intro p hp hp'
+      -- It is enough to show that $17 ∣ p - 1$.
+      suffices h : 17 ∣ p - 1 with h'
+      · rw [Nat.dvd_add_self_right (by omega), Nat.sub_add_cancel (by omega)] at h
+        exact h
+      · -- Assume, for the sake of contradiction, that $17 ∤ p - 1$.
+        by_contra! h
+        -- Then, by Wilson's theorem, $(p - 1)! ≡ -1 \quad (\bmod p)$.
+        have h'' := (Nat.Prime.wilsons_lemma hp).symm
+        -- A better version of the same fact is available in Mathlib.
+        -- From the classical proof of Wilson's theorem, we have
+        -- $p ^ ((p - 1) / 2) ≡ (-1) ^ ((p + 1) / 2) \quad (\bmod p)$.
+        have h' : p ^ ((p - 1) / 2) ≡ (-1) ^ ((p + 1) / 2) [ZMOD p] := by
+          calc _ ≡ (p - 1).factorial [ZMOD p] := by
+            rw [Nat.prime_iff_fac_equiv_neg_one hp]
+            rw [Nat.sub_eq_iff_eq_add (by omega)]
+            rw [show p + 1 - 1 = p by omega]
+            simp only [Nat.reduceSub, reduceAdd]
+            exact (Nat.Prime.wilsons_lemma hp).symm
+          _ ≡ _ := by
+            rw [Nat.modEq_iff_dvd, ← even_iff_two_dvd]
+            rw [← even_iff_two_dvd]
+            rw [← Even.neg_pow_eq_neg_pow, ← Int.modEq_iff_dvd]
+            rw [Int.modEq_iff_dvd]
+            push_cast
+            rw [Nat.cast_sub (by omega)]
+            norm_cast
+            rw [show 1 - p = -(p - 1) by omega, Int.neg_pow, Int.neg_dvd]
+            norm_cast
+            rw [Nat.modEq_iff_dvd, Nat.dvd_sub]
+            push_cast
+            rw [Nat.cast_sub (by omega)]
+            norm_cast
+            norm_num
+        -- We arrive at a contradiction either way.
+        have h'' : p ^ ((p - 1) / 2) ≡ -1 ^ ((p + 1) / 2) [ZMOD p] := by
+          simp [Int.neg_pow]
+          exact h'
+        replace h'' := (ZMod.intCast_eq_intCast_iff (ZMod p) (ZMod p)).mp h''
+        rw [← ZMod.intCast_eq_intCast_iff] at h''
+        simp only [ZMod.intCast_eq_intCast_iff, isUnit_iff_ne_zero, ne_eq, reduceNeg, not_false_eq_true,
+          IsUnit.neg_pow_eq_neg_pow] at h''
+        rw [← h] at h''
+        have := h''.symm.trans h''
+        simp only [ZMod.intCast_eq_intCast_iff, isUnit_iff_ne_zero, ne_eq, reduceNeg, not_false_eq_true,
+          IsUnit.neg_pow_eq_neg_pow] at this
+        contradiction
+    -- To conclude, it is enough to show that $17 ∣ p$ for some prime number $p$ other than 17.
+    suffices h : ∃ p : ℕ, p.Prime ∧ p ≠ 17 → 17 ∣ p with h'
+    · intro p hp hp' := h
+      specialize h p hp hp'
+      exact h
+    -- We can take, for example, $p = 19$.
+    use 19
+    simp only [exists_prop, Nat.reduceEqDiff, Nat.reduceEqDiff, not_false_eq_true, Nat.Prime.natAbs,
+      Nat.reduceAbs, isUnit_iff_ne_zero, ne_eq, reduceNeg, reduceAdd, reduceMul, not_false_eq_true,
+      IsUnit.neg_pow_eq_neg_pow, reducePow]
+    constructor
+    · norm_num
+    · norm_num
+```

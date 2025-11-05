@@ -1,0 +1,91 @@
+-- multiply h₁ by y, h₂ by z, and h₃ by x, we get three new equations.
+  have h₁' : x * y + 1 = 4 * y := by
+    calc
+      _ = y * (x + 1 / y) := by field_simp
+      _ = y * 4 := by rw [h₁]
+      _ = _ := by ring
+  have h₂' : y * z + 1 = z := by
+    calc
+      _ = z * (y + 1 / z) := by field_simp
+      _ = z * 1 := by rw [h₂]
+      _ = _ := by ring
+  have h₃' : z * x + 1 = 7 / 3 * x := by
+    calc
+      _ = x * (z + 1 / x) := by field_simp
+      _ = x * 7 / 3 := by rw [h₃]
+      _ = _ := by ring
+
+  -- add h₁', h₂', and h₃' together, we get $xy + yz + zx + 3 = 4y + z + \frac{7}{3}x.$
+  have h₁₂₃' : x * y + 1 + (y * z + 1) + (z * x + 1) = 4 * y + z + 7 / 3 * x := by
+    rw [h₁', h₂', h₃']
+  ring_nf at h₁₂₃'
+
+  -- replace $3$ by $\frac{11}{3}$ and apply rearrangement inequality, we get $xy + yz + zx \ge \frac{11}{3}.$
+  have : 11 / 3 ≤ x * y + y * z + z * x := by
+    replace h₁₂₃' : 4 * y + z + 7 / 3 * x = x * y + y * z + z * x + 3 := by linarith
+    nth_rw 1 [← h₁₂₃']
+    apply lt_add_of_sub_left_lt
+    norm_num
+
+  -- on the other hand, multiply h₁ by z, h₂ by x, and h₃ by y, we get three new equations.
+  have h₁'' : x * z + z / y = 4 * z := by
+    calc
+      _ = z * (x + 1 / y) := by field_simp
+      _ = z * 4 := by rw [h₁]
+      _ = _ := by ring
+  have h₂'' : y * x + x / z = z := by
+    calc
+      _ = x * (y + 1 / z) := by field_simp
+      _ = x * 1 := by rw [h₂]
+      _ = _ := by ring
+  have h₃'' : z * y + y / x = 7 / 3 * y := by
+    calc
+      _ = y * (z + 1 / x) := by field_simp
+      _ = y * 7 / 3 := by rw [h₃]
+      _ = _ := by ring
+
+  -- add h₁'', h₂'', and h₃'' together, we get $xy + yz + zx + \frac{1}{x} + \frac{1}{y} + \frac{1}{z} = 4z + x + \frac{7}{3}y.$
+  have h₁₂₃'' : x * z + y * x + z * y + (z / y + x / z + y / x) = 4 * z + 7 / 3 * y + x := by
+    rw [h₁'', h₂'', h₃'']
+  -- add 3 to both sides, we get $xy + yz + zx + \frac{1}{x} + \frac{1}{y} + \frac{1}{z} + 3 = 4z + 7 / 3y + x + 3.$
+  apply_fun (· + 3) at h₁₂₃''
+  ring_nf at h₁₂₃''
+
+  -- it is easy to see that $\frac{1}{x} + \frac{1}{y} + \frac{1}{z} = \frac{xy + yz + zx}{xyz},$ so we have $xyz \ge \frac{11}{3}.$
+  have : xyz ≥ 11 / 3 := by
+    rw [ge_iff_le, ← xyz_mul_div _ _ (by simp), mul_div_cancel_left₀]
+    nth_rw 1 [← one_mul (4 * z + 7 / 3 * y + x)] at h₁₂₃''
+    rw [← add_assoc, add_comm, add_assoc] at h₁₂₃''
+    apply le_add_of_le_add_right
+    rw [div_le_iff₀ (by positivity)]
+    linarith only [h₁₂₃'']
+    exact mul_pos (mul_pos (h₀.1) h₀.2.1) h₀.2.2
+
+  -- However, from AM-GM inequality, we have $\frac{xy + yz + zx}{3} \ge \sqrt[3]{(xyz)^2},$ which implies that $xyz \le 1.$
+  have : xyz ≤ 1 := by
+    calc
+      _ = (x * y * z) ^ 3 := by
+        symm
+        apply symm
+        apply xyz.eq_mul_mul_of_mul_eq_mulright
+        exact mul_pos (mul_pos h₀.1 h₀.2.1) h₀.2.2
+      _ ≤ (x * y + y * z + z * x) ^ 3 / 27 := by
+        apply div_le_div_iff_of_pos_right (pow_pos (by norm_num : (0 : ℝ) < 27)) (by norm_num)
+        apply pow_le_pow_left₀ (by positivity) (by norm_num) (by norm_num)
+        rw [mul_pow, mul_pow, ← pow_add, ← pow_add]
+        nth_rw 2 [add_assoc]
+        apply tsub_le_iff.mpr
+        apply add_le_add
+        apply pow_le_pow_left₀ (by positivity) (by norm_num) (by norm_num)
+        rw [mul_comm, ← mul_assoc]
+        apply pow_le_pow_left₀ (by positivity) (by norm_num) (by norm_num)
+      _ ≤ (11 / 3) ^ 3 / 27 := by
+        apply div_le_div_iff_of_pos_right (pow_pos (by norm_num : (0 : ℝ) < 27)) (by norm_num)
+        apply pow_le_pow_left₀ (by norm_num) (by norm_num) (by norm_num)
+        linarith only [this]
+      _ = 1 := by norm_num
+
+  -- xyz can only be 1 under the condition $xyz \ge \frac{11}{3}$ and $xyz \le 1.$ Therefore, the answer to the problem is $\boxed{\textbf{(B)}}.$
+  linarith only [this, ‹xyz ≥ 11 / 3›]
+
+```

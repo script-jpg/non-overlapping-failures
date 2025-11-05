@@ -1,0 +1,73 @@
+--(|2 - x| = 3) ↔ (2 - x = 3) ∨ (2 - x = -3)
+  have r0 : ∀ x : ℝ, abs (2 - x) = 3 ↔ (2 - x = 3) ∨ (2 - x = -3) := by
+    intro x
+    rw [abs_eq]
+
+
+  -- Solve (2 - x = 3) ∨ (2 - x = -3)
+  have r1 : ∀ x : ℝ, (∃ f : ℝ → Prop, f = fun y => abs (2 - y) = 3) →
+    (2 - x = 3) ∨ (2 - x = -3) ↔ x = -1 ∨ x = 5 := by
+    intro x h
+    obtain ⟨f, hf⟩ := h
+    have h2 : f x ↔ x = -1 ∨ x = 5 := by
+      rw [hf, r0]
+      constructor <;> intro h
+      · obtain h1 | h2 := h
+        · left; linarith
+        · right; linarith
+      · obtain h1 | h2 := h
+        · left; linarith
+        · right; linarith
+    have h3 : f x ↔ f (-1) ∨ f 5 := by
+      rw [h2, hf]
+      simp
+    rw [h3, hf]
+    simp [r0]
+
+  -- all solutions of the equation $|2-x|= 3$ is x = -1 or x = 5
+  have r2 : S = {-1, 5} := by
+    ext x
+    constructor <;> intro h
+    · rw [h₀] at h
+      have h1 := r1 x h
+      simp at h1
+      rcases h1 with h1 | h1 <;> replace h1 : x = -1 ∨ x = 5 := by
+        ·
+          obtain ⟨abs_eq_3, h1⟩ := h1
+          have h2 : x = -1 ∨ x = 5 := by
+            have h2 : (2 - x = 3) ∨ (2 - x = -3) := by
+              rw [r0]
+              exact abs_eq_3
+            rcases h2 with h2 | h2
+            · left; linarith
+            · right; linarith
+          exact h2
+        ·
+          have h2 : x = -1 ∨ x = 5 := by
+            have h2 : x = -1 ∨ x = 5 := by
+              obtain ⟨abs_eq_3, h1⟩ := h1
+              have h2 : (2 - x = 3) ∨ (2 - x = -3) := by
+                rw [r0]
+                exact abs_eq_3
+              rcases h2 with h2 | h2
+              · left; linarith
+              · right; linarith
+            exact h2
+          exact h2
+      rcases h1 with h1 | h1
+      · rw [h1]; simp
+      · rw [h1]; simp
+    · rw [h₀]
+      obtain h1 | h1 := h
+      · have : abs (2 - -1) = 3 := by
+          norm_num
+        exact h1 this
+      · have : abs (2 - 5) = 3 := by
+          norm_num
+        exact h1 this
+
+  -- The sum of all solutions of the equation $|2-x|= 3$ is 4.
+  rw [r2, Finset.sum_insert]
+  · norm_num
+  · simp
+```

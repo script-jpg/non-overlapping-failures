@@ -1,0 +1,39 @@
+let a := 24
+  let b := 15
+  let m := 1199
+
+  -- Compute the greatest common divisor of 24 and 1199
+  have gcd_24_1199 : Nat.gcd 24 1199 = 1 := by norm_num
+
+  -- Since gcd(24, 1199) = 1, the modular inverse of 24 modulo 1199 exists
+  have inv_exists : IsUnit (24 : ZMod 1199) := by
+    native_decide
+
+  obtain ⟨y, hy⟩ := ZMod.inv_eq_one.mp inv_exists
+
+  -- The inverse of 24 modulo 1199 is 1008
+  have y_eq : y = 1008 := by
+    norm_cast at hy
+    omega
+
+  -- Multiplying both sides of the congruence by the inverse of 24 gives $x \equiv 15 \cdot 1008 \pmod{1199}$
+  have h₂ : x % 1199 = 15 * 1008 % 1199 := by
+    have h₃ : (24 * x) % 1199 = (15 * 1008) % 1199 := by rw [h₁, y_eq]
+    have h₄ : (x % 1199) = (15 * 1008 % 1199) := by
+      have : 24 * (x % 1199) = 24 * x % 1199 := by
+        rw [Int.mul_emod, Int.mul_emod, Int.emod_emod]
+      rw [this] at h₃
+      omega
+    exact h₄
+
+  -- $15 \cdot 1008 \equiv 449 \pmod{1199}$
+  have h₅ : x % 1199 = 449 := by
+    norm_num at h₂ ⊢
+    exact h₂
+
+  -- The largest negative integer satisfying the congruence is -449
+  have h₆ : x ≤ -449 := by
+    omega
+
+  exact h₆
+```

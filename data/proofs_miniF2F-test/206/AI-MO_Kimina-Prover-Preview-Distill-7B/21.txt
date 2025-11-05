@@ -1,0 +1,56 @@
+-- For any $b \geq 0$ and all $x$, we have $f(x+a+b) = \frac{1}{2} + \sqrt{f(x+a+b-2a) - f(x+a+b-2a)^2}$.
+  have h₂ (b : ℝ) (hb : 0 ≤ b) : ∀ x, f (x + a + b) = 1 / 2 + Real.sqrt (f (x + a + b - 2 * a) - f (x + a + b - 2 * a) ^ 2) := by
+    intro x
+    calc
+      _ = f (x + a + b - 2 * a + a) := by ring_nf
+      _ = 1 / 2 + Real.sqrt (f (x + a + b - 2 * a) - f (x + a + b - 2 * a) ^ 2) := by rw [h₁]
+      _ = _ := by ring_nf
+
+  -- For any $b \geq 0$ and all $x$, we have $f(x+a+b) = \frac{1}{2} + \sqrt{f(x+b-a) - f(x+b-a)^2}$.
+  have h₂' (b : ℝ) (hb : 0 ≤ b) : ∀ x, f (x + a + b) = 1 / 2 + Real.sqrt (f (x + b - a) - f (x + b - a) ^ 2) := by
+    intro x
+    calc
+      _ = f (x + a + b - a) := by ring_nf
+      _ = 1 / 2 + Real.sqrt (f (x + a + b - 2 * a) - f (x + a + b - 2 * a) ^ 2) := by rw [h₁ (x + a + b - 2 * a)]
+      _ = 1 / 2 + Real.sqrt (f (x + b - a) - f (x + b - a) ^ 2) := by ring_nf
+
+  -- Let $b_1 = a$ and $b_2 = 2a$.
+  let b₁ : ℝ := a
+  let b₂ : ℝ := 2 * a
+
+  -- We have $f(x+a+b_1) = \frac{1}{2} + \sqrt{f(x+b_1-a) - f(x+b_1-a)^2}$.
+  have h₃ : ∀ x, f (x + b₁) = 1 / 2 + Real.sqrt (f (x + b₁ - a) - f (x + b₁ - a) ^ 2) := by
+    intro x
+    rw [h₂' b₁ (by linarith only [h₀])]
+    ring_nf
+
+  -- We have $f(x+a+b_2) = \frac{1}{2} + \sqrt{f(x+b_2-a) - f(x+b_2-a)^2}$.
+  have h₄ : ∀ x, f (x + b₂) = 1 / 2 + Real.sqrt (f (x + b₂ - a) - f (x + b₂ - a) ^ 2) := by
+    intro x
+    rw [h₂' b₂ (by linarith only [h₀])]
+    ring_nf
+
+  -- For any $x \in \mathbb{R}$, we have
+  -- $\begin{aligned} f(x+b_2) &= \frac{1}{2} + \sqrt{f(x+b_2-a) - f(x+b_2-a)^2} \\
+  -- &= \frac{1}{2} + \sqrt{f(x+a) - f(x+a)^2} \\
+  -- &= f(x+a) \end{aligned}$.
+  have h₅ : ∀ x, f (x + b₂) = f (x + a) := by
+    intro x
+    calc
+      _ = 1 / 2 + Real.sqrt (f (x + b₂ - a) - f (x + b₂ - a) ^ 2) := by rw [h₄ x]
+      _ = 1 / 2 + Real.sqrt (f (x + a) - f (x + a) ^ 2) := by
+        congr
+        ring_nf
+      _ = f (x + a) := by rw [h₃ x]
+
+  -- We have $f(x+b_2-b_1) = f(x)$ for all $x \in \mathbb{R}$.
+  have h₆ : ∀ x, f (x + b₂ - b₁) = f x := by
+    intro x
+    rw [show b₂ - b₁ = a by ring_nf]
+    exact h₅ x
+
+  -- Let $b = b_2 - b_1 = a$.
+  use b₂ - b₁
+  simp [h₆]
+
+```

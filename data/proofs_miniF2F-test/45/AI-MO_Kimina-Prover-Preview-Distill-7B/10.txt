@@ -1,0 +1,74 @@
+have h₁ : ∀ n ∈ S, 2010 ≤ n ∧ n ≤ 2019 ∧ ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+    intro n hn
+    exact h₀ n hn
+
+  have h₂ : ∀ n ∈ S, ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+    intro n hn
+    have ⟨h₃, h₄, h₅⟩ := h₁ n hn
+    exact ⟨m, h₅, h₄⟩
+  -- all the nice numbers in the set {2010,2011,2012,…,2019} are 2016
+  have h₃ : ∀ n ∈ S, n = 2016 := by
+    intro n hn
+    obtain ⟨m, h₃, h₄⟩ := h₂ n hn
+    have h₅ := h₃
+
+    have h₆ : m ≠ 1 := by
+      by_contra h
+      rw [h] at h₃
+      simp at h₃
+    have h₇ : m ≠ 0 := by
+      by_contra h
+      rw [h] at h₃
+      simp at h₃
+
+    have h₈ : ∃ d, d ∈ Nat.divisors m ∧ d ≠ 1 ∧ d ≠ m := by
+      use m
+      simp
+      constructor
+      exact h₇
+      constructor
+      by_contra h
+      rw [h] at h₃
+      simp at h₃
+      by_contra h
+      exact h₆
+
+    rcases h₈ with ⟨d, h₈, h₉, h₁₀⟩
+    have h₁₁ : d ∣ m := by
+      exact Nat.mem_divisors.mp h₈
+    have h₁₂ : d ≠ m := by
+      exact Nat.ne_of_lt.mp h₁₀
+    have h₁₃ : d < m := by
+      exact Nat.lt_of_dvd_of_ne h₉ h₁₂ h₁₁
+    have h₁₄ : m / d * d = m := by
+      exact Nat.div_mul_cancel h₁₁
+    have h₁₅ : m / d > 1 := by
+      by_contra h
+      push_neg at h
+      have : m / d = 1 := by
+        exact Nat.eq_of_le_of_lt_succ h h₁₃
+      rw [this] at h₁₄
+      simp [h₉] at h₁₄
+    have h₁₆ : m / d ∣ m := by
+      exact Nat.dvd_of_mul_right_dvd h₁₄
+    have h₁₇ : m / d ≠ 1 := by
+      by_contra h
+      rw [h] at h₁₄
+      simp [h₉] at h₁₄
+    have h₁₈ : m / d > m := by
+      exact Nat.lt_of_dvd_of_ne h₁₅ h₁₇ h₁₆
+    have h₁₉ : m / d * d > m := by
+      apply Nat.lt_mul_of_one_lt_of_lt
+      exact h₁₅
+      exact Nat.one_lt_iff_ne_zero_and_ne_one.mpr ⟨h₆, h₇⟩
+      exact h₁₃
+    have h₂₀ : m / d * d = m := by
+      exact Nat.div_mul_cancel h₁₁
+    linarith
+  -- then the sum of all the nice numbers in the set {2010,2011,2012,…,2019} is 2016
+  have h₄ : (∑ k in S, k) = 2016 := by
+    rw [Finset.sum_eq_card_nsmul (h₃)]
+    simp
+  exact h₄
+
+```

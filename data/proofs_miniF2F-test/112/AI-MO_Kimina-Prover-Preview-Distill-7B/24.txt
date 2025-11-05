@@ -1,0 +1,89 @@
+-- Simplify the left summand $\log_{5^k} 3^{k^2}$ to $\frac{k}{2} \log_5 3$.
+  have h₁ (k : ℕ) : Real.logb (5 ^ k) (3 ^ k ^ 2) = k / 2 * Real.logb 5 3 := by
+    -- Use the change of base formula $\log_a b = \frac{\log_c b}{\log_c a}$ with $c = 5$.
+    rw [Real.logb]
+    -- Use the property $\log_a b^n = n \log_a b$.
+    rw [Real.logb_pow]
+    -- Use the property $\log_{a^b} c^d = \frac{d}{b} \log_a c$.
+    rw [←Real.log_div_log]
+    field_simp
+    -- Simplify $(5^k)^{k^2} = 5^{k^3}$ and take the logarithm base 5.
+    rw [show (5 ^ k) ^ (k ^ 2) = 5 ^ (k ^ 3) by ring_nf]
+    rw [Real.log_pow]
+    simp
+    -- Simplify $k \log_5 3^k = k^2 \log_5 3$ and divide by $k$ to get $k \log_5 3$.
+    rw [Real.log_mul]
+    rw [show (5 ^ k) ^ (3 ^ k) = (5 ^ (3 ^ k)) ^ k by rw [←pow_mul]]
+    rw [Real.log_pow]
+    -- Simplify $\log_5 5 = 1$.
+    rw [Real.log_self_eq_one]
+    all_goals
+      norm_num
+
+  -- Simplify the right summand $\log_{9^k} 25^k$ to $\frac{2}{k} \log_9 25$.
+  have h₂ (k : ℕ) : Real.logb (9 ^ k) (25 ^ k) = 2 / k * Real.logb 9 25 := by
+    -- Use the change of base formula $\log_a b = \frac{\log_c b}{\log_c a}$ with $c = 9$.
+    rw [Real.logb]
+    -- Use the property $\log_a b^n = n \log_a b$.
+    rw [Real.logb_pow]
+    -- Use the property $\log_{a^b} c^d = \frac{d}{b} \log_a c$.
+    rw [←Real.log_div_log]
+    field_simp
+    -- Simplify $(9^k)^k = 9^{k^2}$ and take the logarithm base 9.
+    rw [show (9 ^ k) ^ k = 9 ^ (k ^ 2) by ring_nf]
+    rw [Real.log_pow]
+    simp
+    -- Simplify $k \log_9 25^k = k^2 \log_9 25$ and divide by $k$ to get $k \log_9 25$.
+    rw [Real.log_mul]
+    rw [show (9 ^ k) ^ (25 ^ k) = (9 ^ (25 ^ k)) ^ k by rw [←pow_mul]]
+    rw [Real.log_pow]
+    -- Simplify $\log_9 9 = 1$.
+    rw [Real.log_self_eq_one]
+    all_goals
+      norm_num
+
+  -- Simplify the first sum $\sum_{k=1}^{20} \log_{5^k} 3^{k^2}$ to $\frac{1}{2} \sum_{k=1}^{20} k \log_5 3 = \frac{1}{2} \cdot \frac{20 \cdot 21}{2} \log_5 3 = 105 \log_5 3$.
+  have h₃ : ∑ k in Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = 105 * Real.logb 5 3 := by
+    -- Apply the simplification to each summand.
+    simp_rw [h₁]
+    -- Factor out $\log_5 3$.
+    rw [←Finset.mul_sum]
+    -- Show that $\sum_{k=1}^{20} \frac{k}{2} = \frac{1}{2} \sum_{k=1}^{20} k = \frac{1}{2} \cdot \frac{20 \cdot 21}{2} = 105$.
+    norm_num
+    -- Show that $\sum_{k=1}^{20} k = \frac{20 \cdot 21}{2}$.
+    rw [Finset.sum_Icc_succ_top (Nat.zero_lt_succ 10)]
+    rw [Finset.sum_Icc_succ_top (Nat.zero_lt_succ 20)]
+    simp
+    norm_num
+
+  -- Simplify the second sum $\sum_{k=1}^{100} \log_{9^k} 25^k$ to $\frac{2}{100} \sum_{k=1}^{100} k \log_9 25 = \frac{2}{100} \cdot \frac{100 \cdot 101}{2} \log_9 25 = 101 \log_9 25$.
+  have h₄ : ∑ k in Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = 101 * Real.logb 9 25 := by
+    -- Apply the simplification to each summand.
+    simp_rw [h₂]
+    -- Factor out $\log_9 25$.
+    rw [←Finset.mul_sum]
+    -- Show that $\sum_{k=1}^{100} \frac{2}{k} = 2 \sum_{k=1}^{100} \frac{1}{k}$.
+    norm_num
+    -- Show that $\sum_{k=1}^{100} k = \frac{100 \cdot 101}{2}$.
+    rw [Finset.sum_Icc_succ_top (Nat.zero_lt_succ 100)]
+    rw [Finset.sum_Icc_succ_top (Nat.zero_lt_succ 100)]
+    simp
+    norm_num
+
+  -- Combine the simplifications of the two sums and compute the product.
+  rw [h₃, h₄]
+  -- Use the change of base formula $\log_a b = \frac{\log_c b}{\log_c a}$ with $c = 5$ to rewrite $\log_9 25 = \frac{\log_5 25}{\log_5 9}$.
+  rw [Real.logb]
+  -- Use the property $\log_a b^c = c \log_a b$ to rewrite $\log_5 25 = \log_5 5^2 = 2 \log_5 5 = 2$.
+  rw [Real.logb_pow]
+  -- Use the property $\log_a b^c = c \log_a b$ to rewrite $\log_5 9 = \log_5 3^2 = 2 \log_5 3$.
+  rw [show (25 : ℝ) = 5 ^ 2 by norm_num, show (9 : ℝ) = 3 ^ 2 by norm_num]
+  rw [Real.logb_pow, Real.logb_pow]
+  -- Use the fact that $\log_5 5 = 1$.
+  rw [Real.log_self_eq_one]
+  -- Simplify the numerical expressions.
+  norm_num
+  -- Show that $105 \cdot 101 \cdot \frac{2}{2} = 105 \cdot 101 = 10605$.
+  rw [show 105 * (2 / 2 : ℝ) = 105 by norm_num]
+  norm_num
+```

@@ -1,0 +1,77 @@
+-- The maximum of $(1 + 1/k^3)$ for $1 \leq k \leq n$ is $3 - 1$.
+  have max_eq_3_sub_1 : max (Finset.Icc 1 n) (fun k => (1 : ℝ) + 1 / k ^ 3) = 3 - 1 := by
+    apply Finset.max_eq_of_eq_max element_eq_of_eq_mem
+    simp
+    intro k hk k_lt_n
+    rw [← Finset.mem_Ico] at hk
+    simp at hk
+    -- The maximum of $(1 + 1/k^3)$ for $1 \leq k \leq n$ is $3 - 1$.
+    have : ((3 : ℝ) - 1) - (1 + 1 / k ^ 3) = (1 - 1 / k) * (1 - 1 / (k + 1)) * (k + 1) := by
+      field_simp
+      ring
+    rw [this]
+    apply mul_nonneg
+    apply mul_nonneg
+    · norm_num
+    · apply sub_nonneg.mpr
+      apply one_le_inv_nat_pow hk
+    · norm_num
+    · apply one_le_inv_nat_pow (show 0 < k + 1 by omega)
+
+  -- We have $\prod_{k=1}^n (1 + 1/k^3) \leq \prod_{k=1}^n (3 - 1/k)$.
+  have prod_le_prod : (∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3) ≤ ∏ k in Finset.Icc 1 n, (3 : ℝ) - 1 / ↑k := by
+    apply Finset.prod_le_prod
+    · intro k hk
+      simp at hk
+      rw [← Finset.mem_Icc]
+      exact ⟨by omega, by omega⟩
+    · simp
+      intro k hk k_lt_n
+      simp at hk
+      -- for $1 \leq k \leq n$, we have $1 + 1/k^3 \leq 3 - 1/k$.
+      rw [add_comm, ← sub_eq_add_neg]
+      apply div_le_div_iff₀?_?_?_ |>.mpr
+      · norm_num
+      · norm_num
+      · apply one_le_inv_nat_pow hk
+      · norm_num
+      · apply one_le_inv_nat_pow (show 0 < k + 1 by omega)
+
+  -- We have $\prod_{k=1}^n (3 - 1/k) = 3 - 1/n$.
+  have prod_eq : ∏ k in Finset.Icc 1 n, (3 : ℝ) - 1 / ↑k = 3 - 1 / ↑n := by
+    -- We have $(3 - 1/k) = (1 - 1/k) * (1 + 1/(k-1))$.
+    have eq : ∀ k : ℕ, 1 < k → (3 : ℝ) - 1 / ↑k = (1 - 1 / ↑k) * (1 + 1 / ↑(k - 1)) := by
+      intro k hk
+      rw [← Finset.mem_Ico]
+      simp at hk
+      have : (3 : ℝ) - 1 / ↑k = 2 - 1 / ↑k + 1 := by ring
+      rw [this]
+      symm
+      apply add_eq_add_of_sub_eq_sub
+      nth_rw 2 [← mul_one (1 - 1 / ↑k)]
+      rw [mul_comm, ← mul_assoc, inv_mul_cancel₀, mul_inv_cancel₀, sub_add_cancel]
+      simp
+      linarith
+      apply one_le_inv_nat_pow (show 0 < k by omega)
+
+    rw [Finset.prod_Icc_succ_top (show 1 ≤ 1 by norm_num)]
+    simp
+    rw [eq, Finset.prod_Icc_succ_top (show 1 ≤ 2 by norm_num)]
+    simp
+    rw [eq, Finset.prod_Icc_succ_top (show 1 ≤ 3 by norm_num)]
+    simp
+    -- By the above formula, we have $\prod_{k=1}^n (3 - 1/k) = 3 - 1/n$.
+    rw [eq]
+    rw [Finset.prod_Icc_succ_top (show 1 ≤ n by omega)]
+    simp
+    rw [add_comm]
+    nth_rw 1 [← Finset.prod_Ico_eq_prod_Icc (show 1 ≤ n by omega)]
+    rw [← Finset.prod_Ico_eq_prod_Ioc]
+    simp
+    rw [Finset.prod_Icc_succ_top (show 1 ≤ n by omega)]
+    simp
+    linarith
+
+  -- Combining the above results, we have $\prod_{k=1}^n (1 + 1/k^3) \leq 3 - 1/n$.
+  rwa [Prod.map_eq_prod, max_eq_3_sub_1, prod_eq] at prod_le_prod
+```

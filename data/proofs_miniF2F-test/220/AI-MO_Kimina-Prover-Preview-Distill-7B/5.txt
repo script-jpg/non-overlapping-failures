@@ -1,0 +1,71 @@
+-- We do this problem purely for fun.
+  -- First, let's recall some trigonometric identities.
+  -- 1 + tan^2 x = sec^2 x
+  --        tan x = sin x / cos x
+  have : 1 / Real.cos x ^ 2 - 1 / Real.sin x ^ 2 = 1 := by
+    rw [sq, sq]
+    rw [Real.tan_eq_sin_div_cos]
+    field_simp
+    rw [Real.cot_eq_cos_div_sin]
+    field_simp
+    rw [Real.cos_sq_add_sin_sq]
+    ring
+    all_goals
+      try linarith
+  -- 1 / cos x + 1 / sin x * cos x = 1 / sin x
+  have : 1 / Real.cos x + 1 / Real.sin x * Real.cos x = 1 / Real.sin x := by
+    field_simp
+    ring
+  -- 1 / cos x - 1 / sin x * cos x = 1 / cos x - 1 / sin x
+  have : 1 / Real.cos x - 1 / Real.sin x * Real.cos x = 1 / Real.cos x - 1 / Real.sin x := by
+    -- We can make this more complicated.
+    ring_nf
+    rw [Real.tan_eq_sin_div_cos]
+    field_simp
+    ring
+  -- Rewrite the problem in terms of sin and cos.
+  rw [Real.tan_eq_sin_div_cos] at h₀
+  rw [Real.tan_eq_sin_div_cos] at h₁
+  ring_nf at h₀ h₁
+  field_simp at h₀ h₁
+  -- We should try to take the ratio of the two equations.
+  -- This is a huge overkill for this problem, but it demonstrates some powerful algebraic manipulations.
+  have h₂ : (1 / Real.sin x + 1 / Real.cos x) * (1 / Real.cos x - 1 / Real.sin x) = 1 := by
+    nth_rw 1 [←h₀]
+    nth_rw 2 [←h₁]
+    field_simp
+    ring
+  -- Now we need to solve the two equations carefully.
+  -- The most important thing is to never lose solutions.
+  have h₃ : (1 / Real.sin x + 1 / Real.cos x) * (1 / Real.cos x + 1 / Real.sin x) = (1 / Real.cos x + 1 / Real.sin x)^2 - (1 / Real.cos x - 1 / Real.sin x)^2 := by
+    ring
+  have h₄ : (1 / Real.cos x + 1 / Real.sin x)^2 - (1 / Real.cos x - 1 / Real.sin x)^2 = 4 := by
+    rw [sq, sq]
+    rw [←sub_eq_zero]
+    ring_nf
+    rw [Real.cos_sq_add_sin_sq]
+    ring
+  -- Now we can solve the two equations carefully.
+  have h₅ : (1 / Real.sin x + 1 / Real.cos x) * (1 / Real.cos x + 1 / Real.sin x) = 4 := by
+    rw [h₃, h₄]
+  have h₆ : 1 / Real.cos x + 1 / Real.sin x = 2 ∨ 1 / Real.cos x + 1 / Real.sin x = -2 := by
+    apply eq_or_eq_neg_of_sq_eq_sq
+    norm_num
+    rw [←h₅]
+    ring
+  -- Now we can solve the two equations carefully.
+  rcases h₆ with h₆ | h₆
+  · rw [h₆] at h₁
+    -- m = 2/7 * 7/22 = 1/11
+    have : m = 1 / 11 := by
+      calc
+        m = (1 / Real.sin x + 1 / Real.tan x) := by rw [h₁]
+        _ = 2 := by rw [h₆]
+    rw [this]
+    norm_num
+  · -- Impossible.
+    exfalso
+    rw [←h₁, h₆] at h₀
+    norm_num at h₀
+    linarith
+```

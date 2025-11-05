@@ -1,0 +1,99 @@
+-- a + b - c > 0
+  have h₄ : 0 < a + b - c := by linarith
+  -- b + c - a > 0
+  have h₅ : 0 < b + c - a := by linarith
+  -- c + a - b > 0
+  have h₆ : 0 < c + a - b := by linarith
+  -- a + c - b > 0
+  have h₇ : 0 < a + c - b := by linarith
+  -- b + a - c > 0
+  have h₈ : 0 < b + a - c := by linarith
+
+  -- {a, b, c} are positive
+  have h₉ : ∀ x : ℝ, x ∈ ({a, b, c} : Set ℝ) → 0 < x := by
+    intro x hx
+    simp at hx
+    rcases hx with (rfl | rfl | rfl)
+    all_goals simp
+    all_goals exact h₀.right.right
+  -- {a + b - c, b + c - a, c + a - b, a + c - b, b + a - c} are positive
+  have h₁₀ : ∀ x : ℝ, x ∈ ({a + b - c, b + c - a, c + a - b, a + c - b, b + a - c} : Set ℝ) → 0 < x := by
+    intro x hx
+    simp at hx
+    rcases hx with (rfl | rfl | rfl | rfl | rfl)
+    all_goals simp
+    all_goals linarith
+
+  -- a ^ 2 (b + c - a) ≤ b ^ 2 (b + c - a) + (a + b - c) * a * c
+  have h₁₁ : a ^ 2 * (b + c - a) ≤ b ^ 2 * (b + c - a) + (a + b - c) * a * c := by
+    have h₁₁ : (b - a) * (b + c - a) ≥ 0 := by
+      apply mul_nonneg
+      linarith
+      linarith
+    linarith
+
+  -- b ^ 2 (c + a - b) ≤ c ^ 2 (c + a - b) + (b + c - a) * b * a
+  have h₁₂ : b ^ 2 * (c + a - b) ≤ c ^ 2 * (c + a - b) + (b + c - a) * b * a := by
+    have h₁₂ : (c - b) * (c + a - b) ≥ 0 := by
+      apply mul_nonneg
+      linarith
+      linarith
+    linarith
+
+  -- c ^ 2 (a + b - c) ≤ a ^ 2 (a + b - c) + (c + a - b) * c * b
+  have h₁₃ : c ^ 2 * (a + b - c) ≤ a ^ 2 * (a + b - c) + (c + a - b) * c * b := by
+    have h₁₃ : (a - c) * (a + b - c) ≥ 0 := by
+      apply mul_nonneg
+      linarith
+      linarith
+    linarith
+
+  -- a ^ 2 (b + c - a) + b ^ 2 (c + a - b) + c ^ 2 (a + b - c) ≤ b ^ 2 (b + c - a) + (a + b - c) * a * c + c ^ 2 (c + a - b) + (b + c - a) * b * a + a ^ 2 (a + b - c) + (c + a - b) * c * b
+  have h₁₄ : a ^ 2 * (b + c - a) + b ^ 2 * (c + a - b) + c ^ 2 * (a + b - c) ≤ b ^ 2 * (b + c - a) + (a + b - c) * a * c + c ^ 2 * (c + a - b) + (b + c - a) * b * a + a ^ 2 * (a + b - c) + (c + a - b) * c * b := by
+    linarith
+  clear h₁₁ h₁₂ h₁₃
+
+  -- a + b - c + c + a - b + b + c - a = 2(a + b + c)
+  have h₁₅ : a + b - c + (c + a - b) + (b + c - a) = 2 * (a + b + c) := by linarith
+  -- b + c - a + c + a - b + a + b - c = 2(a + b + c)
+  have h₁₆ : (b + c - a) + (c + a - b) + (a + b - c) = 2 * (a + b + c) := by linarith
+  -- a + b + c > 0
+  have h₁₇ : 0 < a + b + c := by linarith
+  -- a * b * c > 0
+  have h₁₈ : 0 < a * b * c := by
+    have h₁₈ : 0 < a * b := by
+      exact mul_pos h₀.left h₀.right.left
+    exact mul_pos h₁₈ h₀.right.right
+  -- (a + b - c) * a * c > 0
+  have h₁₉ : 0 < (a + b - c) * a * c := by
+    have h₁₉ : 0 < a * c := by
+      exact mul_pos h₀.left h₀.right.right
+    exact mul_pos h₁₉ h₁₀ h₁₈
+  -- (b + c - a) * b * a > 0
+  have h₂₀ : 0 < (b + c - a) * b * a := by
+    have h₂₀ : 0 < b * a := by
+      exact mul_pos h₀.right.left h₀.left
+    exact mul_pos h₂₀ h₁₀ h₁₈
+  -- (c + a - b) * c * b > 0
+  have h₂₁ : 0 < (c + a - b) * c * b := by
+    have h₂₁ : 0 < c * b := by
+      exact mul_pos h₀.right.right h₀.right.left
+    exact mul_pos h₂₁ h₁₀ h₁₈
+
+  -- (a + b - c) * a * c + (b + c - a) * b * a + (c + a - b) * c * b ≥ 0
+  have h₂₂ : 0 ≤ (a + b - c) * a * c + (b + c - a) * b * a + (c + a - b) * c * b := by linarith
+
+  -- b ^ 2 (b + c - a) ≤ b ^ 2 (b + c - a) + (a + b - c) * a * c
+  have h₂₃ : b ^ 2 * (b + c - a) ≤ b ^ 2 * (b + c - a) + (a + b - c) * a * c := by
+    linarith
+  -- b ^ 2 (c + a - b) ≤ c ^ 2 (c + a - b) + (b + c - a) * b * a
+  have h₂₄ : b ^ 2 * (c + a - b) ≤ c ^ 2 * (c + a - b) + (b + c - a) * b * a := by
+    linarith
+  -- c ^ 2 (a + b - c) ≤ a ^ 2 (a + b - c) + (c + a - b) * c * b
+  have h₂₅ : c ^ 2 * (a + b - c) ≤ a ^ 2 * (a + b - c) + (c + a - b) * c * b := by
+    linarith
+
+  -- use `linarith` to prove the inequality
+  linarith
+
+```

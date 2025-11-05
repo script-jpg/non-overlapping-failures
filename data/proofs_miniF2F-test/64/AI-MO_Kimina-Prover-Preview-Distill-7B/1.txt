@@ -1,0 +1,104 @@
+-- $h(x) | 3$.
+  have h₄ (x : ℕ+) : h x ∣ 3 := by
+    simp [h₂, h₀, h₁]
+    apply Nat.gcd_dvd_gcd
+   . norm_num
+   . norm_num
+
+  -- Since $h(x)$ is a divisor of $3$, we have $h(x) = 1$ or $h(x) = 3$.
+  have h₅ (x : ℕ+) : h x = 1 ∨ h x = 3 := by
+    have : h x ∣ 3 := h₄ x
+    have h₆ : h x ≠ 0 := by
+      simp [h₂]
+      intro hx
+      rw [hx] at h₄
+      norm_num at h₄
+    apply (Nat.dvd_prime (show Nat.Prime 3 by norm_num)).mp this
+    norm_num
+
+  -- When does $h(x) = 3$ hold true?
+  have h₇ (x : ℕ+) : h x = 3 ↔ 5 ∣ 12 * x + 7 := by
+    simp [h₂, h₀, h₁]
+    rw [Nat.gcd_eq_right (by norm_num)]
+    constructor
+   . intro h
+      norm_num at h
+      omega
+   . intro h
+      norm_num
+      omega
+
+  -- If $h(x) = 3$, then $x \equiv 2 \pmod{5}$.
+  have h₈ (x : ℕ+) : h x = 3 → x ≡ 2 [MOD 5] := by
+    intro h
+    have h₉ : 5 ∣ 12 * x + 7 := h₇ x.mp h
+    rw [Nat.modEq_iff_dvd' (by omega)] at h₉
+    omega
+
+  -- Set $x = 5k+2$ for some integer $k \geq 0$.
+  have h₈' (k : ℕ) : ∃ x, x = 5 * k + 2 ∧ h x = 3 := by
+    let x := 5 * k + 2
+    have hx : x = 5 * k + 2 := rfl
+    use x
+    constructor
+   . exact hx
+   . have h₁₀ := h₈ x
+      simp [h₂, h₀, h₁] at h₁₀
+      rw [Nat.gcd_eq_right (by norm_num)] at h₁₀
+      apply Nat.Prime.ne_zero (show Nat.Prime 3 by norm_num) at h₁₀
+      exact h₁₀
+
+  -- We have $h(x) = 3$ for infinitely many values of $x$.
+  have h₉ : (Set.range h).Infinite := by
+    apply Set.infinite_of_injective_forall_mem (f := fun n ↦ 5 * n + 2)
+   . intro n m hnm
+      simp [h₈']
+      omega
+   . intro x
+      simp [h₂]
+      rw [h₈''] at x
+      obtain ⟨k, hk⟩ := x
+      use k
+      omega
+
+  -- We clearly have $1 \in \text{Range}(h)$.
+  have h₁₀ : 1 ∈ Set.range h := by
+    simp [h₂]
+    use 1
+    norm_num
+
+  -- Since $h(x)$ can only be $1$ or $3$, and there are infinitely many $x$ such that $h(x) = 3$, the only possible values of $h(x)$ are $1$ and $3$. And we already know that $1 \in \text{Range}(h)$, so $\text{Range}(h) = \{1, 3\}$.
+  have h₁₁ : Set.range h = {1, 3} := by
+    ext y
+    simp
+    constructor
+   . intro h
+      simp [h₁₀] at h
+      obtain ⟨x, hx, hxy⟩ := h
+      rw [hxy]
+      have h₇ := h₅ x
+      have h₈ := h₈' x
+      have h₉ : x = 5 * (x / 5) + 2 := by omega
+      rw [h₉] at hx
+      have : h x = 3 := h₈ hx
+      rw [this] at hxy
+      exact Or.inr hxy
+   . intro h
+      cases h with
+      | inl h =>
+        rw [h]
+        simp
+        use 1
+        norm_num
+      | inr h =>
+        rw [h]
+        simp
+        use 5 * 2 + 2
+        norm_num
+        done
+
+  -- Therefore, the sum of all possible values of $h(x)$ is $1 + 3 = 4$.
+  simp [h₁₁]
+  done
+
+```

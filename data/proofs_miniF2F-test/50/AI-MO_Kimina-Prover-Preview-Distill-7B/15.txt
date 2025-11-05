@@ -1,0 +1,57 @@
+-- Simplify the equation to make it more clear
+  have : ↑x / (4 : ℝ) + y / 6 = (x + y) / n ↔ (↑x * 3 + y * 2) * n = (x + y) * 12 := by
+    constructor
+    · intro h
+      field_simp at h
+      norm_num at h ⊢
+      linarith
+    · intro h
+      field_simp
+      norm_num at h ⊢
+      linarith
+  simp only [this] at h₀
+
+  -- Assume the answer is not 5, prove that it is impossible
+  by_contra! h
+
+  -- If the answer is not 5, then n * (x + y) = 12 * (x + y) does not hold
+  replace h : n * (x + y) ≠ 12 * (x + y) := by
+    rintro h
+    simp [h] at h₀
+
+  -- Rewrite the equation and discuss the possible values of x and y
+  replace h₀ : (↑x * 3 + y * 2) * n = (x + y) * 12 := by linarith
+  have : x + y ≠ 0 := by simp
+  replace h₀ : (↑x * 3 + y * 2) = (x + y) * 12 / n := by
+    refine (eq_div_iff_mul_eq?_).mpr h₀
+    simp [this]
+
+  -- Prove that x + y is divisible by 12
+  have : 12 ∣ (x + y) * 12 / n := by rw [h₀]; exact Nat.dvd_mul_right 12 (↑x * 3 + y * 2)
+  replace this : 12 ∣ (x + y) := by
+    apply Nat.Coprime.dvd_of_dvd_mul_right at this
+    exact this
+    norm_num
+
+  -- If x + y is divisible by 12, then (x + y) * 12 / n is a multiple of 12
+  replace h₀ : (↑x * 3 + y * 2) = (x + y) * 12 / n := by linarith
+  replace h₀ : 12 ∣ (↑x * 3 + y * 2) := by
+    rw [h₀]
+    apply Nat.dvd_mul_right
+
+  -- Prove that x must be divisible by 4
+  have h₁ : 4 ∣ x := by
+    apply Nat.Coprime.dvd_of_dvd_mul_left at this
+    exact this
+    norm_num
+
+  -- If x is divisible by 4, then x = 0 is the only solution to 4 ∣ x and x > 0
+  replace h₁ : 4 ∣ x ∧ x ≠ 0 := by exact ⟨h₁, this⟩
+  replace h₁ : x = 0 := by
+    rcases h₁ with ⟨h₁, h₁⟩
+    omega
+
+  -- This is a contradiction
+  simp [h₁] at h₀
+
+```

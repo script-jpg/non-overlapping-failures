@@ -1,0 +1,45 @@
+-- We try finding the pattern of powers of 5 modulo 7.
+  have h1 : 5 ^ 1 % 7 = 5 := by norm_num
+  have h2 : 5 ^ 2 % 7 = 4 := by norm_num
+  have h3 : 5 ^ 3 % 7 = 6 := by norm_num
+  have h4 : 5 ^ 4 % 7 = 2 := by norm_num
+  have h5 : 5 ^ 5 % 7 = 3 := by norm_num
+  have h6 : 5 ^ 6 % 7 = 1 := by norm_num
+  have h7 : 5 ^ 7 % 7 = 5 := by norm_num
+
+  -- It turns out to be periodic with period 6.
+  have h8 : 5 ^ 6 % 7 = 1 := by norm_num
+
+  -- Thus, 5 ^ (6 * k) % 7 = 1 for any integer k.
+  have h9 : ∀ k : ℕ, 5 ^ (6 * k) % 7 = 1 := by
+    intro k
+    induction k with
+    | zero =>
+      simp
+    | succ k ih =>
+      calc
+        _ = 5 ^ (6 * k + 6) % 7 := by congr; ring
+        _ = 5 ^ (6 * k) * 5 ^ 6 % 7 := by rw [Nat.pow_add]
+        _ = (5 ^ (6 * k) % 7) * (5 ^ 6 % 7) % 7 := by rw [Nat.mul_mod]
+        _ = 1 * 1 % 7 := by rw [ih, h8]
+        _ = 1 := by norm_num
+
+  -- Let us try to factorize the exponent.
+  have h10 : 999999 = 6 * 166666 + 3 := by norm_num
+
+  -- Therefore, 5 ^ 999,999 = (5 ^ 6) ^ 166,666 * 5 ^ 3.
+  have h11 : 5 ^ 999999 = (5 ^ 6) ^ 166666 * 5 ^ 3 := by
+    rw [h10, Nat.pow_add, Nat.pow_mul]
+
+  -- So, 5 ^ 999,999 % 7 = ((5 ^ 6) ^ 166,666 % 7) * (5 ^ 3 % 7) % 7 = (1 ^ 166,666 % 7) * 6 % 7 = 6.
+  calc
+    _ = (5 ^ 999999 % 7) := by rw [h11]; norm_num
+    _ = ((5 ^ 6) ^ 166666 * 5 ^ 3) % 7 := by rw [h1]
+    _ = (((5 ^ 6) ^ 166666 % 7) * (5 ^ 3 % 7)) % 7 := by rw [Nat.mul_mod]
+    _ = (((5 ^ 6 % 7) ^ 166666 % 7) * (5 ^ 3 % 7)) % 7 := by rw [Nat.pow_mod]
+    _ = ((4 ^ 166666 % 7) * 6 % 7) := by rw [h2, h3]
+    _ = ((4 % 7 ^ 166666 % 7) * 6 % 7) := by rw [Nat.pow_mod]
+    _ = (4 ^ 166666 % 7 * 6 % 7) := by norm_num
+    _ = (1 * 6 % 7) := by rw [h9 166666]
+    _ = 6 := by norm_num
+```

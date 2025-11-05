@@ -1,0 +1,76 @@
+-- Prove that $f$ is injective.
+  have h₀' : ∀ n m : ℕ, 0 < n → 0 < m → f n = f m → n = m := by
+    intro n m hn hm h
+    by_cases h' : n < m
+   . have h'' : f n < f m := by
+        specialize h₁ n (by omega)
+        have := h₁ h'
+        omega
+      specialize h h''
+      absurd h
+      simp [h']
+   . have h' : m < n := by
+        omega
+      have h'' : f m < f n := by
+        specialize h₁ m (by omega)
+        have := h₁ h'
+        omega
+      specialize h h''
+      absurd h
+      simp [h']
+  -- Prove that $f(0)=0$.
+  have h₂ : f 0 = 0 := by
+    specialize h₁ 0 (by simp)
+    simp at h₁
+    specialize h₀ (f 0)
+    omega
+  -- Prove that $f(n)=n$ for every positive integer $n$.
+  intro n
+  induction' n using Nat.strong_induction_on with n ih
+  match n with
+  | 0 => contradiction
+  | 1 =>
+    have h₃ : f 1 = 1 := by
+      have : f 1 ≠ 1 := by
+        specialize h₀ (f 1)
+        by_contra!
+        simp [this] at h₁
+        specialize h₁ 1 (by simp)
+        omega
+      absurd this
+      simp
+    exact h₃
+  | n + 2 =>
+    have h₃ : f (n + 1) = n + 1 := by
+      have h₄ : f (n + 1) > f (n + 2) := by
+        specialize h₁ (n + 1) (by omega)
+        simp at h₁
+        exact h₁
+      have h₅ : f (n + 1) > f (n + 1) := by
+        specialize h₁ (n + 2) (by omega)
+        simp at h₁
+        specialize h₀ (f (n + 2))
+        omega
+      absurd h₅
+      simp
+      exact h₄
+    have h₄ : f (n + 2) = n + 2 := by
+      have h₅ : f (n + 2) > f (n + 1) := by
+        specialize h₁ (n + 2) (by omega)
+        simp at h₁
+        exact h₁
+      have h₆ : f (n + 2) > f (n + 2) := by
+        specialize h₁ (n + 1) (by omega)
+        simp at h₁
+        specialize h₀ (f (n + 1))
+        omega
+      absurd h₆
+      simp
+      exact h₅
+    have h₅ : f n = n := by
+      specialize ih (by omega) (by omega)
+      exact ih
+    specialize h₀' (n + 1) (n + 2) (by omega) (by omega) h₃
+    rw [h₅, h₄] at h₀'
+    exact h₀'
+```

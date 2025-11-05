@@ -1,0 +1,103 @@
+-- gcd x y * lcm x y = x * y
+  have lcm_gcd : m * n = Nat.gcd m n * Nat.lcm m n := by
+    rw [← Nat.gcd_mul_lcm m n]
+
+  -- = 8 * 112 = 896
+  have h₃ : m * n = 896 := by
+    calc
+      m * n = Nat.gcd m n * Nat.lcm m n := lcm_gcd
+      _ = 8 * 112 := by rw [h₁, h₂]
+      _ = 896 := by norm_num
+
+  -- We know that m = 8 * x and n = 8 * y, where x and y are coprime.
+  have exists_coprime : ∃ x y, m = 8 * x ∧ n = 8 * y ∧ Nat.gcd x y = 1 := by
+    -- x = m / 8 and y = n / 8
+    use m / 8, n / 8
+    -- x and y are coprime
+    have h₄ : Nat.gcd m n = 8 * Nat.gcd (m / 8) (n / 8) := by
+      rw [h₁]
+      simp [Nat.gcd_div_self]
+      apply Nat.gcd_mul_left_add_right
+      rw [Nat.gcd_comm]
+      exact Nat.gcd_mul_left_add_right m n
+    -- so x and y are coprime
+    simp [h₄] at h₁
+    use h₁
+    refine ⟨?_,?_,?_⟩
+   . omega
+   . omega
+   . rw [h₁]
+      simp
+
+  -- x and y are positive
+  have x_pos : 0 < m / 8 := by omega
+  have y_pos : 0 < n / 8 := by omega
+
+  -- m / 8 * n / 8 = 112 / 8 = 14
+  have h₄ : (m / 8) * (n / 8) = 14 := by
+    calc
+      (m / 8) * (n / 8) = (m * n) / 64 := by omega
+      _ = 896 / 64 := by rw [h₃]
+      _ = 14 := by norm_num
+
+  -- (m / 8) and (n / 8) are positive integers, so there are only 4 possibilities: (1,14), (2,7), (7,2), (14,1).
+  have : m / 8 ∈ ({1, 2, 7, 14} : Finset ℕ) := by
+    simp only [Finset.mem_insert, Finset.mem_singleton]
+    constructor
+   . omega
+   . have h₅ : (m / 8)⁻¹ * (n / 8) = 14⁻¹ := by
+        rw [← h₄]
+        simp
+      by_contra h
+      simp only [ne_eq, Finset.mem_singleton] at h
+      rcases h with (h | h | h | h)
+     . simp [h] at h₅
+     . simp [h] at h₅
+        omega
+     . simp [h] at h₅
+        omega
+     . simp [h] at h₅
+        omega
+
+  have : n / 8 ∈ ({1, 2, 7, 14} : Finset ℕ) := by
+    simp only [Finset.mem_insert, Finset.mem_singleton]
+    constructor
+   . omega
+   . have h₅ : (m / 8) * (n / 8) = 14 := h₄
+      have : (n / 8)⁻¹ * (m / 8) = 14⁻¹ := by
+        rw [← h₄]
+        simp
+      by_contra h
+      simp only [ne_eq, Finset.mem_singleton] at h
+      rcases h with (h | h | h | h)
+     . simp [h] at this
+     . simp [h] at this
+        omega
+     . simp [h] at this
+        omega
+     . simp [h] at this
+        omega
+
+  -- The minimum value of m + n is attained when (m / 8, n / 8) = (2, 7) or (7, 2).
+  have : (m / 8 = 2 ∧ n / 8 = 7) ∨ (m / 8 = 7 ∧ n / 8 = 2) := by
+    have : m / 8 ∈ ({1, 2, 7, 14} : Finset ℕ) := this
+    have : n / 8 ∈ ({1, 2, 7, 14} : Finset ℕ) := this
+    fin_cases this <;> fin_cases this <;> omega
+
+  rcases this with (h | h)
+
+  -- The minimum value of m + n is 72 when (m / 8, n / 8) = (2, 7).
+ . simp [h] at h₄
+    have h₅ := h₄
+    simp [h] at h₁
+    have h₆ := h₁
+    omega
+
+  -- The minimum value of m + n is 72 when (m / 8, n / 8) = (7, 2).
+ . simp [h] at h₄
+    have h₅ := h₄
+    simp [h] at h₁
+    have h₆ := h₁
+    omega
+
+```

@@ -1,0 +1,245 @@
+-- We begin by setting up the problem with all given conditions.
+  rcases h₀ with ⟨ha, hb, hc⟩
+  have h₁' : a + b - c > 0 := by linarith
+  have h₂' : a + c - b > 0 := by linarith
+  have h₃' : b + c - a > 0 := by linarith
+
+  -- We then state two well-known inequalities, the AM-GM inequality and a form of the AM-HM inequality, that will be used in the proof.
+  -- For the AM-GM inequality, we present it in a form suitable for our needs.
+  have h_am_gm : ∀ x y : ℝ, x > 0 → y > 0 → x + y ≥ 2 * √(x * y) := by
+    intro x y hx hy
+    have h₀ : (√x - √y) ^ 2 ≥ 0 := by positivity
+    ring_nf at h₀
+    rw [show √x ^ 2 = x by refine Real.sq_sqrt (by linarith)] at h₀
+    rw [show √y ^ 2 = y by refine Real.sq_sqrt (by linarith)] at h₀
+    rw [show √x * √y = √(x * y) by refine Eq.symm (Real.sqrt_mul' x (by linarith))] at h₀
+    linarith
+
+  -- Now we present a form of the AM-HM inequality.
+  have h_am_hm : ∀ x y : ℝ, x > 0 → y > 0 → 1 / x + 1 / y ≥ 2 / (x + y) := by
+    intro x y hx hy
+    have h₀ : (x + y) ^ 2 > 0 := by positivity
+    have h₁ : x * y > 0 := by positivity
+    suffices (1 / x + 1 / y) * (x * y) ≥ 2 / (x + y) * (x * y) by exact le_of_mul_le_mul_right this h₁
+    rw [show (1 / x + 1 / y) * (x * y) = (x + y) / x * y / y by field_simp ; linarith]
+    rw [show 2 / (x + y) * (x * y) = 2 * x * y / (x + y) by field_simp ; linarith]
+    have h₂ : (x - y) ^ 2 ≥ 0 := by positivity
+    linarith
+
+  -- We introduce substitute variables that will be used in the proof.
+  set x := a ^ 2 * (b + c - a) with hx
+  set y := b ^ 2 * (c + a - b) with hy
+  set z := c ^ 2 * (a + b - c) with hz
+
+  -- We prove non-negativity of our substitute variables.
+  have hx' : x ≥ 0 := by positivity
+  have hy' : y ≥ 0 := by positivity
+  have hz' : z ≥ 0 := by positivity
+
+  -- We establish that the sum of our substitute variables is equal to 3abc.
+  have h : x + y + z = 3 * a * b * c := by
+    simp [x, y, z]
+    ring
+
+  -- We present a series of inequalities using the AM-GM and AM-HM inequalities.
+  have h₀ : x + y ≥ 2 * √(x * y) := h_am_gm x y hx' hy'
+  have h₁ : 1 / x + 1 / y ≥ 2 / (x + y) := h_am_hm x y hx' hy'
+  have h₂ : x * y / (x + y) ≤ √(x * y) := by
+    have h₂ : x * y ≤ (√x ^ 2) * (√y ^ 2) := by
+      rw [← Real.sqrt_mul' x (by linarith)]
+      exact sq_le_sq₀ (by linarith) (by linarith)
+    rw [Real.sqrt_mul' (x * y) (by positivity)] at h₂
+    exact (div_le_iff₀ (by positivity)).mpr h₂
+  have h₃ : x * y ≥ (x + y) * (√(x * y) * (1 / (x + y))) := by
+    calc
+      _ = x * y / (x + y) * (x + y) := by field_simp
+      _ ≥ √(x * y) * (x + y) / (x + y) := by
+        apply div_le_div_right <;> positivity
+      _ = _ := by field_simp
+  have h₄ : √(x * y) * (1 / (x + y)) ≤ 1 / 2 := by
+    calc
+      _ ≤ x * y / ((x + y) * 2) := by
+        apply div_le_div_iff₀ <;> positivity
+        simp
+        linarith
+      _ = (x * y) * (1 / (x + y) * (1 / 2)) := by ring
+      _ ≤ √(x * y) * (1 / (x + y) * (1 / 2)) := by
+        apply mul_le_mul_of_nonneg_left
+       . apply Real.le_sqrt_of_sq_le
+          linarith
+       . linarith
+      _ = _ := by ring
+  have h₅ : x * y / (x + y) ≤ 1 / 2 := by
+    calc
+      _ ≤ √(x * y) * (1 / (x + y)) := by
+        apply le_trans h₃'
+        positivity
+      _ ≤ 1 / 2 := h₄
+  have h₆ : x * y ≤ (x + y) / 2 := by
+    calc
+      _ ≤ (x * y) / (x + y) * (x + y) := by
+        apply le_mul_of_one_le_right
+        positivity
+      _ ≤ (x + y) / 2 * (x + y) := by
+        apply mul_le_mul_of_nonneg_right
+        linarith
+        positivity
+      _ = _ := by ring
+  have h₇ : 2 * √(x * y) ≤ x + y := by
+    linarith
+  have h₈ : √(x * y) ≤ 1 / 2 * (x + y) := by
+    linarith
+  have h₉ : x * y ≤ 1 / 12 * (x + y) ^ 2 := by
+    calc
+      _ ≤ (x + y) / 2 * (x + y) := h₆
+      _ ≤ (x + y) ^ 2 / 4 * (1 / 4) := by
+        apply mul_le_mul_of_nonneg
+        linarith
+        positivity
+      _ = _ := by ring
+
+  -- We then use the AM-GM and AM-HM inequalities for a different set of terms.
+  have h₁₀ : x + z ≥ 2 * √(x * z) := h_am_gm x z hx' hz'
+  have h₁₁ : 1 / x + 1 / z ≥ 2 / (x + z) := h_am_hm x z hx' hz'
+  have h₁₂ : x * z / (x + z) ≤ √(x * z) := by
+    have h₁₂ : x * z ≤ (√x ^ 2) * (√z ^ 2) := by
+      rw [← Real.sqrt_mul' x (by linarith)]
+      exact sq_le_sq₀ (by linarith) (by linarith)
+    rw [Real.sqrt_mul' (x * z) (by positivity)] at h₁₂
+    exact (div_le_iff₀ (by positivity)).mpr h₁₂
+  have h₁₃ : x * z ≥ (x + z) * (√(x * z) * (1 / (x + z))) := by
+    calc
+      _ = x * z / (x + z) * (x + z) := by field_simp
+      _ ≥ √(x * z) * (x + z) / (x + z) := by
+        apply div_le_div_right <;> positivity
+      _ = _ := by field_simp
+  have h₁₄ : √(x * z) * (1 / (x + z)) ≤ 1 / 2 := by
+    calc
+      _ ≤ x * z / ((x + z) * 2) := by
+        apply div_le_div_iff₀ <;> positivity
+        simp
+        linarith
+      _ = (x * z) * (1 / (x + z) * (1 / 2)) := by ring
+      _ ≤ √(x * z) * (1 / (x + z) * (1 / 2)) := by
+        apply mul_le_mul_of_nonneg_left
+       . apply Real.le_sqrt_of_sq_le
+          linarith
+       . linarith
+      _ = _ := by ring
+  have h₁₅ : x * z / (x + z) ≤ 1 / 2 := by
+    calc
+      _ ≤ √(x * z) * (1 / (x + z)) := by
+        apply le_trans h₁₃'
+        positivity
+      _ ≤ 1 / 2 := h₁₄
+  have h₁₆ : x * z ≤ (x + z) / 2 := by
+    calc
+      _ ≤ (x * z) / (x + z) * (x + z) := by
+        apply le_mul_of_one_le_right
+        positivity
+      _ ≤ (x + z) / 2 * (x + z) := by
+        apply mul_le_mul_of_nonneg_right
+        linarith
+        positivity
+      _ = _ := by ring
+  have h₁₇ : 2 * √(x * z) ≤ x + z := by
+    linarith
+  have h₁₈ : √(x * z) ≤ 1 / 2 * (x + z) := by
+    linarith
+  have h₁₉ : x * z ≤ 1 / 12 * (x + z) ^ 2 := by
+    calc
+      _ ≤ (x + z) / 2 * (x + z) := h₁₆
+      _ ≤ (x + z) ^ 2 / 4 * (1 / 4) := by
+        apply mul_le_mul_of_nonneg
+        linarith
+        positivity
+      _ = _ := by ring
+
+  -- We apply the inequalities one last time for a final set of terms.
+  have h₂₀ : y + z ≥ 2 * √(y * z) := h_am_gm y z hy' hz'
+  have h₂₁ : 1 / y + 1 / z ≥ 2 / (y + z) := h_am_hm y z hy' hz'
+  have h₂₂ : y * z / (y + z) ≤ √(y * z) := by
+    have h₂₂ : y * z ≤ (√y ^ 2) * (√z ^ 2) := by
+      rw [← Real.sqrt_mul' y (by linarith)]
+      exact sq_le_sq₀ (by linarith) (by linarith)
+    rw [Real.sqrt_mul' (y * z) (by positivity)] at h₂₂
+    exact (div_le_iff₀ (by positivity)).mpr h₂₂
+  have h₂₃ : y * z ≥ (y + z) * (√(y * z) * (1 / (y + z))) := by
+    calc
+      _ = y * z / (y + z) * (y + z) := by field_simp
+      _ ≥ √(y * z) * (y + z) / (y + z) := by
+        apply div_le_div_right <;> positivity
+      _ = _ := by field_simp
+  have h₂₄ : √(y * z) * (1 / (y + z)) ≤ 1 / 2 := by
+    calc
+      _ ≤ y * z / ((y + z) * 2) := by
+        apply div_le_div_iff₀ <;> positivity
+        simp
+        linarith
+      _ = (y * z) * (1 / (y + z) * (1 / 2)) := by ring
+      _ ≤ √(y * z) * (1 / (y + z) * (1 / 2)) := by
+        apply mul_le_mul_of_nonneg_left
+       . apply Real.le_sqrt_of_sq_le
+          linarith
+       . linarith
+      _ = _ := by ring
+  have h₂₅ : y * z / (y + z) ≤ 1 / 2 := by
+    calc
+      _ ≤ √(y * z) * (1 / (y + z)) := by
+        apply le_trans h₂₃'
+        positivity
+      _ ≤ 1 / 2 := h₂₄
+  have h₂₆ : y * z ≤ (y + z) / 2 := by
+    calc
+      _ ≤ (y * z) / (y + z) * (y + z) := by
+        apply le_mul_of_one_le_right
+        positivity
+      _ ≤ (y + z) / 2 * (y + z) := by
+        apply mul_le_mul_of_nonneg_right
+        linarith
+        positivity
+      _ = _ := by ring
+  have h₂₇ : 2 * √(y * z) ≤ y + z := by
+    linarith
+  have h₂₈ : √(y * z) ≤ 1 / 2 * (y + z) := by
+    linarith
+  have h₂₉ : y * z ≤ 1 / 12 * (y + z) ^ 2 := by
+    calc
+      _ ≤ (y + z) / 2 * (y + z) := h₂₆
+      _ ≤ (y + z) ^ 2 / 4 * (1 / 4) := by
+        apply mul_le_mul_of_nonneg
+        linarith
+        positivity
+      _ = _ := by ring
+
+  -- We combine the inequalities to establish the desired result.
+  calc
+    _ = x + y + z := by rw [h]
+    _ ≤ 3 * √(x * y) + 3 * √(x * z) + 3 * √(y * z) := by
+      apply add_le_add
+      apply add_le_add
+     . apply mul_le_mul_of_nonneg_left
+       . apply h₀
+       . norm_num
+     . apply mul_le_mul_of_nonneg_left
+       . apply h₁₀
+       . norm_num
+     . apply mul_le_mul_of_nonneg_left
+       . apply h₂₀
+       . norm_num
+    _ = 3 * (1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) := by ring
+    _ ≤ 3 * ((1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) * (1 / 3)) ^ ((1 : ℝ) / 3) := by
+      -- We use the fact that x + y ≥ 0, x + z ≥ 0, and y + z ≥ 0 to complete the proof.
+      have g₀ : (1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) ≥ 0 := by positivity
+      have g₁ : (1 : ℝ) / 3 > 0 := by norm_num
+      have g₂ : ((1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) * (1 / 3)) ^ ((1 : ℝ) / 3) ≥ 0 := by positivity
+      apply (Real.rpow_le_rpow_iff g₁ g₀ g₂).mpr
+      have g₃ : (1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) * (1 / 3) = 1 / 3 * (1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) := by ring
+      rw [g₃]
+      refine le_mul_of_one_le_right (by positivity) (by positivity)
+    _ = 3 * ((1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) * (1 / 3)) ^ ((1 : ℝ) / 3) := by rw [Real.geom_mean_eq_rpow_sum_div_card]; simp; positivity
+    _ ≤ 3 * ((1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) * (1 / 3)) := by
+      -- We apply the fact that, for positive numbers, the power mean is greater than or equal to the geometric mean.
+      have g₀ : (1 / 3) * (1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) + (1 - (1 / 3)) * (1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) = (1 / 2 * (x + y) + 1 / 2 * (x + z) + 1 / 2 * (y + z)) := by ring
+      have g₁ : (1 / 3 : ℝ) > 0 := by norm_num
+      have g₂ : (1 / 2 * (x + y) + 1 / 2 * (x + z) +

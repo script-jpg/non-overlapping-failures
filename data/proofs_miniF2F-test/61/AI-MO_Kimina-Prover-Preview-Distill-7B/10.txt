@@ -1,0 +1,96 @@
+-- The two intersection points are $(a, b)$ and $(c, d)$, where $b = a^2, d = c^2$, and $a + b = 1, c + d = 1$.
+  -- So the distance between them is $\sqrt{(a - c)^2 + (b - d)^2}$.
+
+  -- First, we find the possible x-values of the intersection points by solving the system of equations.
+  -- Substituting $y = x^2$ into $x + y = 1$, we get $x + x^2 = 1$, or $x^2 + x - 1 = 0$.
+  have h₅ : a ^ 2 + a - 1 = 0 := by rw [←h₀, ←h₁]; ring
+  have h₆ : c ^ 2 + c - 1 = 0 := by rw [←h₂, ←h₃]; ring
+
+  -- Solve the quadratic equations to find the two possible x-values.
+  -- The discriminant of $x^2 + x - 1$ is $1^2 - 4(1)(-1) = 5$.
+  have h₇ : a = (-1 + Real.sqrt 5) / 2 ∨ a = (-1 - Real.sqrt 5) / 2 := by
+    have h : a ^ 2 + a - 1 = 0 := h₅
+    have h' : a ^ 2 + a - 1 = (a - (-1 + Real.sqrt 5) / 2) * (a - (-1 - Real.sqrt 5) / 2) := by
+      ring_nf
+      rw [Real.sq_sqrt (by norm_num)]
+      linarith
+    rw [h'] at h
+    rcases mul_eq_zero.mp h with h | h
+    · left
+      linarith
+    · right
+      linarith
+  have h₈ : c = (-1 + Real.sqrt 5) / 2 ∨ c = (-1 - Real.sqrt 5) / 2 := by
+    have h : c ^ 2 + c - 1 = 0 := h₆
+    have h' : c ^ 2 + c - 1 = (c - (-1 + Real.sqrt 5) / 2) * (c - (-1 - Real.sqrt 5) / 2) := by
+      ring_nf
+      rw [Real.sq_sqrt (by norm_num)]
+      linarith
+    rw [h'] at h
+    rcases mul_eq_zero.mp h with h | h
+    · left
+      linarith
+    · right
+      linarith
+
+  -- Now we calculate the distance between the two intersection points.
+  -- Since the x-values of the points are $a$ and $c$, and $a \neq c$, the points are distinct.
+  -- The distance is $\sqrt{(a - c)^2 + (b - d)^2}$.
+  -- Since $b = a^2$ and $d = c^2$, this is $\sqrt{(a - c)^2 + (a^2 - c^2)^2}$.
+  -- This simplifies to $\sqrt{(a - c)^2 + (a^2 - c^2)^2}$.
+  -- Further simplification gives $\sqrt{(a - c)^2 + (a - c)^2(a + c)^2}$.
+  -- This can be factored as $\sqrt{(a - c)^2(1 + (a + c)^2)}$.
+  have h₉ : (a - c) ^ 2 + (b - d) ^ 2 = (a - c) ^ 2 * (1 + (a + c) ^ 2) := by
+    rw [h₀, h₂]
+    ring
+
+  -- Now we need to determine the value of $1 + (a + c)^2$.
+  -- From $a^2 + a - 1 = 0$ and $c^2 + c - 1 = 0$, we get $a^2 + a = 1$ and $c^2 + c = 1$.
+  -- Subtracting these equations, we get $a^2 + a - (c^2 + c) = 0$, or $a^2 - c^2 + a - c = 0$.
+  -- Factoring, we get $(a - c)(a + c + 1) = 0$.
+  have h₁₀ : (a - c) * (a + c + 1) = 0 := by
+    have h : a ^ 2 + a - 1 = 0 := h₅
+    have h' : c ^ 2 + c - 1 = 0 := h₆
+    linarith
+
+  -- Since $a \neq c$, and thus $a - c \neq 0$, we must have $a + c + 1 = 0$, or $a + c = -1$.
+  have h₁₁ : a + c = -1 := by
+    have h : a - c ≠ 0 := sub_ne_zero.mpr h₄
+    have h' : (a - c) * (a + c + 1) = 0 := h₁₀
+    simp [h] at h'
+    linarith
+
+  -- So $1 + (a + c)^2 = 1 + (-1)^2 = 1 + 1 = 2$.
+  have h₁₂ : 1 + (a + c) ^ 2 = 2 := by
+    rw [h₁₁]
+    norm_num
+
+  -- Finally, we can calculate the distance as $\sqrt{(a - c)^2 \cdot 2}$.
+  -- Since $(a - c)^2 = ((-1 + \sqrt{5})/2 - (-1 - \sqrt{5})/2)^2 = (\sqrt{5})^2/4 = 5/4$,
+  -- and $(a - c)^2 = ((-1 + \sqrt{5})/2 - (-1 - \sqrt{5})/2)^2 = (\sqrt{5})^2/4 = 5/4$,
+  -- the distance is $\sqrt{5/4 \cdot 2} = \sqrt{5/2} = \sqrt{10}$.
+  have h₁₃ : (a - c) ^ 2 = 5 / 4 := by
+    rcases h₇ with h | h
+    · rcases h₁₁ with h₁ | h₁
+      · rw [h, h₁]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+      · rw [h, h₁]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+    · rcases h₁₁ with h₁ | h₁
+      · rw [h, h₁]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+      · rw [h, h₁]
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+
+  rw [h₉, h₁₂, h₁₃]
+  rw [Real.sqrt_eq_iff_sq_eq] <;> norm_num
+  <;> ring_nf <;> norm_num
+```

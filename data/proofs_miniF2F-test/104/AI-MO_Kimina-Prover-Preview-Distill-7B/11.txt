@@ -1,0 +1,149 @@
+have p_ne_2 : p ≠ 2 := by
+    linarith
+
+  have p_ne_3 : p ≠ 3 := by
+    linarith
+
+  have p_ne_5 : p ≠ 5 := by
+    linarith
+
+  have not_p_prime : ¬(Nat.Prime p) := by
+    revert h₀
+    revert p
+    exact Decidable.not_not h₀
+
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  let x : Finset (ZMod p) :=
+    Finset.map { toFun := fun x : ℕ => (ZMod.unitOfCoprime x)⁻¹,
+      inj' := by
+        intro x y h
+        simp at h
+        exact h
+      }
+    (Finset.Icc 1 (p - 2))
+
+  -- each term is of the form $(k+1)^{-1} \cdot k^{-1}$. 
+  let y : Finset (ZMod p) :=
+    Finset.map { toFun := fun x : ℕ => (ZMod.unitOfCoprime (x + 1))⁻¹ * (ZMod.unitOfCoprime x)⁻¹,
+      inj' := by
+        intro x y h
+        simp at h
+        exact h
+      }
+    (Finset.Icc 1 (p - 2))
+
+  -- the terms in two sums are the same.
+  have x_eq_y : x = y := by
+    intro
+
+    rw [Finset.coe_map] at x_def
+    rw [Finset.coe_map] at y_def
+
+    ext ⟨k, hk⟩
+    simp [x_def, y_def]
+    rw [ZMod.inv unitOfCoprime, mul_inv_cancel_right₀]
+    simp at hk
+    rw [← ZMod.natCast_add, ← ZMod.natCast_add]
+    simp
+    exact hk
+
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  let z : Finset (ZMod p) := Finset.image { toFun := fun x : ℕ => (ZMod.unitOfCoprime x)⁻¹, inj' := by intro x y h; simp at h; exact h } (Finset.Icc 2 (p - 1))
+
+  -- we have $x \subseteq z$.
+  have x_comp_z : x ⊆ z := by
+    intro ⟨k, hk⟩
+    simp at x_def z_def
+    rw [← ZMod.natCast_add, ← ZMod.natCast_add]
+    simp
+    exact hk
+
+  -- we have $z \subseteq x$.
+  have z_comp_x : z ⊆ x := by
+    intro ⟨k, hk⟩
+    simp at x_def z_def
+    rw [← ZMod.natCast_add, ← ZMod.natCast_add]
+    simp
+    exact hk
+
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  let w : Finset (ZMod p) := Finset.image { toFun := fun x : ℕ => (ZMod.unitOfCoprime (x + 1))⁻¹, inj' := by intro x y h; simp at h; exact h } (Finset.Icc 1 (p - 2))
+
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  let v : Finset (ZMod p) := Finset.image { toFun := fun x : ℕ => (ZMod.unitOfCoprime (x + 1))⁻¹, inj' := by intro x y h; simp at h; exact h } (Finset.Icc 1 (p - 2))
+
+  -- an element in $x$ is of the form $(k+1)^{-1} \cdot k^{-1}$. 
+  have x_i element_in_x : element ∈ x → ∃ k, element = (ZMod.unitOfCoprime (k + 1))⁻¹ * (ZMod.unitOfCoprime k)⁻¹ := by
+    intro element_in_x
+    simp at x_def
+    rcases element_in_x with ⟨k, hk⟩
+    use k
+    simp
+    exact hk
+
+  -- a summand in the sum is of the form $(k+1)^{-1} \cdot k^{-1}$. 
+  have summand_eq : ∀ k ∈ x, (ZMod.unitOfCoprime (k + 1))⁻¹ * (ZMod.unitOfCoprime k)⁻¹ = (ZMod.unitOfCoprime k)⁻¹ * (ZMod.unitOfCoprime (k + 1))⁻¹ := by
+    intro k hk
+    symm
+    exact Eq.symm (ZMod.mul_inv_cancel (ZMod.unitOfCoprime k) (ZMod.unitOfCoprime (k + 1)))
+
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  have sum_eq : ∑ element in x, element = ∑ element in z, element := by
+    apply Finset.sum_congr x_eq_y
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  have sum_eq : ∑ element in x, element = ∑ element in w, element := by
+    apply Finset.sum_congr x_comp_z
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  have sum_eq : ∑ element in x, element = ∑ element in v, element := by
+    apply Finset.sum_congr z_comp_x
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  have sum_eq : ∑ element in z, element = ∑ element in v, element := by
+    apply Finset.sum_congr sum_eq
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  have sum_eq : ∑ element in w, element = ∑ k ∈ Finset.Icc 1 (p - 2), (ZMod.unitOfCoprime (k + 1))⁻¹ * (ZMod.unitOfCoprime k)⁻¹ := by
+    apply Finset.sum_congr (fun ⟨k, hk⟩ _ => (z_i ⟨k, hk⟩))
+    simp
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    simp
+    exact hk
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  have sum_eq : ∑ element in v, element = ∑ k ∈ Finset.Icc 1 (p - 2), (ZMod.unitOfCoprime (k + 1))⁻¹ * (ZMod.unitOfCoprime k)⁻¹ := by
+    apply Finset.sum_congr (fun ⟨k, hk⟩ _ => (w_i ⟨k, hk⟩))
+    simp
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    simp
+    exact hk
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  have sum_eq : ∑ k in Finset.Icc 1 (p - 2), (ZMod.unitOfCoprime (k + 1))⁻¹ * (ZMod.unitOfCoprime k)⁻¹ = 2 := by
+    rw [Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top]
+    rw [Finset.sum_Icc_succ_top]
+    simp
+    have h₄ : p - 2 + 1 = p - 1 := by
+      simp
+      rw [Nat.sub_add_cancel]
+      linarith
+    rw [h₄]
+    have h₅ : p - 1 + 1 = p := by
+      exact Nat.sub_add_cancel (by linarith)
+    rw [h₅]
+    simp
+    rw [Finset.eq_empty_iff_forall_not_mem]
+    intro k hk
+    simp at hk
+    linarith
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  rw [sum_eq] at sum_eq
+  -- the sum equals $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + 3^{-1} \cdot 4^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}.$
+  rw [← sum_eq, sum_eq]
+
+  -- Now we have the sum equals 2.
+  -- We can compute it directly.
+  revert p h₀
+  revert x y z w v sum
+  exact fun p h₀ x y z w v sum =>
+    calc
+      _ = 2 := sum_eq
+      _ = _ := rfl
+```

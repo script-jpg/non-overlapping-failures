@@ -1,0 +1,117 @@
+constructor
+
+  -- sufficiency
+  · intro hf
+    -- by substituting $a = 0, b = 0$, we get $f(0) = 0$
+    have f_zero : f 0 = 0 := by
+      have h := hf 0 0
+      simp at h
+      exact h
+    -- by substituting $a = 0, b = z$, we get $f(2 * z) = 2 * f(z)$
+    have f_dou (z : ℤ) : f (2 * z) = 2 * f z := by
+      have h := hf 0 z
+      simp [f_zero] at h
+      exact h
+    -- by substituting $z = 2 * a, b = 2 * b$, we get $f(4 * (a + b)) = f(4 * a) + 2 * f(2 * b)$
+    have f_add_dou (a b : ℤ) : f (4 * (a + b)) =  f (4 * a) + 2 * f (2 * b) := by
+      have h := hf (2 * a) (2 * b)
+      simp [f_dou] at h
+      exact h
+    -- by substituting $a = a, b = 2 * a$, we get $f(6 * a) = f(0) + 2 * f(3 * a)$
+    have f triple (a : ℤ) : f (6 * a) = f 0 + 2 * f (3 * a) := by
+      have h := hf a (2 * a)
+      simp [f_dou] at h
+      exact h
+    -- by substituting $a = 3 * a, b = 3 * b$, we get $f(18 * a) = f(9 * (a + b))$
+    have f_nine (a b : ℤ) : f (18 * a) = f (9 * (a + b)) := by
+      have h := hf (3 * a) (3 * b)
+      simp [f_dou, f_add_dou] at h
+      ring_nf at h ⊢
+      exact h
+    -- by substituting $a = 2 * a, b = a$, we get $f(f(3 * a)) = f(4 * a) + 2 * f(a)$
+    have f_f_dou (a : ℤ) : f (f (3 * a)) = f (4 * a) + 2 * f a := by
+      have h := hf (2 * a) a
+      simp [f_dou] at h
+      exact h
+    -- by substituting $a = 3 * a, b = 3 * b$, we get $f(f(6 * a)) = f(18 * a) + 2 * f(3 * b)$
+    have f_f_nine (a b : ℤ) : f (f (6 * a)) = f (18 * a) + 2 * f (3 * b) := by
+      have h := hf (3 * a) (3 * b)
+      simp [f_dou, f_add_dou] at h
+      ring_nf at h ⊢
+      exact h
+    -- by substituting $a = 3 * a, b = 3 * b$, we get $f(9 * (a + b)) = f(9 * a) + 2 * f(3 * (a + b))$
+    have f_nine_add (a b : ℤ) : f (9 * (a + b)) = f (9 * a) + 2 * f (3 * (a + b)) := by
+      have h := hf (3 * a) (3 * (a + b))
+      simp [f_add_dou] at h
+      ring_nf at h ⊢
+      exact h
+    -- we get $f(3 * a) = f(3 * b)$
+    have f_eq (a b : ℤ) : f (3 * a) = f (3 * b) := by
+      rw [←f_nine, ←f_nine_add, ←f_f_nine, ←f_f_dou]
+      ring_nf
+    -- so $f$ is constant on all multiples of $3$
+    have f_eq_nine (n : ℕ) (b : ℤ) : f (9 * n) = f (9 * b) := by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        rw [pow_succ]
+        simp [f_eq]
+        exact ih
+    -- we claim that $f(a) = 0$ for all $a$
+    have f_zero_iff (a : ℤ) : f a = 0 ↔ a = 0 := by
+      constructor
+      · intro h
+        -- if $f(a) = 0$, then $f(2 * a) = 2 * f(a) = 0$
+        have h_dou := f_dou a
+        rw [h] at h_dou
+        simp at h_dou
+        -- also, by substituting $b = a$ in the original equation, we get $f(f(2 * a)) = f(0) + 2 * f(a) = 0$
+        have h_f_dou := hf a a
+        simp [h_dou, h] at h_f_dou
+        -- further, we have $f(4 * a) = 2 * f(2 * a) = 0$
+        have h4 := f_add_dou a a
+        simp [h_dou] at h4
+        rw [h4] at h_f_dou
+        -- by substituting $b = 2 * a$, we get $f(6 * a) = f(0) + 2 * f(3 * a)$
+        have h6 := f_nine a (2 * a)
+        simp [h_f_dou] at h6
+        -- by substituting $a = 3 * a$ and $b = 3 * a$, we get $f(18 * a) = f(9 * (a + a)) = f(9 * a) + 2 * f(3 * a) + 2 * f(3 * a) = 5 * f(3 * a)$
+        have h18 := f_nine_add (3 * a) (3 * a)
+        simp [h6, f_eq (3 * a) (3 * a)] at h18
+        ring_nf at h18
+        -- also, by substituting $a = 9 * a$ and $b = 3 * a$, we get $f(36 * a) = f(27 * a) + 2 * f(3 * a)$
+        have h36 := f_add_dou (9 * a) (3 * a)
+        simp [h18, f_eq (9 * a) (9 * a)] at h36
+        -- by substituting $a = 9 * a$ and $b = 9 * a$, we get $f(18 * (9 * a)) = f(9 * (9 * a)) + 2 * f(3 * (9 * a))$
+        have h162 := f_nine (9 * a) (9 * a)
+        simp [h36, f_eq (9 * a) (9 * a)] at h162
+        -- so $f(9 * a) = 0$
+        have h9 := f_eq_nine (9 * a) a
+        simp [h162] at h9
+        rw [h9] at h_f_dou
+        -- so $f(a) = 0$
+        exact h_f_dou
+      · intro h
+        rw [h]
+        exact f_zero
+    -- so the only solutions are $f(z) = 0$ and $f(z) = 2 * z + c$
+    · intro z
+      obtain (h | ⟨c, h⟩) := f_eq z
+      · simp [h]
+      · use c
+        intro z
+        by_cases hz : z = 0
+        · simp [hz, f_zero]
+        · rw [h z, h]
+          ring_nf
+
+  -- necessity
+  · intro h
+    obtain (h | ⟨c, h⟩) := h
+    · intro a b
+      simp [h]
+    · intro a b
+      simp [h, add_mul, mul_add, mul_comm c, mul_assoc]
+      ring_nf
+
+```

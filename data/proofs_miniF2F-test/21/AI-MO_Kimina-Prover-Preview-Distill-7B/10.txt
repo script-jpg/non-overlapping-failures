@@ -1,0 +1,263 @@
+-- We prove that for any two integers $x$ and $y$, $x^5 \ne y^2 + 4$.
+  -- First, we consider the case when $x$ is even.
+  by_cases hx : Even x
+  · -- If $x$ is even, then $5x^4$ is divisible by $16$.
+    have h1 : 16 ∣ 5 * x ^ 4 := by
+      rcases hx with ⟨k, hk⟩
+      rw [hk]
+      ring_nf
+      use k ^ 4
+      ring
+    -- Then, $x^5 \equiv 0 \pmod {16}$.
+    have h2 : x ^ 5 ≡ 0 [ZMOD 16] := by
+      rw [show x ^ 5 = 5 * x ^ 4 * x by ring]
+      exact Int.ModEq.mul h1 rfl
+    -- On the other hand, we have $y^2 + 4 \equiv 1, 2, 3, \text{or } 4 \pmod {16}$.
+    have h3 : y ^ 2 + 4 ≠ x ^ 5 := by
+      have hy : 16 ∣ (y - 1) * (y + 1) * y * y := by
+        by_cases hy : 16 ∣ y
+        · -- If $16 \mid y$, then $16 \mid y^2$ and $16 \mid (y^2 + 4) - y^2 = 4$.
+          have h3 : 4 ∣ (y ^ 2 + 4) - y ^ 2 := by
+            suffices 4 ∣ 4 by apply dvd_sub'; apply dvd_refl; exact this
+            zify
+            use 1
+            apply Int.dvd_mul_of_dvd_right
+            use y ^ 2
+            exact hy
+          apply Int.ModEq.add_right_cancel' at h3
+          rw [zero_add] at h3
+          have : y ^ 2 ≡ 0 ^ 2 [ZMOD 16] := by
+            exact Int.ModEq.pow 2 hy
+          rw [zero_pow (by norm_num)] at this
+          exact Int.ModEq.trans (id (Int.ModEq.symm h3)) this
+          norm_num
+        · -- If $16 \nmid y$, then $y^2 \equiv 1, 9 \pmod {16}$ and $y^2 + 4 \equiv 5, 13 \pmod {16}$.
+          have h3 : y ^ 2 ≡ 1 [ZMOD 16] ∨ y ^ 2 ≡ 9 [ZMOD 16] := by
+            have h3 : 16 ∣ (y ^ 2 - 1) * (y ^ 2 - 9) := by
+              by_cases hy1 : 4 ∣ y
+              · -- If $4 \mid y$, then $16 \mid y^2 - 4$ and $y^2 \equiv 0, 4 \pmod {16}$.
+                have hy2 : 16 ∣ y ^ 2 - 4 := by
+                  suffices 4 ∣ 4 by apply dvd_sub'; apply dvd_refl; exact this
+                  zify
+                  use 1
+                  apply Int.dvd_mul_of_dvd_right
+                  use y
+                  exact hy1
+                by_cases hy2' : 16 ∣ y ^ 2
+                · -- If $16 \mid y^2$, then $y^2 \equiv 0 \pmod {16}$.
+                  have : y ^ 2 ≡ 0 ^ 2 [ZMOD 16] := by
+                    exact Int.ModEq.pow 2 hy2
+                  rw [zero_pow (by norm_num)] at this
+                  left
+                  exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm h2)) this)
+                  norm_num
+                · -- If $16 \nmid y^2$, then $16 \mid y^2 - 4$ and $y^2 \equiv 4 \pmod {16}$.
+                  have : y ^ 2 ≡ 4 [ZMOD 16] := by
+                    rw [Int.modEq_iff_dvd]
+                    · rw [Int.modEq_iff_dvd]
+                      have : 16 ∣ (y ^ 2 - 4) := by
+                        apply dvd_sub'
+                        · exact Int.dvd_refl (y ^ 2)
+                        · exact hy2
+                      zify
+                      use 1
+                      apply Int.dvd_mul_of_dvd_right
+                      use y
+                      exact hy1
+                    · rfl
+                    · rfl
+                  right
+                  exact this
+              · -- If $4 \nmid y$, then $y^2 \equiv 1, 9 \pmod {16}$.
+                have hy1' : 4 ∣ y ∨ 4 ∣ y + 1 ∨ 4 ∣ y - 1 := by
+                  omega
+                rcases hy1' with (h | h | h)
+                · -- If $4 \mid y + 1$, then $y \equiv -1 \pmod {4}$ and $y^2 \equiv 1 \pmod {4}$.
+                  have hy2 : y ^ 2 ≡ 1 [ZMOD 4] := by
+                    suffices 4 ∣ y ^ 2 - 1 by exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm this)) h2)
+                    zify
+                    rw [Int.modEq_iff_dvd, Nat.cast_sub]
+                    · omega
+                    · apply dvd_pow
+                      exact h
+                  have : 4 ∣ (y ^ 2 - 1) * (y ^ 2 + 9) := by
+                    apply dvd_mul_of_dvd_right
+                    use y ^ 2 + 9
+                    exact hy2
+                  apply Int.ModEq.add_right_cancel' at this
+                  rw [zero_sub] at this
+                  exact Int.ModEq.trans (id (Int.ModEq.symm this)) h2
+                  norm_num
+              .1 -- If $4 \mid y - 1$, then $y \equiv 1 \pmod {4}$ and $y^2 \equiv 1 \pmod {4}$.
+                  have hy2 : y ^ 2 ≡ 1 [ZMOD 4] := by
+                    suffices 4 ∣ y ^ 2 - 1 by exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm this)) h2)
+                    zify
+                    rw [Int.modEq_iff_dvd, Nat.cast_sub]
+                    · omega
+                    · apply dvd_pow
+                      exact h
+                  have : 4 ∣ (y ^ 2 - 1) * (y ^ 2 + 9) := by
+                    apply dvd_mul_of_dvd_right
+                    use y ^ 2 + 9
+                    exact hy2
+                  apply Int.ModEq.add_right_cancel' at this
+                  rw [zero_sub] at this
+                  exact Int.ModEq.trans (id (Int.ModEq.symm this)) h2
+                  norm_num
+                · -- If $4 \nmid y$, then $y^2 \equiv 9 \pmod {16}$.
+                  have hy2 : y ^ 2 ≡ 9 [ZMOD 16] := by
+                    suffices 16 ∣ (y ^ 2 - 9) by exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm this)) h2)
+                    zify
+                    rw [Int.modEq_iff_dvd, Nat.cast_sub]
+                    · omega
+                    · apply dvd_pow
+                      exact h
+                  right
+                  exact hy2
+            rcases h3 with (h3 | h3)
+            · -- If $y^2 \equiv 1 \pmod {16}$, then $y^2 + 4 \equiv 5 \pmod {16}$.
+              have hy4 : (y ^ 2 + 4) ^ 2 ≡ 5 ^ 2 [ZMOD 16] := by
+                apply Int.ModEq.pow 2
+                apply Int.ModEq.add_right_cancel' h3
+                rfl
+              have hy5 : (y ^ 2 + 4) ^ 2 ≡ 1 [ZMOD 16] := by
+                rw [Int.modEq_iff_dvd]
+                · rw [Int.modEq_iff_dvd]
+                  zify
+                  use 1
+                  apply Int.dvd_mul_of_dvd_right
+                  use (y ^ 2 + 4)
+                  exact h3
+                · rfl
+                · rfl
+              apply Int.ModEq.trans (id (Int.ModEq.symm hy5)) at hy4
+              rw [Int.ModEq, Int.emod] at hy4
+              omega
+            · -- If $y^2 \equiv 9 \pmod {16}$, then $y^2 + 4 \equiv 13 \pmod {16}$.
+              have hy4 : (y ^ 2 + 4) ^ 2 ≡ 13 ^ 2 [ZMOD 16] := by
+                apply Int.ModEq.pow 2
+                apply Int.ModEq.add_right_cancel' h3
+                rfl
+              have hy5 : (y ^ 2 + 4) ^ 2 ≡ 9 ^ 2 [ZMOD 16] := by
+                rw [Int.modEq_iff_dvd]
+                · rw [Int.modEq_iff_dvd]
+                  zify
+                  use 1
+                  apply Int.dvd_mul_of_dvd_right
+                  use (y ^ 2 + 4)
+                  exact h3
+                · rfl
+                · rfl
+              apply Int.ModEq.trans (id (Int.ModEq.symm hy5)) at hy4
+              rw [Int.ModEq, Int.emod] at hy4
+              omega
+      -- Now we have $y^2 + 4 \equiv 1, 2, 3, \text{or } 4 \pmod {16}$.
+      rcases hy with (hy | hy | hy | hy)
+      · -- If $y^2 + 4 \equiv 1 \pmod {16}$, then $x^5 \equiv 15 \pmod {16}$.
+        have h4 : x ^ 5 ≡ 15 [ZMOD 16] := by
+          suffices x ^ 5 ≡ 15 [ZMOD 16] by exact this
+          rw [Int.modEq_iff_dvd, Int.modEq_iff_dvd]
+          · omega
+          · omega
+        -- However, $x^5 \equiv 0 \pmod {16}$, so this case is impossible.
+        omega
+      · -- If $y^2 + 4 \equiv 2 \pmod {16}$, then $x^5 \equiv 14 \pmod {16}$.
+        have h4 : x ^ 5 ≡ 14 [ZMOD 16] := by
+          suffices x ^ 5 ≡ 14 [ZMOD 16] by exact this
+          rw [Int.modEq_iff_dvd, Int.modEq_iff_dvd]
+          · omega
+          · omega
+        -- However, $x^5 \equiv 0 \pmod {16}$, so this case is impossible.
+        omega
+      · -- If $y^2 + 4 \equiv 3 \pmod {16}$, then $x^5 \equiv 13 \pmod {16}$.
+        have h4 : x ^ 5 ≡ 13 [ZMOD 16] := by
+          suffices x ^ 5 ≡ 13 [ZMOD 16] by exact this
+          rw [Int.modEq_iff_dvd, Int.modEq_iff_dvd]
+          · omega
+          · omega
+        -- However, $x^5 \equiv 0 \pmod {16}$, so this case is impossible.
+        omega
+      · -- If $y^2 + 4 \equiv 4 \pmod {16}$, then $x^5 \equiv 12 \pmod {16}$.
+        have h4 : x ^ 5 ≡ 12 [ZMOD 16] := by
+          suffices x ^ 5 ≡ 12 [ZMOD 16] by exact this
+          rw [Int.modEq_iff_dvd, Int.modEq_iff_dvd]
+          · omega
+          · omega
+        -- However, $x^5 \equiv 0 \pmod {16}$, so this case is impossible.
+        omega
+    -- Finally, we consider the case when $x$ is odd.
+    · -- If $x$ is odd, then $5x^4$ is divisible by $8$ but not $16$.
+      have h1 : 8 ∣ 5 * x ^ 4 := by
+        rcases hx with ⟨k, hk⟩
+        rw [hk]
+        ring_nf
+        use k ^ 4
+        ring
+      have h2 : 16 ∤ 5 * x ^ 4 := by
+        rcases hx with ⟨k, hk⟩
+        rw [hk]
+        ring_nf
+        omega
+      -- Then, $x^5 \equiv 1 \pmod {8}$.
+      have h3 : x ^ 5 ≡ 1 [ZMOD 8] := by
+        rw [show x ^ 5 = x ^ 4 * x by ring]
+        suffices x ^ 4 ≡ 1 [ZMOD 8] by
+          nth_rw 2 [← mul_one (x ^ 4)]
+          apply Int.ModEq.mul this rfl
+        suffices x % 8 = 1 ∨ x % 8 = 3 ∨ x % 8 = 5 ∨ x % 8 = 7 by
+          rcases this with (h | h | h | h) <;> simp [h, pow_succ, Int.ModEq]
+        have h4 : x % 8 = 1 ∨ x % 8 = 3 ∨ x % 8 = 5 ∨ x % 8 = 7 := by
+          have h4 : x % 8 < 8 := by
+            exact Int.emod_lt_of_pos x (by norm_num)
+          have h5 : 0 ≤ x % 8 := by
+            exact Int.emod_nonneg x (by norm_num)
+          have h6 : x % 8 = 1 ∨ x % 8 = 2 ∨ x % 8 = 3 ∨ x % 8 = 4 ∨ x % 8 = 5 ∨ x % 8 = 6 ∨ x % 8 = 7 ∨ x % 8 = 8 := by
+            omega
+          rcases h6 with (h6 | h6 | h6 | h6 | h6 | h6 | h6 | h6)
+          · exact Or.inl h6
+          · exfalso
+            exact Nat.Prime.not_dvd_of_pos (by norm_num) (Dvd.intro (x / 8 + 1) rfl)
+          · exact Or.inr (Or.inl h6)
+          · exfalso
+            exact Nat.Prime.not_dvd_of_pos (by norm_num) (Dvd.intro (x / 8 + 1) rfl)
+          · exact Or.inr (Or.inr (Or.inl h6))
+          · exfalso
+            exact Nat.Prime.not_dvd_of_pos (by norm_num) (Dvd.intro (x / 8 + 1) rfl)
+          · exact Or.inr (Or.inr (Or.inr h6))
+          · exfalso
+            exact Nat.Prime.not_dvd_of_pos (by norm_num) (Dvd.intro (x / 8 + 1) rfl)
+        exact h4
+      -- On the other hand, we have $y^2 + 4 \equiv 5, 6 \pmod {8}$.
+      have h4 : y ^ 2 + 4 ≠ x ^ 5 := by
+        have hy : 8 ∣ (y - 2) * (y + 2) * y * y := by
+          by_cases hy : 8 ∣ y
+          · -- If $8 \mid y$, then $8 \mid y^2$ and $8 \mid (y^2 + 4) - y^2 = 4$.
+            have h4 : 8 ∣ 4 := by
+              suffices 8 ∣ (y ^ 2 + 4) - y ^ 2 by exact Int.dvd_sub' (id (Int.dvd_refl _)) this
+              rw [zero_add]
+              exact Int.dvd_refl _
+            norm_num at h4
+          · -- If $8 \nmid y$, then $y^2 \equiv 1, 9 \pmod {8}$.
+            have h4 : y ^ 2 ≡ 1 [ZMOD 8] := by
+              have h4 : 8 ∣ y ^ 2 - 1 := by
+                suffices 8 ∣ y ^ 2 - 1 by exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm this)) h2)
+                zify
+                rw [Int.modEq_iff_dvd, Nat.cast_sub]
+                · omega
+                · apply dvd_pow
+                  exact hy
+              rw [Int.modEq_iff_dvd]
+              · apply Int.dvd_iff_emod_eq_zero.mp
+                omega
+              · rfl
+              · rfl
+            right
+            exact h4
+        rcases hy with (hy | hy | hy | hy)
+        · -- If $8 \mid y - 2$, then $y \equiv 2 \pmod {8}$.
+          have hy2 : y ^ 2 ≡ 4 [ZMOD 8] := by
+            suffices 8 ∣ y ^ 2 - 4 by exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm this)) h2)
+            zify
+            rw [Int.modEq_iff_dvd, Nat.cast_sub]
+            · omega
+            · apply dvd_pow

@@ -1,0 +1,222 @@
+have h₁ : ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = 2016 := by
+    use 1620
+    constructor
+    · rw [Nat.divisors_eq_iff_prime_pow]
+      use 2
+      constructor
+      · norm_num
+      · norm_num
+    · decide
+
+  -- Show that if a number $n$ in the set is nice, then $n = 2016$.
+  have h₂ (n : ℕ) (hn₁ : n ∈ S) (hn₂ : n = 2010 ∨ n = 2011 ∨ n = 2012 ∨ n = 2013 ∨ n = 2014 ∨ n = 2015 ∨ n = 2016 ∨ n = 2017 ∨ n = 2018 ∨ n = 2019) : n = 2016 := by
+    -- Assume that $n$ is nice.
+    have h₃ : ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+      rw [h₀] at hn₁
+      exact hn₁.right.right.left
+    -- Extract the witness $m$ from the assumption.
+    rcases h₃ with ⟨m, hm₁, hm₂⟩
+    -- Show that $m$ has exactly four positive divisors, and the sum of the divisors is less than or equal to 2019.
+    have h₄ : (Nat.divisors m).card = 4 := by
+      exact hm₁
+    have h₅ : (∑ p in Nat.divisors m, p) = n := by
+      exact hm₂
+    have h₆ : (∑ p ∈ Nat.divisors m, p) ≤ 2019 := by
+      calc
+        (∑ p ∈ Nat.divisors m, p) = n := by rw [h₅]
+        _ ≤ 2019 := by
+          by_contra!
+          have h₇ : n = 2020 ∨ n = 2021 ∨ n = 2022 ∨ n = 2023 ∨ n = 2024 ∨ n = 2025 ∨ n = 2026 ∨ n = 2027 ∨ n = 2028 ∨ n = 2029 ∨ n = 2030 := by
+            omega
+          rw [h₇] at hn₁
+          rw [h₀] at hn₁
+          omega
+    -- A number with four divisors has to be a product of two distinct primes or a cube of a prime.
+    have h₇ : Nat.divisors m = Nat.divisors (m.natAbs) := by
+      rw [Nat.divisors_eq_iff_prime_pow]
+      rw [Nat.prime_pow]
+      simp
+      by_contra!
+      rw [← Nat.not_prime_mul] at this
+      omega
+    have h₈ : Nat.divisors m.card = 4 := by
+      rw [← h₇, Nat.divisors_card]
+      simp
+      exact Nat.card_divisors
+    have h₉ : Nat.Prime m.natAbs ∨ m.natAbs = (2 ^ 2) * 3 := by
+      apply (Nat.Prime.pow_divisors_card_eq h₈).mp
+      rw [Nat.divisors_eq_iff_prime_pow]
+      simp
+      by_contra!
+      have h₁₀ : Nat.divisors m.card ≠ 4 := by
+        rw [Nat.divisors_eq_iff_prime_pow]
+        simp
+        by_contra!
+        have h₁₁ : m.natAbs = 2 ^ 2 := by
+          omega
+        rw [h₁₁] at this
+        omega
+      contradiction
+    -- Let $p$ be the larger prime factor of $m$.
+    rcases h₉ with h₁₀ | h₁₀
+    ·   -- If $m = p^3$ for some prime $p$, then $n = 2016$.
+      have h₁₁ : ∃ p, Nat.Prime p ∧ p ^ 3 = m := by
+        rw [← Nat.prime_pow]
+        use m.natAbs
+        simp
+        rw [h₁₀]
+        simp
+      rcases h₁₁ with ⟨p, hp₁, hp₂⟩
+      have h₁₂ : p > 3 := by
+        by_contra!
+        have h₁₃ : p ^ 3 ≤ 3 ^ 3 := by
+          rw [show 3 = 3 ^ 1 by simp]
+          exact Nat.pow_le_pow_of_le_left this 3
+        omega
+      have h₁₃ : 4 * p ^ 2 ≤ 2019 := by
+        calc
+          4 * p ^ 2 = 2 * p * (2 * p) := by ring
+          _ ≤ 2 * p * m.natAbs := by
+            rw [show m.natAbs = p ^ 3 by rw [hp₂]; ac_rfl]
+            have h₁₄ : 2 * p ≤ m.natAbs := by
+              rw [hp₂]
+              calc
+                2 * p ≤ p ^ 3 := by
+                  rw [show 3 = 1 + 2 by simp]
+                  exact Nat.mul_le_mul_left p (Nat.pow_le_pow_self hp₁ (by omega))
+                _ = m.natAbs := by rw [hp₂]
+            apply Nat.mul_le_mul_right
+            exact h₁₄
+          _ ≤ 2 * m.natAbs * m.natAbs := by
+            rw [show 2 * m.natAbs = m.natAbs + m.natAbs by ring]
+            apply Nat.mul_le_mul_right
+            rw [show m.natAbs = p ^ 3 by rw [hp₂]]
+            calc
+              2 * (p ^ 3) ≤ 1 + p ^ 3 := by
+                suffices 2 * (p ^ 3) ≤ p ^ 3 + p ^ 3 by
+                  omega
+                exact Nat.add_le_add_right (Nat.zero_le _) (Nat.mul_le_mul_of_nonneg_right (Nat.pow_le_pow_self hp₁ (by omega)) (by omega))
+              _ = m.natAbs * m.natAbs := by rw [show 1 = 1 ^ 3 by simp]; exact Nat.mul_pow_right_comm m.natAbs 3
+          _ = m.natAbs ^ 2 := by ring
+      have h₁₄ : p = 2 ∨ p = 3 := by
+        by_contra!
+        have h₁₅ : p ^ 2 ≥ 5 ^ 2 := by
+          apply Nat.pow_le_pow_of_le_left
+          omega
+        omega
+      rcases h₁₄ with h₁₄ | h₁₄
+      ·   -- If $p = 2$, then $m = 4$ and $n = 8$, which is a contradiction.
+        rw [h₁₄] at hp₂
+        omega
+      ·   -- If $p = 3$, then $m = 27$ and $n = 40$, which is a contradiction.
+        rw [h₁₄] at hp₂
+        omega
+    ·   -- If $m = p * q$ for some distinct primes $p$ and $q$, then $n = 2016$.
+      have h₁₁ : ∃ p q, Nat.Prime p ∧ Nat.Prime q ∧ p * q = m := by
+        rw [← Nat.prime_mul]
+        use m.natAbs
+        simp
+        by_contra!
+        have h₁₂ : m.natAbs = 2 ^ 2 := by
+          omega
+        rw [h₁₂] at this
+        omega
+      rcases h₁₁ with ⟨p, q, hp₁, hq₁, hmul⟩
+      have h₁₂ : p < q := by
+        by_contra!
+        have h₁₃ : p = q := by
+          omega
+        rw [h₁₃] at hmul
+        omega
+      have h₁₃ : q < m.natAbs := by
+        by_contra!
+        have h₁₄ : q = m.natAbs := by
+          omega
+        rw [h₁₄] at hmul
+        omega
+      have h₁₄ : 2 * (p + q) < 2019 := by
+        calc
+          2 * (p + q) ≤ 2 * (m.natAbs) := by
+            rw [show 2 = 2 * 1 by simp]
+            apply Nat.mul_le_mul_right
+            apply Nat.add_le_add_right
+            omega
+          _ ≤ 2019 := by omega
+      have h₁₅ : p + q = 2016 := by
+        rw [← h₀]
+        rw [hmul] at h₀
+        simp at h₀
+        omega
+      omega
+
+  have h₃ : ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = ∑ k in S, k := by
+    use 1620
+    constructor
+    · rw [Nat.divisors_eq_iff_prime_pow]
+      use 2
+      constructor
+      · norm_num
+      · norm_num
+    · simp
+      rw [Finset.sum]
+      simp
+      exact h₁
+
+  -- Show that if $S$ contains more than one element, then the elements cannot be both 2010 and 2019.
+  have h₄ (hn₁ : 2010 ∈ S) (hn₂ : 2019 ∈ S) : False := by
+    by_contra!
+    rcases this with ⟨_, g₀, g₁⟩
+    rw [Finset.mem_insert] at g₀ g₁
+    rcases g₀ with g₀ | g₀
+    · rw [Finset.mem_singleton] at g₀
+      rw [g₀] at hn₁
+      rw [Finset.mem_insert] at g₁
+      rcases g₁ with g₁ | g₁
+      · rw [Finset.mem_singleton] at g₁
+        rw [g₁] at hn₂
+        omega
+      · rw [Finset.mem_singleton] at g₁
+        rw [g₁] at hn₂
+        omega
+    · rw [Finset.mem_insert] at g₀
+      rcases g₀ with g₀ | g₀
+      · rw [Finset.mem_singleton] at g₀
+        rw [g₀] at hn₁
+        rw [Finset.mem_insert] at g₁
+        rcases g₁ with g₁ | g₁
+        · rw [Finset.mem_singleton] at g₁
+          rw [g₁] at hn₂
+          omega
+        · rw [Finset.mem_singleton] at g₁
+          rw [g₁] at hn₂
+          omega
+      · rw [Finset.mem_singleton] at g₀
+        rw [g₀] at hn₁
+        rw [Finset.mem_insert] at g₁
+        rcases g₁ with g₁ | g₁
+        · rw [Finset.mem_singleton] at g₁
+          rw [g₁] at hn₂
+          omega
+        · rw [Finset.mem_singleton] at g₁
+          rw [g₁] at hn₂
+          omega
+
+  -- Show that $S$ has only one element, and it is 2016.
+  have h₅ : S.card = 1 := by
+    rw [Finset.card_eq_one]
+    use 2016
+    ext n
+    simp
+    intro hn
+    by_cases hn' : n = 2010 ∨ n = 2011 ∨ n = 2012 ∨ n = 2013 ∨ n = 2014 ∨ n = 2015 ∨ n = 2016 ∨ n = 2017 ∨ n = 2018 ∨ n = 2019
+    · exact h₂ n hn hn'
+    · by_contra!
+      obtain ⟨hn₁, hn₂⟩ := Finset.mem_pair.mp this
+      apply h₄ at hn₁ hn₂
+      contradiction
+  rw [Finset.sum_eq_card_nsmul (show ∀ n : ℕ, n ∈ S → n = 2016 by intro n hn; rw [h₀] at hn; simp at hn; apply h₂ n hn hn₁)]
+  norm_num
+  rw [h₅]
+  simp
+
+```

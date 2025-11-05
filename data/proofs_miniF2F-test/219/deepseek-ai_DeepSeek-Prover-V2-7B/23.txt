@@ -1,0 +1,33 @@
+have step₁ : ¬5 ∣ ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+    intro h
+    have h1 : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) % 5 = 0 := by
+      omega
+    have h2 : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) % 5 = 2 ^ (2 * n + 1) % 5 := by
+      have h3 : ∀ n : ℕ, ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) % 5 = 2 ^ (2 * n + 1) % 5 := by
+        intro n
+        induction n using Nat.strong_induction_on with
+        | h n ih =>
+          match n with
+          | 0 => simp [Finset.sum_range_succ, Nat.choose_succ_succ, pow_add, pow_mul, Nat.mul_mod, Nat.pow_mod]
+          | 1 => simp [Finset.sum_range_succ, Nat.choose_succ_succ, pow_add, pow_mul, Nat.mul_mod, Nat.pow_mod]
+          | n + 2 =>
+            have h4 := ih (n + 1) (by omega)
+            have h5 := ih n (by omega)
+            simp [Finset.sum_range_succ, Nat.choose_succ_succ, pow_add, pow_mul, Nat.mul_mod, Nat.pow_mod] at h4 h5 ⊢
+            ring_nf at *
+            omega
+      exact h3 n
+    have h3 : 2 ^ (2 * n + 1) % 5 ≠ 0 := by
+      have h4 : 2 ^ (2 * n + 1) % 5 = 2 ^ (2 * n + 1 % 4) % 5 := by
+        rw [← Nat.mod_add_div (2 * n + 1) 4]
+        simp [pow_add, pow_mul, Nat.pow_mod, Nat.mul_mod]
+        <;> norm_num
+        <;> omega
+      have h5 : 2 ^ (2 * n + 1 % 4) % 5 ≠ 0 := by
+        have h6 : 2 * n + 1 % 4 = 1 ∨ 2 * n + 1 % 4 = 3 := by
+          omega
+        rcases h6 with (h6 | h6) <;> simp [h6, pow_one, pow_succ, Nat.mul_mod, Nat.pow_mod] <;> norm_num <;> omega
+      omega
+    omega
+  exact step₁
+```

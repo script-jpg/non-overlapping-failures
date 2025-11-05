@@ -1,0 +1,42 @@
+-- First, we calculate the order of 5 modulo 7.
+  have r5 : orderOf 5 Nat.ModEq 7 = 6 := by
+    -- The order of 5 modulo 7 is the smallest positive integer k such that 5^k ≡ 1 (mod 7).
+    rw [orderOf_eq_iff]
+    -- We need to prove that 5^6 ≡ 1 (mod 7) and that 6 is the smallest such positive integer.
+    constructor
+    -- First, let's show that 5^6 ≡ 1 (mod 7).
+    · rw [Nat.ModEq]
+      -- We can calculate 5^6 = 15,625. When we divide 15,625 by 7, the remainder is 1.
+      norm_num
+    -- Now, we need to show that 6 is the smallest such positive integer.
+    · intro k hk
+      -- The possible values of k are 1, 2, 3, 4, 5, or 6.
+      have : k = 1 ∨ k = 2 ∨ k = 3 ∨ k = 4 ∨ k = 5 ∨ k = 6 := by omega
+      rcases this with (h | h | h | h | h | h) <;> rw [h] at hk
+      -- We need to calculate 5^1, 5^2, 5^3, 5^4, 5^5, and 5^6 modulo 7 and show that none of them are 1.
+      all_goals
+        rw [Nat.ModEq] at hk
+        norm_num at hk
+
+  -- Since the order of 5 modulo 7 is 6, we have 5^6 ≡ 1 (mod 7).
+  have r5_1 : 5 ^ 6 % 7 = 1 := by
+    rw [Nat.ModEq]
+    norm_num
+
+  -- We divide 999,999 by 6 to find the remainder.
+  have r5_2 : 999999 % 6 = 3 := by norm_num
+
+  -- We express 5^999999 as (5^6)^166,666 * 5^3.
+  have r5_3 : 5 ^ 999999 = (5 ^ 6) ^ 166666 * 5 ^ 3 := by
+    rw [←Nat.pow_mul, ←Nat.pow_add]
+    ring_nf
+
+  -- We calculate 5^999999 modulo 7 using the properties of modular arithmetic.
+  calc
+    5 ^ 999999 % 7 = ((5 ^ 6) ^ 166666 * 5 ^ 3) % 7 := by rw [r5_3]
+    _ = (((5 ^ 6) % 7) ^ 166666 * (5 ^ 3 % 7)) % 7 := by rw [Nat.mul_mod, Nat.pow_mod]
+    _ = ((1 % 7) ^ 166666 * (5 ^ 3 % 7)) % 7 := by rw [r5_1]
+    _ = (1 ^ 166666 * (5 ^ 3 % 7)) % 7 := by rw [Nat.one_mod]
+    _ = (5 ^ 3 % 7) % 7 := by rw [Nat.pow_mod]; norm_num
+    _ = 6 := by rw [Nat.mod_self]; norm_num
+```

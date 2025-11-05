@@ -1,0 +1,336 @@
+rcases h₀ with ⟨hx, hy⟩
+
+  -- Show that $x$ and $y$ are not less than 1.
+  have h₂ : ¬x < 1 := by
+    by_contra!
+    have : x ^ y ^ 2 > y ^ x := by
+      calc
+        x ^ y ^ 2 ≥ 1 ^ y ^ 2 := by apply Nat.pow_le_pow_of_le_left; omega
+        _ = 1 := by simp
+        _ > 0 := by apply Nat.pos_pow_of_pos 1 hy
+        _ ≥ y ^ x := by apply Nat.pow_le_pow_of_le_right; omega
+    rw [h₁] at this
+    have : ¬y ^ x > y ^ x := by
+      apply not_lt.mpr
+      apply Nat.pow_le_pow_of_le_left
+      omega
+    contradiction
+  have h₃ : ¬y < 1 := by
+    by_contra!
+    have : x ^ y ^ 2 > y ^ x := by
+      calc
+        x ^ y ^ 2 > 0 := by apply Nat.pos_pow_of_pos hx hy
+        _ ≥ 1 ^ x := by apply Nat.pow_le_pow_of_le_right; omega
+        _ = 1 := by simp
+        _ > y ^ x := by apply Nat.pow_lt_pow_of_lt_left; omega
+    rw [h₁] at this
+    have : ¬y ^ x > y ^ x := by
+      apply not_lt.mpr
+      apply Nat.pow_le_pow_of_le_left
+      omega
+    contradiction
+
+  -- Show that $x \geq 1$ and $y \geq 1$.
+  replace h₂ : x ≥ 1 := by
+    omega
+  replace h₃ : y ≥ 1 := by
+    omega
+
+  -- Take logarithm of both sides at the equation to prove that $x \cdot \log(y) = 2 \cdot \log(x)$.
+  have h₄ : x * (Nat.log y) = 2 * (Nat.log x) := by
+    calc
+      x * (Nat.log y) = (Nat.log y ^ 2) * (Nat.log x) := by
+        rw [<-Nat.pow_two, <-Nat.log_pow, <-Nat.log_pow]
+        congr
+        apply Nat.log_le_log
+        omega
+        omega
+        omega
+      _ = (Nat.log x) * (Nat.log y ^ 2) := by ring
+      _ = 2 * (Nat.log x * Nat.log y) := by
+        congr 2
+        ring
+      _ = 2 * (Nat.log y * Nat.log x) := by ring
+      _ = 2 * (Nat.log x * Nat.log y) := by ring
+      _ = (Nat.log x ^ 2) * (Nat.log y) := by
+        congr
+        ring
+      _ = (Nat.log x ^ 2) * (Nat.log y) := by
+        congr
+        ring
+      _ = (Nat.log x) * (Nat.log x ^ 2) := by ring
+      _ = 2 * (Nat.log x * Nat.log x) := by
+        congr 2
+        ring
+      _ = 2 * (Nat.log x ^ 2) := by ring
+      _ = 2 * (Nat.log x ^ 2) := by
+        congr
+        ring
+      _ = 2 * (Nat.log x ^ 2) := by
+        congr
+        ring
+      _ = (Nat.log x ^ 2) * 2 := by ring
+      _ = (Nat.log x) ^ 2 * 2 := by
+        congr
+        ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = x * (Nat.log y) := by
+        rw [<-Nat.log_pow, <-Nat.log_pow]
+        congr
+        apply Nat.log_le_log
+        omega
+        omega
+        omega
+
+  -- Apply antitone law on divisors.
+  have h₅ : x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 6 ∨ x = 8 ∨ x = 12 ∨ x = 24 ∨ x = 16 ∨ x = 27
+         ∨ x = 81 ∨ x = 243 ∨ x = 531441 ∨ x = 1594323 ∨ x = 4782969 ∨ x = 14348907 := by
+    have h₅ : x ^ (y ^ 2) = y ^ x := by
+      exact h₁.symm
+    have h₆ : x ^ (y ^ 2) > 0 := by
+      calc
+        x ^ (y ^ 2) > 0 := by
+          apply Nat.pos_pow_of_pos
+          omega
+        _ = y ^ x := by
+          rw [h₅]
+        _ > 0 := by
+          apply Nat.pos_pow_of_pos
+          omega
+    have h₇ : y ^ x > 0 := by
+      calc
+        y ^ x > 0 := by
+          apply Nat.pos_pow_of_pos
+          omega
+        _ = x ^ (y ^ 2) := by
+          rw [h₅]
+        _ > 0 := by
+          apply Nat.pos_pow_of_pos
+          omega
+    rw [show y ^ x = x ^ (y ^ 2) by rw [h₅]] at h₄
+    have h₈ : x log y = 2 * log x := by
+      exact h₄
+    by_contra!
+    have h₉ : x log y > 2 * log x := by
+      apply Nat.gt_of_not_le at this
+      apply Nat.lt_of_le_of_lt (show 2 * log x ≤ 2 * log x by rfl)
+      apply Nat.mul_le_mul_left 2
+      apply Nat.log_le_log
+      omega
+      omega
+    linarith only [h₈, h₉]
+
+  have h₆ : y = 1 ∨ y = 2 ∨ y = 3 ∨ y = 4 ∨ y = 6 ∨ y = 8 ∨ y = 12 ∨ y = 24 ∨ y = 16 ∨ y = 27
+         ∨ y = 81 ∨ y = 243 ∨ y = 531441 ∨ y = 1594323 ∨ y = 4782969 ∨ y = 14348907 := by
+    have h₆ : x ^ (y ^ 2) = y ^ x := by
+      exact h₁.symm
+    have h₇ : x ^ (y ^ 2) > 0 := by
+      calc
+        x ^ (y ^ 2) > 0 := by
+          apply Nat.pos_pow_of_pos
+          omega
+        _ = y ^ x := by
+          rw [h₆]
+        _ > 0 := by
+          apply Nat.pos_pow_of_pos
+          omega
+    have h₈ : y ^ x > 0 := by
+      calc
+        y ^ x > 0 := by
+          apply Nat.pos_pow_of_pos
+          omega
+        _ = x ^ (y ^ 2) := by
+          rw [h₆]
+        _ > 0 := by
+          apply Nat.pos_pow_of_pos
+          omega
+    rw [show y ^ x = x ^ (y ^ 2) by rw [h₆]] at h₄
+    have h₉ : x log y = 2 * log x := by
+      exact h₄
+    by_contra!
+    have h₁₀ : y log x > 2 * log y := by
+      apply Nat.gt_of_not_le at this
+      apply Nat.lt_of_le_of_lt (show 2 * log y ≤ 2 * log y by rfl)
+      apply Nat.mul_le_mul_left 2
+      apply Nat.log_le_log
+      omega
+      omega
+    linarith only [h₉, h₁₀]
+
+  -- Show that $x \cdot \log(y) = 2 \cdot \log(x)$ for some positive integers $x$ and $y$.
+  have h₇ : x log y = 2 * log x := by
+    calc
+      x log y = (Nat.log y ^ 2) * (Nat.log x) := by
+        rw [<-Nat.pow_two, <-Nat.log_pow, <-Nat.log_pow]
+        congr
+        apply Nat.log_le_log
+        omega
+        omega
+        omega
+      _ = (Nat.log x) * (Nat.log y ^ 2) := by ring
+      _ = 2 * (Nat.log x * Nat.log y) := by
+        congr 2
+        ring
+      _ = 2 * (Nat.log y * Nat.log x) := by ring
+      _ = 2 * (Nat.log x * Nat.log y) := by ring
+      _ = (Nat.log x ^ 2) * 2 := by
+        congr
+        ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = (Nat.log x * 2) * (Nat.log x) := by ring
+      _ = x * (Nat.log y) := by
+        rw [<-Nat.log_pow, <-Nat.log_pow]
+        congr
+        apply Nat.log_le_log
+        omega
+        omega
+        omega
+
+  clear h₄
+
+  -- Discuss all possible cases of $x$ and $y$.
+  rcases h₅ with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+  · -- If $x = 1$, then $y$ is equal to $1$, $2$, or $3$.
+    rcases h₆ with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+    · -- If $y = 1$, then $(x, y) = (1, 1)$.
+      simp
+    · -- If $y = 2$, then $(x, y) = (1, 2)$.
+      simp
+    · -- If $y = 3$, then $(x, y) = (1, 3)$.
+      simp
+    · -- If $y = 4$, then $2 \cdot \log(4) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 4 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 4 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 6$, then $2 \cdot \log(6) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 6 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 6 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 8$, then $2 \cdot \log(8) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 8 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 8 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 12$, then $2 \cdot \log(12) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 12 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 12 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 24$, then $2 \cdot \log(24) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 24 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 24 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 48$, then $2 \cdot \log(48) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 48 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 48 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 96$, then $2 \cdot \log(96) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 96 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 96 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 192$, then $2 \cdot \log(192) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 192 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 192 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 384$, then $2 \cdot \log(384) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 384 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 384 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 768$, then $2 \cdot \log(768) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 768 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 768 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 1536$, then $2 \cdot \log(1536) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 1536 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 1536 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $y = 3072$, then $2 \cdot \log(3072) = 2 \cdot \log(1)$, which is a contradiction.
+      have h₁₀ : 2 * log 3072 = 2 * log 1 := by
+        rw [<-h₇]
+        rfl
+      have h₁₁ : log 3072 > log 1 := by
+        apply Nat.log_lt_log
+        omega
+        omega
+        omega
+      linarith only [h₁₀, h₁₁]
+    · -- If $

@@ -1,0 +1,47 @@
+-- check the base case $n = 0$
+  have h0 : 11 ∣ 10 ^ 0 - (-1 : ℤ) ^ 0 := by
+    norm_num
+  -- check the case $n = 1$
+  have h1 : 11 ∣ 10 ^ 1 - (-1 : ℤ) ^ 1 := by
+    norm_num
+  -- use induction on $n$
+  induction n with
+  -- when $n\neq 0$ and $n\neq 1$, rewrite $10^{n+1}$
+  | rename_i n hn =>
+    by_cases hn0 : n = 0
+    -- solve the base case
+    · simp [hn0] at h0
+      exact h0
+    -- when $n\neq 0$, we have $10^{n+1} = 10 ^ n * 10 ^ 1$ and $(-1)^{n+1} = (-1)^n * (-1)$
+    · simp [pow_succ] at *
+      -- turn the goal into proving $11 \mid 10 ^ n * 10 - (-1)^n * (-1)$
+      rw [mul_comm]
+      apply sub_dvd_sub
+      -- solve the case when $n$ is even
+      · by_cases hn1 : n % 2 = 0
+        · have g1 : (-1 : ℤ) ^ n = 1 := by
+            rw [pow_eq_one_iff_mod]
+            simp
+            exact hn1
+          have g2 : 11 ∣ 10 ^ n * 10 - 1 * (-1) := by
+            rw [g1]
+            simp
+            norm_num
+            exact dvd_mul_of_dvd_left h1 (10)
+          rw [g2]
+          simp
+        -- solve the case when $n$ is odd
+        · have g1 : (-1 : ℤ) ^ n = -1 := by
+            rw [pow_eq_one_iff_mod]
+            simp
+            push_neg at hn1
+            exact hn1
+          have g2 : 11 ∣ 10 ^ n * 10 - (-1) * (-1) := by
+            rw [g1]
+            simp
+            norm_num
+            exact dvd_mul_of_dvd_left h1 (10)
+          rw [g2]
+          simp
+
+```

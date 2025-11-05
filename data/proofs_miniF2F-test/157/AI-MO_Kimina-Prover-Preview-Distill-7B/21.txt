@@ -1,0 +1,229 @@
+-- Prove that the solution set is exactly $\left\{ \frac{\pi}{4}, \frac{3\pi}{4} \right\}$.
+  have h₁ : S = {Real.pi / 4, Real.pi - Real.pi / 4} := by
+    ext x
+    constructor
+    · -- Suppose that $x \in S$.
+      intro hx
+      rw [h₀] at hx
+      rcases hx with ⟨hx, hx₀, hx₁⟩
+
+      -- We have the equation $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$.
+      have h₂ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by
+        simpa using hx₁
+
+      -- Using the identity $\cos x = \sin \left( \frac{\pi}2 - x\right)$, we have:
+      -- $\sin \left( \frac{\pi}2 \cos x\right) = \sin \left( \frac{\pi}2 \sin x + \frac{\pi}2 - x\right)$.
+      have h₃ : Real.sin (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 * Real.sin x + Real.pi / 2 - x) := by
+        rw [hx]
+        rw [Real.cos_eq_sin_pi_div_two_sub]
+        ring_nf
+
+      -- Using the injectivity of $\sin$ in the first quadrant, we get:
+      -- $\frac{\pi}2 \cos x = \frac{\pi}2 \sin x + \frac{\pi}2 - x$.
+      have h₄ : Real.pi / 2 * Real.cos x = Real.pi / 2 * Real.sin x + Real.pi / 2 - x := by
+        rw [← Real.injOn_sin] at h₃
+        · simpa using h₃
+        · -- Show that $\sin$ is injective on the first quadrant.
+          simp only [Set.InjOn]
+          intro a ha b hb hab
+          exact Real.injOn_sin (by simpa) (by simpa) hab
+
+        -- Show that $2\pi \notin \operatorname{im}(\sin)$.
+        · intro a ha b hb hab
+          simp only [Set.InjOn] at hab
+          rify at ha hb
+          have : 2 * Real.pi ∉ Set.range Real.sin := by
+            apply Real.two_pi_not_mem_range_sin
+          simp only [Set.mem_range] at hab
+          exact this hab
+
+      -- Simplify, we get $\cos x = \sin x + 1 - \frac{2x}{\pi}$.
+      have h₅ : Real.cos x = Real.sin x + 1 - 2 * x / Real.pi := by
+        rify at hx₀ hx₁
+        field_simp at h₄ ⊢
+        linarith
+
+      -- Consider the function $f(x) = \cos x - \sin x - 1 + \frac{2x}{\pi}$.
+      let f (x : ℝ) := Real.cos x - Real.sin x - 1 + 2 * x / Real.pi
+
+      -- We will show that $f$ has exactly two roots in the interval $[0,\pi]$:
+      -- $\frac{\pi}{4}$ and $\frac{3\pi}{4}$.
+      have h₆ : f x = 0 := by
+        simp [f]
+        linarith
+
+      have h₇ : x = Real.pi / 4 ∨ x = Real.pi - Real.pi / 4 := by
+        have h₈ : f (Real.pi / 4) = 0 := by
+          simp [f]
+          have : Real.cos (Real.pi / 4) = Real.sqrt 2 / 2 := by simp
+          rw [this]
+          have : Real.sin (Real.pi / 4) = Real.sqrt 2 / 2 := by simp
+          rw [this]
+          field_simp
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          ring
+
+        have h₉ : f (Real.pi - Real.pi / 4) = 0 := by
+          simp [f]
+          have : Real.cos (Real.pi - Real.pi / 4) = -Real.sqrt 2 / 2 := by
+            rw [Real.cos_pi_sub]
+            have : Real.cos (Real.pi / 4) = Real.sqrt 2 / 2 := by simp
+            rw [this]
+            ring
+          rw [this]
+          have : Real.sin (Real.pi - Real.pi / 4) = Real.sqrt 2 / 2 := by
+            rw [Real.sin_pi_sub]
+            have : Real.sin (Real.pi / 4) = Real.sqrt 2 / 2 := by simp
+            rw [this]
+          rw [this]
+          field_simp
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          ring
+
+        have h₁₀ : f x = 0 → x = Real.pi / 4 ∨ x = Real.pi - Real.pi / 4 := by
+          rintro hx
+          have h₁₁ : x = Real.pi / 4 ∨ x = Real.pi - Real.pi / 4 := by
+            by_contra! h
+            let hx' := hx
+            simp [f] at hx'
+            rcases h with h | h
+            · -- If $x \neq \frac{\pi}{4}$, show that $f(x) \neq 0$.
+              specialize Real.strictAntiOn_sin (by simpa) (by simpa) h
+              have : 2 * Real.pi ∉ Set.range Real.sin := by
+                apply Real.two_pi_not_mem_range_sin
+              simp only [Set.mem_range] at hx'
+              rcases hx' with ⟨a, ha, hb⟩
+              have := Real.injOn_sin (by simpa) (by simpa) ha
+              have := Real.injOn_sin (by simpa) (by simpa) hb
+              linarith
+            · -- If $x \neq \frac{3\pi}{4}$, show that $f(x) \neq 0$.
+              specialize Real.strictAntiOn_sin (by simpa) (by simpa) h
+              have : 2 * Real.pi ∉ Set.range Real.sin := by
+                apply Real.two_pi_not_mem_range_sin
+              simp only [Set.mem_range] at hx'
+              rcases hx' with ⟨a, ha, hb⟩
+              have := Real.injOn_sin (by simpa) (by simpa) ha
+              have := Real.injOn_sin (by simpa) (by simpa) hb
+              linarith
+
+          -- Since $f$ is continuous, by the intermediate value theorem, it cannot have exactly two roots.
+          rw [← h₈, ← h₉] at hx
+          specialize @Real.miftingOn_sin_le_sin_pi_div_two (Real.pi / 2 * Real.cos x) (Real.pi / 2 * Real.sin x + Real.pi / 2 - x) (Real.pi / 2 * Real.sin x) (by linarith) (by linarith) (by linarith) h₁₁
+          simp only [mul_add, mul_sub, ← mul_assoc, ← mul_assoc] at hx
+          rw [show Real.pi / 2 * Real.sin x = Real.pi / 2 * Real.sin x + 0 by ring, add_zero] at hx
+          rw [Real.sin_pi_div_two] at hx
+          replace hx : Real.pi / 2 * Real.cos x - Real.pi / 2 * Real.sin x - 1 + 2 * x / Real.pi = 0 := by
+            linarith
+          replace hx : Real.pi / 2 * Real.cos x - Real.pi / 2 * Real.sin x + 2 * x / Real.pi = 1 := by
+            linarith
+          replace hx : Real.pi / 2 * (Real.cos x - Real.sin x + 4 * x / Real.pi) = 1 := by
+            linarith
+          have : Real.cos x - Real.sin x + 4 * x / Real.pi = 2 / Real.pi := by
+            rwa [← mul_left_inj' (by linarith)]
+          linarith
+
+        exact h₁₀ h₆
+
+      exact h₇
+
+    · -- Show that $\frac{\pi}{4}$ and $\frac{3\pi}{4}$ are indeed solutions.
+      intro hx
+      rcases hx with hx | hx
+      · -- $\frac{\pi}{4}$ is a solution.
+        rw [hx]
+        refine ⟨?_,?_,?_⟩
+        · -- $\frac{\pi}{4} \geq 0$ is trivial.
+          linarith [Real.pi_pos]
+        · -- $\frac{\pi}{4} \leq \pi$ is trivial.
+          linarith [Real.pi_pos]
+        · -- $\sin \left( \frac{\pi}2 \cos \frac{\pi}4\right)=\cos \left( \frac{\pi}2 \sin \frac{\pi}4\right)$.
+          -- Simplify, we get $\sin \left( \frac{\pi}2 \cdot \frac{\sqrt2}2\right) = \cos \left( \frac{\pi}2 \cdot \frac{\sqrt2}2\right)$.
+          -- Use the fact that $\sin x + \cos x = \sqrt{2} \sin \left(x + \frac{\pi}{4}\right)$.
+          rw [show Real.pi / 2 * Real.cos (Real.pi / 4) = Real.pi / 2 * (Real.sqrt 2 / 2) by simp [Real.cos_pi_div_four]]
+          rw [show Real.pi / 2 * Real.sin (Real.pi / 4) = Real.pi / 2 * (Real.sqrt 2 / 2) by simp [Real.sin_pi_div_four]]
+          suffices Real.sin (Real.pi / 2 * (Real.sqrt 2 / 2)) = Real.cos (Real.pi / 2 * (Real.sqrt 2 / 2)) by
+            field_simp [this]
+          -- Use the fact that $\sin x = \cos \left( \frac{\pi}2 - x\right)$.
+          rw [show Real.cos (Real.pi / 2 * (Real.sqrt 2 / 2)) = Real.sin (Real.pi / 2 - Real.pi / 2 * (Real.sqrt 2 / 2)) by rw [Real.cos_eq_sin_pi_div_two_sub]]
+          -- Use the fact that $\sin x = \sin \left(2k\pi + x\right)$.
+          rw [show Real.sin (Real.pi / 2 * (Real.sqrt 2 / 2)) = Real.sin (Real.pi / 2 * (Real.sqrt 2 / 2) + 2 * Real.pi) by rw [Real.sin_add_two_pi]]
+          -- Show that $\sin \left( \frac{\pi}2 \cdot \frac{\sqrt2}2 + 2\pi \right) = \sin \left( \frac{\pi}2 - \frac{\pi}2 \cdot \frac{\sqrt2}2 \right)$.
+          suffices Real.pi / 2 * (Real.sqrt 2 / 2) + 2 * Real.pi = Real.pi / 2 - Real.pi / 2 * (Real.sqrt 2 / 2) + 2 * Real.pi by
+            rw [this]
+          ring_nf
+          rw [← Real.sqrt_two_mul]
+          -- Show that $\sqrt{2} \cdot \frac{1 - \cos 1}{2} = \frac{\pi}{4} \cdot \frac{\sqrt{2}}{2}$.
+          suffices (Real.sqrt 2 * (1 - Real.cos 1)) / 2 = (Real.pi * Real.sqrt 2) / 4 by
+            linarith
+          apply (div_eq_div_iff?_?_).mpr
+          · -- $\sqrt{2} \cdot \frac{1 - \cos 1}2 \stackrel{?_}{=} \frac{\pi}{4} \cdot \frac{\sqrt{2}}2}$
+            rify
+            field_simp
+            rw [mul_assoc, mul_comm, mul_assoc, ← mul_add, Real.cos_sq_add_sin_sq]
+            simp
+            linarith
+          · -- $\sqrt{2} \neq 0$
+            positivity
+          · -- $1 - \cos 1 \neq 0$
+            have h₁ : 1 - Real.cos 1 ≠ 0 := by
+              suffices 1 < Real.cos 1 by
+                linarith
+              rw [Real.cos_eq_cos_of_mem_Icc]
+              · norm_num
+              · simp
+              · simp
+            exact h₁
+        -- $\frac{3\pi}{4}$ is a solution.
+      · rw [hx]
+        refine ⟨?_,?_,?_⟩
+        · -- $\frac{3\pi}{4} \geq 0$ is trivial.
+          linarith [Real.pi_pos]
+        · -- $\frac{3\pi}{4} \leq \pi$ is trivial.
+          linarith [Real.pi_pos]
+        · -- $\sin \left( \frac{\pi}2 \cos \frac{3\pi}4\right)=\cos \left( \frac{\pi}2 \sin \frac{3\pi}4\right)$.
+          -- Simplify, we get $\sin \left( -\frac{\pi}2 \cdot \frac{\sqrt2}2\right) = \cos \left( \frac{\pi}2 \cdot \frac{\sqrt2}2\right)$.
+          -- Use the fact that $\sin x + \cos x = \sqrt{2} \sin \left(x + \frac{\pi}{4}\right)$.
+          rw [show Real.pi / 2 * Real.cos (3 * Real.pi / 4) = - Real.pi / 2 * (Real.sqrt 2 / 2) by simp [Real.cos_three_mul_div_four]]
+          rw [show Real.pi / 2 * Real.sin (3 * Real.pi / 4) = Real.pi / 2 * (Real.sqrt 2 / 2) by simp [Real.sin_three_mul_div_four]]
+          suffices Real.sin (- (Real.pi / 2 * (Real.sqrt 2 / 2))) = Real.cos (Real.pi / 2 * (Real.sqrt 2 / 2)) by
+            field_simp [this]
+          -- Use the fact that $\sin(-x) = -\sin(x)$.
+          rw [show Real.sin (- (Real.pi / 2 * (Real.sqrt 2 / 2))) = - Real.sin (Real.pi / 2 * (Real.sqrt 2 / 2)) by simp [Real.sin_neg]]
+          -- Use the fact that $\sin x = \sin \left(2k\pi + x\right)$.
+          rw [show Real.sin (Real.pi / 2 * (Real.sqrt 2 / 2)) = Real.sin (Real.pi / 2 * (Real.sqrt 2 / 2) + 2 * Real.pi) by rw [Real.sin_add_two_pi]]
+          -- Show that $\sin \left( \frac{\pi}2 \cdot \frac{\sqrt2}2 + 2\pi \right) = \sin \left( \frac{\pi}2 - \frac{\pi}2 \cdot \frac{\sqrt2}2 \right)$.
+          suffices Real.pi / 2 * (Real.sqrt 2 / 2) + 2 * Real.pi = Real.pi / 2 - Real.pi / 2 * (Real.sqrt 2 / 2) + 2 * Real.pi by
+            rw [this]
+            simp
+          ring_nf
+          rw [← Real.sqrt_two_mul]
+          -- Show that $\sqrt{2} \cdot \frac{1 + \cos 1}{2} = \frac{\pi}{4} \cdot \frac{\sqrt{2}}{2}$
+          suffices (Real.sqrt 2 * (1 + Real.cos 1)) / 2 = (Real.pi * Real.sqrt 2) / 4 by
+            linarith
+          apply (div_eq_div_iff?_?_).mpr
+          · -- $\sqrt{2} \cdot \frac{1 + \cos 1}2 \stackrel{?_}{=} \frac{\pi}{4} \cdot \frac{\sqrt{2}}2}$
+            rify
+            field_simp
+            rw [mul_assoc, mul_comm, mul_assoc, ← mul_add, Real.cos_sq_add_sin_sq]
+            simp
+            linarith
+          · -- $\sqrt{2} \neq 0$
+            positivity
+          · -- $1 + \cos 1 \neq 0$
+            have h₁ : -1 < Real.cos 1 := by
+              rw [Real.neg_one_lt_cos]
+              · simp
+              · simp
+            linarith
+
+  -- Show that $\frac{\pi}{4} \neq \frac{3\pi}{4}$.
+  rw [h₁]
+  symm
+  rw [Set.card_pair]
+  -- Show that $0 < \frac{\pi}{4} < \pi$.
+  constructor
+  · linarith [Real.pi_pos]
+  · linarith [Real.pi_pos]
+```

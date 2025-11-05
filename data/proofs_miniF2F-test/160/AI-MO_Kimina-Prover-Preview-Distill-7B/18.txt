@@ -1,0 +1,25 @@
+have : 101 ∣ 123456 - 34 := by norm_num
+  have : 101 ∣ 123456 - n := by rw [h₁]
+  -- As $101$ is a prime, by Euclidean algorithm, it suffices to show that $123456 - n$ and $123456 - 34$ have the same remainder when divided by $101$.
+  have Euclidean : (123456 - n) % 101 = (123456 - 34) % 101 := by
+    apply Nat.modEq_of_dvd
+    apply Nat.dvd_sub (show 101 ∣ 123456 - 34 by norm_num) h₁
+  -- But this is equivalent to say that $n$ and 34 have the same remainder when divided by $101$.
+  have : n % 101 = 34 % 101 := by
+    have : (123456 - n) % 101 = (123456 - 34) % 101 := Euclidean
+    have : (123456 - n) % 101 = 123456 % 101 - n % 101 := by
+      rw [Nat.sub_mod]
+      apply Nat.mod_add_div (123456) 101
+    rw [this] at Euclidean
+    have : (123456 - 34) % 101 = 123456 % 101 - 34 % 101 := by
+      rw [Nat.sub_mod]
+      apply Nat.mod_add_div 123456 101
+    rw [this] at Euclidean
+    exact Nat.add_right_cancel ( Euclidean.symm
+      )
+  -- As $n$ and 34 are both in the range $[0, 101)$, we conclude that they are equal.
+  have : n = 34 := by
+    apply Nat.modEq_unique_of_lt (by norm_num) h₀
+    exact this
+  exact this
+```

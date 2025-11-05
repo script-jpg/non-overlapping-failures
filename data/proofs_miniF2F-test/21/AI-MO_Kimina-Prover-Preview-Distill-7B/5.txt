@@ -1,0 +1,57 @@
+-- We prove that for any two integers $x$ and $y$, $x^5 \ne y^2 + 4$.
+  -- First, consider the case when $x^5$ is even.
+  by_cases h : Even (x ^ 5)
+  · -- In this case, $x$ must be even, so there exists an integer $a$ such that $x = 2a$.
+    have ⟨a, ha⟩ := Even.exists_two_nsmul x h
+    -- Substituting $x = 2a$ into the equation $x^5 = y^2 + 4$ gives $(2a)^5 = y^2 + 4$.
+    rw [←ha] at *
+    -- This implies $y^2 = 32a^5 - 4$.
+    have h1 : y ^ 2 = 32 * a ^ 5 - 4 := by linarith
+    -- Notice that the right hand side is even, but not divisible by $4$.
+    have h2 : 4 ∣ y ^ 2 := by rw [h1]; omega
+    have h3 : ¬ 4 ∣ y ^ 2 := by
+      -- We prove this by contradiction.
+      by_contra!
+      -- If $4$ divided $y^2$, then $y$ would be divisible by $2$.
+      have : 2 ∣ y := by
+        apply Prime.dvd_of_dvd_pow
+        omega
+        assumption
+      -- We know that $y^2 \equiv 1 \pmod{4}$ if $y$ is odd, so this is a contradiction.
+      have : y ^ 2 % 4 = 1 := by
+        omega
+      omega
+    -- This is a contradiction.
+    omega
+
+  -- Now consider the case when $x^5$ is odd.
+  · -- In this case, $x$ must be odd, so there exists an integer $a$ such that $x = 2a + 1$.
+    have ⟨a, ha⟩ := Odd.exists_two_add_one x h
+    -- Substituting $x = 2a + 1$ into the equation $x^5 = y^2 + 4$ gives $(2a + 1)^5 = y^2 + 4$.
+    rw [←ha] at *
+    ring_nf at *
+    -- This implies $y^2 = 80a^5 + 80a^4 + 40a^3 + 20a^2 + 4a + 5 - 4$.
+    have h1 : y ^ 2 = 80 * a ^ 5 + 80 * a ^ 4 + 40 * a ^ 3 + 20 * a ^ 2 + 4 * a + 1 := by linarith
+    -- Notice that the right hand side is odd.
+    have h2 : Odd y := by
+      apply Odd.add_even
+      apply Odd.pow
+      apply Odd.two_mul_add_one
+      assumption
+    apply Dvd.dvd.modEq_zero_int at h2
+    -- We prove that $3$ divides $y^2$.
+    have h3 : 3 ∣ y ^ 2 := by
+      -- In fact, $3$ divides $y$.
+      apply Dvd.dvd.modEq_zero_int
+      omega
+    -- We know that $y^2 \equiv 1 \pmod{3}$ if $y$ is not divisible by $3$, so this is a contradiction.
+    have : y ^ 2 % 3 = 1 := by
+      rw [h1]
+      -- We use the fact that $a^3 \equiv a \pmod{3}$ for any integer $a$.
+      have (a : ℤ) : a ^ 3 % 3 = a % 3 := by
+        have : a % 3 = 0 ∨ a % 3 = 1 ∨ a % 3 = 2 := by omega
+        rcases this with (h | h | h) <;> simp [h, pow_three, Int.add_emod, Int.mul_emod]
+      omega
+    omega
+
+```

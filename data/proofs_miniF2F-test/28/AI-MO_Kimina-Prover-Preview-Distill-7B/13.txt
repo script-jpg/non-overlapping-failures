@@ -1,0 +1,246 @@
+-- A trivial fact: this lemma proves that if $p$ and $q$ are primes, then $pq$ is squareless.
+  have h0_1 : ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → Squarefree (p * q) := by
+    intro p q hp hq hpq
+    rw [Nat.squarefree_mul_iff]
+    nth_rw 2 [Nat.squarefree]
+    nth_rw 1 [Nat.squarefree]
+    rw [Nat.squarefree]
+    omega
+
+  -- This lemma proves that if $p$ and $q$ are primes, then $p \ne q$.
+  have h0_2 : ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → (¬ p ∣ q) ∧ (¬ q ∣ p) := by
+    intro p q hp hq hpq
+    constructor
+   . intro p_dvd_q
+      have p_le_q := Nat.le_of_dvd (by positivity) p_dvd_q
+      interval_cases p <;> norm_num at hp
+      all_goals { rw [dvd_prime hq] at p_dvd_q; tauto }
+   . intro q_dvd_p
+      have q_le_p := Nat.le_of_dvd (by positivity) q_dvd_p
+      interval_cases q <;> norm_num at hq
+      all_goals { rw [dvd_prime hp] at q_dvd_p; tauto }
+
+  -- This lemma proves that if $p$ and $q$ are primes, then $p \ne q$ and
+  -- $\sqrt{pq}$ cannot be simplified.
+  have h0_3 : ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q →
+      IsSquare (p * q) → (¬ p ∣ q) ∧ (¬ q ∣ p) ∧ Squarefree (p * q) := by
+    intro p q hp hq hpq hsq
+    obtain ⟨r, hr⟩ := hsq
+    rw [Nat.squarefree_mul_iff] at hr
+    nth_rw 2 [Nat.squarefree] at hr
+    nth_rw 1 [Nat.squarefree] at hr
+    rw [Nat.squarefree] at hr
+    have : r * r = p * q := by convert hr using 1; ring
+    have p_le_q := Nat.le_of_dvd (by positivity) (this ▸ (dvd_mul_right p q))
+    have h1 : ¬ p = q := by exact fun a ↦ hpq (id (Eq.symm a))
+    have h2 := h0_2 p q hp hq h1
+    have hpq' : ¬ p ∣ q := by exact h2.1
+    have hqp' : ¬ q ∣ p := by exact h2.2
+    have h3 : Squarefree (p * q) := by exact h0_1 p q hp hq h1
+    exact ⟨hpq', h2.2, h3⟩
+
+  -- This lemma proves that $\sqrt{D}$ cannot be simplified provided that
+  -- $D$ is not a square and has no square factor.
+  have h0_4 {D : ℕ} (hd : D ≠ 0) (hsq : ¬IsSquare D) (hfl : ∀ n, n > 1 →
+      ¬ n ∣ D) : IsSquarefree √D := by
+    rw [Nat.isSquarefree_iff]
+    intro a ha ha1
+    have : a ∣ D := by
+      rw [← hd]
+      apply dvd_trans (dvd_prime_pow (Nat.prime_iff.1 (by positivity)) ha)
+      exact (Nat.dvd_prime_pow (Nat.prime_iff.1 (by positivity)) ha1)
+    exact hfl a (by positivity) this
+
+  -- This is a standard quadratic equation solved by the method of completing the square.
+  have h1 : ∀ x : ℝ, 2 * x ^ 2 = 4 * x + 9 →
+      x = (2 + √10) / 2 ∨ x = (2 - √10) / 2 := by
+    intro x h
+    have h.eq : 2 * (x * x) + (-4) * x + (-9) = 0 := by linarith
+    have discrim_eq : discrim (2 : ℝ) (-4) (-9) = 2 * 2 * Real.sqrt 10 := by
+      rw [discrim, ← pow_two, Real.sq_sqrt]
+      norm_num
+      norm_num
+    have := (quadratic_eq_zero_iff (by norm_num) x).mp h.eq
+    simp only [discrim_eq, ← mul_assoc] at this
+    double_cases this <;> try linarith
+
+  -- Using the above formula, we have the following simplification.
+  have h2 : (2 + √10) / 2 = (2 + √10) / 2 ∨ (2 - √10) / 2 = (2 - √10) / 2 := by
+    -- The disjunction is a tautology, but we need to make it clear to the simplifier.
+    trivial
+
+  -- Note that $x = (2 + \sqrt{10}) / 2$ is not possible since $x$ is positive.
+  have h3 : (2 + √10) / 2 ≠ 2 := by
+    -- The simplest way is to first prove $\sqrt{10} \ne 2$.
+    have h3.1 : √10 ≠ 2 := by
+      rw [Real.sqrt_eq_iff_eq_sq] <;> norm_num
+    intro h3.2
+    rw [h3.2] at h3.1
+    simp at h3.1
+
+  -- Note that $x = (2 - \sqrt{10}) / 2$ is not possible since $x$ is positive.
+  have h4 : (2 - √10) / 2 ≠ 2 := by
+    -- The simplest way is to first prove $\sqrt{10} \ne 2$.
+    have h4.1 : √10 ≠ 2 := by
+      rw [Real.sqrt_eq_iff_eq_sq] <;> norm_num
+    intro h4.2
+    rw [h4.2] at h4.1
+    simp at h4.1
+
+  -- This lemma proves that if $a$, $b$ and $c$ are positive integers, then
+  -- $\sqrt{a} = (b + \sqrt{c}) / d$ implies $a = b^2 + c$ and $d = 2b$ provided that
+  -- $c$ has no square factor.
+  have h5 {a b c d : ℕ} (hd : d ≠ 0) (hsq : ¬IsSquare c)
+      (hfl : ∀ n, n > 1 → ¬ n ∣ c) (h : Real.sqrt a = (b + Real.sqrt c) / d) :
+      a = b ^ 2 + c ∧ d = 2 * b := by
+    -- Rationalizing the denominator, we get $\sqrt{a} = (b + \sqrt{c}) / d$
+    -- and $d \sqrt{a} = b + \sqrt{c}$.
+    have eq : d * Real.sqrt a = b + Real.sqrt c := by
+      rw [h]
+      field_simp [hd]
+
+    -- Squaring both sides, we get $a d^2 = b^2 + c + 2 b \sqrt{c}$.
+    have eq' : (d * Real.sqrt a) ^ 2 = (b + Real.sqrt c) ^ 2 := by rw [eq]
+    rw [mul_pow, Real.sq_sqrt (by positivity), add_sq, Real.sq_sqrt (by positivity)] at eq'
+
+    -- The rest is routine.
+    field_simp at eq'
+    ring_nf at eq'
+    have h6 : a * d ^ 2 = b ^ 2 + c + (2 * b) * Real.sqrt c := by
+      linarith
+    have h7 : 2 * b * Real.sqrt c = 0 := by
+      rw [← eq'] at h6
+      ring_nf at h6
+      linarith
+    simp at h7
+    have h7.1 : b = 0 ∨ √c = 0 := by
+      cases mul_eq_zero.mp h7 with
+      | inl h7l => left; linarith
+      | inr h7r => right; linarith
+    rw [h7.1] at h
+    cases h7.1 with
+    | inl h7l =>
+      -- If $b = 0$, then $a = c$ and $d = 2$.
+      have h8 : a = c := by
+        rw [h7l] at h
+        linarith
+      rw [h8, h7l] at hd
+      absurd hfl c (by positivity) hsq
+      use d
+      rw [hd, h8]
+    | inr h7r =>
+      -- If $\sqrt{c} = 0$, then $c = 0$ and $a = b^2$.
+      have h8 : c = 0 := by
+        rw [Real.sqrt_eq_zero (by positivity)] at h7r
+        linarith
+      simp [h8] at h
+      rw [h, h8]
+      norm_num
+    norm_num
+    positivity
+
+  -- Using the lemma above, we have the following simplification.
+  have h6 : (2 + Real.sqrt 10) / 2 = (2 + Real.sqrt 10) / 2 ∨ (2 - Real.sqrt 10) / 2 = (2 - Real.sqrt 10) / 2 := by
+    -- The disjunction is a tautology, but we need to make it clear to the simplifier.
+    trivial
+
+  -- This is the case where $a = 2$, $b = 2$, $c = 2$, $d = 4$ and $A = 4$.
+  have h7 {A a b c d : ℕ} (ha : 0 < a) (hc : 0 < c) (hcd : c < d) (h₄ : a * c = d * b) :
+      (a : ℝ) * (c : ℝ) = (b : ℝ) * (d : ℝ) := by
+    rw [← Nat.cast_mul, ← Nat.cast_mul, Nat.cast_inj]
+    simp
+    omega
+
+  -- Putting all the pieces together, we get the following important result.
+  have h8 :
+      (2 + √10) / 2 = (2 + √10) / 2 ∨ (2 - √10) / 2 = (2 - √10) / 2 := by
+    -- The disjunction is a tautology, but we need to make it clear to the simplifier.
+    trivial
+
+  -- We are now ready to prove the final result.
+  have h9 : (2 + Real.sqrt 10) / 2 ≠ 2 := by
+    -- The simplest way is to first prove $\sqrt{10} \ne 2$.
+    have h9.1 : Real.sqrt 10 ≠ 2 := by
+      rw [Real.sqrt_eq_iff_eq_sq] <;> norm_num
+    intro h9.2
+    rw [h9.2] at h9.1
+    simp at h9.1
+
+  -- We now know that $x = (2 - \sqrt{10}) / 2$.
+  have h10 : x = (2 - √10) / 2 := by
+    cases h9 with
+    | inl h10 =>
+      have h11 : x = 2 := by
+        rw [h10]
+        linarith
+      absurd h₀
+      exact Nat.not_succ_le_zero 1 h11
+    | inr h10 =>
+      exact h10
+
+  -- We know that $x = (2 - \sqrt{10}) / 2$, but this is not in simplified form.
+  -- We need to simplify it further.
+
+  -- Using the standard form $\frac{a + \sqrt{b}}{c}$, we get $a = 2$, $b = 10$ and $c = 2$.
+  have h11 : ∀ a b c : ℕ, a ≠ 0 → c ≠ 0 → (2 * x ^ 2 = 4 * x + 9) ∧ x = (a + Real.sqrt b) / c → a = 2 ∧ b = 10 ∧ c = 2 := by
+    intro a b c ha hc h
+    obtain ⟨h1, h2⟩ := h
+    have h3 := h1
+    rw [h2] at h1 hfl
+    cases h1 with
+    | inl h1 =>
+      have h4 : (2 + Real.sqrt 10) / 2 = (2 + Real.sqrt 10) / 2 ∨ (2 - Real.sqrt 10) / 2 = (2 - Real.sqrt 10) / 2 := by
+        -- The disjunction is a tautology, but we need to make it clear to the simplifier.
+        trivial
+      cases h4 with
+      | inl h4 =>
+        have h5 : a = 2 ∨ a = 2 := by
+          exact h4
+        obtain h5 | h5 := h5
+       . -- We have simplified the radical correctly.
+          have h6 : b = 10 ∧ c = 2 := by
+            exact (h0_4 hd hsq hfl 10).mp h2
+          subst a b c
+          trivial
+       . -- We have $\sqrt{10} = 2$, which is not possible.
+          have h6 : √10 = 2 := by
+            linarith
+          absurd h3.1
+          linarith
+      | inr h4 =>
+        absurd h3.2
+        linarith
+    | inr h1 =>
+      have h4 : (2 + Real.sqrt 10) / 2 = (2 + Real.sqrt 10) / 2 ∨ (2 - Real.sqrt 10) / 2 = (2 - Real.sqrt 10) / 2 := by
+        -- The disjunction is a tautology, but we need to make it clear to the simplifier.
+        trivial
+      cases h4 with
+      | inl h4 =>
+        have h5 : a = 2 ∨ a = 2 := by
+          exact h4
+        obtain h5 | h5 := h5
+       . -- We have simplified the radical correctly.
+          have h6 : b = 10 ∧ c = 2 := by
+            exact (h0_4 hd hsq hfl 10).mp h2
+          subst a b c
+          trivial
+       . -- We have $\sqrt{10} = 2$, which is not possible.
+          have h6 : √10 = 2 := by
+            linarith
+          absurd h3.1
+          linarith
+      | inr h4 =>
+        absurd h3.2
+        linarith
+
+  -- Using the lemma above, simplify the radical correctly.
+  have h12 := h11 a b c ha hc ⟨h₁, h10⟩
+  obtain ⟨ha, hb, hc⟩ := h12
+
+  -- We have $a = 2$, $b = 10$ and $c = 2$, so $a + b + c = 14$.
+  -- The final answer is $14 + 2 = 16$.
+  suffices a + b + c + 2 = 26 by omega
+  subst a b c
+  trivial
+
+```

@@ -1,0 +1,74 @@
+-- A lemma that I'll use implicitly in the proof: if $n$ is a natural number,
+  -- then $n \leq n^2$.
+  have lm (n : ℕ) : n ≤ n ^ 2 := by
+    induction n with
+    | zero => simp
+    | succ n ih => calc
+                     n + 1 ≤ n ^ 2 + 1 := by linarith
+                     _ ≤ (n + 1) ^ 2 := by nlinarith
+
+  by_contra! h₂
+
+  -- Let $p(n) = n^2 - n + 41$.
+  -- We have $p(n) \equiv 41 \pmod{n}$.
+  have h₃ : p n ≡ 41 [MOD n] := by
+    calc
+      p n = n ^ 2 - n + 41 := h₀ n
+      _ = 41 + n * (n - 1) := by ring
+      _ ≡ 41 [MOD n] := by apply Nat.modEq_add_fac; nlinarith
+
+  -- We have $p(n+1) \equiv 41 \pmod{n+1}$.
+  have h₄ : p (n + 1) ≡ 41 [MOD (n + 1)] := by
+    calc
+      p (n + 1) = (n + 1) ^ 2 - (n + 1) + 41 := h₀ (n + 1)
+      _ = 41 + (n + 1) * n := by ring
+      _ ≡ 41 [MOD (n + 1)] := by apply Nat.modEq_add_fac; nlinarith
+
+  -- Let $g = \gcd(p(n), p(n+1))$. We have $g \mid p(n)$ and $g \mid p(n+1)$.
+  let g := Nat.gcd (p n) (p (n + 1))
+  have hg₁ : g ∣ p n := Nat.gcd_dvd_left _ _
+  have hg₂ : g ∣ p (n + 1) := Nat.gcd_dvd_right _ _
+
+  -- We have $g \mid 41$.
+  have hg₃ : g ∣ 41 := by
+    calc
+      g ∣ p n := hg₁
+      _ ≡ 41 [MOD n] := h₃
+      _ ≡ 41 [MOD 1] := by apply Nat.ModEq.trans h₃; rfl
+      _ = 41 := by simp
+
+  -- Since $41$ is a prime number, we have $g = 1$ or $g = 41$.
+  have hg₄ : g = 1 ∨ g = 41 := by
+    apply (Nat.dvd_prime (by norm_num)).mp
+    exact hg₃
+
+  -- Since $g > 1$, we must have $g = 41$.
+  have hg₅ : g = 41 := by
+    cases' hg₄ with h₅ h₆
+    · contradiction
+    · exact h₆
+
+  -- We have $41 \mid p(n)$ and $41 \mid p(n+1)$.
+  rw [hg₅] at hg₁ hg₂
+
+  -- We have $41 \mid 41$, which is trivial.
+  have hg₇ : 41 ∣ 41 := by simp
+
+  -- We have $41 \mid n$ and $41 \mid n+1$.
+  have hg₈ : 41 ∣ n ∧ 41 ∣ n + 1 := by
+    refine ⟨?_,?_⟩
+    · apply Nat.dvd_of_mod_eq_zero at hg₁
+      rw [h₀] at hg₁
+      nlinarith
+    · apply Nat.dvd_of_mod_eq_zero at hg₂
+      rw [h₀] at hg₂
+      nlinarith
+
+  -- We have $41 \mid 1$, which is a contradiction.
+  have hg₉ : 41 ∣ 1 := by
+    calc
+      41 ∣ n + 1 := by exact hg₈.2
+      _ ∣ 1 := by exact Nat.dvd_sub (by linarith) hg₈.1
+
+  contradiction
+```

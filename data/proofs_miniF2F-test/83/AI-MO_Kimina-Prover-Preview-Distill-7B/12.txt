@@ -1,0 +1,230 @@
+-- the sequence is defined by $a_1 = 1$, $a_2 = 3/2$, and $a_{n+1} = a_n * (1 + 1/2^{n+1})$.
+  -- We will prove that $a_n < 5/2$ for all $n \ge 1$.
+  have : 5 / 2 = ∏ i in Finset.Icc 1 1, (1 : ℝ) + 1 / 2 ^ i := by norm_num
+
+  have p1 : 0 < n := h₀
+
+  have p2 : 1 + (1 : ℝ) / 2 ^ n < 5 / 2 := by
+
+    have : 1 / 2 ^ n ≤ 1 / 2 := by
+
+      have : 2 ^ n ≥ 2 := by
+
+        have : 1 < (2 : ℝ) ^ n := by
+
+          apply one_lt_pow₀
+
+          norm_num
+
+          exact Nat.zero_lt_of_lt h₀
+
+        linarith
+
+      have : 0 < (2 : ℝ) ^ n := by positivity
+
+      apply (div_le_div_iff_of_pos_right this).mpr
+
+      have : (2 : ℝ) ^ n * 2 = 2 ^ (n + 1) := by
+
+        rw [Nat.two_pow_succ n]
+
+        ring
+
+      rw [this]
+
+      apply one_lt_pow₀
+
+      norm_num
+
+      exact Nat.zero_lt_of_lt h₀
+
+    have : (1 : ℝ) / 2 ^ n ≤ (1 : ℝ) / 2 ^ 1 := by
+
+      apply div_le_div_of_nonneg_left
+
+      · exact Nat.one_le_two_pow
+
+      · exact this
+
+      · exact Nat.one_le_two_pow
+
+    have : (1 : ℝ) / 2 ^ n ≤ 1 / 2 := by linarith
+
+   -- Apply the lemma `one_add_lt_iff_lt_sub` to get $1 - 1 / 2 ^ n > 1 - 1 / 2$.
+    have : 1 - (1 : ℝ) / 2 ^ n > 1 - 1 / 2 := by linarith
+
+    apply lt_of_le_of_lt
+
+    -- Simplify $1 - 1 / 2 ^ n > 1 - 1 / 2$ to $(1 + 1 / 2 ^ n) < 5 / 2$.
+    · rw [←one_add_div_pow_lt]
+
+      linarith
+
+    -- Finish the proof of $(1 + 1 / 2 ^ n) < 5 / 2$.
+    · linarith
+
+  have p3 : (∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k) < (∏ k in Finset.Icc 1 n, (1 : ℝ) + 1 / 2 ^ k) := by
+
+    -- The goal is to show that $1 + (1/2)^n < \prod_{k=1}^n (1 + (1/2)^k)$.
+    apply Finset.prod_lt_prod_of_nonempty
+
+    -- We need to show that $\forall k \in [1, n]$, $1 + (1/2)^n \le 1 + (1/2)^k$.
+    · intro k hk
+
+      -- We have $k \le n$, so $(1/2)^k \le (1/2)^1$.
+      have : (1 / 2 : ℝ) ^ k ≤ (1 / 2 : ℝ) ^ 1 := by
+
+        apply div_le_div_of_nonneg_left
+
+        · exact Nat.one_le_two_pow
+
+        · exact Nat.one_le_two_pow
+
+        · apply Nat.one_le_pow
+
+          exact Nat.zero_lt_of_lt h₀
+
+      -- This means $(1/2)^k \le 1/2$.
+      have : (1 / 2 : ℝ) ^ k ≤ (1 / 2 : ℝ) := by linarith
+
+      -- We have $1 + (1/2)^k \le 1 + (1/2)$.
+      apply add_le_add_left
+
+      -- The goal is to show that $1 + (1/2)^n \le 1 + (1/2)$.
+      trans 1 / 2 ^ n
+
+      -- The goal is to show that $(1/2)^n \ge (1/2)^k$.
+      · change (1 / 2 : ℝ) ^ n ≥ (1 / 2 : ℝ) ^ k
+
+        -- This is proved by induction on $k$.
+        induction' k, hk.1 using Nat.le_induction with k hk' ih
+
+        -- The base case is proved by simp.
+        · simp
+
+        -- For the induction step, we need to show that $(1/2)^{k+1} \le (1/2)^k$.
+        -- This is true because $(1/2)^{k+1} = (1/2)^k \cdot (1/2)$.
+        -- So $(1/2)^{k+1} \le (1/2)^k$.
+        · rw [pow_succ]
+
+          apply mul_le_mul_of_nonneg_left
+
+          · exact ih
+
+          · norm_num
+
+          · exact one_div_nonneg.mpr
+
+          · positivity
+
+      -- The goal is to show that $1 + (1/2)^n \ge 1$.
+      · change 0 ≤ (1 / 2 : ℝ) ^ n
+
+        -- This is true because $(1/2)^n \ge 0$.
+        positivity
+
+    -- The goal is to show that $[1, n] \ne \emptyset$.
+    · change (Finset.Icc 1 n).Nonempty
+
+      -- This is true because $1 \in [1, n]$.
+      use 1
+
+      simp
+
+      one_le_of_lt h₀
+
+    -- The final part of the induction is to show that $(1 + (1/2)^n) < \prod_{k=1}^n (1 + (1/2)^k)$.
+    -- We will use the induction hypothesis for this.
+    · induction' n, h₀ using Nat.le_induction with n hn ih
+
+      -- The base case is proved by simp.
+      · simp
+
+      -- For the induction step, we need to show that $(1 + (1/2)^{n+1}) < \prod_{k=1}^{n+1} (1 + (1/2)^k)$.
+      -- The induction hypothesis says that $(1 + (1/2)^n) < \prod_{k=1}^n (1 + (1/2)^k)$.
+      -- So we need to show that $(1 + (1/2)^{n+1}) < \prod_{k=1}^n (1 + (1/2)^k) \cdot (1 + (1/2)^{n+1})$.
+      -- This is true because $(1 + (1/2)^{n+1}) < \prod_{k=1}^n (1 + (1/2)^k) \cdot (1 + (1/2)^{n+1})$.
+      · rw [Finset.prod_Icc_succ_top (Nat.le_add_left 1 n)]
+
+        nth_rw 1 [this]
+
+        rw [←one_add_div_pow_lt, add_mul]
+
+        have : (1 : ℝ) / 2 ^ (n + 1) < (1 : ℝ) / 2 ^ n := by
+
+          apply div_lt_div_of_pos_right
+
+          · exact Nat.two_pow_lt_two_pow_iff.mp hn
+
+          · exact Nat.one_le_two_pow
+
+        have : 1 + (1 : ℝ) / 2 ^ (n + 1) < (1 + (1 : ℝ) / 2 ^ n) * (1 + (1 : ℝ) / 2 ^ (n + 1)) := by
+
+          apply lt_of_le_of_lt
+
+          · simp
+
+            -- The goal is to show that $1 - (1/2)^{n+1} \le 1 - (1/2)^n$.
+            apply one_sub_div_le_one_sub_div_of_le
+
+            -- The goal is to show that $(1/2)^{n+1} \ge (1/2)^n$.
+            · apply div_le_div_of_nonneg_left
+
+              · exact Nat.one_le_two_pow
+
+              · exact Nat.one_le_two_pow
+
+              · exact Nat.one_le_pow (n + 1) (Nat.zero_lt_of_lt h₀)
+
+            -- The final part of the induction is to show that $(1/2)^{n+1} < (1/2)^n$.
+            · exact this
+
+          · apply one_lt_mul_of_one_lt_of_one_lt
+
+            -- The goal is to show that $1 < (1/2)^n + (1/2)^{n+1}$.
+            · apply lt_add_of_le_of_pos
+
+              · simp
+
+                -- The goal is to show that $1/2 - 1/2^{n+1} > 0$.
+                apply sub_pos.mpr
+
+                -- The goal is to show that $1/2 > 1/2^{n+1}$.
+                apply one_lt_div_pow₀
+
+                norm_num
+
+                exact Nat.zero_lt_of_lt h₀
+
+              · positivity
+
+            -- The goal is to show that $1 < (1/2)^n + (1/2)^{n+1}$.
+            · apply lt_add_of_le_of_pos
+
+              · simp
+
+                -- The goal is to show that $1/2 - 1/2^n > 0$.
+                apply sub_pos.mpr
+
+                -- The goal is to show that $1/2 > 1/2^n$.
+                apply one_lt_div_pow₀
+
+                norm_num
+
+                exact Nat.zero_lt_of_lt h₀
+
+              · positivity
+
+        nth_rw 2 [←mul_one (1 + (1 : ℝ) / 2 ^ n)]
+
+        apply lt_of_le_of_lt
+
+        -- The first part of the induction is to show that $\prod_{k=1}^n (1 + (1/2)^k) \le \prod_{k=1}^n (1 + (1/2)^k)$.
+        · exact Finset.prod_le_prod_of_nonneg_right ih (fun _ _ => Nat.zero_le _)
+
+        -- The second part of the induction is to show that $(1 + (1/2)^{n+1}) \le (1 + (1/2)^{n+1})$.
+        · exact le_of_lt (this)
+
+  linarith
+
+```

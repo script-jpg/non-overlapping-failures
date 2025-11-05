@@ -1,0 +1,83 @@
+-- First, we define the set S as the set of integers x such that |x| < 3π.
+  have h₀' : S = { x : ℤ | ↑(abs x) < 3 * Real.pi } := by
+    ext x
+    simp [h₀]
+
+  -- We turn the set S into a finset to be able to talk about its cardinality.
+  have h₁ : S.toFinset = Finset.Icc (-19) 19 := by
+    simp only [h₀', Finset.coe_set_eq, Set.toFinset_coe]
+    ext x
+    simp only [Finset.mem_Icc, Nat.ofNat_pos, abs_lt, (by simp : 3 * Real.pi > 0)]
+
+    -- We want to show that |x| < 3π if and only if -19 ≤ x ≤ 19.
+    -- To that end, we rewrite the inequality |x| < 3π to -3π < x < 3π.
+    constructor
+    · -- If |x| < 3π, then -3π < x < 3π.
+      intro h
+      -- We know that -3π < x.
+      have h₁ : -3 * Real.pi < x := by
+        have : -3 * Real.pi < 0 := by
+          simp only [neg_mul, zero_mul]
+          linarith [Real.pi_pos]
+        linarith
+
+      -- We also know that x < 3π.
+      have h₂ : x < 3 * Real.pi := by
+        linarith [abs_lt.mp h]
+
+      -- Therefore, we can rewrite both inequalities to -19 < x < 19.
+      -- Because π > 3.14, 3π > 9.42, so 3π < 10.
+      -- Therefore, x < 10.
+      -- Similarly, -10 < x.
+      have h₃ : x < 10 := by
+        have : 3 * Real.pi < 10 := by
+          have h₃ : Real.pi < 3.15 := Real.pi_lt_315
+          norm_num at h₃
+          linarith
+        linarith
+      have h₄ : -10 < x := by
+        have : -10 < -3 * Real.pi := by
+          have h₃ : Real.pi < 3.15 := Real.pi_lt_315
+          norm_num at h₃
+          linarith
+        linarith
+
+      -- Noting that x is an integer, we get -19 ≤ x ≤ 19.
+      suffices x ≤ 19 ∧ -19 ≤ x by
+        constructor <;> linarith
+      exact ⟨by linarith, by linarith⟩
+
+    · -- If -19 ≤ x ≤ 19, then |x| < 3π.
+      intro h
+      -- We know that x < 3π.
+      have h₂ : x < 3 * Real.pi := by
+        have : 19 < 3 * Real.pi := by
+          have h₃ : Real.pi > 3.14 := Real.pi_gt_314
+          norm_num at h₃
+          linarith
+        linarith
+
+      -- We also know that -3π < x.
+      have h₁ : -3 * Real.pi < x := by
+        have : -3 * Real.pi < -19 := by
+          have h₃ : Real.pi > 3.14 := Real.pi_gt_314
+          norm_num at h₃
+          linarith
+        linarith
+
+      -- Therefore, we can rewrite both inequalities to |x| < 3π.
+      exact abs_lt.mpr ⟨h₁, h₂⟩
+
+  -- Now, we can show that the cardinality of S is 19.
+  -- Because S = {-19, -18,..., 18, 19}, S has 19 elements.
+  have h₂ : (S.toFinset : Finset ℤ) = Finset.Icc (-19) 19 := h₁
+  have h₃ : (S.toFinset : Finset ℤ) = Finset.range 39 := by
+    rw [h₂]
+    rw [Finset.Icc_eq_finset_range']
+    rfl
+
+  -- Because S = {-19, -18,..., 18, 19}, S has 19 elements.
+  rw [h₃]
+  rw [Finset.card_range]
+  rfl
+```

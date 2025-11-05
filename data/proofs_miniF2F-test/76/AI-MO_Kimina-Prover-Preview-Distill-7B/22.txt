@@ -1,0 +1,74 @@
+-- Let $S$ be the set of positive integers $n$ that satisfy the given equation.
+  -- We want to show that $S$ has exactly 6 elements.
+
+  have h₁ : S = {196, 252, 280, 304, 324, 342} := by
+    -- We claim that the set of solutions is exactly these 6 numbers.
+    ext n
+    simp [h₀]
+    constructor
+    · -- Suppose $n$ is a positive integer that satisfies the equation.
+      intro ⟨h₁, h₂⟩
+      have h₃ : 196 ≤ n := by
+        -- We will show that $n \geq 196$.
+        by_contra! h₃
+        -- For a contradiction, assume $n < 196$.
+        -- Then $\lfloor \sqrt{n} \rfloor \leq \lfloor \sqrt{195} \rfloor = 13$.
+        have : Int.floor (Real.sqrt n) ≤ 13 := by
+          apply Int.floor_le.mpr
+          simp
+          rw [Real.sqrt_le_iff]
+          norm_num
+          norm_cast
+        -- So $\dfrac{n+1000}{70} \leq 13$, which means $n \leq 350$.
+        have : (↑n + (1000 : ℝ)) / 70 ≤ 13 := by
+          linarith only [this, h₂]
+        norm_cast at this
+        -- But then $n > 0$ and $n \leq 350$, so $n < 196$.
+        omega
+      -- Now, we do a case analysis on whether $n < 400$.
+      by_cases h₄ : n < 400
+
+      · -- If $n < 400$, then $\lfloor \sqrt{n} \rfloor \leq \lfloor \sqrt{399} \rfloor = 19$.
+        have : Int.floor (Real.sqrt n) ≤ 19 := by
+          apply Int.floor_le.mpr
+          simp
+          rw [Real.sqrt_le_iff]
+          norm_num
+          norm_cast
+        -- So $\dfrac{n+1000}{70} \leq 19$, which means $n \leq 324$.
+        have : (↑n + (1000 : ℝ)) / 70 ≤ 19 := by
+          linarith only [this, h₂]
+        norm_cast at this
+        -- We can now do a case analysis on $n$.
+        interval_cases n <;> norm_num at h₂ <;> tauto
+
+      · -- If $n \geq 400$, then $\lfloor \sqrt{n} \rfloor \geq \lfloor \sqrt{400} \rfloor = 20$.
+        have : 20 ≤ Int.floor (Real.sqrt n) := by
+          apply Int.le_floor.mpr
+          simp
+          rw [Real.le_sqrt]
+          norm_num
+          norm_cast
+        -- So $\dfrac{n+1000}{70} \geq 20$, which means $n \geq 490$.
+        have : (↑n + (1000 : ℝ)) / 70 ≥ 20 := by
+          linarith only [this, h₂]
+        norm_cast at this
+        -- We can now do a case analysis on $n$.
+        interval_cases n <;> norm_num at h₂ <;> tauto
+
+    · -- Now, we verify that the 6 numbers do satisfy the equation.
+      rintro (rfl | rfl | rfl | rfl | rfl | rfl)
+      all_goals
+        constructor
+        · norm_num
+        · norm_num
+        · rw [Real.sqrt_eq_iff_eq_sq]
+          norm_num
+        · rw [Real.sqrt_eq_iff_eq_sq]
+          norm_num
+
+  -- Now that we have determined that $S = \{196, 252, 280, 304, 324, 342\}$, we can conclude that the cardinality of $S$ is 6.
+  rw [h₁]
+  norm_num
+
+```

@@ -1,0 +1,117 @@
+have h₆ (n : ℕ) : n < 2 ^ k → n = 0 ∨ n = 1 ∨ n = 2 ∨ 3 ≤ n ∧ n < 2 ^ k := by
+    induction' k with k ih
+    · intro h
+      interval_cases n
+      · rfl
+      · rfl
+      · exfalso
+        exact Nat.lt_one_iff.mp h
+    · intro h
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        intro h
+        rcases ih with ih | ih | ih | ih
+        · exfalso
+          exact Nat.lt_one_iff.mp h
+        · exfalso
+          exact Nat.lt_one_iff.mp h
+        · rw [Nat.succ_one, ih]
+          exact Nat.lt_two_pow_iff.mp h
+        · exact ih
+          exact Nat.lt_two_pow_iff.mp h
+
+  -- Prove that $d<2 ^ k$
+  have hd : d < 2 ^ k := by
+    -- From $b+c=2 ^ m$ and $b<c$, we get $2 ^ m > 2 ^ c$
+    have h₇ : 2 ^ m > 2 ^ c := by
+      have : 2 ^ m = b + c := by rw [←h₅]
+      rw [this]
+      refine Nat.lt_add_right_of_lt (lt_of_lt_of_le (Nat.pow_lt_pow_right two_pos) (by linarith)) b
+    -- From $a+d=2 ^ k$ and $a < d$, we get $2 ^ k > 2 ^ a$
+    have h₈ : 2 ^ k > 2 ^ a := by
+      have : 2 ^ k = a + d := by rw [←h₄]
+      rw [this]
+      refine Nat.lt_add_right_of_lt (lt_of_lt_of_le (Nat.pow_lt_pow_right two_pos) (by linarith)) a
+    -- Since $2 ^ k > 2 ^ a$ and $2 ^ m > 2 ^ c$, we get $a < d$
+    have h₉ : a < d := Nat.pow_lt_pow_iff_right two_pos |>.mp (by linarith)
+    linarith
+
+  -- Check all possible values of $d$
+  rcases h₆ d hd with hd | hd | hd | hd
+  · rw [hd] at h₄
+    -- If $d=0$, then $a = 2 ^ k$
+    have h₁₀ : a = 2 ^ k := by omega
+    -- Since $a < b < c < d = 0$, we get $a < 0$
+    have h₁₁ : a < 0 := by
+      trans b
+      · linarith
+      · linarith
+    -- Since $a < 0$ and $a = 2 ^ k$, we get $2 ^ k < 0$
+    rw [h₁₀] at h₁₁
+    exact Nat.not_lt_zero (Nat.pow_pos two_pos) h₁₁
+  · rw [hd] at h₄
+    -- If $d=1$, then $a = 2 ^ k - 1$
+    have h₁₂ : a = 2 ^ k - 1 := by omega
+    -- Since $a < b < c < d = 1$, we get $a < 1$
+    have h₁₃ : a < 1 := by
+      trans b
+      · linarith
+      · linarith
+    -- Since $a < 1$ and $a = 2 ^ k - 1$, we get $2 ^ k < 2$
+    rw [h₁₂] at h₁₃
+    simp at h₁₃
+    -- Since $2 ^ k$ is a positive power of $2$, we get $k = 1$
+    have hk : k = 1 := by
+      have h₈ : 0 < 2 ^ k := Nat.pow_pos two_pos
+      omega
+    -- Since $k = 1$, $a = 2 ^ 1 - 1 = 1$
+    subst k
+    omega
+  · rw [hd] at h₄
+    -- If $d=2$, then $a = 2 ^ k - 2$
+    have h₁₄ : a = 2 ^ k - 2 := by omega
+    -- Since $a < b < c < d = 2$, we get $a < 2$
+    have h₁₅ : a < 2 := by
+      trans b
+      · linarith
+      · linarith
+    -- Since $a < 2$ and $a = 2 ^ k - 2$, we get $2 ^ k < 4$
+    rw [h₁₄] at h₁₅
+    simp at h₁₅
+    -- Since $2 ^ k$ is a positive power of $2$, we get $k = 1 ∨ k = 2$
+    have hk : k = 1 ∨ k = 2 := by
+      have h₈ : 0 < 2 ^ k := Nat.pow_pos two_pos
+      by_cases h₉ : k < 2
+      · interval_cases k <;> omega
+      · push_neg at h₉
+        rw [Nat.pow_add one_mul two] at h₉
+        have : 2 ^ k ≤ 2 ^ 2 := Nat.pow_le_pow_right two_pos h₉
+        have : 2 ^ k < 2 ^ 2 := Nat.lt_of_le_of_lt this (by linarith)
+        have : k < 2 := Nat.pow_lt_pow_iff_right two_pos |>.mp this
+        interval_cases k <;> omega
+    rcases hk with hk | hk
+    · -- If $k = 1$, then $a = 2 ^ 1 - 2 = 0$, contradicting $a > 0$
+      subst k
+      omega
+    · -- If $k = 2$, then $a = 2 ^ 2 - 2 = 2$, contradicting $a < b < c < d = 2$
+      subst k
+      omega
+  · -- If $d ≥ 3$, then $a < d$ and $d$ is odd, so $a$ is even, contradicting $a$ is odd
+    have h₁₆ : Odd a := Nat.odd_iff.mpr (Odd.natAbs (by simpa using h₁))
+    have h₁₇ : Even (d - a) := Nat.even_sub.mpr (lt_trans (by omega) hd)
+    have h₁₈ : Even (d - a) := by
+      trans a
+      · rw [Nat.even_sub]
+        · exact Nat.odd_iff.mpr (by simpa using h₁₆)
+        · linarith
+      · exact Nat.even_iff.mpr (by omega)
+    rw [Nat.even_sub] at h₁₈
+    have h₁₉ : Odd (d - a) := by
+      rw [Nat.odd_sub]
+      · exact Nat.even_iff.mpr (by omega)
+      · exact Nat.odd_iff.mpr (by simpa using h₁₇)
+      · linarith
+    exfalso
+    exact Nat.not_odd_even h₁₈ h₁₉
+```

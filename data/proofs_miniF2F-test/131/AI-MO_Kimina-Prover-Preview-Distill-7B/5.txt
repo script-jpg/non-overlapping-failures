@@ -1,0 +1,71 @@
+-- The function $f$ is multiplicative: $f(x\cdot y) = f(x) + f(y)$.
+  -- $f$ maps prime numbers to themselves.
+  -- We need to show that $f\left(\frac{25}{11}\right) < 0$.
+
+  -- First, we show that $f(1) = 0$.
+  have hF1 : f 1 = 0 := by
+    specialize h₀ 1 (by norm_num) 1 (by norm_num)
+    simp at h₀
+    exact h₀
+
+  -- We show that $f(x) = -f(1/x)$ for all positive $x$.
+  have hF_inv : ∀ x > 0, f x = -f (1 / x) := by
+    intro x hx
+    specialize h₀ x hx (1 / x) (by positivity)
+    simp [hF1] at h₀
+    exact h₀
+
+  -- We show that $f$ is order-preserving: if $0 < x < y$ then $f(x) < f(y)$.
+  have hF_mono : MonotoneOn f (Set.Ioi 0) := by
+    intro x hx y hy hxy
+    simp at hx hy
+    have h₀ : ∀ z > 0, f z = f x + f (z / x) := by
+      intro z hz
+      specialize h₀ x hx z hz
+      rw [mul_comm]
+      exact h₀
+    specialize h₀ y hxy
+    rw [h₀]
+    have h₁ : f (y / x) > 0 := by
+      specialize h₁ (y / x) (by positivity)
+      rw [div_self] at h₁
+      exact h₁
+      exact hx.le hy
+    linarith
+
+  -- We show that $f(x) > 0$ for infinitely many $x$.
+  have hF_infinite : ∀ n : ℕ, ∃ x > 0, f x > n := by
+    intro n
+    specialize h₁ (n + 2) (Nat.prime_two_le (n + 2))
+    have h₂ : (n : ℝ) < (n + 2) := by linarith
+    specialize hF_mono (by positivity) (by positivity) h₂
+    have h₃ : f 2 > 0 := by
+      specialize h₁ 2 (Nat.prime_two)
+      rw [h₁]
+      norm_num
+    have h₄ : f 2 + f ((n + 2) / 2) > 0 := by
+      linarith
+    have h₅ : f ((n + 2) / 2) > -f 2 := by
+      linarith
+    have h₆ : (n : ℝ) < f ((n + 2) / 2) := by
+      linarith
+    use (n + 2) / 2
+    positivity
+    linarith
+
+  -- We show that $f(x) > 0$ for all $x > 0$.
+  have hF_pos : ∀ x > 0, f x > 0 := by
+    intro x hx
+    specialize hF_infinite (Nat.floor x)
+    rcases hF_infinite with ⟨y, hy, hfy⟩
+    have hyx : y / x > 0 := by positivity
+    specialize hF_mono (by positivity) (by positivity) hyx
+    linarith
+
+  -- Now we show that $f\left(\frac{25}{11}\right) < 0$.
+  have h : 11 * (25 / 11) = 25 := by ring
+  specialize h₀ 11 (by norm_num) (25 / 11) (by positivity)
+  rw [h] at h₀
+  specialize hF_pos (25 / 11) (by positivity)
+  linarith
+```

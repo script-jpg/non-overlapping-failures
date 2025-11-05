@@ -1,0 +1,123 @@
+-- AB is a two-digit number, so $1 \leq A \leq 9$ and $0 \leq B \leq 9$.
+  rcases h₀ with ⟨h₀₁, h₀₂, h₀₃⟩
+
+  -- $100 \leq AB^3 = 912,\!673$.
+  have h₂ : 100 ≤ (10 * a + b) ^ 3 := by
+    calc
+      100 = 100 * 1 := by norm_num
+      _   = 100 * ((10 * a + b) ^ 3 / 912673) := by rw [mul_div_cancel_of_dvd]; norm_num
+      _   = (10 * a + b) ^ 3 := by norm_num
+
+  -- So $10 \leq AB$.
+  have h₃ : 10 ≤ 10 * a + b := by
+    contrapose! h₂
+    calc
+      100 ≤ (10 * a + b) ^ 3 := h₂
+      _   < (10 * 10 + 9) ^ 3 := by gcongr; omega
+      _   = (10 * (a + 1) + 9) ^ 3 := by omega
+
+  -- $AB^3 = 912,\!673 = 10^3 \cdot 912 + 673$.
+  have h₄ : (10 * a + b) ^ 3 = 10^3 * 912 + 673 := by omega
+
+  -- So $(10 \cdot A + B)^3 \equiv 673 \pmod{10^3}$.
+  have h₅ : (10 * a + b) ^ 3 ≡ 673 [MOD 10^3] := by
+    rw [h₄]
+    apply Nat.modEq_add_fac_self
+
+  -- $0 \cdot B \equiv 673 \pmod{10^3}$.
+  have h₆ : 0 * b ≡ 673 [MOD 10^3] := by
+    rw [mul_zero]
+    exact h₅
+
+  -- $A \cdot 10^3 \equiv 0 \pmod{10^3}$.
+  have h₇ : a * 10^3 ≡ 0 [MOD 10^3] := by
+    apply Nat.modEq_zero_iff_dvd.mpr
+    apply Nat.dvd_mul_right
+
+  -- $A \cdot 10^3 + 0 \cdot B \equiv 673 \pmod{10^3}$.
+  have h₈ : a * 10^3 + 0 * b ≡ 673 [MOD 10^3] := by
+    apply Nat.ModEq.add h₇ h₆
+
+  -- $A \cdot 10^3 + B \cdot 10^3 \equiv 673 \pmod{10^3}$.
+  have h₉ : a * 10^3 + b * 10^3 ≡ 673 [MOD 10^3] := by
+    calc
+      a * 10^3 + b * 10^3 ≡ a * 10^3 + 0 * b [MOD 10^3] := by apply Nat.ModEq.add_left; apply Nat.ModEq.mul_right; norm_num
+      _   ≡ 673 [MOD 10^3] := h₈
+
+  -- $(A + B) \cdot 10^3 \equiv 673 \pmod{10^3}$.
+  have h₁₀ : (a + b) * 10^3 ≡ 673 [MOD 10^3] := by
+    rw [add_mul]
+    apply Nat.ModEq.trans h₉
+    apply Nat.ModEq.symm
+    apply Nat.modEq_of_dvd
+    omega
+
+  -- Therefore, $A + B \equiv 673 \cdot 10^{-3} \pmod{1}$.
+  have h₁₁ : (a + b) ≡ 673 * 10^(-3 : ℤ) [ZMOD 1] := by
+    rw [←Int.natCast_modEq_iff]
+    set m := 673 * 10^(-3 : ℤ)
+    rw [show (10 : ℤ) ^ 3 = 1000 by norm_num]
+    rw [show ((1 : ℤ) / 1000) = 10^(-3 : ℤ) by norm_num]
+    set d := (a + b : ℤ)
+    have hd : d % 1000 = m % 1000 := by
+      calc
+        d % 1000 = (d % 1000 : ℕ) := by rw [Nat.modEq_iff_dvd]; norm_num
+        _ = (m % 1000 : ℕ) := by rw [Int.natCast_modEq_iff]; exact h₁₀
+        _ = m % 1000 := by rw [Nat.modEq_iff_dvd]; norm_num
+    have hmod1 : d ≡ m [ZMOD 1000] := by
+      apply Int.modEq_of_dvd
+      apply Int.dvd_sub_of_emod_eq
+      rw [←Int.natCast_modEq_iff]
+      simp [d, m, hd]
+    apply Int.ModEq.trans hmod1
+    apply Int.ModEq.mul_right
+    rw [show (1 : ℤ) / 1000 = 10^(-3 : ℤ) by norm_num]
+  qify at h₁₁
+
+  -- $673 \cdot 10^{-3} = 0.673$.
+  have h₁₂ : (673 : ℚ) * (1 / 10^3) = 673 / 10^3 := by norm_num
+
+  -- So $A + B \equiv 0.673 \pmod{1}$.
+  rw [h₁₂] at h₁₁
+
+  -- This means that $A + B - 0.673$ is an integer.
+  have h₁₃ : (a + b) - 0.673 = ⌊(a + b) - 0.673⌋ := by
+    apply Int.floor_eq_iff.mpr
+    constructor
+    · apply le_of_eq
+      apply Int.floor_eq_intCast
+    · simp
+      apply Int.le_floor_add
+      simp
+
+  -- And because $10 \leq AB$, we know that $1 \leq A \leq 9$ and $0 \leq B \leq 9$, so $1 \leq A + B \leq 18$.
+  have h₁₄ : a + b ≥ 1 := by omega
+  have h₁₅ : a + b ≤ 18 := by omega
+
+  -- So $A + B - 0.673 \in [0, 1]$.
+  have h₁₆ : ⌊(a + b) - 0.673⌋ ≥ 0 := by omega
+  have h₁₇ : ⌊(a + b) - 0.673⌋ ≤ 1 := by omega
+
+  -- The only integer in this range is 0, 1, or 18.
+  have h₁₈ : ⌊(a + b) - 0.673⌋ = 0 ∨ ⌊(a + b) - 0.673⌋ = 1 := by omega
+
+  -- So $A + B = 0.673 + 0 = 0.673$ or $A + B = 0.673 + 1 = 1.673$.
+  rcases h₁₈ with (h₁₈ | h₁₈)
+  · rw [h₁₈, Int.floor_eq_iff] at h₁₁
+    have h₁₉ : (673 : ℚ) / 10 ^ 3 ≤ (a + b) := by
+      rw [←h₁₁]
+      apply le_of_eq
+      apply Int.floor_le
+    norm_num at h₁₉
+    have h₂₀ : a + b ≤ 9 := by omega
+    linarith
+  · rw [h₁₈, Int.floor_eq_iff] at h₁₁
+    have h₂₁ : (673 : ℚ) / 10 ^ 3 + 1 ≤ (a + b) := by
+      rw [←h₁₁]
+      apply le_of_eq
+      apply Int.floor_le
+    norm_num at h₂₁
+    have h₂₂ : a + b ≤ 9 := by omega
+    linarith
+
+```

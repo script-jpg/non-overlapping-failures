@@ -1,0 +1,253 @@
+-- We will use the intermediate value theorem, so let us define a function $f(x)=1-3\sin x+5\cos3x$.
+  let f (x : ℝ) := 1 - 3 * Real.sin x + 5 * Real.cos (3 * x)
+
+  -- Let $a$ be the number of values of $\theta$ in the interval $0<\theta\le 2\pi$ that satisfy $1-3\sin\theta+5\cos3\theta = 0$.
+  let a := S.card
+
+  -- We will show that $a=6$.
+  suffices a = 6 by dsimp [a]; assumption
+
+  -- We will show that there are at most 6 solutions.
+  have h₁ (x : ℝ) : f x = 0 → 0 ≤ x ∧ x < 2 * Real.pi → 0 < x ∧ x ≤ 2 * Real.pi := by
+    intro hx hx'
+    split_ands
+    · linarith only [hx'.left]
+    · linarith only [hx'.right]
+    · exact hx
+
+  -- Let $P$ be the set of all solutions in the interval $0\le\theta\le4\pi$ except for the solutions at the endpoints.
+  let P := {x ∈ S | 0 < x ∧ x < 2 * Real.pi}
+
+  -- Let $Q$ be the image of $P$ under the map $x\mapsto x+\frac12\pi$.
+  let Q := (Set.ofFn (fun x => x + Real.pi / 2)) P
+
+  -- Let $i$ be the inclusion map from $P$ to $\mathbb{R}$.
+  let i := Set.inclusion P
+
+  -- Let $f$ be the function $x\mapsto\cos x$.
+  let f := fun x => Real.cos x
+
+  -- On $Q$, the function $f$ takes values in the range $\left[-1,1\right]$.
+  have hQ (x : ℝ) (hx : x ∈ Q) : Real.cos x ∈ Set.Icc (-1) 1 := by
+    simp [Q, Set.mem_Icc] at hx
+    obtain ⟨a, ha, hxa⟩ := hx
+    simp [P, Set.mem_Iio] at ha
+    rw [←ha]
+    specialize h₁ (a + Real.pi / 2) (by simp [f]; rw [hxa]; exact hx)
+    exact h₁
+
+  -- The image of $P$ under $f$ is the same as the image of $Q$ under $f$.
+  have h_f_i (x : ℝ) (hx : x ∈ P) : f (i x) = f (x + Real.pi / 2) := by
+    simp [f, P] at hx
+    exact hx
+
+  -- The image of $Q$ under $f$ is the same as the image of $P$ under $f$.
+  have h_f_i_inv (x : ℝ) (hx : x ∈ Q) : f (x + Real.pi / 2) = f (i (x - Real.pi / 2)) := by
+    simp [f, Q] at hx
+    obtain ⟨a, ha, hxa⟩ := hx
+    simp [P, Set.mem_Iio] at ha
+    replace hxa : x = a + Real.pi / 2 := by linarith only [hxa]
+    suffices x - Real.pi / 2 ∈ P by
+      simp [hxa, this]
+    simp [P, Set.mem_Iio]
+    constructor
+    · linarith only [ha.left]
+    · linarith only [ha.right]
+
+  -- The number of values of $\theta$ in the interval $0<\theta\le4\pi$ that satisfy $1-3\sin\theta+5\cos3\theta = 0$ is $a=6$.
+  have hP : P.card = 6 := by
+    -- The number of values of $\theta$ in the interval $0<\theta\le2\pi$ that satisfy $1-3\sin\theta+5\cos3\theta = 0$ is the same as the number of values of $\theta$ in the interval $0<\theta+1/2\pi\le2\pi$ that satisfy $1-3\sin(\theta+1/2\pi)+5\cos(3(\theta+1/2\pi)) = 0$.
+    have h1 : P.card = (i '' Q).card := by
+      rw [Set.InjOn.card_image]
+      apply Set.InjOn.mono
+      intro x hx y hy hxy
+      simp [i] at hx hy
+      exact Subtype.eq hx.1 hy.1
+    -- The number of values of $\theta$ in the interval $0<\theta+1/2\pi\le2\pi$ that satisfy $1-3\sin(\theta+1/2\pi)+5\cos(3(\theta+1/2\pi)) = 0$ is the same as the number of values of $\theta$ in the interval $0<\theta\le2\pi$ that satisfy $1-3\sin\theta+5\cos(3\theta+\pi) = 0$.
+    have h2 : (i '' Q).card = (f '' Q).card := by
+      rw [@Set.InjOn.card_image _ _ (f '' Q) (Set.BijOn f (Q.trans i))] <;> simp
+      apply Set.InjOn.mono
+      intro x hx y hy hxy
+      simp [f, P, Q] at hx hy
+      simp [Set.BijOn] at hxy
+      exact hxy.1
+    -- The number of values of $\theta$ in the interval $0<\theta\le2\pi$ that satisfy $1-3\sin\theta+5\cos(3\theta+\pi) = 0$ is the same as the number of values of $\theta$ in the interval $0<\theta\le2\pi$ that satisfy $1-3\sin\theta+5\cos3\theta = 0$.
+    have h3 : (f '' Q).card = (f '' P).card := by
+      rw [@Set.InjOn.card_image _ _ (f '' P) (Set.BijOn f (P.trans (Set.inclusion P)))]
+      simp
+      apply Set.InjOn.mono
+      intro x hx y hy hxy
+      simp [f, P, Q] at hx hy
+      simp [Set.BijOn] at hxy
+      exact hxy.1
+    rw [h1, h2, h3]
+
+    -- Now, let's work with the function $f(x)=5\cos x-3\sin x$ on the interval $0\le x\le2\pi$.
+    let f (x : ℝ) := 5 * Real.cos x - 3 * Real.sin x
+
+    -- We can use the intermediate value theorem to show that $f$ takes all values in the range $[-8,8]$ on the interval $[0,2\pi]$.
+    have h4 : ∀ y : ℝ, (∀ x ∈ P, f x ≠ y) → (∀ x ∈ P, f x ≠ y + 16) := by
+      intro y hy x hx hfx
+      simp [f] at hy hfx
+      norm_cast at hy hfx
+      specialize hQ x (by simpa [Q] using hx)
+      rw [h_f_i_inv x (by simpa [Q] using hx)] at hfx
+      have := Real.emultiplication_le_mul_add_mul_of_sq_add_sq_le (5:ℝ) (-3) x (by simpa) (by simpa) (by linarith only [hy])
+      linarith only [this, hfx]
+
+    -- We can use the intermediate value theorem to show that $f$ takes all values in the range $[-8,8]$ on the interval $[0,2\pi]$.
+    have h5 : ∀ x ∈ P, ∀ t : ℝ, 0 ≤ t ∧ t ≤ 1 → f x = f x + t * (f x - y) := by
+      intro x hx t ht hfx
+      simp [f] at hfx ⊢
+      norm_cast at hfx ⊢
+      specialize hQ x (by simpa [Q] using hx)
+      rw [h_f_i_inv x (by simpa [Q] using hx)] at hfx ⊢
+      refine ⟨?_,?_⟩
+      · linarith only [hfx, ht.left]
+      · linarith only [hfx, ht.right]
+
+    -- The set of values taken by $f$ on the interval $[0,2\pi]$ is connected.
+    have h6 : Set.range f P = Set.Icc (f.one_lt_card) (fmax := 8) := by
+      -- The function $f$ is continuous.
+      let f' := fun x => 5 * Real.cos x - 3 * Real.sin x
+      have hf' : continuity f' := by continuity
+      have hf : f = f' ∘ Set.inclusion P := by ext x; simpa [f', P]
+      rw [hf]
+
+      -- The image of $P$ under $f'$ is connected.
+      apply Set.range_continuous_eq_Icc
+      apply Set.continuousOn.mono
+      exact hf'
+
+      -- connected $P$ is compact
+      apply Set.range_eq_Icc.mpr
+      apply Set.continuousOn.mono
+      exact hf'
+      simp [P]
+      InductiveField.suffices unbounded field := by simpa using unbounded
+      clear * - field
+      obtain ⟨x, hx⟩ := @Set.exists_mem_of_infiniteField_of_forall_mem field
+      simp [-re, -im] at hx
+      use x
+      simp [-re, -im]
+      simpa [-re, -im] using hx
+
+    -- The set of values taken by $f$ on the interval $[0,2\pi]$ is $[-8,8]$
+    have h7 : Set.range f P = Set.Icc (-8) 8 := by
+      rw [h6]
+      simp [-one_lt_card, fmax]
+      norm_num
+
+    -- The set of values taken by $f$ on the interval $[0,2\pi]$ is connected.
+    have h8 : Set.range f P = Set.Icc (fmin := -8) (fmax := 8) := by
+      exact h7
+
+    -- The number of values of $\theta$ in the interval $0<\theta\le2\pi$ that satisfy $1-3\sin\theta+5\cos3\theta = 0$ is the same as the number of values of $f(\theta)$ in the interval $[0,2\pi]$ that satisfy $f(\theta) = 3\sin\theta-5\cos3\theta$.
+    have h9 : a = (f '' P).card := by
+      simp [a, amc12b_2021_p13.mp h₀]
+      ring_nf
+
+    -- Now, let's work with the function $f(x)=5\cos x-3\sin x$ on the interval $[0,2\pi]$.
+    have h10 : ∀ x ∈ P, ∀ y ∈ Set.Icc (-8) 8, f x = y → 0 < 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) → y = 3 * Real.sin x - 5 * Real.cos (3 * x) := by
+      intro x hx y hy hfx hfx'
+      simp [f] at hfx
+      norm_cast at hfx
+      rw [←hfx, ←hfx'] at hfx
+      ring_nf at hfx ⊢
+      norm_cast at hfx ⊢
+      have ht := Real.emultiplication_le_mul_add_mul_of_sq_add_sq_le (5:ℝ) (-3) x (by simpa) (by simpa) (by linarith only [hy])
+      linarith only [hfx, ht]
+
+    -- We will show that $f(x)$ takes the value $3\sin x-5\cos3x$ at most once on the interval $[0,2\pi]$.
+    have h11 : ∀ x ∈ P, (f x = 3 * Real.sin x - 5 * Real.cos (3 * x)) → 0 < 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) → 0 < x ∧ x < 2 * Real.pi := by
+      intro x hx hfx hfx'
+      specialize h10 x hx (3 * Real.sin x - 5 * Real.cos (3 * x)) (by simpa) hfx hfx'
+      simpa [f] using h10
+
+    -- We will show that $f(x)$ takes the value $3\sin x-5\cos3x$ at most 6 times on the interval $[0,2\pi]$.
+    have h12 : ∀ x ∈ P, 0 < 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) → 0 < x ∧ x < 2 * Real.pi → x ∈ Q := by
+      intro x hx hfx
+      by_cases h : x < 2 * Real.pi
+      · exact ⟨x, this⟩
+      · push_neg at h
+        simp at h
+        have h := h11 x hx (by assumption) hfx
+        linarith only [h, h]
+
+    -- We will show that $Q$ has at most 6 elements.
+    have h13 : Q.card ≤ 6 := by
+      -- We will show that the elements of $Q$ can be put into a one-to-one correspondence with the solutions of $\cos x=3\sin x-5\cos3x$ on the interval $[0,2\pi]$.
+      let f' := fun x => Real.cos x - (3 * Real.sin x - 5 * Real.cos (3 * x))
+      have hf' : continuity f' := by continuity
+      -- The set of solutions of $\cos x=3\sin x-5\cos3x$ on the interval $[0,2\pi]$ is discrete.
+      have f'. discreteZeroSet := by
+        refine Set.discreteZeroSet.mono?_
+        rw [Set.continuousOn]
+        intro x hx
+        simp [-re, -im] at hx
+        simp [f']
+        norm_cast at hx ⊢
+        rw [←sub_eq_zero] at hx
+        norm_num at hx
+        rw [←Real.cos_eq_cos_iff] at hx
+        obtain ⟨k, hk⟩ := hx
+        use (k - 1) / 2
+        simp
+        constructor
+        · linarith only [hk, hx]
+        · linarith only [hk, hx]
+      let P' := f'. ⁻¹' 0
+      have hP' : P = Set.map f P' := by
+        apply Set.eq_of_subset_of_ncard_le_of_maps_to
+        · simp [P]
+        · simp [P']
+        · apply Set.subset
+          simp [f']
+          intro x hx hx'
+          rw [←sub_eq_zero] at hx'
+          rw [←Real.cos_eq_cos_iff] at hx'
+          obtain ⟨k, hk⟩ := hx'
+          use (k - 1) / 2
+          simp [hk]
+          linarith only [pi_pos]
+        · intro x hx
+          simp [-one_lt_card] at hx
+          obtain ⟨k, hk⟩ := hx
+          replace hk : 2 * k < 4 * Real.pi := by
+            norm_cast at hk
+            rw [←Real.pi_pos]
+            linarith only [hk]
+          replace hk : (2 * k) / 2 < 2 * Real.pi := by
+            linarith only [hk]
+          rw [show 2 * Real.pi = (2 * Real.pi) / 2 by ring_nf] at hk
+          have := Real.cos_eq_cos_iff.1 hk
+          use k
+      -- The solutions of $\cos x=3\sin x-5\cos3x$ on the interval $[0,2\pi]$ are actually antipodal, so there are at most 6 of them.
+      have P'.ncard ≤ 3 := by
+        apply Set.ncard_le_of_injOn
+        intro x hx y hy hxy
+        simpa [P'] using hxy
+      rw [←Set.InjOn.card_eq_of_injOn (Set.injOn_of_injective (Set.injective_of_injectiveOn (fun x y : ℝ => by simpa [P'] using hxy))] at P'.ncard ≤ 3
+      rw [←Set.ncard_le_card] at P'.ncard ≤ 3
+      rw [←Set.InjOn.image_eq_of_injective (Set.injective_of_injectiveOn (fun x y : ℝ => by simpa [P'] using hxy)) Set.InjOn.card_eq_of_injOn (fun x y : ℝ => by simpa [P'] using hxy)] at Q.card ≤ P'.ncard
+      linarith only [Q.card ≤ P'.ncard, P'.ncard ≤ 3]
+      simp [Set.InjOn]
+      intro x hx y hy hxy
+      simp [-one_lt_card] at hx hy
+      simp [P'] at hx hy
+      have := Real.cos_eq_cos_iff.1 hx
+      obtain ⟨k, hk⟩ := hx
+      have := Real.cos_eq_cos_iff.1 hy
+      obtain ⟨k', hk'⟩ := hy
+      have h (a b : ℝ) : a = b := by
+        refine (Real.cos_eq_cos_iff?_?_).mp?_
+        · linarith only [pi_pos]
+        · linarith only [pi_pos]
+        · ring_nf
+          rw [show Real.pi * (1 - a) = Real.pi - Real.pi * a by ring_nf]
+          rw [show Real.pi * (1 - b) = Real.pi - Real.pi * b by ring_nf]
+          rw [←Real.arccos_cos]
+          · rw [le_sub_iff_add_le] at hk
+            rw [le_sub_iff_add_le] at hk'
+            linarith only [hk, hk', Real.pi_pos]
+          · apply Real.arccos_lt

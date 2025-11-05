@@ -1,0 +1,290 @@
+-- We shall prove that $\left ( D_{2021}, D_{2022}, D_{2023} \right )$ are $(E, O, E)$ respectively,
+  -- where $E$ denotes evenness and $O$ denotes oddness.
+
+  -- To that end, we define three predicates:
+  let P : ℕ → Prop := fun n => Even (d n)
+  let Q : ℕ → Prop := fun n => Odd (d n)
+  let R : ℕ → Prop := fun n => Even (d n)
+
+  -- We show that $\left ( P(n), Q(n), R(n) \right )$ are satisfied for all $n$ simultaneously,
+  -- where $P(0)$, $Q(1)$, and $R(2)$ are true, and the rest are true by inductively applying
+  -- the following recurrence relations:
+  -- $D_{n} = D_{n - 1} + D_{n - 3}$ for $n \ge 3$.
+  -- $E(n) \iff E(n - 1) \oplus O(n - 3)$
+  -- $O(n) \iff O(n - 1) \oplus E(n - 3)$
+  -- $E(n - 1) \iff E(n - 2) \oplus E(n - 4)$
+  -- $O(n - 1) \iff O(n - 2) \oplus O(n - 4)$
+  -- $E(n - 3) \iff D_{n - 3} \text{ is even } \iff D_{n - 4} \oplus D_{n - 5} \text{ is odd }$
+  -- $O(n - 3) \iff D_{n - 3} \text{ is odd } \iff D_{n - 4} \oplus D_{n - 5} \text{ is even }$
+  have h₄ : ∀ n, P n ↔ Q (n - 1) ∧ R (n - 3) := by
+    intro n
+    induction n with
+    | zero => simp [P, Q, R]
+    | succ n ih =>
+      rw [h₃ (n + 1) (by omega), Nat.even_add, Nat.even_add]
+      simp only [P, Q, R]
+      refine ⟨?_,?_⟩
+      · simp
+        rw [ih.2.1, ih.1]
+        aesop
+      · simp
+        rw [ih.2.2, ih.1]
+        aesop
+
+  have h₅ : ∀ n, Q n ↔ P (n - 1) ∧ R (n - 3) := by
+    intro n
+    induction n with
+    | zero => simp [P, Q, R]
+    | succ n ih =>
+      rw [h₃ (n + 1) (by omega), Nat.even_add, Nat.even_add]
+      simp only [P, Q, R]
+      refine ⟨?_,?_⟩
+      · simp
+        rw [ih.2.1, ih.1]
+        aesop
+      · simp
+        rw [ih.2.2, ih.1]
+        aesop
+
+  have h₆ : ∀ n, R n ↔ P (n - 1) ∧ Q (n - 3) := by
+    intro n
+    induction n with
+    | zero => simp [P, Q, R]
+    | succ n ih =>
+      rw [h₃ (n + 1) (by omega), Nat.even_add, Nat.even_add]
+      simp only [P, Q, R]
+      refine ⟨?_,?_⟩
+      · simp
+        rw [ih.2.1, ih.1]
+        aesop
+      · simp
+        rw [ih.2.2, ih.1]
+        aesop
+
+  -- This is the heart of the proof.
+  -- We define a sequence of triples of propositions,
+  -- and show that it is equivalent to the sequence
+  -- $(P(n) \land Q(n) \land R(n))_{n \ge 0}$.
+  let prop : ℕ → Prop := fun n => P n ∧ Q n ∧ R n
+
+  -- By the above recurrence relations,
+  -- it suffices to show that the sequence
+  -- $(P(n) \land Q(n) \land R(n))_{n \ge 0}$ is equivalent to the sequence $(E(n) \oplus O(n - 1) \oplus E(n - 3))_{n \ge 0}$.
+  have h (n : ℕ) : prop n ↔ Even (d n) ∧ Odd (d (n - 1)) ∧ Even (d (n - 3)) := by
+    induction n with
+    | zero => simp [prop, P, Q, R]
+    | succ n ih =>
+      rw [h₃ (n + 1) (by omega), Nat.even_add, Nat.even_add, ih]
+      simp only [P, Q, R, prop]
+      simp
+      aesop
+
+  -- Since the latter sequence is clearly periodic with period 6,
+  -- it suffices to show that $(P(n) \land Q(n) \land R(n))_{n \ge 0}$ is periodic with period 6.
+  have h₇ : ∀ n, prop (6 * n + 0) ↔ prop 0 := by
+    intro n
+    induction n with
+    | zero => simp [prop]
+    | succ n ih =>
+      -- The inductive hypothesis tells us that
+      -- $(P(6n + i), Q(6n + i), R(6n + i)) ↔ (P(i), Q(i), R(i))$ for $i = 0, 1, 2$.
+      rw [mul_add, mul_one, add_zero, ih]
+      simp only [prop]
+      -- Combined with the recurrence relations, this gives us the desired triple of periodicity.
+      rwa [h₄, h₅, h₆, ← and_assoc]
+
+  have h₈ : ∀ n, prop (6 * n + 1) ↔ prop 1 := by
+    intro n
+    induction n with
+    | zero => simp [prop]
+    | succ n ih =>
+      rw [mul_add, mul_one, add_zero, ih]
+      simp only [prop]
+      rwa [h₄, h₅, h₆, ← and_assoc]
+
+  have h₉ : ∀ n, prop (6 * n + 2) ↔ prop 2 := by
+    intro n
+    induction n with
+    | zero => simp [prop]
+    | succ n ih =>
+      rw [mul_add, mul_one, add_zero, ih]
+      simp only [prop]
+      rwa [h₄, h₅, h₆, ← and_assoc]
+
+  have h₁₀ : ∀ n, prop (6 * n + 3) ↔ prop 3 := by
+    intro n
+    induction n with
+    | zero => simp [prop]
+    | succ n ih =>
+      rw [mul_add, mul_one, add_zero, ih]
+      simp only [prop]
+      rwa [h₄, h₅, h₆, ← and_assoc]
+
+  have h₁₁ : ∀ n, prop (6 * n + 4) ↔ prop 4 := by
+    intro n
+    induction n with
+    | zero => simp [prop]
+    | succ n ih =>
+      rw [mul_add, mul_one, add_zero, ih]
+      simp only [prop]
+      rwa [h₄, h₅, h₆, ← and_assoc]
+
+  have h₁₂ : ∀ n, prop (6 * n + 5) ↔ prop 5 := by
+    intro n
+    induction n with
+    | zero => simp [prop]
+    | succ n ih =>
+      rw [mul_add, mul_one, add_zero, ih]
+      simp only [prop]
+      rwa [h₄, h₅, h₆, ← and_assoc]
+
+  have h₁₃ : ∀ n, prop (6 * n + 6) ↔ prop 0 := by
+    intro n
+    induction n with
+    | zero => simp [prop]
+    | succ n ih =>
+      rw [mul_add, mul_one, add_zero, ih]
+      simp only [prop]
+      rwa [h₄, h₅, h₆, ← and_assoc]
+
+  -- From the above periodicity relations,
+  -- we see that it suffices to show that the triple $(P(0), Q(1), R(2))$ is $(E, O, E)$.
+  have h₁₄ : prop 0 ↔ Even (d 0) ∧ Odd (d 1) ∧ Even (d 2) := by
+    simp [prop, P, Q, R]
+
+  -- This is clear from the given conditions.
+  have h₁₅ : prop 0 := by
+    rw [h₁₄]
+    simp [h₀, h₁, h₂]
+
+  -- From the inductive definition of the sequence,
+  -- we see that the triple $(P(n + 3), Q(n + 4), R(n + 5))$ can be determined in terms of
+  -- the triple $(P(n), Q(n + 1), R(n + 2))$.
+  have h₁₆ (n : ℕ) : prop (n + 3) ↔ prop n := by
+    rw [mul_add, mul_one, add_zero, h₄, h₅, h₆, Nat.even_add, Nat.even_add]
+    simp only [P, Q, R, prop]
+    aesop
+
+  -- In particular, by considering the triples at indices $0, 1, 2$,
+  -- we see that the triple $(P(3), Q(4), R(5))$ is $(O, E, O)$.
+  have h₁₇ : prop 3 ↔ Odd (d 3) ∧ Even (d 4) ∧ Odd (d 5) := by
+    rw [h₄]
+    simp [P, Q, R]
+    rwa [h₅, h₆, h₁₃]
+
+  have h₁₈ : prop 3 := by
+    rw [h₁₇]
+    simp [h₃, h₀, h₁, h₂]
+
+  -- Similarly, by considering the triples at indices $3, 4, 5$,
+  -- we see that the triple $(P(6), Q(7), R(8))$ is $(E, O, E)$.
+  have h₁₉ : prop 6 ↔ Even (d 6) ∧ Odd (d 7) ∧ Even (d 8) := by
+    rw [h₄, h₅, h₆, Nat.even_add, Nat.even_add]
+    simp only [P, Q, R, prop]
+    refine ⟨?_,?_⟩
+    · rw [Nat.even_add]
+      rw [Nat.even_add]
+      simp
+      rw [h₃, h₃, h₃, h₀, h₁, h₂]
+      simp
+    · rw [Nat.odd_add]
+      rw [Nat.odd_add]
+      simp
+      rw [h₃, h₃, h₃, h₀, h₁, h₂]
+      simp
+
+  have h₂₀ : prop 6 := by
+    rw [h₁₉]
+    simp [h₃, h₀, h₁, h₂]
+
+  -- We can repeat this argument to show that the triple $(P(9), Q(10), R(11))$ is $(O, E, O)$.
+  have h₂₁ : prop 9 ↔ Odd (d 9) ∧ Even (d 10) ∧ Odd (d 11) := by
+    rw [h₄, h₅, h₆, Nat.even_add, Nat.even_add]
+    simp only [P, Q, R, prop]
+    refine ⟨?_,?_⟩
+    · rw [Nat.even_add]
+      rw [Nat.even_add]
+      simp
+      rw [h₃, h₃, h₃, h₀, h₁, h₂]
+      simp
+    · rw [Nat.odd_add]
+      rw [Nat.odd_add]
+      simp
+      rw [h₃, h₃, h₃, h₀, h₁, h₂]
+      simp
+
+  have h₂₂ : prop 9 := by
+    rw [h₂₁]
+    simp [h₃, h₀, h₁, h₂]
+
+  -- From the periodicity relation, we can conclude that
+  -- the triple $(P(3), Q(4), R(5))$ is $(O, E, O)$.
+  have h₂₃ : prop 3 := by
+    exact h₇ 1 h₁₅
+
+  -- From the periodicity relation, we can conclude that
+  -- the triple $(P(6), Q(7), R(8))$ is $(E, O, E)$.
+  have h₂₄ : prop 6 := by
+    exact h₈ 1 h₁₅
+
+  -- From the periodicity relation, we can conclude that
+  -- the triple $(P(9), Q(10), R(11))$ is $(O, E, O)$.
+  have h₂₅ : prop 9 := by
+    exact h₁₃ 1 h₁₅
+
+  -- From the inductive definition of the sequence,
+  -- we see that the triple $(P(2021), Q(2022), R(2023))$ can be determined in terms of
+  -- the triple $(P(3), Q(4), R(5))$.
+  have h₂₆ : prop 2021 ↔ prop 3 := by
+    rw [h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆]
+    exact h₁₅
+
+  -- From the inductive definition of the sequence,
+  -- we see that the triple $(P(2022), Q(2023), R(2024))$ can be determined in terms of
+  -- the triple $(P(4), Q(5), R(6))$.
+  have h₂₇ : prop 2022 ↔ prop 4 := by
+    rw [h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆]
+    exact h₁₅
+
+  -- From the inductive definition of the sequence,
+  -- we see that the triple $(P(2023), Q(2024), R(2025))$ can be determined in terms of
+  -- the triple $(P(5), Q(6), R(7))$.
+  have h₂₈ : prop 2023 ↔ prop 5 := by
+    rw [h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆]
+    exact h₁₅
+
+  -- From the periodicity relation, we can conclude that
+  -- the triple $(P(2021), Q(2022), R(2023))$ is $(O, E, O)$.
+  have h₂₉ : prop 2021 ↔ prop 3 := by
+    exact h₇ 336 h₁₅
+
+  -- From the periodicity relation, we can conclude that
+  -- the triple $(P(2022), Q(2023), R(2024))$ is $(E, O, E)$.
+  have h₃₀ : prop 2022 ↔ prop 4 := by
+    exact h₈ 336 h₁₅
+
+  -- From the periodicity relation, we can conclude that
+  -- the triple $(P(2023), Q(2024), R(2025))$ is $(O, E, O)$.
+  have h₃₁ : prop 2023 ↔ prop 5 := by
+    exact h₉ 336 h₁₅
+
+  -- From the inductive definition of the sequence,
+  -- we see that the triple $(P(2025), Q(2026), R(2027))$ can be determined in terms of
+  -- the triple $(P(9), Q(10), R(11))$.
+  have h₃₂ : prop 2025 ↔ prop 9 := by
+    rw [h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆, h₁₆]
+    exact h₁₅
+
+  -- From the periodicity relation, we can conclude that
+  -- the triple $(P(2025), Q(2026), R(2027))$ is $(O, E, O)$.
+  have h₃₃ : prop 2025 ↔ prop 9 := by
+    exact h₁₃ 337 h₁₅
+
+  -- Combining this with the fact that $(P(9), Q(10), R(11)) ↔ (O, E, O)$,
+  -- we see that $(P(2025), Q(2026), R(2027)) ↔ (O, E, O)$.
+  have h₃₄ : prop 2025 ↔ prop 9 := by
+    exact h₁₃ 337 h₁₅
+
+  -- Combining this with the periodicity relation,
+  -- we see that $(P(2021), Q(2022), R(2023)) ↔ (E, O, E)$.
+  have h₃₅ : prop 2021 ↔ prop

@@ -1,0 +1,73 @@
+-- We use the three classical trigonometric identities:
+  -- 1. $\sec^2 x - \tan^2 x = 1$,
+  -- 2. $\csc^2 x - \cot^2 x = 1$,
+  -- 3. $\tan x = \frac{\sin x}{\cos x}$.
+  have h_1 : 1 / Real.cos x ^ 2 - Real.tan x ^ 2 = 1 := by
+    rw [div_pow, Real.tan_eq_sin_div_cos]
+    field_simp
+  have h_2 : 1 / Real.sin x ^ 2 - (1 / Real.tan x) ^ 2 = 1 := by
+    rw [div_pow, Real.tan_eq_sin_div_cos]
+    field_simp
+  have h_3 : Real.tan x = Real.sin x / Real.cos x := by
+    exact Eq.symm (Real.tan_eq_sin_div_cos x)
+
+  -- 4. $\cot x = \frac{\cos x}{\sin x}$.
+  have h_4 : 1 / Real.tan x = Real.cos x / Real.sin x := by
+    rw [Real.tan_eq_sin_div_cos]
+    field_simp
+
+  -- Since $\sec x + \tan x = \frac{22}7$, we have $\frac{1}{\cos x} + \frac{\sin x}{\cos x} = \frac{22}7$,
+  -- and so $\frac{1+\sin x}{\cos x} = \frac{22}7$.
+  rw [h_4, h_3] at h₁
+  have h₅ : (1 + Real.sin x) / Real.cos x = 22 / 7 := by
+    linarith only [h₀]
+
+  -- Thus, $\cos x \neq 0$.
+  have hcos_ne_zero : Real.cos x ≠ 0 := by
+    intro h
+    rw [h] at h₅
+    norm_num at h₅
+
+  -- We rearrange to get $\cos x = \frac{7}{22}(1+\sin x)$.
+  replace h₅ : Real.cos x = 7 / 22 * (1 + Real.sin x) := by
+    field_simp at h₅
+    linarith only [h₅]
+
+  -- We substitute this into $\sec^2 x - \tan^2 x = 1$.
+  rw [h₅, h_3] at h_1
+  field_simp at h_1
+
+  -- We simplify and get a quadratic in $\sin x$.
+  ring_nf at h_1
+  replace h_1 : -(Real.sin x - 1 / 2) * (Real.sin x + 3 / 2) = 0 := by
+    linarith only [h_1]
+
+  -- Thus, $\sin x = \frac 12$ or $\sin x = -\frac 32$.
+  simp at h_1
+
+  rcases h_1 with h | h
+
+  -- The first case is impossible, because then $\cos x = \frac{7}{22}(1+\sin x) = \frac{7}{22} \cdot \frac 32 > 0$,
+  -- but $\sin x = \frac 12 > 0$ and $\cos x$ cannot be positive in the first quadrant.
+  have hcos_pos : 0 < Real.cos x := by
+    have : 0 < 7 / 22 := by norm_num
+    linarith only [h₅, this]
+  linarith only [hcos_pos, h]
+
+  -- In the second case, $\sin x = -\frac 32$, we have $\cos x = \frac{7}{22}(1+\sin x) = \frac{7}{22} \cdot -\frac 12 = -\frac{7}{44}$.
+  have hcos_val : Real.cos x = - 7 / 44 := by
+    linarith only [h₅, h]
+
+  -- We substitute this into $\csc x + \cot x = \frac m{n}$.
+  rw [hcos_val, h₄] at h₁
+  field_simp at h₁
+
+  -- After some rearrangement, we get $\frac{35}{11} = m+n$.
+  replace h₁ : m = 35 / 11 := by linarith only [h₁]
+  apply_fun (fun x => x.natAbs) at h₁
+  norm_cast at h₁
+  suffices m.num + m.den = 44 by omega
+  rw [h₁]
+  norm_num
+
+```

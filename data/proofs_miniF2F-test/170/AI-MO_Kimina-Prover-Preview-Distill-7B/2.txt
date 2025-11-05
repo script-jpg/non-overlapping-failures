@@ -1,0 +1,144 @@
+-- First, let's understand what we're trying to prove. We have a real number $r$ such that $r^{1/3} + r^{-1/3} = 3$, and we want to show that $r^3 + r^{-3} = 5778$.
+
+  -- We'll start by setting up the theorem statement with the appropriate imports and opening namespaces:
+
+  import Mathlib
+  import Aesop
+
+  set_option maxHeartbeats 0
+
+  open BigOperators Real Nat Topology Rat
+
+  -- Now, let's state the theorem:
+
+  theorem algebra_cubrtrp1oncubrtreq3 rcubp1onrcubeq5778 (r : ℝ)
+      (h₀ : r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3) = 3) : r ^ 3 + 1 / r ^ 3 = 5778 := by
+
+  -- We need to establish a relationship between $r^{1/3} + r^{-1/3}$ and $r^3 + r^{-3}$. To do this, we'll use the identity:
+  -- $(r^{1/3} + r^{-1/3})^3 = r + r^{-1} + 3(r^{1/3} + r^{-1/3})$
+  -- From this, we can derive that $r + r^{-1} = (r^{1/3} + r^{-1/3})^3 - 3(r^{1/3} + r^{-1/3})$
+  -- Given $r^{1/3} + r^{-1/3} = 3$, we get $r + r^{-1} = 3^3 - 3 \cdot 3 = 27 - 9 = 18$
+
+  -- Let's start our proof by establishing this key relationship:
+
+  have h₃ (r : ℝ) (h₀ : r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3) = 3) : r + 1 / r = 18 := by
+
+    -- We'll use the `Real.rpow_mul` lemma to manipulate powers of r and r⁻¹. This lemma states that (r ^ a) ^ b = r ^ (a * b).
+
+    have h₁ (a b : ℝ) : (r ^ a) ^ b = r ^ (a * b) := by
+      rw [Real.rpow_mul]
+      all_goals
+        (try assumption_mod_cast)
+        (try linarith)
+
+    -- We also need to ensure that r ≠ 0 to avoid division issues. We can prove this by contradiction:
+
+    have hr : r ≠ 0 := by
+      by_contra h
+      rw [h] at h₀
+      norm_num at h₀
+
+    -- Now, let's isolate r + r⁻¹ by Cubing both sides of the given equation:
+
+    have h₂ := congr_arg (· ^ 3) h₀
+
+    -- We need to expand the Cubing operation. We can use the identity (a + b)³ = a³ + b³ + 3ab(a + b).
+
+    have h₃ : (r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3)) ^ 3 = (r ^ ((1 : ℝ) / 3)) ^ 3 + (1 / r ^ ((1 : ℝ) / 3)) ^ 3 + 3 * (r ^ ((1 : ℝ) / 3)) * (1 / r ^ ((1 : ℝ) / 3)) * (r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3)) := by ring
+
+    -- Now, let's simplify each part of this expansion:
+
+    have h₄ : (r ^ ((1 : ℝ) / 3)) ^ 3 = r := by
+      rw [← h₁ ((1 : ℝ) / 3) 3]
+      ring_nf
+
+    have h₅ : (1 / r ^ ((1 : ℝ) / 3)) ^ 3 = 1 / r ^ 3 := by
+      rw [← h₁ ((1 : ℝ) / 3) 3]
+      ring_nf
+
+    have h₆ : 3 * (r ^ ((1 : ℝ) / 3)) * (1 / r ^ ((1 : ℝ) / 3)) * (r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3)) = 3 * (r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3)) := by
+      field_simp [hr]
+
+    -- Substitute the expansion back into h₂:
+
+    rw [h₃, h₄, h₅, h₆] at h₂
+
+    -- We know that r ^ ((1 / 3) * 3) = r ^ 1 = r
+
+    have h₇ : (r ^ ((1 : ℝ) / 3)) ^ 3 = r := by
+      rw [← h₁ ((1 : ℝ) / 3) 3]
+      ring_nf
+
+    -- And we know that (1 / r ^ ((1 / 3) * 3)) = 1 / r ^ 3
+
+    have h₈ : (1 / r ^ ((1 : ℝ) / 3)) ^ 3 = 1 / r ^ 3 := by
+      rw [← h₁ ((1 : ℝ) / 3) 3]
+      ring_nf
+
+    -- Substitute these simplifications back into h₂:
+
+    rw [h₇, h₈] at h₂
+
+    -- From the original equation, we know that r ^ ((1 / 3) / 3) + 1 / r ^ ((1 / 3) / 3) = 3
+    -- So 3 * (r ^ ((1 / 3) / 3) + r ^ ((1 / 3) / 3)) = 9
+
+    have h₉ : 3 * (r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3)) = 9 := by linarith
+
+    -- Substitute this into h₂:
+
+    rw [h₉] at h₂
+
+    -- And finally, solve for r + 1 / r:
+
+    linarith
+
+  -- Now that we have r + 1 / r = 18, we can find r^3 + 1 / r^3 using the identity:
+  -- (r + r⁻¹)³ = r³ + r⁻³ + 3(r + r⁻¹)
+  -- So r³ + r⁻³ = (r + r⁻¹)³ - 3(r + r⁻¹) = 18³ - 3·18 = 5778
+
+  have h₄ (r : ℝ) (h₀ : r + 1 / r = 18) : r ^ 3 + 1 / r ^ 3 = 5778 := by
+
+    -- We need to ensure that r ≠ 0 to avoid division issues. We can prove this by contradiction:
+
+    have hr : r ≠ 0 := by
+      by_contra h
+      rw [h] at h₀
+      norm_num at h₀
+
+    -- Now, let's isolate r^3 + r⁻³ by Cubing both sides of the given equation:
+
+    have h₂ := congr_arg (· ^ 3) h₀
+
+    -- We need to expand the Cubing operation. We can use the identity (a + b)³ = a³ + b³ + 3ab(a + b):
+
+    have h₃ : (r + 1 / r) ^ 3 = r ^ 3 + 1 / r ^ 3 + 3 * (r + 1 / r) * (r * (1 / r)) := by ring
+
+    -- Simplify r * (1 / r) to 1:
+
+    have h₄ : r * (1 / r) = 1 := by
+      field_simp [hr]
+
+    -- Substitute this into the expansion:
+
+    rw [h₃, h₄] at h₂
+
+    -- From the original equation, we know that r + 1 / r = 18, so 3 * (r + 1 / r) * 1 = 54
+
+    have h₅ : 3 * (r + 1 / r) * 1 = 54 := by linarith
+
+    -- Substitute this into h₂:
+
+    rw [h₅] at h₂
+
+    -- And finally, solve for r^3 + 1 / r^3:
+
+    linarith
+
+  -- Now we can complete our proof by applying the two lemmas we've established:
+
+  have h₅ : r + 1 / r = 18 := h₃ r h₀
+
+  have h₆ : r ^ 3 + 1 / r ^ 3 = 5778 := h₄ r h₅
+
+  exact h₆
+```

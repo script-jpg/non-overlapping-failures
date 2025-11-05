@@ -1,0 +1,86 @@
+-- Let $n$ be a positive integer.
+  -- We want to show that $\prod_{k=1}^n (1 + 1/k^3) \leq 3 - 1/n$.
+
+  -- We will use induction on $n$.
+  induction n with
+  | zero =>
+    -- Base case : $n = 0$. It is vacuously true.
+    linarith
+  | succ n ih =>
+    -- Inductive step : Assume $n \geq 1$ and that the statement is true for $n$.
+    -- We need to show that it is true for $n + 1$.
+
+    -- Write $1 + 1/(n + 1)^3 = 1 + 1/(n + 1)^3 \prod_{k=1}^n (1 + 1/k^3) \leq (3 - 1/n) \cdot (1 + 1/(n + 1)^3)$.
+    rw [Finset.prod_Icc_succ_top (by linarith), ih (by linarith)]
+    calc
+      -- The main inequality.
+      _ ≤ (3 - 1 / ↑n) * (1 + 1 / (↑n + 1) ^ 3) := by
+        -- Note that $1 + 1/(n + 1)^3 \leq 1 + 3 / (n + 1)^2$.
+        have ineq₁ : 1 + (1 : ℝ) / (↑n + 1) ^ 3 ≤ 1 + 3 / (↑n + 1) ^ 2 := by
+          have ineq₂ : (↑n : ℝ) + 1 ≥ 1 := by
+            -- We will use this inequality on $1 / (n + 1) \leq 1$.
+            norm_cast
+            linarith
+          calc
+            _ ≤ 1 + (1 : ℝ) / ((↑n : ℝ) + 1) ^ 2 + (1 : ℝ) / ((↑n : ℝ) + 1) ^ 2 := by
+              -- Expand $1 / (n + 1)^3$.
+              have : ((↑n : ℝ) + 1) ^ 3 = ((↑n : ℝ) + 1) ^ 2 * ((↑n : ℝ) + 1) := by ring
+              rw [this]
+              refine (div_le_add_div_iff₀?_?_).mpr?_
+              · -- Show that $(n + 1)^2 \geq 1$.
+                apply mul_self_nonneg
+                linarith
+              · -- Show that $1 / (n + 1)^2 \geq 0$.
+                refine div_nonneg?_ zero_le_one
+                apply pow_two_nonneg
+              · -- Show that $1 / ((n + 1)^2 \cdot (n + 1)) \leq 1 / (n + 1)^2$.
+                refine div_le_div_of_nonneg_left?_?_?_ <;> try positivity
+                apply one_div_le_one_div_of_le (by norm_cast) (by norm_cast; linarith)
+            _ ≤ _ := by
+              -- Now we need to show that $1 + 1/(n + 1)^2 + 1/(n + 1)^2 \leq 1 + 3/(n + 1)^2$.
+              rw [add_assoc, add_assoc]
+              refine add_le_add_left (div_le_div_iff (by norm_cast) (by norm_cast; linarith)?_)
+              rw [div_le_div_iff₀ (by norm_cast) (by norm_cast; linarith), add_assoc]
+              refine add_le_add_left (div_le_div_iff (by norm_cast) (by norm_cast; linarith)?_)
+              norm_num
+        refine mul_le_mul_of_nonneg_left?_ (by positivity)
+        -- Now we need to show that $3 - 1/n + 3/(n + 1)^2 - 1/(n + 1)^3 \leq 3 - 1/(n + 1)$.
+        -- It is enough to show that $3/(n + 1)^2 - 1/(n + 1)^3 \leq 1/n$.
+        rw [show (3 : ℝ) - 1 / ↑n + 3 / (↑n + 1) ^ 2 - 1 / (↑n + 1) ^ 3 = (3 - 1 / ↑n) * (1 + 1 / (↑n + 1) ^ 2 - 1 / (↑n + 1) ^ 3) by ring]
+        have ineq₃ : (3 : ℝ) / (↑n + 1) ^ 2 - 1 / (↑n + 1) ^ 3 ≤ 1 / ↑n := by
+          -- Rearrange to get the equivalent inequality $3/(n + 1)^2 - 1/(n + 1)^3 \leq 1/n$.
+          rw [show (3 : ℝ) / (↑n + 1) ^ 2 - 1 / (↑n + 1) ^ 3 = 1 / (↑n + 1) ^ 2 * (3 - 1 / (↑n + 1)) by ring]
+          rw [show 1 / (↑n + 1) ^ 2 * (3 - 1 / (↑n + 1)) ≤ 1 / ↑n by refine (mul_le_mul_iff_of_pos_left?_).mpr?_]
+          · -- Show that $(n + 1)^2 \geq 1$.
+            norm_cast
+            linarith
+          · -- Show that $3 - 1 / (n + 1) \leq n + 1$.
+            symm
+            rw [div_le_iff₀ (by norm_cast; linarith)]
+            -- Expand $(n + 1)^2$.
+            have : ((↑n : ℝ) + 1) ^ 2 = (↑n : ℝ) ^ 2 + (1 : ℝ) * 2 * ↑n + 1 := by ring
+            rw [this]
+            refine sub_le_add_of_le_add_left (add_le_add?_?_)?_
+            · -- Show that $3 \leq 2n + 1$.
+              rw [show (3 : ℝ) = 1 + 2 * 1 by norm_num]
+              apply add_le_add (le_refl ((n : ℝ) ^ 2)) (mul_le_mul_of_nonneg_left (by norm_num) (le_refl ↑n))
+            · -- Show that $1/n \geq 0$.
+              apply div_nonneg zero_le_one (by positivity)
+            · -- Show that $3 - 1 \leq (n + 1)^2 + 2n$.
+              ring_nf
+              rw [show (n : ℝ) ^ 2 + (1 : ℝ) * 2 * ↑n = (n : ℝ) * (↑n + 2) by ring]
+              -- Use the fact that $n \geq 1$.
+              calc
+                _ ≤ 1 * (1 + 2) := by
+                  refine mul_le_mul_of_nonneg_left?_?_ (by norm_num) (by positivity)
+                  exact le_refl ↑n
+                _ ≤ ((n : ℝ) + 2) * n := by
+                  apply mul_le_mul_of_nonneg_left (by positivity) (le_refl ↑n)
+        -- Now we need to show that $3 - 1/n \leq 3 - 1/(n + 1)$.
+        -- It is enough to show that $1/n \geq 1/(n + 1)$.
+        have ineq₄ : (3 : ℝ) - 1 / ↑n ≤ 3 - 1 / (↑n + 1) := by
+          -- Show that $1/(n + 1) \leq 1/n$.
+          exact (sub_le_sub_iff_left (by norm_num)).mpr (one_div_le_one_div_of_le (by positivity) (by positivity))
+        -- The induction is complete.
+        linarith
+```

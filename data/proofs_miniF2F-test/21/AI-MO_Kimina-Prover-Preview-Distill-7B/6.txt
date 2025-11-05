@@ -1,0 +1,96 @@
+-- We prove that for any two integers $x$ and $y$, $x^5 \ne y^2 + 4$.
+  -- First, consider the case when $x$ is even.
+  by_cases hx : Even x
+  · -- If $x$ is even, then $5x^4$ is divisible by $16$.
+    have h1 : 16 ∣ 5 * x ^ 4 := by
+      rcases hx with ⟨k, hk⟩
+      rw [hk]
+      ring_nf
+      use 5 * k ^ 4
+      ring
+    -- Then, $x^5 \equiv 0 \pmod{16}$.
+    have h2 : x ^ 5 ≡ 0 [ZMOD 16] := by
+      calc
+        x ^ 5 = 16 * (5 * k ^ 4) + 0 := by ring
+        _ ≡ 16 * (5 * k ^ 4) + 0 [ZMOD 16] := by
+          apply Int.ModEq.add_right
+          apply Int.modEq_zero_iff_dvd.mpr
+          exact h1
+        _ ≡ 0 + 0 [ZMOD 16] := by
+          apply Int.ModEq.add_right
+          apply Int.modEq_zero_iff_dvd.mpr
+          simp
+    -- And $y^2 + 4 \equiv 1 + 4 \equiv 5 \pmod{16}$.
+    have h3 : y ^ 2 + 4 ≡ 5 [ZMOD 16] := by
+      have hy : y ^ 2 ≡ 1 [ZMOD 16] := by
+        -- Consider the case when $y$ is even.
+        by_cases hy : Even y
+        · -- If $y$ is even, then $y^2 \equiv 0 \pmod{16}$.
+          have h4 : y ^ 2 ≡ 0 [ZMOD 16] := by
+            rcases hy with ⟨k, hk⟩
+            rw [hk]
+            ring_nf
+            use 4 * k ^ 2
+            ring
+          exact Int.ModEq.add_right 4 (Int.ModEq.trans hy h4)
+        · -- If $y$ is odd, then $y^2 \equiv 1 \pmod{16}$.
+          have h4 : y ^ 2 ≡ 1 [ZMOD 16] := by
+            have : y % 16 = 1 ∨ y % 16 = 3 ∨ y % 16 = 5 ∨ y % 16 = 7 ∨
+              y % 16 = 9 ∨ y % 16 = 11 ∨ y % 16 = 13 ∨ y % 16 = 15 := by
+              omega
+            rcases this with (h | h | h | h | h | h | h | h) <;> simp [h, pow_two, Int.ModEq]
+          exact h4
+      exact Int.ModEq.add_right 4 hy
+    -- Since $x^5 \not\equiv y^2 + 4 \pmod{16}$, we have $x^5 \ne y^2 + 4$.
+    have h4 : x ^ 5 ≠ y ^ 2 + 4 := by
+      intro h
+      have : x ^ 5 ≡ y ^ 2 + 4 [ZMOD 16] := by
+        exact Int.ModEq.symm (Int.ModEq.trans h (id (Int.ModEq.symm h2)))
+      rw [Int.modEq_iff_dvd] at this
+      have h5 : 16 ∣ (x ^ 5 - (y ^ 2 + 4)) := by
+        exact Int.dvd_sub.symm this
+      simp at h5
+      omega
+    exact h4
+
+  · -- Now, consider the case when $x$ is odd.
+    simp at hx
+    -- If $x$ is odd, then $x^5 \equiv 1 \pmod{2}$.
+    have h1 : x ^ 5 ≡ 1 [ZMOD 2] := by
+      have h1 : x ≡ 1 [ZMOD 2] := by
+        exact Int.modEq_iff_dvd.mpr hx
+      exact Int.ModEq.pow 5 h1
+    -- And $y^2 + 4 \equiv 0 \pmod{2}$.
+    have h2 : y ^ 2 + 4 ≡ 0 [ZMOD 2] := by
+      have h2 : y ^ 2 ≡ 0 [ZMOD 2] := by
+        -- Consider the case when $y$ is even.
+        by_cases hy : Even y
+        · -- If $y$ is even, then $y^2 \equiv 0 \pmod{2}$.
+          have h3 : y ^ 2 ≡ 0 [ZMOD 2] := by
+            rcases hy with ⟨k, hk⟩
+            rw [hk]
+            ring_nf
+            use 2 * k ^ 2
+            ring
+          exact h3
+        · -- If $y$ is odd, then $y^2 \equiv 1 \pmod{2}$.
+          have h3 : y ^ 2 ≡ 1 [ZMOD 2] := by
+            have : y % 2 = 1 := by
+              exact Int.ModEq.antisymm (id (Int.ModEq.symm hy)) (Int.odd_mod_four.2 (by omega))
+            rw [Int.ModEq.odd_pow]
+            exact this
+          exact id (Int.ModEq.symm h3)
+      exact Int.ModEq.add_right 4 h2
+    -- Since $x^5 \not\equiv y^2 + 4 \pmod{2}$, we have $x^5 \ne y^2 + 4$.
+    have h3 : x ^ 5 ≠ y ^ 2 + 4 := by
+      intro h
+      have : x ^ 5 ≡ y ^ 2 + 4 [ZMOD 2] := by
+        exact Int.ModEq.symm (Int.ModEq.trans h (id (Int.ModEq.symm h1)))
+      rw [Int.modEq_iff_dvd] at this
+      have h4 : 2 ∣ (x ^ 5 - (y ^ 2 + 4)) := by
+        exact Int.dvd_sub.symm this
+      simp at h4
+      omega
+    exact h3
+
+```

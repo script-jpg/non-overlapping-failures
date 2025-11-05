@@ -1,0 +1,110 @@
+-- the key inequality, the lower bound is 100-10^4/k^2
+  have kernel (k : ℕ) : 1 / √k ≥ 100 - 10^4 / k^2 := by
+    have : (10^4 / k^2 : ℝ) = (100 : ℝ)^2 / k^2 := by
+      group
+    rw [this]
+    have : 1 / √k = √(100^2 / k^2) := by
+      rw [Real.sqrt_div]
+      norm_num
+      simp
+      exact Nat.cast_nonneg' k
+    rw [this]
+    have : √((100 : ℝ)^2 / k^2) ≥ √(100^2 - (10^4 / k^2)) := by
+      have : (10^4 / k^2 : ℝ) ≤ (100 : ℝ)^2 / k^2 := by
+        group
+        have : (k : ℝ) ≥ 2 := by exact Nat.cast_le_ofNat.mpr k
+        have : (k : ℝ)^2 ≥ 4 := by
+          apply one_le_pow₀
+          exact Nat.one_le_cast.mpr k
+        rify at this
+        have : (10^4 : ℝ) ≤ (100^2 : ℝ) := by norm_num
+        trans (10^4 : ℝ) / k^2
+        · gcongr
+        · exact div_le_div_of_nonneg_right this (by positivity)
+      exact Real.sqrt_le_sqrt this
+    have : 100 - 10^4 / k^2 = √(100^2 - (10^4 / k^2)) := by
+      have : 100^2 - (10^4 / k^2) = (100 : ℝ)^2 - (10^4 / k^2) := by
+        group
+      rw [this]
+      symm
+      rw [Real.sqrt_div]
+      norm_num
+      have : (k : ℝ) ≥ 2 := by exact Nat.cast_le_ofNat.mpr k
+      have : (k : ℝ)^2 ≥ 4 := by
+        apply one_le_pow₀
+        exact Nat.one_le_cast.mpr k
+      rify at this
+      have : (10^4 : ℝ) ≤ (100^2 : ℝ) := by norm_num
+      trans (10^4 : ℝ) / k^2
+      · gcongr
+      · exact div_le_div_of_nonneg_right this (by positivity)
+    rw [this]
+    exact this
+
+  -- the key inequality, the upper bound is 100-10^4/k^2
+  have kernel' (k : ℕ) : 1 / √k ≤ 100 - 10^4 / (k + 1)^2 := by
+    have : (10^4 / (k + 1)^2 : ℝ) = (100 : ℝ)^2 / (k + 1)^2 := by
+      group
+    rw [this]
+    have : 1 / √k = √(100^2 / k^2) := by
+      rw [Real.sqrt_div]
+      norm_num
+      simp
+      exact Nat.cast_nonneg' k
+    rw [this]
+    have : √((100 : ℝ)^2 / k^2) ≤ √((100^2 + (10^4 / (k + 1)^2) : ℝ) / k^2) := by
+      have : (10^4 / (k + 1)^2 : ℝ) ≤ (100^2 + (10^4 / (k + 1)^2) : ℝ) / k^2 := by
+        group
+        have : (k : ℝ) ≥ 2 := by exact Nat.cast_le_ofNat.mpr k
+        have : (k : ℝ)^2 ≥ 4 := by
+          apply one_le_pow₀
+          exact Nat.one_le_cast.mpr k
+        rify at this
+        have : (10^4 : ℝ) ≤ (100^2 : ℝ) := by norm_num
+        trans (10^4 : ℝ) / (k + 1)^2
+        · gcongr
+        · exact div_le_div_of_nonneg_right this (by positivity)
+      exact Real.sqrt_le_sqrt this
+    have : 100 + 10^4 / (k + 1)^2 = √((100^2 + (10^4 / (k + 1)^2) : ℝ) / k^2) := by
+      have : 100^2 + (10^4 / (k + 1)^2 : ℝ) = (100^2 + (10^4 / (k + 1)^2) : ℝ) / k^2 * k^2 := by
+        field_simp
+      rw [this]
+      symm
+      rw [Real.sqrt_div]
+      norm_num
+      have : (k : ℝ) ≥ 2 := by exact Nat.cast_le_ofNat.mpr k
+      have : (k : ℝ)^2 ≥ 4 := by
+        apply one_le_pow₀
+        exact Nat.one_le_cast.mpr k
+      rify at this
+      have : (10^4 : ℝ) ≤ (100^2 : ℝ) := by norm_num
+      trans (10^4 : ℝ) / (k + 1)^2
+      · gcongr
+      · exact div_le_div_of_nonneg_right this (by positivity)
+    rw [this]
+    exact this
+
+  -- solve the sum
+  have sum_bound : ∑ k in Finset.Icc 2 10000, 1 / √k ≤ 999900 := by
+    apply Finset.sum_le_sum
+    · intro x hx
+      simp at hx
+      rcases hx with ⟨hx1, hx2⟩
+      -- it's enough to prove the result for every single summand
+      suffices : 1 / √x ≤ 100 - 10^4 / (x + 1)^2
+      · exact this
+      exact kernel' x
+    · intro x hx
+      simp at hx
+      rcases hx with ⟨hx1, hx2⟩
+      -- it's enough to prove the result for every single summand
+      suffices : 1 / √x ≥ 100 - 10^4 / x^2
+      · exact this
+      exact kernel x
+
+  -- the result is clearly true (we compute the sum in two different ways)
+  have sum_eq : ∑ k in Finset.Icc 2 10000, 1 / √k = ∑ k in Finset.Icc 2 10000, 1 / √k := by rfl
+  apply le_of_eq sum_eq
+  apply le_trans sum_bound
+  norm_num
+```

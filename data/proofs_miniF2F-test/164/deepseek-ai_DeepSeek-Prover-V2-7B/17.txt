@@ -1,0 +1,43 @@
+have h₃ : x ≠ 1 := h₀.1
+  have h₄ : y ≠ 1 := h₀.2
+  have h₅ : Real.log 16 = 4 * Real.log 2 := by
+    rw [show (16 : ℝ) = 2 ^ 4 by norm_num]
+    simp [Real.log_rpow]
+  have h₆ : Real.log x = (Real.log 16) * (Real.log y) / Real.log y := by
+    field_simp [h₄, Real.log_ne_zero_of_pos_of_ne_one] at h₁ ⊢
+    linarith
+  have h₇ : x = 16 := by
+    have h₇ : Real.log x = Real.log 16 := by
+      field_simp [h₄, Real.log_ne_zero_of_pos_of_ne_one] at h₁ ⊢
+      nlinarith
+    have h₈ : x = 16 := by
+      rw [← Real.exp_log (show 0 < x by
+        by_contra h
+        have : x ≤ 0 := by linarith
+        have : Real.log x ≤ 0 := Real.log_nonpos (by linarith) (by linarith)
+        have : Real.log 16 > 0 := Real.log_pos (by norm_num)
+        nlinarith) ]
+      rw [← Real.exp_log (show 0 < (16 : ℝ) by norm_num)]
+      simp_all
+    exact h₈
+  have h₈ : y = 4 := by
+    have h₈ : x * y = 64 := h₂
+    rw [h₇] at h₈
+    have : (16 : ℝ) * y = 64 := by linarith
+    have : y = 4 := by
+      apply mul_left_cancel₀ (show (16 : ℝ) ≠ 0 by norm_num)
+      nlinarith
+    exact this
+  have h₉ : (Real.log (x / y) / Real.log 2) ^ 2 = 20 := by
+    rw [h₇, h₈]
+    field_simp [Real.log_div, Real.log_mul, Real.log_pow, Real.log_exp, Real.log_rpow, Real.log_inv,
+      Real.log_one, Real.log_zero]
+    ring_nf
+    <;> norm_num
+    <;> field_simp [Real.log_ne_zero_of_pos_of_ne_one]
+    <;> norm_num
+    <;> rw [← mul_self_inj (by positivity) (by positivity)]
+    <;> ring_nf
+    <;> norm_num
+  exact h₉
+```

@@ -1,0 +1,63 @@
+-- determine r
+  have r_eq : r = 1342 % 13 := h₀
+
+  have r_val : r = 11 := by
+    norm_num [r_eq]
+
+  -- Let $n$ be a multiple of 1342, such that its remainder upon being divided by 13 is smaller than $r$.
+  have n_eq : 1342 ∣ n := h₂
+  have n_mod : n % 13 < r := h₃
+
+  -- We want to show that $n \geq 6710$.
+  have lower_bound : 6710 ≤ n := by
+
+    -- It is useful to note that $1342 = 13 * 103 + 9$.
+    have eq1 : 1342 = 13 * 103 + 9 := by norm_num
+
+    -- generalization of Fermat's little theorem
+    have h : ∀ a : ℕ, 13 ∣ a ^ 12 - 1 := by
+      intro a
+      have : a.gcd 13 = 1 → 13 ∣ a ^ 12 - 1 := by
+        intro ha
+        have : a ^ 12 = (a ^ 13) * a ^ (-1) := by
+          rw [←Nat.mul_neg_one_add_one (a ^ 13)]
+          ring_nf
+        rw [this]
+        apply Nat.dvd_mul_right
+
+      -- check a = 0 case
+      rcases Nat.eq_zero_or_pos a with ha | ha
+      · rw [ha]
+        norm_num
+      · have ha' : a.gcd 13 = 1 := by
+          refine Nat.coprime_of_not_dvd?_ ha
+          norm_num
+        apply this ha'
+  -- Since $1342 = 13 * 103 + 9$, we have $1342 \equiv 9 \pmod {13}$.
+  have n_mod_13 : n % 13 < 1342 % 13 := by
+    trans r
+    norm_num [r_val]
+    exact n_mod
+  -- This means $n \equiv 9 \pmod {13}$.
+  have n_mod_eq : n % 13 = 9 := by
+    omega
+
+  -- This means $n = 13 * k + 9$ for some $k$.
+  have n_div : ∃ k, n = 13 * k + 9 := by
+    have : n % 13 = 9 := n_mod_eq
+    have : n = 13 * (n / 13) + n % 13 := by
+      exact Eq.symm (Nat.div_add_mod n 13)
+    obtain ⟨k, hk⟩ := Nat.div_eq_of_eq_mul_add_mod this
+    use k
+    rw [hk, this]
+  obtain ⟨k, n_div⟩ := n_div
+
+  -- It is clear that $n \geq 6710$.
+  omega
+
+  -- equality holds when $k = 516$
+  have eq : 6710 = 13 * 516 + 9 := by norm_num
+  rw [eq] at lower_bound
+  omega
+
+```

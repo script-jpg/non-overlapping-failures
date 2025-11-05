@@ -1,0 +1,127 @@
+-- We have $x^2-10x-29>0$, $x^2-10x-45<0$ and $x^2-10x-69<0$.
+
+  have : x ^ 2 - 10 * x - 29 > 0 := by
+    let y := x ^ 2 - 10 * x - 29
+    have hy : y > 0 := by
+      rw [show y = 1 / (1 / y) by simp [y]]
+      apply one_div_pos.mpr
+      linarith
+    dsimp [y]
+    linarith
+
+  have : x ^ 2 - 10 * x - 45 < 0 := by
+    let y := x ^ 2 - 10 * x - 45
+    have hy : y < 0 := by
+      rw [show y = 1 / (1 / y) by simp [y]]
+      apply one_div_neg.mpr
+      linarith
+    dsimp [y]
+    linarith
+
+  have : x ^ 2 - 10 * x - 69 < 0 := by
+    let y := x ^ 2 - 10 * x - 69
+    have hy : y < 0 := by
+      rw [show y = 1 / (1 / y) by simp [y]]
+      apply one_div_neg.mpr
+      linarith
+    dsimp [y]
+    linarith
+
+  -- In particular, $x^2-10x-29$ and
+  -- $x^2-10x-69$ are positive and negative
+  -- respectively so that $x^2-10x-29$ is positive
+  -- and $x^2-10x-69$ is negative. There
+  -- are no common factors to these
+  -- two, so the product is -420.
+
+  have h₅ : (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) = 420 := by
+    calc
+      (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) =
+        (x ^ 2 - 10 * x - 29) * (-(-x ^ 2 + 10 * x + 45) * (x ^ 2 - 10 * x - 29) / (-x ^ 2 + 10 * x + 45)) + (x ^ 2 - 10 * x - 69) * (-(-x ^ 2 + 10 * x + 69) * (x ^ 2 - 10 * x - 29) / (-x ^ 2 + 10 * x + 69)) := by
+        rw [div_self_neg_self]
+        have : x ^ 2 - 10 * x - 29 ≠ 0 := h₁
+        have : x ^ 2 - 10 * x - 45 ≠ 0 := h₂
+        have : x ^ 2 - 10 * x - 69 ≠ 0 := h₃
+        linarith
+      _ = -((-x ^ 2 + 10 * x + 45) * (x ^ 2 - 10 * x - 29) + (-x ^ 2 + 10 * x + 69) * (x ^ 2 - 10 * x - 29)) := by
+        rw [mul_div_cancel_right₀]
+        have : x ^ 2 - 10 * x - 29 ≠ 0 := h₁
+        have : x ^ 2 - 10 * x - 45 ≠ 0 := h₂
+        have : x ^ 2 - 10 * x - 69 ≠ 0 := h₃
+        linarith
+      _ = -420 := by
+        ring_nf
+        linarith
+
+  -- Now, we have the product of two divisors is -420,
+  -- so that the positive divisor is 21 and
+  -- the negative divisor is -20.
+
+  have h₆ : (x ^ 2 - 10 * x - 29) = 21 \or (x ^ 2 - 10 * x - 29) = -20 := by
+    have h₆ : (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) = 420 := h₅
+    have h₇ : x ^ 2 - 10 * x - 69 < 0 := by linarith
+    have h₈ : (x ^ 2 - 10 * x - 29) > 0 := by linarith
+    have h₉ : (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) = -420 := by
+      rw [show (x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69) = -((x ^ 2 - 10 * x - 29) * (x ^ 2 - 10 * x - 69)) by ring_nf]
+      rw [h₅]
+      ring_nf
+    have h₁₀ : (x ^ 2 - 10 * x - 29) = 21 \or (x ^ 2 - 10 * x - 29) = -20 := by
+      have h₁₀ : (x ^ 2 - 10 * x - 29) ∣ 420 := by
+        use (x ^ 2 - 10 * x - 69)
+        linarith
+      have h₁₁ : (x ^ 2 - 10 * x - 29) ≠ 0 := by
+        linarith
+      have h₁₂ : ∃ k : ℤ, 0 < k ∧ k ∣ 420 ∧ (x ^ 2 - 10 * x - 29) = k := by
+        rw [Int.exists_pos_and_dvd] at *
+        use (x ^ 2 - 10 * x - 29)
+        constructor
+        · linarith
+        · rw [h₉]
+          exact Int.dvd_mul_right_2 (x ^ 2 - 10 * x - 29) (x ^ 2 - 10 * x - 69)
+      rcases h₁₂ with ⟨k, h₁₃, h₁₄, h₁₅⟩
+      have h₁₆ : k < 0 := by
+        rw [h₁₅] at h₇
+        linarith
+      have h₁₇ : k > 0 := by linarith
+      omega
+    exact h₁₀
+  have h₇ : (x ^ 2 - 10 * x - 29) = 21 := by
+    rcases h₆ with h | h
+    · exact h
+    · have h₈ : (x ^ 2 - 10 * x - 29) = -20 := h
+      have h₉ : x ^ 2 - 10 * x - 45 = 0 := by
+        rw [h₈]
+        linarith
+      contradiction
+
+  -- So, $x^2-10x-45=5$ and $x^2-10x-29=21$.
+
+  have h₈ : x ^ 2 - 10 * x - 45 = 5 := by
+    have h₈ : x ^ 2 - 10 * x - 45 = (x ^ 2 - 10 * x - 29) - 16 := by ring_nf
+    rw [h₈, h₇]
+    linarith
+
+  -- We can solve the quadratic equation $x^2-10x-45=5$ to find the value of $x$.
+
+  have h₉ : (x - 13) * (x - (-5)) = 0 := by
+    ring_nf
+    linarith
+
+  have h₁₀ : x - 13 = 0 \or x - (-5) = 0 := by
+    rw [mul_eq_zero]
+    exact h₉
+
+  have h₁₁ : x = 13 \or x = -5 := by
+    rcases h₁₀ with h | h
+    · rw [sub_eq_zero] at h
+      exact h
+    · rw [sub_eq_zero] at h
+      linarith
+
+  have h₁₂ : x = 13 := by
+    rcases h₁₁ with h | h
+    · exact h
+    · linarith
+
+  exact h₁₂
+```

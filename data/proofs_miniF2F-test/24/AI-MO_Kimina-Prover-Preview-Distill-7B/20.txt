@@ -1,0 +1,67 @@
+-- Rewrite $\cos{\frac{3\pi}{7}}$ as $\cos{\frac{4\pi}{7}}$.
+  have h : Real.cos (3 * Real.pi / 7) = Real.cos (4 * Real.pi / 7) := by
+    have : 3 * Real.pi / 7 = Real.pi - 4 * Real.pi / 7 := by ring
+    rw [this]
+    rw [Real.cos_pi_sub]
+  rw [h]
+
+  -- Prove that $\cos{\frac{\pi}{7}}-\cos{\frac{2\pi}{7}}+\cos{\frac{4\pi}{7}}=\frac{1}{2}$.
+  have h : Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) = 1 / 2 := by
+    -- Use the identity $e^{i\theta} + e^{-i\theta} = 2\cos{\theta}$.
+    have id (θ : ℝ) : Complex.cos θ = (Complex.exp (θ * Complex.I) + Complex.exp (-θ * Complex.I)) / 2 := by
+      rw [Complex.cos_eq_re, Complex.exp_re, Complex.exp_re, Complex.exp_im, Complex.exp_im]
+      simp only [one_div]
+      ring
+    have id' (θ : ℝ) : Complex.sin θ = (Complex.exp (-θ * Complex.I) - Complex.exp (θ * Complex.I)) / 2 / Complex.I := by
+      rw [Complex.sin_eq_re, Complex.exp_re, Complex.exp_re, Complex.exp_im, Complex.exp_im]
+      simp only [one_div]
+      ring
+    -- Use the above identities to rewrite cosines as complex exponentials.
+    rw [id, id]
+    have : Conjugate ((Complex.exp (4 * Real.pi / 7 * Complex.I) + Complex.exp (-4 * Real.pi / 7 * Complex.I)) / 2) = (Complex.exp (4 * Real.pi / 7 * Complex.I) + Complex.exp (-4 * Real.pi / 7 * Complex.I)) / 2 := by
+      apply Complex.conjugate_eq_ofReal
+    simp only [Complex.ofReal_div, Complex.ofReal_add, Complex.ofReal_mul, Complex.ofReal_ofNat,
+      Complex.ofReal_one, Complex.exp_neg, Complex.exp_ofReal_mul, Complex.exp_ofReal_mul,
+      mul_one_div_cancel, one_div, div_eq_mul_inv, Complex.I_mul_I] at this
+    rw [←Complex.cos_ofReal_div_two]
+    -- Simplify complex terms.
+    rw [←Complex.exp_add, ←Complex.exp_add, ←Complex.exp_add]
+    have : Complex.exp (-4 * Real.pi / 7 * Complex.I + 2 * Real.pi * Complex.I) = Complex.exp (-4 * Real.pi / 7 * Complex.I + 14 * Real.pi / 7 * Complex.I) := by
+      have : 2 * Real.pi * Complex.I = 14 * Real.pi / 7 * Complex.I := by ring
+      rw [this]
+    rw [this]
+    rw [←Complex.exp_add]
+    have : -4 * Real.pi / 7 + 14 * Real.pi / 7 = 10 * Real.pi / 7 := by ring
+    rw [this]
+    rw [show 10 * Real.pi / 7 = 2 * Real.pi - 4 * Real.pi / 7 by ring]
+    simp only [Complex.exp_sub, Complex.exp_mul, Complex.exp_ofReal_mul, Complex.exp_ofReal_mul,
+      mul_one_div_cancel, one_div, div_eq_mul_inv, Complex.I_mul_I]
+    -- Use the identity (e^x + e^-x) * (e^y + e^-y) = e^{x+y} + e^{x-y} + e^{-x+y} + e^{-x-y}.
+    have : (Complex.exp (4 * Real.pi / 7 * Complex.I) + Complex.exp (-4 * Real.pi / 7 * Complex.I)) * (Complex.exp (2 * Real.pi / 7 * Complex.I) + Complex.exp (-2 * Real.pi / 7 * Complex.I)) = Complex.exp (6 * Real.pi / 7 * Complex.I) + Complex.exp (2 * Real.pi / 7 * Complex.I) + Complex.exp (-2 * Real.pi / 7 * Complex.I) + Complex.exp (-6 * Real.pi / 7 * Complex.I) := by
+      rw [show 6 * Real.pi / 7 * Complex.I = (4 * Real.pi / 7 * Complex.I + 2 * Real.pi / 7 * Complex.I) by ring]
+      rw [show 2 * Real.pi / 7 * Complex.I = (4 * Real.pi / 7 * Complex.I - 2 * Real.pi / 7 * Complex.I) by ring]
+      rw [show -2 * Real.pi / 7 * Complex.I = -(4 * Real.pi / 7 * Complex.I - 2 * Real.pi / 7 * Complex.I) by ring]
+      rw [show -6 * Real.pi / 7 * Complex.I = -(4 * Real.pi / 7 * Complex.I + 2 * Real.pi / 7 * Complex.I) by ring]
+      repeat rw [←Complex.exp_add]
+      ring
+    rw [this]
+    -- Use the identity cos(θ) = cos(-θ).
+    have : Real.cos (2 * Real.pi / 7) = Real.cos (-2 * Real.pi / 7) := by
+      rw [show -2 * Real.pi / 7 = - (2 * Real.pi / 7) by ring]
+      simp only [Complex.cos_neg]
+    rw [this]
+    -- Use the fact that cos(θ) = sin(π/2 - θ).
+    have : Real.cos (4 * Real.pi / 7) = Real.sin (Real.pi / 2 - (4 * Real.pi / 7)) := by
+      simp only [Real.sin_pi_div_two_sub]
+    rw [this]
+    have : Real.pi / 2 - (4 * Real.pi / 7) = - (3 * Real.pi / 7) := by ring
+    rw [this]
+    -- Simplify similar terms.
+    have : Real.sin (- (3 * Real.pi / 7)) = - Real.sin (3 * Real.pi / 7) := by
+      simp only [Complex.sin_neg]
+    rw [this]
+    linarith
+  -- Rewrite the result.
+  rw [h]
+
+```

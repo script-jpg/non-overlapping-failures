@@ -1,0 +1,243 @@
+-- Notice that if $p$ is a prime number, then $d(p) = 2$, and $f(p) = 2 / p ^ {1 / 3}$. 
+  have h_prime (p : ℕ) (hp : p.Prime) : (Nat.divisors p).card = 2 := by
+    simp [Nat.divisors, Nat.divisorsAntidiagonal, hp]
+    $\{\}$ -- actually, {1, p} would be sufficient, but an empty set would be a problem.
+    aesop
+    exact hp.ne_one
+  have h_prime_f (p : ℕ) (hp : p.Prime) : f p = 2 / p ^ ((1 : ℝ) / 3) := by
+    rw [h₀ p (by simp), h_prime p hp]
+
+  -- Then, if $p$ and $q$ are prime numbers, we can compare $f(p)$ and $f(q)$.
+  have h_prime_lt_of_lt (p q : ℕ) (hp : p.Prime) (hq : q.Prime) (hlt : p < q) : f p < f q := by
+    rw [h_prime_f p hp, h_prime_f q hq]
+    have htmp : p ^ ((1 : ℝ) / 3) < q ^ ((1 : ℝ) / 3) := by919
+      apply Real.rpow_lt_rpow
+      · simp
+      · simp
+      · exact hlt
+    simp [Real.rpow_pos_of_pos]
+    have : 2 / p ^ ((1 : ℝ) / 3) < 2 / q ^ ((1 : ℝ) / 3) := by
+      apply (div_lt_div_iff_of_pos_left _).mpr
+      · exact htmp
+      · simp
+    linarith
+    · simp
+    · simp
+
+  -- Also, if $p$ and $q$ are prime numbers, then $f(pq) = f(p)f(q) / 2$.
+  have h_mul_f (p q : ℕ) (hp : p.Prime) (hq : q.Prime) : f (p * q) = f p * f q / 2 := by
+    rw [h₀ _ (by simp), h₀ _ (by simp), h₀ _ (by simp)]
+    have : (Nat.divisors (p * q)).card = 4 := by
+      rw [Nat.divisors_mul, Nat.divisors_prime (by simp), Nat.divisors_prime (by simp)]
+      aesop
+      exact hp.ne_one
+      exact hq.ne_one
+    have h : (p * q) ^ ((1 : ℝ) / 3) = p ^ ((1 : ℝ) / 3) * q ^ ((1 : ℝ) / 3) := by
+      rw [Real.mul_rpow]
+      · simp
+      · simp
+    rw [this]
+    field_simp
+    rw [mul_div_assoc]
+
+  -- Thus, if $p$ and $q$ are prime numbers, then $f(pq) > f(p)$ and $f(pq) > f(q)$.
+  have h_mul_f_gt (p q : ℕ) (hp : p.Prime) (hq : q.Prime) : f (p * q) > f p ∧ f (p * q) > f q := by
+    rw [h_mul_f p q hp hq]
+    constructor
+    · apply (div_lt_iff₀ (by simp)).mpr
+      rw [mul_comm]
+      exact h_mul_f_gt hq hp hq hp
+    · apply (div_lt_iff₀ (by simp)).mpr
+      rw [mul_comm]
+      exact h_mul_f_gt hp hq hp hq
+
+  -- Let's think about how to find the maximum value of $f(n)$.
+  -- We first consider the case when $n$ is prime.
+  have h_n prime : ∀ n, f n < f N → ¬ Nat.Prime n := by
+    intro n hn
+    by_contra! hprime
+    have hnp := h_prime_lt_of_lt n (2 : ℕ) (Nat.prime_two) hprime (by simp)
+    have hnn := h_mul_f_gt n 2 (by simp) hprime (by simp)
+    linarith
+  -- Next, we consider the case when $n$ is a product of two primes.
+  have h_n_mul_two : ∀ n, f n < f N → (n = 1 ∨ Nat.Prime n) := by
+    intro n hn
+    by_contra! h
+    have hnp := h_prime_lt_of_lt n (2 : ℕ) (Nat.prime_two) (by omega) (by simp)
+    have hnn := h_mul_f_gt n 2 (by omega) (by simp)
+    linarith
+
+  -- We now show that $1$ is a kind of local maximum.
+  have h_one : f 1 < f N := by
+    by_contra! h
+    specialize h_n_mul_two 1 h
+    simp at h
+    tauto
+
+  -- By the above results, we know that $N$ is a product of two primes or $N = 1$.
+  have hmul_or_one : N = 1 ∨ Nat.Prime N ∧ ¬ (Nat.exists M M < N ∧ N ∣ M ^ 3) := by
+    by_cases h : N = 1
+    · left; exact h
+    · right
+      constructor
+      · exact Nat.prime_iff.mp h_n_mul_two N h
+      · by_contra! h
+        let M : ℕ := N
+        let f : ℕ → ℝ := fun n => (Nat.divisors n).card / n ^ ((1 : ℝ) / 3)
+        have h_M : f N > f M := h n f h h_M
+        have h_not : False := by
+          apply h n f
+          · exact h
+          · exact rfl
+        exact False.elim (h_not this)
+
+  -- Next, we show that $N$ is a product of two distinct primes.
+  have h_mul_of_two_distinct (p q : ℕ) (hp : p.Prime) (hq : q.Prime) (hlt : p < q) : p * q ∈ N ↔ N = p * q := by
+    constructor
+    · intro h
+      have hpq : p * q < q * q := by
+        apply Nat.mul_lt_mul_of_lt_of_le
+        · exact hlt
+        · exact Nat.le_of_lt_succ hlt
+        · apply Nat.Prime.one_lt hq
+      have hqo : ¬ (p * q) ∣ (q * q) := by
+        intro h
+        have : p * q ∣ q := by
+          have : p * q ∣ q * q := h
+          exact Nat.dvd_of_dvd_mul_right_of_gcd_one this rfl
+        exact hq.dvd_prime hp this
+      have : (p * q).divisors.card = 4 := by
+        rw [Nat.divisors_mul, Nat.divisors_prime hp, Nat.divisors_prime hq]
+        aesop
+        exact hp.ne_one
+        exact hq.ne_one
+      have : (p * p).divisors.card = 3 := by
+        rw [Nat.divisors_mul, Nat.divisors_prime hp, Nat.divisors_one]
+        aesop
+        exact hp.ne_one
+      have : (p * q).divisors = (p * p).divisors := by
+        rw [List.eq_iff] at h
+        exact h
+      rw [this] at hqo
+      have hqou : q ∣ p * p := by
+        apply Nat.Coprime.dvd_of_dvd_mul_right hqo
+        apply Nat.Coprime.mul_right
+        · apply Nat.coprime_primes hp hq
+        · apply Nat.Prime.coprime_self hq
+      have hqop : p * p ∣ q * q := by
+        apply Nat.Coprime.dvd_of_dvd_mul_left
+        · apply Nat.Coprime.mul_left
+          · apply Nat.coprime_primes hp hq
+          · apply Nat.Prime.coprime_self hp
+        · apply Nat.Prime.coprime_self hq
+      have : p * p = q * q := by
+        apply Nat.dvd_antisymm hqop
+        · apply Nat.dvd_mul_left
+        · apply Nat.dvd_mul_right
+        · exact Nat.le_of_lt_succ hlt
+        · exact Nat.Prime.one_lt hq
+      tauto
+    · intro h
+      rw [h]
+      simp
+
+  -- Next, we show that $N$ is not a product of two (distinct) primes.
+  have h_not_mul_of_two_distinct : ¬ (∃ p q : ℕ, Nat.Prime p ∧ Nat.Prime q ∧ p < q ∧ N = p * q) := by
+    intro h
+    obtain ⟨p, q, hp, hq, hlt, hmul⟩ := h
+    have hmul_nz : p * q ≠ 0 := by omega
+    rw [hmul] at h_one
+    rw [h_mul_of_two_distinct p q hp hq hlt] at hone
+
+  -- Next, we show that $N$ is a power of some prime number.
+  have h_pow_of_prime (p : ℕ) (hp : p.Prime) (h : N = p ^ 3) : N = p ^ 3 := by
+    intro h'
+    rw [h, h'] at h₀
+    have h_dvd : p ^ 3 ∣ p ^ 2 * p := by exact Nat.dvd_mul_left _ _
+    have : (p ^ 3).divisors.card = 4 := by
+      rw [Nat.divisors_prime_pow hp (by norm_num)]
+      aesop
+      exact hp.ne_one
+    have : (p ^ 2 * p).divisors.card = 6 := by
+      rw [Nat.divisors_mul, Nat.divisors_prime_pow hp (by norm_num), Nat.divisors_prime (by norm_num)]
+      aesop
+      exact hp.ne_one
+    have : (p ^ 3).divisors ≠ (p ^ 2 * p).divisors := by
+      intro h
+      have h_card : (p ^ 3).divisors.card ≠ (p ^ 2 * p).divisors.card := by
+        rw [this, that]
+        norm_num
+      rw [h] at h_card
+      tauto
+    tauto
+
+  have h_not_pow_of_three (p : ℕ) (hp : p.Prime) (h : N = p ^ 3) : N = p ^ 3 := by
+    intro h'
+    obtain ⟨q, hq, hlt, hmul⟩ := h_not_mul_of_two_distinct
+    have : q ∣ p ^ 3 := by
+      rw [h, hmul]
+      apply Nat.pow_dvd_pow
+      exact Dvd.intro p hlt
+    rw [Nat.prime_dvd_prime_iff_eq (Nat.prime_two) hp] at this
+    tauto
+
+  have h_pow : ∃ p : ℕ, Nat.Prime p ∧ N = p ^ 3 := by
+    by_cases h : N = 1
+    · use 1
+      simp at h
+      tauto
+    · by_cases h : N = 0
+      · use 0
+        simp at h
+        tauto
+      · obtain ⟨p, q, hp, hq, hlt, hmul⟩ := h_not_mul_of_two_distinct
+        have : p ^ 3 < q ^ 3 := by exact Nat.pow_lt_pow_left hlt 3
+        have hlt : p < q := by exact Nat.lt_of_pow_lt_pow_left' 3 hlt
+        have : p ^ 3 ∣ N := by
+          rw [h_mul_of_two_distinct p q hp hq hlt] at hone
+          rw [hone]
+          apply Nat.dvd_mul_right
+        obtain ⟨k, hk⟩ := Nat.exists_eq_succ_of_ne_zero (p ^ 3) (by omega)
+        use k
+        rw [hk, h]
+        apply Nat.dvd_antisymm
+        · apply Nat.dvd_mul_right
+        · apply (Nat.pow_dvd_pow_iff (by norm_num)).mpr
+          apply Nat.le_of_lt_succ
+          rw [hk]
+          exact hlt
+
+  obtain ⟨p, hp, h⟩ := h_pow
+  have h_uniq : p = 2 := by
+    have : p ^ 3 < q ^ 3 → p < q := by
+      intro h
+      exact Nat.lt_of_pow_lt_pow_left' 3 h
+    have : p < q → p ^ 3 < q ^ 3 := by
+      intro h
+      exact Nat.pow_lt_pow_left h (by norm_num)
+    have : p ^ 3 < q ^ 3 := by
+      by_contra! h
+      have : p ^ 3 ∣ q ^ 3 := by
+        apply Nat.dvd_of_lt_of_pos
+        · exact h
+        · exact Nat.pow_pos (by norm_num)
+      have : ¬ p ^ 3 ∣ q ^ 3 := by
+        intro h'
+        have hq3 : q ∣ p ^ 3 := by
+          rw [h, hmul]
+          apply Nat.pow_dvd_pow
+          exact Dvd.intro p (Nat.Prime.one_lt hq)
+        rw [Nat.prime_dvd_prime_iff_eq hp hq] at hq3
+        tauto
+      tauto
+    have hlt := this h
+    have hgt := this hlt
+    linarith
+
+  rw [h_uniq] at h
+  have h answer : N = 2 ^ 3 := by
+    exact h
+  rw [h] at h_one
+  norm_num at h_one
+  tauto
+```

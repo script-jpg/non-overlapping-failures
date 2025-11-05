@@ -1,0 +1,52 @@
+-- estimate the sum by integral
+  have : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k < ∫ k ∈ Set.Icc (2 : ℝ) 10000, 1 / Real.sqrt k := by
+    apply Finset.sum_lt_integral
+    simp only [Set.mem_Icc, Nat.ofNat_pos, and_true]
+    norm_num
+
+  -- calculate the integral
+  have integral_eq : ∫ k ∈ Set.Icc (2 : ℝ) 10000, 1 / Real.sqrt k = 2 * Real.sqrt 10000 - 2 * Real.sqrt 2 := by
+    have : ∫ k ∈ Set.Icc (2 : ℝ) 10000, 1 / Real.sqrt k = ∫ k ∈ Set.Ico 2 10000, 1 / Real.sqrt k := by
+      rw [←Set integral_eq_integral]
+      simp only [Set.mem_Icc, and_imp]
+      simp only [Set.mem_Ico, true_and]
+      norm_num
+    rw [this]
+    let g (x : ℝ) := 2 * Real.sqrt x
+    have hg : Differentiable ℝ g := by
+      rw [differentiable_iff_continuousWithinAt]
+      apply ContinuousWithinAt.mul
+      apply continuousWithinAt_const
+      apply continuousWithinAt_id
+    have : ∀ x ∈ Set.Ico 2 10000, deriv g x = 1 / Real.sqrt x := by
+      intro x hx
+      rw [deriv_const_mul, deriv_sqrt, deriv_const, mul_one, inv_pow, Real.sqrt_eq_rpow]
+      simp only [Set.mem_Ico, and_imp]
+      norm_num
+      rcases hx with ⟨hx1, hx2⟩
+      have : x ≠ 0 := by linarith
+      try field_simp
+      rw [rpow_inv_rpow]
+      have : (1 : ℝ) / 2 ≤ x := by linarith
+      try linarith
+      have : (4 : ℝ) ≤ x * x := by nlinarith
+      try linarith
+    rw [integral_eq_sub_of_deriv_eq]
+    apply hg
+    rw [continuousOn_Ico]
+    apply continuousAt.const_mul (continuousAt_id) 2
+    rw [Differentiable.continuousWithinAt hg]
+    simp only [Set.mem_Ico, and_imp]
+    norm_num
+    exact this
+
+  -- use the integral to prove the sum is bounded by $2\sqrt{10000}$
+  have sum_bdd : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k < 2 * Real.sqrt 10000 := by linarith
+
+  -- calculate $2\sqrt{10000} < 198$
+  have : 2 * Real.sqrt 10000 < 198 := by
+    rw [Real.sqrt_eq_iff_sq_eq] <;> norm_num
+    <;> linarith
+
+  linarith
+```

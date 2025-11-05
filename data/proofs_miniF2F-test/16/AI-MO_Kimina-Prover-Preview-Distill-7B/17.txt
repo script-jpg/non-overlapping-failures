@@ -1,0 +1,60 @@
+-- Prove that $f$ is injective.
+  have h₂ : Injective f := by
+    intro a b h
+    by_contra!
+    have : f a < f b := h₁ a (by omega)
+    have : f b < f a := h₁ b (by omega)
+    linarith
+
+  -- Since $f$ is injective, $f(n) < f(n+1)$, and $f(1) < f(f(1)) < f(2)$, we have $f(1) = 1$.
+  have h₃ : f 1 = 1 := by
+    have : f 1 < f 2 := by
+      have := h₁ 1 (by omega)
+      norm_num at this
+      exact this
+    have : f (f 1) < f 2 := h₁ 1 (by omega)
+    by_cases h : f 1 = 1
+    · exact h
+    · have : f 1 < f (f 1) := h₁ (f 1) (by omega)
+      linarith
+
+  -- We have $f(n) < f(n+1)$ for all $n$ by induction.
+  have h₄ : ∀ n, 0 < n → f n < f (n + 1) := by
+    intro n hn
+    induction n with
+    | zero => omega
+    | succ n ih =>
+      by_cases h : n = 0
+      · rw [h, h₃]
+      · have : f (n + 1) < f (n + 1 + 1) := h₁ (n + 1) (by omega)
+        exact this
+
+  -- We have $f(n) \leq n$ for all $n$ by induction.
+  have h₅ : ∀ n, 0 < n → f n ≤ n := by
+    intro n hn
+    induction n with
+    | zero => omega
+    | succ n ih =>
+      by_cases h : n = 0
+      · rw [h, h₃]; omega
+      · have : f (n + 1) ≤ n + 1 := ih (by omega)
+        have : f (n + 1) < f (n + 1 + 1) := h₄ (n + 1) (by omega)
+        linarith
+
+  -- We have $f(n) \geq n$ for all $n$ by induction.
+  have h₆ : ∀ n, 0 < n → n ≤ f n := by
+    intro n hn
+    induction n with
+    | zero => omega
+    | succ n ih =>
+      by_cases h : n = 0
+      · rw [h, h₃]; omega
+      · have : n ≤ f n := ih (by omega)
+        have : f n < f (n + 1) := h₄ n (by omega)
+        linarith
+
+  -- It suffices to show that $f(n) \geq n$.
+  intro n hn
+  exact le_antisymm (h₆ n hn) (h₅ n hn)
+
+```

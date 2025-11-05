@@ -1,0 +1,37 @@
+-- Let $f(x) = x^2 - f(x-1).$  Then, we can also write $f(x-1) = (x-1)^2 -
+  -- f(x-2),$ and so on.  Unfolding this, we get $f(x) = x^2 - (x-1)^2 + (x-2)^2 -
+  -- (x-3)^2 + \dots + (-1)^{94}f(19).$  Looking at the pattern, we can write this as
+  -- $f(x) = \sum_{k=1}^{19} (-1)^{k+1}f(19-k+1) + \sum_{k=1}^{x-19} (-1)^{k+1}(19-k+1)^2
+  -- = \sum_{k=1}^{19} (-1)^{k+1}f(20-k) + \sum_{k=1}^{x-19} (-1)^{k+1}(20-k)^2.$
+  have h2 : ∀ x, f x = f 20 - (-1 : ℤ) ^ (x - 19) * (x - 1) * (x - 19) :=
+    fun x => calc
+    _ = (x ^ 2 - f (x - 1)) := by rw [h0]
+    _ = (x ^ 2 - ((x - 1) ^ 2 - f (x - 2))) := by rw [h0 (x - 1)]; simp only [Nat.sub_sub,
+      Nat.add_comm, Nat.sub_add_cancel]; ring_nf
+    _ = (x ^ 2 - ((x - 1) ^ 2 - ((x - 2) ^ 2 - f (x - 3)))) := by rw [h0 (x - 2)]; simp only [Nat.sub_sub,
+      Nat.add_comm, Nat.sub_add_cancel]; ring_nf
+    _ = (x ^ 2 - ((x - 1) ^ 2 - ((x - 2) ^ 2 - ((x - 3) ^ 2 - f (x - 4))))):= by rw [h0 (x - 3)]; simp only [Nat.sub_sub,
+      Nat.add_comm, Nat.sub_add_cancel]; ring_nf
+    _ = (x ^ 2 - ((x - 1) ^ 2 - ((x - 2) ^ 2 - ((x - 3) ^ 2 - ((x - 4) ^ 2 - f (x - 5)))))) := by rw [h0 (x - 4)]; simp only [Nat.sub_sub,
+      Nat.add_comm, Nat.sub_add_cancel]; ring_nf
+    _ = _ := by rw [h0 (x - 5)]; simp only [Nat.sub_sub,
+      Nat.add_comm, Nat.sub_add_cancel]; ring_nf
+
+  -- This can be rewritten as $f(x) = f(20) - (-1)^{x-19}(x-1)(x-19).$  Thus, we
+  -- have $f(94) = f(20) - (-1)^{75} \cdot 93 \cdot 74 = f(20) + 93 \cdot 74.$
+  have h3 : f 94 = f 20 + 93 * 74 := by
+    rw [h2 94]
+    ring_nf
+
+  -- We can also write $f(20) = 20^2 - f(19) = 400 - 94 = 306.$
+  have h4 : f 20 = 306 := by
+    specialize h0 20
+    rw [h1] at h0
+    ring_nf at h0
+    exact (Mathlib.Tactic.LinearCombination(lc := 1) (-h0)).symm
+
+  -- Thus, $f(94) = 306 + 93 \cdot 74 = 93 \cdot 75 + 306 = 7050 + 306 = 7356.$  The
+  -- remainder when $7356$ is divided by $1000$ is $\boxed{561}.$
+  rw [h3, h4]
+  norm_num
+```

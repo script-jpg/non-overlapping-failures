@@ -1,0 +1,156 @@
+-- First, show that $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is a multiple of $3^5$ but not $3^6$.
+  have h₁ : 3 ^ 5 ∣ ∏ i in Finset.Icc 1 9, i! := by
+    -- The number of factors of 3 in each $k!$ is $\sum_{i \geq 1} \left\lfloor \frac{k}{3^i} \right\rfloor$.
+    have h₁ k : (Nat.factorial k).primeFactors 3 = ∑ i ∈ Finset.Icc 1 (⌊(k : ℝ) / 3⌋), (Nat.divisors k).filter (fun p ↦ p = 3) := by
+      -- First, the number of factors of 3 in $k!$ is the sum of the numbers of factors in each $j!$ for $j \leq k$.
+      rw [Nat.factorial_eq_prod' (by norm_num)]
+      have h₁ : (Nat.factorial k).primeFactors 3 = ∑ i ∈ Finset.Icc 1 k, (Nat.divisors i).filter (fun p ↦ p = 3) := by
+        rw [Nat.factorial_eq_prod' (by norm_num)]
+        apply Finset.digits_factorial
+        intro p hp
+        omega
+      -- Then, the number of factors of 3 in $k!$ is the sum of the numbers of factors in each $j!$ for $j \leq k$.
+      have h₂ : ∑ i ∈ Finset.Icc 1 k, (Nat.divisors i).filter (fun p ↦ p = 3) = ∑ i ∈ Finset.Icc 1 (⌊(k : ℝ) / 3⌋), (Nat.divisors i).filter (fun p ↦ p = 3) := by
+        -- For $i \leq \lfloor k/3 \rfloor$, the number of factors of 3 in $i!$ is the same as the number of factors of 3 in $(3^i)!$.
+        have h₂ : (Nat.divisors i).filter (fun p ↦ p = 3) = (Nat.divisors (3 ^ i)).filter (fun p ↦ p = 3) := by
+          apply Nat.filter_eq_of_dvd
+          have h₂ : (Nat.factorial (3 ^ i)).primeFactors 3 = Finset.Icc 1 (3 ^ i) := by
+            rw [Nat.factorial_eq_prod' (by norm_num)]
+            apply Finset.digits_factorial
+            intro p hp
+            omega
+          rw [←h₂]
+          apply Finset.card_le_card
+          -- Given $i \leq \lfloor k/3 \rfloor$, we have $3^i \leq k$.
+          intro j
+          simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_univ, and_imp]
+          intro _ _
+          apply le_trans _ (by omega)
+          apply Nat.pow_le_of_le_log
+         . norm_num
+          omega
+        -- By the above, the number of factors of 3 in $k!$ is the sum of the numbers of factors in each $3^i!$ for $i \leq \lfloor k/3 \rfloor$.
+        have h₃ : ∑ i ∈ Finset.Icc 1 k, (Nat.divisors i).filter (fun p ↦ p = 3) = ∑ i ∈ Finset.Icc 1 (⌊(k : ℝ) / 3⌋), (Nat.divisors (3 ^ i)).filter (fun p ↦ p = 3) := by
+          apply Finset.sum_bij (fun i _ ↦ 3 ^ i)
+          · intro i hi
+            simp only [Finset.mem_Icc] at hi
+            apply le_trans _ (by omega)
+            apply Nat.pow_le_of_le_log
+           . norm_num
+            omega
+          · intro i hi j hj h
+            simp only [Finset.mem_Icc] at hi hj
+            rw [Nat.pow_inj]
+           . omega
+           . omega
+          · intro i hi
+            simp only [Finset.mem_Icc] at hi
+            exact h₂
+          · intro i hi
+            simp only [Finset.mem_Icc] at hi
+            exact fun p ↦ id (Eq.symm (h₂ p))
+        -- Then, the number of factors of 3 in $k!$ is the sum of the numbers of factors in each $j!$ for $j \leq \lfloor k/3 \rfloor$.
+        rw [h₁.symm]
+        rw [h₃.symm]
+      rw [h₁]
+    -- By the above, the number of factors of 3 in $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the sum of the numbers of factors in each $k!$ for $k \leq 9$.
+    rw [Finset.sum_image (fun k ↦ (Nat.factorial k).primeFactors 3) (Finset.Icc 1 9)]
+    rw [Finset.sum_congr _ h₁]
+    -- We compute this sum directly.
+    -- The number of factors of 3 in $1!$ is 0.
+    -- The number of factors of 3 in $2!$ is 0.
+    -- The number of factors of 3 in $3!$ is 1.
+    -- The number of factors of 3 in $4!$ is 1.
+    -- The number of factors of 3 in $5!$ is 1.
+    -- The number of factors of 3 in $6!$ is 2.
+    -- The number of factors of 3 in $7!$ is 2.
+    -- The number of factors of 3 in $8!$ is 2.
+    -- The number of factors of 3 in $9!$ is 4.
+    simp [Finset.sum_Icc_succ_top, Nat.factorial]
+  -- Show that $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is not a multiple of $3^6$.
+  have h₂ : ¬(3 ^ 6 ∣ ∏ i in Finset.Icc 1 9, i!) := by
+    -- By the above, the number of factors of 3 in $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the sum of the numbers of factors in each $k!$ for $k \leq 9$.
+    rw [Finset.sum_image (fun k ↦ (Nat.factorial k).primeFactors 3) (Finset.Icc 1 9)]
+    rw [Finset.sum_congr _ h₁]
+    -- We compute this sum directly.
+    -- The number of factors of 3 in $1!$ is 0.
+    -- The number of factors of 3 in $2!$ is 0.
+    -- The number of factors of 3 in $3!$ is 1.
+    -- The number of factors of 3 in $4!$ is 1.
+    -- The number of factors of 3 in $5!$ is 1.
+    -- The number of factors of 3 in $6!$ is 2.
+    -- The number of factors of 3 in $7!$ is 2.
+    -- The number of factors of 3 in $8!$ is 2.
+    -- The number of factors of 3 in $9!$ is 4.
+    simp [Finset.sum_Icc_succ_top, Nat.factorial]
+  -- Show that the number of perfect squares that divide $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is 672.
+  -- For a number to be a perfect square, each prime factor must have an even number of factors.
+  -- The number of factors of 2 in $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the sum of the numbers of factors in each $k!$ for $k \leq 9$.
+  have h₃ : 2 ^ 5 ∣ ∏ i in Finset.Icc 1 9, i! := by
+    -- We compute this sum directly.
+    -- The number of factors of 2 in $1!$ is 0.
+    -- The number of factors of 2 in $2!$ is 1.
+    -- The number of factors of 2 in $3!$ is 1.
+    -- The number of factors of 2 in $4!$ is 3.
+    -- The number of factors of 2 in $5!$ is 3.
+    -- The number of factors of 2 in $6!$ is 4.
+    -- The number of factors of 2 in $7!$ is 4.
+    -- The number of factors of 2 in $8!$ is 7.
+    -- The number of factors of 2 in $9!$ is 7.
+    rw [Finset.sum_image (fun k ↦ (Nat.factorial k).primeFactors 2) (Finset.Icc 1 9)]
+    rw [Finset.sum_congr _ (fun k hk ↦ Nat.Prime.factorization (Nat.prime_iff.mp (by norm_num))).symm]
+    simp [Finset.sum_Icc_succ_top, Nat.primeFactors, Nat.factorial]
+  rw [← Finset.card_filter]
+  -- Then, the number of perfect squares that divide $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the number of functions from the set of primes dividing it to the set {0, 2, 4, 6}, where the number of factors of 2 is even, the number of factors of 3 is even, etc.
+  rw [Finset.card_filter]
+  congr
+  ext p
+  simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_univ, and_imp]
+  intro hp
+  have hp₁ : p ≠ 2 := by
+    intro hp₂
+    absurd h₀
+    use 2
+    constructor
+   . simp [hp₂]
+   . norm_num
+  have hp₂ : p ≠ 3 := by
+    intro hp₃
+    absurd h₁
+    use 3
+    constructor
+   . simp [hp₃]
+   . norm_num
+  split_ifs with hp₃
+  swap
+ . intro hp₃
+    right
+    right
+    intro h₄
+    absurd h₂
+    use 3 ^ 2
+    constructor
+   . simp [hp₃, h₄]
+   . norm_num
+ . intro h₄
+    left
+    use p ^ 2
+    constructor
+   . by_contra!
+      absurd h₀
+      use 2
+      constructor
+     . simp
+     . norm_num
+     . simp [this, h₄]
+   . by_contra!
+      absurd h₁
+      use 3
+      constructor
+     . simp
+     . norm_num
+     . simp [this, h₄]
+   . simp
+      exact hp₃
+
+```

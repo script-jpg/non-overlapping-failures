@@ -1,0 +1,255 @@
+-- We will use the intermediate value theorem to show that there are exactly
+  -- 6 solutions to the equation.
+  suffices P : ∀ θ : ℝ, (θ ∈ S) ↔ (⌊θ / (2 * Real.pi)⌋_ℤ = 0 ∧ θ ≤ 2 * Real.pi ∧ (θ - 6 * Real.pi) % (2 * Real.pi) ∈ Ioo (-(Real.pi / 2)) (Real.pi / 2)) by
+    -- It suffices to show that the set of solutions is $2\pi$-periodic.
+    let f : ℝ → ℝ := fun θ => (θ - 6 * Real.pi) % (2 * Real.pi)
+    -- First, show that $f$ is a continuous function.
+    have hf : Continuous f := by
+      apply Continuous.mod
+      apply Continuous.sub
+      exact continuous_const
+      exact continuous_id'
+      exact Continuous.mul
+      exact continuous_const
+      exact continuous_id'
+    -- We will use the intermediate value theorem to show that the preimage
+    -- of each value in the range of $f$ has cardinality at least 6.
+    have h₀ := intermediate_value_Icc (show (0 : ℝ) ∈ Set.Icc (0 : ℝ) by simp) (show (2 * Real.pi : ℝ) ∈ Set.Icc (0 : ℝ) by simp)
+    simp [f] at h₀
+    rcases h₀ with ⟨θ₁, hθ₁, θ₂, hθ₂, hf₁⟩
+    rw [<-f_eq, <-f_eq] at hf₁
+    simp at hf₁
+    -- Since $f$ is continuous and the image of the interval $(0, 2\pi)$ under
+    -- $f$ contains the interval $(0, 2\pi)$, the preimage of each value
+    -- $y \in (0, 2\pi)$ contains at least one point.
+    have h₁ : ∀ y : ℝ, 0 < y ∧ y < 2 * Real.pi → ∃ x : ℝ, 0 < x ∧ x < 2 * Real.pi ∧ f x = y := by
+      intro y hy
+      apply intermediate_value_Ioo (show (0 : ℝ) ∈ Set.Ioo (0 : ℝ) by simp) (show (2 * Real.pi : ℝ) ∈ Set.Ioo (0 : ℝ) by simp)
+      simp [f]
+      use θ₁ + (y - θ₂) / (θ₁ - θ₂) * (2 * Real.pi)
+      exact ⟨by linarith, by linarith⟩
+    -- The set of solutions to the equation is the union of the preimages of
+    -- the values in the range of $f$.
+    have h₂ : S = ⋃ y ∈ Set.Icc (0 : ℝ) (2 * Real.pi), f ⁻¹' y := by
+      ext x
+      simp [h₀]
+      tauto
+    -- Since the cardinality of the domain $(0, 2\pi)$ is the same as the
+    -- cardinality of the range $(0, 2\pi)$, and the preimage of each value
+    -- contains at least 6 points, the cardinality of the domain is at least
+    -- 6 times the cardinality of the range.
+    have h₃ : ((Set.Icc (0 : ℝ) (2 * Real.pi)).ncard * 6 : ℝ) ≤ S.card := by
+      apply Set.ncard_le_card
+      apply Set.image_subset
+      exact convex_subset_Icc (convex_Icc 0 (2 * Real.pi))
+      simp [h₂]
+    -- Since the cardinality of the range $(0, 2\pi)$ is positive, the cardinality
+    -- of the domain is at least 6.
+    have h₄ : 0 < (Set.Icc (0 : ℝ) (2 * Real.pi)).ncard := by
+      apply Set.ncard_pos.mpr
+      apply convex_subset_Icc.mpr
+      exact ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
+    have : (Set.Icc (0 : ℝ) (2 * Real.pi)).ncard * 6 ≤ S.card := by
+      apply le_trans h₃
+      apply le_of_eq
+      norm_cast
+      rw [<-@Set.ncard_coe_Finset _ S, <-h₄]
+      simp [<-ne_eq]
+      apply Set.ncard_le_card
+      simp [h₂]
+      apply Set.image_subset
+      exact convex_subset_Icc (convex_Icc 0 (2 * Real.pi))
+    rw [<-.ncard_eq_toFinset_card (show S ∈ Set.toFinset S by simp)]
+    rw [<-Fintype.card_toFinset S]
+    rw [<-Finset.card_image_of_injOn]
+    rw [<-Set.ncard_coe_Finset]
+    simp
+
+    -- Now, we need to show that the function $f$ is injective on the interval
+    -- $(6\pi, 6\pi + 2\pi)$.
+    have hf_inj : Set.InjOn f (Ioo (6 * Real.pi) (6 * Real.pi + 2 * Real.pi)) := by
+      intro x hx y hy hf
+      simp [f] at hf
+      simp at hx hy
+      norm_num at hx hy
+      simp [hf]
+      rw [Nat.floor_eq_iff (by linarith)] at hx hy
+      omega
+    -- It suffices to show that the set of solutions is contained in
+    -- $(6\pi, 6\pi + 2\pi)$.
+    suffices S ⊆ Ioo (6 * Real.pi) (6 * Real.pi + 2 * Real.pi) by
+      -- Then, since the cardinality of $(6\pi, 6\pi + 2\pi)$ is $2\pi$ which is
+      -- the same as the cardinality of $(0, 2\pi)$, the preimage of each value
+      -- in the range of $f$ contains exactly 6 points.
+      -- Let $T$ be the set of solutions in the interval $(0, 2\pi)$.
+      set T := {x ∈ S | x ≤ 2 * Real.pi}
+      have h₅ : S = T ∪ (T + 6 * Real.pi) := by
+        ext x
+        simp [h₀]
+        constructor
+        · intro ⟨hx₁, hx₂, hx₃⟩
+          rcases lt_or_le hx₂ with hx₂ | hx₂
+          · exact Or.inl ⟨hx₁, hx₂, hx₃⟩
+          · exact Or.inr ⟨by linarith, by linarith, by linarith⟩
+        · intro h
+          rcases h with ⟨hx₁, hx₂, hx₃⟩ | ⟨hx₁, hx₂, hx₃⟩
+          · exact ⟨by linarith, by linarith, by linarith⟩
+          · exact ⟨by linarith, by linarith, by linarith⟩
+      -- The function $f$ is injective on $T$ and $T + 6\pi$.
+      have h₆ : Set.InjOn f T := by
+        intro x hx y hy hf
+        simp [f] at hf
+        simp at hx hy
+        norm_num at hx hy
+        simp
+        omega
+      have h₇ : Set.InjOn f (T + 6 * Real.pi) := by
+        intro x hx y hy hf
+        simp [f] at hf
+        simp at hx hy
+        norm_num at hx hy
+        simp [add_assoc] at hx hy
+        simp
+        omega
+      -- It suffices to show that the set of solutions in the interval
+      -- $(0, 2\pi)$ has cardinality $6$.
+      suffices T.card = 6 by
+        -- Then, since the set of solutions in the interval $(6\pi, 6\pi + 2\pi)$
+        -- has cardinality the same as the set of solutions in the interval
+        -- $(0, 2\pi)$, the set of solutions in the interval $(0, 2\pi)$ has
+        -- cardinality $6$.
+        rw [h₅, Set.card_union_eq_card_add_card.mpr h₆, Set.ncard_eq_toFinset_card (show T ∈ Set.toFinset T by simp), <-h₇]
+        rw [Fintype.card_finset_eq_toFinset_card]
+        rw [<-ncard_eq_toFinset_card (show T + 6 * Real.pi ∈ Set.toFinset (T + 6 * Real.pi) by simp)]
+        rw [Set.ncard_add_of_disjoint]
+        exact disjoint_iff_inter_eq_empty.mpr rfl
+        simp [h₆]
+      clear! T
+      -- It suffices to show that the set of solutions in the interval
+      -- $(0, 2\pi)$ is the image of the function $f$ on the interval
+      -- $(6\pi, 6\pi + 2\pi)$.
+      suffices T = f '' (Ioo (6 * Real.pi) (6 * Real.pi + 2 * Real.pi)) by
+        rw [this]
+        rw [Set.ncard_image_of_injective _ hf_inj]
+        rw [Set.ncard_image_of_injective _ h₆]
+        all_goals
+          simp
+        norm_cast
+        rw [<-@Set.ncard_coe_Finset _ (Ioo (6 * Real.pi) (6 * Real.pi + 2 * Real.pi))]
+        rw [<-Finset.card_image_of_injOn h₆]
+        rw [<-Set.ncard_coe_Finset]
+      ext x
+      simp [h₀]
+      simp at hx
+      constructor
+      · intro ⟨hx₁, hx₂, hx₃⟩
+        -- If $x$ is a solution to the equation in the interval $(0, 2\pi)$,
+        -- then $x = f(\theta)$ for some $\theta \in (6\pi, 6\pi + 2\pi)$.
+        use (x + 6 * Real.pi)
+        refine ⟨by linarith, by linarith, by linarith⟩
+      · intro ⟨hx₁, hx₂, hx₃⟩
+        -- If $x = f(\theta)$ for some $\theta \in (6\pi, 6\pi + 2\pi)$, then
+        -- $x$ is a solution to the equation in the interval $(0, 2\pi)$.
+        rcases lt_or_le hx₂ with hx₂ | hx₂
+        · exact ⟨by linarith, by linarith, by linarith⟩
+        · exact ⟨by linarith, by linarith, by linarith⟩
+
+  -- We will use the intermediate value theorem to show that there are exactly
+  -- 6 solutions to the equation.
+  clear! P
+  rw [Set.ncard_eq_toFinset_card (show S ∈ Set.toFinset S by simp)]
+  rw [<-Fintype.card_toFinset S]
+  rw [<-Finset.card_image_of_injOn]
+  rw [<-Set.ncard_coe_Finset]
+  simp
+
+  -- Now, we will use the intermediate value theorem to show that for each
+  -- $k \in \{0, 1, 2, 3\}$, there are exactly 6 solutions to the equation in
+  -- the interval $(2k\pi, 2(k + 1)\pi]$.
+  have h₁ k (hk₀ : k ∈ Finset.Icc 0 4) : ((Ioo (2 * k * Real.pi) (2 * (k + 1) * Real.pi)).ncard * 6 : ℝ) ≤ {(θ : ℝ) | θ ∈ S ∧ (⌊θ / (2 * Real.pi)⌋ = k ∧ θ ≤ 2 * Real.pi ∧ (θ - 2 * k * Real.pi) % (2 * Real.pi) ∈ Ioo (-(Real.pi / 2)) (Real.pi / 2))}.ncard := by
+    -- The interval $(2k\pi, 2(k + 1)\pi]$ is the image of the interval
+    -- $(0, 2\pi]$ under the function $f(θ) = 2k\pi + θ$.
+    let f : ℝ → ℝ := fun θ => 2 * k * Real.pi + θ
+    have hf : Continuous f := by
+      apply Continuous.add
+      exact continuous_const
+      exact continuous_id'
+    -- It is easy to see that $f$ is a bijection from the interval $(0, 2\pi]$ to
+    -- the interval $(2k\pi, 2(k + 1)\pi]$.
+    have h₀ : ∀ x : ℝ, (x ∈ Set.Ioc 0 (2 * Real.pi)) ↔ (f x ∈ Set.Ioc (2 * k * Real.pi) (2 * (k + 1) * Real.pi)) := by
+      intro x
+      simp [f]
+      constructor
+      · intro ⟨hx₁, hx₂⟩
+        constructor
+        · linarith
+        · linarith
+      · intro ⟨hx₁, hx₂⟩
+        constructor
+        · linarith
+        · linarith
+    -- It is easy to see that the inverse function $f^{-1}(θ) = θ - 2k\pi$ is
+    -- continuous.
+    have hf_inv : Continuous (fun θ => θ - 2 * k * Real.pi) := by
+      apply Continuous.sub
+      exact continuous_const
+      exact continuous_id'
+    -- By the intermediate value theorem, the image of the set of solutions
+    -- in the interval $(0, 2\pi]$ under $f$ is contained in the set of
+    -- solutions in the interval $(2k\pi, 2(k + 1)\pi]$.
+    have h₁ : f '' S ⊆ {(θ) | θ ∈ S ∧ (⌊θ / (2 * Real.pi)⌋ = k ∧ θ ≤ 2 * Real.pi ∧ (θ - 2 * k * Real.pi) % (2 * Real.pi) ∈ Ioo (-(Real.pi / 2)) (Real.pi / 2))} := by
+      intro y hy
+      rcases hy with ⟨x, hx, hfx⟩
+      simp [h₀] at hfx
+      simp
+      tauto
+    -- The set of solutions in the interval $(2k\pi, 2(k + 1)\pi]$ is the image
+    -- of the set of solutions in the interval $(0, 2\pi]$ under $f$.
+    have h₂ : {(θ) | θ ∈ S ∧ (⌊θ / (2 * Real.pi)⌋ = k ∧ θ ≤ 2 * Real.pi ∧ (θ - 2 * k * Real.pi) % (2 * Real.pi) ∈ Ioo (-(Real.pi / 2)) (Real.pi / 2))} = f '' S := by
+      ext y
+      simp [h₀]
+      tauto
+    -- The set of solutions in the interval $(0, 2\pi]$ has cardinality the same
+    -- as the set of solutions in the interval $(2k\pi, 2(k + 1)\pi]$.
+    have h₃ : S.ncard = {(θ) | θ ∈ S ∧ (⌊θ / (2 * Real.pi)⌋ = k ∧ θ ≤ 2 * Real.pi ∧ (θ - 2 * k * Real.pi) % (2 * Real.pi) ∈ Ioo (-(Real.pi / 2)) (Real.pi / 2))}.ncard := by
+      apply Set.ncard_image_of_injective
+      rw [Set.InjOn]
+      intro x hx y hy hxy
+      simp [h₀] at hxy
+      simp [h₀]
+      tauto
+    -- It suffices to show that the set of solutions in the interval $(0, 2\pi]$ has
+    -- cardinality $6$.
+    suffices S.ncard = 6 by
+      rw [h₃.symm, h₂, Set.ncard_image_of_injective hf_inv]
+      simp
+      norm_cast
+      rw [<-@Set.ncard_coe_Finset _ S, <-h₄]
+      rw [<-Finset.card_image_of_injOn h₅]
+      rw [<-Set.ncard_coe_Finset]
+      simp
+
+    -- Now, we will use the intermediate value theorem to show that there are exactly
+    -- 6 solutions to the equation in the interval $(0, 2\pi]$.
+    clear! P h₀ h₁ h₃
+    rw [Set.ncard_eq_toFinset_card (show S ∈ Set.toFinset S by simp)]
+    rw [<-Fintype.card_toFinset S]
+    rw [<-Finset.card_image_of_injOn]
+    rw [<-Set.ncard_coe_Finset]
+    simp
+
+    -- We will use the intermediate value theorem to show that there are exactly
+    -- 6 solutions to the equation in the interval $(0, 2\pi]$.
+    have h₄ : ∀ θ : ℝ, (θ ∈ S ∧ (⌊θ / (2 * Real.pi)⌋ = k ∧ θ ≤ 2 * Real.pi ∧ (θ - 2 * k * Real.pi) % (2 * Real.pi) ∈ Ioo (-(Real.pi / 2)) (Real.pi / 2))) ↔ (⌊θ / (2 * Real.pi)⌋ = k ∧ θ - 2 * k * Real.pi ∈ Ioo 0 (2 * Real.pi) ∧ 1 - 3 * Real.sin θ + 5 * Real.cos (3 * θ) = 0) := by
+      intro θ
+      constructor
+      · intro ⟨hθ, ⟨hx₁, hx₂, hx₃⟩⟩
+        tauto
+      · intro ⟨hx₁, hx₂, hx₃⟩
+        refine ⟨by linarith, by linarith, by linarith⟩
+
+    -- It suffices to show that the set of solutions in the interval $(0, 2\pi]$ has
+    -- cardinality $6$.
+    clear! P h₀ h₁ h₃ h₄
+    suffices (Ioo 0 (2 * Real.pi)).ncard = 6 by
+      rw [h₃, <-ncard_eq_toFinset_card (show S

@@ -1,0 +1,73 @@
+-- gcd (m, n) * lcm (m, n) = m * n
+  have lcm1 : m * n = 756 := by
+    calc
+      m * n = Nat.gcd m n * Nat.lcm m n := by rw [Nat.gcd_mul_lcm]
+      _ = 6 * 126 := by rw [h₀, h₁]
+      _ = 756 := by norm_num
+
+  -- Let $m = 6x$ and $n = 6y$, where $x$ and $y$ are coprime.
+  let x := m / 6
+  let y := n / 6
+
+  -- So $x * y = 756 / 6 = 126$, and $x$ and $y$ are coprime.
+  have h₀ : x * y = 126 := by
+    unfold x y
+    rw [Nat.div_mul_cancel (by rw [←h₀]; exact Nat.gcd_pos_of_pos_left _ (by norm_num))]
+    rw [mul_comm]
+    rw [Nat.div_mul_cancel (by norm_num)]
+    norm_num
+    rw [h₁, h₀]
+    norm_num
+
+  -- Let $d$ be the coprime condition.
+  have h₁ : Nat.Coprime x y := by
+    unfold x y
+    rw [Nat.div_mul_cancel (by rw [←h₀]; exact Nat.gcd_pos_of_pos_left _ (by norm_num))]
+    rw [Nat.div_mul_cancel (by norm_num)]
+    norm_num
+    rw [h₀]
+    rw [Nat.gcd_comm]
+    rw [Nat.coprime_div_gcd_div_gcd]
+    rw [h₀]
+    norm_num
+
+  -- Now, $x$ and $y$ are positive integers such that their product is 126 and they are coprime.
+  -- List all possible pairs (x, y).
+  let xy : Finset (ℕ × ℕ) := {
+    (1, 126), (2, 63), (3, 42), (6, 21), (7, 18), (9, 14), (14, 9), (18, 7), (21, 6), (42, 3), (63, 2), (126, 1)
+  }
+
+  -- Check if all pairs have x + y ≥ 60.
+  have h : ∀ p ∈ xy, p.1 + p.2 ≥ 60 := by
+    intro p hp
+    fin_cases hp <;> norm_num
+
+  -- Now, use these facts to prove that m + n ≥ 60.
+  have h' : (x, y) ∈ xy := by
+    simp [xy]
+    have h₂ : x ≤ 126 := by
+      apply Nat.le_of_dvd (by norm_num)
+      rw [←h₀]
+      exact Nat.dvd_mul_right x y
+    have h₃ : y ≤ 126 := by
+      apply Nat.le_of_dvd (by norm_num)
+      rw [←h₀]
+      exact Nat.dvd_mul_left x y
+    interval_cases x <;> interval_cases y <;> rw [h₀] at h₁ <;> try { tauto }
+
+  -- Since (x, y) ∈ xy, we have x + y ≥ 60.
+  have h'' : x + y ≥ 60 := by
+    apply h
+    exact h'
+
+  -- Hence, m + n = 6 * (x + y) ≥ 6 * 60 = 360.
+  have h''' : m + n = 6 * (x + y) := by
+    unfold x y
+    rw [Nat.div_add_div_of_dvd_mul]
+    rw [h₀]
+    ring
+    rw [h₀]
+    norm_num
+
+  linarith
+```

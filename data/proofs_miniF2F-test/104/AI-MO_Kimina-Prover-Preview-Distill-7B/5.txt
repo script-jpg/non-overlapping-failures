@@ -1,0 +1,185 @@
+have pge2 : 2 ≤ p := by linarith
+
+  have pmodp : p ≡ 0 [MOD p] := by
+    apply Nat.modEq_zero_iff_dvd.mpr
+    exact Nat.dvd_refl p
+
+  have psub1 : p - 1 ≡ -1 [ZMOD p] := by
+    constructor
+    · refine Int.modEq_iff_dvd.mpr?_
+      have : 1 ≤ p := by linarith
+      have : (p : ℤ) - 1 + 1 = (p : ℤ) := by ring
+      simp [this]
+    · by_contra!
+      have : Fact p.Prime := by exact { out := h₀ }
+      rcases Fact.out this with hp
+      have : (p : ℤ) - 1 + 1 = (p : ℤ) := by ring
+      rw [this] at *
+      have : p ∣ 1 := by
+        have : (p : ℤ) - 1 + 1 = (p : ℤ) := by ring
+        rw [this] at *
+        have : (p : ℤ) ∣ (1 : ℤ) := by exact Dvd.intro (-1) rfl
+        exact Int.ofNat_dvd.mp this
+      norm_num at this
+      exact hp this
+
+  have psub2 : p - 2 ≡ -2 [ZMOD p] := by
+    constructor
+    · refine Int.modEq_iff_dvd.mpr?_
+      have : 2 ≤ p := by linarith
+      have : (p : ℤ) - 2 + 2 = (p : ℤ) := by ring
+      simp [this]
+    · by_contra!
+      have : Fact p.Prime := by exact { out := h₀ }
+      rcases Fact.out this with hp
+      have : (p : ℤ) - 2 + 2 = (p : ℤ) := by ring
+      rw [this] at *
+      have : p ∣ 2 := by
+        have : (p : ℤ) - 2 + 2 = (p : ℤ) := by ring
+        rw [this] at *
+        have : (p : ℤ) ∣ (2 : ℤ) := by exact Dvd.intro (-1) rfl
+        exact Int.ofNat_dvd.mp this
+      have : p = 2 := by exact (Nat.dvd_prime h₀).mp this
+      linarith
+
+  have invp1 : (p - 1)⁻¹ ≡ (-1)⁻¹ [ZMOD p] := by
+    apply ZMod.inv_congr
+    · simp [psub1]
+    · intro x hx
+      simp [hx]
+
+  have invp2 : (p - 2)⁻¹ ≡ (-2)⁻¹ [ZMOD p] := by
+    apply ZMod.inv_congr
+    · simp [psub2]
+    · intro x hx
+      simp [hx]
+
+  have facts : (-1 : ZMod p)⁻¹ = 1 := by
+    have : Fact p.Prime := by exact { out := h₀ }
+    rw [ZMod.inv_neg_one]
+    exact h₀.ne_two
+
+  have fact2 : (-2 : ZMod p)⁻¹ = (-2)⁻¹ := by
+    have : (-2 : ZMod p) ≠ 0 := by
+      by_contra!
+      have : Fact p.Prime := by exact { out := h₀ }
+      rcases Fact.out this with hp
+      have : (p : ℤ) ∣ 2 := by
+        have : (p : ℤ) ∣ (-2 : ℤ) := by exact Dvd.intro (-1) rfl
+        exact Int.ofNat_dvd.mp this
+      have : p = 2 := by exact (Nat.dvd_prime h₀).mp this
+      linarith
+    exact ZMod.inv_neg (a := 2) (by assumption)
+
+  -- the difference of $k^{-1} \cdot (k+1)^{-1}$ and $2k^{-1} \cdot (2k+1)^{-1}$ is a multiple of $p$
+  have diff : ∀ k, (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ - 2 * ((2 * k) : ZMod p)⁻¹ * ((2 * k) + 1)⁻¹ ≡ 0 [ZMOD p] := by
+    intro k
+    have : k ≠ 0 := by
+      by_contra!
+      have : k ≡ 0 [ZMOD p] := by exact Dvd.dvd.modEq_zero this
+      have : p ∣ k := by exact Int.dvd_of_emod_eq_zero this
+      have : Fact p.Prime := by exact { out := h₀ }
+      rcases Fact.out this with hp
+      have : p ∣ 1 := by exact (Nat.dvd_prime hp).mpr this
+      norm_num at this
+    have : 2 * k ≠ 0 := by
+      by_contra!
+      have : 2 * k ≡ 0 [ZMOD p] := by exact Dvd.dvd.modEq_zero this
+      have : p ∣ 2 * k := by exact Int.dvd_of_emod_eq_zero this
+      have : Fact p.Prime := by exact { out := h₀ }
+      rcases Fact.out this with hp
+      have : p ∣ 2 ∨ p ∣ k := by exact (Nat.Prime.dvd_mul h₀).mp this
+      rcases this with h | h
+      · have : p = 2 := by exact (Nat.dvd_prime h₀).mpr h
+        linarith
+      · have : p ∣ k := by exact (Nat.dvd_prime h₀).mp h
+        have : k ≡ 0 [ZMOD p] := by exact Dvd.dvd.modEq_zero this
+        have : p ∣ k := by exact Int.dvd_of_emod_eq_zero this
+        have : k ≡ 0 [MOD p] := by exact Dvd.dvd.emodEq_zero this
+        have : k % p = 0 := by exact this
+        have : k = 0 := by omega
+        contradiction
+    have : 2 * k + 1 ≠ 0 := by
+      by_contra!
+      have : 2 * k + 1 ≡ 0 [ZMOD p] := by exact Dvd.dvd.modEq_zero this
+      have : p ∣ 2 * k + 1 := by exact Int.dvd_of_emod_eq_zero this
+      have : Fact p.Prime := by exact { out := h₀ }
+      rcases Fact.out this with hp
+      have : p ∣ 2 * k + 1 := by exact hp.mp this
+      have : 2 * k + 1 > 0 := by linarith
+      have : 2 * k + 1 < 2 * k + 2 := by linarith
+      have : 2 * k + 1 = p := by exact (Nat.dvd_prime h₀).mpr this
+      linarith
+    have : 2 * k + 1 ∣ 2 * k + 1 := by exact Int.dvd_refl (2 * ↑k + 1)
+    rw [← fact2, ← invp1]
+    apply Nat.modEq_zero_iff_dvd.mpr
+    have : ((2 * k) : ZMod p) * ((2 * k) + 1)⁻¹ * ((2 * k) + 1) * ((2 * k) + 1)⁻¹ = ((2 * k) : ZMod p) * ((2 * k) + 1)⁻¹ * (1 : ZMod p) := by ring
+    rw [this]
+    suffices (((2 * k) : ZMod p) * ((2 * k) + 1)⁻¹ * ((2 * k) + 1) * ((2 * k) + 1)⁻¹ + (k : ZMod p) * ((k : ZMod p) + 1)⁻¹ - 2 * ((2 * k) : ZMod p) * ((2 * k) + 1)⁻¹) = ((2 * k) : ZMod p) * ((2 * k) + 1)⁻¹ * (2 * (k : ZMod p) + 1) from by
+      convert this using 1
+     . ring
+     . apply_fun (fun x => x * ((2 * k) : ZMod p)⁻¹)
+        simp
+        ring
+    have : ((2 * k) : ZMod p) * ((2 * k) + 1)⁻¹ * ((2 * k) + 1) * ((2 * k) + 1)⁻¹ = ((2 * k) : ZMod p) * ((2 * k) + 1)⁻¹ * (1 : ZMod p) := by ring
+    rw [this]
+    suffices ((2 * k) : ZMod p) * ((2 * k) + 1)⁻¹ * (1 + 2 * ((k : ZMod p) + 1)⁻¹ * ((2 * k) : ZMod p)⁻¹) = ((2 * k) : ZMod p) * ((2 * k) + 1)⁻¹ * (2 * (k : ZMod p) + 1) from by
+      rw [this]
+    have : (1 : ZMod p) + 2 * ((k : ZMod p) + 1)⁻¹ * ((2 * k) : ZMod p)⁻¹ = 2 * (k : ZMod p) + 1 := by
+      field_simp
+      ring
+    rw [this]
+
+  -- if we take the sum of these terms from $1$ to $p-2$, the result is equal to 2 mod p
+  have sum_eq : (∑ k in Finset.Icc 1 (p - 2), ((k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹)) = 2 := by
+    -- first, we add the term when $k = p-2$
+    have psub2' : p - 2 ∈ Finset.Icc 1 (p - 2) := by
+      simp only [Finset.mem_Icc, Nat.cast_sub, Nat.cast_one]
+      omega
+    have h := Finset.add_sum_Ico_eq_sum_range_succ _ (p - 2) psub2'
+    rw [h]
+    simp only [Finset.sum_Ico_eq_sum_range, Nat.cast_sub, Nat.cast_one, Finset.sum_range_succ]
+    rw [add_assoc]
+    have : (p - 1 : ZMod p)⁻¹ = 1 := by
+      have : (p - 1 : ZMod p) = -1 := by
+        refine Int.modEq_iff_dvd.mpr?_
+        have : 1 ≤ p := by linarith
+        have : (p : ℤ) - 1 + 1 = (p : ℤ) := by ring
+        simp [this]
+      rw [this]
+      exact ZMod.inv_neg_one
+    rw [this, fact2]
+    -- then, we subtract the term when $k = 0$
+    have : 0 ∉ Finset.Icc 1 (p - 2) := by
+      by_contra!
+      have : 0 ∈ Finset.Icc 1 (p - 2) := by exact this
+      simp only [Finset.mem_Icc, Nat.cast_sub, Nat.cast_one] at this
+      linarith
+    simp [this]
+    apply Finset.sum_congr rfl
+    intro x hx
+    simp only [Finset.mem_Icc, Nat.cast_sub, Nat.cast_one] at hx
+    rw [diff $ x]
+    -- next, we subtract the term when $k = p-1$
+    have psub1' : p - 1 ∈ Finset.Icc 1 (p - 2) := by
+      simp only [Finset.mem_Icc, Nat.cast_sub, Nat.cast_one]
+      omega
+    have h := Finset.add_sum_Ico_eq_sum_range_succ _ psub1' (p - 1)
+    rw [h]
+    simp only [Finset.sum_Ico_eq_sum_range, Nat.cast_sub, Nat.cast_one, Finset.sum_range_succ]
+    have : p - 1 + 1 = (p : ℤ) := by ring
+    rw [this]
+    have : (p : ZMod p) = 0 := by exact Dvd.dvd.modEq_zero rfl
+    rw [this]
+    symm
+    apply Nat.modEq_zero_iff_dvd.mpr
+    exact Nat.dvd_refl p
+
+  rw [sum_eq]
+  apply Nat.modEq_iff_dvd.mpr
+  have : 2 % p = 2 := by
+    refine Nat.mod_eq_of_lt?_?_
+    · exact Nat.Prime.two_le h₀
+    · linarith
+  simp [this]
+```

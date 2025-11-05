@@ -1,0 +1,45 @@
+have : ∃ x, f x = 0 := by aesop
+
+  -- We prove that if $f(x) = 0$ then $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$.
+  have h₂ (x : ℝ) (hx : f x = 0) : x ^ 2 + (18 * x + 30) = 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by
+    rw [h₀] at hx
+    linear_combination hx
+
+  -- We prove that if $f(x) = 0$ then $x^2 + 18x + 45 = 36$.
+  have h₃ (x : ℝ) (hx : f x = 0) : x ^ 2 + (18 * x + 45) = 36 := by
+    rw [h₀] at hx
+    apply_fun (· + 2 * Real.sqrt (x ^ 2 + (18 * x + 45))) at hx
+    linear_combination hx
+
+  -- We prove that if $f(x) = 0$ then $x^2 + 18x + 30 = 12$.
+  have h₄ (x : ℝ) (hx : f x = 0) : x ^ 2 + (18 * x + 30) = 12 := by
+    rw [h₂ hx]
+    linear_combination h₃ hx
+
+  -- We prove that if $f(x) = 0$ then $x^2 + 18x + 30 = 0$.
+  have h₅ (x : ℝ) (hx : f x = 0) : x ^ 2 + (18 * x + 30) = 0 := by
+    rw [h₂ hx]
+    apply_fun (· - (x ^ 2 + (18 * x + 45))) at hx
+    linear_combination hx
+
+  -- We prove that the roots are $-6$ and $-12$.
+  have h₆ (x : ℝ) (hx : f x = 0) : x = -6 ∨ x = -12 := by
+    apply_fun (· - 12) at h₅ hx
+    rw [h₄ hx, show x ^ 2 + (18 * x + 30) = (x - -6) * (x - -12) by ring] at h₅ hx
+    simp at h₅ hx
+    exact h₅ hx
+
+  -- Since the roots are $-6$ and $-12$, the product of the roots is 20.
+  apply_fun (· - 12) at h₁
+  rw [Finset.prod_insert] at h₁
+  · convert h₁ using 1
+    · rw [Finset.prod_singleton]
+      simp [h₆]
+    · rw [show (-6 : ℝ) - -12 = -6 + 12 by ring]
+      norm_num
+  · rw [Finset.mem_insert]
+    simp [h₆]
+  · simp
+    exact h₁
+
+```

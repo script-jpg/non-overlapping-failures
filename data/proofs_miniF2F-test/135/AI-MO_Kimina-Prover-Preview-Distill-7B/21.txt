@@ -1,0 +1,129 @@
+-- We shall show that the answer is 93.
+  -- Let $b_k = a_{2k+1}$ for all $k$. We want to show that $b_0 + b_1 + \ldots + b_{48} = 93$.
+  -- We have a recursion relation: $b_{k+1} = b_k + 2$ for all $k$.
+  let b (k : ℕ) := u (2 * k.succ)
+
+  have h' {k : ℕ} : u (2 * (k + 1).succ) = u (2 * k.succ + 1) + 1 := by
+    rw [h₀ (2 * k.succ + 1)]
+    ring_nf
+
+  have h'' {k : ℕ} : u (2 * k.succ + 1) = u (2 * k.succ) + 1 := by
+    rw [h₀ (2 * k.succ)]
+    ring_nf
+
+  have h₃ : b (k + 1) = b k + 2 := by
+    simp [b, h', h'']
+    ring_nf
+
+  -- Let $c_k = b_k + k \cdot 2$ for all $k$. Then $c_{k+1} = c_k + 2$ for all $k$.
+  let c (k : ℕ) := b k + k * 2
+
+  have h₄ : c (k + 1) = c k + 2 := by
+    simp only [c]
+    rw add_assoc, ← add_assoc, h₃, add_assoc, (by ring : 2 * (k + 1) = 2 * k + 2)]
+
+  -- So $c_0, c_1, \ldots, c_{49}$ is an arithmetic progression with common difference 2.
+  -- Each term in this sequence is twice the corresponding term in the sequence $b_0, b_1, \ldots, b_{49}$.
+  have h₅ {k : ℕ} : c k = 2 * b k := by
+    simp [c]
+
+  -- Let $S$ be the sum of all terms in this sequence.
+  let S := ∑ k in Finset.range 50, c k
+
+  have : S = ∑ k in Finset.range 50, 2 * b k := by
+    simp [S, h₅]
+
+  have : S = 2 * (∑ k in Finset.range 50, b k) := by
+    rw [this]
+    rw [Finset.mul_sum]
+
+  -- Because the sequence $c_0, c_1, \ldots, c_{49}$ is an arithmetic progression with common difference 2,
+  -- we know that $S = 50 \cdot c_0 + 2 \cdot \frac{49 \cdot 50}{2} = 2500$.
+  have : S = 2500 := by
+    rw [this]
+    have : ∑ k in Finset.range 50, b k = 950 := by
+      have h₆ : ∀ k ∈ Finset.range 50, b k = 1 + 2 * k := by
+        intro k hk
+        induction' k with k ih
+        · exact (by simp [b]; exact h₀ 0)
+        · rw [h₃, ih, (by ring : 2 * (k + 1) = 2 * k + 2)]
+          simp
+          ring
+      rw [Finset.sum_congr rfl h₆]
+      simp
+      rw [Finset.sum_add_distrib, Finset.sum_const]
+      have : ∑ k ∈ Finset.range 50, (2 : ℚ) = 50 · 2 := by
+        rw [Finset.sum_const]
+        simp
+      rw [this]
+      have : (50 : ℚ) * 2 = 100 := by norm_num
+      rw [this]
+      have : ∑ k ∈ Finset.range 50, (2 : ℚ) * k = 2 * ∑ k ∈ Finset.range 50, k := by
+        rw [Finset.mul_sum]
+      rw [this]
+      have : ∑ k ∈ Finset.range 50, (k : ℚ) = 49 * 50 / 2 := by
+        rw [Finset.sum_range_id]
+      rw [this]
+      norm_num
+    rw [this]
+    norm_num
+
+  -- We have known that $a_1 + a_2 + \ldots + a_{98} = 137$.
+  -- In addition, we have $a_1 + a_3 + \ldots + a_{97} = 950$.
+  -- Hence, $a_2 + a_4 + \ldots + a_{98} = 137 - 950 = -813$.
+  have : ∑ k in Finset.range 49, u (2 * k.succ) = -813 := by
+    have : 137 = (∑ k in Finset.range 98, u k.succ) := by
+      exact (h₁.symm) 
+    rw [this]
+    have : 950 = (∑ k in Finset.range 50, b k) := by
+      rw [← Finset.sum_congr rfl h₅]
+      exact rfl
+    rw [this]
+    have : ∑ k in Finset.range 98, u k.succ = ∑ k in Finset.range 50, b k + ∑ k in Finset.range 49, u (2 * k.succ) := by
+      have : 98 = 50 + 48 := by norm_num
+      rw [this]
+      have : Finset.range 48 = (Finset.range 49).erase 48 := by
+        ext n
+        simp
+        exact (by omega : n < 48 ↔ n < 49 ∧ n ≠ 48)
+      rw [this]
+      have : Finset.range 98 = (Finset.range 50).disjUnion (Finset.range 49).erase 48 := by
+        ext n
+        simp
+        constructor <;> intro h
+        · omega
+        · omega
+      rw [this, Finset.sum_disjUnion]
+    rw [this]
+    linarith
+
+  -- But $a_2 + a_4 + \ldots + a_{98} = 49 \cdot 2 + \sum_{k=0}^{48} (a_2 + 2k) = 98 + S = 98 + 2500 = 2598$.
+  -- This is a contradiction.
+  have : ∑ k in Finset.range 49, u (2 * k.succ) = 2598 := by
+    have : ∑ k in Finset.range 49, u (2 * k.succ) = 49 * 2 + ∑ k in Finset.range 49, (b k) := by
+      simp [Finset.sum_add_distrib, Finset.sum_const]
+      have : ∑ k ∈ Finset.range 49, (2 : ℚ) = 49 * 2 := by
+        rw [Finset.sum_const]
+        simp
+      rw [this]
+    have : ∑ k in Finset.range 49, (b k) = 950 := by
+      have : ∑ k in Finset.range 49, (b k) = ∑ k in Finset.range 50, b k - b 49 := by
+        have : Finset.range 49 = (Finset.range 50).erase 49 := by
+          ext n
+          simp
+          exact (by omega : n < 49 ↔ n < 50 ∧ n ≠ 49)
+        rw [this]
+        rw [Finset.sum_erase]
+      rw [this]
+      have : b 49 = 1 + 2 * 49 := by
+        simp [b]
+        rw [h₃, h₀, h₂]
+        simp
+      rw [this]
+      group
+    rw [this]
+    linarith
+
+  -- The problem is now solved.
+  linarith
+```

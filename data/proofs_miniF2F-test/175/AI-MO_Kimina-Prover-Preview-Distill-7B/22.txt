@@ -1,0 +1,176 @@
+-- Show that $f(x, y) = \frac{y}{x}f(x, x+y)$ when $x < y$.
+  have h₃ : ∀ x y, 0 < x ∧ x < y → f x y = y / x * f x (x + y) := by
+    intro x y hx hy
+    have : x + y > 0 := by omega
+    have : x > 0 := by omega
+    have : y > 0 := by omega
+    calc
+      _ = (x + y) * f x y / (x + y) := by field_simp
+      _ = y * f x (x + y) / (x + y) := by rw [h₂ x y ⟨by omega, by omega⟩]
+      _ = y / (x + y) * (f x (x + y)) := by field_simp
+      _ = y / x * f x (x + y) := by rw [h₁ x (x + y) ⟨by omega, by omega⟩]; field_simp
+
+  -- Show that $f(x, x+y) = f(x+y, x) = f(x, y)$ when $x < y$.
+  have h₄ : ∀ x y, 0 < x ∧ x < y → f x (x + y) = f (x + y) x := by
+    intro x y hx hy
+    have : x + y > 0 := by omega
+    have : x > 0 := by omega
+    have : y > 0 := by omega
+    calc
+      _ = f x (x + y) / 1 := by field_simp
+      _ = f x (x + y) / (x + y) * (x + y) := by field_simp
+      _ = f (x + y) x * (x + y) := by rw [h₂ x (x + y) ⟨by omega, by omega⟩]
+      _ = f (x + y) x := by field_simp
+
+  -- Define $g(i, j) = f(2^i, 2^i + 2^j)$ when $i < j$.
+  let g : ℕ → ℕ → ℝ := fun i j => f (2 ^ i) (2 ^ i + 2 ^ j)
+
+  -- Show that $f(2^i, 2^i + 2^j) = 2^j$ when $i < j$.
+  have h₅ : ∀ i j, i < j → g i j = 2 ^ j := by
+    intro i j hij
+    have : 2 ^ i > 0 := by exact Nat.pos_pow_of_pos i (by norm_num)
+    have : 2 ^ j > 0 := by exact Nat.pos_pow_of_pos j (by norm_num)
+    induction' j with j ih generalizing i
+    · simpa using h₀ _ (by exact Nat.pos_pow_of_pos i (by norm_num))
+    · calc
+        _ = 2 ^ j / (2 ^ i + 2 ^ j) * f (2 ^ i + 2 ^ j) (2 ^ i) := by
+            rw [h₃ _ _ (by exact Nat.pos_pow_of_pos i (by norm_num)) (by omega)]
+            rw [h₄ _ _ (by exact Nat.pos_pow_of_pos i (by norm_num))]
+            congr 1
+            ring
+        _ = 2 ^ j / (2 ^ i + 2 ^ j) * 2 ^ i := by rw [ih]; assumption
+        _ = 2 ^ j := by field_simp; ring
+
+  -- Let $i$ be a positive integer.
+  let i := 3
+  have hi : i > 0 := by norm_num
+
+  -- Show that $f(2^i, 2^i + 2^{i+1}) = 2^{i+1}$.
+  have h₆ : g i (i + 1) = 2 ^ (i + 1) := by
+    apply h₅
+    omega
+
+  -- Show that $f(2^i, 2^i + 2^{i+1} + 2^j) = f(2^i, 2^i + 2^{j})$ when $i < j$.
+  have h₇ : ∀ j, i < j → g i (i + 1 + j) = g i (i + j) := by
+    intro j hij
+    have : 2 ^ i > 0 := by exact Nat.pos_pow_of_pos i (by norm_num)
+    have : 2 ^ (i + 1) > 0 := by exact Nat.pos_pow_of_pos (i + 1) (by norm_num)
+    have : 2 ^ (i + 1) + 2 ^ j > 0 := by omega
+    have : 2 ^ i + 2 ^ (i + 1) > 0 := by omega
+    calc
+      _ = f (2 ^ i) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) / 1 := by field_simp
+      _ = f (2 ^ i) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) / (2 ^ i + 2 ^ (i + 1)) * (2 ^ i + 2 ^ (i + 1)) := by field_simp
+      _ = f (2 ^ (i + 1) + 2 ^ j) (2 ^ i) * (2 ^ i + 2 ^ (i + 1)) := by rw [h₃ (2 ^ i) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) ⟨by omega, by omega⟩]; rw [h₄ (2 ^ i) (2 ^ (i + 1) + 2 ^ j) ⟨by omega, by omega⟩]
+      _ = f (2 ^ (i + 1) + 2 ^ j) (2 ^ (i + 1)) * (2 ^ i + 2 ^ (i + 1)) := by congr 1; ring
+      _ = f (2 ^ (i + 1)) (2 ^ (i + 1) + 2 ^ j) * (2 ^ i + 2 ^ (i + 1)) := by rw [h₄ (2 ^ (i + 1)) (2 ^ i + 2 ^ j) ⟨by omega, by omega⟩]
+      _ = f (2 ^ (i + 1)) (2 ^ (i + 1) + 2 ^ j) := by field_simp
+      _ = _ := by rw [h₅ (i + 1) j (by omega)]
+
+  -- Show that $f(2^i, 2^i + 2^{i+1} + 2^j) = 2^j$ when $i < j$.
+  replace h₇ : ∀ j, i < j → g i (i + 1 + j) = 2 ^ j := by
+    intro j hij
+    calc
+      _ = g i (i + 1 + j) := by exact h₇ j hij
+      _ = _ := by exact h₅ i (i + 1 + j) (by omega)
+
+  -- Let $a_i = f(2^i, 2^i + 2^{i+1}) = 2^{i+1}$.
+  let a_i := g i (i + 1)
+  have ha_i : a_i = 2 ^ (i + 1) := by exact h₆
+
+  -- Let $a_{i+1} = f(2^i, 2^i + 2^{i+1} + 2^{i+2}) = f(2^i, 2^i + 2^{i+2}) = 2^{i+2}$.
+  let a_ip1 := g i (i + 2)
+  have ha_ip1 : a_ip1 = 2 ^ (i + 2) := by
+    calc
+      _ = g i (i + 1 + (i + 1)) := by congr 2; ring
+      _ = _ := by exact h₇ (i + 1) (by omega)
+
+  -- Let $b_j = f(2^i + 2^{i+1}, 2^i + 2^{i+1} + 2^j) = f(2^{i+1}, 2^{i+1} + 2^j) = f(2^j, 2^{i+1}) = f(2^j, 2^j)$ when $i < j$.
+  let b_j : ℕ → ℝ := fun j => f (2 ^ (i + 1) + 2 ^ j) (2 ^ (i + 1) + 2 ^ j)
+
+  -- Show that $b_j = 2^j$ when $i < j$.
+  have hb_j : ∀ j, i < j → b_j j = 2 ^ j := by
+    intro j hij
+    have : 2 ^ (i + 1) + 2 ^ j > 0 := by omega
+    calc
+      _ = f (2 ^ (i + 1) + 2 ^ j) (2 ^ (i + 1) + 2 ^ j) / 1 := by field_simp
+      _ = 2 ^ (i + 1) + 2 ^ j := by rw [h₀ _ (by omega)]
+      _ = _ := by field_simp
+
+  -- Let $c_j = f(2^j, 2^i + 2^{i+1} + 2^j) = f(2^j, 2^i + 2^{i+1} + 2^j)$ when $i < j$.
+  let c_j : ℕ → ℝ := fun j => f (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j)
+
+  -- Show that $c_j = 2^j$ when $i < j$.
+  have hc_j : ∀ j, i < j → c_j j = 2 ^ j := by
+    intro j hij
+    have : 2 ^ j > 0 := by exact Nat.pos_pow_of_pos j (by norm_num)
+    have : 2 ^ i + 2 ^ (i + 1) + 2 ^ j > 0 := by omega
+    calc
+      _ = f (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) / 1 := by field_simp
+      _ = f (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) / (2 ^ j) * (2 ^ j) := by field_simp
+      _ = f (2 ^ i + 2 ^ (i + 1) + 2 ^ j) (2 ^ j) * (2 ^ j) := by rw [h₃ (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) ⟨by omega, by omega⟩]
+      _ = f (2 ^ (i + 1) + 2 ^ j) (2 ^ j) * (2 ^ j) := by rw [h₄ (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) ⟨by omega, by omega⟩]; ring
+      _ = f (2 ^ j) (2 ^ (i + 1) + 2 ^ j) * (2 ^ j) := by rw [h₄ (2 ^ (i + 1) + 2 ^ j) (2 ^ j) ⟨by omega, by omega⟩]
+      _ = f (2 ^ j) (2 ^ j) * (2 ^ j) := by rw [h₅ (i + 1) j (by omega)]
+      _ = _ := by rw [h₀ _ (by omega)]; ring
+
+  -- Show that $c_j = b_j$ when $i < j$.
+  have h₈ : ∀ j, i < j → c_j j = b_j j := by
+    intro j hij
+    exact Nat.eq_of_le_of_lt (hb_j j hij) (hc_j j hij)
+
+  -- Let $d_j = f(2^j, 2^i + 2^{i+1} + 2^j) = f(2^j, 2^i + 2^{i+1} + 2^j)$ when $i < j$.
+  let d_j : ℕ → ℝ := fun j => f (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j)
+
+  -- Show that $d_j = 2^j$ when $i < j$.
+  have hd_j : ∀ j, i < j → d_j j = 2 ^ j := by
+    intro j hij
+    have : 2 ^ j > 0 := by exact Nat.pos_pow_of_pos j (by norm_num)
+    have : 2 ^ i + 2 ^ (i + 1) + 2 ^ j > 0 := by omega
+    calc
+      _ = f (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) / 1 := by field_simp
+      _ = f (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) / (2 ^ j) * (2 ^ j) := by field_simp
+      _ = f (2 ^ i + 2 ^ (i + 1) + 2 ^ j) (2 ^ j) * (2 ^ j) := by rw [h₃ (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) ⟨by omega, by omega⟩]
+      _ = f (2 ^ (i + 1) + 2 ^ j) (2 ^ j) * (2 ^ j) := by rw [h₄ (2 ^ j) (2 ^ i + 2 ^ (i + 1) + 2 ^ j) ⟨by omega, by omega⟩]; ring
+      _ = f (2 ^ j) (2 ^ (i + 1) + 2 ^ j) * (2 ^ j) := by rw [h₄ (2 ^ (i + 1) + 2 ^ j) (2 ^ j) ⟨by omega, by omega⟩]
+      _ = f (2 ^ j) (2 ^ j) * (2 ^ j) := by rw [h₅ (i + 1) j (by omega)]
+      _ = _ := by rw [h₀ _ (by omega)]; ring
+
+  -- Show that $d_j = c_j$ when $i < j$.
+  have h₉ : ∀ j, i < j → d_j j = c_j j := by
+    intro j hij
+    exact Nat.eq_of_le_of_lt (hc_j j hij) (hd_j j hij)
+
+  -- Show that $b_j = a_{j+1}$ when $i < j$.
+  have h₁₀ : ∀ j, i < j → b_j j = a_ip1 := by
+    intro j hij
+    exact Nat.eq_of_le_of_lt (h₅ i (i + 1) (by omega)) (hb_j j hij)
+
+  -- Show that $c_j = a_{j+1}$ when $i < j$.
+  have h₁₁ : ∀ j, i < j → c_j j = a_ip1 := by
+    intro j hij
+    exact Nat.eq_of_le_of_lt (h₅ i (i + 1) (by omega)) (hc_j j hij)
+
+  -- Show that $d_j = a_{j+1}$ when $i < j$.
+  have h₁₂ : ∀ j, i < j → d_j j = a_ip1 := by
+    intro j hij
+    exact Nat.eq_of_le_of_lt (h₅ i (i + 1) (by omega)) (hd_j j hij)
+
+  -- Let $e_j = f(2^j, 2^i + 2^{i+1} + 2^j) = f(2^j, 2^i + 2^{i+1} + 2^j)$ when $i < j$.
+  let e_j : ℕ → ℝ := fun j => f (2 ^ j) (2 ^ i + 2 ^ i + 2 ^ j)
+
+  -- Show that $e_j = 2^j$ when $i < j$.
+  have he_j : ∀ j, i < j → e_j j = 2 ^ j := by
+    intro j hij
+    have : 2 ^ j > 0 := by exact Nat.pos_pow_of_pos j (by norm_num)
+    have : 2 ^ i + 2 ^ i + 2 ^ j > 0 := by omega
+    calc
+      _ = f (2 ^ j) (2 ^ i + 2 ^ i + 2 ^ j) / 1 := by field_simp
+      _ = f (2 ^ i + 2 ^ i + 2 ^ j) (2 ^ j) * (2 ^ j) := by
+        rw [←h₃]
+        have : 2 ^ j > 0 := by exact Nat.pos_pow_of_pos j (by norm_num)
+        have : 2 ^ i + 2 ^ i + 2 ^ j > 0 := by omega
+        field_simp
+        ring
+      _ = f (2 ^ i + 2 ^ i + 2 ^ j) (2 ^ i + 2 ^ i) * (2 ^ j) := by rw [h₄ (2 ^ j) (2 ^ i + 2 ^ i + 2 ^ j) ⟨by omega, by omega⟩]
+      _ = f (2 ^ i + 2 ^ i) (2 ^ i + 2 ^ i + 2 ^ j) * (2 ^ j) := by rw [h₄ (2 ^ i + 2 ^ i) (2 ^ j) ⟨by omega, by omega⟩]
+      _ = f (2 ^ i + 2 ^ i

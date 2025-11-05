@@ -1,0 +1,88 @@
+-- We need to show that the two numbers $21n+4$ and $14n+3$ are coprime, or that their
+  -- greatest common divisor is 1. Let's call them $a$ and $b$ respectively, with
+  -- $a = 21n + 4$ and $b = 14n + 3$.
+
+  let a := 21 * n + 4
+  let b := 14 * n + 3
+
+  -- To show that $\gcd(a, b) = 1$, we can use the Euclidean algorithm. We start by computing
+  -- $a \bmod b$. In other words, we want to find the remainder $r$ when $a$ is divided by $b$.
+
+  let r := a % b
+
+  -- We would like to show that $r$ is equal to 1. To do this, we can use the fact that
+  -- $a = bq + r$ for some quotient $q$, and that $0 \leq r < b$.
+
+  have h1 : a = b * (a / b) + r := by omega
+
+  -- Let's rewrite $r$ using the formula $r = a - bq$. Since $a = 21n + 4$ and $b = 14n + 3$,
+  -- we have:
+  --
+  -- $$r = (21n + 4) - (14n + 3) \cdot q$$
+  --
+  -- for some natural number $q$. Let's see if we can determine $q$.
+
+  have h2 : r = 1 := by
+    -- Let's rewrite the equation for $r$:
+    -- $$r = (21n + 4) - (14n + 3) \cdot q$$
+    -- We can rearrange this to:
+    -- $$r = 21n + 4 - 14n \cdot q - 3q$$
+    -- $$r = 21n - 14n \cdot q + 4 - 3q$$
+    -- $$r = 7n(3 - 2q) + (4 - 3q)$$
+    have : r = 21 * n + 4 - (14 * n + 3) * (r / b) := by
+      -- This follows from the fact that $a = bq + r$, or equivalently, $r = a - bq$.
+      rw [← h1]
+      -- The tactic `omega` is able to rewrite the subtraction in terms of addition, which is more efficient.
+      omega
+    -- Let's rewrite this again to separate the terms involving $n$ and the constant terms:
+    -- $$r = 7n(3 - 2q) + (4 - 3q)$$
+    have : r = 7 * n * (3 - 2 * (r / b)) + (4 - 3 * (r / b)) := by
+      rw [this]
+      ring
+    -- Now, let's analyze the two terms:
+    -- - The first term is $7n(3 - 2q)$. Since $n$ is a natural number, for this term to be bounded
+    --   (which it must be, since $0 \leq r < b$), $3 - 2q$ must be 0. Otherwise, if $3 - 2q \neq 0$,
+    --   the term would grow linearly with $n$, making $r$ negative or greater than $b$.
+    have h3 : 3 - 2 * (r / b) = 0 := by
+      omega
+    -- This implies that $q = 1$, which gives us:
+    -- $$r = 4 - 3 \cdot 1 = 1$$
+    have h4 : r / b = 1 := by
+      omega
+    -- So indeed, $r = 1$.
+    omega
+  -- Let's reflect on what we've shown so far: We've shown that for any natural number $n$,
+  -- if we define $a = 21n + 4$ and $b = 14n + 3$, then $a$ and $b$ have a remainder of 1 when
+  -- divided by $b$, meaning that $\gcd(a, b) = 1$.
+
+  -- To complete the proof, we need to convert this to a statement about $\gcd(a, b)$.
+  change Nat.gcd a b = 1
+  -- We can use the theorem `Nat.gcd_eq_iff` to rewrite this as a statement about the remainder
+  -- of $a$ divided by $b$.
+  rw [Nat.gcd_eq_iff_dvd]
+  -- We need to show that $b \mid a \leftrightarrow b \mid 1$. We'll show both directions.
+  constructor
+  -- Let's start with the forward direction: If $b \mid a$, then $b \mid 1$.
+  intro h
+  rw [← h2] at h
+  -- The Lean library has a useful lemma called `Nat.dvd_iff_mod_eq_zero` which states that
+  -- $b \mid a$ if and only if $a \bmod b = 0$.
+  rw [Nat.dvd_iff_mod_eq_zero] at h
+  -- But we've already shown that $a \bmod b = 1$, so this would imply that $1 = 0$, which is a contradiction!
+  rw [h] at h2
+  omega
+  -- Now for the reverse direction: If $b \mid 1$, then $b \mid a$.
+  intro h
+  -- If $b \mid 1$, then $b = 1$, since $b$ is a natural number.
+  have hb : b = 1 := by
+    rw [Nat.dvd_iff_mod_eq_zero] at h
+    omega
+  -- And if $b = 1$, then since $a = 21n + 4$ and $n$ is a natural number, $a$ must be greater than $b$.
+  -- So in this case, $a \bmod b = a$, which means that $a \bmod b > 0$, which contradicts the assumption
+  -- that $b \mid a$ (since then $a \bmod b$ would have to be 0).
+  rw [hb] at h
+  have ha : a > 1 := by
+    omega
+  rw [Nat.dvd_iff_mod_eq_zero] at h
+  omega
+```

@@ -1,0 +1,75 @@
+-- We have $\sqrt{16 + 16a} = 4 \sqrt{1 + a}.$
+  have : Real.sqrt (16 + 16 * a) = 4 * Real.sqrt (1 + a) := by
+    rw [show (16 + 16 * a) = (4 ^ 2) * (1 + a) by ring]
+    rw [Real.sqrt_mul (by positivity)]
+    simp
+
+  -- We have $\sqrt{4 + 4 \sqrt{1 + a}} = 2 \sqrt{1 + \sqrt{1 + a}}.$
+  have : Real.sqrt (4 + 4 * Real.sqrt (1 + a)) = 2 * Real.sqrt (1 + Real.sqrt (1 + a)) := by
+    rw [show (4 + 4 * Real.sqrt (1 + a)) = (2 ^ 2) * (1 + Real.sqrt (1 + a)) by ring]
+    rw [Real.sqrt_mul (by positivity)]
+    simp
+
+  -- We get $2 \sqrt{1 + \sqrt{1 + a}} + \sqrt{1 + \sqrt{1 + a}} = 6.$
+  rw [this, ‹Real.sqrt (16 + 16 * a) = 4 * Real.sqrt (1 + a)›] at h₀
+  rw [show (4 * Real.sqrt (1 + a)) = 2 * (2 * Real.sqrt (1 + a)) by ring] at h₀
+  rw [← add_mul, ← mul_add] at h₀
+  rw [show (2 + 2) = (2 * 2) by ring, mul_comm, ← mul_assoc] at h₀
+
+  -- We get $\sqrt{1 + \sqrt{1 + a}} = 1 + \sqrt{1 + a}$ or $\sqrt{1 + \sqrt{1 + a}} = 2 - \sqrt{1 + \sqrt{1 + a}}.$
+  have : 1 + Real.sqrt (1 + a) = 2 ∨ 1 + Real.sqrt (1 + a) = (2 : ℝ) ^ 2 := by
+    cases mul_self_eq_mul_self (by positivity : (2 : ℝ) ^ 2 ≥ 0) (by positivity : (1 + Real.sqrt (1 + a)) ≥ 0) |>.mp h₀ with
+    | inl h => left; linarith
+    | inr h => right; rw [← h]; ring
+
+  cases this with
+  | inl this =>
+    -- Assume $\sqrt{1 + \sqrt{1 + a}} = 1 + \sqrt{1 + a}$, we get $1 + \sqrt{1 + a} ≥ 0.$
+    have : (1 + Real.sqrt (1 + a)) ≥ 0 := by positivity
+    -- We get $\sqrt{1 + a} = 0$ or $\sqrt{1 + a} = 1.$
+    have : 1 + Real.sqrt (1 + a) = 1 ∨ 1 + Real.sqrt (1 + a) = (1 : ℝ) ^ 2 := by
+      cases mul_self_eq_mul_self (by positivity : (1 : ℝ) ^ 2 ≥ 0) (by positivity : (1 + Real.sqrt (1 + a)) ≥ 0) |>.mp this with
+      | inl h => left; linarith
+      | inr h => right; rw [← h]; ring
+    cases this with
+    | inl this =>
+      -- Assume $\sqrt{1 + a} = 0$, we get $a = -1$ which is not a solution.
+      have : a = -1 := by
+        rw [Real.sqrt_eq_zero (by positivity)] at this
+        linarith
+      rw [this] at h₀
+      norm_num at h₀
+    | inr this =>
+      -- Assume $\sqrt{1 + a} = 1$, we get $a = 1$ which is not a solution.
+      have : a = 1 := by
+        rw [show (1 : ℝ) ^ 2 = 1 by norm_num, Real.sqrt_eq_iff_eq_sq (by linarith) (by positivity)] at this
+        linarith
+      rw [this] at h₀
+      norm_num at h₀
+  | inr this =>
+    -- Assume $\sqrt{1 + \sqrt{1 + a}} = 2 - \sqrt{1 + \sqrt{1 + a}}$, we get $\sqrt{1 + \sqrt{1 + a}} = 1$.
+    have this' : Real.sqrt (1 + Real.sqrt (1 + a)) = 1 := by linarith
+    -- We get $1 + \sqrt{1 + a} = 1$ or $1 + \sqrt{1 + a} = 1 + \sqrt{1 + a} - 2 \sqrt{1 + a}.$
+    have : 1 + Real.sqrt (1 + a) = 1 ∨ 1 + Real.sqrt (1 + a) = (1 : ℝ) ^ 2 - 4 * Real.sqrt (1 + a) + (Real.sqrt (1 + a) * 2) ^ 2 := by
+      cases mul_self_eq_mul_self (by positivity : (1 : ℝ) ^ 2 ≥ 0) (by positivity : (1 + Real.sqrt (1 + a)) ≥ 0) |>.mp this with
+      | inl h => left; linarith
+      | inr h => right; rw [← h]; ring
+    cases this with
+    | inl this =>
+      -- Assume $1 + \sqrt{1 + a} = 1$, we get $a = -1$ which is not a solution.
+      have : a = -1 := by
+        rw [Real.sqrt_eq_zero (by positivity)] at this
+        linarith
+      rw [this] at h₀
+      norm_num at h₀
+    | inr this =>
+      -- Assume $1 + \sqrt{1 + a} = 1 + \sqrt{1 + a} - 2 \sqrt{1 + \sqrt{1 + a}},$ we get $\sqrt{1 + a} = \frac{1}{2}.$
+      have this' : Real.sqrt (1 + a) = 1 / 2 := by linarith
+      -- We get $1 + \frac{1}{2} = \sqrt{1 + \frac{1}{2}}$ which is not true.
+      have : a = -7 / 4 := by
+        rw [Real.sqrt_eq_iff_eq_sq (by linarith) (by positivity)] at this'
+        linarith
+      rw [this] at h₀
+      norm_num at h₀
+
+```

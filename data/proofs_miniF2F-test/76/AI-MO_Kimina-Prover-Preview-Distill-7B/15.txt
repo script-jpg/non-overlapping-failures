@@ -1,0 +1,61 @@
+-- Let $S$ be the set of positive integers $n$ satisfying $\dfrac{n+1000}{70} = \lfloor \sqrt{n} \rfloor$.
+  -- We want to show that $S$ has $6$ elements.
+
+  have h₁ : S = {196, 252, 280, 288, 294, 296} := by
+    -- We will show that $S = \{196, 252, 280, 288, 294, 296\}$ by extensionality.
+    ext n
+    -- membership in $S$ is equivalent to being one of the 6 numbers
+    simp [h₀]
+    constructor
+    · -- If $n \in S$, then $n$ is one of the 6 numbers.
+      intro hn
+      rcases hn with ⟨hnpos, hneq⟩
+      -- Since $70 \lfloor \sqrt{n} \rfloor = n + 1000$, we have $70 \lfloor \sqrt{n} \rfloor - 1000 = n$.
+      have hn' : 70 * (⌊Real.sqrt n⌋ : ℝ) - 1000 = n := by
+        rw [←hneq]
+        ring
+      -- Let $m = \lfloor \sqrt{n} \rfloor$.
+      let m := ⌊Real.sqrt n⌋
+      have hna : m = ⌊Real.sqrt n⌋ := rfl
+      rw [←hna] at hn'
+      -- $m$ is an integer, so $70m - 1000$ is an integer.
+      have h0 : n = 70 * m - 1000 := by
+        norm_cast at hn'
+      -- This means that $n$ is a member of the set on the right-hand side.
+      have h1 : m ≥ 0 := by
+        exact Int.floor_nonneg.mpr (Real.sqrt_nonneg n)
+      -- So it suffices to show that $m \le 5$.
+      suffices m ≤ 5 by omega
+      -- For a contradiction, assume that $m \ge 6$.
+      by_contra! h2
+      -- Then $70m - 1000 \ge 70 \times 6 - 1000 = 200$.
+      have h3 : n ≥ 200 := by omega
+      clear h2
+      -- On the other hand, $n = (\sqrt{n})^2 < m^2 \le 5^2 = 25$.
+      have h4 : n < 25 := by
+        calc
+          n = (Real.sqrt n)^2 := by rw [Real.sq_sqrt]; linarith
+          _ < m^2 := by exact sq_lt_sq.mpr Int.lt_floor_add_one _ h1
+          _ ≤ 5^2 := by
+            have h5 : m ≤ 5 := h2
+            have h6 : 1 ≤ m := by omega
+            nlinarith
+      -- This is a contradiction.
+      linarith
+
+    · -- If $n$ is one of the 6 numbers, then $n \in S$.
+      intro hn
+      -- Just check each of the 6 numbers.
+      simp at hn ⊢
+      rcases hn with (rfl | rfl | rfl | rfl | rfl | rfl)
+      all_goals
+        simp [h₀]
+        try norm_num
+
+  -- Now we know that $S = \{196, 252, 280, 288, 294, 296\}$.
+  -- So it suffices to show that this set has $6$ elements.
+  rw [h₁]
+  rw [Finset.card_eq_toFinset_card']
+  simp
+
+```

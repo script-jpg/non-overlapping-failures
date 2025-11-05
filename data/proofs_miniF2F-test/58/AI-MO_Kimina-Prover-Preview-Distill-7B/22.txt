@@ -1,0 +1,188 @@
+have h (m n) : 0 < m → 0 < n → f (m + n) = f m + f n ∨ f (m + n) = f m + f n + 1 := by
+    intro m_pos n_pos
+    specialize h₀ m n m_pos n_pos
+    rcases h₀ with h₀ | h₀
+    · rw [← Nat.sub_eq_zero]
+      exact h₀
+    · rw [← Nat.sub_eq_one]
+      exact h₀
+
+  have h' (m n) : 0 < m → 0 < n → f (m + n) = f m + f n + 1 - (f (m + n) - f m - f n)  := by
+    intro m_pos n_pos
+    specialize h₀ m n m_pos n_pos
+    rcases h₀ with h₀ | h₀
+    · rw [h₀]
+      simp
+    · rw [h₀]
+      simp
+
+  -- Let us call a positive integer $n$ nice, if $f(n) =  n / 3 * 2$.
+
+  -- We will prove, that all nice numbers satisfy the property $f(a + b) = f(a) + f(b)$.
+
+  let rec h'' : (n : ℕ) → Nat → Prop
+    where
+      -- $1$ is nice
+      h'' 1 1 := by simp
+      -- If $b$ is nice, then $ nice + nice = nice + nice + 1 - (f (nice + nice) - f nice - f nice) $
+      h'' b 1 := fun hb =>
+        h' b 1 hb rfl
+      -- If $a + b$ is nice, then $f(a + b) = f a + f b + 1 - (f (a + b) - f a - f b)$
+      h'' a (b + 1) := fun hab =>
+        (h' a (b + 1) (Nat.pos.intro hb) (Nat.pos.intro (by simpa using hb)).symm).trans (h'' a b) (by simpa using hb)
+
+  -- Let us call a positive integer $n$ semi-nice, if $f(n) =  n / 3 * 2 - 1$.
+
+  -- We will prove, that all semi-nice numbers satisfy the property $f(a + b) = f(a) + f(b)$.
+
+  let rec h'' : (n : ℕ) → Nat → Prop
+    where
+      -- $2$ is semi-nice
+      h'' 2 1 := by simp
+      -- If $b$ is semi-nice, then $ semi-nice + semi-nice = semi-nice + semi-nice + 1 - (f (semi-nice + semi-nice) - f semi-nice - f semi-nice) $
+      h'' b 1 := fun hb =>
+        h' b 1 (Nat.pos.intro hb) (by simpa using hb)
+      -- If $a + b$ is semi-nice, then $f(a + b) = f a + f b + 1 - (f (a + b) - f a - f b)$
+      h'' a (b + 1) := fun hab =>
+        (h' a (b + 1) (Nat.pos.intro hb) (by simpa using hb)).trans (h'' a b) (by simpa using hb)
+
+  -- We will prove, that if $b$ is nice and $a$ is nice or semi-nice, then $a + b$ is nice or semi-nice.
+
+  let rec h (a b : ℕ) : Nat → Nat → Prop
+    where
+      -- If $b$ is nice and $a$ is semi-nice, then $a + b$ is nice or semi-nice.
+      h a b b + 1 := fun hb =>
+        (h' a (b + 1) (Nat.pos.intro (h a b)) (by simpa using hb)).trans (h'' a b) (by simp; rw [hb]; decide)
+      -- If $b$ is nice and $a$ is nice, then $a + b$ is nice or semi-nice.
+      h a b b := fun hb =>
+        (h' a b (Nat.pos.intro (h a b)) (by simpa using hb)).trans (h'' a b) (by simp; rw [hb]; decide)
+      -- $3$ is nice
+      h 3 b b + 1 := fun hb =>
+        (h' 3 (b + 1) (Nat.pos.intro hb) (by simpa using hb)).trans (h'' 3 b) (by simp; rw [hb]; decide)
+      -- $9999$ is nice
+      h 9999 b b + 1 := fun hb =>
+        (h' 9999 (b + 1) (Nat.pos.intro hb) (by simpa using hb)).trans (h'' 9999 b) (by simp; rw [hb]; decide)
+
+  -- Now we can show, that all numbers, which are nice or semi-nice, satisfy the property $f(a + b) = f(a) + f(b)$.
+
+  let rec h' : (n : ℕ) → Nat → Prop
+    where
+      -- $1$ is nice
+      h' 1 1 := by simp
+      -- If $b$ is nice or semi-nice, then $ nice + nice = nice + nice + 1 - (f (nice + nice) - f nice - f nice) $
+      h' b 1 := fun hb =>
+        (h' b (1 + 1) (by simpa using hb)).trans (h b 1 (by simpa using hb)) (by simp; rw [hb]; decide)
+      -- If $a + b$ is nice or semi-nice, then $f(a + b) = f a + f b + 1 - (f (a + b) - f a - f b)$
+      h' a (b + 1) := fun hab =>
+        (h' a (b + 1) (by simpa using hb)).trans (h a (b + 1) (by simpa using hb)) (by simp; rw [hab]; decide)
+
+  -- We will prove, that all numbers, which are nice or semi-nice, are in the set $\{2, 3, 9999\}$.
+
+  let rec h'' : (n : ℕ) → Nat → Prop
+    where
+      -- $1$ is nice
+      h'' 1 1 := by simp
+      -- If $b$ is nice or semi-nice, then $ nice + nice = nice + nice + 1 - (f (nice + nice) - f nice - f nice) $
+      h'' b 1 := fun hb =>
+        (h'' b (1 + 1) (by simpa using hb)).trans (h' b 1 (by simpa using hb)) (by simp; rw [hb]; decide)
+      -- If $a + b$ is nice or semi-nice, then $f(a + b) = f a + f b + 1 - (f (a + b) - f a - f b)$
+      h'' a (b + 1) := fun hab =>
+        (h'' a (b + 1) (by simpa using hb)).trans (h' a (b + 1) (by simpa using hb)) (by simp; rw [hab]; decide)
+
+  -- Now we can show, that $1982$ is nice or semi-nice.
+
+  have h_1982 := h' 9999 9999 9999 + 1  (by simp; decide)
+  have h_1982' := h 9999 9999 9999 + 1 (by simp; decide)
+  have h_1982'' := h 9999 9999 9999 (by simp; decide)
+
+  -- Because $1982$ is nice or semi-nice, $f(1982) = 1982 / 3 * 2 * 2 / 3 * 2$.
+
+  have h_1982_2 :=
+    (h' 1982 1982 1982 + 1 (by simp; exact h_1982)) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- Because $1982$ is nice or semi-nice, $f(1982) = 1982 / 3 * 2 - 1$.
+
+  have h_1982_2' :=
+    (h' 1982 1982 1982 + 1 (by simp; exact h_1982')) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- Because $1982$ is nice or semi-nice, $f(1982) = 1982 / 3 * 2$.
+
+  have h_1982_2'' :=
+    (h' 1982 1982 1982 (by simp; exact h_1982'')) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- We will prove, that $1982$ is nice.
+
+  have h_1982_nice :=
+    (h 1982 1982 1982 + 1 (by simp; exact h_1982_2'')) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- We will prove, that $1982$ is semi-nice.
+
+  have h_1982_semi_nice :=
+    (h 1982 1982 1982 + 1 (by simp; exact h_1982_2''')) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- Because $1982$ is nice or semi-nice, $f(1982) = 1982 / 3 * 2 - 1$.
+
+  have h_1982_nice_or_semi_nice :=
+    (h' 1982 1982 1982 + 1 (by simp; exact h_1982_nice)) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- Because $1982$ is nice or semi-nice, $1982 / 3 * 2 - 1 = 660$.
+
+  have h_1982_nice_or_semi_nice_2 :=
+    (h'' 1982 1982 1982 + 1 (by simp; exact h_1982_nice_or_semi_nice)) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- Because $1982$ is nice or semi-nice, $1982 / 3 * 2 - 1 = 660$.
+
+  have h_1982_nice_or_semi_nice_2' :=
+    (h'' 1982 1982 1982 + 1 (by simp; exact h_1982_nice_or_semi_nice_or_semi_nice)) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- Because $1982$ is nice or semi-nice, $1982 / 3 * 2 - 1 = 660$.
+
+  have h_1982_nice_or_semi_nice_2'' :=
+    (h'' 1982 1982 1982 (by simp; exact h_1982_nice_or_semi_nice_2')) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- Because $1982$ is nice or semi-nice, $f(1982) = 660$.
+
+  have h_1982_nice_or_semi_nice_2''' :=
+    (h' 1982 1982 1982 (by simp; exact h_1982_nice_or_semi_nice_2'')) ⊢
+    (f 1982 = 1982 / 3 * 2 ∧ 1982 / 3 * 2 ≤ f 1982 ∧ ¬ (1982 / 3 * 2 + 1 ≤ f 1982)) ∧
+    (f 1982 = 1982 / 3 * 2 - 1 ∧ 1982 / 3 * 2 - 1 ≥ f 1982 ∧ ¬ (1982 / 3 * 2 ≤ f 1982))
+    := by
+    decide
+
+  -- Because $1982$ is nice or semi-nice, $1982 / 3 * 2 - 1 = 660

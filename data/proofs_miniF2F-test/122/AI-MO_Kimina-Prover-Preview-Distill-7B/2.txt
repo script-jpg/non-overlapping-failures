@@ -1,0 +1,31 @@
+-- Prove the Cauchy-Schwarz inequality.
+  have CS_ineq (x₁ y₁ z₁ x₂ y₂ z₂ : ℝ) : (x₁ * x₂ + y₁ * y₂ + z₁ * z₂) ^ 2 ≤ (x₁ ^ 2 + y₁ ^ 2 + z₁ ^ 2) * (x₂ ^ 2 + y₂ ^ 2 + z₂ ^ 2) := by
+    nlinarith [sq_nonneg (x₁ * y₂ - y₁ * x₂), sq_nonneg (y₁ * z₂ - z₁ * y₂), sq_nonneg (z₁ * x₂ - x₁ * z₂)]
+
+  -- Modify the inequality to (√x₁ + √y₁ + √z₁)² ≤ 3(x₁ + y₁ + z₁).
+  have CS_ineq' (x₁ y₁ z₁ : ℝ) : (√x₁ + √y₁ + √z₁) ^ 2 ≤ 3 * (x₁ + y₁ + z₁) := by
+    have h₁ :  (√x₁ + √y₁ + √z₁) ^ 2 = (√x₁) ^ 2 + (√y₁) ^ 2 + (√z₁) ^ 2 + 2 * (√x₁ * √y₁ + √y₁ * √z₁ + √z₁ * √x₁) := by ring
+    have h₂ : (√x₁) ^ 2 = x₁ := by refine Real.sq_sqrt (by linarith)
+    have h₃ : (√y₁) ^ 2 = y₁ := by refine Real.sq_sqrt (by linarith)
+    have h₄ : (√z₁) ^ 2 = z₁ := by refine Real.sq_sqrt (by linarith)
+    have h₅ : 3 * (x₁ + y₁ + z₁) = x₁ + y₁ + z₁ + 2 * (x₁ + y₁ + z₁) := by ring
+    rw [h₁, h₂, h₃, h₄, h₅]
+    nlinarith [CS_ineq √x₁ √y₁ √z₁ √x₁ √y₁ √z₁]
+
+  -- Prove the inequality for three variables.
+  have h₁ := CS_ineq' (x + y) (y + z) (z + x)
+  simp [← add_assoc] at h₁
+  rw [show 3 * ((x + y) + (y + z) + (z + x)) = 3 * (2 * (x + y + z)) by ring] at h₁
+  rw [show (√(x + y) + √(y + z) + √(z + x)) ^ 2 = (√(x + y) + √(y + z) + √(z + x)) ^ 2 by simp] at h₁
+
+  -- Prove the inequality for the original variables.
+  have h₂ : 2 / (x + y) + 2 / (y + z) + 2 / (z + x) = 2 * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by ring
+  rw [h₂]
+  calc
+    _ = 9 / (x + y + z) * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by field_simp; ring
+    _ ≤ (√(x + y) + √(y + z) + √(z + x)) ^ 2 / ((x + y) + (y + z) + (z + x)) * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by
+      -- The left-hand side is nonnegative.
+      field_simp
+      positivity
+    _ = _ := by field_simp
+```

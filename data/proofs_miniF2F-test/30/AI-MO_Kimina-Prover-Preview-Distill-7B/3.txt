@@ -1,0 +1,227 @@
+rcases h₀ with ⟨hx, hy⟩
+
+  -- Show that $x$ and $y$ are greater than 1.
+  have h₂ : 1 < x ∧ 1 < y := by
+    -- Let $t = x ^ y ^ 2$.
+    let t := x ^ y ^ 2
+    have ht : t = x ^ y ^ 2 := by rfl
+
+    -- If $x = 1$, then $t = 1$, so $y^x = 1$, so $y = 1$, contradicting $x > 1$.
+    have h₂ : x ≠ 1 := by
+      intro h
+      simp only [h, Nat.one_lt_iff_ne_zero, not_false_eq_true, zero_ne_one] at h₁
+      rcases h₁ with h₁ | h₁
+      · simp_all
+      · simp [ht, h₁] at hy
+    -- If $y = 1$, then $t = 1$, so $x = 1$, contradicting $x > 1$.
+    have h₃ : y ≠ 1 := by
+      intro h
+      simp only [h, Nat.one_lt_iff_ne_zero, not_false_eq_true, zero_ne_one] at h₁
+      rcases h₁ with h₁ | h₁
+      · simp_all
+      · simp [ht, h₁] at hx
+    omega
+
+  -- Let $v = 2 \cdot (y ^ 2)^{\phi(x)}$.
+  let v := 2 * (y ^ 2) ^ Nat.totient x
+  have hv : v = 2 * (y ^ 2) ^ Nat.totient x := by rfl
+
+  -- If $x = 2$, then $v = 2 \cdot (y ^ 2)^1 = 2 \cdot y ^ 2$.
+  have h₃ : x = 2 → v = 2 * y ^ 2 := by
+    intro h
+    simp only [h, Nat.totient_two, Nat.one_pow] at hv
+    exact hv
+
+  -- Show that $x$ is even.
+  have h₄ : Even x := by
+    -- By the lemma `Nat.pow_totient`, $(y ^ 2)^{\phi(x)} = y^{2 \cdot \phi(x)}$.
+    have h₄ : (y ^ 2) ^ Nat.totient x = y ^ (2 * Nat.totient x) := by
+      rw [Nat.pow_totient]
+    -- So, $v = 2 \cdot y^{2 \cdot \phi(x)}$.
+    rw [hv, h₄]
+    -- By the lemma `Even.of_dvd`, it is enough to show that $2$ divides $v$.
+    suffices 2 ∣ v by exact Nat.even_iff_dvd.mp this
+    -- This is true by the definition of $v$.
+    use y ^ (2 * Nat.totient x - 1)
+    ring
+
+  -- Since $x$ is even, there exists a natural number $w$ such that $x = 2w$.
+  have h₅ : ∃ w, x = 2 * w := by exact h₄.exists_eq_two_mul
+  rcases h₅ with ⟨w, hw⟩
+
+  -- Let $t = \gcd(x, y)$.
+  let t := x.gcd y
+  have ht : t = x.gcd y := by rfl
+
+  -- If $t = 1$, then $x$ and $y$ are coprime.
+  have h₆ : t = 1 → x.Coprime y := by
+    intro h
+    exact Nat.coprime_comm.mp h
+
+  -- Otherwise, $t > 1$.
+  have h₇ : t > 1 := by
+    by_contra! h
+    simp only [Nat.one_lt_iff_ne_zero, ne_eq, not_false_eq_true, not_and, not_or] at h
+    simp [ht] at h
+    tauto
+
+  -- Since $x \neq 1$ and $x$ is even, $x \geq 2$.
+  have h₈ : x ≥ 2 := by
+    rcases hw with h₈ | h₈
+    · omega
+    · simp [h₈]
+
+  -- Since $y \neq 1$, $y \geq 2$.
+  have h₉ : y ≥ 2 := by
+    rcases hy with h₉ | h₉
+    · omega
+    · simp [h₉]
+
+  -- Since $x \geq 2$ and $y \geq 2$, $t \geq 2$.
+  have h₁₀ : t ≥ 2 := by
+    have h₁₀ : x.gcd y ≥ x.gcd 2 := by
+      apply Nat.gcd_le_gcd_of_dvd_left
+      apply Nat.dvd_trans (by omega : 2 ∣ x) (Nat.gcd_dvd_left x y)
+    have h₁₁ : x.gcd 2 = 2 := by
+      suffices 2 = 2 ^ 1 by exact Nat.pow_eq_self_iff.mp this
+      rw [Nat.totient_prime_pow (by norm_num) h₈]
+      simp
+    omega
+
+  -- Since $t \geq 2$, $\phi(t) \geq 1$.
+  have h₁₁ : 1 ≤ Nat.totient t := by
+    suffices 0 < Nat.totient t by omega
+    apply Nat.totient_pos
+    omega
+
+  -- Since $t \geq 2$, $t^{\phi(t)} \geq 2$.
+  have h₁₂ : 2 ≤ (t ^ Nat.totient t) := by
+    apply Nat.le_self_pow
+    omega
+    exact h₁₁
+
+  -- Since $t$ is the gcd of $x$ and $y$, $t$ divides $x$ and $t$ divides $y$.
+  have h₁₃ : t ∣ x ∧ t ∣ y := by
+    rw [ht]
+    exact Nat.gcd_dvd
+
+  -- Since $t$ divides $x = 2w$, $t$ divides $2w$.
+  have h₁₄ : t ∣ 2 * w := by
+    rw [hw] at h₁₃
+    exact h₁₃.left.trans (dvd_mul_right t w)
+
+  -- Since $t$ divides $2w$ and $t \geq 2$, $t$ divides $2$ or $t$ divides $w$.
+  have h₁₅ : t ∣ 2 ∨ t ∣ w := by
+    apply (Nat.Prime.dvd_mul (by linarith)).mp
+    simp only [Nat.Prime] at this
+    omega
+
+  -- Case analysis on whether $t$ divides $2$ or $t$ divides $w$.
+  rcases h₁₅ with h₁₅ | h₁₅
+
+  -- If $t$ divides $2$, then $t = 2$.
+  · have h₁₆ : t = 2 := by
+      -- Since $t \geq 2$ and $t$ divides $2$, $t = 2$.
+      exact (Nat.dvd_prime (by norm_num)).mp h₁₅
+    rw [h₁₆] at h₁₃
+    rcases h₁₃ with h₁₃ | h₁₃
+    · contradiction
+    · have h₁₇ : y = 2 ^ w := by
+        -- Since $2$ is prime and $2$ divides $y$, $y = 2^k$ for some $k$.
+        exact (Nat.dvd_prime (by norm_num)).mp h₁₃
+      -- Let $u = 2 ^ w ^ 2$.
+      let u := 2 ^ w ^ 2
+      have hu : u = 2 ^ w ^ 2 := by rfl
+
+      -- If $y = 2$, then $u = 2 ^ 2 ^ 2 = 16$, so $x = 16$ and $y = 2$.
+      have h₁₈ : y = 2 → x = 16 ∧ y = 2 := by
+        intro h
+        simp [h] at h₁₇
+        have h₁₈ : w = 4 := by
+          -- Since $2 ^ w = 2 ^ 4$, $w = 4$.
+          apply Nat.pow_right_injective (by norm_num) h₁₇.symm
+        simp [h₁₈] at hw hu ⊢
+        rw [hw, hu]
+        exact ⟨rfl, h⟩
+      -- If $y = 2$, then $(x, y) = (16, 2)$.
+      rcases h₁₃ with h₁₃ | h₁₃
+      · exact h₁₈ h₁₃
+      · simp [h₁₃] at hu
+        simp [hu, h₁₄, h₁₆]
+    · suffices x = 2 ^ (w + 1) by exact Nat.pow_right_injective (by norm_num) this
+      rw [hw]
+      rw [← Nat.pow_add_one']
+      apply Nat.pow_dvd_pow
+      omega
+
+  -- If $t$ divides $w$, then $t \leq w$.
+  · have h₁₇ : t ≤ w := by
+      -- Since $t \geq 2$ and $t$ divides $w$, $t \leq w$.
+      exact Nat.le_of_dvd (by omega) h₁₅
+    -- Since $t$ divides $y$ and $t \leq w$, $y = k \cdot t$ for some $k \leq w$.
+    have h₁₈ : ∃ k ≤ w, y = k * t := by
+      rw [← Nat.dvd_iff_exists_eq_mul_left]
+      exact ⟨h₁₃.right, h₁₇⟩
+    -- Case analysis whether $y = 0$ or $y \neq 0$.
+    rcases h₁₈ with ⟨k, h₁₈, h₁₈⟩ | h₁₈
+    · simp [h₁₈] at hy
+    · -- If $y \neq 0$, then $k \geq 1$.
+      have h₁₉ : 1 ≤ k := by omega
+      -- Since $y \geq 2$ and $y = k \cdot t$, $k \geq 2$.
+      have h₂₀ : 2 ≤ k := by
+        by_contra! h₂₀
+        simp at h₂₀
+        interval_cases k
+        · simp [h₁₈, h₂₀] at h₁₉
+        · simp [h₁₈, h₂₀] at hy
+      -- Since $k \geq 2$, $t \geq 2$, and $t \leq w$, $w \geq 2$.
+      have h₂₁ : 2 ≤ w := by
+        omega
+      -- Since $w \geq 2$, $3 \leq 2 ^ w$.
+      have h₂₂ : 2 ^ 2 ≤ 2 ^ w := by
+        exact Nat.pow_le_pow_right (by omega) h₂₁
+      -- This implies that $3 \leq 2 ^ w \mid x ^ y ^ 2$.
+      have h₂₃ : 2 ^ 2 ≤ 2 ^ w := by
+        exact Nat.pow_le_pow_right (by omega) h₂₁
+      rw [← h₁₈] at h₂₃
+      apply Nat.pow_dvd_pow 2 at h₂₃
+      rw [hw] at h₂₃
+      apply Nat.pow_dvd_pow 2 at h₂₃
+      have h₂₄ : 2 ^ (3 * (2 ^ w) * w) ≤ 2 ^ (x * y ^ 2) := by
+        apply Nat.pow_le_pow_right
+        omega
+        exact h₂₃
+      rw [← h₁₁, ← h₁₂] at h₂₄
+      -- This implies that $w \geq 3$.
+      have h₂₅ : 3 ≤ w := by
+        by_contra! h₂₅
+        simp at h₂₅
+        interval_cases w
+        · simp at h₂₄
+        · apply Nat.le_of_lt_succ at h₂₄
+          linarith
+      -- Since $t \geq 2$ and $t \leq w$, $2 \leq t \leq w \leq 3$.
+      have h₂₆ : 2 ≤ t := by omega
+      have h₂₇ : t ≤ 3 := by omega
+      -- This implies that $t = 2$ or $t = 3$.
+      have h₂₈ : t = 2 ∨ t = 3 := by omega
+      rcases h₂₈ with h₂₈ | h₂₈
+      · -- If $t = 2$, then $y = k \cdot 2$, so $x = 2 ^ (2 ^ 2) = 16$, and $y = 2$, so $(x, y) = (16, 2)$.
+        have h₂₉ : x = 16 ∧ y = 2 := by
+          simp [h₂₈, h₁₈, h₂₅] at hw
+          apply Nat.pow_right_injective (by norm_num) at hw
+          simp [h₂₈] at hw
+          omega
+        right
+        left
+        exact h₂₉
+      · -- If $t = 3$, then $y = k \cdot 3$, so $x = 2 ^ (3 ^ 2) = 81$, and $y = 3$, so $(x, y) = (81, 3)$.
+        have h₂₉ : x = 81 ∧ y = 3 := by
+          simp [h₂₈, h₁₈, h₂₅] at hw
+          apply Nat.pow_right_injective (by norm_num) at hw
+          simp [h₂₈] at hw
+          omega
+        right
+        right
+        exact h₂₉
+```

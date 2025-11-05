@@ -1,0 +1,122 @@
+-- Prove that the solution set is { π/2, 3π/2 }
+  have h₁ : S = {Real.pi / 2, Real.pi * (3 / 2)} := by
+    ext x
+    constructor
+    -- Show that S is a subset of { π/2, 3π/2 }
+    · intro hx
+      rw [h₀] at hx
+      rcases hx with ⟨hx, hx₁, hx₂⟩
+      have hx₃ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := hx₂
+      have hx₄ : Real.cos (Real.pi / 2 * Real.sin x) = Real.sin (Real.pi / 2 * Real.cos x) := by linarith
+      have hx₅ : Real.sin (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 * Real.cos x) := by linarith
+      have hx₆ : Real.pi / 2 * Real.cos x = Real.pi / 2 * Real.cos x := by linarith
+      -- Use trigonometric identities to analyze the equation
+      rw [Real.cos_pi_div_two_mul] at hx₄
+      rw [Real.sin_pi_div_two_mul] at hx₅
+      -- Transform the equation using sin(π/2 - θ) = cos(θ)
+      rw [← Real.sin_pi_div_two_sub] at hx₄
+      rw [← Real.sin_pi_div_two_sub] at hx₅
+      -- Apply injectivity of sine function
+      have hx₇ : Real.pi / 2 * Real.sin x = Real.pi / 2 * Real.cos x + 2 * Real.pi * (k : ℤ) ∨ Real.pi / 2 * Real.sin x = Real.pi - (Real.pi / 2 * Real.cos x + 2 * Real.pi * (k : ℤ)) := by
+        apply Real.injOn_sin.mp
+        · simp
+          linarith
+        · simp
+          linarith
+        · simp
+          linarith
+        · rintro (h | h) <;> linarith
+      -- Simplify expressions
+      rw [mul_add, mul_add, mul_one] at hx₇
+      have hx₈ : Real.sin x = 4 * Real.cos x + 4 * Real.pi * (k : ℤ) ∨ Real.sin x = 2 * Real.pi - 4 * Real.cos x - 4 * Real.pi * (k : ℤ) := by
+        rcases hx₇ with (hx₇ | hx₇)
+        · left
+          linarith
+        · right
+          linarith
+      -- Use the fact that sine is bounded
+      have hx₉ : k = 0 ∧ Real.sin x = Real.cos x ∨ k = 0 ∧ Real.sin x = -Real.cos x := by
+        rcases hx₈ with (hx₈ | hx₈)
+        · left
+          refine ⟨?_, by linarith⟩
+          calc
+            4 * Real.cos x + 4 * Real.pi * (k : ℤ) ≤ 4 * |Real.cos x| + 4 * Real.pi * |k| := by rel [abs_mul_le_mul_abs]
+            _ ≤ 4 * 1 + 4 * Real.pi * 1 := by
+              apply add_le_add
+              · apply mul_le_mul_of_nonneg_right
+                exact abs_cos_le_one x
+                exact zero_le_abs (↑k)
+              · exact mul_le_mul_of_nonneg_right (abs_nonneg_pi) (by simp)
+            _ < 1 := by simp [Real.pi_gt_three]
+        · right
+          refine ⟨?_, by linarith⟩
+          calc
+            4 * Real.cos x + 4 * Real.pi * (k : ℤ) ≥ -4 * |Real.cos x| - 4 * Real.pi * |k| := by rel [abs_mul_le_mul_abs]
+            _ ≥ -4 * 1 - 4 * Real.pi * 1 := by
+              apply sub_le_sub
+              · apply mul_le_mul_of_nonneg_right
+                exact abs_cos_le_one x
+                exact zero_le_abs (↑k)
+              · exact mul_le_mul_of_nonneg_right (abs_nonneg_pi) (by simp)
+            _ > -1 := by simp [Real.pi_gt_three]
+      -- Simplify further using trigonometric identities
+      rw [Real.sin_eq_cos_iff] at hx₉
+      rcases hx₉ with (hx₉ | hx₉)
+      · -- Case 1: sin x = cos x
+        rw [abs_eq] at hx₉
+        -- Split into two cases: x = π/4 + 2πk or x = 5π/4 + 2πk
+        rcases hx₉ with (hx₉ | hx₉)
+        · rw [hx₉] at hx₁ hx₂
+          replace hx₉ := hx₉
+          refine ⟨hx₉,?_⟩
+          clear hx₈ hx₉
+          rw [hx₉, Real.pi_ne_zero] at hx₁ hx₂
+          field_simp at hx₁ hx₂ ⊢
+          ring_nf at hx₁ hx₂ ⊢
+          nlinarith [Real.cos_sq_add_sin_sq x, Real.pi_gt_three]
+        · rw [hx₉] at hx₁ hx₂
+          replace hx₉ := hx₉
+          refine ⟨hx₉,?_⟩
+          clear hx₈ hx₉
+          rw [hx₉, Real.pi_ne_zero] at hx₁ hx₂
+          field_simp at hx₁ hx₂ ⊢
+          ring_nf at hx₁ hx₂ ⊢
+          nlinarith [Real.cos_sq_add_sin_sq x, Real.pi_gt_three]
+      · -- Case 2: sin x = -cos x
+        rw [abs_eq] at hx₉
+        -- Split into two cases: x = 3π/4 + 2πk or x = 7π/4 + 2πk
+        rcases hx₉ with (hx₉ | hx₉)
+        · rw [hx₉] at hx₁ hx₂
+          replace hx₉ := hx₉
+          refine ⟨hx₉,?_⟩
+          clear hx₈ hx₉
+          rw [hx₉, Real.pi_ne_zero] at hx₁ hx₂
+          field_simp at hx₁ hx₂ ⊢
+          ring_nf at hx₁ hx₂ ⊢
+          nlinarith [Real.cos_sq_add_sin_sq x, Real.pi_gt_three]
+        · rw [hx₉] at hx₁ hx₂
+          replace hx₉ := hx₉
+          refine ⟨hx₉,?_⟩
+          clear hx₈ hx₉
+          rw [hx₉, Real.pi_ne_zero] at hx₁ hx₂
+          field_simp at hx₁ hx₂ ⊢
+          ring_nf at hx₁ hx₂ ⊢
+          nlinarith [Real.cos_sq_add_sin_sq x, Real.pi_gt_three]
+
+    -- Show that { π/2, 3π/2 } is a subset of S
+    · intro hx
+      rw [h₀]
+      rcases hx with (hx | hx)
+      · simp [hx]
+        rw [Real.sin_pi_div_two]
+        rw [Real.cos_pi_div_two]
+      · simp [hx]
+        rw [Real.sin_pi_div_two]
+        rw [Real.cos_pi_div_two]
+
+
+  -- Calculate the cardinality of the solution set
+  rw [h₁]
+  rw [Finset.card_pair]
+  · exact Ne.symm (Real.pi_ne_zero)
+```

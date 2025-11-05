@@ -1,0 +1,39 @@
+-- First, extract the positivity conditions
+  obtain ⟨ha, hb, hc⟩ := h₀
+
+  -- Multiply all three equations
+  have h : (a * (b + c)) * (b * (c + a)) * (c * (a + b)) = 152 * 162 * 170 := by
+    rw [h₁, h₂, h₃]
+
+  -- Simplify the left-hand side
+  have h' : (a * (b + c)) * (b * (c + a)) * (c * (a + b)) = (a * b * c) ^ 2 * (a + b + c) ^ 2 - (a * b * c) ^ 2 := by
+    ring
+
+  -- Combine the equations
+  rw [h'] at h
+
+  -- We now have $(a * b * c) ^ 2 * (a + b + c) ^ 2 = (152 * 162 * 170 + (a * b * c) ^ 2) $, which implies that $152 * 162 * 170 + (a * b * c) ^ 2 $ is a square. We can write this as $152 * 162 * 170 + (a * b * c) ^ 2 = (a * b * c + k) ^ 2 $ for some $k$.
+  Let k := a * b * c + Real.sqrt (a * b * c ^ 2 + a ^ 2 * b ^ 2 * c ^ 2)
+  have hsq : k ^ 2 = a * b * c ^ 2 + a ^ 2 * b ^ 2 * c ^ 2 + 2 * (a * b * c) ^ 2 := by
+    ring_nf
+    rw [Real.sq_sqrt?_, mul_nonneg?_]
+    positivity
+    positivity
+    ring
+  have hsq' : (a * b * c + k) ^ 2 = 152 * 162 * 170 + (a * b * c) ^ 2 := by
+    ring_nf
+    rw [Real.sq_sqrt _]
+    ring_nf
+    positivity
+    ring
+
+  -- Note that $k > 0$.
+  have hk : k > 0 := by positivity
+
+  -- We can now solve for $a * b * c$.
+  have h : a * b * c = 720 := by
+    nlinarith [h, hsq, hsq', sq_nonneg (a * b * c - 720)]
+
+  -- Return the final answer
+  exact h
+```

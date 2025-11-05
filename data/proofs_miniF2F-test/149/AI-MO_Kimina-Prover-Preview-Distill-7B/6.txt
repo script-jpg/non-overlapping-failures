@@ -1,0 +1,45 @@
+-- prepare some simple facts for later use
+  have hn : 0 < (n : ℝ) := by linarith
+  have hn' : 0 < (n : ℝ) ^ ((1 : ℝ) / n) := by refine Real.rpow_pos_of_pos hn (by linarith)
+  have one_lt_two : 1 < (2 : ℝ) := by norm_num
+  have one_div_n_lt_one : 1 / (n : ℝ) < 1 := by
+    rw [one_div_lt_one₀ (by linarith)]
+    linarith
+  have half_lt_one : 0 < (1 : ℝ) / 2 := by norm_num
+
+  -- we will show that $n^{1/n} \leq 2 - 1/n$ by proving that $n^{1/n} < 2$ and $1/n < 1$.
+  apply Real.lt_add_of_tsub_lt_right
+  have two_sub_one_div_n_lt_one_div_n : 2 - 1 / (n : ℝ) < 2 := by
+    linarith
+  apply this
+  -- we have $n^{1/n} < 2$.
+  have h1 : (n : ℝ) ^ ((1 : ℝ) / n) < 2 := by
+    -- we have $n \leq 2^n$.
+    have n_le_two_pow_n : n ≤ 2 ^ (n : ℝ) := by
+      let f : ℕ → ℝ := fun k => 2 ^ (k : ℝ)
+      have hf : ∀ k : ℕ, k ≤ f k := by
+        intro k
+        induction k with
+        | zero => norm_num
+        | succ k ih =>
+          rw [show (k + 1 : ℝ) = (k : ℝ) + 1 by norm_cast]
+          rw [show (2 ^ (k + 1 : ℝ)) = 2 ^ (k : ℝ) * 2 by refine Eq.symm (Real.rpow_add (by linarith) (1 : ℝ) (k : ℝ))]
+          linarith [ih]
+      exact hf n
+    -- then $n^{1/n} \leq 2^{n \cdot (1/n)} = 2^1 = 2$.
+    have h1 : (2 : ℝ) ^ (n : ℝ) ≥ (2 : ℝ) ^ (1 : ℝ) := by
+      refine Real.rpow_le_rpow_of_exponent_le (by linarith)?_
+      exact one_le_n
+    have h2 : (n : ℝ) ^ ((1 : ℝ) / n) ≤ (2 ^ (n : ℝ)) ^ ((1 : ℝ) / n) := by
+      have h2 : (2 ^ (n : ℝ)) ^ ((1 : ℝ) / n) = 2 := by
+        rw [Real.rpow_mul (by linarith) (n : ℝ) (1 / n)]
+        rw [show (n : ℝ) * (1 / n) = 1 by rw [mul_inv_cancel₀]; linarith]
+        simp
+      rw [h2]
+      refine Real.rpow_le_rpow_of_exponent_le?_ (by linarith)
+      exact hn'
+    have h3 : (2 : ℝ) ^ (1 : ℝ) = 2 := by simp
+    rw [h3] at h1
+    linarith
+  exact h1
+```

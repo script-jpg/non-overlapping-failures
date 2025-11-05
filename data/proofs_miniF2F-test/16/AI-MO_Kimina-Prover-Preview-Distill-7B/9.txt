@@ -1,0 +1,100 @@
+-- prove that $f$ is injective
+  have h₂ : ∀ n m : ℕ, 0 < n → 0 < m → f n = f m → n = m := by
+    intro n m hn hm h
+    by_cases n_eq_m : n = m
+    · exact n_eq_m
+    · -- if $n \neq m$ then $f(n) \neq f(m)$
+      have f_n_neq_f_m : f n ≠ f m := by
+        intro h
+        have h₁ := h₁ n hn
+        have h₂ := h₁ m hm
+        rw [h, h] at h₂
+        contradiction
+      contradiction
+
+  -- prove that $f(0) = 0$
+  have h₃ : f 0 = 0 := by
+    by_contra! h
+    -- if $f(0) \neq 0$ then $f(0) > 0$
+    have f_0_pos : 0 < f 0 := h₀ 0
+    have f_0_lt_f_1 := h₁ 0 (by decide)
+    -- simplify the inequality $f(0) > 0$ and $f(f(0)) < f(1)$
+    simp [f_0_pos] at f_0_lt_f_1
+    -- it is impossible that $f(0) > 0$ and $f(f(0)) < f(1)$ simultaneously
+    have f_0_ge_1 : 1 ≤ f 0 := by omega
+    have f_1_pos : 0 < f 1 := h₀ 1
+    have f_f_0_ge_1 : 1 ≤ f (f 0) := by omega
+    -- substitute $f(0) > 0$ into $f(f(0)) < f(1)$
+    have f_f_0_lt_f_1 : f (f 0) < f 1 := by specialize h₁ 0 (by decide); simp at h₁; exact h₁
+    -- it is impossible that $f(f(0)) ≥ 1$ and $f(f(0)) < f(1)$ simultaneously
+    have f_1_gt_f_f_0 : f 1 > f (f 0) := by omega
+    -- we get a contradiction from the two inequalities
+    have f_1_lt_f_f_0 : f 1 < f (f 0) := by omega
+    omega
+
+  -- map $f$ to $f(f(n))$ is strictly increasing
+  have h₄ : ∀ n, 0 < n → f (f n) < f (f (n + 1)) := by
+    intro n hn
+    specialize h₁ n hn
+    simp [h₃] at h₁
+    exact h₁
+
+  -- prove that $f$ is strictly increasing
+  have h₅ : ∀ n, 0 < n → f n < f (n + 1) := by
+    intro n hn
+    have f_f_n_pos : 0 < f (f n) := h₀ (f n)
+    have f_f_n_lt_f_n_plus_1 : f (f n) < f (n + 1) := by specialize h₁ n hn; simp at h₁; exact h₁
+    have f_n_lt_f_n_plus_1 : f n < f (n + 1) := by
+      -- it is impossible that $f(n) \geq f(n+1)$ and $f(f(n)) < f(n+1)$ simultaneously
+      by_contra! h
+      have h_1 : f (f n) < f (n + 1) := by specialize h₁ n hn; simp at h₁; exact h₁
+      -- we get a contradiction from the two inequalities
+      have h_2 : f (f n) ≥ f (n + 1) := by
+        apply h₀
+        simp
+        apply h
+      omega
+    exact f_n_lt_f_n_plus_1
+
+  -- prove that $f(n) = n$ for each positive integer $n$
+  intro n hn
+  have f_n_pos : 0 < f n := h₀ n
+  -- we have $f(0) = 0$
+  have f_0 : f 0 = 0 := by decide
+  -- we have $f(n) < f(n+1)$
+  have f_n_lt_f_n_plus_1 : f n < f (n + 1) := by apply h₅; simp; exact hn
+  -- we have $f(n-1) < f(n)$
+  have f_n_minus_1_lt_f_n : n > 0 → f (n - 1) < f n := by
+    intro n_gt_0
+    apply h₅
+    simp at n_gt_0
+    exact n_gt_0
+  -- prove that $f(n) ≤ n$ by using the above facts
+  have f_n_le_n : f n ≤ n := by
+    -- it is obvious when $n = 0$
+    by_cases n_zero : n = 0
+    · rw [n_zero, f_0]
+    -- if $n \neq 0$ then $f(n) \leq n$ by induction
+    · have f_n_minus_1_lt_f_n : f (n - 1) < f n := by apply f_n_minus_1_lt_f_n; simp; exact Nat.zero_lt_of_ne_zero n_zero
+      have f_n_le : f n ≤ n := by
+        simp [f_n_lt_f_n_plus_1]
+        apply le_of_lt
+        apply Nat.lt_add_one_iff.mp
+        exact f_n_minus_1_lt_f_n
+      exact f_n_le
+  -- prove that $n ≤ f(n)$ by using the above facts
+  have n_le_f_n : n ≤ f n := by
+    -- it is obvious when $n = 0$
+    by_cases n_zero : n = 0
+    · rw [n_zero, f_0]
+    -- if $n \neq 0$ then $n ≤ f(n)$ by induction
+    · have f_n_lt_f_n_plus_1 : f n < f (n + 1) := by apply h₅; simp; exact Nat.zero_lt_of_ne_zero n_zero
+      have n_le : n ≤ f n := by
+        rw [← Nat.le_sub_one_iff_lt]
+        exact f_n_lt_f_n_plus_1
+        exact Nat.zero_lt_of_ne_zero n_zero
+      exact n_le
+  -- we have $f(n) = n$ by the two inequalities
+  exact Nat.le_antisymm n_le_f_n f_n_le_n
+
+```

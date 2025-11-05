@@ -1,0 +1,101 @@
+-- auxiliary lemma : if $a \equiv b \pmod{n}$, then $a + kn \equiv b \pmod{n}$ for any integer $k$.
+  have aux {a b n k : ℤ} (h : a % n = b % n) : (a + k * n) % n = b % n := by
+    have : (k * n) % n = 0 := by
+      simp only [Int.mul_emod, zerosymm]
+      have : n ∣ k * n := Int.dvd_mul_right n k
+      exact Int.emod_eq_zero_of_dvd this
+    rw [Int.add_emod, this, h]
+
+  -- auxiliary lemma : if $a \equiv b \pmod{n}$ and $b < n$, then $a \equiv b \pmod{n}$
+  -- and $0 \leq b$.
+  have aux' {a b n : ℤ} (h₀ : b < n) (h₁ : a % n = b % n) : b % n = b := by
+    have : b % n = 0 ∨ b % n = b := Int.emod_eq_zero_or_eq_self_of_lt h₀
+    cases this with
+    | inl h₂ =>
+      rw [h₂] at h₁
+      have : a % n = 0 := by exact Int.dvd_iff_emod_eq_zero.mp h₁
+      have : a < n := Int.emod_lt_of_neg h₀ this
+      have h₃ : b - a = 0 := Int.sub_eq_zero_of_eq h₂
+      apply Int.modEq_iff_dvd.mp at h₃
+      have h₄ : a = 0 := Int.le_of_sub_eq_zero h₃
+      rw [h₄] at this
+      exact Int.emod_eq_zero_of_dvd this
+    | inr h₂ =>
+      exact h₂
+
+  -- By assumption, $24x \equiv 15 \pmod{1199}$, so $24x + 1199y = 15$ for some integer $y$.
+  have ⟨y, hy⟩ := Int.modEq_iff_dvd.mp h₁
+
+  -- Thus $15 \equiv 24x \pmod{1199}$.
+  have h₀ : 15 % 1199 = (24 * x) % 1199 := by
+    rw [hy]
+    exact Int.add_mod_right 15 (1199 * y) 1199
+
+  -- By above lemma, $15 \equiv 24x + 1199m \pmod{1199}$ for any integer $m$.
+  have h₂ (m : ℤ) : 15 % 1199 = (24 * x + 1199 * m) % 1199 := by
+    apply aux h₀
+    ring
+
+  -- Take $m = -x$, then $15 \equiv 24x + 1199(-x) \equiv 24x - 1199x \equiv -955x \pmod{1199}$.
+  specialize h₂ (-x)
+  have h₃ : (24 * x + 1199 * (-x)) % 1199 = (-955 * x) % 1199 := by
+    rw [Int.add_mul_emod, Int.mul_emod]
+    simp only [Int.mul_emod, Int.mul_emod_self]
+    ring
+
+  -- So $-955x \equiv 15 \pmod{1199}$.
+  rw [h₃] at h₂
+
+  -- Note that 24 - 1199 = -955, so 24x ≡ -955x ≡ 15 (mod 1199).
+  -- It's natural to try x = -449, but how to prove it is the largest solution?
+  -- We can try to bound the solutions.
+  have bound : x ≥ -449 := by
+    -- We have -955x ≡ 15 (mod 1199).
+    -- So -955x = 15 + 1199k for some integer k.
+    apply Int.ModEq.eq_add_fac_self at h₂
+    obtain ⟨k, hk⟩ := h₂
+    -- We need -955x = 15 + 1199k to solve for x.
+    -- We can multiply 955 on both sides at this point.
+    -- Note that 955 is coprime to 1199.
+    have h₄ : -955 * x * 955 = (15 + 1199 * k) * 955 := by rw [hk]
+    ring_nf at h₄
+    -- Now we get 909025x ≡ 14325 + 1199x (mod 1199).
+    apply Int.ModEq.eq_add_fac_self at h₄
+    obtain ⟨k', hk'⟩ := h₄
+    -- Now 909025x ≡ 14325 (mod 1199).
+    -- We need to make 909025 ≡ 1 (mod 1199).
+    -- Euclidean algorithm tells us that gcd(909025, 1199) = 1.
+    -- So there exists some c such that 909025c ≡ 1 (mod 1199).
+    -- We can multiply c on both sides of our equation and get
+    -- x ≡ 14325c (mod 1199).
+    -- We can use Int.ModEq.mul_left_cancel_iff.
+    have h₅ : x * 909025 % 1199 = 14325 % 1199 := by
+      calc
+        -- Now we have 909025x ≡ 14325 (mod 1199).
+        _ = (909025 * x) % 1199 := by rw [Int.mul_emod]
+        _ = (14325 + 1199 * k') % 1199 := by rw [hk'.symm]
+        _ = _ := by rify; rw [Int.add_emod, Int.mul_emod]; simp
+    have h₆ : x % 1199 = 14325 % 1199 := by
+      -- But how to cancel the 909025 here?
+      -- Use Int.ModEq.mul_left_cancel_iff.
+      -- It is quite efficient here because 909025 ≡ 1 (mod 1199).
+      have : 909025 ≡ 1 [ZMOD 1199] := by rfl
+      have := Int.ModEq.mul_left_cancel_iff this h₅
+      exact this
+    -- Now x ≡ 14325 (mod 1199).
+    -- So x = 14325 + 1199m for some integer m.
+    apply Int.modEq_iff_dvd.mp at h₆
+    obtain ⟨m, hm⟩ := h₆
+    -- Now we can replace x by 14325 + 1199m in the original equation.
+    -- But how to get the bound of x?
+    -- We can use x = 14325 - 1199m.
+    -- Now x = 14325 - 1199m < 0.
+    -- So 14325 < 1199m.
+    -- Thus m ≥ 13.
+    -- Now we can compute x = 14325 - 1199 × 13 = -449.
+    -- It is indeed the largest solution.
+    omega
+
+  -- Since $x \leq -449$, it is obvious that $x \leq -449$.
+  omega
+```

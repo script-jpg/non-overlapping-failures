@@ -1,0 +1,95 @@
+-- Prove that $f$ is injective.
+  have h₂ : f.Injective := by
+    intro a b h
+    -- If $f(a) = f(b)$, then clearly $a = b$.
+    by_cases h' : a = b
+    · exact h'
+    -- If $a < b$, then we get $f(a) < f(f(a)) < f(b+1)$, contradiction.
+    · have h'' : a + 1 ≤ b := by omega
+      have h₃ : f a < f (f a) := by
+        specialize h₁ a h'
+        simp [h'] at h₁
+        exact h₁
+      have h₄ : f (f a) < f (b + 1) := by
+        specialize h₁ b h''
+        simp [h''] at h₁
+        exact h₁
+      linarith
+
+  -- If $f(a) < f(b)$, then $a < b$.
+  have h₃ : ∀ a b : ℕ, 0 < a → 0 < b → f a < f b → a < b := by
+    intro a b ha hb h
+    by_contra! h'
+    have h'' : b < a := by omega
+    specialize h₃ b a hb ha h
+    linarith only [h', h₃]
+
+  -- If $f(a) ≤ f(b)$, then $a ≤ b$.
+  have h₄ : ∀ a b : ℕ, 0 < a → 0 < b → f a ≤ f b → a ≤ b := by
+    intro a b ha hb h
+    rw [le_iff_lt_or_eq] at h
+    cases h with
+    | inl h' =>
+      exact h₃ a b ha hb h'
+    | inr h' =>
+      exact Nat.le_of_eq h'
+
+  -- If $a < f(a)$, then apply the original condition to get $f(a) < f(f(a)) < f(a+1)$.
+  have h₅ : ∀ a : ℕ, 0 < a → a < f a → f a < f (f a) ∧ f (f a) < f (a + 1) := by
+    intro a ha h
+    specialize h₁ a ha
+    have h₂ : f a < f (f a) := by
+      specialize h₀ (f a)
+      simp [h] at h₀
+      exact h₀
+    exact ⟨h₂, h₁⟩
+
+  -- If $f(a) < a$, then apply the original condition to get $f(f(a)) < f(a+1) ≤ f(a)$, contradiction.
+  have h₆ : ∀ a : ℕ, 0 < a → f a < a → f (f a) < f (a + 1) ∧ f (a + 1) ≤ f a := by
+    intro a ha h
+    specialize h₀ (f a)
+    specialize H₁ a ha
+    have h₂ : f (f a) < f (a + 1) := by
+      specialize h₁ a ha
+      simp [h] at h₁
+      exact h₁
+    have h₃ : f (a + 1) ≤ f a := by
+      suffices f (a + 1) ≤ f (f a) by
+        trans f (f a)
+        · exact this
+        · exact h₂
+      specialize h₄ (f a) (a + 1) (by simp [h]) (by simp) (by linarith)
+      simp [h] at h₄
+      exact h₄
+    exact ⟨h₂, h₃⟩
+
+  -- We claim that $f(a) = a$ for all $a$.
+  intro n hn
+  -- Set $a = n$ in h₅.
+  have h₇ : f n < f (f n) ∧ f (f n) < f (n + 1) := by
+    specialize h₅ n hn
+    exact h₅
+  -- Then we get $f(n) < f(f(n)) < f(n+1)$.
+  have h₈ : f n < f (f n) := h₇.left
+  have h₉ : f (f n) < f (n + 1) := h₇.right
+  -- Case 1 : $f(n) ≤ n$.
+  by_cases h₁₀ : f n ≤ n
+  · -- If $f(n) < n$, then we get $f(f(n)) < f(n+1) ≤ f(n)$, contradiction.
+    · have h₁₁ : f n < n := by omega
+      have h₁₂ : f (f n) < f (n + 1) := h₉
+      have h₁₃ : f (n + 1) ≤ f n := by
+        specialize h₄ (f n) n (by simp [h₁₀]) (by simp) (by linarith)
+        exact h₄
+      linarith
+    -- If $f(n) = n$, then we are done.
+    · have h₁₁ : f n = n := by omega
+      exact h₁₁
+  -- Case 2 : $n < f(n)$.
+  · -- If $n < f(n)$, then we get $f(f(n)) < f(n+1) ≤ f(n)$, contradiction.
+    have h₁₁ : n < f n := by omega
+    have h₁₂ : f (f n) < f (n + 1) := h₉
+    have h₁₃ : f (n + 1) ≤ f n := by
+      specialize h₄ (f n) n (by simp [h₁₁]) (by simp) (by linarith)
+      exact h₄
+    linarith
+```

@@ -1,0 +1,205 @@
+-- Let $A$ be the coefficient matrix.
+  let A : Fin 3 → Fin 3 → ℝ := fun i j => a (i * 3 + j)
+
+  -- Let $X$ be the column vector of variables.
+  let X : Fin 3 → ℝ := fun i => match i with
+    | 0 => x
+    | 1 => y
+    | 2 => z
+
+  -- Let $0$ be the column vector of all $0$'s.
+  let zero : Fin 3 → ℝ := fun _ => 0
+
+  -- The goal is to show that if $A * X = 0$, then $X = 0$.
+  suffices X = zero from by simp [X, zero] at this; exact this
+
+  -- Extract the individual equations from the matrix equation.
+  have eq0 : A 0 0 * x + A 0 1 * y + A 0 2 * z = 0 := by
+    rw [← h₇]
+    rfl
+
+  have eq1 : A 1 0 * x + A 1 1 * y + A 1 2 * z = 0 := by
+    rw [← h₈]
+    rfl
+
+  have eq2 : A 2 0 * x + A 2 1 * y + A 2 2 * z = 0 := by
+    rw [← h₉]
+    rfl
+
+  -- The first condition is satisfied by the positivity of the diagonal coefficients.
+  have diag_pos : 0 < A 0 0 ∧ 0 < A 1 1 ∧ 0 < A 2 2 := by
+    exact h₀
+
+  -- The second condition is satisfied by the negativity of the off-diagonal coefficients.
+  have offdiag_neg : ∀ i j : Fin 3, i ≠ j → A i j < 0 := by
+    intro i j h
+    fin_cases i <;> fin_cases j <;> simp [A] <;> try { exact h₁ h; exact h₂ h; exact h₃ h }
+
+  -- The third condition is satisfied by the positivity of the row sums.
+  have row_sum_pos : 0 < (A 0 0 + A 0 1 + A 0 2) ∧ 0 < (A 1 0 + A 1 1 + A 1 2) ∧ 0 < (A 2 0 + A 2 1 + A 2 2) := by
+    exact h₄ h₅ h₆
+
+  -- We have $A * X = 0$.
+  have eq : A * X = zero := by
+    simp [A, X, zero]
+    exact ⟨eq0, eq1, eq2⟩
+
+  -- To show that $X = 0$, it suffices to show that $x = 0$, $y = 0$, and $z = 0$.
+  suffices x = 0 ∧ y = 0 ∧ z = 0 from by simp [X, zero, this]
+
+  -- We show that $x = 0$.
+  have hx : x = 0 := by
+    -- $A * X = 0$ implies $A * X - 0 = 0$.
+    replace eq : A * X - 0 = 0 := by rw [eq]; ring
+
+    -- By the triangle inequality, we have $|A * X| - |0| \leq |A * X - 0| = 0$.
+    have h : ‖A * X - 0‖ = 0 := by
+      rw [eq]
+      simp
+    have h' : ‖A * X - 0‖ ≥ ‖A * X‖ - ‖0‖ := norm_sub_norm_le (A * X) 0
+    simp at h'
+
+    -- $A * X \neq 0$ because $A * X = 0$ would contradict $0 < A 0 0$, $0 < A 1 1$, and $0 < A 2 2$.
+    have h'' : A * X ≠ 0 := by
+      intro h
+      have : (A * X) 0 = 0 := by rw [h]; simp
+      rw [norm_eq_zero] at h
+      have : 0 < A 0 0 := diag_pos.1
+      have : 0 < A 1 1 := diag_pos.2.1
+      have : 0 < A 2 2 := diag_pos.2.2
+      simp [X] at this
+      have := Eq.symm h this
+      simp [A] at this
+      linarith [h₀.1, h₀.2.1, h₀.2.2]
+
+    -- $A * X \neq 0$ because $A * X \neq 0$ and $A * X - 0 = 0$ would contradict $0 < A 0 0$, $0 < A 1 1$, and $0 < A 2 2$.
+    have h'' : (A * X) ≠ 0 := by
+      intro h
+      have : (A * X) 0 = 0 := by rw [h]; simp
+      rw [norm_eq_zero] at h
+      have : 0 < A 0 0 := diag_pos.1
+      have : 0 < A 1 1 := diag_pos.2.1
+      have : 0 < A 2 2 := diag_pos.2.2
+      simp [X] at this
+      have := Eq.symm h this
+      simp [A] at this
+      linarith [h₀.1, h₀.2.1, h₀.2.2]
+
+    -- $A * X = 0$ implies $|A * X| = 0$.
+    have h''' : ‖A * X‖ = 0 := by
+      rw [← norm_sub_norm_eq h]
+      rw [norm_eq_zero]
+      simp
+
+    -- $A * X \neq 0$ implies $|A * X| > 0$.
+    have h'''' : ‖A * X‖ > 0 := by
+      apply norm_pos_of_ne_zero h''
+
+    -- $|A * X| > 0$ and $|A * X| = 0$ is a contradiction.
+    linarith [h''', h'''']
+
+  -- We show that $y = 0$.
+  have hy : y = 0 := by
+    -- $A * X = 0$ implies $A * X - 0 = 0$.
+    replace eq : A * X - 0 = 0 := by rw [eq]; ring
+
+    -- By the triangle inequality, we have $|A * X| - |0| \leq |A * X - 0| = 0$.
+    have h : ‖A * X - 0‖ = 0 := by
+      rw [eq]
+      simp
+    have h' : ‖A * X - 0‖ ≥ ‖A * X‖ - ‖0‖ := norm_sub_norm_le (A * X) 0
+    simp at h'
+
+    -- $A * X \neq 0$ because $A * X = 0$ would contradict $0 < A 0 0$, $0 < A 1 1$, and $0 < A 2 2$.
+    have h'' : A * X ≠ 0 := by
+      intro h
+      have : (A * X) 0 = 0 := by rw [h]; simp
+      rw [norm_eq_zero] at h
+      have : 0 < A 0 0 := diag_pos.1
+      have : 0 < A 1 1 := diag_pos.2.1
+      have : 0 < A 2 2 := diag_pos.2.2
+      simp [X] at this
+      have := Eq.symm h this
+      simp [A] at this
+      linarith [h₀.1, h₀.2.1, h₀.2.2]
+
+    -- $A * X \neq 0$ because $A * X \neq 0$ and $A * X - 0 = 0$ would contradict $0 < A 0 0$, $0 < A 1 1$, and $0 < A 2 2$.
+    have h'' : (A * X) ≠ 0 := by
+      intro h
+      have : (A * X) 0 = 0 := by rw [h]; simp
+      rw [norm_eq_zero] at h
+      have : 0 < A 0 0 := diag_pos.1
+      have : 0 < A 1 1 := diag_pos.2.1
+      have : 0 < A 2 2 := diag_pos.2.2
+      simp [X] at this
+      have := Eq.symm h this
+      simp [A] at this
+      linarith [h₀.1, h₀.2.1, h₀.2.2]
+
+    -- $A * X = 0$ implies $|A * X| = 0$.
+    have h''' : ‖A * X‖ = 0 := by
+      rw [← norm_sub_norm_eq h]
+      rw [norm_eq_zero]
+      simp
+
+    -- $A * X \neq 0$ implies $|A * X| > 0$.
+    have h'''' : ‖A * X‖ > 0 := by
+      apply norm_pos_of_ne_zero h''
+
+    -- $|A * X| > 0$ and $|A * X| = 0$ is a contradiction.
+    linarith [h''', h'''']
+
+  -- We show that $z = 0$.
+  have hz : z = 0 := by
+    -- $A * X = 0$ implies $A * X - 0 = 0$.
+    replace eq : A * X - 0 = 0 := by rw [eq]; ring
+
+    -- By the triangle inequality, we have $|A * X| - |0| \leq |A * X - 0| = 0$.
+    have h : ‖A * X - 0‖ = 0 := by
+      rw [eq]
+      simp
+    have h' : ‖A * X - 0‖ ≥ ‖A * X‖ - ‖0‖ := norm_sub_norm_le (A * X) 0
+    simp at h'
+
+    -- $A * X \neq 0$ because $A * X = 0$ would contradict $0 < A 0 0$, $0 < A 1 1$, and $0 < A 2 2$.
+    have h'' : A * X ≠ 0 := by
+      intro h
+      have : (A * X) 0 = 0 := by rw [h]; simp
+      rw [norm_eq_zero] at h
+      have : 0 < A 0 0 := diag_pos.1
+      have : 0 < A 1 1 := diag_pos.2.1
+      have : 0 < A 2 2 := diag_pos.2.2
+      simp [X] at this
+      have := Eq.symm h this
+      simp [A] at this
+      linarith [h₀.1, h₀.2.1, h₀.2.2]
+
+    -- $A * X \neq 0$ because $A * X \neq 0$ and $A * X - 0 = 0$ would contradict $0 < A 0 0$, $0 < A 1 1$, and $0 < A 2 2$.
+    have h'' : (A * X) ≠ 0 := by
+      intro h
+      have : (A * X) 0 = 0 := by rw [h]; simp
+      rw [norm_eq_zero] at h
+      have : 0 < A 0 0 := diag_pos.1
+      have : 0 < A 1 1 := diag_pos.2.1
+      have : 0 < A 2 2 := diag_pos.2.2
+      simp [X] at this
+      have := Eq.symm h this
+      simp [A] at this
+      linarith [h₀.1, h₀.2.1, h₀.2.2]
+
+    -- $A * X = 0$ implies $|A * X| = 0$.
+    have h''' : ‖A * X‖ = 0 := by
+      rw [← norm_sub_norm_eq h]
+      rw [norm_eq_zero]
+      simp
+
+    -- $A * X \neq 0$ implies $|A * X| > 0$.
+    have h'''' : ‖A * X‖ > 0 := by
+      apply norm_pos_of_ne_zero h''
+
+    -- $|A * X| > 0$ and $|A * X| = 0$ is a contradiction.
+    linarith [h''', h'''']
+
+  -- We conclude that $X = 0$.
+  exact ⟨hx, hy, hz⟩
+```

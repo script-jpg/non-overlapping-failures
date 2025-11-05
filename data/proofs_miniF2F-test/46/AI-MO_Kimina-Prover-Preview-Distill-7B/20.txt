@@ -1,0 +1,55 @@
+-- We shall show that $a = \sqrt{2}$. Let's square both sides of $\langle a^{-1} \rangle = \langle a^2 \rangle$.
+  have h₄ : 1 / a - Int.floor (1 / a) = a ^ 2 - Int.floor (a ^ 2) := h₁
+
+  -- Since $2 < a^2 < 3$, we have $\lfloor a^2 \rfloor = 2$. Therefore, $\langle a^2 \rangle = a^2 - 2$.
+  have h₅ : Int.floor (a ^ 2) = 2 := by
+    have : 2 < a ^ 2 := h₂
+    have : a ^ 2 < 3 := h₃
+    apply Int.floor_eq_iff.mpr
+    norm_cast
+    constructor
+    · exact le_of_lt this
+    · exact lt_of_lt_of_le (by nlinarith (by nlinarith)) this
+  rw [h₅] at h₄
+
+  -- Since $1/a > 1/\sqrt{3} > 0.577$, we have $\lfloor 1/a \rfloor = 0$. Therefore, $\langle a^{-1} \rangle = 1/a$.
+  have h₆ : Int.floor (1 / a) = 0 := by
+    have : 1 < a ^ 2 := by nlinarith
+    have : 1 / a < 1 := by
+      refine (one_div_lt?_).mpr?_
+      · nlinarith
+      · nlinarith
+    have : 1 / a < 1 / a ^ 2 := by
+      refine one_div_lt_one_div_of_lt?_?_
+      · nlinarith
+      · nlinarith
+    have : 1 / a < 1 / (1.5773214) := by
+      refine (one_div_lt_one_div_of_lt?_?_)
+      · norm_num
+      · h
+    norm_num at this
+    apply Int.floor_eq_iff.mpr
+    norm_cast
+    constructor
+    · exact le_of_lt this
+    · exact lt_of_lt_of_le (by norm_num) this
+  rw [h₆] at h₄
+
+  -- Now we have $1/a = a^2 - 2$. We can solve for $a$.
+  have h₇ : a ^ 3 - 2 * a - 1 = 0 := by
+    field_simp at h₄
+    nlinarith
+  have h₈ : (a - 1) * (a ^ 2 + a + 1) = 0 := by nlinarith
+
+  -- From this, we can conclude that $a = 1$ or $a^2 + a + 1 = 0$. But $a > 0$, so $a = 1$.
+  have h₉ : a = 1 := by
+    have : a ^ 2 + a + 1 ≠ 0 := by nlinarith (by nlinarith)
+    have : a - 1 = 0 := by
+      apply_fun (fun x => x / (a ^ 2 + a + 1)) at h₈
+      field_simp at h₈
+      nlinarith
+    linarith
+
+  -- However, $a = 1$ does not satisfy $2 < a^2 < 3$. Thus, there is no solution!
+  nlinarith (by norm_num [h₉])
+```

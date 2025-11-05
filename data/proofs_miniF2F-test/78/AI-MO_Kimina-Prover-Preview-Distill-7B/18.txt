@@ -1,0 +1,67 @@
+-- A small warm-up: We know that the gcd of a and b is 6, and the last digit of a is 2 and b is 4.
+  -- This means that a = 6x and b = 6y, where x and y are relatively prime.
+  -- Then, we have x and y are relatively prime, and the last digit of x is 3 and y is 4/6 = 2/3.
+  -- The last digit of x must be either 3 or 7, and the last digit of y must be either 1 or 9.
+  -- In other words, x % 10 = 3 or 7, and y % 10 = 1 or 9.
+  -- We have: a = 6x, b = 6y, x % 10 = 3 or 7, y % 10 = 1 or 9, gcd(x,y) = 1.
+
+  have h₄ : a = 6 * a / 6 := by
+    rw [Nat.gcd_mul_left_mod a b, h₃]
+    omega
+  have h₅ : b = 6 * b / 6 := by
+    rw [Nat.gcd_mul_right_mod a b, h₃]
+    omega
+
+  rw [h₄, h₅]
+
+  -- Now we need to find the smallest possible value of the least common multiple of a and b.
+  -- In other words, we need to find the smallest possible value of the least common multiple of 6x and 6y.
+  -- In other words, we need to find the smallest possible value of the least common multiple of 6 and lcm(x,y).
+  -- In other words, we need to minimize lcm(x,y).
+  -- But how do we minimize lcm(x,y)? We need to minimize (x*y)/gcd(x,y).
+  -- Since gcd(x,y) = 1, we need to minimize x*y.
+  -- But x % 10 = 3 or 7, and y % 10 = 1 or 9.
+  -- We find the minimal value of x * y for x % 10 = 3 or 7 and y % 10 = 1 or 9.
+  -- The minimal value is 18 = 3 * 6, so x = 3 and y = 6.
+  -- Therefore, a = 6 * 3 = 18 and b = 6 * 6 = 36.
+  -- We check that the condition is satisfied, and indeed it does.
+  -- The lcm of 18 and 36 is 36, and the digits are 2 and 4, respectively.
+  have P (x y : ℕ) : (x % 10 = 3 ∨ x % 10 = 7) ∧ (y % 10 = 1 ∨ y % 10 = 9) ∧
+    Nat.gcd x y = 1 → 18 ≤ x * y := by
+    intro h₅ h₆ h₇
+    rcases h₅ with (h₅ | h₅)
+    · rcases h₆ with (h₆ | h₆)
+      · omega
+      · omega
+    · rcases h₆ with (h₆ | h₆)
+      · omega
+      · omega
+  have Q (x y : ℕ) (h₈ : Nat.gcd x y = 1) : 18 ≤ lcm x y := by
+    rw [Nat.lcm]
+    have P := P x y ⟨(Nat.gcd x y = x % 10 ∨ Nat.gcd x y = y % 10) ∧ (Nat.gcd x y % 10 = 3 ∨ Nat.gcd x y % 10 = 7) ∧ (Nat.gcd x y % 10 = 1 ∨ Nat.gcd x y % 10 = 9), by omega⟩
+    have h₉ : x * y = lcm x y * Nat.gcd x y := by rw [Nat.lcm, Nat.gcd_mul_lcm]
+    have h₁₀ : 18 * 1 ≤ x * y := by linarith
+    rw [h₉] at h₁₀
+    exact h₁₀
+
+  -- Now we have the lower bound of x * y, and we need to convert it to a lower bound of lcm(a,b).
+  -- In other words, we need to find the lower bound of lcm(6x, 6y) = 6 * lcm(x,y) = 6 * (x*y/gcd(x,y)) = 6 * x * y.
+  -- Since gcd(x,y) = 1, the lower bound is 6 * 18 = 108.
+  have h₆ : 18 ≤ x * y := by
+    have ⟨h₇, h₈⟩ := h₅
+    have h₉ : x = 6 * a / 36 := by
+      rw [h₄]
+      omega
+    have h₁₀ : y = 6 * b / 36 := by
+      rw [h₅]
+      omega
+    rw [h₉, h₁₀]
+    apply Q
+    omega
+  have h₇ : 6 * 18 ≤ 6 * x * y := by
+    omega
+  rw [←h₃] at h₇
+  rw [←Nat.mul_assoc, Nat.mul_comm, Nat.mul_assoc, ←Nat.mul_assoc, h₄, h₅] at h₇
+  simp at h₇
+  exact h₇
+```

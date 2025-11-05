@@ -1,0 +1,52 @@
+-- The key fact is that $\frac{1}{\sqrt{x}} \leq 10000-x$ for $x \in
+  -- [2,10000]$. This can be rearranged to $x-10000 \leq 10000 \sqrt{x} - 1$ or
+  -- $(x-10000)^2 \leq 10000^2 (\sqrt{x}-1)^2$, which can be easily verified.
+  have h1{x:ℝ}(hx: x ∈ Finset.Icc (2 : ℕ) 10000): 1/Real.sqrt x ≤ 10000 - x := by
+    simp at hx
+    have h1: 0 < Real.sqrt x := by
+      apply Real.sqrt_pos_of_pos
+      linarith
+    -- The key inequality $1/\sqrt{x} \leq 10000-x$ is equivalent to $1 \leq (10000-x) \sqrt{x}$
+    have h2: 1 ≤ (10000 - x) * Real.sqrt x := by
+      -- which is equivalent to $(10000-x)^2 \geq 1$ or $x(20000-x) \geq 9999$.
+      have h2: (10000 - x)^2 ≥ 1 := by
+        nlinarith
+      have h3: x * (20000 - x) ≥ 9999 := by
+        nlinarith
+      have h4: (10000 - x)^2 = 1 + x * (20000 - x) := by
+        ring
+      nlinarith
+    -- Now we multiply both sides by $h1$ to get $1 \leq (10000-x) \sqrt{x}$
+    exact (le_div_iff₀ h1).mpr h2
+
+  -- Using this, we bound $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}}$ by
+  -- $\sum_{k=2}^{10000} (10000-k+1)$.
+  have h2: (∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k) ≤
+    (∑ k ∈ Finset.Icc (2 : ℕ) 10000, (10000 - k + 1 : ℝ)) := by
+    apply Finset.sum_le_sum
+    simp
+    intro x hx
+    simp at hx
+    exact h1 hx
+
+  -- This sum can be rewritten as $\sum_{k=2}^{10000} (10000-k+1)$.
+  have h3: (∑ k ∈ Finset.Icc (2 : ℕ) 10000, (10000 - k + 1 : ℝ)) =
+    (198 : ℝ) + 19980 := by
+    -- Using the `Finset.sum_Icc_succ_top` lemma, we could induct on the upper bound
+    -- to get a closed-form expression for this sum.
+    have: ∀ n: ℕ, (∑ k ∈ Finset.Icc 2 n, (10000 - k + 1: ℝ)) =
+      (n-1: ℝ) * (n-2) / 2 + 9999 * n := by
+      intro n
+      induction' n with n ih
+      · simp
+      · simp only [Finset.sum_Icc_succ_top, Nat.cast_add, Nat.cast_one]
+        rw [add_comm, ih]
+        field_simp
+        ring
+    convert this 10000 using 1
+    · norm_num
+    · ring
+
+  -- Together, these facts let us conclude the original claim.
+  linarith
+```

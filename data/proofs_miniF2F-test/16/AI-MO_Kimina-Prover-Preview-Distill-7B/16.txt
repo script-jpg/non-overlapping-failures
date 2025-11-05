@@ -1,0 +1,75 @@
+-- Prove that $f$ is injective.
+  have h₂ : Injective f := by
+    -- Assume $f(a) = f(b)$, show that $a = b$.
+    intro a b h₃
+    -- Show that $f(a) = f(b)$ implies $a = b$.
+    have h₄ : ∀ a b : ℕ, 0 < a → 0 < b → f a = f b → a = b := by
+      intro a b h₄ h₅ h₆
+      -- Since $f(a) = f(b)$, we have $f(f(a)) = f(f(b))$.
+      have h₇ : f (f a) = f (f b) := by
+        rw [h₆]
+      -- Since $a = f(f(a)) < f(a+1)$ and $b = f(f(b)) < f(b+1)$, we have $f(a+1) = f(b+1)$.
+      have h₈ : a = f (f a) := by
+        have h₈ : f a > 0 := h₀ a
+        omega
+      have h₉ : b = f (f b) := by
+        have h₉ : f b > 0 := h₀ b
+        omega
+      have h₁₀ : f (a + 1) = f (b + 1) := by
+        have h₁₀ : f (f a) < f (a + 1) := h₁ a h₄
+        have h₁₁ : f (f b) < f (b + 1) := h₁ b h₅
+        linarith
+      -- Since $f(a+1) = f(b+1)$, we have $a+1 = b+1$.
+      have h₁₁ : a + 1 = b + 1 := by
+        have h₁₁ : ∀ n, 0 < n → ∀ m, 0 < m → f n = f m → n = m := by
+          intro n n_pos m m_pos h
+          interval_cases n
+          · omega
+          · exact h
+          · exact h
+        exact h₁₁ (a + 1) (by omega) (b + 1) (by omega) h₁₀
+      -- Since $a+1 = b+1$, we have $a = b$.
+      omega
+    -- Since $f(a) = f(b)$ implies $a = b$, $f$ is injective.
+    exact h₄ a b h₄ h₀ a h₀ b h₃
+
+  -- Prove that $f(0) = 0$.
+  have h₃ : f 0 = 0 := by
+    -- Assume $f(0) > 0$, show that this is a contradiction.
+    by_contra! h₃
+    -- Since $f(0) > 0$, we have $f(f(0)) < f(1)$.
+    have h₄ := h₁ 0 h₃
+    -- Since $f(0) > 0$ and $f(f(0)) < f(1)$, we have $f(0) < 1$.
+    have h₅ : f 0 < 1 := by
+      calc
+        _ = f (f 0) := by
+          rw [h₃]
+          rw [Nat.pos_iff_ne_zero]
+          exact ne_of_lt h₃
+        _ < f 1 := h₄
+    -- Since $f(0) < 1$ and $f(0) > 0$, we have $f(0) = 0$.
+    have h₆ : f 0 = 0 := by
+      omega
+    -- This is a contradiction.
+    contradiction
+
+  -- Prove that $f(n) = n$ for all $n > 0$.
+  intro n h₃
+  -- First, show that $f(n) > 0$.
+  have h₄ : f n > 0 := by
+    exact h₀ n
+  -- Since $f(f(n)) < f(n+1)$ and $f(n) > 0$, we have $f(n) < f(n+1)$.
+  have h₅ : f n < f (n + 1) := by
+    have h₅ := h₁ n h₄
+    linarith
+  -- Since $f$ is injective and $f(n) < f(n+1)$, we have $n < n+1$.
+  have h₆ : n < n + 1 := by
+    apply h₂
+    · exact h₄
+    · exact Nat.pos_succ n
+    · linarith
+  -- Since $n < n+1$ is always true, we have $f(n) = n$.
+  have h₇ : f n = n := by
+    linarith
+  exact h₇
+```

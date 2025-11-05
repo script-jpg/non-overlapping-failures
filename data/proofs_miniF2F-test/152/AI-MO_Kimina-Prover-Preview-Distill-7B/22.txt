@@ -1,0 +1,120 @@
+-- A number of properties of natural numbers can be found in `Mathlib` or in
+  -- `NumberTheory` or in `Arithmetic`.
+  set_option maxHeartbeats 0
+  -- The least common multiple of $m$ and $n$ is 112. The lcm of $m$ and $n$ must be a
+  -- multiple of 8 since 8 is the greatest common divisor of $m$ and $n$.
+  have h₃ : 8 ∣ Nat.lcm m n := by apply Nat.gcd_dvd_lcm; exact h₁
+  -- Then, 112 is a multiple of 8.
+  rw [h₂] at h₃
+  -- The least common multiple of $m$ and $n$ has at least three prime factors, namely 2, 7
+  -- and 8. This is because 112 = 2 x 2 x 2 x 7.
+  have h₄ : PrimeFactors 112 = {2, 7} := by native_decide
+  have h₅ : 2 ∈ Nat.primeFactors (Nat.lcm m n) := by
+    rw [h₂]
+    rw [Nat.primeFactors_eq_empty_iff.mp]
+    simp
+    norm_num
+  rw [←h₄] at h₅
+  -- Since the least common multiple of $m$ and $n$ has at least three prime factors, namely
+  -- 2, 7 and 8, then at least one of $m$ and $n$ has prime factor 7.
+  have h₆ : 7 ∣ m ∨ 7 ∣ n := by
+    by_contra h
+    rw [Nat.Prime.not_dvd_iff] at h
+    simp at h
+    rcases h with ⟨h₇, h₈⟩
+    -- If both $m$ and $n$ does not have prime factor 7, then their lcm does not have prime
+    -- factor 7, in other words, 7 ∤ Nat.lcm m n.
+    have h₉ : 7 ∤ Nat.lcm m n := by
+      rw [h₂]
+      rw [Nat.Prime.not_dvd_iff]
+      simp
+      norm_num
+    rw [Nat.primeFactors_eq_empty_iff.mp] at h₉
+    simp at h₉
+    -- But this is impossible since 7 is in the prime factors of 112.
+    rw [h₅] at h₉
+    simp at h₉
+  -- Without loss of generality, assume that 7 ∣ m.
+  wlog h₇ : 7 ∣ m
+  · apply this n m
+    · rw [add_comm]
+    · rw [Nat.gcd_comm]
+    · rw [Nat.lcm_comm]
+    · exact h₀.2
+    · exact h₁
+    · exact h₂
+    · exact h₆
+  -- Since 7 ∣ m, we can write m = 7k for some natural number k.
+  obtain ⟨k, h₇⟩ := h₆
+  -- The least common multiple of $m$ and $n$ has at least three prime factors, namely 2, 7
+  -- and 8. This is because 112 = 2 x 2 x 2 x 7.
+  have h₈ : PrimeFactors 112 = {2, 7} := by native_decide
+  have h₉ : 2 ∈ Nat.primeFactors (Nat.lcm m n) := by
+    rw [h₂]
+    rw [Nat.primeFactors_eq_empty_iff.mp]
+    simp
+    norm_num
+  rw [←h₈] at h₉
+  -- Since 2 is a prime factor of the least common multiple of $m$ and $n$, then at least one
+  -- of $m$ and $n$ has 2 as a prime factor.
+  have h₁₀ : 2 ∣ m ∨ 2 ∣ n := by
+    by_contra h
+    rw [Nat.Prime.not_dvd_iff] at h
+    simp at h
+    rcases h with ⟨h₇, h₈⟩
+    -- If both $m$ and $n$ does not has 2 as a prime factor, then lcm does not have 2 as a prime
+    -- factor, in other words, 2 ∤ Nat.lcm m n.
+    have h₉ : 2 ∤ Nat.lcm m n := by
+      rw [h₂]
+      rw [Nat.Prime.not_dvd_iff]
+      simp
+      norm_num
+    rw [Nat.primeFactors_eq_empty_iff.mp] at h₉
+    simp at h₉
+    -- But this is impossible since 2 is in the prime factors of 112.
+    rw [h₈] at h₉
+    simp at h₉
+  -- Since 2 ∣ m, we can write m = 2l for some natural number l.
+  wlog h₁₁ : 2 ∣ m
+  · apply this k n
+    · rw [show k = k by]
+    · rw [Nat.gcd_comm]
+    · rw [Nat.lcm_comm]
+    · exact h₀.2
+    · exact h₁
+    · exact h₂
+    · exact h₇
+    · exact h₁₁
+  obtain ⟨l, h₁₁⟩ := h₁₀
+  -- Then, m = 2l. Since 8 is the greatest common divisor of $m$ and $n$, 2l and n has exactly
+  -- 3 prime factors in common.
+  have h₁₂ : Nat.primeFactors (2 * l).gcd n = {2, 7} := by
+    have h₁₂ : (2 * l).gcd n = 8 := by
+      rw [h₁₁, h₁]
+      exact h₁
+    -- The prime factors of 8 are only 2.
+    have h₁₃ : Nat.primeFactors 8 = {2} := by native_decide
+    rw [h₁₂, h₁₃]
+  -- The prime factors of n are a subset of the prime factors of 8, since n ∣ 8.
+  have h₁₄ : Nat.primeFactors n ⊆ {2, 7} := by
+    rw [←h₁₂]
+    apply Nat.primeFactors_subset_of_dvd
+    exact h₀.2
+  -- Then, n has at least three prime factors, namely 2, 7 and 8.
+  have h₁₅ : 8 ∣ n := by
+    rw [←h₁₂]
+    exact Nat.gcd_dvd_right n (2 * l)
+  -- We know that n is even, but we want to show that n is a multiple of 8.
+  have h₁₆ : 8 ∣ n := by
+    exact h₁₅
+  -- We can write n = 8t for some natural number t.
+  obtain ⟨t, h₁₆⟩ := h₁₅
+  -- Then, n = 8t.
+  rw [h₁₁, h₁₆]
+  -- We have:
+  --   m + n = 2l + 8t
+  --   = 2(l + 4t)
+  --   = 2(something)
+  -- Then, 2 ∣ m + n.
+  omega
+```

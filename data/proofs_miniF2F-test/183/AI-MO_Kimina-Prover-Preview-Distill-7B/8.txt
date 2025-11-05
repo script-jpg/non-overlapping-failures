@@ -1,0 +1,103 @@
+have hf (x : ℝ) : f x = 0 ↔ (x + 3) ^ 2 = 2 * Real.sqrt ((x + 3) ^ 2) := by
+    rw [h₀]
+    ring_nf
+    rw [Real.sqrt_eq_iff_eq_sq]
+    · ring
+    · linarith
+    · positivity
+
+  let g := λ x : ℝ => (x + 3) ^ 2
+  let G := g ⁻¹' {0} 
+  have G_eq : G = {(-3 : ℝ)} := by
+    ext x
+    simp [g]
+    constructor
+    · intro h
+      simp at h
+      exact eq_neg_of_add_eq_zero_left h
+    · intro h
+      rw [h]
+      norm_num
+
+  have f_eq_g_sub : ∀ x, f x = g x - 2 * Real.sqrt (g x) := by
+    intro x
+    rw [h₀]
+    simp [g]
+    ring
+
+  have f_eq_zero_iff_g_eq : ∀ x, f x = 0 ↔ g x = 2 * Real.sqrt (g x) := by
+    intro x
+    rw [hf]
+    rw [f_eq_g_sub]
+    simp
+
+  have f_finite : Fintype (f ⁻¹' {0}) := by
+    rw [← image_preimage]
+    exact h₁
+  have f_finite' : Fintype (g ⁻¹' {0}) := by
+    rw [← image_preimage]
+    exact h₁
+
+  have hf_finite : f ⁻¹' {0} = (f ⁻¹' {0}).toFinset.toFintype := by
+    exact Fintype.coe_toFintype (f ⁻¹' {0}.toFinset)
+  have hg_finite : g ⁻¹' {0} = (g ⁻¹' {0}).toFinset.toFintype := by
+    exact Fintype.coe_toFintype (g ⁻¹' {0}.toFinset)
+
+  have hG_eq : (G.toFinset).toFintype = G := by
+    rw [G_eq]
+    simp
+    exact Fintype.coe_singleton (a := (-3 : ℝ))
+  have hG : (G.toFinset) = {(-3 : ℝ)} := by
+    rw [← hG_eq]
+    exact Finset.coe_singleton (a := (-3 : ℝ))
+  rw [hG] at hf_finite
+
+  have g_eq_0_iff_eq_neg3 : ∀ x : ℝ, g x = 0 ↔ x = (-3 : ℝ) := by
+    intro x
+    constructor
+    · intro h
+      simp [g] at h
+      exact eq_neg_of_add_eq_zero_left h
+    · intro h
+      rw [h]
+      norm_num
+
+  have g_finite : g ⁻¹' {0} = {(-3 : ℝ)} := by
+    ext x
+    simp [g]
+    constructor
+    · intro h
+      exact g_eq_0_iff_eq_neg3 _ h
+    · intro h
+      rw [h]
+      norm_num
+
+  rw [g_finite] at f_finite'
+
+  have g_0_mem : 0 ∈ g ⁻¹' {0} := by
+    simp [g]
+  have g_0_mem' : (0 : ℝ) ∈ (g ⁻¹' {0}).toFinset := by
+    exact Finset.mem_of_mem_coe g_0_mem
+  have g_card : (g ⁻¹' {0}.toFinset).card = 1 := by
+    rw [Finset.card_singleton]
+    exact g_0_mem'
+  have g_prod : ∏ x ∈ (g ⁻¹' {0}).toFinset, x = (-3 : ℝ) := by
+    rw [Finset.prod_singleton]
+    exact g_0_mem'
+
+  have f_card : (f ⁻¹' {0}.toFinset).card = 1 := by
+    convert f_finite' using 1
+    rw [hg_finite]
+    rw [g_card]
+  have f_prod : ∏ x ∈ (f ⁻¹' {0}).toFinset, x = 20 := by
+    have hf_prod : ∀ x ∈ (f ⁻¹' {0}).toFinset, f x = 2 * Real.sqrt (g x) := by
+      intro x hx
+      specialize f_finite' x
+      exact hf_finite x |>.mpr <| f_finite' x
+    rw [Finset.prod_congr hf_prod]
+    rw [hg_finite]
+    rw [g_prod]
+    simp [g]
+    norm_num
+  exact f_prod
+```

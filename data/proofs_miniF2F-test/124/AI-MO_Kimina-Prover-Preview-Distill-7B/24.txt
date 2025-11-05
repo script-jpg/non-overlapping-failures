@@ -1,0 +1,123 @@
+-- Let $x$ be the sum of $a$ and $b$.
+  set x := a + b with hx
+
+  -- Let $y$ be the absolute value of $x$.
+  set y := abs x with hy
+
+  -- Let $z$ be the absolute value of $a$.
+  set z := abs a with hz
+
+  -- Let $t$ be the absolute value of $b$.
+  set t := abs b with ht
+
+  -- Prove $0 < 1 + y$ to ensure the denominator is positive.
+  have hpos : 0 < 1 + y := by
+    rw [hy]
+    exact add_pos (by norm_num) (by simp)
+
+  -- Prove $0 < 1 + z$ to ensure the denominator of the second fraction is positive.
+  have hzpos : 0 < 1 + z := by
+    rw [hz]
+    exact add_pos (by norm_num) (by simp)
+
+  -- Prove $0 < 1 + t$ to ensure the denominator of the third fraction is positive.
+  have htpos : 0 < 1 + t := by
+    rw [ht]
+    exact add_pos (by norm_num) (by simp)
+
+  -- Clear unnecessary hypotheses and variables.
+  clear_value x y z t
+  clear hz hzpos ht htpos hpos
+
+  -- Restate the goal with the substitutions.
+  rw [hx, hy]
+
+  -- Prove the multiplication property of the absolute value.
+  have abs_mul {a b : ℝ} : abs (a * b) = abs a * abs b := by
+    exact abs_mul a b
+
+  -- Clear the absolute value of multiplication.
+  clear h_abs_mul
+
+  -- Rewrite the left side of the inequality using the substitution $x = a + b$.
+  rw [<-hx]
+
+  -- Prove the triangle inequality for absolute values.
+  have h1 : y ≤ z + t := by
+    rw [hy, hz, ht]
+    exact abs_add a b
+
+  -- Rearrange the inequality.
+  have h2 : z + t - y ≥ 0 := by
+    linarith only [h1]
+
+  -- Square both sides of the inequality.
+  have h3 : (z + t - y) ^ 2 ≥ 0 := by
+    exact sq_nonneg (z + t - y)
+
+  -- Multiply both sides by $\frac{1}{(1+y)(1+z)(1+t)}$.
+  have h4 : (z + t - y) ^ 2 * (1 / ((1 + y) * (1 + z) * (1 + t))) ≥ 0 := by
+    apply mul_nonneg
+    exact h3
+    positivity
+
+  -- Rearrange the inequality.
+  have h5 : (z + t - y) * ((z + t - y) / ((1 + y) * (1 + z) * (1 + t))) ≥ 0 := by
+    calc
+      (z + t - y) * ((z + t - y) / ((1 + y) * (1 + z) * (1 + t))) = (z + t - y) ^ 2 * (1 / ((1 + y) * (1 + z) * (1 + t))) := by ring_nf
+      _ ≥ 0 := h4
+
+  -- Rearrange the inequality.
+  have h6 : (-y + z + t) * ((-y + z + t) / ((1 + y) * (1 + z) * (1 + t))) ≥ 0 := by
+    calc
+      (-y + z + t) * ((-y + z + t) / ((1 + y) * (1 + z) * (1 + t))) = (z + t - y) * ((z + t - y) / ((1 + y) * (1 + z) * (1 + t))) := by ring_nf
+      _ ≥ 0 := h5
+
+  -- Prove the denominator is positive.
+  have h7 : 0 < (1 + y) * (1 + z) * (1 + t) := by
+    positivity
+
+  -- Multiply both sides by $(1+y)(1+z)(1+t)$ to clear the denominator.
+  suffices (-y + z + t) * ((-y + z + t) / ((1 + y) * (1 + z) * (1 + t))) * ((1 + y) * (1 + z) * (1 + t)) ≤ ((abs a / (1 + abs a) + abs b / (1 + abs b)) * ((1 + y) * (1 + z) * (1 + t))) by
+    rw [div_mul_cancel₀ _ h7] at this
+    rw [mul_comm ((1 + y) * (1 + z) * (1 + t)), mul_assoc] at this
+    simp only [isUnit_iff_ne_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
+      IsUnit.mul_inv_cancel_right] at this
+    linarith only [this]
+
+  -- Clear unnecessary hypotheses.
+  clear h8 h9 h10
+
+  -- Simplify the left side to $0 \leq 0$.
+  rw [show (-y + z + t) * ((-y + z + t) / ((1 + y) * (1 + z) * (1 + t))) * ((1 + y) * (1 + z) * (1 + t)) = 0 by simp]
+
+  -- Prove the right side is greater than or equal to $0$.
+  have h1 : 0 ≤ (abs a / (1 + abs a) + abs b / (1 + abs b)) * ((1 + y) * (1 + z) * (1 + t)) := by
+    positivity
+
+  -- Clear unnecessary hypotheses.
+  clear h2 h3 h4 h5 h6
+
+  -- Apply multiplication to both sides of the inequality.
+  rw [mul_le_mul_right h1]
+
+  -- Rearrange the terms.
+  have h2 : (abs a / (1 + abs a) + abs b / (1 + abs b)) * ((1 + y) * (1 + z) * (1 + t)) = (abs a / (1 + abs a) * (1 + y) * (1 + z) * (1 + t)) + (abs b / (1 + abs b) * (1 + y) * (1 + z) * (1 + t)) := by
+    ring_nf
+
+  -- Substitute the values.
+  rw [h2]
+
+  -- Prove the first term on the right side is greater than or equal to $\frac{|a|}{1+|a|}\frac{1+y}{1+y}$.
+  have h3 : (abs a / (1 + abs a) * (1 + y) * (1 + z) * (1 + t)) ≥ (abs a / (1 + abs a) * (1 + y)) := by
+    field_simp
+    linarith only [h1, hzpos, htpos]
+
+  -- Prove the second term is greater than or equal to $\frac{|b|}{1+|b|}\frac{1+y}{1+y}$.
+  have h4 : (abs b / (1 + abs b) * (1 + y) * (1 + z) * (1 + t)) ≥ (abs b / (1 + abs b) * (1 + y)) := by
+    field_simp
+    linarith only [h1, hzpos, htpos]
+
+  -- Combine the two inequalities to get the desired result.
+  linarith only [h3, h4]
+```

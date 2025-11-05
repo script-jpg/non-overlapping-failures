@@ -1,0 +1,91 @@
+-- 2^n - 1 is called a Mersenne number
+  -- If 2^n - 1 is prime, then it is called a Mersenne prime
+  -- Euclid proved that if p is a prime, then 2^p - 1 is divisible by some prime
+  -- Fermat proved that if p is a prime and p > 3, then 2^p - 1 is divisible by some prime
+  -- Therefore, if 2^n - 1 is prime, then n must be prime
+
+  -- The idea is that if n = a * b, then 2^a - 1 divides 2^n - 1
+  have H {a b : ℕ} (h : a * b = n) : Nat.Prime (2 ^ a - 1) → Nat.Prime (2 ^ b - 1) →
+      Nat.Prime (2 ^ n - 1) → 2 ^ a - 1 ∣ 2 ^ n - 1 := by
+    intro h₂ h₃ h₄
+
+    -- 2^a - 1 | 2^(a * b) - 1
+    have h₅ : 2 ^ a - 1 ∣ 2 ^ (a * b) - 1 := by
+      apply Nat.sub_one_dvd_pow_sub_one
+
+    -- 2^a - 1 | 2^n - 1
+    rw [h] at h₅
+    exact h₅
+
+  -- n > 1
+  have h₂ : n > 1 := by
+    -- n > 0
+    have h₂ : n > 0 := h₀
+    -- if n > 0 then n >= 1
+    omega
+
+  -- n is prime or n = a * b
+  have h₃ : n.Prime ∨ ∃ a b, a * b = n ∧ 1 < a ∧ a < n ∧ 1 < b ∧ b < n := by
+    apply (Nat.Prime.mem_prime_or_eq_mul' h₂).mp
+
+  cases h₃ with
+  | inl h₃ => exact h₃
+  | inr h₃ =>
+    -- 1 < a < n and 1 < b < n
+    obtain ⟨a, b, h₃, h₄, h₅, h₆, h₇⟩ := h₃
+
+    -- 2^a - 1 | 2^n - 1 and 2^a - 1 is prime
+    have h₈ := H h₃ (Nat.prime_sub_one_iff_lt.prime_pow_succ h₄).mpr (Nat.prime_sub_one_iff_lt.prime_pow_succ h₅).mpr h₁
+
+    -- 2^a - 1 = 1 or 2^a - 1 = 2^^n - 1
+    have h₉ : 2 ^ a - 1 = 1 ∨ 2 ^ a - 1 = 2 ^ n - 1 := by
+      exact (Nat.dvd_prime h₁).mp h₈
+
+    -- 2^a - 1 = 1
+    cases h₉ with
+    | inl h₉ =>
+      -- a = 1 or a = 0
+      have h₁₀ : a = 1 ∨ a = 0 := by
+        apply Nat.eq_one_or_zero_of_pow_eq_one' at h₉
+        omega
+
+      -- a = 1
+      cases h₁₀ with
+      | inl h₁₀ =>
+        -- a = 1 → n = 1 → (2^1 - 1 = 1) → (2^n - 1 = 1)
+        have h₁₁ : n = 1 := by
+          rw [h₁₀] at h₃
+          omega
+
+        -- n = 1 → (2^n - 1 = 1) → 2^n - 1 is not prime
+        rw [h₁₁] at h₁
+        norm_num at h₁
+
+      -- a = 0 is impossible
+      | inr h₁₀ =>
+        linarith only [h₁₀, h₀]
+
+    -- 2^a - 1 = 2^1 - 1 = 1
+    | inr h₉ =>
+      -- a = 1 or a = 0
+      have h₁₀ : a = 1 ∨ a = 0 := by
+        apply Nat.eq_one_or_zero_of_pow_eq_pow' at h₉
+        omega
+
+      -- a = 1
+      cases h₁₀ with
+      | inl h₁₀ =>
+        -- a = 1 → n = 1 → (2^1 - 1 = 1) → (2^n - 1 = 1)
+        have h₁₁ : n = 1 := by
+          rw [h₁₀] at h₃
+          omega
+
+        -- n = 1 → (2^n - 1 = 1) → 2^n - 1 is not prime
+        rw [h₁₁] at h₁
+        norm_num at h₁
+
+      -- a = 0 is impossible
+      | inr h₁₀ =>
+        linarith only [h₁₀, h₀]
+
+```

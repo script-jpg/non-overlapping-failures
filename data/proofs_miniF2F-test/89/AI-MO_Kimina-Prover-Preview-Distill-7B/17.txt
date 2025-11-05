@@ -1,0 +1,375 @@
+-- determine r
+  have h4 : r = 11 := by norm_num [h₀]
+
+  -- if n % 13 < r, then n % 13 < 11
+  have h5 : n % 13 < 11 := by linarith
+
+  -- if n % 13 < 11, then n % 13 ≤ 10
+  have h6 : n % 13 ≤ 10 := by linarith
+
+  -- construct a map
+  let f : ℕ → ℕ
+  | x => if x % 13 = 0 then 13 else x % 13
+
+  -- f is a function
+  have hf : f = fun x => if x % 13 = 0 then 13 else x % 13 := rfl
+
+  -- verify f < 11
+  have hf_11 : ∀ x, f x < 11 := by
+    intro x
+    unfold f
+    by_cases h : x % 13 = 0
+    · simp [h]
+    · simp [h]
+      have : x % 13 ≤ 10 := by linarith
+      linarith
+
+  -- verify f ≥ 0
+  have hf_0 : ∀ x, f x ≥ 0 := by
+    intro x
+    unfold f
+    by_cases h : x % 13 = 0
+    · simp [h]
+    · simp [h]
+      have : x % 13 ≤ 10 := by linarith
+      linarith
+
+  -- prove that f is injective on the set of multiples of 13
+  have hf_inj : ∀ x y, f x = f y → x = y := by
+    intro x y h
+    unfold f at h
+    by_cases hx : x % 13 = 0
+    · simp [hx] at h
+      simp [hx]
+      rcases h with h | h
+      · linarith
+      · linarith
+    · simp [hx] at h
+      have : x % 13 ≤ 10 := by linarith
+      have hx' : x % 13 = y % 13 := by linarith
+      have hy : y % 13 ≤ 10 := by linarith
+      have : x % 13 = y % 13 := by linarith
+      omega
+
+  -- define the set of remainders
+  let S := {n | n ≥ 0 ∧ 1342 ∣ n ∧ n % 13 < r}
+
+  -- prove that 6710 is in the set
+  have h7 : 6710 ∈ S := by
+    unfold S
+    constructor
+    · norm_num
+    · constructor
+      · norm_num
+      · rify at h4
+        rw [h4]
+        norm_num
+
+  -- prove that 6710 is the smallest element in the set
+  have h8 : ∀ n ∈ S, 6710 ≤ n := by
+    intro n hn
+    unfold S at hn
+    rcases hn with ⟨hn_0, hn_13, hn_mod⟩
+
+    -- prove that n ≥ 6710
+    by_contra! h
+    have h9 : n < 6710 := h
+
+    -- consider the remainder of n
+    have : n % 13 < 13 := by apply Nat.mod_lt; norm_num
+    have : n % 13 < 11 := by linarith
+
+    -- n % 13 ∈ {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    have : n % 13 ∈ ({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10} : Finset ℕ) := by
+      simp
+      have : n % 13 ≤ 10 := by linarith
+      omega
+
+    -- enumerate all possible values of n % 13
+    have : n % 13 = 0 ∨ n % 13 = 1 ∨ n % 13 = 2 ∨ n % 13 = 3 ∨ n % 13 = 4 ∨ n % 13 = 5 ∨ n % 13 = 6 ∨ n % 13 = 7 ∨ n % 13 = 8 ∨ n % 13 = 9 ∨ n % 13 = 10 := by
+      simp
+      exact this
+
+    -- use case analysis to prove that n ≥ 6710
+    rcases this with (h | h | h | h | h | h | h | h | h | h | h)
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 13)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 13 := by
+          omega
+        omega
+      have : n - 13 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 13 := by
+        omega
+      linarith
+
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 14)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 14 := by
+          omega
+        omega
+      have : n - 14 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 14 := by
+        omega
+      linarith
+
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 15)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 15 := by
+          omega
+        omega
+      have : n - 15 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 15 := by
+        omega
+      linarith
+
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 16)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 16 := by
+          omega
+        omega
+      have : n - 16 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 16 := by
+        omega
+      linarith
+
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 17)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 17 := by
+          omega
+        omega
+      have : n - 17 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 17 := by
+        omega
+      linarith
+
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 18)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 18 := by
+          omega
+        omega
+      have : n - 18 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 18 := by
+        omega
+      linarith
+
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 19)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 19 := by
+          omega
+        omega
+      have : n - 19 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 19 := by
+        omega
+      linarith
+
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 20)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 20 := by
+          omega
+        omega
+      have : n - 20 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 20 := by
+        omega
+      linarith
+
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 21)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 21 := by
+          omega
+        omega
+      have : n - 21 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 21 := by
+        omega
+      linarith
+
+    · have : ∃ x_13 : ℕ, x_13 * 13 = n := by
+        exact exists_eq_mul_left_of_dvd hn_13
+      rcases this with ⟨x_13, hx_13⟩
+
+      have : x_13 > 516 := by
+        by_contra! h
+        have : x_13 ≤ 516 := by linarith
+        have : n ≤ 516 * 13 := by
+          nth_rw 2 [hx_13]
+          apply mul_le_mul
+          exact this
+          norm_num
+        linarith
+
+      obtain ⟨x_13', hx_13'⟩ := exists_eq_mul_left_of_dvd (by linarith : 13 ∣ n - 22)
+      have : x_13' ≤ 515 := by
+        have : x_13' * 13 ≤ 516 * 13 - 22 := by
+          omega
+        omega
+      have : n - 22 ≤ 515 * 13 := by
+        nth_rw 2 [hx_13']
+        apply mul_le_mul
+        linarith
+        norm_num
+      have : n ≤ 515 * 13 + 22 := by
+        omega
+      linarith
+
+    · have : �

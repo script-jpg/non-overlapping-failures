@@ -1,0 +1,85 @@
+have h₂ : a ^ 2 % 8 = 1 := by
+    -- Using the theorem `Int.pow_emod` and `Odd.natAbs`, we have that `a^2 % 8 = (a % 8)^2 % 8`. And
+    -- `a % 8 = 1`, `3`, `5` or `7`.
+    have h₂ : a % 8 = 1 ∨ a % 8 = 3 ∨ a % 8 = 5 ∨ a % 8 = 7 := by
+      have h₂ : a % 8 = 1 ∨ a % 8 = 3 ∨ a % 8 = 5 ∨ a % 8 = 7 ∨
+        a % 8 = 9 ∨ a % 8 = 11 ∨ a % 8 = 13 ∨ a % 8 = 15 := by
+      -- `a % 8` is an integer between `0` and `15`
+      have h₂ : a % 8 ≥ 0 ∧ a % 8 ≤ 15 := by
+        constructor
+        · exact Int.emod_nonneg _ (by norm_num)
+        · exact Int.emod_lt _ (by norm_num)
+      -- `Odd.natAbs` says that if `a` is odd, then so is `a % 8`
+      have h₃ : Odd (a % 8) := by
+        apply Odd.natAbs
+        apply Int.natAbs_mod_eq_abs
+        exact h₀
+      -- So `a % 8` is either `1`, `3`, `5` or `7`
+      have h₄ : a % 8 = 1 ∨ a % 8 = 3 ∨ a % 8 = 5 ∨ a % 8 = 7 := by
+        have := Int.even_or_odd (a % 8)
+        cases this with
+        | inl h₅ =>
+          cases h₅ with
+          | inl h₆ =>
+            tauto
+          | inr h₆ =>
+            tauto
+        | inr h₅ =>
+          cases h₅ with
+          | inl h₆ =>
+            tauto
+          | inr h₆ =>
+            tauto
+      tauto
+    -- `a^2 % 8 = (a % 8)^2 % 8` and `(a % 8)^2 % 8 = 1` if `a % 8 = 1`, `3`, `5` or `7`
+    have : a ^ 2 % 8 = (a % 8) ^ 2 % 8 := by
+      rw [pow_two, Int.mul_emod, Int.mul_emod]
+    rw [this]
+    have : (a % 8) ^ 2 % 8 = 1 := by
+      rcases h₂ with h₂ | h₂ | h₂ | h₂
+      all_goals
+        norm_num [h₂]
+    rw [this]
+  have h₃ : b ^ 2 % 8 = 0 := by
+    -- Using the theorem `Int.pow_emod`, we have that `b^2 % 8 = (b % 8)^2 % 8`.
+    have h₃ : b ^ 2 % 8 = (b % 8) ^ 2 % 8 := by
+      rw [pow_two, Int.mul_emod, Int.mul_emod]
+    -- Since `4 | b`, `b % 8 = 0` or `4` or `8` or `12`
+    have h₄ : b % 8 = 0 ∨ b % 8 = 4 ∨ b % 8 = 8 ∨ b % 8 = 12 := by
+      rcases h₁ with ⟨c, hc⟩
+      have h₄ : b = 4 * c := by
+        rw [hc]
+        ring
+      have h₅ : b % 8 = (4 * c) % 8 := by rw [h₄]
+      have h₆ : (4 * c) % 8 = 0 ∨ (4 * c) % 8 = 4 ∨ (4 * c) % 8 = 8 ∨ (4 * c) % 8 = 12 := by
+        have h₆ : (4 * c) % 8 = 4 * (c % 2) := by
+          rw [Int.mul_emod, Int.mul_emod]
+          have : c % 2 * 4 % 2 = 0 := by
+            simp only [Nat.mod_eq_of_lt]
+            norm_num
+          rw [this]
+          simp only [Int.reduceMul, Int.reduceAbs, Int.reduceMod, Nat.ofNat_nonneg, Int.reduceMul]
+        rw [h₆]
+        have h₇ : c % 2 = 0 ∨ c % 2 = 1 := by
+          exact Int.even_or_odd c
+        rcases h₇ with h₇ | h₇
+        · left
+          rw [h₇]
+          norm_num
+        · right
+          rw [h₇]
+          norm_num
+      rw [h₅] at h₆
+      exact h₆
+    -- `(b % 8)^2 % 8 = 0` if `b % 8 = 0`, `4`, `8` or `12`
+    have : (b % 8) ^ 2 % 8 = 0 := by
+      rcases h₄ with h₄ | h₄ | h₄ | h₄
+      all_goals
+        norm_num [h₄]
+    rw [this]
+  -- `a^2 + b^2 % 8 = (a^2 % 8 + b^2 % 8) % 8 = (1 + 0) % 8 = 1`
+  rw [Int.add_emod, h₂, h₃]
+  norm_num
+
+
+```

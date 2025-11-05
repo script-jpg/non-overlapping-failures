@@ -1,0 +1,115 @@
+-- We know that $m = 6 \cdot x$ and $n = 6 \cdot y$, where $x$ and $y$ are coprime.
+  have h₂ : ∃ x y : ℕ, m = 6 * x ∧ n = 6 * y ∧ Nat.gcd x y = 1 := by
+    rw [←Nat.gcd_eq_iff_eq_mul_left, ←Nat.gcd_eq_iff_eq_mul_right] at h₀
+    have h₂ : 6 = m.gcd n := by
+      rw [h₀]
+      exact rfl
+    have h₃ : m / 6 = m / m.gcd n := by
+      rw [h₂]
+    have h₄ : n / 6 = n / m.gcd n := by
+      rw [h₂]
+    let x := m / 6
+    let y := n / 6
+    use x, y
+    refine ⟨?_,?_,?_⟩
+    · refine Nat.eq_div_of_mul_eq_right?_ h₃
+      apply Nat.gcd_pos_of_pos_left
+      by_contra h₅
+      simp [h₅] at h₂
+      omega
+    · refine Nat.eq_div_of_mul_eq_right?_ h₄
+      apply Nat.gcd_pos_of_pos_left
+      by_contra h₆
+      simp [h₆] at h₂
+      omega
+    · rw [h₂, Nat.gcd_div_gcd_div]
+      have h₇ : x.gcd y ∣ 6 := by
+        rw [←h₀]
+        apply Nat.gcd_dvd_gcd
+        apply Nat.dvd_gcd_mul_left
+        rw [←Nat.gcd_dvd_iff_dvd_mul_right]
+        exact Nat.gcd_dvd_gcd_mul_right _ _
+      have h₈ : x.gcd y = 1 := by
+        by_contra h₉
+        have h₁₀ : 2 ∣ x.gcd y := by
+          rw [Nat.dvd_gcd_iff]
+          apply And.intro
+          · rw [Nat.dvd_iff_mod_eq_zero]
+            simp [h₉]
+            omega
+          · simp [h₉]
+            omega
+        have h₁₁ : 2 ∣ 6 := by
+          exact Dvd.dvd.trans h₁₀ h₇
+        simp [h₉] at h₁₁
+        omega
+      exact h₈
+
+  rcases h₂ with ⟨x, y, h₂, h₃, h₄⟩
+
+  -- Then, we know that $lcm(m, n) = 6 * x * y = 126$. Therefore, $x * y = 21$.
+  have h₅ : 6 * x * y = 126 := by
+    rw [h₂, h₃, Nat.gcd_mul_lcm] at h₁
+    linarith
+  have h₆ : x * y = 21 := by
+    linarith
+
+  -- The pairs of positive integers with product 21 are $(1, 21), (3, 7), (7, 3), (21, 1)$.
+  have h₇ : x = 1 ∧ y = 21 ∨ x = 3 ∧ y = 7 ∨ x = 7 ∧ y = 3 ∨ x = 21 ∧ y = 1 := by
+    have h₇ : x ≤ 21 := by
+      apply Nat.le_of_dvd (by omega)
+      rw [←h₆]
+      exact Nat.dvd_mul_right x y
+    interval_cases x
+    · have h₈ : y = 21 := by
+        omega
+      exact Or.inl ⟨by rfl, by linarith⟩
+    · have h₈ : y = 10 := by
+        omega
+      exfalso
+      have h₉ : Nat.gcd 2 10 = 2 := by
+        rw [Nat.gcd_eq_iff_eq_mul_left]
+        omega
+      rw [h₈, h₉] at h₄
+      tauto
+    · have h₈ : y = 7 := by
+        omega
+      exact Or.inr (Or.inl ⟨by rfl, by linarith⟩)
+    · have h₈ : y = 3 := by
+        omega
+      exact Or.inr (Or.inr (Or.inl ⟨by rfl, by linarith⟩))
+    · have h₈ : y = 1 := by
+        omega
+      exact Or.inr (Or.inr (Or.inr ⟨by rfl, by linarith⟩))
+
+  -- The minimum sum $m + n$ corresponds to the pair $(3, 7)$ or $(7, 3)$, and is equal to 60.
+  rcases h₇ with ⟨hx, hy⟩ | ⟨hx, hy⟩ | ⟨hx, hy⟩ | ⟨hx, hy⟩
+  · have h₈ : m = 6 := by
+      rw [h₂, hx, hy]
+      omega
+    have h₉ : n = 126 := by
+      rw [h₃, hx, hy]
+      omega
+    linarith
+  · have h₈ : m = 18 := by
+      rw [h₂, hx, hy]
+      omega
+    have h₉ : n = 42 := by
+      rw [h₃, hx, hy]
+      omega
+    linarith
+  · have h₈ : m = 42 := by
+      rw [h₂, hx, hy]
+      omega
+    have h₉ : n = 18 := by
+      rw [h₃, hx, hy]
+      omega
+    linarith
+  · have h₈ : m = 126 := by
+      rw [h₂, hx, hy]
+      omega
+    have h₉ : n = 6 := by
+      rw [h₃, hx, hy]
+      omega
+    linarith
+```

@@ -1,0 +1,258 @@
+-- A squarefree natural number $n$ is a natural number that is not divisible by any perfect square $k^2$ with $k \geq 2$.
+  let squarefree (n : ℕ) := ∀ k, k > 1 → k * k ∣ n → False
+
+  -- Let $p$ be a prime number and $n$ a natural number. Then $p$ divides $n$ if and only if $n$ is equal to the product of all the primes in the prime factorization of $n$.
+  have h₀ (p : ℕ) (hp : Nat.Prime p) : p ∣ n ↔ (∀ k : ℕ, k > 1 → k ∣ n → k = p) := by
+    constructor
+    · intro h
+      intro k hk h'k
+      have h'' : k ∣ n := h'k
+      have h'' : ¬p ∣ k := by
+        intro h'' hk'
+        exact hk' h
+      have h''' : k = p := by
+        exact Nat.prime_dvd_prime_iff_eq hp h'''.mp h''
+      exact h'''
+    · intro h
+      apply dvd_of_eq
+      exact h
+
+  -- Let $p$ be a prime number and $n$ a natural number. Then $p$ divides $n$ if and only if the exponent of $p$ in the prime factorization of $n$ is greater than $0$.
+  have h₁ (p : ℕ) (hp : Nat.Prime p) : p ∣ n ↔ 0 < (n).factorization p := by
+    constructor
+    · intro h
+      have h'' : n.factorization p > 0 := by
+        exact Nat.Prime.dvd_iff_pos_factorization hp h
+      exact h''
+    · intro h
+      have h'' : n.factorization p > 0 := h
+      exact Nat.Prime.dvd_iff_pos_factorization hp h''.mp h
+
+  -- Let $s$ be a squarefree natural number and $p$ a prime number. Then $p$ divides $s$ if and only if $s$ is equal to $p$.
+  have h₂ (s : ℕ) (hs : squarefree s) : ∀ p : ℕ, p.Prime → (p ∣ s ↔ s = p) := by
+    intro p hp
+    constructor
+    · intro h
+      have h' : ¬p ∣ s := hs p hp h
+      have h' : p = s := by
+        exact Nat.prime_dvd_prime_iff_eq hp h'
+      exact h'
+    · intro h
+      exact (Nat.prime_dvd_prime_iff_eq hp h.symm).mp h
+
+  -- Let $s$ be a squarefree natural number and $p$ a prime number. Then $p$ divides $s$ if and only if $s$ is equal to $p$.
+  have h₂ (s : ℕ) (hs : squarefree s) : ∀ p : ℕ, p.Prime → (p ∣ s ↔ s = p) := by
+    intro p hp
+    constructor
+    · intro h
+      have h' : ¬p ∣ s := hs p hp h
+      have h' : p = s := by
+        exact Nat.prime_dvd_prime_iff_eq hp h'
+      exact h'
+    · intro h
+      exact (Nat.prime_dvd_prime_iff_eq hp h.symm).mp h
+
+  -- Let $m$ and $n$ be natural numbers. Then $n$ is a divisor of $m$ if and only if the prime factorization of $n$ is a subset of the prime factorization of $m$.
+  have h₃ (m n : ℕ) : n ∣ m ↔ ∀ p : ℕ, p.Prime → n.factorization p ≤ m.factorization p := by
+    constructor
+    · intro h
+      intro p hp
+      exact Nat.factorization_le_of_dvd hp (h hp)
+    · intro h
+      exact Nat.factorization_le_iff_dvd hp (h hp)
+
+  -- Let $x$ be a natural number and $a$ a squarefree natural number. Then $x^2$ divides $a$ if and only if there exists a natural number $k$ such that $a = k^2$.
+  have h₄ (x : ℕ) (a : ℕ) : x * x ∣ a ↔ ∃ k : ℕ, a = k * k := by
+    constructor
+    · intro h
+      have h' : IsSquare a := ⟨x, h⟩
+      exact ⟨a.sqrt, by simp [h']⟩
+    · intro h
+      exists a.sqrt
+      rw [h]
+      simp
+
+  -- Let $s$ be a squarefree natural number. Then $s$ has no perfect square factors $k^2$ where $k \geq 2$.
+  have h₅ (s : ℕ) (hs : squarefree s) : ∀ k : ℕ, k > 1 → k * k ∣ s → False := by
+    intro k hk h
+    have h : ¬k * k ∣ s := hs k hk
+    contradiction
+
+  -- Let $m$ and $n$ be natural numbers. Then $n$ is a square factor of $m$ if and only if the prime factorization of $n$ is a subset of the prime factorization of $m$ and for all primes in $n$, their exponents in $n$ are even and their exponents in $m$ are greater than or equal to their exponents in $n$.
+  let squarefactor (m n : ℕ) := (∀ p : ℕ, p.Prime → n.factorization p ≤ m.factorization p) ∧ (∀ p : ℕ, p.Prime → (n.factorization p).Even → (m.factorization p).Even → p ∣ m)
+
+  -- Let $s$ be a squarefree natural number. Then $s$ has no square factors $k^2$ where $k \geq 2$.
+  have h₆ (s : ℕ) (hs : squarefree s) : ∀ k : ℕ, k > 1 → k * k ∣ s → False := by
+    intro k hk h
+    have h : ¬k * k ∣ s := hs k hk
+    contradiction
+
+  -- Let $m$ and $n$ be natural numbers. Then $n$ is a square factor of $m$ if and only if $n$ is a divisor of $m$ and for all primes in $n$, their exponents in $n$ are even and their exponents in $m$ are greater than or equal to their exponents in $n$.
+  have h₇ (m n : ℕ) : squarefactor m n ↔ n ∣ m ∧ (∀ p : ℕ, p.Prime → (n.factorization p).Even → (m.factorization p).Even → p ∣ m) := by
+    constructor
+    · intro h
+      squarefactor.mp h
+    · intro h
+      constructor
+      · exact Nat.square_factor.mp h.2
+      · exact h.1
+
+  -- Let $m$ and $n$ be natural numbers. Then $n$ is a square factor of $m$ if and only if $n$ is a divisor of $m$ and for all primes in $n$, their exponents in $n$ are even and their exponents in $m$ are greater than or equal to their exponents in $n$.
+  have h₇ (m n : ℕ) : squarefactor m n ↔ n ∣ m ∧ (∀ p : ℕ, p.Prime → (n.factorization p).Even → (m.factorization p).Even → p ∣ m) := by
+    constructor
+    · intro h
+      squarefactor.mp h
+    · intro h
+      constructor
+      · exact Nat.square_factor.mp h.2
+      · exact h.1
+
+  -- Let $n$ be a natural number. Then the number of square factors of $n$ is equal to $2^{m_1 + m_2 + \hdots + m_k}$ where $p_1^{m_1} p_2^{m_2} \hdots p_k^{m_k}$ is the prime factorization of $n$.
+  have h₈ (n : ℕ) : (squarefactor n n).card = 2 ^ (∑ p : ℕ, p.Prime → n.factorization p) := by
+    have h : squarefactor n n ↔ ∀ p : ℕ, p.Prime → n.factorization p Even := by
+      refine squarefactor_iff_factorization?_
+      exact Nat.lcm_squarefree (n := n)
+
+    simp only [h, Nat.card_eq_card_iff_bijOn, Nat.card_eq_zero, Finsupp.coe_image, Finsupp.card_image_of_injective, Finsupp.card_support_iff, Nat.cast_pow, Nat.pow_ne_zero, and_imp]
+
+    -- Define a function $f$ that maps each subset of $\{p_1, p_2, \hdots, p_k\}$ to a square factor of $n$.
+    let f (S : Finset ℕ) : ℕ := ∏ p ∈ S, p ^ (n.factorization p % 2)
+
+    -- Show that the square factors of $n$ are exactly the images of this function.
+    have h : Set.map f (Finset.powerset ({p : ℕ | p.Prime} ∩ n.primeFactors)) = Set.Icc (squarefactor n n) (squarefactor n n) := by
+      ext x
+      simp only [Set.mem_Icc, Set.mem_map, Set.mem_setOf_eq, Finset.coe_image, Finset.mem_support_iff, Finset.mem_powerset]
+      constructor
+      · intro ⟨S, hS, hfx⟩
+        simp [← hfx, f]
+        simp [hS]
+        exact Nat.factorization_le_iff_dvd hS (x n).factorization
+      · intro ⟨hx1, hx2⟩
+        let S := {p | p.Prime ∧ p ∣ x}
+        let f := fun p => p ^ (x.factorization p % 2)
+        have hf : ∀ p, p ∈ S → f p ∈ squarefactor n n := by
+          intro p hp
+          simp only [S] at hp
+          obtain ⟨hp, hxdvd⟩ := hp
+          constructor
+          · exact Nat.square_factor_dvd hxdvd
+          · simp only [f]
+            exact Nat.factorization_pow p (x.factorization p % 2) hp
+
+        have hS : S ⊆ {p | p.Prime} ∩ n.primeFactors := by
+          intro p hp
+          simp only [S] at hp ⊢
+          simp [hp]
+          constructor
+          · exact hp.1
+          · exact Nat.Prime.dvd_of_dvd_pow hp.1 hxdvd
+
+        have hcard : S.card ≤ (∑ p : ℕ, p.Prime → n.factorization p) := by
+          have h : S = Finset.intersect S (n.primeFactors) := by
+            simp only [Finset.intersect, Set.Icc]
+            exact rfl
+          rw [h]
+          apply Finset.card_le_card Finset.intersect_subset_left
+
+        constructor
+        · exact Nat.factorization_le_iff_dvd hS hx1
+        · refine Nat.dvd_trans?_ hxdvd
+          exact Nat.dvd_factorization_le hS.card n.factorization
+
+    -- Show that $f$ is injective on the set of subsets of $\{p_1, p_2, \hdots, p_k\}$.
+    have h_injective : Set.InjOn f (Finset.powerset ({p : ℕ | p.Prime} ∩ n.primeFactors)) := by
+      intro S T hS hT h
+      simp only [f] at h
+      simp [Finset.mem_support_iff] at hS hT
+      apply Finset.dvd_sub_of_dvd_of_dvd at h
+      apply Finset.prod_eq_zero_iff.mp at h
+      rcases h with p | hp
+      · exact False.elim (hS p (by simp; exact hp) (hT p (by simp; exact hp)))
+      · have hp := Finset.disjoint_iff_inter_eq_empty.mpr hp
+        have hS' : S ∪ T = S := by
+          apply Finset.eq_of_subset_of_inter_eq_empty?_ hp
+          apply Finset.subset_union_left
+        have hT' : S ∪ T = T := by
+          apply Finset.eq_of_subset_of_inter_eq_empty?_ hp
+          apply Finset.subset_union_right
+        rw [hS', show T = ∅ by simp] at hT'
+        rw [hT'] at hS'
+        exact Finset.eq_empty_of_union_eq_left hS'
+
+    -- Show that $f$ is surjective onto the set of square factors of $n$.
+    have hSurjective : Set.SurjOn f (Finset.powerset ({p : ℕ | p.Prime} ∩ n.primeFactors)) (squarefactor n n) := by
+      intro x
+      simp only [Set.mem_Icc, Set.mem_map, Set.mem_setOf_eq, Finset.coe_image, Finset.mem_support_iff, Finset.mem_powerset]
+      simp only [f]
+      intro hS
+      have hx1 := Nat.square_factor_dvd hS x.factorization
+      have hxdvd := x.2 hS
+      refine ⟨S.erase (x.factorization x |>.key),?_, rfl⟩
+      simp only [Finset.insert_eq, Finset.prod_erase, Finset.prod_singleton, Nat.succ_ne_zero, implies_true, Nat.factorization_pow, Nat.powFactorization_eq_mul_factorization, Nat.factorization_mul, Nat.factorization_prod]
+      rw [Nat.factorization_eq_zero_iff, Nat.factorization_eq_zero_iff]
+      simp [hS]
+
+    -- Calculate the cardinality of the set of square factors of $n$.
+    have h9 : (squarefactor n n).card = ((Finset.powerset ({p : ℕ | p.Prime} ∩ n.primeFactors)).card).card := by
+      exact Set.ncard_congr f h_injective hSurjective
+
+    rw [h9]
+    rw [Finset.card_powerset]
+    simp [Finset.card_inter]
+    exact Nat.subset_iff_exists_inter m.2
+
+  -- Define a function $s$ that maps each subset of $\{p_1, p_2, \hdots, p_k\}$ to a natural number.
+  let s (S : Finset ℕ) : ℕ := ∏ p ∈ S, p ^ (9.factorization p % 2)
+
+  -- Show that the set of subsets of $\{p_1, p_2, \hdots, p_k\}$ is in bijection with the set of natural numbers.
+  have h₉ : Set.ncard ((Finset.powerset ({p : ℕ | p.Prime} ∩ 9.primeFactors)).toSet) = 9.factorization 9.card := by
+    have h₀ : ((Finset.powerset ({p : ℕ | p.Prime} ∩ 9.primeFactors)).toSet) = Set.Icc Set.Icc (fun a b ↦ a ∣ b) (refl _) := by
+      ext S
+      simp only [Set.mem_Icc, Set.mem_toSet, Set.mem_setOf_eq, Finset.coe_image, Finset.mem_support_iff, Finset.mem_powerset, Set.mem_Icc]
+      constructor
+      · intro ⟨hS, hS'⟩
+        exact Nat.factorization_le_iff_dvd hS hS'
+      · intro ⟨hS, hS'⟩
+        let f := fun p => p ^ (9.factorization p % 2)
+        have hf : ∀ p, p ∈ {p | p.Prime ∧ p ∣ S} → f p ∈ Set.Icc (fun a b ↦ a ∣ b) _ := by
+          intro p hp
+          simp only [Set.mem_Icc, Set.mem_setOf_eq] at hp ⊢
+          obtain ⟨hp, hpdvd⟩ := hp
+          constructor
+          · exact Nat.pow_dvd_pow 9 hpdvd
+          · refine Nat.dvd_trans?_ (Nat.dvd_of_mod_eq_zero?_)
+            · apply Nat.dvd_factorization_le
+              simp [Nat.Prime.factorization]
+              exact hp
+            · exact Nat.mod_eq_zero_of_dvd hS
+
+        have hS : {p | p.Prime ∧ p ∣ S} ⊆ {p | p.Prime} ∩ S.primeFactors := by
+          intro p hp
+          simp only [Set.mem_inter, Set.mem_setOf_eq, Set.mem_primeFactors, Set.mem_Icc] at hp ⊢
+          simp [hp]
+
+        have hcard : {p | p.Prime ∧ p ∣ S}.card ≤ (9.factorization 9).card := by
+          have h : {p | p.Prime ∧ p ∣ S} = Finset.intersect {p | p.Prime} S.primeFactors := by
+            simp only [Set.Icc]
+            exact rfl
+          rw [h]
+          apply Finset.card_le_card Finset.intersect_subset_left
+
+        apply Set.ncard_le_card hcard
+        exact Set.InjOn.mpr hInjOn
+      · exact hS'
+
+    have h₁ : Set.InjOn (fun a b ↦ a ∣ b) ((Finset.powerset ({p : ℕ | p.Prime} ∩ 9.primeFactors)).toSet) := by
+      intro a b h
+      exact Nat.dvd_factorization.mp h
+
+    have h₂ : Set.SurjOn (fun a b ↦ a ∣ b) (Set.Icc Set.Icc (fun a b ↦ a ∣ b) _) := by
+      intro b
+      simp only [Set.mem_Icc, Set.mem_toSet, Set.mem_setOf_eq, Finset.coe_image, Finset.mem_support_iff, Finset.mem_powerset, Set.mem_Icc]
+      intro hS
+      have hS' : a ∣ b := hS hS'
+      exact ⟨b,?_, hS'⟩
+      apply Nat.dvd_trans hS'
+      exact Nat.dvd_factorization_le b.primeFactors b.factorization
+
+    have h₃ : Set.ncard ((Finset.powerset ({p : ℕ | p.Prime} ∩ 9.primeFactors)).toSet) = Set.ncard (Set.Icc (fun a b �

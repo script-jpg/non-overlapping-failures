@@ -1,0 +1,265 @@
+-- We will show that
+  --   f(x) = x^3 + a x^2 + b x + c
+  -- has roots { cos(2π/7), cos(4π/7), cos(6π/7) } if and only if
+  --   a = -3/4, b = 1/8, c = -3/16
+  -- so abc = (-3/4) * (1/8) * (-3/16) = 9/1024 ≠ 1/32 so answer is "None"
+
+  -- Let ζ = e^{2πi/7} and η = e^{4πi/7}. Then ζ is a primitive 7th root of unity
+  -- and η = ζ^2. The sum of all 7th roots of unity is 0, so 0 = ζ^3 + ζ^2 + ζ + 1 + ζ^-1 + ζ^-2 + ζ^-3
+  --   = ζ^3 + η + η^2 + ζ + η + ζ^2 + ζ^3
+  --   = ζ^3 + ζ^2 + ζ + 1 + η + η^2 + η^3
+  --   = P(1) + P(ω) + P(ω^2) + P(ω^3), where ω = e^{2πi/7}
+  -- Since P has roots { ω, ω^2, ω^3 }, we have 0 = P(1) + P(ω) + P(ω^2) + P(ω^3) = P(ω^4) + P(ω) + P(ω^2) + P(ω^3)
+  --   = 4P(ω) + 2P(ω^2) + P(ω^3)
+  --   = 4(ω^3 + aω^2 + bω + c) + 2(ω^2 + aω + b) + (ω + a + b + c)
+  --   = (4 + 2 + 1)(ω + a + b + c) + (4a + 2)(ω^2 + aω + b)
+  --   = 7(ω + a + b + c) + (4a + 2)(ω^2 + aω + b)
+  --   = 0 + 0 = 0
+  -- so a + b + c = 0
+  have h₂ : a + b + c = 0 := by
+    let ζ : ℂ := Complex.exp (2 * Real.pi * I / 7)
+    have hζ : IsPrimitiveRoot ζ 7 := by
+      rw [Complex.isPrimitiveRoot_iff]
+      push_cast
+      constructor
+      · exact Complex.exp_ne_one_of_ne_zero (by norm_num)
+      · rw [Complex.exp_eq_one_iff]
+        norm_num
+    let ω : ℂ := ζ ^ 1
+    have hω : ω = ζ ^ 1 := by rfl
+    have hω_ne_one : ω ≠ 1 := by
+      rw [hω]
+      exact Complex.exp_ne_one_of_ne_zero (by norm_num)
+    have hω_ne_zero : ω ≠ 0 := by
+      intro h
+      simp [hω] at h
+      exact Complex.exp_ne_one_of_ne_zero (by norm_num) h
+    have hp : ∀ k, ζ ^ k = Complex.exp (2 * Real.pi * I * (k / 7)) := by
+      intro k
+      simpa [Complex.exp_mul_I, ζ]
+    have hzeta : ∀ k, ζ ^ k = Complex.exp (2 * Real.pi * I * (k / 7)) := by
+      intro k
+      simpa [Complex.exp_mul_I, ζ]
+    have hp4 : ∀ k, ζ ^ (4 * k) = Complex.exp (2 * Real.pi * I * ((4 * k) / 7)) := by
+      intro k
+      simpa [Complex.exp_mul_I, ζ]
+    have h₀ : ∀ x, f x = x ^ 3 + a * x ^ 2 + b * x + c := by simp [h₀]
+    have h₁ :
+      f ⁻¹' {0} =
+        {Real.cos (2 * Real.pi / 7), Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} := by
+      simpa [h₀] using h₁
+    have h₃ :
+      {x : ℂ | f x = 0} ∩ (Finset.range 7).toSet = {ω, ω ^ 2, ω ^ 3} := by
+      have h₃ : {x : ℂ | f x = 0} = {ω, ω ^ 2, ω ^ 3} := by
+        calc
+          {x : ℂ | f x = 0} = f ⁻¹' {0} := by simp
+          _ = {Real.cos (2 * Real.pi / 7), Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} := by
+            exact h₁
+          _ = {ω, ω ^ 2, ω ^ 3} := by
+            have h₃ : {Real.cos (2 * Real.pi / 7), Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} ⊆ {ω, ω ^ 2, ω ^ 3} := by
+              intro x
+              simp only [Finset.mem_insert, Finset.mem_singleton, and_imp]
+              intro hx
+              rw [← hzeta] at hx
+              simp at hx
+              rw [hp] at hx
+              replace hx : ((↑x : ℂ) ^ 3 + a * ↑x ^ 2 + b * ↑x + c) = 0 := by
+                simpa [h₀] using hx
+              clear hzeta hx
+              have hx : (x ^ 3 + a * x ^ 2 + b * x + c).re = 0 := by
+                simp [Complex.add_re, Complex.mul_re, pow_two, pow_three] at hx
+                simp [Complex.ofReal_re, Complex.I_re] at hx
+                linarith
+              have hx : (x ^ 3 + a * x ^ 2 + b * x + c).im = 0 := by
+                simp [Complex.add_im, Complex.mul_im, pow_two, pow_three] at hx
+                simp [Complex.ofReal_im, Complex.I_im] at hx
+                linarith
+              have hx : (x ^ 3 + a * x ^ 2 + b * x + c) = 0 := by
+                rw [Complex.ext_iff] at hx ⊢
+                exact ⟨hx, hx⟩
+              have hx' : x ∈ { ω, ω ^ 2, ω ^ 3 } := by
+                have hx'' : x ^ 3 + a * x ^ 2 + b * x + c = 0 := by
+                  exact hx
+                replace hx' : (x - ω) * (x - ω ^ 2) * (x - ω ^ 3) = 0 := by
+                  have hx' : x ^ 3 + a * x ^ 2 + b * x + c = (x - ω) * (x - ω ^ 2) * (x - ω ^ 3) := by
+                    rw [← minimalPolynomial_def_eq_prod_multiset_X_sub_C]; simp
+                    rw [minimalPolynomial_Coprime_natCast (by norm_num)]
+                    rw [Coprime.def, IsPrimitiveRoot.minimalPolynomial_iff (hζ)]
+                    simp [hω, hω_ne_one]
+                    rw [hp, hp4]
+                    simp
+                    ring
+                  rw [hx', hx]
+                  simp [Complex.ext_iff]
+                  ring
+                simp only [Finset.mem_insert, Finset.mem_singleton, or_imp] at hx''
+                refine (mul_eq_zero.mp hx'').1 (mul_eq_zero.mp?_)
+                · simp [Complex.ext_iff, hω]
+                  by_contra hx'
+                  by_contra hx''
+                  nth_rw 2 [show n = n - 1 + 1 by simp] at hx''
+                  rw [Nat.sub_add_cancel] at hx''
+                  nth_rw 2 [hx''] at hx'
+                  rw [hω] at hx'
+                  replace hx' : (ω ^ 3 - 1) * (ω - 1) = 0 := by
+                    ring_nf
+                    rw [hx']
+                    ring
+                  simp [Complex.ext_iff] at hx'
+                  replace hx' : ω ^ 3 - 1 = 0 ∨ ω - 1 = 0 := by
+                    simpa [mul_eq_zero] using hx'
+                  rcases hx' with hx' | hx'
+                  · rw [sub_eq_zero] at hx'
+                    nth_rw 2 [hx'] at hω
+                    replace hω : ω ^ 3 = 1 := by
+                      rw [hx'] at hω
+                      ring_nf at hω ⊢
+                      simpa using hω
+                    have hω' : ω ^ 7 = 1 := by
+                      rw [show 7 = 7 * 1 by simp, pow_mul]
+                      rw [hω, one_pow]
+                    have hω'' : ω ^ 3 = ω ^ 7 := by
+                      rw [hx', hω']
+                    replace hω'' : ω ^ 3 = 1 := by
+                      nth_rw 2 [hω''] at hω
+                      rw [hω, one_pow]
+                    have h₄ : ω ^ 2 ≠ 0 := by
+                      exact Complex.mul_ne_zero (by norm_num) (pow_ne_zero 2 hω_ne_zero)
+                    rw [show ω ^ 3 = ω * ω ^ 2 by ring] at hω''
+                    rw [Complex.ext_iff] at hω''
+                    replace hω'': ω = 1 ∨ ω ^ 2 = 1 := by
+                      simpa [mul_eq_one_iff_eq_inv, pow_two, ← pow_mul, mul_one] using hω''
+                    rcases hω'' with hω'' | hω''
+                    · rw [hω''] at hω
+                      ring_nf at hω
+                      rw [←Complex.exp_mul_I] at hω
+                      rcases hω with hω | hω
+                      · rw [hω] at hω_ne_one
+                        trivial
+                      · rw [hω] at hω
+                        trivial
+                    · have hω : ω ^ 2 = 0 := by
+                        nth_rw 2 [hω'']
+                        simp
+                      simp [hω] at hω_ne_zero
+                  · rw [sub_eq_zero] at hx'
+                    rw [hω] at hx'
+                    ring_nf at hx' ⊢
+                    rw [show 4 = 2 + 2 by simp, pow_add, pow_two] at hx'
+                    rw [show 3 = 2 + 1 by simp, pow_add, pow_one] at hx'
+                    rw [show 1 = 2 - 1 by simp, pow_add, pow_one] at hx'
+                    ring_nf at hx' ⊢
+                    rw [←Complex.exp_mul_I] at hx'
+                    rcases hx' with hx' | hx'
+                    · rw [hx', hω] at hzeta
+                      rw [show 7 = 7 * 1 by simp, pow_mul] at hzeta
+                      rw [hzeta, one_pow] at hzeta
+                      simp [Complex.ext_iff] at hzeta
+                      replace hzeta : Real.cos (2 * Real.pi / 7) = 1 := by
+                        simpa using hzeta
+                      have hzeta' : Real.cos (2 * Real.pi / 7) ^ 2 = 1 := by
+                        rw [hzeta]
+                        ring
+                      have hzeta'' : Real.cos (2 * Real.pi / 7) ^ 2 = 1 := by
+                        exact hzeta'
+                      rw [show Real.pi * 2 / 7 = 2 * Real.pi / 7 * 1 by ring] at hzeta
+                      rw [← Complex.cos_add_sin_I] at hzeta
+                      rcases hzeta with hzeta | hzeta
+                      · have hzeta' : Real.cos (2 * Real.pi / 7) ^ 2 = -1 := by
+                          rw [hzeta]
+                          ring_nf
+                          rw [Complex.I_sq]
+                          ring
+                        have hzeta'' : Real.cos (2 * Real.pi / 7) ^ 2 = 0 := by
+                          nlinarith
+                        simp [hzeta''] at hzeta'
+                      · have hzeta' : Real.cos (2 * Real.pi / 7) ^ 2 = 1 := by
+                          rw [hzeta]
+                          ring
+                        have hzeta'' : Real.cos (2 * Real.pi / 7) ^ 2 = 1 := by
+                          exact hzeta'
+                        have hzeta''' : Real.cos (2 * Real.pi / 7) ^ 2 = 1 := by
+                          exact hzeta''
+                        rw [show Real.pi * 2 / 7 = 2 * Real.pi / 7 * 1 by ring] at hzeta
+                        rw [← Complex.cos_add_sin_I] at hzeta
+                        rcases hzeta with hzeta | hzeta
+                        · have hzeta' : Real.cos (2 * Real.pi / 7) ^ 2 = -1 := by
+                            rw [hzeta]
+                            ring_nf
+                            rw [Complex.I_sq]
+                            ring
+                          have hzeta'' : Real.cos (2 * Real.pi / 7) ^ 2 = 0 := by
+                            nlinarith
+                          simp [hzeta''] at hzeta'
+                        · exact hzeta'
+          simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_setOf_eq,
+            Set.mem_inter_iff, Set.mem_singleton_iff] at h₃
+          simp only [Complex.ext_iff, and_imp] at h₃
+          have h₄ := h₃ ω
+          have h₅ := h₃ (ω ^ 2)
+          have h₆ := h₃ (ω ^ 3)
+          simp only [pow_one, one_pow, and_self] at h₄ h₅ h₆
+          rw [hω, hω_pow] at h₄ h₅ h₆
+          simp at h₄ h₅ h₆
+          have h₇ : ω + ω ^ 2 + ω ^ 3 = 0 := by
+            calc
+              ω + ω ^ 2 + ω ^ 3 = ω * (ω ^ 2 + ω + 1) := by ring
+              _ = ω * 0 := by
+                rw [hω, hω_pow, hω_pow]
+                ring_nf
+                rw [show 7 = 7 * 1 by simp, pow_mul]
+                rw [hω, one_pow]
+                ring
+              _ = 0 := by simp
+          rw [h₇] at h₄ h₅ h₆
+          simp only [hω, hω_pow] at h₄ h₅ h₆
+          rw [show 3 = 2 + 1 by simp, pow_add, pow_one] at h₄ h₅ h₆
+          rw [show 1 = 2 - 1 by simp, pow_add, pow_one] at h₄ h₅ h₆
+          ring_nf at h₄ h₅ h₆
+          rw [←Complex.exp_mul_I] at h₄ h₅ h₆
+          rcases h₄ with h₄ | h₄
+          · rw [h₄] at h₅
+            rw [add_comm] at h₄
+            rw [← add_assoc] at h₅
+            rw [← h₄, h₅] at h₆
+            ring_nf at h₆
+            rw [← Complex.exp_mul_I] at h₆
+            rcases h₆ with h₆ | h₆
+            · rw [h₆] at h₄
+              ring_nf at h₄
+              rw [←Complex.exp_mul_I] at h₄
+              rcases h₄ with h₄ | h₄
+              · rw [h₄] at h₀
+                simp at h₀
+                rw [show (c : ℂ) = c.re + c.im * I by exact Eq.symm (Complex.ext_iff.mp rfl)] at h₀
+                simp [h₀] at h₄
+              · rw [h₄]
+                ring_nf
+                rw [Complex.ext_iff]
+                simp
+              · rw [h₄]
+                ring_nf
+                rw [Complex.ext_iff]
+                simp
+            · rw [h₆] at h₀
+              simp at h₀
+              rw [show (c : ℂ) = c.re + c.im * I by exact Eq.symm (Complex.ext_iff.mp rfl)] at h₀
+              simp [h₀] at h₄
+              rw [h₄]
+              ring_nf
+              rw [Complex.ext_iff]
+              simp
+              · rw [h₄]
+                ring_nf
+                rw [Complex.ext_iff]
+                simp
+          · rw [h₄] at h₅
+            rw [add_comm] at h₄
+            rw [← add_assoc] at h₅
+            rw [← h₄, h₅] at h₆
+            ring_nf at h₆
+            rw [← Complex.exp_mul_I] at h₆
+            rcases h₆ with h₆ | h₆
+            · rw [h₆] at h₀
+              simp at h₀
+              rw [show (c : ℂ) = c.re + c.im * I by exact Eq.symm (Complex.ext_iff.mp rfl)] at h₀

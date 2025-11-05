@@ -1,0 +1,74 @@
+-- Let's first show that both a and b satisfy quadratic equations.
+  have h₄ : ∀ x : ℝ, abs (x - 1 / x) = 1 → x ^ 2 - x + 1 = 0 ∨ x ^ 2 + x - 1 = 0 := by
+    intro x h
+    have : x ≠ 0 := by
+      by_contra hx
+      rw [hx] at h
+      simp at h
+    have : x - 1 / x = 1 ∨ x - 1 / x = -1 := by
+      cases abs_eq (h.symm) with
+      | inl h => exact Or.inl h
+      | inr h => exact Or.inr h
+    cases this with
+    | inl h =>
+      have h₅ : x ^ 2 - x + 1 = 0 := by
+        field_simp at h
+        linarith only [h]
+      exact Or.inl h₅
+    | inr h =>
+      have h₆ : x ^ 2 + x - 1 = 0 := by
+        field_simp at h
+        linarith only [h]
+      exact Or.inr h₆
+  -- Now we can apply this to our a and b.
+  have h₇ := h₄ a h₂
+  have h₈ := h₄ b h₃
+  rw [h₂, h₃] at h₁
+
+  -- Let's show that 1 is not a solution to the quadratic equations.
+  have h₉ : ∀ x : ℝ, x ≠ 1 → (x ^ 2 - x + 1 = 0 ∨ x ^ 2 + x - 1 = 0) → False := by
+    intro x hx h
+    cases h with
+    | inl h =>
+      have h₁₀ : x ^ 2 - x + 1 = 0 := h
+      nlinarith only [h₁₀, hx]
+    | inr h =>
+      have h₁₁ : x ^ 2 + x - 1 = 0 := h
+      nlinarith only [h₁₁, hx]
+
+  -- Now we show that a and b satisfy x^2 + x - 1 = 0.
+  replace h₇ : a ^ 2 + a - 1 = 0 := by
+    cases h₇ with
+    | inl h₇ => contradiction
+    | inr h₇ => exact h₇
+  replace h₈ : b ^ 2 + b - 1 = 0 := by
+    cases h₈ with
+    | inl h₈ => contradiction
+    | inr h₈ => exact h₈
+
+  -- Subtracting the equations, (a - b) * (a + b + 1) = 0.
+  have h₁₂ : (a - b) * (a + b + 1) = 0 := by
+    nlinarith only [h₇, h₈]
+
+  -- Which means that a + b + 1 = 0 since a - b ≠ 0.
+  simp [h₁] at h₁₂
+  have h₁₃ : a + b + 1 = 0 ∨ a - b = 0 := by
+    exact mul_eq_zero.mp h₁₂
+  cases h₁₃ with
+  | inl h₁₃ =>
+    -- So a + b = -1. Impossible! We can prove that -1 is not in the image of f(x) = x + 1/x.
+    nlinarith only [h₁₃]
+  | inr h₁₃ =>
+    -- Trivially, a + b = 0 + 1 = 1, impossible!
+    nlinarith only [h₁₃, h₁]
+  -- Now we derive a quadratic equation for a + b.
+  have h₁₄ : (a + b) ^ 2 - (a + b) - 1 = 0 := by
+    nlinarith only [h₇, h₈, h₁₃]
+
+  -- We know that a + b > 0, so a + b = (1 + √5)/2.
+  replace h₁₄ : (a + b) ^ 2 = (a + b) + 1 := by
+    exact Eq.symm h₁₄
+  have h₁₅ : 0 < a + b := by
+    linarith only [h₀.left, h₀.right]
+  nlinarith only [h₁₄, h₁₅, Real.sq_sqrt (show 0 ≤ 5 from by norm_num)]
+```

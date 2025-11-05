@@ -1,0 +1,96 @@
+-- The meaning of the question
+  -- It is equivalent to show that $\frac{\log 80}{\log 2 \cdot \log 40} = \frac{\log 160}{\log 2 \cdot \log 20}$.
+  have h1: Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) =
+      Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) := by rfl
+  have h2: Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20) = Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20) := by rfl
+
+  -- Change the base of the log to 2.
+  have h1': Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) = (Real.log 80 / Real.log 40) / (Real.log 2 / Real.log 2) := by
+    ring
+  have h2': Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20) = (Real.log 160 / Real.log 20) / (Real.log 2 / Real.log 2) := by
+    ring
+
+  rw [h1', h2']
+
+  -- Then it is equivalent to show that $\log_40 80 = \log_20 160$.
+  have h3: (Real.log 80 / Real.log 40) / (Real.log 2 / Real.log 2) = (Real.log 160 / Real.log 20) / (Real.log 2 / Real.log 2) := by
+    -- It is equivalent to show that $\log_40 80 = \log_20 160$.
+    have h3': Real.log 80 / Real.log 40 = Real.log 160 / Real.log 20 := by
+      -- Get the definition of the log.
+      have h3'': Real.log 80 / Real.log 40 = Real.log 160 / Real.log 20 := by
+        have d1: Real.log 80 = (Real.log 80 / Real.log 2) * Real.log 2 := by
+          ring
+        have d2: Real.log 40 = (Real.log 40 / Real.log 2) * Real.log 2 := by
+          ring
+        have d3: Real.log 160 = (Real.log 160 / Real.log 2) * Real.log 2 := by
+          ring
+        have d4: Real.log 20 = (Real.log 20 / Real.log 2) * Real.log 2 := by
+          ring
+        -- Substitute them into the equation.
+        rw [d1, d2, d3, d4]
+        -- Cancel the term `Real.log 2 / Real.log 2` which is equal to 1.
+        have: Real.log 2 / Real.log 2 = 1 := by
+          refine div_self?_
+          exact ne_of_gt (Real.log_pos (by norm_num: (2:ℝ) > 1))
+        -- Rewrite the equation and simplify it.
+        rw [mul_one]
+        linarith
+      -- The definition of the log.
+      exact h3''
+    -- Simplify the equation.
+    rw [h3']
+    -- Cancel the term `Real.log 2 / Real.log 2` which is equal to 1.
+    have: Real.log 2 / Real.log 2 = 1 := by
+      refine div_self?_
+      exact ne_of_gt (Real.log_pos (by norm_num: (2:ℝ) > 1))
+    -- Rewrite the equation and simplify it.
+    rw [mul_one]
+
+  -- Simplify the equation.
+  rw [h3]
+  -- Now it is equivalent to show that $\log 160 / \log 20 = 2$.
+  have h4: Real.log 160 / Real.log 20 = 2 := by
+    -- Rewrite 160 as $20^2 \cdot 2^3$.
+    have: (160:ℝ) = 20^2 * 2^3 := by norm_num
+    -- Substitute it.
+    rw [this]
+    -- Use the property of the log: $\log (a^b) = b \log a$.
+    have h4': Real.log (20^2 * 2^3) = Real.log (20^2) + Real.log (2^3) := by
+      refine Real.log_mul?_?_ (by norm_num) (by norm_num)
+      refine Real.log_nonneg (by norm_num)
+      refine Real.log_nonneg (by norm_num)
+    rw [h4']
+    -- Simplify the equation using the property of the log: $\log (a^b) = b \log a$.
+    have h4'': Real.log (20^2) = 2 * Real.log 20 := by
+      refine Real.log_pow 2?_
+      exact Ne.symm (ne_of_lt (Real.log_pos (by norm_num: (2:ℝ) > 1)))
+    have h4''': Real.log (2^3) = 3 * Real.log 2 := by
+      refine Real.log_pow 3?_
+      exact Ne.symm (ne_of_lt (Real.log_pos (by norm_num: (2:ℝ) > 1)))
+    -- Use `h4`, `h4'`, `h4''`, and `h4'''` to simplify the equation.
+    rw [h4'', h4''']
+    -- Cancel the common factor `Real.log 20` on the two sides of the equation.
+    have: Real.log 20 ≠ 0 := by
+      refine ne_of_gt?_
+      exact Real.log_pos (by norm_num)
+    -- Simplify the equation and it becomes $2 + 3 \cdot \frac{\log 2}{\log 20} = 2$, which implies $\frac{\log 2}{\log 20} = 0$.
+    have h4'''': 2 * Real.log 20 + 3 * Real.log 2 = 2 * Real.log 20 := by linarith
+    -- Subtract `2 * Real.log 20` from both sides and simplify.
+    rw [add_sub_cancel_left (2 * Real.log 20)] at h4''''
+    -- Simplify to get the equation `3 * Real.log 2 = 0`.
+    have h4''': 3 * Real.log 2 = 0 := by linarith
+    -- Divide both sides by 3 and simplify.
+    have h4'': Real.log 2 = 0 := by
+      linarith
+    -- Simplify to get the equation `Real.log 2 = 0`.
+    have: (2:ℝ) > 0 := by norm_num
+    -- Use the fact that if `Real.log a = 0` and `a > 0`, then `a = 1`.
+    have h4: 2 = 1 := by
+      exact (Real.log_eq_zero_iff (by linarith) (by norm_num) (by norm_num)).mp h4''
+    -- We get a contradiction.
+    linarith
+  -- Simplify the equation using `h4`.
+  rw [h4]
+  -- Simplify the equation.
+  ring
+```

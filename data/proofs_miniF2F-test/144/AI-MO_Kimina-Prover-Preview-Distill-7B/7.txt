@@ -1,0 +1,77 @@
+-- A trivial lemma that might be useful later.
+  have h' (z : ℂ) : Complex.normSq (z ^ 2 + 1) = Complex.normSq z ^ 2 + 2 * Complex.normSq z - 1 := by
+    calc
+      Complex.normSq (z ^ 2 + 1) = |z ^ 2 + 1| ^ 2 := by simp [Complex.normSq_eq_abs]
+      _ = |z ^ 2| ^ 2 + 2 * |z ^ 2| * |1| + |1| ^ 2 := by rw [sq, Complex.abs_add_sq]; simp
+      _ = Complex.normSq z ^ 2 + 2 * Complex.normSq z - 1 := by
+        rw [Complex.normSq_pow, Complex.normSq_eq_abs]
+        simp
+
+  -- Plug in $z^2+1$ and simplify it.
+  have h₁ : 12 * Complex.normSq z = 2 * Complex.normSq (z + 2) + Complex.normSq z ^ 2 + 2 * Complex.normSq z - 1 + 31 := by
+    rw [h' z] at h₀
+    exact h₀
+
+  -- Define $f(x)$ to be $12x-2(x+2)^2-(x^2+1)^2+31$.
+  let f (x : ℝ) := 12 * x - 2 * (x + 2) ^ 2 - (x ^ 2 + 1) ^ 2 + 31
+
+  -- Show that $f(|z|^2)=0$.
+  have h₂ : f (Complex.normSq z) = 0 := by
+    show f (Complex.normSq z) = 0
+    simp [f]
+    rw [h₁]
+    ring
+
+  -- Show that $f(x)=0$ implies $x=1$.
+  have h₃ : ∀ x : ℝ, f x = 0 → x = 1 := by
+    intro x hx
+    simp [f] at hx
+    have hx' : (x - 1) * (x ^ 3 + 4 * x ^ 2 + 13 * x + 15) = 0 := by linear_combination hx
+    rw [mul_eq_zero] at hx'
+    rcases hx' with hx' | hx'
+   . linarith
+   . -- Show that if $x^3+4x^2+13x+15=0$ then $x^3+4x^2+13x+15>0$ so that a contradiction is reached.
+      have : x ^ 3 + 4 * x ^ 2 + 13 * x + 15 > 0 := by
+        have : x ^ 3 + 4 * x ^ 2 + 13 * x + 15 = (x + 3 / 2) ^ 2 * (x + 5 / 2) + 3 / 4 := by ring
+        rw [this]
+        have : (x + 3 / 2) ^ 2 ≥ 0 := by
+          apply sq_nonneg
+        positivity
+      linarith
+
+  -- Show that $|z|^2=1$.
+  have h₄ : Complex.normSq z = 1 := by
+    -- We have $f(|z|^2)=0$ by the previous lemma.
+    specialize h₃ (Complex.normSq z) h₂
+    -- We have $|z|^2=1$ as desired.
+    exact h₃
+
+  -- Show that $z$ is real.
+  have h₅ : ∃ (z : ℝ), z = z := by
+    -- We have $|z|^2=1$ so that $z=\frac 1 z$.
+    use (Complex.normSq z)⁻¹
+    -- We have $z=\frac 1 z$.
+    have : z ≠ 0 := by
+      by_contra h
+      rw [h] at h₄
+      simp at h₄
+    field_simp
+    rw [h₄]
+    simp
+
+  -- Now we have $z=\frac 1 z$.
+  obtain ⟨z, rfl⟩ := h₅
+
+  -- Show that $z$ is non-zero.
+  have : z ≠ 0 := by
+    by_contra h
+    rw [h] at h₄
+    simp at h₄
+
+  -- Substitute $z=\frac 1 z$ into the original equation.
+  simp [this] at h₀
+  ring_nf at h₀
+  field_simp at h₀
+  rw [h₀]
+  ring
+```

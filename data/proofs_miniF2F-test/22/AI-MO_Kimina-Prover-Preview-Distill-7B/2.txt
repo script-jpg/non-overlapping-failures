@@ -1,0 +1,124 @@
+-- the Cauchy-Schwarz inequality
+  have CS (x y : ℕ → NNReal) (n : ℕ) : (∑ i in Finset.range n, x i * y i) ^ 2 ≤ (∑ i in Finset.range n, x i ^ 2) * (∑ i in Finset.range n, y i ^ 2) := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, ih]
+      apply_fun fun t => t ^ 2 at ih
+      simp at ih
+      rw [←Finset.sum_mul, ←Finset.sum_mul, Finset.sum_range_succ]
+      apply_fun fun t => t ^ 2 at ih ⊢
+      rw [mul_pow]
+      calc
+        (∑ x_1 ∈ Finset.range n, x x_1 * y x_1) ^ 2 + (x n * y n) ^ 2 ≤ (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (x n ^ 2) * (y n ^ 2) := by rel [ih]
+        _ = (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (y n ^ 2) + (x n ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (x n ^ 2) * (y n ^ 2) := by ring
+        _ = (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2 + y n ^ 2) + (x n ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (x n ^ 2) * (y n ^ 2) := by ring
+        _ = (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range (n + 1), y x_1 ^ 2) + (x n ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (x n ^ 2) * (y n ^ 2) := by rw [Finset.sum_range_succ]
+        _ = (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range (n + 1), y x_1 ^ 2) + (x n ^ 2) * (∑ x_1 ∈ Finset.range (n + 1), y x_1 ^ 2) := by ring
+
+      apply_fun fun t => t ^ (1 / 2 : ℝ) at ih
+      rw [←Real.rpow_mul] at ih
+      rw [Real.sq_sqrt] at ih
+      rw [←ih]
+      calc
+        (∑ x_1 ∈ Finset.range n, x x_1 * y x_1) ^ 2 + (x n * y n) ^ 2 ≤ (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (x n ^ 2) * (y n ^ 2) := by rel [ih]
+        _ = (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (y n ^ 2) + (x n ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (x n ^ 2) * (y n ^ 2) := by ring
+        _ = (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2 + y n ^ 2) + (x n ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (x n ^ 2) * (y n ^ 2) := by ring
+        _ = (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range (n + 1), y x_1 ^ 2) + (x n ^ 2) * (∑ x_1 ∈ Finset.range n, y x_1 ^ 2) + (x n ^ 2) * (y n ^ 2) := by rw [Finset.sum_range_succ]
+        _ = (∑ x_1 ∈ Finset.range n, x x_1 ^ 2) * (∑ x_1 ∈ Finset.range (n + 1), y x_1 ^ 2) + (x n ^ 2) * (∑ x_1 ∈ Finset.range (n + 1), y x_1 ^ 2) := by ring
+
+      rel [Finset.range_succ, Finset.range_succ]
+
+  -- Apply the Cauchy-Schwarz inequality to $a_1^2 a_2, a_2^2 a_3, \dots, a_{99}^2 a_{100}$ to get $(\sum_{n=0}^{98} a_{n+1}^2 a_{n+2}) \le \sqrt{(\sum_{n=0}^{98} a_{n+1}^2) (\sum_{n=0}^{98} a_{n+2}^2)}$
+  have h₁ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) ≤ √((∑ x in Finset.range 99, a (x + 1) ^ 2) * (∑ x in Finset.range 99, a (x + 2) ^ 2)) := by
+    specialize CS (fun x_1 => a (x_1 + 1) ^ 2) (fun x_1 => a (x_1 + 2)) 99
+    simp at CS
+    exact CS
+
+  -- Apply the Cauchy-Schwarz inequality to $a_2^2, a_3^2, \dots, a_{100}^2$ to get $(\sum_{n=0}^{98} a_{n+2}^2) \le (\sum_{n=0}^{99} a_{n+1}^2) = 1$
+  have h₂ : (∑ x in Finset.range 99, a (x + 2) ^ 2) ≤ (∑ x in Finset.range 100, a (x + 1) ^ 2) := by
+    specialize CS (fun x_1 => a (x_1 + 2) ^ 2) (fun x_1 => a (x_1 + 1)) 99
+    simp at CS
+    rw [Finset.sum_range_succ] at CS
+    apply CS
+
+  rw [h₀] at h₂
+
+  -- Show that $\sqrt{(\sum_{n=0}^{98} a_{n+1}^2) (\sum_{n=0}^{98} a_{n+2}^2)} < \frac{6}{5}$
+  have h₃ : √((∑ x in Finset.range 99, a (x + 1) ^ 2) * (∑ x in Finset.range 99, a (x + 2) ^ 2)) < 6 / 5 := by
+    specialize CS (fun x_1 => a (x_1 + 1) * a (x_1 + 2)) (fun x_1 => 1) 99
+    simp at CS
+    have w : (∑ x_1 ∈ Finset.range 99, a (x_1 + 1) * a (x_1 + 2)) ^ 2 < 1 := by
+      calc
+        (∑ x_1 ∈ Finset.range 99, a (x_1 + 1) * a (x_1 + 2)) ^ 2 = (∑ x_1 ∈ Finset.range 99, a (x_1 + 1) * a (x_1 + 2)) ^ 2 + (∑ x_1 ∈ Finset.range 99, (a (x_1 + 1) - a (x_1 + 2)) ^ 2) - (∑ x_1 ∈ Finset.range 99, (a (x_1 + 1) - a (x_1 + 2)) ^ 2) := by simp
+        _ = (∑ x_1 ∈ Finset.range 99, (a (x_1 + 1) ^ 2 + a (x_1 + 2) ^ 2 - 2 * a (x_1 + 1) * a (x_1 + 2))) + (∑ x_1 ∈ Finset.range 99, (a (x_1 + 1) - a (x_1 + 2)) ^ 2) - (∑ x_1 ∈ Finset.range 99, (a (x_1 + 1) - a (x_1 + 2)) ^ 2) := by simp; ring
+        _ = (∑ x_1 ∈ Finset.range 99, (a (x_1 + 1) ^ 2 + a (x_1 + 2) ^ 2 - 2 * a (x_1 + 1) * a (x_1 + 2))) := by simp
+        _ = (∑ x_1 ∈ Finset.range 99, a (x_1 + 1) ^ 2 + ∑ x_1 ∈ Finset.range 99, a (x_1 + 2) ^ 2 - 2 * (∑ x_1 ∈ Finset.range 99, a (x_1 + 1) * a (x_1 + 2))) := by simp; ring
+        _ = 1 + 1 - 2 * (∑ x_1 ∈ Finset.range 99, a (x_1 + 1) * a (x_1 + 2)) := by rw [h₀, h₂]
+        _ = 2 - 2 * (∑ x_1 ∈ Finset.range 99, a (x_1 + 1) * a (x_1 + 2)) := by ring
+        _ < 2 := by simp
+        _ = 1 := by simp
+    rw [h₀, h₂] at w
+    apply Real.lt_of_sq_lt_sq' at w
+    simp at w
+    simp [w]
+
+  have h₄ : a 100 ^ 2 * a 1 < 1 / 5 := by
+    -- Apply the AM-GM inequality to $a_1, a_2, \dots, a_{100}$ to get $a_1 a_2 \cdots a_{100} \le 1$
+    have AM_GM : (a 1 * a 2 *... * a 100) ≤ 1 := by
+      have AM_GM (x y : NNReal) : x * y ≤ (1 / 2) * (x ^ 2 + y ^ 2) := by
+        simp
+        rw [mul_comm, ←mul_assoc]
+        rel [sq_nonneg (x - y)]
+      convert_to a 1 * a 2 *... * a 100 ≤ 1 ^ 100
+      · simp
+      · refine Nat.pow_le_pow_of_le_left?h 100
+        convert_to 1 = ∏ x ∈ Finset.range 100, 1
+        · simp
+        · simp
+      -- induct on $n$ to prove $\prod_{x \in Finset.range n} a x \le \left(\frac{1}{2}\right)^n + \frac{1}{2} \sum_{x \in Finset.range n} a x ^ 2$
+      induction' n := Nat.strong_induction_on with n ih
+      match n with
+      | 0 => simp
+      | 1 =>
+        simp [Finset.prod_range_succ]
+        convert_to a 1 ≤ 1
+        rel [h₀]
+      | n + 2 =>
+        rw [Finset.prod_range_succ, Finset.prod_range_succ, ih (n + 1) (by linarith only [Nat.zero_lt_of_lt (show n > 0 by linarith only [Nat.zero_lt_of_lt (show n + 1 > 0 by norm_num)])])]
+        -- combine the inductive hypothesis with the AM-GM inequality
+        have h₀ : a 1 *... * a n ≤ ((1 : NNReal) / 2) ^ n + (1 / 2) * (∑ x ∈ Finset.range n, a x ^ 2) := by
+          exact ih n (by linarith only [Nat.zero_lt_of_lt (show n > 0 by linarith only [Nat.zero_lt_of_lt (show n + 1 > 0 by norm_num)])])
+        have h₁ : a (n + 1) * a (n + 2) ≤ 1 / 2 * (a (n + 1) ^ 2 + a (n + 2) ^ 2) := by
+          exact AM_GM a (n + 1) a (n + 2)
+        convert_to a 1 *... * a n * a (n + 1) * a (n + 2) ≤ ((1 : NNReal) / 2) ^ (n + 2) + (1 / 2) * (∑ x ∈ Finset.range (n + 2), a x ^ 2)
+        · ring
+        · calc
+            a 1 *... * a n * a (n + 1) * a (n + 2) ≤ a 1 *... * a n * ((1 : NNReal) / 2) * (a (n + 1) ^ 2 + a (n + 2) ^ 2) := by
+              rw [mul_assoc, mul_assoc]
+              exact (mul_le_mul_iff_of_pos_left (by simp)).mpr h₁
+            _ = ((1 : NNReal) / 2) ^ (n + 1) + (1 / 2) * ((1 / 2) * (∑ x ∈ Finset.range n, a x ^ 2) + a (n + 1) ^ 2 + a (n + 2) ^ 2) := by
+              rw [mul_add, mul_add, h₀]
+              ring
+            _ = ((1 : NNReal) / 2) ^ (n + 2) + (1 / 2) * (∑ x ∈ Finset.range (n + 2), a x ^ 2) := by
+              rw [pow_add, mul_add, Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ]
+              ring
+
+    -- simplify the inequality
+    simp at AM_GM
+    have h₄ : a 100 ^ 2 * a 1 < 1 / 5 := by
+      rw [mul_assoc]
+      calc
+        a 100 ^ 2 * a 1 ≤ a 1 * (1 / 5) * (1 / 5) * a 1 := by
+          rel [h₂]
+        _ = (1 / 5) ^ 2 * (a 1 ^ 2 * a 1) := by ring
+        _ = (1 / 5) ^ 2 * (a 1 * a 1 * a 1) := by ring
+        _ ≤ (1 / 5) ^ 2 * 1 := by rel [AM_GM]
+        _ = 1 / 125 < 1 / 5 := by norm_num
+
+    exact h₄
+
+  rw [h₀] at h₁
+  rw [h₁, h₃]
+  norm_num
+```

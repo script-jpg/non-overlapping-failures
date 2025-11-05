@@ -1,0 +1,225 @@
+--/-- Auxiliary lemma : the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is a perfect square if and only if
+  -- all the numbers $1, 2, \hdots, 9$ are perfect squares.
+  --  Show that it is false.-/
+  have aux : ∏ i in Finset.Icc 1 9, i! ≠ square := by
+    by_contra h
+    -- the factorial of a non-square number is not a perfect square
+    have h1 (n : ℕ) (hns : n ≠ square) : n! ≠ square := by
+      by_contra h
+      simp [square] at h
+      have : Nat.Prime 2 := by norm_num
+      -- the multiplicity of the prime number 2 in $n!$ is
+      -- given by the sum $\sum_{k \ge 1} \left\lfloor \frac{n}{2^k} \right\rfloor$
+      have h2 : multiplicity 2 n! ≥ 1 := by
+        have : multiplicity 2 (2!) = 1 := by simp [multiplicity]
+        have : multiplicity 2 (n!) ≥ multiplicity 2 (2!) := by
+          apply multiplicity_le_multiplicity_of_dvd
+          have {m : ℕ} (hm : 2 ≤ m) : 2 ∣ m! := by
+            exact Nat.dvd_factorial (by norm_num) hm
+          apply this
+          apply Nat.factorial_mono
+          omega
+        linarith
+      apply exists_prime_and_dvd at h2
+      obtain ⟨p, hp2, pdvd⟩ := h2
+      -- the multiplicity of the prime number 2 in $n!$ is less than $n$
+      have h3 : multiplicity 2 n! < n := by
+        have h3 (n : ℕ) : multiplicity 2 n! < n := by
+          induction n with
+          | zero => simp [multiplicity]
+          | succ n ih =>
+            have : multiplicity 2 (n!) + multiplicity 2 (n + 1) < n + 1 := by
+              have : multiplicity 2 (n!) < n := ih
+              apply Nat.add_lt_add_right
+              apply lt_of_lt_of_le (this : (multiplicity 2 (n!)) < n)
+              apply Nat.lt_succ_le
+              simp
+            linarith
+        exact h3 n
+      -- there exists a prime number $p$ such that $p$ divides $n!$ and
+      -- the multiplicity of $p$ in $n!$ is less than $n$
+      have h4 : ∃ p, p ∣ n! ∧ multiplicity p n! < n := by
+        use p
+        constructor
+       . exact pdvd
+       . exact h3 n
+      -- the multiplicity of the prime number 2 in $n!$ is less than $n$ when $n$ is a prime number
+      have h5 : ∀ p, p ≠ 2 → p ∣ n! → multiplicity p n! < n := by
+        intro p ne2 pdvd
+        have h5 : multiplicity p n! ≤ multiplicity p (n!) := by exact Nat.le_mul_self_multiplicity pdvd
+        have h6 : multiplicity p (n!) < n := by
+          apply (h3 n).trans
+          exact (Nat.le_mul_self_multiplicity pdvd).trans h5
+        exact Nat.le_of_lt_succ h6
+      -- if $n$ is a prime number, then $ multiplicity p n! < n $
+      have h6 : ∀ p, p ≠ 2 → p.Prime → p ∣ n! → multiplicity p n! < n := by
+        intro p ne2 hpp pdvd
+        apply h5 p ne2 hpp pdvd
+      -- the multiplicity of the prime number 2 in $n!$ is less than $n$ when $n$ is a prime number
+      have h7 : ∀ p, p.Prime → p ≠ 2 → p ∣ n! → multiplicity p n! < n := by
+        intro p hpp ne2 pdvd
+        apply h6 p hpp ne2 pdvd
+      -- by contradiction, we know that $ multiplicity p n! < n $
+      have h8 : multiplicity p n! < n := by
+        apply h7 p hpp ne2 pdvd
+      linarith
+
+  -- We need to determine the number of non-negative integers $k$ such that $k^2$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  have (k : ℕ) : k ∈ S ↔ 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i! := by
+    simp [h₀]
+  simp_rw [this]
+
+  -- the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is not a perfect square
+  have h1 (k : ℕ) : k ∣ ∏ i ∈ Finset.Icc 1 9, i! → k ∣ ∏ i ∈ Finset.Icc 1 9, i! ∧ (∏ i ∈ Finset.Icc 1 9, i!) ≠ square := by
+    intro hk
+    constructor
+   . exact hk
+   . exact aux
+
+  -- the number of non-negative integers $k$ such that $k^2$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the same
+  -- as the number of non-negative integers $k$ such that $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ where $k$ is not a perfect square
+  have h2 (k : ℕ) : k ∈ S ↔ 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i! ∧ ¬ square (k * k) := by
+    constructor
+   . intro hk
+      simp_rw [this] at hk ⊢
+      obtain ⟨h1, h2⟩ := hk
+      have h3 : k ∣ ∏ i ∈ Finset.Icc 1 9, i! := h1 h2
+      exact ⟨h1, h3, fun h => aux h2 h3 h⟩
+   . intro hk
+      simp_rw [this] at hk ⊢
+      obtain ⟨h1, h2, h3⟩ := hk
+      have h4 : k ∣ ∏ i ∈ Finset.Icc 1 9, i! := h2
+      exact ⟨h1, h4, fun h => h3 h⟩
+
+  -- the number of non-negative integers $k$ such that $k^2$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the same
+  -- as the number of non-negative integers $k$ such that $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ where $k$ is not a perfect square
+  have h3 : S.card = (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i! ∧ ¬ square (k * k)) (Finset.Ioi 0)).card := by
+    rw [←Finset.card_filter]
+    apply Eq.to.symm
+    exact Set.toFinset_inj.mp (h2)
+  rw [h3]
+
+  -- the number of non-negative integers $k$ such that $k^2$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the same
+  -- as the number of non-negative integers $k$ such that $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ and $k$ is not a perfect square
+  have h4 : (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i! ∧ ¬ square (k * k)) (Finset.Ioi 0)).card = (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i!)) \ (Finset.filter (fun k => 0 < k ∧ square (k * k)) (Finset.Ioi 0)).card := by
+    rw [Finset.card_sdiff_eq_sub_card]
+    apply Finset.filter_subset
+    intro k
+    simp
+    intro hk1 hk2 hk3
+    exact hk2 hk3
+  rw [h4]
+
+  -- the number of non-negative integers $k$ such that $k^2$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the same
+  -- as the number of non-negative integers $k$ such that $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ and $k$ is a perfect square
+  have h5 : (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i!)) \ (Finset.filter (fun k => 0 < k ∧ square (k * k)) (Finset.Ioi 0)).card = (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i!)) \ (Finset.filter (fun k => square (k * k)) (Finset.Ioi 0)).card := by
+    apply Finset.card_sdiff_eq_sub_card
+    apply Finset.filter_subset
+    intro k
+    simp
+    intro hk1 hk2
+    exact hk1
+  rw [h5]
+
+  -- the number of non-negative integers $k$ such that $k^2$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the same
+  -- as the number of non-negative integers $k$ such that $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ and $k$ is a perfect square
+  have h6 : (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i!)) \ (Finset.filter (fun k => 0 < k ∧ square (k * k)) (Finset.Ioi 0)).card = (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i!)).card - (Finset.filter (fun k => 0 < k ∧ square (k * k)) (Finset.Ioi 0)).card := by
+    rw [Finset.card_sdiff_eq_sub_card]
+    apply Finset.filter_subset
+    intro k
+    simp
+    intro hk1 hk2
+    exact hk1
+  rw [h6]
+
+  -- the number of non-negative integers $k$ such that $k^2$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the same
+  -- as the number of non-negative integers $k$ such that $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ minus the number of non-negative integers $k$ such that $k$ is a perfect square and $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$
+  have h7 : (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i!)).card - (Finset.filter (fun k => 0 < k ∧ square (k * k)) (Finset.Ioi 0)).card = (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i!)).card - (Finset.filter (fun k => square (k * k)) (Finset.Ioi 0)).card := by
+    apply Nat.sub_eq_sub
+    apply Finset.card_subset_card
+    intro k
+    simp
+    intro hk1 hk2
+    exact ⟨hk1, hk2⟩
+  rw [h7]
+
+  -- the number of non-negative integers $k$ such that $k^2$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the same
+  -- as the number of non-negative integers $k$ such that $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ minus the number of non-negative integers $k$ such that $k$ is a perfect square and $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$
+  have h8 : (Finset.filter (fun k => 0 < k ∧ k ∣ ∏ i ∈ Finset.Icc 1 9, i!)).card = ∏ i ∈ Finset.Icc 1 9, (Finset.filter (fun k => 0 < k ∧ k ∣ i!)) (Finset.Ioi 0) := by
+    simp
+    ext k
+    constructor
+   . intro hk
+      simp_rw [Finset.mem_filter] at hk
+      obtain ⟨hk1, hk2⟩ := hk
+      have hk3 : k ∣ ∏ i ∈ Finset.Icc 1 9, i! := hk2
+      have : k ∣ Finset.prod (Finset.Icc 1 9) (fun i => i!) := by
+        exact hk3
+      have : k ∈ Finset.Icc 1 9 := by
+        have : 1 ≤ k := by exact Nat.one_le_iff_ne_zero.mpr hk1
+        exact Finset.mem_Icc.mpr ⟨this, le_of_dvd (by tauto) hk3⟩
+      simp [this]
+   . intro hk
+      simp_rw [Finset.mem_filter] at hk
+      obtain ⟨hk1, hk2⟩ := hk
+      simp_rw [Finset.mem_Icc] at hk1
+      have : k ∣ Finset.prod (Finset.Icc 1 9) (fun i => i!) := by
+        exact hk2
+      exact ⟨hk1, this⟩
+  rw [h8]
+
+  -- the number of non-negative integers $k$ such that $k$ divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is the product of the number of non-negative integers $k$ such that $k$ divides $i!$ for each $i \in \left[1, 9\right]$
+  have h9 : ∏ i ∈ Finset.Icc 1 9, (Finset.filter (fun k => 0 < k ∧ k ∣ i!) (Finset.Ioi 0)) = ∏ i ∈ Finset.Icc 1 9, (Finset.filter (fun k => k ∣ i!) (Finset.Ioi 0)) := by
+    simp
+    ext k
+    constructor
+   . intro hk
+      simp_rw [Finset.mem_filter] at hk
+      obtain ⟨hk1, hk2⟩ := hk
+      simp_rw [Finset.mem_filter]
+      exact ⟨hk2, hk1⟩
+   . intro hk
+      simp_rw [Finset.mem_filter] at hk
+      obtain ⟨hk1, hk2⟩ := hk
+      simp_rw [Finset.mem_filter]
+      exact ⟨hk2, hk1⟩
+  rw [h9]
+
+  -- the number of non-negative integers $k$ such that $k$ divides $i!$ is equal to the number of non-negative integers $k$ such that $k$ divides $i!$ and $k \le i!$
+  have h10 (i : ℕ) : (Finset.filter (fun k => k ∣ i!) (Finset.Ioi 0)).card = (Finset.filter (fun k => k ∣ i! ∧ k ≤ i!) (Finset.Ioi 0)).card := by
+    apply Finset.card_eq_of_bijective
+    -- the function $f : k \mapsto k \cdot \text{lcm}\left(i!, \frac{i!}{k}\right)$ is a bijection from the set of non-negative integers $k$ such that $k$ divides $i!$ to the set of non-negative integers $k \le i!$ such that $k$ divides $i!$
+   . intro k
+      simp
+      intro hk1
+      use k.natAbs
+      constructor
+     . simp [hk1]
+        exact Nat.zero_lt_of_ne_zero hk1
+     . constructor
+       . simp [hk1]
+          exact Nat.zero_lt_of_ne_zero hk1
+       . apply Nat.dvd_mul_right
+   . intro a
+      simp
+      intro ha
+      use a.natAbs
+      constructor
+     . simp [ha]
+        exact Nat.zero_lt_of_ne_zero ha
+     . constructor
+       . simp [ha]
+          exact Nat.zero_lt_of_ne_zero ha
+       . have ha1 : a ≤ i! := by
+            apply Nat.le_of_dvd (by simp)
+            exact ha.2
+          have ha2 : a ∣ i! := by
+            apply Nat.dvd_of_mod_eq_zero
+            have : i! % a = 0 := by
+              apply Nat.mod_eq_zero_of_dvd
+              exact ha.2
+            exact this
+          exact ⟨ha2, ha1⟩
+   . intro k hk1 hk2
+      simp at hk1 hk2
+      have : ⟨k.natAbs, by apply Nat.mod_eq_zero_of_dvd; exact hk2

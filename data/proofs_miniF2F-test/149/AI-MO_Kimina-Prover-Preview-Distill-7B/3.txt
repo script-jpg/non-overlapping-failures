@@ -1,0 +1,71 @@
+-- prepare some simple facts for later use
+  have hn : 0 < (n : ℝ) := by linarith
+  have hn' : 0 < (n : ℝ) ^ ((1 : ℝ) / n) := by refine Real.rpow_pos_of_pos hn (by linarith)
+  have n1 : 1 ≤ (↑n : ℝ) := by norm_cast
+  have n2 : 1 < (↑n : ℝ) := by
+    apply lt_of_le_of_ne
+    · linarith
+    · by_contra!
+      rw [this] at n1
+      simp at n1
+
+  -- consider the cases when $1 \leq n$ and $n \neq 1$
+  by_cases h : 1 < n
+
+  -- case $1 < n$: we prove by induction on $n$
+  · have nge2 : 2 ≤ (n : ℝ) := by norm_cast
+    have nsub1ge1 : 1 ≤ ((n : ℝ) - 1) := by linarith
+
+    -- prepare for induction
+    have f1 : ((↑n - 1) : ℝ) ^ ((1 : ℝ) / (↑n - 1)) ≤ (2 - 1 / (↑n - 1)) := by
+      -- $(n-1)^{1/(n-1)} \leq 2 - 1/(n-1)$ by induction hypothetis
+      have := algebra_ineqnto1onlt2m1on (n - 1)
+      norm_cast at this
+      rw [Nat.cast_sub (by linarith)] at this
+      norm_num at this
+      exact this
+
+    -- $(n-1)^{1/(n-1)} \geq 1$ since $(n-1)^{1/(n-1)} \geq 1$ and $n-1 \geq 1$
+    have f2 : 1 ≤ ((↑n - 1) : ℝ) ^ ((1 : ℝ) / (↑n - 1)) := by
+      have : 1 ^ (1 : ℝ) / (↑n - 1) = 1 := by norm_num
+      rw [this] at hn'
+      linarith
+
+    -- $2 - 1/(n-1) \leq 2 - 1/n$
+    have f3 : (2 : ℝ) - 1 / (↑n - 1) ≤ 2 - 1 / n := by
+      apply sub_le_sub_left
+      rw [Nat.cast_sub (by linarith)]
+      apply one_div_le_one_div_of_le
+      · linarith
+      · linarith
+
+    -- $2 - 1/n \leq 2 - 1/n$
+    have f4 : (2 : ℝ) - 1 / n ≤ 2 - 1 / n := by linarith
+
+    -- $(n-1)^{1/(n-1)} \leq 2 - 1/n$
+    have f5 : ((↑n - 1) : ℝ) ^ ((1 : ℝ) / (↑n - 1)) ≤ (2 : ℝ) - 1 / n := by
+      apply le_trans f1 f4
+    clear f1 f2 f3 f4
+
+    -- $n^{1/n} \leq (n-1)^{1/(n-1)}$
+    have f1 : ((↑n : ℝ) - 1) ^ ((1 : ℝ) / (↑n - 1)) ≤ (n : ℝ) ^ ((1 : ℝ) / n) := by
+      -- $n-1 \leq n$ and $1/n \leq 1/(n-1)$
+      have := pow_le_pow_left
+      · linarith
+      · linarith
+      · linarith
+    clear this
+
+    -- $n^{1/n} \leq 2 - 1/n$
+    apply le_trans f5 f1
+    apply le_trans f5 (le_refl _)
+    apply Real.rpow_le_rpow
+    · linarith
+    · linarith
+    · linarith
+
+  -- case $n = 1$
+  · rw [Nat.cast_one] at h
+    rw [h]
+    norm_num
+```

@@ -1,0 +1,127 @@
+-- lemma, $\sum_{i=1}^n (1/i^3) \leq 2$.
+  have hle2 : ∑ i ∈ Finset.Icc 1 n, 1 / (↑i : ℝ) ^ 3 ≤ 2 := by
+    have h : ∀ i ∈ Finset.Icc 1 n, 1 / (↑i : ℝ) ^ 3 ≤ 1 / (↑i : ℝ) ^ 2 := by
+      intro i hi
+      simp at hi
+      apply one_div_le_one_div_of_le
+      · norm_num
+      · simp
+        apply Nat.one_le_pow
+        simp at hi
+        exact hi.1
+      · apply Nat.one_le_pow
+        simp at hi
+        exact hi.1
+    have h'' : ∑ i ∈ Finset.Icc 1 n, 1 / (↑i : ℝ) ^ 2 ≤ 2 := by
+      have : ∑ i ∈ Finset.Icc 1 n, 1 / (↑i : ℝ) ^ 2 ≤ ∑ i ∈ Finset.Icc 1 n, 1 / ↑i ^ 2 := by
+        apply Finset.sum_le_sum
+        intro i hi
+        simp at hi
+        simp
+        apply one_div_le_one_div_of_le
+        · norm_num
+        · simp
+          exact hi.1
+        · apply Nat.one_le_pow
+          simp at hi
+          exact hi.1
+      have : ∑ i ∈ Finset.Icc 1 n, 1 / ↑i ^ 2 ≤ 2 := by
+        have h' : ∀ i : ℕ, 1 / (↑i : ℝ) ^ 2 ≤ 1 / (i : ℝ) := by
+          intro i
+          simp
+          apply one_div_le_one_div_of_le
+          · norm_num
+          · simp
+            exact Nat.cast_ne_zero.mpr (Nat.ne_of_gt (Nat.one_lt_ofNat (i + 1)))
+          · exact Nat.cast_ne_zero.mpr (Nat.ne_of_gt (Nat.one_lt_ofNat (i + 1)))
+        have h'' : ∑ i ∈ Finset.Icc 1 n, 1 / (i : ℝ) ≤ 2 := by
+          rw [Finset.sum_Icc_succ_top (by norm_num)]
+          apply (Nat.cast_le_nat.cast_add_le (Finset.sum_Icc_succ_top (by norm_num)))
+          apply Finset.sum_le_sum
+          intro i hi
+          simp at hi
+          simp
+          apply one_div_le_one_div_of_le
+          · norm_num
+          · simp
+            exact hi.1
+          · apply Nat.one_le_pow
+            simp at hi
+            exact hi.1
+        exact le_trans (Finset.sum_le_sum h' (Finset.Icc 1 n)) h''
+      exact le_trans this this
+    have h'' : ∑ i ∈ Finset.Icc 1 n, 1 / (↑i : ℝ) ^ 3 ≤ ∑ i ∈ Finset.Icc 1 n, 1 / (↑i : ℝ) ^ 2 := by
+      apply Finset.sum_le_sum
+      intro i hi
+      simp at hi
+      apply one_div_le_one_div_of_le
+      · norm_num
+      · simp
+        apply Nat.one_le_pow
+        simp at hi
+        exact hi.1
+      · apply Nat.one_le_pow
+        simp at hi
+        exact hi.1
+    exact le_trans h'' h'
+
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+    cases n with
+    | zero =>
+      norm_num
+    | succ n =>
+      rcases (Nat.even_or_odd' n) with ⟨k, (hmid | hmid)⟩
+      -- ($\prod_{i=1}^{2k} (1 + 1/i^3) \leq 3 - 1/(2k)$.)
+      · rw [Finset.prod_Icc_succ_top (by norm_num), Finset.prod_Icc_succ_top (by norm_num),
+          mul_assoc]
+        conv =>
+          lhs
+          arg 1
+          arg 1
+          rw [← hmid]
+        rw [← one_add_one_div]
+        convex_combination
+        (le_trans (mul_le_mul_of_nonneg_right ih.1 (by positivity)) (hle2))
+        conv =>
+          lhs
+          arg 2
+          simp
+          rw [Finset.prod_Icc_succ_top (by norm_num)]
+          arg 1
+          rw [← Finset.sum_Icc_succ_top (by norm_num)]
+          rw [← Finset.sum_Icc_succ_top (by norm_num)]
+          rw [Finset.sum_Icc_succ_top (by norm_num)]
+          rw [Finset.sum_Icc_succ_top (by norm_num)]
+          rw [hmid]
+          simp
+      -- ($\prod_{i=1}^{2k+1} (1 + 1/i^3) \leq 3 - 1/(2k+1)$.)
+      · rw [Finset.prod_Icc_succ_top (by norm_num),
+          mul_assoc, mul_assoc, mul_assoc, mul_add]
+        rw [Finset.prod_Icc_succ_top (by norm_num),
+          Finset.prod_Icc_succ_top (by norm_num),
+          Finset.prod_Icc_succ_top (by norm_num),
+          Finset.prod_Icc_succ_top (by norm_num)]
+        simp
+        rw [mul_assoc, mul_assoc, mul_assoc]
+        conv =>
+          lhs
+          arg 1
+          arg 1
+          arg 1
+          rw [← hmid]
+        rw [← one_add_one_div]
+        rw [← Finset.sum_Icc_succ_top (by norm_num)]
+        iterate 3 rw [← Finset.sum_Icc_succ_top (by norm_num)]
+        rw [Finset.sum_Icc_succ_top (by norm_num)]
+        rw [hmid]
+        simp
+        ring
+        linarith
+        positivity
+        positivity
+        exact Nat.zero_lt_succ n
+        exact Nat.zero_lt_succ n
+
+```

@@ -1,0 +1,58 @@
+-- define `I` to do induction on it
+  let I : ℕ → Prop := fun n => n ∣ a ^ n - a
+
+  -- show that `I` is true for `0`, where `0` is a natural number
+  have hI0 : I 0 := by
+    simp [I]
+    -- `0` divides `0` and `a ^ 0 - a = 1 - a`
+
+  -- show that `I n` implies `I (n + 1)`
+  have hI : ∀ n, I n → I (n + 1) := by
+    intro n
+    intro hn
+    simp [I] at hn ⊢
+    -- `I n` implies `n ∣ a ^ n - a`
+    -- according to the lemma `Nat.pow_sub_pow_dvd_pow_sub`, we have `n + 1 ∣ a ^ (n + 1) - a`
+    have h1 : n + 1 ∣ a ^ (n + 1) - a := by
+      have h2 : n + 1 ∣ a ^ n - a := hn
+      have h3 : n + 1 ∣ a ^ n := by
+        apply Nat.pow_dvd_pow
+        linarith
+      have h4 : n + 1 ∣ a ^ (n + 1) - a ^ n := by
+        apply Nat.dvd_sub'
+        apply Nat.pow_le_pow_of_le_left
+        linarith
+        linarith
+      exact Nat.dvd_trans h4 h3
+    -- we need `0 < a` to use `Nat.pow_sub_pow_dvd_pow_sub`
+    simp at h2
+    by_cases h : 0 < a
+   . have ha : 0 < a ^ n := by simp [pow_pos h]
+      have h' : n ∣ a ^ n - a := hn
+      have h'' : n ∣ a ^ n := by
+        apply Nat.pow_dvd_pow
+        linarith
+      have h''' : n ∣ a ^ n - a + a := by
+        apply Nat.dvd_add
+       . assumption
+       . exact Nat.dvd_refl n
+      rw [Nat.sub_add_cancel ha] at h'''
+      have : a ^ n - a + a = a ^ n := by
+        rw [Nat.sub_add_cancel ha]
+        linarith
+      rw [this] at h'''
+      exact h'''
+   . have : a = 0 := by omega
+      simp [this]
+
+  -- do induction
+  have hI' : ∀ n, I n := by
+    intro n
+    induction' n using Nat.strong_induction_on with n ih
+    cases n with
+    | zero => exact hI0
+    | succ n => exact hI n ih
+
+  -- we need `hI'` to get `I p`
+  exact hI' p
+```

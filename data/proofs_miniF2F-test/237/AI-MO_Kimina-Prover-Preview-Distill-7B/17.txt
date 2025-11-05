@@ -1,0 +1,189 @@
+obtain ⟨k, hk⟩ := h₁
+
+  -- some auxiliary inequalities
+  have h2 : 2 ^ k > 0 := by apply Nat.pow_pos; norm_num
+  have h3 : 2 ^ k > 1 := by
+    have : 2 ^ k > 0 := by apply Nat.pow_pos; norm_num
+    have : k > 0 := by linarith
+    have : 2 ^ k > 2 ^ 0 := by apply Nat.pow_lt_pow_right; norm_num; linarith
+    rw [pow_zero] at this
+    linarith
+  have h4 : a + b ^ 2 > 0 := by linarith
+  have h5 : b + a ^ 2 > 0 := by linarith
+  have h6 : a + b ^ 2 > 1 := by
+    have : a > 0 := by linarith
+    have : b ^ 2 > 0 := by apply Nat.pow_pos; linarith
+    linarith
+  have h7 : b + a ^ 2 > 1 := by
+    have : b > 0 := by linarith
+    have : a ^ 2 > 0 := by apply Nat.pow_pos; linarith
+    linarith
+
+  -- inequalities are preserved under multiplication
+  have h8 : (a + b ^ 2) * (b + a ^ 2) > 0 := by
+    apply mul_pos
+    linarith
+    linarith
+  have h9 : (a + b ^ 2) * (b + a ^ 2) > 1 := by
+    have : (a + b ^ 2) * (b + a ^ 2) > (a + b ^ 2) := by
+      apply Nat.mul_lt_mul_left
+      linarith
+      linarith
+    have : (a + b ^ 2) > 1 := by linarith
+    linarith
+
+  -- now we do some simple inequalities manipulation
+  have h10 : a * b < 2 ^ k := by
+    have : (a + b ^ 2) * (b + a ^ 2) = a * b + a ^ 3 + b ^ 3 + a ^ 2 * b ^ 2 := by ring
+    rw [this] at hk
+    nlinarith
+
+  have h11 : a * b > 2 ^ (k - 1) := by
+    have : a * b < (a + b ^ 2) * (b + a ^ 2) := by
+      nlinarith
+    rw [hk] at this
+    have : 2 ^ (k - 1) < 2 ^ k := by apply Nat.pow_lt_pow_right; norm_num; linarith
+    linarith
+
+  -- we prove that $a * b$ is a power of two by assuming it is a power of two and then proving the only possibility is $a = 1$
+  have h12 : ∃ t : ℕ, a * b = 2 ^ t := by
+    by_cases h : ∃ t : ℕ, a * b = 2 ^ t
+    · obtain ⟨t, ht⟩ := h
+      have : t > 0 := by
+        have : a * b > 1 := by nlinarith
+        rw [ht] at this
+        have : 2 ^ t > 1 := by linarith
+        have : t > 0 := by by_contra!; simp at this; linarith
+        exact this
+      have t1 : a * b < 2 ^ t := by
+        exact h10
+      have t2 : 2 ^ (t - 1) < a * b := by
+        exact h11
+      have t3 : a * b = 2 ^ t := by
+        exact ht
+      have t4 : a = 1 ∧ b = 2 ^ t := by
+        have : a ∣ 2 ^ t := by use b; rw [← t3]
+        have ⟨n, ht⟩ := (Nat.Prime.dvd_pow_iff_dvd a (by norm_num)).mp this
+        have n1 : n > 0 := by
+          have : a > 0 := by linarith
+          have : 2 ^ t > 0 := by apply Nat.pow_pos; norm_num
+          by_contra!; simp at this; linarith
+        have n2 : n < t := by
+          have : 2 ^ n ≤ 2 ^ t := by apply Nat.pow_le_pow_right; linarith; rfl
+          rw [← t3] at this
+          have : a * b ≤ 2 ^ t := by linarith
+          nlinarith
+        have n3 : n ∣ t := by
+          apply (Nat.Prime.dvd_pow_iff_dvd n (by norm_num)).mpr ht
+        have : n = t := by
+          apply Nat.prime_dvd_prime_iff_eq (by norm_num) (by norm_num) n3
+          linarith
+        have t5 : 1 < a := by
+          have : a > 0 := by linarith
+          by_contra!; simp at this; linarith
+        have : a ∣ 2 ^ t := by use b; rw [← t3]
+        have ⟨u, hu⟩ := (Nat.dvd_prime_pow Nat.prime_two this).mp this
+        interval_cases u
+        · have : a = 1 := by linarith
+          exact this
+        · have : a = 2 := by linarith
+          have : 2 ∣ 2 ^ t := by use a; rw [← t3]
+          have ⟨u, hu⟩ := (Nat.dvd_prime_pow Nat.prime_two this).mp this
+          interval_cases u
+          · have : t = 1 := by linarith
+            have t5 : a * b = 2 := by
+              rw [this] at t3
+              have : a * b = 2 ^ 1 := by linarith
+              rw [pow_one] at this
+              exact this
+            have : b = 1 := by nlinarith
+            linarith
+          · have : t = 2 := by linarith
+            have : a * b = 4 := by
+              rw [this] at t3
+              have : a * b = 2 ^ 2 := by linarith
+              rw [pow_two] at this
+              linarith
+            have : b = 2 := by nlinarith
+            linarith
+        · have : a = 2 := by linarith
+          have : 2 ∣ 2 ^ t := by use a; rw [← t3]
+          have ⟨u, hu⟩ := (Nat.dvd_prime_pow Nat.prime_two this).mp this
+          simp at hu
+          have u2 : u > 0 := by
+            have : b > 0 := by linarith
+            have : 2 ^ u > 0 := by apply Nat.pow_pos; norm_num
+            by_contra!; simp at this; linarith
+          have u1 : u < t := by
+            have : 2 ^ u ≤ 2 ^ t := by apply Nat.pow_le_pow_right; linarith; rfl
+            rw [← hu, ← t3] at this
+            have : a * b ≤ 2 ^ t := by linarith
+            nlinarith
+          have u3 : u ∣ t := by
+            apply (Nat.dvd_prime_pow Nat.prime_two (by linarith)).mp hu
+          have : u = t := by
+            apply Nat.prime_dvd_prime_iff_eq (by norm_num) (by norm_num) u3
+            linarith
+          linarith
+      left
+      exact n4
+    · have : a * b > 0 := by nlinarith
+      have : ∃ t : ℕ, a * b = 2 ^ t := by
+        use Nat.log 2 (a * b)
+        rw [Nat.rpow_log]
+        · nlinarith
+        · nlinarith
+        · exact Nat.Prime.two_pos
+      exact this
+  clear h10 h11 h12
+
+  -- we have $a * b = 2 ^ t$ for some $t$
+  obtain ⟨t, ht⟩ := h12
+  -- we have $t > 0$
+  have t1 : t > 0 := by
+    have : a * b > 1 := by nlinarith
+    rw [ht] at this
+    have : 2 ^ t > 1 := by linarith
+    have : t > 0 := by by_contra!; simp at this; linarith
+    exact this
+  -- we have $t < k$
+  have t2 : t < k := by
+    have : a * b < 2 ^ k := by
+      exact h10
+    rw [ht] at this
+    have : 2 ^ t < 2 ^ k := by linarith
+    exact (Nat.pow_lt_pow_iff_right (by norm_num)).mp this
+  -- we have $t > k - 1$
+  have t3 : t > k - 1 := by
+    have : a * b > 2 ^ (k - 1) := by
+      exact h11
+    rw [ht] at this
+    have : 2 ^ t > 2 ^ (k - 1) := by linarith
+    exact (Nat.pow_lt_pow_iff_right (by norm_num)).mp this
+  -- we have $t = k$
+  have t4 : t = k := by
+    linarith
+  -- we have $a = 1$
+  have t5 : a = 1 := by
+    have : a ∣ 2 ^ t := by use b; rw [← ht]
+    rw [Nat.dvd_prime_pow Nat.prime_two] at this
+    obtain ⟨u, hu⟩ := this
+    have u1 : u > 0 := by
+      have : a > 0 := by linarith
+      have : 2 ^ u > 0 := by apply Nat.pow_pos; norm_num
+      by_contra!; simp at this; linarith
+    have u2 : u < t := by
+      have : 2 ^ u ≤ 2 ^ t := by apply Nat.pow_le_pow_right; linarith; rfl
+      rw [hu, ht] at this
+      have : a * b ≤ 2 ^ t := by linarith
+      nlinarith
+    have u3 : u ∣ t := by
+      apply (Nat.dvd_prime_pow Nat.prime_two (by linarith)).mp hu
+    have : u = t := by
+      apply Nat.prime_dvd_prime_iff_eq (by norm_num) (by norm_num) u3
+      linarith
+    have : u = 0 := by linarith
+    linarith
+  exact t5
+
+```

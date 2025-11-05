@@ -1,0 +1,25 @@
+have h₂ : 0 < a ^ n := by exact pow_pos (h₀.left) n
+  have h₃ : 0 < b ^ n := by exact pow_pos (h₀.right) n
+
+  -- The arithmetic-geometric mean inequality for two numbers
+  have h₄ : (a * b) ^ (1 / 2 : ℝ) ≤ (a + b) / 2 := by
+    rw [Real.le_rpow] 
+    · rw [mul_rpow (by linarith) (by linarith), ←Real.rpow_mul (by linarith),
+        ←Real.rpow_natCast, ←Real.rpow_mul (by linarith), mul_comm, ←mul_assoc, Real.mul_rpow,
+        Real.rpow_one, one_div, Real.le_div_iff₀, add_mul, div_mul_cancel₀, mul_comm]
+      exact mul_le_mul_of_nonneg_left (by apply mul_nonneg; linarith; linarith) (by linarith)
+    · linarith
+    · apply Real.one_le_rpow
+      linarith
+    · norm_num
+
+  -- The function $f(x) = x^n$ is convex on $\mathbb{R}_{>0}$
+  have h₅ : ConvexOn ℝ (Set.Ioi 0) (fun x => x ^ n) := by
+    apply convexOn_pow
+
+  -- Apply Jensen's inequality for the convex function $f(x) = x^n$
+  specialize h₅ ((a + b) / 2) (by simp; linarith) (by simp; linarith) (by linarith)
+  simp [h₂, h₃] at h₅
+  exact h₅
+
+```

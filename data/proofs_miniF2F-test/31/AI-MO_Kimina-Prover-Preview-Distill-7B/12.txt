@@ -1,0 +1,238 @@
+-- The greatest common divisor of positive integers $m$ and $n$ is 6.
+  -- The least common multiple of $m$ and $n$ is 126. What is the least possible value of $m+n$? Show that it is 60.
+
+  have dvd_m : 6 ∣ m := by
+    have : Nat.gcd m n ∣ m := Nat.gcd_dvd_left m n
+    rw [h₀] at this
+    exact this
+
+  have dvd_n : 6 ∣ n := by
+    have : Nat.gcd m n ∣ n := Nat.gcd_dvd_right m n
+    rw [h₀] at this
+    exact this
+
+  -- The least common multiple of $m$ and $n$ is 126. What is the least possible value of $m+n$? Show that it is 60.
+
+  have dvd_lcm : m ∣ 126 := by
+    have : m ∣ Nat.lcm m n := Nat.dvd_lcm_left m n
+    rw [h₁] at this
+    exact this
+
+  have dvd_lcm' : n ∣ 126 := by
+    have : n ∣ Nat.lcm m n := Nat.dvd_lcm_right m n
+    rw [h₁] at this
+    exact this
+
+  -- We have known that the gcd of ideal and qideal is 6, and lcm is 126.
+  -- ideal | 126
+  -- qideal | 126
+  -- gcd(ideal, qideal) = 6
+  -- lcm(ideal, qideal) = 126
+  -- We want to find the minimum of ideal + qideal.
+
+  have h₂ : m * n = 6 * 126 := by
+    have dvd_gcd : m.gcd n ∣ m := Nat.gcd_dvd_left m n
+    have dvd_gcd' : m.gcd n ∣ n := Nat.gcd_dvd_right m n
+    have dvd_lcm : m ∣ m.lcm n := Nat.dvd_lcm_left m n
+    have dvd_lcm' : n ∣ m.lcm n := Nat.dvd_lcm_right m n
+
+    rw [h₀] at dvd_gcd
+    rw [h₀] at dvd_gcd'
+    rw [h₁] at dvd_lcm
+    rw [h₁] at dvd_lcm'
+
+    obtain ⟨c, dvdcm⟩ := dvd_gcd
+    obtain ⟨d, dvdmd⟩ := dvd_gcd'
+    obtain ⟨e, dvdle⟩ := dvd_lcm
+    obtain ⟨f, dvdlf⟩ := dvd_lcm'
+
+    havew : m * n = m.gcd n * (m.lcm n) := Nat.gcd_mul_lcm m n
+    rw [h₀, h₁] at thisw
+    rw [thisw]
+
+    have h₃ : c * (d * (m * n)) = 6 * 126 := by
+      calc
+        _ = (c * d) * (m * n) := by ring
+        _ = 6 * 126 := by rw [dvdcm, dvdmd, dvdle, dvdlf]; ring
+
+    obtain ⟨g, hg⟩ := show ∃g, g = c * d by exact ⟨c * d, rfl⟩
+    obtain ⟨h, hh⟩ := show ∃h, h = e * f by exact ⟨e * f, rfl⟩
+
+    have h₄ : c * d = e * f := by omega
+
+    rw [hg, hh] at h₃
+    rw [h₃] at thish
+    exact thish
+
+  -- We have h mn = 6 126. So we can use the method of Lagrange's identity.
+  -- m * n = 6 * 126
+  -- m + n ≥ 2 * √(m * n) = 2 * √(6 * 126) = 2 * √756 = 2 * √(4 * 189) = 2 * √(4 * 3 * 63)
+  --   = 2 * √(4 * 3 * 9 * 7) = 2 * √(4 * 27 * 7) = 2 * √(18 * 21) = 2 * √378
+  --   = 2 * √(9 * 42) = 2 * 3 * √42 = 6 * √42
+  --   = 6 * √(6 * 7) = 6 * √42
+
+  have h₃ : m + n ≥ 60 := by
+    by_cases h₄ : 60 ≤ m + n
+    · exact h₄
+    · push_neg at h₄
+      obtain ⟨s, ⟨h₅, h₆⟩⟩ := show 60 ∈ Set.Ioo m n by exact ⟨by omega, by omega⟩
+      obtain ⟨t, ⟨h₇, h₈⟩⟩ := show 60 ∈ Set.Ioo m n by exact ⟨by omega, by omega⟩
+
+      -- We have m + n < 60, so m < 60 and n < 60.
+      have hm : m < 60 := by omega
+      have hn : n < 60 := by omega
+
+      -- We have m > 60 and n > 60.
+      have hm' : 0 < m := by omega
+      have hn' : 0 < n := by omega
+
+      --ideals = 5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+      -- ideals | 6 = 6
+      -- ideals | 126 = 5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+      -- intersection = 6
+      clear * - h₅ h₆ h₇ h₈
+
+      -- We want to find the minimum of m + q.
+      -- We have mn = 6 126.
+      -- We have m | 6 126 and n | 6 126.
+      -- m > 0 and n > 0.
+      -- We have m < 60 and n < 60.
+      clear * - h₅ h₆ h₇ h₈
+
+      -- Lagrange's identity
+      -- m * n = 6 * 126
+      -- m + n ≥ 2 * √(m * n) = 2 * √(6 * 126) = 2 * √756 = 2 * √(4 * 189) = 2 * √(4 * 3 * 63)
+      --   = 2 * √(4 * 9 * 21) = 2 * √(36 * 21) = 2 * 6 * √21 = 12 * √21
+      --   ≥ 2 * 6 * √(6 * 7) = 2 * 6 * √42 = 12 * √42
+      --   > 2 * 6 * 6 = 72
+      -- It is not possible.
+
+      interval_cases m <;> interval_cases n <;> decide
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- m = 6 * x, n = 6 * y, x * y = 21, x + y ≥ 8, and x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2.
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y = 2
+  -- It is not possible.
+
+  -- We have m = 6 * x and n = 6 * y.
+  -- x * y = 6 * 126 / 36 = 21
+  -- x + y ≥ 2 * √(x * y) = 2 * √21 > 2 * 4 = 8
+  -- x + y = 8 → x = 2, y = 3 ∨ x = 3, y

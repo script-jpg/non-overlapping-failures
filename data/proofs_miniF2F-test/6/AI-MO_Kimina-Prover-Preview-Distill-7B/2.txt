@@ -1,0 +1,177 @@
+-- some useful lemmas to expand the cos (a + x)
+  have cos_add (x a : ℝ) : Real.cos (a + x) = Real.cos a * Real.cos x - Real.sin a * Real.sin x := by rw [Real.cos_add]
+  have cos_add' (x a : ℝ) : Real.sin (a + x) = Real.sin a * Real.cos x + Real.cos a * Real.sin x := by rw [Real.sin_add]
+
+  -- some calculations before starting the inductive step
+  have h : (fun x => y x) = (fun x => ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i) := by ext x; exact h₁ x
+  have h' : (fun x => y x) = (fun x => ∑ i ∈ Finset.range k, Real.sin (a i + x) / 2 ^ i) := by ext x; simp [h₁]
+  have h_zero : 0 < k := h₀
+
+  -- extract the last term in the sum to simplify the expression
+  have eq_aux (i : ℕ) (hq : i ∈ Finset.range k) : ∑ j ∈ Finset.range i, cos (a j + x) / 2 ^ j = ∑ j ∈ Finset.range i, Real.cos (a j + x) / 2 ^ j := by simp
+  have eq_aux' (i : ℕ) (hq : i ∈ Finset.range k) : ∑ j ∈ Finset.range i, sin (a j + x) / 2 ^ j = ∑ j ∈ Finset.range i, Real.sin (a j + x) / 2 ^ j := by simp
+
+  -- define the term in the sum for x = m, and prove it is equal to zero
+  set c₁ := Real.cos (a k - 1 + m) / 2 ^ (k - 1) with c₁_def
+  set c₂ := Real.cos (a k - 1 + n) / 2 ^ (k - 1) with c₂_def
+  have c₁_eq : c₁ = Real.cos (a k - 1 + m) / 2 ^ (k - 1) := rfl
+  have c₂_eq : c₂ = Real.cos (a k - 1 + n) / 2 ^ (k - 1) := rfl
+  clear c₁_def c₂_def
+
+  -- sum from 0 to k - 1 is equal to sum from 0 to k - 2 plus the last term
+  have sum_eq (i : ℕ) (hi : i ∈ Finset.range k) (hi' : i + 1 ∈ Finset.range k) : ∑ j ∈ Finset.range i, cos (a j + m) / 2 ^ j = ∑ j ∈ Finset.range (i + 1), cos (a j + m) / 2 ^ j - cos (a i + m) / 2 ^ i := by
+    rw [← Finset.sum_range_succ, ← Finset.sum_range_succ]
+    ring
+
+  -- last term of sum from 0 to k - 1 is equal to -cos (a k - 1 + x) / 2 ^ (k - 1)
+  have c₁_eq_aux : c₁ = - Real.cos (a k - 1 + m) / 2 ^ (k - 1) := by
+    rw [c₁_def]
+    apply Finset.sum_eq_zero_on_range_add
+   . intro i hi
+      nth_rw 1 [← Finset.sum_range_succ]
+      rw [← Finset.sum_range_succ]
+     . rw [← add_zero (Real.cos (a i + m) / 2 ^ i), ← eq_aux]
+        norm_num
+        linarith
+     . intro h
+        simp at hi
+        linarith
+   . simp
+      linarith
+
+  -- last term of sum from 0 to k - 1 is equal to -cos (a k - 1 + x) / 2 ^ (k - 1)
+  have c₂_eq_aux : c₂ = - Real.cos (a k - 1 + n) / 2 ^ (k - 1) := by
+    rw [c₂_def]
+    apply Finset.sum_eq_zero_on_range_add
+   . intro i hi
+      nth_rw 1 [← Finset.sum_range_succ]
+      rw [← Finset.sum_range_succ]
+     . rw [← add_zero (Real.cos (a i + n) / 2 ^ i), ← eq_aux]
+        norm_num
+        linarith
+     . intro h
+        simp at hi
+        linarith
+   . simp
+      linarith
+
+  -- simplify the expression
+  have eq_aux : ∑ j ∈ Finset.range k, Real.cos (a j + m) / 2 ^ j = Real.cos (a k - 1 + m) / 2 ^ (k - 1) + ∑ j ∈ Finset.range (k - 1), Real.cos (a j + m) / 2 ^ j := by
+    simp [Finset.sum_range_succ]
+  have eq_aux' : ∑ j ∈ Finset.range k, Real.cos (a j + n) / 2 ^ j = Real.cos (a k - 1 + n) / 2 ^ (k - 1) + ∑ j ∈ Finset.range (k - 1), Real.cos (a j + n) / 2 ^ j := by
+    simp [Finset.sum_range_succ]
+  have eq_aux'' : ∑ j ∈ Finset.range k, Real.sin (a j + m) / 2 ^ j = Real.sin (a k - 1 + m) / 2 ^ (k - 1) + ∑ j ∈ Finset.range (k - 1), Real.sin (a j + m) / 2 ^ j := by
+    simp [Finset.sum_range_succ]
+  have eq_aux''' : ∑ j ∈ Finset.range k, Real.sin (a j + n) / 2 ^ j = Real.sin (a k - 1 + n) / 2 ^ (k - 1) + ∑ j ∈ Finset.range (k - 1), Real.sin (a j + n) / 2 ^ j := by
+    simp [Finset.sum_range_succ]
+
+  -- given that y m = 0 and y n = 0, we conclude that the sum from 0 to k - 1 is equal to -c₁
+  have ym_eq : ∑ j ∈ Finset.range k, Real.cos (a j + m) / 2 ^ j = - c₁ := by rw [c₁_eq_aux]; linarith
+  have yn_eq : ∑ j ∈ Finset.range k, Real.cos (a j + n) / 2 ^ j = - c₂ := by rw [c₂_eq_aux]; linarith
+
+  -- given that y m = 0 and y n = 0, we conclude that the sum from 0 to k - 1 is equal to -c₁
+  have ym_eq' : ∑ j ∈ Finset.range k, Real.sin (a j + m) / 2 ^ j = - c₁ := by rw [c₁_eq_aux]; linarith
+  have yn_eq' : ∑ j ∈ Finset.range k, Real.sin (a j + n) / 2 ^ j = - c₂ := by rw [c₂_eq_aux]; linarith
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have sum_eq' (i : ℕ) (hi : i ∈ Finset.range k) (hi' : i + 1 ∈ Finset.range k) : ∑ j ∈ Finset.range (i + 1), Real.cos (a j + m) / 2 ^ j = ∑ j ∈ Finset.range i, Real.cos (a j + m) / 2 ^ j + Real.cos (a i + m) / 2 ^ i := by
+    rw [Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have sum_eq'' (i : ℕ) (hi : i ∈ Finset.range k) (hi' : i + 1 ∈ Finset.range k) : ∑ j ∈ Finset.range (i + 1), Real.sin (a j + m) / 2 ^ j = ∑ j ∈ Finset.range i, Real.sin (a j + m) / 2 ^ j + Real.sin (a i + m) / 2 ^ i := by
+    rw [Finset.sum_range_succ]
+    ring
+
+  -- substituting the expression of y m = 0 and y n = 0
+  have ym_eq_sum : ∑ j ∈ Finset.range (k - 1), Real.cos (a j + m) / 2 ^ j = - c₁ - Real.cos (a k - 1 + m) / 2 ^ (k - 1) := by
+    rw [← ym_eq]
+    rw [eq_aux]
+    rw [← ym_eq_sum]
+    linarith
+
+  -- substituting the expression of y m = 0 and y n = 0
+  have yn_eq_sum : ∑ j ∈ Finset.range (k - 1), Real.cos (a j + n) / 2 ^ j = - c₂ - Real.cos (a k - 1 + n) / 2 ^ (k - 1) := by
+    rw [← yn_eq]
+    rw [eq_aux']
+    rw [← yn_eq_sum]
+    linarith
+
+  -- substituting the expression of y m = 0 and y n = 0
+  have ym_eq_sum' : ∑ j ∈ Finset.range (k - 1), Real.sin (a j + m) / 2 ^ j = - c₁ - Real.sin (a k - 1 + m) / 2 ^ (k - 1) := by
+    rw [← ym_eq']
+    rw [eq_aux'']
+    rw [← ym_eq_sum']
+    linarith
+
+  -- substituting the expression of y m = 0 and y n = 0
+  have yn_eq_sum' : ∑ j ∈ Finset.range (k - 1), Real.sin (a j + n) / 2 ^ j = - c₂ - Real.sin (a k - 1 + n) / 2 ^ (k - 1) := by
+    rw [← yn_eq']
+    rw [eq_aux''']
+    rw [← yn_eq_sum']
+    linarith
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have eq_aux : ∑ j ∈ Finset.range (k - 1), Real.cos (a j + m) / 2 ^ j = ∑ j ∈ Finset.range (k - 2), Real.cos (a j + m) / 2 ^ j - Real.cos (a k - 2 + m) / 2 ^ (k - 2) := by
+    rw [← Finset.sum_range_succ, ← Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have eq_aux' : ∑ j ∈ Finset.range (k - 1), Real.sin (a j + m) / 2 ^ j = ∑ j ∈ Finset.range (k - 2), Real.sin (a j + m) / 2 ^ j - Real.sin (a k - 2 + m) / 2 ^ (k - 2) := by
+    rw [← Finset.sum_range_succ, ← Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have eq_aux'' : ∑ j ∈ Finset.range (k - 1), Real.cos (a j + n) / 2 ^ j = ∑ j ∈ Finset.range (k - 2), Real.cos (a j + n) / 2 ^ j - Real.cos (a k - 2 + n) / 2 ^ (k - 2) := by
+    rw [← Finset.sum_range_succ, ← Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have eq_aux''' : ∑ j ∈ Finset.range (k - 1), Real.sin (a j + n) / 2 ^ j = ∑ j ∈ Finset.range (k - 2), Real.sin (a j + n) / 2 ^ j - Real.sin (a k - 2 + n) / 2 ^ (k - 2) := by
+    rw [← Finset.sum_range_succ, ← Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have eq_aux'''' : ∑ j ∈ Finset.range (k - 2), Real.cos (a j + m) / 2 ^ j = ∑ j ∈ Finset.range (k - 3), Real.cos (a j + m) / 2 ^ j - Real.cos (a k - 3 + m) / 2 ^ (k - 3) := by
+    rw [← Finset.sum_range_succ, ← Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have eq_aux''''' : ∑ j ∈ Finset.range (k - 2), Real.sin (a j + m) / 2 ^ j = ∑ j ∈ Finset.range (k - 3), Real.sin (a j + m) / 2 ^ j - Real.sin (a k - 3 + m) / 2 ^ (k - 3) := by
+    rw [← Finset.sum_range_succ, ← Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have eq_aux'''''' : ∑ j ∈ Finset.range (k - 2), Real.cos (a j + n) / 2 ^ j = ∑ j ∈ Finset.range (k - 3), Real.cos (a j + n) / 2 ^ j - Real.cos (a k - 3 + n) / 2 ^ (k - 3) := by
+    rw [← Finset.sum_range_succ, ← Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 2 is equal to sum from 0 to k - 1 minus the last term
+  have eq_aux''''''' : ∑ j ∈ Finset.range (k - 2), Real.sin (a j + n) / 2 ^ j = ∑ j ∈ Finset.range (k - 3), Real.sin (a j + n) / 2 ^ j - Real.sin (a k - 3 + n) / 2 ^ (k - 3) := by
+    rw [← Finset.sum_range_succ, ← Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 3 is equal to sum from 0 to k - 2 minus the last term
+  have sum_eq' (i : ℕ) (hi : i ∈ Finset.range k) (hi' : i + 1 ∈ Finset.range k) : ∑ j ∈ Finset.range (i + 1), Real.cos (a j + m) / 2 ^ j = ∑ j ∈ Finset.range i, Real.cos (a j + m) / 2 ^ j + Real.cos (a i + m) / 2 ^ i := by
+    rw [Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 3 is equal to sum from 0 to k - 2 minus the last term
+  have sum_eq'' (i : ℕ) (hi : i ∈ Finset.range k) (hi' : i + 1 ∈ Finset.range k) : ∑ j ∈ Finset.range (i + 1), Real.sin (a j + m) / 2 ^ j = ∑ j ∈ Finset.range i, Real.sin (a j + m) / 2 ^ j + Real.sin (a i + m) / 2 ^ i := by
+    rw [Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 3 is equal to sum from 0 to k - 2 minus the last term
+  have sum_eq''' (i : ℕ) (hi : i ∈ Finset.range k) (hi' : i + 1 ∈ Finset.range k) : ∑ j ∈ Finset.range (i + 1), Real.cos (a j + n) / 2 ^ j = ∑ j ∈ Finset.range i, Real.cos (a j + n) / 2 ^ j + Real.cos (a i + n) / 2 ^ i := by
+    rw [Finset.sum_range_succ]
+    ring
+
+  -- the sum from 0 to k - 3 is equal to sum from 0 to k - 2 minus the last term
+  have sum_eq'''' (i : ℕ) (hi : i ∈ Finset.range k) (hi' : i + 1 ∈ Finset.range k) : ∑ j ∈ Finset.range (i + 1), Real.sin (a j + n) / 2 ^ j = ∑ j ∈ Finset.range i, Real.sin (a j + n) / 2 ^ j + Real.sin (a i + n) / 2 ^ i := by
+    rw [Finset.sum_range_succ]
+    ring
+
+  -- use induction to prove the theorem
+  have ind (n : ℕ) (hn : n ∈ Finset.range k) (hn' : n + 1 ∈ Finset.range k) :
+      ∃ t : ℤ, (Real.cos (a k - 1 + m) / 2 ^ (k - 1) - Real.cos (a k - 1 + n) / 2 ^ (k - 1)) = t * Real.pi := by
+    induction n with

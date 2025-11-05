@@ -1,0 +1,48 @@
+have h₂ : a ^ 3 = 8 := by linear_combination h₀
+  have h₃ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := h₁
+  have h₄ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := by linear_combination h₃
+  have h₅ : a = 2 := by
+    have h₅₁ : a = 2 := by
+      have h₅₁ : a ^ 3 = 8 := h₂
+      have h₅₂ : a = 2 := by
+        have h₅₃ : a ^ 3 - 8 = 0 := by linear_combination h₀
+        have h₅₄ : (a - 2) * (a ^ 2 + 2 * a + 4) = 0 := by linear_combination h₅₃
+        have h₅₅ : a - 2 = 0 ∨ a ^ 2 + 2 * a + 4 = 0 := eq_zero_or_eq_zero_of_mul_eq_zero h₅₄
+        cases h₅₅ with
+        | inl h₅₅ => exact eq_of_sub_eq_zero h₅₅
+        | inr h₅₅ =>
+          have h₅₆ : a ^ 2 + 2 * a + 4 = 0 := h₅₅
+          have h₅₇ : (a + 1) ^ 2 = -3 := by linear_combination h₅₆
+          have h₅₈ : (a + 1) ^ 2 ≥ 0 := by nlinarith
+          nlinarith
+      exact h₅₂
+    exact h₅₁
+  have h₆ : b = 4 ∨ b = -4 + 4 * Complex.I ∨ b = -4 - 4 * Complex.I := by
+    have h₆₁ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := h₄
+    have h₆₂ : (b - 4) * (b ^ 2 - 4 * b - 16) = 0 := by linear_combination h₆₁
+    have h₆₃ : b - 4 = 0 ∨ b ^ 2 - 4 * b - 16 = 0 := eq_zero_or_eq_zero_of_mul_eq_zero h₆₂
+    cases h₆₃ with
+    | inl h₆₃ =>
+      have h₆₄ : b = 4 := by linear_combination h₆₃
+      exact Or.inl h₆₄
+    | inr h₆₃ =>
+      have h₆₄ : b ^ 2 - 4 * b - 16 = 0 := h₆₃
+      have h₆₅ : b = -4 + 4 * Complex.I ∨ b = -4 - 4 * Complex.I := by
+        apply or_iff_not_imp_left.mpr
+        intro h₆₅
+        apply mul_left_cancel₀ (sub_ne_zero_of_ne h₆₅)
+        rw [← sub_eq_zero]
+        ring_nf at h₆₄ ⊢
+        norm_cast at h₆₄ ⊢
+        simp_all [Complex.ext_iff, pow_two, pow_three]
+        <;> ring_nf at * <;>
+        norm_num at * <;>
+        (try constructor) <;>
+        nlinarith
+      exact Or.inr h₆₅
+  rcases h₆ with (rfl | rfl | rfl) <;> simp_all [Complex.abs, Complex.normSq, pow_two, pow_three, Complex.ext_iff]
+  <;> norm_num <;>
+  apply le_of_pow_le_pow_left two_ne_zero (by positivity) <;>
+  ring_nf <;>
+  norm_num <;>
+  nlinarith [Real.sqrt_nonneg 21, Real.sq_sqrt (show (0 : ℝ) ≤ 21 by norm_num),

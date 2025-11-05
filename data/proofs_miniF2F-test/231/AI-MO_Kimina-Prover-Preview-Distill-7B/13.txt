@@ -1,0 +1,345 @@
+-- Notice that if $n$ is a (not necessarily perfect) cube, $d(n)$ is $O(n)$, and
+  -- if $n$ is a cube, $d(n)$ is $O(n)$. Therefore, $f(n)$ for cubic $n$ is
+  -- $O(n^{2/3})$.
+  have h2 : ∀ n, 0 < n → f n ≤ 6 * n ^ ((2 : ℝ) / 3) := by
+    intro n hn
+    have := h₀ n hn
+    have : (Nat.divisors n).card ≤ 6 * n ^ ((2 : ℝ) / 3) := by
+      by_cases hn' : n = 1
+      · rw [hn']
+        simp
+      · by_cases hn'' : n < 1
+        · absurd hn''
+          simp
+          apply Nat.one_le
+        · have h2 : n ^ ((2 : ℝ) / 3) ≥ 1 := by
+            apply Real.one_le_pow
+            rw [← Nat.cast_pow]
+            norm_cast
+            linarith
+          have h3 : (Nat.divisors n).card ≤ 6 * n ^ ((2 : ℝ) / 3) :=
+            by
+              by_contra! h
+              have h2 : n ^ ((2 : ℝ) / 3) ≥ 1 := by
+                apply Real.one_le_pow
+                rw [← Nat.cast_pow]
+                norm_cast
+                linarith
+              have : ¬ n ^ ((2 : ℝ) / 3) ≥ 1 := by push_neg; exact h
+              contradiction
+            exact h3
+      simp [h₀]
+      rw [div_le_iff₀ (by positivity), one_mul]
+      have : (6 ^ (2 / 3 : ℝ) : ℝ) ≥ 1 := by
+        apply Real.one_le_pow
+        norm_num
+      calc
+        _ = (@Nat.cast_le Real) ((6 ^ (2 / 3 : ℝ) : ℝ) * n ^ ((2 : ℝ) / 3))
+          _ = ((6 ^ (2 / 3 : ℝ) : ℕ) * (n ^ ((2 : ℝ) / 3) : ℕ)) := by
+            push_cast
+            rw [Nat.cast_mul]
+        _ ≤ ((6 ^ (2 / 3 : ℝ) : ℕ) * (n ^ ((2 : ℝ) / 3) : ℕ)) + 1 := by
+          apply Nat.le_add_one
+        _ = _ := by
+          rw [Nat.cast_mul]
+          rw [Nat.cast_pow]
+          rw [Nat.cast_pow]
+          ring_nf
+          repeat rw [← Nat.cast_mul]
+          norm_cast
+          calc
+            _ = (6 : ℝ) ^ (2 / 3 : ℝ) * (n : ℝ) ^ ((2 : ℝ) / 3) := by
+              rw [← mul_rpow]
+              · norm_num
+              · norm_num
+              · rw [← Real.rpow_natCast_mul]
+                norm_num
+                linarith
+            _ = (6 : ℝ) ^ (2 / 3 : ℝ) * (n ^ ((2 : ℝ) / 3)) := by
+              rw [← Real.rpow_mul]
+              · norm_num
+              · norm_num
+              · linarith
+
+    linarith
+
+  -- More precisely, let's show that if $n$ is not a perfect cube,
+  -- $d(n)$ is o(n^(2/3)).
+  have h3 : ∀ n, 0 < n → ¬ (Nat.divisors n).card = 6 * n ^ ((2 : ℝ) / 3) →
+      (Nat.divisors n).card < 6 * n ^ ((2 : ℝ) / 3) := by
+    intro n hn
+    by_contra! h0
+    have h1 : (Nat.divisors n).card ≤ 6 * n ^ ((2 : ℝ) / 3) := by
+      by_cases hn' : n = 1
+      · rw [hn']
+        simp
+      · by_cases hn'' : n < 1
+        · absurd hn''
+          simp
+          apply Nat.one_le
+        · have h2 : n ^ ((2 : ℝ) / 3) ≥ 1 := by
+            apply Real.one_le_pow
+            rw [← Nat.cast_pow]
+            norm_cast
+            linarith
+          have h3 : (Nat.divisors n).card ≤ 6 * n ^ ((2 : ℝ) / 3) :=
+            by
+              by_contra! h
+              have h2 : n ^ ((2 : ℝ) / 3) ≥ 1 := by
+                apply Real.one_le_pow
+                rw [← Nat.cast_pow]
+                norm_cast
+                linarith
+              have : ¬ n ^ ((2 : ℝ) / 3) ≥ 1 := by push_neg; exact h
+              contradiction
+            exact h3
+      simp [h0]
+      simp [h₀]
+      by_cases hn' : n < 1
+      · simp at hn'
+        linarith
+      · have h2 : n ^ ((2 : ℝ) / 3) ≥ 1 := by
+          apply Real.one_le_pow
+          rw [← Nat.cast_pow]
+          norm_cast
+          linarith
+        have h4 : ¬ n ^ ((2 : ℝ) / 3) ≥ 1 := by
+          push_neg
+          exact h0
+        contradiction
+
+  -- Now let's show that if $n$ is not a perfect cube, $f(n) < 6n^(2/3)$.
+  have h4 : ∀ n, 0 < n → ¬ (Nat.divisors n).card = 6 * n ^ ((2 : ℝ) / 3) →
+      f n < 6 * n ^ ((2 : ℝ) / 3) := by
+    intro n hn
+    by_cases hn' : n = 1
+    · rw [hn']
+      simp [h₀]
+      rw [div_self]
+      · norm_num
+      · by_contra! h2
+        have h3 : ¬ (6 : ℝ) * n ^ ((2 : ℝ) / 3) ≤ (6 : ℝ) * n ^ ((2 : ℝ) / 3) := by
+          push_neg
+          apply lt_of_le_of_ne
+          · exact h2
+          · by_contra! h3
+            apply h3
+            rfl
+        contradiction
+    · by_cases hn'' : n < 1
+      · absurd hn''
+        simp
+        apply Nat.one_le
+      · have h2 : n ^ ((2 : ℝ) / 3) ≥ 1 := by
+          apply Real.one_le_pow
+          rw [← Nat.cast_pow]
+          norm_cast
+          linarith
+        have h3 : ¬ n ^ ((2 : ℝ) / 3) ≥ 1 := by
+          push_neg
+          exact h0
+        contradiction
+      have h3 : (Nat.divisors n).card < 6 * n ^ ((2 : ℝ) / 3) := by
+        apply h3
+        assumption
+      linarith
+
+  -- We can show that if $n$ is not a perfect cube, $f(n) < f(n+1)$.
+  have h5 : ∀ n, 0 < n → ¬ (Nat.divisors n).card = 6 * n ^ ((2 : ℝ) / 3) →
+      f n < f (n + 1) := by
+    intro n hn
+    have h6 : ¬ (Nat.divisors n).card = 6 * n ^ ((2 : ℝ) / 3) := by
+      assumption
+    have h7 : (Nat.divisors n).card < 6 * n ^ ((2 : ℝ) / 3) := by
+      apply h3
+      assumption
+    have h8 : (Nat.divisors (n + 1)).card ≤ 6 * (n + 1) ^ ((2 : ℝ) / 3) := by
+      apply h2
+      linarith
+    have h9 : f n < f (n + 1) := by
+      have h10 : (Nat.divisors n).card / n ^ ((1 : ℝ) / 3) < (Nat.divisors (n + 1)).card / (n + 1) ^ ((1 : ℝ) / 3) := by
+        apply div_lt_div₀
+        · exact h7
+        · linarith
+        · apply Nat.card_le_divisors
+          assumption
+        · linarith
+      simp [h₀, h₀]
+      assumption
+    assumption
+
+  -- Then, we can show that if $f(n) < f(n+1)$, $n < N$.
+  have h6 : ∀ n, 0 < n → f n < f (n + 1) → n < N := by
+    intro n hn hfn
+    by_contra! h
+    have h7 : ¬ (Nat.divisors n).card = 6 * n ^ ((2 : ℝ) / 3) := by
+      by_contra! h8
+      have h9 : n < N := by
+        apply h5
+        assumption
+        · assumption
+        · assumption
+      absurd h9
+      assumption
+    have h8 : (Nat.divisors n).card < 6 * n ^ ((2 : ℝ) / 3) := by
+      apply h3
+      assumption
+    have h9 : ¬ (Nat.divisors (n + 1)).card = 6 * (n + 1) ^ ((2 : ℝ) / 3) := by
+      by_contra! h10
+      have h11 : n + 1 < N := by
+        apply h5
+        · linarith
+        · assumption
+        · assumption
+      absurd h11
+      assumption
+    have h10 : (Nat.divisors (n + 1)).card < 6 * (n + 1) ^ ((2 : ℝ) / 3) := by
+      apply h3
+      linarith
+    have : f n ≥ f (n + 1) := by
+      by_contra! h
+      have h11 : (Nat.divisors n).card / n ^ ((1 : ℝ) / 3) < (Nat.divisors (n + 1)).card / (n + 1) ^ ((1 : ℝ) / 3) := by
+        simp [h₀, h₀]
+        linarith
+      have h12 : (Nat.divisors n).card / n ^ ((1 : ℝ) / 3) = (Nat.divisors n).card * n ^ ((-1 : ℝ) / 3) := by
+        field_simp
+        <;> linarith
+      have h13 : (Nat.divisors (n + 1)).card / (n + 1) ^ ((1 : ℝ) / 3) = (Nat.divisors (n + 1)).card * (n + 1) ^ ((-1 : ℝ) / 3) := by
+        field_simp
+        <;> linarith
+      rw [h12, h13] at h11
+      have h14 : (Nat.divisors n).card * n ^ ((-1 : ℝ) / 3) < (Nat.divisors (n + 1)).card * (n + 1) ^ ((-1 : ℝ) / 3) := by
+        exact h11
+      have h15 : (Nat.divisors n).card * n ^ ((-1 : ℝ) / 3) ≤ (Nat.divisors n).card := by
+        apply mul_le_mul_of_nonneg_left
+        · exact Nat.le_pow_succ (n := -1) (by linarith : 0 ≤ n)
+        · exact Nat.zero_le (n := -1) (by linarith)
+      have h16 : (Nat.divisors (n + 1)).card * (n + 1) ^ ((-1 : ℝ) / 3) ≤ (Nat.divisors (n + 1)).card := by
+        apply mul_le_mul_of_nonneg_left
+        · exact Nat.le_pow_succ (n := -1) (by linarith : 0 ≤ n + 1)
+        · exact Nat.zero_le (n := -1) (by linarith)
+      have h17 : (Nat.divisors n).card < (Nat.divisors (n + 1)).card := by
+        linarith
+      have h18 : ¬ (Nat.divisors n).card < (Nat.divisors (n + 1)).card := by
+        push_neg
+        exact h
+      contradiction
+    linarith
+
+  -- We show that $N$ is a perfect cube.
+  have h7 : ∃ k, N = k ^ 3 := by
+    by_contra! h
+    have h2 : ∀ n, 0 < n → f n < f (n + 1) := by
+      intro n hn
+      apply h5
+      assumption
+      apply h2
+      linarith
+    have h3 : ∀ n, 0 < n → f n ≤ 6 * n ^ ((2 : ℝ) / 3) := by
+      intro n hn
+      apply h2
+      assumption
+    have h4 : ∀ n, 0 < n → ¬ (Nat.divisors n).card = 6 * n ^ ((2 : ℝ) / 3) := by
+      intro n hn
+      apply h3
+      assumption
+    have h5 := h6 1 (by norm_num) (by apply h2)
+    have h6 : N > 1 := by
+      apply Nat.one_lt_of_ne
+      assumption
+      by_contra! h
+      have h7 : ¬ (1 : ℕ) > 1 := by
+        push_neg
+        exact h
+      contradiction
+    have h7 := h6 h5
+    absurd h7
+    apply h
+    by_contra! h
+    have h10 : ∀ n, 0 < n → n < N → f n < f (n + 1) := by
+      intro n hn
+      apply h5
+      assumption
+      assumption
+    have h11: ∀ n, 0 < n → n < N → f n ≤ 6 * n ^ ((2 : ℝ) / 3) := by
+      intro n hn
+      apply h3
+      assumption
+    have h12 : ∀ n, 0 < n → n < N → ¬ (Nat.divisors n).card = 6 * n ^ ((2 : ℝ) / 3) := by
+      intro n hn
+      apply h4
+      assumption
+      assumption
+    have h13 := h1 (N - 1) (by linarith)
+    have h14 : (N - 1) < N := by
+      apply Nat.sub_one_lt_of_lt
+      linarith
+    have h15 := h11 (N - 1) (by linarith) h14
+    have h16 := h12 (N - 1) (by linarith) h14
+    have h17 : f (N - 1) < f N := by
+      apply h10 (N - 1) (by linarith) h14
+    have h18 : f (N - 1) = f N := by
+      linarith
+    linarith
+
+  obtain ⟨k, hk⟩ := h7
+  have hk0 : 0 < k := by
+    by_contra! h
+    have h1 : k ^ 3 ≤ 0 ^ 3 := by
+      apply Nat.pow_le_pow_left
+      linarith
+    simp at h1
+    omega
+
+  have hk1 : 0 < k ^ 3 := by
+    exact Nat.pos_pow_of_pos 3 hk0
+
+  have hk2 : f (k ^ 3) ≤ 6 * (k ^ 3) ^ ((2 : ℝ) / 3) := by
+    apply h3
+    assumption
+
+  have hk3 : ∀ n, 0 < n → n ≠ k ^ 3 → f n < f (k ^ 3) := by
+    intro n hn
+    by_contra! h
+    have h1 : ¬ (Nat.divisors n).card = 6 * n ^ ((2 : ℝ) / 3) := by
+      by_contra! h2
+      have h3 : f n > f n := by
+        have h4 : f n = f (k ^ 3) := by
+          linarith
+        have h5 := h6 n hn h4
+        linarith
+      have h6 : ¬ f n > f n := by
+        exact h
+      contradiction
+    have h2 : (Nat.divisors n).card < 6 * n ^ ((2 : ℝ) / 3) := by
+      apply h3
+      assumption
+      by_contra! h3
+      have h4 : f n > f (k ^ 3) := by
+        apply h6 n hn h3
+      have h5 : ¬ f n > f n := by
+        linarith
+      contradiction
+    have h3 : f n < f (k ^ 3) := by
+      apply h5 n hn h2
+    linarith
+
+  -- Let's show that for non-cube $n$, $f(n) < f(n+1)$.
+  have h8 : ∀ n, 0 < n → ¬ (Nat.divisors n).card = 6 * n ^ ((2 : ℝ) / 3) →
+      f n < f (n + 1) := by
+    intro n hn
+    by_contra! h
+    have h2 : (Nat.divisors n).card < 6 * n ^ ((2 : ℝ) / 3) := by
+      apply h3
+      assumption
+    have h3 : ¬ (Nat.divisors (n + 1)).card = 6 * (n + 1) ^ ((2 : ℝ) / 3) := by
+      by_contra! h4
+      have h5 : n + 1 < k ^ 3 := by
+        have h6 : (n + 1) < (k ^ 3) := by
+          apply lt_of_lt_of_le
+          · apply h5
+          · apply le_of_eq
+            rw [Nat.lt_pow_iff_one_lt_pow] <;> try linarith
+            rw [Nat.pow_le_pow_iff_left] <;> try linarith
+            apply Nat.one_lt_pow_of_lt
+            lin

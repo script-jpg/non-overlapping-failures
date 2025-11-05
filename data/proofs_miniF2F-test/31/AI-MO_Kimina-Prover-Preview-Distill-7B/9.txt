@@ -1,0 +1,56 @@
+-- The gcd of m and n is 6, so m = 6x and n = 6y for some x and y which are coprime.
+  have h₂ : ∃ x y : ℕ, m = 6 * x ∧ n = 6 * y ∧ Nat.gcd x y = 1 ∧
+      Nat.lcm m n = 6 * Nat.lcm x y := by
+    use (m / 6), (n / 6)
+    rw [Nat.div_add_mod m 6, Nat.div_add_mod n 6]
+    simp only [Nat.mod_eq_of_lt, and_true]
+    rw [Nat.dvd_gcd_iff, Nat.dvd_mul_left]
+    nth_rw 2 [← Nat.gcd_mul_left, Nat.gcd_comm, Nat.gcd_mul_right, Nat.mul_assoc]
+    rw [Nat.lcm]
+    congr
+   . rw [Nat.gcd_mul_left, Nat.gcd_comm, Nat.gcd_mul_right, Nat.mul_assoc]
+      rw [Nat.mul_left_inj]
+      apply Nat.gcd_mul_right
+   . rw [Nat.mul_left_inj]
+      apply Nat.gcd_mul_right
+   . rw [Nat.mul_left_inj]
+      apply Nat.gcd_mul_right
+
+  rcases h₂ with ⟨x, y, h₃, h₄, h₅, h₆⟩
+
+  -- The lcm of m and n is 126, so lcm(x,y)=21.
+  have h₇ : Nat.lcm x y = 21 := by
+    rw [h₆] at h₁
+    linarith
+
+  -- The pairs (x,y) with lcm(x,y)=21 are (1,21), (3,7), (7,3), (21,1).
+  have h₈ : (x = 1 ∧ y = 21) ∨ (x = 3 ∧ y = 7) ∨ (x = 7 ∧ y = 3) ∨ (x = 21 ∧ y = 1) := by
+    have : Nat.lcm x y = 21 := h₇
+    have : x ∣ 21 := by exact Nat.dvd_lcm_left x y
+    have : y ∣ 21 := by exact Nat.dvd_lcm_right x y
+    have : x ≠ 0 := fun x0 => by
+      rw [x0, Nat.lcm_zero_left] at this
+      simp at this
+    have : y ≠ 0 := fun y0 => by
+      rw [y0, Nat.lcm_zero_right] at this
+      simp at this
+    have : x ≤ 21 := Nat.le_of_dvd (by norm_num) this
+    have : y ≤ 21 := Nat.le_of_dvd (by norm_num) this
+    interval_cases x <;> interval_cases y <;> simp at this <;> tauto
+
+  -- The value of m + n is 126, 60, 60, or 126 according to this.
+  have h₉ : m + n = 126 ∨ m + n = 60 ∨ m + n = 60 ∨ m + n = 126 := by
+    rcases h₈ with (⟨hx, hy⟩ | ⟨hx, hy⟩ | ⟨hx, hy⟩ | ⟨hx, hy⟩)
+   . rw [h₃, h₄, hx, hy]
+      norm_num
+   . rw [h₃, h₄, hx, hy]
+      norm_num
+   . rw [h₃, h₄, hx, hy]
+      norm_num
+   . rw [h₃, h₄, hx, hy]
+      norm_num
+
+  -- The least possible value of m + n is 60.
+  rcases h₉ with (h | h | h | h) <;> linarith
+
+```

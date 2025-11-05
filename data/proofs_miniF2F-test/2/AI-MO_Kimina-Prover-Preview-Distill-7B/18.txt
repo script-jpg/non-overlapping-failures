@@ -1,0 +1,125 @@
+-- We shall denote `log w` by `logw` for ease of formalization.
+  set logw := Real.log w
+  have logw_ne_zero : logw ≠ 0 := by
+    intro h
+    simp [h] at h0
+    exact hw (by linarith)
+
+  -- We shall denote `log x` by `logx` for ease of formalization.
+  set logx := Real.log x
+  have logx_ne_zero : logx ≠ 0 := by
+    intro h
+    simp [h] at h0
+    exact ht.left (by linarith)
+
+  -- We shall denote `log y` by `logy` for ease of formalization.
+  set logy := Real.log y
+  have logy_ne_zero : logy ≠ 0 := by
+    intro h
+    simp [h] at h0
+    exact ht.right.left (by linarith)
+
+  -- We shall denote `log z` by `logz` for ease of formalization.
+  set logz := Real.log z
+  have logz_ne_zero : logz ≠ 0 := by
+    intro h
+    simp [h] at h0
+    exact ht.right.right (by linarith)
+
+  -- Let us rewrite the given equations in terms of log w, log x, and log y.
+  have h3 : logw = 24 * logx := by
+    field_simp at h0
+    exact h0
+
+  have h4 : logw = 40 * logy := by
+    field_simp at h1
+    exact h1
+
+  have h5 : logw = 12 * log (x * y * z) := by
+    field_simp at h2
+    exact h2
+
+  -- Now, we need to rewrite `log (x * y * z)` in terms of `log x`, `log y`, and `log z`.
+  have h6 : log (x * y * z) = logx + logy + logz := by
+    calc
+      log (x * y * z) = log (x * y) + log z := by rw [log_mul (by linarith) (by linarith)]
+      _ = log x + log y + log z := by rw [log_mul (by linarith) (by linarith)]
+
+  -- Substitute `log (x * y * z)` in `h5` by `logx + logy + logz`.
+  rw [h6] at h5
+
+  -- We now have three equations:
+  -- - `logw = 24 * logx` (in `h3`)
+  -- - `logw = 40 * logy` (in `h4`)
+  -- - `logw = 12 * (logx + logy + logz)` (in `h5`)
+  -- Eliminate `logw` to get `24 * logx = 40 * logy` and hence `logx = (40 / 24) * logy`.
+  have h7 : 24 * logx = 40 * logy := by
+    rw [← h3, ← h4]
+  have h8 : logx = (40 / 24) * logy := by
+    field_simp
+    linarith only [h7]
+
+  -- Eliminate `logw` from the pair of equations `h3` and `h5` to obtain `24 * logx = 12 * (logx + logy + logz)`.
+  -- Substitute `logx = (40 / 24) * logy` into this equation.
+  -- Hence, we get `(24 * (40 / 24) - 12) * logy = 12 * logz` and therefore `logz = ((24 * (40 / 24) - 12) / 12) * logy`.
+  have h9 : 24 * logx = 12 * (logx + logy + logz) := by
+    rw [← h3, ← h5]
+  have h10 : logz = ((24 * (40 / 24) - 12) / 12) * logy := by
+    rw [h8] at h9
+    linarith only [h9]
+
+  -- Now, substitute `logz` in `h4` (or alternatively in `h3`) to obtain `logw`.
+  rw [h10] at h4
+  field_simp at h4
+  -- Hence, we get `logw = 40 * logy` and `logy = (logw / 40)`.
+  have h11 : logw = 60 * logy := by
+    linarith only [h4]
+
+  -- Finally, substitute `logy` in `h8` to obtain `logx`.
+  rw [h11] at h8
+  field_simp at h8
+  -- Hence, we get `logx = (40 / 24) * (logw / 40) = logw / 24`.
+  have h12 : logx = logw / 24 := by
+    linarith only [h8]
+
+  -- Eliminate `logw` from the pair of equations `h8` and `h12` to obtain `logz`.
+  rw [h12] at h8
+  field_simp at h8
+  -- Hence, we get `logz = ((24 * (40 / 24) - 12) / 12) * (logw / 24) = logw / 12`.
+  have h13 : logz = logw / 12 := by
+    linarith only [h8]
+
+  -- Eliminate `logw` from the pair of equations `h11` and `h13` to obtain the value of `logz`.
+  rw [h13] at h11
+  field_simp at h11
+  -- Hence, we get `logz = logw / 12` and `logw = 60 * logz`.
+  have h14 : logw = 60 * logz := by
+    linarith only [h11]
+
+  -- Eliminate `logw` from the pair of equations `h13` and `h14` to obtain the value of `logz`.
+  rw [h14] at h13
+  field_simp at h13
+  -- Hence, we get `logz = (logw / 24) / (logw / 60) = 60 / 24 = 5 / 2`.
+  have h15 : logz = 60 / 24 * logw := by
+    linarith only [h13]
+
+  -- Now, substitute `logz` in `h12` to obtain `logx` in terms of `logw`.
+  rw [h15, h14] at h12
+  field_simp at h12
+  -- Hence, we get `logx = logw / 24 = (60 / 24 * logw / 60) / 24 = logz / 24`.
+  -- This shows that `logx = logz / 24`.
+  have h16 : logx = logz / 24 := by
+    linarith only [h12]
+
+  -- Eliminate `logx` from the pair of equations `h12` and `h16` to obtain `logz`.
+  rw [h16] at h12
+  field_simp at h12
+  -- Hence, we get `logz = logw / 12` and `logw = 60 * logz`.
+  have h17 : logw = 60 * logz := by
+    linarith only [h12]
+
+  -- Eliminate `logw` from the pair of equations `h15` and `h17` to obtain the value of `logz`.
+  rw [h17] at h15
+  linarith only [h15]
+
+```

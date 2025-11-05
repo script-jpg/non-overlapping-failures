@@ -1,0 +1,323 @@
+have hp : 1 < p := h₀.1
+  have hq : 1 < q := by linarith
+  have hr : 1 < r := by linarith
+
+  have hpqr : 1 < p * q * r := by nlinarith
+
+  have hp1 : 0 < p - 1 := by omega
+  have hq1 : 0 < q - 1 := by omega
+  have hr1 : 0 < r - 1 := by omega
+
+  have hpqr1 : 0 < p * q * r - 1 := by omega
+
+  let s : ℕ := ((p - 1) * (q - 1) * (r - 1)).natAbs
+  let t : ℕ := (p * q * r - 1).natAbs
+
+  have h₀ : s ∣ t := by zify; simpa
+
+  have h₁ : s ≠ 0 := by
+    intro hs
+    rw [hs] at h₀
+    exact Nat.eq_zero_of_dvd_zero h₀
+
+  have h₂ : s ≤ t := by exact Nat.le_of_dvd (by omega) h₀
+
+  have h₃ : p * q * r - 1 = (p - 1) * (q - 1) * (r - 1) * k := by
+    zify at h₀ h₁ ⊢
+    simpa using h₀
+
+  have h₄ : 1 ≤ k := by nlinarith
+
+  have h₅ : p * q * r = (p - 1) * (q - 1) * (r - 1) * k + 1 := by omega
+
+  -- First, show that $p$ divides $k$.
+
+  have h₆ : p ∣ k := by
+    rw [show p * q * r = p * (q * r) by ring]
+    zify at h₅ ⊢
+    have : p ∣ (p - 1) * (q - 1) * (r - 1) * k + 1 - 1 := by
+      rw [sub_add_cancel]
+      apply Int.dvd_sub
+      · apply Int.dvd_mul_right
+      · apply Int.dvd_mul_right
+        apply Int.dvd_sub
+        · apply Int.dvd_mul_right
+          simp
+        · exact hp.2.2
+      · exact hq.2
+    have : p ∣ (p - 1) * (q - 1) * (r - 1) * k := by
+      apply Int.dvd_mul_right
+    omega
+
+  -- Next, show that $q$ divides $k$.
+
+  have h₇ : q ∣ k := by
+    rw [show p * q * r = q * (p * r) by ring]
+    zify at h₅ ⊢
+    have : q ∣ (p - 1) * (q - 1) * (r - 1) * k + 1 - 1 := by
+      rw [sub_add_cancel]
+      apply Int.dvd_sub
+      · apply Int.dvd_mul_right
+      · apply Int.dvd_mul_right
+        apply Int.dvd_sub
+        · apply Int.dvd_mul_right
+          simp
+        · exact hp.2.2
+        · apply Int.dvd_mul_right
+          simp
+      · exact hq.2
+    have : q ∣ (p - 1) * (q - 1) * (r - 1) * k := by
+      apply Int.dvd_mul_right
+    omega
+
+  -- Then, show that $r$ divides $k$.
+
+  have h₈ : r ∣ k := by
+    rw [show p * q * r = r * (p * q) by ring]
+    zify at h₅ ⊢
+    have : r ∣ (p - 1) * (q - 1) * (r - 1) * k + 1 - 1 := by
+      rw [sub_add_cancel]
+      apply Int.dvd_sub
+      · apply Int.dvd_mul_right
+      · apply Int.dvd_mul_right
+        apply Int.dvd_sub
+        · apply Int.dvd_mul_right
+          simp
+        · exact hp.2.2
+        · apply Int.dvd_mul_right
+          simp
+      · exact hq.2
+    have : r ∣ (p - 1) * (q - 1) * (r - 1) * k := by
+      apply Int.dvd_mul_right
+    omega
+
+  -- Show that $pqr$ divides $k$.
+
+  have h₉ : p * q * r ∣ k := by
+    have hp : Int.gcd p q = 1 := by
+      exact Int.coprime_iff_gcd_eq_one.mpr ⟨hp.2.2, hq.2⟩
+    have h₇' : Int.gcd q r = 1 := by
+      exact Int.coprime_iff_gcd_eq_one.mpr ⟨hq.2, hr.2⟩
+    have h₈' : Int.gcd r p = 1 := by
+      exact Int.coprime_iff_gcd_eq_one.mpr ⟨hr.2, hp.2.2⟩
+    have h₁₀ : p * q ∣ k := by
+      apply IsCoprime.mul_dvd_of_dvd_of_dvd
+      · exact isCoprime_iff_dvd.mpr ⟨hp, h₇⟩
+      · exact h₈
+      · apply IsCoprime.mul_dvd_of_dvd_of_dvd
+        · exact isCoprime_iff_dvd.mpr ⟨hp, h₈⟩
+        · exact h₇
+        · exact h₉
+    exact IsCoprime.mul_dvd_of_dvd_of_dvd h₁₀ h₇' h₈'
+
+  -- Show that $k$ is positive.
+
+  have h₁₀ : 0 < k := by
+    nlinarith
+
+  -- Show that $k$ is less than $p$.
+
+  have h₁₁ : k < p := by
+    nlinarith
+
+  -- Now, we need to show that $p * q * r = (p - 1) * (q - 1) * (r - 1) * k + 1$ implies $k = 1$ given $1 < p < q < r$ and $p$, $q$, $r$ divides $k$.
+
+  have h₁₂ : k = 1 := by
+    have h₁₃ : p * q * r ≤ p * q * r - 1 + 1 := by
+      simp
+      linarith
+    rw [h₅] at h₁₃
+    have h₁₄ : p * q * r - 1 + 1 = (p - 1) * (q - 1) * (r - 1) * k + 1 - 1 + 1 := by
+      rw [sub_add_cancel]
+      rw [Nat.sub_add_cancel]
+      · omega
+      · exact hpqr
+    rw [h₁₄] at h₁₃
+    have : p * q * r - 1 + 1 ≤ (p - 1) * (q - 1) * (r - 1) * k + 1 := by
+      linarith
+    have h₁₅ : p * q * r - 1 < (p - 1) * (q - 1) * (r - 1) * k + 1 := by
+      nlinarith
+    have : p * q * r ≤ p * q * r - 1 + 1 := by
+      simp
+      linarith
+    have h₁₆ : p * q * r < (p - 1) * (q - 1) * (r - 1) * k + 1 := by
+      nlinarith
+    have h₁₇ : p * q * r - 1 + 1 = (p - 1) * (q - 1) * (r - 1) * k + 1 - 1 + 1 := by
+      rw [sub_add_cancel]
+      rw [Nat.sub_add_cancel]
+      · omega
+      · exact hpqr
+    rw [h₁₇] at h₁₃
+    have : p * q * r - 1 < (p - 1) * (q - 1) * (r - 1) * k + 1 := by
+      linarith
+    have h₁₈ : p * q * r < (p - 1) * (q - 1) * (r - 1) * k + 1 := by
+      linarith
+    have h₁₉ : (p - 1) * (q - 1) * (r - 1) * p ≤ (p - 1) * (q - 1) * (r - 1) * k := by
+      apply mul_le_mul_of_nonneg_left
+      · apply mul_le_mul_of_nonneg_left
+        · apply mul_le_mul_of_nonneg_left
+          · exact hp1
+          · exact hq1
+          · exact hr1
+        · apply Nat.le_of_lt_succ
+          exact h₉
+      · apply Nat.le_of_lt_succ
+        exact h₁₀
+    have h₂₀ : (p - 1) * (q - 1) * (r - 1) * p + 1 ≤ (p - 1) * (q - 1) * (r - 1) * k + 1 := by
+      linarith
+    have : (p - 1) * (q - 1) * (r - 1) * k + 1 < (p - 1) * (q - 1) * (r - 1) * k + 1 + 1 := by
+      simp
+      linarith
+    have h₂₁ : (p - 1) * (q - 1) * (r - 1) * k + 1 + 1 = p * q * r := by
+      simp
+      rw [add_comm]
+      rw [h₅]
+      ring
+    rw [h₂₁] at this
+    have h₂₂ : p * q * r ≤ p * q * r := by
+      simp
+    have h₂₃ : p * q * r < p * q * r := by
+      linarith
+    have h₂₄ : p * q * r ≤ p * q * r := by
+      linarith
+    have h₂₅ : p * q * r < p * q * r := by
+      nlinarith
+    have h₂₆ : p * q * r < p * q * r := by
+      nlinarith
+    have h₂₇ : p * q * r < p * q * r := by
+      nlinarith
+    omega
+
+  -- Now, we can show that $p$, $q$ and $r$ are powers of $2$.
+
+  have hp₂ : IsPowerOfTwo (p - 1) := by
+    rw [show p - 1 = (p - 1).natAbs by rw [Int.natAbs_of_nonneg]; omega]
+    rw [← Int.ofNat_dvd_ofNat]
+    · apply Nat.dvd_of_mod_eq_zero
+      have hp := Int.ModEq.pow k (Int.ModEq.refl _) (Int.ModEq.refl _)
+      rw [h₅, Int.sub_emod, Int.emod_self, zero_add, ← hp] at this
+      exact this
+    · norm_num
+
+  have hq₂ : IsPowerOfTwo (q - 1) := by
+    rw [show q - 1 = (q - 1).natAbs by rw [Int.natAbs_of_nonneg]; omega]
+    rw [← Int.ofNat_dvd_ofNat]
+    · apply Nat.dvd_of_mod_eq_zero
+      have hq := Int.ModEq.pow k (Int.ModEq.refl _) (Int.ModEq.refl _)
+      rw [h₅, Int.sub_emod, Int.emod_self, zero_add, ← hq] at this
+      exact this
+    · norm_num
+
+  have hr₂ : IsPowerOfTwo (r - 1) := by
+    rw [show r - 1 = (r - 1).natAbs by rw [Int.natAbs_of_nonneg]; omega]
+    rw [← Int.ofNat_dvd_ofNat]
+    · apply Nat.dvd_of_mod_eq_zero
+      have hr := Int.ModEq.pow k (Int.ModEq.refl _) (Int.ModEq.refl _)
+      rw [h₅, Int.sub_emod, Int.emod_self, zero_add, ← hr] at this
+      exact this
+    · norm_num
+
+  -- Show that $p - 1$ is a power of $2$.
+
+  have hp₃ : (p - 1).natAbs = 2 ^ k := by
+    zify
+    rw [Int.natAbs_of_nonneg (by omega)]
+    rw [show (p - 1) * (q - 1) * (r - 1) = (p - 1).natAbs * (q - 1).natAbs * (r - 1).natAbs by simp]
+    zify
+    rw [Int.natAbs_of_nonneg (by omega)]
+    rw [mul_assoc, h₅, Int.sub_emod, Int.emod_self, zero_add, h₁₂]
+    norm_num
+
+  -- Show that $q - 1$ is a power of $2$.
+
+  have hq₃ : (q - 1).natAbs = 2 ^ k := by
+    zify
+    rw [Int.natAbs_of_nonneg (by omega)]
+    rw [show (p - 1) * (q - 1) * (r - 1) = (p - 1).natAbs * (q - 1).natAbs * (r - 1).natAbs by simp]
+    zify
+    rw [Int.natAbs_of_nonneg (by omega)]
+    rw [mul_assoc, h₅, Int.sub_emod, Int.emod_self, zero_add, h₁₂]
+    norm_num
+
+  -- Show that $r - 1$ is a power of $2$.
+
+  have hr₃ : (r - 1).natAbs = 2 ^ k := by
+    zify
+    rw [Int.natAbs_of_nonneg (by omega)]
+    rw [show (p - 1) * (q - 1) * (r - 1) = (p - 1).natAbs * (q - 1).natAbs * (r - 1).natAbs by simp]
+    zify
+    rw [Int.natAbs_of_nonneg (by omega)]
+    rw [mul_assoc, h₅, Int.sub_emod, Int.emod_self, zero_add, h₁₂]
+    norm_num
+
+  -- Show that $p - 1$ is a power of $2$.
+
+  have hp₄ : p - 1 = 2 ^ k := by
+    have : 0 < p - 1 := by omega
+    have hp₃' : 0 < (p - 1).natAbs := by
+      zify
+      rw [Int.natAbs_of_nonneg (by omega)]
+      norm_num
+    have : (p - 1).natAbs = 2 ^ k := by
+      exact hp₃
+    have hp₄ : (p - 1).natAbs = p - 1 := by
+      rw [Int.natAbs_of_nonneg (by omega)]
+      linarith
+    rw [hp₄] at this
+    exact this
+
+  -- Show that $q - 1$ is a power of $2$.
+
+  have hq₄ : q - 1 = 2 ^ k := by
+    have : 0 < q - 1 := by omega
+    have hq₃' : 0 < (q - 1).natAbs := by
+      zify
+      rw [Int.natAbs_of_nonneg (by omega)]
+      norm_num
+    have : (q - 1).natAbs = 2 ^ k := by
+      exact hq₃
+    have hq₄ : (q - 1).natAbs = q - 1 := by
+      rw [Int.natAbs_of_nonneg (by omega)]
+      linarith
+    rw [hq₄] at this
+    exact this
+
+  -- Show that $r - 1$ is a power of $2$.
+
+  have hr₄ : r - 1 = 2 ^ k := by
+    have : 0 < r - 1 := by omega
+    have hr₃' : 0 < (r - 1).natAbs := by
+      zify
+      rw [Int.natAbs_of_nonneg (by omega)]
+      norm_num
+    have : (r - 1).natAbs = 2 ^ k := by
+      exact hr₃
+    have hr₄ : (r - 1).natAbs = r - 1 := by
+      rw [Int.natAbs_of_nonneg (by omega)]
+      linarith
+    rw [hr₄] at this
+    exact this
+
+  -- Show that $p = 2$.
+
+  have hp₅ : p = 2 := by
+    zify
+    have hp₄' : 0 < p - 1 := by omega
+    have hp₄'' : p - 1 < p := by omega
+    have hp₅ : p - 1 = 2 ^ k := by
+      exact hp₄
+    have hp₆ : 2 ^ k < 2 ^ (k + 1) := by
+      apply Nat.pow_lt_pow_of_lt
+      · exact Nat.zero_lt_two
+      · omega
+    have hp₇ : 2 ^ (k + 1) = 2 * 2 ^ k := by
+      ring
+    rw [hp₅] at hp₆
+    have hp₈ : p = 2 := by
+      by_contra h
+      push_neg at h
+      have hp₉ : p ≥ 3 := by
+        omega
+      have hp₁₀ : 2 ^ k ≥ 2 ^ 1 := by
+        apply Nat.pow_le_pow_of_le
+        · exact

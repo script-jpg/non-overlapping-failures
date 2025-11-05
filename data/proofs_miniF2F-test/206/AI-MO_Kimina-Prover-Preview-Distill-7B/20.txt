@@ -1,0 +1,164 @@
+-- aux lemma, if f(x) ≤ 1, then f(x + a) is 1 / 2 + √(f(x) - f(x) ^ 2)
+  have l_1 (x : ℝ) (hx : f x ≤ 1) : 1 / 2 + Real.sqrt (f x - f x ^ 2) = f (x + a) := by
+    rw [h₁ x]
+    exact Eq.symm (h₁ x)
+
+  -- aux lemma, if f(x + a) = 1 / 2 + √(f(x) - f(x) ^ 2), then f(x) ≤ 1
+  have l_2 (x : ℝ) (hx : f (x + a) = 1 / 2 + Real.sqrt (f x - f x ^ 2)) : f x ≤ 1 := by
+    have h : f x - f x ^ 2 ≥ 0 := by
+      calc
+        f x - f x ^ 2 = (Real.sqrt (f x - f x ^ 2)) ^ 2 := by
+          rw [Real.sq_sqrt]
+          calc
+            f x - f x ^ 2 = f x * (1 - f x) := by ring
+            _ ≥ 0 := by
+              have : 1 - f x ≥ 0 := by
+                have : 1 / 2 + Real.sqrt (f x - f x ^ 2) ≥ 1 / 2 := by
+                  rw [show Real.sqrt (f x - f x ^ 2) ≥ 0 by exact Real.sqrt_nonneg (f x - f x ^ 2)]
+                  exact add_le_add_right (Real.sqrt_nonneg _) (1 / 2)
+                linarith [hx, this]
+              linarith
+            _ = f x * (1 - f x) := by ring
+        _ ≥ 0 := by exact mul_nonneg (by linarith) this
+    linarith [Real.sqrt_nonneg (f x - f x ^ 2)]
+
+  -- Show that f(x + 4a) ≥ f(x)
+  have h₃ (x : ℝ) : f (x + 4 * a) ≥ f x := by
+    have h₁ := h₁ (x + a)
+    have h₂ := h₁ (x + 2 * a)
+    have h₃ := h₁ (x + 3 * a)
+    have h₄ := h₁ (x + 4 * a)
+    rw [show x + a + 3 * a = x + 4 * a by ring] at h₄
+    have h₅ : f (x + a) ≥ 1 / 2 := by
+      rw [h₁]
+      exact half_le_add_sqrt (f x - f x ^ 2)
+    have h₆ : f (x + 2 * a) ≥ 1 / 2 := by
+      have h₆ : f (x + a + a) ≥ 1 / 2 := by
+        calc
+          f (x + a + a) = 1 / 2 + Real.sqrt (f (x + a) - f (x + a) ^ 2) := by rw [h₁]
+          _ ≥ 1 / 2 := by linarith [Real.sqrt_nonneg (f (x + a) - f (x + a) ^ 2)]
+      rw [show x + a + a = x + 2 * a by ring] at h₆
+      exact h₆
+    have h₇ : f (x + 3 * a) ≥ 1 / 2 := by
+      have h₇ : f (x + 2 * a + a) ≥ 1 / 2 := by
+        calc
+          f (x + 2 * a + a) = 1 / 2 + Real.sqrt (f (x + 2 * a) - f (x + 2 * a) ^ 2) := by rw [h₁]
+          _ ≥ 1 / 2 := by linarith [Real.sqrt_nonneg (f (x + 2 * a) - f (x + 2 * a) ^ 2)]
+      rw [show x + 2 * a + a = x + 3 * a by ring] at h₇
+      exact h₇
+    have h₈ : f (x + 4 * a) ≥ 1 / 2 := by
+      have h₈ : f (x + 3 * a + a) ≥ 1 / 2 := by
+        calc
+          f (x + 3 * a + a) = 1 / 2 + Real.sqrt (f (x + 3 * a) - f (x + 3 * a) ^ 2) := by rw [h₁]
+          _ ≥ 1 / 2 := by linarith [Real.sqrt_nonneg (f (x + 3 * a) - f (x + 3 * a) ^ 2)]
+      rw [show x + 3 * a + a = x + 4 * a by ring] at h₈
+      exact h₈
+    calc
+      f (x + 4 * a) ≥ 1 / 2 := h₈
+      _ ≥ f x := by linarith [h₅]
+
+  -- Show that f(x + 4a) = f(x) for all x ∈ ℝ
+  have h₄ : ∀ x, f (x + 4 * a) = f x := by
+    intro x
+    have h₅ := h₁ (x + 2 * a)
+    have h₆ := h₁ (x + a)
+    have h₇ := h₁ (x + 3 * a)
+    have h₈ := h₁ (x + 4 * a)
+    have h₉ : f (x + 2 * a) = 1 / 2 + Real.sqrt (f (x + a) - f (x + a) ^ 2) := by
+      rw [show x + a + a = x + 2 * a by ring] at h₅
+      exact h₅
+    have h₁₀ : f (x + 3 * a) = 1 / 2 + Real.sqrt (f (x + 2 * a) - f (x + 2 * a) ^ 2) := by
+      rw [show x + 2 * a + a = x + 3 * a by ring] at h₆
+      exact h₆
+    have h₁₁ : f (x + 4 * a) = 1 / 2 + Real.sqrt (f (x + 3 * a) - f (x + 3 * a) ^ 2) := by
+      rw [show x + 3 * a + a = x + 4 * a by ring] at h₇
+      exact h₇
+    have h₁₂ : f (x + 4 * a) = f x := by
+      rw [h₁₁, h₁₀, h₉]
+      have h₁₃ : Real.sqrt (f (x + a) - f (x + a) ^ 2) ≥ 0 := by exact Real.sqrt_nonneg (f (x + a) - f (x + a) ^ 2)
+      have h₁₄ : f (x + a) - f (x + a) ^ 2 ≥ 0 := by
+        calc
+          f (x + a) - f (x + a) ^ 2 = f (x + a) * (1 - f (x + a)) := by ring
+          _ ≥ 0 := by
+            have : 1 - f (x + a) ≥ 0 := by
+              have : f (x + 2 * a) ≥ 1 / 2 := by
+                linarith [h₅, h₆, h₇, h₈]
+              have h₁₅ : f (x + a) ≥ 1 / 2 := by
+                linarith [h₅, h₆, h₇, h₈]
+              linarith
+            linarith
+      have h₁₅ : f x ≤ 1 := by
+        have h₁₅ : f (x + a) ≤ 1 := by
+          linarith [h₅, h₆, h₇, h₈]
+        linarith [h₅, h₆, h₇, h₈]
+      have h₁₆ : f (x + 3 * a) ≤ 1 := by
+        linarith [h₅, h₆, h₇, h₈]
+      have h₁₇ : f (x + 2 * a) ≤ 1 := by
+        linarith [h₅, h₆, h₇, h₈]
+      have h₁₈ : f (x + a) ≤ 1 := by
+        linarith [h₅, h₆, h₇, h₈]
+      have h₁₉ : f (x + 4 * a) ≤ 1 := by
+        linarith [h₅, h₆, h₇, h₈]
+      linarith [h₁₃, h₁₄, h₁₅, h₁₆, h₁₇, h₁₈, h₁₉]
+    exact h₁₂
+
+  -- show that f(x + 4ka) = f(x) for all k ≥ 1 and x ∈ ℝ
+  have h₅ (k : ℕ) (hk : 1 ≤ k) : ∀ x, f (x + 4 * k * a) = f x := by
+    induction k with
+    | zero => contradiction -- out of range
+    | succ k ih =>
+      by_cases h : k = 0
+      · rw [h]
+        simp
+      · have hk : 1 ≤ k := by
+          exact Nat.one_le_iff_ne_zero.mpr h
+        specialize ih (x + 4 * a)
+        rw [show x + 4 * (k + 1) * a = x + 4 * ((k + 1) * a) by ring]
+        rw [show x + 4 * ((k + 1) * a) = (x + 4 * a) + 4 * k * a by ring]
+        rw [h₁ (x + 4 * a)]
+        rw [show x + 4 * a + 4 * k * a = x + 4 * (k + 1) * a by ring]
+        exact ih
+
+  -- show that f(x + 4ka) = f(x) for all k ≥ 1 and x ∈ ℝ
+  replace h₅ (k : ℕ) (hk : 1 ≤ k) : ∀ x, f (x + 4 * k * a) = f x := by
+    exact h₅ k hk
+
+  -- show that f(x + 4a) = f(x) for all x ∈ ℝ
+  have h₆ : ∀ x, f (x + 4 * a) = f x := by
+    intro x
+    specialize h₅ x 1 le_rfl x
+    exact h₅
+
+  -- show that f(x + 4m * a) = f(x) for all m ≥ 1 and x ∈ ℝ
+  replace h₆ (m : ℕ) (hm : 1 ≤ m) : ∀ x, f (x + 4 * m * a) = f x := by
+    induction m with
+    | zero => contradiction -- out of range
+    | succ m ih =>
+      by_cases h : m = 0
+      · rw [h]
+        simp
+      · have hm : 1 ≤ m := by
+          exact Nat.one_le_iff_ne_zero.mpr h
+        specialize ih (x + 4 * a)
+        rw [show x + 4 * (m + 1) * a = x + 4 * ((m + 1) * a) by ring]
+        rw [show x + 4 * ((m + 1) * a) = (x + 4 * a) + 4 * m * a by ring]
+        rw [h₁ (x + 4 * a)]
+        rw [show x + 4 * a + 4 * m * a = x + 4 * (m + 1) * a by ring]
+        exact ih
+
+  -- show that f(x + 4b) = f(x) for all b ≥ 1 and x ∈ ℝ
+  replace h₆ (b : ℕ) (hb : 1 ≤ b) : ∀ x, f (x + 4 * b * a) = f x := by
+    exact h₆ b hb
+
+  -- show that f(x + 4ka) = f(x) for all k ≥ 1 and x ∈ ℝ
+  replace h₆ (k : ℕ) (hk : 1 ≤ k) : ∀ x, f (x + 4 * k * a) = f x := by
+    exact h₅ k hk
+
+  -- choose b = 1, since f(x + 4a) = f(x)
+  use 4 * a
+  simp
+  intro x
+  specialize h₆ x 1 le_rfl
+  simpa using h₆
+
+```

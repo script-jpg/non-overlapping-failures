@@ -1,0 +1,107 @@
+constructor
+
+  -- sufficiency
+ . intro hf
+
+    -- By setting $a = 0, b = 0$, we get $f(0) = 0$.
+    have f_zero : f 0 = 0 := by
+      have h := hf 0 0
+      simp at h
+      linarith
+
+    -- By setting $a = 0, b = n$, we get $f(2n) = 2f(n)$.
+    have f_two (n : ℤ) : f (2 * n) = 2 * f n := by
+      have h := hf 0 n
+      simp [f_zero] at h
+      linarith
+
+    -- By setting $a = n, b = n$, we get $2f(2n) = f(2f(n))$.
+    have f_2f (n : ℤ) : 2 * f (2 * n) = f (2 * f n) := by
+      have h := hf n n
+      simp [f_two] at h
+      linarith
+
+    -- By setting $a = n, b = m, we get $f(2n) + 2f(m) = f(f(n + m))$.
+    have f_add (n m : ℤ) : f (2 * n) + 2 * f m = f (f (n + m)) := by
+      have h := hf n m
+      simp [f_two] at h
+      linarith
+
+    -- we prove that $f(n) = 2n + c$ is a solution
+    have f_eq (c : ℤ) : (∀ z, f z = 2 * z + c) ↔ (∀ a b, f (2 * a) + 2 * f b = f (f (a + b))) := by
+      constructor
+      · intro hf
+        intro a b
+        simp [hf]
+        ring_nf
+      · intro hf
+        exact hf
+
+    -- we prove that $f(m) = 0$ or $f(m) = 2m + c$ for all $m \in \mathbb{Z}$
+    have f_0_or_two_add (m : ℤ) : f m = 0 ∨ ∃ c, ∀ z, f z = 2 * z + c := by
+      induction m using Int.induction_on with
+      | hz =>
+        use 0
+        simp [f_zero]
+      | hp i hi =>
+        obtain ⟨c, hf⟩ := hi
+        use c
+        intro z
+        simp [hf]
+        ring_nf
+      | hn i hi =>
+        obtain ⟨c, hf⟩ := hi
+        use -2 * c
+        intro z
+        rw [hf z, hf (z + 1), hf, hf]
+        ring_nf
+
+    -- we prove that there exists $c$ such that $f(m) = 2m + c$ for all $m \in \mathbb{Z}$
+    have f_exists_two_add : ∃ c, ∀ z, f z = 2 * z + c := by
+      rcases f_0_or_two_add 0 with h | ⟨c, hf⟩
+      · use 0
+        intro z
+        simp [h, hf]
+      · use c
+        intro z
+        simp [hf]
+
+    obtain ⟨c, hf⟩ := f_exists_two_add
+
+    -- we prove that $c = f(1) - 2$
+    have c_eq_f_one_sub_two : c = f 1 - 2 := by
+      have h := hf 1
+      have h' := hf (1 + 1)
+      linarith
+
+    -- we prove that $f(a) = 2a$ for all $a \in \mathbb{Z}$
+    have f_eq_two_mul : ∀ a : ℤ, f a = 2 * a := by
+      intro a
+      have h := hf a
+      have h' := hf 0 a
+      linarith
+
+    -- we prove that $f(a) = 2a + (f(1) - 2)$ for all $a \in \mathbb{Z}$
+    intro a
+    specialize hf a
+    rw [c_eq_f_one_sub_two] at hf
+    linear_combination hf
+
+  -- necessity
+ . intro hf
+
+    rcases hf with hf | ⟨c, hf⟩
+   . intro a b
+      have h := hf
+      specialize hf (a + b)
+      rw [hf, hf, hf]
+      ring_nf
+   . intro a b
+      have h1 := hf
+      have h2 := hf (f a + f b)
+      rw [h1, h1] at h2
+      rw [← h2]
+      ring_nf
+
+
+```

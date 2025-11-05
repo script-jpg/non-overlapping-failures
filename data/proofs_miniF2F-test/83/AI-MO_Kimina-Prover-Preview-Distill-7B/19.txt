@@ -1,0 +1,28 @@
+-- $\prod_{k=1}^{n} (1 + 1/2^k)$ is increasing.
+  have h₁ : Monotone(∏ k ∈ Finset.Icc 1 #}, 1 + (1 : ℝ) / 2 ^ k) := by
+    intro n₁ n₂ h
+    have : Finset.Icc 1 n₁ ⊆ Finset.Icc 1 n₂ := Finset.Icc_subset_Icc h
+    apply Finset.prod_le_prod this
+    intro _
+    exact fun _ ↦ by norm_num
+
+  -- $\prod_{k=1}^{n} (1 + 1/2^k) < 5/2$ for all $n$.
+  have h₂ : ∀ n, (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k) < 5 / 2 := by
+    intro n
+    induction n with
+    | zero => norm_num
+    | succ n ih =>
+      by_cases h : n = 0
+      · rw [h, Finset.prod_Icc_succ_top, Finset.prod_Icc_succ_top]
+        norm_num
+      · have : ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k < 5 / 2 := ih
+        have : 1 + (1 : ℝ) / 2 ^ (n + 1) > 0 := by positivity
+        apply (mul_lt_mul_iff_of_pos_right this).mpr
+        apply (add_lt_add_iff_right (1 + (1 : ℝ) / 2 ^ (n + 1))).mpr
+        simpa using ih
+
+  induction n with
+  | zero => norm_num -- $0 < 5/2$.
+  | succ n ih => exact h₂ (n + 1)
+
+```

@@ -1,0 +1,111 @@
+-- Simplify the equation.
+  field_simp at h₀
+  ring_nf at h₀
+  norm_cast at h₀
+
+  -- We have $x + y = 24y + 4x$, hence $20y = 3x$.
+  have h₁ : 20 * y = 3 * x := by linarith only [h₀]
+
+  -- Notice that this means $20 \mid 3x$.
+  have h₂ : 20 ∣ 3 * x := by
+    use y
+    rw [h₁]
+
+  -- However, we have $\gcd(20,3)=1$, so $20 \mid x$.
+  have h₃ : 20 ∣ x := by
+    have h₃ : Nat.Coprime 20 3 := by
+      norm_num
+    apply Nat.Coprime.dvd_of_dvd_mul_left h₃
+    exact h₂
+
+  -- Write $x = 20k$.
+  rw [dvd_iff_exists_eq_mul_right] at h₃
+  obtain ⟨k, h₃⟩ := h₃
+
+  -- Substitute $x = 20k$ into $20y = 3x$.
+  rw [h₃] at h₁
+  ring_nf at h₁
+
+  -- We have $3k = 20(y - 4)$, hence $\frac{3k}{20} = y - 4$ is an integer.
+  have h₄ : 20 ∣ 3 * k := by
+    rw [<-h₁]
+    apply dvd_mul_right
+
+  -- However, $\frac{3k}{20}$ is also an integer, namely $y - 4$.
+  have h₅ : 20 ∣ k := by
+    have h₅ : Nat.Coprime 20 3 := by
+      norm_num
+    apply Nat.Coprime.dvd_of_dvd_mul_left h₅
+    exact h₄
+
+  -- Write $k = 20l$.
+  rw [dvd_iff_exists_eq_mul_right] at h₅
+  obtain ⟨l, h₅⟩ := h₅
+
+  -- Substitute $k = 20l$ into $x = 20k$.
+  rw [h₅] at h₃
+  ring_nf at h₃
+
+  -- We have $x = 400l$.
+  have h₆ : x = 400 * l := by linarith only [h₃]
+
+  -- Substitute $x = 400l$ into the original equation.
+  rw [h₆] at h₀
+  ring_nf at h₀
+
+  -- We have $400l + y = \frac{24}{n} y + 160l$, hence $(400 - 160l)y = \frac{24}{n} y$.
+  have h₇ : (400 - 160 * l) * y = (24 / n) * y := by linarith only [h₀]
+
+  -- Notice that this means $(400 - 160l)y = \frac{24}{n} y$.
+  have h₈ : (400 - 160 * l) ∣ 24 / n := by
+    apply dvd_of_mul_left_dvd
+    exact h₇
+
+  -- However, we have $\gcd(400 - 160l,24) = 8$.
+  have h₉ : Nat.gcd (400 - 160 * l) 24 = 8 := by
+    by_cases hl : l = 0
+    · rw [hl]
+      simp
+    · have hl : l ≥ 1 := by
+        omega
+      have h₁₀ : 400 - 160 * l ≤ 400 - 160 * 1 := by
+        apply Nat.sub_le_sub_right
+        omega
+      have h₁₁ : 400 - 160 * l ≥ 0 := by
+        omega
+      rw [<-Nat.lt_add_one_iff, <-Nat.lt_sub_iff_add_lt, <-h₁₀]
+      norm_num
+      apply Nat.sub_odd_iff_even.mp
+      apply Nat.even_mul.mpr
+      left
+      omega
+
+  -- So we have $8 \mid \frac{24}{n}$, which means $n \mid 24 / 8 = 3$.
+  have h₁₀ : n ∣ 3 := by
+    have h₁₀ : 8 ∣ 24 / n := by
+      calc
+        8 = Nat.gcd (400 - 160 * l) 24 := by rw [h₉]
+        _ ∣ 24 / n := by exact h₈
+    apply dvd_of_dvd_div at h₁₀
+    rw [Nat.div_div_eq_div_mul] at h₁₀
+    omega
+    omega
+
+  -- Since $1 \mid n$ and $n \mid 3$, we have $n = 1$ or $n = 3$.
+  have h₁₁ : n = 1 ∨ n = 3 := by
+    apply (Nat.dvd_prime (by norm_num)).mp
+    apply h₁₀
+
+  -- Substituting $n = 1$ into the original equation, we get $x = 24y + 4x$.
+  cases h₁₁ with
+  | inl h₁₁ =>
+      rw [h₁₁] at h₀
+      omega
+
+  -- Substituting $n = 3$ into the original equation, we get $200 = 6y$.
+  | inr h₁₁ =>
+      rw [h₁₁] at h₀
+      omega
+
+  omega
+```

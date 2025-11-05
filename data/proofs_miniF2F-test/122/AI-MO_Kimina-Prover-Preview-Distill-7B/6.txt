@@ -1,0 +1,40 @@
+-- prove the Cauchy-Schwarz inequality
+  have CS_ineq (a b c : ℝ) (h : 0 < a) (h' : 0 < b) : (a + b) * (a + b) ≤ (a ^ 2 + c ^ 2 * b) + (b ^ 2 + c ^ 2 * a) := by
+    suffices 0 ≤ (a - b) ^ 2 + c ^ 2 * (a + b) by
+      ring_nf at this ⊢
+      exact this
+    apply add_nonneg
+    · apply sq_nonneg
+    · apply mul_nonneg
+      · exact sq_nonneg
+      · linarith
+
+  -- prove that 1 / (x + y) + 1 / (y + z) + 1 / (z + x) ≥ 9 / (2 * (x + y + z))
+  have h₀₁ : 1 / (x + y) + 1 / (y + z) + 1 / (z + x) ≥ 9 / (2 * (x + y + z)) := by
+    -- transform the Cauchy-Schwarz inequality
+    have h₁ := CS_ineq (x + y) (y + z) (z + x) (show 0 < x + y by linarith) (show 0 < y + z by linarith)
+    rw [show (x + y + (y + z) + (z + x)) = 2 * (x + y + z) by ring] at h₁
+    rw [show (x + y) * (x + y) + (y + z) * (y + z) + (z + x) * (z + x) = 2 * ((x + y) ^ 2 + (y + z) ^ 2 + (z + x) ^ 2) by ring] at h₁
+    have h₂ : (x + y) ^ 2 + (y + z) ^ 2 + (z + x) ^ 2 ≥ 8 * (x * y + y * z + z * x) := by
+      apply add_nonneg
+      · apply add_nonneg
+        · apply sq_nonneg
+        · apply sq_nonneg
+      · apply mul_nonneg
+        · apply mul_nonneg
+          · exact sq_nonneg
+          · linarith
+        · linarith
+    rw [show (9 / (2 * (x + y + z))) = (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) * ((x + y) + (y + z) + (z + x)) / 2 by ring] at h₁
+    apply (div_le_div_iff_of_pos_right (by linarith)).mp at h₁
+    apply (mul_le_mul_iff_of_pos_right (by linarith)).mp at h₁
+    linarith
+
+  -- multiply 3 at both sides of 1 / (x + y) + 1 / (y + z) + 1 / (z + x) ≥ 9 / (2 * (x + y + z))
+  apply (mul_le_mul_iff_of_pos_right (by linarith)).mpr at h₀₁
+  apply (mul_le_mul_iff_of_pos_right (by linarith)).mpr at h₀₁
+  rw [show (9 / (x + y + z)) = 3 * (3 / (x + y + z)) by ring] at h₀₁
+  rw [show (2 / (x + y) + 2 / (y + z) + 2 / (z + x)) = 3 * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) by ring] at h₀₁
+  exact h₀₁
+
+```

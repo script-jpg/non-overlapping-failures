@@ -1,0 +1,82 @@
+-- Prove that $S$ is a subset of $\{ \frac{\pi}{4}, \frac{3\pi}{4} \}$.
+  have h₁ : S ⊆ { Real.pi / 4, Real.pi - Real.pi / 4 } := by
+    intro x hx
+    rw [h₀] at hx
+    rcases hx with ⟨hx, hx₁, hx₂⟩
+
+    -- Show that $\cos x$ is non-negative since it's equal to $2\cdot 1^2 - 1$.
+    have hx₃ : 0 ≤ Real.cos x := by
+      rw [show Real.cos x = 2 * (Real.cos x ^ 2) - Real.cos x ^ 2 by ring_nf]
+      rw [show Real.cos x ^ 2 = 1 - Real.sin x ^ 2 by rw [Real.sin_sq x]]
+      linarith [Real.cos_sq_add_sin_sq x]
+
+    -- Show that $\sin x$ is non-negative since it's equal to $2\cdot 1^2 - 1$.
+    have hx₄ : 0 ≤ Real.sin x := by
+      rw [show Real.sin x = 2 * (Real.sin x ^ 2) - Real.sin x ^ 2 by ring_nf]
+      rw [show Real.sin x ^ 2 = 1 - Real.cos x ^ 2 by rw [Real.sin_sq x]]
+      linarith [Real.cos_sq_add_sin_sq x]
+
+    -- Since $\sin x$ and $\cos x$ are non-negative, $x$ is in the first quadrant.
+    have hx₅ : x ∈ Set.Icc (-(Real.pi / 2)) (Real.pi / 2) := by
+      constructor
+      · linarith [hx₄, Real.neg_one_le_sin x, Real.sin_le_one x]
+      · linarith [hx₃, Real.neg_one_le_cos x, Real.cos_le_one x]
+
+    -- Use strict monotonicity of $\sin$ on the first quadrant to show that $\sin x = \cos x$.
+    have hx₆ : Real.sin x = Real.cos x := by
+      have h₁ := Real.strictMonoOn_sin
+      have h₂ := Real.strictMonoOn_cos
+      have h₃ : Set.Icc (-(Real.pi / 2)) (Real.pi / 2) ⊆ Set.Icc (-(Real.pi / 2)) (Real.pi / 2) := Set.Icc_subset_Icc (by linarith) (by linarith)
+      have h₄ : Real.sin x = Real.sin x := rfl
+      have h₅ : Real.cos x = Real.cos x := rfl
+      exact h₁.lt_iff_lt h₃ (by linarith) (by linarith) h₄.trans h₂.lt_iff_lt.symm
+    have hx₇ : Real.sin x = Real.sqrt 2 / 2 := by
+      have h₁ : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := Real.sin_sq_add_cos_sq x
+      have h₂ : Real.sin x = Real.cos x := hx₆
+      have h₃ : 0 ≤ Real.sin x := hx₄
+      have h₄ : 0 ≤ Real.cos x := hx₃
+      replace h₂ : Real.sin x ^ 2 = 1 / 2 := by
+        linarith only [h₁, h₂]
+      replace h₂ : Real.sin x = Real.sqrt (Real.sin x ^ 2) := by
+        rw [Real.sqrt_sq_eq_abs]
+        rw [abs_of_nonneg h₃]
+      rw [h₂, h₂]
+      field_simp
+    have hx₈ : Real.cos x = Real.sqrt 2 / 2 := by
+      rw [hx₆, hx₇]
+
+    -- Since $\sin x = \cos x = \frac{\sqrt{2}}{2}$, $x$ is either $\frac{\pi}{4}$ or $\frac{3\pi}{4}$.
+    have hx₉ : x = Real.pi / 4 ∨ x = Real.pi - Real.pi / 4 := by
+      have h₁ : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := Real.sin_sq_add_cos_sq x
+      have h₂ : Real.sin x = Real.sqrt 2 / 2 := hx₇
+      have h₃ : Real.cos x = Real.sqrt 2 / 2 := hx₈
+      have h₄ : Real.sin x ^ 2 = 1 / 2 := by
+        rw [h₂]
+        field_simp
+      have h₅ : Real.cos x ^ 2 = 1 / 2 := by
+        rw [h₃]
+        field_simp
+      have h₆ : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := by
+        linarith only [h₄, h₅]
+      exact h₆
+    tauto
+
+  -- Prove that $\{ \frac{\pi}{4}, \frac{3\pi}{4} \} \subseteq S$.
+  have h₂ : { Real.pi / 4, Real.pi - Real.pi / 4 } ⊆ S := by
+    intro x hx
+    rw [h₀]
+    simp at hx
+    rcases hx with hx | hx
+    · simp [hx, Real.sin_pi_div_four, Real.cos_pi_div_four]
+    · simp [hx, Real.sin_pi_sub, Real.cos_pi_sub, Real.sin_pi_div_four, Real.cos_pi_div_four]
+
+  -- Show that $S = \{ \frac{\pi}{4}, \frac{3\pi}{4} \}$ by applying the two inclusions.
+  have h₃ : S = { Real.pi / 4, Real.pi - Real.pi / 4 } := Set.Subset.antisymm h₁ h₂
+
+  -- Show that the cardinality of $S$ is 2.
+  rw [h₃]
+  rw [show ({x, y} : Finset ℝ) = insert x {y} from rfl]
+  rw [Finset.card_insert_of_not_mem]
+  simp
+  linarith [Real.pi_pos]
+```

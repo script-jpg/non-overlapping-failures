@@ -1,0 +1,50 @@
+-- `x * 9 % 100 = 1` implies that there is a number $k$ such that $x * 9 = 1 + 100 k$.
+  have h₂ (k : ℕ) : x * 9 = 1 + 100 * k → x = 89 := by
+    intro h
+    -- Since $x < 100$, it must be that $k < 1$.
+    have : k < 1 := by
+      by_contra! h'
+      have : 1 + 100 * k ≥ 1 + 100 := by
+        apply Nat.add_le_add_right
+        exact Nat.mul_le_mul_left 100 h'
+      have : x * 9 ≥ 1 + 100 := by linarith
+      have : x ≥ 12 := by
+        have : x * 9 ≥ 12 * 9 := by linarith
+        exact Nat.le_of_mul_le_mul_right this 9
+      linarith
+    -- Since $k < 1$, we must have $k = 0$. Substituting, we get $x = 89$.
+    have : k = 0 := by
+      omega
+    subst this
+    omega
+
+  -- Since $x < 100$, we can write $x = 100 k + r$ where $r = 0, 1, \dots, 99$.
+  have h₃ : x = 100 * k + r := by
+    refine Nat.div_add_mod x 100
+  have h₄ : r < 100 := by
+    rw [h₃] at h₁
+    apply Nat.mod_lt
+    norm_num
+
+  -- We have $1 = x \cdot 9 \mod 100 = (100k + r) \cdot 9 \mod 100 = r \cdot 9 \mod 100$.
+  have h₅ : r * 9 % 100 = 1 := by
+    rw [h₃, Nat.add_mul_mod, Nat.mul_mod, Nat.mod_mod] at h₁
+    omega
+
+  -- By trying $r = 0, 1, \dots, 99$, we find that $r = 89$.
+  have h₆ : r = 89 := by
+    interval_cases r
+    any_goals
+      try { contradiction }
+    omega
+
+  -- Substituting $r = 89$ into $x = 100 k + r$, we get $x = 100 k + 89$.
+  subst h₆
+  subst h₃
+  -- Since $x < 100$, $k$ must be 0, and so $x = 89$.
+  interval_cases k
+  any_goals
+    try { contradiction }
+  omega
+
+```

@@ -1,0 +1,37 @@
+-- The product of all positive odd integers less than $10000$ is
+  -- $\text{(A)}\ \dfrac{10000!}{(5000!)^2}\qquad \text{(B)}\ \dfrac{10000!}{2^{5000}}\qquad
+  -- \text{(C)}\ \dfrac{9999!}{2^{5000}}\qquad \text{(D)}\ \dfrac{10000!}{2^{5000} \cdot 5000!}\qquad
+  -- \text{(E)}\ \dfrac{5000!}{2^{5000}}$. Show that it is \text{(D)} $\dfrac{10000!}{2^{5000} \cdot 5000!}$.
+  rw [Finset.prod_filter]
+  have h1 : Finset.filter (fun x => ¬Even x) (Finset.range 10000) = (Finset.range 5000).map (fun x => 2 * x + 1) := by
+    ext x
+    constructor
+    · intro ⟨h1, h2⟩
+      use x / 2
+      omega
+    · intro h
+      constructor
+      · omega
+      · omega
+
+  rw [h1]
+  rw [Finset.prod_map]
+  simp
+  rw [Finset.prod_range_id]
+  -- \[\prod_{x=0}^{4999} (2x + 1) = \frac{1 \cdot 3 \cdot 5 \cdot 7 \cdots 9999}{2 \cdot 4 \cdot 6 \cdot 8 \cdots 10000} \cdot 10000!\]
+  -- The RHS is equivalent to $\[\frac{1 \cdot 2 \cdot 3 \cdot 4 \cdots 10000}{2 \cdot 4 \cdot 6 \cdot 8 \cdots 10000} \cdot 10000! = \frac{10000!}{2^{5000} \cdot 5000!} \cdot 10000!\]
+  -- By cancelling the $10000!$ term, we get that the answer is indeed $\text{(D)} \dfrac{10000!}{2^{5000} \cdot 5000!}$.
+  have h2 : ∏ x ∈ Finset.range 5000, (2 * x + 1) = 10000! / (2 ^ 5000 * 5000!) := by
+    have eq : ∏ x ∈ Finset.range 5000, (2 * x + 1) * ∏ x ∈ Finset.range 5000, 2 * x + 1 = 9999! / 2 ^ 5000 := by
+      rw [Finset.prod_mul_distrib (Finset.range 5000) (fun x => 2 * x + 1)]
+      rw [Finset.prod_range_id]
+      have eq : (9999).odd := by apply Nat.odd_iff.mpr; norm_num
+      rw [← Nat.eq_div_of_mul_eq_right eq rfl]
+      omega
+    have id1 : ∏ x ∈ Finset.range 5000, 2 * x + 1 = ∏ x ∈ Finset.range 5000, (2 * x + 1) := by rw [Finset.prod]
+    have id2 : ∏ x ∈ Finset.range 5000, (2 * x + 1) = ∏ x ∈ Finset.range 5000, (2 * x + 1) := by rfl
+    rw [← id1, ← id2] at eq
+    apply Nat.eq_div_of_mul_eq_right at eq
+    exact eq
+  exact h2
+```

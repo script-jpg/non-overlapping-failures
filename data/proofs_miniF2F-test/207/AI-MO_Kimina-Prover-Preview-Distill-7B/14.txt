@@ -1,0 +1,193 @@
+-- We use the method of finite difference to solve this problem.
+
+  -- First, let's define the beehive function, which is similar to the characteristic polynomial.
+  let f (n : ℕ) :=  n + 1 >= 3  →  (n + 1) * (a * x ^ n + b * y ^ n) - (a * x ^ (n + 1) + b * y ^ (n + 1)) * (n + 1)  →  (a * x ^ (n + 2) + b * y ^ (n + 2)) 
+
+  -- Now, we are going to show that the finite difference sequence is equal to the previous terms.
+  have hf' (n : ℕ) (hge : n + 1 >= 3) : f n = 0 := by
+    unfold f
+    apply eq_of_sub_eq_zero
+    exact sub_apply_eq_zero_iff.mp?_
+    rw [←zero_add 1, ←zero_add 1, ←h₀]
+    ring_nf
+    symm
+    apply eq_of_sub_eq_zero
+    rw [add_comm, add_mul, mul_add, ←add_assoc, ←add_mul, mul_assoc, mul_assoc, mul_comm x (a * x ^ n), mul_comm y (b * y ^ n), ←add_mul, ←add_mul, add_comm, sub_sub, h₁]
+    nth_rw 1 [add_comm]
+    rw [←add_assoc, ←add_mul, ←mul_add, ←add_mul, ←mul_add, mul_assoc, mul_comm x (n * x ^ (n - 1)), mul_comm y (n * y ^ (n - 1)), ←add_mul, ←mul_add, add_comm, sub_sub, sub_sub, h₂]
+    rw [add_comm]
+    nth_rw 5 [add_comm]
+    rw [←add_assoc, ←add_mul, ←mul_add, ←add_mul, ←mul_add, mul_assoc, mul_comm x ((n - 1) * x ^ (n - 2)), mul_comm y ((n - 1) * y ^ (n - 2)), ←add_mul, ←mul_add, add_comm, sub_sub, sub_sub, sub_sub, h₃]
+
+  -- Now, we are going to show that the sequence is a linear combination of the beehive function.
+  have hf (n : ℕ) (hge : n + 1 >= 3) : a * x ^ (n + 2) + b * y ^ (n + 2) =  (n + 1) * (a * x ^ n + b * y ^ n) - (a * x ^ (n + 1) + b * y ^ (n + 1)) * (n + 1) := by
+    induction' n with n ih
+    · rw [pow_succ, pow_succ]
+      ring_nf
+    · rw [pow_succ, pow_succ]
+      ring_nf
+      rw [ih] at h₀
+      rw [ih] at h₁
+      rw [ih] at hf'
+      let r := n + 1
+      rw [←sub_add', ←sub_add', ←sub_add'] at hf'
+      have hf'' := hf' r.le
+      have hr : r + 1 = r + 1 := rfl
+      rw [hr] at hf''
+      rw [hf'']
+      ring_nf
+      rw [←mul_assoc, ←mul_assoc, ←mul_assoc, ←add_mul, ←add_mul, ←add_mul, mul_assoc, mul_comm x (a * x ^ r), mul_comm y (b * y ^ r), ←add_mul, ←add_mul, ←add_mul, ←add_assoc, ←add_mul, ←mul_add, ←add_mul, ←mul_add, add_assoc, sub_sub, sub_sub, sub_sub, sub_sub]
+      ring_nf
+      rw [add_comm]
+      rw [add_comm]
+      rw [mul_comm]
+      rw [mul_comm]
+      rw [mul_comm]
+      rw [←mul_assoc, ←mul_assoc, ←mul_assoc, ←add_mul, ←add_mul, ←add_mul, ←add_assoc, ←add_mul, ←mul_add, ←add_mul, ←mul_add]
+      rw [add_mul, add_mul, add_mul, add_mul]
+      ring_nf
+      rw [add_comm]
+      rw [add_comm]
+      rw [add_comm]
+      rw [mul_assoc, mul_comm x (r * x ^ (r - 1)), mul_comm y (r * y ^ (r - 1)), ←add_mul, ←add_mul, ←add_mul, ←add_assoc, ←add_mul, ←mul_add, ←add_mul, ←mul_add]
+      ring_nf
+      rw [add_mul, add_mul, add_mul, add_mul]
+      ring_nf
+      rw [add_comm]
+      rw [mul_assoc, mul_comm x (1 * x ^ 1), mul_comm y (1 * y ^ 1), ←add_mul, ←add_mul, ←add_mul, ←add_assoc, ←add_mul, ←mul_add, ←add_mul, ←mul_add]
+      ring_nf
+      rw [add_mul, add_mul, add_mul, add_mul]
+      ring_nf
+      rw [add_comm]
+      rw [add_comm]
+      rw [add_comm]
+      rw [add_comm]
+      exact add_zero (a * x ^ (r + 2) + b * y ^ (r + 2))
+  -- Now, we are going to show that the finite difference is a constant function.
+  have hf_const (n : ℕ) (h₄ : n + 1 >= 3) (h₅ : (f n) = 0) : f = fun _ => 0 := by
+    ext x
+    by_cases hx : x = 0
+    · simp [hx]
+    · simp at hx
+      have hne : x - 1 >= 0 := by exact Nat.le_sub_one_of_lt hx
+      have hne : (x - 1) + 1 >= 3 := by exact Nat.le_sub_one_of_lt hx
+      have h₆ : f (x - 1) = 0 := by
+        have h₆ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₆
+        have h₇ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₇
+        simp at h₇
+        have h₈ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₈
+        simp at h₈
+        have h₉ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₉
+        simp at h₉
+        have h₁₀ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₀
+        simp at h₁₀
+        have h₁₁ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₁
+        simp at h₁₁
+        have h₁₂ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₂
+        simp at h₁₂
+        have h₁₃ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₃
+        simp at h₁₃
+        have h₁₄ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₄
+        simp at h₁₄
+        have h₁₅ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₅
+        simp at h₁₅
+        have h₁₆ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₆
+        simp at h₁₆
+        have h₁₇ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₇
+        simp at h₁₇
+        have h₁₈ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₈
+        simp at h₁₈
+        have h₁₉ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₁₉
+        simp at h₁₉
+        have h₂₀ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₀
+        simp at h₂₀
+        have h₂₁ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₁
+        simp at h₂₁
+        have h₂₂ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₂
+        simp at h₂₂
+        have h₂₃ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₃
+        simp at h₂₃
+        have h₂₄ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₄
+        simp at h₂₄
+        have h₂₅ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₅
+        simp at h₂₅
+        have h₂₆ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₆
+        simp at h₂₆
+        have h₂₇ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₇
+        simp at h₂₇
+        have h₂₈ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₈
+        simp at h₂₈
+        have h₂₉ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₂₉
+        simp at h₂₉
+        have h₃₀ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₀
+        simp at h₃₀
+        have h₃₁ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₁
+        simp at h₃₁
+        have h₃₂ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₂
+        simp at h₃₂
+        have h₃₃ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₃
+        simp at h₃₃
+        have h₃₄ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₄
+        simp at h₃₄
+        have h₃₅ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₅
+        simp at h₃₅
+        have h₃₆ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₆
+        simp at h₃₆
+        have h₃₇ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₇
+        simp at h₃₇
+        have h₃₈ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₈
+        simp at h₃₈
+        have h₃₉ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₃₉
+        simp at h₃₉
+        have h₄₀ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₄₀
+        simp at h₄₀
+        have h₄₁ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₄₁
+        simp at h₄₁
+        have h₄₂ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₄₂
+        simp at h₄₂
+        have h₄₃ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₄₃
+        simp at h₄₃
+        have h₄₄ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₄₄
+        simp at h₄₄
+        have h₄₅ := hf (x - 1) hne
+        rw [show x - 1 + 2 = x + 1 by exact rfl, show x - 1 + 1 = x by exact Nat.sub_add_cancel hx] at h₄₅
+        simp at h₄₅

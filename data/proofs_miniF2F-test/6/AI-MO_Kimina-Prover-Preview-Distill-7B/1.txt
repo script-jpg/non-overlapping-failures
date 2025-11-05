@@ -1,0 +1,198 @@
+-- some useful lemmas and their proofs are listed at the bottom of the file
+
+  -- given $a<0$, $b0$, and $a+2b<0$, we can get $b<0$
+  have lem_1 (a b : ℝ) (h₀ : a < 0) (h₁ : b < 0) : a + 2 * b < 0 := by
+    linarith
+
+  -- given $a<0$, $b<0$, and $a+2b<0$, we can get $2a+b<0$
+  have lem_2 (a b : ℝ) (h₀ : a < 0) (h₁ : b < 0) : 2 * a + b < 0 := by
+    linarith
+
+  -- given $d>0$ and $e+f/d<0$, we can get $e+f/d<0$
+  have lem_3 (d e f : ℝ) (h₀ : d > 0) (h₁ : e + f / d < 0) : f / d < -e / d := by
+    have h₂ : -e/d > 0 := by
+      refine div_pos_of_neg_of_pos?h₀ h₁
+      linarith
+    linarith
+
+  -- given $x1<x2$ where $x1$ and $x2$ are real numbers, we can get $x2-x1=mπ$ for some integer $m$
+  have lem_4 (x x1 x2 : ℝ) (h₀ : x1 < x) (h₁ : x < x2) : ∃ m : ℤ, x2 - x1 = m * Real.pi := by
+    have h₂ : x2 - x1 = (x2 - x1) / Real.pi * Real.pi := by
+      rw [div_mul_cancel₀]
+      exact ne_of_gt h₀
+    let m := (x2 - x1) / Real.pi
+    have hm : m = (x2 - x1) / Real.pi := by exact rfl
+    use m
+    rw [h₂, hm]
+    refine Eq.symm (mul_div_cancel₀ _ (ne_of_gt h₀))
+  
+  -- some useful expressions
+  have h₄ : y m = ∑ i in Finset.range k, Real.cos (a i + m) / 2 ^ i := by exact h₁ m
+  have h₅ : y n = ∑ i in Finset.range k, Real.cos (a i + n) / 2 ^ i := by exact h₁ n
+
+  -- subtracting the two equations
+  have h₆ : 0 = ∑ i in Finset.range k, (Real.cos (a i + m) - Real.cos (a i + n)) / 2 ^ i := by
+    calc
+      0 = y m - y n := by rw [h₂, h₃]; ring
+      _ = ∑ i in Finset.range k, Real.cos (a i + m) / 2 ^ i - ∑ i in Finset.range k, Real.cos (a i + n) / 2 ^ i := by rw [h₄, h₅]
+      _ = ∑ i in Finset.range k, (Real.cos (a i + m) - Real.cos (a i + n)) / 2 ^ i := by rw [Finset.sum_sub_distrib]
+
+  -- decompose the difference of cosines
+  have h₇ : ∀ i ∈ Finset.range k, Real.cos (a i + m) - Real.cos (a i + n) = -2 * Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) := by
+    intro i h
+    rw [Real.cos_sub_cos]
+    ring_nf
+
+  -- substituting h₇ into h₆
+  have h₈ : 0 = ∑ i in Finset.range k, -2 * Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i := by
+    calc
+      0 = ∑ i in Finset.range k, (Real.cos (a i + m) - Real.cos (a i + n)) / 2 ^ i := by exact h₆
+      _ = ∑ i in Finset.range k, -2 * Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i := by
+        congr 1
+        funext i
+        rw [h₇ i h]
+
+  -- factoring out common terms
+  have h₉ : 0 = -2 * (∑ i in Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i) := by
+    calc
+      0 = ∑ i in Finset.range k, -2 * Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i := by exact h₈
+      _ = -2 * (∑ i in Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i) := by rw [Finset.mul_sum]; ring
+
+  -- simplifying the equation
+  have h₁₀ : 0 = (∑ i in Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i) := by
+    linarith
+
+  -- extracting common terms
+  have h₁₁ : ∃ t : ℤ, ∑ i in Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i = t := by
+    use (∑ i in Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i)
+    exact rfl
+  rcases h₁₁ with ⟨t, h₁₁⟩
+
+  -- showing that $t$ is integer
+  have h₁₂ : ∃ t : ℤ, t = ∑ i in Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i := by
+    use t
+    rw [h₁₁]
+  rcases h₁₂ with ⟨t, h₁₂⟩
+
+  -- $t$ is indeed integer
+  have h₁₃ : ∃ t : ℤ, t = (∑ i ∈ Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i : ℤ) := by
+    use t
+    rw [h₁₂]
+    norm_cast
+  rcases h₁₃ with ⟨t, h₁₃⟩
+
+  -- since $\sin^2(\theta)\leq 1$, we have $|t|\leq k$
+  have h₁₄ : (t : ℝ) ^ 2 ≤ k ^ 2 := by
+    rw [h₁₃]
+    simp
+    -- estimating the expression
+    have h₁₄ : |(∑ i ∈ Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i : ℝ)| ≤  ∑ i ∈ Finset.range k, |(Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i : ℝ)| := by
+      have h₁₄ : |(∑ i ∈ Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i : ℝ)| ≤ |(∑ i ∈ Finset.range k, |Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i| : ℝ)| := by
+        apply abs_real_sum_le_sum_abs
+      rw [abs_eq_self.mpr]
+      exact h₁₄
+    have h₁₅ : ∑ i ∈ Finset.range k, |(Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i : ℝ)| ≤  ∑ i ∈ Finset.range k, 1 := by
+      apply Finset.sum_le_sum
+      intro i hi
+      simp at hi
+      have h₁₅ : |(Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i : ℝ)| ≤ |(Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i : ℝ)| := by
+        apply abs_le_abs
+        apply mul_nonneg
+        apply mul_nonneg
+        apply Real.sin_nonneg_of_nonneg_of_le_pi
+        linarith
+        linarith
+        apply Real.sin_nonneg_of_nonneg_of_le_pi
+        linarith
+        linarith
+      rw [abs_eq_self.mpr]
+      exact h₁₅
+    have h₁₆ : ∑ i ∈ Finset.range k, 1 = k := by simp
+    rw [h₁₆] at h₁₅
+    have h₁₇ : |(∑ i ∈ Finset.range k, Real.sin ((a i + m + a i + n) / 2) * Real.sin ((a i + m - (a i + n)) / 2) / 2 ^ i : ℝ)| ≤ k := by
+      linarith
+    apply sq_le_sq'
+    apply le_trans h₁₄ h₁₇
+    apply abs_le_abs
+    apply le_trans h₁₀ h₁₇
+    linarith
+  have h₁₈ : |(t : ℝ)| ≤ k := by
+    rw [h₁₃]
+    exact abs_le_of_sq_le_sq' h₁₄ h₁₇
+  have h₁₉ : (t : ℝ) ≥ -k := by
+    rw [h₁₃]
+    linarith [abs_le.mp h₁₈]
+  have h₂₀ : (t : ℝ) ≤ k := by
+    rw [h₁₃]
+    linarith [abs_le.mp h₁₈]
+  have h₂₁ : t ≥ -k := by
+    apply Int.cast_le.mp
+    linarith [h₁₉]
+  have h₂₂ : t ≤ k := by
+    apply Int.cast_le.mp
+    linarith [h₂₀]
+  have h₂₃ : t = 0 ∨ t = 1 ∨ t = -1 ∨ t = 2 ∨ t = -2 ∨ t = 3 ∨ t = -3 ∨ t = 4 ∨ t = -4 ∨ t = 5 ∨ t = -5 ∨ t = 6 ∨ t = -6 ∨ t = 7 ∨ t = -7 ∨ t = 8 ∨ t = -8 ∨ t = 9 ∨ t = -9 ∨ t = 10 ∨ t = -10 ∨ t = 11 ∨ t = -11 ∨ t = 12 ∨ t = -12 ∨ t = 13 ∨ t = -13 ∨ t = 14 ∨ t = -14 ∨ t = 15 ∨ t = -15 ∨ t = 16 ∨ t = -16 ∨ t = 17 ∨ t = -17 ∨ t = 18 ∨ t = -18 ∨ t = 19 ∨ t = -19 ∨ t = 20 ∨ t = -20 := by
+    have h₂₃ : t ≥ -20 := by omega
+    have h₂₄ : t ≤ 20 := by omega
+    omega
+  rcases h₂₃ with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+  -- some trivial cases
+  all_goals (simp at h₁₃)
+  -- handling the general case
+  any_goals (try (rw [h₁₃] at h₁₀; norm_num at h₁₀; linarith))
+
+  -- some extra lemmas about cosines and sines
+  have real_cos_sq_add_sin_sq (x : ℝ) : (Real.cos x) ^ 2 + (Real.sin x) ^ 2 = 1 := by exact Real.cos_sq_add_sin_sq x
+
+  have Real.cos_two_mul (x : ℝ) : Real.cos (2 * x) = 2 * (Real.cos x) ^ 2 - 1 := by exact Real.cos_two_mul x
+
+  have Real.sin_two_mul (x : ℝ) : Real.sin (2 * x) = 2 * Real.sin x * Real.cos x := by exact Real.sin_two_mul x
+
+  have Real.cos half_pi : Real.cos (Real.pi / 2) = 0 := by exact Real.cos_pi_div_two
+
+  have Real.sin_half_pi : Real.sin (Real.pi / 2) = 1 := by exact Real.sin_pi_div_two
+
+  have Real.cos_pi : Real.cos Real.pi = -1 := by exact Real.cos_pi
+
+  have Real.sin_pi : Real.sin Real.pi = 0 := by exact Real.sin_pi
+
+  have Real.cos_two_pi : Real.cos (2 * Real.pi) = 1 := by exact Real.cos_two_pi
+
+  have Real.sin_two_pi : Real.sin (2 * Real.pi) = 0 := by exact Real.sin_two_pi
+
+  have Real.cos_add (x y : ℝ) : Real.cos (x + y) = Real.cos x * Real.cos y - Real.sin x * Real.sin y := by exact Real.cos_add x y
+
+  have Real.sin_add (x y : ℝ) : Real.sin (x + y) = Real.sin x * Real.cos y + Real.cos x * Real.sin y := by exact Real.sin_add x y
+
+  have Real.cos_sub (x y : ℝ) : Real.cos (x - y) = Real.cos x * Real.cos y + Real.sin x * Real.sin y := by exact Real.cos_sub x y
+
+  have Real.sin_sub (x y : ℝ) : Real.sin (x - y) = Real.sin x * Real.cos y - Real.cos x * Real.sin y := by exact Real.sin_sub x y
+
+  have Real.cos_pi_div_three : Real.cos (Real.pi / 3) = 1 / 2 := by
+    have h₁ : Real.cos (Real.pi / 3) = 1 / 2 := by
+      have h₃ : (Real.pi / 3 : ℝ) = (π / 3 : ℝ) := by rfl
+      rw [h₃]
+      exact Real.cos_pi_div_three
+    exact h₁
+  have Real.sin_pi_div_three : Real.sin (Real.pi / 3) = √3 / 2 := by
+    have h₁ : Real.sin (Real.pi / 3) = √3 / 2 := by
+      have h₃ : (Real.pi / 3 : ℝ) = (π / 3 : ℝ) := by rfl
+      rw [h₃]
+      exact Real.sin_pi_div_three
+    exact h₁
+  have Real.cos_pi_div_four : Real.cos (Real.pi / 4) = √2 / 2 := by
+    have h₁ : Real.cos (Real.pi / 4) = √2 / 2 := by
+      have h₃ : (Real.pi / 4 : ℝ) = (π / 4 : ℝ) := by rfl
+      rw [h₃]
+      exact Real.cos_pi_div_four
+    exact h₁
+  have Real.sin_pi_div_four : Real.sin (Real.pi / 4) = √2 / 2 := by
+    have h₁ : Real.sin (Real.pi / 4) = √2 / 2 := by
+      have h₃ : (Real.pi / 4 : ℝ) = (π / 4 : ℝ) := by rfl
+      rw [h₃]
+      exact Real.sin_pi_div_four
+    exact h₁
+  have Real.cos_pi_div_succ_nine (n : ℕ) : Real.cos (Real.pi / (n + 99)) = Real.sin (Real.pi / 2 - Real.pi / (n + 99)) := by
+    rw [show Real.pi / (n + 99) = Real.pi / 2 - (Real.pi / 2 - Real.pi / (n + 99)) by ring]
+    exact Real.cos_pi_div_two_sub (Real.pi / (n + 99))
+  have Real_sin_pi_div_succ_nine (n : ℕ) : Real.sin (Real.pi / (n + 99)) = Real.cos (Real.pi /

@@ -1,0 +1,226 @@
+-- Notice that if we increase any of the exponents in the prime factorization of $n$ by $1$, we increase the value of $f(n)$.
+  have h₂ : ∀ n, 0 < n → ∀ k ∈ Nat.primeFactors n, 1 ≤ (Nat.factorization n) k := by
+    intro n hn k hk
+    have h : k ∈ Nat.primeFactors n ↔ k ∈ Nat.primes ∧ Nat.Prime k ∧ Nat.factorization n k > 0 := by
+      constructor
+      · intro h
+        exact (Nat.mem_primeFactors hk h).mp h
+      · intro h
+        exact (Nat.mem_primeFactors h).mpr h
+    rw [h] at hk
+    exact hk.2.2
+
+  -- The smallest prime factor of $N$ is $2$.
+  have h₃ : Nat.Prime 2 := by norm_num
+  have h₄ : 2 ∈ Nat.primeFactors N := by
+    have h₅ : Nat.factorization N 2 > 0 := by
+      have h₆ : 2 ∈ Nat.primeFactors N := h₁ 2 (by norm_num) (by norm_num) |>.1
+      exact h₆
+    have h₇ : (Nat.factorization N 2) 1 > 0 := by
+      exact Nat.eq_of_le_of_lt_succ (Nat.zero_lt_of_ne_zero h₅) |>.2
+    exact Nat.mem_primeFactors.mpr ⟨h₃, h₇, (show Nat.Prime 2 by norm_num)⟩
+  have h₈ : Nat.factorization N 2 ≥ 1 := by
+    exact Nat.le_of_succ_le (Nat.Prime.two_le h₃)
+
+  -- Since increasing any of the exponents in the prime factorization of $n$ by $1$ increases the value of $f(n)$, we must have that $N$ is squarefree.
+  have h₉ : ∀ k ∈ Nat.primeFactors N, Nat.factorization N k = 1 := by
+    intro k hk
+    by_contra h₁₀
+    have h₁₁ : Nat.factorization N k ≥ 2 := by
+      exact Nat.le_of_succ_le (Nat.Prime.two_le h₃)
+    have h₁₂ : (Nat.factorization N k) 1 ≥ 2 := by
+      exact Nat.eq_of_le_of_lt_succ h₁₁
+    have h₁₃ : (Nat.factorization N k) 1 > (Nat.factorization N k) 1 := by
+      have h₁₄ : k ∈ Nat.primeFactors N := h₁ k hk
+      exact lt_of_le_of_lt (Nat.factorization_nonneg k N) (Nat.le_of_succ_lt (Nat.one_lt_of_ne_zero (by simp [h₁₄])))
+
+    have h₁₅ : 0 < N := by
+      simp [h₄] at h₁₄
+      exact Nat.pos_of_mem_primeFactors h₁₄.2.1
+    have h₁₆ : 0 < ↑(Nat.factorization N k) 1 := by
+      exact Nat.pos_pow_of_pos side条件 (Nat.Prime.pos h₃)
+
+    have h₁₇:= h₁ (k ^ 1) (by rw [Nat.pow_one]; rw [←Nat.pow_mul]; norm_num; exact Nat.pos_of_mem_primeFactors h₁₄.2.1) (by simp [h₁₅])
+    have h₁₈ : (↑(Nat.factorization N k)) 1 ≥ 2 := by
+      exact Nat.le_of_succ_le (Nat.Prime.two_le h₃)
+
+    have h₁₉ : ↑(Nat.factorization N k) 1 < ↑(Nat.factorization N k) 1 := by
+      have h₁₂ : Nat.factorization N k 1 > Nat.factorization N k 1 := by
+        exact lt_of_le_of_lt (Nat.factorization_nonneg k N) (Nat.le_of_succ_lt (Nat.one_lt_of_ne_zero (by simp [h₁₄])))
+      exact Nat.lt_trans h₁₂ (Nat.lt_succ_iff.mp h₁₃)
+
+    exact (Nat.lt_irrefl _ h₁₉)
+
+  -- For any prime $p$, we have $f(p)^2f(p^2)^2f(p^3)^2f(p^4)^2\cdots=4p^3$.
+  have h₁₀ {p : ℕ} (hp : Nat.Prime p) : ∏ i, ((↑(Nat.factorization (p ^ i) : ℕ))↑.card / (p ^ i) ^ ((1 : ℝ) / 3)) ^ (2 * i) = 4 * p ^ 3 := by
+    have h₁₁ : Nat.factorization p ↑p = 1 := by
+      rw [Nat.factorization_self]
+      exact (Nat.Prime.pos hp).ne'
+    have h₁₂ : Nat.factorization p (p ^ 2) = 2 := by
+      rw [Nat.factorization_pow]
+      simp
+      rw [h₁₁]
+      exact hp.ne'
+    have h₁₃ : Nat.factorization p (p ^ 3) = 3 := by
+      rw [Nat.factorization_pow]
+      simp
+      rw [h₁₁]
+      exact hp.ne'
+    have h₁₄ : Nat.factorization p (p ^ 4) = 4 := by
+      rw [Nat.factorization_pow]
+      simp
+      rw [h₁₁]
+      exact hp.ne'
+    have h₁₅ : ∑ i, ((↑(Nat.factorization (p ^ i) : ℕ))↑.card / (p ^ i) ^ ((1 : ℝ) / 3)) ^ (2 * i) = 4 * p ^ 3 := by
+      have h₁₆ : Nat.factorization p (p ^ i) = i := by
+        rw [Nat.factorization_pow]
+        simp
+        rw [h₁₁]
+        exact hp.ne'
+      have h₁₇ : (↑(Nat.factorization (p ^ i) : ℕ))↑.card = i := by
+        rw [h₁₆, Nat.card_eq_finsetCard']
+        simp
+      have h₁₈ : (p ^ i) ^ ((1 : ℝ) / 3) = p ^ ((i : ℝ) / 3) := by
+        rw [←Real.rpow_natCast, ←Real.rpow_mul]
+        simp
+        norm_cast
+      have h₁₉ : i * 2 * (p ^ ((i : ℝ) / 3)) ^ 2 = 4 * p ^ (3 * ((i : ℝ) / 3)):= by
+        rw [←Real.rpow_natCast, ←Real.rpow_mul, ←Real.rpow_mul]
+        simp
+        norm_cast
+        rw [mul_assoc, ←Real.rpow_natCast]
+        norm_cast
+        norm_cast
+      have h₂₀ : ∑ i, ((↑(Nat.factorization (p ^ i) : ℕ))↑.card / (p ^ i) ^ ((1 : ℝ) / 3)) ^ (2 * i) = ∑ i, (i * 2 * (p ^ ((i : ℝ) / 3)) ^ 2 / (p ^ ((i : ℝ) / 3)) ^ 2) := by
+        conv =>
+          lhs
+          simp only [h₁₇, h₁₈, h₁₅]
+      conv_lhs at h₂₀ =>
+        ext k
+        rw [h₁₉, h₁₅, h₁₃, h₁₁, Nat.cast_one, Nat.cast_ofNat, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_mul, Nat.cast_pow]
+        norm_num
+        ring
+      rw [h₂₀, h₁₉, h₁₅, h₁₃, h₁₁, Nat.cast_one, Nat.cast_ofNat, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_mul, Nat.cast_pow]
+      norm_num
+      norm_cast
+      simp
+    exact h₁₅
+
+  -- If $q$ is a prime that doesn't divide $N$, we have $f(q)f(q^2)f(q^3)f(q^4)\cdots=2q^3$.
+  have h₁₁ {q : ℕ} (hq : Nat.Prime q) (hq' : q ∤ N) : ∏ i, ((↑(Nat.factorization (q ^ i) : ℕ))↑.card / (q ^ i) ^ ((1 : ℝ) / 3)) ^ i = 2 * q ^ 3 := by
+    have h₁₂ : ∑ i, ((↑(Nat.factorization (q ^ i) : ℕ))↑.card / (q ^ i) ^ ((1 : ℝ) / 3)) ^ i = 2 * q ^ 3 := by
+      have h₁₃ : Nat.factorization q (q ^ i) = i := by
+        rw [Nat.factorization_pow]
+        simp
+        rw [Nat.card_eq_finsetCard']
+        simp
+      have h₁₄ : (q ^ i) ^ ((1 : ℝ) / 3) = q ^ ((i : ℝ) / 3) := by
+        rw [←Real.rpow_natCast, ←Real.rpow_mul]
+        simp
+        norm_cast
+      have h₁₅ : i * (q ^ ((i : ℝ) / 3)) ^ 2 = 2 * q ^ (3 * ((i : ℝ) / 3)):= by
+        rw [←Real.rpow_natCast, ←Real.rpow_mul, ←Real.rpow_mul]
+        simp
+        norm_cast
+        rw [mul_assoc, ←Real.rpow_natCast]
+        norm_cast
+        norm_cast
+      have h₁₆ : ∑ i, ((↑(Nat.factorization (q ^ i) : ℕ))↑.card / (q ^ i) ^ ((1 : ℝ) / 3)) ^ i = ∑ i, (i * (q ^ ((i : ℝ) / 3)) ^ 2 / (q ^ ((i : ℝ) / 3)) ^ 2) := by
+        conv =>
+          lhs
+          simp only [h₁₃, h₁₄]
+      conv_lhs at h₁₆ =>
+        ext k
+        rw [h₁₅]
+      rw [h₁₆, h₁₅, h₁₃, Nat.cast_one, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_sub, Nat.cast_mul, Nat.cast_pow]
+      norm_num
+      norm_cast
+      simp
+    exact h₁₂
+
+  -- Let $N=\prod p^a_p$ be the prime factorization of $N$.
+  have h₁₂ : N = ∏ p ∈ Nat.primeFactors N, p ^ (Nat.factorization N p) := by
+    rw [←Nat.prod_factorization_eq_prod_primeFactors]
+    exact Nat.primeFactors N
+    exact fun p a => (Nat.mem_primeFactors N p a).mp h₁
+
+  -- For every positive integer $n$, we have $f(n)=f(\prod p^a_p)=\prod f(p^a_p)$.
+  have h₁₃ : ∀ n, 0 < n → f n = ∏ p ∈ Nat.primeFactors n, ((↑(Nat.factorization n p) : ℕ))↑.card / n ^ ((1 : ℝ) / 3) := by
+    intro n hn
+    conv =>
+      lhs
+      rw [h₁₃, Nat.factorization_prod_pow_eq_self hn]
+
+  -- Combine the results for $N$ and the primes not dividing $N$, we get that for any squarefree $N$, we have $f(N)=\prod_{p|N} 2p^3$.
+  have h₁₄ : ∀ n, 0 < n → n.Coprime N → f n = ∏ p ∈ Nat.primeFactors n, 2 * (p ^ 3) := by
+    intro n hn hn'
+    have h₁₅ : ∏ p ∈ Nat.primeFactors n, ((↑(Nat.factorization n p) : ℕ))↑.card / n ^ ((1 : ℝ) / 3) = ∏ p ∈ Nat.primeFactors n, 2 * (p ^ 3) := by
+      have h₁₆ : ∏ p ∈ Nat.primeFactors n, ((↑(Nat.factorization n p) : ℕ))↑.card / n ^ ((1 : ℝ) / 3) = (∏ p ∈ Nat.primeFactors n, (2 * (p ^ 3)) / n ^ ((1 : ℝ) / 3)) := by
+        conv =>
+          lhs
+          enter [1]
+          rw [Nat.factorization_prod_pow_eq_self hn]
+
+      have h₁₇ : (∏ p ∈ Nat.primeFactors n, (2 * (p ^ 3)) / n ^ ((1 : ℝ) / 3)) = (∏ p ∈ Nat.primeFactors n, 2 * (p ^ 3)) / n ^ ((1 : ℝ) / 3) := by
+        rw [Finset.prod_div_distrib]
+        rw [Finset.prod_const, Nat.card_primeFactors]
+        simp
+
+      have h₁₈ : n ^ ((1 : ℝ) / 3) = ∏ p ∈ Nat.primeFactors n, p ^ ((1 : ℝ) / 3) := by
+        rw [←Nat.prod_factorization_eq_prod_primeFactors]
+        exact Nat.primeFactors n
+        exact fun p a => (Nat.mem_primeFactors n p a).mp h₁
+
+      rw [h₁₇, h₁₈]
+
+      let x := ∏ p ∈ Nat.primeFactors n, ↑(Nat.factorization n p)
+      have h₁₉ : f n = x / n ^ ((1 : ℝ) / 3) := by
+        exact Eq.symm (h₁₃ n hn)
+      rw [h₁₉, h₁₆]
+
+      have h₂₀ : Nat.factorization n ↑p > 0 := by
+        exact h₂ n hn (Nat.prime_iff.1 hq)
+      have h₂₁ : (↑(Nat.factorization n ↑p))↑.card = Nat.factorization n ↑p := by
+        rw [Nat.card_eq_finsetCard']
+        simp
+        linarith
+      have h₂₂ : Nat.Prime ↑p := by
+        exact Nat.prime_iff.2 hq
+      have h₂₃ : (Nat.factorization n ↑p) = 1 := by
+        exact h₉ p (Nat.prime_iff.2 hq) |>.1
+      have h₂₄ : x = n := by
+        rw [Finset.prod_eq_prod_iff]
+        exact fun p a => (Nat.mem_primeFactors n p a).mp h₁
+      rw [h₂₄]
+
+      have h₂₅ : 0 < ∏ p ∈ Nat.primeFactors n, p ^ ((1 : ℝ) / 3) := by
+        apply Finset.prod_pos
+        exact fun p a => Nat.cast_pos.mpr (Nat.Prime.pos h₂₂)
+      exact Nat.div_self (n ^ ((1 : ℝ) / 3)) h₂₅
+
+    rw [h₁₃ n hn, h₁₅]
+
+  -- If $f(N)$ is maximal, then $N$ is squarefree.
+  have h₁₅ : N.Coprime N := by
+    by_contra h₁₆
+    have h₁₇ : 0 < N := by
+      simp [h₄] at h₁₆
+      exact Nat.pos_of_mem_primeFactors h₁₆.2.1
+    have h₁₈ : 0 < ↑(Nat.factorization N N) 1 := by
+      exact Nat.pos_pow_of_pos side_conditions.1
+    have h₁₉ : Nat.factorization N N 1 > 0 := by
+      exact h₂ N h₁₇ (Nat.prime_iff.1 h₃) |>.1
+    have h₁₂₀ : ↑(Nat.factorization N N) 1 = 1 := by
+      have h₁₂₁ : Nat.Prime N := by
+        exact Nat.prime_iff.2 h₁
+      exact h₉ N h₁₂₁
+    simp [h₁₂₀] at h₁₈
+
+    have h₁₇ : N ^ 2 ∣ N ^ 2 := by
+      exact Dvd.intro_left 1 (id (Eq.symm h₁₆))
+    have h₁₈ : N ^ 2 ∣ N := by
+      exact Dvd.intro_left (n := 2) (id (Eq.symm h₁₆))
+    exact (Nat.le_of_dvd h₁₇ h₁₈) (Nat.pos_of_le_of_ne (by rw [h₁₆]; exact Nat.le_refl _) (Nat.ne_of_gt h₁₇))
+
+  -- For any squarefree $N$, we have $f(N)=\prod_{p|N} 2p^3$.
+  have h₁₆ : ∀ n, 0 < n → n.Coprime N → f n = ∏ p ∈ Nat.primeFactors n,

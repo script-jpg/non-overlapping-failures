@@ -1,0 +1,45 @@
+-- The base case is when $n = 0$. We have $(1+0*x) = 1$ and $(1+x)^0 = 1$, so the inequality holds.
+  induction n, x generalizing n with
+  | zero => simp
+  | succ n x h =>
+    -- The induction hypothesis states that $(1+nx)\leq (1+x)^n$.
+    -- We want to show that $(1+(n+1)x)\leq (1+x)^{n+1}$.
+    -- $(1+(n+1)x) = (1+nx+x) = (1+nx) + x$
+    -- $(1+x)^{n+1} = (1+x)^n \cdot (1+x)$
+    -- By the induction hypothesis, $(1+nx) \leq (1+x)^n$
+    -- So $(1+nx) + x \leq (1+x)^n + x$
+    -- It suffices to show that $(1+x)^n + x \leq (1+x)^{n+1}$
+    -- This is true because $x \leq (1+x)^n$ when $x > -1$.
+    -- The key insight is that $(1+x)^n = 1 + \binom{n}{1}x + \binom{n}{2}x^2 + \cdots + x^n$
+    -- So $(1+x)^n - x = 1 + \binom{n}{1}x + \cdots + \binom{n}{n}x^n - x$
+    -- $= 1 + \binom{n}{1}x + \cdots + \binom{n}{n-1}x^{n-1} \geq 1 + x$ as desired.
+    induction n with
+    | zero =>
+      simp
+      -- This is the base case, where n = 0. We need to show that (1+0*x) ≤ (1+x)^0, which simplifies to 1 ≤ 1, which is true.
+      -- The `simp` tactic simplifies both sides of the inequality, and then the `linarith` tactic proves that 1 ≤ 1 is true.
+      linarith
+    | succ n ih =>
+      -- We assume the inequality holds for n (the induction hypothesis), and prove it for n+1.
+      -- The left side of the inequality is (1+nx) + x.
+      -- The right side is (1+x)^(n+1) = (1+x)^n * (1+x).
+      -- By the induction hypothesis, (1+nx) ≤ (1+x)^n.
+      -- So (1+nx) + x ≤ (1+x)^n + x.
+      -- We need to show that (1+x)^n + x ≤ (1+x)^(n+1).
+      -- This is true because x ≤ (1+x)^n when x > -1.
+      -- The key insight is that (1+x)^n = 1 + (n choose 1)x +... + x^n
+      -- So (1+x)^n - x = 1 + (n choose 1)x +... + (n choose n)x^n - x
+      -- = 1 + (n choose 1)x +... + (n choose n-1)x^(n-1) ≥ 1 + x as desired.
+      have h : (1 + x) ^ (n + 1 : ℕ) = (1 + x) ^ (n : ℕ) * (1 + x) := by
+        rw [Nat.add_comm, pow_succ]
+      rw [h]
+      have h' : 1 + ↑(n + 1) * x = (1 + ↑n * x) + x := by
+        ring
+      rw [h']
+      apply (add_le_add_iff_left _).mpr
+      rw [mul_one_add]
+      -- Now we need to show that x ≤ (1+x)^n
+      apply one_add_mul_le_pow
+      assumption
+
+```

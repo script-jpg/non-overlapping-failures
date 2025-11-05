@@ -1,0 +1,47 @@
+-- Prove that $f$ is strictly increasing.
+  have h₂ : StrictMono f := by
+    intro n m h
+    induction h with
+    | refl => simp
+    | step h h' =>
+      have h'' : f n < f m := by
+        calc
+          f n < f (n + 1) := by apply h₁; linarith
+          _ < f (m + 1) := by rel [h]
+          _ < f m := by apply h₁; linarith
+      apply lt_of_lt_of_le h'' (h.le)
+
+  -- Since $f$ is strictly increasing, $f(n) \geq n$ for all $n > 0$.
+  have h₃ : ∀ n, 0 < n → f n ≥ n := by
+    intro n h
+    induction n with
+    | zero => linarith
+    | succ n hn ih =>
+      by_cases h' : n = 0
+      · simp [h']
+      · have h'' : n < n + 1 := by exact Nat.lt_add_one n
+        apply lt_of_le_of_lt (ih h')?_
+        calc
+          f n ≤ f (n + 1) := by apply h₂.monotone; exact h'''
+          _ < f (n + 1) := by exact h₁ (n + 1); linarith
+
+  -- For each $n > 0$, we have $f(n) < f(f(n))$.
+  have h₄ : ∀ n, 0 < n → f n < f (f n) := by
+    intro n h
+    apply h₁
+    exact h₃ n h
+
+  -- We claim that $f(n) = n$ for all $n > 0$.
+  intro n hn
+  -- If $f(n) < n$, there is a contradiction.
+  by_contra! h
+  -- If $f(n) > n$, there is also a contradiction.
+  cases lt_or_gt_of_ne h with
+  | inl h =>
+    have h' : f n ≤ n := by exact Nat.le_of_lt_succ h
+    linarith
+  | inr h =>
+    have h' : f (f n) ≤ f n := by exact h₃ (f n) (h₃ n hn)
+    linarith
+
+```

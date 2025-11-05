@@ -1,0 +1,329 @@
+-- some auxilary definitions
+  let p : ℕ → ℝ := fun i => Real.cos (a i) / 2 ^ i
+  let q : ℕ → ℝ := fun i => Real.sin (a i) / 2 ^ i
+
+  -- some basic properties
+  have h₄ : ∀ i ∈ Finset.range k, 0 ≤ p i := by
+    intro i hi
+    simp [p]
+    apply div_nonneg
+    apply Real.cos_nonneg_of_neg_pi_div_two_le_of_le
+    linarith [Finset.mem_range.mp hi]
+    apply pow_nonneg
+    norm_num
+
+  have h₅ : ∀ i ∈ Finset.range k, 0 ≤ q i := by
+    intro i hi
+    simp [q]
+    apply div_nonneg
+    apply Real.sin_nonneg_of_neg_pi_div_two_le_of_le
+    linarith [Finset.mem_range.mp hi]
+    apply pow_nonneg
+    norm_num
+
+  have h₆ : ∀ i ∈ Finset.range k, 0 ≤ p i ∧ 0 ≤ q i := fun i hi => ⟨h₄ i hi, h₅ i hi⟩
+
+  have h₇ : ∀ i ∈ Finset.range k, 2 ^ i > 0 := fun i hi => pow_pos (by norm_num) i
+
+  have h₈ : 0 < ∑ i ∈ Finset.range k, p i := by
+    apply Finset.sum_pos
+    · intro i hi
+      apply h₄
+      exact Finset.mem_range.mp hi
+    · simp [p]
+      use 0
+      apply div_pos
+      apply Real.cos_pos_of_mem_Ioo
+      constructor
+      · linarith [Finset.mem_range.mp hi]
+      · linarith [Finset.mem_range.mp hi]
+      apply pow_pos
+      norm_num
+
+  have h₉ : 0 < ∑ i ∈ Finset.range k, (p i) ^ 2 + (q i) ^ 2 := by
+    apply Finset.sum_pos
+    · intro i hi
+      have : 0 ≤ (p i) ^ 2 + (q i) ^ 2 := add_nonneg (pow_two_nonneg _) (pow_two_nonneg _)
+      apply lt_of_le_of_ne this
+      apply ne_of_gt
+      apply sq_pos_of_pos
+      apply h₇
+      exact Finset.mem_range.mp hi
+    · simp [p, q]
+      apply div_pos
+      apply Real.cos_sq_add_sin_sq
+      apply pow_pos
+      norm_num
+
+  -- define an o(1) function
+  let ε : ℕ → ℝ := fun i => (∑ i' in Finset.range i, p i' ^ 2 + q i' ^ 2) / (∑ i' in Finset.range k, p i' ^ 2 + q i' ^ 2)
+
+  -- show that ε is strictly monotonous
+  have h₁₀ : StrictMono ε := by
+    intro i j hij
+    simp [ε]
+    apply Finset.sum_lt_sum_of_add_lt_add
+    · apply Finset.sum_lt_sum_of_add_lt_add
+      · apply Finset.sum_lt_sum_of_add_lt_add
+        · apply Finset.sum_lt_sum_of_add_lt_add
+          · apply Finset.sum_lt_sum_of_add_lt_add
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · simp
+              · simp
+                apply h₇
+                simp
+              · simp
+                apply pow_pos (by norm_num)
+                apply h₇
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · apply Finset.sum_lt_sum_of_add_lt_add
+                · apply Finset.sum_lt_sum_of_add_lt_add
+                  · apply Finset.sum_lt_sum_of_add_lt_add
+                    · simp
+                    · simp
+                      apply h₇
+                      simp
+                    · simp
+                      apply pow_pos (by norm_num)
+                      apply h₇
+                  · apply Finset.sum_lt_sum_of_add_lt_add
+                    · simp
+                    · simp
+                      apply h₇
+                      simp
+                    · simp
+                      apply pow_pos (by norm_num)
+                      apply h₇
+                · apply Finset.sum_lt_sum_of_add_lt_add
+                  · simp
+                  · simp
+                    apply h₇
+                    simp
+                  · simp
+                  · apply pow_pos (by norm_num)
+                    apply h₇
+              · apply Finset.sum_lt_sum_of_add_lt_add
+                · simp
+                · simp
+                  apply h₇
+                  simp
+                · simp
+                · apply pow_pos (by norm_num)
+                  apply h₇
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · simp
+              · simp
+                apply h₇
+                simp
+              · simp
+              · apply pow_pos (by norm_num)
+                apply h₇
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · apply Finset.sum_lt_sum_of_add_lt_add
+                · apply Finset.sum_lt_sum_of_add_lt_add
+                  · simp
+                  · simp
+                    apply h₇
+                    simp
+                  · simp
+                  · simp
+                    apply h₇
+                    simp
+                · apply Finset.sum_lt_sum_of_add_lt_add
+                  · simp
+                  · simp
+                    apply h₇
+                    simp
+                  · simp
+                  · apply pow_pos (by norm_num)
+                    apply h₇
+              · apply Finset.sum_lt_sum_of_add_lt_add
+                · simp
+                · simp
+                  apply h₇
+                  simp
+                · simp
+                · apply pow_pos (by norm_num)
+                  apply h₇
+          · apply Finset.sum_lt_sum_of_add_lt_add
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · apply Finset.sum_lt_sum_of_add_lt_add
+                · apply Finset.sum_lt_sum_of_add_lt_add
+                  · simp
+                  · simp
+                    apply h₇
+                    simp
+                  · simp
+                  · simp
+                    apply h₇
+                    simp
+                · apply Finset.sum_lt_sum_of_add_lt_add
+                  · simp
+                  · simp
+                    apply h₇
+                    simp
+                  · simp
+                  · apply pow_pos (by norm_num)
+                    apply h₇
+              · apply Finset.sum_lt_sum_of_add_lt_add
+                · simp
+                · simp
+                  apply h₇
+                  simp
+                · simp
+                · apply pow_pos (by norm_num)
+                  apply h₇
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · simp
+              · simp
+                apply h₇
+                simp
+              · simp
+              · apply pow_pos (by norm_num)
+                apply h₇
+        · apply Finset.sum_lt_sum_of_add_lt_add
+          · apply Finset.sum_lt_sum_of_add_lt_add
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · apply Finset.sum_lt_sum_of_add_lt_add
+                · simp
+                · simp
+                  apply h₇
+                  simp
+                · simp
+                · simp
+                  apply h₇
+                  simp
+              · apply Finset.sum_lt_sum_of_add_lt_add
+                · simp
+                · simp
+                  apply h₇
+                  simp
+                · simp
+                · apply pow_pos (by norm_num)
+                  apply h₇
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · simp
+              · simp
+                apply h₇
+                simp
+              · simp
+              · apply pow_pos (by norm_num)
+                apply h₇
+          · apply Finset.sum_lt_sum_of_add_lt_add
+            · simp
+            · simp
+              apply h₇
+              simp
+            · simp
+            · apply pow_pos (by norm_num)
+              apply h₇
+      · apply Finset.sum_lt_sum_of_add_lt_add
+        · apply Finset.sum_lt_sum_of_add_lt_add
+          · apply Finset.sum_lt_sum_of_add_lt_add
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · simp
+              · simp
+                apply h₇
+                simp
+              · simp
+              · simp
+                apply h₇
+                simp
+            · apply Finset.sum_lt_sum_of_add_lt_add
+              · simp
+              · simp
+                apply h₇
+                simp
+              · simp
+              · apply pow_pos (by norm_num)
+                apply h₇
+          · apply Finset.sum_lt_sum_of_add_lt_add
+            · simp
+            · simp
+              apply h₇
+              simp
+            · simp
+            · apply pow_pos (by norm_num)
+              apply h₇
+        · apply Finset.sum_lt_sum_of_add_lt_add
+          · simp
+          · simp
+            apply h₇
+            simp
+          · simp
+          · apply pow_pos (by norm_num)
+            apply h₇
+    · apply Finset.sum_lt_sum_of_add_lt_add
+      · apply Finset.sum_lt_sum_of_add_lt_add
+        · apply Finset.sum_lt_sum_of_add_lt_add
+          · apply Finset.sum_lt_sum_of_add_lt_add
+            · simp
+            · simp
+              apply h₇
+              simp
+            · simp
+            · simp
+              apply h₇
+              simp
+          · apply Finset.sum_lt_sum_of_add_lt_add
+            · simp
+            · simp
+              apply h₇
+              simp
+            · simp
+            · apply pow_pos (by norm_num)
+              apply h₇
+        · apply Finset.sum_lt_sum_of_add_lt_add
+          · simp
+          · simp
+            apply h₇
+            simp
+          · simp
+          · apply pow_pos (by norm_num)
+            apply h₇
+      · apply Finset.sum_lt_sum_of_add_lt_add
+        · simp
+        · simp
+          apply h₇
+          simp
+        · simp
+        · apply pow_pos (by norm_num)
+          apply h₇
+  -- prove that the sum of squares of p and q is less than 1
+  have h₁₁ : ∑ i ∈ Finset.range k, (p i) ^ 2 + (q i) ^ 2 < 1 := by
+    suffices ∑ i ∈ Finset.range k, (p i) ^ 2 + (q i) ^ 2 ≤ 1 / 2 by linarith
+    have : ∀ i ∈ Finset.range k, (p i) ^ 2 + (q i) ^ 2 ≤ 1 / 2 := by
+      intro i hi
+      simp [p, q]
+      apply (div_le_div_iff_of_pos_right (by norm_num : 0 < 2)).mpr
+      apply Finset.sum_le_sum
+      intro i' hi'
+      apply mul_self_nonneg
+      apply Real.cos_sq_add_sin_sq
+      apply h₇
+      exact Finset.mem_range.mp hi'
+    apply Finset.sum_le_sum this
+  -- prove that y(m) < 0
+  have h₁₂ : y m < 0 := by
+    rw [h₁, Finset.sum_range_succ]
+    simp [p, q, y, ε]
+    apply div_neg_of_neg_of_pos (Real.cos_neg_of_pi_div_two_lt_of_lt (by linarith [h₈]) (by linarith [h₈])) (by positivity)
+  -- prove that y(m) > 0
+  have h₁₃ : y n > 0 := by
+    rw [h₁, Finset.sum_range_succ]
+    simp [p, q, y, ε]
+    apply div_pos
+    apply Real.cos_pos_of_mem_Ioo
+    constructor
+    · linarith [Finset.mem_range.mp h₂]
+    · linarith [Finset.mem_range.mp h₂]
+    apply pow_pos
+    norm_num
+  -- prove that y(m) ≤ 0
+  have h₁₄ : y m ≤ 0 := by exact le_of_lt (by apply lt_trans h₁₂; apply h₃)
+  -- prove that y(m) ≥ 0
+  have h₁₅ : y m ≥ 0 := by exact le_of_lt (by apply lt_trans h₃; apply h₁₃)
+  -- thus y(m) = 0
+  have h₁₆ : y m = 0 := by linarith
+  exact h₁₆
+```

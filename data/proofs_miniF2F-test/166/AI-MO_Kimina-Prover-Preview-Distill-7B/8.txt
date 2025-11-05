@@ -1,0 +1,110 @@
+-- make a list of assumptions clear
+  have h1 : ∀ i ∈ Finset.range n, 0 ≤ a i := by
+    intro i hi
+    apply a
+  have h2 : ∑ i ∈ Finset.range n, a i = n := h₀
+  have h3 : ∀ i ∈ Finset.range n, 0 ≤ a i := by
+    intro i hi
+    apply h1
+  have h4 : ∏ i ∈ Finset.range n, a i ≤ 1 := by
+    -- we proceed by induction on `n`
+    induction n with
+    | zero =>
+      -- if `n = 0`, then the result is trivial
+      simp
+    | succ n ih =>
+      -- For the inductive step, we suppose the result holds for `n` and show it for `n + 1`.
+      -- `n = 0` has already been proved.
+      cases n with
+      | zero =>
+        simp
+        rw [← Finset.prod_range_succ']
+        apply le_of_eq
+        simp [h2]
+      | succ n =>
+        -- make a list of assumptions clear
+        have ih : ∏ x ∈ Finset.range (n + 1), a x ≤ 1 := ih
+        have h3 : ∀ i ∈ Finset.range (n + 1), 0 ≤ a i := by
+          intro i hi
+          apply h1
+        have h4 : ∑ i ∈ Finset.range (n + 1), a i = n + 1 := by
+          rw [Finset.sum_range_succ']
+          rw [h2]
+          simp
+        -- Since $\sum_{i=1}^{n+1} a_i = n+1$, we have $\sum_{i=1}^{n+1} (a_i - 1) = 0$.
+        have h5 : ∑ i ∈ Finset.range (n + 1), (a i - 1) = 0 := by
+          rw [Finset.sum_range_succ']
+          rw [h4]
+          simp
+          rw [Finset.sum_range_succ']
+          rw [h2]
+          simp
+        -- By the nonnegativity of $a_i$ we have $a_i - 1 \leq a_i$.
+        have h6 : ∀ i ∈ Finset.range (n + 1), a i - 1 ≤ a i := by
+          intro i hi
+          apply sub_le_self
+          apply h1
+        -- Then by the AM-GM inequality, we have
+        -- $\prod_{i=1}^{n+1} a_i = \prod_{i=1}^{n+1} (a_i - 1 + 1) \leq \left( \sum_{i=1}^{n+1} (a_i - 1) \right)^{n+1} / n! = 1$.
+        have h7 : ∏ i ∈ Finset.range (n + 1), a i ≤ 1 := by
+          have g1 : ∏ i ∈ Finset.range (n + 1), (a i - 1 + 1) ≤ (∑ i ∈ Finset.range (n + 1), (a i - 1)) ^ (n + 1 : ℝ) := by
+            -- apply the AM-GM inequality
+            apply Real.finset_prod_le_pow_sum
+            -- satisfy the assumption of positive values
+            set f : ℕ → ℝ := fun _ => 1 with hf
+            have : ∀ i ∈ Finset.range (n + 1), 0 ≤ f i := by
+              intro i hi
+              rw [hf]
+              simp
+            -- satisfy the assumption of AM-GM inequality
+            simp only [f, Finset.prod_const, Finset.card_range, nsmul_eq_mul, mul_one]
+          -- simplify the inequality
+          rw [Finset.prod_range_succ'] at g1
+          rw [Finset.sum_range_succ'] at g1
+          simp at g1
+          simp
+          rw [h5] at g1
+          -- rewrite by 0 ^ (n + 1 : ℝ) = 0
+          rw [zero_rpow] at g1
+          -- handle the degenerate case
+          cases (fun {a b} : ℝ × ℝ => a ≤ b) (h6 0 (by simp))
+          | inl h8 =>
+            rw [h8] at g1
+            norm_num at g1
+            norm_num
+            -- handle the inductive step
+            rw [show (n : ℝ) + 1 + 1 = (n + 1 : ℕ) + 1 by norm_cast]
+            exact (pow_le_one_iff_of_nonneg (by simp)).mpr g1
+          | inr h8 =>
+            -- show that `a 0 - 1 = 0`
+            have h9 : a 0 - 1 = 0 := by
+              -- if `∃ i ∈ Finset.range (n + 1), a i - 1 < 0`, then `∏ i ∈ Finset.range (n + 1), (a i - 1 + 1)` is negative
+              by_contra!
+              have h9 : ∏ i ∈ Finset.range (n + 1), (a i - 1 + 1) < 0 := by
+                apply Real.finset_prod_neg_of_exists_neg
+                -- satisfy the assumption of negative value
+                simp
+                use 0
+                constructor
+                · by_contra!
+                  rw [Nat.ne_zero_iff_zero_lt] at this
+                  norm_cast at this
+                  -- contradicts to `h3`
+                  have h9 : ¬ 0 ≤ a 0 := by
+                    apply not_le_of_lt
+                    apply Nat.lt_of_sub_ne_zero this
+                  exact h1 0 (by simp) h9
+                · rw [hf]
+                  norm_num
+              linarith
+            -- replace `a 0 - 1` by `0`
+            rw [h9] at g1
+            norm_num at g1
+            norm_num
+            -- if `n + 1` is a positive integer, then `(n : ℝ) + 1 + 1 = (n + 1 : ℕ) + 1`
+            rw [show (n : ℝ) + 1 + 1 = (n + 1 : ℕ) + 1 by norm_cast]
+            -- finish the rest trivial goals
+            exact (pow_le_one_iff_of_nonneg (by simp)).mpr g1
+        exact h7
+  exact h4
+```

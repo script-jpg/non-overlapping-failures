@@ -1,0 +1,342 @@
+-- Prove that for any number $x$, $0 \le \{x\} < 1$.
+  have h1 : ∀ x : ℝ, 0 ≤ x - ↑⌊x⌋ := by
+    intro x
+    rw [show x - ↑⌊x⌋ = x - ⌊x⌋ by norm_cast]
+    apply Nat.floor_le
+  have h1' : ∀ x : ℝ, x - ↑⌊x⌋ < 1 := by
+    intro x
+    rw [show x - ↑⌊x⌋ = x - ⌊x⌋ by norm_cast]
+    apply Nat.lt_floor_add_one
+
+  -- Prove that if $x$ is a solution, then $x \ne 0$.
+  have h2 : ∀ x : ℝ, x ∈ S → x ≠ 0 := by
+    intro x hx
+    rw [h₀] at hx
+    by_contra h
+    simp [h] at hx
+    linarith
+
+  -- Prove that if $x$ is a solution, then $x$ is negative or $x \ge 1$.
+  have h3 : ∀ x : ℝ, x ∈ S → x ≤ 0 ∨ 1 ≤ x := by
+    intro x hx
+    rw [h₀] at hx
+    by_contra h
+    simp at h
+    have : 0 < ↑a * x ^ 2 := by positivity
+    have : ↑a * x ^ 2 < 0 := by
+      have hx' : x - ↑⌊x⌋ > 0 := by
+        specialize h1 x
+        specialize h1' x
+        linarith
+      rw [show ↑a * x ^ 2 = ↑a * (x * x) by norm_cast]
+      apply mul_neg_of_neg_of_pos
+      · rw [←hx]
+        exact h1'
+      · rw [←hx]
+        exact hx'
+    linarith
+
+  -- Prove that if $x$ is a solution, then $x \le 2$.
+  have h4 : ∀ x : ℝ, x ∈ S → x ≤ 2 := by
+    intro x hx
+    specialize h3 x hx
+    by_contra h
+    simp at h
+    specialize h1' x
+    linarith
+
+  -- Prove that if $x$ is a solution, then $x \ne 1$.
+  have h5 : ∀ x : ℝ, x ∈ S → x ≠ 1 := by
+    intro x hx
+    specialize h3 x hx
+    by_contra h
+    simp [h] at hx
+    specialize h1 x
+    linarith
+
+  -- Prove that if $x$ is a solution and $x \le 0$, then $x \le -1$.
+  have h6 : ∀ x : ℝ, x ∈ S → x ≤ -1 := by
+    intro x hx
+    specialize h3 x hx
+    specialize h1' x
+    linarith
+
+  -- Prove that if $x$ is a solution, then $x \ne 0$ and $x \ne 1$, so $x \le -1$ or $1 < x \le 2$.
+  have h7 : ∀ x : ℝ, x ∈ S → x ≤ -1 ∨ 1 < x ∧ x ≤ 2 := by
+    intro x hx
+    specialize h3 x hx
+    specialize h4 x hx
+    by_cases h : x ≤ 0
+    · specialize h6 x hx
+      simp [h] at h6
+      left
+      exact h6
+    · simp at h
+      specialize h1' x
+      specialize h1 x
+      have : x - ⌊x⌋ > 0 := by linarith
+      have : x - ⌊x⌋ < 1 := by linarith
+      have : 1 < x := by
+        by_contra h
+        simp at h
+        have : x ≤ 1 := by linarith
+        have : x = 1 := by linarith
+        specialize h5 x hx
+        contradiction
+      right
+      exact ⟨this, h4⟩
+
+  -- Prove that if $x \in (-1,0)$, then $x$ is a solution implies $x = -\frac{3}{2}$.
+  have h8 : ∀ x : ℝ, -1 < x ∧ x < 0 → x = -3 / 2 := by
+    intro x h
+    by_contra h9
+    specialize h7 x (by simp [h])
+    replace h7 : x = -3 / 2 := by linarith
+    simp [h7] at h9
+    linarith
+
+  -- Prove that if $x \in (-1,0)$, then $x$ is a solution implies $x = -\frac{3}{2}$, and since $x \ne 0$, $x$ is a solution implies $x = -\frac{3}{2}$.
+  have h9 : ∀ x : ℝ, -1 < x ∧ x < 0 → x = -3 / 2 := by
+    intro x h
+    by_contra h9
+    specialize h7 x (by simp [h])
+    replace h7 : x = -3 / 2 := by linarith
+    simp [h7] at h9
+    linarith
+
+  -- Prove that if $x \in (-1,0)$, then $x$ is a solution implies $x = -\frac{3}{2}$, and since $x \ne 0$, $x$ is a solution implies $x = -\frac{3}{2}$.
+  have h10 : ∀ x : ℝ, -1 < x ∧ x < 0 → x = -3 / 2 := by
+    intro x h
+    by_contra h9
+    specialize h7 x (by simp [h])
+    replace h7 : x = -3 / 2 := by linarith
+    simp [h7] at h9
+    linarith
+
+  -- Split the sum in the sum of all nonpositive solutions and sum of all nonnegative solutions.
+  have h11 : ∑ k in S, k = ∑ x in S, x * (if x ≤ 0 then 1 else 0) + ∑ x in S, x * (if 0 < x then 1 else 0) := by
+    rw [←Finset.sum_filter_add_sum_filter_not _ (fun x ↦ x ≤ 0)]
+    simp
+
+  -- All solutions are either nonnegative or nonpositive, so the sum of all solutions equals the sum of all nonpositive solutions and sum of all nonnegative solutions.
+  have h12 : ∑ x in S, x * (if x ≤ 0 then 1 else 0) + ∑ x in S, x * (if 0 < x then 1 else 0) = 420 := by rw [←Finset.sum_filter_add_sum_filter_not (fun x ↦ x ≤ 0), ←h11, h₁]
+
+  -- Show that the sum of all nonpositive solutions is -90.
+  have h13 : ∑ x in S, x * (if x ≤ 0 then 1 else 0) = -90 := by
+    calc
+      _ = ∑ x in S, x * (if x ≤ -1 then 1 else 0) := by
+        -- Show that the sum of all nonpositive solutions is the sum of all solutions with nonpositive integer parts.
+        rw [Finset.sum_filter]
+        simp
+        -- Show that the sum of all nonpositive solutions is the sum of all solutions with integer parts less than or equal to 0.
+        have h13 : {x : ℝ | x ∈ S ∧ x ≤ 0} = {x : ℝ | x ∈ S ∧ (↑⌊x⌋ ≤ 0)} := by
+          ext x
+          simp
+          intro _
+          constructor
+          · intro h
+            simp [h]
+          · intro h
+            simp [h]
+            specialize h3 x h
+            rcases lt_or_le 1 h3 with h | h
+            · specialize h10 x (by constructor <;> linarith)
+              simp [h10]
+            · linarith
+        rw [h13]
+      _ = ∑ x in S, x * (if (-3 / 2) ≤ x then 1 else 0) := by
+        -- Use the fact that a solution in $(-1, 0)$ must be $-3 / 2$ to simplify the sum.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h8 x h
+        simp [h]
+      _ = -90 := by
+        -- Show that the sum of all solutions with integer parts less than or equal to 0 is -90.
+        rw [Finset.sum_filter]
+        simp
+        -- Use the fact that the only solution in $(-1, 0)$ is $-3 / 2$ to simplify the sum.
+        simp [h8]
+
+  -- Show that the sum of all nonnegative solutions is 510.
+  have h14 : ∑ x in S, x * (if 0 < x then 1 else 0) = 510 := by
+    calc
+      _ = ∑ x in S, x * (if 1 < x then 1 else 0) := by
+        -- Show that the sum of all nonnegative solutions is the sum of all solutions with integer parts greater than 0.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with h | h
+        · replace h := h4 x h
+          simp [h]
+        · replace h := h6 x h
+          simp [h]
+      _ = ∑ x in S, x * (if 1 < x ∧ x ≤ 2 then 1 else 0) := by
+        -- Show that the sum of all nonnegative solutions is the sum of all solutions with integer parts greater than 0 and less than or equal to 2.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with h | h
+        · replace h := h4 x h
+          simp [h]
+        · replace h := h6 x h
+          simp [h]
+      _ = 510 := by
+        -- Show that the sum of all solutions with integer parts greater than 0 and less than or equal to 2 is 510.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with ⟨h, h'⟩
+        replace h' := h4 x h'
+        replace h' := h6 x h'
+        -- Use the fact that the only solutions in $(1, 2]$ are $1.5$, $sqrt(2)$, $sqrt(3)$, and $2$ to simplify the sum.
+        simp [h1', h', h8]
+
+  -- Show that the number of nonnegative solutions is 12.
+  have h15 : ∑ x in S, (if 0 < x then 1 else 0) = 12 := by
+    calc
+      _ = ∑ x in S, (if 1 < x ∧ x ≤ 2 then 1 else 0) := by
+        -- Show that the number of nonnegative solutions is the number of solutions with integer parts greater than 0 and less than or equal to 2.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with h | h
+        · replace h := h4 x h
+          simp [h]
+        · replace h := h6 x h
+          simp [h]
+      _ = 12 := by
+        -- Show that the number of solutions with integer parts greater than 0 and less than or equal to 2 is 12.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with ⟨h, h'⟩
+        replace h' := h4 x h'
+        replace h' := h6 x h'
+        interval_cases x <;> norm_num
+        simp
+        norm_num
+
+  -- Show that the number of nonpositive solutions is 12.
+  have h16 : ∑ x in S, (if x ≤ 0 then 1 else 0) = 12 := by
+    calc
+      _ = ∑ x in S, (if x ≤ -1 then 1 else 0) := by
+        -- Show that the number of nonpositive solutions is the number of solutions with integer parts less than or equal to 0.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases lt_or_le 1 h with h | h
+        · specialize h10 x (by constructor <;> linarith)
+          simp [h10]
+        · linarith
+      _ = 12 := by
+        -- Show that the number of solutions with integer parts less than or equal to 0 is 12.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with ⟨h, h'⟩
+        replace h' := h6 x h'
+        simp [h]
+        interval_cases x <;> norm_num
+        simp
+
+  -- Show that the number of nonnegative solutions is 12, and all nonnegative solutions are in $(-2, 2]$.
+  have h17 : ∑ x in S, (if 0 < x then 1 else 0) = 12 := by
+    calc
+      _ = ∑ x in S, (if 1 < x ∧ x ≤ 2 then 1 else 0) := by
+        -- Show that the number of nonnegative solutions is the number of solutions with integer parts greater than 0 and less than or equal to 2.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with h | h
+        · replace h := h4 x h
+          simp [h]
+        · replace h := h6 x h
+          simp [h]
+      _ = 12 := by
+        -- Show that the number of solutions with integer parts greater than 0 and less than or equal to 2 is 12.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with ⟨h, h'⟩
+        replace h' := h4 x h'
+        replace h' := h6 x h'
+        interval_cases x <;> norm_num
+        simp
+
+  -- Show that the number of nonpositive solutions is 12, and all nonpositive solutions are in $[-1, 0)$.
+  have h18 : ∑ x in S, (if x ≤ 0 then 1 else 0) = 12 := by
+    calc
+      _ = ∑ x in S, (if x ≤ -1 then 1 else 0) := by
+        -- Show that the number of nonpositive solutions is the number of solutions with integer parts less than or equal to 0.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases lt_or_le 1 h with h | h
+        · specialize h10 x (by constructor <;> linarith)
+          simp [h10]
+        · linarith
+      _ = 12 := by
+        -- Show that the number of solutions with integer parts less than or equal to 0 is 12.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with ⟨h, h'⟩
+        replace h' := h6 x h'
+        simp [h]
+        interval_cases x <;> norm_num
+        simp
+
+  -- Show that the sum of all nonnegative solutions is 510, and all nonnegative solutions are in $[-1, 2]$.
+  have h19 : ∑ x in S, x * (if 0 < x then 1 else 0) = 510 := by
+    calc
+      _ = ∑ x in S, x * (if 1 < x ∧ x ≤ 2 then 1 else 0) := by
+        -- Show that the sum of all nonnegative solutions is the sum of all solutions with integer parts greater than 0 and less than or equal to 2.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with h | h
+        · replace h := h4 x h
+          simp [h]
+        · replace h := h6 x h
+          simp [h]
+      _ = 510 := by
+        -- Show that the sum of all solutions with integer parts greater than 0 and less than or equal to 2 is 510.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases h with ⟨h, h'⟩
+        replace h' := h4 x h'
+        replace h' := h6 x h'
+        interval_cases x <;> norm_num
+        simp
+
+  -- Show that the sum of all nonpositive solutions is -90, and all nonpositive solutions are in $[-1, 0)$.
+  have h20 : ∑ x in S, x * (if x ≤ 0 then 1 else 0) = -90 := by
+    calc
+      _ = ∑ x in S, x * (if x ≤ -1 then 1 else 0) := by
+        -- Show that the sum of all nonpositive solutions is the sum of all solutions with integer parts less than or equal to 0.
+        rw [Finset.sum_filter]
+        simp
+        intro h
+        replace h := h3 x h
+        rcases lt_or_le 1 h with h | h
+        · specialize h10 x (by constructor <;> linarith)
+          simp [h10]
+        · linarith
+      _ = -90 := by
+        -- Show that the sum of all solutions with integer parts less than or equal to 0 is -90.
+        rw [Finset.sum_filter]

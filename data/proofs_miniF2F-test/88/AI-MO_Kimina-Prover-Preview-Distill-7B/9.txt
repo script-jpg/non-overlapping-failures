@@ -1,0 +1,156 @@
+-- intro equations and assume even numbers are n, n+2, n+4.
+  have h₂ : (n : ℤ) > 0 := by
+
+    -- prove by contradiction.
+    by_contra!
+
+    -- simplify the equation.
+    have : (n : ℤ) ^ 2 ≤ 4098 := by nlinarith
+
+    -- rewrite the equation as (n+1)² + (n-1)² = 4098.
+    have : ((n : ℤ) + 1) ^ 2 + (n - 1) ^ 2 = 4098 := by
+
+      -- 1 is negligible compared to n², so use n² + (n²+4n+4) = 4098.
+      have : (1 : ℤ) ≤ 50 := by norm_num
+
+      -- simplify.
+      ring_nf
+
+      -- use nlinarith to simplify.
+      nlinarith
+
+    -- prove (n+1)² > 2023.
+    have : (n + 1 : ℤ) ^ 2 > 2023 := by
+
+      -- expand and use nlinarith to simplify.
+      ring_nf
+
+      -- suppose on the contrary that it is not the case.
+      by_contra!
+
+      -- simplify the inequality.
+      have : (n : ℤ) ≤ 43 := by nlinarith
+
+      -- turn the equation to 1+1+1 = 3.
+      ring_nf at this
+
+      -- false.
+      omega
+
+    -- prove (n-1)² > 2023.
+    have : (n - 1 : ℤ) ^ 2 > 2023 := by
+
+      -- 1 is negligible compared to n², so use n² + (n²-4n+4) = 4098.
+      have : (1 : ℤ) ≤ 50 := by norm_num
+
+      -- simplify.
+      ring_nf
+
+      -- use nlinarith to simplify.
+      nlinarith
+
+    -- clearly, contradiction.
+    nlinarith
+
+  -- simplify the equation to get n² = 4090.
+  have : (↑n - 2) ^ 2 + ↑n ^ 2 + (↑n + 2) ^ 2 = 3 * ↑n ^ 2 + 8 := by ring
+  rw [this] at h₁
+
+  have h₃ : (↑n - 2) ^ 2 + ↑n ^ 2 + (↑n + 2) ^ 2 = (12296 : ℤ) := h₁
+  rw [this] at h₃
+
+  have h₄ : (n : ℤ) ^ 2 = 4090 := by nlinarith
+
+  -- n-2, n, n+2 are all even.
+  have h₅ : Even ((n : ℤ) - 2) := by
+
+    -- even numbers are closed under subtraction.
+    have : Even ((n : ℤ) - 2) := by
+      rw [← Int.even_sub_iff_right]
+
+      -- even numbers are closed under addition.
+      have : Even ((n : ℤ) + 2) := by
+        rw [← Int.even_add_iff_right]
+
+        -- 2 is even.
+        exact even_two
+
+      -- use the fact that n-2, n, n+2 are all even.
+      rw [← even_two]
+
+      -- simplify.
+      simp [h₀, h₂]
+
+    -- simplify.
+    exact this
+
+  have h₆ : Even (↑n + 2) := by
+
+    -- even numbers are closed under addition.
+    have : Even ((n : ℤ) + 2) := by
+      rw [← Int.even_add_iff_left]
+
+      -- use the fact that n-2, n, n+2 are all even.
+      rw [← even_two]
+
+      -- simplify.
+      simp [h₀, h₂]
+
+    -- simplify.
+    exact this
+
+  -- n is even and n > 0, so n ≥ 2.
+  have h₇ : 2 ≤ (n : ℤ) := by
+
+    -- prove by contradiction.
+    by_contra!
+
+    -- use nlinarith to simplify.
+    have : (n : ℤ) ^ 2 < 4090 := by nlinarith
+
+    -- contradiction.
+    nlinarith
+
+  -- notice that 4090 = 2 × 5 × 7 × 59, so n must be one of 2, 59.
+  have h₈ : (↑n = 2 ∨ ↑n = 59) := by
+
+    -- use nlinarith to reformulate the condition.
+    have : (↑n) ^ 2 = 4090 := by norm_cast at *
+
+    -- reformulate the equation.
+    have hsimp : ∀ (n : ℤ), n ≥ 2 → n ≤ 65 → n ^ 2 = 4090 → n = 2 ∨ n = 59 := by decide
+
+    -- use the fact that n is positive and solve the equation.
+    specialize hsimp n h₇
+
+    -- prove n ≤ 65.
+    have : (n : ℤ) ≤ 65 := by nlinarith
+
+    -- simplify.
+    simp_all
+
+  -- n=2 is impossible.
+  have h₉ : ↑n ≠ 2 := by
+
+    -- suppose on the contrary.
+    by_contra!
+
+    -- turn the equation to 59³ = 1.
+    rw [this] at h₃
+
+    -- simplify.
+    simp at h₃
+
+    -- impossible.
+    linarith only [h₃, h₈]
+
+  -- therefore n = 59.
+  have h₁₀ : ↑n = 59 := by exact h₈.right h₉
+
+  -- simplify the goal.
+  have : (↑n - 2) * ↑n * (↑n + 2) = 59 * 61 * 63 := by rw [h₁₀]
+
+  -- compute the goal.
+  rw [this]
+  norm_num
+```

@@ -1,0 +1,302 @@
+-- Define the function as given in the problem
+  have h_f : ∀ x, f x = (x ^ 2 + 18 * x + 30) - 2 * Real.sqrt (x ^ 2 + 18 * x + 45) := by
+    intro x
+    rw [h₀ x]
+    ring
+
+  -- Prove that the preimage of 0 under f is finite
+  have h_f_finite : Fintype (f ⁻¹' {0}) := by simp [h₁]
+
+  -- Show that the square root is well-defined (i.e., the expression is non-negative)
+  have h_sqrt_nonneg : ∀ x : ℝ, 0 ≤ Real.sqrt (x ^ 2 + 18 * x + 45) := by
+    intro x
+    exact Real.sqrt_nonneg (x ^ 2 + 18 * x + 45)
+
+  -- Prove that the expression under the square root is non-negative
+  have h_sqrtominator_nonneg : ∀ x : ℝ, 0 ≤ x ^ 2 + 18 * x + 45 := by
+    intro x
+    calc
+      0 ≤ (x + 3) ^ 2 := by exact sq_nonneg (x + 3)
+      _ = x ^ 2 + 6 * x + 9 := by ring
+      _ ≤ x ^ 2 + 18 * x + 45 := by linarith
+
+  -- Show that f(x) = 0 implies the square root term equals x^2 + 18x + 30
+  have h_sqrt_eq : ∀ x : ℝ, f x = 0 → Real.sqrt (x ^ 2 + 18 * x + 45) = x ^ 2 + 18 * x + 30 := by
+    intro x hx
+    rw [h_f]
+    simp at hx
+    linarith
+
+  -- Prove that x^2 + 18x + 30 >= 0 when f(x) = 0
+  have h_prod_nonneg : ∀ x : ℝ, f x = 0 → 0 ≤ x ^ 2 + 18 * x + 30 := by
+    intro x hx
+    have : 0 ≤ Real.sqrt (x ^ 2 + 18 * x + 45) := by exact h_sqrt_nonneg x
+    have := h_sqrt_eq x hx
+    linarith
+
+  -- Show that if f(x) = 0, then x^2 + 18x + 45 = (x^2 + 18x + 30)^2
+  have h_prod_eq : ∀ x : ℝ, f x = 0 → (x ^ 2 + 18 * x + 45) = (x ^ 2 + 18 * x + 30) ^ 2 := by
+    intro x hx
+    have : Real.sqrt (x ^ 2 + 18 * x + 45) ≥ 0 := by exact h_sqrt_nonneg x
+    have h_sqrt_eq : Real.sqrt (x ^ 2 + 18 * x + 45) = x ^ 2 + 18 * x + 30 := by exact h_sqrt_eq x hx
+    have h_sq : (Real.sqrt (x ^ 2 + 18 * x + 45)) ^ 2 = x ^ 2 + 18 * x + 45 := by exact Real.sq_sqrt (h_sqrt nonneg)
+    rw [h_sqrt_eq] at h_sq
+    linarith
+
+  -- Define the polynomial whose roots we need to find
+  let P : Polynomial ℝ := Polynomial.X ^ 2 + Polynomial.C 18 * Polynomial.X + Polynomial.C 30
+
+  -- Show that P has degree 2
+  have h_degree : P.natDegree = 2 := by dsimp [P]; compute_degree!
+
+  -- Prove that P is monic
+  have h_monic : P.Monic := by
+    rw [Monic, leadingCoeff, h_degree]
+    simp [P, coeff_X]
+  
+  -- Show that P is reciprocal
+  have h_reciprocal : PReciprocal P := by
+    rw [Polynomial.PReciprocal]
+    simp [P]
+    have h (n : ℕ) : n ≠ 0 → (n + 1) ≠ 0 := by
+      intro hn
+      linarith
+    refine ⟨h,?_⟩
+    intro n hn
+    simp [P]
+    have : n + 1 ≠ 0 := by linarith
+    show (n + 1) * (n + 1) - 18 * (n + 1) + 30 = 0 → (n + 1) * (n + 1) - 18 * (n + 1) + 30 ≠ 0
+    intro h
+    apply this
+    linarith
+
+  -- Show that the leading coefficient of P is 1
+  have h_coeff_0 : P.coeff 0 = 1 := by simp [P]
+
+  -- Define the set of roots of P
+  let Z := P.roots
+
+  -- Show that the cardinality of the set of roots is 2
+  have h_card : Z.card = 2 := by
+    rw [← h_degree]
+    apply Polynomial.card_roots'
+
+  -- Show that the roots are distinct
+  have h_nodup : Z.Nodup := by
+    rw [← h_degree]
+    apply Polynomial.card_roots'.nodup
+
+  -- Prove that P is not constant
+  have h_nonconst : ¬ Polynomial.IsConstant P := by
+    intro h
+    rw [Polynomial.isConstant_iff] at h
+    obtain ⟨c, hc⟩ := h
+    rw [hc] at h_degree
+    simp at h_degree
+
+  -- Show that 0 is not a root of P
+  have h_not_root : 0 ∉ Z := by
+    intro h
+    rw [h] at h_coeff_0
+    simp at h_coeff_0
+
+  -- Prove that P is monic reciprocal with 2 roots (counting multiplicity)
+  have h_mono_recip : PReciprocal P ∧ P.Monic := by exact ⟨h_reciprocal, h_monic⟩
+
+  -- Define the product of the roots (as a polynomial)
+  let prod_roots := ∏ x in Z, (P.map (RingHom.id ℝ) x)
+
+  -- Show that the product of the roots equals 20
+  have h_prod_roots : prod_roots = 20 := by
+    have h := @Polynomial.prod_roots_multiset_eq_of_monic_of_splits_id PMonicReciprocal ℝ P
+      (by simpa using h_monic) (by simpa using h_reciprocal) (by simpa using h_nonconst) (by simp; exact h_degree)
+    simp [Z] at h
+    rw [h]
+    have h cardinality : (Multiset.map (fun x => P.map (RingHom.id ℝ) x) Z).card = Z.card := by
+      apply Multiset.card_map
+    rw [h, h_degree] at cardinality
+    have h_roots : Multiset.map (fun x => P.map (RingHom.id ℝ) x) Z = Multiset.map (RingHom.id ℝ) Z := by
+      simp
+    rw [h_roots] at cardinality
+    rw [Polynomial.card_roots''] at cardinality
+    simp at cardinality
+    have h_splits : IsAlgClosed.splits P := by
+      apply IsAlgClosed.splits
+    have h_roots_eq : Multiset.ofList Z = Multiset.map (RingHom.id ℝ) Z := by
+      simp
+    rw [h_splits, Multiset.prod_ofList] at h
+    rw [h_roots_eq] at h
+    simp at h
+    show (∏ x ∈ Z, P.map (RingHom.id ℝ) x) = 20
+    simp [Z]
+    rw [h]
+    have h_nodup : Z.Nodup := by
+      rw [← h_degree]
+      apply Polynomial.card_roots'.nodup
+    have h_prod : (∏ x ∈ Z, (P.map (RingHom.id ℝ) x)) = (∏ x ∈ Z, (ringHom.id ℝ) x) := by
+      apply Finset.prod_congr
+      rw [map_apply]
+      rfl
+    rw [h_prod]
+    have h_id : (∏ x ∈ Z, (ringHom.id ℝ) x) = ∏ x ∈ Z, x := by
+      apply Finset.prod_congr
+      rfl
+      simp
+    rw [h_id]
+    have h_ne_zero : ∏ x ∈ Z, x ≠ 0 := by
+      by_contra!
+      rw [this] at h_not_root
+      simp at h_not_root
+      have h := h_not_root
+      simp [Z] at h
+      have h_card := @Finset.card_ne_zero_of_mem _ _ h
+      simp at h_card
+      have h_roots : Multiset.map (fun x => (ringHom.id ℝ) x) Z = Multiset.map (ringHom.id ℝ) Z := by
+        simp
+      rw [h_roots] at h_card
+      have h_card' : Multiset.card (Multiset.map (fun x => (ringHom.id ℝ) x) Z) = Multiset.card Z := by
+        apply Multiset.card_map
+      rw [Multiset.card_eq_two] at h_card'
+      simp at h_card'
+      obtain ⟨x, y, hxy, hxy'⟩ := h_card'
+      rw [Multiset.mem_map] at hxy hxy'
+      obtain ⟨hx, _⟩ := hxy
+      obtain ⟨hy, _⟩ := hxy'
+      rw [hx, hy] at h
+      ring_nf at h
+      have h_x_ne_zero : x ≠ 0 := by
+        by_contra!
+        rw [this] at h
+        simp at h
+      have h_y_ne_zero : y ≠ 0 := by
+        by_contra!
+        rw [this] at h
+        simp at h
+      have h_x_y : x = y := by
+        by_contra!
+        have h : x - y ≠ 0 := by
+          obtain ⟨hx', hy'⟩ := this
+          rw [hx', hy']
+          simp
+        have h : (x - y) * (x + y) = 0 := by
+          ring_nf
+          rw [h]
+          simp
+        simp at h
+        obtain ⟨h, _⟩ | ⟨h, _⟩ := h
+        · linarith
+        · linarith
+      rw [h] at hxy
+      simp at hxy
+    have h_card' : Multiset.card ((Multiset.map (fun x => (ringHom.id ℝ) x) Z) : Set ℝ) = 2 := by
+      rw [Multiset.card_eq_two]
+      use (∏ x ∈ Z, (ringHom.id ℝ) x)
+      use ∏ x ∈ Z, x
+      rw [h]
+      simp
+      tauto
+    rw [Multiset.toFinset_card_eq_card] at h_card'
+    simp [Multiset.toFinset] at h_card'
+    have h_prod : (∏ x ∈ Finset.toFinset Z, x) = (∏ x ∈ Z, x) := by
+      apply Finset.prod_congr
+      simp
+      rfl
+    rw [h_prod]
+    have h_nodup : Finset.toFinset Z.Nodup := by
+      rw [Multiset.nodup_iff_toFinset_inj]
+      rw [Multiset.Nodup_iff_inj]
+      tauto
+    have h_card : Finset.card Finset.toFinset Z = 2 := by
+      rw [← h_card']
+      simp
+    have := Multiset.card_eq_two_iff.mp h_card
+    obtain ⟨x, y, hxy, hxy'⟩ := this
+    simp [Finset.coe_toFinset, Finset.mem_toFinset] at hxy hxy'
+    obtain ⟨hx, _⟩ := hxy
+    obtain ⟨hy, _⟩ := hxy'
+    rw [hx, hy]
+    simp
+    exact h_ne_zero
+  -- Show that the product of the roots of f is the same as the product of the roots of P
+  have h_prod_roots_eq : (∏ x ∈ f ⁻¹' {0}, x) = (∏ x ∈ Z, x) := by
+    have h := @Polynomial.prod_roots_multiset_eq_of_monic_of_splits_id PMonicReciprocal ℝ P
+      (by simpa using h_monic) (by simpa using h_reciprocal) (by simpa using h_nonconst) (by simp; exact h_degree)
+    simp [Z] at h
+    rw [h]
+    have h_roots_eq : Multiset.map (fun x => (P.map (RingHom.id ℝ) x)) (P.roots) = Multiset.map (RingHom.id ℝ) (P.roots) := by
+      simp
+    rw [h_roots_eq] at h
+    simp at h
+    tauto
+  -- Show that the product of the roots of f is 20
+  have h_prod_f : (∏ x ∈ f ⁻¹' {0}, x) = 20 := by
+    have : f ⁻¹' {0} = Z := by
+      ext x
+      simp [Z, f]
+      constructor
+      · intro h
+        rw [h_f] at h
+        have : 0 ≤ Real.sqrt (x ^ 2 + 18 * x + 45) := by exact h_sqrt_nonneg x
+        have h_sqrt_eq : Real.sqrt (x ^ 2 + 18 * x + 45) = x ^ 2 + 18 * x + 30 := by exact h_sqrt_eq x h
+        have h_sq : (Real.sqrt (x ^ 2 + 18 * x + 45)) ^ 2 = x ^ 2 + 18 * x + 45 := by exact Real.sq_sqrt (h_sqrt nonneg)
+        rw [h_sqrt_eq] at h_sq
+        have : x ^ 2 + 18 * x + 30 ≥ 0 := by linarith
+        have : x ^ 2 + 18 * x + 30 = (x - (-9 + √81 - √(81 - 15))) * (x - (-9 - √81 + √(81 - 15))) := by
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          linarith
+        rw [this]
+        simp
+        right
+        have h_ne : x - (-9 - √81 + √(81 - 15)) ≠ 0 := by
+          by_contra!
+          rw [sub_eq_zero] at this
+          have h_ne_zero : x - (-9 + √81 - √(81 - 15)) ≠ 0 := by
+            by_contra!
+            rw [sub_eq_zero] at this
+            have h : (x - (-9 + √81 - √(81 - 15))) * (x - (-9 - √81 + √(81 - 15))) = 0 := by
+              rw [this]
+              simp
+            rw [h] at hne
+            simp at hne
+          have h : x ^ 2 + 18 * x + 30 = 0 := by
+            rw [this]
+            ring
+          have h : x ^ 2 + 18 * x + 30 ≠ 0 := by
+            have h : x ^ 2 + 18 * x + 30 > 0 := by
+              have h : x ^ 2 + 18 * x + 30 = (x + 9) ^ 2 + √81 - √(81 - 15) := by
+                ring_nf
+                rw [Real.sq_sqrt (by norm_num)]
+                linarith
+              rw [h]
+              have h₁ : (x + 9) ^ 2 ≥ 0 := by exact sq_nonneg (x + 9)
+              have h₂ : √81 - √(81 - 15) > 0 := by
+                have h₁ : √81 > 0 := by
+                  apply Real.sqrt_pos_of_pos (by norm_num)
+                have h₂ : √(81 - 15) > 0 := by
+                  apply Real.sqrt_pos_of_pos (by norm_num)
+                have h₃ : √81 > √(81 - 15) := by
+                  have h₃ : (81 : ℝ) > 81 - 15 := by norm_num
+                  exact Real.sqrt_lt_sqrt (by linarith) h₃
+                linarith
+              linarith
+            linarith
+          contradiction
+        right
+        left
+        assumption
+      · intro h
+        rw [h_f]
+        have : 0 ≤ Real.sqrt (x ^ 2 + 18 * x + 45) := by exact h_sqrt_nonneg x
+        have h_sqrt_eq : Real.sqrt (x ^ 2 + 18 * x + 45) = x ^ 2 + 18 * x + 30 := by exact h_sqrt_eq x h
+        have h_sq : (Real.sqrt (x ^ 2 + 18 * x + 45)) ^ 2 = x ^ 2 + 18 * x + 45 := by exact Real.sq_sqrt (h_sqrt nonneg)
+        rw [h_sqrt_eq] at h_sq
+        have : x ^ 2 + 18 * x + 30 ≥ 0 := by linarith
+        have : x ^ 2 + 18 * x + 30 = (x - (-9 + √81 - √(81 - 15))) * (x - (-9 - √81 + √(81 - 15))) := by
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          linarith
+        rw [this]
+        simp
+        right
+        have h_ne : x - (-9 - √81 + √(81 -

@@ -1,0 +1,95 @@
+-- We have $a^3 - 8 = 0$ and $b^3 - 8b^2 - 8b + 64 = 0$. Let's factor these equations.
+  have ha : (a - 2) * (a ^ 2 + 2 * a + 4) = 0 := by
+    calc _ = a ^ 3 - 8 := by ring
+         _ = 0 := by assumption
+
+  have hb : (b - 2) * (b ^ 2 - 6 * b - 32) = 0 := by
+    calc _ = b ^ 3 - 8 * b ^ 2 - 8 * b + 64 := by ring
+         _ = 0 := by assumption
+
+  -- Now we find the roots of these quadratic equations.
+  have h2 : (a - 2) * (a - (-1 + Complex.sqrt 3)) * (a - (-1 - Complex.sqrt 3)) = 0 := by
+    ring_nf
+    rw [Complex.I_sq]
+    ring_nf
+    exact ha
+
+  have h3 : (b - 2) * (b - (3 + Real.sqrt 57)) * (b - (3 - Real.sqrt 57)) = 0 := by
+    ring_nf
+    rw [Complex.I_sq]
+    ring_nf
+    exact hb
+
+  -- Now we have all the roots, and we need to show that the greatest distance is $2\sqrt{21}$.
+  -- We will show that the maximum distance is achieved when $a = -1 + \sqrt{3}$ and $b = 3 - \sqrt{57}$.
+  have h4 : a = -1 + Complex.sqrt 3 ∨ a = -1 - Complex.sqrt 3 ∨ a = 2 := by
+    rcases (mul_eq_zero.mp h2) with h | h
+   . rcases (mul_eq_zero.mp h) with h | h
+     . left
+        calc _ = a - 2 := by ring
+             _ = 0 := by exact h
+             _ = a := by ring
+     . right; left
+        calc _ = a - (-1 - Complex.sqrt 3) := by ring
+             _ = 0 := by exact h
+             _ = a := by ring
+   . right; right
+      calc _ = a - 2 := by ring
+           _ = 0 := by exact h
+           _ = a := by ring
+
+  have h5 : b = 3 - Real.sqrt 57 ∨ b = 3 + Real.sqrt 57 ∨ b = 2 := by
+    rcases (mul_eq_zero.mp h3) with h | h
+   . rcases (mul_eq_zero.mp h) with h | h
+     . right; right
+        calc _ = b - (3 - Real.sqrt 57) := by ring
+             _ = 0 := by exact h
+             _ = b := by ring
+     . left
+        calc _ = b - 2 := by ring
+             _ = 0 := by exact h
+             _ = b := by ring
+   . right; left
+      calc _ = b - (3 + Real.sqrt 57) := by ring
+           _ = 0 := by exact h
+           _ = b := by ring
+
+  -- Now we calculate all possible distances and show that the maximum is $2\sqrt{21}$.
+  rcases h4 with h | h | h <;> rcases h5 with H | H | H <;> simp [Complex.abs, h, H] <;>
+  calc _ = Real.sqrt 21 ∨ _ = Real.sqrt 9 ∨ _ = Real.sqrt 12 ∨ _ = Real.sqrt 21 * 2 := by
+   . rw [Real.sqrt_eq_iff_eq_sq]
+      norm_num
+      ring_nf
+      norm_num
+   . rw [Real.sqrt_eq_iff_eq_sq]
+      norm_num
+      norm_num
+   . rw [Real.sqrt_eq_iff_eq_sq]
+      norm_num
+      ring_nf
+      norm_num
+   . rw [mul_pow, Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)]
+      norm_num
+  _ ≤ 2 * Real.sqrt 21 := by
+    rcases h with h | h | h <;> rcases h5 with H | H | H <;> simp [h, H] <;>
+    calc _ = Real.sqrt 21 := by ring_nf
+         _ ≤ 2 * Real.sqrt 21 := by
+            have : 0 < 21 := by norm_num
+            exact (mul_le_mul_iff_of_pos_left this).mpr (by positivity)
+
+    _ = 3 := by
+      rw [Real.sqrt_eq_iff_eq_sq]
+      norm_num
+      norm_num
+    _ ≤ 2 * 3 := by
+      calc _ = 2 * 3 := by rfl
+         _ = 6 := by norm_num
+         _ ≤ 2 * 3 := by norm_num
+
+    _ = 2 * Real.sqrt 21 := by
+      rw [Real.sqrt_eq_iff_eq_sq]
+      norm_num
+      ring_nf
+      norm_num
+
+```

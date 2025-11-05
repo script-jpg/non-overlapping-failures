@@ -1,0 +1,64 @@
+-- aux lemma that can be proved by using `Real.sin_sub` recursively
+  have l₁ : ∀ (n : ℕ), 0 < n → ∑ k ∈ Finset.Icc 1 n, Real.sin (5 * k * Real.pi / 180) = Real.sin (5 * (n + 1) * Real.pi / 360) / Real.sin (5 * Real.pi / 360) := by
+    intro n h
+    induction n with
+    | zero => simp_all
+    | succ n ih =>
+      by_cases h' : n = 0
+      · simp [h']
+      · rw [Finset.sum_Icc_succ_top (by omega), ih (by omega)]
+        symm
+        rw [Real.sin_sub, ← mul_sub, mul_assoc]
+        have : 5 * (↑n + 1) * Real.pi / 180 - 5 * Real.pi / 180 = 5 * Real.pi / (360 : ℝ) * n := by field_simp; ring
+        rw [this]
+        have : Real.sin (5 * Real.pi / (360 : ℝ) * n) / Real.sin (5 * Real.pi / 360) = Real.sin (5 * Real.pi / 360 * n) / Real.sin (5 * Real.pi / 360) := by
+          norm_cast
+        rw [this]
+
+  have h₃ := l₁ 35 (by norm_num)
+
+  -- aux lemma that can be proved by using `Real.sin_sub` recursively
+  have l₂ : ∀ (n : ℕ), 0 < n → Real.sin (5 * (n + 1) * Real.pi / 360) = Real.sin (5 * (n + 1) * Real.pi / 180) / Real.sin (5 * Real.pi / 360) := by
+    intro n h
+    induction n with
+    | zero => simp_all
+    | succ n ih =>
+      by_cases h' : n = 0
+      · simp [h']
+      · have : 5 * (↑n + 1) * Real.pi / 180 - 5 * (n + 1) * Real.pi / 360 = 5 * Real.pi / (360 : ℝ) * n := by field_simp; ring
+        rw [show 5 * (↑n + 1) * Real.pi / 360 = 5 * (n + 1) * Real.pi / 180 - 5 * Real.pi / (360 : ℝ) * n by linarith only [this]]
+        rw [Real.sin_sub, ← mul_sub, mul_assoc]
+        have : Real.sin (5 * Real.pi / (360 : ℝ) * n) / Real.sin (5 * Real.pi / 360) = Real.sin (5 * Real.pi / 360 * n) / Real.sin (5 * Real.pi / 360) := by
+          norm_cast
+        rw [this]
+        field_simp
+
+  have h₄ := l₂ 35 (by norm_num)
+
+  -- from `h₃` and `h₄`, we can prove the main identity
+  have : m = 7 * (m / 7).num := by
+    refine (Eq.symm (Rat.mul_den_eq (m / 7).to_iff)).mp?_
+    rw [h₃, h₄] at h₁
+    have : Real.sin (5 * Real.pi / 360) ≠ 0 := by
+      have : 0 < 5 * Real.pi / 360 := by positivity
+      have h'' : 5 * Real.pi / 360 < Real.pi := by linarith only [Real.pi_pos]
+      refine Real.sin_pos_of_pos_of_lt_pi this?_
+      linarith only [Real.pi_pos]
+    have : Real.sin (5 * Real.pi / 360) * Real.sin (5 * (35 + 1) * Real.pi / 180) / Real.sin (5 * Real.pi / 180) = Real.sin (5 * (35 + 1) * Real.pi / 360) := by simp [h₄]
+    rw [mul_div_assoc, Eq.symm (mul_div_cancel₀ this _), h₃, mul_comm] at h₁
+    exact Eq.symm (div_eq_mul_inv h₁)
+  rw [this]
+  -- now we have `m / 7 = tan (35 * 5 / 360 * π)`, and we need to find the related rational number
+  have h₅ := h₁
+  refine (Rat.div_int_inj (a := m.num) (b := m.den) (c := (35 : ℤ) * 5) (d := 360)?_?_).mp?_
+  · simp [h₀]
+  · simp
+  · rw [h₅]
+    have : 5 * (35 : ℤ) * Real.pi / 360 = 7 * (5 * Real.pi / 360) := by ring
+    rw [this]
+    rw [mul_div_assoc, Eq.symm (mul_div_cancel₀ (by positivity) _)]
+    norm_cast
+  · norm_cast
+  · norm_cast
+  · linarith only [Real.pi_pos]
+```

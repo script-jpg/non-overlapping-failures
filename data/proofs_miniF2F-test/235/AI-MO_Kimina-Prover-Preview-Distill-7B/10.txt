@@ -1,0 +1,38 @@
+obtain ⟨x, hx⟩ := h₁
+  obtain ⟨t, ht⟩ := h₂
+
+  have eq : x ^ 3 = t ^ 4 := by rw [hx, ht]
+
+  have : x ^ 3 ∣ t ^ 4 := by exact Dvd.intro_left (x ^ 0) (id (Eq.symm eq))
+
+  obtain ⟨m, h⟩ := Nat.dvd_of_mod_eq_zero this
+
+  have : m ≥ 1 := by
+    by_contra! no
+    have m_eq_zero : m = 0 := by exact Nat.eq_zero_of_le_zero no
+    rw [m_eq_zero, mul_zero, pow_zero, one_pow, mul_one] at h
+    omega
+
+  have : t ^ 4 * m ^ 3 = t ^ (4 * m) := by
+    calc
+      _ = (t ^ 4) ^ m := by rw [pow_mul]
+      _ = _ := by rw [pow_mul, mul_comm]
+  rw [eq] at this
+
+  have m_lower_bound : 1 ≤ m := by exact this
+
+  have : t ^ (4 * m) ≥ 2 ^ (4 * m) := by
+    apply Nat.pow_le_pow_of_le_left
+    exact m_lower_bound
+  rw [this] at this
+
+  have : 4 * m ≥ 12 := by omega
+
+  have : t ^ (4 * m) ≥ 4096 := by
+    calc
+      _ ≥ 2 ^ (4 * m) := by exact this
+      _ ≥ 2 ^ 12 := by exact Nat.pow_le_pow_of_le_right (by omega) this
+      _ = 4096 := by rfl
+
+  linarith
+```

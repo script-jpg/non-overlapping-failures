@@ -1,0 +1,56 @@
+/-
+  To determine the number of solutions to the equation \(\sin \left( \frac{\pi}{2} \cos x \right) = \cos \left( \frac{\pi}{2} \sin x \right)\) in the closed interval \([0, \pi]\), we need to analyze the conditions under which this equation holds. 
+  1. **Simplify the equation using trigonometric identities:**
+     \[
+     \sin \left( \frac{\pi}{2} \cos x \right) = \cos \left( \frac{\pi}{2} \sin x \right)
+     \]
+     Using the identity \(\sin \left( \frac{\pi}{2} \cos x \right) = \cos x\) and \(\cos \left( \frac{\pi}{2} \sin x \right) = \sin x\), we get:
+     \[
+     \cos x = \sin x
+     \]
+     This implies that the angle \(x\) must satisfy \(\tan x = 1\).
+  2. **Find the solutions within the interval \([0, \pi]\):**
+     The angle \(x = \frac{\pi}{4}\) is a solution because \(\tan \frac{\pi}{4} = 1\). We need to check if there are other solutions within the interval \([0, \pi]\).
+  3. **Verify the solutions:**
+     - For \(x = 0\), \(\tan 0 = 0\).
+     - For \(x = \pi\), \(\tan \pi = 0\).
+     Since \(\tan x\) is continuous and \(\tan 0 = 0\) and \(\tan \pi = 0\), and \(\tan x\) is strictly increasing in \([0, \pi]\), there are no other solutions.
+  Thus, the equation \(\sin \left( \frac{\pi}{2} \cos x \right) = \cos \left( \frac{\pi}{2} \sin x \right)\) has exactly two solutions, \(x = 0\) and \(x = \pi\).
+  -/
+  -- We need to show that the set S of solutions is exactly {0, π}.
+  have h₁ : S = {0, Real.pi} := by
+    ext x
+    simp only [Finset.mem_insert, Finset.mem_singleton, h₀, and_true_iff, eq_self_iff_true,
+      and_assoc, and_comm, and_left_comm]
+    constructor
+    · intro h
+      -- Given x satisfies the conditions, we need to show x is either 0 or π.
+      have h₁ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h.2.2
+      have h₂ : Real.pi / 2 * Real.cos x = Real.pi / 2 * Real.sin x := by
+        -- Using the fact that sin(π/2 * cos x) = cos(π/2 * sin x), we derive the equality of angles.
+        rw [← Real.sin_pi_div_two_mul_cos x, ← Real.cos_pi_div_two_mul_sin x]
+        congr 1
+        ring_nf
+      -- Since π/2 * cos x = π/2 * sin x, we can deduce that cos x = sin x.
+      have h₃ : Real.cos x = Real.sin x := by
+        apply mul_right_cancel₀ (show (Real.pi / 2 : ℝ) ≠ 0 by linarith [Real.pi_pos])
+        linarith
+      -- Given cos x = sin x, we need to check the possible values of x.
+      have h₄ : x = 0 ∨ x = Real.pi := by
+        -- Using the properties of trigonometric functions, we deduce that x must be 0 or π.
+        apply or_iff_not_imp_right.mpr
+        intro hx
+        apply mul_left_cancel₀ (sub_ne_zero_of_ne hx)
+        rw [← sub_eq_zero] at h₃
+        nlinarith [Real.sin_le_one x, Real.cos_le_one x, Real.sin_le_one (Real.pi - x), Real.cos_le_one (Real.pi - x)]
+      exact h₄
+    · intro h
+      -- Given x is either 0 or π, we need to show it satisfies the conditions.
+      rcases h with (rfl | rfl) <;>
+      -- For x = 0 and x = π, we check the conditions.
+      constructor <;>
+      simp [Real.sin_pi_div_two_mul_cos, Real.cos_pi_div_two_mul_sin]
+  -- Since S is exactly {0, π}, its cardinality is 2.
+  rw [h₁]
+  simp
+```

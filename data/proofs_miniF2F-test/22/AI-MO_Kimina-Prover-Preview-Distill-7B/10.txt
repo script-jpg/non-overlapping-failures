@@ -1,0 +1,95 @@
+-- Apply AM-GM inequality to $a_1^2, a_2^2, \dots, a_{100}^2$ and $1, 1, \dots, 1$ (99 times)
+  have h₁ : (∏ x in Finset.range 100, a (x + 1) ^ 2) ^ (1 / 99 : ℝ) ≤
+    (∑ x in Finset.range 100, (1 : ℝ) * a (x + 1) ^ 2) / 100 := by
+    apply Real.geom_mean_le_arith_mean_weighted
+    -- For all $i \in \{1, 2, \dots, 100\}$, $a_i \ge 0$.
+    all_goals positivity
+    -- For all $i \in \{1, 2, \dots, 100\}$, $\frac{1}{100} \ge 0$.
+    all_goals norm_num
+    -- $\sum_{i=1}^{100} \frac{1}{100} a_i^2 = \sum_{i=1}^{100} a_i^2 = 1$
+    rw [Finset.sum_const, Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ,
+      Finset.sum_range_succ]
+      <;> norm_num
+    exact h₀
+
+  -- Prove that $\sum_{i=1}^{100} a_i^2 = 1$
+  have h₁' : ∑ x in Finset.range 100, a (x + 1) ^ 2 = 1 := by
+    rw [Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ]
+      <;> norm_num
+    exact h₀
+
+  -- Simplify $h₁$ using $h₁'$
+  rw [h₁'] at h₁
+  clear h₁'
+
+  -- Simplify the left-hand side of $h₁$
+  rw [Finset.prod_range_succ, Finset.prod_range_succ, Finset.prod_range_succ, Finset.prod_range_succ]
+      <;> norm_num at h₁
+
+  -- We have $\sqrt[99]{\prod_{i=1}^{100} a_i^2} \le \frac{1}{100} \sum_{i=1}^{100} a_i^2 = \frac{1}{100}$
+  replace h₁ : (1 / 100 : ℝ) ^ 99 ≤ ∏ x in Finset.range 100, a (x + 1) ^ 2 := by
+    rw [<-Real.mul_rpow (by positivity) (by norm_num), <-Real.rpow_mul (by norm_num)]
+    -- $\frac{1}{100} \le \prod_{i=1}^{100} a_i^2$
+    nlinarith
+    -- For all $i \in \{1, 2, \dots, 100\}$, $a_i^2 \le \frac{1}{100}$
+    all_goals nlinarith [sq_nonneg (a 1), sq_nonneg (a 2), sq_nonneg (a 3), sq_nonneg (a 4)]
+
+  -- Take reciprocal of both sides of $h₁$
+  replace h₁ : ∏ x in Finset.range 100, a (x + 1) ^ 2 ≤ (1 / (1 / 100 : ℝ) : ℝ) := by
+    apply (div_le_iff₀' (by positivity)).mp
+    exact h₁
+
+  -- Simplify the right-hand side of $h₁$
+  norm_num at h₁
+
+  -- Take the power of both sides of $h₁$ with exponent $99$
+  replace h₁ : (∏ x in Finset.range 100, a (x + 1) ^ 2) ^ (99 : ℝ) ≤ (100 : ℝ) ^ (99 : ℝ) := by
+    apply Real.rpow_le_rpow
+    -- For all $i \in \{1, 2, \dots, 100\}$, $a_i^2 \le \frac{1}{100}$
+    all_goals nlinarith [sq_nonneg (a 1), sq_nonneg (a 2), sq_nonneg (a 3), sq_nonneg (a 4)]
+    -- $0 < 99$
+    norm_num
+
+  -- $\sum_{i=1}^{99} a_i^2 a_{i+1} + a_{100}^2 a_1 < \frac{12}{25}$
+  suffices ∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2) + a 100 ^ 2 * a 1 < 12 / 25 by
+    exact this
+
+  -- Apply AM-GM inequality to $a_1^2 a_2, a_2^2 a_3, \dots, a_{99}^2 a_{100}, a_{100}^2 a_1$
+  -- Use the fact that $\sum_{i=1}^{100} a_i^2 = 1$.
+  have h₂ : (∏ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) * a 100 ^ 2 * a 1 ≤ (12 / 25) ^ 99 := by
+    calc
+      _ ≤ (∏ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) * a 100 ^ 2 * a 1 * (1 / 100) := by
+        -- $a_{100}^2 a_1 \le \frac{1}{100}$
+        nlinarith [sq_nonneg (a 1), sq_nonneg (a 2), sq_nonneg (a 3), sq_nonneg (a 4),
+          h₁']
+      _ = (∏ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) * (a 100 ^ 2 * a 1 * (1 / 100)) := by
+        ring
+      _ ≤ (∏ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) * ((1 / 100) ^ 99 := by
+        -- Use the fact that $\prod_{i=1}^{100} a_i^2 \le \frac{1}{100^{99}}$
+        apply Finset.prod_mul_distrib
+        simp [Finset.prod_const]
+        rw [<-Real.mul_rpow (by positivity) (by norm_num),
+          <-Real.rpow_mul (by norm_num)]
+        -- $\frac{1}{100} \le \prod_{i=1}^{100} a_i^2$
+        nlinarith [h₁]
+        -- For all $i \in \{1, 2, \dots, 100\}$, $a_i^2 \le \frac{1}{100}$
+        all_goals nlinarith [sq_nonneg (a 1), sq_nonneg (a 2), sq_nonneg (a 3), sq_nonneg (a 4)]
+      _ = (∏ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) * ((1 / 100) ^ 99 * 1) := by
+        simp
+      _ ≤ (∏ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) * ((1 / (1 / 100 : ℝ) : ℝ) ^ 99 := by
+        -- Take reciprocal of both sides of $h₁$
+        apply mul_le_mul_of_nonneg_left
+        -- $(1/100)^{99} \le (1/(1/100))^{99}$
+        apply Real.rpow_le_rpow
+        -- $(1/100) \le 1/(1/100)$
+        norm_num
+        -- For all $i \in \{1, 2, \dots, 100\}$, $a_i^2 \le \frac{1}{100}$
+        all_goals positivity
+      _ = _ := by
+        -- Simplify the right-hand side
+        ring
+
+  -- The result follows from AM-GM inequality
+  exact (lt_div_iff' (by norm_num)).mpr h₂
+
+```

@@ -1,0 +1,194 @@
+-- Note that it is enough to find a solution of $24x \equiv 15 \pmod{1199}$, which is $x = 449$. Since we are working modulo $1199$, any solution must be of the form $x = 449 + 1199k$ for some integer $k$. Then, let us check this number.
+  have n_1 : 24 * 449 % 1199 = 15 := by omega
+
+  -- This congruence is equivalent to $24x - 15 \equiv 0 \pmod{1199}$. In other words, $24x - 15 = 1199k$ for some integer $k$. We can rewrite this as $24x = 1199k + 15$. Note that the right hand side is divisible by $3$ whenever $k$ is even, so it is sufficient to only consider the case where $k$ is even. Substituting $k = 2k'$, we get that $16x = 811k' + 15$, where $k'$ is an integer. Clearly, this implies that $x$ is a solution of the original congruence if and only if $16x \equiv 15 \pmod{811}$.
+  have : 24 * x % 1199 = 15 ↔ 16 * x % 811 = 15 := by
+    -- To prove this, we will show that both congruences have the same solutions.
+    suffices 24 * x % 1199 = 15 ↔ 16 * x % 811 = 15 by exact this
+    -- Let $m : \mathbb{Z} \to \mathbb{Z}$ be the function $m(x) = 24x \bmod 1199$ and let $n : \mathbb{Z} \to \mathbb{Z}$ be the function $n(x) = 16x \bmod 811$. What we want to show is that $m(x) = 15 \iff n(x) = 15$.
+    apply Int.eq_iff_modEq_int
+    -- Note that $m$ and $n$ are both $\mathbb{Z}$-algebra homomorphisms.
+    let m : ℤ → ℤ := fun x => 24 * x % 1199
+    let n : ℤ → ℤ := fun x => 16 * x % 811
+    -- Let $p$ be the kernel of $m$ and let $q$ be the kernel of $n$.
+    let p : ℤ := Int.gcd 24 1199
+    let q : ℤ := Int.gcd 16 811
+    -- We claim that $p = 1$ and $q = 1$.
+    have hp : p = 1 := by
+      calc
+        p = Int.gcd 24 1199 := by rfl
+        _ = 1 := by norm_num
+    have hq : q = 1 := by
+      calc
+        q = Int.gcd 16 811 := by rfl
+        _ = 1 := by norm_num
+    have ker_m : Kernels.mono (Ideal.map (RingHom.id ℤ) p) (Ideal.map (RingHom.id ℤ) p) := Ideal-kernel monic
+    have ker_n : Kernels.mono (Ideal.map (RingHom.id ℤ) q) (Ideal.map (RingHom.id ℤ) q) := Ideal-kernel monic
+    -- Now, we are going to show that $p \mid x \iff q \mid x$. Note that $p \mid x \iff 24 \mid x \iff x = 24k$ for some integer $k$ and $q \mid x \iff 16 \mid x \iff x = 16l$ for some integer $l$.
+    have ab : p ∣ x ↔ q ∣ x := by
+      simp only [hp, hq, one_dvd]
+      constructor
+      · intro h
+        -- If $24 \mid x$, then $x = 24k$ for some integer $k$. Substituting this into the equation $24x \equiv 15 \pmod{1199}$, we get that $576k \equiv 15 \pmod{1199}$. However, $576 = 16 \cdot 36$, so this congruence is equivalent to $16 \cdot 36k \equiv 15 \pmod{1199}$. However, since $\gcd(16, 1199) = 1$, this is equivalent to $36k \equiv 15 \pmod{1199}$. Reducing this congruence by $36$, which is valid since $\gcd(36, 1199) = 1$, gives us $k \equiv 15 \pmod{1199}$. This means that $k = 15 + 1199l$ for some integer $l$ and $x = 24k = 24(15 + 1199l) = 360 + 28776l$. In other words, $x \equiv 360 \pmod{28776}$.
+      · intro h
+        -- Similarly, if $16 \mid x$, then $x = 16l$ for some integer $l$. Substituting this into the congruence $16x \equiv 15 \pmod{811}$, we get that $16 \cdot 16l \equiv 15 \pmod{811}$. However, $16 \cdot 16 = 256$, so this congruence is equivalent to $256l \equiv 15 \pmod{811}$. By inspection, we can see that $256 \cdot 449 = 112576 = 15 + 811 \cdot 139$. In other words, $256 \equiv 15 \pmod{811}$. Therefore, this congruence is satisfied if and only if $449 \equiv 1 \pmod{811}$. However, this is not possible, since $449 < 811$.
+        omega
+    -- Let $a$ be the image of the element $1$ under the inclusion $\{x \in \mathbb{Z} \mid p \mid x\} \to \mathbb{Z}$ and let $b$ be the image of the element $1$ under the inclusion $\{x \in \mathbb{Z} \mid q \mid x\} \to \mathbb{Z}$.
+    let a : ℤ := 24
+    let b : ℤ := 16
+    -- Let $T$ be the set of all integers $x$ such that $p \mid x$ and $q \mid x$.
+    let T : Set ℤ := {x | p ∣ x ∧ q ∣ x}
+    -- Let $S$ be the set of all integers $x$ such that $a \mid x$ and $b \mid x$.
+    let S : Set ℤ := {x | a ∣ x ∧ b ∣ x}
+    -- From the above, we have that $p \mid x \iff q \mid x$, so these two sets are equal.
+    have T_eq_S : T = S := by
+      ext x
+      simp only [T, S, hq, hp]
+      exact ab
+    -- Let $r$ be the set of all integers that are in both $a$ and $b$.
+    let r : Set ℤ := {x | a ∈ rlt x ∧ b ∈ rlt x}
+    -- Then, $S$ is the set of all integers such that $r \mid x$.
+    have S_eq_r : S = {x | r ∣ x} := by
+      ext x
+      simp only [S, r, Int.mem_rlt]
+      constructor
+      · intro h
+        exact h
+      · intro h
+        simp only [h]
+    -- Let $A$ be the set of all integers that are in $a$ but not in $b$.
+    let A : Set ℤ := {x \ a | b ∤ x}
+    -- Let $B$ be the set of all integers that are in $b$ but not in $a$.
+    let B : Set ℤ := {x \ b | a ∤ x}
+    -- Let $C$ be the set of all integers that are in both $a$ and $b$.
+    let C : Set ℤ := {x | a ∈ rlt x ∧ b ∈ rlt x}
+    -- Let $D$ be the set of all integers that are in neither $a$ nor $b$.
+    let D : Set ℤ := {x | a ∤ x ∧ b ∤ x}
+    -- We claim that $A \cup B \cup C \cup D = \mathbb{Z}$.
+    have : A ∪ B ∪ C ∪ D = (Int.univ : Set ℤ) := by
+      ext x
+      simp only [A, B, C, D, Int.mem_rlt, Set.mem_union]
+      omega
+    -- We claim that $A$, $B$, $C$, and $D$ form a partition of $\mathbb{Z}$.
+    have par : Partition (Int.univ : Set ℤ) A B C D := by
+      -- To that end, it is enough to show that $A$, $B$, $C$, and $D$ are pairwise disjoint, and that they are all nonempty.
+      refine ⟨?_,?_,?_,?_⟩
+      · -- Let's show that $A$ and $B$ are disjoint.
+        intro x h₁ h₂
+        simp only [A, h₁, h₂] at h₂
+        aesop
+      · -- Let's show that $A$ and $C$ are disjoint.
+        intro x h₁ h₂
+        simp only [A, C, h₁, h₂] at h₂
+        aesop
+      · -- Let's show that $A$ and $D$ are disjoint.
+        intro x h₁ h₂
+        simp only [A, D, h₁, h₂] at h₂
+        aesop
+      · -- Let's show that $B$ and $C$ are disjoint.
+        intro x h₁ h₂
+        simp only [B, C, h₁, h₂] at h₂
+        aesop
+      · -- Let's show that $B$ and $D$ are disjoint.
+        intro x h₁ h₂
+        simp only [B, D, h₁, h₂] at h₂
+        aesop
+      · -- Let's show that $C$ and $D$ are disjoint.
+        intro x h₁ h₂
+        simp only [C, D, h₁, h₂] at h₂
+        aesop
+      · -- Let's show that $A$ is nonempty.
+        use a - 1
+        simp only [A, Nat.reduceSub, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, Int.reduceSub, Subtype.mk.injEq, true_and]
+        omega
+      · -- Let's show that $B$ is nonempty.
+        use b - 1
+        simp only [B, Nat.reduceSub, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, Int.reduceSub, Subtype.mk.injEq, true_and]
+        omega
+      · -- Let's show that $C$ is nonempty.
+        use a * b
+        simp only [C, Nat.reduceMul, Int.reduceMul, true_and]
+      · -- Let's show that $D$ is nonempty.
+        use a * b - 1
+        simp only [D, Nat.not_ofNat_le_sub_one, Int.reduceMul, Nat.reduceSub, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, true_and]
+        omega
+    -- Let $f$ be the function that maps $x \in \mathbb{Z}$ to $x \in \mathbb{Z}$.
+    let f : ℤ → ℤ := fun x => x
+    -- We claim that $f$ is a bijection.
+    have f-bij : Set.BijOn f T S := by
+      -- To that end, it is enough to show that $f$ is a surjective letf, and a injective retraction.
+      refine ⟨?_,?_⟩
+      · -- Let's show that $f$ is a surjective.
+        intro x h
+        simp only [h, Set.mem_setOf_eq, T, S] at h
+        obtain ⟨⟨p, q⟩, h⟩ := h
+        use p
+        simp only [f, Set.mem_setOf_eq, hq, hp, Int.reduceSub, Subtype.mk.injEq, true_and]
+        omega
+      · -- Let's show that $f$ is a injective retraction.
+        intro x y h₁ h₂ h₃
+        simp only [f, Set.mem_setOf_eq, T, S] at h₁ h₂ h₃
+        simp only [Set.mem_setOf_eq, Int.reduceSub, Subtype.mk.injEq, true_and] at h₁ h₂ h₃
+        rw [h₁] at h₂ h₃
+        rw [h₂] at h₃
+        exact h₃
+    -- Let $g$ be the function that maps $x \in \mathbb{Z}$ to $x \in \mathbb{Z}$.
+    let g : ℤ → ℤ := fun x => x
+    -- We claim that $g$ is a bijection.
+    have g-bij : Set.BijOn g S T := by
+      -- To that end, it is enough to show that $g$ is a surjective letf, and a injective retraction.
+      refine ⟨?_,?_⟩
+      · -- Let's show that $g$ is a surjective.
+        intro x h
+        simp only [h, Set.mem_setOf_eq, S, T] at h
+        obtain ⟨p, q⟩ := h
+        use p
+        simp only [f, Set.mem_setOf_eq, hq, hp, Int.reduceSub, Subtype.mk.injEq, true_and]
+        omega
+      · -- Let's show that $g$ is a injective retraction.
+        intro x y h₁ h₂ h₃
+        simp only [f, Set.mem_setOf_eq, S, T] at h₁ h₂ h₃
+        simp only [Set.mem_setOf_eq, Int.reduceSub, Subtype.mk.injEq, true_and] at h₁ h₂ h₃
+        rw [h₁] at h₂ h₃
+        rw [h₂] at h₃
+        exact h₃
+    -- The function $f \circ g^{-1}$ is a bijection from $S$ to $T$.
+    have f_circ_g_inv : Set.BijOn (f ∘ g⁻¹) S T := by
+      -- To that end, it is enough to show that $f \circ g^{-1}$ is a surjective letf, and a injective retraction.
+      refine ⟨?_,?_⟩
+      · -- Let's show that $f \circ g^{-1}$ is a surjective.
+        intro x h
+        simp only [h, Set.mem_setOf_eq, S, T] at h
+        obtain ⟨p, q⟩ := h
+        use p
+        simp only [f, Set.mem_setOf_eq, hq, hp, Int.reduceSub, Subtype.mk.injEq, true_and]
+        omega
+      · -- Let's show that $f \circ g^{-1}$ is a injective retraction.
+        intro x y h₁ h₂ h₃
+        simp only [f, Set.mem_setOf_eq, S, T] at h₁ h₂ h₃
+        simp only [Set.mem_setOf_eq, Int.reduceSub, Subtype.mk.injEq, true_and] at h₁ h₂ h₃
+        rw [h₁] at h₂ h₃
+        rw [h₂] at h₃
+        exact h₃
+    -- The function $g \circ f^{-1}$ is a bijection from $T$ to $S$.
+    have g_circ_f_inv : Set.BijOn (g ∘ f⁻¹) T S := by
+      -- To that end, it is enough to show that $g \circ f^{-1}$ is a surjective letf, and a injective retraction.
+      refine ⟨?_,?_⟩
+      · -- Let's show that $g \circ f^{-1}$ is a surjective.
+        intro x h
+        simp only [h, Set.mem_setOf_eq, T, S] at h
+        obtain ⟨p, q⟩ := h
+        use p
+        simp only [f, Set.mem_setOf_eq, hq, hp, Int.reduceSub, Subtype.mk.injEq, true_and]
+        omega
+      · -- Let's show that $g \circ f^{-1}$ is a injective retraction.
+        intro x y h₁ h₂ h₃
+        simp only [f, Set.mem_setOf_eq, T, S] at h₁ h₂ h₃
+        simp only [Set.mem_setOf_eq, Int.reduceSub, Subtype.mk.injEq, true_and] at h₁ h₂ h₃
+        rw [h₁] at h₂ h₃
+        rw [h₂] at h₃
+        exact h₃
+    -- The function $f \circ g^{-1}$ is a bijection from $S$ to $T$.
+    have f_circ_g_inv : Set.BijOn (f ∘ g⁻¹) S T := by
+      exact Set.BijOn.mono f_bij g_circ_f_inv
+    -- The function $g \circ

@@ -1,0 +1,181 @@
+-- aux lemma, given $a \leq 2\pi$, $\sum_{k=1}^n \sin (k a)$ is bounded by $-\sin(\frac{a}{2}) \leq \sum_{k=1}^n \sin (k a) \leq \sin(\frac{a}{2})$.
+  have hsin (a : ℝ) (h₀ : a ≤ 2 * Real.pi) (n : ℕ) : ∑ k in Finset.Icc 1 n, Real.sin (k * a) ≥ -Real.sin (a / 2) ∧ ∑ k in Finset.Icc 1 n, Real.sin (k * a) ≤ Real.sin (a / 2) := by
+    have hsin : ∀ k : ℕ, Real.sin (k * a) = - (Real.sin (a / 2 - k * a)) := by
+      intro k
+      rw [show -(a / 2 - k * a) = k * a - a / 2 by ring]
+      rw [Real.sin_neg]
+      rw [Real.sin_sub]
+      simp only [Real.cos_pi_div_two, sub_left_inj, Real.sin_pi_div_two]
+      ring
+    simp only [Finset.sum_neg_distrib, Finset.sum_Icc_succ_top, Finset.sum_range_succ, Nat.cast_one, Finset.sum_singleton, Nat.cast_ofNat]
+    have : -Real.sin (a / 2) = Real.sin ((n : ℤ) * (a / 2)) := by
+      rw [show -Real.sin (a / 2) = Real.sin (- (a / 2)) by simp only [Real.sin_neg]]
+      rw [←Real.sin_int_mul]
+      simp only [Nat.cast_neg, Nat.cast_one]
+    constructor
+    · rw [this]
+      apply Real.le_sin_of_le_of_le_pi_div_two
+      repeat (linarith only [h₀])
+    · apply Real.sin_le_of_le_of_le_pi_div_two
+      repeat (linarith only [h₀])
+
+  -- aux lemma, given $a \leq 2\pi$, $\sum_{k=1}^n \sin (k a)$ is bounded by $-\sin(\frac{a}{2}) \leq \sum_{k=1}^n \sin (k a) \leq \sin(\frac{a}{2})$.
+  have hcos (a : ℝ) (h₀ : a ≤ 2 * Real.pi) (n : ℕ) : ∑ k in Finset.Icc 1 n, Real.cos (k * a) ≥ -Real.sin (a / 2) ∧ ∑ k in Finset.Icc 1 n, Real.cos (k * a) ≤ Real.sin (a / 2) := by
+    have hsin : ∀ k : ℕ, Real.cos (k * a) = - (Real.cos (a / 2 - k * a)) := by
+      intro k
+      rw [show -(a / 2 - k * a) = k * a - a / 2 by ring]
+      rw [Real.cos_neg]
+      rw [Real.cos_sub]
+      simp only [Real.cos_pi_div_two, sub_left_inj, Real.sin_pi_div_two]
+      ring
+    simp only [Finset.sum_neg_distrib, Finset.sum_Icc_succ_top, Finset.sum_range_succ, Nat.cast_one, Finset.sum_singleton, Nat.cast_ofNat]
+    have : -Real.sin (a / 2) = Real.cos ((n : ℤ) * (a / 2)) := by
+      rw [show -Real.sin (a / 2) = Real.cos (Real.pi / 2 - (a / 2)) by simp only [Real.cos_pi_div_two_sub]]
+      rw [←Real.cos_int_mul]
+      simp only [Nat.cast_neg, Nat.cast_one]
+    constructor
+    · rw [this]
+      apply Real.le_cos_of_le_of_le_pi
+      repeat (linarith only [h₀])
+    · apply Real.cos_le_of_le_of_le_pi
+      repeat (linarith only [h₀])
+
+  -- aux lemma, $\sum_{k=1}^n \sin (k a)$ is equal to $-\frac{\cos ((n+1) a/2) - \cos (a/2)}{\sin (a/2)}$.
+  have hsum_sin (a : ℝ) (h₀ : a ≠ 0) (n : ℕ) : ∑ k in Finset.Icc 1 n, Real.sin (k * a) = - (Real.cos ((n : ℤ) * (a / 2)) - Real.cos (a / 2)) / Real.sin (a / 2) := by
+    have h (k : ℕ) : Real.sin (k * a) = Real.sin (a / 2) * Real.cos (k * a) + Real.cos (a / 2) * Real.sin (k * a) := by
+      rw [Real.sin_add]
+      ring
+    simp only [Finset.sum_Icc_succ_top, Finset.sum_range_succ, Nat.cast_one, Finset.sum_singleton, Nat.cast_ofNat, h]
+    have : ∑ k ∈ Finset.Icc 1 n, Real.cos (k * a) = Real.cos (a / 2) * Real.cos ((n : ℤ) * (a / 2)) := by
+      calc
+        ∑ k ∈ Finset.Icc 1 n, Real.cos (k * a) = ∑ k ∈ Finset.Icc 1 n, Real.cos ((k + (n - 1) - (n - 1)) * a) := by simp only [Finset.mem_Icc, add_tsub_cancel_right, Nat.cast_sub, Nat.cast_add, Nat.cast_one, Nat.cast_ofNat, tsub_le_iff_left, sub_add_cancel]
+        _ = ∑ k ∈ Finset.Icc 1 n, Real.cos ((k - n + (n - 1)) * a) := by simp only [Finset.sum_Icc_succ_top, Nat.cast_add, Nat.cast_one, Nat.cast_ofNat, add_tsub_cancel_right]
+        _ = ∑ k ∈ Finset.Icc 1 n, Real.cos ((k - n) * a) := by rw [Finset.sum_congr]; rfl; intros; ring
+        _ = ∑ k ∈ Finset.Icc 1 n, Real.cos (- (n - k) * a) := by simp only [Finset.sum_Icc_succ_top, Nat.cast_neg, Nat.cast_ofNat]
+        _ = ∑ k ∈ Finset.Icc 1 n, Real.cos ((n - k) * a) := by rw [Finset.sum_congr]; rfl; intros; rw [mul_comm]
+    rw [this, Finset.sum_mul, mul_comm, ←Real.cos_int_mul, mul_comm]
+    simp only [Nat.cast_neg, Nat.cast_one, Nat.cast_ofNat, Int.cast_one, Int.cast_neg, Int.cast_add, Int.cast_mul]
+    ring
+
+  -- aux lemma, $\sum_{k=1}^n \cos (k a)$ is equal to $\frac{\sin ((n+1) a/2) - \sin (a/2)}{\sin (a/2)}$.
+  have hsum_cos (a : ℝ) (h₀ : a ≠ 0) (n : ℕ) : ∑ k in Finset.Icc 1 n, Real.cos (k * a) = Real.sin ((n : ℤ) * (a / 2)) - Real.sin (a / 2) := by
+    have h (k : ℕ) : Real.cos (k * a) = Real.sin (a / 2) * Real.cos (k * a) + Real.cos (a / 2) * Real.sin (k * a) := by
+      rw [Real.cos_add]
+      ring
+    simp only [Finset.sum_Icc_succ_top, Finset.sum_range_succ, Nat.cast_one, Finset.sum_singleton, Nat.cast_ofNat, h]
+    have : ∑ k ∈ Finset.Icc 1 n, Real.sin (k * a) = Real.sin (a / 2) * Real.sin ((n : ℤ) * (a / 2)) - Real.cos (a / 2) * Real.cos ((n : ℤ) * (a / 2)) := by
+      calc
+        ∑ k ∈ Finset.Icc 1 n, Real.sin (k * a) = ∑ k ∈ Finset.Icc 1 n, Real.sin ((k + (n - 1) - (n - 1)) * a) := by simp only [Finset.mem_Icc, add_tsub_cancel_right, Nat.cast_sub, Nat.cast_add, Nat.cast_one, Nat.cast_ofNat, tsub_le_iff_left, sub_add_cancel]
+        _ = ∑ k ∈ Finset.Icc 1 n, Real.sin ((k - n + (n - 1)) * a) := by simp only [Finset.sum_Icc_succ_top, Nat.cast_add, Nat.cast_one, Nat.cast_ofNat, add_tsub_cancel_right]
+        _ = ∑ k ∈ Finset.Icc 1 n, Real.sin ((k - n) * a) := by rw [Finset.sum_congr]; rfl; intros; ring
+        _ = ∑ k ∈ Finset.Icc 1 n, Real.sin (- (n - k) * a) := by simp only [Finset.sum_Icc_succ_top, Nat.cast_neg, Nat.cast_ofNat]
+        _ = ∑ k ∈ Finset.Icc 1 n, Real.sin ((n - k) * a) := by rw [Finset.sum_congr]; rfl; intros; rw [mul_comm]
+    rw [this, Finset.sum_mul, mul_comm, ←Real.sin_int_mul, mul_comm]
+    simp only [Nat.cast_neg, Nat.cast_one, Nat.cast_ofNat, Int.cast_one, Int.cast_neg, Int.cast_add, Int.cast_mul]
+    ring
+
+  -- By hsum_sin, $\sum_{k=1}^{35} \sin (5k) = -\frac{\cos (90) - \cos (5/2)}{\sin (5/2)}$.
+  have hsum_sin' : ∑ k in Finset.Icc (1 : ℕ) 35, Real.sin (5 * k) = - (Real.cos (90) - Real.cos (5 / 2)) / Real.sin (5 / 2) := by
+    rw [hsum_sin]
+    · ring
+    · exact Ne.symm (OfNat.zero_ne_ofNat 5)
+    · exact zero_lt_two_mul (Real.pi / 180) (by norm_num)
+
+  -- By hsum_cos, $\sum_{k=1}^{35} \sin (5k) = \frac{\sin (90) - \sin (5/2)}{\sin (5/2)}$.
+  have hsum_cos' : ∑ k in Finset.Icc (1 : ℕ) 35, Real.cos (5 * k) = Real.sin (90) - Real.sin (5 / 2) := by
+    rw [hsum_cos]
+    · ring
+    · exact Ne.symm (OfNat.zero_ne_ofNat 5)
+    · exact zero_lt_two_mul (Real.pi / 180) (by norm_num)
+
+  -- Using the fact that $\sin (90) = \cos (0)$, rewrite the equation $\sum_{k=1}^{35} \sin (5k) = \frac{\sin (90) - \sin (5/2)}{\sin (5/2)}$ to $\sum_{k=1}^{35} \sin (5k) = -\frac{\cos (0) - \cos (5/2)}{\sin (5/2)}$.
+  have hcos' : Real.sin (90) = Real.cos (0) := by
+    rw [show 90 = Real.pi / 2 by norm_num, Real.sin_pi_div_two]
+
+  rw [hcos'] at hsum_cos'
+
+  -- Because $\sum_{k=1}^{35} \sin (5k) = \sum_{k=1}^{35} \sin (5k)$, we have $-\frac{\cos (0) - \cos (5/2)}{\sin (5/2)} = \frac{\sin (0) - \sin (5/2)}{\sin (5/2)}$.
+  have h : - (Real.cos (90) - Real.cos (5 / 2)) / Real.sin (5 / 2) = (Real.sin (90) - Real.sin (5 / 2)) / Real.sin (5 / 2) := by
+    rw [←hsum_sin', hsum_cos']
+  norm_num at h
+
+  -- Because $\sum_{k=1}^{35} \sin (5k) = \sum_{k=1}^{35} \sin (5k)$, we have $-\cos (5/2) = \sin (0) - \sin (5/2)$.
+  have h' : - Real.cos (5 / 2) = Real.sin (0) - Real.sin (5 / 2) := by
+    rw [←hsum_sin', hsum_cos']
+    norm_num
+
+  -- Simplify it to $-\cos (5/2) = - \sin (5/2)$.
+  simp only [Real.sin_zero, zero_sub] at h'
+
+  -- Because $\sum_{k=1}^{35} \sin (5k) = \sum_{k=1}^{35} \sin (5k)$, we have $\sin (5/2) = \cos (5/2)$.
+  have h'' : Real.sin (5 / 2) = Real.cos (5 / 2) := by
+    rw [←hsum_sin', hsum_cos']
+    norm_num
+  rw [show 5 / 2 = Real.pi - (Real.pi / 2 - 5 / 2) by ring, Real.sin_pi_sub] at h''
+  rw [←h'] at h''
+
+  -- Because $\sin (5/2) = \cos (5/2)$, we have $\tan (5/2) = 1$.
+  have htan : Real.tan (5 / 2) = 1 := by
+    rw [Real.tan_eq_sin_div_cos]
+    rw [h'']
+    norm_num
+
+  -- Because $\sum_{k=1}^{35} \sin (5k) = \tan (m / n)$, we have $\tan (5/2) = \tan (m / n)$.
+  rw [hsum_sin'] at htan
+
+  -- Because $\tan (5/2) = \tan (m / n)$, we have $5/2 = m / n + k \pi$ for some integer $k$.
+  have ⟨c, hc⟩ : ∃ c : ℤ, (5 / 2 : ℝ) = (m / n) + c * Real.pi := by
+    rw [←htan]
+    apply Real.tan_eq_tan_iff
+    norm_num
+  rcases hc with ⟨hc, htan⟩
+
+  -- Because $5/2$ is in $[0, \pi/2)$, we have $m / n = 5 / 2 - k \pi \in [0, \pi/2)$.
+  have h₀ : 0 ≤ (m : ℝ) / n ∧ (m : ℝ) / n < Real.pi / 2 := by
+    constructor
+    · rcases hc with ⟨c, hc⟩
+      have : (5 / 2 : ℝ) - c * Real.pi ≥ 0 := by
+        rw [←hc]
+        exact Real.sin_nonneg_of_nonneg_of_le_pi (by norm_num) (by norm_num)
+      linarith
+    · rcases hc with ⟨c, hc⟩
+      have : (5 / 2 : ℝ) - c * Real.pi < Real.pi / 2 := by
+        linarith [Real.pi_pos]
+      linarith
+
+  norm_cast at h₀
+
+  -- We get $m = 5 n / 2 - k n \pi$.
+  have h₁ : (m : ℤ) = 5 * n / 2 - c * n := by
+    qify
+    linarith
+
+  -- Because $m$ and $n$ are relatively prime, we have $\gcd(m, n) = 1$.
+  have h₂ : IsCoprime m n := by
+    apply Int.isCoprime_of_nat
+    zify
+    exact h₂
+
+  -- Because $m$ and $n$ are relatively prime, we get $n = 2 / (5 - 2 k)$.
+  have h₃ : n = (2 : ℤ) / (5 - c * 2) := by
+    qify
+    apply mul_right_cancel₀ (by Int.cast_ne_zero.mpr (by linarith))
+    nlinarith
+
+  -- Because $n$ is positive, we have $5 - 2 k \neq 0$.
+  have h₄ : 5 - c * 2 ≠ (0 : ℤ) := by
+    intro hc'
+    rw [hc'] at h₃
+    norm_cast at h₃
+    linarith [h₃, h₀]
+
+  -- Because $5 - 2 k \neq 0$, we have $5 - 2 k = 1, -1, 2, $ or $-2$.
+  have h₅ : (5 - c * 2 : ℤ) = 1 ∨ (5 - c * 2 : ℤ) = -1 ∨ (5 - c * 2 : ℤ) = 2 ∨ (5 - c * 2 : ℤ) = -2 := by
+    have hc' : (5 - c * 2 : ℝ) ≠ 0 := by
+      qify at h₄
+      exact h₄
+    have : |(5 - c * 2 : ℝ)| ≠ 0 := by
+      rw [abs_ne_zero]
+      exact hc'
+    have : |(5 - c * 2 : ℝ)| = 1 ∨ |(5 - c * 2 : ℝ)| = 2 := by
+      have h₅ : |(5 - c * 2 : ℝ)| = 1 ∨ |(5 - c * 2 : ℝ)| = 2 ∨ |(

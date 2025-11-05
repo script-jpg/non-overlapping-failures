@@ -1,0 +1,215 @@
+have cast (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 8 ^ k := by
+    apply Finset.sum_congr rfl
+    intros k hk
+    rw [pow_mul]
+    calc
+      _ = 2 ^ (3 * k) := by ring
+      _ = (2 ^ 3) ^ k := by rw [pow_mul]
+      _ = 8 ^ k := by norm_num
+
+  have cast_nat (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 8 ^ k = ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * (↑(8 : ℕ)) ^ k := by
+    apply Finset.sum_congr rfl
+    intros k hk
+    norm_cast
+
+  -- Note that if we take $n = 4a + 1$, for some integer $a \ge 0$, then, by Lucas's theorem, we have $$\binom{2n+1}{2k+1} \equiv \binom{9}{1} \binom{1}{0} \equiv 9 \pmod{5}$$when $k = 0$. Therefore, $$\sum_{k=0}^{n}\binom{2n+1}{2k+1}2^{3k} \equiv \binom{2n+1}{1} + \sum_{k=1}^{n}\binom{2n+1}{2k+1}2^{3k} \equiv 9 + \sum_{k=1}^{n}\binom{2n+1}{2k+1}2^{3k} \not\equiv 0 \pmod{5}.$$
+
+  have Lucas_nine (a b : ℕ) : 5 ∣ ∑ k in Finset.range (a + 1), Nat.choose (5 * a + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+    induction a with
+    | zero => simp [Finset.sum_range_succ]
+    | succ a ih =>
+      rw [show 5 * (a + 1) + 1 = 5 * a + 1 + 5 by ring]
+      rw [show 5 * a + 1 + 5 = 5 * a + 1 + Nat.choose 5 1 by rw [Nat.choose_succ_right]]
+      rw [add_assoc, Finset.sum_add_distrib]
+      simp [add_comm]
+      rw [ih, Nat.mul_mod, Nat.add_mod]
+      have h1 : Nat.choose (5 * a + 1 + 5) (2 * (a + 1) + 1) ≡ Nat.choose (5 * a + 1) (2 * 0 + 1) * Nat.choose 5 2 [MOD 5] := by
+        rw [Nat.choose_succ_right]
+        rw [Nat.choose_succ_right]
+        rw [Nat.choose_succ_left]
+        rw [Nat.choose_succ_left]
+        rw [Nat.choose_succ_left]
+        simp only [Nat.choose_zero_right, Nat.choose_succ_zero, Nat.reduceAdd, and_true]
+        apply Nat.mod_eq_of_modEq
+        apply Nat.modEq_trans
+        · apply Nat.modEq_of_dvd
+          rw [Nat.sub_add_cancel]
+          apply Nat.choose_dvd_choose
+          simp only [Set.mem_range, add_nonneg, Nat.reduceLeDiff, and_self]
+          simp only [Nat.reduceSub, Nat.reduceAdd, Nat.reduceLeDiff, Nat.reduceEqDiff, and_true]
+          use 1
+          rfl
+        · decide
+      have h2 : Nat.choose (5 * a + 1 + 5) (2 * (a + 1) + 1) * 2 ^ (3 * (a + 1)) ≡ Nat.choose (5 * a + 1) (2 * 0 + 1) * Nat.choose 5 2 * 2 ^ (3 * (a + 1)) [MOD 5] := by
+        apply Nat.ModEq.mul_right
+        apply h1
+      have h3 : Nat.choose (5 * a + 1) (2 * 0 + 1) * Nat.choose 5 2 * 2 ^ (3 * (a + 1)) ≡ 1 * 10 * 2 ^ (3 * (a + 1)) [MOD 5] := by
+        simp only [Nat.choose_zero_right, Nat.choose_succ_zero, Nat.reduceAdd, and_self]
+        simp only [Nat.reduceSub, Nat.reduceAdd, Nat.reduceLeDiff, Nat.reduceEqDiff, and_true]
+        apply Nat.ModEq.mul_right
+        apply Nat.ModEq.mul_right
+        rfl
+        decide
+        simp only [Nat.reduceLeDiff, and_true]
+        use 1
+        rfl
+      have h4 : 1 * 10 * 2 ^ (3 * (a + 1)) ≡ 0 [MOD 5] := by
+        rw [Nat.modEq_zero_iff_dvd]
+        rw [Nat.mul_mod, Nat.mul_mod]
+        norm_num
+        decide
+      have h5 : Nat.choose (5 * a + 1 + 5) (2 * (a + 1) + 1) * 2 ^ (3 * (a + 1)) ≡ 0 [MOD 5] := by
+        apply Nat.ModEq.trans h2 h3
+        apply Nat.ModEq.trans h3 h4
+        apply Nat.ModEq.trans h2 h4
+      have h6 : ∑ x ∈ Finset.range (a + 1 + 1), Nat.choose (5 * a + 1 + 5) (2 * x + 1) * 2 ^ (3 * x) ≡ 0 [MOD 5] := by
+        cases a + 1 + 1 with
+        | zero => simp
+        | succ a + 1 =>
+          rw [Finset.sum_range_succ]
+          apply Nat.ModEq.add
+          rw [Nat.zero_add]
+          exact h5
+          rw [Finset.sum_congr rfl]
+          intros x hx
+          rw [show 2 * (x + 1) + 1 = 2 * x + 1 + 2 by ring]
+          rw [show 3 * (x + 1) = 3 * x + 3 by ring]
+          rw [Nat.choose_succ_right]
+          rw [Nat.mul_mod, Nat.mul_mod]
+          apply Nat.ModEq.mul_left
+          apply Nat.ModEq.trans (by decide) h5
+          simp only [Nat.reduceLeDiff, and_false, not_true_eq_false]
+          simp only [Nat.reduceSub, Nat.reduceAdd, Nat.reduceLeDiff, Nat.reduceEqDiff, and_true]
+          ring_nf
+          decide
+      apply Nat.dvd_of_mod_eq_zero
+      apply Nat.ModEq.symm
+      apply Nat.ModEq.trans h6
+      apply Nat.modEq_zero_iff_dvd.mp
+      rw [Nat.add_mod, Nat.add_mod]
+      apply Nat.ModEq.add
+      · apply Nat.ModEq.trans (id (Nat.ModEq.symm h1)) (id (Nat.ModEq.symm h4))
+      · apply Nat.ModEq.symm
+        apply Nat.ModEq.trans (id (Nat.ModEq.symm h2)) h4
+  -- We show that if $n$ is not of the form $4a + 1$, for some integer $a \ge 0$, then $\sum^n_{k=0}\binom{2n+1}{2k+1}2^{3k}$ is not divisible by $5$. 
+  have Lucas_ineq (n : ℕ) : 5 ∤ ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+    induction' n with n ih
+    · simp [Finset.sum_range_succ]
+      intro h
+      have h1 : 5 ∣ 2 * (n + 1) := by
+        apply Nat.dvd_of_mod_eq_zero
+        apply Nat.modEq_of_dvd
+        rw [Nat.sub_add_cancel]
+        apply Nat.choose_dvd_choose
+        simp only [Set.mem_range, add_nonneg, Nat.reduceLeDiff, and_self]
+        simp only [Nat.reduceSub, Nat.reduceAdd, Nat.reduceLeDiff, Nat.reduceEqDiff, and_true]
+        use 1
+        rfl
+      rw [Nat.prime_iff.mp Nat.prime_five] at h1
+      tauto
+    · rw [show 2 * (n + 1) + 1 = 2 * n + 1 + 2 by ring]
+      rw [show 2 * (n + 1) + 1 = 2 * n + 1 + Nat.choose 2 1 by rw [Nat.choose_succ_right]]
+      rw [add_assoc, Finset.sum_add_distrib]
+      simp [add_comm]
+      rw [ih, Nat.mul_mod, Nat.add_mod]
+      have h1 : Nat.choose (2 * n + 1 + 2) (2 * (n + 1) + 1) ≡ Nat.choose (2 * n + 1) (2 * 0 + 1) * Nat.choose 2 1 [MOD 5] := by
+        rw [Nat.choose_succ_right]
+        rw [Nat.choose_succ_right]
+        rw [Nat.choose_succ_left]
+        rw [Nat.choose_succ_left]
+        rw [Nat.choose_succ_left]
+        simp only [Nat.choose_zero_right, Nat.choose_succ_zero, Nat.reduceAdd, and_self]
+        apply Nat.mod_eq_of_modEq
+        apply Nat.modEq_trans
+        · apply Nat.modEq_of_dvd
+          rw [Nat.sub_add_cancel]
+          apply Nat.choose_dvd_choose
+          simp only [Set.mem_range, add_nonneg, Nat.reduceLeDiff, and_self]
+          simp only [Nat.reduceSub, Nat.reduceAdd, Nat.reduceLeDiff, Nat.reduceEqDiff, and_true]
+          use 1
+          rfl
+        · rfl
+      have h2 : Nat.choose (2 * n + 1 + 2) (2 * (n + 1) + 1) * 2 ^ (3 * (n + 1)) ≡ Nat.choose (2 * n + 1) (2 * 0 + 1) * Nat.choose 2 1 * 2 ^ (3 * (n + 1)) [MOD 5] := by
+        apply Nat.ModEq.mul_right
+        apply h1
+      have h3 : Nat.choose (2 * n + 1) (2 * 0 + 1) * Nat.choose 2 1 * 2 ^ (3 * (n + 1)) ≡ 1 * 2 * 2 ^ (3 * (n + 1)) [MOD 5] := by
+        simp only [Nat.choose_zero_right, Nat.choose_succ_zero, Nat.reduceAdd, and_self]
+        simp only [Nat.reduceSub, Nat.reduceAdd, Nat.reduceLeDiff, Nat.reduceEqDiff, and_true]
+        apply Nat.ModEq.mul_right
+        apply Nat.ModEq.mul_right
+        rfl
+        rfl
+        simp only [Nat.reduceLeDiff, and_false, not_true_eq_false]
+        use 1
+        rfl
+      have h4 : 1 * 2 * 2 ^ (3 * (n + 1)) ≡ 0 [MOD 5] := by
+        rw [Nat.modEq_zero_iff_dvd]
+        rw [Nat.mul_mod]
+        nth_rw 2 [Nat.mul_mod]
+        norm_num
+        decide
+      have h5 : Nat.choose (2 * n + 1 + 2) (2 * (n + 1) + 1) * 2 ^ (3 * (n + 1)) ≡ 0 [MOD 5] := by
+        apply Nat.ModEq.trans h2 h3
+        apply Nat.ModEq.trans h3 h4
+        apply Nat.ModEq.trans h2 h4
+      have h6 : ∑ x ∈ Finset.range (n + 1 + 1), Nat.choose (2 * n + 1 + 2) (2 * x + 1) * 2 ^ (3 * x) ≡ 0 [MOD 5] := by
+        cases n + 1 + 1 with
+        | zero => simp
+        | succ n + 1 =>
+          rw [Finset.sum_range_succ]
+          apply Nat.ModEq.add
+          rw [Nat.zero_add]
+          exact h5
+          rw [Finset.sum_congr rfl]
+          intros x hx
+          rw [show 2 * (x + 1) + 1 = 2 * x + 1 + 2 by ring]
+          rw [show 3 * (x + 1) = 3 * x + 3 by ring]
+          rw [Nat.choose_succ_right]
+          rw [Nat.mul_mod, Nat.mul_mod]
+          apply Nat.ModEq.mul_left
+          apply Nat.ModEq.trans (id (Nat.ModEq.symm h1)) (id (Nat.ModEq.symm h4))
+          simp only [Nat.reduceLeDiff, and_false, not_true_eq_false]
+          simp only [Nat.reduceSub, Nat.reduceAdd, Nat.reduceLeDiff, Nat.reduceEqDiff, and_true]
+          ring_nf
+          decide
+      by_contra h
+      rw [Nat.not_dvd_iff_mod_ne_zero] at h
+      apply Nat.dvd_of_mod_eq_zero at h
+      apply Nat.ModEq.symm at h
+      apply Nat.ModEq.trans h h6
+      apply Nat.modEq_zero_iff_dvd.mp
+      rw [Nat.add_mod, Nat.add_mod]
+      apply Nat.ModEq.add
+      · apply Nat.ModEq.trans (id (Nat.ModEq.symm h1)) (id (Nat.ModEq.symm h4))
+      · apply Nat.ModEq.symm
+        apply Nat.ModEq.trans (id (Nat.ModEq.symm h2)) h4
+  -- Since every positive integer $n$ is of the form $4a + 1$, for some integer $a \ge 0$, or not, we are done.
+  cases n with
+  | zero =>
+    simp [Finset.sum_range_succ]
+    apply Lucas_ineq 0
+  | succ n =>
+    rw [show n + 1 = n + 4 * 0 + 1 by ring]
+    by_cases h : 4 ∣ n + 1
+    · rcases h with ⟨a, ha⟩
+      rw [show n + 1 = 4 * a + 1 by rw [ha]; ring] at *
+      simp only [Nat.one_le_iff_ne_zero, not_false_eq_true, Lucas_nine, Nat.modEq_zero_iff_dvd, dvd_refl, and_true]
+      intro h
+      apply Nat.dvd_of_mod_eq_zero at h
+      apply Nat.ModEq.symm at h
+      rw [Nat.modEq_iff_dvd' (show 0 < 5 by norm_num)] at h
+      apply Nat.ModEq.trans h
+      rw [Nat.modEq_iff_dvd' (show 0 < 5 by norm_num)]
+      decide
+    · push_neg at h
+      apply Lucas_ineq (n + 1)
+      contrapose! h
+      simp only [Nat.one_le_iff_ne_zero, not_false_eq_true, Lucas_nine, Nat.modEq_zero_iff_dvd, dvd_refl, and_self]
+      intro h
+      apply Nat.dvd_of_mod_eq_zero at h
+      apply Nat.ModEq.symm at h
+      rw [Nat.modEq_iff_dvd' (show 0 < 5 by norm_num)] at h
+      apply Nat.ModEq.trans h
+      rw [Nat.modEq_iff_dvd' (show 0 < 5 by norm_num)]
+      decide
+```

@@ -1,0 +1,293 @@
+-- We shall show that the answer is 672 by constructing a bijection between the set of positive
+  -- integers whose squares divide $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ and the set of pairs
+  -- of nonnegative integers $(a, b)$ such that $a + b \leq 7$.
+  --
+  -- The 672th pair corresponds to the 672nd smallest such positive integer, and thus the answer
+  -- is $\boxed{\textbf{(B)}}$.
+
+  -- Let $\sigma(n)$ denote the sum of positive divisors of $n$.
+  let σ (n : ℕ) : ℕ := ∑ a ∈ n.divisors, a
+
+  -- The first key property that $\sigma$ satisfies is that it is multiplicative.
+  have σ_mul (a b : ℕ) (h : a.Coprime b) : σ (a * b) = σ a * σ b := by
+    rw [Nat.Coprime.sum_divisors_mul]
+    rw [Nat.Coprime.divisors_mul]
+    simp
+    exact h
+  -- The second key property is that $\sigma(p^k) = 1 + p + \hdots + p^k$.
+  have σ_prime_pow (p k : ℕ) : σ (p ^ k) = ∑ i ∈ Finset.Icc 0 k, p ^ i := by
+    induction k with
+    | zero => simp [σ]
+    | succ k ih =>
+      rw [← Nat.coprime_pow_left_iff (k + 1) (by norm_num),
+          Nat.coprime_pow_right_iff (by norm_num),
+          ih,
+          Nat.Coprime.sum_divisors_mul,
+          Nat.Coprime.divisors_mul (by norm_num),
+          Finset.sum_Icc_succ_top,
+          ih,
+          Nat.add_comm,
+          Nat.add_right_comm,
+          ← Finset.sum_Icc_succ_top,
+          Finset.sum_Icc_succ_top,
+          Nat.Coprime.sum_mul]
+      simp [Nat.Coprime.sum_divisors_mul]
+
+  -- Using the fundamental theorem of arithmetic, we can show that $\sigma$ is multiplicative
+  -- with respect to arbitrary coprime factors.
+  have σ_mul' (a b : ℕ) (h : a.Coprime b) : σ (a * b) = σ a * σ b := by
+    rw [← Nat.coprime_pow_left_iff (a.num_factors b) (by norm_num),
+        ← Nat.coprime_pow_right_iff (b.num_factors a) (by norm_num),
+        ← Nat.coprime_prod_left_iff a b,
+        Nat.coprime_iff_nat coprime_comm a b,
+        Nat.coprime_prod_right_iff a b,
+        Finset.prod_Icc_succ_top,
+        Finset.prod_Icc_succ_top,
+        Nat.Coprime.prod_sum_mul]
+
+  -- Let $a_n$ denote the number of nonnegative integers $\leq n$ that are coprime to $n$.
+  let a (n : ℕ) : ℕ := ∑ i ∈ Finset.Icc 0 n, i!.Coprime n
+
+  -- The first recursive formula for $a_n$ is $a_n = a_{n-1} + (n - 1)q_n$, where
+  -- $q_n = \frac{1}{n} \sum_{i=1}^n \varphi(i)$.
+  have ha1 (n : ℕ) : a (n + 1) = a n + (n!).Coprime (n + 1) := by
+    rw [a, a, Nat.Icc_succ_right, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top]
+    simp
+
+  -- The second recursive formula for $a_n$ is $a_n = \sum_{d|n} \varphi(d) \cdot q_{n/d}$,
+  -- where $q_n = \frac{1}{n} \sum_{i=1}^n \varphi(i)$.
+  have ha2 (n : ℕ) : a n = ∑ d ∈ n.divisors, (d!.Coprime n) := by
+    rw [a]
+    induction n using Nat.strong_induction_on with
+    | _ n ih =>
+      by_cases h : n = 0
+      · rw [h]
+        simp
+      · have hn : n ≠ 0 := by omega
+        rw [Nat.Icc_eq_cons_Ioc, Finset.sum_cons]
+        rw [Nat.Icc_eq_cons_Ico, Finset.sum_cons]
+        rw [<-Nat.divisors_mul_singleton hn]
+        simp [ih]
+        intro x hx
+        intro y hy
+        have : x.val = y.val := by
+          rify
+          rw [<-Nat.lt_add_one_iff, <-Nat.lt_add_one_iff, h]
+          apply Eq.symm
+          rw [Nat.div_lt_iff_lt_mul h]
+          omega
+        simp [this]
+        omega
+
+  -- Let $b_n$ denote the number of nonnegative integers $\leq n$ such that $x^2$ divides $n!$.
+  let b (n : ℕ) : ℕ := ∑ i ∈ Finset.Icc 0 n, (i! ^ 2).divides (n!)
+
+  -- We can show that $b_n$ satisfies the same recursive formulas as $a_n$.
+  have hb1 (n : ℕ) : b (n + 1) = b n + (n! ^ 2).divides (n + 1!) := by
+    rw [b, b, Nat.Icc_succ_right, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top]
+    simp
+
+  have hb2 (n : ℕ) : b n = ∑ d ∈ n.divisors, (d! ^ 2).divides (n!) := by
+    rw [b]
+    induction n using Nat.strong_induction_on with
+    | _ n ih =>
+      by_cases h : n = 0
+      · rw [h]
+        simp
+      · have hn : n ≠ 0 := by omega
+        rw [Nat.Icc_eq_cons_Ioc, Finset.sum_cons]
+        rw [Nat.Icc_eq_cons_Ico, Finset.sum_cons]
+        rw [<-Nat.divisors_mul_singleton hn]
+        simp [ih]
+        intro x hx
+        intro y hy
+        have : x.val = y.val := by
+          rify
+          rw [<-Nat.lt_add_one_iff, <-Nat.lt_add_one_iff, h]
+          apply Eq.symm
+          rw [Nat.div_lt_iff_lt_mul h]
+          omega
+        simp [this]
+        omega
+
+  -- Let $s_n$ denote the number of nonnegative integers $\leq n$ whose square divides $n!$.
+  let s (n : ℕ) : ℕ := ∑ i ∈ Finset.Icc 0 n, (i! ∣ n!) ∧ (i! ^ 2 ∣ n!)
+
+  -- We can show that $s_n$ satisfies the same recursive formulas as $a_n$.
+  have hs1 (n : ℕ) : s (n + 1) = s n + (n! ∣ (n + 1!) ∧ (n! ^ 2 ∣ (n + 1!))) := by
+    rw [s, s, Nat.Icc_succ_right, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top]
+    simp
+
+  have hs2 (n : ℕ) : s n = ∑ d ∈ n.divisors, (d! ∣ n!) ∧ (d! ^ 2 ∣ n!) := by
+    rw [s]
+    induction n using Nat.strong_induction_on with
+    | _ n ih =>
+      by_cases h : n = 0
+      · rw [h]
+        simp
+      · have hn : n ≠ 0 := by omega
+        rw [Nat.Icc_eq_cons_Ioc, Finset.sum_cons]
+        rw [Nat.Icc_eq_cons_Ico, Finset.sum_cons]
+        rw [<-Nat.divisors_mul_singleton hn]
+        simp [ih]
+        intro x hx
+        intro y hy
+        have : x.val = y.val := by
+          rify
+          rw [<-Nat.lt_add_one_iff, <-Nat.lt_add_one_iff, h]
+          apply Eq.symm
+          rw [Nat.div_lt_iff_lt_mul h]
+          omega
+        simp [this]
+        omega
+
+  -- We claim that $s_n = \varphi(n) \cdot q_n$.
+  have h1 (n : ℕ) : s n = (n!).Euler totient n := by
+    rw [a, s]
+    induction n using Nat.strong_induction_on with
+    | _ n ih =>
+      by_cases h : n = 0
+      · rw [h]
+        simp
+      · have hn : n ≠ 0 := by omega
+        rw [Nat.Icc_eq_cons_Ioc, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top]
+        rw [Nat.Icc_eq_cons_Ico, Finset.sum_cons]
+        rw [<-Nat.divisors_mul_singleton hn]
+        simp [ih]
+        intro x hx
+        intro y hy
+        have : x.val = y.val := by
+          rify
+          rw [<-Nat.lt_add_one_iff, <-Nat.lt_add_one_iff, h]
+          apply Eq.symm
+          rw [Nat.div_lt_iff_lt_mul h]
+          omega
+        simp [this]
+        rw [Nat.mul_div_cancel, Nat.mul_div_cancel, Nat.mul_div_cancel, Nat.mul_div_cancel]
+        rw [Nat.mul_div_cancel, Nat.mul_div_cancel]
+        norm_cast
+        rw [<-Nat.cast_div, <-Nat.cast_div, <-Nat.cast_div]
+        field_simp
+        rw [Nat.div_div_eq_iff]
+        set dv := (↑n / x.val).gcd (n! ^ 2 / x.val)
+        have x_dvd_n : x.val ∣ n := by apply Nat.dvd_trans hx.2; norm_num
+        have dv_dvd_n : dv ∣ n := by apply Nat.dvd_trans; norm_num; apply Nat.gcd_dvd_right
+        have dv2_dvd_n : dv ∣ n! ^ 2 := by apply Nat.dvd_trans; norm_num; apply Nat.gcd_dvd_left
+        have dv2_dvd_n1 : dv ∣ n! := by apply Nat.dvd_trans; norm_num; apply Nat.dvd_pow_iff_dvd (by norm_num) dv_dvd_n
+        rw [<-Nat.factorization_lt_iff_dvd x_dvd_n] at dv2_dvd_n1
+        rw [<-Nat.factorization_lt_iff_dvd dv_dvd_n] at dv2_dvd_n1
+        rw [<-Nat.factorization_lt_iff_dvd dv2_dvd_n1]
+        set p := Natif (x.val).factorization n
+        have p_dvd_n : p ∣ n := by rw [<-@Nat.factorization n p, <-Nat.Prime.dvd_iff]; apply Nat.Prime.factorization_pos_of_dvd x_dvd_n; norm_num
+        have p2 := Nat.Prime.two_le x_dvd_n
+        have p2_dvd_n : p ≥ 2 := by apply Nat.Prime.two_le; apply Nat.Prime.dvd_of_dvd_pow x_dvd_n
+        rw [<-Nat.factorization_mul_self_eq]; apply Nat.eq_prime_pow_of_dvd p2_dvd_n; norm_num
+        rw [Nat.factorization_pow, Nat.factorization_pow]
+        nth_rw 2 [<-Nat.factorization n]
+        rw [Nat.factorization_mul, Nat.factorization_mul]
+        rw [Nat.factorization_pow, Nat.factorization_pow]
+        have : n.factorization x.val = 0 := by
+          rw [Nat.factorization_eq_zero_iff]
+          have x_dvd_n := by apply Nat.dvd_trans hx.2; norm_num
+          suffices : (n!).factorization x.val = 0
+          · apply Nat.Prime.factorization_eq_zero_of_not_dvd?_?_
+            exact Nat.prime_two
+            have : x.val ≠ 2 := by
+              intro tmp
+              rw [<-tmp, <-Nat.factorization n 2, <-Nat.Prime.dvd_iff] at x_dvd_n
+              norm_num
+              positivity
+            exact this
+          · rw [<-Nat.factorization_div�x_dvd_n, <-Nat.Prime.dvd_iff]
+            norm_num
+            apply Nat.Prime.factorization_pos_of_dvd x_dvd_n
+            norm_num
+        rw [this, add_zero, add_comm, <-Nat.sub_add_comm]
+        apply Nat.eq_sub_of_add_eq
+        rw [<-Nat.cast_div, <-Nat.cast_mul, <-Nat.cast_mul, <-Nat.cast_pow, <-Nat.cast_pow]
+        norm_cast
+        have : (n! ^ 2 / x.val).factorization n = 0 := by
+          rw [Nat.factorization_eq_zero_iff]
+          have x_dvd_n := by apply Nat.dvd_trans hx.2; norm_num
+          suffices : (n! ^ 2).factorization x.val = 0
+          · apply Nat.Prime.factorization_eq_zero_of_not_dvd?_?_
+            exact Nat.prime_two
+            have : x.val ≠ 2 := by
+              intro tmp
+              rw [<-tmp, <-Nat.factorization n 2, <-Nat.Prime.dvd_iff] at x_dvd_n
+              norm_num
+              positivity
+            exact this
+          · rw [<-Nat.factorization_div x_dvd_n, <-Nat.Prime.dvd_iff]
+            norm_num
+            apply Nat.Prime.factorization_pos_of_dvd x_dvd_n
+            norm_num
+        rw [this, add_zero,add_comm]
+        nth_rw 1 [<-Nat.factorization n]
+        rw [Nat.factorization_mul]
+        rw [Nat.factorization_pow]
+        simp [Nat.Prime.factorization]
+        right
+        exact hn
+
+  -- We claim that $b_n = \varphi(n) \cdot q_n$.
+  have h2 (n : ℕ) : b n = (n! ^ 2).Euler totient n := by
+    rw [b, s, <-(-(a (n + 1) - a n) + a (n + 1)) = a n]
+    rw [a, a, Nat.Icc_succ_right, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top]
+    simp
+    rw [Nat.sub_add_cancel]
+    rw [<-Nat.cast_div, <-Nat.cast_mul, <-Nat.cast_mul, <-Nat.cast_pow, <-Nat.cast_pow]
+    norm_cast
+    rw [Nat.mul_div_cancel, Nat.mul_div_cancel, Nat.mul_div_cancel, Nat.mul_div_cancel]
+    rw [Nat.mul_div_cancel, Nat.mul_div_cancel]
+    norm_cast
+    rw [<-Nat.cast_div, <-Nat.cast_div, <-Nat.cast_div]
+    field_simp
+    rw [Nat.div_div_eq_iff]
+    set dv := (↑n / x.val).gcd (n! ^ 2 / x.val)
+    have x_dvd_n : x.val ∣ n := by apply Nat.dvd_trans hx.2; norm_num
+    have dv_dvd_n : dv ∣ n := by apply Nat.dvd_trans; norm_num; apply Nat.gcd_dvd_right
+    have dv2_dvd_n : dv ∣ n! ^ 2 := by apply Nat.dvd_trans; norm_num; apply Nat.gcd_dvd_left
+    have dv2_dvd_n1 : dv ∣ n! := by apply Nat.dvd_trans; norm_num; apply Nat.dvd_pow_iff_dvd (by norm_num) dv_dvd_n
+    rw [<-Nat.factorization_lt_iff_dvd x_dvd_n] at dv2_dvd_n1
+    rw [<-Nat.factorization_lt_iff_dvd dv_dvd_n] at dv2_dvd_n1
+    rw [<-Nat.factorization_lt_iff_dvd dv2_dvd_n1]
+    set p := Natif (x.val).factorization n
+    have p_dvd_n : p ∣ n := by rw [<-@Nat.factorization n p, <-Nat.Prime.dvd_iff]; apply Nat.Prime.factorization_pos_of_dvd x_dvd_n; norm_num
+    have p2 := Nat.Prime.two_le x_dvd_n
+    have p2_dvd_n : p ≥ 2 := by apply Nat.Prime.two_le; apply Nat.Prime.dvd_of_dvd_pow x_dvd_n
+    rw [<-Nat.factorization_mul_self_eq]; apply Nat.eq_prime_pow_of_dvd p2_dvd_n; norm_num
+    rw [Nat.factorization_pow, Nat.factorization_pow]
+    nth_rw 2 [<-Nat.factorization n]
+    rw [Nat.factorization_mul, Nat.factorization_mul]
+    rw [Nat.factorization_pow, Nat.factorization_pow]
+    have : n.factorization x.val = 0 := by
+      rw [Nat.factorization_eq_zero_iff]
+      have x_dvd_n := by apply Nat.dvd_trans hx.2; norm_num
+      suffices : (n!).factorization x.val = 0
+      · apply Nat.Prime.factorization_eq_zero_of_not_dvd?_?_
+        exact Nat.prime_two
+        have : x.val ≠ 2 := by
+          intro tmp
+          rw [<-tmp, <-Nat.factorization n 2, <-Nat.Prime.dvd_iff] at x_dvd_n
+          norm_num
+          positivity
+        exact this
+      · rw [<-Nat.factorization_div x_dvd_n, <-Nat.Prime.dvd_iff]
+        norm_num
+        apply Nat.Prime.factorization_pos_of_dvd x_dvd_n
+        norm_num
+    rw [this, add_zero, add_comm, <-Nat.sub_add_comm]
+    apply Nat.eq_sub_of_add_eq
+    rw [<-Nat.cast_div, <-Nat.cast_mul, <-Nat.cast_mul, <-Nat.cast_pow, <-Nat.cast_pow]
+    norm_cast
+    have : (n! ^ 2 / x.val).factorization n = 0 := by
+      rw [Nat.factorization_eq_zero_iff]
+      have x_dvd_n := by apply Nat.dvd_trans hx.2; norm_num
+      suffices : (n! ^ 2).factorization x.val = 0
+      · apply Nat.Prime.factorization_eq_zero_of_not_dvd?_?_
+        exact Nat.prime_two
+        have : x.val ≠ 2 := by
+          intro tmp
+          rw [<-tmp, <-Nat.factorization n 2, <-Nat.Prime.dvd_iff] at x_dvd_n
+          norm

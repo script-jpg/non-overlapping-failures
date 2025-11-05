@@ -1,0 +1,41 @@
+-- We can decompose the residue by decomposing the sum.
+  -- 2010 ≡ 2010 - 2009 = 1 (mod 2009)
+  -- 2011 ≡ 2011 - 2009 = 2 (mod 2009)
+  --...
+  -- 4018 ≡ 4018 - 2009 × 2 = 4018 - 4018 = 0 (mod 2009)
+  -- Therefore, S ≡ 1 + 2 +... + 0 (mod 2009)
+  have h₁ : s % 2009 = (∑ k ∈ Finset.Icc 2010 4018, k % 2009) % 2009 := by
+    rw [h₀]
+    simp only [Nat.add_mod, Finset.sum_nat_mod]
+  -- We can cancel the term 2009.
+  have h₂ : ∑ k ∈ Finset.Icc 2010 4018, k % 2009 = ∑ k ∈ Finset.Icc 1 2008, k := by
+    -- Because 2010 - 2009 = 1 and 4018 - 2009 × 2 = 4018 - 4018 = 0.
+    -- So the residue of each term in the sum is just the term with the term 2009 canceled.
+    rw [Finset.sum_congr]
+    · rfl
+    · intro x hx
+      simp at hx
+      calc
+        (↑(1 : ℕ)) % 2009 = 1 := by simp
+        _ = 2010 % 2009 := by simp
+        _ = (↑(2010 : ℕ) % 2009) % 2009 := by simp
+        _ = (↑(2010 + x - 2010) % 2009) % 2009 := by simp
+        _ = (↑(2010 + (x - 1) - 2010) % 2009) % 2009 := by congr; omega
+        _ = _ := by simp
+  -- We can use the formula for the sum of an arithmetic series.
+  -- 1 + 2 +... + 2008 = (2008 + 1) × 2008 / 2 = 2009 × 1004
+  -- So the residue is 0.
+  have h₃ : (∑ k ∈ Finset.Icc 1 2008, k) % 2009 = 0 := by
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    norm_num
+  -- Finset.Icc 1 2008 has 2008 elements, so each number from 1 to 2008 appears exactly once.
+  -- So the sum is the same as the sum of the elements of Finset.range 2008.
+  have h₄ : (∑ k ∈ Finset.Icc 1 2008, k) % 2009 = (∑ k ∈ Finset.range 2008, k) % 2009 := by
+    rw [Finset.sum_congr]
+    · rfl
+    · intro x hx
+      simp at hx
+      simp
+  rw [h₁, h₂, h₃, h₄]
+
+```

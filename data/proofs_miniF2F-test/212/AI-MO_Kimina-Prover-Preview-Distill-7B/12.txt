@@ -1,0 +1,35 @@
+have h₂ : a ^ 2 % 8 = 1 := by
+    -- This is well known that the square of an odd number is congruent to 1 modulo 8.
+    -- Odd numbers are of the form 2k+1. Squaring them gives 4k^2 + 4k + 1 = 4k(k+1) + 1.
+    -- Since k(k+1) is always even, 4k(k+1) is divisible by 8, so the square is 1 modulo 8.
+    rcases h₀ with ⟨k, hk⟩
+    rw [hk]
+    ring_nf
+    rw [show (4 * k ^ 2 + 4 * k) % 8 = 0 by omega]
+    simp
+
+  -- Btw, why is 4 ∣ b implies b² ≡ 0 (mod 4)?
+  -- Because if b is divisible by 4, then b = 4k for some k, so b² = 16k², which is divisible by 16, hence 8.
+  -- And if b is odd, then b = 2k+1, so b² = 4k² + 4k + 1, which is 1 modulo 8.
+  rcases h₁ with ⟨k, hk⟩
+  obtain ⟨k', hk'⟩ : ∃ k', b = 4 * k' := by
+    obtain ⟨k', hk'⟩ := (Nat.mul_div_cancel' (by omega)).mp hk
+    use k'
+    rw [hk']
+    exact Eq.symm (mul_assoc (4 : ℤ) k' k)
+
+  rw [hk', pow_two, show (4 ^ 2 * k' ^ 2 : ℤ) = (16 * k' ^ 2 : ℕ) by norm_num]
+  have : 8 ∣ 16 := by omega
+  have : 8 ∣ 16 * k' ^ 2 := by exact Dvd.dvd.mul_left this (k' ^ 2)
+  rw [← Int.natCast_dvd_natCast this, Int.natCast_add_intCast, Int.natCast_mul_intCast 1,
+    Int.natCast_sub_self, add_tsub_cancel_right, ← pow_two]
+
+  have : (1 : ZMod 8) + (0 : ZMod 8) = 1 := by
+    push_cast
+    rfl
+  rw [← this]
+  convert Int.natCast_inj.mp _
+  rw [Int.natCast_add_intCast, Int.natCast_mul_intCast, Int.natCast_pow, Int.natCast_pow]
+  convert Int.natCast_inj.mp _
+  simp; norm_cast
+```

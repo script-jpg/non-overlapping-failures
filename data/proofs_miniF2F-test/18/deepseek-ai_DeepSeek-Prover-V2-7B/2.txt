@@ -1,0 +1,46 @@
+have h₂ : n ≠ 0 := by linarith
+  have h₃ : (16 : ℝ) = 2 ^ 4 := by norm_num
+  have h₄ : (4 : ℝ) = 2 ^ 2 := by norm_num
+  rw [h₃, h₄] at *
+  field_simp [Real.logb, Real.log_rpow, Real.log_pow, Real.log_mul, Real.log_rpow, Real.log_pow,
+    Real.log_mul, Real.log_rpow, Real.log_pow] at h₁ ⊢
+  ring_nf at h₁ ⊢
+  norm_num at h₁ ⊢
+  have h₅ : n ≠ 0 := by positivity
+  have h₆ : n ≠ 1 := by
+    intro h
+    rw [h] at h₁
+    norm_num at h₁
+  have h₇ : n ≥ 2 := by
+    by_contra! h
+    interval_cases n <;> norm_num at h₁ ⊢ <;> simp_all [log_div, log_mul, log_rpow]
+    <;> ring_nf at h₁ ⊢ <;> norm_num at h₁ ⊢ <;> nlinarith
+  have h₈ : n ≤ 16384 := by
+    by_contra! h
+    have h₉ : n ≥ 16385 := by linarith
+    have h₁₀ : (n : ℝ) ≥ 16385 := by exact_mod_cast h₉
+    have h₁₁ : Real.logb 2 (Real.logb (2 ^ 4) n) = Real.logb 4 (Real.logb (2 ^ 2) n) := by simpa [h₃, h₄] using h₁
+    have h₁₂ : Real.logb (2 ^ 4) n = Real.logb 2 n / 4 := by
+      field_simp [Real.logb, Real.log_rpow] <;> ring
+    have h₁₃ : Real.logb (2 ^ 2) n = Real.logb 2 n / 2 := by
+      field_simp [Real.logb, Real.log_rpow] <;> ring
+    rw [h₁₂, h₁₃] at h₁₁
+    have h₁₄ : Real.logb 2 n / 4 = Real.logb 4 (Real.logb 2 n / 2) := by simpa [h₃, h₄] using h₁₁
+    have h₁₅ : Real.logb 4 (Real.logb 2 n / 2) = (Real.logb 2 (Real.logb 2 n / 2)) / 2 := by
+      field_simp [Real.logb, Real.log_rpow] <;> ring
+    rw [h₁₅] at h₁₄
+    have h₁₆ : Real.logb 2 n / 4 = (Real.logb 2 (Real.logb 2 n / 2)) / 2 := by linarith
+    have h₁₇ : Real.logb 2 (Real.logb 2 n / 2) ≤ Real.logb 2 n := by
+      apply Real.logb_le_logb_of_le
+      all_goals norm_num
+      all_goals
+        nlinarith [Real.logb_pos (by norm_num : (1 : ℝ) < 2) (by norm_num : (1 : ℝ) < 2)]
+    have h₁₈ : Real.logb 2 n / 4 < Real.logb 2 n := by
+      have h₁₉ : Real.logb 2 n > 0 := by
+        apply Real.logb_pos
+        all_goals norm_num
+        all_goals
+          nlinarith [Real.log_one]
+      nlinarith
+    nlinarith
+  interval_cases n <;> norm_num at h₁ ⊢ <;>

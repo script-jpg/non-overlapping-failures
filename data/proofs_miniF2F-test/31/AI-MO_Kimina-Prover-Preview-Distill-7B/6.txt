@@ -1,0 +1,122 @@
+have lcm \[ m n : ℕ \] : Nat.lcm m n = m * n / Nat.gcd m n := by
+    -- The least common multiple of $m$ and $n$ is equal to $m * n / \gcd(m, n)$.
+    rw [Nat.lcm]
+    simp [Nat.gcd, Nat.lcm]
+    rw [mul_comm]
+  have h₂ := lcm m n
+  rw [h₀] at h₂
+  rw [h₂] at h₁
+  -- The least common multiple of $m$ and $n$ is equal to $m * n / 6$, or $m * n = 6 * LCM$
+  have h₃ : m * n = 6 * 126 := by
+    rw [h₁]
+    simp
+  have h₄ : m * n = 756 := by
+    rw [h₃]
+    simp
+  -- The greatest common divisor of $m$ and $n$ is 6, so $m = 6 * x$ and $n = 6 * y$ for some positive integers $x$ and $y$
+  have h₅ : m = 6 * m / 6 := by
+    rw [←Nat.gcd_self m n, h₀]
+  have h₆ : n = 6 * n / 6 := by
+    rw [←Nat.gcd_self m n, h₀]
+  have h₇ : 6 ∣ m := by
+    rw [h₅]
+    simp
+  have h₈ : 6 ∣ n := by
+    rw [h₆]
+    simp
+  have h₉ : ∃ x y : ℕ, m = 6 * x ∧ n = 6 * y := by
+    rw [←Nat.dvd_iff_exists_eq_mul_right] at h₇
+    rw [←Nat.dvd_iff_exists_eq_mul_right] at h₈
+    obtain ⟨x, h₇⟩ := h₇
+    obtain ⟨y, h₈⟩ := h₈
+    use x, y
+    rw [h₇, h₈]
+  obtain ⟨x, y, h₁₀, h₁₁⟩ := h₉
+  rw [h₁₀] at h₃
+  rw [h₁₁] at h₃
+  have h₁₂ : x * y = 126 := by
+    rw [h₃]
+    simp
+  -- $x$ and $y$ are positive integers such that $x * y = 126$, and $m = 6 * x$ and $n = 6 * y$, so $m + n = 6 * (x + y)$
+  have h₁₃ : m + n = 6 * (x + y) := by
+    rw [h₁₀, h₁₁]
+    ring
+  -- The least possible value of $m + n$ corresponds to the least possible value of $x + y$.
+  -- The least value of $x + y$ occurs when $x$ and $y$ are as close as possible to $\sqrt{126}$
+  -- $\sqrt{126} \approx 11.225$, so the closest integers are $x = 12$ and $y = 10$, or $x = 10$ and $y = 12$
+  -- For both of these options, $x + y = 22$, so $m + n = 6 * 22 = 132$
+  have h₁₄ : 22 ≤ x + y := by
+    by_cases h₁₅ : x ≤ y
+    · have h₁₆ : x * x ≤ x * y := by
+        -- If $x ≤ y$, then $x * x ≤ x * y$.
+        rw [mul_le_mul_left]
+        exact h₁₅
+      rw [h₁₂] at h₁₆
+      have h₁₇ : 126 / x ≥ 126 / 12 := by
+        -- If $x * y = 126$ and $x ≤ y$, then $y ≥ 12$.
+        rw [←h₁₂]
+        apply Nat.div_le_div
+        · exact h₁₅
+        · simp
+      have h₁₈ : 126 / x ≥ 11 := by
+        -- $126 / x ≥ 126 / 12 ≥ 11$
+        rw [h₁₇]
+        norm_num
+      have h₁₉ : 11 * x ≤ 126 := by
+        -- $11 * x ≤ 126 / x * x = 126$
+        rw [mul_comm]
+        apply Nat.div_mul_le_self
+        · exact h₁₅
+        · simp
+      have h₂₀ : x ≤ 11 := by
+        -- If $11 * x ≤ 126$, then $x ≤ 11$.
+        by_contra!
+        have h₂₁ : 12 * x ≤ 12 * 11 := by
+          -- $12 * x ≤ 12 * 11$ because $x ≤ 11$
+          exact Nat.mul_le_mul_left 12 this
+        linarith
+      linarith
+    · have h₁₅ : y ≤ x := by
+        -- If $x > y$, then $y ≤ x$.
+        exact Nat.lt_iff_le_and_ne.mpr ⟨Nat.le_of_lt_succ h₁₅, Ne.symm h₁₅⟩
+      have h₁₆ : y * y ≤ x * y := by
+        -- If $y ≤ x$, then $y * y ≤ x * y$.
+        rw [mul_le_mul_right]
+        exact h₁₅
+      rw [h₁₂] at h₁₆
+      have h₁₇ : 126 / y ≥ 126 / 12 := by
+        -- If $x * y = 126$ and $y ≤ x$, then $x ≥ 12$.
+        rw [←h₁₂]
+        apply Nat.div_le_div
+        · exact h₁₅
+        · simp
+      have h₁₈ : 126 / y ≥ 11 := by
+        -- $126 / y ≥ 126 / 12 ≥ 11$
+        rw [h₁₇]
+        norm_num
+      have h₁₉ : 11 * y ≤ 126 := by
+        -- $11 * y ≤ 126 / y * y = 126$
+        rw [mul_comm]
+        apply Nat.div_mul_le_self
+        · exact h₁₅
+        · simp
+      have h₂₀ : y ≤ 11 := by
+        -- If $11 * y ≤ 126$, then $y ≤ 11$.
+        by_contra!
+        have h₂₁ : 12 * y ≤ 12 * 11 := by
+          -- $12 * y ≤ 12 * 11$ because $y ≤ 11$
+          exact Nat.mul_le_mul_left 12 this
+        linarith
+      linarith
+  rw [h₁₃]
+  -- For example, if $x = 9$ and $y = 14$, then $m = 6 * x = 54$ and $n = 6 * y = 84$, so $m + n = 54 + 84 = 138$
+  -- If $x = 12$ and $y = 10.5$, then $m = 6 * x = 72$ and $n = 6 * y = 63$, so $m + n = 72 + 63 = 135$
+  -- If $x = 18$ and $y = 7$, then $m = 6 * x = 108$ and $n = 6 * y = 42$, so $m + n = 108 + 42 = 150$
+  -- If $x = 21$ and $y = 6$, then $m = 6 * x = 126$ and $n = 6 * y = 36$, so $m + n = 126 + 36 = 162$
+  -- The least possible value of $m + n$ is achieved when $x = 12$ and $y = 10$, or $x = 10$ and $y = 12$
+  -- For both of these options, $x + y = 22$, so $m + n = 6 * 22 = 132$
+  have h₁₇ : 6 * (x + y) ≥ 6 * 22 := by
+    -- $6 * (x + y) ≥ 6 * 22$ because $x + y ≥ 22$
+    exact Nat.mul_le_mul_left 6 h₁₄
+  linarith
+```

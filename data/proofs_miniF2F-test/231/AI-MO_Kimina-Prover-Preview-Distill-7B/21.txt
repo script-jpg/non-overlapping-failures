@@ -1,0 +1,45 @@
+-- We start by showing that $f$ is strictly decreasing
+  have h2 : ∀ n, 0 < n → f n > f (n + 1) := by
+    intro n hn
+    calc
+      f n = (Nat.divisors n).card / n ^ ((1 : ℝ) / 3) := h₀ n hn
+      _ > (Nat.divisors (n + 1)).card / (n + 1) ^ ((1 : ℝ) / 3) := h₁ n hn
+      _ = f (n + 1) := by rw [h₀ (n + 1) (by omega)]
+
+  -- From the monotone property we know that $f(1) > f(2) >... > f(24)$
+  have h3 : ∀ n, 0 < n ∧ n ≤ 24 → f n > f 24 := by
+    intro n hn
+    induction' n with n ih
+   . simp
+   . calc
+        f n > f (n + 1) := h2 n ih.1
+        _ > f 24 := ih.2
+
+  -- Since the function is strictly decreasing, we know that $f(25) < f(24)$
+  have h4 : f 25 < f 24 := by
+    apply h2
+    simp
+
+  -- We also know that $f(25) > f(26)$
+  have h5 : f 25 > f 26 := by
+    apply h2
+    simp
+
+  -- From transitivity, we get $f(24) > f(25) > f(26)$
+  have h6 : f 24 > f 25 ∧ f 25 > f 26 := ⟨(by linarith), h5⟩
+
+  -- From the property of $N$, we know $f(N) > f(24), f(N) > f(25), f(N) > f(26)$
+  have h7 : f 24 < f N ∧ f 25 < f N ∧ f 26 < f N := by
+    have hN1 := h₁ 24 (by simp) (by omega)
+    have hN2 := h₁ 25 (by simp) (by omega)
+    have hN3 := h₁ 26 (by simp) (by omega)
+    rw [h₀ 24 (by omega)] at hN1
+    rw [h₀ 25 (by omega)] at hN2
+    rw [h₀ 26 (by omega)] at hN3
+    simp at hN1 hN2 hN3
+    exact ⟨hN1, hN2, hN3⟩
+
+  -- From the above inequalities, we get a contradiction
+  linarith
+
+```

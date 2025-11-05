@@ -1,0 +1,65 @@
+-- The given inequality is equivalent to
+  -- $(a^2 / b + b^2 / c + c^2 / d + d^2 / a) - (a + b + c + d) \geq 0$.
+  apply sub_nonneg_of_le
+
+  -- We use the AM-GM inequality to prove this.
+  -- Rewrite the left-hand side as a sum of 5 terms.
+  have eq : (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a) - (a + b + c + d) =
+      (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - a) +
+      (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - b) +
+      (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - c) +
+      (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - d) := by ring
+
+  -- AM-GM inequality for each term.
+  have amgm (x y z : ℝ) (hx : 0 < x) (hy : 0 < y) (hz : 0 < z) : x ^ 2 / y + y ^ 2 / z + z ^ 2 / x - (x + y + z) ≥ 0 := by
+    -- The AM-GM inequality for 3 variables.
+    have amgm3 (x y z : ℝ) (hx : 0 < x) (hy : 0 < y) (hz : 0 < z) : x ^ 2 / y + y ^ 2 / z + z ^ 2 / x - (x + y + z) ≥ 0 := by
+      -- Rewrite the inequality as a sum of squares.
+      have : x ^ 2 / y + y ^ 2 / z + z ^ 2 / x - (x + y + z) =
+          (x - y) ^ 2 / y + (y - z) ^ 2 / z + (z - x) ^ 2 / x := by field_simp ; ring
+      rw [this]
+      positivity
+    -- Take x = a, y = b, z = a.
+    have h1 := amgm3 a b a (by positivity) (by positivity) (by positivity)
+    -- Take x = b, y = c, z = b.
+    have h2 := amgm3 b c b (by positivity) (by positivity) (by positivity)
+    -- Take x = c, y = d, z = c.
+    have h3 := amgm3 c d c (by positivity) (by positivity) (by positivity)
+    -- Take x = d, y = a, z = d.
+    have h4 := amgm3 d a d (by positivity) (by positivity) (by positivity)
+    -- Combine the inequalities.
+    calc
+      (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a) - (a + b + c + d)
+        = (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - a) +
+          (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - b) +
+          (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - c) +
+          (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - d) := by ring
+      _ = (a ^ 2 / b + b ^ 2 / a + c ^ 2 / d + d ^ 2 / a - a - b - c - d) +
+          (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - a - b - c - d) +
+          (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - a - b - c - d) +
+          (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - a - b - c - d) := by ring
+      _ = (a ^ 2 / b + b ^ 2 / a - a - b) +
+          (a ^ 2 / b + b ^ 2 / c - a - c) +
+          (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d - c - d) +
+          (a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - b - d) := by ring
+      _ ≥ 0 + 0 + 0 + 0 := by linarith only [h1, h2, h3, h4]
+      _ = 0 := by simp
+
+  -- Apply the equality for AM-GM inequality for each term.
+  have amgm1 := amgm a b c (by simpa) (by simpa) (by simpa)
+  have amgm2 := amgm b c d (by simpa) (by simpa) (by simpa)
+  have amgm3 := amgm c d a (by simpa) (by simpa) (by simpa)
+  have amgm4 := amgm d a b (by simpa) (by simpa) (by simpa)
+
+  -- Combine the 4 inequalities.
+  calc
+    a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - (a + b + c + d)
+      = ((a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a) - (a + b + c + d)) := by ring
+    _ = ((a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a) - a - (a + b + c + d) + a) := by ring
+    _ = ((a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a - a) - (a + b + c + d) + a) := by ring
+    _ ≥ 0 - (a + b + c + d) + a := by linarith only [amgm1, amgm2, amgm3, amgm4]
+    _ = - (b + c + d) := by ring
+    _ ≥ - (a + b + c + d) := by linarith only [amgm1]
+    _ = - a - b - c - d := by ring
+
+```

@@ -1,0 +1,220 @@
+-- auxiliary lemma : for any positive real numbers x,y, $2\sqrt{xy} \leq x + y$.
+  have aux {x y : ℝ} (hx : 0 < x) (hy : 0 < y) : 2 * Real.sqrt (x * y) ≤ x + y := by
+    have : 0 ≤ (Real.sqrt x - Real.sqrt y) ^ 2 := by
+      apply sq_nonneg
+    rw [sub_sq, mul_assoc, Real.sq_sqrt (by linarith), Real.sq_sqrt (by linarith)] at this
+    linarith
+
+  -- By Cauchy-Schwarz inequality, we have $(a+b+c)(\frac{a}{a+b}+\frac{b}{b+c}+\frac{c}{c+a}) \geq (a^{1/2}+b^{1/2}+c^{1/2})^2 = 3 + 2(\sqrt{ab}+\sqrt{bc}+\sqrt{ca})$.
+  have h₀' : (a + b + c) * (a / (a + b) + b / (b + c) + c / (c + a)) ≥ 3 + 2 * (Real.sqrt (a * b) + Real.sqrt (b * c) + Real.sqrt (c * a)) := by
+    -- $(a+b+c)(\frac{a}{a+b}+\frac{b}{b+c}+\frac{c}{c+a})-(3 + 2(\sqrt{ab}+\sqrt{bc}+\sqrt{ca})) = \frac{(a^{1/2}-b^{1/2})^2}{\sqrt{a}+\sqrt{b}}+\frac{(b^{1/2}-c^{1/2})^2}{\sqrt{b}+\sqrt{c}}+\frac{(c^{1/2}-a^{1/2})^2}{\sqrt{c}+\sqrt{a}}$.
+    have h₀' : (a + b + c) * (a / (a + b) + b / (b + c) + c / (c + a)) - (3 + 2 * (Real.sqrt (a * b) + Real.sqrt (b * c) + Real.sqrt (c * a))) =
+      (Real.sqrt a - Real.sqrt b) ^ 2 / (Real.sqrt a + Real.sqrt b) + (Real.sqrt b - Real.sqrt c) ^ 2 / (Real.sqrt b + Real.sqrt c) + (Real.sqrt c - Real.sqrt a) ^ 2 / (Real.sqrt c + Real.sqrt a) := by
+      ring_nf
+      field_simp
+      ring_nf
+    have h₁' : 0 ≤ (Real.sqrt a - Real.sqrt b) ^ 2 / (Real.sqrt a + Real.sqrt b) := by
+      have : 0 ≤ (Real.sqrt a - Real.sqrt b) ^ 2 := by
+        exact sq_nonneg (Real.sqrt a - Real.sqrt b)
+      positivity
+    have h₂' : 0 ≤ (Real.sqrt b - Real.sqrt c) ^ 2 / (Real.sqrt b + Real.sqrt c) := by
+      have : 0 ≤ (Real.sqrt b - Real.sqrt c) ^ 2 := by
+        exact sq_nonneg (Real.sqrt b - Real.sqrt c)
+      positivity
+    have h₃' : 0 ≤ (Real.sqrt c - Real.sqrt a) ^ 2 / (Real.sqrt c + Real.sqrt a) := by
+      have : 0 ≤ (Real.sqrt c - Real.sqrt a) ^ 2 := by
+        exact sq_nonneg (Real.sqrt c - Real.sqrt a)
+      positivity
+    linarith
+
+  -- By Cauchy-Schwarz inequality, we also have $(a^{1/2}+b^{1/2}+c^{1/2})^2 \leq (a+b+c)(a+b+c)$.
+  have h₁' : (Real.sqrt a + Real.sqrt b + Real.sqrt c) ^ 2 ≤ (a + b + c) * (a + b + c) := by
+    -- $(a+b+c)(a+b+c)-(a^{1/2}+b^{1/2}+c^{1/2})^2 = \sum_{cyc}^{a,b,c} \frac{a+b-2\sqrt{ab}}{2} + \frac{(a+b+c)}{2} - \sqrt{ab} - \sqrt{bc} - \sqrt{ca}$.
+    have h₁' : (a + b + c) * (a + b + c) - (Real.sqrt a + Real.sqrt b + Real.sqrt c) ^ 2 =
+        ∑ x ∈ Finset.univ, (Real.sqrt x + Real.sqrt (x + 1)) * (Real.sqrt (x + 2) - Real.sqrt x) := by
+      simp [Finset.sum_univ_three]
+      ring_nf
+      field_simp
+      ring_nf
+    have h₂' : 0 ≤ ∑ x ∈ Finset.univ, (Real.sqrt x + Real.sqrt (x + 1)) * (Real.sqrt (x + 2) - Real.sqrt x) := by
+      apply Finset.sum_nonneg
+      intro i hi
+      simp at hi
+      rcases hi with hi | hi | hi
+      · specialize h₀ (show 0 < a + b by linarith)
+        apply mul_nonneg
+        apply add_nonneg
+        · apply Real.sqrt_nonneg
+        · apply Real.sqrt_nonneg
+      · specialize h₀ (show 0 < b + c by linarith)
+        apply mul_nonneg
+        apply add_nonneg
+        · apply Real.sqrt_nonneg
+        · apply Real.sqrt_nonneg
+      · specialize h₀ (show 0 < c + a by linarith)
+        apply mul_nonneg
+        apply add_nonneg
+        · apply Real.sqrt_nonneg
+        · apply Real.sqrt_nonneg
+    linarith
+
+  -- Show that $3(\sqrt{ab}+\sqrt{bc}+\sqrt{ca})) \leq 3$.
+  have h₂' : 3 * (Real.sqrt (a * b) + Real.sqrt (b * c) + Real.sqrt (c * a)) ≤ 3 * 3 := by
+    rw [mul_add, mul_add, ← h₁]
+    apply le_trans
+    · -- $\sqrt{ab}+\sqrt{bc}+\sqrt{ca} \leq a+b+c$.
+      apply add_le_add
+      · apply add_le_add
+        · apply Real.sqrt_le_left
+          exact h₀.1
+        · apply Real.sqrt_le_left
+          exact h₀.2.1
+      · apply Real.sqrt_le_left
+        exact h₀.2.2
+
+    -- $\sqrt{ab}+\sqrt{bc}+\sqrt{ca} \leq \frac{(a+b+c)^2}{4}$.
+    apply le_trans
+    · -- $\sqrt{ab} \leq \frac{a+b}{2}$.
+      apply add_le_add
+      · apply add_le_add
+        · apply Real.sqrt_le_left
+          exact h₀.1
+        · apply Real.sqrt_le_left
+          exact h₀.2.1
+      · apply Real.sqrt_le_left
+        exact h₀.2.2
+
+    -- $\frac{(a+b+c)^2}{4} \leq \frac{(a+b+c)^2}{3}$ since $3 \leq a+b+c$.
+    apply (div_le_div_iff_of_pos_right (by norm_num)).mpr
+    rw [mul_le_mul_left (a + b + c)]
+    rw [pow_two, mul_assoc]
+    apply (div_le_div_iff_of_pos_right (by norm_num)).mpr
+    apply mul_le_mul
+    · exact h₀.1
+    · exact h₀.2.1
+    · exact h₀.2.2
+    · norm_num
+
+  -- Show that $3 \leq a+b+c$.
+  have h₃' : 3 ≤ a + b + c := by
+    by_contra! h₃'
+    -- If $a+b+c < 3$, then $(a+b+c)(\frac{a}{a+b}+\frac{b}{b+c}+\frac{c}{c+a}) < 3(\frac{a}{a+b}+\frac{b}{b+c}+\frac{c}{c+a}) \leq 3$ by C-S inequality, which is a contradiction.
+    have : (a + b + c) * (a / (a + b) + b / (b + c) + c / (c + a)) < 3 := by
+      calc
+        (a + b + c) * (a / (a + b) + b / (b + c) + c / (c + a)) ≤ 3 + 2 * (Real.sqrt (a * b) + Real.sqrt (b * c) + Real.sqrt (c * a)) := h₀'
+        _ ≤ 3 + 2 * 3 := by linarith [h₂']
+        _ < 3 := by
+          norm_num
+          rw [← add_zero 3]
+          apply (add_lt_add_iff_left 2 * 3).mpr
+          norm_num
+
+    absurd this
+    apply le_of_lt
+    apply (div_lt_div_iff_of_pos_right (by positivity)).mpr
+    rw [mul_le_mul_left (a + b + c)]
+    rw [h₁]
+    apply (le_div_iff₀ (by positivity)).mpr
+    norm_num
+    by_contra! h₃''
+    rw [h₃''] at h₃'
+    linarith
+
+  -- Show that $3 \leq \sqrt{ab}+\sqrt{bc}+\sqrt{ca}$.
+  have h₄' : 3 ≤ Real.sqrt (a * b) + Real.sqrt (b * c) + Real.sqrt (c * a) := by
+    -- $\sqrt{ab}+\sqrt{bc}+\sqrt{ca} \geq \sqrt{3(a+b+c)}$ by Cauchy-Schwarz inequality.
+    have h₄' : Real.sqrt (a * b) + Real.sqrt (b * c) + Real.sqrt (c * a) ≥ Real.sqrt (3 * (a + b + c)) := by
+      rw [← pow_le_pow_iff_left₀ (by norm_num) (by norm_num) (show 2≠0 by norm_num)]
+      rw [mul_add, mul_add, Real.sq_sqrt (by positivity)]
+      apply add_le_add
+      · apply add_le_add
+        · apply Real.sq_sqrt (by positivity)
+        · apply Real.sq_sqrt (by positivity)
+      · apply Real.sq_sqrt (by positivity)
+
+    -- $\sqrt{3(a+b+c)} \geq 3$ by $3 \leq a+b+c$.
+    apply Real.le_sqrt_of_sq_le
+    apply mul_le_mul
+    · norm_num
+    · norm_num
+    · apply le_of_lt
+      apply (div_lt_div_iff_of_pos_right (by norm_num)).mpr
+      rw [← add_zero 3]
+      apply (add_lt_add_iff_left 2 * 3).mpr
+      linarith
+
+  -- Show that $3(\sqrt{ab}+\sqrt{bc}+\sqrt{ca})) / \sqrt{2} \leq a/\sqrt{a+b}+b/\sqrt{b+c}+c/\sqrt{c+a}$.
+  have h₅' : 3 * (Real.sqrt (a * b) + Real.sqrt (b * c) + Real.sqrt (c * a)) / Real.sqrt 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+    -- $3(\sqrt{ab}+\sqrt{bc}+\sqrt{ca})) / \sqrt{2} \leq 3(a+b+c)/\sqrt{2} $ by $3 \leq a+b+c$.
+    have h₅' : 3 * (Real.sqrt (a * b) + Real.sqrt (b * c) + Real.sqrt (c * a)) / Real.sqrt 2 ≤ 3 * (a + b + c) / Real.sqrt 2 := by
+      apply (div_le_div_iff_of_pos_right (by positivity)).mpr
+      rw [mul_le_mul_left (3 * (Real.sqrt (a * b) + Real.sqrt (b * c) + Real.sqrt (c * a)))]
+      apply le_of_lt
+      apply (div_lt_div_iff_of_pos_right (by positivity)).mpr
+      rw [mul_le_mul_left 3]
+      apply h₃'
+      · norm_num
+      · norm_num
+      · by_contra! h₅''
+        rw [h₅''] at h₃'
+        linarith
+    -- $3(a+b+c)/\sqrt{2} \leq a/\sqrt{a+b}+b/\sqrt{b+c}+c/\sqrt{c+a}$ by Cauchy-Schwarz inequality.
+    have h₆' : 3 * (a + b + c) / Real.sqrt 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+      -- $3(a+b+c)/\sqrt{2} = \sqrt{a+b} \cdot \frac{a}{\sqrt{2(a+b)}} + \sqrt{b+c} \cdot \frac{b}{\sqrt{2(b+c)}} + \sqrt{c+a} \cdot \frac{c}{\sqrt{2(c+a)}}$.
+      have h₆' : 3 * (a + b + c) / Real.sqrt 2 =  √(a + b) * (a / √(2 * (a + b))) + √(b + c) * (b / √(2 * (b + c))) + √(c + a) * (c / √(2 * (c + a))) := by
+        field_simp
+        ring_nf
+        field_simp
+        ring_nf
+      rw [h₆']
+      apply le_of_eq
+      -- $ \sqrt{a+b} \cdot \frac{a}{\sqrt{2(a+b)}} + \sqrt{b+c} \cdot \frac{b}{\sqrt{2(b+c)}} + \sqrt{c+a} \cdot \frac{c}{\sqrt{2(c+a)}}  = \frac{(\sqrt{a}-\sqrt{b})^2}{\sqrt{a}+\sqrt{b}} + \frac{(\sqrt{b}-\sqrt{c})^2}{\sqrt{b}+\sqrt{c}} + \frac{(\sqrt{c}-\sqrt{a})^2}{\sqrt{c}+\sqrt{a}}$.
+      have : √(a + b) * (a / √(2 * (a + b))) + √(b + c) * (b / √(2 * (b + c))) + √(c + a) * (c / √(2 * (c + a))) = (Real.sqrt a - Real.sqrt b) ^ 2 / (Real.sqrt a + Real.sqrt b) + (Real.sqrt b - Real.sqrt c) ^ 2 / (Real.sqrt b + Real.sqrt c) + (Real.sqrt c - Real.sqrt a) ^ 2 / (Real.sqrt c + Real.sqrt a) := by
+        field_simp
+        ring_nf
+        field_simp
+        ring_nf
+      rw [this]
+      -- $ \frac{(\sqrt{a}-\sqrt{b})^2}{\sqrt{a}+\sqrt{b}} + \frac{(\sqrt{b}-\sqrt{c})^2}{\sqrt{b}+\sqrt{c}} + \frac{(\sqrt{c}-\sqrt{a})^2}{\sqrt{c}+\sqrt{a}} \leq \frac{(\sqrt{a}+\sqrt{b})^2}{\sqrt{a}+\sqrt{b}} + \frac{(\sqrt{b}+\sqrt{c})^2}{\sqrt{b}+\sqrt{c}} + \frac{(\sqrt{c}+\sqrt{a})^2}{\sqrt{c}+\sqrt{a}}$ since $a,b,c > 0$.
+      apply add_le_add
+      · apply add_le_add
+        · apply (div_le_div_iff_of_pos_right (by positivity)).mpr
+          rw [mul_le_mul_left (Real.sqrt a - Real.sqrt b) ^ 2]
+          apply pow_le_pow
+          · apply Real.sqrt_le_left
+            exact h₀.1
+          · norm_num
+          · apply Real.sqrt_pos_of_pos h₀.1
+          · apply Real.sqrt_pos_of_pos h₀.2.1
+        · apply (div_le_div_iff_of_pos_right (by positivity)).mpr
+          rw [mul_le_mul_left (Real.sqrt a + Real.sqrt b)]
+          apply le_of_lt
+          apply (div_lt_div_iff_of_pos_right (by positivity)).mpr
+          rw [mul_le_mul_left (Real.sqrt a - Real.sqrt b)]
+          apply sub_sq_lt_sq
+          · linarith
+          · apply Real.sqrt_pos_of_pos h₀.1
+          · apply Real.sqrt_pos_of_pos h₀.2.1
+      · apply (div_le_div_iff_of_pos_right (by positivity)).mpr
+        rw [mul_le_mul_left (Real.sqrt b - Real.sqrt c) ^ 2]
+        apply pow_le_pow
+        · apply Real.sqrt_le_left
+          exact h₀.2.1
+        · norm_num
+        · apply Real.sqrt_pos_of_pos h₀.2.1
+        · apply Real.sqrt_pos_of_pos h₀.2.2
+      · apply (div_le_div_iff_of_pos_right (by positivity)).mpr
+        rw [mul_le_mul_left (Real.sqrt b + Real.sqrt c)]
+        apply le_of_lt
+        apply (div_lt_div_iff_of_pos_right (by positivity)).mpr
+        rw [mul_le_mul_left (Real.sqrt b - Real.sqrt c)]
+        apply sub_sq_lt_sq
+        · linarith
+        · apply Real.sqrt_pos_of_pos h₀.2.1
+        · apply Real.sqrt_pos_of_pos h₀.2.2
+        · apply Real.sqrt_pos_of_pos h₀.2.2
+
+    linarith
+
+  -- Show that $3 \leq \sqrt{ab}+\sqrt{bc}+\sqrt{ca}$.
+  have h₆' :

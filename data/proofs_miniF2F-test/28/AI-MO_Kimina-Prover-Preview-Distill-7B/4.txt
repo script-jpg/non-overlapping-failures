@@ -1,0 +1,55 @@
+-- A lemma that says a nonnegative real number is less than a square root if and only if its square is less than the square root.
+  have h₄ {x y : ℝ} (h₄ : 0 ≤ x) : x < y ↔ x ^ 2 < y ^ 2 := by
+    constructor
+   . intro h₄
+      exact (Real.lt_sqrt h₄).mpr h₄
+   . intro h₄
+      exact (Real.sqrt_lt' h₄).mpr h₄
+
+  -- Rearrange the equation to get a square root by itself.
+  have h₅ : √5 = x * 2 - 2 := by
+    calc
+      √5 = √(2 * x ^ 2 - 4 * x) := by
+        rw [h₁]
+        ring_nf
+        rw [Real.sqrt_eq_iff_eq_sq]
+        ring_nf
+        linarith
+        nlinarith
+      _ = √(2 * x * x - 4 * x + 4 - 4) := by ring_nf
+      _ = √(2 * x * x - 4 * x + 4) - √4 := by
+        rw [Real.sqrt_sub (by nlinarith)]
+        congr
+        ring_nf
+      _ = √(2 * x * x - 4 * x + 2 ^ 2) - √(2 ^ 2) := by norm_num
+      _ = √((2 * x - 2) ^ 2) - √(2 ^ 2) := by ring_nf
+      _ = (2 * x - 2) - 2 := by
+        rw [Real.sqrt_sq (by linarith)]
+        rw [Real.sqrt_sq (by norm_num)]
+      _ = x * 2 - 2 := by ring_nf
+
+  -- Isolate x to get x = (2 + √5) / 2.
+  have h₆ : x = (2 + √5) / 2 := by
+    calc
+      x = (x * 2 - 2) + 2 := by ring_nf
+      _ = √5 + 2 := by rw [h₅]
+      _ = (2 + √5) / 2 := by ring_nf
+
+  -- Extract the values of a, b, and c from the assumption.
+  obtain ⟨ha, hb, hc⟩ : ∃ a, b, c : ℕ ∧ x = (a + √b) / c ∧ 0 < a ∧ 0 < b ∧ 0 < c ∧
+      x ≥ 0 ∧ a ≥ 1 ∧ b ≥ 1 ∧ c ≥ 1 ∧ a.Coprime b ∧ a.Coprime c ∧ b ≠ c ∧
+      (∀ (a : ℕ), a ≠ 0 → a ≠ 1 → a ≤ 4 → 1 ≤ a + 1 ∧ a + 1 ≤ 4 → a = 1 ∨ a = 2 ∨ a = 3 ∨ a = 4) := by
+    -- Rewrite h₆ to make a, b, and c appear.
+    have h₆ : x = ((2 + √5) / 2) := by exact h₆
+    have : (2 + √5) / 2 = (2 + √5) / 2 := rfl
+    refine ⟨1, 5, 2, (2 + √5) / 2,?_⟩
+    -- Prove the conditions.
+    repeat rw [h₆]; simp
+    refine ⟨by norm_num, by norm_num, by norm_num, by norm_num, by positivity, by norm_num, by norm_num, by norm_num, by rfl, by norm_num, by norm_num, by norm_num⟩
+
+  -- Substitute the values of a, b, and c.
+  calc
+    a + b + c = 1 + 5 + 2 := by rw [ha, hb, hc]
+    _ = 8 := by norm_num
+    _ = 26 := by linarith
+```

@@ -1,0 +1,58 @@
+have ha := h₀.1
+  have hb := h₀.2.1
+  have hc := h₀.2.2.1
+  have hd := h₀.2.2.2
+
+  have ha_odd := h₁.1
+  have hb_odd := h₁.2.1
+  have hc_odd := h₁.2.2.1
+  have hd_odd := h₁.2.2.2
+
+  have hab := h₂.1
+  have hbc := h₂.2.1
+  have hcd := h₂.2.2
+
+  have h₆ : d > 2 ^ k := by
+    calc
+      d = a + d - a := by rw [Nat.add_sub_cancel]; exact ha
+      _ = 2 ^ k - a := by rw [h₄]
+      _ > 2 ^ k - 2 ^ k := by linarith only [ha]
+      _ = 0 := by rw [Nat.sub_self]; exact ha
+  have h₇ : c < 2 ^ m := by
+    calc
+      c = b + c - b := by rw [Nat.add_sub_cancel]; exact hb
+      _ = 2 ^ m - b := by rw [h₅]
+      _ < 2 ^ m - 0 := by linarith only [hb]
+      _ = 2 ^ m := by rw [Nat.sub_zero]; exact hb
+
+  -- Prove that $a * d = b * c$ implies $a * (2 ^ k - a) = b * (2 ^ m - b)$
+  have h₈ : a * (2 ^ k - a) = b * (2 ^ m - b) := by
+    calc
+      a * (2 ^ k - a) = a * d := by rw [h₄]
+      _ = b * c := by rw [h₃]
+      _ = b * (2 ^ m - b) := by rw [h₅]
+
+  -- Prove that $0 < a < b$ implies $a * (2 ^ k - a) < b * (2 ^ m - b)$
+  have h₉ : a * (2 ^ k - a) < b * (2 ^ m - b) := by
+    have hab' : 0 < b - a := by exact Nat.sub_pos_of_lt hab
+    calc
+      a * (2 ^ k - a) = a * d := by rw [h₄]
+      _ = b * c := by rw [h₃]
+      _ = b * (2 ^ m - b) := by rw [h₅]
+      _ < (b - a) * (2 ^ m - b) := by
+        apply Nat.mul_lt_mul_of_pos_right
+        · exact hab'
+        · exact Nat.lt_sub_of_add_lt' h₇
+      _ < (2 ^ k - a) * (2 ^ m - b) := by
+        apply Nat.mul_lt_mul_of_pos_left
+        · apply Nat.sub_pos_of_lt
+          calc
+            2 ^ k - a = a + d - a := by rw [h₄]; exact Nat.zero_lt_two_pow
+            _ = d := by rw [Nat.add_sub_cancel]; exact ha
+            _ > b := by exact hbc
+        · exact Nat.lt_sub_of_add_lt' h₆
+
+  -- Contradiction: $a * (2 ^ k - a) = b * (2 ^ m - b)$ and $a * (2 ^ k - a) < b * (2 ^ m - b)$
+  linarith only [h₈, h₉]
+
+```

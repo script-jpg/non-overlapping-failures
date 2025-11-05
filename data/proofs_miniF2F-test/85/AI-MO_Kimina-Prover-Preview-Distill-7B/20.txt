@@ -1,0 +1,34 @@
+-- Assume $2^n - 1$ is a prime number.
+  -- We need to prove that $n$ is prime.
+
+  -- Assume $n$ is not a prime number.
+  by_contra! h
+  rw [Nat.not_prime_iff_exists_dvd_ne] at h
+
+  -- We have $n = ab$ for some $1 < a < n$ and $1 < b < n$.
+  obtain ⟨a, ha₁, ha₂, h₀a, h₀b⟩ := h
+  -- replace $a$ with $min a b$ and $b$ with $max a b$
+  have hmin : a ≤ b := by by_contra!; simp at this; rw [← Nat.le_max_iff] at this; tauto
+  have hmax : b ≥ a := by by_contra!; simp at this; rw [← Nat.le_max_iff] at this; tauto
+  -- such that $a$ divides $n$.
+  have h₁a : a ∣ n := by rw [h₀a, h₀b]; rw [Nat.dvd_mul_left]
+  -- and $2^a - 1$ divides $2^n - 1$.
+  have h₂a : 2 ^ a - 1 ∣ 2 ^ n - 1 := by
+    rw [Nat.pow_mul, Nat.sub_dvd_pow_sub_pow (by linarith) (by linarith)]
+    exact Nat.dvd_pow_self (by linarith) h₁a
+
+  -- Since $2^n - 1$ is a prime number, it follows that $2^a - 1$ is either $1$ or $2^n - 1$.
+  rw [Nat.prime_dvd_prime_iff_eq Nat.prime_two_sub_one h₁] at h₂a
+  -- However, $2^a - 1$ is greater than $1$ and less than $2^n - 1$, which is a contradiction.
+  have h₂b : 1 < 2 ^ a - 1 := by
+    apply Nat.one_lt_pow_sub_one
+    linarith
+    linarith
+  have h₂c : 2 ^ a - 1 < 2 ^ n - 1 := by
+    apply Nat.sub_lt_sub_left
+    apply Nat.pow_lt_pow_right
+    linarith
+    linarith
+    linarith
+  tauto
+```

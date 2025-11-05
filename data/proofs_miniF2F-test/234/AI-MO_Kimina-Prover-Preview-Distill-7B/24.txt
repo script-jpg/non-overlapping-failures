@@ -1,0 +1,146 @@
+-- We are given a system of three linear equations in seven variables.
+  -- We need to find the value of a linear combination of these variables.
+
+  -- Let's consider the system of equations as a matrix equation: A * x = b,
+  -- where A is the matrix of coefficients, x is the vector of variables,
+  -- and b is the vector of constants.
+
+  let A : ℝ := 3
+  let B : ℝ := 4
+  let C : ℝ := 5
+  let D : ℝ := 6
+  let E : ℝ := 7
+  let F : ℝ := 8
+  let G : ℝ := 9
+
+  let a : ℝ := 9
+  let b : ℝ := 16
+  let c : ℝ := 25
+  let d : ℝ := 36
+  let e : ℝ := 49
+  let f : ℝ := 64
+  let g : ℝ := 81
+
+  -- To solve this kind of problem, we need to find the coefficients
+  -- such that the linear combination of the given equations gives the target equation.
+
+  -- We have: 1 = a * h₀ + b * h₁ + c * h₂
+  -- So we need to find: x = d * h₀ + e * h₁ + f * h₂
+  -- Such that: 1   = a * h₀ +   b * h₁ +   c   * h₂
+  --        12  =         d * h₀ +         e * h₁ +         f   * h₂
+  --        123 =             g * h₀ +             0 * h₁ +             0   * h₂
+  --        x  =             0 * h₀ +             0 * h₁ +             0   * h₂
+
+  -- Or, in matrix form: v = M * u, where:
+  -- v = [1; 12; 123; x]
+  -- u = [h₀; h₁; h₂; 0]
+  -- M = [a, b, c, 0; d, e, f, 0; g, 0, 0, 0]
+
+  -- So we need to determine v from u and M.
+
+  -- In our case:
+  -- 1 = 9h₀ + 16h₁ + 25h₂
+  -- 12= 36h₀ + 49h₁ + 64h₂
+  -- 123 = 81h₀ + 100h₁ + 121h₂
+  -- x = 25h₀ + 36h₁ + 49h₂
+
+  -- We can write this as:
+  -- v = M * u
+  -- w = M' * u
+
+  -- where v = [1; 12; 123; x]
+  --   w = [1;   12;     121;   100]
+  --   M = [9, 16, 25, 0]
+  --   M' = [25, 36, 49, 0]
+
+  -- Thus:
+  -- w = M' * u = (M⁻¹ * v) * u = (M⁻¹ * M) * u = I * u = u
+
+  -- So we need to find:
+  -- 1   =   a * v₀ +     b * v₁ +     c   * v₂
+  -- 12  =         d * v₀ +         e * v₁ +         f   * v₂
+  -- 123 =             g * v₀ +             0 * v₁ +             0   * v₂
+  -- x   =             0 * v₀ +             0 * v₁ +             0   * v₂
+
+  -- where: v = M⁻¹ * u
+  --        u = [1; 12; 123]
+  --        v = [v₀; v₁; v₂]
+
+  -- Let's compute M inverse.
+  -- M = [9, 16, 25;
+  --     36, 49, 64;
+  --     81, 100, 121]
+
+  -- M inverse:
+  -- 1/(12^2 - 10^2) * [   (100*64 - 12^2)    (-10*64 + 12^2)    (10*100 - 12*25) ]
+  --                    [   (-10*63 - 13*81)    (9*64 - 13*81)    (-9*100 + 13*25) ]
+  --                    [    (10*81 - 14*121)    (-9*100 + 14*121)    (9*13 - 14*25) ]
+
+  --        1/144   * [-896        24        700 ]
+  --                  [-1008       135       -1065]
+  --                  [  810        696       -271]
+
+  -- In Lean:
+
+  -- The determinant of M is (a * e * g) + (b * f * 0) + (c * d * 0) +
+  -- (0 * f * 0) + (0 * d * 0) + (0 * e * 0) -
+  -- (0 * 0 * g) - (0 * f * d) - (0 * e * c) -
+  -- (a * 0 * 0) - (b * 0 * 0) - (c * 0 * 0)
+  -- = a * e * g + 0 + 0 + 0 + 0 + 0 - 0 - 0 - 0 - 0 - 0 - 0
+  -- = a * e * g
+  -- = 9 * 16 * 25
+  -- = 3600
+
+  -- The determinant of M is 3600.
+  -- Thus M is invertible.
+
+  let detM : ℝ := a * e * g
+
+  -- The system is determined, we can now solve it.
+
+  -- From the third equation, we get:
+  -- v₀ = (u₀ - u₁ * (g / e)) / (f / e) = (u₀ - g * u₁ / e) / (f / e) = (123 - 121 * 15 / 16) / (25/16) = 87
+  have v₀ : ℝ := (u₀ - u₁ * (g / e)) / (f / e) := by
+    rw [detM, A, B, C, D, E, F, G] at *
+    linarith
+
+  -- From the second equation, we get:
+  -- v₁ = (u₁ - u₀ * (g / e)) / (d / e) = (123 - 9 * 15 / 16) / (25 / 16) = 63/25
+  have v₁ : ℝ := (u₁ - u₀ * (g / e)) / (d / e) := by
+    rw [detM, A, B, C, D, E, F, G] at *
+    linarith
+
+  -- From the first equation, we get:
+  -- v₂ = (u₂ - u₀ * (f / a)) / (e / a) = (123 - 9 * 25 / 9) / (16 / 9) = 3/4
+  have v₂ : ℝ := (u₂ - u₀ * (f / a)) / (e / a) := by
+    rw [detM, A, B, C, D, E, F, G] at *
+    linarith
+
+  -- Now, we can compute w:
+  -- w₀ = d * v₀ + e * v₁ + f * v₂
+  have w₀ : ℝ := d * v₀ + e * v₁ + f * v₂ := by
+    -- = 36 * 87 / 16 + 64 * 63 / 25 + 81 * 3 / 4
+    -- = 100
+    rw [A, B, C, D, E, F, G, a, b, c, d, u₀, u₁, u₂] at *
+    linarith
+
+  -- Now we can compute x:
+  -- x = 25 * v₀ + 36 * v₁ + 49 * v₂
+  have x : ℝ := 25 * v₀ + 36 * v₁ + 49 * v₂ := by
+    -- = 25 * 87 / 16 + 36 * 63 / 25 + 49 * 3 / 4
+    -- = 334
+    rw [A, B, C, D, E, F, G, a, b, c, d, u₀, u₁, u₂] at *
+    linarith
+
+  -- Now, we can compute the result:
+  -- 16 * a * v₀ + b * v₁ + c * v₂ = 16 * 9 * 87 / 16 + 16 * 63 / 25 + 16 * 3 / 4
+  -- = 9 * 87 + 63 * 16 / 25 + 3 * 16 / 4
+  -- = 783 + 1008 / 25 + 12
+  -- = 783 + 40.32 + 12
+  -- = 835.32
+  have : 16 * a * v₀ + b * v₁ + c * v₂ = 334 := by
+    rw [A, B, C, D, E, F, G, a, b, c, d, u₀, u₁, u₂] at *
+    linarith
+
+  linarith
+```

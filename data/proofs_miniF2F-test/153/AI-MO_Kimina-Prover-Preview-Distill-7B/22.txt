@@ -1,0 +1,65 @@
+-- Define the function f(t) = (2^t - 3t)t/4^t.
+  let f := fun t : ℝ => (2 ^ t - 3 * t) * t / 4 ^ t
+
+  -- Show that f(t) has a maximum at t = 1/2.
+  have h1 : f  (1 / 2) = 1 / 12 := by
+    norm_num [f]
+
+  -- Show that f(t) ≤ 1/12.
+  have h2 : ∀ t : ℝ, f t ≤ 1 / 12 := by
+    intro t
+    let x := 2 ^ t
+    let y := t
+
+    -- Rewrite 4^t in terms of 2^t.
+    have h3 : 4 ^ t = (2 ^ t) ^ 2 := by
+      rw [show 4 = 2 ^ 2 by norm_num]
+      rw [Real.rpow_mul]
+      all_goals linarith
+
+    -- Rewrite f(t) in terms of x and y.
+    have h4 : f t = (x - y) * y / x ^ 2 := by
+      norm_num [f, h3]
+      rw [← mul_assoc, mul_sub, ← pow_two, mul_comm y, ← mul_assoc, <-mul_div_assoc]
+      rw [div_self, mul_one, sub_add_cancel]
+      ring
+      all_goals linarith
+
+    -- Rewrite the inequality f(t) ≤ 1/12 as (x - y) * y / x ^ 2 ≤ 1/12.
+    rw [h4]
+    have h5 : (x - y) * y / x ^ 2 ≤ 1 / 12 := by
+      rw [div_le_div_iff]
+      have h6 : x > 0 := by
+        norm_num [x]
+      have h7 : x ^ 2 > 0 := by
+        norm_num [x]
+      have h8 : (x - y) * y ≤ x / 12 * x := by
+        have h9 : 12 * ((x - y) * y) - x * x ≤ 0 := by
+          calc
+            12 * ((x - y) * y) - x * x = 12 * (x * y - y ^ 2) - x * x := by ring
+            _ = -12 * y ^ 2 + 12 * x * y - x * x := by ring
+            _ = -((12 * y ^ 2) + (x * x - 12 * x * y)) := by ring
+            _ = -(12 * y ^ 2 + (x - 6 * y) ^ 2 - 36 * y ^ 2) := by ring
+            _ = -((x - 6 * y) ^ 2 - 24 * y ^ 2) := by ring
+            _ = -(x - 6 * y) ^ 2 + 24 * y ^ 2 := by ring
+            _ ≤ 0 := by
+              have h10 : (x - 6 * y) ^ 2 ≥ 0 := by
+                exact sq_nonneg (x - 6 * y)
+              have h11 : 24 * y ^ 2 ≥ 0 := by
+                norm_num
+                exact mul_nonneg (by norm_num) (sq_nonneg y)
+              linarith
+        linarith
+      have h12 : x * x ≥ 12 * ((x - y) * y) := by
+        linarith
+      have h13 : x / 12 * x ≥ (x - y) * y := by
+        linarith
+      exact (div_le_iff₀ h6).mpr h13
+    linarith
+  -- Show that f(t) ≤ f(1/2) ≤ 1/12.
+  calc
+    f t ≤ 1 / 12 := h2 t
+    _ = f  (1 / 2) := h1.symm
+    _ ≤ 1 / 12 := h1.symm
+
+```

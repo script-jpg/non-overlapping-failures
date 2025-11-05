@@ -1,0 +1,38 @@
+-- let $a_{0} = 1$ and $a_{n+1} = a_{n} * (1 + 1/2^{n+1})$.
+  let $a_0 := 1$
+  let a (n : ℕ) := ∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k
+
+  -- Then $a_{n} < 5/2$ for all positive integer $n$.
+  have h₁ : ∀ n > 0, a n < 5 / 2 := by
+    intro n hn
+    induction' n with n ih
+    · -- if $n=1$, then $a_{n} = 1 + 1/2 = 1.5 < 2.5 = 5/2$.
+      simp [a]
+      norm_num
+    · -- if $n > 1$, then $a_{n} < 5/2$ by induction hypothesis.
+      simp [a]
+      rw [Finset.prod_Icc_succ_top (by omega)]
+      rw [mul_assoc]
+      -- By induction hypothesis, $a_{n} < 5/2$. So we have
+      -- $a_{n+1} = a_{n} * (1 + 1/2^{n+1}) < 5/2 * (1 + 1/2^{n+1})$.
+      have := ih (by omega)
+      -- So we just need to show that $5/2 * (1 + 1/2^{n+1}) < 5/2$.
+      -- That is, $1/2^{n+1} < 1/2$.
+      -- That is, $2 < 2^{n+1}$.
+      -- That is, $2^{n} < 2^{n+1}$.
+      -- This is true because $2^{n} < 2^{n} + 1 = 2^{n+1}$.
+      suffices 5 / 2 * (1 + 1 / 2 ^ (n + 1)) < 5 / 2 by
+        linarith
+      have h₂ : 1 / 2 ^ (n + 1) < 1 / 2 := by
+        have h₂ : 2 < 2 ^ (n + 1) := by
+          apply Nat.zero_lt_of_lt_succ
+          apply Nat.pow_lt_pow_of_lt (by norm_num)
+          omega
+        rw [← one_div, ← one_div, ← one_div (2 ^ (n + 1))]
+        apply (one_div_lt_one_div (by norm_num) (by norm_num)).mpr
+        exact h₂
+      linarith
+
+  -- So the original proposition is true.
+  exact h₁ n h₀
+```

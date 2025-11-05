@@ -1,0 +1,87 @@
+-- We first show that $m^2 + mn + n^2 > 0$.
+  have neq0 : m ^ 2 + m * n + n ^ 2 > 0 := by
+    -- Since $m > 0$ and $n > 0$, $m^2 > 0$, $n^2 > 0$, and $mn > 0$.
+    apply add_pos
+    · apply add_pos
+      · exact sq_pos_of_pos h₀.1
+      · exact mul_pos h₀.1 h₀.2
+    · exact sq_pos_of_pos h₀.2
+
+  -- We have $m^3 = 2$ and $n^3 = 4$, so $m \neq 0$ and $n \neq 0$.
+  have mnneq0 : m ≠ 0 ∧ n ≠ 0 := by
+    constructor
+    · by_contra! hm
+      -- If $m = 0$, then $m^3 = 0$, which contradicts the fact that $m^3 = 2$.
+      rw [hm] at h₁
+      simp at h₁
+    · by_contra! hn
+      -- If $n = 0$, then $n^3 = 0$, which contradicts the fact that $n^3 = 4$.
+      rw [hn] at h₂
+      simp at h₂
+
+  -- We have $a = -bm - cn$.
+  have aeqnegbmcn : a = -b * m - c * n := by
+    linarith only [h₃]
+
+  -- Substituting $a = -bm - cn$ into the equation $a + bm + cn = 0$, we get $0 = 0$.
+  -- This doesn't give us any new information.
+  subst a
+
+  -- We show that $b = 0$.
+  have beq0 : b = 0 := by
+    -- If $b \neq 0$, then $m^2 + mn + n^2 \leq 0$, which contradicts the fact that $m^2 + mn + n^2 > 0$.
+    by_contra! bneq0
+    -- Since $b \neq 0$ and $m \neq 0$, $b^2 > 0$.
+    have bsqpos : b ^ 2 > 0 := by
+      exact sq_pos_of_ne_zero bneq0
+    -- Since $m \neq 0$, $m^2 > 0$.
+    have msqpos : m ^ 2 > 0 := by
+      exact sq_pos_of_ne_zero mnneq0.1
+    -- Since $n \neq 0$, $n^2 > 0$.
+    have nsqpos : n ^ 2 > 0 := by
+      exact sq_pos_of_ne_zero mnneq0.2
+    -- Since $b^2 > 0$, $m^2 > 0$, and $n^2 > 0$, $b^2(m^2 + mn + n^2) > 0$.
+    have.mul_pos bsqpos mnneq0.1.ne' nsqpos := by
+      apply mul_pos
+      · apply mul_pos bsqpos msqpos
+      · nlinarith only [msqpos, nsqpos]
+    -- However, $b^2(m^2 + mn + n^2) = 0$ because $m^3 = 2$ and $n^3 = 4$.
+    have.mul_eq_zero := by
+      ring_nf
+      nlinarith only [h₁, h₂]
+    -- This is a contradiction.
+    linarith only [mul_pos, mul_eq_zero]
+
+  -- We substitute $b = 0$ into $a = -bm - cn$, so $a = -cn$.
+  subst b
+  simp only [zero_mul, add_zero] at aeqnegbmcn
+  rw [aeqnegbmcn]
+
+  -- We show that $c = 0$.
+  have ceq0 : c = 0 := by
+    -- If $c \neq 0$, then $n^2 \leq 0$, which contradicts the fact that $n^2 > 0$.
+    by_contra! cneq0
+    -- Since $c \neq 0$ and $n \neq 0$, $c^2 > 0$.
+    have csqpos : c ^ 2 > 0 := by
+      exact sq_pos_of_ne_zero cneq0
+    -- Since $n \neq 0$, $n^2 > 0$.
+    have nsqpos : n ^ 2 > 0 := by
+      exact sq_pos_of_ne_zero mnneq0.2
+    -- Since $c^2 > 0$ and $n^2 > 0$, $c^2n^2 > 0$.
+    have.mul_pos csqpos nsqpos : c ^ 2 * n ^ 2 > 0 := by
+      exact mul_pos csqpos nsqpos
+    -- However, $c^2n^2 = 0$ because $m^3 = 2$ and $n^3 = 4$.
+    have.mul_eq_zero := by
+      ring_nf
+      nlinarith only [h₁, h₂]
+    -- This is a contradiction.
+    linarith only [mul_pos, mul_eq_zero]
+
+  -- We substitute $c = 0$ into $a = -cn$, so $a = 0$.
+  subst c
+  simp only [zero_mul] at aeqnegbmcn
+  rw [aeqnegbmcn]
+
+  -- Therefore, $a = b = c = 0$.
+  exact ⟨by linarith only [beq0], by linarith only [ceq0]⟩
+```

@@ -1,0 +1,91 @@
+have pge1 : 1 ≤ p := by linarith
+
+  have_lhs : (∑ k in Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) = (p - 2)⁻¹ - 1⁻¹ := by
+    -- Using the identity that $(n-1)^{-1}n^{-1} = (n^{-1} - (n-1)^{-1})$, we induction on $p$ to get the result.
+    rw [← Finset.sum_Icc_succ_top (by linarith)]
+    cases p with
+    | zero => contradiction
+    | succ p =>
+      cases p with
+      | zero =>
+        simp
+        rfl
+      | succ p =>
+        cases p with
+        | zero =>
+          simp
+          rfl
+        | succ p =>
+          rename_i q hq hq'
+          rw [Finset.sum_Icc_succ_top (by linarith)]
+          rw [Finset.sum_Icc_succ_top (by linarith)]
+          rw [Finset.sum_Icc_succ_top (by linarith)]
+          rw [Finset.sum_Icc_succ_top (by linarith)]
+          simp
+      | succ p =>
+        rename_i q hq hq'
+        rw [Finset.sum_Icc_succ_top (by linarith)]
+        rw [Finset.sum_Icc_succ_top (by linarith)]
+        simp
+    cases p with
+    | zero => contradiction
+    | succ p =>
+      rename_i q hq hq'
+      rw [Finset.sum_Icc_succ_top (by linarith)]
+      simp
+  -- Because $p \ge 7$, $p - 2 \ge 5$. Thus $(p - 2)^{-1} - 1^{-1} = 2$.
+  have rhs : (p - 2)⁻¹ - 1⁻¹ = 2 := by
+    obtain ⟨p', hp⟩ := show ∃p', p' = p - 2 by simp
+    rw [hp]
+    have pge5 : 5 ≤ p' := by
+      calc
+        5 = 7 - 2 := by norm_num
+        _ ≤ p - 2 := by linarith
+    rw [(ZMod.inv_eq_of_eq_inv hp (by linarith: p' ≠ 0))]
+    rw [(ZMod.inv_eq_of_eq_inv (by linarith: p' + 1 ≠ 0))]
+
+    -- To do the subtraction, we need $2 \neq 0$ in $\ZMod p$.
+    have pne2 : 2 ≠ 0 := by
+      by_contra h
+      rw [h] at hp
+      have : 2 ≤ p := by linarith
+      have : p ∈ Nat.Prime := by norm_cast
+      have := Nat.Prime.two_le this
+      linarith
+
+    -- To do the subtraction, we need $-1 \neq 0$ in $\ZMod p$.
+    have pne1 : -1 ≠ 0 := by
+      by_contra h
+      rw [h] at hp
+      have : 1 ≤ p := by linarith
+      have : p ∈ Nat.Prime := by norm_cast
+      have := Nat.Prime.two_le this
+      linarith
+
+    -- To do the subtraction, we need $1 \neq -1$ in $\ZMod p$.
+    have peq : 1 ≠ -1 := by
+      by_contra h
+      have : 2 ≤ p := by linarith
+      have : p ∈ Nat.Prime := by norm_cast
+      have := Nat.Prime.two_le this
+      linarith
+    rw [ZMod.sub_eq_zero_iff_eq hp (by linarith : p' ≠ 0)]
+    rw [ZMod.sub_eq_zero_iff_eq hp (by linarith : p' + 1 ≠ 0)]
+    simp
+    calc
+      2 = 1 + 1 := by norm_num
+      _ = 1 * (p' + 1) * inv (p' + 1) + 1 * p' * inv p' := by
+        rw [ZMod.mul_inv_cancel (by linarith : p' + 1 ≠ 0)]
+        rw [ZMod.mul_inv_cancel (by linarith : p' ≠ 0)]
+        simp
+      _ = 1 * (p' + 1) * inv (p' + 1) - 1 * p' * inv p' + 2 := by
+        rw [ZMod.sub_eq_zero_iff_eq hp (by linarith : p' ≠ 0)]
+        simp
+      _ = 2 := by
+        rw [ZMod.mul_inv_cancel (by linarith : p' + 1 ≠ 0)]
+        rw [ZMod.mul_inv_cancel (by linarith : p' ≠ 0)]
+        simp
+  rw [lhs, rhs]
+
+
+```

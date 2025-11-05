@@ -1,0 +1,139 @@
+-- The function $f(n)$ is defined as $\frac{d(n)}{\sqrt[3]{n}}$, where $d(n)$ is the number of positive divisors of $n$.
+  have h_f_def (n : ℕ) (h_n_pos : 0 < n) : f n = (Nat.divisors n).card / n ^ ((1 : ℝ) / 3) := by
+    exact h₀ n h_n_pos
+
+  -- We need to find the unique positive integer $N$ such that $f(N) > f(n)$ for all positive integers $n \neq N$.
+  -- Then we need to prove that the sum of digits of $N$ is 9.
+  have h_unique : ∀ n, n ≠ N → 0 < n → f n < f N := by
+    exact h₁
+
+  /- The approach will be:
+  - First, prove that $N$ is 3600.
+  - Then compute the sum of digits of 3600 is 9.
+  -/
+  suffices N = 3600 by
+    rw [this]
+    norm_num
+
+  /- First, let's analyze the function $f(n) = \frac{d(n)}{\sqrt[3]{n}}$.
+  To maximize $f(n)$, we need to balance the growth of $d(n)$ against the decay of $\sqrt[3]{n}$.
+  - For a prime number $p$, $d(p) = 2$, so $f(p) = \frac{2}{\sqrt[3]{p}}$.
+  - For a power of a prime $p^k$, $d(p^k) = k + 1$, so $f(p^k) = \frac{k+1}{\sqrt[3]{p^k}} = \frac{k+1}{p^{k/3}}$.
+  - For a product of two primes $p \cdot q$, $d(p \cdot q) = 4$, so $f(p \cdot q) = \frac{4}{\sqrt[3]{p \cdot q}}$.
+  -/
+  have h_f3600 : f 3600 > f 3601 := by
+    specialize h_unique 3601 (by norm_num) (by norm_num)
+    specialize h_f_def 3601 (by norm_num)
+    specialize h_f_def 3600 (by norm_num)
+    rw [h_f_def, h_f_def] at h_unique
+    norm_num at h_unique
+    linarith
+
+  have h_f3600' : f 3600 > f 3602 := by
+    specialize h_unique 3602 (by norm_num) (by norm_num)
+    specialize h_f_def 3602 (by norm_num)
+    specialize h_f_def 3600 (by norm_num)
+    rw [h_f_def, h_f_def] at h_unique
+    norm_num at h_unique
+    linarith
+
+  have h_f3600_1 : f 3601 > f 3603 := by
+    specialize h_unique 3603 (by norm_num) (by norm_num)
+    specialize h_f_def 3603 (by norm_num)
+    specialize h_f_def 3601 (by norm_num)
+    rw [h_f_def, h_f_def] at h_unique
+    norm_num at h_unique
+    linarith
+
+  /- By analyzing the values of $f$ at 3600 and its neighbors, we can gather information about the structure of $N$.
+  Since $f(N) > f(n)$ for all $n \neq N$, $N$ must have certain properties.
+  From the inequalities we've established:
+  - $f(3600) > f(3601)$
+  - $f(3600) > f(3602)$
+  - $f(3601) > f(3603)$
+  -/
+  /- Let's continue with the proof that $N = 3600$.
+  We'll analyze the prime factorization of $N$.
+  Since $f(N) > f(3601)$ and $f(N) > f(3602)$, $N$ must have a significant number of divisors compared to its neighbors.
+  This suggests $N$ has a specific form with a particular number of divisors.
+  Let's continue with the proof:
+  -/
+  have h_n_div3600 (n : ℕ) (h_n_pos : 0 < n) : (Nat.divisors n).card ≤ 3600 / n ^ ((1 : ℝ) / 3) := by
+    specialize h_f_def n h_n_pos
+    specialize h_unique n (by linarith) h_n_pos
+    linarith
+
+  /- Next, let's prove that $N$ must be exactly 3600.
+  We'll use proof by contradiction.
+  Assume $N \neq 3600$, then we'll derive a contradiction from the properties of $f$.
+  -/
+  suffices N = 3600 by
+    rw [this]
+    norm_num
+
+  /- To formalize the contradiction, we need to show that there exists some $n \neq N$ such that $f(n) \geq f(N)$.
+  This would contradict the assumption that $f(N) > f(n)$ for all $n \neq N$.
+  -/
+  by_contra h
+  specialize h_n_div3600 3600 (by norm_num)
+  simp [h] at h_n_div3600
+
+  /- The key insight is that for $n = 3601$ and $n = 3602$, we have $f(n) > f(3600)$, which would imply $f(n) > f(N)$, contradicting the uniqueness of $N$.
+  Let's continue with the proof:
+  -/
+  have h_f3601 : f 3601 > f 3600 := by
+    specialize h_unique 3600 (by norm_num) (by norm_num)
+    specialize h_f_def 3600 (by norm_num)
+    specialize h_f_def 3601 (by norm_num)
+    rw [h_f_def, h_f_def] at h_unique
+    norm_num at h_unique
+    linarith
+
+  have h_f3602 : f 3602 > f 3600 := by
+    specialize h_unique 3600 (by norm_num) (by norm_num)
+    specialize h_f_def 3600 (by norm_num)
+    specialize h_f_def 3602 (by norm_num)
+    rw [h_f_def, h_f_def] at h_unique
+    norm_num at h_unique
+    linarith
+
+  /- Since $f(3601) > f(3600)$ and $f(3602) > f(3600)$, if $N \neq 3600$, then either $f(N) \leq f(3600)$ or $f(N) > f(3601)$ and $f(N) > f(3602)$.
+  But $f(N) > f(3601)$ and $f(N) > f(3602)$ would contradict the uniqueness of $N$.
+  Also, $f(N) \leq f(3600)$ would contradict $f(N) > f(3600)$.
+  -/
+  have h_f3600_1 : f 3601 > f 3603 := by
+    specialize h_unique 3603 (by norm_num) (by norm_num)
+    specialize h_f_def 3603 (by norm_num)
+    specialize h_f_def 3601 (by norm_num)
+    rw [h_f_def, h_f_def] at h_unique
+    norm_num at h_unique
+    linarith
+
+  /- We have established that $f(3600) > f(3601)$, $f(3600) > f(3602)$, $f(3601) > f(3603)$, and $f(3602) > f(3600)$.
+  From these inequalities, we can conclude that $N$ must be 3600.
+  If $N \neq 3600$, then we get a contradiction with the uniqueness of $N$.
+  -/
+  have h_contra : f 3601 ≤ f 3600 := by
+    specialize h_n_div3600 3601 (by norm_num)
+    specialize h_f3600
+    linarith
+
+  have h_contra' : f 3602 ≤ f 3600 := by
+    specialize h_n_div3600 3602 (by norm_num)
+    specialize h_f3600'
+    linarith
+
+  have h_contra'' : f 3601 > f 3603 := by
+    specialize h_unique 3603 (by norm_num) (by norm_num)
+    specialize h_f_def 3603 (by norm_num)
+    specialize h_f_def 3601 (by norm_num)
+    rw [h_f_def, h_f_def] at h_unique
+    norm_num at h_unique
+    linarith
+
+  /- The contradiction arises because we have $f(3601) > f(3603)$ and $f(3602) > f(3600)$, but also $f(3601) \leq f(3600)$ and $f(3602) \leq f(3600)$.
+  This would imply $f(3603) \geq f(3601) > f(3600)$ and $f(3600) \geq f(3602) > f(3603)$, which is impossible.
+  -/
+  linarith
+
+```

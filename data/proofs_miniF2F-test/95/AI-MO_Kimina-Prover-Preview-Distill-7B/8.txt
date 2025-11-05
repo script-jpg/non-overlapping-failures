@@ -1,0 +1,172 @@
+-- We need to compute the prime factorization of 80325.
+  -- 80325 = 80325 / 3 * 3 * 29 * 29
+  --   = 80325 / 3 * 3^2 * 29^2
+  --   = 80325 / (3 * 29) * 3^2 * 29^2
+  --   = 267 * 3^2 * 29^2
+  --   = 3 * 89 * 3^2 * 29^2
+  --   = 3^3 * 29^2 * 89
+  native_decide
+
+  have p1 : Nat.Prime 3 := by norm_num
+  have p2 : Nat.Prime 29 := by norm_num
+  have p3 : Nat.Prime 89 := by norm_num
+  have p4 : Nat.Prime 17 := by norm_num
+
+  have h1 : n! ≠ 0 := by exact Nat.factorial_ne_zero n
+  have h2 : n! = n! := by exact rfl
+
+  rw [show 80325 = 3^3 * 29^2 * 89 by native_decide, Nat.factorization_mul (by exact Nat.factorial_pos 89) (by exact Nat.factorial_pos 29),
+    Nat.factorization_pow Nat.Prime.factorization 29 2, Nat.factorization_pow Nat.Prime.factorization 3 3, Nat.Prime.factorization 89] at h₁
+  simp only [factorization_eq_zero_of_not_dvd, ↓reduceIte, Nat.reduceEqDiff, List.length_cons, zero_add,
+    Nat.factorization_mul Nat.Prime.factorization Nat.Prime.factorization, Nat.Prime.factorization,
+    List.length_nil, zero_mul, Nat.reduceEqDiff, List.length_cons, add_zero, Nat.factorization_pow,
+    Nat.Prime.factorization, List.length_singleton, Nat.reduceEqDiff, mul_zero, Nat.factorization_zero,
+    List.nil_append, List.length_nil, zero_add, Nat.factorial_pos, Nat.reduceEqDiff, eq_comm,
+    List.nodup_cons, List.not_mem_nil, not_or, List.nodup_nil, and_true, List.not_mem_singleton,
+    not_false_eq_true, List.length_cons, add_zero, Nat.factorization_mul Nat.Prime.factorization Nat.Prime.factorization,
+    Nat.Prime.factorization, List.length_nil, zero_add, Nat.factorization_zero, List.nil_append,
+    List.length_nil, zero_add, Nat.factorial_pos] at h₁
+  -- We get F3 = 3, F29 = 2, F89 = 1
+  --   E3 = 3, E29 = 2, E89 = 1
+  --   Therefore, 3 ∣ n, 29 ∣ n, 89 ∣ n
+  have h3 : 3 ∣ n! := by
+    have h4 : 3 ∈ n!.primeFactors := by simp_all
+    exact Dvd.intro_left (n! / 3) (id (Eq.symm h4))
+  have h4 : 29 ∣ n! := by
+    have h5 : 29 ∈ n!.primeFactors := by simp_all
+    exact Dvd.intro_left (n! / 29) (id (Eq.symm h5))
+  have h5 : 89 ∣ n! := by
+    have h6 : 89 ∈ n!.primeFactors := by simp_all
+    exact Dvd.intro_left (n! / 89) (id (Eq.symm h6))
+
+  rw [Nat.factorial_primeFactorsList_eq_filter_range] at h3 h4 h5
+  rw [Nat.primeFactorsList_eq_filter_range] at h₁
+
+  -- First, show that 3 ∣ n.
+  have h6 : 3 ∣ n := by
+    have h7 : 3 ∈ n.primeFactors := by
+      have h7_1 : 3 ∈ n!.primeFactors := by exact h3
+      have h7_2 : n!.primeFactors = n.primeFactors.filter_range (n + 1) := by
+        exact Nat.primeFactorsList_eq_filter_range n
+      rw [h7_2] at h7_1
+      exact (List.mem_filter_iff_right (Nat.Prime.ne_zero p1)).mp h7_1
+    have h8 : n ≠ 0 := by exact Nat.not_eq_zero_of_ne_zero h₀
+    exact (List.mem_filter_iff_right (by simp)).mp h7
+  -- Next, show that 29 ∣ n.
+  have h7 : 29 ∣ n := by
+    have h8 : 29 ∈ n!.primeFactors := by
+      have h8_1 : 29 ∈ n!.primeFactors := by exact h4
+      have h8_2 : n!.primeFactors = n.primeFactors.filter_range (n + 1) := by
+        exact Nat.primeFactorsList_eq_filter_range n
+      rw [h8_2] at h8_1
+      exact (List.mem_filter_iff_right (by simp)).mp h8_1
+    have h9 : n ≠ 28 := by
+      by_contra! h9
+      have h9_1 : n!.primeFactors = n.primeFactors.filter_range (n + 1) := by
+        exact Nat.primeFactorsList_eq_filter_range n
+      rw [h9] at h9_1
+      simp [h9_1] at h8
+    exact (List.mem_filter_iff_right (by simp)).mp h8
+  -- Next, show that 89 ∣ n.
+  have h8 : 89 ∣ n := by
+    have h9 : 89 ∈ n!.primeFactors := by
+      have h9_1 : 89 ∈ n!.primeFactors := by exact h5
+      have h9_2 : n!.primeFactors = n.primeFactors.filter_range (n + 1) := by
+        exact Nat.primeFactorsList_eq_filter_range n
+      rw [h9_2] at h9_1
+      exact (List.mem_filter_iff_right (by simp)).mp h9_1
+    have h10 : n ≠ 88 := by
+      by_contra! h10
+      have h10_1 : n!.primeFactors = n.primeFactors.filter_range (n + 1) := by
+        exact Nat.primeFactorsList_eq_filter_range n
+      rw [h10] at h10_1
+      simp [h10_1] at h9
+    exact (List.mem_filter_iff_right (by simp)).mp h9
+  -- Next, show that 17 ∣ n.
+  have h9 : 17 ∣ n := by
+    by_contra! h9
+    have h10 : ∀ k ∈ n.primeFactors, k < 17 := by
+      intro k hk
+      by_contra! h10
+      have h10_1 : n.primeFactors = n!.primeFactors.filter_range (n + 1) := by
+        exact Nat.primeFactorsList_eq_filter_range n
+      simp at h10_1
+      have h10_2 : k ∈ n!.primeFactors := by exact hk
+      rw [h10_1] at h10_2
+      exact (List.mem_filter_iff_right (by simp)).mp h10_2
+    have h11 : n < 17 := by
+      have h11_1 : n + 1 ≤ 17 := by
+        have h11_1_1 : n!.primeFactors = n.primeFactors.filter_range (n + 1) := by
+          exact Nat.primeFactorsList_eq_filter_range n
+        have h11_1_2 : n ∈ n!.primeFactors := by
+          have h11_1_2_1 : n ≠ 0 := by exact Nat.not_eq_zero_of_ne_zero h₀
+          have h11_1_2_2 : n ∈ n! := by exact Nat.mem_factorial h₀
+          have h11_1_2_3 : n ∈ n!.primeFactors := by
+            refine (Nat.mem_primeFactors h11_1_2_1?_).mpr h11_1_2_2
+            exact Nat.prime_iff.mp p1
+          exact h11_1_2_3
+        rw [h10] at h11_1_2
+        exact (List.mem_filter_iff_right (by simp)).mp h11_1_2
+      omega
+    have h12 : n ≠ 0 := by
+      exact Nat.not_eq_zero_of_ne_zero h₀
+    interval_cases n
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+  -- Finally, show that 17 ≤ n.
+  have h10 : 17 ≤ n := by
+    have h11 : 17 ∈ n.primeFactors := by
+      have h11_1 : 17 ∣ n := by exact h9
+      have h11_2 : n ≠ 16 := by
+        by_contra! h11_2
+        have h11_2_1 : n!.primeFactors = n.primeFactors.filter_range (n + 1) := by
+          exact Nat.primeFactorsList_eq_filter_range n
+        simp at h11_2_1
+        have h11_2_2 : n ∈ n!.primeFactors := by
+          have h11_2_2_1 : n ≠ 0 := by exact Nat.not_eq_zero_of_ne_zero h₀
+          have h11_2_2_2 : n ∈ n! := by exact Nat.mem_factorial h₀
+          have h11_2_2_3 : n ∈ n!.primeFactors := by
+            refine (Nat.mem_primeFactors h11_2_2_1?_).mpr h11_2_2_2
+            exact Nat.prime_iff.mp p1
+          exact h11_2_2_3
+        rw [h11_1] at h11_2_2
+        exact (List.mem_filter_iff_right (by simp)).mp h11_2_2
+      have h11_3 : 17 ≤ n := by
+        by_contra! h11_3
+        have h11_3_1 : n < 17 := by omega
+        have h11_3_2 : n > 16 := by omega
+        omega
+      exact h11_3
+    have h11_1 : n ≠ 16 := by
+      by_contra! h11_1
+      have h11_1_1 : n!.primeFactors = n.primeFactors.filter_range (n + 1) := by
+        exact Nat.primeFactorsList_eq_filter_range n
+      simp at h11_1_1
+      have h11_1_2 : n ∈ n!.primeFactors := by
+        have h11_1_2_1 : n ≠ 0 := by exact Nat.not_eq_zero_of_ne_zero h₀
+        have h11_1_2_2 : n ∈ n! := by exact Nat.mem_factorial h₀
+        have h11_1_2_3 : n ∈ n!.primeFactors := by
+          refine (Nat.mem_primeFactors h11_1_2_1?_).mpr h11_1_2_2
+          exact Nat.prime_iff.mp p1
+        exact h11_1_2_3
+      rw [h11_1_1] at h11_1_2
+      exact (List.mem_filter_iff_right (by simp)).mp h11_1_2
+    rw [h10] at h11
+    have h12 : n ≥ 17 := by omega
+    exact h12
+  exact h10
+```

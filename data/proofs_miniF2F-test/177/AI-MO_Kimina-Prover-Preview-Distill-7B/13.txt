@@ -1,0 +1,182 @@
+constructor
+
+  -- Let $\mathbb{Z}$ be the set of integers. Determine all functions $f : \mathbb{Z} \to \mathbb{Z}$ such that, for all
+  -- integers $a$ and $b$, $f(2a) + 2f(b) = f(f(a + b)).$
+  · intro hf
+
+    -- The only constant functions that work are $f(z) = 0$ and $f(z) = 2z + c$ for any constant c.
+    have h_0 : f 0 = 0 ∨ ∃ c, ∀ z, f z = 2 * z + c := by
+
+      -- Note that, for any $b$, $f(f(b)) = f(2 * 0) + 2 * f(b) = f(f(0) + b)$.
+      have h1 b : f (f b) = f (f 0 + b) := by
+        specialize hf 0 b
+        simp at hf
+        exact hf
+
+      -- For any $a$, $f(f(a)) = f(2 * a) + 2 * f(0) = f(f(0) + 2 * a)$.
+      have h2 a : f (f a) = f (f 0 + 2 * a) := by
+        specialize hf a 0
+        simp at hf
+        exact hf
+
+      -- Let $c = f(f(0)) - 2 * f(0)$.
+      set c := f (f 0) - 2 * f 0 with c_def
+
+      -- Then, for any $z$, $f(f(z)) = c + 2 * f(z)$.
+      have h3 z : f (f z) = c + 2 * f z := by
+        rw [←c_def, ←h1 z, h2 z]
+        ring_nf
+
+      -- So, for any $b$, $f(f(f(b))) = f(f(f(b)) + c) = f(2 * f(b)) + 2 * f(f(b))$.
+      have h4 b : f (f (f b)) = f (2 * f b) + 2 * f (f b) := by
+        specialize hf (f b) b
+        simp at hf
+        exact hf
+
+      -- On the other hand, $f(f(f(b))) = c + 2 * f(f(b)) = c + 2 * (c + 2 * f(b)) = 2 * c + 4 * f(b)$.
+      have h5 b : f (f (f b)) = 2 * c + 4 * f b := by
+        rw [h3]
+        rw [h3]
+        ring_nf
+
+      -- Hence, $2 * f(f(b)) = 2 * c + 2 * f(f(b)) + 2 * f(b)$, or $c = -f(f(b)) - f(b)$.
+      have h6 b : c = -f (f b) - f b := by
+        linarith only [h4 b, h5 b]
+
+      -- So, $f(f(b)) = -c - f(b)$ for any $b$.
+      replace h6 b : f (f b) = -c - f b := by
+        linarith only [h6 b]
+
+      -- Let $b_0$ be such that $f(b_0) = 0$ (if no such $b_0$ exists, then $f(z) ≠ 0$ for any $z$, so $c = 0$).
+      by_cases h : ∃ b_0, f b_0 = 0
+
+      -- If $c = 0$, then $f(f(b)) = -f(b)$ for any $b$.
+      · rw [show c = 0 by linarith only [h]] at h6
+        simp at h6
+
+        -- For any $z$, $f(f(f(z))) = 2 * c + 4 * f(z) = 4 * f(z)$.
+        have h7 z : f (f (f z)) = 4 * f z := by
+          rw [h5, show c = 0 by linarith only [h]]
+          ring_nf
+
+        -- But also $f(f(f(z))) = f(2 * f(z) + c) = f(2 * f(z)) + 2 * f(f(z)) = 2 * f(2 * f(z)) + 2 * f(f(z))$.
+        have h8 z : f (f (f z)) = 2 * f (2 * f z) + 2 * f (f z) := by
+          specialize hf (f z) z
+          simp at hf
+          rw [show f (f z) + z = f z + z by linarith only [h6 z]] at hf
+          exact hf
+
+        -- Hence, $2 * f(2 * f(z)) = 2 * f(2 * f(z)) + 2 * f(f(z)) - 4 * f(z)$, or $f(f(z)) = -2 * f(z)$.
+        have h9 z : f (f z) = -2 * f z := by
+          linarith only [h7 z, h8 z]
+
+        -- So, $-2 * f(z) = f(f(z)) = -c - f(z)$ for any $z$.
+        replace h9 z : -2 * f z = -c - f z := by
+          linarith only [h6 z, h9 z]
+
+        -- Hence, $f(z) = c$ for any $z$.
+        replace h9 z : f z = c := by
+          linarith only [h9 z]
+
+        -- Let $z_0$ be such that $z_0 ≠ 0$.
+        obtain ⟨z_0, hz0⟩ := h
+
+        -- Then $c = f(z_0) = c * z_0$, so $c = 0$.
+        specialize h9 z_0
+        rw [h9] at hz0
+        simp [hz0] at hz0
+        rw [show c = 0 by linarith only [hz0]] at h9
+
+        -- So, $f(z) = 0$ for any $z$.
+        left
+        exact h9
+
+      -- If there exists $b_0$ such that $f(b_0) = 0$, then $c = -f(f(b_0)) - f(b_0) = -f(0)$.
+      obtain ⟨b_0, hb0⟩ := h
+      rw [hb0, h9 0, <-hb0] at h6
+      replace h6 : c = -f 0 := by
+        linarith only [h6]
+
+      -- Then, $f(f(b)) = -c - f(b) = -(-f(0)) - f(b) = f(0) - f(b)$ for any $b$.
+      replace h6 b : f (f b) = f 0 - f b := by
+        rw [<-h6]
+        linarith only [h6 b]
+
+      -- So, $f(0) = f(f(b)) + f(b)$ for any $b$.
+      replace h6 b : f 0 = f (f b) + f b := by
+        linarith only [h6 b]
+
+      -- Let $b_1$ be such that $f(b_1) = 1$ (if no such $b_1$ exists, then $f(z) = 2z + c$ for any $z$, so $f(0) = c = 0$).
+      by_cases h : ∃ b_1, f b_1 = 1
+
+      -- If $f(0) = 0$, then $c = -f(f(0)) - f(0) = -f(0) = 0$.
+      · rw [show f 0 = 0 by linarith only [h]] at h6
+        rw [show c = 0 by linarith only [h6]] at h9 h2
+        simp at h9 h2
+
+        -- So, $f(f(z)) = -f(z)$ and $f(2z) = 2f(z)$ for any $z$.
+        -- Let $z_0$ be such that $z_0 ≠ 0$.
+        obtain ⟨z_0, hz0⟩ := h
+
+        -- Then, $f(f(z_0)) = -f(z_0)$, so $-f(z_0) = f(0) - f(z_0)$, or $f(0) = 0$.
+        specialize h9 z_0
+        rw [h9] at h2
+        rw [show f 0 = 0 by linarith only [h2]] at h6
+
+        -- So, $f(f(z)) = -f(z)$ for any $z$.
+        left
+        exact fun z => h9 z
+
+      -- If there exists $b_1$ such that $f(b_1) = 1$, then $c = -f(f(b_1)) - f(b_1) = -f(1) - 1$.
+      obtain ⟨b_1, hb1⟩ := h
+      specialize h6 b_1
+      replace h6 : f 0 = f (f b_1) + f b_1 := by
+        linarith only [h6]
+
+      -- Let $a_0$ be such that $f(a_0) = 1$ (if no such $a_0$ exists, then $f(z) = 2z + c$ for any $z$, so $f(1) = 1 - c$).
+      by_cases h : ∃ a_0, f a_0 = 1
+
+      -- If $f(1) = 1 - c$, then $c = -f(f(b_1)) - f(b_1) = -f(1) - 1 = -(1 - c) - 1 = c - 2$, so $2 = 0$.
+      · rw [show f 1 = 1 - c by linarith only [h]] at h6
+        specialize h9 b_1
+        rw [h6] at h9
+        replace h9 : c = c - 2 := by
+          linarith only [h9]
+        linarith only [h9]
+
+      -- So, there exists $a_0$ such that $f(a_0) = 1$.
+      obtain ⟨a_0, ha0⟩ := h
+
+      -- Let $b = a_0 + b_1$.
+      set b := a_0 + b_1 with b_def
+
+      -- Then, for any $z$, $f(z) = f(f(b)) - f(b) = -c - f(b) - f(b) = -c - 2 * f(b)$.
+      have h10 z : f z = -c - 2 * f b := by
+        specialize h9 (b - z)
+        rw [h9]
+        conv =>
+          simp [b_def]
+          ring_nf
+        ring_nf
+
+      -- So, $f(z) = -c - 2 * f(b)$ for any $z$.
+      right
+      use (-c - 2 * f b)
+      intro z
+      linarith only [h10 z]
+
+    -- Now, let's prove the converse.
+    · intro hf z
+      rcases hf with hf | ⟨c, hf⟩
+      · simp [hf]
+      · simp [hf]
+        ring_nf
+
+  -- And now the converse.
+  · intro hf a b
+    rcases hf with hf | ⟨c, hf⟩
+    · simp [hf]
+    · simp [hf]
+      ring_nf
+
+```

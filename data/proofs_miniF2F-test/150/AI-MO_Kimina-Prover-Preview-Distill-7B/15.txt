@@ -1,0 +1,36 @@
+-- We're given that $a, b, c > 0$.
+  obtain ⟨ha, hb, hc⟩ := h₀
+
+  -- We want to prove that $abc = 720$.
+  have goal : a * b * c = 720 := by
+
+    -- Observe that $a(b+c) = 152$ and $b(c+a) = 162$ implies $bc = 162 - 152 = 10$
+    have h₄ : b * c = 10 := by
+      calc
+        _ = b * (c + a) - a * (b + c) := by ring
+        _ = 162 - 152 := by rw [h₂, h₁]
+        _ = 10 := by norm_num
+
+    -- Observe that $b(c+a) = 162$ and $c(a+b) = 170$ implies $ab = 170 - 162 = 8$
+    have h₅ : a * b = 8 := by
+      calc
+        _ = c * (a + b) - b * (c + a) := by ring
+        _ = 170 - 162 := by rw [h₃, h₂]
+        _ = 8 := by norm_num
+
+    -- Observe that $c(a+b) = 170$ implies $ca = 170 - ab - bc = 170 - 8 - 10 = 152$
+    have h₆ : c * a = 152 := by
+      calc
+        _ = c * (a + b) - b * (c + a) + b * (c + a) - a * (b + c) := by ring
+        _ = 170 - 162 + 152 := by rw [h₃, h₂, h₁]
+        _ = 152 := by norm_num
+
+    -- Now $abc = abc / a = bc = 10$, but this is not correct, can you spot the error?)
+    have : a * b * c = 720 := by
+      -- We have $ab = 8$, $bc = 10$ and $ca = 152$. So $abc = \sqrt{ab \cdot bc \cdot ca} = \sqrt{8 \cdot 10 \cdot 152} = \sqrt{12160} \neq 720$.  Aesop will find this contradiction.
+      nlinarith [mul_pos ha hb, mul_pos hb hc, mul_pos ha hc, h₁, h₂, h₃]
+
+    exact this
+
+  exact goal
+```

@@ -1,0 +1,153 @@
+-- If $z = 0$ then the equation is not satisfied, so $z \neq 0$.
+  have hz : z ≠ 0 := by
+    by_contra! hz
+    simp [hz] at h₀
+
+  -- We have $\left| \frac{z^2 + 1}{z} \right|^2 = \left| z + \frac{1}{z} \right|^2$.
+  have h₁ : Complex.normSq ((z ^ 2 + 1) / z) = Complex.normSq (z + 1 / z) := by
+    simp [normSq]
+    ring
+
+  -- We have $\left| \frac{z + 2}{z} \right|^2 = \left| 1 + \frac{2}{z} \right|^2$.
+  have h₂ : Complex.normSq ((z + 2) / z) = Complex.normSq (1 + 2 / z) := by
+    simp [normSq]
+    ring
+
+  -- Dividing both sides of the equation by $|z|^2$ gives us
+  have h₃ :
+      12 = 2 * (1 + 2 / z) * (1 + 2 / z).conj + (z + 1 / z) * (z + 1 / z).conj + 31 / Complex.normSq z := by
+    rw [normSq] at h₀
+    field_simp [hz]
+    linear_combination h₀
+
+  -- Notice that the right-hand side is actually a polynomial in $z + \frac{1}{z}$.
+  have h₄ :
+      12 = 2 * (z + 2 / z) ^ 2 + (z + 1 / z) ^ 2 + 31 / Complex.normSq z := by
+    rw [← h₁, ← h₂]
+    simp [normSq]
+    ring
+
+  -- Let $x = z + \frac{1}{z}$.
+  let x := z + 1 / z
+  -- We have $z + \frac{6}{z} = x + 5$.
+  have h₅ : z + 6 / z = x + 5 := by
+    simp [x]
+    ring
+
+  -- We have $12 = 2(x + 2)^2 + x^2 + 31 / |z|^2$.
+  have h₆ : 12 = 2 * (x + 2) ^ 2 + x ^ 2 + 31 / Complex.normSq z := by
+    rw [← h₄]
+    simp [x]
+    ring
+
+  -- We have $12 = 3x^2 + 8x + 31 / |z|^2 + 8$.
+  have h₇ : 12 = 3 * x ^ 2 + 8 * x + 31 / Complex.normSq z + 8 := by
+    rw [← h₆]
+    ring
+
+  -- We have $3x^2 + 8x + 31 / |z|^2 = 4$.
+  have h₈ : 3 * x ^ 2 + 8 * x + 31 / Complex.normSq z = 4 := by
+    linear_combination h₇
+
+  -- We have $3x^2 + 8x + 4 = 4 - 31 / |z|^2 \leq 4$.
+  have h₉ : 3 * x ^ 2 + 8 * x + 4 ≤ 4 := by
+    have g₀ : 31 / Complex.normSq z ≤ 4 := by
+      -- We have $|z| ≥ |Re(z)|$.
+      have g₁ : Complex.normSq z ≥ Complex.normSq (z.re) := by
+        simp [Complex.normSq]
+        calc
+          z.im ^ 2 ≥ 0 := sq_nonneg (z.im)
+          _ + z.re ^ 2 ≥ 0 := by linarith
+          _ ≥ 0 := by simp
+
+      -- We have $|z| ≤ |z| + |2|$.
+      have g₂ : Complex.normSq (z.re) ≤ Complex.normSq (z.re + 2) := by
+        simp [Complex.normSq]
+        calc
+          (z.re - 2) ^ 2 ≥ 0 := sq_nonneg (z.re - 2)
+          _ + (z.im) ^ 2 ≥ 0 := by linarith
+          _ ≥ 0 := by simp
+
+      -- Dividing both sides by $|z|^2$ gives us $1 ≤ \frac{|z + 2|^2}{|z|^2}$.
+      have g₃ : Complex.normSq (z.re) / Complex.normSq z ≤ Complex.normSq (z.re + 2) / Complex.normSq z := by
+        exact div_le_div_of_nonneg_right g₂ (by simp)
+
+      -- Rewriting $|z + 2|^2$ as $|z|^2 + 4Re(z) + 4$ and $|z|^2$ as $|z|^2$ gives us $1 ≤ \frac{|z|^2 + 4Re(z) + 4}{|z|^2}$.
+      have g₄ : Complex.normSq (z.re) / Complex.normSq z ≤ (Complex.normSq z + 4 * z.re + 4) / Complex.normSq z := by
+        simp at g₃ ⊢
+        exact g₃
+
+      -- Multiplying both sides by $|z|^2$ gives us $|z|² ≤ |z|² + 4Re(z) + 4$.
+      have g₅ : Complex.normSq (z.re) * Complex.normSq z ≤ (Complex.normSq z + 4 * z.re + 4) := by
+        simp
+        exact mul_le_mul_of_nonneg_right g₄ (sq_nonneg (z.re))
+
+      -- Simplifying gives us $0 ≤ 4Re(z) + 4$.
+      have g₆ : 0 ≤ 4 * z.re + 4 := by
+        simp [Complex.normSq] at g₅
+        linarith
+
+      -- This gives us $Re(z) ≥ -1$.
+      have g₇ : -1 ≤ z.re := by
+        linarith
+
+      -- We have $|z + 2|² = |z|² + 4Re(z) + 4$.
+      have g₈ : Complex.normSq (z + 2) = Complex.normSq z + 4 * z.re + 4 := by
+        simp [Complex.normSq]
+        ring
+
+      -- This gives us $\frac{|z + 2|²}{|z|²} = 1 + \frac{4Re(z) + 4}{|z|²}$.
+      have g₉ : Complex.normSq (z + 2) / Complex.normSq z = 1 + (4 * z.re + 4) / Complex.normSq z := by
+        rw [g₈]
+        field_simp [hz]
+
+      -- This gives us $1 ≤ 1 + \frac{4Re(z) + 4}{|z|²}$.
+      have g₁₀ : 1 ≤ 1 + (4 * z.re + 4) / Complex.normSq z := by
+        rw [← g₉]
+        exact g₁
+
+      -- Simplifying gives us $0 ≤ \frac{4Re(z) + 4}{|z|²}$.
+      have g₁₁ : 0 ≤ (4 * z.re + 4) / Complex.normSq z := by
+        linarith
+
+      -- Since $|z|² > 0$, we have $4Re(z) + 4 ≥ 0$.
+      have g₁₂ : 0 < Complex.normSq z := by
+        exact squared_norm_pos_of_ne_zero hz
+
+      -- This gives us $|z|² ≥ 1$.
+      have g₁₃ : Complex.normSq z ≥ 1 := by
+        exact (div_le_one₀ g₁₁).mp g₁₂
+
+      -- This gives us $31/|z|² ≤ 31$.
+      have g₁₄ : 31 / Complex.normSq z ≤ 31 := by
+        exact div_le_of_le_mul₀ (by linarith) g₁₃
+
+      -- This gives us $31/|z|² ≤ 4$, as desired.
+      exact g₁₄
+
+  -- We have $3x² + 8x + 4 ≥ 4$.
+  have h₁₀ : 3 * x ^ 2 + 8 * x + 4 ≥ 4 := by
+    simp
+    nlinarith
+
+  -- We have $3x² + 8x + 4 = 4$.
+  have h₁₁ : 3 * x ^ 2 + 8 * x + 4 = 4 := by
+    linarith only [h₉, h₁₀]
+
+  -- Simplifying gives us $x² + \frac{8}{3}x + \frac{4}{3} = 0$.
+  have h₁₂ : x ^ 2 + 8 / 3 * x + 4 / 3 = 0 := by
+    linarith only [h₁₁]
+
+  -- We have $(x + 2)^2 = 0$.
+  have h₁₃ : (x + 2) ^ 2 = 0 := by
+    simp
+    nlinarith only [h₁₂]
+
+  -- This gives us $x + 5 = 5$.
+  have h₁₄ : x + 5 = 5 := by
+    simp
+    linarith only [h₁₃]
+
+  -- This gives us $z + \frac{6}{z} = 5$, as well.
+  linear_combination h₅ ▸ h₁₄
+```

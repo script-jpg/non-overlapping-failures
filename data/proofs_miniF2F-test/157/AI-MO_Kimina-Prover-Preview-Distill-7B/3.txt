@@ -1,0 +1,152 @@
+-- Prove that the solution set is exactly $\left\{ \frac{\pi}{4}, \frac{3\pi}{4} \right\}$.
+  have h₁ : S = {Real.pi / 4, Real.pi - Real.pi / 4} := by
+    ext x
+    constructor
+    · -- If $x \in S$, then $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$.
+      intro hx
+      rcases hx with ⟨hx, h₀, h₁⟩
+
+      -- Show that $\cos x \in [-1,1]$ and $\sin x \in [-1,1]$.
+      have h₂ : Real.cos x ∈ Set.Icc (-1) 1 := by
+        exact ⟨Real.neg_one_le_cos x, Real.cos_le_one x⟩
+      have h₃ : Real.sin x ∈ Set.Icc (-1) 1 := by
+        exact ⟨Real.neg_one_le_sin x, Real.sin_le_one x⟩
+
+      -- Since $\cos \left( \frac{\pi}2 \cdot t \right)$ is even for $t \in [-1,1]$, we have
+      -- $\cos \left( \frac{\pi}2 \cdot \cos x\right) = \cos \left( \frac{\pi}2 \cdot |\cos x|\right)$.
+      have h₄ : Real.cos (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * |Real.cos x|) := by
+        suffices Even (Real.pi / 2 * Real.cos x) from by
+          apply Even.cos_eq_cos
+          apply this
+        apply Even.mul_left
+        rw [Even.pi_div_two]
+      -- Since $\sin \left( \frac{\pi}2 \cdot t \right)$ is odd for $t \in [-1,1]$, we have
+      -- $\sin \left( \frac{\pi}2 \cdot \sin x\right) = -\sin \left( \frac{\pi}2 \cdot |\sin x|\right)$.
+      have h₅ : Real.sin (Real.pi / 2 * Real.sin x) = - Real.sin (Real.pi / 2 * |Real.sin x|) := by
+        suffices Odd (Real.pi / 2 * Real.sin x) from by
+          apply Odd.sin_eq_sin
+          apply this
+        apply Odd.mul_left
+        rw [Odd.pi_div_two]
+      -- Since $|Real.cos x| \in [0,1]$ and $|Real.sin x| \in [0,1]$, we have
+      -- $\cos \left( \frac{\pi}2 \cdot |\cos x|\right) =  \sin \left( \frac{\pi}2 \cdot |\cos x|\right)$ and
+      -- $\sin \left( \frac{\pi}2 \cdot |\sin x|\right) =  \cos \left( \frac{\pi}2 \cdot |\sin x|\right)$.
+      have h₆ : Real.cos (Real.pi / 2 * |Real.cos x|) = Real.sin (Real.pi / 2 * |Real.cos x|) := by
+        rw [<-Real.sin_pi_div_two_sub]
+        congr
+        ring
+      have h₇ : Real.sin (Real.pi / 2 * |Real.sin x|) = Real.cos (Real.pi / 2 * |Real.sin x|) := by
+        rw [<-Real.cos_pi_div_two_sub]
+        congr
+        ring
+      -- Combining the above equalities, we have
+      -- $\cos \left( \frac{\pi}2 \cdot \cos x\right) = - \cos \left( \frac{\pi}2 \cdot \sin x\right)$.
+      rw [h₄, h₅, h₆, h₇] at h₁
+      -- That is $\cos \left( \frac{\pi}2 \cdot \cos x\right) = - \cos \left( \frac{\pi}2 \cdot \sin x\right)$.
+      have h₈ : Real.cos (Real.pi / 2 * Real.cos x) = - Real.cos (Real.pi / 2 * Real.sin x) := by
+        linarith only [h₁]
+      -- Squaring and adding both sides, we have
+      -- $2 - 2 \cos \left( \frac{\pi}2 \cdot \cos x\right) \cos \left( \frac{\pi}2 \cdot \sin x\right) = 2$.
+      have h₉ : 2 - 2 * Real.cos (Real.pi / 2 * Real.cos x) * Real.cos (Real.pi / 2 * Real.sin x) = 2 := by
+        calc
+          _ = Real.cos (Real.pi / 2 * Real.cos x) ^ 2 + Real.cos (Real.pi / 2 * Real.sin x) ^ 2 := by
+            linarith only [Real.cos_sq_add_sin_sq (Real.pi / 2 * Real.cos x),
+            Real.cos_sq_add_sin_sq (Real.pi / 2 * Real.sin x)]
+          _ = _ := by
+            nlinarith only [h₈]
+      -- The equation simplifies to $2 - 2 \cos \left( \frac{\pi}2 \cdot \cos x\right) \cos \left( \frac{\pi}2 \cdot \sin x\right) = 2$.
+      have h₁₀ : 2 * Real.cos (Real.pi / 2 * Real.cos x) * Real.cos (Real.pi / 2 * Real.sin x) = 0 := by
+        linarith only [h₉]
+      -- So either $\cos \left( \frac{\pi}2 \cdot \cos x\right) = 0$ or $\cos \left( \frac{\pi}2 \cdot \sin x\right) = 0$.
+      have h₁₁ : Real.cos (Real.pi / 2 * Real.cos x) = 0 ∨
+        Real.cos (Real.pi / 2 * Real.sin x) = 0 := by
+        rcases (mul_eq_zero.mp h₁₀) with (h₁₀ | h₁₀)
+        · left
+          exact h₁₀
+        · right
+          exact h₁₀
+      -- If $\cos \left( \frac{\pi}2 \cdot \cos x\right) = 0$, then $\frac{\pi}2 \cdot \cos x = \frac{\pi}{2}$.
+      -- That is, $\cos x = 1$. But then $\cos x = 0$, a contradiction.
+      rcases h₁₁ with (h₁₁ | h₁₁)
+      · have h₁₂ : Real.cos x = 1 := by
+          apply Real.cos_eq_zero_iff.1
+          apply eq_div_of_mul_eq (by norm_num) at h₁₁
+          rw [← h₁₁]
+          rw [mul_div_assoc]
+          norm_num
+        have h₁₃ : Real.cos x = 0 := by
+          rw [h₁₂]
+          norm_num
+        absurd h₁₃
+        apply Real.cos_ne_zero_of_mem_Ioo
+        constructor
+        · linarith only [h₀]
+        · linarith only [h₁]
+      · have h₁₄ : Real.sin x = 1 := by
+          apply Real.sin_eq_zero_iff.1
+          apply eq_div_of_mul_eq (by norm_num) at h₁₁
+          rw [← h₁₁]
+          rw [mul_div_assoc]
+          norm_num
+        have h₁₅ : Real.sin x = 0 := by
+          rw [h₁₄]
+          norm_num
+        absurd h₁₅
+        apply Real.sin_ne_zero_of_mem_Ioo
+        constructor
+        · linarith only [h₀]
+        · linarith only [h₁]
+      -- If $\cos \left( \frac{\pi}2 \cdot \sin x\right) = 0$, then $\frac{\pi}2 \cdot \sin x = \frac{\pi}{2}$.
+      -- That is, $\sin x = 1$. But then $\sin x = 0$, a contradiction.
+      · have h₁₆ : Real.sin x = 1 := by
+          apply Real.sin_eq_zero_iff.1
+          apply eq_div_of_mul_eq (by norm_num) at h₁₁
+          rw [← h₁₁]
+          rw [mul_div_assoc]
+          norm_num
+        have h₁₇ : Real.sin x = 0 := by
+          rw [h₁₆]
+          norm_num
+        absurd h₁₇
+        apply Real.sin_ne_zero_of_mem_Ioo
+        constructor
+        · linarith only [h₀]
+        · linarith only [h₁]
+      -- We proved that if $x \in S$, then $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$.
+      · rcases h₁ with (h₁ | h₁)
+        · rw [h₁]
+          constructor
+          · rw [Real.pi_div_four]
+            norm_num
+          · rw [Real.pi_div_four]
+            ring
+        · rw [h₁]
+          constructor
+          · rw [Real.pi_sub_pi_div_four]
+            ring
+          · rw [Real.pi_sub_pi_div_four]
+            ring
+    · -- If $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$, then $x \in S$.
+      intro hx
+      rcases hx with (rfl | rfl)
+      · -- When $x = \frac{\pi}{4}$, we have $\cos x = \frac{\sqrt{2}}{2}$ and $\sin x = \frac{\sqrt{2}}{2}$.
+        -- The equation is satisfied.
+        refine ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos],?_⟩
+        rw [Real.sin_pi_div_two, Real.cos_pi_div_two]
+        norm_num
+      · -- When $x = \frac{3\pi}{4}$, we have $\cos x = -\frac{\sqrt{2}}{2}$ and $\sin x = \frac{\sqrt{2}}{2}$.
+        -- The equation is satisfied.
+        refine ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos],?_⟩
+        have h₁ : 3 * Real.pi / 4 = Real.pi - Real.pi / 4 := by
+          ring
+        rw [h₁, Real.sin_pi_sub, Real.cos_pi_sub]
+        rw [Real.sin_pi_div_two, Real.cos_pi_div_two]
+        norm_num
+
+  -- Now it suffices to show that $\frac{\pi}{4} \neq \frac{3\pi}{4}$, which is trivial.
+  rw [h₁]
+  rw [Finset.card_pair]
+  · linarith only [Real.pi_pos]
+
+
+```

@@ -1,0 +1,89 @@
+-- A small technical lemma for the sake of clarity.
+  have P (n : ℕ) : n % 6 = 0 ∨ n % 6 = 1 ∨ n % 6 = 2 ∨ n % 6 = 3 ∨ n % 6 = 4 ∨ n % 6 = 5 := by
+    omega
+
+  -- Firstly, we verify that $k=5$ indeed satisfies the three conditions. This is simply a matter of checking various cases.
+  have : 5 % 6 = 5 := by norm_num
+  have : Nat.gcd 5 3 = 1 := by norm_num
+  have : Nat.gcd 5 2 = 1 := by norm_num
+  have : Nat.gcd 5 1 = 1 := by norm_num
+
+  -- From now on, we assume $k < 5$ and show that it cannot possibly satisfy the conditions.
+  by_contra! h
+  interval_cases h : k <;> clear * - h₁ h₂ h₃
+
+  -- Now we do a case analysis on $k$. Each case is rather trivial.
+  -- Firstly, we take $n = 0$ into consideration.
+  · specialize h₁ 0
+    norm_num at h₁
+
+  -- From the hypothesis `h₂`, we have $\text{gcd}(k, k+2) = 1$. This implies that $k$ cannot be even.
+  have P₁ (k : ℕ) : k < 3 →  Nat.gcd k (6 * 0 + 2) = 1 → k % 2 = 1 := by
+    intro hk h
+    have : k % 6 = 0 ∨ k % 6 = 1 ∨ k % 6 = 2 ∨ k % 6 = 3 ∨ k % 6 = 4 ∨ k % 6 = 5 := by clear * - h; omega
+    rcases this with (h | h | h | h | h | h) <;> rw [Nat.gcd_eq_iff] at h <;> omega
+  have k_odd : k % 2 = 1 := by
+    specialize P₁ k (by linarith) h₂
+    exact P₁
+  rw [← Nat.not_even_iff_odd] at k_odd
+
+  -- In particular, we have $\text{gcd}(k, k+1) = 1$. This implies that $k$ cannot be divisible by $3$.
+  have P₂ (k : ℕ) : k < 3 →  Nat.gcd k (6 * 0 + 1) = 1 → k % 3 = 1 ∨ k % 3 = 2 := by
+    intro hk h
+    have : k % 6 = 0 ∨ k % 6 = 1 ∨ k % 6 = 2 ∨ k % 6 = 3 ∨ k % 6 = 4 ∨ k % 6 = 5 := by clear * - h; omega
+    rcases this with (h | h | h | h | h | h) <;> rw [Nat.gcd_eq_iff] at h <;> omega
+  have k_not_div_3 : k % 3 = 1 ∨ k % 3 = 2 := by
+    specialize P₂ k (by linarith) h₃
+    exact P₂
+  rcases k_not_div_3 with (h | h)
+
+  -- In particular, we have $\text{gcd}(k, k+1) = 1$. This implies that $k$ cannot be divisible by $2$.
+  have P₃ (k : ℕ) : k < 2 →  Nat.gcd k (6 * 0 + 3) = 1 → k % 2 = 1 := by
+    intro hk h
+    have : k % 6 = 0 ∨ k % 6 = 1 ∨ k % 6 = 2 ∨ k % 6 = 3 ∨ k % 6 = 4 ∨ k % 6 = 5 := by clear * - h; omega
+    rcases this with (h | h | h | h | h | h) <;> rw [Nat.gcd_eq_iff] at h <;> omega
+  specialize P₃ 1 (by norm_num) h₁
+  omega
+
+  -- Now we take $n = 1$ into consideration.
+  · specialize h₁ 1
+    norm_num at h₁
+
+  -- In particular, we have $\text{gcd}(k+6, k+3) = 1$.
+  have P₁ (k : ℕ) : Nat.gcd (k + 6) (k + 3) = 1 := by rw [← Nat.gcd_sub_add_iff (by omega), Nat.sub_add_cancel (by omega)]; exact h₁
+  have P₂ (k : ℕ) : Nat.gcd (k + 6) (k + 2) = 1 := by rw [← Nat.gcd_sub_add_iff (by omega), Nat.sub_add_cancel (by omega)]; exact h₂
+  have P₃ (k : ℕ) : Nat.gcd (k + 6) (k + 1) = 1 := by rw [← Nat.gcd_sub_add_iff (by omega), Nat.sub_add_cancel (by omega)]; exact h₃
+
+  -- We prove that $k$ is in fact less than $6$.
+  have P₄ (k : ℕ) : k < 6 → k + 3 < 9 → k + 2 < 9 → k + 1 < 9 →  Nat.gcd (k + 6) (k + 3) = 1 →  Nat.gcd (k + 6) (k + 2) = 1 →  Nat.gcd (k + 6) (k + 1) = 1 → k = 0 ∨ k = 1 ∨ k = 2 ∨ k = 3 ∨ k = 4 ∨ k = 5 := by
+    intro hk₁ hk₂ hk₃ hk₄ h₁ h₂ h₃
+    have : k % 6 = 0 ∨ k % 6 = 1 ∨ k % 6 = 2 ∨ k % 6 = 3 ∨ k % 6 = 4 ∨ k % 6 = 5 := by clear * - hk₁; omega
+    rcases this with (h | h | h | h | h | h) <;> simp [h, Nat.gcd_eq_iff, Nat.mod_eq_of_lt] at h₂ h₃ h₁
+
+  -- Now we do a case analysis on $k$.
+  have : k < 6 := by omega
+  rcases this with (h | h | h | h | h | h) <;> simp [h] <;> try omega
+
+  -- In the first case, $k = 0$, we contradicts the fact that $k$ is odd.
+  · absurd k_odd
+    simp
+
+  -- In the second case, $k = 1$, we contradicts the fact that $k$ is divisible by $3$.
+  · absurd k_not_div_3
+    simp
+
+  -- In the third case, $k = 2$, we contradicts the fact that $k$ is odd.
+  · absurd k_odd
+    simp
+
+  -- In the fourth case, $k = 3$, we contradicts the fact that $k$ is divisible by $3$.
+  · absurd k_not_div_3
+    simp
+
+  -- In the fifth case, $k = 4$, we contradicts the fact that $k$ is odd.
+  · absurd k_odd
+    simp
+
+  -- In the sixth case, $k = 5$, we have proven that $5$ is indeed the smallest number that satisfies all the conditions.
+  · decide
+```

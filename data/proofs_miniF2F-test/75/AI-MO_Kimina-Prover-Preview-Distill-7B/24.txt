@@ -1,0 +1,305 @@
+-- Let's start by understanding the problem. We have the Fibonacci sequence defined as:
+  -- a₁ = a₂ = 1, and aₙ₊₂ = aₙ₊₁ + aₙ for n ≥ 1.
+  -- We need to find the remainder when a₁₀₀ is divided by 4.
+
+  -- First, let's calculate the first few terms modulo 4 to see if there's a pattern.
+  -- a₁ ≡ 1 (mod 4)
+  -- a₂ ≡ 1 (mod 4)
+  -- a₃ = a₂ + a₁ ≡ 1 + 1 ≡ 2 (mod 4)
+  -- a₄ = a₃ + a₂ ≡ 2 + 1 ≡ 3 (mod 4)
+  -- a₅ = a₄ + a₃ ≡ 3 + 2 ≡ 1 (mod 4)
+  -- a₆ = a₅ + a₄ ≡ 1 + 3 ≡ 0 (mod 4)
+  -- a₇ = a₆ + a₅ ≡ 0 + 1 ≡ 1 (mod 4)
+  -- a₈ = a₇ + a₆ ≡ 1 + 0 ≡ 1 (mod 4)
+  -- a₉ = a₈ + a₇ ≡ 1 + 1 ≡ 2 (mod 4)
+  -- a₁₀ = a₉ + a₈ ≡ 2 + 1 ≡ 3 (mod 4)
+
+  -- We observe that the sequence modulo 4 appears to repeat every 6 terms: 1, 1, 2, 3, 1, 0, then back to 1, 1, 2, 3, 1, 0,...
+  -- Let's verify this by checking the next few terms:
+  -- a₁₁ = a₁₀ + a₉ ≡ 3 + 2 ≡ 1 (mod 4) ✓
+  -- a₁₂ = a₁₁ + a₁₀ ≡ 1 + 3 ≡ 0 (mod 4) ✓
+  -- a₁₃ = a₁₂ + a₁₁ ≡ 0 + 1 ≡ 1 (mod 4) ✓
+  -- a₁₄ = a₁₃ + a₁₂ ≡ 1 + 0 ≡ 1 (mod 4) ✓
+  -- a₁₅ = a₁₄ + a₁₃ ≡ 1 + 1 ≡ 2 (mod 4) ✓
+  -- a₁₆ = a₁₅ + a₁₄ ≡ 2 + 1 ≡ 3 (mod 4) ✓
+
+  -- It does indeed repeat every 6 terms. So we have a cycle of length 6:
+  -- 1, 1, 2, 3, 1, 0, 1, 1, 2, 3, 1, 0,...
+
+  -- Now, to find a₁₀₀, we notice that 100 = 6 × 16 + 4,
+  -- so a₁₀₀ ≡ a₄ ≡ 3 (mod 4).
+
+  -- Let's formalize this in Lean 4:
+
+  -- First, we need to import the necessary libraries and set up the theorem statement:
+
+  import Mathlib
+  import Aesop
+
+  set_option maxHeartbeats 0
+
+  open BigOperators Real Nat Topology Rat
+
+  /-- The Fibonacci sequence is the sequence 1, 1, 2, 3, 5, $\ldots$ where each term is the sum of the previous two terms. What is the remainder when the $100^{\mathrm{th}}$ term of the sequence is divided by 4? Show that it is 3.-/
+  theorem mathd_numbertheory_483 (a : ℕ → ℕ) (h₀ : a 1 = 1) (h₁ : a 2 = 1)
+      (h₂ : ∀ n, a (n + 2) = a (n + 1) + a n) : a 100 % 4 = 3 := by
+
+    -- The first 6 values modulo 4 are:
+    -- a₁ ≡ 1 (mod 4)
+    -- a₂ ≡ 1 (mod 4)
+    -- a₃ ≡ 2 (mod 4)
+    -- a₄ ≡ 3 (mod 4)
+    -- a₅ ≡ 1 (mod 4)
+    -- a₆ ≡ 0 (mod 4)
+    have h₃ : a 3 = a 2 + a 1 := h₂ 1
+    have h₄ : a 4 = a 3 + a 2 := h₂ 2
+    have h₅ : a 5 = a 4 + a 3 := h₂ 3
+    have h₆ : a 6 = a 5 + a 4 := h₂ 4
+    have h₇ : a 7 = a 6 + a 5 := h₂ 5
+    have h₈ : a 8 = a 7 + a 6 := h₂ 6
+    have h₉ : a 9 = a 8 + a 7 := h₂ 7
+    have h₁₀ : a 10 = a 9 + a 8 := h₂ 8
+
+    -- Let's calculate these values explicitly modulo 4:
+    -- a₁ ≡ 1 (mod 4)
+    -- a₂ ≡ 1 (mod 4)
+    -- a₃ = a₂ + a₁ ≡ 1 + 1 ≡ 2 (mod 4)
+    have h₃' : a 3 % 4 = 2 := by
+      rw [h₃, h₁, h₀]
+      norm_num
+
+    -- a₄ = a₃ + a₂ ≡ 2 + 1 ≡ 3 (mod 4)
+    have h₄' : a 4 % 4 = 3 := by
+      rw [h₄, h₃', h₁]
+      norm_num
+
+    -- a₅ = a₄ + a₃ ≡ 3 + 2 ≡ 1 (mod 4)
+    have h₅' : a 5 % 4 = 1 := by
+      rw [h₅, h₄', h₃']
+      norm_num
+
+    -- a₆ = a₅ + a₄ ≡ 1 + 3 ≡ 0 (mod 4)
+    have h₆' : a 6 % 4 = 0 := by
+      rw [h₆, h₅', h₄']
+      norm_num
+
+    -- a₇ = a₆ + a₅ ≡ 0 + 1 ≡ 1 (mod 4)
+    have h₇' : a 7 % 4 = 1 := by
+      rw [h₇, h₆', h₅']
+      norm_num
+
+    -- a₈ = a₇ + a₆ ≡ 1 + 0 ≡ 1 (mod 4)
+    have h₈' : a 8 % 4 = 1 := by
+      rw [h₈, h₇', h₆']
+      norm_num
+
+    -- a₉ = a₈ + a₇ ≡ 1 + 1 ≡ 2 (mod 4)
+    have h₉' : a 9 % 4 = 2 := by
+      rw [h₉, h₈', h₇']
+      norm_num
+
+    -- a₁₀ = a₉ + a₈ ≡ 2 + 1 ≡ 3 (mod 4)
+    have h₁₀' : a 10 % 4 = 3 := by
+      rw [h₁₀, h₉', h₈']
+      norm_num
+
+    -- The cycle has length 6: 1, 1, 2, 3, 1, 0, then back to 1, 1, 2, 3, 1, 0,...
+    -- Since 100 = 6 × 16 + 4, a₁₀₀ ≡ a₄ ≡ 3 (mod 4).
+    have h₁₁' : a 11 % 4 = 1 := by
+      rw [h₂ 9, h₁₀', h₉']
+      norm_num
+
+    have h₁₂' : a 12 % 4 = 0 := by
+      rw [h₂ 10, h₁₁', h₁₀']
+      norm_num
+
+    have h₁₃' : a 13 % 4 = 1 := by
+      rw [h₂ 11, h₁₂', h₁₁']
+      norm_num
+
+    have h₁₄' : a 14 % 4 = 1 := by
+      rw [h₂ 12, h₁₃', h₁₂']
+      norm_num
+
+    have h₁₅' : a 15 % 4 = 2 := by
+      rw [h₂ 13, h₁₄', h₁₃']
+      norm_num
+
+    have h₁₆' : a 16 % 4 = 3 := by
+      rw [h₂ 14, h₁₅', h₁₄']
+      norm_num
+
+    have h₁₇' : a 17 % 4 = 1 := by
+      rw [h₂ 15, h₁₆', h₁₅']
+      norm_num
+
+    have h₁₈' : a 18 % 4 = 0 := by
+      rw [h₂ 16, h₁₇', h₁₆']
+      norm_num
+
+    have h₁₉' : a 19 % 4 = 1 := by
+      rw [h₂ 17, h₁₈', h₁₇']
+      norm_num
+
+    have h₂₀' : a 20 % 4 = 1 := by
+      rw [h₂ 18, h₁₉', h₁₈']
+      norm_num
+
+    have h₂₁' : a 21 % 4 = 2 := by
+      rw [h₂ 19, h₂₀', h₁₉']
+      norm_num
+
+    have h₂₂' : a 22 % 4 = 3 := by
+      rw [h₂ 20, h₂₁', h₂₀']
+      norm_num
+
+    have h₂₃' : a 23 % 4 = 1 := by
+      rw [h₂ 21, h₂₂', h₂₁']
+      norm_num
+
+    have h₂₄' : a 24 % 4 = 0 := by
+      rw [h₂ 22, h₂₃', h₂₂']
+      norm_num
+
+    have h₂₅' : a 25 % 4 = 1 := by
+      rw [h₂ 23, h₂₄', h₂₃']
+      norm_num
+
+    have h₂₆' : a 26 % 4 = 1 := by
+      rw [h₂ 24, h₂₅', h₂₄']
+      norm_num
+
+    have h₂₇' : a 27 % 4 = 2 := by
+      rw [h₂ 25, h₂₆', h₂₅']
+      norm_num
+
+    have h₂₈' : a 28 % 4 = 3 := by
+      rw [h₂ 26, h₂₇', h₂₆']
+      norm_num
+
+    have h₂₉' : a 29 % 4 = 1 := by
+      rw [h₂ 27, h₂₈', h₂₇']
+      norm_num
+
+    have h₃₀' : a 30 % 4 = 0 := by
+      rw [h₂ 28, h₂₉', h₂₈']
+      norm_num
+
+    have h₃₁' : a 31 % 4 = 1 := by
+      rw [h₂ 29, h₃₀', h₂₉']
+      norm_num
+
+    have h₃₂' : a 32 % 4 = 1 := by
+      rw [h₂ 30, h₃₁', h₃₀']
+      norm_num
+
+    have h₃₃' : a 33 % 4 = 2 := by
+      rw [h₂ 31, h₃₂', h₃₁']
+      norm_num
+
+    have h₃₄' : a 34 % 4 = 3 := by
+      rw [h₂ 32, h₃₃', h₃₂']
+      norm_num
+
+    have h₃₅' : a 35 % 4 = 1 := by
+      rw [h₂ 33, h₃₄', h₃₃']
+      norm_num
+
+    have h₃₆' : a 36 % 4 = 0 := by
+      rw [h₂ 34, h₃₅', h₃₄']
+      norm_num
+
+    have h₃₇' : a 37 % 4 = 1 := by
+      rw [h₂ 35, h₃₆', h₃₅']
+      norm_num
+
+    have h₃₈' : a 38 % 4 = 1 := by
+      rw [h₂ 36, h₃₇', h₃₆']
+      norm_num
+
+    have h₃₉' : a 39 % 4 = 2 := by
+      rw [h₂ 37, h₃₈', h₃₇']
+      norm_num
+
+    have h₄₀' : a 40 % 4 = 3 := by
+      rw [h₂ 38, h₃₉', h₃₈']
+      norm_num
+
+    have h₄₁' : a 41 % 4 = 1 := by
+      rw [h₂ 39, h₄₀', h₃₉']
+      norm_num
+
+    have h₄₂' : a 42 % 4 = 0 := by
+      rw [h₂ 40, h₄₁', h₄₀']
+      norm_num
+
+    have h₄₃' : a 43 % 4 = 1 := by
+      rw [h₂ 41, h₄₂', h₄₁']
+      norm_num
+
+    have h₄₄' : a 44 % 4 = 1 := by
+      rw [h₂ 42, h₄₃', h₄₂']
+      norm_num
+
+    have h₄₅' : a 45 % 4 = 2 := by
+      rw [h₂ 43, h₄₄', h₄₃']
+      norm_num
+
+    have h₄₆' : a 46 % 4 = 3 := by
+      rw [h₂ 44, h₄₅', h₄₄']
+      norm_num
+
+    have h₄₇' : a 47 % 4 = 1 := by
+      rw [h₂ 45, h₄₆', h₄₅']
+      norm_num
+
+    have h₄₈' : a 48 % 4 = 0 := by
+      rw [h₂ 46, h₄₇', h₄₆']
+      norm_num
+
+    have h₄₉' : a 49 % 4 = 1 := by
+      rw [h₂ 47, h₄₈', h₄₇']
+      norm_num
+
+    have h₅₀' : a 50 % 4 = 1 := by
+      rw [h₂ 48, h₄₉', h₄₈']
+      norm_num
+
+    have h₅₁' : a 51 % 4 = 2 := by
+      rw [h₂ 49, h₅₀', h₄₉']
+      norm_num
+
+    have h₅₂' : a 52 % 4 = 3 := by
+      rw [h₂ 50, h₅₁', h₅₀']
+      norm_num
+
+    have h₅₃' : a 53 % 4 = 1 := by
+      rw [h₂ 51, h₅₂', h₅₁']
+      norm_num
+
+    have h₅₄' : a 54 % 4 = 0 := by
+      rw [h₂ 52, h₅₃', h₅₂']
+      norm_num
+
+    have h₅₅' : a 55 % 4 = 1 := by
+      rw [h₂ 53, h₅₄', h₅₃']
+      norm_num
+
+    have h₅₆' : a 56 % 4 = 1 := by
+      rw [h₂ 54, h₅₅', h₅₄']
+      norm_num
+
+    have h₅₇' : a 57 % 4 = 2 := by
+      rw [h₂ 55, h₅₆', h₅₅']
+      norm_num
+
+    have h₅₈' : a 58 % 4 = 3 := by
+      rw [h₂ 56, h₅₇', h₅₆']
+      norm_num
+
+    have h₅₉' : a 59 % 4 = 1 := by
+      rw [h₂ 57, h₅₈', h₅₇']
+      norm_num
+
+    have h₆₀' : a 60 % 4 = 0 := by
+      rw [h₂

@@ -1,0 +1,115 @@
+-- We can decompose the sum into three parts: from 2010 to 3008, from 3009 to 4018
+
+  have h₁ : s = ∑ k in Finset.Icc 2010 3008, k + ∑ k in Finset.Icc 3009 4018, k := by
+
+    -- This is because the set {2010, 2011,..., 4018} is the union of the sets {2010, 2011,..., 3008} and {3009, 3010,..., 4018}, and they are disjoint.
+
+    rw [h₀]
+    have : Finset.Icc 2010 4018 = Finset.Icc 2010 3008 ∪ Finset.Icc 3009 4018 := by decide
+    rw [this]
+    have : Finset.Icc 2010 3008 ∩ Finset.Icc 3009 4018 = ∅ := by decide
+    rw [this]
+    rw [Finset.sum_union this]
+
+  -- Let $S_1 = \sum_{k=2010}^{3008} k$ and $S_2 = \sum_{k=3009}^{4018} k$. We want to compute $S_1 + S_2 \bmod 2009$.
+
+  let s₁ := ∑ k in Finset.Icc 2010 3008, k
+  let s₂ := ∑ k in Finset.Icc 3009 4018, k
+
+  have h₂ : s = s₁ + s₂ := by rw [h₁]
+
+  -- Note that $3009 = 2009 + 1000$ and $4018 = 2009 + 2009$. So we can rewrite $S_2$ as $\sum_{k=1000}^{2009} (2009 + k)$.
+
+  have h₃ : s₂ = ∑ k in Finset.Icc 1000 2009, (2009 + k) := by
+
+    rw [h₀]
+    -- We are just substituting the values of the endpoints
+
+    rw [←Finset.sum_Icc_succ_top (b := 3008) (by norm_num)]
+    rw [Finset.sum_Icc_succ_top (b := 4018) (by norm_num)]
+    -- We are decomposing the sum into two parts
+
+    congr 1
+    -- We want to show that the sum from 3009 to 4018 is the same as the sum from 1000 to 2009
+
+    ext k
+    -- We are showing that $4018 - 3009 = 2009 - 1000$
+
+    rw [Nat.Icc_insert_succ_right, Nat.Icc_insert_succ_right]
+    rw [Nat.Icc_insert_succ_left, Nat.Icc_insert_succ_left]
+    -- We are simplifying the expressions
+
+    congr 1
+    intro hk
+    omega
+    -- We are proving the equivalence between the two expressions
+
+    omega
+    -- We are proving that $k \leq 4018$ follows from $k \leq 3008$
+
+    omega
+    -- We are proving that $k \leq 4018$ follows from $k \leq 3009$
+
+    omega
+    -- We are proving that $k \leq 3008$ follows from $k \leq 1000$
+
+    omega
+    -- We are proving that $k \leq 3008$ follows from $k \leq 2009$
+
+    omega
+    -- We are proving that $k \leq 4018$ follows from $k \leq 2009$
+
+    -- Q.E.D.
+
+  -- So $S_2 = \sum_{k=1000}^{2009} (2009 + k) = \sum_{k=1000}^{2009} 2009 + \sum_{k=1000}^{2009} k = 1000 \cdot 2009 + \sum_{k=1000}^{2009} k$
+
+  have h₄ : s₂ = 1000 * 2009 + ∑ k in Finset.Icc 1000 2009, k := by rw [h₃]; ring
+
+  -- Let's compute $S_1 \bmod 2009$. We can write $S_1 = \sum_{k=2010}^{3008} k = \sum_{k=2010}^{3008} (2009 + (k - 2009)) = \sum_{k=2010}^{3008} 2009 + \sum_{k=2010}^{3008} (k - 2009) = (3008 - 2010 + 1) \cdot 2009 + \sum_{k=2010}^{3008} (k - 2009) = 1000 \cdot 2009 + \sum_{k=2010}^{3008} (k - 2009)$
+
+  have h₅ : s₁ = 1000 * 2009 + ∑ k in Finset.Icc 1000 2008, k := by
+
+    rw [h₀]
+    -- We are writing the sum in a more convenient form
+
+    let k' := 2010 - 2009
+    let l' := 3008 - 2009
+    have : 2010 = 2009 + k' := by omega
+    have : 3008 = 2009 + l' := by omega
+    rw [add_assoc, add_assoc]
+    nth_rw 2 [←zero_add 2009]
+    rw [this, this]
+    rw [Finset.sum_Icc_succ_top (b := l') (by omega)]
+    rw [Finset.sum_Icc_succ_top (b := l' + k' - k') (by omega)]
+    simp
+    congr 1
+    -- We are showing that the two expressions are equivalent
+
+    ext k
+    simp
+    omega
+    -- We are proving that $k \leq 3008$ follows from $k \leq 2008$
+
+    omega
+    -- We are proving that $k \leq 3008$ follows from $k \leq 2009$
+
+    omega
+    -- We are proving that $k \leq 2008$ follows from $k \leq 1000$
+
+    omega
+    -- We are proving that $k \leq 2008$ follows from $k \leq 2009$
+
+    omega
+    -- We are proving that $k \leq 3008$ follows from $k \leq 2009$
+
+    -- Q.E.D.
+
+  -- So $S_1 + S_2 = 2009 \cdot 2000 + \sum_{k=1000}^{2008} k + \sum_{k=1000}^{2009} k$
+
+  have h₆ : s₁ + s₂ = 2009 * 2000 + ∑ k in Finset.Icc 1000 2008, k + ∑ k in Finset.Icc 1000 2009, k := by rw [h₄, h₅]; ring
+
+  -- We have that $2009 \cdot 2000 \equiv 0 \pmod{2009}$ and $\sum_{k=1000}^{2008} k + \sum_{k=1000}^{2009} k \equiv 0 \pmod{2009}$, so $S \equiv 0 \pmod{2009}$.
+
+  rw [h₂, h₆]
+  norm_num
+```

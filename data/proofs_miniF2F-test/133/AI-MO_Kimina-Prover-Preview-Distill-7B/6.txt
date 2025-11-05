@@ -1,0 +1,43 @@
+have h₂ : 0 < a ^ p := Nat.pow_pos h₀
+
+  -- We have $a^p \equiv  a \pmod{p}$ if $p \nmid a$. Otherwise $a^p \equiv  0 \pmod{p}$ and $p \mid a$.
+  cases Nat.Prime.ne_zero_or_dvd h₁ a with
+  | inl h₂ =>
+    -- If $p \nmid a$, then by Fermat's little theorem $p \mid a^{p - 1} - 1$.
+    have h₃ : p ∣ a ^ (p - 1) - 1 := by
+      -- By definition, $a ^ p \equiv  a \pmod{p}$ implies $a ^ p  =  a + k * p$ for a multiple $k$ of $p$.
+      rw [Nat.Prime.coprime_iff_not_dvd h₁] at h₂
+      -- With the  help of Fermat's little theorem we can write $a ^ {p - 1} = a ^ p \cdot a ^ {1 - p} = a \cdot (a ^ p \cdot a ^ {1 - p})$.
+      have h3 : a ^ (p - 1) = a * (a ^ p * a ^ (1 - p)) := by
+        rw [pow_add a p (1 - p), pow_one, mul_assoc, pow_mul, mul_one_div_cancel h₂]
+      -- According to Fermat's little theorem, $a ^ {p - 1} \equiv  1 \pmod{p}$, so $a ^ {p - 1} = 1 + m * p$ for a multiple $m$ of $p$.
+      rw [Nat.prime_dvd_of_dvd_pow h₁, h3, Nat.mul_sub_right_dvd] at *
+      -- So $a ^ p \cdot  a ^ {1 - p} = 1 + m * p$.
+      obtain ⟨m, hm⟩ := h3
+      -- We can rewrite $a ^ p \cdot a ^ {1 - p} = a \cdot (a ^ {p - 1})$.
+      rw [Nat.mul_sub_right_dvd, mul_one, ←Nat.sub_add_comm] at hm
+      -- So $a \cdot (a ^ {p - 1})  = 1 + m * p$.
+      rw [←h3, pow_one, ←mul_assoc] at hm
+      -- This implies $a \cdot 1 \equiv  a \cdot (a ^ {p - 1}) \pmod{p}$.
+      have h4 : a * 1 ≡ a * (a ^ (p - 1)) [MOD p] := Nat.ModEq.mul_left a h₂
+      -- This implies $a \equiv  a \cdot (a ^ {p - 1}) \pmod{p}$.
+      replace h4 : a ≡ a * (a ^ (p - 1)) [MOD p] := by
+        rw [Nat.modEq_iff_dvd, ←Nat.sub_add_comm]
+        apply Nat.dvd_sub (mul_comm a (a ^ (p - 1))) hm
+        rw [mul_comm]
+      -- According to Fermat's little theorem, this means $a \equiv  1 \pmod{p}$.
+      rw [Nat.modEq_iff_dvd, Nat.Prime.dvd_pow_iff_dvd h₁] at h4
+      -- So $p \mid a ^ p - a$ because $a ^ p - a = a \cdot (a ^ {p - 1} - 1)$.
+      exact Nat.dvd_sub (mul_comm a (a ^ (p - 1))) h4
+    have h₄ : a ^ p - a = a * (a ^ (p - 1) - 1) := by
+      rw [pow_add a (p - 1) 1, pow_one, mul_assoc, mul_one_div_cancel h₂, mul_sub, mul_one]
+    rw [h₄]
+    apply Nat.dvd_mul_left
+
+  | inr h₂ =>
+    -- If $p \mid a$, then $a ^ p \equiv  0 \pmod{p}$ and $p \mid a$.
+    have h₃ : p ∣ a := Nat.Prime.dvd_of_dvd_pow h₁ h₂
+    -- This implies $p \mid a ^ p$.
+    exact Nat.Prime.dvd_of_dvd_pow h₁ h₃
+
+```

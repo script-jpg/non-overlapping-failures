@@ -1,0 +1,147 @@
+-- Let's first show that neither a nor b equals 0.
+  have ha_ne_zero : a ≠ 0 := by
+    intro ha
+    rw [ha] at h₂
+    simp at h₂
+
+  have hb_ne_zero : b ≠ 0 := by
+    intro hb
+    rw [hb] at h₃
+    simp at h₃
+
+  -- Now we have two equations:
+  -- |a - 1/a| = 1
+  -- |b - 1/b| = 1
+  -- Each gives two possibilities: a - 1/a = 1 or a - 1/a = -1
+  -- Similarly for b.
+  -- This gives us 4 cases in total.
+  -- Let's consider the case a - 1/a = 1.
+  cases' abs_cases (a - 1 / a) with h h <;> cases' abs_cases (b - 1 / b) with h' h' <;> simp [h, h'] at h₂ h₃
+
+  -- For each case, we derive a quadratic equation.
+  -- For example, for the first case (a - 1/a = 1) and (b - 1/b = 1),
+  -- we get x^2 - x - 1 = 0.
+  -- The two roots of this equation are 1/2 ± √5/2.
+  -- Since a and b are different, we must pick the two different roots.
+  -- Thus a + b = 1/2 + √5/2 + 1/2 - √5/2 = √5.
+ . -- Case 1: a - 1/a = 1, b - 1/b = 1
+    have : a ^ 2 - a - 1 = 0 := by
+      field_simp at h₂
+      linarith only [h₂]
+    have : b ^ 2 - b - 1 = 0 := by
+      field_simp at h₃
+      linarith only [h₃]
+
+    -- Now, we can solve the quadratic equation.
+    have : a = 1 / 2 + Real.sqrt 5 / 2 ∨ a = 1 / 2 - Real.sqrt 5 / 2 := by
+      refine (quadratic_eq_zero_iff ha_ne_zero (by norm_num) (by simp)).mp
+      linarith only [this]
+    have : b = 1 / 2 + Real.sqrt 5 / 2 ∨ b = 1 / 2 - Real.sqrt 5 / 2 := by
+      refine (quadratic_eq_zero_iff hb_ne_zero (by norm_num) (by simp)).mp
+      linarith only [this]
+
+    -- Verify a ≠ b by checking their different.
+    rcases this with (ha | ha)
+   . rcases this with (hb | hb)
+     . -- a = b = 1/2 + √5/ 2, which is a contradiction.
+        exfalso
+        exact h₁ (by linarith only [ha, hb])
+     . -- a = 1/2 + √5/ 2, b = 1/2 - √5/ 2
+        have : a - b ≠ 0 := by
+          rw [ha, hb]
+          simp
+          apply (Real.sub_ne_zero_of_ne (by linarith only [ha_ne_zero])).mpr
+          apply (Real.sqrt_ne_zero (by norm_num)).mpr (by norm_num)
+        exact absurd this (by linarith only [h₁])
+   . rcases this with (hb | hb)
+     . -- a = 1/2 - √5/ 2, b = 1/2 + √5/ 2
+        have : a - b ≠ 0 := by
+          rw [ha, hb]
+          simp
+          apply (Real.sub_ne_zero_of_ne (by linarith only [ha_ne_zero])).mpr
+          apply (Real.sqrt_ne_zero (by norm_num)).mpr (by norm_num)
+        exact absurd this (by linarith only [h₁])
+     . -- a = b = 1/2 - √5/ 2, which is a contradiction.
+        exfalso
+        exact h₁ (by linarith only [ha, hb])
+
+  -- For the other cases, we can derive a same equation as above.
+ . -- Case 2: a - 1/a = 1, b - 1/b = -1
+    have : a ^ 2 - a - 1 = 0 := by
+      field_simp at h₂
+      linarith only [h₂]
+    have : b ^ 2 + b - 1 = 0 := by
+      field_simp at h₃
+      linarith only [h₃]
+    have : b = 1 / 2 + Real.sqrt 5 / 2 ∨ b = 1 / 2 - Real.sqrt 5 / 2 := by
+      refine (quadratic_eq_zero_iff hb_ne_zero (by norm_num) (by simp)).mp
+      linarith only [this]
+    rcases this with (hb | hb)
+   . -- a = 1/2 + √5/ 2, b = 1/2 + √5/ 2, which is a contradiction.
+      exfalso
+      exact h₁ (by linarith only [ha, hb])
+   . -- a = 1/2 + √5/ 2, b = 1/2 - √5/ 2
+      have : a - b ≠ 0 := by
+        rw [ha, hb]
+        simp
+        apply (Real.sub_ne_zero_of_ne (by linarith only [ha_ne_zero])).mpr
+        apply (Real.sqrt_ne_zero (by norm_num)).mpr (by norm_num)
+      exact absurd this (by linarith only [h₁])
+ . -- Case 3: a - 1/a = -1, b - 1/b = 1
+    have : a ^ 2 + a - 1 = 0 := by
+      field_simp at h₂
+      linarith only [h₂]
+    have : b ^ 2 - b - 1 = 0 := by
+      field_simp at h₃
+      linarith only [h₃]
+    have : a = 1 / 2 + Real.sqrt 5 / 2 ∨ a = 1 / 2 - Real.sqrt 5 / 2 := by
+      refine (quadratic_eq_zero_iff ha_ne_zero (by norm_num) (by simp)).mp
+      linarith only [this]
+    rcases this with (ha | ha)
+   . -- a = 1/2 + √5/ 2, b = 1/2 + √5/ 2, which is a contradiction.
+      exfalso
+      exact h₁ (by linarith only [ha, hb])
+   . -- a = 1/2 - √5/ 2, b = 1/2 + √5/ 2
+      have : a - b ≠ 0 := by
+        rw [ha, hb]
+        simp
+        apply (Real.sub_ne_zero_of_ne (by linarith only [ha_ne_zero])).mpr
+        apply (Real.sqrt_ne_zero (by norm_num)).mpr (by norm_num)
+      exact absurd this (by linarith only [h₁])
+ . -- Case 4: a - 1/a = -1, b - 1/b = -1
+    have : a ^ 2 + a - 1 = 0 := by
+      field_simp at h₂
+      linarith only [h₂]
+    have : b ^ 2 + b - 1 = 0 := by
+      field_simp at h₃
+      linarith only [h₃]
+    have : a = 1 / 2 + Real.sqrt 5 / 2 ∨ a = 1 / 2 - Real.sqrt 5 / 2 := by
+      refine (quadratic_eq_zero_iff ha_ne_zero (by norm_num) (by simp)).mp
+      linarith only [this]
+    have : b = 1 / 2 + Real.sqrt 5 / 2 ∨ b = 1 / 2 - Real.sqrt 5 / 2 := by
+      refine (quadratic_eq_zero_iff hb_ne_zero (by norm_num) (by simp)).mp
+      linarith only [this]
+    rcases this with (ha | ha)
+   . rcases this with (hb | hb)
+     . -- a = b = 1/2 + √5/ 2, which is a contradiction.
+        exfalso
+        exact h₁ (by linarith only [ha, hb])
+     . -- a = 1/2 + √5/ 2, b = 1/2 - √5/ 2
+        have : a - b ≠ 0 := by
+          rw [ha, hb]
+          simp
+          apply (Real.sub_ne_zero_of_ne (by linarith only [ha_ne_zero])).mpr
+          apply (Real.sqrt_ne_zero (by norm_num)).mpr (by norm_num)
+        exact absurd this (by linarith only [h₁])
+   . rcases this with (hb | hb)
+     . -- a = 1/2 - √5/ 2, b = 1/2 + √5/ 2
+        have : a - b ≠ 0 := by
+          rw [ha, hb]
+          simp
+          apply (Real.sub_ne_zero_of_ne (by linarith only [ha_ne_zero])).mpr
+          apply (Real.sqrt_ne_zero (by norm_num)).mpr (by norm_num)
+        exact absurd this (by linarith only [h₁])
+     . -- a = b = 1/2 - √5/ 2, which is a contradiction.
+        exfalso
+        exact h₁ (by linarith only [ha, hb])
+```

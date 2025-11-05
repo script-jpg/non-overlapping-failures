@@ -1,0 +1,256 @@
+have hx : 0 < x := h₀.1
+  have hy : 0 < y := h₀.2
+
+  have h₂ : x ^ (y ^ 2) = (x ^ y) ^ y := by rw [Nat.pow_mul]; ring
+  rw [h₂] at h₁
+
+  have h₃ : x ^ y ∣ y ^ x := by
+    rw [h₁]
+    exact Dvd.intro_left (x ^ y) rfl
+
+  have h₄ : x ^ y ∣ x ^ x := by
+    apply Nat.dvd_trans h₃
+    apply Nat.pow_dvd_pow
+    linarith
+
+  have h₅ : x ∣ x ^ x := by
+    apply Nat.dvd_pow
+    linarith
+
+  have h₆ : x ∣ x ^ y := by
+    apply Nat.dvd_of_mod_eq_zero
+    have : x ^ y % x = 0 := by
+      have : x ^ y % x = 0 := by
+        apply Nat.mod_eq_zero_of_dvd
+        apply Nat.dvd_trans h₄
+        apply Nat.pow_dvd_pow
+        linarith
+      rw [this]
+    rw [this]
+
+  have h₇ : x ∣ y ^ x := by
+    rw [←h₁]
+    exact h₆
+
+  have h₈ : x ∣ y := by
+    apply Nat.Coprime.dvd_of_dvd_pow h₇
+    apply Nat.coprime_one_left
+    by_contra h
+    have : x = 0 := by
+      have : x ^ 2 ∣ y ^ x := by
+        apply Nat.pow_dvd_pow_of_le
+        linarith
+        exact h
+      rw [h] at this
+      simp at this
+    linarith
+
+  have h₉ : x ^ y ∣ y ^ y := by
+    apply Nat.dvd_trans h₃
+    apply Nat.pow_dvd_pow
+    linarith
+
+  have h₁₀ : y ∣ y ^ y := by
+    apply Nat.dvd_pow
+    linarith
+
+  have h₁₁ : y ∣ y ^ x := by
+    rw [←h₁]
+    exact h₁₀
+
+  have h₁₂ : y ∣ x := by
+    by_contra h
+    have : y ^ 2 ∣ x ^ y := by
+      apply Nat.pow_dvd_pow_of_le
+      linarith
+      exact h
+    rw [h₁] at this
+    simp at this
+    linarith
+
+  have h₁₃ : x = y := by
+    linarith
+
+  rw [h₁₃] at h₁
+  by_cases h₁₄ : y = 1
+  · rw [←h₁₃, h₁₄] at h₁
+    simp at h₁
+    have : x = 1 := by
+      by_contra h
+      have : x ^ 2 ∣ 1 ^ x := by
+        apply Nat.pow_dvd_pow_of_le
+        linarith
+        exact h
+      rw [h₁] at this
+      simp at this
+    rw [this, h₁₄]
+    simp
+  · have hy : 2 ≤ y := by
+      by_contra h
+      have : y = 1 := by linarith
+      contradiction
+    have hx : 2 ≤ x := by
+      by_contra h
+      have : x = 1 := by linarith
+      rw [this] at h₁
+      simp at h₁
+      have : y ^ 2 ∣ 1 ^ y := by
+        apply Nat.pow_dvd_pow_of_le
+        linarith
+        exact h₁.symm
+      rw [h₁₄] at this
+      simp at this
+    by_cases h₁₅ : x = y ^ 2
+    · rw [h₁₅] at h₁
+      have h₁₆ : y ^ (y ^ 2) = y ^ y ^ 2 := by
+        rw [Nat.pow_rfl]
+      rw [h₁₆] at h₁
+      have : y ^ 2 ∣ y ^ y := by
+        apply Nat.pow_dvd_pow_of_le
+        linarith
+        exact h₁₄
+      have h₁₇ := Nat.pow_dvd_pow_iff_le_right hy this
+      have : y = 2 := by linarith
+      rw [this] at h₁₅
+      rw [h₁₅]
+      simp
+    · have h₁₆ : y ^ 2 < x := by
+        by_contra h
+        have : x = y ^ 2 := by linarith
+        contradiction
+      rw [←h₁₅] at h₁₆
+      have h₁₇ : y ^ 3 < x ^ y := by
+        apply Nat.pow_lt_pow_left
+        linarith
+        exact h₁₆
+      have h₁₈ : y ^ 3 ∣ x ^ y := by
+        apply Nat.dvd_trans
+        have : y ^ 3 ∣ y ^ x := by
+          rw [h₁]
+          exact Dvd.intro_left (y ^ 2) rfl
+        exact this
+        apply Nat.dvd_trans
+        have : x ^ y ∣ y ^ x := by
+          rw [h₁]
+          exact Dvd.intro_left (x ^ y) rfl
+        exact this
+        apply Nat.dvd_pow
+        linarith
+      have h₁₉ : y ^ 3 ∣ y ^ y := by
+        apply Nat.dvd_trans h₁₈
+        apply Nat.pow_dvd_pow
+        linarith
+      have h₁₂₀ : y ∣ x ^ y := by
+        rw [←h₁₅]
+        apply Nat.dvd_pow
+        linarith
+      have h₁₂₁ : y ∣ y ^ y := by
+        apply Nat.dvd_pow
+        linarith
+      have h₁₂₂ : y ∣ y ^ x := by
+        rw [h₁]
+        exact h₁₂₁
+      have h₁₂₃ : y ∣ x := by
+        by_contra h
+        have : y ^ 2 ∣ x ^ y := by
+          apply Nat.pow_dvd_pow_of_le
+          linarith
+          exact h
+        rw [h₁₅] at this
+        simp at this
+        have : y ∣ 1 := by
+          apply Nat.Coprime.dvd_of_dvd_pow at this
+          apply Nat.coprime_one_left at this
+          exact this
+        simp at this
+        contradiction
+      have h₁₂₄ : y ^ 2 ∣ x ^ y := by
+        apply Nat.pow_dvd_pow_of_le
+        linarith
+        exact h₁₂₃
+      rw [h₁] at h₁₂₄
+      simp at h₁₂₄
+      have h₁₂₅ : y ^ 2 ∣ y ^ y := by
+        apply Nat.dvd_trans h₁₂₄
+        apply Nat.pow_dvd_pow
+        linarith
+      have h₁₂₆ : y ∣ y ^ y := by
+        apply Nat.dvd_pow
+        linarith
+      have h₁₂₇ : y ∣ y ^ x := by
+        rw [h₁]
+        exact h₁₂₆
+      have h₁₂₈ : y ∣ x := by
+        by_contra h
+        have : y ^ 2 ∣ x ^ y := by
+          apply Nat.pow_dvd_pow_of_le
+          linarith
+          exact h
+        rw [h₁₅] at this
+        simp at this
+        have : y ∣ 1 := by
+          apply Nat.Coprime.dvd_of_dvd_pow at this
+          apply Nat.coprime_one_left at this
+          exact this
+        simp at this
+        contradiction
+      have h₁₂₉ : y ^ 3 ∣ x ^ y := by
+        apply Nat.pow_dvd_pow_of_le
+        linarith
+        exact h₁₂₈
+      have h₁₃₀ : y ^ 3 ∣ y ^ y := by
+        apply Nat.dvd_trans h₁₂₉
+        apply Nat.pow_dvd_pow
+        linarith
+      have h₁₃₁ : y ^ 3 ∣ y ^ x := by
+        rw [h₁]
+        exact h₁₃₀
+      have h₁₃₂ : y ^ 3 ∣ x := by
+        by_contra h
+        have : y ^ 3 ^ 2 ∣ x ^ y ^ 3 := by
+          apply Nat.pow_dvd_pow_of_le
+          linarith
+          exact h
+        rw [h₁₅] at this
+        simp at this
+        have : y ^ 3 ∣ 1 := by
+          apply Nat.Coprime.dvd_of_dvd_pow at this
+          apply Nat.coprime_one_left at this
+          exact this
+        simp at this
+        contradiction
+      have h₁₃₃ : y ^ 3 ∣ y := by
+        apply Nat.Coprime.dvd_of_dvd_pow h₁₃₂
+        apply Nat.coprime_one_left
+        linarith
+      have h₁₃₄ : y ^ 4 ∣ y ^ 3 := by
+        apply Nat.pow_dvd_pow
+        linarith
+      have h₁₃₅ : y = 1 := by
+        apply Nat.le_of_dvd at h₁₃₄
+        by_contra h
+        have : y ^ 3 < y ^ 4 := by
+          apply Nat.pow_lt_pow_left
+          linarith
+          exact h
+        simp at this
+        linarith
+      simp [h₁₃₅] at h₁₄
+      have : y ^ 2 ∣ x := by
+        by_contra h
+        have : y ^ 2 ^ 2 ∣ x ^ y ^ 2 := by
+          apply Nat.pow_dvd_pow_of_le
+          linarith
+          exact h
+        rw [h₁₅] at this
+        simp at this
+        have : y ^ 2 ∣ 1 := by
+          apply Nat.Coprime.dvd_of_dvd_pow at this
+          apply Nat.coprime_one_left at this
+          exact this
+        simp at this
+        contradiction
+      rw [h₁₃₅] at h₁₆
+      linarith
+
+```

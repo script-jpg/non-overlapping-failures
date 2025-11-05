@@ -1,0 +1,75 @@
+-- Show that f 1 = 0.
+  have h₄ : f 1 = 0 := by
+    -- Assume that f 1 = k.
+    by_contra! h₄
+    let k := f 1
+    rw [show f 1 = k by simp [k]] at *
+
+    -- Show that f 2 = k + 1.
+    have h₅ : f 2 = k + 1 := by
+      calc
+        f 2 = f (1 + 1) := by norm_num
+        _   = f 1 + 1   := by rw [h₀ 1 1]; omega; omega; simp
+        _   = k + 1     := by simp [h₄]
+    rw [h₁] at h₅
+
+    -- Show that f 3 = k + 2.
+    have h₆ : f 3 = k + 2 := by
+      calc
+        f 3 = f (2 + 1) := by norm_num
+        _   = f 2 + 1   := by rw [h₀ 2 1]; omega; omega; simp
+        _   = k + 1     := by rw [h₅]
+        _   = k + 2     := by omega
+    have h₇ : f 3 > 0 := h₂
+    rw [show k + 2 = 0 + 2 by simp [zero_add]] at h₇
+    have h₈ : k = -2 := by omega
+    simp [h₈] at h₄
+
+  -- Show that f n = n - 1 if n > 0 is an integer.
+  have h₉ : ∀ n : ℕ, n > 0 → f n = n - 1 := by
+    intro n hn
+    induction' n using Nat.strong_induction_on with n ih
+
+    -- The induction start case is clear.
+    have h₉ : n = 1 ∨ n > 1 := by omega
+    rcases h₉ with h₉ | h₉
+   . -- If n = 1, then f 1 = 0 = 1 - 1.
+      simp [h₉, h₄]
+   . -- If n > 1, then by induction hypothesis we have f (n - 1) = n - 2.
+      have h₁₀ : n = 2 ∨ n > 2 := by omega
+      rcases h₁₀ with h₁₀ | h₁₀
+     . -- If n = 2, then f 2 = 0 = 2 - 2.
+        simp [h₁₀, h₁]
+     . -- If n > 2, then by induction hypothesis we have f (n - 1) = n - 2 and f (n - 2) = n - 3.
+        have h₁₁ : f (n - 1) = n - 2 := by
+          apply ih (n - 1)
+          omega
+          omega
+        have h₁₂ : f (n - 2) = n - 3 := by
+          apply ih (n - 2)
+          omega
+          omega
+        -- Show that f (n - 1) + 1 = f n.
+        have h₁₃ : f (n - 1) + 1 = f n := by
+          calc
+            f (n - 1) + 1 = f (n - 1 + 1) := by rw [h₀ (n - 1) 1]; omega; omega; simp
+            _ = f n := by simp [Nat.sub_add_cancel]
+        rw [h₁₁] at h₁₃
+        -- Show that f (n - 2) + 1 = f (n - 1).
+        have h₁₄ : f (n - 2) + 1 = f (n - 1) := by
+          calc
+            f (n - 2) + 1 = f (n - 2 + 1) := by rw [h₀ (n - 2) 1]; omega; omega; simp
+            _ = f (n - 1) := by simp [Nat.sub_add_cancel]
+        rw [h₁₂] at h₁₄
+        rw [h₁₄] at h₁₃
+        rw [h₁₃]
+        omega
+
+  -- We get the value of f 1982.
+  have h₁₀ : f 1982 = 1981 := by
+    apply h₉
+    norm_num
+
+  -- This is a contradiction.
+  omega
+```

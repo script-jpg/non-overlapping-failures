@@ -1,0 +1,133 @@
+have : ∑ k in Finset.range 49, u (2 * k.succ) = 93 := by
+    -- square the difference and sum them up
+    have : ∑ k in Finset.range 49, ((u (2 * k.succ)) - u 1) ^ 2 = ∑ k in Finset.range 49, (u (2 * k.succ) - u (2 * k.succ - 1)) ^ 2 := by
+      rw [Finset.sum_congr rfl]
+      intro x hx
+      have : u (2 * x.succ) - u 1 = u (2 * x.succ) - u (2 * x.succ - 1) := by
+        -- both sides are equal to u (2 * x.succ) - u (2 * x.succ - 1)
+        have : x < 49 := by
+          apply Finset.mem_range.mp
+          exact hx
+        induction' x with x ih
+        · -- base case
+          simp only [Nat.reduceMul, Nat.reduceAdd, Nat.reduceSub, zero_mul, zero_add, zero_sub]
+        · -- inductive step
+          calc
+            _ = u (2 * x.succ) - u (2 * x.succ - 1) + 1 - 1 := by rw [add_sub_cancel_right]
+            _ = u (2 * x.succ + 1) - u (2 * x.succ - 1) - 1 := by
+              rw [←add_assoc, h₀ (2 * x.succ - 1), Nat.sub_add_cancel]
+              · -- 1 ≤ 2 * x.succ
+                exact Nat.one_le_of_lt (by omega)
+              · -- 2 * x.succ + 1 = 2 * x.succ + 1 - 1 + 1
+                rw [Nat.sub_add_cancel]
+                · -- 2 * x.succ + 1 > 1
+                  omega
+                · -- 2 * x.succ + 1 - 1 = 2 * x.succ
+                  rw [Nat.sub_add_cancel]
+                  · -- 2 * x.succ + 1 ≥ 1
+                    exact Nat.le_add_left 1 (2 * x.succ)
+                  · -- 2 * x.succ ≥ 1
+                    exact Nat.one_le_mul (by omega) (by omega)
+              · -- 2 * x.succ - 1 = 2 * x.succ - 1 - 1 + 1
+                rw [Nat.sub_add_cancel]
+                · -- 2 * x.succ - 1 ≥ 1
+                  omega
+                · -- 2 * x.succ - 1 - 1 = 2 * x.succ - 2
+                  rw [Nat.sub_add_cancel]
+                  · -- 2 * x.succ - 1 ≥ 1
+                    omega
+                  · -- 2 * x.succ - 1 ≥ 1
+                    exact Nat.le_sub_of_add_le (by omega)
+                  · -- 2 * x.succ - 2 + 1 = 2 * x.succ - 1
+                    rw [Nat.sub_add_cancel]
+                    · -- 2 * x.succ - 2 + 1 ≥ 1
+                      omega
+                    · -- 2 * x.succ - 2 ≥ 0
+                      exact Nat.sub_le_sub_right (2 * x.succ) 2
+                · -- 1 + 1 = 2
+                  rfl
+              · -- 2 * x.succ + 1 - (2 * x.succ - 1) = 2
+                rw [Nat.sub_add_cancel]
+                · -- 2 * x.succ ≥ 1
+                  exact Nat.le_add_left 1 (2 * x.succ)
+                · -- 2 * x.succ - 1 ≥ 0
+                  exact Nat.sub_le (2 * x.succ) 1
+                · -- 2 * x.succ + 1 - (2 * x.succ - 1) = 2
+                  omega
+            _ = u (2 * x.succ + 1) - u (2 * x.succ - 1) - 1 := by simp [h₀]
+            _ = u (2 * x.succ + 1) - u (2 * x.succ) := by
+              rw [←Nat.sub_add_comm]
+              · -- 2 * x.succ + 1 ≥ 2 * x.succ
+                exact Nat.le_add_right (2 * x.succ) 1
+              · -- 2 * x.succ ≥ 1
+                exact Nat.le_add_left 1 (2 * x.succ)
+            _ = u (2 * x.succ + 1) - u (2 * x.succ) - 1 + 1 := by
+              rw [Nat.sub_add_cancel]
+              · -- 2 * x.succ + 1 ≥ 1
+                exact Nat.le_add_right (2 * x.succ) 1
+              · -- 2 * x.succ ≥ 0
+                exact Nat.zero_le (2 * x.succ)
+            _ = u (2 * x.succ + 1) - u (2 * x.succ) := by
+              rw [Nat.sub_add_cancel]
+              · -- 2 * x.succ + 1 ≥ 1
+                exact Nat.le_add_right (2 * x.succ) 1
+              · -- 2 * x.succ ≥ 0
+                exact Nat.zero_le (2 * x.succ)
+            _ = _ := by rfl
+      rw [←add_right_inj (1 : ℚ), ←add_right_inj (1 : ℚ)]
+      rw [←this]
+    -- rearrange the terms
+    rw [←Finset.sum_add_distrib]
+    rw [Finset.sum_add_distrib]
+    rw [Finset.sum_add_distrib]
+    rw [Finset.sum_add_distrib]
+    -- write down all the terms
+    norm_num
+    -- sum all the edges
+    apply Finset.sum_congr rfl
+    intro x hx
+    rw [←add_right_inj (1 : ℚ), h₀]
+    rw [←Nat.mul_add, ←Nat.mul_add, h₀, ←add_assoc, Nat.sub_add_cancel]
+    · -- 98 = 49 * 2
+      norm_num
+      exact Finset.mem_range.mp hx
+    · -- 2 * x + 1 = 2 * x + 1 - 1 + 1
+      rw [Nat.sub_add_cancel]
+      · -- 2 * x + 1 > 1
+        omega
+      · -- 2 * x + 1 - 1 = 2 * x
+        rw [Nat.sub_add_cancel]
+        · -- 2 * x + 1 ≥ 1
+          omega
+        · -- 2 * x ≥ 0
+          exact Nat.zero_le (2 * x)
+      · -- 2 * (x + 1) = 2 * x + 2
+        rw [Nat.mul_add, Nat.mul_one]
+        omega
+    · -- 2 * x + 2 = 2 * x + 1 + 1
+      rw [←Nat.sub_add_cancel]
+      · -- 2 * x + 1 ≥ 0
+        omega
+      · -- 2 * x + 2 = 2 * x + 2 - 1 + 1
+        rw [Nat.sub_add_cancel]
+        · -- 2 * x + 2 ≥ 1
+          omega
+        · -- 2 * x + 2 - 1 = 2 * x + 1
+          rw [Nat.sub_add_cancel]
+          · -- 2 * x + 2 ≥ 1
+            omega
+          · -- 2 * x + 1 ≥ 0
+            exact Nat.zero_le (2 * x + 1)
+        · -- 1 + 1 = 2
+          rfl
+    · -- 2 * x + 1 = 2 * x + 1 - 1 + 1
+      rw [Nat.sub_add_cancel]
+      · -- 2 * x + 1 ≥ 1
+        omega
+      · -- 2 * x ≥ 0
+        exact Nat.zero_le (2 * x)
+    · -- 2 * (x + 1) = 2 * x + 2
+      rw [Nat.mul_add, Nat.mul_one]
+      omega
+  assumption
+```

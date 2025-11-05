@@ -1,0 +1,97 @@
+-- Prove that $a + b - c + d$ is positive.
+  have h₅ : 0 < b + d + a - c := by
+    linarith only [h₃, h₂, h₁]
+
+  -- Prove that $a - c + b + d$ is positive.
+  have h₆ : 0 < b + d + c - a := by
+    linarith only [h₃, h₁, h₀]
+
+  -- Apply the AM-GM inequality.
+  have h₇ : b * d + (a - c) ^ 2 < (b + d + a - c) ^ 2 := by
+    -- Use the fact that $a + b - c + d$ is positive to show that $(a - c)(b + d)$ is positive.
+    apply lt_of_le_of_lt (mul_self_nonneg (b + d + a - c - (b + d + c - a)))
+    _ + (b * d + (a - c) ^ 2) + (a - c) * (b + d) * 2
+    _ + (b * d + (a - c) ^ 2) - ((b + d + a - c) ^ 2 - (b + d + c - a) ^ 2)
+
+    -- Show that $(b - d) ^ 2 + (a - c) ^ 2$ is positive.
+    apply add_pos
+    · rw [sub_sq, sub_sq, mul_pow]
+      positivity
+      norm_num
+    · positivity
+
+  -- Rearrange the terms to show that $(a * c + b * d) < (b + d + a - c) ^ 2$.
+  have h₈ : a * c + b * d < (b + d + a - c) ^ 2 := by
+    linarith only [h₇]
+
+  -- Rewrite $(b + d + a - c) ^ 2$ as $((b + d + c - a) + (b + d + a - c))$.
+  rw [show (b + d + a - c) ^ 2 = ((b + d + c - a) + (b + d + a - c)) ^ 2 by ring] at h₈
+
+  -- Apply the inequality $(x + y) ^ 2 \geq 4xy$.
+  have h₉ : 4 * (a * c + b * d) ≤ ((b + d + c - a) + (b + d + a - c)) ^ 2 := by
+    rw [mul_assoc, show 4 = 2 * 2 by norm_num, mul_assoc, mul_le_mul_left]
+    linarith only [h₈]
+
+  rw [add_assoc, ←add_sub_assoc, add_comm, ←add_sub_assoc, sub_add_cancel, mul_comm] at h₉
+  rw [←mul_le_mul_iff_of_pos_right (show 0 < 4 by norm_num)] at h₉
+
+  -- Show that $a * b + c * d$ is divisible by $a + b - c + d$.
+  have h₁₀ : a * b + c * d ∈ ({n | 0 < n} ∩ {n | 4 * n ∈ {n | 0 < n} ∧ (a * c + b * d) ≤ n}) \ {n | 0 < n} := by
+    refine ⟨⟨?_,?_⟩,?_⟩
+    · positivity
+    · exact h₉
+    · simp
+      -- Show that $a + b - c + d < a * b + c * d$.
+      rw [Nat.lt_iff_add_one_le]
+      qify
+      rw [Int.cast_sub (by linarith only [h₀]) (by linarith only [h₁]), Int.cast_sub (by linarith only [h₀]) (by linarith only [h₂]), Int.cast_sub (by linarith only [h₀]) (by linarith only [h₃])]
+      -- Rearrange the terms to show that $(a * b + c * d) - (a + b - c + d) = (a - c) * (b + d)$.
+      have h₁₀ : (a * b + c * d) - (a + b - c + d) = (a - c) * (b + d) := by
+        linarith only [h₀]
+      qify at h₁₀
+      rw [h₁₀]
+      apply mul_nonneg
+      · apply Nat.cast_nonneg
+      · rw [Int.cast_sub (by linarith only [h₀]) (by linarith only [h₃])]
+        apply Nat.cast_nonneg
+  rw [Set.difference_def] at h₁₀
+  simp at h₁₀
+  obtain ⟨⟨⟨h₁₁, h₁₂⟩, h₁₃⟩, h₁₄⟩ := h₁₀
+  have h₁₅ : a + b - c + d ≤ a * b + c * d := by
+    exact h₁₂
+
+  -- Show that $a * b + c * d$ is not prime.
+  rw [Nat.not_prime_iff_exists_dvd_lt (by linarith only [h₀])]
+  use (a + b - c + d)
+  constructor
+  · exact Nat.dvd_of_mod_eq_zero h₁₄
+  · constructor
+    · exact h₁₅
+    · -- Show that $a + b - c + d < a * b + c * d$.
+      rw [Nat.lt_iff_add_one_le]
+      qify
+      rw [Int.cast_sub (by linarith only [h₀]) (by linarith only [h₁]), Int.cast_sub (by linarith only [h₀]) (by linarith only [h₂]), Int.cast_sub (by linarith only [h₀]) (by linarith only [h₃])]
+      -- Rearrange the terms to show that $(a * b + c * d) - (a + b - c + d) = (a - c) * (b + d)$.
+      have h₁₀ : (a * b + c * d) - (a + b - c + d) = (a - c) * (b + d) := by
+        linarith only [h₀]
+      qify at h₁₀
+      rw [h₁₀]
+      apply mul_pos
+      · apply Nat.cast_pos_of_pos (by linarith only [h₃])
+      · rw [Int.cast_add, Int.cast_add]
+        apply add_pos
+        <;> apply add_pos
+        <;> apply Nat.cast_pos_of_pos
+        · linarith only [h₀]
+        · linarith only [h₁]
+        · linarith only [h₂]
+        · linarith only [h₃]
+  · apply Nat.not_prime_of_dvd_of_ne
+    · exact h₁₄
+    · by_contra!
+      rw [←Nat.prime_dvd_prime_iff_eq (by linarith only [h₀]) (by linarith only [h₁₄])] at this
+      have h₁₆ : a + b - c + d > 0 := by
+        linarith only [h₀]
+      linarith only [h₁₆, h₁₄, this]
+
+```

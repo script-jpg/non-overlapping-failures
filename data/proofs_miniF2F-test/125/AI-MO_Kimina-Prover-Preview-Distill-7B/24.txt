@@ -1,0 +1,287 @@
+-- Prove that $c$ is a power of two.
+  have hⁿ : ∃ t : ℕ, c = 2 ^ t := by
+    -- Since $c$ is odd, $c ≡ 1 \pmod{2}$.
+    have hc : c % 2 = 1 := by
+      obtain ⟨hc, _⟩ := Nat.odd_iff.mp ⟨h₁.right.right.right, h₂.right.right.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at hc
+      exact hc
+    -- Since $c$ is odd, all prime factors of $c$ are odd.
+    have hc' : ∀ p : ℕ, Nat.Prime p → p ∣ c → Odd p := by
+      intro p hp hpbd
+      apply Nat.Prime.odd_of_dvd (Nat.prime_iff.mp hp) hpbd hc
+    -- Since $c$ is odd, $c$ is not divisible by 2.
+    have hc'' : ¬ 2 ∣ c := by exact Nat.Prime.not_dvd_of_not_dvd (Nat.prime_iff.mp hc) (by norm_num) hc
+    -- Since $c$ is odd, $c$ is coprime to 2.
+    replace hc'' : Nat.Coprime 2 c := by exact Nat.coprime_comm.mp (Nat.coprime_of_not_dvd hc'')
+    -- Since $c$ is odd, $c$ is a power of an odd number.
+    apply Nat.exists_eq_pow_of_coprime_of_dvd hc'' (by norm_num)
+    obtain ⟨t, ht⟩ := this
+    use t
+    rw [ht]
+    exact Nat.coprime_pow_left_iff.mpr hc''.symm
+
+  -- Since $a$ is odd, $a ≡ 1 \pmod{2}$.
+  have ha : a % 2 = 1 := by
+    obtain ⟨ha, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+    rw [Nat.odd_iff] at ha
+    exact ha
+
+  -- Since $a$ is odd, $a$ is not divisible by 2.
+  have ha'' : ¬ 2 ∣ a := by exact Nat.Prime.not_dvd_of_not_dvd (Nat.prime_iff.mp ha) (by norm_num) ha
+  -- Since $a$ is odd, $a$ is coprime to 2.
+  replace ha'' : Nat.Coprime 2 a := by exact Nat.coprime_comm.mp (Nat.coprime_of_not_dvd ha'')
+
+  -- Since $a+d=2^k$ and $a$ is odd, $d$ is also odd.
+  have hd : Odd d := by
+    have : 2 ^ k % 2 = 1 := by
+      rw [Nat.pow_mod]
+      exact Nat.odd_iff.mp (Odd.add_odd ha hd)
+    rw [← h₄] at this
+    exact Nat.odd_iff.mp (Nat.even_iff.mp this)
+
+  -- Since $d$ is odd, $d ≡ 1 \pmod{2}$.
+  have hd' : d % 2 = 1 := by
+    obtain ⟨hd, _⟩ := Nat.odd_iff.mp ⟨hd, h₂.right.right.right, h₃, h₄, h₅⟩
+    rw [Nat.odd_iff] at hd
+    exact hd
+
+  -- Since $d$ is odd, $d$ is not divisible by 2.
+  have hd'' : ¬ 2 ∣ d := by exact Nat.Prime.not_dvd_of_not_dvd (Nat.prime_iff.mp hd) (by norm_num) hd
+  -- Since $d$ is odd, $d$ is coprime to 2.
+  replace hd'' : Nat.Coprime 2 d := by exact Nat.coprime_comm.mp (Nat.coprime_of_not_dvd hd'')
+
+  -- Since $b+c=2^m$ and $c$ is odd, $b$ is also odd.
+  have hb : Odd b := by
+    have : 2 ^ m % 2 = 1 := by
+      rw [Nat.pow_mod]
+      exact Nat.odd_iff.mp (Odd.add_odd ha hd)
+    rw [← h₅] at this
+    exact Nat.odd_iff.mp (Nat.even_iff.mp this)
+
+  -- Since $b$ is odd, $b ≡ 1 \pmod{2}$.
+  have hb' : b % 2 = 1 := by
+    obtain ⟨hb, _⟩ := Nat.odd_iff.mp ⟨hb, h₂.left, h₃.left, h₄, h₅⟩
+    rw [Nat.odd_iff] at hb
+    exact hb
+
+  -- Since $b$ is odd, $b$ is not divisible by 2.
+  have hb'' : ¬ 2 ∣ b := by exact Nat.Prime.not_dvd_of_not_dvd (Nat.prime_iff.mp hb) (by norm_num) hb
+  -- Since $b$ is odd, $b$ is coprime to 2.
+  replace hb'' : Nat.Coprime 2 b := by exact Nat.coprime_comm.mp (Nat.coprime_of_not_dvd hb'')
+
+  -- Since $ad=bc$ and $a$,$c$ are odd, $d$,$b$ are odd.
+  have hnz : Odd d ∧ Odd b := by
+    have : Odd a * d := by exact Nat.odd_mul.mpr ⟨ha, hd⟩
+    rw [← h₃] at this
+    exact ⟨this, hb⟩
+  -- Since $a+d=2^k$ and $d$ is odd, $a$ is also odd.
+  have ha' : Odd a := by
+    have : 2 ^ k % 2 = 1 := by
+      rw [Nat.pow_mod]
+      exact Nat.odd_iff.mp (Odd.add_odd ha hd)
+    rw [← h₄] at this
+    exact Nat.odd_iff.mp (Nat.even_iff.mp this)
+  -- Since $a$ is odd, $a ≡ 1 \pmod{4}$ or $a ≡ 3 \pmod{4}$.
+  have ha'' : a % 4 = 1 ∨ a % 4 = 3 := by
+    obtain ⟨ha, hapos⟩ := Nat.odd_iff.mp ⟨ha, h₂.left, h₃.left, h₄, h₅⟩
+    have : 0 < a := hapos
+    have : a % 4 = 1 ∨ a % 4 = 3 := by
+      have : a % 4 < 4 := by apply Nat.mod_lt; norm_num
+      have : 0 < a % 4 := by
+        apply Nat.mod_pos_of_pos
+        exact Nat.zero_lt_of_lt this
+      interval_cases a % 4 <;> tauto
+    exact this
+
+  -- Since $a+d=2^k$ and $a$,$d$ are odd, $k$ is greater than 0.
+  have hk : k > 0 := by
+    by_contra!
+    simp at this
+    rw [← h₄] at this
+    obtain ⟨_, h₁⟩ := Nat.even_iff.mp this
+    have : ¬ Even a := by
+      obtain ⟨ha, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at ha
+      exact ha
+    obtain ⟨_, h₂⟩ := Nat.even_iff.mp h₁
+    exact this h₁
+
+  -- Since $a+d=2^k$ and $a$,$d$ are odd, $a$,$d$ are both greater than 1.
+  have hapos : 1 < a := by
+    by_contra!
+    have : a = 0 := by omega
+    rw [this] at h₄
+    obtain ⟨_, h₁⟩ := Nat.even_iff.mp h₄
+    have : ¬ Even d := by
+      obtain ⟨_, h₂⟩ := Nat.even_iff.mp h₁
+      rw [← this] at h₂
+      rw [Nat.odd_iff] at h₂
+      exact h₂
+    obtain ⟨h₂, _⟩ := Nat.even_iff.mp h₁
+    exact this h₂
+  have hdpos : 1 < d := by
+    by_contra!
+    have : d = 0 := by omega
+    rw [this] at h₄
+    obtain ⟨h₁, _⟩ := Nat.even_iff.mp h₄
+    have : ¬ Even a := by
+      obtain ⟨ha, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at ha
+      exact ha
+    obtain ⟨_, h₂⟩ := Nat.even_iff.mp h₁
+    exact this h₂
+  -- Since $c$ is a power of two and $c$ is greater than $b$, $c$ is greater than or equal to $b$.
+  have hcnge : c ≥ b := by
+    obtain ⟨t, ht⟩ := hⁿ
+    have : 2 ^ t ≥ b := by
+      have : 2 ^ t ≥ 2 := by
+        calc
+          2 ^ t ≥ 2 ^ 1 := by apply Nat.pow_le_pow_of_le_right; norm_num; exact t.le
+          _ = 2 := by rfl
+      obtain ⟨hb, hblt⟩ := Nat.odd_iff.mp ⟨hb, h₂.left, h₃.left, h₄, h₅⟩
+      rw [Nat.odd_iff] at hb
+      omega
+    linarith
+
+  -- Since $b+c=2^m$ and $b$,$c$ are odd, $m$ is greater than 0.
+  have hm : m > 0 := by
+    by_contra!
+    simp at this
+    rw [← h₅] at this
+    obtain ⟨_, h₁⟩ := Nat.even_iff.mp this
+    have : ¬ Even b := by
+      obtain ⟨hb, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at hb
+      exact hb
+    obtain ⟨h₂, _⟩ := Nat.even_iff.mp h₁
+    exact this h₂
+  -- Since $b+c=2^m$ and $b$,$c$ are odd, $b$,$c$ are both greater than 1.
+  have hbpos : 1 < b := by
+    by_contra!
+    have : b = 0 := by omega
+    rw [this] at h₅
+    obtain ⟨h₁, _⟩ := Nat.even_iff.mp h₅
+    have : ¬ Even c := by
+      obtain ⟨_, h₂⟩ := Nat.even_iff.mp h₁
+      rw [← this] at h₂
+      rw [Nat.odd_iff] at h₂
+      exact h₂
+    obtain ⟨_, h₂⟩ := Nat.even_iff.mp h₁
+    exact this h₂
+  have hcpos : 1 < c := by
+    by_contra!
+    have : c = 0 := by omega
+    rw [this] at h₅
+    obtain ⟨h₁, _⟩ := Nat.even_iff.mp h₅
+    have : ¬ Even b := by
+      obtain ⟨hb, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at hb
+      exact hb
+    obtain ⟨hb, _⟩ := Nat.even_iff.mp h₁
+    exact this hb
+
+  -- Since $ad=bc$ and $d$,$b$ are odd, $a$,$c$ are odd.
+  have hanz : Odd a ∧ Odd c := by
+    have : Odd a * d := by exact Nat.odd_mul.mpr ⟨ha, hd⟩
+    rw [← h₃] at this
+    exact ⟨this, hc⟩
+
+  -- Since $ad=bc$ and $a$,$c$ are odd, $d$,$b$ are odd.
+  have hbnz : Odd d ∧ Odd b := by
+    have : Odd a * d := by exact Nat.odd_mul.mpr ⟨ha, hd⟩
+    rw [← h₃] at this
+    exact ⟨this, hb⟩
+
+  -- Since $a+d=2^k$ and $a$,$d$ are odd, $a$,$d$ are both greater than 1.
+  have hapos : 1 < a := by
+    by_contra!
+    have : a = 0 := by omega
+    rw [this] at h₄
+    obtain ⟨_, h₁⟩ := Nat.even_iff.mp h₄
+    have : ¬ Even d := by
+      obtain ⟨hd, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at hd
+      exact hd
+    obtain ⟨h₂, _⟩ := Nat.even_iff.mp h₁
+    exact this h₂
+  have hdpos : 1 < d := by
+    by_contra!
+    have : d = 0 := by omega
+    rw [this] at h₄
+    obtain ⟨h₁, _⟩ := Nat.even_iff.mp h₄
+    have : ¬ Even a := by
+      obtain ⟨ha, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at ha
+      exact ha
+    obtain ⟨_, h₂⟩ := Nat.even_iff.mp h₁
+    exact this h₂
+
+  -- Since $a+d=2^k$ and $a$,$d$ are odd, $k$ is greater than 0.
+  have hk : k > 0 := by
+    by_contra!
+    simp at this
+    rw [← h₄] at this
+    obtain ⟨_, h₁⟩ := Nat.even_iff.mp this
+    have : ¬ Even a := by
+      obtain ⟨ha, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at ha
+      exact ha
+    obtain ⟨h₂, _⟩ := Nat.even_iff.mp h₁
+    exact this h₂
+
+  -- Since $a+d=2^k$ and $a$,$d$ are odd, $a$,$d$ are both greater than 1.
+  have hapos : 1 < a := by
+    by_contra!
+    have : a = 0 := by omega
+    rw [this] at h₄
+    obtain ⟨_, h₁⟩ := Nat.even_iff.mp h₄
+    have : ¬ Even d := by
+      obtain ⟨hd, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at hd
+      exact hd
+    obtain ⟨h₂, _⟩ := Nat.even_iff.mp h₁
+    exact this h₂
+  have hdpos : 1 < d := by
+    by_contra!
+    have : d = 0 := by omega
+    rw [this] at h₄
+    obtain ⟨h₁, _⟩ := Nat.even_iff.mp h₄
+    have : ¬ Even a := by
+      obtain ⟨ha, _⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.symm, h₄, h₅⟩
+      rw [Nat.odd_iff] at ha
+      exact ha
+    obtain ⟨_, h₂⟩ := Nat.even_iff.mp h₁
+    exact this h₂
+
+  -- Since $c$ is a power of two and $c$ is greater than $b$, $c$ is greater than or equal to $b$.
+  have hcnge : c ≥ b := by
+    obtain ⟨t, ht⟩ := hⁿ
+    have : 2 ^ t ≥ b := by
+      have : 2 ^ t ≥ 2 := by
+        calc
+          2 ^ t ≥ 2 ^ 1 := by apply Nat.pow_le_pow_of_le_right; norm_num; exact t.le
+          _ = 2 := by rfl
+      obtain ⟨hb, hblt⟩ := Nat.odd_iff.mp ⟨hb, h₂.left, h₃.left, h₄, h₅⟩
+      rw [Nat.odd_iff] at hb
+      omega
+    linarith
+
+  -- Since $c$ is a power of two and $c$ is greater than $b$, $c$ is greater than or equal to $b$.
+  have tge : t ≥ s := by
+    obtain ⟨t, ht⟩ := hⁿ
+    have : 2 ^ t ≥ 2 ^ s := by
+      calc
+        2 ^ t ≥ b := by exact Nat.pow_le_of_le_log_pow (by omega) ht
+        _ ≥ 2 ^ s := by apply Nat.pow_le_pow_of_le_right; exact hcnge; norm_num
+    exact (Nat.pow_le_pow_iff_right (by norm_num)).mp this
+
+  -- Since $a$ is odd, $a ≡ 1 \pmod{4}$ or $a ≡ 3 \pmod{4}$.
+  have ha'' : a % 4 = 1 ∨ a % 4 = 3 := by
+    obtain ⟨ha, hapos⟩ := Nat.odd_iff.mp ⟨h₁.left, h₂.left, h₃.left, h₄, h₅⟩
+    have : 0 < a := hapos
+    have : a % 4 = 1 ∨ a % 4 = 3 := by
+      have : a % 4 < 4 := by apply Nat.mod_lt; norm_num
+      have : 0 < a % 4 := by
+        apply Nat.mod_pos_of_pos
+        exact Nat.zero_lt_of_lt this
+      interval_cases

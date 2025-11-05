@@ -1,0 +1,29 @@
+-- A small ommiction: if a, b, c are negative, the inequality does not hold.
+  have : 0 < a * b + b * c + c * a := by linarith
+  have : 0 < a + b + c := by nlinarith
+  have : 0 < Real.sqrt (a + b) := by apply Real.sqrt_pos_of_pos; linarith
+  have : 0 < Real.sqrt (b + c) := by apply Real.sqrt_pos_of_pos; linarith
+  have : 0 < Real.sqrt (c + a) := by apply Real.sqrt_pos_of_pos; linarith
+
+  -- Clear denominators and manipulate the inequality.
+  have : 0 < a * Real.sqrt (a + b) + b * Real.sqrt (b + c) + c * Real.sqrt (c + a) := by linarith
+  clear this
+  have : 0 < a + b + c := by linarith
+  rify at *
+  -- Now we need to show that $3 \sqrt{2} \leq \frac{a \sqrt{a+b} + b \sqrt{b+c} + c \sqrt{c+a}}{\sqrt{a+b} + \sqrt{b+c} + \sqrt{c+a}}$.
+  calc
+    3 / √2 = 3 * (a + b + c) / (√2 * (a + b + c)) := by field_simp; linarith
+    _ = ((a * √2) / (a + b + c)) * a + ((b * √2) / (a + b + c)) * b + ((c * √2) / (a + b + c)) * c := by ring_nf; rw [mul_assoc, div_mul_cancel₀]; ring_nf; linarith
+    _ ≤ (a * √(a + b) + b * √(b + c) + c * √(c + a)) / (√(a + b) + √(b + c) + √(c + a)) * √2 := by
+      -- Now we need to show that $a \sqrt{2(a+b)} + b \sqrt{2(b+c)} + c \sqrt{2(c+a)} \leq \sqrt{2(a+b)} + \sqrt{2(b+c)} + \sqrt{2(c+a)}$, which follows from the Cauchy-Schwarz inequality.
+      apply div_le_div_of_nonneg_right
+      · nth_rewrite 2 [mul_comm]
+        apply mul_le_mul_of_nonneg_left
+        · linarith
+        · apply sqrt_nonneg
+      · apply sqrt_nonneg
+    _ = _ := by field_simp; ring_nf
+
+
+  
+```

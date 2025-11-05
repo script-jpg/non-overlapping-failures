@@ -1,0 +1,269 @@
+-- Show that $x$ and $y$ are not equal.
+  have h₂ : x ≠ y := by
+    intro h
+    simp [h] at h₁
+    have : 2 ∣ x := by
+      have : 2 ∣ x ^ 2 := by
+        rw [Nat.dvd_pow]
+        use y
+        omega
+      exact Nat.Prime.dvd_of_dvd_pow (by norm_num) this
+    have : 2 ∣ y ^ x := by
+      rw [Nat.dvd_pow]
+      use x / 2
+      omega
+    have : 2 ∣ x := by
+      rw [← h] at this
+      exact (Nat.Prime.dvd_iff_dvd_of_pos (by norm_num)).mp this
+    omega
+
+  -- Show that $x$ and $y$ are coprime.
+  have h₃ : x.Coprime y := by
+    -- Suppose that $x$ and $y$ are not coprime.
+    by_contra! h₃
+    -- Let $p$ be a common divisor of $x$ and $y$.
+    obtain ⟨p, hp₁, hp₂⟩ := Nat.exists_prime_and_dvd h₃
+    -- Show that $p$ is also a divisor of $x^y$ and $y^x$.
+    have h₄ : p ∣ x ^ y := by
+      apply Nat.dvd_trans (pow_dvd_pow_of_dvd hp₂) (Nat.dvd_pow hp₁ y)
+    have h₅ : p ∣ y ^ x := by
+      apply Nat.dvd_trans (pow_dvd_pow_of_dvd hp₁) (Nat.dvd_pow hp₂ x)
+    -- Since $p$ divides both $x^y$ and $y^x$, it also divides $x^{y^2}$.
+    have h₆ : p ∣ x ^ (y ^ 2) := by
+      calc
+        p ∣ x ^ y := h₄
+        _ ∣ (x ^ y) ^ y := by
+          rw [Nat.pow_dvd_pow]
+          omega
+        _ = x ^ (y ^ 2) := by rw [Nat.pow_mul]
+    -- However, $p$ does not divide $y^x$ (it divides $x^y$ but not $y^x$.)
+    have h₇ : ¬p ∣ y ^ x := by
+      rw [h₁] at h₆
+      rw [Nat.dvd_iff_mod_eq_zero] at h₆
+      rw [Nat.dvd_iff_mod_eq_zero] at h₅
+      have h₈ : x % p = 0 := by
+        exact h₆
+      have h₉ : y % p = 0 := by
+        exact h₅
+      have h₁₀ : (x ^ y) % p = 0 := by
+        rw [Nat.pow_mod, h₈]
+      have h₁₁ : (y ^ x) % p = 0 := by
+        rw [Nat.pow_mod, h₉]
+      have h₁₂ : (x ^ y) % p = 0 ∧ (y ^ x) % p = 0 := by
+        exact ⟨h₁₀, h₁₁⟩
+      have h₁₃ : (x ^ y ^ 2) % p = 0 := by
+        calc
+          (x ^ y ^ 2) % p = (x ^ y) % p ^ y % p := by
+            rw [Nat.mul_mod]
+            rw [Nat.pow_mod]
+            omega
+          _ = 0 ^ y % p := by rw [h₁₂.left]
+          _ = 0 := by omega
+      rw [h₁] at h₁₃
+      tauto
+    -- $p$ divides $x$ and $y$ but not $y^x$, which is a contradiction.
+    have h₁₄ : p ∣ y ^ x := by
+      exact Nat.dvd_trans (pow_dvd_pow_of_dvd hp₁) (Nat.dvd_pow hp₂ x)
+    contradiction
+
+  -- Show that $x$ and $y$ are not coprime, if $x$ is a power of 2 and $y$ is a power of 3.
+  have h₄ (a b : ℕ) (ha : 2 ^ a = x) (hb : 3 ^ b = y) (hc : x * y = 2 ^ (a + b)) : ¬Nat.Coprime x y := by
+    -- Assume that $x = 2^a$ and $y = 3^b$.
+    -- First, we consider the case where $a$ is not zero.
+    by_cases h : a ≠ 0
+    · -- If $a$ is not zero, then $2$ divides $x$.
+      have h₅ : 2 ∣ x := by
+        rw [ha]
+        exact Nat.dvd_pow_self 2 h
+      -- If $2$ divides $x$ and $x \cdot y = 2^{a+b}$, then $2$ divides $2^{a+b}$.
+      have h₆ : 2 ∣ 2 ^ (a + b) := by
+        rw [<-hc]
+        exact Nat.dvd_mul_left 2 (3 ^ b)
+      -- However, $2$ does not divide $2^{a+b}$, since $a + b$ is a natural number and $2$ does not divide $3^b$.
+      have h₇ : ¬2 ∣ 2 ^ (a + b) := by
+        apply Nat.Prime.coprime_pow_of_not_dvd
+        norm_num
+        apply Nat.Prime.dvd_of_dvd_pow
+        norm_num
+        rw [ha, hb]
+        by_contra! h₈
+        have h₉ : 2 ∣ 3 ^ b := by
+          calc
+            2 ∣ 2 ^ (a + b) := h₈
+            _ = 2 ^ a * 3 ^ b := by rw [ha, hb]
+            _ = 2 ^ a * (3 ^ b) := by ring
+            _ ∣ (2 ^ a) * (3 ^ b) := by
+              apply Nat.dvd_mul_left
+            _ = 3 ^ b := by rw [<-mul_one (3 ^ b), mul_assoc, <-Nat.pow_add]
+        have h₁₀ : 2 ∣ 3 := by
+          apply Nat.Prime.dvd_of_dvd_pow (by norm_num) h₉
+        omega
+      contradiction
+    · -- Consider the case where $a$ is zero.
+      have h₈ : a = 0 := by
+        omega
+      simp [h₈] at ha
+      -- If $a = 0$, then $x = 1$.
+      have h₉ : x = 1 := by
+        omega
+      -- Show that $y \neq 1$.
+      have h₁₀ : y ≠ 1 := by
+        by_contra! h₁₀
+        simp [h₁₀] at hb
+        omega
+      -- Since $y$ is a power of 3 and $y \neq 1$, $3$ divides $y$.
+      have h₁₁ : 3 ∣ y := by
+        by_contra! h₁₁
+        have h₁₂ : y = 1 := by
+          rw [show 1 = 3 ^ 0 by norm_num, <-hb, Nat.pow_eq_one_iff]
+          tauto
+        contradiction
+      -- Since $x = 1$ and $3$ divides $y$, it is clear that $x$ and $y$ are not coprime.
+      rw [h₉]
+      exact Nat.not_coprime_one_left h₁₁
+
+  -- Show that if $x$ and $y$ are not coprime, then they are both greater than 1.
+  have h₅ (h : ¬Nat.Coprime x y) : x > 1 ∧ y > 1 := by
+    -- Assume that $x$ and $y$ are not coprime.
+    -- show that x > 1 and y > 1
+    by_contra! h₅
+    -- If $x \leq 1$ and $y \leq 1$, then $x = 1$ and $y = 1$, which contradicts the fact that they are not coprime.
+    replace h₅ : x = 1 ∧ y = 1 := by
+      have h₆ : x = 1 := by
+        omega
+      have h₇ : y = 1 := by
+        omega
+      exact ⟨h₆, h₇⟩
+    -- If $x = 1$ and $y = 1$, then $x$ and $y$ are coprime, which contradicts the assumption.
+    rw [h₅.left, h₅.right] at h
+    simp at h
+
+  -- Let $x = 2 ^ a \cdot k$ and $y = 3 ^ b \cdot l$, where $k$ and $l$ are coprime to 2 and 3, respectively.
+  apply Nat.exists_prime_and_dvd (h₃.symm)
+  apply Nat.exists_prime_and_dvd (h₃.symm)
+  -- Show that $a \neq 0$ and $b \neq 0$.
+  have h₆ (a b : ℕ) (ha : 2 ^ a ∣ x) (hb : 3 ^ b ∣ y) (h : x * y = 2 ^ (a + b) * 3 ^ (a + b)) :
+      a ≠ 0 ∧ b ≠ 0 := by
+    by_contra! h₆
+    -- Assume that $a = 0$ or $b = 0$.
+    cases h₆ with
+    | inl h₆ =>
+      -- If $a = 0$, then $x = 1$, which contradicts the fact that $x$ and $y$ are not coprime.
+      replace h₆ : a = 0 := by
+        omega
+      simp [h₆] at ha
+      apply h₅ at h₃
+      omega
+    | inr h₆ =>
+      -- If $b = 0$, then $y = 1$, which contradicts the fact that $x$ and $y$ are not coprime.
+      replace h₆ : b = 0 := by
+        omega
+      simp [h₆] at hb
+      apply h₅ at h₃
+      omega
+
+  -- Show that $a + b$ is positive.
+  have h₇ (a b : ℕ) (h : x * y = 2 ^ (a + b) * 3 ^ (a + b)) : a + b ≠ 0 := by
+    by_contra! h₇
+    -- If $a + b = 0$, then $x * y = 1$, which means $x = 1$ and $y = 1$.
+    replace h₇ : a + b = 0 := by
+      omega
+    replace h₇ : a = 0 ∧ b = 0 := by
+      constructor
+      · omega
+      · omega
+    simp [h₇] at h
+    rw [h] at h₃
+    apply h₅ at h₃
+    tauto
+
+  -- Let $x = 2 ^ a \cdot k$ and $y = 3 ^ b \cdot l$, where $k$ and $l$ are coprime to 2 and 3, respectively.
+  -- Show that $a$ and $b$ are positive.
+  have h₈ (a b : ℕ) (ha : 2 ^ a ∣ x) (hb : 3 ^ b ∣ y) (h : x * y = 2 ^ (a + b) * 3 ^ (a + b)) :
+      0 < a ∧ 0 < b := by
+    constructor
+    · -- Show that $a$ is positive.
+      by_contra! h₈
+      -- If $a = 0$, then $x = 1$, which contradicts the fact that $x$ and $y$ are not coprime.
+      replace h₈ : a = 0 := by
+        omega
+      simp [h₈] at ha
+      apply h₅ at h₃
+      omega
+    · -- Show that $b$ is positive.
+      by_contra! h₈
+      -- If $b = 0$, then $y = 1$, which contradicts the fact that $x$ and $y$ are not coprime.
+      replace h₈ : b = 0 := by
+        omega
+      simp [h₈] at hb
+      apply h₅ at h₃
+      omega
+
+  -- Show that $a$ and $b$ are not greater than 4.
+  have h₉ (a b : ℕ) (ha : 2 ^ a ∣ x) (hb : 3 ^ b ∣ y) (h : x * y = 2 ^ (a + b) * 3 ^ (a + b)) :
+      a ≤ 4 ∧ b ≤ 4 := by
+    -- Assume that $a > 4$ or $b > 4$.
+    by_contra! h₉
+    apply Nat.exists_prime_and_dvd h₃
+    -- Since $x$ and $y$ are not coprime, we can choose a prime $p$ that divides both $x$ and $y$.
+    let ⟨p, hp₁, hp₂⟩ := h₃
+    -- Show that $p = 2$ or $p = 3$.
+    have h₁₀ : p = 2 ∨ p = 3 := by
+      by_contra! h₁₀
+      -- If $p$ is neither 2 nor 3, then $p \geq 5$.
+      have h₁₁ : p ≥ 5 := by
+        by_contra! h₁₁
+        interval_cases p <;> tauto
+      -- Show that $p$ is coprime to 2 and 3.
+      have h₁₂ : p.Coprime 2 := by
+        exact Nat.Prime.coprime_iff_not_dvd (by norm_num) hp₁ (by omega)
+      have h₁₃ : p.Coprime 3 := by
+        exact Nat.Prime.coprime_iff_not_dvd (by norm_num) hp₁ (by omega)
+      -- Show that $p$ is coprime to both $x$ and $y$.
+      have h₁₄ : p.Coprime x := by
+        exact (Nat.Prime.coprime_iff_not_dvd hp₁).mpr hp₂
+      have h₁₅ : p.Coprime y := by
+        exact (Nat.Prime.coprime_iff_not_dvd hp₁).mpr hp₂
+      -- Show that $p$ is coprime to $x * y$.
+      have h₁₆ : p.Coprime (x * y) := by
+        exact (Nat.Prime.coprime_iff_not_dvd hp₁).mpr (Nat.dvd_mul_of_dvd_left hp₂ (x * y))
+      -- However, $p$ is not coprime to $2 ^ (a + b) * 3 ^ (a + b)$, because $p$ divides both $2$ and $3$.
+      have h₁₇ : ¬p.Coprime (2 ^ (a + b) * 3 ^ (a + b)) := by
+        have h₁₈ : p ∣ 2 ^ (a + b) := by
+          calc
+            p ∣ 2 := hp₁
+            _ ∣ 2 ^ (a + b) := by
+              apply Nat.dvd_pow_self
+              omega
+        have h₁₉ : p ∣ 3 ^ (a + b) := by
+          calc
+            p ∣ 3 := hp₁
+            _ ∣ 3 ^ (a + b) := by
+              apply Nat.dvd_pow_self
+              omega
+        have h₂₀ : p ∣ 2 ^ (a + b) * 3 ^ (a + b) := by
+          exact Nat.dvd_mul_left p (3 ^ (a + b))
+        exact Nat.not_coprime_of_dvd_of_dvd h₁₈ h₁₉ h₂₀
+      -- $p$ is coprime to $x * y$ but not to $2 ^ (a + b) * 3 ^ (a + b)$, which is a contradiction.
+      rw [h] at h₁₇
+      rw [Nat.coprime_mul_iff_right] at h₁₆
+      tauto
+    -- Since $x$ and $y$ are not coprime, there is a prime $p$ such that $p$ divides both $x$ and $y$.
+    obtain ⟨p, hp₁, hp₂⟩ := h₃
+    -- We have just shown that $p = 2$ or $p = 3$.
+    have h₁₀ : p = 2 ∨ p = 3 := by
+      by_contra! h₁₀
+      have h₁₁ : p ≥ 5 := by
+        by_contra! h₁₁
+        interval_cases p <;> tauto
+      have h₁₂ : p.Coprime 2 := by
+        exact Nat.Prime.coprime_iff_not_dvd (by norm_num) hp₁ (by omega)
+      have h₁₃ : p.Coprime 3 := by
+        exact Nat.Prime.coprime_iff_not_dvd (by norm_num) hp₁ (by omega)
+      have h₁₄ : p.Coprime x := by
+        exact (Nat.Prime.coprime_iff_not_dvd hp₁).mpr hp₂
+      have h₁₅ : p.Coprime y := by
+        exact (Nat.Prime.coprime_iff_not_dvd hp₁).mpr hp₂
+      have h₁₆ : p.Coprime (x * y) := by
+        exact (Nat.Prime.coprime_iff_not_dvd hp₁).mpr (Nat.dvd_mul_of_dvd_left hp₂ (x * y))
+      have h₁₇ : ¬p.Coprime (2 ^ (a + b) * 3 ^ (a + b

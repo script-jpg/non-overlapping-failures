@@ -1,0 +1,110 @@
+have h₄: n % 13 < 1342 % 13 := by
+    apply Nat.lt_of_lt_of_le
+    exact h₃
+    exact Nat.mod_le n (by norm_num)
+```
+
+Now we have established that $n \bmod 13 < 1342 \bmod 13$. The key insight is that we need to find the smallest positive integer $n$ that is a multiple of $1342$ and has a remainder less than $r$ when divided by $13$.
+
+Let's think about how to approach this problem. We need to find the smallest $n$ such that:
+1. $n \geq 1342$ (since it's a multiple of $1342$)
+2. $n \bmod 13 < 1342 \bmod 1m{13}$
+
+We can start by computing $1342 \bmod 13$:
+$1342 \div 13 = 103$ remainder $3$, so $r = 3$.
+
+We need to find the smallest $n$ such that $1342 \mid n$ and $n \bmod 13 < 3$.
+
+Let's test $n = 1342$:
+$1342 \bmod 13 = 3$, which does not satisfy our condition.
+
+$n = 2 \cdot 1342 = 2684$:
+$2684 \bmod 13 = 6$, which also does not satisfy our condition.
+
+$n = 3 \cdot 1342 = 4026$:
+$4026 \bmod 13 = 9$, which does not satisfy our condition.
+
+We can see a pattern here. For $n = k \cdot 1342$, we have $n \bmod 13 = (k \cdot 1342 \bmod 13) = (k \cdot 3 \bmod 13)$. 
+
+To get $n \bmod 13 < 3$, we need $k \cdot 3 \bmod 13 < 3$. This happens when $k \cdot 3 < 13$ or $k \cdot 3 > 13$ by a margin that keeps us below 3 when we take $n \bmod 13$.
+
+Since $1342 \bmod 13 = 3$, we need $n \bmod 13 = 0, 1, 2$.
+
+For $n \bmod 13 = 0$, we need $k \cdot 3 \bmod 13 = 0$, which happens when $k \bmod 13 = 0$.
+
+For $n \bmod 13 = 1$, we need $k \cdot 3 \bmod 13 = 1$, which happens when $k \bmod 13 = 9$ (since $3 \cdot 9 = 27 = 2 \cdot 13 + 1$).
+
+For $n \bmod 13 = 2$, we need $k \cdot 3 \bmod 13 = 2$, which happens when $k \bmod 13 = 8$ (since $3 \cdot 8 = 24 = 1 \cdot 13 + 11$... wait, let me recalculate.
+
+For $k \cdot 3 \bmod 13 = 2$, we actually need $k \bmod 13 = 11$, since:
+$3 \cdot 11 = 33 = 2 \cdot 13 + 7$... no, let me try another approach.
+
+To solve $3k \bmod 13 = 2$, we need $3k = 13m + 2$ for some integer $m$.
+Rearranging, $3k - 13m = 2$.
+
+This is a linear Diophantine equation. The solutions will be of the form:
+$k = k_0 + \frac{13}{\gcd(3,13)} t = k_0 + 13t$
+$m = m_0 + \frac{3}{\gcd(3,13)} t = m_0 + 3t$
+
+For $t \in \mathbb{Z}$.
+
+Since $\gcd(3,13) = 1$, we need to find $k_0$ and $m_0$ such that $3k_0 - 13m_0 = 2$.
+
+Testing small values, if $k_0 = 5$, then $3 \cdot 5 = 15$.
+$15 - 13m_0 = 2 \implies 13m_0 = 13 \implies m_0 = 1$.
+
+So $k_0 = 5$ and $m_0 = 1$ is a particular solution.
+The general solution is $k = 5 + 13t$ and $m = 1 + 3t$.
+
+We need the smallest positive $k$, so $t = 0$ gives $k = 5$ as the smallest positive solution.
+
+But $k = 5$ gives $n = 5 \cdot 1342 = 6710$.
+
+Let's check $6710 \bmod 13$:
+$6710 \div 13 = 516$ remainder $2$, so $6710 \bmod 13 = 2$, which is indeed less than $3$.
+
+So $6710$ is the smallest positive integer that is a multiple of $1342$ and has a remainder less than $3$ when divided by $13$.
+
+Let's complete the proof:
+
+```tactics
+omega
+```
+
+The `omega` tactic is powerful for solving integer arithmetic goals. It will automatically deduce that $6710 \leq n$ given the constraints $n \bmod 13 < 1342 \bmod 13$, $1342 \mid n$, and $0 < n$.
+
+To recap why $6710$ is indeed the smallest such number:
+1. $6710 = 5 \cdot 1342$, so it's a multiple of $1342$
+2. $6710 \bmod 13 = 2 < 3$, which is $1342 \bmod 13$
+3. For any smaller $n$ that satisfies these properties, it would contradict either the divisibility or the remainder condition
+
+Thus, we have proved that $6710$ is the smallest positive integer with the given properties.
+</think>
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+
+
+/-- Let $r$ be the remainder when $1342$ is divided by $13$.
+
+Determine the smallest positive integer that has these two properties:
+
+$\bullet~$ It is a multiple of $1342$.
+
+$\bullet~$ Its remainder upon being divided by $13$ is smaller than $r$. Show that it is 6710.-/
+
+theorem mathd_numbertheory_314 (r n : ℕ) (h₀ : r = 1342 % 13) (h₁ : 0 < n) (h₂ : 1342 ∣ n)
+    (h₃ : n % 13 < r) : 6710 ≤ n := by
+
+  have h₄: n % 13 < 1342 % 13 := by
+    apply Nat.lt_of_lt_of_le
+    exact h₃
+    exact Nat.mod_le n (by norm_num)
+
+  omega
+```

@@ -1,0 +1,204 @@
+-- We want to compute the sum $\sum_{k=1}^{35} \sin(5k)$. This is a geometric series.
+  -- Let's compute it in general: $\sum_{k=1}^n \sin(kx) = \frac{\cos(x/2) - \cos((2n+1)x/2)}{2\sin(x/2)}$.
+  have h (n : ℕ) (x : ℝ) (hx : x ≠ 0) (hx' : x ≠ 2 * Real.pi * (↑k : ℝ) for any k : ℤ) :
+      ∑ k : ℕ, Real.sin (k * x) = (Real.cos (x / 2) - Real.cos ((2 * n + 1) * x / 2)) / (2 * Real.sin (x / 2)) := by
+
+    -- We will use the complex exponential to compute this sum.
+    -- $\sum_{k=0}^{n-1} e^{ikx} = \frac{1 - e^{ix^n}}{1 - e^{ix}}$
+    have h' (n : ℕ) (x : ℝ) (hx : x ≠ 0) (hx' : x ≠ 2 * Real.pi * (↑k : ℝ) for any k : ℤ) :
+        ∑ k : ℕ, Complex.exp (k * x) = (1 - Complex.exp (n * x)) / (1 - Complex.exp x) := by
+      by_cases h : n = 0
+      · simp [h]
+      · have h'' : ∀ k : ℕ, Complex.exp (h' k x) = Complex.exp (k * x) := by intros; symm; apply Complex.exp_mul
+        have : ∑ k ∈ Finset.range n, Complex.exp (h' k x) = (1 - Complex.exp (n * x)) / (1 - Complex.exp x) := by
+          rw [← Finset.sum_range_succ', Finset.sum_range_succ']
+          simp
+          rw [h'']
+          apply geom_sum_eq
+          · by_contra! h
+            have : Complex.exp x = 1 := by
+              have : (Complex.exp x - 1) = 0 := by apply sub_eq_zero_of_eq; exact h
+              exact this
+            obtain ⟨k, hk⟩ := Complex.exp_eq_one_iff.mp this
+            obtain ⟨k', hk'⟩ := Complex.exp_eq_one_iff.mp (h (↑k': ℤ))
+            simp at hk hk'
+            have : (k : ℝ) = (k' : ℝ) := by
+              calc
+                (k : ℝ) = (↑k : ℤ) := by simp
+                _ = (k' : ℤ) := by exact hk'
+                _ = (k' : ℝ) := by simp
+            have this' : k = k' := by exact_mod_cast this
+            rw [this'] at hk
+            exact hx' k hk
+          · exact hx
+          · exact hx'
+        apply_fun Complex.im at this
+        simp at this
+        rw [Complex.exp_ofReal_mul_sin, Complex.exp_ofReal_mul_sin] at this
+        rw [← this]
+        have : ∑ k ∈ Finset.range n, Real.sin (k * x) = Complex.im ((1 - Complex.exp (n * x)) / (1 - Complex.exp x)) := by
+          apply Finset.sum_congr
+          simp
+          intro k hk
+          rw [Complex.div_im]
+          simp
+          simp [hk]
+        rw [this]
+        have : (Complex.exp (n * x) - 1) = - (1 - Complex.exp (n * x)) := by ring
+        rw [this]
+        rw [Complex.normSq_exp_ofReal_mul_sin]
+        rw [Complex.normSq_exp_ofReal_mul_sin]
+        ring
+        · by_contra! h
+          have : Complex.exp x = 1 := by
+            have : (Complex.exp x - 1) = 0 := by apply sub_eq_zero_of_eq; exact h
+            exact this
+          obtain ⟨k, hk⟩ := Complex.exp_eq_one_iff.mp this
+          obtain ⟨k', hk'⟩ := Complex.exp_eq_one_iff.mp (h (↑k': ℤ))
+          simp at hk hk'
+          have : (k : ℝ) = (k' : ℝ) := by
+            calc
+              (k : ℝ) = (↑k : ℤ) := by simp
+              _ = (k' : ℤ) := by exact hk'
+              _ = (k' : ℝ) := by simp
+          have this' : k = k' := by exact_mod_cast this
+          rw [this'] at hk
+          exact hx' k hk
+        · by_contra! h
+          have : Complex.exp x = 1 := by
+            have : (Complex.exp x - 1) = 0 := by apply sub_eq_zero_of_eq; exact h
+            exact this
+          obtain ⟨k, hk⟩ := Complex.exp_eq_one_iff.mp this
+          obtain ⟨k', hk'⟩ := Complex.exp_eq_one_iff.mp (h (↑k': ℤ))
+          simp at hk hk'
+          have : (k : ℝ) = (k' : ℝ) := by
+            calc
+              (k : ℝ) = (↑k : ℤ) := by simp
+              _ = (k' : ℤ) := by exact hk'
+              _ = (k' : ℝ) := by simp
+          have this' : k = k' := by exact_mod_cast this
+          rw [this'] at hk
+          exact hx' k hk
+
+    -- Now, we have $\sum_{k=0}^{n-1} \sin(kx) = \frac{\cos(x/2) - \cos((2n+1)x/2)}{2\sin(x/2)}$.
+    -- We can calculate this sum using the previous result.
+    have h'' (n : ℕ) (x : ℝ) (hx : x ≠ 0) (hx' : x ≠ 2 * Real.pi * (↑k : ℝ) for any k : ℤ) :
+        ∑ k : ℕ, Real.sin (k * x) = (Real.cos (x / 2) - Real.cos ((2 * n + 1) * x / 2)) / (2 * Real.sin (x / 2)) := by
+      have : ∑ k : ℕ, Real.sin (k * x) = ∑ k : ℕ, Complex.im (Complex.exp (k * x * Complex.I)) := by
+        apply Finset.sum_congr
+        simp
+        intro k _
+        exact Real.sin_eq_im_exp_mul_I (k * x * Complex.I)
+      rw [this]
+      -- Note that `Complex.exp ((2 * n + 1) * x / 2) = Complex.exp (n * x * Complex.I) * Complex.exp (x * Complex.I / 2)`
+      -- and `Complex.exp (n * x * Complex.I) = Complex.exp ((n * x) * Complex.I)`
+      have h'' : Complex.exp ((2 * n + 1) * x / 2) = Complex.exp (n * x * Complex.I) * Complex.exp (x * Complex.I / 2) := by
+        rw [← exponent_mul, mul_assoc]
+        congr
+        calc
+          (n : ℝ) * x * Complex.I = (n : ℝ) * (x * Complex.I) := by ring
+          _ = ↑n * (x * Complex.I) := by simp
+          _ = ↑n • (↑1 • (x * Complex.I)) := by simp
+          _ = (n • x) * Complex.I := by rw [← mul_assoc, Complex.ext_iff]
+          _ = (n * x) * Complex.I := by simp
+      rw [h'']
+      rw [← Finset.sum_mul, Finset.sum_range_succ']
+      simp
+      -- So, $\sum_{k=0}^{n-1} \sin(kx) = \frac{1 - \cos((2n+1)x/2) - \sin(x/2)}{2\sin(x/2)}$
+      -- Now use $\cos((2n+1)x/2) = \cos(nx + x/2) = \cos(nx)\cos(x/2) - \sin(nx)\sin(x/2)$ and $\sin((2n+1)x/2) = \sin(nx + x/2) = \sin(nx)\cos(x/2) + \cos(nx)\sin(x/2)$
+      rw [Complex.exp_mul_I]
+      rw [Complex.exp_mul_I]
+      rw [Real.cos_eq_re_exp]
+      rw [Real.sin_eq_im_exp]
+      rw [← Complex.exp_ofReal_mul_sin]
+      rw [← Complex.exp_ofReal_mul_sin]
+      rw [Real.cos_eq_re_exp]
+      rw [Real.sin_eq_im_exp]
+      rw [← Complex.exp_ofReal_mul_sin]
+      rw [← Complex.exp_ofReal_mul_sin]
+      -- We get $\sum_{k=0}^{n-1} \sin(kx) = \frac{\cos(x/2) - \cos((2n+1)x/2)}{2\sin(x/2)}$
+      field_simp
+      ring
+
+  -- Using this, we can compute $\sum_{k=1}^{35} \sin(5k)$.
+  -- $\sum_{k=1}^{35} \sin(5k) = \frac{\cos(5/2) - \cos(36 \cdot 5 / 2)}{2\sin(5/2)}$
+  -- $\sum_{k=1}^{35} \sin(5k) = \frac{\cos(5/2) - \cos(90)}{2\sin(5/2)}$
+  -- $\sum_{k=1}^{35} \sin(5k) = \frac{\cos(5/2)}{2\sin(5/2)}$
+  -- $\sum_{k=1}^{35} \sin(5k) = \frac{1}{2} \cdot \frac{\cos(5/2)}{\sin(5/2)}$
+  -- $\sum_{k=1}^{35} \sin(5k) = \frac{1}{2} \cot(5/2)$
+  have h'' (x : ℝ) (hx : x ≠ 0) (hx' : x ≠ 2 * Real.pi * (↑k : ℝ) for any k : ℤ) :
+      ∑ k : ℕ, Real.sin (5 * k * x) = (Real.cos (5 * x / 2) - Real.cos (90 * x / 180)) / (2 * Real.sin (5 * x / 2)) := by
+    have := h (35) (5 * x) (by linarith) (by
+      intro k hk
+      rw [show 5 * x = 2 * Real.pi * (5 * k / 180) by ring]
+      apply hx'
+      exact_mod_cast hk)
+    rw [this]
+    ring_nf
+    rw [show 90 * x / 180 = x / 2 by ring]
+    rw [show 35 * 5 * x = 175 * x by ring]
+    rw [show 2 * Real.pi * (35 * x / 180) = 35 * 2 * Real.pi * x / 180 by ring]
+    rw [show 35 * 2 * Real.pi * x / 180 = 70 * Real.pi * x / 36 by ring]
+    rw [show 70 * Real.pi * x / 36 = 35 * (2 * Real.pi * x / 180) by ring]
+    rw [this]
+    have : 2 * Real.pi * x / 180 = x / 2 := by ring
+    rw [this]
+
+  have h''' (x : ℝ) (hx : x ≠ 0) (hx' : x ≠ 2 * Real.pi * (↑k : ℝ) for any k : ℤ) :
+      ∑ k : ℕ, Real.sin (k * x) = (Real.cos (x / 2) - Real.cos ((2 * 35 + 1) * x / 2)) / (2 * Real.sin (x / 2)) := by
+    have := h (35) (x) (by linarith) (by
+      intro k hk
+      rw [show 35 * x = 2 * Real.pi * (35 * k / 180) by ring]
+      apply hx'
+      exact_mod_cast hk)
+    rw [this]
+    ring_nf
+
+  -- We want to show that $\sum_{k=1}^{35} \sin(5k) = \tan(m^\circ)$.
+  -- $\sum_{k=1}^{35} \sin(5k) = \frac{\cos(5/2) - \cos(90)}{2\sin(5/2)}$
+  -- $\sum_{k=1}^{35} \sin(5k) = \frac{\cos(5/2)}{2\sin(5/2)}$
+  -- $\sum_{k=1}^{35} \sin(5k) = \frac{1}{2} \cdot \frac{\cos(5/2)}{\sin(5/2)}$
+  -- $\sum_{k=1}^{35} \sin(5k) = \frac{1}{2} \cot(5/2)$
+  have h'''' (x : ℝ) (hx : x ≠ 0) (hx' : x ≠ 2 * Real.pi * (↑k : ℝ) for any k : ℤ) :
+      ∑ k : ℕ, Real.sin (k * x) = (Real.cos (5 * x / 2) - Real.cos (90 * x / 180)) / (2 * Real.sin (5 * x / 2)) := by
+    have := h'' (x) (hx) (hx')
+    rw [this]
+    ring_nf
+    rw [show 90 * x / 180 = x / 2 by ring]
+    rw [show 35 * 5 * x = 175 * x by ring]
+    rw [show 2 * Real.pi * (35 * x / 180) = 35 * 2 * Real.pi * x / 180 by ring]
+    rw [show 35 * 2 * Real.pi * x / 180 = 70 * Real.pi * x / 36 by ring]
+    rw [show 70 * Real.pi * x / 36 = 35 * (2 * Real.pi * x / 180) by ring]
+    rw [this]
+    have : 2 * Real.pi * x / 180 = x / 2 := by ring
+    rw [this]
+
+  -- Now, we need to show that $\frac{\cos(5/2) - \cos(90)}{2\sin(5/2)} = \tan(m^\circ)$.
+  -- $\cos(90) = 0$, so $\frac{\cos(5/2) - \cos(90)}{2\sin(5/2)} = \frac{\cos(5/2)}{2\sin(5/2)}$
+  -- $\frac{\cos(5/2)}{2\sin(5/2)} = \frac{1}{2} \cdot \frac{\cos(5/2)}{\sin(5/2)}$
+  -- $\frac{\cos(5/2)}{\sin(5/2)} = \cot(5/2)$
+  -- $\frac{1}{2} \cdot \cot(5/2) = \tan(m^\circ)$
+  have h''''' (x : ℝ) (hx : x ≠ 0) (hx' : x ≠ 2 * Real.pi * (↑k : ℝ) for any k : ℤ) :
+      ∑ k : ℕ, Real.sin (k * x) = (Real.cos (5 * x / 2) / (2 * Real.sin (5 * x / 2))) := by
+    have := h''' (x) (hx) (hx')
+    rw [this]
+    ring_nf
+    rw [show 90 * x / 180 = x / 2 by ring]
+    rw [show 35 * 5 * x = 175 * x by ring]
+    rw [show 2 * Real.pi * (35 * x / 180) = 35 * 2 * Real.pi * x / 180 by ring]
+    rw [show 35 * 2 * Real.pi * x / 180 = 70 * Real.pi * x / 36 by ring]
+    rw [show 70 * Real.pi * x / 36 = 35 * (2 * Real.pi * x / 180) by ring]
+    rw [this]
+    have : 2 * Real.pi * x / 180 = x / 2 := by ring
+    rw [this]
+
+  have h'''''' (x : ℝ) (hx : x ≠ 0) (hx' : x ≠ 2 * Real.pi * (↑k : ℝ) for any k : ℤ) :
+      ∑ k : ℕ, Real.sin (k * x) = (Real.cos (5 * x / 2) / (2 * Real.sin (5 * x / 2))) := by
+    have := h'''' (x) (hx) (hx')
+    rw [this]
+    ring_nf
+    rw [show 90 * x / 180 = x / 2 by ring]
+    rw [show 35 * 5 * x = 175 * x by ring]
+    rw [show 2 * Real.pi * (35 * x / 180) = 35 * 2 * Real.pi * x / 180 by ring]
+    rw [show 35 * 2 * Real.pi * x / 180 = 70 * Real.pi * x / 36 by ring]
+    rw [show 70 * Real.pi * x / 36 = 35 * (2 * Real.pi * x / 180) by ring

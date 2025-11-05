@@ -1,0 +1,47 @@
+/-
+  To determine the number of solutions to the equation \(\sin \left( \frac{\pi}{2} \cos x \right) = \cos \left( \frac{\pi}{2} \sin x \right)\) in the closed interval \([0, \pi]\), we need to find the values of \(x\) that satisfy this equation. We will show that there are exactly two such values.
+  -/
+  have h₁ : S = {0, Real.pi} := by
+    ext x
+    simp only [h₀, Finset.mem_insert, Finset.mem_singleton, and_true_iff, and_assoc, and_imp]
+    constructor
+    · intro h
+      -- We need to show that x is either 0 or π.
+      have h' : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h.2.2
+      -- Use the Pythagorean identity to derive the necessary conditions.
+      have h₀ : Real.sin (Real.pi / 2 * Real.cos x) ^ 2 + Real.cos (Real.pi / 2 * Real.sin x) ^ 2 = 1 := by
+        rw [← Real.sin_sq_add_cos_sq (Real.pi / 2 * Real.sin x)]
+      have h₁ : Real.cos (Real.pi / 2 * Real.sin x) ^ 2 + Real.sin (Real.pi / 2 * Real.cos x) ^ 2 = 1 := by
+        rw [← Real.sin_sq_add_cos_sq (Real.pi / 2 * Real.cos x)]
+      -- Simplify the expressions using the Pythagorean identity.
+      field_simp at h' h₀ h₁
+      -- Use the fact that sin(x) and cos(x) are bounded by -1 and 1.
+      have h₂ : Real.sin x ≤ 1 := by
+        exact Real.sin_le_one x
+      have h₃ : Real.cos x ≤ 1 := by
+        exact Real.cos_le_one x
+      have h₄ : -1 ≤ Real.sin x := by
+        exact Real.neg_one_le_sin x
+      have h₅ : -1 ≤ Real.cos x := by
+        exact Real.neg_one_le_cos x
+      -- Use the fact that sin(x) and cos(x) are bounded by -1 and 1 to conclude the possible values of x.
+      have h₆ : Real.sin x = 0 ∨ Real.sin x = 1 := by
+        apply or_iff_not_imp_left.mpr
+        intro h
+        apply mul_left_cancel₀ (sub_ne_zero_of_ne h)
+        nlinarith [Real.sin_le_one x, Real.neg_one_le_sin x]
+      have h₇ : Real.cos x = 0 ∨ Real.cos x = 1 := by
+        apply or_iff_not_imp_left.mpr
+        intro h
+        apply mul_left_cancel₀ (sub_ne_zero_of_ne h)
+        nlinarith [Real.cos_le_one x, Real.neg_one_le_cos x]
+      cases' h₆ with h₆ h₆ <;> cases' h₇ with h₇ h₇ <;> simp_all
+    · intro h
+      -- If x is either 0 or π, then it satisfies the equation.
+      cases' h with h h <;> simp_all
+      <;> linarith [Real.pi_pos]
+  -- Rewrite the set S as {0, π}.
+  rw [h₁]
+  -- The cardinality of {0, π} is 2.
+  simp
+```

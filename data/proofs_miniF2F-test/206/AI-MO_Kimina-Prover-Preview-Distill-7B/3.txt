@@ -1,0 +1,205 @@
+-- Boring lemma that I'm too smart to be arithmetically:
+  have square_eq (x : ℝ) : x ^ 2 = 1 / 4 ↔ x = 1 / 2 ∨ x = -1 / 2 := by
+    group
+    constructor
+   . intro hx
+      rw [← sub_eq_zero]
+      rw [show 1 / 4 - x ^ 2 = (1 / 2 - x) * (1 / 2 + x) by ring, mul_eq_zero] at hx
+      obtain hx | hx := hx
+     . left; linarith
+     . right; linarith
+   . intro hx
+      obtain hx | hx := hx
+      all_goals
+        rw [hx]; norm_num
+
+  -- Boring proof that $f(x) \in (1 / 2 - \epsilon, 1 / 2 + \epsilon)$ for $x \in (x_0, x_0 + a)$
+  have aux₀ (x₀ : ℝ) (ε : ℝ) (hε : 0 < ε) : ∃ x : ℝ, x₀ < x ∧ x < x₀ + a ∧ (1 / 2 - ε) < f x ∧ f x < (1 / 2 + ε) := by
+    by_cases h : ∃ x : ℝ, x₀ < x ∧ x < x₀ + a ∧ f x ≤ 1 / 2
+   . obtain ⟨x, ⟨h₁, h₂, h₃⟩⟩ := h
+      have h₄ : f x ∈ ((1 / 2 - ε) ≤ f x ∧ f x ≤ 1 / 2) ∨ f x ∈ (1 / 2 < f x ∧ f x ≤ 1 / 2 + ε) := by
+        have h : f x ≤ 1 / 2 := h₃
+        have square_eq : (2 * f x - 1) ^ 2 = 1 / 4 := by
+          calc
+            (2 * f x - 1) ^ 2 = (4 * (f x ^ 2 - f x + 1 / 4)) := by ring
+            _ = 4 * ((f x - 1 / 2) ^ 2) := by ring
+            _ = 1 := by
+              rw [show (4 : ℝ) = 2 ^ 2 by norm_num, pow_two]
+              rw [← @Real.sqrt_sq (2 * f x - 1) (0 : ℝ)]
+              rw [two_mul, sub_add, sub_add_sub_cancel, add_comm]
+              rw [sub_eq_iff_eq_add', h₁, add_comm]
+              rw [h]
+              norm_num
+        have := square_eq.mp (by linarith)
+        obtain this | this := this
+       . left; exact ⟨by linarith, h₃⟩
+       . right; exact ⟨h, ⟨by linarith, by linarith⟩⟩
+      obtain h | h := h₄
+     . obtain ⟨h₃, h₄⟩ := h
+        use x
+        exact ⟨h₁, h₂, h₃, h₄⟩
+     . obtain ⟨h₁, h₂⟩ := h
+        use x
+        exact ⟨h₁, h₂, by linarith, by linarith⟩
+   . push_neg at h
+      use (x₀ + a)
+      obtain ⟨h₁, h₂⟩ := h
+      constructor
+     . linarith
+     . constructor
+       . linarith
+       . calc
+            1 / 2 - ε < 1 / 2 + ε := by linarith
+            _ ≤ f (x₀ + a) := by rw [h₂]
+            _ ≤ f (x₀ + a) := by linarith
+
+  -- Boring proof that $f(x) \in (\epsilon, 1 - \epsilon)$ for $x \in (x_0, x_0 + a)$
+  have aux₁ (x₀ : ℝ) (ε : ℝ) (hε : 0 < ε) : ∃ x : ℝ, x₀ < x ∧ x < x₀ + a ∧ ε < f x ∧ f x < (1 - ε) := by
+    by_cases h : ∃ x : ℝ, x₀ < x ∧ x < x₀ + a ∧ f x ≤ 1 / 2
+   . obtain ⟨x, ⟨h₁, h₂, h₃⟩⟩ := h
+      have h₄ : f x ∈ ((1 - ε) < f x ∧ f x ≤ 1 / 2) ∨ f x ∈ (1 / 2 < f x ∧ f x < 1 - ε) := by
+        have h : f x ≤ 1 / 2 := h₃
+        have square_eq : (2 * f x - 1) ^ 2 = 1 / 4 := by
+          calc
+            (2 * f x - 1) ^ 2 = (4 * (f x ^ 2 - f x + 1 / 4)) := by ring
+            _ = 4 * ((f x - 1 / 2) ^ 2) := by ring
+            _ = 1 := by
+              rw [show (4 : ℝ) = 2 ^ 2 by norm_num, pow_two]
+              rw [← @Real.sqrt_sq (2 * f x - 1) (0 : ℝ)]
+              rw [two_mul, sub_add, sub_add_sub_cancel, add_comm]
+              rw [sub_eq_iff_eq_add', h₁, add_comm]
+              rw [h]
+              norm_num
+        have := square_eq.mp (by linarith)
+        obtain this | this := this
+       . left; exact ⟨by linarith, h₃⟩
+       . right; exact ⟨h, ⟨by linarith, by linarith⟩⟩
+      obtain h | h := h₄
+     . obtain ⟨h₂, h₃⟩ := h
+        use x
+        exact ⟨h₁, h₂, by linarith, by linarith⟩
+     . obtain ⟨h₁, h₂⟩ := h
+        use x
+        exact ⟨h₁, h₂, by linarith, by linarith⟩
+   . push_neg at h
+      use (x₀ + a)
+      obtain ⟨h₁, h₂⟩ := h
+      constructor
+     . linarith
+     . constructor
+       . linarith
+       . calc
+            ε < 1 - ε := by linarith
+            _ < f (x₀ + a) := by rw [h₂]
+            _ ≤ f (x₀ + a) := by linarith
+
+  -- Boring proof that $f(x) \in (1 / 2 - \epsilon, 1 / 2 + \epsilon)$ for $x \in (x_0, x_0 + a)$ for countable many $\epsilon$
+  have aux₂ (x₀ : ℝ) : ∀ ε : ℕ → ℝ, (0 < ε) → (∀ n : ℕ, ∃ x : ℝ, x₀ < x ∧ x < x₀ + a ∧ (1 / 2 - ε n) < f x ∧ f x < (1 / 2 + ε n)) := by
+    intro ε hε n
+    obtain ⟨x, ⟨h₁, h₂, h₃, h₄⟩⟩ := aux₀ x₀ (ε n) (hε n)
+    use x
+    exact ⟨h₁, h₂, h₃, h₄⟩
+
+  -- Boring proof that $f(x) \in (\epsilon, 1 - \epsilon)$ for $x \in (x_0, x_0 + a)$ for countable many $\epsilon$
+  have aux₃ (x₀ : ℝ) : ∀ ε : ℕ → ℝ, (0 < ε) → (∀ n : ℕ, ∃ x : ℝ, x₀ < x ∧ x < x₀ + a ∧ ε n < f x ∧ f x < (1 - ε n)) := by
+    intro ε hε n
+    obtain ⟨x, ⟨h₁, h₂, h₃, h₄⟩⟩ := aux₁ x₀ (ε n) (hε n)
+    use x
+    exact ⟨h₁, h₂, h₃, h₄⟩
+
+  -- Boring lemma that $f(x) \in (1 / 2 - \epsilon, 1 / 2 + \epsilon)$ for $x \in (x_0, x_0 + a)$ for countable many $\epsilon$ implies $f(x) \in (1 / 2 - \epsilon', (1 / 2 + \epsilon')$ for $x \in (x_0, x_0 + a - \delta)$
+  have aux₄ (x₀ : ℝ) (δ : ℝ) (hδ : 0 < δ) (h : ∀ n : ℕ, ∃ x : ℝ, x₀ < x ∧ x < x₀ + a - δ ∧ (1 / 2 - (1 / n) ^ (-1 : ℝ)) < f x ∧ f x < (1 / 2 + (1 / n) ^ (-1 : ℝ))) : ∀ ε : ℝ, (0 < ε) → ∃ x : ℝ, x₀ < x ∧ x < x₀ + a - δ - ε ∧ ε < f x ∧ f x < (1 / 2 + ε) := by
+    intro ε hε
+    obtain ⟨x, ⟨h₁, h₂, h₃, h₄⟩⟩ := h ⌊(Real.logb (1 / 2) ε)⁻¹⌋
+    have hε' : (1 / 2) ^ (1 / (⌊(Real.logb (1 / 2) ε)⁻¹⌋ : ℝ)) ≤ ε := by
+      calc
+        (1 / 2) ^ (1 / (⌊(Real.logb (1 / 2) ε)⁻¹⌋ : ℝ)) ≤ (1 / 2) ^ (Real.logb (1 / 2) ε) := by
+          rw [← Real.rpow_le_rpow_of_exponent_le]
+         . exact Real.rpow_pos_of_pos (by norm_num) (1 / (⌊(Real.logb (1 / 2) ε)⁻¹⌋))
+         . simp only [inv_inv, Real.logb_inv, Real.logb_rpow]
+            simp only [Int.cast_nonneg]
+            rw [Real.logb_eq_iff_rpow_eq]
+            ofReal_nonneg
+           . exact Real.logb_nonpos_of_nonpos (by norm_num) (by norm_num)
+           . exact Real.logb_nonneg_of_nonneg_of_nonneg (by norm_num) hε
+           . norm_num
+           . exact Real.logb_nonneg_of_nonneg_of_nonneg (by norm_num) (by norm_num)
+        _ ≤ ε := by
+          rw [Real.rpow_logb]
+          field_simp
+          norm_num
+          norm_num
+          exact Int.floor_le ((Real.logb (1 / 2) ε)⁻¹)
+    obtain ⟨x', ⟨h₃, h₄, h₅, h₆⟩⟩ := h₃
+    use x'
+    obtain ⟨ square_eq, h₇, h₈ ⟩ := (square_eq (f x')).mp h₄
+    exact ⟨h₁, h₂, h₃, h₂ + (Real.sqrt (f x') ^ 2 - 1 / 2) - (Real.sqrt (f x') ^ 2 - 1 / 2)⟩
+
+  -- Boring lemma that $f(x) \in (\epsilon, 1 - \epsilon)$ for $x \in (x_0, x_0 + a)$ for countable many $\epsilon$ implies $f(x) \in (1 / 2 - \epsilon', (1 / 2 + \epsilon')$ for $x \in (x_0, x_0 + a - \delta)$
+  have aux₅ (x₀ : ℝ) (δ : ℝ) (hδ : 0 < δ) (h : ∀ n : ℕ, ∃ x : ℝ, x₀ < x ∧ x < x₀ + a - δ ∧ (1 / 2 - (1 / n) ^ (-1 : ℝ)) < f x ∧ f x < (1 / 2 + (1 / n) ^ (-1 : ℝ))) : ∀ ε : ℝ, (0 < ε) → ∃ x : ℝ, x₀ < x ∧ x < x₀ + a - δ - ε ∧ (1 / 2 - ε) < f x ∧ f x < (1 / 2 + ε) := by
+    intro ε hε
+    obtain ⟨x, ⟨h₁, h₂, h₃, h₄⟩⟩ := h ⌊(Real.logb (1 / 2) ε)⁻¹⌋
+    have hε' : (1 / 2) ^ (1 / (⌊(Real.logb (1 / 2) ε)⁻¹⌋ : ℝ)) ≤ ε := by
+      calc
+        (1 / 2) ^ (1 / (⌊(Real.logb (1 / 2) ε)⁻¹⌋ : ℝ)) ≤ (1 / 2) ^ (Real.logb (1 / 2) ε) := by
+          rw [← Real.rpow_le_rpow_of_exponent_le]
+         . exact Real.rpow_pos_of_pos (by norm_num) (1 / (⌊(Real.logb (1 / 2) ε)⁻¹⌋ : ℝ))
+         . simp only [inv_inv, Real.logb_inv, Real.logb_rpow]
+            simp only [Int.cast_nonneg]
+            rw [Real.logb_eq_iff_rpow_eq]
+            ofReal_nonneg
+           . exact Real.logb_nonpos_of_nonpos (by norm_num) (by norm_num)
+           . exact Real.logb_nonneg_of_nonneg_of_nonneg (by norm_num) hε
+           . norm_num
+           . exact Real.logb_nonneg_of_nonneg_of_nonneg (by norm_num) (by norm_num)
+        _ ≤ ε := by
+          rw [Real.rpow_logb]
+          field_simp
+          norm_num
+          norm_num
+          exact Int.floor_le ((Real.logb (1 / 2) ε)⁻¹)
+    obtain ⟨x', ⟨h₃, h₄, h₅, h₆⟩⟩ := h₃
+    use x'
+    simp only [gt_iff_lt, sub_lt_sub_iff_right] at h₂ h₃
+    obtain ⟨ square_eq, h₇, h₈ ⟩ := (square_eq (f x')).mp h₄
+    linarith
+
+  -- Obtain a sequence of subsets $F_n = \{x \in \mathbb{R} \mid f(x + na) \in (1 / 2 - 1 / n, 1 / 2 + 1 / n)\}$
+  let F (n : ℕ) := {x ∈ Ici 0 : f (x + n * a) ∈ Set.Ioo (1 / 2 - 1 / (n + 1 : ℝ)) (1 / 2 + 1 / (n + 1 : ℝ))}
+  have hF₀ (n : ℕ) : ∀ x ∈ F n, x ∈ Ici 0 := by
+    intro x hx
+    simp only [Set.mem_setOf_eq] at hx
+    exact hx.1
+  have hF₁ (n : ℕ) : ∀ x ∈ F n, f (x + n * a) ∈ Set.Ioo (1 / 2 - 1 / (n + 1 : ℝ)) (1 / 2 + 1 / (n + 1 : ℝ)) := by
+    intro x hx
+    simp only [Set.mem_setOf_eq] at hx
+    exact hx.2
+  have hF₂ (n : ℕ) : F n ⊆ Ici 0 := by
+    intro x hx
+    exact hF₀ n x hx
+  have hF₃ (n : ℕ) : ∀ x ∈ F n, f (x + n * a) ∈ Set.Ioo (1 / 2 - 1 / (n + 1 : ℝ)) (1 / 2 + 1 / (n + 1 : ℝ)) := by
+    exact fun x hx => hF₁ n x hx
+  have hF₄ (n : ℕ) : F n ⊆ Ici 0 ∧ ∀ x ∈ Ici 0, f (x + n * a) ∈ Set.Ioo (1 / 2 - 1 / (n + 1 : ℝ)) (1 / 2 + 1 / (n + 1 : ℝ)) → x ∈ F n := by
+    intro x hx
+    constructor
+   . exact hF₀ n x
+   . intro hfx
+      have hfx := hF₁ n x hfx
+      simp only [Set.mem_Ioi] at hx
+      simp only [Set.mem_setOf_eq]
+      exact ⟨hx, hfx⟩
+  have hF₅ (x : ℝ) : x ∈ F 0 ↔ x = 0 := by
+    simp only [Set.mem_setOf_eq, Set.mem_Ioi, not_false_eq_true, zero_add, hF₁]
+    intro hfx
+    obtain ⟨h₁, h₂⟩ := hfx
+    linarith
+  -- Prove that $F_n$ is a nested sequence of sets
+  have hF₆ (n : ℕ) : ∀ x ∈ F (n + 1), x ∈ F n := by
+    intro x hx
+    obtain ⟨h₁, h₂⟩ := hF₁ (n + 1) x hx
+    have h₁ : x ∈ Ici 0 := h₁
+    have h₃ : (1 : ℝ) / (n + 1 + 1) ≤ 1 / (n + 1) := by
+      rw [show (1 : ℝ) / (n + 1 + 1) = (1 / (n + 1)) * (1 / (1 + 1 / (n + 1))) by ring]
+      refine (mul_le_mul_iff_of_pos_left (by norm_num)).mpr (by norm_num)
+    have h₄ : f (x + (n + 1) * a) ∈ Set.Ioo (1 / 2 - 1 / (n + 1 : ℝ)) (1 / 2 + 1 / (n + 1 : ℝ)) := h₂
+    have h₅ : x

@@ -1,0 +1,241 @@
+-- Let $S$ be the set of positive integers $n$ satisfying $\frac{n+1000}{70} = \lfloor \sqrt{n} \rfloor$.
+  apply_fun (· S.card) at h₀
+  simp only [Finset.card_eq_zero, Nat.cast_eq_zero, false_implies, S.card_eq_zero] at h₀
+  absurd h₀
+  replace h₀ : S.Nonempty := by
+    -- Show that $S$ is nonempty.
+    rw [Finset.Nonempty_iff_ne_empty] at *
+    simp_rw [Finset.mem_coe] at *
+    -- There are at least one such positive integer.
+    suffices ((420 : ℕ): ℕ) ∈ S by
+      rwa [Finset.mem_coe] at this
+    apply h₀
+    norm_num
+  -- Let $k = \lfloor \sqrt{n} \rfloor$ and $m = n - k^2$.
+  generalize n = n at h₀
+  generalize (s := √n) k : ℕ at h₀
+  have hk : k = √n - m := by
+    simp [k, m]
+  have hm : m < 2 * k + 1 := by
+    simp [m, k, hk, Real.floor_eq_iff]
+    rw [← Nat.cast_add_one]
+    apply Nat.lt_add_one_of_le
+    rw [Real.le_sqrt] <;> (simp; norm_cast)
+    <;> linarith
+  -- We have $n = k^2 + m$.
+  have hnm : n = k^2 + m := by
+    simp [m]
+    rw [← hk, Nat.floor_eq_iff]
+    simp
+    rw [Real.sq_sqrt] <;> (simp; norm_cast)
+    <;> linarith
+  -- We have $0 < m$.
+  have hm_pos : 0 < m := by
+    -- Assume $m = 0$.
+    by_contra! hm_nonpos
+    simp at hm_nonpos
+    -- Then $k = \lfloor \sqrt{n} \rfloor = \sqrt{n}$, so $n$ is a perfect square.
+    simp [hm_nonpos] at hk
+    rw [← Nat.cast_add_one] at h₀
+    nth_rw 1 [hnm, hk] at h₀
+    rw [Nat.cast_pow, Nat.cast_add_one, ← Real.sqrt_sq (by linarith), Real.sqrt_eq_floor] at h₀
+    -- However, $n = k^2 + m = k^2$ implies that $m = 0$, which is not possible.
+    simp [hm_nonpos] at h₀
+  -- We have $m < k + 1$.
+  have hm_lt : m < k + 1 := by
+    -- Assume $k = 0$.
+    by_contra! hm_k
+    simp at hm_k
+    -- Then $n = k^2 + m = m$, so $n$ is not a perfect square.
+    simp [hm_k] at hnm
+    rw [hnm, ← Nat.cast_add_one, Nat.cast_zero, Real.sqrt_eq_floor] at hk
+    nth_rw 1 [hnm, hk] at h₀
+    rw [Nat.cast_pow, Nat.cast_add_one, ← Real.sqrt_sq (by linarith), Real.sqrt_eq_floor] at h₀
+    -- However, $n = m$ implies that $m$ is a perfect square, which is not possible.
+    have : ¬ IsSquare m := by
+      rw [notIsSquare]
+      use n
+      simp [h₀]
+    tauto
+  -- We have $m < 2k$.
+  have hm_lt' : m < 2 * k := by
+    linarith
+  -- We have $k < 35$.
+  have hk_lt : k < 35 := by
+    -- Assume $m = 2k$.
+    by_contra! hk_ge
+    push_neg at hk_ge
+    -- Then $n = k^2 + m = k^2 + 2k + r$ where $0 < r ≤ k$.
+    replace hm : 2 * k ≤ m := by linarith
+    have hk_lt : k < 35 := by
+      -- We have $k^2 < n = k^2 + m ≤ k^2 + 2k + k = k^2 + 3k$.
+      suffices k ^ 2 < k ^ 2 + 3 * k by linarith
+      rw [Nat.pow_lt_pow_iff_left (by linarith)]
+      -- We have $3 ≤ k$.
+      suffices 3 * k < k ^ 2 + 3 * k by linarith
+      rw [Nat.pow_lt_pow_iff_left (by linarith)]
+      omega
+    -- However, $k ≥ 35$ implies that $30 < \lfloor \sqrt{n} \rfloor$, which is not possible.
+    simp [h₀, hnm, hm, ← hk, ← Nat.cast_add_one, Nat.cast_mul, Nat.cast_ofNat] at hk_lt
+    by_cases h : 35 ≤ k
+    · nth_rw 1 [← Nat.cast_one] at h
+      rw [Nat.cast_le_cast_iff] at h
+      simp at h
+      linarith
+    · push_neg at h
+      interval_cases k <;> linarith
+  -- We have $10 ≤ k$.
+  have hk_le : 10 ≤ k := by
+    -- Assume $k < 10$.
+    by_contra! hk_lt
+    -- Then $n = k^2 + m ≤ k^2 + 2k < k^2 + 3k < 35^2 + 3*35 = 1444$.
+    replace hm : m < 2 * k := by linarith
+    simp [h₀, hnm, hm, ← hk] at hk_le
+    rw [Nat.le_sqrt] at hk_le
+    norm_num at hk_le
+    -- We have $35 < \lfloor \sqrt{n} \rfloor$, which is not possible.
+    suffices 35 < (n:ℝ) by
+      linarith
+    norm_cast
+    linarith
+  -- We have $10 ≤ k < 35$.
+  set w := 35 - k with hw
+  -- We have $1 ≤ w$.
+  have hw_pos : 1 ≤ w := by
+    omega
+  -- We have $w ≤ 34$.
+  have hw_lt : w ≤ 34 := by
+    omega
+  -- We have $m = 35 - w$.
+  have hm_eq : m = 35 - w := by
+    simp [hw]
+    rw [Nat.sub_sub_self (by linarith)]
+  -- We have $1 ≤ m$.
+  have hm_ge : 1 ≤ m := by
+    omega
+  -- We have $m < 2k = 70 - 2w$.
+  have hm_lt : m < 70 - 2 * w := by
+    simp [hm_eq]
+    omega
+  -- Let $f(w)$ be the number of positive integers $n$ for a fixed $w$.
+  let f (w: ℕ) := ((35 - w) + 1000) / 70 - (35 - w)
+  -- Let $W$ be the set of positive integers $w$ satisfying $1 ≤ w ≤ 34$.
+  let W := Finset.Icc 1 34
+  -- We have $S = \bigcup_{w=1}^{34} \{ (35 - w)^2 + m | m = 1, 2, \dots, 70 - 2w - 1 \}$.
+  have hS_union : S = Finset.biUnion W fun n ↦ ((35 - n)^2 + (1 + (f n): ℤ))..((35 - n)^2 + (f n): ℤ) := by
+    -- Verify that $w = 35 - k$ is indeed a valid solution.
+    ext n
+    simp [S, Finset.mem_biUnion, Finset.mem_Icc, and_assoc]
+    constructor
+    · intro ⟨hn, h₀, h₁⟩
+      -- For any valid $n$, we have $10 ≤ k = 35 - w < 35$.
+      have : 10 ≤ 35 - w := by
+        simp [hw]
+        linarith
+      have : 35 - w < 35 := by
+        simp [hw]
+        omega
+      -- We have $1 ≤ m = 35 - w$.
+      have hm_ge : 1 ≤ 35 - w := by
+        omega
+      -- We have $m < 2k = 70 - 2w$.
+      have hm_lt : 35 - w < 70 - 2 * w := by
+        omega
+      -- We have $n = k^2 + m = (35 - w)^2 + (35 - w)$.
+      rw [hnm, h₀, hm_eq]
+      -- We have $1 ≤ n = (35 - w)^2 + (35 - w) < (35 - w)^2 + 70 - 2w - 1$.
+      omega
+    · rintro ⟨w, ⟨hw_ge, hw_lt⟩, hw_eq⟩
+      -- For any $w ∈ W$, we have $1 ≤ w ≤ 34$.
+      -- We have $10 ≤ 35 - w < 35$.
+      have h₁ : 10 ≤ 35 - w := by
+        omega
+      have h₂ : 35 - w < 35 := by
+        omega
+      -- We have $1 ≤ 35 - w$.
+      have h₃ : 1 ≤ 35 - w := by
+        omega
+      -- We have $35 - w < 70 - 2w$.
+      have h₄ : 35 - w < 70 - 2 * w := by
+        omega
+      -- We have $n = (35 - w)^2 + m$ where $1 ≤ m ≤ 70 - 2w - 1$.
+      have h₅ : (35 - w) ^ 2 + (1 + (f w): ℤ) ≤ n := by
+        simp [f, h₃, hw_eq, hn, h₁, h₅]
+      have h₆ : n ≤ (35 - w) ^ 2 + (f w): ℤ) := by
+        simp [f, h₃, hw_eq, hn, h₁, h₅]
+      -- We have $10 ≤ \lfloor \sqrt{n} \rfloor = 35 - w < 35$.
+      have h₇ : 10 ≤ (n: ℝ) := by
+        norm_cast
+        calc
+          10 = (10: ℤ) := by simp
+          _ ≤ (35 - w) ^ 2 + (1 + (f w): ℤ) := by linarith
+          _ ≤ _ := by norm_cast
+      have h₈ : (n: ℝ) < 35 ^ 2 := by
+        norm_cast
+        calc
+          (n: ℤ) < (35 - w) ^ 2 + (f w): ℤ := by linarith
+          _ ≤ (35 - w) ^ 2 + (70 - 2 * w - 1): ℤ := by linarith
+          _ < _ := by norm_cast
+      rw [← Nat.sqrt_lt_sqrt (by norm_num) (by norm_cast), Real.sqrt_eq_floor] at h₇
+      -- We have $35 - w = \lfloor \sqrt{n} \rfloor$, so $n = (35 - w)^2 + m$ for some $1 ≤ m ≤ 70 - 2w - 1$.
+      refine ⟨?_,?_⟩
+      · refine h₀ (n := (35 - w) ^ 2 + (1 + (f w): ℤ))?_
+        simp only [h₀]
+        norm_cast
+        rw [Int.cast_add_one, Int.cast_pow, Int.cast_add_zero, Int.cast_add_one, Int.cast_pow, Int.cast_ofNat, Int.cast_one]
+      · refine h₁ (n := (35 - w) ^ 2 + (f w): ℤ)?_
+        simp only [h₁]
+        norm_cast
+        rw [Int.cast_add_zero, Int.cast_pow, Int.cast_add_one, Int.cast_pow, Int.cast_ofNat, Int.cast_one]
+  -- We have $S = \bigcup_{w=1}^{34} \{ (35 - w)^2 + m | m = 1, 2, \dots, 70 - 2w - 1 \}$.
+  have hS_finset : S = ((Finset.Icc 1 34).biUnion fun n ↦ ((35 - n)^2 + (1 + (f n): ℤ))..((35 - n)^2 + (f n): ℤ)) := by
+    rw [hS_union]
+    congr
+    · rfl
+    · ext n
+      simp
+      intro hn
+      linarith
+  -- We have $f(w)$ is non-zero.
+  have hf_lt_zero : ∀ w ∈ W, 0 < f w := by
+    intro w hw
+    simp at hw
+    simp [f, hw, hw_ge, hw_lt]
+    omega
+  -- We have $f(w)$ is less than 35.
+  have hf_lt_35 : ∀ w ∈ W, f w < 35 := by
+    intro w hw
+    simp at hw
+    simp [f, hw, hw_ge, hw_lt]
+    omega
+  -- We have $S = \bigcup_{w=1}^{34} \{ (35 - w)^2 + m | m = 1, 2, \dots, 70 - 2w - 1 \}$.
+  have hS_disj : S = ((Finset.Icc 1 34).biUnion fun n ↦ ((35 - n)^2 + (1 + (f n): ℤ))..((35 - n)^2 + (f n): ℤ)) := by
+    exact hS_finset
+  rw [hS_disj] at h₀
+  -- Show that $f(w)$ is constant.
+  have hf_const : Function.Injective f := by
+    intro a ha b hb h
+    -- For any $w ∈ W$, the value of $f(w)$ is less than 35.
+    have hf_lt_35 := hf_lt_35 b hb
+    -- For any $w ∈ W$, the value of $f(w)$ is non-zero.
+    have hf_lt_zero := hf_lt_zero b hb
+    -- We have $f(a) = f(b)$.
+    simp [f, ha, hb] at h
+    -- We have $35 - a = 35 - b$.
+    replace h : 35 - a = 35 - b := by
+      linarith
+    -- We have $a = b$.
+    omega
+  -- We have $f(w)$ is non-constant.
+  have hf_not_const : ¬Function.Injective f := by
+    -- Let $a = 15$ and $b = 16$.
+    push_neg
+    use 15, 16
+    -- We have $f(15) = 10$ and $f(16) = 9$.
+    refine ⟨?_,?_⟩
+    · rw [hf_const 15 (by norm_num) 16 (by norm_num) (by norm_num)]
+      norm_num
+    · rw [hf_const 15 (by norm_num) 16 (by norm_num) (by norm_num)]
+      norm_num
+  contradiction
+```

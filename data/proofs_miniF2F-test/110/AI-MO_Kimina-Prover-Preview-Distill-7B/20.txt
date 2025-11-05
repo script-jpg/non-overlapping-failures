@@ -1,0 +1,66 @@
+have t0 : 0 < Real.sqrt a := by
+    apply Real.sqrt_pos_of_pos
+    exact h₀.left
+
+  have t1 : 0 < Real.sqrt b := by
+    apply Real.sqrt_pos_of_pos
+    exact h₀.right
+
+  have t2 : 0 < Real.sqrt (a * b) := by
+    rw [Real.sqrt_mul (le_of_lt h₀.left)]
+    apply Real.sqrt_pos_of_pos
+    exact h₀.right
+
+  -- The arithmetic mean of $a$ and $b$ is greater than or equal to their geometric mean.
+  have tge : (a + b) / 2 - Real.sqrt (a * b) ≥ 0 := by
+    rw [sub_nonneg, add_div]
+    apply le_of_eq
+    rw [div_self]
+    ring_nf
+    rw [Real.sq_sqrt (by positivity)]
+    nlinarith only [h₁, h₀.left, h₀.right]
+
+  -- Let $t = \sqrt{a} - \sqrt{b}$.
+  let t := Real.sqrt a - Real.sqrt b
+
+  -- Then $t \geq 0$.
+  have ht : 0 < t := by
+    apply sub_pos.mpr
+    exact Real.sqrt_le_sqrt h₁
+
+  -- $t^2 = (\sqrt{a} - \sqrt{b})^2 = a + b - 2\sqrt{ab}$.
+  have tsq : t^2 = a + b - 2 * Real.sqrt (a * b) := by
+    calc
+      _ = (Real.sqrt a - Real.sqrt b)^2 := by rfl
+      _ = (Real.sqrt a)^2 + (Real.sqrt b)^2 - 2 * (Real.sqrt a * Real.sqrt b) := by ring
+      _ = a + b - 2 * (Real.sqrt a * Real.sqrt b) := by rw [Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)]
+      _ = a + b - 2 * Real.sqrt (a * b) := by rw [Real.sqrt_mul (le_of_lt h₀.left)]
+
+  -- Thus $(a + b) / 2 - \sqrt{ab} = \frac{t^2}{2} \leq \frac{t^2}{8b} + \frac{t^2}{8b} \leq \frac{t^2}{8b} + \frac{t^2}{2}\frac{1}{4b} \leq \frac{t^2}{8b} + \frac{t^2}{8b} \leq \frac{t^2}{8b} + \frac{t^2}{8b}$.
+  calc
+    _ = t^2 / 2 := by
+      rw [tsq]
+      ring_nf
+      rw [Real.sq_sqrt (by positivity)]
+      ring
+    _ ≤ t^2 / (8 * b) + t^2 / 2 := by
+      have : 0 ≤ t^2 / (8 * b) + t^2 / 2 := by
+        apply add_nonneg
+        · rw [div_nonneg_iff]
+          apply mul_nonneg
+          norm_num
+          apply mul_nonneg
+          exact h₀.right
+          norm_num
+        · apply mul_nonneg
+          exact sq_nonneg t
+          norm_num
+      apply le_of_mul_le_mul_left this
+      rw [sq_pos_iff]
+      exact ht
+    _ = t^2 / (8 * b) + (a + b - 2 * Real.sqrt (a * b)) / 2 := by
+      rw [tsq]
+    _ = t^2 / (8 * b) + (a + b) / 2 - Real.sqrt (a * b) := by
+      ring
+
+```

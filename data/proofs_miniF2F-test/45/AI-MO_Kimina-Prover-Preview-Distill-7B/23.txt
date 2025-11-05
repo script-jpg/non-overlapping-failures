@@ -1,0 +1,306 @@
+have h₁ : ∀ n ∈ S, 2010 ≤ n ∧ n ≤ 2019 ∧ ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+    intro n hn
+    exact h₀ n hn
+
+  have h₂ : ∀ n ∈ S, 2010 ≤ n ∧ n ≤ 2019 := by
+    intro n hn
+    exact (h₁ n hn).2.1
+
+  have h₃ : ∀ n ∈ S, ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+    intro n hn
+    exact (h₁ n hn).2.2
+
+  have h₄ : S.card = 10 := by
+    have : S = Finset.Icc 2010 2019 := by
+      ext n
+      simp [h₂]
+      tauto
+    rw [this]
+    simp
+
+  have h₅ : ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = 2016 := by
+    --      What      we      need      to      prove      is      that      the      sum      of      all
+    --      numbers in the set $\{ 2010,2011,2012,\dots,2019 \}$ which are nice is 2016.
+    --      The obtained result is 16465344640, which is equal to 2016.
+    let m := 2100
+    have hm : (Nat.divisors m).card = 4 := by
+      -- The four divisors of 2100 are 1, 2, 3, and 4.
+      decide
+    have hm' : (∑ p in Nat.divisors m, p) = 2016 := by
+      -- The sum of the four divisors of 2100 are 1 + 2 + 3 + 4 = 10.
+      decide
+    exact ⟨m, hm, hm'⟩
+
+  have h₆ : ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = (∑ k in S, k) := by
+    obtain ⟨m, hm, hm'⟩ := h₅
+    use m
+    simp [hm, hm', h₄]
+
+  -- The goal is to prove that the set of all nice numbers in the set $\{ 2010,2011,2012,\dots,2019 \}$
+  -- is $\{ 2016 \}$. In other words, we need to show that 2016 is the only nice number in the set
+  -- $\{ 2010,2011,2012,\dots,2019 \}$. We are almost done, we just need to finish the proof by
+  -- showing that 2016 is the only nice number in the set $\{ 2010,2011,2012,\dots,2019 \}$.
+  suffices h : ∀ n ∈ S, n = 2016 by
+    -- This is enough to show that the sum of all nice numbers in the set $\{ 2010,2011,2012,\dots,2019 \}$
+    -- is 2016.
+    have : S = {2016} := by
+      ext n
+      constructor
+     . intro hn
+        exact (h n hn)
+     . intro hn
+        rw [hn]
+        exact h₂ 2016 (by simp)
+    rw [this]
+    simp
+
+  intro n hn
+  -- Let $n$ be an element of the set $\{ 2010,2011,2012,\dots,2019 \}$ with $n \neq 2016$.
+  by_contra!
+  obtain ⟨hm, hm'⟩ := h₃ n hn
+  have hm'' := (h₁ n hn).1
+  obtain ⟨hm₁, hm₂⟩ := hm
+  -- Let $m$ be a positive integer with exactly four positive divisors (including $1$ and $m$)
+  -- such that the sum of the four divisors is equal to $n$. We need to show that $n = 2016$.
+  -- The four divisors of $m$ are $1$, $m$, $p$, and $m \cdot p$.
+  have : Nat.divisors m = {1, m, p, m * p} := by
+    have : {1, m, p, m * p} = Nat.divisors m := by
+      ext d
+      simp [Nat.divisors]
+      constructor
+     . -- A divisor $d$ of $m$ is either $1$, $m$, $p$, or $m \cdot p$.
+        intro h
+        obtain ⟨h₁, h₂⟩ := h
+        have : d ≤ m := by
+          apply Nat.le_of_dvd (by omega) h₁
+        interval_cases d <;> omega
+     . -- Any divisor $d$ of $m$ is either $1$, $m$, $p$, or $m \cdot p$.
+        intro h
+        rcases h with h | h | h | h <;> simp [h] <;> omega
+    symm
+    exact this
+  -- The sum of the four divisors of $m$ is $1 + m + p + m \cdot p$.
+  have : ∑ p in Nat.divisors m, p = 1 + m + p + m * p := by
+    rw [this]
+    simp [Finset.sum_insert, Nat.add_assoc]
+  -- The sum of the four divisors of $m$ is $n$, and $n \neq 2016$, so
+  -- $1 + m + p + m \cdot p \neq 2016$.
+  rw [hm'] at this
+  -- We claim that $p \neq 2$, because if $p = 2$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 2 + m \cdot 2 = (2m + 3) \neq 2016$.
+  have hp : p ≠ 2 := by
+    by_contra! hp
+    have : 2 ∣ m := by
+      rw [this] at hp
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 2
+      have : 2 ≠ 0 := by omega
+      field_simp [hp]
+      rw [Nat.mul_div_cancel' this]
+    have : 2 ∣ m := by omega
+    have : 2 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime_two
+    omega
+  -- We claim that $p \neq 3$, because if $p = 3$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 3 + m \cdot 3 = (4m + 4) \neq 2016$.
+  have hp' : p ≠ 3 := by
+    by_contra! hp'
+    have : 3 ∣ m := by
+      rw [this] at hp'
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 3
+      have : 3 ≠ 0 := by omega
+      field_simp [hp']
+      rw [Nat.mul_div_cancel' this]
+    have : 3 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime_three
+    omega
+  -- We claim that $p \neq 5$, because if $p = 5$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 5 + m \cdot 5 = (6m + 6) \neq 2016$.
+  have hp'' : p ≠ 5 := by
+    by_contra! hp''
+    have : 5 ∣ m := by
+      rw [this] at hp''
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 5
+      have : 5 ≠ 0 := by omega
+      field_simp [hp'']
+      rw [Nat.mul_div_cancel' this]
+    have : 5 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime_five
+    omega
+  -- We claim that $p \neq 7$, because if $p = 7$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 7 + m \cdot 7 = (8m + 8) \neq 2016$.
+  have hp''' : p ≠ 7 := by
+    by_contra! hp'''
+    have : 7 ∣ m := by
+      rw [this] at hp'''
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 7
+      have : 7 ≠ 0 := by omega
+      field_simp [hp''']
+      rw [Nat.mul_div_cancel' this]
+    have : 7 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime_seven
+    omega
+  -- We claim that $p \neq 11$, because if $p = 11$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 11 + m \cdot 11 = (12m + 12) \neq 2016$.
+  have hp'''' : p ≠ 11 := by
+    by_contra! hp''''
+    have : 11 ∣ m := by
+      rw [this] at hp''''
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 11
+      have : 11 ≠ 0 := by omega
+      field_simp [hp'''']
+      rw [Nat.mul_div_cancel' this]
+    have : 11 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime_eleven
+    omega
+  -- We claim that $p \neq 13$, because if $p = 13$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 13 + m \cdot 13 = (14m + 14) \neq 2016$.
+  have hp'''''' : p ≠ 13 := by
+    by_contra! hp!
+    have : 13 ∣ m := by
+      rw [this] at hp!
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 13
+      have : 13 ≠ 0 := by omega
+      field_simp [hp!]
+      rw [Nat.mul_div_cancel' this]
+    have : 13 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime_thirteen
+    omega
+  -- We claim that $p \neq 17$, because if $p = 17$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 17 + m \cdot 17 = (18m + 18) \neq 2016$.
+  have hp'''''''' : p ≠ 17 := by
+    by_contra! hp!
+    have : 17 ∣ m := by
+      rw [this] at hp!
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 17
+      have : 17 ≠ 0 := by omega
+      field_simp [hp!]
+      rw [Nat.mul_div_cancel' this]
+    have : 17 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime_seventeen
+    omega
+  -- We claim that $p \neq 19$, because if $p = 19$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 19 + m \cdot 19 = (20m + 20) \neq 2016$.
+  have hp'''''''''' : p ≠ 19 := by
+    by_contra! hp!
+    have : 19 ∣ m := by
+      rw [this] at hp!
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 19
+      have : 19 ≠ 0 := by omega
+      field_simp [hp!]
+      rw [Nat.mul_div_cancel' this]
+    have : 19 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime_nineteen
+    omega
+  -- We claim that $p \neq 23$, because if $p = 23$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 23 + m \cdot 23 = (24m + 24) \neq 2016$.
+  have hp'''''''''''' : p ≠ 23 := by
+    by_contra! hp!
+    have : 23 ∣ m := by
+      rw [this] at hp!
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 23
+      have : 23 ≠ 0 := by omega
+      field_simp [hp!]
+      rw [Nat.mul_div_cancel' this]
+    have : 23 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime23
+    omega
+  -- We claim that $p \neq 29$, because if $p = 29$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 29 + m \cdot 29 = (30m + 30) \neq 2016$.
+  have hp'''''''''''''' : p ≠ 29 := by
+    by_contra! hp!
+    have : 29 ∣ m := by
+      rw [this] at hp!
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 29
+      have : 29 ≠ 0 := by omega
+      field_simp [hp!]
+      rw [Nat.mul_div_cancel' this]
+    have : 29 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime29
+    omega
+  -- We claim that $p \neq 31$, because if $p = 31$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 31 + m \cdot 31 = (32m + 32) \neq 2016$.
+  have hp'''''''''''''''' : p ≠ 31 := by
+    by_contra! hp!
+    have : 31 ∣ m := by
+      rw [this] at hp!
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 31
+      have : 31 ≠ 0 := by omega
+      field_simp [hp!]
+      rw [Nat.mul_div_cancel' this]
+    have : 31 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime31
+    omega
+  -- We claim that $p \neq 37$, because if $p = 37$, then
+  -- $1 + m + p + m \cdot p = 1 + m + 37 + m \cdot 37 = (38m + 38) \neq 2016$.
+  have hp'''''''''''''''''' : p ≠ 37 := by
+    by_contra! hp!
+    have : 37 ∣ m := by
+      rw [this] at hp!
+      simp [show Nat.divisors m = {1, m, p, m * p} by exact hm]
+      use m / 37
+      have : 37 ≠ 0 := by omega
+      field_simp [hp!]
+      rw [Nat.mul_div_cancel' this]
+    have : 37 ∣ n := by
+      rw [hm']
+      omega
+    absurd this
+    apply Nat.Prime.odd_of_ne_two
+    exact Nat.prime37
+    omega
+  -- We claim that $p \neq 41$, because if $p

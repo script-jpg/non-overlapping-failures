@@ -1,0 +1,68 @@
+have h₁ : S ⊆ Icc 0 Real.pi := by
+    intro x hx
+    have ⟨h₁, h₂⟩ := h₀ x
+    exact ⟨h₁, h₂⟩
+
+  have h₂ : S.Nonempty := by
+    suffices 0 ∈ S by simp [this]
+    suffices 0 ∈ Icc (0 : ℝ) Real.pi by simp [h₁]
+    exact ⟨by simp, Real.pi_nonneg⟩
+
+  have h₃ : S = {0, Real.pi} := by
+    let f : ℝ → ℝ := fun x => Real.sin (Real.pi / 2 * Real.cos x) - Real.cos (Real.pi / 2 * Real.sin x)
+    let Z : Set ℝ := f ⁻¹' {0}
+    have h₃ : S = Z := by
+      ext x
+      simp [S, Z]
+      constructor
+      · intro ⟨h₁, h₂⟩
+        simp [h₁, h₂]
+      · intro h
+        simp [h]
+    have h₄ : Z = {0, Real.pi} := by
+      ext x
+      simp [Z]
+      constructor
+      · intro h
+        apply sub_eq_zero.mp at h
+        have h₄ : Real.sin (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 * Real.sin x) := by simpa using h
+        have h₅ : Real.sin (Real.pi / 2 * Real.cos x) + Real.sin (Real.pi / 2 * Real.sin x) = 2 * Real.sin (Real.pi / 2) * Real.cos (Real.pi / 2 * (Real.sin x + Real.cos x) / 2) := by
+          simpa [Real.sin_add] using by ring
+        have h₆ : Real.sin (Real.pi / 2 * Real.cos x) - Real.sin (Real.pi / 2 * Real.sin x) = 2 * Real.cos (Real.pi / 2) * Real.sin (Real.pi / 2 * (Real.sin x - Real.cos x) / 2) := by
+          simpa [Real.sin_sub] using by ring
+        have h₇ : Real.sin (Real.pi / 2) ≠ 0 := by
+          rw [Real.sin_pi_div_two]
+        have h₈ : Real.cos (Real.pi / 2) = 0 := by
+          rw [Real.cos_pi_div_two]
+        rw [h₄, h₇, h₈] at h₅ h₆
+        simp at h₅ h₆
+        rcases h₅ with h₅ | h₅
+        · rw [Real.sin_eq_one_iff] at h₅
+          have h₉ : Real.pi / 2 * Real.cos x = x + 2 * Real.pi * ↑k := by
+            obtain ⟨k, h₉⟩ := h₅
+            simp [h₉, two_mul]
+          have h₁₀ : x = Real.pi / 2 := by
+            nlinarith [Real.cos_sq_add_sin_sq x]
+          rw [h₁₀, Real.cos_pi_div_two]
+          norm_num
+        · rw [Real.sin_eq_zero_iff] at h₅
+          have h₉ : Real.pi / 2 * Real.cos x = x + Real.pi * ↑k := by
+            obtain ⟨k, h₉⟩ := h₅
+            simp [h₉]
+          have h₁₀ : x = 0 ∨ x = Real.pi := by
+            rcases ((mul_right_inj' Real.pi_pos).mp h₉.symm).1 with h₁₀ | h₁₀
+            · left; linarith
+            · right; linarith
+          rcases h₁₀ with h₁₀ | h₁₀
+          · simp [h₁₀]
+          · simp [h₁₀]
+      · intro h
+        rcases h with h | h
+        · simp [h]
+        · simp [h]
+    rw [h₃, h₄]
+  rw [h₃, Finset.card_pair]
+  linarith
+
+
+```

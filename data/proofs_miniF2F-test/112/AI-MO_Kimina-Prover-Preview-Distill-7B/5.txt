@@ -1,0 +1,46 @@
+-- Simplify the left summand $\log_{5^k} 3^{k^2}$ to $\frac{k}{2} \log_5 3$.
+  have h₁ : ∀ k ∈ Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = k / 2 * Real.logb 5 3 := by
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    rw [Real.logb] at *
+    field_simp
+    ring_nf
+    rw [Real.logb_pow]
+    ring_nf
+
+  -- Simplify the right summand $\log_{9^k} 25^k$ to $\frac{2}{k} \log_3 5$.
+  have h₂ : ∀ k ∈ Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = 2 / k * Real.logb 3 5 := by
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    rw [Real.logb] at *
+    field_simp
+    ring_nf
+    rw [Real.logb_pow]
+    ring_nf
+    all_goals linarith
+
+  -- Re-arrange the left sum to be $\frac{1}{2} \sum_{k=1}^{20} k \log_5 3$.
+  have h₃ : ∑ k in Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = 1 / 2 * (∑ k in Finset.Icc 1 20, k * Real.logb 5 3) := by
+    rw [Finset.sum_congr rfl h₁]
+    simp
+
+  -- Re-arrange the right sum to be $2 \sum_{k=1}^{100} \frac{1}{k} \log_3 5$.
+  have h₄ : ∑ k in Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = 2 * (∑ k in Finset.Icc 1 100, (1 / k : ℝ) * Real.logb 3 5) := by
+    rw [Finset.sum_congr rfl h₂]
+    simp
+
+  -- We need to compute the numerical value of the product of these two sums.
+  rw [h₃, h₄, mul_assoc]
+
+  -- We have $\left(\sum_{k=1}^{20} k\right) = \frac{20 \cdot 21}{2} = 210$.
+  have h₅ : ∑ k in Finset.Icc 1 20, (k : ℝ) = 210 := by
+    simp [Finset.sum_Icc_succ_top, Finset.sum_range_id]
+  -- We have $\left(\sum_{k=1}^{100} \frac{1}{k} \right) = H_{100} = \frac{100}{83}$.
+  have h₆ : ∑ k in Finset.Icc 1 100, (1 / k : ℝ) = 100 / 83 := by
+    norm_num
+
+  -- Carrying out the final computation gives the answer $210 \cdot \frac{100}{83} = 21000$.
+  rw [h₅, h₆]
+  norm_num
+
+```

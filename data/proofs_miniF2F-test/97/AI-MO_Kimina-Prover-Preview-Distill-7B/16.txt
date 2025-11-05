@@ -1,0 +1,130 @@
+-- Note that it is impossible for $n$ to be expressed in base $10$ as $ABCACCC$ or $ABCBCB$.
+  have : ¬ (Nat.digits 10 n = [B, A, B, C, C, C, A, C, B] ∨ Nat.digits 10 n = [B, A, C, B, C, B, C, A, B]) := by
+    intro hn
+    cases hn with
+    | inl hn =>
+      -- Suppose it is of the form $ABCACCC$.
+      rw [hn] at h₆
+      absurd h₆
+      simp only [Nat.ofDigits_digits, Nat.digits_ofNat, Nat.reduceLeDiff, List.length_cons, zero_pow,
+        Nat.reduceAdd, List.length_nil, zero_add, Nat.reduceLeDiff, List.length_singleton, true_or,
+        List.getLast_cons, List.cons_ne_self, List.ne_nil, and_true, List.getLast_singleton, Nat.reduceLeDiff,
+        List.length_ofFn, List.ofFn_cons, List.ofFn_nil, zero_add, List.cons_eq_self, List.nil_eq_self,
+        and_self, not_false_eq_true, List.getLast_ofFn]
+      norm_num
+    | inr hn =>
+      -- Suppose it is of the form $ABCBCB$.
+      rw [hn] at h₆
+      absurd h₆
+      simp only [Nat.ofDigits_digits, Nat.digits_ofNat, Nat.reduceLeDiff, List.length_cons, zero_pow,
+        Nat.reduceAdd, List.length_nil, zero_add, Nat.reduceLeDiff, List.length_singleton, true_or,
+        List.getLast_cons, List.cons_ne_self, List.ne_nil, and_true, List.getLast_singleton, Nat.reduceLeDiff,
+        List.length_ofFn, List.ofFn_cons, List.ofFn_nil, zero_add, List.cons_eq_self, List.nil_eq_self,
+        and_self, not_false_eq_true, List.getLast_ofFn]
+      norm_num
+
+  -- Since $n = ABCACCBAB$, we have $n = 100000100A + 1000010B + 10010C$.
+  have h₇ : n = 100000100 * A + 1000010 * B + 10010 * C := by
+    rw [h₆]
+    simp only [Nat.ofDigits_digits, Nat.digits_ofNat, Nat.reduceLeDiff, List.length_cons, zero_pow,
+      Nat.reduceAdd, List.length_nil, zero_add, Nat.reduceLeDiff, List.length_singleton, true_or,
+      List.getLast_cons, List.cons_ne_self, List.ne_nil, and_true, List.getLast_singleton, Nat.reduceLeDiff,
+      List.length_ofFn, List.ofFn_cons, List.ofFn_nil, zero_add, List.cons_eq_self, List.nil_eq_self,
+      and_self, not_false_eq_true, List.getLast_ofFn]
+    norm_num
+
+  -- Since $A$ and $C$ are odd, $A,C \neq 0$.
+  have h₈ : A ≠ 0 ∧ C ≠ 0 := by
+    refine ⟨?_,?_⟩
+    all_goals
+      by_contra! h
+      have : Odd 0 := by
+        rw [h] at h₄
+        exact h₄.resolve_left (by norm_num)
+      contradiction
+
+  -- Since $A,B,C$ are distinct, $A,B,C$ are nonzero.
+  have h₉ : A ≠ 0 ∧ B ≠ 0 ∧ C ≠ 0 := by
+    refine ⟨?_,?_,?_⟩
+    all_goals
+      by_contra! h
+      have : (A, B, C) = (0, 0, 0) := by
+        exact Prod.ext_iff.mpr ⟨Prod.ext_iff.mpr ⟨h, h⟩, h⟩
+      simp only [Prod.mk.injEq, and_true] at this
+      contradiction
+
+  -- Since $A,B,C$ are distinct digits, $A,B,C$ are at most 9.
+  have h₁₀ : A < 10 ∧ B < 10 ∧ C < 10 := by
+    refine ⟨?_,?_,?_⟩
+    all_goals
+      by_contra! h
+      have h₁₀ : 10 ∣ n + 1 := by
+        rw [h₇] at h₁
+        ring_nf at h₁
+        have h₁₀ : 10 ∣ n + 1 := by
+          exact (Nat.dvd_add_iff_right (by norm_num)).mpr (Nat.dvd_pow (by norm_num) h)
+        exact h₁₀
+      have h₁₁ : 10 ∣ n := by
+        rw [h₇]
+        ring_nf
+        exact Nat.dvd_pow (by norm_num) h
+      have : ¬10 ∣ n + 1 := by
+        have h₁₂ : n + 1 = 3 ^ 10 + 1 := by
+          rw [h₀]
+          ring_nf
+        rw [h₁₂]
+        norm_num
+      contradiction
+
+  -- Since $A$ and $C$ are odd digits, $A,C \in \{1,3,5,7,9\}$.
+  have h₁₁ : A ∈ Finset.Icc 1 9 ∧ C ∈ Finset.Icc 1 9 := by
+    refine ⟨?_,?_⟩
+    both_goals
+      simp only [Finset.mem_Icc]
+      constructor
+      · exact Nat.pos_of_ne_zero (h₈.1)
+      · exact h₁₀.1
+
+  -- We have $A + C = 10$.
+  have h₁₂ : A + C = 10 := by
+    simp only [Finset.mem_Icc] at h₁₁
+    have h₁₂ : List.ofFn (Nat.digits 10 n) 8 = 0 := by
+      rw [h₆]
+      simp only [List.ofFn_cons, List.ofFn_nil, zero_add, List.cons_zero]
+      norm_num
+    have h₁₃ : List.ofFn (Nat.digits 10 n) 7 = 1 := by
+      rw [h₆]
+      simp only [List.ofFn_cons, List.ofFn_nil, zero_add, List.cons_zero]
+      norm_num
+    have h₁₄ : List.ofFn (Nat.digits 10 n) 6 = 0 := by
+      rw [h₆]
+      simp only [List.ofFn_cons, List.ofFn_nil, zero_add, List.cons_zero]
+      norm_num
+    have : List.ofFn (Nat.digits 10 n) 8 = List.ofFn (Nat.digits 10 n) 6 := by
+      rw [h₁₂, h₁₄]
+      norm_num
+    rw [List.ofFn_eq_ofFn_iff] at this
+    simp only [List.length_cons, List.length_nil, List.length_singleton, Nat.reduceLeDiff,
+      List.getElem_cons_succ, List.getElem_cons_zero, List.getElem_singleton, Nat.reduceAdd, Nat.ofNat_pos,
+      Nat.lt_add_one, and_self, or_false] at this
+    linarith only [this]
+
+  -- We have $B = 2$.
+  have h₁₃ : B = 2 := by
+    have h₁₃ : List.ofFn (Nat.digits 10 n) 7 = 2 := by
+      rw [h₆]
+      simp only [List.ofFn_cons, List.ofFn_nil, zero_add, List.cons_zero]
+      norm_num
+    rw [h₁₃] at h₁₄
+    exact h₁₄
+
+  -- We have $A = 9$.
+  have h₁₄ : A = 9 := by
+    linarith only [h₁₂, h₁₃]
+
+  -- We have $C = 1$.
+  have h₁₅ : C = 1 := by
+    linarith only [h₁₂, h₁₄]
+
+  rw [h₁₃, h₁₄, h₁₅]
+```

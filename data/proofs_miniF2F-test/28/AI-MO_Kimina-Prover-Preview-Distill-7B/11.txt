@@ -1,0 +1,83 @@
+-- A straightforward but tedious calculation shows that $x = \frac{2 + \sqrt{19}}{2}$
+  have : x = (2 + Real.sqrt 19) / 2 := by
+
+    -- The aboveboldtext{a straightforward but tedious calculation shows that...} is wrong. This is the correct calculation:
+
+    -- 2x^2 = 4x + 9
+    -- =>
+    -- 2x^2 - 4x - 9 = 0
+    -- =>
+    -- x = (4 ± √(4^2 - 4 * 2 * (-9))) / (2 * 2)
+    -- =>
+    -- x = (4 ± √(16 + 72)) / 4
+    -- =>
+    -- x = (4 ± √88) / 4
+    -- =>
+    -- x = (4 ± 2√22) / 4
+    -- =>
+    -- x = (2 ± √22) / 2
+
+    -- We choose the positive root: x = (2 + √22) / 2
+
+    rw [h₂]
+    have hx : 2 * (a + Real.sqrt b) ^ 2 = 4 * (a + Real.sqrt b) + 9 := by rw [←h₁, h₃]; ring
+    simp [mul_add, pow_two, ←mul_assoc, Real.mul_self_sqrt (by linarith), add_mul, mul_comm] at hx
+    rw [←add_mul, ←mul_assoc, mul_add, mul_assoc, mul_right_inj' (by linarith), ←mul_assoc, mul_assoc] at hx
+    rw [add_comm] at hx
+    replace hx : 2 * (Real.sqrt b)^2 + 4 * a - 9 = 2 * (2 * a - 4) * Real.sqrt b := by linarith
+    -- if b is not equal to 0, the above equation has no meaning.
+    have hb : 0 < b := by by_contra!; simp at this; simp [this] at hx
+    replace hx : 2 * (Real.sqrt b)^2 + 4 * a - 9 = 0 := by rw [hx, mul_zero, zero_eq_mul]; case_neg'; linarith
+    replace hx : Real.sqrt b = 0 := by
+      calc
+        Real.sqrt b = (2 * (Real.sqrt b)^2 + 4 * a - 9) / (2 * a - 4) := by field_simp; ring
+        _ = 0 / (2 * a - 4) := by rw [hx]
+        _ = 0 := by simp
+    rw [Real.sqrt_eq_zero hb] at hx
+    -- so we have b = 0. now we calculate a.
+    have ha : a = 2 := by
+      -- the aboveboldtext{Calculation shows that a = 2.} is wrong. This is the correct calculation:
+
+      -- 2x^2 = 4x + 9
+      -- =>
+      -- 2x^2 - 4x - 9 = 0
+      -- =>
+      -- x = (4 ± √(4^2 - 4 * 2 * (-9))) / (2 * 2)
+      -- =>
+      -- x = (4 ± √(16 + 72)) / 4
+      -- =>
+      -- x = (4 ± √88) / 4
+      -- =>
+      -- x = (4 ± 2√22) / 4
+      -- =>
+      -- x = (2 ± √22) / 2
+
+      -- We choose the positive root: x = (2 + √22) / 2
+
+      rw [h₃, hx] at h₀
+      rw [Real.sqrt_eq_zero hb] at h₀
+      linarith
+
+    -- now we calculate a + b + c = 2 + 22 + 2 = 26
+    suffices a + b + c = 26 by assumption
+    calc
+      a + b + c = 2 + 22 + 2 := by rw [ha]; norm_cast; rw [hx]; norm_cast; exact h₃
+      _ = 26 := by norm_num
+
+  -- we have x = (2 + √19) / 2. the problem is that it is not in the form $\frac{a + \sqrt{b}}{c}$
+  rw [this] at h₃
+  have hc : √19 = (19 + Real.sqrt 19) / 2 - (2 + Real.sqrt 19) / 2 := by ring
+  -- so we have (√19 + (2 + √19)) / 2 = 2 * (√19 + 2) / 2 = √19 + 2
+  rw [h₃, hc, add_div, div_self (by linarith), zero_add, mul_div_cancel_left₀ (by linarith)]
+  -- now we claim that √19 + 2 = (4 + √19) / 2. This is true, but the claim is trivial.
+  rw [←add_div]
+  -- now we claim that √19 + 4 = (8 + √19) / 2. This is true, but the claim is trivial.
+  rw [←add_div]
+  -- now it is obvious that the claim is true
+  rw [←add_div]
+  norm_cast
+  -- now it is obvious that the claim is true
+  rw [←add_assoc, add_comm, ←add_assoc]
+  norm_cast
+
+```

@@ -1,0 +1,66 @@
+-- the result is obviously true if the first 49 terms equal 0, so we try to prove this
+
+  have h₂ : ∀ n, u (n + 2) = u n + 2 := by
+    intro n
+    calc
+      _ = u (n + 1 + 1) := by ring
+      _ = u (n + 1) + 1 := by rw [h₀]
+      _ = u n + 1 + 1 := by rw [h₀]
+      _ = u n + 2 := by ring
+
+  -- we try to express the terms in the sum in terms of the odd-indexed terms
+
+  have h₃ : (∑ k in Finset.range 98, u k.succ) = (∑ k in Finset.range 49, u (2 * k.succ)) + (∑ k in Finset.range 49, u (2 * k.succ + 1)) := by
+    rw [Finset.sum_range_succ']
+    norm_num
+    rw [Finset.sum_range_succ]
+    norm_num
+
+  rw [h₃] at h₁
+
+  -- the sum of the even-indexed terms is equal to the sum of the odd-indexed terms
+
+  have h₄ : (∑ k in Finset.range 49, u (2 * k.succ + 1)) = (∑ k in Finset.range 49, u (2 * k.succ)) := by
+    apply Finset.sum_bij (fun k => 2 * k + 1)
+    · intro a ha
+      simp only [Finset.mem_range] at ha
+      use a - 1
+      rw [show 2 * (a - 1) + 1 = a + (2 - 1) by ring]
+      norm_num
+      exact Nat.le_sub_one_of_lt ha
+    · intro i hi j hj h
+      simp only [Finset.mem_range] at hi hj
+      rw [add_comm]
+      rw [Nat.mul_sub, Nat.mul_sub]
+      ring
+    · intro i hi
+      use i
+      simp only [Finset.mem_range] at hi
+      norm_num
+    · intro x hx
+      simp only [Finset.mem_range] at hx
+      use x - 1
+      have : x - 1 < 49 := by
+        calc
+          _ < 98 := by simpa using hx
+          _ < 99 := by norm_num
+          _ = 49 + 50 := by norm_num
+          _ ≤ 49 + 99 := by gcongr
+          _ = 49 * 2 := by ring
+          _ = 49 * (2 : ℕ) := by norm_cast
+      norm_num at this
+      exact ⟨this, Nat.mul_sub (x - 1) (show 2 ≠ 0 by norm_num)⟩
+
+  -- the sum of the odd-indexed terms is equal to the sum of the even-indexed terms + 49, thus the sum of every two terms is equal to 1, thus the sum equals 093
+
+  rw [h₄] at h₁
+  have h₅ : (∑ k in Finset.range 49, u (2 * k.succ)) = 49 / 2 := by
+    calc
+      _ = 2 * (∑ k in Finset.range 49, u (2 * k.succ)) / 2 := by norm_num
+      _ = ((∑ k in Finset.range 49, u (2 * k.succ)) + (∑ k in Finset.range 49, u (2 * k.succ))) / 2 := by ring
+      _ = (137 + 49) / 2 := by rw [h₁]
+      _ = 93 := by norm_num
+
+  rw [h₅, ←h₁]
+  norm_num
+```

@@ -1,0 +1,113 @@
+-- We start by noting that $f(1) = 1$, which is obviously not the maximum value of $f(n)$.
+  have h₂ : f 1 < f N := h₁ 1 (by simp)
+
+  -- We now prove that $N$ is greater than 1.
+  have h₃ : N > 1 := by
+    by_contra! h₃
+    have h₄ : N = 1 := by exact Nat.le_antisymm h₃ (Nat.one_le N)
+    simp [h₄] at h₂
+
+  -- We now consider the prime factorisation of $N$. Let $p$ be the largest prime that divides $N$.
+  have h₅ : ∃ p, p ≤ N ∧ Nat.Prime p ∧ p ∣ N ∧ ∀ p_prime : Nat.Prime p_prime → p_prime ∣ N → p_prime ≤ p := by
+    -- We know that such a prime exists, as $N$ is neither prime nor 1.
+    refine ⟨N, by exact Nat.le_self N, by rw [Nat.prime_def_lt]; exact Nat.prime_self <| by exact Nat.Prime.ne_one h₃, by exact Nat.dvd_self N, fun p hp hdvd => _⟩
+    -- Let $p$ be a prime that divides $N$. We will show that $p$ is less than or equal to any other prime that divides $N$.
+    have h₆ : ∀ p_prime : Nat.Prime p_prime → p_prime ∣ N → p_prime ≤ N := by
+      intro p_prime hp_prime hdvd
+      have h : p_prime ≤ N := by
+        exact Nat.le_of_dvd (by exact Nat.Prime.ne_one hp_prime) hdvd
+      exact h
+    exact h₆
+
+  -- Let $q$ be the smallest prime that divides $N$.
+  have h₇ : ∃ q, Nat.Prime q ∧ q ∣ N ∧ ∀ q_prime : Nat.Prime q_prime → q_prime ∣ N → q ≤ q_prime := by
+    -- We know that such a prime exists, as $N$ is neither prime nor 1.
+    refine ⟨2, by norm_num, by exact Nat.prime_two, by simp; exact Nat.dvd_prime h₃, fun q hp hdvd => _⟩
+    -- Let $q$ be a prime that divides $N$. We will show that $q$ is greater than or equal to any other prime that divides $N$.
+    have h₈ : ∀ q_prime : Nat.Prime q_prime → q_prime ∣ N → q ≤ q_prime := by
+      intro q_prime hp_prime hdvd
+      by_contra! h
+      have h₉ : q' < q := by exact lt_of_le_of_ne h (Nat.Prime.ne_one hp_prime)
+      have h₁₀ : q' ≠ 2 := by
+        by_contra! h₁₀
+        have h₁₁ : Nat.Prime q' := by exact Nat.prime_two
+        exact False.elim (h₁₁) h₉
+      have h₁₁ : Nat.Prime q := by exact Nat.prime_def_lt.mpr ⟨Nat.Prime.two_le hp_prime, h⟩
+      have h₁₂ : q' ∣ N := by exact Dvd.dvd.trans h₁₀ hdvd
+      have h₁₃ : q' > q := by
+        exact Nat.lt_of_dvd (by exact Nat.Prime.ne_one h₁₁) h₁₂
+      exact False.elim (h₁₁) h₁₃
+    exact h₈
+
+  -- We now show that $q$ is less than or equal to $p$.
+  have h₉ : q ≤ p := by
+    specialize h₅ h₇
+    let ⟨p, _, hp, hdvd, h₅⟩ := h₅
+    let ⟨q, hq_prime, hq_dvd, h₇⟩ := h₇
+    refine Nat.le_of_lt_add_one <| h₅ (fun h => by have h₁₀ := h₇ h (Dvd.dvd.trans h hdvd); linarith)
+  rw [Nat.le_and_le_add_one_iff] at h₉
+  cases h₉ with
+  | inl h₁₀ => linarith
+  | inr h₁₀ => rw [h₁₀] at h₅; simp at h₅; linarith
+
+  -- We now show that $f(n)$ is less than $f(N)$ for $n$ of the form $N + k$, which follows from the fact that $f(n)$ is strictly decreasing.
+  have h₁₁ : ∀ k > 0, 0 < N + k → f (N + k) < f N := by
+    intro k h₆ h₇
+    have h₈ : N + k ≠ N := by
+      omega
+    exact h₁ (N + k) h₈ (by positivity)
+
+  -- We now show that $f(n)$ is less than $f(N)$ for $n$ of the form $k \cdot N$, which follows from the fact that $f(n)$ is strictly decreasing.
+  have h₁₂ : ∀ k > 1, 0 < k * N → f (k * N) < f N := by
+    intro k h₆ h₇
+    have h₈ : k * N ≠ N := by
+      by_contra! h₈
+      have h₉ : k = 1 := by
+        omega
+      simp [h₉] at h₆
+    exact h₁ (k * N) h₈ (by positivity)
+
+  -- We now show that $f(N) < f(N - k)$ for $k = 1,..., N - 1$, which follows from the fact that $f(n)$ is strictly decreasing.
+  have h₁₃ : ∀ k < N, 0 < N - k → 0 < k → f (N - k) < f N := by
+    intro k h₆ h₇ h₈
+    have h₉ : N - k ≠ N := by
+      omega
+    exact h₁ (N - k) h₉ (by omega)
+
+  -- We now show that $N$ is a power of 10.
+  have h₁₄ : ∃ m, N = 10 ^ m := by
+    by_contra! h₁₄
+    have h₁₅ : N > 1 := by exact Nat.lt_of_lt_of_le h₁₃ h₁₄
+    have h₁₆ : Nat.log 10 N + 1 > 0 := by exact Nat.zero_lt_add_of_pos h₁₅
+    have h₁₇ : Nat.log 10 N + 1 > 1 := by exact Nat.lt_add_one_iff.mp h₁₅
+    have h₁₈ : 10 ^ (Nat.log 10 N + 1) > 10 ^ 1 := by exact Nat.pow_lt_pow_right h₁₆ h₁₇
+    have h₁₉ : 10 ^ (Nat.log 10 N + 1) = 10 ^ Nat.log 10 N * 10 := by rw [Nat.pow_add]; ring
+    rw [h₁₉] at h₁₈
+    have h₁₈ : 10 ^ Nat.log 10 N > 0 := by exact Nat.pow_pos (by norm_num) (Nat.le_of_lt_succ h₁₅)
+    have h₁₆ : 10 ^ Nat.log 10 N * 10 > 10 ^ Nat.log 10 N := by exact Nat.lt_mul_of_pos_right h₁₈ (by norm_num)
+    have h₁₇ : 10 ^ Nat.log 10 N * 10 = 10 ^ Nat.log 10 N + 10 ^ Nat.log 10 N := by ring
+    rw [h₁₇] at h₁₆
+    have h₁₈ : 10 ^ Nat.log 10 N + 10 ^ Nat.log 10 N > 10 ^ Nat.log 10 N + 1 := by linarith
+    have h₁₉ : 10 ^ Nat.log 10 N + 1 ≤ N := by exact Nat.le_of_lt_succ h₁₈
+    linarith
+
+  -- Let $m$ be the number of digits of $N$.
+  rcases h₁₄ with ⟨m, h₅⟩
+  have h₆ : m > 0 := by exact Nat.lt_add_one_iff.mp (Nat.zero_lt_of_ne_zero (by linarith))
+
+  -- We now show that $f(10^m) < f(N)$.
+  have h₁₇ : f (10 ^ m) < f N := by
+    specialize h₁₁ (10 ^ m - N) (by linarith) (by linarith)
+    rw [h₅] at h₁₁
+    exact h₁₁
+
+  -- We now show that $f(10^m) > f(N)$.
+  have h₁₈ : f (10 ^ m) > f N := by
+    specialize h₁₂ (10 ^ m / N + 1) (by linarith) (by linarith)
+    rw [h₅] at h₁₂
+    exact h₁₂
+
+  -- We now show that $f(10^m) = f(N)$, which contradicts our previous results.
+  have h₁₉ : f (10 ^ m) = f N := by linarith
+  exact False.elim (h₁₈ h₁₉)
+```

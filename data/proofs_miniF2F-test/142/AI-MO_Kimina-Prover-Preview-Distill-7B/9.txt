@@ -1,0 +1,199 @@
+-- A perfect square $p^2$ is a divisor of $n!$ if and only if $p^2$ is a divisor of each $i!$ for $i = 1, 2, \ldots, 9$.
+  have h₁ (p : ℕ) (hp : p ≥ 2) : (∀ i : ℕ, i ∈ Finset.Icc 1 9 → (p * p : ℕ) ∣ i!) ↔ (∀ i : ℕ, i ∈ Finset.Icc 1 9 → p ∣ i!) := by
+    constructor
+    · intro h i hi
+      calc
+        (p * p : ℕ) ∣ i! := h i hi
+        _ ∣ i! := by exact Nat.dvd_trans (pow_dvd_mul_right p (by omega)) h
+    · intro h i hi
+      have hi' : i ≥ 1 := by simp at hi; omega
+      have hi'' : i ≤ 9 := by simp at hi; omega
+      -- The prime factorization of $i!$ has at least as many factors of $p$ as the prime factorization of $p^2$.
+      have h_i_factored : (p * p).factorization i! ≥ 2 := by
+        calc
+          (p * p).factorization i! = ∑ j ∈ (Finset.Icc 1 9).filter (λ j : ℕ ↦ p ∣ Nat.factorial j), Nat.factorization (p * p) j := by rw [Finset.sum_filter]; intro x; simp; constructor; omega; omega
+          _ ≥ ∑ j ∈ (Finset.Icc 1 9).filter (λ j : ℕ ↦ p ∣ Nat.factorial j), 1 := by
+            apply Finset.sum_le_sum
+            intro x hx
+            rw [Nat.factorization_mul]
+            repeat rw [Nat.factorization_pow]
+            simp
+            rw [Nat.factorization_prime_iff_dvd]
+            · rfl
+            · exact ne_of_gt hp
+            · exact Dvd.dvd.mul_right (pow_dvd_mul_right p (by omega)) (Nat.factorization p (i!))
+            · exact dvd_refl _
+          _ = 2 := by simp
+      have p_factored : p.factorization (p * p : ℕ) = 2 := by
+        rw [Nat.factorization_mul]
+        rw [Nat.factorization_pow]
+        simp
+        rw [Nat.factorization_prime_iff_dvd]
+        · rfl
+        · exact ne_of_gt hp
+        · exact dvd_refl _
+        · exact dvd_refl _
+      -- Therefore, $p^2$ is a divisor of $i!$ if and only if $p$ is a divisor of $i!$.
+      have p_not_in_i_factored : ¬p ∈ (Nat.factorization (i!)).support := by
+        simp
+        intro hp'
+        rw [Nat.mem_support_iff]
+        rcases hp' with ⟨a, ha⟩
+        rw [←ha] at p_factored
+        norm_num at p_factored
+        omega
+      rw [Finset.mem_filter] at h_i_factored
+      omega
+      exact Finset.one_le_iff_ne_zero.mpr hp
+
+  -- A product of distinct prime powers $p_1^{e_1} \cdot p_2^{e_2} \cdot \hdots \cdot p_k^{e_k}$ is a perfect square if and only if each $e_i$ is even.
+  have h₂ (S : Finset ℕ) (hS : ∀ k : ℕ, k ∈ S ↔ 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i!) : ∃ p, p ≥ 2 ∧ (∀ i : ℕ, i ∈ S ↔ p ∣ i!) := by
+    let p := Finset.prod S
+    have hp : p ≥ 2 := by
+      calc
+        p ≥ 2 := by simp [p]
+        _ ≥ 2 := by simp
+    use p
+    refine ⟨hp,?_⟩
+    intro i hi
+    have h_not_in_filter : (Finset.filter (fun x ↦ x! ∣ ∏ i ∈ Finset.Icc 1 9, i!) S) = S := by
+      ext x
+      simp
+      intro _
+      exact Nat.factorial_dvd_factorial (by omega)
+    have h_prod : p ∣ ∏ i ∈ Finset.Icc 1 9, i! := by
+      rw [h_not_in_filter, Finset.prod_iff_inter_ne_empty]
+      simp
+      intro j hj
+      rw [←hS]
+      simp at hi
+      exact hi.2
+    constructor
+    · exact h_prod
+    · intro j hj
+      rw [hS] at hi
+      exact hi.2 h_prod
+
+  -- For each prime $p$, the number of times $p$ appears in the factorization of $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is $$
+  -- \sum_{i=1}^9 \left( \sum_{j=1}^{\lfloor \log_p(i) \rfloor} \left\lfloor \frac{i}{p^j} \right\rfloor \right).
+  -- $$
+  have h₃ (p : ℕ) (hp : p ≥ 2) : ∑ i ∈ Finset.Icc 1 9, ∑ j ∈ Finset.Icc 1 ⌊(logb p i)⌋, ⌊(i / p ^ j)⌋ = 672 := by
+    -- This is an application of the inclusion-exclusion principle.  For each $i$, we count the number of multiples of $p^j$ for $j = 1, 2, \ldots, \lfloor \log_p(i) \rfloor$.
+    have h₃ (i : ℕ) (hi : i ≥ 1) (hi' : i ≤ 9) : ∑ j ∈ Finset.Icc 1 ⌊(logb p i)⌋, ⌊(i / p ^ j)⌋ = i - (i.factorization p) := by
+      have h₄ : i / p ^ 0 = i := by
+        simp
+      have h₅ : i / p ^ 1 = i / p := by
+        simp
+      rw [h₄, h₅]
+      revert i
+      -- This is a straightforward but tedious calculation.
+      simp [Finset.sum_Icc_succ_top, h₄, h₅, Nat.div_div]
+      intro x _
+      by_cases hx : x = 0
+      · simp [hx]
+      · have hx' : 1 ≤ x := by omega
+        rw [Nat.Ioo_eq_range, Finset.sum_range_succ] at *
+        rw [Nat.div_div, Nat.div_div]
+        iterate 2 rw [Nat.div_div]
+        rw [Nat.div_div]
+        iterate 3 rw [Nat.div_div]
+        rw [Nat.div_div, Nat.div_div, Nat.div_div]
+        iterate 4 rw [Nat.div_div]
+        rw [Nat.div_div]
+        simp [hx']
+        omega
+    -- Now, let's sum up the results for each $i = 1, 2, \ldots, 9$.
+    calc
+      ∑ i ∈ Finset.Icc 1 9, ∑ j ∈ Finset.Icc 1 ⌊(logb p i)⌋, ⌊(i / p ^ j)⌋ = ∑ i ∈ Finset.Icc 1 9, (i - (i.factorization p)) := by
+        apply Finset.sum_congr rfl
+        simp [h₃, hp]
+      _ = ∑ i ∈ Finset.Icc 1 9, i - ∑ i ∈ Finset.Icc 1 9, i.factorization p := by
+        rw [Finset.sum_sub_distrib]
+      _ = 672 := by
+        rw [Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top,
+            Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top,
+            Finset.sum_Icc_succ_top]
+        simp
+        have h₄ (i : ℕ) (hi : i ≥ 1) (hi' : i ≤ 9) : i.factorization p = 0 ↔ i ≠ p := by
+          rw [Nat.factorization_eq_zero_iff]
+          constructor
+          · exact fun a ↦ hp (Nat.Prime.one_lt_iff.mp?_)
+            (by rw [←a, Finset.mem_Icc] at hi hi'; omega)
+          · exact fun a ↦ hp (Nat.Prime.one_lt_iff.mp?_)
+            (by rw [←a, Finset.mem_Icc] at hi hi'; omega)
+        simp [h₄] at hi
+        iterate 9 rw [Finset.sum_eq_card_nsmul (show Nat.factorization p 1 = 0 by simp)]
+        simp [hp]
+
+  -- Let $s$ be the number of distinct prime factors of $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  set s := Finset.card <| (Finset.filter (fun x ↦ 0 < x ∧ (∃ i : ℕ, i ∈ Finset.Icc 1 9 ∧ (x * x : ℕ) ∣ i!)) (Finset.Icc 1 9)).toFinset
+  -- Let $a$ be the number of perfect square divisors of $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  set a := Finset.card S
+  -- Let $p$ be the number of prime factors of $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  set p := Finset.card <| (Finset.filter (fun x ↦ 0 < x ∧ x ∣ ∏ i ∈ Finset.Icc 1 9, i!) (Finset.Icc 1 9)).toFinset
+  -- Let $q$ be the number of prime power factors of $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  set q := Finset.card <| Finset.filter (fun x ↦ 0 < x ∧ (∃ i : ℕ, i ∈ Finset.Icc 1 9 ∧ x ∣ i!)) (Finset.Icc 1 9)
+
+  -- We clearly have $s \leq q$.
+  have h₄ : s ≤ q := by
+    rw [←Finset.coe_toFinset]
+    apply Finset.card_le_card
+    intro x hx
+    simp at hx
+    simp
+    omega
+
+  -- We clearly have $q \leq p$.
+  have h₅ : q ≤ p := by
+    rw [←Finset.coe_toFinset]
+    apply Finset.card_le_card
+    intro x hx
+    simp at hx
+    simp
+    omega
+
+  -- We clearly have $p \leq 9$.
+  have h₆ : p ≤ 9 := by
+    rw [←Finset.coe_toFinset]
+    apply Finset.card_le_card
+    simp
+
+  -- Therefore, it is enough to show that $s = 672$.
+  suffices s = 672 by
+    have h₇ : q = 672 := by
+      rw [←h₃ p hp, h₆]
+      simp [h₃, hp]
+    have h₈ : s = a := by
+      rw [←Finset.coe_toFinset]
+      rw [Finset.card_eq_card_of_bijective]
+      similar
+      exact h₁
+      simp
+      intro x
+      simp
+      intro _ _ _
+      exact Nat.dvd_trans (h₁ x) (Nat.dvd_mul_right _ _)
+    simp [h₇, h₈]
+
+  -- Now, let's compute $s$.
+  have h₇ (i : ℕ) (hi : i ≥ 1) (hi' : i ≤ 9) : (Finset.filter (fun x ↦ 0 < x ∧ x ∣ i!) (Finset.Icc 1 i)).card = i - (i.factorization p) := by
+    rw [Finset.card_filter]
+    apply h₃
+    exact Nat.Prime.two_le (Nat.prime_iff.mp (Nat.mem_prime_filter.mp (by omega)))
+    exact hi
+    exact hi'
+    exact h₁
+
+  -- And now, let's compute $s$.
+  have h₈ : s = ∑ i ∈ Finset.Icc 1 9, (i - (i.factorization p)) := by
+    rw [Finset.sum_congr rfl]
+    simp [h₇, hp]
+  calc
+    s = ∑ i ∈ Finset.Icc 1 9, (i - (i.factorization p)) := by rw [h₈]
+    _ = 672 := by
+      rw [Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top,
+          Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top,
+          Finset.sum_Icc_succ_top]
+      simp [h₃, hp]
+
+```

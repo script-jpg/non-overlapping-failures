@@ -1,0 +1,86 @@
+-- A trivial lemma that may be useful later.
+  have h' (z : ℂ) : 2 * Complex.normSq z = 2 * (Complex.abs z) ^ 2 := by
+    simp [Complex.normSq]
+  -- Rewrite the given equation using this lemma.
+  rw [h'] at h₀
+
+  have h'' (z : ℂ) : Complex.normSq (z ^ 2 + 1) = Complex.normSq (z + 2) + Complex.normSq (z - 1) := by
+    intro z
+    rw [←h₀, Complex.normSq_add', Complex.mul_re, Complex.mul_im]
+    ring_nf
+    simp
+    norm_cast
+    ring_nf
+  -- Rewrite the given equation using this lemma.
+  rw [h''] at h₀
+
+  -- Let $z=a+bi$ for some $a,b\in\mathbb R$.
+  let a := z.re
+  let b := z.im
+  have hab : z = a + b * I := by exact Eq.symm (re_add_im z)
+
+  -- Rewrite the equation in terms of $a$ and $b$.
+  rw [hab] at h₀
+  simp [Complex.abs, Complex.normSq] at h₀
+  ring_nf at h₀
+
+  -- Simplify the equation.
+  replace h₀ : ((a + 2) ^ 2 + b ^ 2) * (2 * a ^ 2 * b - 8 * a * b - 2 * b ^ 2 + 12) = 0 := by linear_combination h₀
+  simp at h₀
+
+  -- Either the square is zero or the fifth degree polynomial is zero.
+  cases' h₀ with h₀ h₀
+
+  -- If the square is zero, then the answer is clearly 0.
+  · have h₁ : a + 2 = 0 := by exact pow_eq_zero h₀
+    have h₂ : b ^ 2 = 0 := by exact pow_eq_zero h₀
+    simp at h₁ h₂
+    rw [h₁, h₂] at hab
+    simp [hab] ; norm_num
+
+  -- We now assume that the fifth degree polynomial is zero.
+  · have h' := @Complex.abs_re_add_im z
+    simp [Complex.abs, hab] at h'
+    ring_nf at h'
+
+    -- Eliminate $a^5$ from the fifth degree polynomial.
+    rw [show a ^ 5 = a ^ 4 * a by ring] at h₀
+    rw [show a ^ 4 = a ^ 3 * a by ring] at h₀
+    rw [show a ^ 3 = a ^ 2 * a by ring] at h₀
+    rw [show a ^ 2 = a * a by ring] at h₀
+    nth_rewrite 1 [show a = a * 1 by ring] at h₀
+    rw [←mul_assoc] at h₀
+    simp [Complex.abs] at h₀
+    have h'' : (a - 1) * (a * (2 * a ^ 2 * b - 8 * a * b - 2 * b ^ 2 + 12) + (a ^ 2 + b ^ 2) * (-a ^ 2 * b + 4 * a * b + b ^ 2 - 6)) = 0 := by linear_combination h' + h₀
+    simp at h''
+
+    -- Either $a=1$ or the square is zero.
+    cases' h'' with h'' h''
+    · simp [h''] ; simp [hab] ; norm_num
+    · have h''' : (a * b - 2 * a - b) ^ 2 = 0 := by linear_combination h'' - h'
+      simp at h'''
+      have h'''' : (a - 2) * (a * b - 2 * a - b + 2) = 0 := by linear_combination h''' + h''
+      simp at h''''
+      cases' h''' with h''' h'''
+      · simp [h'''] ; simp [hab] ; norm_num
+      · have h'''' : b * (a * b - 2 * a - b + 2) = 0 := by linear_combination h'''' - h'''
+        simp at h''''
+
+
+    -- If the square is zero, then the answer is clearly 0.
+    · have h₁ : a = 0 := by exact pow_eq_zero h₀
+      have h₂ : b * (b ^ 2 - 1) = 0 := by linear_combination h' - h₁
+      simp at h₂
+      cases' h₂ with h₂ h₂
+      · simp [h₁, h₂] at hab
+        simp [hab]
+      -- We now assume that $b^2=1$.
+      · cases' h₂ with h₂ h₂
+        · simp [h₁, h₂] at hab
+          simp [hab]
+        · simp [h₁, h₂] at hab
+          simp [hab] ; norm_num
+          rw [←Complex.abs_add_mul_I]
+          norm_num
+
+```

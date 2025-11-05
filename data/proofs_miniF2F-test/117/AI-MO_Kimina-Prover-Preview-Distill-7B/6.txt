@@ -1,0 +1,92 @@
+-- preparing some simple facts for later use
+  have fact_1 : 2 ∣ 6 := by norm_num
+  have fact_2 : 3 ∣ 6 := by norm_num
+  have fact_3 : 4 ∣ 8 := by norm_num
+  have fact_4 : 5 ∣ 10 := by norm_num
+  have fact_5 : 7 ∣ 14 := by norm_num
+
+  -- By contradiction, we assume that $k \neq 5$, and the goal is to derive a contradiction.
+  by_contra! h₄
+
+  -- Case 1 : $k < 5$
+  by_cases h₅ : k < 5
+  · -- By the assumption $h₁$, for $n = 0$, we have $\gcd(k, 3) = 1$, which implies that $k$ is relatively prime to 3.
+    have h₆ : k.gcd 3 = 1 := by
+      have h₆ := h₁ 0
+      norm_num at h₆
+      exact h₆
+  -- By the assumption $h₂$, for $n = 0$, we have $\gcd(k, 2) = 1$, which implies that $k$ is relatively prime to 2.
+  have h₇ : k.gcd 2 = 1 := by
+    have h₇ := h₂ 0
+    norm_num at h₇
+    exact h₇
+  -- By the assumption $h₃$, for $n = 0$, we have $\gcd(k, 1) = 1$, which implies that $k$ is relatively prime to 1.
+  have h₈ : k.gcd 1 = 1 := by
+    have h₈ := h₃ 0
+    norm_num at h₈
+    exact h₈
+  -- By the above three conclusions, we have that $k$ is relatively prime to 6.
+  have h₉ : k.gcd 6 = 1 := by
+    have : 6 = 2 * 3 := by norm_num
+    rw [this]
+    apply Nat.Coprime.mul_right
+    apply Nat.Coprime.mul_right
+    exact h₆
+    exact h₇
+    exact h₈
+  -- But the above conclusion contradicts with $0 < k$.
+  have : 0 < k := h₀
+  have : k < 6 := by linarith
+  have : k.gcd 6 ≠ 1 := by
+    have : k.gcd 6 < 6 := by
+      apply Nat.lt_gcd_of_lt_of_pos _ (by norm_num) this
+    omega
+  contradiction
+
+  -- Case 2 : $k > 5$
+  · -- To handle this case, we need some additional facts.
+    have fact_6 : 6 ∣ 6 := by norm_num
+    have t : 6 ∣ 6 * n + 6 := by
+      nth_rw 2 [fact_6]
+      apply Nat.dvd_add
+      simp
+      apply Nat.dvd_mul_right
+    have t' : 6 ∣ 6 * n + 3 - 3 := by
+      rw [Nat.add_sub_cancel]
+      apply Nat.dvd_mul_right
+    have t'' : 6 ∣ 6 * n + 2 - 2 := by
+      rw [Nat.add_sub_cancel]
+      apply Nat.dvd_mul_right
+    have t''' : 6 ∣ 6 * n + 1 - 1 := by
+      rw [Nat.add_sub_cancel]
+      apply Nat.dvd_mul_right
+    have t'''' : 6 ∣ 6 * n + 5 - 5 := by
+      rw [Nat.add_sub_cancel]
+      apply Nat.dvd_mul_right
+
+    -- By the assumption $h₁$, for $n$, we have $\gcd(6n+k, 6n+3) = 1$, which implies that $6n+k$ is relatively prime to 3.
+    have h₅ : ∀ n, Nat.gcd (6 * n + k) (6 * n + 3) = 1 := by
+      intro n
+      exact h₁ n
+    specialize h₅ (k - 3)
+    nth_rw 2 [show 6 * (k - 3) + 3 = 6 * k - 15 by omega] at h₅
+    have h₆ : 6 * k - 15 + (6 * n + 3) = 6 * n + 6 := by omega
+    rw [←h₆] at h₅
+    clear h₆
+    -- By the above equation, we have that $6n+6$ is relatively prime to 3.
+    have h₇ : 3 ∣ 6 := by norm_num
+    have h₈ : Nat.gcd (6 * n + 6) 3 = 1 := by
+      rw [Nat.gcd_comm]
+      apply Nat.coprime_comm.mp
+      apply Nat.gcd_eq_one_iff_coprime.mpr
+      exact h₅
+    -- But the above conclusion contradicts with $3 \mid 6$.
+    have h₉ : 3 ∣ 6 * n + 6 := by
+      rw [Nat.add_comm]
+      apply Nat.dvd_add
+      simp
+      apply Nat.dvd_mul_right
+    contradiction
+  -- The above contradiction completes the proof.
+
+```

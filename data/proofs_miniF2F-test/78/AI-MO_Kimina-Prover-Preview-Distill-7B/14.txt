@@ -1,0 +1,304 @@
+-- A small warm-up: we prove that the gcd of $6$ and the lcm of $a$ and $b$ is $6$.
+  have hgcd : Nat.gcd 6 (Nat.lcm a b) = 6 := by
+    rw [Nat.gcd_comm]
+    apply Nat.gcd_eq_right.mpr
+    apply Nat.dvd_lcm_left
+
+  -- The key identity that relates lcm and gcd of two numbers.
+  have key := Nat.gcd_mul_lcm a b
+
+  -- Note that the right-hand side of the key identity is divisible by $6^2$.
+  have rhs_div : 6 ^ 2 ∣ a * b := by
+    calc
+      6 ^ 2 = 36 := by norm_num
+      _ = 6 * 6 := by norm_num
+      _ ∣ (Nat.lcm a b) * 6 := by
+        rw [←hgcd]
+        apply Nat.mul_dvd_mul_left
+        apply Nat.dvd_lcm_left
+      _ = a * b := by rw [key]
+
+  -- This means that the left-hand side of the key identity is divisible by $6$.
+  have lhs_div : 6 ∣ (Nat.lcm a b) * a := by
+    apply Nat.dvd_trans _ rhs_div
+    apply Nat.dvd_mul_right
+
+  -- Write $a = 6a' / d$ and $b = 6b' / d$, where $d = gcd(a, b) = 6$.
+  have ha : a = 6 * (a / 6) := by
+    rw [←Nat.gcd_comm a b]
+    apply Nat.eq_mul_div_of_dvd
+    apply Nat.dvd_mul_right
+  have hb : b = 6 * (b / 6) := by
+    rw [←Nat.gcd_comm a b]
+    apply Nat.eq_mul_div_of_dvd
+    apply Nat.dvd_mul_right
+
+  -- By the above key identity, we have $6^2 \mid a * b = 6^2 * (a' * b')$, where
+  -- $a' = a / 6$ and $b' = b / 6$.
+  have lhs_div' : 6 ^ 2 ∣ 6 ^ 2 * (a / 6) * (b / 6) := by
+    calc
+      6 ^ 2 ∣ (Nat.lcm a b) * a := by
+        apply lhs_div
+      _ = (Nat.lcm a b) * 6 * (a / 6) := by
+        rw [show (6 * (a / 6) = a) from ha]
+        ring
+      _ = 6 ^ 2 * (a / 6) * (b / 6) := by
+        rw [←hgcd]
+        ring
+
+  -- Canceling the $6^2$ on both sides, we obtain $1 \mid a' * b'$, where $a' = a / 6$ and
+  -- $b' = b / 6$.
+  have h_div : 1 ∣ (a / 6) * (b / 6) := by
+    apply Nat.Coprime.dvd_mul_left (by norm_num)
+    apply Nat.mul_dvd_mul_of_dvd_of_dvd
+    apply lhs_div'
+    apply dvd_trans _ (show 6 ∣ 6 ^ 2 by norm_num)
+    apply Nat.dvd_mul_right
+
+  -- We have $a' \mid 6b'$ and $b' \mid 6a'$.
+  have h1 : a / 6 ∣ 6 * (b / 6) := by
+    calc
+      a / 6 ∣ 6 * (a / 6) * (b / 6) / (b / 6) := by
+        apply Nat.dvd_div
+        apply Nat.mul_dvd_mul_of_dvd_of_dvd
+        apply h_div
+        apply Nat.dvd_mul_right
+        apply Nat.mul_dvd_mul_of_dvd_of_dvd
+        apply lhs_div'
+        apply dvd_trans _ (show 6 ∣ 6 ^ 2 by norm_num)
+        apply Nat.dvd_mul_right
+      _ = 6 * (b / 6) := by
+        rw [Nat.mul_div_cancel_left]
+        have : b % 6 = 0 := by
+          have : b % 10 = 4 := h₂
+          norm_num at this
+          exact this
+        omega
+  have h2 : b / 6 ∣ 6 * (a / 6) := by
+    calc
+      b / 6 ∣ 6 * (a / 6) * (b / 6) / (a / 6) := by
+        apply Nat.dvd_div
+        apply Nat.mul_dvd_mul_of_dvd_of_dvd
+        apply h_div
+        apply Nat.dvd_mul_left
+        apply Nat.mul_dvd_mul_of_dvd_of_dvd
+        apply lhs_div'
+        apply dvd_trans _ (show 6 ∣ 6 ^ 2 by norm_num)
+        apply Nat.dvd_mul_right
+      _ = 6 * (a / 6) := by
+        rw [Nat.mul_div_cancel_left]
+        have : a % 6 = 0 := by
+          have : a % 10 = 2 := h₁
+          norm_num at this
+          exact this
+        omega
+
+  -- The above two identities show that $a' \mid 6b'$ and $b' \mid 6a'$, so we have
+  -- $6 \mid a'^2$.
+  have h3 : 6 ∣ (a / 6) ^ 2 := by
+    calc
+      6 = 6 * 1 := by norm_num
+      _ ∣ 6 * ((a / 6) * (b / 6)) := by
+        apply Nat.mul_dvd_mul
+        apply Nat.dvd_mul_right
+        apply h1
+      _ = (a / 6) * (b / 6) * 6 := by
+        ring
+      _ ∣ ((a / 6) * (b / 6)) * (a / 6) * 6 := by
+        apply Nat.mul_dvd_mul_right
+        apply Nat.dvd_mul_left
+        apply h2
+      _ = (a / 6) ^ 2 * (b / 6) * 6 := by
+        ring
+
+  -- This means that $6 \mid a'^2$, so $6 \mid a'$.
+  have h4 : 6 ∣ a / 6 := by
+    have : 6 ∣ (a / 6) ^ 2 := by
+      exact h3
+    apply Nat.Prime.dvd_of_dvd_pow (by norm_num) this
+
+  -- This means that $a' \ge 6$, or $a' \ge 36$.
+  have h5 : 36 ≤ (a / 6) ^ 2 := by
+    apply Nat.le_of_dvd
+    exact Nat.zero_lt_succ ((a / 6) ^ 2)
+    apply Nat.dvd_of_dvd_pow (by omega)
+    exact h4
+
+  -- This means that $a \ge 216$.
+  have h6 : 216 ≤ a := by
+    calc
+      216 = 6 * 36 := by norm_num
+      _ = 6 * ((a / 6) ^ 2) := by
+        symm
+        apply Nat.mul_div_cancel
+        have : a % 6 = 0 := by
+          have : a % 10 = 2 := h₁
+          norm_num at this
+          exact this
+        omega
+      _ ≤ (a / 6) * ((a / 6) ^ 2) * 6 := by
+        apply Nat.mul_le_mul
+        apply Nat.mul_le_mul_left
+        omega
+        apply Nat.pow_pos
+        apply Nat.pos_of_mul_pos_left
+        omega
+      _ = a := by
+        rw [Nat.mul_div_cancel_left]
+        have : b % 6 = 0 := by
+          have : b % 10 = 4 := h₂
+          norm_num at this
+          exact this
+        omega
+
+  -- We have similar results for $b$.
+  have h7 : 36 ≤ (b / 6) ^ 2 := by
+    have hgcd : Nat.gcd 6 (Nat.lcm a b) = 6 := by
+      rw [Nat.gcd_comm]
+      apply Nat.gcd_eq_right.mpr
+      apply Nat.dvd_lcm_left
+    have key := Nat.gcd_mul_lcm a b
+    have rhs_div : 6 ^ 2 ∣ a * b := by
+      calc
+        6 ^ 2 = 36 := by norm_num
+        _ = 6 * 6 := by norm_num
+        _ ∣ (Nat.lcm a b) * 6 := by
+          rw [←hgcd]
+          apply Nat.mul_dvd_mul_left
+          apply Nat.dvd_lcm_left
+        _ = a * b := by rw [key]
+    have lhs_div : 6 ∣ (Nat.lcm a b) * b := by
+      calc
+        6 ∣ (Nat.lcm a b) * a := by
+          apply lhs_div
+        _ = (Nat.lcm a b) * 6 * (b / 6) := by
+          rw [show (6 * (b / 6) = b) from hb]
+          ring
+        _ = 6 ^ 2 * (a / 6) * (b / 6) := by
+          rw [←hgcd]
+          ring
+    have h1 : b' ∣ 6 * a' := by
+      calc
+        b / 6 ∣ 6 * (a / 6) * (b / 6) / (a / 6) := by
+          apply Nat.dvd_div
+          apply Nat.mul_dvd_mul_of_dvd_of_dvd
+          apply h_div
+          apply Nat.dvd_mul_left
+          apply Nat.mul_dvd_mul_of_dvd_of_dvd
+          apply lhs_div
+          apply dvd_trans _ (show 6 ∣ 6 ^ 2 by norm_num)
+          apply Nat.dvd_mul_right
+        _ = 6 * (a / 6) := by
+          rw [Nat.mul_div_cancel_left]
+          have : a % 6 = 0 := by
+            have : a % 10 = 2 := h₁
+            norm_num at this
+            exact this
+          omega
+    have h2 : a / 6 ∣ 6 * (b / 6) := by
+      calc
+        a / 6 ∣ 6 * (a / 6) * (b / 6) / (b / 6) := by
+          apply Nat.dvd_div
+          apply Nat.mul_dvd_mul_of_dvd_of_dvd
+          apply h_div
+          apply Nat.dvd_mul_right
+          apply Nat.mul_dvd_mul_of_dvd_of_dvd
+          apply lhs_div
+          apply dvd_trans _ (show 6 ∣ 6 ^ 2 by norm_num)
+          apply Nat.dvd_mul_right
+        _ = 6 * (b / 6) := by
+          rw [Nat.mul_div_cancel_left]
+          have : b % 6 = 0 := by
+            have : b % 10 = 4 := h₂
+            norm_num at this
+            exact this
+          omega
+    have h3 : 6 ∣ (b / 6) ^ 2 := by
+      calc
+        6 = 6 * 1 := by norm_num
+        _ ∣ 6 * ((a / 6) * (b / 6)) := by
+          apply Nat.mul_dvd_mul
+          apply Nat.dvd_mul_right
+          apply h1
+        _ = (a / 6) * (b / 6) * 6 := by
+          ring
+        _ ∣ ((a / 6) * (b / 6)) * (b / 6) * 6 := by
+          apply Nat.mul_dvd_mul_right
+          apply Nat.dvd_mul_left
+          apply h2
+        _ = (b / 6) ^ 2 * (a / 6) * 6 := by
+          ring
+        _ ∣ (b / 6) ^ 2 * ((a / 6) * 6) := by
+          apply Nat.mul_dvd_mul_left
+          apply Nat.dvd_mul_right
+          omega
+        _ = (b / 6) ^ 2 * a := by
+          rw [Nat.mul_div_cancel_left]
+          have : a % 6 = 0 := by
+            have : a % 10 = 2 := h₁
+            norm_num at this
+            exact this
+          omega
+    have h4 : 6 ∣ b / 6 := by
+      have : 6 ∣ (b / 6) ^ 2 := by
+        exact h3
+      apply Nat.Prime.dvd_of_dvd_pow (by norm_num) this
+    have h5 : 36 ≤ (b / 6) ^ 2 := by
+      apply Nat.le_of_dvd
+      exact Nat.zero_lt_succ ((b / 6) ^ 2)
+      apply Nat.dvd_of_dvd_pow (by omega)
+      exact h4
+    linarith
+
+  -- This means that $b \ge 216$.
+  have h7 : 216 ≤ b := by
+    calc
+      216 = 6 * 36 := by norm_num
+      _ = 6 * ((b / 6) ^ 2) := by
+        symm
+        apply Nat.mul_div_cancel
+        have : b % 6 = 0 := by
+          have : b % 10 = 4 := h₂
+          norm_num at this
+          exact this
+        omega
+      _ ≤ (b / 6) * ((b / 6) ^ 2) * 6 := by
+        apply Nat.mul_le_mul
+        apply Nat.mul_le_mul_left
+        omega
+        apply Nat.pow_pos
+        apply Nat.pos_of_mul_pos_left
+        omega
+      _ = b := by
+        rw [Nat.mul_div_cancel_left]
+        have : a % 6 = 0 := by
+          have : a % 10 = 2 := h₁
+          norm_num at this
+          exact this
+        omega
+
+  -- We have $lcm(a, b) \ge lcm(216, 216) = 216$, which is not enough to prove our claim
+  -- (we need a stronger lower bound).
+  have h8 : 216 ≤ Nat.lcm a b := by
+    calc
+      216 = Nat.lcm 216 216 := by
+        apply Nat.lcm_self
+      _ ≤ Nat.lcm a b := by
+        apply Nat.lcm_le_lcm
+        all_goals omega
+
+  -- However, we can do much better: we can show that $lcm(a, b) \ge lcm(36, 54) = 108$.
+  have h9 : 108 ≤ Nat.lcm a b := by
+    calc
+      108 = Nat.lcm 36 54 := by
+        apply Nat.lcm_comm
+        norm_num
+      _ ≤ Nat.lcm a b := by
+        apply Nat.lcm_le_lcm
+        all_goals omega
+
+  -- To see why $lcm(36, 54) = 108$, factorize $36 = 2^2 * 3^2$ and $54 = 2 * 3^3$.
+  -- Therefore, the smallest possible value of the least common multiple of $a$ and $b$ is
+  -- $\mathbf{108}$.
+  omega
+```

@@ -1,0 +1,108 @@
+-- We need the following lemma to prove the inequality:
+  -- For positive real numbers $x, y$, we have $x^2(y-x) + y^2(x-y) \le 0$.
+  have aux {x y : ℝ} (hx : 0 < x) (hy : 0 < y) : x ^ 2 * (y - x) + y ^ 2 * (x - y) ≤ 0 := by
+    -- Rewrite the inequality to the form $(x-y)^2(x+y) \le 0$.
+    nth_rw 2 [show x ^ 2 * (y - x) + y ^ 2 * (x - y) = - (x - y) ^ 2 * (x + y) by ring]
+    -- It is sufficient to show that $(x-y)^2(x+y) \ge 0$.
+    apply neg_nonpos.mpr
+    apply mul_nonneg
+    · apply pow_two_nonneg
+    · apply add_nonneg
+      all_goals linarith
+
+  -- Split the inequality to three parts.
+  suffices a ^ 2 * (b + c - a) + b ^ 2 * (c + a - b) ≤ 3 * a * b * c ∧
+         b ^ 2 * (c + a - b) + c ^ 2 * (a + b - c) ≤ 3 * a * b * c ∧
+         c ^ 2 * (a + b - c) + a ^ 2 * (b + c - a) ≤ 3 * a * b * c by
+    -- Add the three inequalities to get the desired result.
+    linarith
+
+  -- The idea is to use the lemma `aux` and the triangle inequality to prove each part.
+  -- The triangle inequalities are satisfied by the assumptions.
+  refine ⟨?_,?_,?_⟩
+  · apply le_of_sub_nonpos
+    -- The first part is equivalent to $(c+a-b)^2(b+c-a) \le (a+b-c)^2(b+c-a)$.
+    rw [show a ^ 2 * (b + c - a) + b ^ 2 * (c + a - b) - 3 * a * b * c = (c + a - b) ^ 2 * (b + c - a) - (a + b - c) ^ 2 * (b + c - a) by ring]
+    -- It is sufficient to show $(b+c-a)(c+a-b)^2 \le (b+c-a)(a+b-c)^2$.
+    suffices (b + c - a) * (c + a - b) ^ 2 ≤ (b + c - a) * (a + b - c) ^ 2 by
+      linarith
+    -- It is sufficient to show $(b+c-a)(c+a-b) \le (b+c-a)(a+b-c)$.
+    suffices b + c - a ≤ 0 ∨ (c + a - b) ≤ (a + b - c) by
+      cases this with
+      | inl h₀ =>
+        -- If $b+c-a \le 0$, then $(b+c-a)(c+a-b)^2 \le (b+c-a)(a+b-c)^2$ since $(c+a-b)^2 \le (a+b-c)^2$.
+        apply mul_le_mul_of_nonneg_left
+        · apply pow_le_pow_left₀
+          · linarith
+          · linarith
+        · linarith
+      | inr h₁ =>
+        -- If $(c+a-b) \le (a+b-c)$, then $(b+c-a)(c+a-b) \le (b+c-a)(a+b-c)$.
+        apply mul_le_mul_of_nonneg_right
+        · linarith
+        · apply pow_le_pow_left₀
+          · linarith
+          · linarith
+    -- It is sufficient to show $c+a-b \le a+b-c$.
+    rw [show b + c - a ≤ 0 ∨ (c + a - b) ≤ (a + b - c) ↔ c + a - b ≤ a + b - c by
+      have : c + a - b ≤ a + b - c ↔ c - b ≤ 0 := by
+        constructor <;> intro <;> linarith
+      rw [this]
+      simp]
+    -- It is sufficient to show $c \le b$.
+    linarith
+  · apply le_of_sub_nonpos
+    -- The second part is equivalent to $(a+b-c)^2(c+a-b) \le (a+b-c)^2(b+c-a)$.
+    rw [show b ^ 2 * (c + a - b) + c ^ 2 * (a + b - c) - 3 * a * b * c = (a + b - c) ^ 2 * (c + a - b) - (b + c - a) ^ 2 * (c + a - b) by ring]
+    -- It is sufficient to show $(c+a-b)(a+b-c)^2 \le (c+a-b)(b+c-a)^2$.
+    suffices (c + a - b) * (a + b - c) ^ 2 ≤ (c + a - b) * (b + c - a) ^ 2 by
+      linarith
+    -- It is sufficient to show $(c+a-b) \le (c+a-b)$.
+    suffices c + a - b ≤ 0 ∨ (a + b - c) ≤ (b + c - a) by
+      cases this with
+      | inl h₀ =>
+        -- If $c+a-b \le 0$, then $(c+a-b)(a+b-c)^2 \le (c+a-b)(b+c-a)^2$ since $(a+b-c)^2 \le (b+c-a)^2$.
+        apply mul_le_mul_of_nonneg_left
+        · apply pow_le_pow_left₀
+          · linarith
+          · linarith
+        · linarith
+      | inr h₁ =>
+        -- If $(a+b-c) \le (b+c-a)$, then $(c+a-b)(a+b-c) \le (c+a-b)(b+c-a)$.
+        apply mul_le_mul_of_nonneg_right
+        · linarith
+        · apply pow_le_pow_left₀
+          · linarith
+          · linarith
+    -- It is sufficient to show $a+b-c \le b+c-a$.
+    rw [show c + a - b ≤ 0 ∨ (a + b - c) ≤ (b + c - a) ↔ a + b - c ≤ b + c - a by
+      have : c + a - b ≤ 0 ∨ (a + b - c) ≤ (b + c - a) ↔ a - c ≤ c - a by
+        constructor <;> intro <;> linarith
+      rw [this]
+      simp]
+    -- It is sufficient to show $a \le c$.
+    linarith
+  · apply le_of_sub_nonpos
+    -- The third part is equivalent to $(b+c-a)^2(c+a-b) \le (b+c-a)^2(b+c-a)$.
+    rw [show c ^ 2 * (a + b - c) + a ^ 2 * (b + c - a) - 3 * a * b * c = (b + c - a) ^ 2 * (c + a - b) - (c + a - b) ^ 2 * (c + a - b) by ring]
+    -- It is sufficient to show $(b+c-a)^2(c+a-b) \le (b+c-a)^2(c+a-b)$.
+    suffices (b + c - a) ^ 2 * (c + a - b) ≤ (b + c - a) ^ 2 * (c + a - b) by
+      linarith
+    -- It is sufficient to show $(b+c-a)^2 \le (b+c-a)^2$.
+    suffices b + c - a ≤ 0 ∨ (c + a - b) ≤ (c + a - b) by
+      cases this with
+      | inl h₀ =>
+        -- If $b+c-a \le 0$, then $(b+c-a)^2(c+a-b) \le (b+c-a)^2(b+c-a)$ since $(c+a-b) \le (b+c-a)$.
+        apply mul_le_mul_of_nonneg_left
+        · apply pow_le_pow_left₀
+          · linarith
+          · linarith
+        · linarith
+      | inr h₁ =>
+        -- If $(c+a-b) \le (c+a-b)$, then $(b+c-a)^2(c+a-b) \le (b+c-a)^2(c+a-b)$.
+        apply mul_le_mul_of_nonneg_right
+        · linarith
+        · linarith
+    -- It is sufficient to show $b+c-a \le 0$.
+    linarith
+```

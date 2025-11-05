@@ -1,0 +1,60 @@
+have h₀a : 0 < a := h₀.left
+  have h₀b : 0 < b := h₀.right
+
+  have h₂ : ∀ k : ℕ, 0 < a ^ k := by
+    intro k
+    exact Nat.pos_pow_of_pos h₀a k
+
+  have h₃ : ∀ k : ℕ, 0 < b ^ k := by
+    intro k
+    exact Nat.pos_pow_of_pos h₀b k
+
+  have h₄ : ∀ k : ℕ, 0 < a ^ k + b ^ k := by
+    intro k
+    exact add_pos (h₂ k) (h₃ k)
+
+  -- The arithmetic mean of two positive numbers is greater than or equal to
+  -- the n-th root of the product of the numbers.
+  have h₅ : (a * b) ^ (1 / n : ℝ) ≤ (a + b) / 2 := by
+    rw [mul_div_assoc, mul_div_cancel_left₀, div_le_div_iff₀']
+    -- The product of two positive numbers is greater than or equal to
+    -- the square of their arithmetic mean.
+    rw [← pow_le_pow_iff_left₀ (h₄ 2) (h₄ 2) (by norm_num), ← sub_nonneg]
+    ring_nf
+    rw [← mul_le_mul_iff_of_pos_left (h₄ 2) (by positivity), ← sub_nonneg]
+    -- (a+b)^2-a^2-b^2 = 2ab
+    rw [add_sq, sq, sq, sub_sub, add_comm, sub_self, add_zero, add_comm]
+    ring_nf
+    rw [mul_le_mul_left (h₂ 1)]
+    ring_nf
+    rw [← le_div_iff₀' (h₄ 1)]
+    ring_nf
+    rw [div_le_iff₀', mul_comm, ← le_div_iff₀' (h₄ 1)]
+    ring_nf
+    exact (pow_le_pow_iff_left₀ (h₄ (n / 2)) (h₄ (n / 2)) (by positivity)).trans
+      (div_le_div_iff₀' (by positivity) (by positivity)).mpr (by positivity)
+
+  -- The arithmetic mean of two positive numbers is greater than or equal to
+  -- the n-th root of the product of the numbers.
+  replace h₅ : ((a * b) ^ (1 / n : ℝ)) ^ n ≤ ((a + b) / 2) ^ n := by
+    refine pow_le_pow_left₀?_ h₅ (by positivity)
+    apply le_of_lt
+    apply lt_trans (h₄ 1)?_
+    apply lt_of_lt_of_le (h₄ 2)
+    rw [← one_div, Real.rpow_neg_one, Real.rpow_mul, ← Real.exp_log, ← Real.exp_log]
+    ring_nf
+    rw [Real.exp_neg, Real.exp_mul, Real.exp_neg, Real.exp_mul, Real.exp_neg]
+    ring_nf
+    rw [Real.exp_neg, Real.exp_mul, Real.exp_neg, Real.exp_mul]
+    ring_nf
+    have h₆ : (1 / n : ℝ) ≤ 1 := by
+      rw [div_le_one (by norm_num)]
+      exact Nat.one_le_of_lt h₁
+    exact Real.strictMono_rpow h₀a h₆
+
+  rw [← Real.mul_rpow (h₄ 1) (h₄ 1), ← Real.rpow_add (a * b) (1 / n) (n : ℝ)] at h₅
+  -- (a * b) ^ ((1 / n) * n) = (a * b) ^ 1 = a * b
+  rw [← Real.rpow_mul (a * b) ((1 / n : ℝ) * n), Real.rpow_one (a * b)] at h₅
+  exact h₅
+
+```

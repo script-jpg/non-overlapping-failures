@@ -1,0 +1,131 @@
+-- Show that $x\geq 0$.
+  have h₃ : 0 ≤ x := by
+    -- Suppose that $x<0$.
+    by_contra! h₃
+    rw [not_le] at h₃
+    let y := 1 - Real.sqrt (1 + 2 * x)
+    -- Show that $1-\sqrt{1+2x}\leq 0$.
+    have h₄ : y ≤ 0 := by
+      simp [y]
+      rw [sub_nonpos, Real.le_sqrt]
+      linarith only [h₀]
+      linarith only [h₃]
+    -- Show that $\dfrac{4x^2}{(1 - \sqrt{1 + 2x})^2}\geq 0$.
+    have h₅ : 0 ≤ 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+      apply div_nonneg
+      · apply mul_nonneg
+        · norm_num
+        · apply pow_two_nonneg
+      · apply pow_two_nonneg
+    -- Show that $2x+9>0$.
+    have h₆ : 0 < 2 * x + 9 := by linarith only [h₀, h₃]
+    -- Show that $\dfrac{4x^2}{(1 - \sqrt{1 + 2x})^2}\geq 2x+9$, which is a contradiction.
+    have h₇ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 ≥ 2 * x + 9 := by
+      rw [show 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (2 * x / (1 - Real.sqrt (1 + 2 * x))) ^ 2 by ring_nf]
+      rw [div_le_iff₀]
+      · apply pow_two_le_pow_left₀
+        · linarith only [h₅, h₆]
+        · simp [y]
+          apply sub_ne_zero_of_ne
+          apply ne_of_lt
+          apply lt_of_le_of_ne h₄ (by simpa [h₁])
+      · linarith only [h₆]
+      · linarith only [h₀, h₃]
+    linarith only [h₂, h₇]
+
+  -- Consider two cases: $x<1/2$ and $x\geq 1/2$.
+  by_cases h₄ : x < 1 / 2
+
+  -- Case $x<1/2$.
+  · -- Show that $1-\sqrt{1+2x}<0$.
+    have h₅ : 1 - Real.sqrt (1 + 2 * x) < 0 := by
+      simp
+      rw [Real.sqrt_lt]
+      linarith only [h₀]
+      linarith only [h₄]
+    -- Show that $\dfrac{4x^2}{(1 - \sqrt{1 + 2x})^2}<\dfrac{4x^2}{4x+2}$.
+    have h₆ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 4 * x ^ 2 / (4 * x + 2) := by
+      apply (div_lt_div_iff_of_pos_left (by apply pow_pos; linarith only [h₀])).mpr
+      · nlinarith only [h₅]
+      · linarith only [h₀]
+      · nlinarith only [h₀]
+    -- Show that $\dfrac{4x^2}{4x+2}<2x+9$.
+    have h₇ : 4 * x ^ 2 / (4 * x + 2) < 2 * x + 9 := by
+      rw [show 4 * x ^ 2 / (4 * x + 2) = (2 * x) ^ 2 / (2 * (2 * x + 1)) by ring_nf]
+      -- Use the inequality $\dfrac{a^2}{b)<c$ if and only if $a^2< b c$ when $b>0$.
+      refine div_lt_iff₀.mpr?_
+      · nlinarith only [h₄]
+      · linarith only [h₀]
+    -- Show that $4x^2/(4x+2)>0$.
+    have h₈ : 0 < 4 * x ^ 2 / (4 * x + 2) := by
+      apply div_pos
+      · apply pow_pos
+        linarith only [h₄]
+      · linarith only [h₀]
+    -- Show that $2x+9>0$.
+    have h₉ : 0 < 2 * x + 9 := by linarith only [h₀, h₄]
+    -- Show that $4x^2/(4x+2)<2x+9$, which is a contradiction.
+    have h₁₀ : 4 * x ^ 2 / (4 * x + 2) < 2 * x + 9 := by
+      apply lt_of_lt_of_le h₇ h₈
+    linarith only [h₂, h₁₀]
+
+  -- Case $x\geq 1/2$.
+  · -- Show that $1-\sqrt{1+2x}\leq 0$.
+    have h₅ : 1 - Real.sqrt (1 + 2 * x) ≤ 0 := by
+      simp
+      rw [Real.le_sqrt]
+      linarith only [h₀]
+      linarith only [h₄]
+    -- Show that $\dfrac{4x^2}{(1 - \sqrt{1 + 2x})^2}\geq 0$.
+    have h₆ : 0 ≤ 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+      apply div_nonneg
+      · apply mul_nonneg
+        · norm_num
+        · apply pow_two_nonneg
+      · apply pow_two_nonneg
+    -- Show that $2x+9>0$.
+    have h₇ : 0 < 2 * x + 9 := by linarith only [h₀, h₄]
+    -- Show that $\dfrac{4x^2}{(1 - \sqrt{1 + 2x})^2}<2x+9$.
+    have h₈ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 2 * x + 9 := by
+      suffices 4 * x ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 by
+        apply lt_of_le_of_lt (div_le_iff₀.mpr?_)
+        · apply mul_nonneg
+          · linarith only [h₇]
+          · apply pow_two_nonneg
+        · linarith only [h₈]
+      nlinarith only [h₄, h₅, sq_nonneg (Real.sqrt (1 + 2 * x)), sq_nonneg (x - 9 / 8)]
+    -- Show that $4x^2/(4x+2)>0$.
+    have h₉ : 0 < 4 * x ^ 2 / (4 * x + 2) := by
+      apply div_pos
+      · apply pow_pos
+        linarith only [h₄]
+      · linarith only [h₀]
+    -- Show that $2x+9>0$.
+    have h₁₀ : 0 < 2 * x + 9 := by linarith only [h₀, h₄]
+    -- Show that $\dfrac{4x^2}{(1 - \sqrt{1 + 2x})^2}<\dfrac{4x^2}{4x+2}$.
+    have h₁₁ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 4 * x ^ 2 / (4 * x + 2) := by
+      apply (div_lt_div_iff_of_pos_left (by apply pow_pos; linarith only [h₀])).mpr
+      · nlinarith only [h₅, h₉, h₁₀]
+      · linarith only [h₀]
+      · nlinarith only [h₀]
+    -- Show that $\dfrac{4x^2}{4x+2}<2x+9$.
+    have h₁₂ : 4 * x ^ 2 / (4 * x + 2) < 2 * x + 9 := by
+      rw [show 4 * x ^ 2 / (4 * x + 2) = (2 * x) ^ 2 / (2 * (2 * x + 1)) by ring_nf]
+      -- Use the inequality $\dfrac{a^2}{b< c$ if and only if $a^2< b c$ when $b>0$.
+      refine div_lt_iff₀.mpr?_
+      · nlinarith only [h₄]
+      · linarith only [h₀]
+    -- Show that $4x^2/(4x+2)>0$.
+    have h₁₃ : 0 < 4 * x ^ 2 / (4 * x + 2) := by
+      apply div_pos
+      · apply pow_pos
+        linarith only [h₄]
+      · linarith only [h₀]
+    -- Show that $2x+9>0$.
+    have h₁₄ : 0 < 2 * x + 9 := by linarith only [h₀, h₄]
+    -- Show that $4x^2/(4x+2)<2x+9$, which is a contradiction.
+    have h₁₅ : 4 * x ^ 2 / (4 * x + 2) < 2 * x + 9 := by
+      apply lt_of_lt_of_le h₁₂ h₁₃
+    linarith only [h₂, h₁₅]
+
+```

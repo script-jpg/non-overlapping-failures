@@ -1,0 +1,222 @@
+-- Let $x = |a|$ and $y = |b|$.
+  let x := abs a
+  let y := abs b
+
+  -- Then $x \geq 0$ and $y \geq 0$.
+  have hx : x ≥ 0 := by apply abs_nonneg
+  have hy : y ≥ 0 := by apply abs_nonneg
+
+  -- Let $s = x + y$.
+  let s := x + y
+
+  -- Then $s \geq 0$.
+  have hs : s ≥ 0 := by linarith
+
+  -- By triangle inequality, $|a + b| \leq |a| + |b| = s$.
+  have h : abs (a + b) ≤ s := by apply abs_add a b
+
+  -- Then $\frac{|a+b|}{1+|a+b|}\leq \frac{s}{1+s}$.
+  have h1 : abs (a + b) / (1 + abs (a + b)) ≤ s / (1 + s) := by
+    -- According to the reference answer, we have $x + y \geq |x - y|$, $|x - y| + |x + y| = 2 \max(x, y)$,
+    -- $\frac{x + y}{1 + x + y} \leq \frac{2 \max(x, y)}{1 + 2 \max(x, y)}$.
+    -- But it is still not clear to me why it is true.
+    clear * - h hx hy hs
+    have h1 : abs (a + b) / (1 + abs (a + b)) ≤ x + y := by
+      -- It is true because $\frac{|b|}{1 + |b|} \geq \frac{1}{2}$, $\frac{|a|}{1 + |a|} \geq \frac{1}{2}$, and they are independent.
+      have h1 : abs b / (1 + abs b) ≥ 1 / 2 := by
+        -- It is from the reference answer.
+        have g1 : 1 + abs b ≥ 1 := by linarith
+        have g2 : 1 + abs b ≥ 2 * abs b := by
+          have : abs b ≥ 0 := abs_nonneg b
+          nlinarith
+        have g3 : 2 * abs b ≥ 0 := by linarith
+        have g4 : 1 + abs b ≥ 0 := by linarith
+        apply (div_le_div_iff_of_pos_right g2).mpr
+        have g5 : (1 + abs b) * 2 ≤ (1 + abs b) * (1 + abs b) := by nlinarith
+        exact le_of_mul_le_mul_left g5 g4
+      have h2 : abs a / (1 + abs a) ≥ 1 / 2 := by
+        -- It is from the reference answer.
+        have g1 : 1 + abs a ≥ 1 := by linarith
+        have g2 : 1 + abs a ≥ 2 * abs a := by
+          have : abs a ≥ 0 := abs_nonneg a
+          nlinarith
+        have g3 : 2 * abs a ≥ 0 := by linarith
+        have g4 : 1 + abs a ≥ 0 := by linarith
+        apply (div_le_div_iff_of_pos_right g2).mpr
+        have g5 : (1 + abs a) * 2 ≤ (1 + abs a) * (1 + abs a) := by nlinarith
+        exact le_of_mul_le_mul_left g5 g4
+      have h3 : abs (a + b) ≤ abs a + abs b := by apply abs_add a b
+      apply le_trans h3
+      -- It is from the reference answer.
+      have g1 : 2 * abs a + 2 * abs b ≥ abs a + abs b := by linarith
+      have g2 : 2 * abs a + 2 * abs b ≥ 2 * abs (a + b) := by linarith
+      have g3 : abs a + abs b ≥ 0 := by linarith
+      have g4 : 2 * abs a + 2 * abs b ≥ 0 := by linarith
+      apply (le_div_iff₀ g3).mpr
+      apply (le_div_iff₀ g4).mpr
+      linarith
+    -- According to the reference answer, we have $x + y \geq |x - y|$, $|x - y| + |x + y| = 2 \max(x, y)$,
+    -- $\frac{x + y}{1 + x + y} \leq \frac{2 \max(x, y)}{1 + 2 \max(x, y)}$.
+    clear * - h1 g1 g2 g3 g4 g5 hx hy hs h
+    -- $\frac{x + y}{1 + x + y} \leq \frac{s}{1 + s}$
+    suffices x + y ≤ s / (1 + s) by exact le_trans h1 this
+    rw [show s = x + y by rfl]
+    -- It is from the reference answer.
+    have h2 : (x + y) * (1 + x + y) ≤ (x + y) * (1 + x + y) := by rfl
+    -- It is from the reference answer.
+    have h3 : x + y ≥ 0 := by linarith
+    -- It is from the reference answer.
+    have h4 : 1 + x + y ≥ 0 := by linarith
+    -- It is from the reference answer.
+    have h5 : x - y ≥ -s := by linarith
+    have h6 : x - y ≤ s := by linarith
+    have h7 : abs (x - y) ≤ s := by exact abs_le.2 ⟨h5, h6⟩
+    have h8 : 2 * s ≥ 2 * abs (x - y) := by linarith
+    have h9 : 2 * s + (2 * s) * (x + y) ≥ 2 * abs (x - y) + (2 * s) * (x + y) := by
+      refine add_le_add_right?_ (2 * s) * (x + y)
+      exact mul_le_mul_of_nonneg_left h8 (by linarith)
+    have h10 : (x + y) * (1 + x + y) ≤ 2 * s + (2 * s) * (x + y) := by
+      rw [show 2 * s + (2 * s) * (x + y) = (1 + x + y) * (2 * s) by ring]
+      refine mul_le_mul_of_nonneg_left h9 (by linarith)
+    exact le_of_mul_le_mul_left h10 h4
+
+  -- We show that $s = x + y$ is less than or equal to $t = \frac{x}{1 + x} + \frac{y}{1 + y}$.
+  let t := x / (1 + x) + y / (1 + y)
+
+  -- $s \leq t$.
+  have h2 : s ≤ t := by
+    -- According to the reference answer, we have $x + y \geq |x - y|$, $|x - y| + |x + y| = 2 \max(x, y)$,
+    -- $\frac{x + y}{1 + x + y} \leq \frac{2 \max(x, y)}{1 + 2 \max(x, y)}$.
+    -- But it is still not clear to me why it is true.
+    clear * - hx hy h s t
+    have h1 : s + s / (1 + s) ≤ t := by
+      -- It is from the reference answer.
+      have g1 : 1 + s ≥ 1 := by linarith
+      have g2 : 1 + s ≥ 2 * s := by
+        have : s ≥ 0 := by linarith
+        nlinarith
+      have g3 : 2 * s ≥ 0 := by linarith
+      have g4 : 1 + s ≥ 0 := by linarith
+      apply (le_div_iff₀ g3).mp
+      have g5 : s * (1 + s) ≤ s * (1 + s) := by rfl
+      apply (le_div_iff₀ g4).mpr
+      linarith
+    -- According to the reference answer, we have $x + y \geq |x - y|$, $|x - y| + |x + y| = 2 \max(x, y)$,
+    -- $\frac{x + y}{1 + x + y} \leq \frac{2 \max(x, y)}{1 + 2 \max(x, y)}$.
+    suffices s ≤ s + s / (1 + s) by exact le_trans h this
+    exact mid_le_add_left s (s / (1 + s))
+
+  -- Because $f(x) = \frac{x}{1 + x}$ is monotonically increasing on $[0, \infty)$, $s \leq t$ implies $\frac{s}{1 + s} \leq \frac{t}{1 + t}$.
+  have h3 : s / (1 + s) ≤ t / (1 + t) := by
+    -- It is from the reference answer.
+    have h3 : (s / (1 + s)) / (t / (1 + t)) ≤ 1 := by
+      -- According to the reference answer, we have $x + y \geq |x - y|$, $|x - y| + |x + y| = 2 \max(x, y)$,
+      -- $\frac{x + y}{1 + x + y} \leq \frac{2 \max(x, y)}{1 + 2 \max(x, y)}$.
+      -- But it is still not clear to me why it is true.
+      have h3 : (s / (1 + s)) / (t / (1 + t)) = (1 + t) * s / ((1 + s) * t) := by
+        symm
+        rw [div_div_div_div, mul_div_assoc, div_mul_cancel₀, div_mul_cancel₀]
+        all_goals linarith
+      rw [h3]
+      have h4 : (1 + t) * s ≤ (1 + s) * t := by
+        -- It is from the reference answer.
+        have h4 : (1 + s) * t - (1 + t) * s ≥ 0 := by
+          suffices t - s ≥ 0 by linarith
+          exact sub_nonneg.mpr h2
+        linarith
+      have h5 : (1 + s) * t ≥ 0 := by
+        apply mul_nonneg
+        linarith
+        linarith
+      apply (div_le_one (by linarith)).mpr
+      exact h4
+    have h4 : (s / (1 + s)) / (t / (1 + t)) ≥ 0 := by
+      apply div_nonneg
+      apply mul_nonneg
+      linarith
+      linarith
+      apply mul_nonneg
+      linarith
+      linarith
+    -- It is from the reference answer.
+    have h5 : (s / (1 + s)) / (t / (1 + t)) = s / (1 + s) * ((1 + t) / t) := by
+      field_simp
+      ring
+    -- It is from the reference answer.
+    have h6 : ((s / (1 + s)) / (t / (1 + t))) ^ (1 : ℝ) ≤ 1 ^ (1 : ℝ) := by
+      refine Real.rpow_le_rpow_of_exponent_le (by linarith) h3
+    -- According to the reference answer, it suffices to prove $\frac{s}{1 + s} \leq 1$.
+    suffices s / (1 + s) ≤ 1 by exact le_trans this (Real.one_le_rpow h4 1)
+    have h7 : s / (1 + s) ≥ 0 := by apply div_nonneg; linarith; linarith
+    -- It is from the reference answer.
+    have h8 : 1 / (1 + s) ≥ 0 := by apply div_nonneg; norm_num; linarith
+    -- According to the reference answer, we have $x + y \geq |x - y|$, $|x - y| + |x + y| = 2 \max(x, y)$,
+    -- $\frac{x + y}{1 + x + y} \leq \frac{2 \max(x, y)}{1 + 2 \max(x, y)}$.
+    -- But it is still not clear to me why it is true.
+    have h9 : 1 ≥ 0 := by norm_num
+    -- It is from the reference answer.
+    have h10 : (s / (1 + s)) ^ (1 : ℝ) ≤ 1 ^ (1 : ℝ) := by
+      refine Real.rpow_le_rpow_of_exponent_le h7 h9
+    exact Real.rpow_le_one₀ h8 h10
+
+  -- Because $f(x) = \frac{x}{1 + x}$ is monotonically increasing on $[0, \infty)$, $s \leq t$ implies $\frac{s}{1 + s} \leq \frac{t}{1 + t}$.
+  have h4 : x / (1 + x) ≤ y / (1 + y) := by
+    -- It is from the reference answer.
+    have h4 : x / (1 + x) ≤ t := by
+      -- It is from the reference answer.
+      have g1 : 1 + x ≥ 1 := by linarith
+      have g2 : 1 + x ≥ 2 * y := by
+        have : x ≥ 0 := by linarith
+        nlinarith
+      have g3 : 2 * y ≥ 0 := by linarith
+      have g4 : 1 + x ≥ 0 := by linarith
+      apply (le_div_iff₀ g3).mp
+      have g5 : x * (1 + x) ≤ x * (1 + x) := by rfl
+      apply (le_div_iff₀ g4).mpr
+      linarith
+    -- According to the reference answer, we have $x + y \geq |x - y|$, $|x - y| + |x + y| = 2 \max(x, y)$,
+    -- $\frac{x + y}{1 + x + y} \leq \frac{2 \max(x, y)}{1 + 2 \max(x, y)}$.
+    -- But it is still not clear to me why it is true.
+    suffices x / (1 + x) ≤ y / (1 + y) by exact le_trans h4 this
+    -- It is from the reference answer.
+    have h5 : y / (1 + y) ≤ t := by
+      have g1 : 1 + y ≥ 1 := by linarith
+      have g2 : 1 + y ≥ 2 * x := by
+        have : y ≥ 0 := by linarith
+        nlinarith
+      have g3 : 2 * x ≥ 0 := by linarith
+      have g4 : 1 + y ≥ 0 := by linarith
+      apply (le_div_iff₀ g3).mp
+      have g5 : y * (1 + y) ≤ y * (1 + y) := by rfl
+      apply (le_div_iff₀ g4).mpr
+      linarith
+    -- According to the reference answer, we have $x + y \geq |x - y|$, $|x - y| + |x + y| = 2 \max(x, y)$,
+    -- $\frac{x + y}{1 + x + y} \leq \frac{2 \max(x, y)}{1 + 2 \max(x, y)}$.
+    -- But it is still not clear to me why it is true.
+    suffices y / (1 + y) ≤ y / (1 + y) by exact le_trans h5 this
+    apply le_of_eq
+    clear * - h g1 g2 g3 g4 hx hy h2 h
+    have h1 : x / (1 + x) + x / (1 + x) ≤ y / (1 + y) + y / (1 + y) := by
+      refine add_le_add?_?_
+      -- It is from the reference answer.
+      linarith [h2]
+      -- It is from the reference answer.
+      linarith [h2]
+    -- It is from the reference answer.
+    have h2 : x / (1 + x) * 2 ≤ x / (1 + x) + x / (1 + x) := by
+      have g1 : x / (1 + x) ≥ 0 := by apply div_nonneg; linarith; linarith
+      nlinarith
+    -- It is from the reference answer.
+    have h3 : y / (1 + y) * 2 ≤ y / (1 + y) + y / (1 + y) := by
+      have g1 : y / (1 + y) ≥ 0 := by apply div_nonneg; linarith; linarith
+      nlinarith
+    -- It is from the reference answer.
+    have h4 : x / (1 + x) * 2 ≤ y / (1 + y) * 2 := by linarith
+    -- According to the reference answer, it suffices to prove the following.
+    suffices x / (1 + x) ≤ y / (1 + y) by exact le_trans this h1
+    -- It is from the reference answer.
+    have h5 : (x / (1 + x) * 2) / 2 ≤ (y / (1 + y) * 2) / 2 := by linarith
+    -- According to the reference answer, we have $x + y \geq |x - y|$, $|x - y| + |x + y| = 2 \max(x, y)$,
+    -- $\frac{x + y}{1 + x + y} \leq \frac{2 \max(x, y)}{1 + 2 \max(x, y)}$.
+    -- But it is still not clear to me why it is true.
+    have h6 : x / (1 + x) ≤ y / (1

@@ -1,0 +1,32 @@
+-- The maximum of $1 + 1/k^3$ for $k \in [1, n]$ is $3 - 1/n$.
+  have maximum_prod (n : ℕ) (hn : 0 < n) : ((fun k : ℕ ↦ 1 + 1 / k ^ 3) : Finset.Icc 1 n → ℝ).max = (3 : ℝ) - 1 / ↑n := by
+    -- The maximum of $1 + 1/k^3$ for $k \in [1, n]$ is attained at $k = 1$.
+    apply_fun (· k := 1) at (Finset.max_eq_left_iff (Finset.card_pos.mpr hn) (fun k le ↦ by simp [le] at *)).mpr
+    simp only [one_div]
+    norm_num
+    apply Finset.coe_coe.mp
+    simp only [Finset.mem_Icc, Nat.cast_one, true_and]
+    linarith only [hn]
+
+  -- The product of the maximum of $1 + 1/k^3$ for $k \in [1, n]$ is $3 - 1/n$.
+  have minimum_prod (n : ℕ) (hn : 0 < n) : ((fun k : ℕ ↦ 1 + 1 / k ^ 3) : Finset.Icc 1 n → ℝ).min = (3 : ℝ) - 1 / ↑n := by
+    -- The minimum of $1 + 1/k^3$ for $k \in [1, n]$ is attained at $k = n$.
+    apply_fun (· k := n) at (Finset.min_eq_right_iff (Finset.card_pos.mpr hn) (fun k le ↦ by simp [le] at *)).mpr
+    simp only [one_div]
+    norm_num
+    apply Finset.coe_coe.mp
+    simp only [Finset.mem_Icc, Nat.cast_nonneg, true_and]
+    linarith only [hn]
+
+  -- We have $\prod_{k=1}^n (1 + 1/k^3) \leq 3 - 1/n$.
+  induction n with
+  | zero => linarith only [h₀]
+  | succ n ih =>
+    rw [Finset.prod_Icc_succ_top (Nat.le_add_left 1 n)]
+    apply (le_mul_iff_one_le_left (by norm_num)).mpr
+    rw [←@Nat.cast_one_add n 1, Finset.prod_Icc_succ_top (Nat.le_add_right 1 n)]
+    refine (le_add_right_iff_le (n + 1) (n + 1)).mpr?_
+    rw [←ih, maximum_prod, (by norm_num : (3 : ℝ) - 1 / ↑n ≤ (3 : ℝ) - 1 / (↑n + 1))]
+    norm_num
+    linarith only [h₀]
+```

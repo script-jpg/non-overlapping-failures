@@ -1,0 +1,91 @@
+-- Note: The idea is to use the divisibility rule for 11, which states that a number is divisible by 11 if and only if the alternating sum of its digits is divisible by 11.
+
+  -- From the digits, we have $n = 100000000ABCACCBAB = ABCACCBABABC \cdot 100000000 + ABCAB$.
+  have h₇ : n = ABCACCBABABC * 100000000 + ABCAB := by rw [show 100000000 = 100000000 by rfl, show ABCACCBABABC = ABCACCBABABC by rfl]
+    rw [Nat.digits_eq_cons_digits_div, Nat.digits_eq_cons_digits_div, Nat.digits_eq_cons_digits_div]
+    rw [Nat.digits_eq_cons_digits_div, Nat.digits_eq_cons_digits_div]
+    rw [Nat.digits_eq_cons_digits_div]
+    simp only [Nat.reduceLeDiff, List.cons_append, List.nil_append, List.cons_append, List.cons_append]
+    rw [h₆]
+    simp only [List.length_cons, List.length_nil, Nat.succ_ne_self, List.getLast_cons, List.getLast_nil,
+      List.length_cons, List.length_nil, Nat.succ_ne_self, List.getLast_cons, List.getLast_nil,
+      List.length_nil, zero_lt_one, List.getLast_cons, List.getLast_nil, zero_lt_one, and_true]
+    norm_num
+    exact h₁
+
+  -- We can conclude that $ABCAB = ABCACCBABABC \bmod 11$.
+  have h₈ : ABCAB = ABCACCBABABC \[mod 11\] := by
+    calc
+      ABCAB = ABCAB + 0 := by simp
+      _ = ABCAB + (n - ABCAB) := by omega
+      _ = n := by omega
+      _ = ABCACCBABABC \[mod 11\] := by
+        apply Nat.modEq_iff_dvd.mpr
+        apply Nat.dvd_sub
+        simp only [Nat.reduceSub, Nat.mod_eq_sub_mod, Nat.sub_mod, n, ABCACCBABABC]
+        rw [h₇]
+        omega
+
+  -- The alternating sum of the digits of $n$ is $A - B + C - A + C - C + B - A + C$, which simplifies to $-11A + C$.
+  have h₉ : ABCAB = -11 * A + C \[mod 11\] := by
+    calc
+      ABCAB = ABCACCBABABC \[mod 11\] := by exact h₈
+      _ = ABCACCBABABC \[mod 11\] := by rfl
+      _ = A \[mod 11\] := by
+        rw [show ABCACCBABABC = A * 100000000 + (B * 10000000 + C * 1000000 + A * 100000 + C * 10000 + C * 100 + B * 10 + A) by ring]
+        rw [Nat.modEq_iff_dvd.mpr, Nat.dvd_add, Nat.dvd_add, Nat.dvd_add, Nat.dvd_add, Nat.dvd_add, Nat.dvd_add]
+        omega
+      _ = -11 * A + C \[mod 11\] := by
+        replace h : A = -11 * A + C \[mod 11\] := by
+          apply Nat.modEq_iff_dvd.mpr
+          apply Nat.dvd_sub
+          simp only [Nat.reduceSub, Nat.mod_eq_sub_mod, Nat.sub_mod, h]
+        exact h
+
+  -- This implies that $-11A + C = -11A + C + 11B$, or $11B = 0$.
+  have h₁₀ : 11 * B = 0 \[mod 11\] := by
+    calc
+      11 * B = 11 * B + 0 := by simp
+      _ = 11 * B + (C - C) := by simp
+      _ = C - C := by omega
+      _ = (-11 * A + C) - (-11 * A + C) := by rw [h₉]; apply Nat.sub_mod_eq_of_modEq; apply Nat.modEq_iff_dvd.mpr; omega
+      _ = -11 * A + C := by rw [Nat.sub_add_cancel]; apply Nat.ModEq.add_right; exact h₈
+      _ = ABCAB := by rw [h₉]
+      _ = ABCACCBABABC \[mod 11\] := by exact h₈
+      _ = A \[mod 11\] := by
+        rw [show ABCACCBABABC = A * 100000000 + (B * 10000000 + C * 1000000 + A * 100000 + C * 10000 + C * 100 + B * 10 + A) by ring]
+        rw [Nat.modEq_iff_dvd.mpr, Nat.dvd_add, Nat.dvd_add, Nat.dvd_add, Nat.dvd_add, Nat.dvd_add, Nat.dvd_add]
+        omega
+      _ = 0 \[mod 11\] := by
+        replace h : A = 0 \[mod 11\] := by
+          apply Nat.modEq_iff_dvd.mpr
+          apply Nat.dvd_add
+          apply Nat.dvd_add
+          apply Nat.dvd_add
+          apply Nat.dvd_add
+          apply Nat.dvd_add
+          omega
+        exact h
+
+  -- Since 11 is a prime number and $B \neq 0$ (since $B$ is not divisible by $3$), we can conclude that $11 = 0$ in the context, which is a contradiction.
+  have h₁₁ : 11 = 0 \[mod 11\] := by
+    calc
+      11 = 11 * 1 := by simp
+      _ = 11 * B := by omega
+      _ = 0 \[mod 11\] := by exact h₁₀
+
+  -- Since 11 is a prime number, the only way for $11 = 0$ to be true is if $11$ divides $11$, which is true, or if $B = 0$, which is not the case.
+  have h₁₂ : 11 = 0 \[mod 11\] := by exact h₁₁
+  have h₁₃ : 11 ∣ 11 := by
+    calc
+      11 = 11 \[mod 11\] := by exact h₁₂
+      _ ↔ 11 ∣ 11 := by
+        apply Nat.modEq_iff_dvd
+  have h₁₄ : 11 = 0 := by
+    apply Nat.modEq_iff_dvd.mp at h₁₃
+    exact h₁₃
+
+  -- A trivial proof is complete.
+  have h₁₅ : 11 ≠ 0 := by omega
+  contradiction
+```

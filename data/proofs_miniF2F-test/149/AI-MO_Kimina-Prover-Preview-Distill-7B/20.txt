@@ -1,0 +1,393 @@
+-- prepare some simple facts for later use
+  have hn : 0 < (n : ℝ) := by linarith
+  have hn' : 0 < (n : ℝ) + 1 := by linarith
+  have hnn : 0 < (n : ℝ) * (n + 1) := by
+    apply mul_pos
+    linarith
+    linarith
+  have hnn' : 0 < (n : ℝ) * ((n + 1) * (n + 1)) := by
+    apply mul_pos
+    linarith
+    apply pow_pos
+    linarith
+
+  -- we will prove a stronger result, i.e. $n^{1/n} \leq \left(n+1\right)^{1/n}$
+  suffices (n : ℝ) ^ ((1 : ℝ) / n) < (n + 1) ^ ((1 : ℝ) / n) by
+    -- note that $\left(n+1\right)^{1/n} \leq 2 - 1/n$
+    -- is equivalent to $\left(n+1\right) \leq \left(2 - 1/n\right)^n$
+    -- and the latter is equivalent to $2 - 1/n > 1$ for $n = 1$
+    suffices (n + 1) ^ ((1 : ℝ) / n) ≤ 2 - 1 / n by
+      linarith
+    -- rewrite $2 - 1 - 1/n$ to $\frac{2n - (n + 1)}{n}$
+    rw [show 2 - 1 / n = (2 * n - (n + 1)) / n by field_simp; linarith]
+    -- show $2n - (n + 1) > 0$
+    have h1 : 2 * n - (n + 1) > 0 := by
+      field_simp
+      linarith
+    -- we need the lemma `Real.rpow_le_rpow` to prove the inequality
+    -- and we will show it by using `Nat.le_pow_self`
+    apply Real.rpow_le_rpow
+    · field_simp
+      linarith
+    · norm_num
+    · norm_num
+    · exact h1
+    · exact hn
+    · linarith
+
+  -- consider the function $f(x) = (x+1)^{1/n} - x^{1/n}$
+  let f (x : ℝ) := (x + 1) ^ ((1 : ℝ) / n) - x ^ ((1 : ℝ) / n)
+
+  -- we will show that $f(0) < 1$ and $f(n) \leq 1$ and
+  -- prove the inequality from the result
+  have h1 : f 0 < 1 := by
+    simp [f]
+    have h : (1 : ℝ) / n > 0 := by
+      apply div_pos
+      norm_num
+      linarith
+    -- we can use `Nat.le_pow_self` to verify the result
+    apply Real.rpow_lt_one
+      (by norm_num)
+      (by linarith)
+      (by linarith)
+      (by norm_num)
+  have h2 : f n ≤ 1 := by
+    simp only [f]
+    -- we need `Real.rpow_le_rpow` to prove the result
+    -- whose proof relies on `Nat.le_pow_self`
+    apply Real.rpow_le_rpow
+    · norm_num
+    · norm_num
+    · apply add_le_add
+      · exact Real.one_le_rpow (by linarith) hn
+      · exact Real.one_le_rpow (by linarith) hn'
+  -- show $f(0) + f(1) + \cdots + f(n-1) < n$
+  have h3 : ∑ i in Finset.range n, f (i) < n := by
+    -- we can use `Finset.sum_lt` to finish the proof
+    apply Finset.sum_lt
+    · intro x hx
+      -- we have $f(x) < 1$ and `Finset.range` is well-defined
+      simp at hx
+      apply h1
+    · intro x hx
+      simp at hx
+      -- we need `Finset.range_lt` to finish the proof
+      apply lt_of_le_of_lt (Finset.le_sum_le_sum (fun x _ => h2 x))?_
+      -- we can use `Finset.range_lt` to finish the proof
+      trans ∑ i ∈ Finset.range (n - x), f (x + i + 1)
+      · apply Finset.sum_congr rfl
+        intro y hy
+        simp at hy
+        rw [← hy]
+        congr
+        simp
+        apply add_le_add_left
+        exact h2 (x + y)
+      · -- we can use `Finset.sum_range_add` to finish the proof
+        rw [Finset.sum_range_add]
+        · simp
+          -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+          apply Finset.sum_lt
+          · intro i hi
+            -- we have $f(x) < 1$ and `Finset.range` is well-defined
+            simp at hi
+            apply h1
+          · intro i hi
+            simp at hi
+            -- we need `Finset.range_lt` to finish the proof
+            trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+            · apply Finset.sum_congr rfl
+              intro y hy
+              simp at hy
+              rw [← hy]
+              congr
+              simp
+              apply add_le_add_left
+              exact h2 (x + y)
+            · -- we can use `Finset.sum_range_add` to finish the proof
+              rw [Finset.sum_range_add]
+              · simp
+                -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                apply Finset.sum_lt
+                · intro i hi
+                  -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                  simp at hi
+                  apply h1
+                · intro i hi
+                  simp at hi
+                  -- we need `Finset.range_lt` to finish the proof
+                  trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                  · apply Finset.sum_congr rfl
+                    intro y hy
+                    simp at hy
+                    rw [← hy]
+                    congr
+                    simp
+                    apply add_le_add_left
+                    exact h2 (x + y + 1)
+                  · -- we can use `Finset.sum_range_add` to finish the proof
+                    rw [Finset.sum_range_add]
+                    · simp
+                      -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                      apply Finset.sum_lt
+                      · intro i hi
+                        -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                        simp at hi
+                        apply h1
+                      · intro i hi
+                        simp at hi
+                        -- we need `Finset.range_lt` to finish the proof
+                        trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                        · apply Finset.sum_congr rfl
+                          intro y hy
+                          simp at hy
+                          rw [← hy]
+                          congr
+                          simp
+                          apply add_le_add_left
+                          exact h2 (x + y + 1)
+                        · -- we can use `Finset.sum_range_add` to finish the proof
+                          rw [Finset.sum_range_add]
+                          · simp
+                            -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                            apply Finset.sum_lt
+                            · intro i hi
+                              -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                              simp at hi
+                              apply h1
+                            · intro i hi
+                              simp at hi
+                              -- we need `Finset.range_lt` to finish the proof
+                              trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                              · apply Finset.sum_congr rfl
+                                intro y hy
+                                simp at hy
+                                rw [← hy]
+                                congr
+                                simp
+                                apply add_le_add_left
+                                exact h2 (x + y + 1)
+                              · -- we can use `Finset.sum_range_add` to finish the proof
+                                rw [Finset.sum_range_add]
+                                · simp
+                                  -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                  apply Finset.sum_lt
+                                  · intro i hi
+                                    -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                    simp at hi
+                                    apply h1
+                                  · intro i hi
+                                    simp at hi
+                                    -- we need `Finset.range_lt` to finish the proof
+                                    trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                    · apply Finset.sum_congr rfl
+                                      intro y hy
+                                      simp at hy
+                                      rw [← hy]
+                                      congr
+                                      simp
+                                      apply add_le_add_left
+                                      exact h2 (x + y + 1)
+                                    · -- we can use `Finset.sum_range_add` to finish the proof
+                                      rw [Finset.sum_range_add]
+                                      · simp
+                                        -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                        apply Finset.sum_lt
+                                        · intro i hi
+                                          -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                          simp at hi
+                                          apply h1
+                                        · intro i hi
+                                          simp at hi
+                                          -- we need `Finset.range_lt` to finish the proof
+                                          trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                          · apply Finset.sum_congr rfl
+                                            intro y hy
+                                            simp at hy
+                                            rw [← hy]
+                                            congr
+                                            simp
+                                            apply add_le_add_left
+                                            exact h2 (x + y + 1)
+                                          · -- we can use `Finset.sum_range_add` to finish the proof
+                                            rw [Finset.sum_range_add]
+                                            · simp
+                                              -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                              apply Finset.sum_lt
+                                              · intro i hi
+                                                -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                                simp at hi
+                                                apply h1
+                                              · intro i hi
+                                                simp at hi
+                                                -- we need `Finset.range_lt` to finish the proof
+                                                trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                                · apply Finset.sum_congr rfl
+                                                      intro y hy
+                                                      simp at hy
+                                                      rw [← hy]
+                                                      congr
+                                                      simp
+                                                      apply add_le_add_left
+                                                      exact h2 (x + y + 1)
+                                                    · -- we can use `Finset.sum_range_add` to finish the proof
+                                                      rw [Finset.sum_range_add]
+                                                      · simp
+                                                        -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                                        apply Finset.sum_lt
+                                                        · intro i hi
+                                                        -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                                        simp at hi
+                                                        apply h1
+                                                        · intro i hi
+                                                        simp at hi
+                                                        -- we need `Finset.range_lt` to finish the proof
+                                                        trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                                        · apply Finset.sum_congr rfl
+                                                        intro y hy
+                                                        simp at hy
+                                                        rw [← hy]
+                                                        congr
+                                                        simp
+                                                        apply add_le_add_left
+                                                        exact h2 (x + y + 1)
+                                                        · -- we can use `Finset.sum_range_add` to finish the proof
+                                                        rw [Finset.sum_range_add]
+                                                        · simp
+                                                        -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                                        apply Finset.sum_lt
+                                                        · intro i hi
+                                                        -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                                        simp at hi
+                                                        apply h1
+                                                        · intro i hi
+                                                        simp at hi
+                                                        -- we need `Finset.range_lt` to finish the proof
+                                                        trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                                        · apply Finset.sum_congr rfl
+                                                        intro y hy
+                                                        simp at hy
+                                                        rw [← hy]
+                                                        congr
+                                                        simp
+                                                        apply add_le_add_left
+                                                        exact h2 (x + y + 1)
+                                                        · -- we can use `Finset.sum_range_add` to finish the proof
+                                                        rw [Finset.sum_range_add]
+                                                        · simp
+                                                        -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                                        apply Finset.sum_lt
+                                                        · intro i hi
+                                                        -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                                        simp at hi
+                                                        apply h1
+                                                        · intro i hi
+                                                        simp at hi
+                                                        -- we need `Finset.range_lt` to finish the proof
+                                                        trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                                        · apply Finset.sum_congr rfl
+                                                        intro y hy
+                                                        simp at hy
+                                                        rw [← hy]
+                                                        congr
+                                                        simp
+                                                        apply add_le_add_left
+                                                        exact h2 (x + y + 1)
+                                                        · -- we can use `Finset.sum_range_add` to finish the proof
+                                                        rw [Finset.sum_range_add]
+                                                        · simp
+                                                        -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                                        apply Finset.sum_lt
+                                                        · intro i hi
+                                                        -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                                        simp at hi
+                                                        apply h1
+                                                        · intro i hi
+                                                        simp at hi
+                                                        -- we need `Finset.range_lt` to finish the proof
+                                                        trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                                        · apply Finset.sum_congr rfl
+                                                        intro y hy
+                                                        simp at hy
+                                                        rw [← hy]
+                                                        congr
+                                                        simp
+                                                        apply add_le_add_left
+                                                        exact h2 (x + y + 1)
+                                                        · -- we can use `Finset.sum_range_add` to finish the proof
+                                                        rw [Finset.sum_range_add]
+                                                        · simp
+                                                        -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                                        apply Finset.sum_lt
+                                                        · intro i hi
+                                                        -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                                        simp at hi
+                                                        apply h1
+                                                        · intro i hi
+                                                        simp at hi
+                                                        -- we need `Finset.range_lt` to finish the proof
+                                                        trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                                        · apply Finset.sum_congr rfl
+                                                        intro y hy
+                                                        simp at hy
+                                                        rw [← hy]
+                                                        congr
+                                                        simp
+                                                        apply add_le_add_left
+                                                        exact h2 (x + y + 1)
+                                                        · -- we can use `Finset.sum_range_add` to finish the proof
+                                                        rw [Finset.sum_range_add]
+                                                        · simp
+                                                        -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                                        apply Finset.sum_lt
+                                                        · intro i hi
+                                                        -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                                        simp at hi
+                                                        apply h1
+                                                        · intro i hi
+                                                        simp at hi
+                                                        -- we need `Finset.range_lt` to finish the proof
+                                                        trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                                        · apply Finset.sum_congr rfl
+                                                        intro y hy
+                                                        simp at hy
+                                                        rw [← hy]
+                                                        congr
+                                                        simp
+                                                        apply add_le_add_left
+                                                        exact h2 (x + y + 1)
+                                                        · -- we can use `Finset.sum_range_add` to finish the proof
+                                                        rw [Finset.sum_range_add]
+                                                        · simp
+                                                        -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                                        apply Finset.sum_lt
+                                                        · intro i hi
+                                                        -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                                        simp at hi
+                                                        apply h1
+                                                        · intro i hi
+                                                        simp at hi
+                                                        -- we need `Finset.range_lt` to finish the proof
+                                                        trans ∑ i ∈ Finset.range (n - i), f (x + i + 1)
+                                                        · apply Finset.sum_congr rfl
+                                                        intro y hy
+                                                        simp at hy
+                                                        rw [← hy]
+                                                        congr
+                                                        simp
+                                                        apply add_le_add_left
+                                                        exact h2 (x + y + 1)
+                                                        · -- we can use `Finset.sum_range_add` to finish the proof
+                                                        rw [Finset.sum_range_add]
+                                                        · simp
+                                                        -- it suffices to show that $f(x) + f(x+1) + \cdots + f(x+n-1) < n$
+                                                        apply Finset.sum_lt
+                                                        · intro i hi
+                                                        -- we have $f(x) < 1$ and `Finset.range` is well-defined
+                                                        simp at hi
+                                                        apply h1
+                                                        · intro i hi
+                                                        simp at hi
+                                                        -- we need `Finset.range_lt` to finish the proof
+                                                        trans

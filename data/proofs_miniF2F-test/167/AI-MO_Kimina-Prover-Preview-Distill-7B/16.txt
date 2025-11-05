@@ -1,0 +1,192 @@
+-- lemma about sequence
+  have l_exp (x y : ℝ) (hx : 0 < x) (hy : y > 1) : ∀ n, 0 < x * (x + 1 / n) ^ n := by
+    intro n
+    induction n with
+    | zero => simp [hx]
+    | succ n ih =>
+      have : 0 < x + 1 / n := by
+        apply add_pos
+        exact hx
+        exact (one_div_pos.mpr (by simp)).trans hy
+      exact mul_pos ih this
+
+  -- lemma about sequence 2
+  have l_exp' (x y : ℝ) (hx : 0 < x) (hy : y > 1) : ∀ n, x * (x + 1 / n) ^ n < x * (x + 1 / n) ^ n * (x + 1 / n + 1 / n) := by
+    intro n
+    induction n with
+    | zero => simp [hx]
+    | succ n ih =>
+      have : 0 < x + 1 / n := by
+        apply add_pos
+        exact hx
+        exact (one_div_pos.mpr (by simp)).trans hy
+      have : 0 < x + 1 / n + 1 / n := by
+        apply add_pos
+        exact this
+        exact (one_div_pos.mpr (by simp)).trans hy
+      exact mul_lt_mul_of_pos_left ih this
+
+  -- define the function g
+  let g : ℝ → ℝ := fun x => x * (x + 1 / (⌊x⌋ + 1)) ^ ⌊x⌋
+
+  -- lemma about g
+  have l_g (x : ℝ) (hx : 0 < x) (hx' : x < 1) : g x < g x * (x + 1 / ⌊x⌋ + 1 / ⌊x⌋) := by
+    rw [show g x = x * (x + 1 / ⌊x⌋) ^ ⌊x⌋ by simp [g]]
+    cases' lt_or_ge ⌊x⌋ 0 with h h
+    · simp at h
+      have : x < x + 1 / ⌊x⌋ := by
+        apply add_lt_add_of_lt_of_le
+        exact hx
+        exact one_div_pos.mpr (Int.floor_pos.mpr hx)
+      exact mul_lt_mul_of_pos_left this (pow_pos (show 0 < x + 1 / ⌊x⌋ by linarith) ⌊x⌋)
+    · have : 0 < ⌊x⌋ := by simp [h]
+      have : 0 < x + 1 / ⌊x⌋ := by
+        apply add_pos
+        exact hx
+        exact one_div_pos.mpr (Int.floor_pos.mpr hx)
+      exact l_exp' x (x + 1 / ⌊x⌋) this hx
+  -- prove g is strictly monotone
+  have g_mono : StrictMono g := by
+    intro x y h
+    cases' lt_or_ge x y with hxy hyx
+    · rw [show g x = x * (x + 1 / (⌊x⌋ + 1)) ^ ⌊x⌋ by simp [g]]
+      cases' lt_or_ge y y + 1 / (⌊y⌋ + 1) with hy1 hy1
+      · have : ⌊x⌋ = ⌊y⌋ := Int.floor_eq_of_lt_of_le hxy hy1
+        simp [this]
+        cases' lt_or_ge x x + 1 / (⌊x⌋ + 1) with hx1 hx1
+        · have : x < y := by linarith
+          exact mul_lt_mul_of_pos_left this (pow_pos (show 0 < x + 1 / (⌊x⌋ + 1) by linarith) ⌊x⌋)
+        · have : x + 1 / (⌊x⌋ + 1) < y + 1 / (⌊x⌋ + 1) := by linarith
+          exact mul_lt_mul_of_pos_left this (pow_pos (show 0 < y + 1 / (⌊x⌋ + 1) by linarith) ⌊x⌋)
+      · have : ⌊x⌋ = y + 1 := by
+          rw [← Int.le_floor]
+          apply add_le_add
+          exact Int.le_floor x
+          exact le_of_lt (one_div_pos.mpr (Int.floor_pos.mpr hx))
+        simp [this]
+        refine lt_trans?_ (show 1 / (y + 1) < 1 / y by refine one_div_lt_one_div_of_lt?_ hy)?_
+        · exact add_lt_add_of_lt_of_le (show 0 < y by linarith) (one_div_pos.mpr (by linarith))
+        · exact one_div_lt_one_div_of_lt (by linarith) hy1
+    · rw [show g x = x * (x + 1 / (⌊x⌋ + 1)) ^ ⌊x⌋ by simp [g]]
+      cases' lt_or_ge y y + 1 / (⌊y⌋ + 1) with hy1 hy1
+      · have : ⌊x⌋ = ⌊y⌋ := Int.floor_eq_of_le_of_lt hyx hy1
+        simp [this]
+        refine lt_trans?_ (show x < y by linarith)?_
+        · exact add_lt_add_of_lt_of_le (show 0 < x by linarith) (one_div_pos.mpr (Int.floor_pos.mpr hx))
+        · exact one_div_lt_one_div_of_lt (by linarith) hy1
+      · have : ⌊x⌋ = y + 1 := by
+          rw [← Int.le_floor]
+          apply add_le_add
+          exact Int.le_floor y
+          exact le_of_lt (one_div_pos.mpr (Int.floor_pos.mpr hx))
+        simp [this]
+        refine lt_trans (show x < 1 by linarith)?_?_
+        · exact add_lt_add_of_lt_of_le (show 0 < x by linarith) (one_div_pos.mpr (by linarith))
+        · exact one_div_lt_one_div_of_lt (by linarith) (show 1 < y by linarith)
+
+  -- prove f n x = g (f (n - 1) x) for n ≥ 1 and 0 < x < 1
+  have h_f_g (n : ℕ) (hn : 0 < n) (hx : 0 < x) (hx' : x < 1) : f n x = g (f (n - 1) x) := by
+    induction' n with n ih
+    · contradiction
+    · rw [show n = n - 1 + 1 by omega, h₁, ih, show g (f (n - 1) x) = f (n - 1) x * (f (n - 1) x + 1 / (⌊f (n - 1) x⌋ + 1)) ^ ⌊f (n - 1) x⌋ by simp [g]]
+      cases' lt_or_ge (f (n - 1) x) (f (n - 1) x + 1 / (⌊f (n - 1) x⌋ + 1)) with h h
+      · have : ⌊f (n - 1) x⌋ = ⌊x⌋ := Int.floor_eq_of_lt_of_le hx (show f (n - 1) x > x by linarith)
+        simp [this]
+      · have : ⌊f (n - 1) x⌋ = ⌊x⌋ + 1 := Int.floor_eq_iff.mpr (show ⌊x⌋ + 1 ≤ f (n - 1) x < ⌊x⌋ + 2 by constructor <;> linarith)
+        simp [this]
+
+  -- prove f n x < f (n + 1) x for n ≥ 1 and 0 < x < 1
+  have h_f_mono (n : ℕ) (hn : 0 < n) (hx : 0 < x) (hx' : x < 1) : f n x < f (n + 1) x := by
+    rw [h_f_g (n + 1) (by omega) hx hx', h_f_g n hn hx hx']
+    cases' lt_or_ge (f (n - 1) x) (f (n - 1) x + 1 / (⌊f (n - 1) x⌋ + 1)) with h h
+    · refine lt_of_lt_of_le (show 0 < f (n - 1) x by linarith)?_
+      rw [show f (n - 1) x + 1 / (⌊f (n - 1) x⌋ + 1) < f (n - 1) x + 1 / ⌊f (n - 1) x⌋ by linarith]
+      exact lt_of_le_of_ne (Int.le_floor x) (show ¬⌊f (n - 1) x⌋ = ⌊x⌋ by linarith [Int.floor_lt x])
+    · refine lt_of_lt_of_le (show f (n - 1) x < 1 by linarith)?_
+      rw [show f (n - 1) x + 1 / ⌊f (n - 1) x⌋ ≤ f (n - 1) x + 1 / ⌊x⌋ by linarith]
+      exact lt_of_le_of_ne (Int.floor_le x) (show ¬⌊f (n - 1) x⌋ = ⌊x⌋ by linarith [Int.floor_lt x])
+
+  -- prove f n x < f (n + 1) x < 1 for all n ≥ 1 and 0 < x < 1
+  have h_f_lt_one (n : ℕ) (hn : 0 < n) (hx : 0 < x) (hx' : x < 1) : f n x < f (n + 1) x ∧ f (n + 1) x < 1 := by
+    constructor
+    · exact h_f_mono n hn hx hx'
+    · rw [h_f_g (n + 1) (by omega) hx hx']
+      cases' lt_or_ge (f (n - 1) x) (f (n - 1) x + 1 / (⌊f (n - 1) x⌋ + 1)) with h h
+      · cases' lt_or_eq_of_le h with h h
+        · rw [show f (n - 1) x + 1 / (⌊f (n - 1) x⌋ + 1) < 1 by linarith]
+          exact lt_of_lt_of_le (show 0 < f (n - 1) x by linarith) (show f (n - 1) x < 1 by linarith)
+        · simp [h]
+      · simp [h]
+
+  -- prove the lower bound of f n x for n ≥ 1 and 0 < x < 1
+  have h_f_bound (n : ℕ) (hn : 0 < n) (hx : 0 < x) : 0 < f n x := by
+    induction' n with n ih
+    · contradiction
+    · rw [h_f_g (n + 1) (by omega) hx (show x < 1 by linarith)]
+      cases' lt_or_ge (f n x) (f n x + 1 / (⌊f n x⌋ + 1)) with h h
+      · exact pos_of_mul_pos_left (show 0 < f n x + 1 / (⌊f n x⌋ + 1) by linarith)
+      · cases' lt_or_eq_of_le h with h h
+        · exact pos_of_mul_pos_left (show 0 < f n x by linarith)
+        · simp [h, show 0 < f n x by linarith]
+
+  -- prove the upper bound of f n x for n ≥ 1 and 0 < x < 1
+  have h_f_bound' (n : ℕ) (hn : 0 < n) (hx : 0 < x) : f n x < 1 := by
+    induction' n with n ih
+    · contradiction
+    · rw [h_f_g (n + 1) (by omega) hx (show x < 1 by linarith), show f n x * (f n x + 1 / (⌊f n x⌋ + 1)) ^ ⌊f n x⌋ < 1 by linarith]
+      cases' lt_or_ge (f n x) (f n x + 1 / (⌊f n x⌋ + 1)) with h h
+      · refine pow_lt_one₀ (show 0 < f n x by linarith) (show f n x < 1 by linarith) (show 0 < ⌊f n x⌋ + 1 by linarith)
+      · cases' lt_or_eq_of_le h with h h
+        · refine pow_lt_one₀ (show 0 < f n x by linarith) (show f n x < 1 by linarith) (show 0 < ⌊f n x⌋ + 1 by linarith)
+        · simp [h]
+
+  -- prove the limit of f n x is 1 for n ≥ 1 and 0 < x < 1
+  have h_f_lim (n : ℕ) (hn : 0 < n) (hx : 0 < x) (hx' : x < 1) : f n x = 1 := by
+    -- using proof by contradiction
+    by_contra h
+    have : 0 < n + 1 := by omega
+    have : 0 < f n x := h_f_bound n hn hx
+    have : f n x < 1 := h_f_bound' n hn hx
+    have : f n x < f (n + 1) x ∧ f (n + 1) x < 1 := h_f_lt_one n hn hx hx'
+    rw [show n = n + 1 - 1 by omega] at this
+    have := lt_of_le_of_ne (Int.le_floor x) (show ¬⌊f (n + 1 - 1) x⌋ = ⌊x⌋ by linarith [Int.floor_lt x])
+    have : 1 / (⌊f (n + 1 - 1) x⌋ + 1) < 1 / ⌊x⌋ := one_div_lt_one_div_of_lt (by simp) this
+    have : f (n + 1 - 1) x * (f (n + 1 - 1) x + 1 / (⌊f (n + 1 - 1) x⌋ + 1)) ^ ⌊f (n + 1 - 1) x⌋ < f (n + 1 - 1) x * (f (n + 1 - 1) x + 1 / ⌊x⌋) ^ ⌊f (n + 1 - 1) x⌋ := by
+      apply mul_lt_mul_of_pos_left
+      apply pow_lt_pow_right
+      · exact this
+      · exact lt_trans (show f (n + 1 - 1) x < 1 by linarith) (show 1 / (⌊f (n + 1 - 1) x⌋ + 1) < 1 / ⌊x⌋ by refine one_div_lt_one_div_of_lt?_ this) 
+      · exact le_of_lt (show 0 < f (n + 1 - 1) x by linarith)
+    have : f n x * (f n x + 1 / (⌊f n x⌋ + 1)) ^ ⌊f n x⌋ < f (n + 1 - 1) x * (f (n + 1 - 1) x + 1 / ⌊x⌋) ^ ⌊f (n + 1 - 1) x⌋ := by
+      rw [show f n x = f (n + 1 - 1) x by omega]
+      exact this
+    rw [show n = n + 1 - 1 by omega] at this
+    contradiction
+
+  -- prove the main result
+  have : ∃! a, ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 := by
+    use 1 / 2
+    constructor
+    · intro n hn
+      have : 0 < (1 / 2 : ℝ) := by norm_num
+      have : (1 / 2 : ℝ) < 1 := by norm_num
+      refine ⟨h_f_bound n (by omega) this,?_⟩
+      refine ⟨h_f_mono n (by omega) this, h_f_lt_one n (by omega) this⟩
+    · intro a h
+      -- Using proof by contradiction
+      by_contra h'
+      have : 0 < a := h_f_bound 1 (by norm_num) a
+      have : a < 1 := h_f_bound' 1 (by norm_num) a
+      have h_a_val : ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 := by
+        intro n hn
+        exact h n hn
+      specialize h_a_val 1 (by norm_num)
+      have : 0 < f 1 a := h_a_val.1
+      have : f 1 a < f 2 a := h_a_val.2.1
+      have : f 2 a < 1 := h_a_val.2.2
+      have : f 1 a = a := by rw [h₁]; norm_num
+      rw [this] at have
+      linarith
+  assumption
+
+```

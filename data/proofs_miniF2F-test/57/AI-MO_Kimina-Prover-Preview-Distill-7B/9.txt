@@ -1,0 +1,289 @@
+have hp : 1 < p := h₀.1
+  have hq : 1 < q := by linarith
+  have hr : 1 < r := by linarith
+
+  have hpqr : 1 < p * q * r := by
+    calc
+      1 < p := hp
+      _ < q := by linarith
+      _ < r := by linarith
+      _ < p * q * r := by gcongr
+
+  have hpqr' : 0 < p * q * r - 1 := by omega
+
+  have h₂ : (p - 1) * (q - 1) * (r - 1) < p * q * r - 1 := by
+    calc
+      (p - 1) * (q - 1) * (r - 1) < p * q * r := by
+        apply mul_lt_mul_of_pos_of_nonneg
+        apply mul_lt_mul_of_pos_of_nonneg
+        · omega
+        · omega
+        · positivity
+        · linarith
+      _ < p * q * r - 1 := by omega
+
+  have h₃ : 0 < (p - 1) * (q - 1) * (r - 1) := by positivity
+
+  have h₄ : (p - 1) * (q - 1) * (r - 1) ≠ 0 := by positivity
+
+  have hp₁ : Nat.Prime 2 := by norm_num
+
+  have hp₂ : Nat.Prime 3 := by norm_num
+
+  have hp₃ : Nat.Prime 5 := by norm_num
+
+  have hp₄ : Nat.Prime 7 := by norm_num
+
+  have hp₅ : Nat.Prime 11 := by norm_num
+
+  have hp₆ : Nat.Prime 13 := by norm_num
+
+  have hp₇ : Nat.Prime 17 := by norm_num
+
+  have hp₈ : Nat.Prime 19 := by norm_num
+
+  have hq₁ : Nat.Prime 7 := by norm_num
+
+  have hq₂ : Nat.Prime 13 := by norm_num
+
+  have hq₃ : Nat.Prime 19 := by norm_num
+
+  have hq₄ : Nat.Prime 31 := by norm_num
+
+  have hq₅ : Nat.Prime 37 := by norm_num
+
+  have hq₆ : Nat.Prime 43 := by norm_num
+
+  have hq₇ : Nat.Prime 61 := by norm_num
+
+  have hq₈ : Nat.Prime 73 := by norm_num
+
+  have hr₁ : Nat.Prime 11 := by norm_num
+
+  have hr₂ : Nat.Prime 19 := by norm_num
+
+  have hr₃ : Nat.Prime 29 := by norm_num
+
+  have hr₄ : Nat.Prime 41 := by norm_num
+
+  have hr₅ : Nat.Prime 47 := by norm_num
+
+  have hr₆ : Nat.Prime 59 := by norm_num
+
+  have hr₇ : Nat.Prime 71 := by norm_num
+
+  have hr₈ : Nat.Prime 89 := by norm_num
+
+  -- The key observation is the following: if $p, q, r$ are integers with $1 < p < q < r$ and $(p - 1) (q - 1) (r - 1)$ divides $pqr - 1$, then $p = 2$ or $p = 3$.
+  have key : (p = 2) ∨ (p = 3) := by
+    -- By the triangle inequality, $(q - 1) (r - 1) ≤ q + r - 2$.
+    have h₅ : (q - 1) * (r - 1) ≤ q + r - 2 := by
+      apply le_of_lt
+      calc
+        (q - 1) * (r - 1) < q * r := by
+          apply mul_lt_mul_of_pos_of_nonneg
+          · omega
+          · positivity
+          · linarith
+          · linarith
+        _ < q + r - 2 := by
+          calc
+            q + r - 2 = 2 + (q + r - 4) := by omega
+            _ < q * r := by apply Nat.lt_mul_of_pos_of_lt; positivity; linarith
+
+    -- This means that $(p - 1) (q - 1) (r - 1) ≤ (p - 1) (q + r - 2)$.
+    have h₆ : (p - 1) * (q - 1) * (r - 1) ≤ (p - 1) * (q + r - 2) := by
+      apply mul_le_mul_of_nonneg_left
+      · exact h₅
+      · linarith
+
+    -- So $(p - 1) (q + r - 2) ≥ 1$.
+    have h₇ : (p - 1) * (q + r - 2) ≥ 1 := by omega
+
+    -- This means that $p ≥ 2$.
+    have h₈ : p ≥ 2 := by
+      by_contra!
+      have : p - 1 = 0 := by omega
+      rw [this] at h₇
+      simp at h₇
+
+    -- In particular, $p - 1$ is a positive integer.
+    have h₉ : 0 < p - 1 := by omega
+
+    -- So $(p - 1) (q + r - 2) ≤ (p - 1) (q - 1) (r - 1)$.
+    have h₁₀ : (p - 1) * (q + r - 2) ≤ (p - 1) * (q - 1) * (r - 1) := by omega
+
+    -- By the division property, $p - 1$ divides $pqr - 1$.
+    have h₁₁ : p - 1 ∣ p * q * r - 1 := by
+      apply dvd_trans _ h₁
+      apply Nat.dvd_mul_right
+
+    -- This means that $p - 1$ is a prime power (Fundamental Theorem of Arithmetic).
+    have h₁₂ : ∃ p : ℕ, p.Prime ∧ p ∣ p - 1 ∧ p ∣ p * q * r - 1 := by
+      rw [←Nat.prime_def]
+      use p - 1
+      constructorm* _ ∧ _
+      · linarith
+      · exact h₁₁
+
+    -- However, $p - 1$ is not a prime power: it is a product of two smaller integers.
+    have h₁₃ : ¬∃ p : ℕ, p.Prime ∧ p ∣ p - 1 ∧ p ∣ p * q * r - 1 := by
+      by_contra! h₁₃
+      obtain ⟨p, h₅, h₆, h₇⟩ := h₁₃
+      have hpge : 2 ≤ p := by rw [←Nat.pos_iff_ne_zero, Nat.Prime.two_le] at h₅; omega
+
+      have h₈ : p - 1 ∣ p * q * r - 1 := by
+        calc
+          p - 1 ∣ (p - 1) * (q - 1) * (r - 1) := by apply dvd_mul_right
+          _ ∣ p * q * r - 1 := by exact h₁
+
+      have h₉ : p - 1 ∣ p * q * r - (p * q * r - 1) := by
+        apply dvd_sub
+        · apply Nat.dvd_trans h₈
+          apply Nat.dvd_mul_right
+        · exact Nat.dvd_refl _
+      have h₁₀ : p - 1 ∣ 1 := by
+        calc
+          p - 1 ∣ p * q * r - (p * q * r - 1) := by exact h₉
+          _ = 1 := by omega
+      have : p - 1 = 1 := by
+        apply Nat.eq_one_of_dvd_one
+        exact h₁₀
+      have hp_eq_p_sub_one : p = p - 1 + 1 := by omega
+      rw [this] at hpge
+      linarith
+
+    -- We arrive at a contradiction.
+    contradiction
+
+  -- Now we show that if $p = 2$, then $q = 4$ and $r = 8$.
+  have p_eq_2_or_3 : p = 2 ∨ p = 3 := by
+    omega
+
+  rcases p_eq_2_or_3 with p_eq_2 | p_eq_3
+
+  -- If $p = 2$, we can substitute $p = 2$ into the equation $(p - 1) (q - 1) (r - 1) = pqr - 1$.
+  · have hq₁ : q ≥ 3 := by nlinarith
+
+    have h₅ : (q - 1) * (r - 1) = q + r - 2 := by
+      simp [p_eq_2] at h₁
+      nlinarith
+
+    have h₆ : q - 1 ∣ q + r - 2 := by
+      apply dvd_of_mul_left_dvd
+      exact h₅
+
+    -- By the triangle inequality, $(q - 1) (r - 1) ≤ q + r - 2$.
+    have h₇ : (q - 1) * (r - 1) ≤ q + r - 2 := by
+      apply le_of_lt
+      calc
+        (q - 1) * (r - 1) < q * r := by
+          apply mul_lt_mul_of_pos_of_nonneg
+          · omega
+          · positivity
+          · linarith
+          · linarith
+        _ < q + r - 2 := by
+          calc
+            q + r - 2 = 2 + (q + r - 4) := by omega
+            _ < q * r := by
+              apply Nat.lt_mul_of_pos_of_lt; positivity; linarith
+
+    have h₈ : (q - 1) * (r - 1) = q + r - 2 := by
+      linarith
+
+    -- This means that $q - 1$ divides $q + r - 2$.
+    have h₉ : q - 1 ∣ q + r - 2 := by
+      apply dvd_of_mul_left_dvd
+      exact h₈
+
+    -- However, $q - 1$ cannot divide $q + r - 2$ if $q ≥ 4$.
+    have hq₂ : ¬(q - 1) ∣ q + r - 2 := by
+      by_contra! hq₂
+      have : q - 1 ∣ q + r - (q + r - 2) := by
+        apply dvd_sub
+        · apply Nat.dvd_trans hq₂
+          apply Nat.dvd_mul_right
+        · exact Nat.dvd_refl _
+      have : q - 1 ∣ 4 := by
+        calc
+          q - 1 ∣ q + r - (q + r - 2) := by exact this
+          _ = 4 := by omega
+      have : 4 < 5 := by norm_num
+      have : ¬(q - 1) ∣ 4 := by
+        interval_cases q
+        · have : q - 1 = 0 := by omega
+          rw [this] at this
+          contradiction
+        · have : q - 1 = 1 := by omega
+          rw [this] at this
+          contradiction
+        · have : q - 1 = 2 := by omega
+          rw [this] at this
+          contradiction
+        · have : q - 1 = 3 := by omega
+          rw [this] at this
+          contradiction
+        · omega
+      contradiction
+
+    -- We arrive at a contradiction.
+    contradiction
+
+  -- If $p = 3$, we can substitute $p = 3$ into the equation $(p - 1) (q - 1) (r - 1) = pqr - 1$.
+  · have hq₁ : q ≥ 4 := by nlinarith
+
+    have h₅ : (q - 1) * (r - 1) = 2 * (q + r - 2) := by
+      simp [p_eq_3] at h₁
+      nlinarith
+
+    -- By the triangle inequality, $(q - 1) (r - 1) ≤ q + r - 2$.
+    have h₆ : (q - 1) * (r - 1) ≤ q + r - 2 := by
+      apply le_of_lt
+      calc
+        (q - 1) * (r - 1) < q * r := by
+          apply mul_lt_mul_of_pos_of_nonneg
+          · omega
+          · positivity
+          · linarith
+          · linarith
+        _ < q + r - 2 := by
+          calc
+            q + r - 2 = 2 + (q + r - 4) := by omega
+            _ < q * r := by
+              apply Nat.lt_mul_of_pos_of_lt; positivity; linarith
+
+    have h₇ : r - 1 ≤ q - 1 := by
+      nlinarith
+
+    -- This means that $q - 1 = r - 1$.
+    have h₈ : q - 1 = r - 1 := by
+      linarith
+
+    -- We can substitute $r = q$ into the equation $(q - 1) (r - 1) = 2(q + r - 2)$.
+    have h₉ : (q - 1) * (r - 1) = 2 * (q + r - 2) := by
+      exact h₅
+
+    rw [show r - 1 = q - 1 by omega] at h₉
+    rw [show r = q by omega] at h₉
+
+    -- We can simplify to get $q = 4$.
+    have hq_eq_4 : q = 4 := by
+      nlinarith
+
+    have h₉ : r = 8 := by
+      linarith
+
+    left
+    simp [p_eq_3, hq_eq_4, h₉]
+
+  -- The only remaining case is when $p = 2$ and $q = 4$, which implies $r = 8$.
+  · have hq_eq_4 : q = 4 := by
+      nlinarith
+
+    have hr_eq_8 : r = 8 := by
+      nlinarith
+
+    right
+    simp [p_eq_2, hq_eq_4, hr_eq_8]
+```

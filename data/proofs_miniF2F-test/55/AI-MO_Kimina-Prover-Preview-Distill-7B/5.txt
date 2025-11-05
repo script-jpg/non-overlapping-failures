@@ -1,0 +1,88 @@
+-- We use `induction` to prove this identity. 
+  induction n with
+  | zero =>
+    simp
+```
+
+The base case, when $n = 0$, is trivial. Both sides of the equation evaluate to 0. The left side is an empty sum of cubes, and the right side is the square of an empty sum, which is also 0.
+
+Now for the inductive step:
+
+```/-- For the inductive step, we assume the identity holds for $n$, and show it also holds for $n+1$. -/
+```
+
+We assume the identity is true for $n$, and prove it for $n+1$:
+
+```tactics
+| succ n ih =>
+  rw [Finset.sum_range_succ, Finset.sum_range_succ]
+```
+
+We've expanded the sums to include the $n$-th term. Now we need to show that:
+$\sum_{k=0}^{n}k^3 = \sum_{k=0}^{n-1}k^3 + n^3$
+$\sum_{k=0}^{n}k = \sum_{k=0}^{n-1}k + n$
+
+And we need to show that $\sum_{k=0}^{n}k^3 = (\sum_{k=0}^{n}k)^2$
+
+Let's continue with the inductive hypothesis:
+
+```tactics
+rw [ih]
+```
+
+Now we need to show that:
+$\sum_{k=0}^{n-1}k^3 + n^3 = (\sum_{k=0}^{n-1}k + n)^2$
+
+Expanding the right side:
+$(\sum_{k=0}^{n-1}k + n)^2 = (\sum_{k=0}^{n-1}k)^2 + 2n(\sum_{k=0}^{n-1}k) + n^2$
+
+And we know from the inductive hypothesis that:
+$\sum_{k=0}^{n-1}k^3 = (\sum_{k=0}^{n-1}k)^2$
+
+So we need to show:
+$\sum_{k=0}^{n-1}k^3 + n^3 = (\sum_{k=0}^{n-1}k)^2 + 2n(\sum_{k=0}^{n-1}k) + n^2$
+
+Which simplifies to:
+$n^3 = 2n(\sum_{k=0}^{n-1}k) + n^2$
+
+Further simplification gives:
+$n^2(n-1) = 2n(\sum_{k=0}^{n-1}k)$
+
+And finally:
+$n(n-1) = 2(\sum_{k=0}^{n-1}k)$
+
+The last equation is a well-known formula for the sum of the first $n-1$ natural numbers. We can complete the proof with:
+
+```tactics
+simp [add_sq]
+ring_nf
+```
+
+These tactics are proving the algebraic equivalence between the two sides of the equation. The `simp` tactic with `add_sq` is expanding the square on the right side, and `ring_nf` is simplifying the resulting expressions to show they are equal.
+
+In conclusion, we've proven that for all natural numbers $n$, the sum of the cubes of the first $n-1$ natural numbers equals the square of the sum of the first $n-1$ natural numbers. This is a classic result in mathematics, and our proof follows the standard approach using induction.
+</s>
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+
+
+/-- Show that for all natural numbers $n$, we have $\sum_{k=0}^{n-1}k^3 = \left(\sum_{k=0}^{n-1}k\right)^2$.-/
+
+theorem induction_sumkexp3eqsumksq (n : ℕ) :
+    (∑ k in Finset.range n, k ^ 3) = (∑ k in Finset.range n, k) ^ 2 := by
+  -- We use `induction` to prove this identity. 
+  induction n with
+  | zero =>
+    simp
+  | succ n ih =>
+    rw [Finset.sum_range_succ, Finset.sum_range_succ]
+    rw [ih]
+    simp [add_sq]
+    ring_nf
+```

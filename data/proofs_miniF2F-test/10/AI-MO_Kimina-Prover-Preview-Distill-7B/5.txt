@@ -1,0 +1,36 @@
+-- We first consider the case when all numbers are small, i.e. less than $6.$
+  have h : (∑ k in Finset.range 7, k) % 6 = 0 := by
+    simp [Finset.sum_range_succ]
+
+  -- We now use the Chinese Remainder Theorem to solve the problem.
+  have h' : (∑ k in Finset.range 101, k) % 6 = 4 := by
+    rw [show 101 = 7 + 7*14 by norm_num]
+
+    -- We write $N$ for the sum of the first $7$ numbers.
+    set N := ∑ k in Finset.range 7, k
+
+    -- We add $N$ to both sides of the equation.
+    have : N + (∑ k in Finset.range 7 * 14, (k + 7)) = ∑ k in Finset.range 101, k := by
+      simp only [Finset.sum_range_succ, Finset.sum_range_succ']
+      ring
+
+    rw [this.symm]
+    rw [show N + (∑ k in Finset.range 7 * 14, (k + 7)) = N + (∑ k in Finset.range 14, (k * 7)) by simp]
+
+    -- We first compute the remainder of the sum on the right.
+    have h'' : (∑ k in Finset.range 14, (k * 7)) % 6 = 0 := by
+      rw [Finset.sum_eq_card_nsmul (show ∀ i ∈ Finset.range 14, 7 = 7 by simp)]
+      rw [Finset.card_range]
+      norm_num
+
+    -- We then compute the remainder of the left-hand side.
+    have h''' : (N + N % 6 + (∑ k in Finset.range 14, (k * 7)) % 6) % 6 = (N % 6 + N % 6 + 0) % 6 := by
+      rw [h', h'']
+      simp
+
+    rw [← h] at h'''
+    omega
+
+  exact h'
+
+```

@@ -1,0 +1,76 @@
+-- the minimum value of $Icc\;2\;10000$ is $2$
+  have hmin : Finset.Icc (2 : ℕ) 10000 = Finset.Ico 2 10001 := by
+    ext x
+    simp
+    omega
+  have hmin' : (2 : ℕ) ∈ Finset.Icc (2 : ℕ) 10000 := by
+    simp [hmin]
+    norm_num
+  have hmax : ∀ x ∈ Finset.Icc (2 : ℕ) 10000, x ≤ 10000 := by
+    intro x hx
+    simp [hmin] at hx
+    exact hx.2
+
+  -- Define $f(x) = \frac{1}{\sqrt{x}}$
+  let f (x : ℕ) := 1 / Real.sqrt x
+
+  -- Transform the sum into an integral
+  have integral_f_eq_sum : ∑ k in Finset.Icc (2 : ℕ) 10000, f k = ∑ k in Finset.Icc (2 : ℕ) 10000, f k := by rfl
+
+  -- Show that $f(x)$ is monotone on $Icc\;2\;10000$
+  have hmono : MonotoneOn f (Finset.Icc (2 : ℕ) 10000) := by
+    intro x hx y hy hxy
+    simp [f] at *
+    rw [Real.sqrt_le_sqrt (by simp ; omega)]
+    apply one_div_le_one_div_of_le (by simp; omega) (by simp; omega) hxy
+
+  -- Since $f(x)$ is monotone, we have
+  -- $\sum_{k=2}^{10000} f(k) \leq \int_{2}^{10001} f(x)dx$
+  have integral_ineq : ∑ k in Finset.Icc (2 : ℕ) 10000, f k ≤ ∫ k in Finset.Icc (2 : ℕ) 10000, f k := by
+    apply Finset.sum_le_sum_of integrableOn_of_nonneg_of_mono
+    · intro x hx
+      simp at hx
+      exact hx.1
+    · simp [f]
+      apply le_of_lt
+      apply Real.lt_sqrt_of_sq_lt
+      apply lt_of_le_of_lt (hmax x hx)
+      norm_num
+    · intro x hx y hy hxy
+      simp [f] at *
+      rw [Real.sqrt_le_sqrt (by simp ; omega)]
+      apply one_div_le_one_div_of_le (by simp; omega) (by simp; omega) hxy
+
+  -- We can evaluate $\int_{2}^{10001} f(x)dx$ by finding the antiderivative of $f(x)$
+  have integral_eq : ∫ k in Finset.Icc (2 : ℕ) 10000, f k = 2 * (sqrt 10000 - sqrt 2) := by
+    simp [f]
+    rw [← Finset.sum_range integral_f_eq_sum, integral_f_eq_sum]
+    norm_num
+    rw [hmin', hmax 10000 (by simp [hmin])]
+    norm_num
+    rw [← Finset.sum_range, Finset.sum_Ico_eq_sum_range]
+    simp
+    norm_num
+    rw [← hmin, hmax 10000 (by simp [hmin])]
+    norm_num
+    rw [Finset.sum_range, Finset.sum_range]
+    simp
+    rw [← Finset.sum_Ico_eq_sum_range]
+    simp
+    norm_num
+    rw [← Finset.sum_range, Finset.sum_range]
+    simp
+    norm_num
+
+  -- $\sqrt{10000} = 100$
+  have sqrt_10000 : Real.sqrt 10000 = 100 := by
+    rw [Real.sqrt_eq_iff_sq_eq] <;> norm_num
+
+  -- $\int_{2}^{10001} f(x)dx < 200$
+  have integral_lt_200 : ∫ k in Finset.Icc (2 : ℕ) 10000, f k < 200 := by
+    rw [integral_eq, sqrt_10000]
+    norm_num
+
+  linarith only [integral_ineq, integral_lt_200]
+
+```

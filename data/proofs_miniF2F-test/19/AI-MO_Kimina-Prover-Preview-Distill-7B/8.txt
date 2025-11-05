@@ -1,0 +1,92 @@
+-- It suffices to show that those $x$ satisfy $x < \frac {45}8$ and $x \ge -\frac 12$
+  suffices h : x < 45 / 8 ∧ -1 / 2 ≤ x by
+    constructor
+    · linarith
+    · linarith
+
+  -- Some transformations to simplify the inequality
+  have h₃ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 > 0 := by
+    apply sq_pos_of_ne_zero
+    exact h₁
+
+  have h₄ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 2 * x + 9 ↔ 4 * x ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    refine Iff.symm (div_lt_iff₀ h₃)
+    linarith
+
+  have h₅ : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (2 * x + 1) ^ 2 - (2 * x + 1 + 2 * Real.sqrt (1 + 2 * x)) ^ 2 := by
+    ring_nf
+    rw [Real.sq_sqrt (by linarith)]
+    ring_nf
+    rw [Real.sq_sqrt (by linarith)]
+    ring_nf
+
+  have h₆ : 4 * x ^ 2 < (2 * x + 1) ^ 2 - (2 * x + 1 + 2 * Real.sqrt (1 + 2 * x)) ^ 2 ↔ 0 < (2 * x + 1 + 2 * Real.sqrt (1 + 2 * x)) ^ 2 - 4 * x ^ 2 + (2 * x + 1) ^ 2 := by
+    simp
+    rw [lt_sub_iff_add_lt]
+    rw [sub_sq, ← sub_sub, ← sub_sub, ← sub_add]
+    ring_nf
+    nth_rw 1 [← add_zero (2 * x + 1)]
+    rw [add_sub_assoc, ← sub_eq_add_neg]
+    simp
+    rw [add_comm]
+    simp
+
+  have h₇ : (2 * x + 1 + 2 * Real.sqrt (1 + 2 * x)) ^ 2 - 4 * x ^ 2 + (2 * x + 1) ^ 2 = (2 * x + 1 + 2 * Real.sqrt (1 + 2 * x)) ^ 2 - ((2 * x + 1) ^ 2 - 4 * x ^ 2) := by
+    ring_nf
+    rw [Real.sq_sqrt (by linarith)]
+    ring_nf
+    rw [Real.sq_sqrt (by linarith)]
+    ring_nf
+    rw [add_comm]
+    simp
+
+  have h₈ : 0 < (2 * x + 1 + 2 * Real.sqrt (1 + 2 * x)) ^ 2 - 4 * x ^ 2 + (2 * x + 1) ^ 2 ↔ 0 < (2 * x + 1 + 2 * Real.sqrt (1 + 2 * x)) ^ 2 - ((2 * x + 1) ^ 2 - 4 * x ^ 2) := by
+    rw [h₆]
+  rw [h₄, h₅, h₇] at h₂
+  rw [h₈] at h₂
+
+  -- Split the goal into two
+  constructor
+  · -- Prove that $x < \frac {45}8$
+    by_contra! h₉
+    -- If $x \ge \frac {45}8$, then $2x + 1 \ge 10$
+    have h₁₀ : 2 * x + 1 ≥ 10 := by linarith
+    -- and $1 - \sqrt {2x + 1} \le -3$
+    have h₁₁ : 1 - Real.sqrt (1 + 2 * x) ≤ -3 := by
+      -- equivalently, $\sqrt{2x + 1} \ge 4$
+      suffices h : 4 ≤ Real.sqrt (1 + 2 * x) by linarith
+      -- This is true because $4 = \sqrt {16} \le \sqrt {2x + 1}$
+      apply Real.le_sqrt_of_sq_le
+      linarith
+    -- We have $(1 - \sqrt {2x + 1})^2 \ge 9$
+    have h₁₂ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 ≥ 9 := by nlinarith
+    -- and $2x + 1 + 2\sqrt{2x + 1} \ge 17 + 8 = 25$
+    have h₁₃ : 2 * x + 1 + 2 * Real.sqrt (1 + 2 * x) ≥ 25 := by
+      -- equivalently, $2x + 1 + 2\sqrt{2x + 1} - 25 \ge 0$
+      suffices h : 2 * x + 1 + 2 * Real.sqrt (1 + 2 * x) - 25 ≥ 0 by linarith
+      -- Note that $2x + 1 \ge 10$, $2x + 1 + 2\sqrt{2x + 1} - 25 \ge 10 + 2\sqrt{10} - 25$
+      nlinarith [Real.sqrt_nonneg (1 + 2 * x)]
+    -- Now we have $(1 - \sqrt {2x + 1})^2 - (2x + 1 + 2\sqrt{2x + 1})^2 \ge 9 - 25^2$, which is negative
+    have h₁₄ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 - (2 * x + 1 + 2 * Real.sqrt (1 + 2 * x)) ^ 2 ≤ -576 := by nlinarith
+    -- which is a contradiction
+    linarith
+
+  · -- Prove that $x \ge -\frac 12$
+    -- If $x < -\frac 12$, then $2x + 1 < 0$
+    by_contra! h₁₀
+    have h₁₁ : 2 * x + 1 < 0 := by linarith
+    -- and $1 - \sqrt {2x + 1} < 1$
+    have h₁₂ : 1 - Real.sqrt (1 + 2 * x) < 1 := by
+      -- equivalently, $\sqrt {2x + 1} > 0$
+      suffices h : 0 < Real.sqrt (1 + 2 * x) by linarith
+      -- This is true because $2x + 1 > 0$
+      apply Real.sqrt_pos_of_pos
+      linarith
+    -- We have $(1 - \sqrt {2x + 1})^2 > 1$
+    have h₁₃ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 > 1 := by nlinarith
+    -- Now we have $(1 - \sqrt {2x + 1})^2 - (2x + 1 + 2\sqrt{2x + 1})^2 > 1 - 25^2$, which is negative
+    have h₁₄ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 - (2 * x + 1 + 2 * Real.sqrt (1 + 2 * x)) ^ 2 > -576 := by nlinarith
+    -- which is a contradiction
+    linarith
+
+```

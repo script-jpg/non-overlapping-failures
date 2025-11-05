@@ -1,0 +1,54 @@
+-- Let $x=|a|$ and $y=|b|$.
+  let x := abs a
+  let y := abs b
+
+  -- $x \geq 0$ and $y \geq 0$.
+  have hx : x ≥ 0 := abs_nonneg a
+  have hy : y ≥ 0 := abs_nonneg b
+
+  -- $x+y \geq 0$.
+  have hxy : x + y ≥ 0 := by
+    apply add_nonneg
+    exact hx
+    exact hy
+
+  have h : x + y ≥ 0 := by
+    exact hxy
+
+  -- $|a+b| \leq |a|+|b| = x+y$.
+  have hineq : abs (a + b) ≤ x + y := by
+    have h : abs (a + b) ≤ abs a + abs b := abs_add a b
+    rw [show abs a = x by rfl]
+    rw [show abs b = y by rfl]
+    exact h
+
+  -- $\frac{|a+b|}{1+|a+b|}\leq \frac{|a|}{1+|a|}+\frac{|b|}{1+|b|}$ is equivalent to
+  --
+  -- $\frac{x+y}{1+x+y} \leq \frac{x}{1+x}+\frac{y}{1+y}$.
+  --
+  -- This is true because $\frac{x+y}{1+x+y} \leq \frac{x}{1+x}+\frac{y}{1+y}$.
+  have hfrac : abs (a + b) / (1 + abs (a + b)) ≤ abs a / (1 + abs a) + abs b / (1 + abs b) := by
+    rw [show abs (a + b) = x + y by simp only [x, y]]
+    rw [show abs a = x by rfl]
+    rw [show abs b = y by rfl]
+
+    have h : (x + y) / (1 + x + y) ≤ x / (1 + x) + y / (1 + y) := by
+      -- $\frac{x+y}{1+x+y} \leq \frac{x}{1+x}+\frac{y}{1+y}$.
+      -- This is true because $\frac{x}{1+x}+\frac{y}{1+y} = \frac{x + y + 2xy}{(1+x)(1+y)}$ and $x+y \leq x+y+2xy$.
+      have h : x * y ≥ 0 := by
+        exact mul_nonneg hx hy
+      have h' : 1 + x + y ≤ (1 + x) * (1 + y) := by
+        rw [show (1 + x) * (1 + y) = 1 + x + y + x * y by ring]
+        linarith
+      have h'' : 1 + x + y + x * y ≤ (1 + x) * (1 + y) := by
+        linarith
+      have h''' : 1 + x + y ≤ 0 + (1 + x) * (1 + y) := by
+        linarith
+      apply (div_le_div_iff (by linarith) (by linarith)).mpr
+      linarith
+
+    exact h
+
+  exact hfrac
+
+```

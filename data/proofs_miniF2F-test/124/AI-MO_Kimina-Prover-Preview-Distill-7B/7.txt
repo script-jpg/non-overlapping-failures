@@ -1,0 +1,49 @@
+-- Set $x=|a|$ and $y=|b|$.
+  let x := abs a
+  let y := abs b
+
+  -- simple inequality $x+y \geq |x+y|$
+  have hxy : x + y ≥ abs (x + y) := by
+    rcases abs_cases (x + y) with h | h
+    all_goals
+      simp [h]
+      linarith
+
+  -- $x \geq ||a|-|b||$
+  have hx : x ≥ abs (x - y) := by
+    rcases abs_cases (x - y) with h | h
+    all_goals
+      simp [h]
+      linarith
+
+  -- $y \geq ||a|-|b||$
+  have hy : y ≥ abs (x - y) := by
+    rcases abs_cases (x - y) with h | h
+    all_goals
+      simp [h]
+      linarith
+
+  -- $\frac{|x+y|}{1+|x+y|} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+  have hxy' : abs (x + y) / (1 + abs (x + y)) ≤ abs a / (1 + abs a) + abs b / (1 + abs b) := by
+    -- $\frac{|x+y|}{1+|x+y|} \leq \frac{x+y}{1+x+y}$ since $x+y \geq |x+y|$ and $1+x+y > 0$.
+    have h1 : abs (x + y) / (1 + abs (x + y)) ≤ (x + y) / (1 + (x + y)) := by
+      have h1 : 1 + abs (x + y) > 0 := by
+        linarith [abs_nonneg (x + y)]
+      apply (div_le_div_iff₀ h1 (by linarith)).mpr
+      simp
+      exact hxy
+    -- $\frac{x+y}{1+x+y} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+    have h2 : (x + y) / (1 + (x + y)) ≤ abs a / (1 + abs a) + abs b / (1 + abs b) := by
+      have h2 : 1 + (x + y) > 0 := by
+        linarith [abs_nonneg a, abs_nonneg b]
+      rw [div_add_div]
+      refine ⟨⟨?_, h2⟩, ⟨h2,?_⟩⟩
+      all_goals
+        linarith
+    exact le_trans h1 h2
+
+  -- Replace $x$ by $|a|$ and $y$ by $|b|$ to get the desired inequality.
+  apply hxy'
+  simp [x, y]
+
+```

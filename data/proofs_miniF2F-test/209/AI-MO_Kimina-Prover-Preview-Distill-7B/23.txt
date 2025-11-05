@@ -1,0 +1,54 @@
+-- We begin by setting up the problem and simplifying the expression.
+
+  -- Let's first simplify the left hand side: $\sqrt{\log_2{6}+\log_3{6}}$.
+  have : Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3 = 2 * Real.log 6 / (Real.log 2 * Real.log 3) := by
+    field_simp
+    ring
+
+  -- Now, we need to show that $\sqrt{\frac{2\log 6}{\log 2 \log 3}} = \sqrt{\log_2{3}}+\sqrt{\log_3{2}}$.
+  rw [this]
+  have : 2 * Real.log 6 = 2 * (Real.log 2 + Real.log 3) := by
+    ring_nf
+    rw [show Real.log 6 = Real.log (2 * 3) by ring_nf]
+    rw [Real.log_mul (by linarith) (by linarith)]
+  rw [this]
+
+  -- We have simplified the left hand side to $\sqrt{\frac{2(\log_2{6}+\log_3{6})}{\log_2{6}\log_3{6}}}$.
+  -- Now, let's focus on the right hand side: $\sqrt{\log_2{3}}+\sqrt{\log_3{2}}$.
+  have : (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3)) ^ 2 =
+      2 * (Real.log 2 + Real.log 3) / (Real.log 2 * Real.log 3) := by
+    rw [add_sq]
+    field_simp
+    rw [Real.sq_sqrt (by positivity)]
+    rw [Real.sq_sqrt (by positivity)]
+    field_simp
+    ring_nf
+    rw [Real.log_mul (by linarith) (by linarith), Real.log_mul (by linarith) (by linarith)]
+    rw [add_mul, mul_add, mul_assoc, mul_assoc]
+    rw [Real.log_div (by positivity) (by linarith), Real.log_div (by positivity) (by linarith)]
+    field_simp
+    ring_nf
+    rw [Real.log_mul (by linarith) (by linarith), Real.log_mul (by linarith) (by linarith)]
+    ring_nf
+    rw [Real.log_mul (by linarith) (by linarith), Real.log_mul (by linarith) (by linarith)]
+    ring_nf
+    rw [Real.log_div (by positivity) (by linarith), Real.log_div (by positivity) (by linarith)]
+    field_simp
+    ring
+
+  -- We have shown that both sides square to the same value.
+  -- Since the right hand side is a sum of square roots, it must be nonnegative.
+  have : 0 ≤ Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3) := by
+    apply add_nonneg
+    · apply Real.sqrt_nonneg
+    · apply Real.sqrt_nonneg
+
+  -- Since the square of the right hand side equals the left hand side, and the right hand side is nonnegative,
+  -- the right hand side must equal the principal square root of the left hand side.
+  have : (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3)) ^ 2 =
+      Real.sqrt (Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3) ^ 2 := by
+    rw [this]
+    rw [Real.sq_sqrt (by positivity)]
+  rw [sq_eq_sq (by positivity) (by linarith)] at this
+  exact this
+```

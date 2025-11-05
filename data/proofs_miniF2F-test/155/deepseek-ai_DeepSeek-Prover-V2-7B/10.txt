@@ -1,0 +1,46 @@
+have step₁ : S.card = 5 := by
+    have h₁ : S = {0, Real.pi / 2, Real.pi, (3 * Real.pi) / 2, 2 * Real.pi} := by
+      ext x
+      simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+      constructor
+      · intro h
+        have h₂ : 0 ≤ x := h.1
+        have h₃ : x ≤ 2 * Real.pi := h.2.1
+        have h₄ : Real.tan (2 * x) = Real.cos (x / 2) := h.2.2
+        have h₅ : Real.tan (2 * x) = Real.sin (2 * x) / Real.cos (2 * x) := by rw [Real.tan_eq_sin_div_cos]
+        rw [h₅] at h₄
+        have h₆ : Real.cos (2 * x) = 2 * Real.cos x ^ 2 - 1 := by rw [Real.cos_two_mul]
+        have h₇ : Real.sin (2 * x) = 2 * Real.sin x * Real.cos x := by rw [Real.sin_two_mul]
+        rw [h₆, h₇] at h₄
+        have h₈ : Real.cos (x / 2) = Real.cos (x / 2) := rfl
+        have h₉ : Real.cos x ≠ 0 ∨ Real.cos x = 0 := by apply Classical.em
+        cases h₉ with
+        | inl h₉ =>
+          have h₁₀ : Real.sin x ≠ 0 ∨ Real.sin x = 0 := by apply Classical.em
+          cases h₁₀ with
+          | inl h₁₀ =>
+            field_simp [h₉, h₁₀] at h₄
+            have h₁₁ : x = 0 ∨ x = Real.pi / 2 ∨ x = Real.pi ∨ x = (3 * Real.pi) / 2 ∨ x = 2 * Real.pi := by
+              apply or_iff_not_imp_left.mpr
+              intro h₁₂
+              apply or_iff_not_imp_left.mpr
+              intro h₁₃
+              apply or_iff_not_imp_left.mpr
+              intro h₁₄
+              apply or_iff_not_imp_left.mpr
+              intro h₁₅
+              apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₂)
+              apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₃)
+              apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₄)
+              apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₅)
+              field_simp [h₉, h₁₀, Real.cos_two_mul, Real.sin_two_mul] at h₄ ⊢
+              ring_nf at h₄ ⊢
+              nlinarith [Real.sin_sq_add_cos_sq x, Real.sin_le_one x, Real.cos_le_one x, Real.pi_pos.le, sq_nonneg (Real.sin x + Real.cos x), sq_nonneg (Real.sin x - Real.cos x), sq_nonneg (Real.sin x + Real.cos x + 1), sq_nonneg (Real.sin x + Real.cos x - 1), sq_nonneg (Real.sin x - Real.cos x + 1), sq_nonneg (Real.sin x - Real.cos x - 1)]
+            aesop
+          | inr h₁₀ =>
+            simp_all [Real.tan_eq_sin_div_cos]
+            <;> ring_nf at *
+            <;> norm_num at *
+            <;> (try {
+              nlinarith [Real.pi_pos, Real.pi_le_four, Real.two_pi_pos.le] })
+            <;> aesop

@@ -1,0 +1,140 @@
+-- A trivial fact: for positive integers $a$ and $b$, $a^b$ divides $a^{2b}$.
+  have h₃ {a b : ℕ} (h : 0 < a) : a ^ b ∣ a ^ (2 * b) := by
+    by_cases h' : b = 0
+    · simp [h']
+    · rw [Nat.pow_dvd_pow_iff]
+      omega
+      simp
+
+  -- Let $k = 2^n - 2^m$.
+  let k := 2 ^ n - 2 ^ m
+
+  -- Show that $2^m + 2^m \leq 2^n$, so $2^m + 2^m - 2^m \leq 2^n - 2^m$.
+  have h₄ : k + 2 ^ m ≤ 2 ^ n := by
+    simp [k]
+    omega
+
+  -- Show that $f(2^n) = 4^k + 4^m \cdot 6^k + 4^m \cdot 9^k$.
+  have h₅ : f (2 ^ n) = 4 ^ k + 4 ^ m * 6 ^ k + 4 ^ m * 9 ^ k := by
+    simp [h₀, ←pow_add, mul_pow, ←pow_add]
+    congr 1
+    · nth_rw 1 [show 4 ^ m = (2 ^ m) ^ 2 by rw [←pow_mul], pow_two]
+      rw [<-Nat.mul_sub_right_distrib]
+      omega
+    · rw [show 9 ^ m = (3 ^ m) ^ 2 by rw [←pow_mul], pow_two]
+      rw [<-Nat.mul_sub_right_distrib]
+      omega
+
+  -- Show that $f(2^m) = 4^m + 6^m + 9^m$.
+  have h₆ : f (2 ^ m) = 4 ^ m + 6 ^ m + 9 ^ m := by simp [h₀]
+
+  -- We have $f(2^n) = (4^k + 4^m \cdot 6^k + 4^m \cdot 9^k) \cdot (4^m + 6^m + 9^m) - 4^m \cdot (6^k - 6^m) \cdot (9^k - 9^m)$.
+  have h₇ : f (2 ^ n) = (4 ^ k + 4 ^ m * 6 ^ k + 4 ^ m * 9 ^ k) * (4 ^ m + 6 ^ m + 9 ^ m) - 4 ^ m * (6 ^ k - 6 ^ m) * (9 ^ k - 9 ^ m) := by
+    rw [h₅, h₆]
+    zify
+    rw [Nat.cast_sub (le_of_lt (Nat.pow_pos (m := 6) (by omega))), Nat.cast_sub (le_of_lt (Nat.pow_pos (m := 9) (by omega)))]
+    simp
+    ring
+
+  -- Show that $4^m + 6^m + 9^m$ divides $(4^k + 4^m \cdot 6^k + 4^m \cdot 9^k) \cdot (4^m + 6^m + 9^m)$.
+  have h₈ : f (2 ^ m) ∣ (4 ^ k + 4 ^ m * 6 ^ k + 4 ^ m * 9 ^ k) * (4 ^ m + 6 ^ m + 9 ^ m) := by
+    rw [h₆]
+    apply Nat.dvd_add
+    · apply Nat.dvd_add
+      · rw [<-Nat.pow_add_one]
+        apply Nat.dvd_mul_left
+      · apply Nat.dvd_mul
+        apply Nat.dvd_trans (Nat.dvd_refl _)
+        rw [<-Nat.pow_add_one]
+        apply Nat.dvd_mul_left
+    · apply Nat.dvd_mul
+      apply Nat.dvd_trans (Nat.dvd_refl _)
+      rw [<-Nat.pow_add_one]
+      apply Nat.dvd_mul_left
+
+  -- It suffices to show that $f(2^m)$ divides the difference $4^m \cdot (6^k - 6^m) \cdot (9^k - 9^m)$.
+  suffices h : f (2 ^ m) ∣ 4 ^ m * (6 ^ k - 6 ^ m) * (9 ^ k - 9 ^ m) by
+    apply Nat.dvd_sub (m := h₇) h
+    simp
+
+  -- We have $4^m \cdot (6^k - 6^m) \cdot (9^k - 9^m) = 4^m \cdot 6^m \cdot (2^k - 2^m) \cdot (3^k - 3^m)$.
+  have h₉ : 4 ^ m * (6 ^ k - 6 ^ m) * (9 ^ k - 9 ^ m) = 4 ^ m * 6 ^ m * (2 ^ k - 2 ^ m) * (3 ^ k - 3 ^ m) := by
+    nth_rw 1 [mul_comm]
+    rw [Nat.mul_sub_right_distrib, <-Nat.pow_add, mul_comm, <-Nat.pow_add, mul_assoc, mul_comm]
+    repeat congr 1
+   . omega
+
+  -- Show that $2^m + 2^m - 2^m = 2^m$.
+  have h₁₀ : 2 ^ m + 2 ^ m - 2 ^ m = 2 ^ m := by
+    zify
+    rw [Nat.cast_sub (by omega), Nat.cast_sub (by omega)]
+    simp
+    ring
+
+  -- We have $2^k - 2^m = 2^m$.
+  have h₁₁ : 2 ^ k - 2 ^ m = 2 ^ m := by
+    zify
+    rw [Nat.cast_sub (le_of_lt (Nat.pow_pos (2 ^ m) (by omega))), Nat.cast_sub (le_of_lt (Nat.pow_pos (2 ^ k) (by omega)))]
+    simp
+    rw [h₁₀]
+    ring
+
+  -- We have $3^k - 3^m = 2 \cdot 3^m$.
+  have h₁₂ : 3 ^ k - 3 ^ m = 2 * 3 ^ m := by
+    rw [h₁₁]
+    zify
+    rw [Nat.cast_sub (le_of_lt (Nat.pow_pos (3 ^ m) (by omega))), Nat.cast_sub (le_of_lt (Nat.pow_pos (3 ^ k) (by omega)))]
+    simp
+    ring
+
+  -- We have $4^m \cdot 6^m \cdot 2^m \cdot 2 \cdot 3^m = 4^m \cdot 6^m \cdot 6^m \cdot 3^m$.
+  have h₁₃ : 4 ^ m * 6 ^ m * (2 ^ k - 2 ^ m) * (3 ^ k - 3 ^ m) = 4 ^ m * 6 ^ m * 6 ^ m * 3 ^ m := by
+    rw [h₁₁, h₁₂]
+    ring
+
+  -- Show that $4^m \cdot 6^m \cdot 6^m \cdot 3^m = 4^m \cdot (6^m \cdot 3^m) \cdot 6^m$.
+  have h₁₄ : 4 ^ m * 6 ^ m * 6 ^ m * 3 ^ m = 4 ^ m * (6 ^ m * 3 ^ m) * 6 ^ m := by
+    ring
+
+  -- Show that $4^m \cdot (6^m \cdot 3^m) \cdot 6^m \cdot 2^m = 4^m \cdot (6^m \cdot 2^m) \cdot (3^m \cdot 6^m)$.
+  have h₁₅ : 4 ^ m * (6 ^ m * 3 ^ m) * 6 ^ m * 2 ^ m = 4 ^ m * (6 ^ m * 2 ^ m) * (3 ^ m * 6 ^ m) := by
+    ring
+
+  -- Let $t = 2^m$.
+  let t := 2 ^ m
+
+  -- Show that $6^m = 2^m \cdot 3^m$.
+  have h₁₆ : 6 ^ m = 2 ^ m * 3 ^ m := by
+    rw [show 6 = 2 * 3 by norm_num, mul_pow]
+
+  -- Let $4^m = (2^m)^2 = t^2$.
+  have h₁₇ : 4 ^ m = t ^ 2 := by
+    rw [show 4 = 2 ^ 2 by norm_num, pow_mul, show t = 2 ^ m by rfl]
+
+  -- Let $9^m = (3^m)^2 = (3 \cdot t)^2 = 9 \cdot t^2$.
+  have h₁₈ : 9 ^ m = 9 * t ^ 2 := by
+    rw [show 9 = 3 ^ 2 by norm_num, pow_mul, <-Nat.pow_add, <-h₁₆, h₁₇]
+    congr 1
+    · ring
+    · zify; rw [Nat.cast_sub (by omega), Nat.cast_sub (by omega)]; simp; ring
+
+  -- Show that $4^m + 6^m + 9^m = t^2 + t \cdot 3^m + 9 \cdot t^2 = 10 \cdot t^2 + t \cdot 3^m$.
+  have h₁₉ : f (2 ^ m) = 10 * t ^ 2 + t * 3 ^ m := by
+    rw [h₆, h₁₇, h₁₈, h₁₆]
+    ring
+
+  -- Let $10 \cdot t^2 + t \cdot 3^m = t \cdot (10 \cdot t + 3^m)$.
+  have h₂₀ : f (2 ^ m) = t * (10 * t + 3 ^ m) := by
+    rw [h₁₉]
+    ring
+
+  rw [h₉, h₁₃, h₁₄, h₁₅, <-mul_assoc, mul_comm t (6 ^ m * 3 ^ m), mul_assoc, <-h₂₀]
+
+  -- It suffices to show that $t \cdot (10 \cdot t + 3^m)$ divides $t \cdot (10 \cdot t + 3^m) \cdot (2 \cdot t \cdot 3^m)$.
+  suffices h : (10 * t + 3 ^ m) ∣ (10 * t + 3 ^ m) * (2 * t * 3 ^ m) by
+    apply Nat.mul_dvd_mul_left _ h
+    apply Nat.dvd_mul_right
+
+  -- This is obvious.
+  exact dvd_mul_right _ _
+```

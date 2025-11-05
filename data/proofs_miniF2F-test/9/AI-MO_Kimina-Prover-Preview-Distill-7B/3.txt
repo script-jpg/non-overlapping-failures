@@ -1,0 +1,75 @@
+-- without loss of generality, we can assume $a \geq b$
+  wlog hab : a ≥ b
+  · -- if otherwise, we can swap $a$ and $b$ and get a equivalent result
+    simp at hab
+    specialize this b a c (by linarith) (by linarith) (by linarith) (by linarith)
+    ring_nf at this ⊢
+    exact this
+
+  -- without loss of generality, we can assume $b \geq c$
+  wlog hbc : b ≥ c
+  · -- if otherwise, we can swap $b$ and $c$ and get a equivalent result
+    simp at hbc
+    by_cases ha : a ≥ c
+    · specialize this a c b (by linarith) (by linarith) (by linarith) ha (by linarith)
+      ring_nf at this ⊢
+      exact this
+    · -- since we have assumed $a \geq b$, we have $a \geq c$
+      push_neg at ha
+      -- swap $b$ and $c$ in this case, inequality sign will flip
+      specialize this a b c (by linarith) (by linarith) (by linarith) (by linarith) (by linarith)
+      ring_nf at this ⊢
+      exact this
+
+  -- without loss of generality, we can assume $c \geq a$
+  wlog hca : c ≥ a
+  · -- if otherwise, we can swap $c$ and $a$ and get a equivalent result
+    simp at hca
+    by_cases hb : b ≥ a
+    · -- if $b \geq a$, then $b \geq c$ and we can use this case
+      specialize this a b c (by linarith) (by linarith) (by linarith) hb (by linarith)
+      ring_nf at this ⊢
+      exact this
+    · -- if not, then $a \geq b$
+      push_neg at hb
+      -- swap $a$ and $c$ in this case, inequality sign will flip
+      specialize this b c a (by linarith) (by linarith) (by linarith) (by linarith) (by linarith)
+      ring_nf at this ⊢
+      exact this
+
+  -- if $a \geq b \geq c$, then $b^2 \geq c^2$
+  have h : b ^ 2 ≥ c ^ 2 := by
+    apply sq_le_sq'
+    linarith
+    linarith
+
+  -- rearrange the terms
+  ring_nf
+
+  -- re-arrange the terms
+  rw [show a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) =
+      b ^ 2 * (a ^ 2 - c ^ 2) + c ^ 2 * a * (c - a) + a ^ 2 * b * (a - b) by ring]
+
+  -- split the goal into two parts
+  refine le_add_of_nonneg_left?_
+
+  -- first part
+  apply mul_nonneg
+  · -- $b^2 \geq 0$ and $a^2 - c^2 \geq 0$
+    apply mul_nonneg
+    · apply sq_nonneg
+    · apply sq_le_sq'
+      linarith
+      linarith
+
+  -- second part
+  apply add_nonneg
+  · -- $c^2 \geq 0$ and $a \geq 0$ ($c \geq a$)
+    apply mul_nonneg
+    · apply sq_nonneg
+    · linarith
+  · -- $a^2 \geq 0$ and $b \geq 0$ ($b \geq a$)
+    apply mul_nonneg
+    · apply sq_nonneg
+    · linarith
+```

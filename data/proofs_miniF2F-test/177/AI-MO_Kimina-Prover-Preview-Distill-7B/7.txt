@@ -1,0 +1,119 @@
+constructor
+
+  -- sufficiency
+ . intro hf
+
+    -- By setting $a = b = 0$, we get $f(0) = 0$.
+    have f_zero : f 0 = 0 := by
+      have h := hf 0 0
+      simp at h
+      exact h
+
+    -- By setting $a = 0$ and $b = z$, we get $f(2z) = 2f(z)$ for all $z$.
+    have f_doubling (z : ℤ) : f (2 * z) = 2 * f z := by
+      have h := hf 0 z
+      simp [f_zero] at h
+      exact h
+
+    -- By setting $b = 0$ and $a = z$, we get $2f(0) = f(f(z))$ for all $z$.
+    have f_f (z : ℤ) : f (f z) = 2 * f 0 := by
+      have h := hf z 0
+      simp [f_zero] at h
+      exact h
+
+    -- Since $f(0) = 0$, we get $f(f(z)) = 0$ for all $z$.
+    replace f_f (z : ℤ) : f (f z) = 0 := by
+      specialize f_f z
+      rw [f_zero] at f_f
+      exact f_f
+
+    -- For any $z$ and $n \ge 1$, we have $f(nz) = nf(z)$.
+    have f_mul (n : ℕ) (z : ℤ) : f (n * z) = n * f z := by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        intro rfl
+        simp [add_mul, f_doubling, ih]
+
+    -- For any $z$ and $n \ge 1$, we have $f(-nz) = -nf(z)$.
+    have f_neg_mul (n : ℕ) (z : ℤ) : f (-n * z) = -n * f z := by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        intro rfl
+        simp only [Int.reduceNeg, add_mul, f_neg_mul, ih]
+
+        -- For any $z$, $f(-z) = -f(z)$.
+        have f_neg (z : ℤ) : f (-z) = -f z := by
+          have h := hf (-z) 0
+          rw [← f_f, ← f_f] at h
+          simp [f_zero] at h
+          exact h
+        rw [f_neg]
+
+    -- For any $z$ and $n \ge 1$, we have $f(nz) = nf(z)$.
+    replace f_mul (n : ℤ) (z : ℤ) : f (n * z) = n * f z := by
+      induction n with
+      | zero => simp
+      | pos n ih =>
+        intro hz
+        exact f_mul n z
+      | neg n ih =>
+        intro hz
+        rw [hz, Int.mul_neg, f_neg_mul, ih]
+
+    -- Thus, for any integer $n$ and integer $z$, we have $f(nz) = nf(z)$.
+    replace f_mul (n : ℤ) (z : ℤ) : f (n * z) = n * f z := by
+      rw [mul_comm]
+      exact f_mul n z
+
+    -- Let $c = f(1)$.
+    let c := f 1
+
+    -- For any integer $z$, $f(z) = f(1 \cdot z) = 1 \cdot f(z) = f(1) \cdot z = cz$.
+    have f_eq (z : ℤ) : f z = c * z := by
+      suffices z = 1 * z from by rw [this, f_mul]; ring
+      exact Int.mul_one z
+
+    -- The goal is to show that for all $z$, $f(z) = 0$ or there exists a $c$ such that for all $z$, $f(z) = 2z + c$.
+    -- We have shown that $f(z) = cz$ for some $c$.
+    refine ⟨?_, ⟨c,?_⟩⟩
+    · have : c = 0 ∨ c = 2 := by
+        -- Since $f(f(z)) = 0$, we have $f(cz) = 0$.
+        have f_f_z (z : ℤ) : f (c * z) = 0 := by
+          specialize f_f z
+          rw [f_eq, f_eq] at f_f
+          exact f_f
+        -- Let $z = 1$, then $f(c) = 0$.
+        have f_f_c := f_f_z 1
+        simp at f_f_c
+        -- We get $c = 0$ or $c = 2$.
+        have : c = 0 ∨ c = 2 := by
+          have : f c = 0 := by exact f_f_c
+          rw [f_eq] at this
+          simp at this
+          exact this
+        exact this
+      cases this with
+      | inl h =>
+        -- If $c = 0$, then $f(z) = 0$.
+        rw [h] at f_eq
+        simp at f_eq
+        exact f_eq
+      | inr h =>
+        -- If $c = 2$, then $f(z) = 2z + c$.
+        rw [h] at f_eq
+        use 2
+        exact f_eq
+
+  -- necessity
+ . intro hf
+    rcases hf with hf | ⟨c, hf⟩
+    · intro a b
+      rw [hf, hf, hf]
+      ring
+    · intro a b
+      rw [hf, hf, hf]
+      ring
+
+```

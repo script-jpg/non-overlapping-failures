@@ -1,0 +1,300 @@
+obtain ⟨k, hk0, hk1⟩ := h₁
+
+  have h1 : 2 ^ k = (a + b ^ 2) * (b + a ^ 2) := by
+    exact hk1
+
+  have h2 : 2 ^ k > 0 := by
+    exact Nat.pos_pow_of_pos k (by norm_num)
+
+  have h3 : (a + b ^ 2) * (b + a ^ 2) > 0 := by
+    exact (mul_pos_iff_of_pos_left (Nat.pos_add_of_pos_left b)).mpr (by
+      have : a + b ^ 2 > 0 := by
+        exact Nat.add_pos_of_nonneg_of_pos (Nat.pow_nonneg a 2) (by norm_num)
+      linarith)
+
+  -- In this proof, $a$ and $b$ are always positive integers.
+  -- So we first clear all hypotheses and lemmas which involve $a$ or $b$ being positive.
+  clear h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 h17 h18 h19 h20 h21 h22 h23 h24 h25 h26 h27 h28 h29 h30 h31 h32 h33 h34 h35 h36 h37 h38 h39 h40 h41 h42 h43 h44 h45 h46 h47 h48 h49 h50 h51 h52 h53 h54 h55 h56 h57 h58 h59 h60 h61 h62 h63 h64 h65 h66 h67 h68 h69 h70 h71 h72 h73 h74 h75 h76 h77 h78 h79 h80 h81 h82 h83 h84 h85 h86 h87 h88 h89 h90 h91 h92 h93 h94 h95 h96 h97 h98 h99 h100 h101 h102 h103 h104 h105 h106 h107 h108 h109 h110 h111 h112 h113 h114 h115 h116 h117 h118 h119 h120 h121
+
+  -- Let $p$ be a prime divisor of $a+1$.
+  have h4 : a + 1 ∣ 2 ^ k := by
+    use b + a ^ 2
+    rw [h1]
+    ring
+
+  rcases h4 with ⟨p, hp0, hp1⟩
+
+  -- Then $p$ is odd.
+  have h5 : Odd p := by
+    have h5 : ¬ 2 ∣ a + 1 := by
+      rw [Nat.Prime.not_dvd_iff_gcd_eq_one hp0]
+      suffices Nat.gcd 2 (a + 1) = 1 by
+        exact Nat.coprime_comm.mp this
+      have : 0 < a := h₀.left
+      have : 0 < 2 ^ k := by
+        exact Nat.pos_pow_of_pos k (by norm_num)
+      have : 0 < (a + 1) * (b + a ^ 2) := by
+        apply Nat.mul_pos
+        linarith
+        linarith
+      rw [← Nat.gcd_mul_gcd_eq_mul_gcd this]
+      simp only [Nat.gcd, Nat.reduceGCD, and_true]
+      by_contra!
+      have : 2 ∣ a + 1 := by
+        exact this
+      have : 2 ∣ 2 ^ k := by
+        rw [h1]
+        exact Dvd.dvd.mul_right this (b + a ^ 2)
+      have : 2 ∣ (a + 1) * (b + a ^ 2) := by
+        exact Dvd.dvd.mul_right this (b + a ^ 2)
+      have : 2 ∣ 2 ^ k := by
+        rw [h1]
+        exact Dvd.dvd.mul_right this (b + a ^ 2)
+      have : 2 ∣ 2 ^ k := by
+        exact this
+      have : 2 ^ k = 2 ∨ 2 ^ k = 1 := by
+        apply (Nat.dvd_prime (Nat.prime_two)).mp this
+      rw [← Nat.pow_one 2] at this
+      have : k = 1 := by
+        exact Nat.pow_right_injective (show 2 > 0 by norm_num) this
+      rw [this] at hk1
+      have : a = 1 := by
+        omega
+      rw [this] at h₀
+      tauto
+    exact Nat.Prime.odd_of_not_two_dvd h4 h5
+
+  -- Then $p \equiv 1 \pmod{4}$.
+  have h6 : a + 1 ≡ 1 [MOD 4] := by
+    -- It suffices to show that $p \equiv 1 \pmod{4}$.
+    suffices p ≡ 1 [MOD 4] by
+      have : a + 1 ≡ p [MOD p] := by
+        exact Nat.ModEq.symm (Nat.modEq_iff_dvd.mpr hp1)
+      have : p ≡ 1 [MOD 4] := by
+        exact this.trans (id (Nat.ModEq.symm...))
+      exact this
+    -- We have $p \equiv 1 \pmod{2}$.
+    have h6 : p ≡ 1 [MOD 2] := by
+      have h6 : Odd (a + 1) := by
+        exact Nat.Prime.odd_of_dvd (Nat.Prime.odd_of_ne_two (Nat.Prime.odd_of_ne_two hp0) (by omega)) hp1
+      rw [Nat.odd_iff] at h6
+      have : Odd (p + 1) := by
+        rw [Nat.odd_iff]
+        have : p + 1 = a + 1 + 1 := by
+          rw [hp1]
+          ring
+        rw [this]
+        exact Odd.add_odd h6 (by omega)
+      have : p % 2 = 1 := by
+        exact (Nat.odd_iff_mod_four (show 2 ∣ 2 by norm_num)).mp this
+      exact id (Nat.ModEq.symm this)
+    -- It remains to show that $p \equiv 1 \pmod{4}$.
+    suffices (p % 4) = 1 by
+      exact this
+    have : (p % 4) = 1 ∨ (p % 4) = 3 := by
+      have : (p % 4) % 2 = 1 := by
+        exact Nat.mod_mod_of_mod_add_mod p 2 1 h6
+      have : (p % 4) % 2 = p % 2 := by
+        exact Eq.symm (Nat.mod_add_div' (p % 4) 2)
+      rw [this] at *
+      omega
+    rcases this with (h | h)
+    · exact h
+    · -- Assume on the contrary that $p \equiv 3 \pmod{4}$.
+      have : 2 ∣ 2 ^ k := by
+        rw [h1]
+        rw [← Nat.modEq_zero_iff_dvd]
+        rw [Nat.modEq_zero_iff_dvd]
+        rw [h]
+        have : (4 * (1 + (p - 1) / 4)) % 2 = 0 := by
+          rw [Nat.mul_mod]
+          rw [Nat.mod_mod_of_mod_add_mod p 2 1 h6]
+          norm_num
+        rw [this]
+        exact Nat.dvd_mul_right 2 ((1 + (p - 1) / 4) % 2)
+      have : 2 ∣ (a + 1) * (b + a ^ 2) := by
+        rw [← Nat.dvd_mul_right (a + 1) _]
+        exact this
+      apply Nat.Prime.dvd_mul (Nat.prime_two).mp at this
+      apply Nat.dvd_iff_mod_eq_zero.mp at this
+      rw [hp1] at this
+      have : (2 ^ k % 4) = 1 := by
+        rw [h1, Nat.pow_mod]
+        have : k ≠ 0 := by
+          by_contra!
+          rw [this] at hk1
+          have : a = 1 := by
+            omega
+          rw [this] at h₀
+          tauto
+        omega
+      rw [this] at this
+      tauto
+
+  -- Let $p$ be a prime divisor of $b+1$.
+  have h7 : b + 1 ∣ 2 ^ k := by
+    use a + b ^ 2
+    rw [h1, mul_comm]
+    ring
+
+  rcases h7 with ⟨p, hp0, hp1⟩
+
+  -- Then $p$ is odd.
+  have h8 : Odd p := by
+    have h8 : ¬ 2 ∣ b + 1 := by
+      rw [Nat.Prime.not_dvd_iff_gcd_eq_one hp0]
+      suffices Nat.gcd 2 (b + 1) = 1 by
+        exact Nat.coprime_comm.mp this
+      have : 0 < b := h₀.right
+      have : 0 < 2 ^ k := by
+        exact Nat.pos_pow_of_pos k (by norm_num)
+      have : 0 < (a + b ^ 2) * (b + a ^ 2) := by
+        apply Nat.mul_pos
+        linarith
+        linarith
+      rw [← Nat.gcd_mul_gcd_eq_mul_gcd this]
+      simp only [Nat.gcd, Nat.reduceGCD, and_true]
+      by_contra!
+      have : 2 ∣ b + 1 := by
+        exact this
+      have : 2 ∣ 2 ^ k := by
+        rw [h1]
+        exact Dvd.dvd.mul_left this (a + b ^ 2)
+      have : 2 ∣ 2 ^ k := by
+        exact this
+      have : 2 ∣ 2 ^ k := by
+        exact this
+      have : 2 ^ k = 2 ∨ 2 ^ k = 1 := by
+        apply (Nat.dvd_prime (Nat.prime_two)).mp this
+      rw [← Nat.pow_one 2] at this
+      have : k = 1 := by
+        exact Nat.pow_right_injective (show 2 > 0 by norm_num) this
+      rw [this] at hk1
+      have : b = 1 := by
+        omega
+      rw [this] at h₀
+      tauto
+    exact Nat.Prime.odd_of_not_two_dvd h7 h8
+
+  -- Then $p \equiv 1 \pmod{4}$.
+  have h9 : b + 1 ≡ 1 [MOD 4] := by
+    -- It suffices to show that $p \equiv 1 \pmod{4}$.
+    suffices p ≡ 1 [MOD 4] by
+      have : b + 1 ≡ p [MOD p] := by
+        exact Nat.ModEq.symm (Nat.modEq_iff_dvd.mpr hp1)
+      have : p ≡ 1 [MOD 4] := by
+        exact this.trans (id (Nat.ModEq.symm...))
+      exact this
+    -- We have $p \equiv 1 \pmod{2}$.
+    have h9 : p ≡ 1 [MOD 2] := by
+      have h9 : Odd (b + 1) := by
+        exact Nat.Prime.odd_of_dvd (Nat.Prime.odd_of_ne_two (Nat.Prime.odd_of_ne_two hp0) (by omega)) hp1
+      rw [Nat.odd_iff] at h9
+      have : Odd (p + 1) := by
+        rw [Nat.odd_iff]
+        have : p + 1 = b + 1 + 1 := by
+          rw [hp1]
+          ring
+        rw [this]
+        exact Odd.add_odd h9 (by omega)
+      have : p % 2 = 1 := by
+        exact (Nat.odd_iff_mod_four (show 2 ∣ 2 by norm_num)).mp this
+      exact id (Nat.ModEq.symm this)
+    -- It remains to show that $p \equiv 1 \pmod{4}$.
+    suffices (p % 4) = 1 by
+      exact h
+    have : (p % 4) = 1 ∨ (p % 4) = 3 := by
+      have : (p % 4) % 2 = 1 := by
+        exact Nat.mod_mod_of_mod_add_mod p 2 1 h9
+      have : (p % 4) % 2 = p % 2 := by
+        exact Eq.symm (Nat.mod_add_div' (p % 4) 2)
+      rw [this] at *
+      omega
+    rcases this with (h | h)
+    · exact h
+    · -- Assume on the contrary that $p \equiv 3 \pmod{4}$.
+      have : 2 ∣ 2 ^ k := by
+        rw [h1]
+        rw [← Nat.modEq_zero_iff_dvd]
+        rw [Nat.modEq_zero_iff_dvd]
+        rw [h]
+        have : (4 * (1 + (p - 1) / 4)) % 2 = 0 := by
+          rw [Nat.mul_mod]
+          rw [Nat.mod_mod_of_mod_add_mod p 2 1 h9]
+          norm_num
+        rw [this]
+        exact Nat.dvd_mul_right 2 ((1 + (p - 1) / 4) % 2)
+      have : 2 ∣ (a + b ^ 2) * (b + a ^ 2) := by
+        rw [← Nat.dvd_mul_right (b + a ^ 2) _]
+        exact this
+      apply Nat.Prime.dvd_mul (Nat.prime_two).mp at this
+      apply Nat.dvd_iff_mod_eq_zero.mp at this
+      rw [hp1] at this
+      have : (2 ^ k % 4) = 1 := by
+        rw [h1, Nat.pow_mod]
+        have : k ≠ 0 := by
+          by_contra!
+          rw [this] at hk1
+          have : b = 1 := by
+            omega
+          rw [this] at h₀
+          tauto
+        omega
+      rw [this] at this
+      tauto
+
+  -- Let $p$ be a prime divisor of $a - b$.
+  have h10 : a - b ∣ 2 ^ k := by
+    have h10 : a - b ∣ (a + b ^ 2) * (b + a ^ 2) := by
+      have h10 : a - b ∣ (a + b) * (a - b) := by
+        exact Dvd.dvd.sub h₀.left h₀.right
+      have h11 : (a + b) * (a - b) ∣ (a + b ^ 2) * (b + a ^ 2) := by
+        apply Nat.mul_dvd_mul
+        · apply Nat.dvd_add
+          · apply Nat.dvd_trans h10
+            exact Nat.dvd_refl (a + b)
+          · exact Nat.dvd_pow_self (a - b) 2
+        · apply Nat.dvd_trans
+          · exact Nat.dvd_pow_self (a + b) 2
+          · exact Nat.dvd_refl (b + a ^ 2)
+      exact Nat.dvd_trans h10 h11
+    rw [h1] at h10
+    apply Nat.dvd_mul_left (a - b) at h10
+    exact h10
+
+  rcases h10 with ⟨p, hp0, hp1⟩
+
+  -- Then $p$ is odd.
+  have h11 : Odd p := by
+    have h11 : ¬ 2 ∣ a - b := by
+      by_contra!
+      have : (a - b) % 2 = 0 := by
+        exact this
+      have : a % 2 = b % 2 := by
+        omega
+      have h11 : (a + 1) % 2 = (b + 1) % 2 := by
+        omega
+      have h12 : (a + 1) % 2 = 0 := by
+        omega
+      have h13 : b % 2 = 1 := by
+        exact (Nat.add_mod_eq_right (b - 1)).symm ▸ rfl
+      have : (b + 1) % 2 = 0 := by
+        exact Nat.zero_mod 2
+      rw [h13] at h12
+      rw [h12] at this
+      tauto
+    exact Nat.Prime.odd_of_not_two_dvd h10 h11
+
+  -- Then $p \equiv 1 \pmod{4}$.
+  have h12 : a - b ≡ 1 [MOD 4] := by
+    -- It suffices to show that $p \equiv 1 \pmod{4}$.
+    suffices p ≡ 1 [MOD 4] by
+      have : a - b ≡ p [MOD p] := by
+        exact Nat.ModEq.symm (Nat.modEq_iff_dvd.mpr hp1)
+      have : p ≡ 1 [MOD 4] := by
+        exact this.trans (id (Nat.ModEq.symm...))
+      exact this
+    -- We have $p \equiv 1 \pmod{2}$.
+    have h12 : p ≡ 1 [MOD 2] := by
+      have h12 : Odd (a - b) := by
+        exact Nat.Prime.odd_of_dvd (Nat.Prime.odd_of_ne_two (

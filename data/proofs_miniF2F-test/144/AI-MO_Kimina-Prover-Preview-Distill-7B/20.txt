@@ -1,0 +1,113 @@
+-- A trivial lemma that any nonzero complex number divided by itself is 1.
+  have h₁ (z : ℂ) (hz : z ≠ 0) : z / z = 1 := by
+    field_simp [hz]
+
+  -- A fundamental lemma of algebra, complex numbers have square roots.
+  have h₂ (z : ℂ) : ∃ z' : ℂ, z' ^ 2 = z := by
+    by_contra!
+    obtain ⟨z', hz'⟩ := exists_or_not_exists_sqrt_of_not_sq_eq_zero (fun a => this (a ^ 2))
+
+    have : ∀ x : ℂ, x ^ 2 ≠ 0 := by
+      intro x
+      simp only [ne_eq, IsEmpty.forall_iff] at this
+      specialize this x
+      simp only [not_not] at this
+      exact this
+
+    specialize this z'
+    contradiction
+
+  -- For any complex number $z$, we have $|z|^2 = z \overline{z}$.
+  have h₃ (z : ℂ) : Complex.normSq z = z * z.conj := by
+    simp [Complex.normSq]
+
+  -- The modulus of a sum is less than or equal to the sum of the moduli.
+  have h₄ (z w : ℂ) : |z + w| ≤ |z| + |w| := by
+    apply norm_add_le
+
+  -- We prove that if $z$ satisfies the condition in the problem, then $z$ lies on the imaginary axis.
+  have h₅ (z : ℂ) (h₀ : 12 * Complex.normSq z = 2 * Complex.normSq (z + 2) + Complex.normSq (z ^ 2 + 1) + 31) :
+      z.im = 0 := by
+    -- Expand the condition in the problem.
+    rw [h₃, h₃, h₃] at h₀
+    rw [show |z + 2| ^ 2 = (z + 2) * (z + 2).conj by simp, show |z ^ 2 + 1| ^ 2 = (z ^ 2 + 1) * (z ^ 2 + 1).conj by simp] at h₀
+
+    -- Assume on the contrary that $z$ does not lie on the imaginary axis.
+    by_contra! h₅
+    refine ne_of_gt (Set.mem_lt_card_iff.mp?_)?_
+
+    -- Prove that the set $\{z \in \mathbb{C} : |z| = 1\}$ is compact.
+    have h₆ : ContinuousTheory.isCompact (Set.Icc (-1) 1 ×ˢ (-1) 1) := by
+      continuity
+      apply isCompact_Icc
+      apply isCompact_Icc
+    -- Also, $\{z \in \mathbb{C} : |z + 2| = |z ^ 2 + 1|\}$ is compact.
+    have h₇ : ContinuousTheory.isCompact {(z : ℂ) | |z + 2| = |z ^ 2 + 1|} := by
+      apply ContinuousTheory.isCompact.mono (continuous_mod_eq_mod)
+      simp [continuous_id']
+    -- But we have $\{z \in \mathbb{C} : |z| = 1\} \cap \{z \in \mathbb{C} : |z + 2| = |z ^ 2 + 1|\} = \emptyset$, which is not compact.
+    replace h₅ : Disjoint (Set.Icc (-1) 1 ×ˢ (-1) 1) {(z : ℂ) | |z + 2| = |z ^ 2 + 1|} := by
+      refine disjoint_iff_forall_ne.mpr?_
+      intro z₁ z₂ hz₁ hz₂ hz₁z₂
+      simp at hz₁z₂
+      rcases hz₁z₂ with hz₁' | hz₂'
+      · contrapose! hz₁'
+        rw [mod_eq_mod_iff] at hz₂'
+        exact hz₁' hz₂'
+      · contrapose! hz₂'
+        simp [mod_eq_mod_iff] at hz₁'
+        exact hz₁' hz₂'
+    -- This is a contradiction.
+    replace h₅ := ContinuousTheory.isCompact.disjoint_iff.mp h₅
+    rcases h₅ with ⟨r, hr⟩
+    simp at hr
+    obtain ⟨z', hz'⟩ := exists_or_not_exists_sqrt_of_not_sq_eq_zero (fun a => hr (a ^ 2) (a * 2 + 1) (by simp))
+    have : |z' + 2| = |(z' ^ 2 + 1) * z'| := by
+      calc
+        |z' + 2| = |z'| * |z' + 2| / |z'| := by field_simp [Complex.normSq_eq_conj]
+        _ = |(z' ^ 2 + 1) * z'| := by rw [hr]; field_simp [Complex.normSq_eq_conj]; simp
+    suffices (0 : ℝ) ∈ r by
+      simp at this
+      obtain ⟨res, hres⟩ := this
+      rw [hres] at hz'
+      have : z' ≠ 0 := by
+        refine ne_of_gt?_
+        simp [hz'.field_simp]
+      have : z' = 0 := h₁ z' this
+      contradiction
+    simp [h₃] at hr ⊢
+    calc
+      (0 : ℝ) = |z' + 2| ^ 2 - |z' ^ 2 + 1| ^ 2 := by rw [hr]; simp
+      _ = (z' + 2) * (z' + 2).conj - (z' ^ 2 + 1) * (z' ^ 2 + 1).conj := by simp
+      _ = (z' + 2) * (z' + 2).conj - (z' ^ 2 + 1) * (z' ^ 2 + 1).conj - 31 + 31 := by ring
+      _ = 12 * Complex.normSq z' - 2 * Complex.normSq (z' + 2) - Complex.normSq (z' ^ 2 + 1) - 31 + 31 := by
+        simp [h₃]
+      _ = 0 + 31 - 31 := by rw [h₀]
+      _ = 0 := by simp
+
+  -- By doing so, we have $z = ai$ for some real number $a$.
+  rw [Complex.ext_iff] at h₅
+  simp at h₅
+  obtain ⟨a, h₅⟩ := h₅
+
+  -- Substitute $z = ai$ into the equation.
+  subst z
+  simp at h₀
+  replace h₀ : a ^ 2 = 1 := by
+    nlinarith [sq_nonneg a, sq_nonneg (a ^ 2), sq_nonneg (a + 2)]
+
+  -- We have $a = 1$ or $a = -1$.
+  have h₆ : a = 1 ∨ a = -1 := by
+    rw [sq_eq_one_iff] at h₀
+    exact h₀
+
+  -- Either case, $z + \frac{6}{z} = 1 + \frac{6}{-1} = -2$.
+  rcases h₆ with h₆ | h₆
+  · subst a
+    simp
+    norm_num
+  · subst a
+    simp
+    norm_num
+
+```

@@ -1,0 +1,236 @@
+obtain ⟨k, hk, h₂⟩ := h₁
+
+  have h₃ : 2 ^ k = (a + b ^ 2) * (b + a ^ 2) := h₂
+
+  have h₄ : 2 ^ k > 0 := by positivity
+
+  have h₅ : (a + b ^ 2) > 0 := by positivity
+
+  have h₆ : (b + a ^ 2) > 0 := by positivity
+
+  -- By the problem statement, we have $2^k=(a+b^2)(b+a^2)$.
+
+  -- In particular, we have $2^k=a b+a^3+b^3+a b^3$.
+
+  have h₇ : a * b + a ^ 3 + b ^ 3 + a * b ^ 3 = 2 ^ k := by
+    calc
+      a * b + a ^ 3 + b ^ 3 + a * b ^ 3 = (a + b ^ 2) * (b + a ^ 2) := by ring
+      _ = 2 ^ k := h₃
+  rw [h₇] at h₃
+
+  -- We have $a b+a^3+b^3+a b^3 \equiv 0 \pmod{2}$.
+
+  have h₈ : a * b + a ^ 3 + b ^ 3 + a * b ^ 3 ≡ 0 [MOD 2] := by
+    rw [h₇]
+    apply Nat.ModEq.pow
+    exact Nat.ModEq.rfl
+
+  -- We have $a b+a^3+b^3+a b^3 \equiv 0 \pmod{4}$.
+
+  have h₉ : a * b + a ^ 3 + b ^ 3 + a * b ^ 3 ≡ 0 [MOD 4] := by
+    have h₁₀ : 2 ^ k > 1 := by
+      calc
+        2 ^ k > 2 ^ 0 := by exact Nat.pow_lt_pow_of_base_lt (by norm_num) hk
+        _ = 1 := by norm_num
+    have h₁₁ : 2 ∣ (a * b + a ^ 3 + b ^ 3 + a * b ^ 3) := by
+      apply Classical.Omega.Int.ModEq.eq
+      rw [h₇]
+      apply Nat.dvd_pow
+      omega
+      exact Nat.ModEq.rfl
+    exact Classical.Omega.Int.ModEq.eq h₁₁
+
+  -- Break into cases with respect to parity of $a$ and $b$.
+
+  rcases Nat.even_or_odd a with ha | ha
+  · rcases Nat.even_or_odd b with hb | hb
+    -- Suppose that $a$ and $b$ are both even.
+
+    -- Then the left-hand side of the equation is divisible by $4$ but the right-hand side is not.
+
+    · have h₁₂ : 2 ∣ a := even_iff_two_dvd.mp ha
+      have h₁₃ : 2 ∣ b := even_iff_two_dvd.mp hb
+      have h₁₄ : 4 ∣ (a ^ 3 + a * b ^ 3) := by
+        calc
+          4 = 2 ^ 2 := by norm_num
+          _ ∣ 2 ^ 3 := by apply Nat.pow_dvd_pow; norm_num
+          _ ∣ (a ^ 3 + a * b ^ 3) := by
+            apply Nat.dvd_add
+            · exact h₁₂.map (pow_succ)
+            · exact h₁₃.map (pow_succ)
+      have h₁₅ : 4 ∣ (a * b + b ^ 3) := by
+        calc
+          4 = 2 ^ 2 := by norm_num
+          _ ∣ 2 ^ 3 := by apply Nat.pow_dvd_pow; norm_num
+          _ ∣ (a * b + b ^ 3) := by
+            apply Nat.dvd_add
+            · exact h₁₂.map (pow_succ)
+            · exact h₁₃.map (pow_succ)
+      have h₁₆ : 4 ∣ 2 ^ k := by
+        apply Nat.dvd_add
+        · exact h₁₄
+        · exact h₁₅
+      have h₁₇ : 2 ^ k % 4 = 0 := h₁₆
+      have h₁₈ : 2 ^ k % 4 = 2 := by
+        rw [h₃]
+        apply Nat.mul_mod
+        apply Nat.mod_eq_of_lt
+        exact Nat.two_pow_pos k
+      omega
+
+    -- Suppose that $a$ is even and $b$ is odd.
+
+    · have h₁₂ : 2 ∣ a := even_iff_two_dvd.mp ha
+      have h₁₃ : ¬ 2 ∣ b := Nat.not_two_dvd.mp hb
+      have h₁₄ : 4 ∣ (a ^ 3 + a * b ^ 3) := by
+        calc
+          4 = 2 ^ 2 := by norm_num
+          _ ∣ 2 ^ 3 := by apply Nat.pow_dvd_pow; norm_num
+          _ ∣ (a ^ 3 + a * b ^ 3) := by
+            apply Nat.dvd_add
+            · exact h₁₂.map (pow_succ)
+            · exact (show 2 ∣ b ^ 2 by apply Nat.pow_dvd_pow; omega).trans (dvd_iff exists_right.mpr rfl)
+      have h₁₅ : ¬ 4 ∣ (a * b + b ^ 3) := by
+        suffices ¬ 4 ∣ b ^ 3 by
+          apply Nat.Prime.not_dvd_add_right (Nat.prime_four)
+          intro h
+          exact this h
+        intro h
+        have h₁₆ : 4 ∣ b ^ 2 := by
+          calc
+            4 = 2 ^ 2 := by norm_num
+            _ ∣ 2 ^ 3 := by apply Nat.pow_dvd_pow; norm_num
+            _ ∣ (b ^ 2 + b ^ 3) := by
+              apply Nat.dvd_add
+              · exact (show 2 ∣ b ^ 2 by apply Nat.pow_dvd_pow; omega).trans (dvd_iff_exists_right.mpr rfl)
+              · exact h
+        have h₁₇ : 4 ∣ b := by
+          apply Nat.Prime.dvd_of_dvd_pow (Nat.prime_four) h₁₆
+        absurd h₁₃
+        exact (even_iff_two_dvd.mp h₁₇).mpr rfl
+      have h₁₆ : 4 ∣ 2 ^ k := by
+        calc
+          4 ∣ (a ^ 3 + a * b ^ 3) := h₁₄
+          _ ∣ (a * b + a ^ 3 + b ^ 3 + a * b ^ 3) := by
+            apply Nat.dvd_add
+            · apply Nat.dvd_add
+              · exact h₁₂.map (pow_succ)
+              · exact (show 2 ∣ b ^ 2 by apply Nat.pow_dvd_pow; omega).trans (dvd_iff_exists_right.mpr rfl)
+            · exact h₁₃
+          _ = 2 ^ k := h₃
+      have h₁₇ : 2 ^ k % 4 = 0 := h₁₆
+      have h₁₈ : 2 ^ k % 4 = 2 := by
+        rw [h₃]
+        apply Nat.mul_mod
+        apply Nat.mod_eq_of_lt
+        exact Nat.two_pow_pos k
+      omega
+
+    -- Suppose that $a$ is odd and $b$ is even.
+
+    · have h₁₂ : ¬ 2 ∣ a := Nat.not_two_dvd.mp ha
+      have h₁₃ : 2 ∣ b := even_iff_two_dvd.mp hb
+      have h₁₄ : ¬ 4 ∣ (a ^ 3 + a * b ^ 3) := by
+        suffices ¬ 4 ∣ a ^ 3 by
+          apply Nat.Prime.not_dvd_add_right (Nat.prime_four)
+          intro h
+          exact this h
+        intro h
+        have h₁₅ : 4 ∣ a ^ 2 := by
+          calc
+            4 = 2 ^ 2 := by norm_num
+            _ ∣ 2 ^ 3 := by apply Nat.pow_dvd_pow; norm_num
+            _ ∣ (a ^ 2 + a ^ 3) := by
+              apply Nat.dvd_add
+              · exact (show 2 ∣ a ^ 2 by apply Nat.pow_dvd_pow; omega).trans (dvd_iff_exists_right.mpr rfl)
+              · exact h
+        have h₁₆ : 4 ∣ a := by
+          apply Nat.Prime.dvd_of_dvd_pow (Nat.prime_four) h₁₅
+        absurd h₁₂
+        exact (even_iff_two_dvd.mp h₁₆).mpr rfl
+      have h₁₅ : 4 ∣ (a * b + b ^ 3) := by
+        calc
+          4 = 2 ^ 2 := by norm_num
+          _ ∣ 2 ^ 3 := by apply Nat.pow_dvd_pow; norm_num
+          _ ∣ (a * b + b ^ 3) := by
+            apply Nat.dvd_add
+            · exact h₁₃.map (pow_succ)
+            · exact h₁₂.map (pow_succ)
+      have h₁₆ : 4 ∣ 2 ^ k := by
+        calc
+          4 ∣ (a * b + b ^ 3) := h₁₅
+          _ ∣ (a * b + a ^ 3 + b ^ 3 + a * b ^ 3) := by
+            apply Nat.dvd_add
+            · apply Nat.dvd_add
+              · exact h₁₃.map (pow_succ)
+              · exact (show 2 ∣ a ^ 2 by apply Nat.pow_dvd_pow; omega).trans (dvd_iff_exists_right.mpr rfl)
+            · exact h₁₂
+          _ = 2 ^ k := h₃
+      have h₁₇ : 2 ^ k % 4 = 0 := h₁₆
+      have h₁₈ : 2 ^ k % 4 = 2 := by
+        rw [h₃]
+        apply Nat.mul_mod
+        apply Nat.mod_eq_of_lt
+        exact Nat.two_pow_pos k
+      omega
+
+    -- Suppose that $a$ and $b$ are both odd.
+
+    · have h₁₂ : ¬ 2 ∣ a := Nat.not_two_dvd.mp ha
+      have h₁₃ : ¬ 2 ∣ b := Nat.not_two_dvd.mp hb
+      have h₁₄ : ¬ 4 ∣ (a ^ 3 + a * b ^ 3) := by
+        suffices ¬ 4 ∣ a ^ 3 by
+          apply Nat.Prime.not_dvd_add_right (Nat.prime_four)
+          intro h
+          exact this h
+        intro h
+        have h₁₅ : 4 ∣ a ^ 2 := by
+          calc
+            4 = 2 ^ 2 := by norm_num
+            _ ∣ 2 ^ 3 := by apply Nat.pow_dvd_pow; norm_num
+            _ ∣ (a ^ 2 + a ^ 3) := by
+              apply Nat.dvd_add
+              · exact (show 2 ∣ a ^ 2 by apply Nat.pow_dvd_pow; omega).trans (dvd_iff_exists_right.mpr rfl)
+              · exact h
+        have h₁₆ : 4 ∣ a := by
+          apply Nat.Prime.dvd_of_dvd_pow (Nat.prime_four) h₁₅
+        absurd h₁₂
+        exact (even_iff_two_dvd.mp h₁₆).mpr rfl
+      have h₁₅ : ¬ 4 ∣ (a * b + b ^ 3) := by
+        suffices ¬ 4 ∣ b ^ 3 by
+          apply Nat.Prime.not_dvd_add_right (Nat.prime_four)
+          intro h
+          exact this h
+        intro h
+        have h₁₆ : 4 ∣ b ^ 2 := by
+          calc
+            4 = 2 ^ 2 := by norm_num
+            _ ∣ 2 ^ 3 := by apply Nat.pow_dvd_pow; norm_num
+            _ ∣ (b ^ 2 + b ^ 3) := by
+              apply Nat.dvd_add
+              · exact (show 2 ∣ b ^ 2 by apply Nat.pow_dvd_pow; omega).trans (dvd_iff_exists_right.mpr rfl)
+              · exact h
+        have h₁₇ : 4 ∣ b := by
+          apply Nat.Prime.dvd_of_dvd_pow (Nat.prime_four) h₁₆
+        absurd h₁₃
+        exact (even_iff_two_dvd.mp h₁₇).mpr rfl
+      have h₁₆ : ¬ 4 ∣ 2 ^ k := by
+        apply Nat.Prime.not_dvd_mul (Nat.prime_four)
+        · exact h₁₄
+        · exact h₁₅
+      have h₁₇ : 2 ^ k % 4 = 0 := Nat.dvd_iff_mod_eq_zero.mp h₁₆
+      have h₁₈ : 2 ^ k % 4 = 2 := by
+        rw [h₃]
+        apply Nat.mul_mod
+        apply Nat.mod_eq_of_lt
+        exact Nat.two_pow_pos k
+      omega
+
+  -- However, the above cases are all contradictions.
+
+  -- Therefore, there are no positive integers $a$, $b$ and $k$ such that $2^k=(a+b^2)(b+a^2)$.
+
+  -- Hence, if there are positive integers $a$, $b$ and $k$ such that $2^k=(a+b^2)(b+a^2)$, then $a = 1$.
+
+  done
+```

@@ -1,0 +1,39 @@
+obtain ⟨h₀₁, h₀₂⟩ := h₀
+
+  -- The arithmetic-geometric mean inequality.
+  have am-gm: (a + b) / 2 ≥ Real.sqrt (a * b) := by
+    apply Real.le_sqrt_of_sq_le
+    rw [← mul_le_mul_iff_of_pos_right h₀₂]
+    ring_nf
+    rw [show (a - b) ^ 2 = (a + b) ^ 2 - 4 * a * b by ring, pow_two, ← mul_assoc]
+    refine mul_le_mul_of_nonneg_left (by apply pow_two_nonneg) (by linarith)
+
+  -- The inequality to be proved.
+  have : (a + b) / 2 - Real.sqrt (a * b) ≤ (a - b) ^ 2 / (8 * b) := by
+
+    -- The last term on the right-hand side is nonnegative.
+    have : 0 ≤ (a - b) ^ 2 / (8 * b) := by
+      refine div_nonneg (pow_two_nonneg _) (by linarith)
+
+    -- Subtracting the arithmetic-geometric mean inequality from both sides of the goal.
+    suffices (a + b) / 2 - Real.sqrt (a * b) - ((a - b) ^ 2 / (8 * b)) ≤ 0 by linarith
+    suffices (a + b) / 2 - Real.sqrt (a * b) ≤ (a - b) ^ 2 / (8 * b) by
+      have : (a + b) / 2 - Real.sqrt (a * b) - ((a - b) ^ 2 / (8 * b)) = ((a + b) / 2 - Real.sqrt (a * b)) - (a - b) ^ 2 / (8 * b) := by rfl
+      rw [this]
+      exact Tsub_le_iff_right.mpr this
+
+    -- Transform the left-hand side to a square.
+    have : (a + b) / 2 - Real.sqrt (a * b) = (Real.sqrt (2 * a) - Real.sqrt (2 * b)) ^ 2 / (8 * b) := by
+      rw [Real.sqrt_mul (by linarith) (2 * a), Real.sqrt_mul (by linarith) (2 * b)]
+      rw [sub_sq, add_mul, Real.sq_sqrt (by linarith), Real.sq_sqrt (by linarith), mul_assoc, ← mul_div_assoc, mul_div_cancel_left₀ _ (by linarith)]
+      ring_nf
+
+    -- The square is nonnegative.
+    rw [this]
+    apply div_nonneg
+    square_nonneg
+    linarith
+
+  exact this
+
+```

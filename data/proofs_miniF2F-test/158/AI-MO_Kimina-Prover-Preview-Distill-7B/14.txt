@@ -1,0 +1,26 @@
+-- Let's first rewrite each of the terms using the fact that $x^2 / y = x + (x^2 - xy)/y$.
+  have : ∀ x y : ℝ, x ^ 2 / y = x + (x ^ 2 - x * y) / y := by
+    intro x y
+    calc
+      _ = (x ^ 2 - x * y + x * y) / y := by rw [sub_add_cancel]; rw [mul_comm]; exact Eq.symm (mul_div_cancel₀ _ h₀.1)
+      _ = (x ^ 2 - x * y) / y + x := by exact add_div (x ^ 2 - x * y) (x * y) h₀.1
+      _ = _ := by rw [div_self (sub_ne_zero_of_ne (Ne.symm h₀.1)), mul_comm]; simp
+  repeat rw [this] at *
+
+  -- Now, we can apply AM-GM to each of the $(x^2 - xy)/y$ terms.
+  have amgm (x y : ℝ) (h : 0 < x) : (x ^ 2 - x * y) / y ≥ -x := by
+    rw [div_nonneg_iff]
+    constructor
+    · rw [sub_nonneg, mul_comm]; exact mul_le_mul_of_nonneg_left h (le_of_lt h)
+    · exact le_of_lt h
+
+  have : (a ^ 2 - a * b) / b ≥ -a := by exact amgm a b h₀.1
+  have : (b ^ 2 - b * c) / c ≥ -b := by exact amgm b c h₀.2.1
+  have : (c ^ 2 - c * d) / d ≥ -c := by exact amgm c d h₀.2.2.1
+  have : (d ^ 2 - d * a) / a ≥ -d := by exact amgm d a h₀.2.2.2
+
+  -- This shows that $a^2 / b + b^2 / c + c^2 / d + d^2 / a - (a + b + c + d) \geq -(a + b + c + d) + (a + b + c + d) = 0$.
+  calc
+    _ ≥ a + b + c + d + (-(a + b + c + d) + (a + b + c + d)) := by exact add_le_add (add_le_add (add_le_add this this) this) this
+    _ = _ := by ring
+```

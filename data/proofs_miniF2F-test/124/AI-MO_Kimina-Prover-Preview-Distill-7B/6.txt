@@ -1,0 +1,85 @@
+-- Let $x = |a|$ and $y = |b|$.
+  let x := abs a
+  let y := abs b
+
+  -- Then $x \geq 0$ and $y \geq 0$.
+  have hx : x ≥ 0 := abs_nonneg a
+  have hy : y ≥ 0 := abs_nonneg b
+
+  -- Let $s = x + y$.
+  let s := x + y
+
+  -- Then $s \geq 0$.
+  have hs : s ≥ 0 := by positivity
+
+  -- From the triangle inequality, we have $|a + b| \leq x + y = s$.
+  have h : abs (a + b) ≤ s := abs_add a b
+
+  -- Then $\frac{|a+b|}{1+|a+b|}\leq \frac{s}{1+s}$.
+  have h1 : abs (a + b) / (1 + abs (a + b)) ≤ s / (1 + s) := by
+    -- If $|a+b| = 0$, then $s = 0$, and the inequality holds.
+    by_cases h2 : abs (a + b) = 0
+    · simp [h2]
+    -- If $|a+b| > 0$, then $s > 0$, and the inequality holds by the lemma.
+    · have h3 : s > 0 := by
+        dsimp [s]
+        apply add_pos
+        exact hx
+        exact hy
+      have h4 : 1 + abs (a + b) > 0 := by positivity
+      have h5 : 1 + s > 0 := by positivity
+      apply (div_le_div_iff (by linarith) (by linarith)).mpr
+      nlinarith [h]
+
+  -- We have $s/(1+s) \leq x/(1+x) + y/(1+y)$.
+  have h2 : s / (1 + s) ≤ x / (1 + x) + y / (1 + y) := by
+    -- It suffices to show that $s/(1+s) \leq x/(1+x)$ and $s/(1+s) \leq y/(1+y)$.
+    suffices s / (1 + s) ≤ x / (1 + x) ∧ s / (1 + s) ≤ y / (1 + y) by
+      rcases this with ⟨h2, h3⟩
+      linarith
+    constructor
+    · -- It is true because $s = x + y$ and $1 + s = 1 + x + y$.
+      -- The denominator is larger and the numerator is the same.
+      rw [dsimp [s], add_div, div_add_div_same]
+      -- We need to exclude the case where $1 + x + y = 0$.
+      · have h2 : 1 + x + y ≠ 0 := by positivity
+        -- But this case is impossible because $x \geq 0$ and $y \geq 0$.
+        field_simp [h2]
+        linarith
+      -- The same argument applies to $x/(1+x)$ and $y/(1+y)$.
+      · have h2 : 1 + x ≠ 0 := by positivity
+        have h3 : 1 + y ≠ 0 := by positivity
+        field_simp [h2, h3]
+        have h4 : x + y ≥ 0 := by positivity
+        have h5 : (1 + x) * y ≥ 0 := by
+          apply mul_nonneg
+          · apply add_nonneg
+            · exact hx
+            · exact zero_nonneg
+          · exact hy
+        linarith
+    · -- It is true because $1 + s = 1 + x + y$ and $y \geq 0$.
+      -- The denominator is larger and the numerator is the same.
+      rw [dsimp [s], add_div, div_add_div_same]
+      -- We need to exclude the case where $1 + x + y = 0$.
+      · have h2 : 1 + x + y ≠ 0 := by positivity
+        -- But this case is impossible because $x \geq 0$ and $y \geq 0$.
+        field_simp [h2]
+        linarith
+      -- The same argument applies to $x/(1+x)$ and $y/(1+y)$.
+      · have h2 : 1 + x ≠ 0 := by positivity
+        have h3 : 1 + y ≠ 0 := by positivity
+        field_simp [h2, h3]
+        have h4 : x ≥ 0 := hx
+        have h5 : x * (1 + y) ≥ 0 := by
+          apply mul_nonneg
+          · exact h4
+          · apply add_nonneg
+            · exact zero_nonneg
+            · exact hy
+        linarith
+
+  -- The proof is complete.
+  linarith
+
+```

@@ -1,0 +1,53 @@
+-- We will show that $129^{34} \equiv 1 \pmod{11}$ and
+  -- $96^{38} \equiv 8 \pmod{11}$, so $129^{34}+96^{38} \equiv 1+8 \equiv 9 \pmod{11}$.
+
+  -- First, note that $129 \equiv 1 \pmod{11}$.
+  have h1 : 129 ≡ 1 [MOD 11] := by rfl
+
+  -- So, $129^{34} \equiv 1^{34} \equiv 1 \pmod{11}$.
+  have h1' : 129 ^ 34 ≡ 1 ^ 34 [MOD 11] := by
+    apply Nat.ModEq.pow 34 h1
+
+  simp at h1'
+
+  -- Also, $96 \equiv 9 \pmod{11}$.
+  have h2 : 96 ≡ 9 [MOD 11] := by rfl
+
+  -- So, $96^{38} \equiv 9^{38} \pmod{11}$.
+  have h2' : 96 ^ 38 ≡ 9 ^ 38 [MOD 11] := by
+    apply Nat.ModEq.pow 38 h2
+
+  -- Note that by Fermat's Little Theorem, $9^{10} \equiv 1 \pmod{11}$.
+  have h3 : 9 ^ 10 ≡ 1 [MOD 11] := by
+    apply Nat.ModEq.pow_totient
+    rfl
+
+  -- So, $9^{38} = 9^{10\cdot 3 + 8} = (9^{10})^3\cdot 9^8 \equiv 1^3\cdot 9^8 \equiv 9^8 \pmod{11}$.
+  have h2'' : 9 ^ 38 ≡ 9 ^ 8 [MOD 11] := by
+    calc
+      _ ≡ 9 ^ (10 * 3 + 8) := by congr; norm_num
+      _ = 9 ^ (10 * 3) * 9 ^ 8 := by rw [Nat.pow_add]
+      _ = (9 ^ 10) ^ 3 * 9 ^ 8 := by rw [Nat.pow_mul]
+      _ ≡ 1 ^ 3 * 9 ^ 8 := by
+        apply Nat.ModEq.mul
+        apply Nat.ModEq.pow 3 h3
+        rfl
+      _ = 9 ^ 8 := by rw [Nat.one_pow]
+  -- Now, we can calculate $9^8 \pmod{11}$.
+  have h4 : 9 ^ 8 ≡ 9 [MOD 11] := by
+    rfl
+
+  -- So, $96^{38} \equiv 9 \pmod{11}$.
+  have h2''' : 96 ^ 38 ≡ 9 [MOD 11] := by
+    calc
+      _ ≡ 9 ^ 38 := by exact h2'
+      _ ≡ 9 ^ 8 := by exact h2''
+      _ ≡ 9 := by exact h4
+
+  -- Hence, $129^{34}+96^{38} \equiv 1 + 9 \equiv 10 \pmod{11}$.
+  calc
+    _ ≡ 1 + 96 ^ 38 := by exact Nat.ModEq.add h1' h2'''
+    _ ≡ 1 + 9 := by exact Nat.ModEq.add h1' h2'''
+    _ ≡ 10 := by rfl
+
+```

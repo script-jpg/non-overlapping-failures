@@ -1,0 +1,110 @@
+-- The maximum value is attained at $t = 2.$
+  have h1 : (2:ℝ) - 3 * logb 2 2 = 2 - 3 * 1 = -1 := by norm_num
+
+  -- For all other values of $t,$ the inequality is strictly less than $\frac{1}{12}.$
+  have h2 : ∀ t:ℝ, t ≠ 2 → (2 ^ t - 3 * t) * t / 4 ^ t < 1 / 12 := by
+
+    intro t ht
+
+    -- Prove the inequality in some cases based on the value of $t.$
+    by_cases h3 : t > 2
+    · by_cases h4 : t > 0
+      · -- If $t > 2,$ then $\frac{(2^t-3t)t}{4^t} < \frac{(2^t-3t)t}{2^t} = \frac{(2^t-3t)}{2^t} \cdot t = (1 - \frac{3t}{2^t}) \cdot t.$
+        have h5 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (2 ^ t - 3 * t) * t / (2 ^ t) := by
+          rw [div_eq_mul_inv, div_eq_mul_inv]
+          apply mul_le_mul_of_nonneg_left
+          · exact sub_nonneg.mpr (pow_le_pow_of_le_one (by norm_num) (by linarith) (by norm_num))
+          · exact inv_le_inv₀ (by linarith) (by norm_num)
+        have h6 : (2 ^ t - 3 * t) * t / (2 ^ t) = (1 - 3 * (t / 2 ^ t)) * t := by field_simp
+        suffices h7 : (1 - 3 * (t / 2 ^ t)) * t < 1 / 12 by linarith
+        have h8 : 3 * (t / 2 ^ t) > 3 * (1 / 2) := by
+          apply mul_lt_mul_of_pos_left
+          · linarith
+          · positivity
+        linarith
+
+      · -- If $t \leq 0,$ then $2^t - 3t > 0$ and $t \leq 0.$
+        have h9 : 2 ^ t - 3 * t > 0 := by
+          apply sub_pos.mpr
+          apply lt_trans
+          · exact pow_pos (by norm_num) t
+          · linarith
+        nlinarith
+
+    · -- If $t < 2,$ then $2^t - 3t < 0$ or $t < 0.$
+      by_cases h10 : t < 0
+      · -- If $t < 0,$ then $2^t - 3t > 0$ and $t < 0.$
+        have h9 : 2 ^ t - 3 * t > 0 := by
+          apply sub_pos.mpr
+          apply lt_trans
+          · exact pow_pos (by norm_num) t
+          · linarith
+        nlinarith
+
+      · -- If $0 \le t < 2,$ then $(2^t-3t)t < 0.$
+        have h9 : (2 ^ t - 3 * t) * t < 0 := by
+          apply mul_neg_of_neg_of_pos
+          · apply sub_neg.mpr
+            apply lt_trans
+            · exact pow_pos (by norm_num) t
+            · linarith
+          · linarith
+        linarith
+
+  -- Consider the value of $t$ which maximizes the value of $\frac{(2^t-3t)t}{4^t}.$
+  by_cases h11 : t > 2
+  · -- If $t > 2,$ then $\frac{(2^t-3t)t}{4^t} < \frac{(2^t-3t)t}{2^t} = \frac{(2^t-3t)}{2^t} \cdot t = (1 - \frac{3t}{2^t}) \cdot t.$
+    have h12 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (2 ^ t - 3 * t) * t / (2 ^ t) := by
+      rw [div_eq_mul_inv, div_eq_mul_inv]
+      apply mul_le_mul_of_nonneg_left
+      · exact sub_nonneg.mpr (pow_le_pow_of_le_one (by norm_num) (by linarith) (by norm_num))
+      · exact inv_le_inv₀ (by linarith) (by norm_num)
+    have h13 : (2 ^ t - 3 * t) * t / (2 ^ t) = (1 - 3 * (t / 2 ^ t)) * t := by field_simp
+    suffices h14 : (1 - 3 * (t / 2 ^ t)) * t ≤ 1 / 12 by linarith
+    have h15 : 3 * (t / 2 ^ t) ≥ 3 * (1 / 2) := by
+      apply mul_le_mul_of_nonneg_left
+      · linarith
+      · positivity
+    linarith
+
+  · -- If $t \leq 2,$ then $2^t - 3t \leq 0.$
+    have h16 : 2 ^ t - 3 * t ≤ 0 := by
+      by_contra!
+      replace this : t > 2 := by
+        have h16 : 3 * t > 3 * 2 := by linarith
+        have h17 : 2 ^ t > 2 ^ 2 := by
+          apply (Nat.pow_lt_pow_iff_right (by norm_num)).mpr
+          linarith
+        linarith
+      exact h11 this
+
+    -- If $t = 2,$ then $\frac{(2^t-3t)t}{4^t} = \frac{(4-6)2}{16} = -\frac{1}{12}.$
+    by_cases h17 : t = 2
+    · rw [h17] at h16
+      replace h16 : t < 2 := lt_of_le_of_ne h16 fun a ↦ h17 (id (Eq.symm a))
+      have h18 : (2 ^ t - 3 * t) * t / 4 ^ t < 1 / 12 := by
+        apply h2
+        exact h16
+      linarith
+
+    -- If $t < 2,$ then $2^t - 3t < 0$ or $t < 0.$
+    by_cases h18 : t < 0
+    · -- If $t < 0,$ then $2^t - 3t > 0$ and $t < 0.$
+      have h19 : 2 ^ t - 3 * t > 0 := by
+        apply sub_pos.mpr
+        apply lt_trans
+        · exact pow_pos (by norm_num) t
+        · linarith
+      nlinarith
+
+    -- If $0 \le t < 2,$ then $(2^t-3t)t < 0.$
+    have h19 : (2 ^ t - 3 * t) * t < 0 := by
+      apply mul_neg_of_neg_of_pos
+      · apply sub_neg.mpr
+        apply lt_trans
+        · exact pow_pos (by norm_num) t
+        · linarith
+      · linarith
+    linarith
+
+```

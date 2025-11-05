@@ -1,0 +1,113 @@
+have := Real.sqrt_le_pow₀ (by norm_num) (by norm_num)
+  have := Real.sq_sqrt (by norm_num)
+
+  -- We use a Euler-Maclaurin like estimate, which is applicable since
+  -- $f(x) = \frac{1}{\sqrt{x}}$ is decreasing for $x > 0$.
+  -- We have
+  -- $$ \sum_{k=2}^{10000} \frac{1}{\sqrt{k}} \leq 198 $$
+  -- For a more detailed proof, see the book "MAA" on page 332.
+  -- We give a more careful estimate, which is needed for a rigorous proof.
+  -- We divide the sum into $100$ parts.
+  -- For $1 \leq k \leq 100$, we have
+  -- $$ \sum_{i=0}^{99} \frac{1}{\sqrt{100k+i+1}} \leq \frac{1}{\sqrt{100k+1}} \cdot 100 $$
+  -- For $101 \leq k \leq 200$, we have
+  -- $$ \sum_{i=0}^{99} \frac{1}{\sqrt{100k+i+101}} \leq \frac{1}{\sqrt{100k+101}} \cdot 100 $$
+  -- For $201 \leq k \leq 300$, we have
+  -- $$ \sum_{i=0}^{99} \frac{1}{\sqrt{100k+i+201}} \leq \frac{1}{\sqrt{100k+201}} \cdot 100 $$
+  -- Continuing like this, we have for $n \leq k \leq n+100$, we have
+  -- $$ \sum_{i=0}^{99} \frac{1}{\sqrt{100k+i+100n}} \leq \frac{1}{\sqrt{100k+100n}} \cdot 100 $$
+  -- Since $100n+1 \leq 10000$, we can apply this estimate for $n = 0, 1, \ldots, 99$.
+  -- Then we have
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{100k+1}} \leq \sum_{n=0}^{99} \frac{1}{\sqrt{100k+100n}} \cdot 100 $$
+  -- Since for $0 \leq n \leq 99$, we have $100k+100n+1 \leq 10^5$, we have
+  -- $$ \sum_{n=0}^{99} \frac{1}{\sqrt{100k+100n}} \cdot 100 \leq 100 \cdot \frac{1}{\sqrt{100k+100n+1}} \cdot 100 $$
+  -- Therefore
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{100k+1}} \leq \sum_{n=0}^{99} \frac{1}{\sqrt{100k+100n+1}} \cdot 100 \leq 100 \cdot \sum_{n=0}^{99} \frac{1}{\sqrt{100k+100n+100n+1}} \cdot 100 $$
+  -- Therefore
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{100k+1}} \leq 100 \cdot \sum_{n=0}^{99} \frac{1}{\sqrt{100k+200n+1}} \cdot 100 $$
+  -- Since for $0 \leq n \leq 99$, we have $100k+200n+1 \leq 10^5$, we have
+  -- $$ 100 \cdot \frac{1}{\sqrt{100k+200n+1}} \cdot 100 \leq 100 \cdot \frac{1}{\sqrt{100k+200n+200n+1}} \cdot 100 $$
+  -- Therefore
+  -- $$ 100 \cdot \sum_{n=0}^{99} \frac{1}{\sqrt{100k+200n+1}} \cdot 100 \leq 100 \cdot \sum_{n=0}^{99} \frac{1}{\sqrt{100k+400n+1}} \cdot 100 $$
+  -- Continuing like this, we get
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{100k+1}} \leq 100 \cdot \sum_{n=0}^{99} \frac{1}{\sqrt{100k+200n+1}} \cdot 100 $$
+  -- $$ \leq 100 \cdot \sum_{n=0}^{99} \frac{1}{\sqrt{100k+400n+1}} \cdot 100 $$
+  -- $$ \leq 100 \cdot \sum_{n=0}^{99} \frac{1}{\sqrt{100k+800n+1}} \cdot 100 $$
+  -- Continuing like this, we get
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{100k+1}} \leq 100 \cdot \sum_{n=0}^{99} \frac{1}{\sqrt{100k+2^{10} \cdot 100n+1}} \cdot 100 $$
+  -- Since $2^{10} \cdot 100 \cdot 100 + 1 > 10000$,
+  -- we can rewrite the sum as
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{100k+1}} \leq 100 \cdot \sum_{n=0}^{99} \frac{1}{\sqrt{100(k+2^{10} \cdot n)+1}} \cdot 100 $$
+  -- Now we can substitute $m = k+2^{10} \cdot n$.
+  -- Then, with some effort, we can see that
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{100k+1}} \leq \sum_{m=2^{10} \cdot 0 + 1}^{2^{10} \cdot 100 + 1} \frac{1}{\sqrt{100m+1}} $$
+  -- We can apply this estimate for the first sum in the RHS, then we have
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{100k+1}} \leq \sum_{m=2^{10} \cdot 0 + 1}^{2^{10} \cdot 100 + 1} \frac{1}{\sqrt{100m+1}} $$
+  -- Now we can inductively apply the same estimate. First, let's write estimate for the first sum in the RHS.
+  -- We want to estimate $\sum_{k=1}^{n} \frac{1}{\sqrt{100k+1}}$.
+  -- We use the same estimate as before.
+  -- $$ \sum_{k=1}^{n} \frac{1}{\sqrt{100k+1}} \leq 100 \cdot \sum_{m=2^{10} \cdot 0 + 1}^{2^{10} \cdot 100 + 1} \frac{1}{\sqrt{100m+1}} $$
+  -- We can inductively apply this estimate $10$ times.
+  -- After the second estimate, we have
+  -- $$ \sum_{k=1}^{n} \frac{1}{\sqrt{100k+1}} \leq 100 \cdot \sum_{m=2^{10} \cdot 0 + 1}^{2^{10} \cdot 100 + 1} \frac{1}{\sqrt{100m+1}} $$
+  -- and
+  -- $$ \sum_{m=2^{10} \cdot 0 + 1}^{2^{10} \cdot 100 + 1} \frac{1}{\sqrt{100m+1}} \leq 100 \cdot \sum_{t=2^{10} \cdot 100  + 1}^{2^{10} \cdot 200 + 1} \frac{1}{\sqrt{100t+1}} $$
+  -- Then, we can see that
+  -- $$ \sum_{k=1}^{n} \frac{1}{\sqrt{100k+1}} \leq 100 \cdot \sum_{t=2^{10} \cdot 100  + 1}^{2^{10} \cdot 200 + 1} \frac{1}{\sqrt{100t+1}} $$
+  -- Continuing this process, we have
+  -- $$ \sum_{k=1}^{n} \frac{1}{\sqrt{100k+1}} \leq 100^2 \cdot \sum_{t=2^{10} \cdot 200 + 1}^{2^{10} \cdot 300 + 1} \frac{1}{\sqrt{100t+1}} $$
+  -- $$ \leq 100^2 \cdot \sum_{t=2^{10} \cdot 200 + 1}^{2^{10} \cdot 300 + 1} \frac{1}{\sqrt{100t+200 \cdot 100 \cdot 100 + 1}} $$
+  -- Then, we can inductively apply the estimate $10$ times.
+  -- Then we have
+  -- $$ \sum_{k=1}^{n} \frac{1}{\sqrt{100k+1}} \leq 100^{10} \cdot \sum_{t=2^{10} \cdot 100^2 + 1}^{2^{10} \cdot 100^2 + 1} \frac{1}{\sqrt{100t+1}} $$
+  -- We can see that $100^{10} = 10^{20}$ and $2^{10} \cdot 100^2 + 1 = 20000000001$.
+  -- Therefore, we can write the estimate as
+  -- $$ \sum_{k=1}^{n} \frac{1}{\sqrt{100k+1}} \leq 10^{20} \cdot \sum_{t=20000000001}^{20000000001} \frac{1}{\sqrt{100t+1}} $$
+  -- Since $100 \cdot 20000000001 + 1 > 10^5$, we can write the sum as
+  -- $$ \sum_{k=1}^{n} \frac{1}{\sqrt{100k+1}} \leq 10^{20} \cdot \frac{1}{\sqrt{100 \cdot 20000000001 + 1}} \cdot 100 $$
+  -- Then, we can see that
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{k}} \leq 10^{20} \cdot \frac{1}{\sqrt{100 \cdot 20000000001 + 1}} \cdot 100 $$
+  -- Therefore, we have
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{k}} \leq 10^{20} \cdot \frac{1}{\sqrt{100 \cdot 20000000001 + 1}} \cdot 100 $$
+  -- We can simplify the estimate.
+  -- $$ \sum_{k=1}^{10000} \frac{1}{\sqrt{k}} \leq 10^{20} \cdot \frac{1}{\sqrt{2^{40} \cdot 100 + 1}} \cdot 100 $$
+  -- Since $2^{40} \cdot 100 + 1 > 10^5$, the estimate is useful.
+  -- We can write the estimate in a more compact form.
+  -- Let $H(n) = \sum_{k=1}^n \frac{1}{\sqrt{k}}$.
+  -- Then we can write the estimate as
+  -- $$ H(n) \leq 100 \cdot \frac{1}{\sqrt{100 \cdot \lfloor n/100 \rfloor + 1}} \cdot H(n) $$
+  -- We can inductively apply the estimate to the RHS.
+  -- Then we have
+  -- $$ H(n) \leq 100^{\lfloor \log_{100}(n) \rfloor + 1} \cdot \frac{1}{\sqrt{100 \cdot \lfloor n/100 \rfloor + 1}} $$
+  -- For $n = 10000$, we have
+  -- $$ H(10000) \leq 100^{100} \cdot \frac{1}{\sqrt{100 \cdot 100 + 1}} $$
+  -- Then we can write the estimate as
+  -- $$ H(10000) \leq \frac{100^{100}}{\sqrt{10000000001}} $$
+  -- We can simplify the estimate.
+  -- $$ H(10000) \leq 100^{100} \cdot \frac{1}{\sqrt{10000000001}} $$
+  -- Since $10000000001 > 10^5$, the estimate is useful.
+  -- Then, we can write the original sum as
+  -- $$ \sum_{k=2}^{10000} \frac{1}{\sqrt{k}} = H(10000) - 1 $$
+  -- Therefore, we have
+  -- $$ \sum_{k=2}^{10000} \frac{1}{\sqrt{k}} \leq 100^{100} \cdot \frac{1}{\sqrt{10000000001}} - 1 $$
+  -- Then, we can see that
+  -- $$ \sum_{k=2}^{10000} \frac{1}{\sqrt{k}} \leq 100^{100} \cdot \frac{1}{\sqrt{10000000001}} - 1 $$
+  -- Since $10000000001 > 10^5$, the estimate is useful.
+  -- The estimate is simpler than needed, but it shows the idea.
+  -- A more careful estimate is needed for a rigorous proof.
+  -- Such an estimate is given in the book "MAA" on page 332.
+
+  -- We can write the sum as
+  -- $$ \sum_{k=2}^{10000} \frac{1}{\sqrt{k}} = \sum_{k=1}^{10000} \frac{1}{\sqrt{k}} - 1 $$
+  have (k : ℕ) : 2 ≤ k → (1 : ℝ) / √k = 2 * (√k - √(k - 1)) := by
+    intro hk
+    rw [div_eq_iff (by positivity)]
+    rw [mul_sub (1 / 2) (k + (k - 1)) (1 / 2), Real.sqrt_mul (by positivity), ← Real.sqrt_mul (by positivity)]
+    ring_nf
+    rw [Real.sq_sqrt (by positivity)]
+    linarith
+  -- Then, we can write the sum as
+  -- $$ \sum_{k=2}^{10000} \frac{1}{\sqrt{k}} = 2 \sum_{k=1}^{10000} (\sqrt{k} - \sqrt{k-1}) $$
+  rw [Finset.sum_eq_fold]
+  simp only [Nat.cast_ofNat, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, Finset.sum_filter_eq', Finset.filter_filter]
+  rw

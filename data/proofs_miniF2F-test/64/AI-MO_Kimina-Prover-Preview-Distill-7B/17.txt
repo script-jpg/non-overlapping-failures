@@ -1,0 +1,47 @@
+-- We shall prove that the possible values of $h(x)$ are 1 and 7.
+  have : ∀ x, h x = 1 ∨ h x = 7 := by
+    intro x
+    rw [h₂, h₀, h₁]
+    -- Simplify the condition using the Euclidean algorithm.
+    have : Nat.gcd (12 * x + 7) (5 * x + 2) = Nat.gcd (5 * x + 2) (2 * x + 3) := by
+      calc
+        Nat.gcd (12 * x + 7) (5 * x + 2) = Nat.gcd (7 * (x + 1) + 15) (5 * x + 2) := by ring_nf
+        _ = Nat.gcd (15 * (x + 1) - 8 * (5 * x + 2)) (5 * x + 2) := by ring_nf
+        _ = Nat.gcd (5 * x + 2) (15 - 8 * (x + 1)) := by apply Nat.gcd_mul_add_mod
+        _ = Nat.gcd (5 * x + 2) (2 * x + 3) := by ring_nf
+    rw [this]
+    -- We shall prove that the possible values of the gcd are 1 and 7.
+    have : 5 * x + 2 > 0 := by omega
+    have : Nat.gcd (5 * x + 2) (2 * x + 3) ∣ 5 * x + 2 := by exact Nat.gcd_dvd_left (5 * x + 2) (2 * x + 3)
+    have : Nat.gcd (5 * x + 2) (2 * x + 3) ∣ 2 * x + 3 := by exact Nat.gcd_dvd_right (5 * x + 2) (2 * x + 3)
+    have : Nat.gcd (5 * x + 2) (2 * x + 3) ≤ 5 * x + 2 := by apply Nat.le_of_dvd this
+    have : Nat.gcd (5 * x + 2) (2 * x + 3) ≤ 2 * x + 3 := by apply Nat.le_of_dvd this
+    have : 1 ≤ Nat.gcd (5 * x + 2) (2 * x + 3) := by
+      have : 1 ≤ 5 * x + 2 := by omega
+      have : 1 ∣ 5 * x + 2 := by exact Nat.dvd_of_mod_eq_zero rfl
+      exact Nat.le_of_dvd this this
+    -- Since $2 * x + 3$ is a linear function of $x$ and the gcd is at most the smaller of the two coefficients,
+    -- we have the gcd is either 1 or 7.
+    have : Nat.gcd (5 * x + 2) (2 * x + 3) = 1 ∨ Nat.gcd (5 * x + 2) (2 * x + 3) = 7 := by
+      omega
+    exact this
+
+  -- Then the possible values of $h(x)$ are 1 and 7.
+  replace : Set.range h = {1, 7} := by
+    ext y
+    simp only [Set.mem_range, Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff]
+    constructor
+    · intro ⟨x, hx⟩
+      rw [← hx.2]
+      exact this x
+    · intro h
+      rcases h with h | h
+      · use 1
+        simp [h, h₀, h₁, h₂]
+      · use 7
+        simp [h, h₀, h₁, h₂]
+  -- The sum of all possible values of $h(x)$ is 1 + 7 = 8.
+  simp only [this, Set.range_singleton, Finset.sum_insert, Finset.sum_singleton]
+  <;> rfl
+
+```

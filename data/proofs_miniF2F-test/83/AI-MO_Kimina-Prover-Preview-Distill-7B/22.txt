@@ -1,0 +1,50 @@
+-- the sequence is defined by $a_0 = 1$, $a_1 = 3/2$, and $a_{n+1} = a_n * (1 + 1/2^{n+1})$.
+  let a (n : ℕ) : ℝ := ((1 : ℝ) + 1 / 2) * ((1 : ℝ) + 1 / 4) * ((1 : ℝ) + 1 / 8) * ((1 : ℝ) + 1 / 16) * ((1 : ℝ) + 1 / 32) * ((1 : ℝ) + 1 / 64) * ((1 : ℝ) + 1 / 128) * ((1 : ℝ) + 1 / 256) * ((1 : ℝ) + 1 / 512) * ((1 : ℝ) + 1 / 1024) * ((1 : ℝ) + 1 / 2048) * ((1 : ℝ) + 1 / 4096) * ((1 : ℝ) + 1 / 8192));
+  let a' (n : ℕ) : ℝ := ∏ k in Finset.Icc 1 n, ((1 : ℝ) + 1 / 2 ^ k);
+
+  -- the sequence is increasing.
+  have hmono : Monotone a' := by
+    intro n m hnm
+    simp only [Finset.prod_Icc_succ_top]
+    exact le_mul_of_one_le_left (a' n) (by simp only [add_pos_iff, zero_lt_one, true_and])
+
+  -- $a_0 < 5/2$.
+  have h₀ : a 0 < 5 / 2 := by
+    unfold a
+    norm_num
+
+  -- By induction, we know that $a_n < 5/2$.
+  have h₁ : ∀ n : ℕ, a' n < 5 / 2 := by
+    intro n
+    induction n with
+    | zero =>
+      unfold a'
+      simp only [Finset.prod_Icc_succ_top]
+      exact h₀
+    | succ n ih =>
+      unfold a'
+      simp only [Finset.prod_Icc_succ_top]
+      apply add_lt_add_left
+      apply lt_of_lt_of_le ih
+      unfold a
+      simp only [add_pos_iff, zero_lt_one, true_and]
+      exact le_mul_of_one_le_left (a' n) (by simp only [add_pos_iff, zero_lt_one, true_and])
+
+  -- the limit of the sequence is $5/2$.
+  have h₂ : ∀ ε : ℝ, 0 < ε → ∃ N : ℕ, ∀ n : ℕ, N ≤ n → |a' n - 5 / 2| < ε := by
+    intro ε hε
+    use 0
+    intro n hn
+    simp only [abs, Nat.cast_ofNat]
+    have : (5 : ℝ) / 2 - a' n < ε := by
+      have : (5 : ℝ) / 2 - a' n ≤ 0 := by
+        have : a' n < (5 : ℝ) / 2 := h₁ n
+        linarith
+      linarith
+    linarith
+
+  -- By induction, we know that $a_n < 5/2$.
+  unfold a' at h₁
+  exact h₁ n
+
+```

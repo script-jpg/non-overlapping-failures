@@ -1,0 +1,106 @@
+-- A lemma that later simplify all square roots of natural numbers to a form of $\sqrt{c}$.
+  have h₄ {n : ℕ} (hn : 0 < n) : √n = √↑n := by simp
+
+  -- First, we cancel the constant term on the LHS of the quadratic equation.
+  have h₅ : 2 * x ^ 2 - 4 * x = 9 := by rw [h₁]; simp
+
+  -- We rewrite the LHS of the equation to a form of $(x - a)^2 = b$.
+  have h₆ : (x - 1) ^ 2 = 11 / 2 := by calc
+    _ = 2 * (x ^ 2 - 2 * x) + 1 := by ring
+    _ = 2 * (x ^ 2 - 4 * x) + 9 := by rw [show x ^ 2 - 4 * x = (x - 2) ^ 2 - 4 * x by ring]; ring
+    _ = 2 * (x ^ 2 - 4 * x + 4) + 1 := by ring
+    _ = 2 * (x - 1) ^ 2 := by ring
+    _ = 11 / 2 := by rw [h₅]; ring
+
+  -- We take square root on both sides of the equation and simplify.
+  have h₇ : (x - 1) = Real.sqrt (11 / 2) ∨ (x - 1) = -Real.sqrt (11 / 2) := by
+    have h₇ : (x - 1) ^ 2 = 11 / 2 := by assumption
+    have h₈ : (x - 1) ^ 2 = (Real.sqrt (11 / 2)) ^ 2 := by rw [h₇]; simp [h₄]
+    have h₉ : (x - 1) = Real.sqrt (11 / 2) ∨ (x - 1) = -Real.sqrt (11 / 2) := by
+      have h : (x - 1) ^ 2 - (Real.sqrt (11 / 2)) ^ 2 = 0 := by h₈
+      have h₁₀ : ((x - 1) - Real.sqrt (11 / 2)) * ((x - 1) + Real.sqrt (11 / 2)) = 0 := by
+        rw [←h]; ring
+      have h₁₁ : (x - 1) - Real.sqrt (11 / 2) = 0 ∨ (x - 1) + Real.sqrt (11 / 2) = 0 := by
+        apply mul_eq_zero.mp at h₁₀
+        exact h₁₀
+      rcases h₁₁ with h₁₂ | h₁₃
+      · left; linarith
+      · right; linarith
+    exact h₉
+
+  -- We simplify the square root of 11/2.
+  have h₁₁ : √(11 / 2) = √22 / 2 := by
+    rw [Real.sqrt_eq_iff_sq_eq] <;> norm_num
+    <;> ring_nf <;> norm_num
+
+  -- We further simplify the expression.
+  have h₁₂ : x = 1 + √22 / 2 ∨ x = 1 - √22 / 2 := by
+    have h₁₂ : x = 1 + Real.sqrt (11 / 2) ∨ x = 1 - Real.sqrt (11 / 2) := by
+      rcases h₇ with h₇ | h₇
+      · left; linarith
+      · right; linarith
+    rw [h₁₁] at h₁₂
+    exact h₁₂
+
+  -- Now we start to substitute the value of $x$.
+  rcases h₁₂ with h₁₂ | h₁₂
+  · -- If $x = 1 + \sqrt{22}/2$, we substitute this value into the expression.
+    rw [h₁₂] at h₂
+    have h₁₃ : a = 1 := by
+      apply eq_of_le_of_le
+      · have h₁₃ : a ≤ 1 := by
+          have h₁₄ : 0 ≤ (1 : ℝ) := by norm_num
+          have h₁₅ : a ≤ (1 : ℝ) := by
+            rw [h₂]
+            apply Real.le_sqrt_of_sq_le
+            apply add_nonneg
+            · apply pow_two_nonneg
+            · norm_num
+          exact_mod_cast h₁₅
+        · have h₁₆ : 0 < a := by assumption
+        exact h₁₃
+    have h₁₄ : b = 22 := by
+      apply eq_of_le_of_le
+      · have h₁₄ : b ≤ 22 := by
+          have h₁₅ : b ≤ (22 : ℝ) := by
+            rw [h₂]
+            apply Real.sqrt_le_left
+            apply add_nonneg
+            · apply pow_two_nonneg
+            · norm_num
+          exact h₁₅
+        · norm_num
+      · have h₁₆ : 0 < b := by assumption
+        exact h₁₄
+    have h₁₅ : c = 2 := by assumption
+    rw [h₁₃, h₁₄, h₁₅]
+    norm_num
+  · -- If $x = 1 - \sqrt{22}/2$, we will get a negative number in the condition, which is a contradiction.
+    have h₁₇ : 0 ≤ x := by assumption
+    have h₁₈ : 0 < (1 : ℝ) := by norm_num
+    have h₁₉ : ¬ x < 1 := by
+      by_contra! h₁₉
+      have h₁₇ : 0 ≤ x := by assumption
+      have h₁₈ : 0 < (1 : ℝ) := by norm_num
+      have h₁_{20} : x < 1 := by linarith
+      have h₁_{21} : √22 / 2 < 1 := by
+        calc
+          _ < (11 / 2 : ℝ) := by apply (div_lt_iff₀?_).mpr; norm_num; norm_num
+          _ = √((11 / 2) ^ 2) := by simp [h₄]
+          _ < √((1 : ℝ) ^ 2) := by apply Real.sqrt_lt_sqrt; norm_num; norm_num
+          _ = 1 := by simp
+      have h₁_{22} : √22 < 2 := by
+        calc
+          _ < 11 / 2 := by rw [h₁₁]; apply Real.sqrt_lt_sqrt; norm_num; norm_num
+          _ < (2 : ℝ) := by norm_num
+      have h₁_{23} : √22 / 2 < 1 := by linarith
+      have h₁_{24} : √22 / 2 < √22 / 2 := by linarith
+      exact (lt_self_iff_false?_).mp h₁_{24}
+    have h₁_{25} : 0 < 1 - x := by
+      calc
+        _ = 1 - 1 := by simp
+        _ < 1 - x := by exact_sub_lt_sub_right h₁_{20} 1
+    have h₁_{26} : 1 - x < 0 := by linarith
+    exact (lt_self_iff_false?_).mp h₁_{26} -- Contradiction!
+
+```

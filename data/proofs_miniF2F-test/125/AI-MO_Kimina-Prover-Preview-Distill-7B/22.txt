@@ -1,0 +1,134 @@
+have ha : a = 2 ^ k - d := by omega
+
+  -- All of the following are easy to prove by simple algebraic manipulation, using the fact that $a,b,c,d$ are positive.
+  have hb : b = 2 ^ m - c := by omega
+  have hc : c = (b + 2 ^ m) / 2 := by omega
+  have hd : d = 2 ^ k - a := by omega
+
+  -- Since $c$ is odd, $2 \mid b + 2 ^ m$, so $2 \mid b - 2 ^ m$, which implies $b \equiv 2 ^ m \pmod{2}$.
+  have hbl : b ≡ 2 ^ m [MOD 2] := by rw [← Nat.two_dvd_iff, ← hc]; omega
+
+  -- Since $b,c$ are both odd, $2 \mid c - b$, so $2 \mid 2 ^ m - b$, which implies $2 ^ m \equiv b \pmod{2}$.
+  have hcr : 2 ^ m ≡ b [MOD 2] := by rw [← Nat.two_dvd_iff, ← hc]; omega
+
+  -- Since $b \equiv 2 ^ m \pmod{2}$ and $2 ^ m \equiv b \pmod{2}$, we have $b \equiv 2 ^ m \equiv 1 \pmod{2}$.
+  have hdb : b ≡ 1 [MOD 2] := by exact Nat.ModEq.trans hbl hcr
+
+  -- Since $b \equiv 1 \pmod{2}$, we have $b = 2 ^ m - 1$.
+  have hbeq : b = 2 ^ m - 1 := by exact Nat.ModEq.eq_of_lt hdb (by omega)
+
+  -- Since $a * d = b * c$, we have $a = b * c / d$.
+  have haeq : a = b * c / d := by rw [← h₃]; field_simp
+
+  -- Since $a * d = b * c$, we have $c = a * d / b$.
+  have hceq : c = a * d / b := by rw [← h₃]; field_simp
+
+  -- Since $b = 2 ^ m - 1$, we have $2 ^ m = b + 1$.
+  have hft : 2 ^ m = b + 1 := by omega
+
+  -- Since $c = a * d / b$, we have $2 * c = 2 * a * d / b$, and since $2 * a * d / b = (a * d / b) * 2 = c * 2$, we have $2 * c = c * 2$, so $c \mid 2 * c$.
+  have hdiv : c ∣ 2 * c := by rw [Nat.mul_comm]; apply Nat.dvd_mul_left
+
+  -- Since $2 * c = c * 2$, we have $c \mid 2 * c$, so $c \mid 2 * a * d / b$.
+  rw [hceq] at hdiv
+
+  -- Since $2 * a * d / b$ is an integer, so is $c / b$.
+  have hdiv₂ : b ∣ a * d := by
+    refine Nat.dvd_of_mul_dvd_mul_left?_ hdiv
+    rw [← h₃, mul_comm]
+
+  -- Since $b \mid a * d$ and $b$ is positive, so is $a * d / b$.
+  have hdiv₃ : a * d / b ∈ (BijOn (fun x => b * x) (Finset.range (a * d))).toFinset := by
+    simp
+    rw [← Nat.mem_range]
+    apply Nat.lt_of_dvd
+    omega
+    exact hdiv₂
+  rw [Finset.mem_toFinset] at hdiv₃
+  obtain ⟨w, hdiv₃, hw⟩ := hdiv₃
+
+  -- Since $a * d / b = w$, we have $a * d = b * w$.
+  have heq : a * d = b * w := by rw [← hdiv₃, mul_comm]
+
+  -- Since $a * d = b * w$ and $a * d = b * c$, we have $b * w = b * c$, so $b \mid b * w$.
+  have h� : b ∣ b * w := by rw [← heq]; exact Nat.dvd_mul_left b w
+
+  -- Since $b \mid b * w$ and $b$ is positive, so is $w$.
+  have hwpos : 0 < w := by
+    rw [← Nat.pos_iff_ne_zero]
+    apply Nat.ne_zero_of_dvd
+    omega
+    exact h�
+  have hwle : w ≤ a * d / b := by refine Nat.div_le_div_right (a * d) b hw
+
+  -- Since $a * d = b * w$ and $w \leq a * d / b$, we have $w \mid a * d / b$.
+  rw [← hdiv₃] at hwle
+  have hdiv₄ : w ∣ a * d / b := by
+    refine Nat.dvd_of_mul_dvd_mul_left?_ hwle
+    rw [← h₃, mul_comm]
+
+  -- Since $w \mid a * d / b$ and $w$ is positive, so is $a * d / b / w$.
+  have hwdiv : a * d / b / w ∈ (BijOn (fun x => w * x) (Finset.range (a * d / b))).toFinset := by
+    simp
+    rw [← Nat.mem_range]
+    apply Nat.lt_of_dvd
+    omega
+    exact hdiv₄
+  rw [Finset.mem_toFinset] at hwdiv
+  obtain ⟨v, hwdiv, hv⟩ := hwdiv
+
+  -- Since $w * v = a * d / b$ and $a * d = b * w$, we have $w * v = a * d / b = c$.
+  have hv : v = c / b := by
+    have heq : b * w * v = b * c / b := by rw [← heq, h₃]
+    rw [mul_assoc, Nat.mul_div_assoc] at heq
+    rw [mul_assoc, Nat.mul_div_assoc]
+    cancel_denoms at heq
+    exact heq
+
+  -- Since $w * v = c$ and $c$ is odd, $w \mid c$, so $w \mid c / b$.
+  have hwdiv₂ : w ∣ c / b := by
+    rw [← hv]
+    rw [← Nat.div_mul_comm]
+    refine Nat.dvd_mul_right w?_
+    refine Nat.dvd_div_right _ (by omega)
+    exact Nat.dvd_mul_left w (c / b)
+
+  -- Since $w \mid c / b$ and $w$ is positive, so is $c / b / w$.
+  have hwdiv₃ : w ∣ c / b / w := by
+    refine Nat.dvd_of_mul_dvd_mul_left?_ (Nat.dvd_refl _)
+    rw [← hv]
+    exact Nat.dvd_mul_left w (c / b / w)
+
+  -- Since $w \mid c / b / w$ and $w$ is positive, we have $c / b / w \geq 0$.
+  have hge : 0 ≤ c / b / w := by exact Nat.zero_le (c / b / w)
+
+  -- Since $w \mid c / b / w$ and $w$ is nonzero, we have $c / b / w \mid w$.
+  have hmul : c / b / w ∣ w := by
+    refine Nat.dvd_of_mul_dvd_mul_left?_ hwdiv₃
+    rw [← hv]
+    refine Nat.dvd_mul_left (c / b / w) (w * v)
+    apply Nat.dvd_mul_right
+    exact Nat.dvd_refl w
+
+  -- Since $c / b / w \mid w$ and $w \geq 0$, we have $c / b / w \leq w$.
+  have hle : c / b / w ≤ w := by exact Nat.le_of_dvd (by omega) mul_le_mul_of_nonneg_right hmul (by omega)
+
+  -- Since $w \mid c / b$ and $w \mid c / b / w$, we have $c / b / w \mid c / b$.
+  have hdiv₅ : c / b / w ∣ c / b := by
+    exact Nat.dvd_trans hwdiv₂ hwdiv₃
+
+  -- Since $c / b / w \mid c / b$ and $c / b / w \geq 0$, so is $c / b$.
+  have hge₂ : 0 ≤ c / b := by exact Nat.zero_le (c / b)
+
+  -- Since $c / b / w \mid c / b$ and $c / b / w \geq 0$, we have $c / b \geq c / b / w$.
+  have hmul₂ : c / b / w ∣ c / b → c / b ≥ c / b / w := by
+    intro hdiv₅
+    exact Nat.le_of_dvd hge₂ hdiv₅
+
+  -- Since $c / b / w \mid c / b$ and $c / b \geq c / b / w$, we have $c / b / w \geq 0$.
+  have hge₃ : 0 ≤ c / b / w := by exact Nat.zero_le (c / b / w)
+
+  -- Since $c / b / w \mid c / b$ and $c / b / w \geq 0$, we have $c / b / w \mid c / b$.
+  exact Nat.eq_zero_of_dvd_of_le hge₃ (hmul₂ hdiv₅)
+
+```

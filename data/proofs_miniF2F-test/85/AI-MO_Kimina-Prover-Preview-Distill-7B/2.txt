@@ -1,0 +1,50 @@
+-- 2^n - 1 is called a Mersenne number.
+  -- Mersenne numbers are prime only for prime exponents, but not all prime exponents yield prime Mersenne numbers.
+  -- For more information, you can refers to
+  -- [Mersenne prime](https://en.wikipedia.org/wiki/Mersenne_prime).
+
+  -- induction on n
+  induction' n using Nat.strong_induction_on with n ih
+
+  -- if n is a prime, then we are done.
+  by_cases h : Nat.Prime n
+  · exact h
+
+  -- otherwise, we can find a divisor of n.
+  replace h : ∃ m, 1 < m ∧ m < n ∧ n % m = 0 := by
+    apply Nat.exists_dvd_of_not_prime
+    · linarith only [h₀]
+    · exact h
+
+  obtain ⟨m, hm₁, hm₂, hm₃⟩ := h
+
+  -- we claim that 2^m - 1 divides 2^n - 1.
+  -- in fact, we can prove that 2^m - 1 divides 2^(km) - 1 for any k.
+  have h₂ : 2 ^ m - 1 ∣ 2 ^ (k * m) - 1 := by
+    induction' k with k hk
+    · simp
+    · rw [show (2 ^ (k + 1) * m) = (2 ^ m) ^ (k + 1) by rw [mul_assoc, pow_mul]; linarith only [hm₁]]
+      exact nat_sub_dvd_pow_sub_pow (2 ^ m) (by linarith only [hk]) (by linarith only [hm₁])
+
+  -- since 2^n - 1 is prime, then 2^m - 1 must be 1 or 2^n - 1.
+  have h₃ : (2 ^ m - 1) = 1 ∨ (2 ^ m - 1) = 2 ^ n - 1 := by
+    apply (Nat.dvd_prime h₁).mp
+    · exact h₂
+    · exact Nat.one_le_pow m 2 (by linarith only [hm₁])
+
+  -- 2^m - 1 = 1 implies m = 0, which is a contradiction.
+  have h₄ : 2 ^ m - 1 ≠ 1 := by
+    by_contra! h₄
+    have : m = 0 := by
+      suffices 2 ^ m = 2 ^ 0 from Nat.pow_right_injective (by norm_num) (by omega) this
+      omega
+    linarith only [hm₁, this]
+
+  -- so 2 ^ m - 1 = 2 ^ n - 1.
+  rw [Nat.prime_dvd_prime_iff_eq h₁ (Nat.prime_two_pow_sub_one (by omega))] at h₃
+  -- which implies m = n, a contradiction.
+  have : m = n := by
+    have := Nat.pow_right_injective (by norm_num) h₃
+    omega
+  linarith only [hm₂, this]
+```

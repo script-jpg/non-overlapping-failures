@@ -1,0 +1,69 @@
+-- We begin by representing the logarithms in a more manageable form.
+  -- Using the change of base formula: log_a(b) = log_c(b) / log_c(a)
+  -- Thus, log_2(6) = log(6) / log(2), and log_3(6) = log(6) / log(3)
+  have h1 : Real.logb 2 6 = Real.log 6 / Real.log 2 := by
+    rw [Real.logb]
+  have h2 : Real.logb 3 6 = Real.log 6 / Real.log 3 := by
+    rw [Real.logb]
+
+  -- Substituting into the square root
+  -- sqrt(log_2(6) + log_3(6)) = sqrt(log(6)/log(2) + log(6)/log(3))
+  rw [h1, h2]
+
+  -- Simplifying the expression
+  -- log(6)/log(2) + log(6)/log(3) = log(6) * (1/log(2) + 1/log(3))
+  -- log(6) * (1/log(2) + 1/log(3)) = log(6) * (log(3) + log(2)) / (log(2) * log(3))
+  have h3 : Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3 =
+    Real.log 6 * (Real.log 3 + Real.log 2) / (Real.log 2 * Real.log 3) := by
+    field_simp
+    ring
+  rw [h3]
+
+  -- log(6) * (log(3) + log(2)) / (log(2) * log(3))
+  -- = log(6) * log(3)/ (log(2) * log(3)) + log(6) * log(2) / (log(2) * log(3))
+  -- = log(6)/log(2) + log(6)/log(3)
+  have h4 : Real.log 6 * (Real.log 3 + Real.log 2) / (Real.log 2 * Real.log 3) =
+    Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3 := by
+    field_simp
+    ring
+  rw [h4]
+
+  -- log(6)/log(2) + log(6)/log(3) = log(6)/log(2) + log(6)/log(3)
+  -- We can rewrite log(6) as log(2*3) = log(2) + log(3)
+  have h5 : Real.log 6 = Real.log 2 + Real.log 3 := by
+    rw [show (6 : ℝ) = 2 * 3 by norm_num]
+    rw [Real.log_mul (by linarith) (by linarith)]
+  rw [h5]
+
+  -- Thus, we have
+  -- sqrt(log(2) + log(3))/log(2) + sqrt(log(2) + log(3))/log(3)
+  -- = sqrt(log(2) + log(3))/log(2) + sqrt(log(2) + log(3))/log(3)
+  -- = sqrt(log(3))/log(2) + sqrt(log(2))/log(3)
+  have h6 : (Real.log 2 + Real.log 3) / Real.log 2 + (Real.log 2 + Real.log 3) / Real.log 3 =
+    Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3 := by
+    field_simp
+    ring
+  rw [h6]
+
+  -- Finally, we can write
+  -- sqrt(log(3)/log(2) + log(2)/log(3)) = sqrt(log(3))/log(2) + sqrt(log(2))/log(3)
+  -- This is because sqrt(a/b) = sqrt(a)/sqrt(b) when b ≠ 0
+  have h7 : Real.sqrt (Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3) =
+      Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3) := by
+    have g1 : Real.log 2 > 0 := by
+      norm_num
+      apply Real.log_pos
+      norm_num
+    have g2 : Real.log 3 > 0 := by
+      norm_num
+      apply Real.log_pos
+      norm_num
+    have g3 : Real.log 3 / Real.log 2 > 0 := by
+      apply div_pos
+      all_goals linarith
+    have g4 : Real.log 2 / Real.log 3 > 0 := by
+      apply div_pos
+      all_goals linarith
+    rw [Real.sqrt_eq_iff_sq_eq] <;> (field_simp) <;> ring_nf <;> (apply le_of_lt; (apply div_lt_div_of_pos_right; all_goals linarith))
+  rw [h7]
+```

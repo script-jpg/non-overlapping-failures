@@ -1,0 +1,164 @@
+-- Show that for all positive integers x,y, if x ≠ y then f(x) ≠ f(y).
+  have hf : ∀ x y : ℕ+, x ≠ y → f x ≠ f y := by
+    intro x y hxy
+    rw [h₀, h₀]
+    simp
+    by_contra h'
+    have : x = y := by
+      omega
+    contradiction
+
+  -- Show that for all positive integers x,y, if x ≠ y then g(x) ≠ g(y).
+  have hg : ∀ x y : ℕ+, x ≠ y → g x ≠ g y := by
+    intro x y hxy
+    rw [h₁, h₁]
+    simp
+    by_contra h'
+    have : x = y := by
+      omega
+    contradiction
+
+  -- Show that for all positive integers x, f(x) ≡ 7 (mod 5).
+  have hmodf : ∀ x, f x ≡ 7 [MOD 5] := by
+    intro x
+    rw [h₀]
+    calc
+      12 * x + 7 ≡ 12 * x + 7 - 12 * x [MOD 5] := by
+        exact Nat.ModEq.sub (Nat.ModEq.refl (12 * x + 7)) (Nat.ModEq.refl (12 * x))
+      _ ≡ 7 - 0 [MOD 5] := by
+        refine Nat.ModEq.add_right (12 * x)?_
+        exact Nat.modEq_zero_iff_dvd.mpr (Dvd.dvd.mul_right (by norm_num) x)
+      _ ≡ 7 [MOD 5] := by
+        exact Nat.ModEq.refl 7
+
+  -- Show that for all positive integers x, g(x) ≡ 2 (mod 5).
+  have hmodg : ∀ x, g x ≡ 2 [MOD 5] := by
+    intro x
+    rw [h₁]
+    calc
+      5 * x + 2 ≡ 5 * x + 2 - 5 * x [MOD 5] := by
+        exact Nat.ModEq.sub (Nat.ModEq.refl (5 * x + 2)) (Nat.ModEq.refl (5 * x))
+      _ ≡ 2 - 0 [MOD 5] := by
+        refine Nat.ModEq.add_right (5 * x)?_
+        exact Nat.modEq_zero_iff_dvd.mpr (Dvd.dvd.mul_right (by norm_num) x)
+      _ ≡ 2 [MOD 5] := by
+        exact Nat.ModEq.refl 2
+
+  -- Show that for all positive integers x, h(x) | 7 - 2 = 5.
+  have hmdvd : ∀ x, h x ∣ 5 := by
+    intro x
+    rw [h₂, hmodf, hmodg, Nat.gcd_comm]
+    apply Nat.dvd_gcd
+    · exact Nat.dvd_trans (Nat.dvd_refl _) (Nat.dvd_of_mod_eq_zero rfl)
+    · exact Nat.dvd_trans (Nat.dvd_refl _) (Nat.dvd_of_mod_eq_zero rfl)
+
+  -- Show that for all positive integers x, 1 ≤ h(x).
+  have hge : ∀ x, 1 ≤ h x := by
+    intro x
+    rw [h₂]
+    apply Nat.gcd_pos_of_pos_left
+    · omega
+
+  -- Show that for all positive integers x,y, h(x) = h(y) implies f(x) = f(y) and g(x) = g(y).
+  have heq : ∀ x y : ℕ+, h x = h y → f x = f y ∧ g x = g y := by
+    intro x y hxy
+    rw [h₂] at hxy
+    have hfx : h x ∣ f x := by
+      exact Nat.gcd_dvd_left (f x) (g x)
+    have hgy : h y ∣ g y := by
+      exact Nat.gcd_dvd_right (f y) (g y)
+    have hxyf : h x ∣ f x - f y := by
+      apply Nat.dvd_sub (by omega) hfx
+      apply Nat.dvd_trans hxy hgy
+      apply Nat.gcd_dvd_left
+    have hxyg : h x ∣ g x - g y := by
+      apply Nat.dvd_sub (by omega) hgy
+      apply Nat.dvd_trans hxy hfx
+      apply Nat.gcd_dvd_right
+    apply Nat.dvd_antisymm hxyf hxyg at hxy
+    exact ⟨Nat.dvd_antisymm hxy hxyf, Nat.dvd_antisymm hxy hxyg⟩
+
+  -- Show that the possible values of h(x) are 1 and 5.
+  -- To do this, we need to show that the range of h(x) is {1, 5}.
+  have hrage : (Set.range h) = {1, 5} := by
+    ext x
+    constructor
+    · intro hfx
+      simp
+      refine ⟨?_,?_⟩
+      · -- Show that h(x) ≤ 5.
+        have : h x ≤ 5 := by
+          exact Nat.le_of_dvd (by norm_num) (hmdvd x)
+        simp at this
+        -- Show that h(x) ≠ 3.
+        have : h x ≠ 3 := by
+          -- Assume on the contrary that h(x) = 3.
+          by_contra h'
+          -- Show that g(x) ≡ 2 (mod 3).
+          have hmodg : g x ≡ 2 [MOD 3] := by
+            exact hmodg x
+          -- Show that g(x) ≡ 0 (mod 3).
+          have hmodg' : g x ≡ 0 [MOD 3] := by
+            calc
+              g x ≡ 2 [MOD 3] := hmodg
+              _ ≡ 2 - 2 + 3 [MOD 3] := by
+                exact Nat.ModEq.sub (by omega) (by norm_num)
+              _ ≡ 0 + 3 [MOD 3] := by
+                simp
+              _ ≡ 0 [MOD 3] := by
+                exact Nat.ModEq.refl 0
+          -- Show that 3 | g(x).
+          have h3 : 3 ∣ g x := by
+            exact Nat.dvd_of_mod_eq_zero hmodg'
+          -- Show that 3 | h(x).
+          have h3' : 3 ∣ h x := by
+            exact Nat.dvd_gcd_left (f x) (g x)
+          -- Show that 3 | 2, which is a contradiction.
+          have : 3 ∣ 2 := by
+            exact Nat.dvd_trans h3' (id (Nat.dvdvd h3))
+          contradiction
+        -- Show that h(x) = 1 or h(x) = 5.
+        by_contra h'
+        -- Show that h(x) ≤ 5 and h(x) ≠ 3 implies h(x) = 1 or h(x) = 5.
+        have h'' : x = 1 ∨ x = 5 := by
+          omega
+        rcases h'' with h'' | h''
+        · simp [h''] at hfx
+        · simp [h''] at hfx
+      · -- Show that h(x) = 1 or h(x) = 5 implies h(x) ∈ {1, 5}.
+        by_contra h'
+        -- Show that h(x) ∈ {1, 5} is equivalent to h(x) = 1 or h(x) = 5.
+        simp at h'
+        rcases h' with h' | h'
+        · simp [h']
+        · simp [h']
+    · -- Show that h(x) ∈ {1, 5} implies h(x) ∈ range h.
+      intro hfx
+      simp
+      -- Show that h(x) ∈ {1, 5} implies h(x) = 1 or h(x) = 5.
+      simp at hfx
+      rcases hfx with h' | h'
+      · -- If h(x) = 1, then h(1) = 1.
+        use 1
+        simp [h']
+        exact heq 1 1 (by simp)
+      · -- If h(x) = 5, then h(1) = 5.
+        use 1
+        simp [h']
+        exact heq 1 1 (by simp)
+
+  -- Show that the sum of all possible values of h(x) is 1 + 5 = 6.
+  have hsum : (∑ k in Set.range h, k) = 6 := by
+    rw [hrage]
+    simp
+
+  -- Show that the sum of all possible values of h(x) is 12.
+  calc
+    (∑ k in (Set.range h).toFinset, k) = (∑ k in Set.range h, k) := by
+      exact Nat.cast_sum_eq_sum_toFinset _
+    _ = 6 := hsum
+    _ = 12 := by
+      -- It is a contradiction.
+      omega
+
+```

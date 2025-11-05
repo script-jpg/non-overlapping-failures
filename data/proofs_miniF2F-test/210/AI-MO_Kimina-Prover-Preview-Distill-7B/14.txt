@@ -1,0 +1,238 @@
+-- We will use the intermediate value theorem to show that there are exactly
+  -- 6 values of $\theta$ in the interval $0 < \theta \leq 2\pi$ that satisfy the equation.
+  have inter : ∀ (x : ℝ), cos (3 * x) = 1 - 3 * sin x + 5 * cos (3 * x) +
+      5 * sin x - 5 * cos (3 * x) - 1 + 1 - 3 * sin x + 5 * cos (3 * x) :=
+    fun x => by ring
+  have inter' : ∀ (x : ℝ), sin (3 * x) = 3 * sin x - 4 * sin x ^ 3 :=
+    fun x => by
+      convert Real.sin_three_mul x using 1
+      ring
+
+  -- First, consider the interval $0 < \theta < \frac{\pi}{2}$.
+  -- Define $f(x) = 1 - 3\sin x + 5\cos3x$.
+  -- We have $f(0) = 1 - 3\sin 0 + 5\cos0 = 1 - 0 + 5 \cdot 1 = 6$.
+  -- We have $f\left(\frac{\pi}{2}\right) = 1 - 3\sin\frac{\pi}{2} + 5\cos\frac{3\pi}{2} = 1 - 3 \cdot 1 + 0 = -2$.
+  have h₁ :
+      ∃ (x : ℝ), 0 < x ∧ x < Real.pi / 2 ∧ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) = 0 :=
+    by
+      let f : ℝ → ℝ := fun x => 1 - 3 * Real.sin x + 5 * Real.cos (3 * x)
+      -- Use the intermediate value theorem to show that there is a value of
+      -- $\theta$ in the interval $0 < \theta < \frac{\pi}{2}$ that satisfies the
+      -- equation.
+      have hf : ∀ (x : ℝ), 0 ≤ x ∧ x ≤ 2 * Real.pi →
+          -6 ≤ f x ∧ f x ≤ 6 := by
+        intro x ⟨h₁, h₂⟩
+        simp only [f]
+        constructor
+        · calc
+            -6 ≤ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) :=
+              by rw [inter x]; simp; linarith [Real.sin_sq_le_one x,
+              Real.cos_sq_le_one (3 * x)]
+            _ = f x := by simp [f]
+        · calc
+            f x = 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) := by simp [f]
+            _ ≤ 1 + 3 * Real.sin x + 5 * Real.cos (3 * x) :=
+              by linarith [Real.sin_sq_le_one x, Real.cos_sq_le_one (3 * x)]
+            _ ≤ 1 + 3 * 1 + 5 * 1 := by
+              rw [inter' x]
+              have g₁ : 0 ≤ 1 - 4 * Real.sin x ^ 3 :=
+                calc
+                  0 ≤ 1 - 4 * (0 : ℝ) := by linarith
+                  _ ≤ 1 - 4 * Real.sin x ^ 3 :=
+                    by convert Real.sin_sq_le_one x using 2; ring
+              linarith [g₁]
+            _ = 6 := by simp
+      have hf' : ∀ (x : ℝ), 0 ≤ x ∧ x ≤ 2 * Real.pi →
+          -6 ≤ 1 - 3 * Real.sin (x + Real.pi / 2) + 5 * Real.cos (3 * (x + Real.pi / 2)) ∧
+          1 - 3 * Real.sin (x + Real.pi / 2) + 5 * Real.cos (3 * (x + Real.pi / 2)) ≤ 6 := by
+        intro x ⟨h₁, h₂⟩
+        simp only [add_mul, mul_add] at h₂
+        constructor
+        · calc
+            -6 ≤ 1 - 3 * Real.sin (x + Real.pi / 2) + 5 * Real.cos (3 * (x + Real.pi / 2)) :=
+              by convert hf (x + Real.pi / 2) ⟨by linarith, by linarith⟩ using 1; simp; ring
+            _ = 1 - 3 * Real.sin (x + Real.pi / 2) + 5 * Real.cos (3 * x + 3 * Real.pi / 2) := by ring
+            _ = 1 - 3 * Real.sin (x + Real.pi / 2) - 5 * Real.cos (3 * x) := by
+              rw [Real.cos_add_pi]; simp
+            _ ≤ 1 + 3 * Real.sin (x + Real.pi / 2) - 5 * Real.cos (3 * x) :=
+              by linarith [Real.sin_sq_le_one (x + Real.pi / 2), Real.cos_sq_le_one (3 * x)]
+            _ ≤ 1 + 3 * 1 - 5 * Real.cos (3 * x) := by
+              have g₁ : 0 ≤ 3 * Real.sin (x + Real.pi / 2) := by
+                have g₁ : 0 ≤ Real.sin (x + Real.pi / 2) := by
+                  apply Real.sin_nonneg_of_nonneg_of_le_pi
+                  · apply Real.le_pi_div_two_of_nonneg
+                    linarith
+                  · apply add_le_of_le_sub
+                    rw [Real.pi_pos]
+                    ring_nf
+                    apply mul_le_mul_of_nonneg_left
+                    · exact Real.pi_div_two_nonneg
+                    · exact neg_one_le_three
+                linarith
+              linarith [g₁]
+            _ = -4 * Real.cos (3 * x) := by
+              rw [inter' (x + Real.pi / 2)]
+              ring
+            _ ≤ -4 * (-1) := by
+              have g₁ : -1 ≤ Real.cos (3 * x) := by
+                apply Real.neg_one_le_cos
+              linarith [g₁]
+            _ = 4 := by simp
+            _ ≤ 6 := by simp
+        · calc
+            1 - 3 * Real.sin (x + Real.pi / 2) + 5 * Real.cos (3 * (x + Real.pi / 2)) =
+              1 - 3 * Real.sin (x + Real.pi / 2) + 5 * Real.cos (3 * x + 3 * Real.pi / 2) := by ring
+            _ = 1 - 3 * Real.sin (x + Real.pi / 2) - 5 * Real.cos (3 * x) := by
+              rw [Real.cos_add_pi]; simp
+            _ ≤ 1 + 3 * Real.sin (x + Real.pi / 2) - 5 * Real.cos (3 * x) :=
+              by linarith [Real.sin_sq_le_one (x + Real.pi / 2), Real.cos_sq_le_one (3 * x)]
+            _ ≤ 1 + 3 * 1 - 5 * Real.cos (3 * x) :=
+              by have g₁ : 0 ≤ 3 * Real.sin (x + Real.pi / 2) := by
+                have g₁ : 0 ≤ Real.sin (x + Real.pi / 2) := by
+                  apply Real.sin_nonneg_of_nonneg_of_le_pi
+                  · apply Real.le_pi_div_two_of_nonneg
+                    linarith
+                  · apply add_le_of_le_sub
+                    rw [Real.pi_pos]
+                    ring_nf
+                    apply mul_le_mul_of_nonneg_left
+                    · exact Real.pi_div_two_nonneg
+                    · exact neg_one_le_three
+                linarith
+              linarith [g₁]
+            _ = -4 * Real.cos (3 * x) := by
+              rw [inter' (x + Real.pi / 2)]
+              ring
+            _ ≤ -4 * (-1) := by
+              have g₁ : -1 ≤ Real.cos (3 * x) := by
+                apply Real.neg_one_le_cos
+              linarith [g₁]
+            _ = 4 := by simp
+            _ ≤ 6 := by simp
+      have hf'' : ∀ (x : ℝ), 0 ≤ x ∧ x ≤ 2 * Real.pi →
+          -6 ≤ 1 - 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * (x + 2 * Real.pi / 3)) ∧
+          1 - 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * (x + 2 * Real.pi / 3)) ≤ 6 := by
+        intro x ⟨h₁, h₂⟩
+        simp only [add_mul, mul_add] at h₂
+        constructor
+        · calc
+            -6 ≤ 1 - 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * (x + 2 * Real.pi / 3)) :=
+              by convert hf (x + 2 * Real.pi / 3) ⟨by linarith, by linarith⟩ using 1; simp; ring
+            _ = 1 - 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * x + 2 * Real.pi) := by ring
+            _ = 1 - 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * x) := by
+              rw [Real.cos_add_two_pi]
+            _ ≤ 1 + 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * x) :=
+              by linarith [Real.sin_sq_le_one (x + 2 * Real.pi / 3), Real.cos_sq_le_one (3 * x)]
+            _ ≤ 1 + 3 * 1 + 5 * Real.cos (3 * x) := by
+              have g₁ : 0 ≤ -3 * Real.sin (x + 2 * Real.pi / 3) := by
+                have g₁ : 0 ≤ Real.sin (x + 2 * Real.pi / 3) := by
+                  apply Real.sin_nonneg_of_nonneg_of_le_pi
+                  · apply add_nonneg
+                    apply Real.pi_nonneg
+                    linarith
+                  · apply add_le_of_le_sub
+                    linarith
+                    rw [show 2 * Real.pi / 3 = (2 * Real.pi - Real.pi / 3) by ring]
+                    apply Real.le_pi_div_two_of_nonneg
+                    rw [Real.pi_pos]
+                    linarith
+                linarith
+              linarith [g₁]
+            _ = 6 + 5 * Real.cos (3 * x) := by ring
+            _ ≤ 6 + 5 * 1 := by
+              have g₁ : -1 ≤ Real.cos (3 * x) := by
+                apply Real.neg_one_le_cos
+              linarith [g₁]
+            _ = 11 := by simp
+            _ ≤ 6 := by simp
+        · calc
+            1 - 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * (x + 2 * Real.pi / 3)) =
+              1 - 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * x + 2 * Real.pi) := by ring
+            _ = 1 - 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * x) := by
+              rw [Real.cos_add_two_pi]
+            _ ≤ 1 + 3 * Real.sin (x + 2 * Real.pi / 3) + 5 * Real.cos (3 * x) :=
+              by linarith [Real.sin_sq_le_one (x + 2 * Real.pi / 3), Real.cos_sq_le_one (3 * x)]
+            _ ≤ 1 + 3 * 1 + 5 * Real.cos (3 * x) :=
+              by have g₁ : 0 ≤ -3 * Real.sin (x + 2 * Real.pi / 3) := by
+                  have g₁ : 0 ≤ Real.sin (x + 2 * Real.pi / 3) := by
+                    apply Real.sin_nonneg_of_nonneg_of_le_pi
+                    · apply add_nonneg
+                      apply Real.pi_nonneg
+                      linarith
+                    · apply add_le_of_le_sub
+                      linarith
+                      rw [show 2 * Real.pi / 3 = (2 * Real.pi - Real.pi / 3) by ring]
+                      apply Real.le_pi_div_two_of_nonneg
+                      rw [Real.pi_pos]
+                      linarith
+                linarith
+              linarith [g₁]
+            _ = 6 + 5 * Real.cos (3 * x) := by ring
+            _ ≤ 6 + 5 * 1 := by
+              have g₁ : -1 ≤ Real.cos (3 * x) := by
+                apply Real.neg_one_le_cos
+              linarith [g₁]
+            _ = 11 := by simp
+            _ ≤ 6 := by simp
+      have hf''' : ∀ (x : ℝ), 0 ≤ x ∧ x ≤ 2 * Real.pi →
+          -6 ≤ 1 - 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * (x + 4 * Real.pi / 3)) ∧
+          1 - 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * (x + 4 * Real.pi / 3)) ≤ 6 := by
+        intro x ⟨h₁, h₂⟩
+        simp only [add_mul, mul_add] at h₂
+        constructor
+        · calc
+            -6 ≤ 1 - 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * (x + 4 * Real.pi / 3)) :=
+              by convert hf (x + 4 * Real.pi / 3) ⟨by linarith, by linarith⟩ using 1; simp; ring
+            _ = 1 - 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * x + 4 * Real.pi) := by ring
+            _ = 1 - 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * x) := by
+              rw [Real.cos_add_two_pi, Real.cos_add_two_pi]
+            _ ≤ 1 + 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * x) :=
+              by linarith [Real.sin_sq_le_one (x + 4 * Real.pi / 3), Real.cos_sq_le_one (3 * x)]
+            _ ≤ 1 + 3 * 1 + 5 * Real.cos (3 * x) := by
+              have g₁ : 0 ≤ -3 * Real.sin (x + 4 * Real.pi / 3) := by
+                have g₁ : 0 ≤ Real.sin (x + 4 * Real.pi / 3) := by
+                  apply Real.sin_nonneg_of_nonneg_of_le_pi
+                  · apply add_nonneg
+                    apply Real.pi_nonneg
+                    linarith
+                  · apply add_le_of_le_sub
+                    rw [show 4 * Real.pi / 3 = (3 * Real.pi - Real.pi / 3) by ring]
+                    apply Real.le_pi_div_two_of_nonneg
+                    rw [Real.pi_pos]
+                    linarith
+                linarith
+              linarith [g₁]
+            _ = 6 + 5 * Real.cos (3 * x) := by ring
+            _ ≤ 6 + 5 * 1 := by
+              have g₁ : -1 ≤ Real.cos (3 * x) := by
+                apply Real.neg_one_le_cos
+              linarith [g₁]
+            _ = 11 := by simp
+            _ ≤ 6 := by simp
+        · calc
+            1 - 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * (x + 4 * Real.pi / 3)) =
+              1 - 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * x + 4 * Real.pi) := by ring
+            _ = 1 - 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * x) := by
+              rw [Real.cos_add_two_pi, Real.cos_add_two_pi]
+            _ ≤ 1 + 3 * Real.sin (x + 4 * Real.pi / 3) + 5 * Real.cos (3 * x) :=
+              by linarith [Real.sin_sq_le_one (x + 4 * Real.pi / 3), Real.cos_sq_le_one (3 * x)]
+            _ ≤ 1 + 3 * 1 + 5 * Real.cos (3 * x) :=
+              by have g₁ : 0 ≤ -3 * Real.sin (x + 4 * Real.pi / 3) := by
+                  have g₁ : 0 ≤ Real.sin (x + 4 * Real.pi / 3) := by
+                    apply Real.sin_nonneg_of_nonneg_of_le_pi
+                    · apply add_nonneg
+                      apply Real.pi_nonneg
+                      linarith
+                    · apply add_le_of_le_sub
+                      rw [show 4 * Real.pi / 3 = (3 * Real.pi - Real.pi / 3) by ring]
+                      apply Real.le_pi_div_two_of_nonneg
+                      rw [Real.pi_pos]
+                      linarith
+                linarith
+              linarith [g₁]
+            _ = 6 + 5 * Real.cos (3 * x) := by ring
+            _ ≤ 6 + 5 * 1 := by
+              have g₁ : -1 ≤ Real.cos (3 * x) := by
+                apply Real.neg_one_le_cos
+              linarith [g₁]
+            _ = 11 := by simp

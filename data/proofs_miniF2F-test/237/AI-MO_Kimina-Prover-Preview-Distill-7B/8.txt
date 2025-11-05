@@ -1,0 +1,196 @@
+obtain ⟨k, hk, h₂⟩ := h₁
+
+  have h₃ : 2 ^ k = (a + b ^ 2) * (b + a ^ 2) := h₂
+
+  have ha : 0 < a := h₀.1
+
+  have hb : 0 < b := h₀.2
+
+  have h₄ : 2 ^ k > 0 := by
+    calc
+      2 ^ k > 0 := by positivity
+      _ = (a + b ^ 2) * (b + a ^ 2) := h₃
+  -- Here it is proved that $2^k$ is positive, this is used in the proof of Lemma 1 in the paper.
+  have h₅ : (a + b ^ 2) * (b + a ^ 2) > 0 := by
+    calc
+      (a + b ^ 2) * (b + a ^ 2) = 2 ^ k := h₃
+      _ > 0 := by positivity
+  -- It is proved that each term in the product is positive.
+  have h₆ : a + b ^ 2 > 0 := by
+    apply Nat.add_pos_left
+
+    apply Nat.pow_pos
+
+    exact hb
+  have h₇ : b + a ^ 2 > 0 := by
+    apply Nat.add_pos_left
+
+    apply Nat.pow_pos
+
+    exact ha
+  -- It is proved that $a + b^2$ and $b + a^2$ are powers of 2.
+  have h₈ : (a + b ^ 2) = 2 ^ m := by
+    -- It is proved by showing that it is a divisor of $2^k$.
+    have h₉ : (a + b ^ 2) ∣ 2 ^ k := by
+      use (b + a ^ 2)
+      rw [h₃]
+      ring
+    -- It is shown that it is a power of 2 by using the lemma Nat.dvd_prime_pow only available in Mathlib 4.5.0.
+    apply Nat.dvd_prime_pow at h₉
+    exact h₉
+    -- The prime to consider is 2.
+    exact Nat.prime_two
+  have h₁₀ : (b + a ^ 2) = 2 ^ n := by
+    -- Exactly the same proof is applied.
+    have h₁₁ : (b + a ^ 2) ∣ 2 ^ k := by
+      use (a + b ^ 2)
+      rw [h₃]
+      ring
+    apply Nat.dvd_prime_pow at h₁₁
+    exact h₁₁
+    -- The prime to consider is 2.
+    exact Nat.prime_two
+  -- It is shown that $m$ is greater or equal to 1.
+  have h₁₂ : 1 ≤ m := by
+    -- It is shown by contradiction that it is greater than 0.
+    by_contra!
+    -- If it is equal to 0, then $a + b^2 = 1$.
+    replace this : m = 0 := Nat.lt_zero_iff.mp this
+    simp at this
+    rw [this] at h₈
+    -- So $a + b^2 = 1$.
+    simp at h₈
+    -- It is shown that $a = 1$ and $b = 0$, contradicting $0 < b$.
+    have h₁₃ : a = 1 := by
+      linarith only [ha, hb, h₈]
+    have h₁₄ : b = 0 := by
+      linarith only [ha, hb, h₈]
+    rw [h₁₃, h₁₄] at hb
+    linarith only [hb]
+  -- It is shown that $n$ is greater or equal to 1.
+  have h₁₃ : 1 ≤ n := by
+    -- Exactly the same proof is applied as above.
+    by_contra!
+    replace this : n = 0 := Nat.lt_zero_iff.mp this
+    simp at this
+    rw [this] at h₁₀
+    simp at h₁₀
+    have h₁₅ : b = 1 := by
+      linarith only [ha, hb, h₁₀]
+    have h₁₆ : a = 0 := by
+      linarith only [ha, hb, h₁₀]
+    rw [h₁₅, h₁₆] at ha
+    linarith only [ha]
+
+  have h₁₄ : 2 ^ k = 2 ^ (m + n) := by
+    -- It is proved by rearranging the equation and simplifying.
+    calc
+      2 ^ k = (a + b ^ 2) * (b + a ^ 2) := h₃
+      _ = 2 ^ m * 2 ^ n := by rw [h₈, h₁₀]
+      _ = 2 ^ (m + n) := by rw [Nat.pow_add]
+  -- It is shown that $k = m + n$.
+  have h₁₅ : k = m + n := by
+    -- It is proved by using the lemma Nat.pow_right_injective which is available in Mathlib 4.5.0.
+    apply Nat.pow_right_injective at h₁₄
+    exact h₁₄
+    all_goals
+      positivity
+  -- Lemma 1 is used to prove that $m$ is equal to $n$.
+  have h₁₆ : m = n := by
+    -- It is applied to the equation $2^k = 2^{m + n}$.
+    rw [h₁₅] at h₃
+    -- It is simplified to $2^{m + n} = 2^{2m}$.
+    have h₁₇ : 2 ^ (m + n) = 2 ^ (2 * m) := by
+      calc
+        2 ^ (m + n) = 2 ^ k := by rw [h₃]
+        _ = (a + b ^ 2) * (b + a ^ 2) := by rw [h₃]
+        _ = 2 ^ (2 * m) := by rw [h₈, Nat.mul_comm, h₁₀, Nat.mul_comm, Nat.pow_add, Nat.add_comm]
+
+    -- It is shown that $m + n = 2m$.
+    apply Nat.pow_right_injective at h₁₇
+    replace h₁₇ : m + n = 2 * m := by
+      exact h₁₇
+    -- It is simplified to $n = m$.
+    linarith only [h₁₇]
+
+  have h₁₇ : m = 1 := by
+    -- It is shown by contradiction.
+    by_contra!
+    -- If it is greater than 1, then $n$ is greater than or equal to $m$.
+    replace this : n ≥ m := by
+      calc
+        n = n - m + m := by rw [Nat.sub_add_cancel]; positivity
+        _ ≥ m := by omega
+    -- So $2^m$ divides $2^n$.
+    replace this : 2 ^ m ∣ 2 ^ n := by
+      apply Nat.pow_dvd_pow
+      linarith only [this]
+    -- It is shown that $m$ divides $n$.
+    replace this : m ∣ n := by
+      rw [Nat.pow_dvd_pow_iff]
+      exact this
+      positivity
+    -- It is used to simplify the equation $2^{m + n} = 2^{2m}$.
+    replace h₁₇ : 2 ^ (m + n) = 2 ^ (2 * m) := by
+      calc
+        2 ^ (m + n) = 2 ^ k := by rw [h₃, h₁₅]
+        _ = (a + b ^ 2) * (b + a ^ 2) := by rw [h₃]
+        _ = 2 ^ m * 2 ^ n := by rw [h₈, h₁₀]
+        _ = 2 ^ (m + n) := by rw [Nat.pow_add]
+    -- It is simplified to $m + n = 2m$.
+    apply Nat.pow_right_injective at h₁₇
+    replace h₁₇ : m + n = 2 * m := by
+      exact h₁₇
+    -- It is simplified to $n = m$, contradicting $n ≥ m$.
+    replace h₁₇ : n = m := by
+      linarith only [h₁₇]
+    apply Nat.le_antisymm at this
+    replace this : n = m := this.symm
+    replace this : n < m := this
+    linarith only [this, h₁₇]
+    all_goals
+      positivity
+  -- It is shown that $a = 1$.
+  calc
+    a = (a + b ^ 2) - b ^ 2 := by ring
+    _ = 2 ^ m - b ^ 2 := by rw [h₈]
+    _ = 1 - b ^ 2 := by rw [h₁₇]
+    _ = 1 := by
+      -- It is proven that $b = 0$, so $1 - 0^2 = 1$.
+      have h₁₈ : b = 0 := by
+        -- It is shown that $b$ is the square of a natural number.
+        have h₁₉ : ∃ x, b = x ^ 2 := by
+          use (2 ^ n - 1)
+          rw [h₈, h₁₇] at h₃
+          calc
+            b ^ 2 = (2 ^ 1 - 1) ^ 2 := by rw [h₃]; congr 1; ring
+            _ = 1 := by norm_num
+        obtain ⟨x, hx⟩ := h₁₉
+        -- It is shown that $x$ is greater or equal to 1.
+        have h₂₀ : 1 ≤ x := by
+          by_contra!
+          replace this : x = 0 := Nat.lt_zero_iff.mp this
+          simp at this
+          rw [this] at hx
+          linarith only [hb, hx]
+        -- It is shown that $x = 1$.
+        have h₂₁ : x = 1 := by
+          by_contra!
+          replace this : x ≥ 2 := by
+            calc
+              x ≥ 1 + 1 := by rw [Nat.add_one_le_iff]; exact h₂₀
+              _ ≥ 2 := by norm_num
+          have h₂₂ : 2 ^ 1 - 1 ≥ 2 ^ x - 1 := by
+            apply Nat.sub_le_sub_right
+            rw [h₈, h₁₇]
+            omega
+          rw [hx] at h₂₂
+          simp at h₂₂
+          linarith only [h₂₂]
+        -- So $b = 1^2 = 1$.
+        rw [h₂₁] at hx
+        simp at hx
+        rw [hx]
+        norm_num
+
+```

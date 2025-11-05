@@ -1,0 +1,48 @@
+-- Let's try to eliminate variables.
+  -- Let $y = (a,b,c,d,e,f,g)$.  Then the equations say $yA = (1,12,123)$ for some matrix $A$.
+  -- We can rewrite this as one big matrix equation: $(yA_1, yA_2, yA_3) = (1,12,123)$.
+  -- Thus $y(A_1^T, A_2^T, A_3^T) = (1,12,123)$, and the goal is $y(16,25,36,49,64,81,100)$.
+  let y := (a, b, c, d, e, f, g)
+  let A1 := (1, 4, 9, 16, 25, 36, 49)
+  let A2 := (4, 9, 16, 25, 36, 49, 64)
+  let A3 := (9, 16, 25, 36, 49, 64, 81)
+  let b := (1, 12, 123)
+  let x := (16, 25, 36, 49, 64, 81, 100)
+
+  -- This is a system of three linear equations.
+  -- The first step is to make a big matrix from it.
+  have eq1 : y ++.A.((A1 ++.x)) = 1 := by
+    simp [y, A1, x]
+    linarith
+  have eq2 : y ++.A.((A2 ++.x)) = 12 := by
+    simp [y, A2, x]
+    linarith
+  have eq3 : y ++.A.((A3 ++.x)) = 123 := by
+    simp [y, A3, x]
+    linarith
+
+  -- makebigmq trics to make a matrix from a system of equations.
+  let A := (A1, A2, A3)
+
+  -- makebigmq is used to make a big matrix from a system of equations.
+  let eq := eq1.trans (eq2.trans eq3)
+
+  -- We can use Solving System of Linear Equations to solve the equation.
+  have eq4 : y ++.A.((x ++.A.I.)) = 334 := by
+    simp [y, x]
+    linarith
+
+  -- Now we need to make the inverse of the big matrix.
+  -- But the inverse of the big matrix is itself a matrix.
+  let A_inv := A ++.I
+
+  -- We can use Matrix Inversion to solve the equation.
+  have eq5 : y ++.A.((A_inv ++.x ++.A.I.)) = 334 := by
+    rw [← eq4]
+    simp [A_inv]
+    linarith
+
+  -- The result is 334.
+  simp [y, x] at eq5
+  linarith
+```

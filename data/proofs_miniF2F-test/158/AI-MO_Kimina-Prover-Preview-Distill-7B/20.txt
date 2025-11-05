@@ -1,0 +1,76 @@
+-- let's prove the AM-GM inequality for 4 variables:
+  -- $x_1 + x_2 + x_3 + x_4 \geq 4 \sqrt[4]{x_1 x_2 x_3 x_4}$
+  have amgm_4 (x1 x2 x3 x4 : ℝ) (h : 0 < x1 ∧ 0 < x2 ∧ 0 < x3 ∧ 0 < x4) :
+      x1 + x2 + x3 + x4 ≥ 4 * (x1 * x2 * x3 * x4) ^ (1 / 4 : ℝ) := by
+
+    -- notice that $x^{1/4}$ is concave on $\mathbb{R}_+$, so we can use Jensen's inequality
+    -- let's define the concave function $f(x) = x^{1/4}$
+    let f (x : ℝ) := x ^ (1 / 4 : ℝ)
+    let f' (x : ℝ) := (1 / 4) * x ^ (-3 / 4 : ℝ)
+    have hf' : ∀ x, 0 < x → deriv f x = f' x := by
+      intro x hx
+      rw [deriv_pow, mul_comm, ← pow_one, ← f]
+      apply Real.deriv_rpow?_?_
+      all_goals linarith
+    have hf : ∀ x, 0 < x → 0 ≤ f x := by
+      intro x hx
+      apply Real.rpow_nonneg
+      linarith
+
+    -- by Jensen's inequality, $\frac{1}{4}(f(x_1) + f(x_2) + f(x_3) + f(x_4)) \geq f(\frac{1}{4}(x_1 + x_2 + x_3 + x_4))$
+    have h : (1 / 4 : ℝ) * (f x1 + f x2 + f x3 + f x4) ≥ f ((x1 + x2 + x3 + x4) / 4) := by
+      let p : ProbabilitySpace ℝ := {
+        type := (Finset.univ : Finset ℝ),
+        eq_zero : ∀ x, 0 ≤ (1 / 4 : ℝ) := by simp
+        zero_mem : (0 : ℝ) ∈ (Finset.univ : Finset ℝ) := by simp,
+        one_mem : (1 : ℝ) ∈ (Finset.univ : Finset ℝ) := by simp,
+        mem_weighted_sum := fun i hi => (mem_univ i).elim fun a => fun b => by simp
+      }
+      let q : ProbabilitySpace ℝ := {
+        type := (Finset.univ : Finset ℝ),
+        eq_zero : ∀ x, 0 ≤ (1 / 4 : ℝ) := by simp
+        zero_mem : (0 : ℝ) ∈ (Finset.univ : Finset ℝ) := by simp,
+        one_mem : (1 : ℝ) ∈ (Finset.univ : Finset ℝ) := by simp,
+        mem_weighted_sum := fun i hi => (mem_univ i).elim fun a => fun b => by simp
+      }
+      let g : ℝ → ℝ := fun x => f x
+      have hg : ∀ x, 0 < x → 0 ≤ g x := fun x hx => hf x hx
+      have : ∀ x, 0 < x → g derivativeAt x = f' x := fun x hx => hf' x hx
+      convert Real.geom_mean_le_arith_mean4_weighted (repeat (1 / 4)) (repeat (1 / 4)) p q g?_?_ using 1
+      · simp
+      · simp
+      · simp
+      · simp [show (4 : ℝ) = 2 ^ 2 by norm_num]
+        exact fun x hx => by positivity
+      · exact fun x hx => by positivity
+      · (repeat (simp)) ; norm_num
+      · simp
+    simp [f] at h
+    -- simplify the inequality, we get $x_1^{1/4} + x_2^{1/4} + x_3^{1/4} + x_4^{1/4} \geq 4 x_1^{1/4} x_2^{1/4} x_3^{1/4} x_4^{1/4}$
+    -- then multiply $4 x_1^{-3/4} x_2^{-3/4} x_3^{-3/4} x_4^{-3/4}$ to both sides
+    -- we get $x_1 + x_2 + x_3 + x_4 \geq 4 x_1^{1/4} x_2^{1/4} x_3^{1/4} x_4^{1/4}$
+    -- which is desired inequality
+    calc
+      x1 + x2 + x3 + x4 = (1 / 4) * (4 * x1) + (1 / 4) * (4 * x2) + (1 / 4) * (4 * x3) + (1 / 4) * (4 * x4) := by ring
+      _ = (1 / 4) * (x1 + x2 + x3 + x4) + (1 / 4) * (x1 + x2 + x3 + x4) + (1 / 4) * (x1 + x2 + x3 + x4) + (1 / 4) * (x1 + x2 + x3 + x4) := by ring
+      _ ≥ (1 / 4) * (4 * (x1 * x2 * x3 * x4) ^ (1 / 4 : ℝ)) + (1 / 4) * (4 * (x1 * x2 * x3 * x4) ^ (1 / 4 : ℝ)) + (1 / 4) * (4 * (x1 * x2 * x3 * x4) ^ (1 / 4 : ℝ)) + (1 / 4) * (4 * (x1 * x2 * x3 * x4) ^ (1 / 4 : ℝ)) := by rel [h (x1 * x2 * x3 * x4) (by positivity)]
+      _ = 4 * (x1 * x2 * x3 * x4) ^ (1 / 4 : ℝ) := by ring
+
+  -- apply AM-GM inequality to $a^2 / b, b^2 / c, c^2 / d, d^2 / a$
+  have h₁ := amgm_4 (a ^ 2 / b) (b ^ 2 / c) (c ^ 2 / d) (d ^ 2 / a)
+  -- note that $a^2 / b * b^2 / c * c^2 / d * d^2 / a = a b c d * (a b c d)^{-1} = 1$
+  have h₂ : (a ^ 2 / b) * (b ^ 2 / c) * (c ^ 2 / d) * (d ^ 2 / a) = 1 := by field_simp ; linarith
+  rw [h₂] at h₁
+  simp at h₁
+
+  -- apply AM-GM inequality to $a, b, c, d$
+  have h₃ := amgm_4 a b c d
+  have h₄ : a * b * c * d = a * b * c * d := rfl
+  rw [h₄] at h₃
+  simp at h₃
+
+  -- we get $a^2 / b + b^2 / c + c^2 / d + d^2 / a \geq 4$ and $a + b + c + d \geq 4$
+  -- then subtract the two inequalities, we get the desired result
+  linarith
+
+```

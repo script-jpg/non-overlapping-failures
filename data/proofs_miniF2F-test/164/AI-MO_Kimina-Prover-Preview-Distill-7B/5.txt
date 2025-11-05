@@ -1,0 +1,43 @@
+-- intro constraints and prove the target
+  intro h₃ h₄
+  have h₅ : x > 0 := by positivity
+  have h₆ : y > 0 := by positivity
+
+  -- change target to $\log_2{\left(\frac{x}{y}\right)}^2$
+  rw [Real.log_div (le_of_lt h₅) (le_of_lt h₆), <-Real.log_rpow (show 2 > 0 by simp) (show 2 ≠ 1 by simp)]
+  ring_nf
+
+  -- prove three subgoals
+  --   1. $\log_2{x}\neq 0$
+  --   2. $\log_2{y}\neq 0$
+  --   3. $\log_2{\left(\frac{x}{y}\right)}^2=20$
+  apply And.intro
+  · intro h
+    rw [h] at h₁
+    simp at h₁
+  apply And.intro
+  · intro h
+    rw [h] at h₁
+    simp at h₁
+  have h₇ : (Real.log x ^ 2 - Real.log y ^ 2) / (Real.log 2 ^ 2) = 25 / 2 := by
+    rw [div_pow, div_pow, pow_two, pow_two] at h₁ ⊢
+    rw [<-mul_sub, mul_comm (Real.log 2 ^ 2), <-mul_sub, <-sq_sub_sq]
+    rw [sq, mul_assoc, sq, div_mul, div_self (by simpa using h₃), mul_one]
+    rw [sq, mul_assoc, sq, div_mul, div_self (by simpa using h₄), mul_one]
+    linarith only [h₁]
+  -- refine the final goal
+  rw [div_pow, Real.log_div (le_of_lt h₅) (le_of_lt h₆), <-Real.log_rpow (show 2 > 0 by simp) (show 2 ≠ 1 by simp)]
+  ring_nf
+  rw [<-sq_sub_sq, sq, mul_assoc, sq, div_mul, div_self (by simpa using h₃), mul_one]
+  rw [sq, mul_assoc, sq, div_mul, div_self (by simpa using h₄), mul_one]
+  rw [show Real.log 16 = 4 * Real.log 2 by simp [Real.log_pow], mul_comm, mul_assoc, mul_comm _ 4]
+  rw [div_mul, div_self (by norm_num), mul_one]
+  rw [show Real.log x ^ 2 - Real.log y ^ 2 = (Real.log x + Real.log y) * (Real.log x - Real.log y) by ring_nf]
+  rw [show Real.log x + Real.log y = Real.log (x * y) by simp [Real.log_mul], <-h₂]
+  simp
+  norm_num
+  -- prove all constraints
+  all_goals
+    field_simp
+    positivity
+```

@@ -1,0 +1,39 @@
+-- We apply Fermat's Little Theorem, which states that if $p$ is a prime and $a$ is an integer not divisible by $p$,
+  -- then $a^{p-1} \equiv 1 \pmod{p}$. Here, $p = 7$ and $a = 5$.
+  have : Fact (Nat.Prime 7) := ⟨Nat.prime_seven⟩
+  have : Fact (5 ≠ 0) := ⟨by decide⟩
+  have fact : 7 ∣ 5 ^ 6 - 1 := by
+    -- Show that $5^6 - 1$ is divisible by 7.
+    apply Prime.dvd_of_dvd_pow (Nat.prime_iff.mp this) |>.mp
+    have : 5 ≡ 5 [MOD 7] := rfl
+    have : 5 ^ 6 ≡ 5 ^ 6 [MOD 7] := rwa [Nat.ModEq.pow 6 this]
+    have : 5 ^ 6 ≡ 1 [MOD 7] := by
+      have : 5 * 5 * 5 * 5 * 5 * 5 = 15625 := rfl
+      have : 15625 % 7 = 1 := by norm_num
+      rw [Nat.modEq_iff_dvd' (by simp)]
+      rw [Nat.modEq_iff_dvd]
+      rw [Nat.modEq_iff_dvd]
+      rw [this]
+      norm_num
+    have : 5 ^ 6 - 1 ≡ 0 [MOD 7] := by
+      rw [Nat.modEq_iff_dvd]
+      rw [Nat.modEq_iff_dvd]
+      rw [Nat.modEq_iff_dvd]
+      rw [this]
+      norm_num
+    exact this
+
+  -- Since $5^6 \equiv 1 \pmod{7}$, we can deduce that $5^{30} = (5^6)^5 \equiv 1^5 \equiv 1 \pmod{7}$.
+  have : 5 ^ 30 % 7 = 1 := by
+    rw [show 30 = 6 * 5 by norm_num, pow_mul]
+    have : 5 ^ 6 % 7 = 1 := by
+      have : 5 ^ 6 - 1 + 1 = 5 ^ 6 := by ring
+      have : 5 ^ 6 = (5 ^ 6 - 1) + 1 := by rw [this]
+      rw [this, Nat.modEq_iff_dvd' (by simp)]
+      exact fact
+    rw [Nat.ModEq.eq_1]
+    apply Nat.ModEq.pow 5 this
+
+  -- We conclude that the remainder when $5^{30}$ is divided by 7 is 1.
+  exact this
+```

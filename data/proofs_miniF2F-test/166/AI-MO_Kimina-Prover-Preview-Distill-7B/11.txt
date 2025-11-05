@@ -1,0 +1,33 @@
+-- make sure that all terms of $a$ are nonnegative
+  have h₁ : ∀ i ∈ Finset.range n, 0 ≤ a i := by
+    intro i hi
+    exact Nat.zero_le (a i)
+
+  -- if all $a_i$ are 0, we have $a_i = 0$ for all $i \in \{0, 1, \ldots, n-1\}$, so $\prod_{i=1}^n a_i = 0 \leq 1$
+  by_cases h₂ : ∀ i ∈ Finset.range n, a i = 0
+  · simp [h₂]
+
+  -- if there is an $a_i \neq 0$, then $0 < a_j$ for all $j \in \{0, 1, \ldots, n-1\}$
+  · have h₃ : ∃ i ∈ Finset.range n, 0 < a i := by
+      exact h₂.exists
+
+    obtain ⟨i, hi, h₃⟩ := h₃
+
+    have h₄ : ∀ j ∈ Finset.range n, 0 < a j := by
+      intro j hj
+      exact lt_of_le_of_ne (h₁ j hj) (h₃ j)
+
+    -- then $\sum_{i=1}^n a_i > 0$ as all $a_i \geq 0$ and at least one $a_j > 0$
+    have h₅ : ∑ x ∈ Finset.range n, a x > 0 := by
+      apply Finset.sum_pos
+      · simp [h₄]
+      · exact Nat.zero_lt_of_ne_zero n
+
+    -- this is a contradiction, since $\sum_{i=1}^n a_i = n$ and $n \neq > 0$
+    have h₆ : ∑ x ∈ Finset.range n, a x = n := by
+      exact h₀.symm
+    rw [h₆] at h₅
+    have h₇ : n > 0 := by
+      exact Nat.zero_lt_of_ne_zero n
+    linarith [h₇, h₅] -- contradiction
+```

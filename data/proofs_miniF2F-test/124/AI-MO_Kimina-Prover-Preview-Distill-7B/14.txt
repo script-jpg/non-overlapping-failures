@@ -1,0 +1,70 @@
+-- Let $a$ and $b$ be real numbers.
+
+  -- We need to show that $\frac{|a+b|}{1+|a+b|} \leq \frac{|a|}{1+|a|} + \frac{|b|}{1+|b|}$.
+
+  -- Let's consider the types of inequalities that could be used here.
+
+  -- In particular, we haves $|a+b| \leq |a|+|b|$.
+
+  have h : abs (a + b) ≤ abs a + abs b := by apply abs_add a b
+
+  -- Then we have $1+|a+b| \leq 1+|a|+|b|$.
+
+  have h' : 1 + abs (a + b) ≤ 1 + abs a + abs b := by linarith
+
+  -- We also have $|a| \leq 1+|a|$ and $|b| \leq 1+|b|$.
+
+  have ha : abs a ≤ 1 + abs a := le_of_lt (lt_add_one (abs a))
+  have hb : abs b ≤ 1 + abs b := le_of_lt (lt_add_one (abs b))
+
+  -- The function $x \mapsto \frac{x}{1+x}$ is monotonically increasing on $[0,\infty)$.
+
+  -- Therefore, $\frac{|a+b|}{1+|a+b|} \leq \frac{|a|+|b|}{1+|a|+|b|} $.
+
+  have h'' : abs (a + b) / (1 + abs (a + b)) ≤ (abs a + abs b) / (1 + abs a + abs b) := by
+    apply div_le_div_iff (by linarith) (by linarith) |>.mpr
+    linarith[abs_nonneg (a + b), abs_nonneg a, abs_nonneg b]
+
+  -- So it suffices to show that $\frac{|a|+|b|}{1+|a|+|b|} \leq \frac{|a|}{1+|a|} + \frac{|b|}{1+|b|}$.
+
+  trans (abs a + abs b) / (1 + abs a + abs b)
+ . exact h''
+ . rw [div_add_div]
+    -- We have $\frac{|a|+|b|}{1+|a|+|b|} = \frac{|a|}{1+|a|+|b|} + \frac{|b|}{1+|a|+|b|}$.
+
+    -- Let's show that $1+|a|+|b| \leq (1+|a|)(1+|b|)$.
+
+    have h''' : 1 + abs a + abs b ≤ (1 + abs a) * (1 + abs b) := by
+      linarith [sq_nonneg (abs a - abs b)]
+
+    -- The function $x \mapsto \frac{x}{1+x}$ is monotonically increasing on $[0,\infty)$.
+
+    -- Therefore, $\frac{|a|+|b|}{1+|a|+|b|} \leq \frac{|a|+|b|}{(1+|a|)(1+|b|)} = \frac{|a|}{(1+|a|)(1+|b|)}+\frac{|b|}{(1+|a|)(1+|b|)} \leq
+    -- \frac{|a|}{1+|a|} + \frac{|b|}{1+|b|}$.
+
+    have h'''' : (abs a + abs b) / (1 + abs a + abs b) ≤ (abs a + abs b) / ((1 + abs a) * (1 + abs b)) := by
+      apply div_le_div_of_nonneg_left (by linarith) (by linarith[abs_nonneg a, abs_nonneg b])
+      linarith[abs_nonneg (a + b), abs_nonneg a, abs_nonneg b]
+
+    have h''''' : (abs a + abs b) / ((1 + abs a) * (1 + abs b)) = abs a / (1 + abs a) * (1 / (1 + abs b)) + abs b / (1 + abs b) * (1 / (1 + abs a)) := by
+      field_simp
+      ring
+
+    have h'''''' : abs a / (1 + abs a) * (1 / (1 + abs b)) + abs b / (1 + abs b) * (1 / (1 + abs a)) ≤ abs a / (1 + abs a) + abs b / (1 + abs b) := by
+      have ha' : 0 < 1 + abs a := by linarith[abs_nonneg a]
+      have hb' : 0 < 1 + abs b := by linarith[abs_nonneg b]
+
+      have h'''''''' : (abs a / (1 + abs a) * (1 / (1 + abs b))) ≤  (abs a / (1 + abs a)) := by
+        apply (mul_le_mul_iff_of_pos_left (by linarith)).mpr
+        exact (div_le_div_iff (by linarith) (by linarith)).mpr (by linarith[abs_nonneg (a + b), abs_nonneg a, abs_nonneg b])
+
+      have h''''''''' : (abs b / (1 + abs b) * (1 / (1 + abs a))) ≤  (abs b / (1 + abs b)) := by
+        apply (mul_le_mul_iff_of_pos_left (by linarith)).mpr
+        exact (div_le_div_iff (by linarith) (by linarith)).mpr (by linarith[abs_nonneg (a + b), abs_nonneg a, abs_nonneg b])
+
+      linarith
+
+    linarith
+  -- The proof is complete.
+
+```

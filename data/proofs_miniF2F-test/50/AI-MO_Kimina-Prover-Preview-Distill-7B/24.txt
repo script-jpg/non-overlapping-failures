@@ -1,0 +1,55 @@
+-- the total amount of milk is x, the total amount of coffee is y, thus x + y = 8n
+  -- So the condition ensures (the amount of milk in each cup) + (the amount of coffee in each cup) = 8.
+  have h₀' : (x / 4 + y / 6 : ℝ) * (x + y) = (x + y) ^ 2 / (n : ℝ) := by
+    rw [mul_comm, h₀]
+    ring
+  have h₀'' : (x / 4 + y / 6 : ℝ) * (x + y) / (x + y) = (x + y) / (n : ℝ) := by
+    rw [h₀']
+    ring
+  have h₁ : (x / 4 + y / 6 : ℝ) = (x + y) / (n : ℝ) := by
+    rcases (show x + y ≠ 0 by aesop) with h
+    · rw [h₀'']
+      simp [h]
+    · exact h₀'
+  have h₁' : 0 < (x + y) / (n : ℝ) := by
+    aesop
+  have h₂ : n ∣ x + y := by
+    apply (div_eq_iff_mul_eq h₀'').mp
+    simp [h₁]
+  rify at h₂
+  rw [div_eq_iff (show (n : ℝ) ≠ 0 by aesop)] at h₁'
+  have h₃ : 0 < (x : ℝ) / 4 + (y : ℝ) / 6 := by
+    aesop
+  have h₄ : (x : ℝ) / 4 + (y : ℝ) / 6 ≤ (x + y) / 4 + (x + y) / 6 := by
+    rw [show (x + y) / 4 + (x + y) / 6 = (x + y) / 4 + (y + x) / 6 by ring]
+    exact add_le_add (div_le_div_of_nonneg_left (show 0 ≤ x by aesop) (show 0 < (4 : ℝ) by norm_num)) (div_le_div_of_nonneg_left (show 0 ≤ y by aesop) (show 0 < (6 : ℝ) by norm_num))
+  rw [h₁] at h₄
+  have h₅ : (n : ℝ) / 2 ≤ (↑x + ↑y) * (↑n : ℝ) / (↑x + ↑y) := by
+    rw [show (↑x + ↑y) * (↑n : ℝ) / (↑x + ↑y) = (↑n : ℝ) / 2 * ((↑x + ↑y) / (↑n : ℝ) * (↑n : ℝ) / (↑x + ↑y)) by ring]
+    · rw [mul_comm, mul_one_div, one_mul]
+      apply le_mul_of_one_le_left
+      exact (div_le_one (by aesop)).mpr h₄
+      exact le_of_lt (show 0 < (n : ℝ) by aesop)
+    · apply le_of_lt
+      exact div_pos (by aesop) (by aesop)
+  rw [mul_comm, div_eq_mul_inv, ←mul_assoc, mul_inv_cancel₀ (by exact Ne.symm (OfNat.zero_ne_ofNat n))] at h₅
+  have h₆ : n / 2 ≤ (x + y) * (1 / (n : ℝ)) * (↑n : ℝ) := by
+    rw [show (x + y) * (1 / (n : ℝ)) * (↑n : ℝ) = (x + y) * (1 / (n : ℝ) * (↑n : ℝ)) by ring]
+    · apply (div_le_iff₀ (by aesop)).mp
+      apply add_le_add (h₅.trans?_) (by aesop)
+      rw [mul_comm]
+      apply (div_le_iff₀ (by aesop)).mp
+      linarith only [h₃, show 0 < (n : ℝ) by aesop]
+      exact le_of_lt (show 0 < (n : ℝ) by aesop)
+    · exact le_of_lt (show 0 < (n : ℝ) by aesop)
+  rw [mul_assoc, mul_one_div_cancel (show n ≠ 0 by aesop), ←mul_div_assoc, div_le_iff₀ (show (0 : ℝ) < n by aesop)] at h₆
+  have h₇ : n * 2 ≤ 3 * n := by
+    rify
+    calc
+      _ = (n : ℝ) * 2 / (n : ℝ) * (n : ℝ) := by rw [mul_div_cancel₀]; exact Ne.symm (OfNat.zero_ne_ofNat n)
+      _ ≤ 3 * n := by
+        rw [div_mul_eq_mul_div, div_le_iff₀ (show (0 : ℝ) < n by aesop)]
+        linarith only [h₆]
+  omega
+
+```

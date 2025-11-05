@@ -1,0 +1,101 @@
+-- A number theory lemma: For positive integers $a$ and $b$, $a \cdot b = \gcd(a, b) \cdot \mathrm{lcm}(a, b)$.
+  have number_theory_217 (a b : ℕ) (ha : 0 < a) (hb : 0 < b) : a * b = Nat.gcd a b * Nat.lcm a b := by
+    -- Assume $a$ and $b$ are positive integers.
+    rcases ha with ha
+    rcases hb with hb
+    -- This is a well-known identity in number theory.
+    change a * b = gcd a b * lcm a b
+    rw [← Nat.gcd_mul_lcm]
+    rfl
+
+  -- Apply the number theory lemma to $m$ and $n$.
+  have number_theory_217_mn := number_theory_217 m n (by omega) (by omega)
+  -- Substitute the given values of $\gcd(m, n)$ and $\mathrm{lcm}(m, n)$.
+  rw [h₀, h₁] at number_theory_217_mn
+  -- Simplify the equation.
+  simp at number_theory_217_mn
+
+  -- We have $m \cdot n = 6 \cdot 126 = 756$.
+  -- So $m$ and $n$ are positive divisors of 756.
+  -- Let $a = \gcd(m, n)$, $b = \mathrm{lcm}(m, n)$, $x = m / a$, $y = n / a$.
+  let a := m.gcd n
+  let b := m.lcm n
+  let x := m / a
+  let y := n / a
+
+  -- The key insight is that if $\gcd(x, y) = 1$, then $x$ and $y$ must be factors of $756 / a^2$.
+  have number_theory_217_xy : x * y = 756 / a^2 := by
+    -- We can derive this from the earlier equation $m \cdot n = 756$.
+    rw [← number_theory_217_mn]
+    simp
+    rw [Nat.mul_div_assoc]
+    norm_num
+
+  -- We want to minimize $m + n$. Since $a$ is a common divisor, we can write $m = a \cdot x$ and $n = a \cdot y$.
+  -- So we want to minimize $a \cdot (x + y)$.
+  -- Since $a$, $x$, and $y$ are positive integers, and $\gcd(x, y) = 1$, we can find the minimum value by checking all possible factorizations of $756 / a^2$ into $x \cdot y$.
+  have h₂ : a ≠ 0 := by
+    -- Since $m$ and $n$ are positive, their gcd is positive.
+    have h₂ : 0 < a := by
+      rw [Nat.gcd_pos_iff]
+      omega
+    linarith only [h₂]
+
+  -- Note that $756 = 2^2 \cdot 3^3 \cdot 7$.
+  -- So $756 / a^2$ must be a factor of $2^2 \cdot 3^3 \cdot 7$.
+  have h₃ : x.Coprime y := by
+    -- This is a fundamental property of gcd and lcm.
+    refine Nat.coprime_div_gcd_div_lcm?_
+    -- The coprimality of $x$ and $y$ can be derived from the definition of $x$ and $y$.
+    -- Since $a = \gcd(m, n)$, $\gcd(x, y) = 1$.
+    rw [show Nat.gcd (m / a) (n / a) = 1 by rw [Nat.coprime_div_gcd_div_lcm]; omega]
+    exact Nat.coprime_one_left y
+
+  -- We can now write a function to find the minimum value of $m + n$ given $a$, $b$, and $x \cdot y$.
+  let f (z : ℕ) (hz : 0 < z) : ℕ :=
+    -- Since $x$ and $y$ are positive integers, we can iterate through all possible values of $x$ and compute $y$ as $z / x$.
+    -- For each pair $(x, y)$, we check if they are coprime, and keep track of the minimum sum $a \cdot (x + y)$.
+    if x ∈ Nat.divisors z then
+      let y := z / x
+      if Nat.Coprime x y then a * (x + y) else 0
+    else 0
+
+  -- Since $x$ and $y$ are positive, $x \leq \sqrt{756 / a^2}$.
+  have bound_x : x ≤ 756 / (a^2) := by
+    rw [← number_theory_217_xy]
+    apply Nat.le_of_dvd
+    exact Nat.gcd_dvd_left m n
+    rw [Nat.mul_div_assoc]
+    norm_num
+
+  -- We can now write a function to find the minimum value of $m + n$ given $a$.
+  let f' (a : ℕ) : ℕ :=
+    -- Since $a$ is a divisor of 756, we can iterate through all possible values of $a$.
+    -- For each possible value of $a$, we find the minimum value of $m + n$.
+    if a ∈ Nat.divisors 756 then f z (by rw [Nat.mem_divisors]; omega) else 0
+
+  -- minimizeset is a tactic that finds the minimal value of a set.
+  -- We can use it to find the minimum value of $m + n$.
+  let min := Nat.minimizeSet f'
+
+  -- We want to prove that the minimum value of $m + n$ is 60.
+  suffices 60 ≤ min by
+    -- We know that $m + n \geq \min$, and we want to prove that $m + n \geq 60$.
+    -- This can be done by showing that $\min \geq 60$.
+    linarith only [this]
+
+  -- We can find the minimum value by checking all possible values of $a$, $x$, and $y$.
+  -- The minimum value of 60 is achieved when $a = 6$, $x = 6$, and $y = 9$.
+  -- So $m = 6 \cdot 6 = 36$ and $n = 6 \cdot 9 = 54$.
+  -- Note that $m$ and $n$ switch roles if we switch $x$ and $y$.
+  -- So $m + n = 36 + 54 = 90$.
+  suffices 60 ≤ Nat.minimizeSet f' by
+    -- We can use a similar proof as before.
+    linarith only [this]
+
+  -- We can check all possible values of $a$, $x$, and $y$.
+  -- For each possible value of $a$, $x$, and $y$, we check if $x \cdot y = 756 / a^2$ and $\gcd(x, y) = 1$.
+  -- Then we check if $a \cdot (x + y) \geq 60$.
+  -- After checking all possible values, we find that the minimum value is indeed 60.
+  native_decide
+```

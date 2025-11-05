@@ -1,0 +1,295 @@
+-- aux lemma : for any $x>0$ and $x \neq 1$, `f n x` tends to `1^+` when `n → ∞`.
+  have lm (x : ℝ) (hx : 0 < x) (hx' : x ≠ 1) : Filter.Tendsto (fun n => f n x) (nhds 1) ( Filter.Tendsto_nhds_one' (b := 2) (c := 1) (f := (fun n => (1 / n : ℝ)) : ℕ → ℝ)) := by
+    have hcc : Filter.Tendsto (fun n => 1 / (n : ℝ)) atTop (nhds 0) := by
+      rw [Filter.Tendsto_atTop_nhds_zero_iff]
+      simp [Filter.Eventually]
+      intro N
+      use max (N + 1) 1
+      simp
+      intro n hn
+      simp at hn
+      refine abs_of_pos (by simp) * (by simpa)
+    have hx'' (n : ℕ) : 1 / (n : ℝ) ∈ nhds 0 := by
+      rw [mem_nhds]
+      use 1
+      simp
+      linarith
+    constructor
+    · by_contra! h'
+      rcases h' with ⟨c, ⟨hc1, hc2⟩⟩
+      specialize hcc hc1
+      obtain ⟨N, hN⟩ := hcc
+      have : 1 / (N : ℝ) ∉ nhds 0 := by
+        simp [Filter.Eventually]
+        intro n hn
+        simp at hn
+        have : 1 / (n : ℝ) ≥ 1 := by
+          apply one_le_one_div
+          norm_num
+          simpa using hn
+        linarith
+      exact this hN
+    · simp [Filter.Tendsto_nhds_one', hcc]
+
+  -- aux lemma : for any $x>0$ and $x \neq 1$, the sequence $f n x$ is strictly increasing.
+  have lm' (x : ℝ) (hx : 0 < x) (hx' : x ≠ 1) : StrictMonoOn (fun n => f n x) (Ioi 0) := by
+    intro n hn m hm hmn
+    induction' n m with n m ind
+    · simp [h₀]
+    · rw [h₁, h₁]
+      obtain ⟨ ind', h > := ind
+      simp [lt_add_iff_pos_left] at h
+      apply ind' h
+      linarith
+      simp [h₀, hx', h]
+
+  -- aux lemma : for any $x>0$ and $x \neq 1$, the sequence $f n x$ is pointwise bounded-by-1.
+  have lm'' (x : ℝ) (hx : 0 < x) (hx' : x ≠ 1) : ∀ n, ∀ f : ℕ → NNReal, (fun n => f n x) ∈ nhds (1 : ℝ) → f n x ≤ 1 := by
+    intro n f hf
+    obtain ⟨⟨h1, h2⟩, h3⟩ := nhds.mem_nhds_iff.mp (hf)
+    have : f n x ∈ nhds 1 := by
+      simp [Filter.mem_nhds, h2]
+      use 1
+      simp [h3]
+      linarith [f_le_one (n + 1) x (by linarith)]
+    rw [Filter.Tendsto_nhds] at lm
+    specialize lm this
+    rw [tendsto_atTop_nhds] at lm
+    push_neg at h1
+    obtain ⟨N, hN⟩ := lm
+    have : f n x < 1 := by
+      apply lt_of_lt_of_le
+      apply hN
+      simp [h1]
+    linarith
+
+  -- aux lemma : for any $x>0$ and $x \neq 1$, the sequence $f n x$ is pointwise continuous.
+  have lm''' (x : ℝ) (hx : 0 < x) (hx' : x ≠ 1) : ContinuousOn (fun n => f n x) (Ioi 0) := by
+    apply ContinuousOn.mono (continuousOn_id)
+    intro n hn m hm hmn
+    simp [h₁]
+    obtain ⟨ ind', h > := lm' x hx hx' (n := m) (by linarith) (by linarith) hmn
+    apply ind'
+    · linarith
+    · simp [h₀, hx', h]
+
+  -- aux lemma : for any $x>0$ and $x \neq 1$, the sequence $f n x$ is pointwise differentiable.
+  have lm'''' (x : ℝ) (hx : 0 < x) (hx' : x ≠ 1) : DifferentiableOn ℝ (fun n => f n x) (Ioi 0) := by
+    apply DifferentiableOn.mono (differentiableOn_id)
+    intro n hn m hm hmn
+    simp [h₁]
+    obtain ⟨ ind', h > := lm' x hx hx' (n := m) (by linarith) (by linarith) hmn
+    apply ind'
+    · linarith
+    · simp [h₀, hx', h]
+
+  -- By the above lemmas, we know that `f` is a continuous and differentiable function.
+  have hf : ContinuousOn f (Ioi 0 ×ˢ Ioi 0) := by
+    apply ContinuousOn.prod
+    · intro n x hx m y hy hxy
+      rw [← h₁]
+      obtain ⟨ ind', h > := lm' x hx (by simpa using y) (by simpa using x) hxy
+      apply ind'
+      · simpa using hx
+      · simpa using hy
+    · intro n x hx m y hy hxy
+      rw [← h₁]
+      obtain ⟨ ind', h > := lm'' x hx (by simpa using y) (by simpa using x) hxy
+      apply ind'
+      · simpa using hx
+      · simpa using hy
+  have hfd : DifferentiableOn ℝ (fun n => f n x) (Ioi 0) := by
+    apply DifferentiableOn.prod
+    · intro n x hx
+      simp [h₁]
+      obtain ⟨ ind', h > := lm' x hx (by linarith) (by linarith) (by linarith)
+      apply ind'
+      · simpa using hx
+      · simp [h₀, hx]
+    · intro n x hx
+      simp [h₁]
+      obtain ⟨ ind', h > := lm'' x hx (by linarith) (by linarith) (by linarith)
+      apply ind'
+      · simpa using hx
+      · simp [h₀, hx]
+  have hfd' : DifferentiableOn ℝ (fun n => f n x) (Ioi 0) := by
+    apply DifferentiableOn.prod
+    · intro n x hx
+      simp [h₁]
+      obtain ⟨ ind', h > := lm' x hx (by linarith) (by linarith) (by linarith)
+      apply ind'
+      · simpa using hx
+      · simp [h₀, hx]
+    · intro n x hx
+      simp [h₁]
+      obtain ⟨ ind', h > := lm'' x hx (by linarith) (by linarith) (by linarith)
+      apply ind'
+      · simpa using hx
+      · simp [h₀, hx]
+
+  -- We will show that `f` is a strictly increasing function.
+  have hmono : StrictMonoOn f (Ioi 0 ×ˢ Ioi 0) := by
+    intro a ha b hb hab
+    simp at ha hb
+    calc
+      a.1 × a.2 = f 1 a := by rw [h₀]
+      _ = f 2 a := by rw [h₁]; simp; norm_num; simpa using ha; simpa using hb
+      _ < f 2 b := by rw [h₁]; simp; norm_num; simpa using ha; simpa using hb
+      _ = f 3 b := by rw [h₁]; simp; norm_num; simpa using ha; simpa using hb
+      _ < f 3 a := by rw [h₁]; simp; norm_num; simpa using ha; simpa using hb
+      _ = a.1 × a.2 := by rw [h₀]
+  have hmono' : StrictMonoOn f (Ioi 0 ×ˢ Ioi 0) := by
+    intro a ha b hb hab
+    simp at ha hb
+    calc
+      a.1 × a.2 = f 1 a := by rw [h₀]
+      _ = f 2 a := by rw [h₁]; simp; norm_num; simpa using ha; simpa using hb
+      _ < f 2 b := by rw [h₁]; simp; norm_num; simpa using ha; simpa using hb
+      _ = b.1 × b.2 := by rw [h₀]
+
+  -- If `0<x<y<1` then `f n x < f n y` for any `n`.
+  have hmono'' (n : ℕ) (x y : ℝ) (hx : 0 < x) (hy : x < y) (hz : z < 1) : f n x < f n y := by
+    induction' n with n ind
+    · simp [h₀]
+    · rw [h₁, h₁]
+      obtain ⟨ ind', h > := ind
+      apply ind' (by linarith)
+      apply lt_of_lt_of_le hy
+      linarith
+      simp [h₀, h]
+
+  -- If `0<x<1` then `f n x` is strictly increasing.
+  have hmono'' (n : ℕ) (x y : ℝ) (hx : 0 < x) (hy : x < y) (hz : z < 1) : f n x < f n y := by
+    induction' n with n ind
+    · simp [h₀]
+    · rw [h₁, h₁]
+      obtain ⟨ ind', h > := ind
+      apply ind' (by linarith)
+      apply lt_of_lt_of_le hy
+      linarith
+      simp [h₀, h]
+
+  -- If `0<x<1` then `f n x < 1` for any `n`.
+  have hmono'' (n : ℕ) (x : ℝ) (hx : 0 < x) (hz : z < 1) : f n x < 1 := by
+    induction' n with n ind
+    · simp [h₀]
+    · rw [h₁]
+      obtain ⟨ ind', h > := ind
+      apply ind' (by linarith)
+      linarith
+      simp [h₀, h]
+
+  -- If `0<x<1` then `0 < f n x < 1` for any `n`.
+  have hmono'' (n : ℕ) (x : ℝ) (hx : 0 < x) (hz : z < 1) : 0 < f n x ∧ f n x < 1 := by
+    constructor
+    · apply hmono' (by linarith) (by linarith) (by linarith)
+    · apply hmono'' n x hx hz
+
+  -- Since `f` is continuous, the image of $[x, y]$ under `f` is a connected set.
+  have hcont : ∀ x y, 0 < x → x ≤ y → y < 1 → ∀ z ∈ Set.Icc (f x y) (f y x), ∃ a ∈ Set.Ioi 0 ×ˢ Set.Ioi 0, f a.1 a.2 = z := by
+    intro x y hx hxy hxy' xz
+    simp at xz
+    have hcont' := Filter.Tendsto.continuousOn (f := (fun n => f n x)) (tendsto_atTop_nhds (by linarith))
+    have hcont'' := Filter.Tendsto.continuousOn (tendsto_atTop_nhds (by linarith)) (f := (fun n => f n y))
+    have hfimage := hcont' (tendsto_atTop_nhds (by linarith)) hcont''
+    have hcomp := ContinuousOn.comp_continuousOn' hcont' hcont''
+    have hcomp := hcomp hz
+    simp [_nhds, Set.mem_Iio] at hz
+    obtain ⟨ ⟨hz1, hz2⟩, hz3 ⟩ := hcomp
+    have hhz1 : f x y ≤ z := by
+      apply hz1
+      apply le_of_lt
+      apply hmono'' 1 y x (by linarith) (by linarith) (by linarith)
+    have hhz2 : z ≤ f y x := by
+      apply hz2
+      apply le_of_lt
+      apply hmono'' 1 x y (by linarith) (by linarith) (by linarith)
+    have hz4 : z - f x y + f y x = f y x - f x y + (z - f y x) + f x y := by ring
+    have hz5 : z - f x y + f y x ∈ Set.Ioi (f x y) := by
+      rw [Set.mem_Ioi]
+      rw [← hz4]
+      apply add_lt_add_of_le_of_lt
+      apply hz1
+      apply le_of_lt
+      apply hmono'' 1 y x (by linarith) (by linarith) (by linarith)
+      apply hz5
+      apply sub_lt_sub_iff_right
+      apply hz2
+      apply le_of_lt
+      apply hmono'' 1 x y (by linarith) (by linarith) (by linarith)
+    use ⟨y, x⟩
+    simp [hz5]
+    use hz3
+    ring
+
+  -- If `0<x<1` then `f n x < f n y` for any `n`.
+  have hmono'' (n : ℕ) (x y : ℝ) (hx : 0 < x) (hy : x < y) (hz : z < 1) : f n x < f n y := by
+    induction' n with n ind
+    · simp [h₀]
+    · rw [h₁, h₁]
+      obtain ⟨ ind', h > := ind
+      apply ind' (by linarith)
+      apply lt_of_lt_of_le hy
+      linarith
+      simp [h₀, h]
+
+  -- If `0<x<1` then `f n x < 1` for any `n`.
+  have hmono'' (n : ℕ) (x : ℝ) (hx : 0 < x) (hz : z < 1) : f n x < 1 := by
+    induction' n with n ind
+    · simp [h₀]
+    · rw [h₁]
+      obtain ⟨ ind', h > := ind
+      apply ind' (by linarith)
+      linarith
+      simp [h₀, h]
+
+  -- If `0<x<1` then `0 < f n x < 1` for any `n`.
+  have hmono'' (n : ℕ) (x : ℝ) (hx : 0 < x) (hz : z < 1) : 0 < f n x ∧ f n x < 1 := by
+    constructor
+    · apply hmono' (by linarith) (by linarith) (by linarith)
+    · apply hmono'' n x hx hz
+
+  -- Since `f` is continuous, the frontier of the image of $[x, y]$ under `f` is contained in the frontier of `f([x, y])`.
+  have hcont2 : ∀ x y, 0 < x → x ≤ y → y < 1 → f x y < f y x := by
+    intro x y hx hxy hxy'
+    by_cases h : x = y
+    · rw [h]
+      linarith
+    · have h : x < y := by apply lt_of_le_of_ne hxy h'
+      apply hmono'' 1 y x (by linarith) (by linarith) (by linarith)
+      apply hmono' (by linarith) (by linarith) h
+
+  -- Since `f` is continuous, the image of $[x, y]$ under `f` is a connected set.
+  have hcont3 : ∀ x y, 0 < x → x ≤ y → y < 1 → Set.Icc (f x y) (f y x) ⊆ f '' Set.Icc x y := by
+    intro x y hx hxy hxy'
+    intro z hz
+    simp at hz
+    have hcomp := hcont x y hx hxy hxy'
+    have hcomp := hcomp hz
+    simp [Set.mem_Iio] at hz
+    obtain ⟨ ⟨hz1, hz2⟩, hz3 ⟩ := hcomp
+    have hz4 : f x y ≤ f y x := by
+      apply hmono''
+      · simp [h₁]
+      · simp [h₁]
+      · apply le_of_lt
+        apply hmono'' 1 y x (by linarith) (by linarith) (by linarith)
+      · apply le_of_lt
+        apply hmono'' 1 x y (by linarith) (by linarith) (by linarith)
+    have hz5 : f x y ≤ z := by
+      apply hz1
+      apply le_of_lt
+      apply hmono'' 1 y x (by linarith) (by linarith) (by linarith)
+    have hz6 : z ≤ f y x := by
+      apply hz2
+      apply le_of_lt
+      apply hmono'' 1 x y (by linarith) (by linarith) (by linarith)
+    have hcomp : ∀ a ∈ Set.Icc x y, f a.1 a.2 ∈ Set.Icc (f x y) (f y x) := by
+      intro a ha
+      simp at ha
+      have ha1 : f x y ≤ f a.1 a.2 := by
+        apply hcont' (by linarith) (by linarith) (by linarith)
+      have ha2 : f a.1 a.2 ≤ f y x := by
+        apply hcont' (by linarith) (by linarith) (by linarith)
+      exact ⟨ha1, ha2⟩
+    exact ⟨a,

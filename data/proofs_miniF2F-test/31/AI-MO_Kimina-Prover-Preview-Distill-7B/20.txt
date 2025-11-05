@@ -1,0 +1,83 @@
+-- Thegcd of $m$ and $n$ is 6, so $m = 6x$ and $n = 6y$ for some integers $x$ and $y$.
+  set d := m.gcd n
+  have hd : d = 6 := h₀
+  rw [Nat.gcd_eq_iff] at hd
+  rcases hd with ⟨⟨x, hx⟩, ⟨y, hy⟩⟩
+
+  -- The least common multiple of $m$ and $n$ is 126.
+  -- $126 = \frac{m \cdot n}{6}$, so $m \cdot n = 756$.
+  have dprod : m * n = 756 := by
+    have := Nat.gcd_mul_lcm m n
+    simp [hd, h₁] at this
+    linarith
+
+  -- Substituting $m = 6x$ and $n = 6y$ into $m \cdot n = 756$, we get $6x \cdot 6y = 756$.
+  -- So $x \cdot y = 756 / 6^2 = 21$.
+  have xyprod : x * y = 21 := by
+    have : m * n = 6^2 * (x * y) := by
+      rw [hx, hy]
+      ring_nf
+    rw [this] at dprod
+    linarith
+
+  -- The [LCM](https://artofproblemsolving.com/wiki/index.php/LCM) of $x$ and $y$ is $\frac{6}{\gcd(x,y)}$.
+  have xy_gcd : Nat.lcm x y = 6 / (6 / Nat.gcd x y) := by
+    have : Nat.gcd x y * Nat.lcm x y = x * y := Nat.gcd_mul_lcm x y
+    rw [xyprod] at this
+    have : Nat.gcd x y * Nat.lcm x y = 21 := by linarith
+    have hgcd : 0 < Nat.gcd x y := by
+      apply Nat.gcd_pos_of_pos_left
+      rcases xyprod with _ | _ <;> linarith
+    have : Nat.gcd x y ≤ 21 := by
+      apply Nat.le_of_dvd (by norm_num)
+      apply Nat.gcd_dvd_right
+    interval_cases n := Nat.gcd x y
+    · have dlt : Nat.lcm x y < 1 := by
+        rw [this]
+        norm_num
+      have : Nat.lcm x y ≥ 1 := Nat.one_le_lcm x y
+      linarith
+    · have : Nat.lcm x y = 21 := by
+        rw [this]
+        norm_num
+      linarith
+    · have : Nat.lcm x y = 7 := by
+        rw [this]
+        norm_num
+      linarith
+    · rw [this]
+      norm_num
+    · have : Nat.lcm x y = 3 := by
+        rw [this]
+        norm_num
+      linarith
+    · have : Nat.lcm x y = 7 := by
+        rw [this]
+        norm_num
+      linarith
+
+  -- The possible pairs $(x,y)$ are $(1,21), (3,7), (7,3), (21,1)$.
+  have : (x = 1 ∧ y = 21) ∨ (x = 3 ∧ y = 7) ∨ (x = 7 ∧ y = 3) ∨ (x = 21 ∧ y = 1) := by
+    have : x ≤ 21 := by
+      apply Nat.le_of_dvd (by norm_num)
+      apply Nat.gcd_dvd_right
+    have : y ≤ 21 := by
+      apply Nat.le_of_dvd (by norm_num)
+      apply Nat.gcd_dvd_left
+    interval_cases x <;> interval_cases y <;> omega
+
+  -- The least possible value of $m+n$ is $60$.
+  rcases this with h | h | h | h
+  · rw [h.1, h.2] at hx hy
+    simp [h₀] at hx hy
+    linarith
+  · rw [h.1, h.2] at hx hy
+    simp [h₀] at hx hy
+    linarith
+  · rw [h.1, h.2] at hx hy
+    simp [h₀] at hx hy
+    linarith
+  · rw [h.1, h.2] at hx hy
+    simp [h₀] at hx hy
+    linarith
+```

@@ -1,0 +1,63 @@
+-- The function f is defined on the set of positive rational numbers and satisfies f(a·b) = f(a) + f(b).
+  -- We also know that f(p) = p for any prime number p.
+
+  -- We need to determine which of the given numbers has f(x) < 0.
+
+  -- Let's start by analyzing f(1). Since 1 is a positive rational number, we can consider f(1·1) = f(1) + f(1).
+  have h2 : f 1 = 0 := by
+    specialize h₀ 1 (by norm_num) 1 (by norm_num)
+    simp at h₀
+    linarith
+
+  -- By induction, we can show that f(n) = n for any positive integer n.
+  have h3 : ∀ n : ℕ, f n = n := by
+    intro n
+    induction' n using Nat.strongRecOn with n ih
+    rcases Nat.lt_trichotomy n 1 with h | h | h
+    · interval_cases n
+      · simp [h2]
+      · simp
+    · cases h with
+      | inl h =>
+        rw [show n = n - 1 + 1 by omega, h]
+        rw [h₀ (n - 1 + 1) (by omega) 1 (by norm_num)]
+        rw [ih (n - 1) (by omega) h]
+        rw [h2]
+        simp [h]
+      | inr h =>
+        exfalso
+        exact Nat.not_prime_one h
+
+  -- We can also determine f(1/p) for a prime p. Using f(1) = f(1/p·p) = f(1/p) + f(p) = f(1/p) + p,
+  have h4 : ∀ p, Nat.Prime p → f p⁻¹ = -f p := by
+    intro p hp
+    have h41 : f 1 = f p⁻¹ + f p := by
+      specialize h₀ p⁻¹ (by positivity) p (by norm_num)
+      simp at h₀
+      exact h₀
+    rw [h2, h₁ p hp] at h41
+    linarith
+
+  -- we can conclude that f(1/p) = -p.
+
+  -- Now let's determine f(25/11). We have 25/11 = 5²/11 = 5/11·5/1 = f(5/11) + f(5/1).
+  have h5 : f (25 /. 11) = f (5 / 11) + f 5 := by
+    specialize h₀ (5 / 11) (by norm_num) 5 (by norm_num)
+    norm_num at h₀
+    exact h₀
+
+  -- We have f(5/11) = f(5/11·1) = f(5/11) + f(1) => f(5/11) = -1.
+  have h6 : f (5 / 11) = -1 := by
+    specialize h₀ (5 / 11) (by norm_num) 1 (by norm_num)
+    norm_num at h₀
+    linarith
+
+  -- Therefore, f(25/11) = f(5/11) + f(5) = -1 + 5 = 4 > 0.
+  have h7 : f (25 /. 11) = 4 := by
+    rw [h5, h6, h3 5]
+    norm_num
+
+  -- The answer should be (E) 25/11.
+  linarith
+
+```

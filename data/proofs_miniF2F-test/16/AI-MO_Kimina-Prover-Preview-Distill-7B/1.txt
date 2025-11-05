@@ -1,0 +1,61 @@
+-- we prove that $f(n) = n$ where $n$ is a positive integer
+  -- let $P(n)$ be the proposition that $f(n) = n$
+  -- we prove that $P(1), P(2),...$ by using strong induction
+  intro n hn
+  have hn1 : 1 ≤ n := by linarith
+  -- prepare for induction
+  induction' n, hn using Nat.le_induction with n hn ih
+  -- if $f(1) \neq 1$, then $f(1) > 1$ since $f(1)$ is a positive integer
+  have h2 : f 1 > 1 := by
+    by_contra!
+    have : f 1 = 1 := by omega
+    simp [this] at h₁
+  -- by induction hypothesis $f(n) = n$, we have $f(1) = 1$, a contradiction
+  have h3 : f 1 = 1 := by
+    specialize ih 1 (by norm_num)
+    simpa [hn1] using ih
+  -- if $f(k) = k$ for all $k \leq n$, then $f(n+1) = n+1$
+  have h4 : f (n + 1) = n + 1 := by
+    -- if $f(n+1) \neq n+1$, choose $m$ such that $f(n+1) = n+1 - m$
+    by_contra! h5
+    replace h5 : f (n + 1) > n + 1 := by omega
+    replace h5 : ∃ m, 1 ≤ m ∧ f (n + 1) = n + 1 - m := by
+      use (n + 1) - f (n + 1)
+      refine ⟨?_,?_⟩
+      · omega
+      · rw [Nat.sub_add_cancel]
+        linarith
+    obtain ⟨m, hm1, hm2⟩ := h5
+    -- we have $f(n+1) = n+1 - m \geq n+1 - m + 1$ since $f(n+1) > n+1$
+    have h6 : n + 1 - m + 1 ≤ f (n + 1) := by omega
+    -- we have $f(f(n+1)) \geq f(n+1 - m + 1)$ by property of $f$
+    have h7 : f (f (n + 1)) ≥ f (n + 1 - m + 1) := by
+      apply h₀
+      simp
+      zify
+      apply le_trans hm1
+      simp
+      exact (Nat.cast_sub hm1).symm
+    -- by inductive hypothesis, we have $f(k) = k$ for all $k \leq n+1-m+1$
+    have h8 : ∀ k, 1 ≤ k → k ≤ n + 1 - m + 1 → f k = k := by
+      intro k hk1 hk2
+      induction' k, hk1 using Nat.le_induction with k hk1 ih
+      · simpa [hk1] using ih
+      · rw [Nat.add_sub_assoc] at hk2
+        have : k + 1 ≤ n + 1 := by linarith
+        replace this : k + 1 ≤ n + 1 - m + 1 := by omega
+        specialize ih (k + 1) (by linarith) this
+        omega
+    -- so $f(f(n+1)) = f(n+1-m+1) = n+1-m+1$
+    have h9 : f (f (n + 1)) = n + 1 - m + 1 := by
+      specialize h8 (f (n + 1)) (by linarith) (by omega)
+      simp [h8]
+      rw [hm2]
+      omega
+    -- we get $n+1-m+1 \leq f(n+1) = n+1-m$ since $f(f(n+1)) \geq f(n+1-m+1)$ and $f(f(n+1)) = n+1-m+1$
+    -- a contradiction
+    omega
+  -- so we have $f(n) = n$ for all $n \geq 1$
+  omega
+
+```

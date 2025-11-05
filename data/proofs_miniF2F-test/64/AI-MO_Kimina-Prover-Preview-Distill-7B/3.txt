@@ -1,0 +1,147 @@
+-- We prove that if $x$ is a positive integer, then $h(x) \in \{1,,3,11\}$.
+  have h₄ : ∀ x, h x ∈ ({1, 3, 11} : Finset ℕ) := by
+    intro x
+    simp_rw [h₂, h₀, h₁]
+    -- We know that $h(x)$ is the greatest common divisor of $12x+7$ and $5x+2$.
+    let ⟨m, hm⟩ := Nat.gcd_dvd_gcd (12 * x + 7) (5 * x + 2)
+    -- We know that $m \mid 12x+7$ and $m \mid 5x+2$.
+    let ⟨n, hn⟩ := hm
+    let ⟨p, hp⟩ := hm
+    -- We know that $m \mid 7(5x+2) - 5(12x+7) = -11x$.
+    let ⟨q, hq⟩ := Nat.dvd_sub (by linarith) (by linarith) (by linarith)
+    -- We know that $m \mid 12x+7$ and $m \mid 11x$.
+    let ⟨r, hr⟩ := Nat.dvd_sub (by linarith) (by linarith) (by linarith)
+    -- We know that $m \mid 12x+7$ and $m \mid 33x$.
+    let ⟨s, hs⟩ := Nat.dvd_sub (by linarith) (by linarith) (by linarith)
+    -- We know that $m \mid 33x - 33(12x+7) = -321x$.
+    let ⟨t, ht⟩ := Nat.dvd_sub (by linarith) (by linarith) (by linarith)
+    -- We know that $m \mid -321x$ and $m \mid 321(11x) = 3531x$.
+    let ⟨u, hu⟩ := Nat.dvd_sub (by linarith) (by linarith) (by linarith)
+    -- We know that $m \mid 3531x$ and $m \mid 321x$.
+    let ⟨v, hv⟩ := Nat.dvd_sub (by linarith) (by linarith) (by linarith)
+    -- We know that $m \mid 3531x - 321(321x) = 0$.
+    let ⟨w, hw⟩ := Nat.dvd_sub (by linarith) (by linarith) (by linarith)
+    -- We have $m \mid 0$, which implies that $m = 1$.
+    have hm' : m = 1 := by
+      have : m ∣ 0 := by simp [hw]
+      exact Nat.eq_one_of_dvd_one this
+    simp [hm'] at hn
+    rw [hn] at hr
+    have : n ∣ 11x := by
+      simp [hr]
+    have := Nat.eq_one_of_dvd_one this
+    rw [hn, this] at hp
+    simp [hp] at this
+    rw [this] at hp
+    simp [hp]
+    -- We have $n \mid 2$ and $n \mid 7$, so $n = 1$.
+    have : n ∣ 7 := by
+      simp [hm]
+    have : n ∣ 2 := by
+      rw [← this]
+      calc
+        _ ∣ 11 := by norm_num
+        _ ∣ 11 * 2 := by simp
+    have : n = 1 := by
+      have := Nat.dvd_prime Nat.prime_two this
+      have := Nat.dvd_prime Nat.prime_seven this
+      tauto
+    simp [this] at hp
+    simp [hp] at hm
+    simp [hm]
+
+  -- We prove that $h(x) \neq 11$ for all $x$.
+  have h₅ : ∀ x, h x ≠ 11 := by
+    intro x
+    have := h₄ x
+    simp [Set.mem_range] at this
+    revert this
+    intro a
+    by_cases hx : x = 0
+    · rw [hx, h₂, h₀, h₁]
+      decide
+    rw [show 1 ≤ x by omega, h₂, h₀, h₁]
+    simp
+    have : 11 ∣ 12 * x + 7 := by
+      rw [show 11 * (x + 1) = 12 * x + 7 + (11 - 4) by omega]
+      calc
+        _ ∣ 11 * (x + 1) := by apply Nat.dvd_mul_right
+        _ ∣ 11 - 4 := by norm_num
+        _ ∣ 12 * x + 7 := by decide
+    have : 11 ∣ 12 * x + 7 := by
+      omega
+    absurd this
+    apply Nat.dvd_antisymm
+    · rw [show 11 * (x + 1) = 5 * x + 2 + (11 - 2) by omega]
+      apply Nat.dvd_add_right
+      norm_num
+    omega
+
+  -- We prove that $h(x) \neq 3$ for all $x$.
+  have h₆ : ∀ x, h x ≠ 3 := by
+    intro x
+    have := h₄ x
+    simp [Set.mem_range] at this
+    revert this
+    intro a
+    by_cases hx : x = 0
+    · rw [hx, h₂, h₀, h₁]
+      decide
+    rw [show 1 ≤ x by omega, h₂, h₀, h₁]
+    simp
+    have : 3 ∣ 12 * x + 7 := by
+      rw [show 3 * (4 * x + 2) = 12 * x + 6 + 1 by omega]
+      calc
+        _ ∣ 3 * (4 * x + 2) := by apply Nat.dvd_mul_right
+        _ ∣ 12 * x + 6 := by simp
+        _ ∣ 12 * x + 7 := by rw [show 12 * x + 6 + 1 = 12 * x + 7 by omega]
+    have : 3 ∣ 12 * x + 7 := by
+      omega
+    absurd this
+    apply Nat.dvd_antisymm
+    · rw [show 3 * (4 * x + 3) = 12 * x + 9 by omega]
+      apply Nat.dvd_add_right
+      omega
+    omega
+
+  -- We prove that $h(x) \in \{1\}$ for all $x$.
+  have h₇ : ∀ x, h x = 1 := by
+    intro x
+    have := h₄ x
+    simp [Set.mem_range] at this
+    revert this
+    intro a
+    by_cases hx : x = 0
+    · rw [hx, h₂, h₀, h₁]
+      decide
+    rw [show 1 ≤ x by omega, h₂, h₀, h₁]
+    simp
+    have : 11 ∣ 5 * x + 2 := by
+      rw [show 11 * (x + 1) = 5 * x + 2 + (11 - 5) by omega]
+      calc
+        _ ∣ 11 * (x + 1) := by apply Nat.dvd_mul_right
+        _ ∣ 11 - 5 := by norm_num
+        _ ∣ 5 * x + 2 := by decide
+    have : 11 ∣ 5 * x + 2 := by
+      omega
+    absurd this
+    apply Nat.dvd_antisymm
+    · rw [show 11 * (x + 1) = 12 * x + 7 + (11 - 7) by omega]
+      apply Nat.dvd_add_right
+      omega
+    omega
+
+  -- We prove that the sum of all possible values of $h(x)$ is 12.
+  have h₈ : (Set.range h) = {1} := by
+    ext k
+    simp
+    apply Iff.intro
+    · intro ⟨x, hx⟩
+      rw [h₇ x] at hx
+      simp [hx]
+    · intro hk
+      use (12 * k + 7)
+      simp [h₇, hk]
+
+  simp [h₈]
+```

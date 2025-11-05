@@ -1,0 +1,87 @@
+have h₂ : 0 < a + b := by linarith only [h₀]
+
+  -- The strategy is to use the binomial theorem to expand the power and then apply the inequality of arithmetic and geometric means.
+  have h₃ : ((a + b) / 2) ^ n = ∑ i in Finset.range (n + 1), choose n i * ((a + b) / 2) ^ (n - i) * (1 / 2) ^ i := by
+    rw [add_div]
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [mul_div_assoc, div_self (by linarith), mul_one]
+    rw [pow_div, mul_div_assoc, div_self (by linarith), mul_one]
+    congr
+    apply choose_mul_factorial_div_factorial
+    simp
+    calc
+      _ + k.choose * 2 ^ k * a ^ k * b ^ (n - k) ≤ n.choose * 2 ^ n * a ^ n * b ^ n := by
+        apply choose_mul_le_choose_mul
+        simp only [Nat.choose_mul]
+        apply Nat.choose_le_choose_of_le_right
+        linarith only [h₀]
+        calc
+          _ ≤ (n.choose : ℝ) * (2 ^ n) * (a ^ n) * (b ^ n) := by
+            apply (n.choose_mul_const_le_mul_const (by simp only [Nat.choose_pos_iff] ) (by linarith only [h₀])).2
+            apply pow_le_pow_left₀ (by linarith only [h₀]) (by apply Nat.choose_pos_of_pos_left; linarith only [h₀]) n
+            apply pow_le_pow_left₀ (by linarith only [h₀]) (by apply Nat.choose_pos_of_pos_left; linarith only [h₀]) n
+          _ = _ := by
+            congr 1
+            apply Nat.choose_mul_eq_choose_mul
+            symm
+            apply Nat.choose_mul_div_cancel_right₀ h₁
+            apply Nat.choose_ne_zero_right
+            linarith only [h₁]
+      _ + k.choose * 2 ^ k * a ^ (n - k) * b ^ k ≤ n.choose * 2 ^ n * a ^ n * b ^ n := by
+        apply choose_mul_le_choose_mul
+        simp only [Nat.choose_mul]
+        apply Nat.choose_le_choose_of_le_right
+        linarith only [h₀]
+        calc
+          _ ≤ (n.choose : ℝ) * (2 ^ n) * (a ^ n) * (b ^ n) := by
+            apply (n.choose_mul_const_le_mul_const (by simp only [Nat.choose_pos_iff] ) (by linarith only [h₀])).2
+            apply pow_le_pow_left₀ (by linarith only [h₀]) (by apply Nat.choose_pos_of_pos_left; linarith only [h₀]) n
+            apply pow_le_pow_left₀ (by linarith only [h₀]) (by apply Nat.choose_pos_of_pos_left; linarith only [h₀]) n
+          _ = _ := by
+            congr 1
+            apply Nat.choose_mul_eq_choose_mul
+            symm
+            apply Nat.choose_mul_div_cancel_right₀ h₁
+            apply Nat.choose_ne_zero_right
+            linarith only [h₁]
+      _ ≤ _ := by
+        apply add_le_add
+        apply choose_mul_le_choose_mul
+        simp only [Nat.choose_mul]
+        apply Nat.choose_le_choose_of_le_right
+        linarith only [h₀]
+        apply pow_le_pow_left₀ (by linarith only [h₀]) (by apply Nat.choose_pos_of_pos_left; linarith only [h₀]) n
+        apply pow_nonneg (by linarith only [h₀])
+        apply pow_le_pow_left₀ (by linarith only [h₀]) (by apply Nat.choose_pos_of_pos_left; linarith only [h₀]) n
+        apply pow_nonneg (by linarith only [h₀])
+    linarith only [h₀, h₁]
+  rw [h₃]
+  -- Now we have the sum of the binomial expansion and we need to prove that is less than $(a^n+b^n)/2$.
+  apply Finset.sum_le_sum
+  intro i hi
+  rw [Finset.mem_range] at hi
+  -- most terms can be directly canceled
+  apply le_of_eq
+  rw [←add_div]
+  congr 1
+  apply add_comm
+  -- split the sum into two parts: the second term and the rest
+  rw [Finset.sum_range_succ]
+  -- the second term is equal to $((a + b) / 2) ^ n / 2$
+  apply add_left_cancel_iff.mpr
+  rw [←pow_sub₀ h₂ (by linarith only [h₀]) n 1]
+  congr 1
+  apply Nat.choose_eq_choose_of_eq
+  norm_num
+  apply Nat.choose_eq_choose_of_eq
+  norm_num
+  -- the first term is positive and the rest terms are nonnegative
+  apply Nat.choose_ne_zero_right
+  linarith only [h₀]
+  apply pow_pos (by linarith only [h₀])
+  apply pow_nonneg (by linarith only [h₀])
+  · exact le_of_lt (Nat.one_lt_choose h₁ (by linarith only [h₀]))
+  · apply pow_nonneg
+    exact le_of_lt (Nat.one_lt_choose h₁ (by linarith only [h₀]))
+```

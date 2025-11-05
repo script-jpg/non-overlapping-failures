@@ -1,0 +1,155 @@
+-- define $f$ as an increasing sequence of positive real numbers such that $f(0) = 1$ and $\sum_{i=0}^{n-1} f(i) = n$
+  set f : ℕ → NNReal := fun t => if t = 0 then 1 else Nat.cast t / n with f_eq
+  have f_pos : ∀ t ∈ Finset.range n, 0 < f t := by
+    intro t ht
+    simp [f_eq, Nat.cast_pos] at *
+    rcases ht with ht | ht
+    · simp [ht]
+    · replace ht : t ≤ n - 1 := Finset.mem_range.mp ht
+      rw [Nat.cast_div]
+      refine (div_pos_iff_of_pos_right?_).mpr?_
+      · norm_cast
+      · exact Nat.cast_pos_of_pos (Nat.le_pred_of_lt (Nat.zero_lt_of_lt n))
+  have f_sum : ∑ x ∈ Finset.range n, f x = n := by
+    simp_rw [Finset.sum_ite, Finset.sum_const, Finset.card_range, Nat.cast_one, Nat.cast_sum]
+    rw [← Nat.cast_div]
+    refine (div_eq_iff (by norm_cast)).mpr?_
+    rw [mul_comm, ← Nat.cast_mul, Nat.cast_div, ← Nat.cast_mul]
+    ring
+    exact Nat.cast_pos_of_pos (Nat.le_pred_of_lt (Nat.zero_lt_of_lt n))
+  have f_nonneg : ∀ i ∈ Finset.range n, 0 ≤ f i := by
+    intro i hi
+    simp [f_eq]
+    rcases hi with hi | hi
+    · simp [hi]
+    · replace hi : i ≤ n - 1 := Finset.mem_range.mp hi
+      exact Nat.cast_nonneg (Nat.le_pred_of_lt (Nat.zero_lt_of_lt n))
+  have f_ge_1 : ∀ i ∈ Finset.range n, 1 ≤ f i := by
+    intro i hi
+    simp [f_eq]
+    rcases hi with hi | hi
+    · simp [hi]
+    · replace hi : i ≤ n - 1 := Finset.mem_range.mp hi
+      rw [Nat.cast_div]
+      refine (one_le_div_iff (by norm_cast)).mpr?_
+      apply Nat.le_mul_of_pos_right
+      exact Nat.le_pred_of_lt (Nat.zero_lt_of_lt n)
+  have f_le_f_add_1 : ∀ i ∈ Finset.range n, f i ≤ f (i + 1) := by
+    intro i hi
+    simp [f_eq]
+    rcases hi with hi | hi
+    · simp [hi]
+    · replace hi : i ≤ n - 1 := Finset.mem_range.mp hi
+      rw [Nat.cast_div, Nat.cast_div]
+      refine (div_le_div_iff (by norm_cast) (by norm_cast)).mpr?_
+      simp
+      suffices 1 * (i + 1) ≤ i + (1 : ℤ) + 1 by norm_cast
+      rw [mul_add, add_assoc]
+      simp
+      norm_cast
+      exact Nat.cast_le_of_pos (Nat.le_pred_of_lt (Nat.zero_lt_of_lt n))
+  have f_i_le_sum : ∀ i ∈ Finset.range n, ∑ x ∈ Finset.range i, f x = n - i := by
+    intro i hi
+    generalize Finset.range i = j at *
+    induction j with
+    | zero =>
+      simp [f_sum]
+    | succ j ih =>
+      rw [Finset.sum_range_succ, ih, Nat.cast_add, Nat.cast_one, Nat.cast_sub]
+      rw [← Nat.cast_add, Nat.cast_add, Nat.cast_one, Nat.cast_sub]
+      ring
+      exact Nat.cast_pos_of_pos (Nat.le_pred_of_lt (Nat.zero_lt_of_lt n))
+
+  -- define $c$ as a nonnegative real sequence such that $\sum_{i=0}^{n-1} c_i = 1$ and $c_i \leq 1$ for all $i$
+  set c : ℕ → NNReal := fun t => 1 / n := by simp
+  have c_pos : ∀ t ∈ Finset.range n, 0 < c t := by
+    intro t ht
+    simp [c]
+    exact Nat.cast_pos_of_pos (Nat.zero_lt_of_lt n)
+  have c_sum : ∑ x ∈ Finset.range n, c x = 1 := by
+    simp_rw [Finset.sum_ite, Finset.sum_const, Finset.card_range, Nat.cast_one, Nat.cast_sum]
+    rw [← Nat.cast_div, Nat.cast_one, Nat.cast_sum, Nat.cast_div]
+    exact (div_eq_iff (by norm_cast)).mpr (Nat.cast_le_of_eq (Eq.symm (Nat.div_self n n)))
+  have c_nonneg : ∀ i ∈ Finset.range n, 0 ≤ c i := by
+    intro i hi
+    simp [c]
+  have c_le_1 : ∀ i ∈ Finset.range n, c i ≤ 1 := by
+    intro i hi
+    simp [c]
+    exact Nat.cast_le_of_pos (Nat.zero_lt_of_lt n)
+  have c_i_le_sum : ∀ i ∈ Finset.range n, ∑ x ∈ Finset.range i, c x ≤ 1 := by
+    intro i hi
+    generalize Finset.range i = j at *
+    induction j with
+    | zero =>
+      simp
+    | succ j ih =>
+      rw [Finset.sum_range_succ, ih]
+      suffices 1 * i ≤ 1 * (j + 1) by simpa
+      exact Nat.cast_le_of_pos (Nat.le_pred_of_lt (Nat.zero_lt_of_lt n))
+
+  -- for all $i$, we have $\prod_{j=0}^{i-1} a_j \leq \prod_{j=0}^{i-1} f(j)$
+  have h_i : ∀ i ∈ Finset.range n, (∏ x ∈ Finset.range i, a x) ≤ (∏ x ∈ Finset.range i, f x) := by
+    intro i hi
+    induction i with
+    | zero =>
+      simp
+    | succ i ih =>
+      by_cases i' : i = 0
+      · simp [f_eq, i']
+        exact Nat.cast_le_of_pos (Nat.zero_lt_of_lt n)
+      · have i_pos : 0 < i := Nat.zero_lt_of_lt (Nat.le_pred_of_lt (Nat.zero_lt_of_lt n))
+        rw [Finset.prod_range_succ, ih, ← Nat.cast_mul, Nat.cast_one, Nat.cast_sub]
+        suffices Nat.cast (prod_le_prod_of_nonneg i' (fun i hi => c_nonneg i hi) (fun i hi => f_nonneg i hi))
+          ≤ Nat.cast (prod_le_prod_of_nonneg i' (fun i hi => c_i_le_sum i hi) (fun i hi => f_i_le_f_add_1 i hi))
+          by simpa
+        apply Nat.cast_le_of_le
+        exact Finset.prod_le_prod_of_nonneg
+          i' (fun i hi => c_nonneg i hi) (fun i hi => f_nonneg i hi)
+        apply Finset.prod_le_prod_of_nonneg
+          i' (fun i hi => c_i_le_sum i hi) (fun i hi => f_i_le_f_add_1 i hi)
+
+  -- for all $i$, we have $\prod_{j=0}^{i-1} f(j) \leq \prod_{j=0}^{i-1} 1$
+  have h_i' : ∀ i ∈ Finset.range n, (∏ x ∈ Finset.range i, f x) ≤ (∏ x ∈ Finset.range i, 1) := by
+    intro i hi
+    induction i with
+    | zero =>
+      simp
+    | succ i ih =>
+      by_cases h : i + 1 = n
+      · rw [h, Finset.prod_range_succ]
+        suffices f (n - 1) ≤ 1 by simpa
+        have : f (n - 1) ≤ 1 := f_le_f_add_1 (n - 1) (Finset.mem_range.mpr (Nat.lt_of_le_of_ne n (id (Ne.symm h))))
+        simpa
+      · have i_pos : 0 < i := Nat.zero_lt_of_lt (Nat.le_pred_of_lt (Nat.zero_lt_of_lt n))
+        rw [Finset.prod_range_succ, ih, ← Nat.cast_mul, Nat.cast_one, Nat.cast_sub]
+        suffices Nat.cast (prod_le_prod_of_nonneg i' (fun i hi => c_nonneg i hi) (fun i hi => f_nonneg i hi))
+          ≤ Nat.cast (prod_le_prod_of_nonneg i' (fun i hi => c_i_le_sum i hi) (fun i hi => f_i_le_f_add_1 i hi))
+          by simpa
+        apply Nat.cast_le_of_le
+        exact Finset.prod_le_prod_of_nonneg
+          i' (fun i hi => c_nonneg i hi) (fun i hi => f_nonneg i hi)
+        apply Finset.prod_le_prod_of_nonneg
+          i' (fun i hi => c_i_le_sum i hi) (fun i hi => f_i_le_f_add_1 i hi)
+
+  -- for all $i$, we have $\prod_{j=0}^{i-1} 1 \leq \prod_{j=0}^{i-1} c(j)$
+  have h_i'' : ∀ i ∈ Finset.range n, (∏ x ∈ Finset.range i, 1) ≤ (∏ x ∈ Finset.range i, c x) := by
+    intro i hi
+    simp
+    induction i with
+    | zero =>
+      simp
+    | succ i ih =>
+      suffices ∏ x ∈ Finset.range i, c x ≤ 1 by simpa
+      apply Finset.prod_le_prod_of_nonneg
+        i' (fun i hi => c_nonneg i hi) (fun i hi => c_le_1 i hi)
+
+  -- by transitivity, we have $\prod_{j=0}^{i-1} a_j \leq \prod_{j=0}^{i-1} 1$
+  have h_i''' : ∀ i ∈ Finset.range n, (∏ x ∈ Finset.range i, a x) ≤ (∏ x ∈ Finset.range i, c x) := by
+    intro i hi
+    exact le_trans (h_i i hi) (h_i' i hi)
+
+  -- therefore, $\prod_{j=0}^{n-1} a_j \leq \prod_{j=0}^{n-1} c(j) = 1$
+  simp_rw [Finset.prod_ite, Finset.prod_ite, Finset.prod_const, Nat.cast_one, Nat.cast_sum] at h_i'''
+  exact h_i''' (n - 1) (Finset.mem_range.mpr (Nat.lt_of_le_of_ne n (id (Ne.symm (Nat.zero_lt_of_lt n)))))
+```

@@ -1,0 +1,204 @@
+-- First, establish that $m^2 + mn + n^2 > 0$ based on the fact that $m$ and $n$ are positive.
+  have h₄ : m ^ 2 + m * n + n ^ 2 > 0 := by
+    have hm : 0 < m := h₀.left
+    have hn : 0 < n := h₀.right
+    nlinarith [mul_pos hm hn]
+
+  -- Given the equation $a + bm + cn = 0$, square both sides to get $a^2 + 2b m a + 2c n a + b^2 m^2 + 2b c m n + c^2 n^2 = 0$.
+  have h₅ : a ^ 2 + 2 * b * m * a + 2 * c * n * a + b ^ 2 * m ^ 2 + 2 * b * c * m * n + c ^ 2 * n ^ 2 = 0 := by
+    have h₆ : (a + b * m + c * n) ^ 2 = 0 := by
+      rw [h₃]
+      ring
+    linarith [h₆]
+
+  -- Rearrange the squared equation to isolating $a^2$: $a^2 = -2b m a - 2c n a - b^2 m^2 - 2b c m n - c^2 n^2$.
+  have h₇ : a ^ 2 = -2 * b * m * a - 2 * c * n * a - b ^ 2 * m ^ 2 - 2 * b * c * m * n - c ^ 2 * n ^ 2 := by
+    linarith [h₅]
+
+  -- Multiply both sides of the equation by $m^2 + mn + n^2$ to get $a^2(m^2 + mn + n^2) = 0$.
+  have h₈ : a ^ 2 * (m ^ 2 + m * n + n ^ 2) = 0 := by
+    have h₉ : m ^ 2 + m * n + n ^ 2 > 0 := h₄
+    nlinarith [sq_nonneg a, h₉]
+
+  -- Since $m^3 = 2$ and $n^3 = 4$, we can derive that $m \neq 0$ and $n \neq 0$.
+  have hm : m ≠ 0 := by
+    by_contra h
+    have h₁₀ : m ^ 3 = 0 := by
+      rw [h]
+      ring
+    rw [h₁] at h₁₀
+    norm_num at h₁₀
+  have hn : n ≠ 0 := by
+    by_contra h
+    have h₁₀ : n ^ 3 = 0 := by
+      rw [h]
+      ring
+    rw [h₂] at h₁₀
+    norm_num at h₁₀
+
+  -- From $a^2(m^2 + mn + n^2) = 0$ and $m^2 + mn + n^2 > 0$, we get $a^2 = 0$.
+  have h₁₀ : a ^ 2 = 0 := by
+    have h₁₁ : m ^ 2 + m * n + n ^ 2 > 0 := h₄
+    nlinarith [h₁₁, h₈]
+
+  -- Since $a^2 = 0$, we have $a = 0$.
+  have ha : a = 0 := by
+    rw [sq_eq_zero_iff] at h₁₀
+    exact h₁₀
+
+  -- Substitute $a = 0$ into the original equation to get $bm + cn = 0$.
+  have h₅ : b * m + c * n = 0 := by
+    rw [ha] at h₃
+    linarith [h₃]
+
+  -- Multiply both sides of $bm + cn = 0$ by $m$ to get $b m^2 + c m n = 0$.
+  have h₆ : b * m ^ 2 + c * m * n = 0 := by
+    have h₇ : m ≠ 0 := hm
+    apply_fun (· * m) at h₅
+    simp [h₇] at h₅
+    linarith [h₅]
+
+  -- Subtract $m n^3 = 2m$ from $b m^2 + c m n = 0$ to get $b m^2 + c m n - m n^3 = -2m$.
+  have h₇ : b * m ^ 2 + c * m * n - m * n ^ 3 = -2 * m := by
+    have h₈ : n ^ 3 = 4 := h₂
+    nlinarith [h₆, h₈]
+
+  -- Factor $m$ out of the equation to get $m(bm + cn - n^3) = -2m$.
+  have h₈ : m * (b * m + c * n - n ^ 2) = -2 * m := by
+    ring_nf
+    nlinarith [h₇, hn]
+
+  -- Divide both sides by $m$ (which is non-zero) to get $bm + cn - n^3 = -2$.
+  have h₉ : b * m + c * n - n ^ 2 = -2 := by
+    have h₁₀ : m ≠ 0 := hm
+    apply_fun (· / m) at h₈
+    simp [h₁₀] at h₈
+    nlinarith [h₈, hn]
+
+  -- Isolate $b m^2 + c m n - m n^3 = -2m$ from $h₇$ and $h₉$ to get $b m^2 + c m n - m n^3 - (b m + c n - n^3) = -2m - (-2)$.
+  have h₁₀ : b * m ^ 2 + c * m * n - m * n ^ 3 - (b * m + c * n - n ^ 2) = -2 * m - (-2) := by
+    nlinarith [h₇, h₉]
+
+  -- Simplify the equation to $b m^2 + c m n - m n^3 - b m - c n + n^3 = -2m + 2$.
+  have h₁₁ : b * m ^ 2 + c * m * n - m * n ^ 3 - b * m - c * n + n ^ 3 = -2 * m + 2 := by
+    linarith [h₁₀]
+
+  -- Factor the equation to get $m(bm + cn - n^3) + n^3 - b m - c n = -2m + 2$.
+  have h₁₂ : m * (b * m + c * n - n ^ 2) + n ^ 3 - b * m - c * n = -2 * m + 2 := by
+    ring_nf
+    nlinarith [h₁₁]
+
+  -- From $h₉: b m + c n - n^2 = -2$, get $b m + c n = n^2 - 2$.
+  have h₁₃ : b * m + c * n = n ^ 2 - 2 := by
+    linarith [h₉]
+
+  -- Substitute $b m + c n = n^2 - 2$ into $m(b m + c n - n^2) + n^3 - b m - c n = -2m + 2$ to get $m(n^2 - 2 - n^2) + n^3 - (b m + c n) = -2m + 2$.
+  have h₁₄ : m * (n ^ 2 - 2 - n ^ 2) + n ^ 3 - (b * m + c * n) = -2 * m + 2 := by
+    nlinarith [h₁₂, h₁₃]
+
+  -- Simplify the equation to get $n^3 - b m - c n = -2m + 2$.
+  have h₁₅ : n ^ 3 - b * m - c * n = -2 * m + 2 := by
+    linarith [h₁₄]
+
+  -- Rearrange to get $n^3 - b m - c n + 2m - 2 = 0$.
+  have h₁₆ : n ^ 3 - b * m - c * n + 2 * m - 2 = 0 := by
+    linarith [h₁₅]
+
+  -- Factor the equation to get $(n^3 - 2) - m(b + c - 2) = 0$.
+  have h₁₇ : (n ^ 3 - 2) - m * (b + c - 2) = 0 := by
+    ring_nf
+    nlinarith [h₁₆]
+
+  -- From $h₁: m^3 = 2$, get $m^3 - 2 = 0$.
+  have h₁₈ : m ^ 3 - 2 = 0 := by
+    exact h₁.symm
+
+  -- Subtract $m^3 - 2 = 0$ from $(n^3 - 2) - m(b + c - 2) = 0$ to get $n^3 - m^3 = m(b + c - 2)$.
+  have h₁₉ : n ^ 3 - m ^ 3 = m * (b + c - 2) := by
+    nlinarith [h₁₇, h₁₈]
+
+  -- Factor $n^3 - m^3$ as $(n - m)(n^2 + mn + m^2) = m(b + c - 2)$.
+  have h₂₀ : (n - m) * (n ^ 2 + m * n + m ^ 2) = m * (b + c - 2) := by
+    ring_nf
+    nlinarith [h₁₉]
+
+  -- Since $n^2 + mn + m^2 > 0$ and $m > 0$, we can divide both sides by $m(n^2 + mn + m^2)$ to get $\frac{1}{m} = \frac{b+c-2}{n^2+mn+m^2}$.
+  have h₂₁ : n ^ 2 + m * n + m ^ 2 > 0 := by
+    have hm : 0 < m := h₀.left
+    have hn : 0 < n := h₀.right
+    nlinarith [mul_pos hm hn]
+  have h₂₂ : (n - m) * (n ^ 2 + m * n + m ^ 2) > 0 := by
+    nlinarith [h₂₁, h₀.left, h₀.right]
+  have h₂₃ : m > 0 := by
+    exact h₀.left
+  have h₂₄ : m * (n ^ 2 + m * n + m ^ 2) > 0 := by
+    nlinarith [h₂₁, h₂₃]
+  have h₂₅ : (n - m) * (n ^ 2 + m * n + m ^ 2) ≠ 0 := by
+    nlinarith [h₂₁, h₀.left, h₀.right]
+  have h₂₆ : m * (n ^ 2 + m * n + m ^ 2) ≠ 0 := by
+    nlinarith [h₂₁, h₂₃]
+  have h₂₇ : (n - m) = (m * (b + c - 2)) / (n ^ 2 + m * n + m ^ 2) := by
+    have h₂₈ : (n ^ 2 + m * n + m ^ 2) ≠ 0 := h₂₅
+    field_simp [h₂₈]
+    linarith [h₂₀]
+
+  -- From h₂₇, we get $n - m \neq 0$ because the right side is positive.
+  have h₂₈ : n - m ≠ 0 := by
+    by_contra h
+    have h₂₉ : (n - m) = 0 := by
+      exact h
+    rw [h₂₉] at h₂₇
+    simp [h₂₃] at h₂₇
+
+  -- From $n - m \neq 0$, we get $n \neq m$.
+  have h₂₉ : n ≠ m := by
+    by_contra h
+    have h₃₀ : n - m = 0 := by
+      exact sub_eq_zero_of_eq h
+    contradiction
+
+  -- From the equation $(n - m)(n^2 + mn + m^2) = m(b + c - 2)$ and $n - m \neq 0$, we get $n^2 + mn + m^2 = \frac{m(b + c - 2)}{n - m}$.
+  have h₃₀ : n ^ 2 + m * n + m ^ 2 = m * (b + c - 2) / (n - m) := by
+    have h₃₁ : (n - m) ≠ 0 := h₂₈
+    field_simp [h₃₁]
+    linarith [h₂₀]
+
+  -- Since $n^2 + mn + m^2 > 0$ and $m > 0$, the right side must be positive, implying $b + c - 2 > 0$.
+  have h₃₁ : m * (b + c - 2) / (n - m) > 0 := by
+    have h₃₂ : n ^ 2 + m * n + m ^ 2 > 0 := h₂₁
+    rw [←h₃₀]
+    exact h₃₂
+
+  -- Since $m > 0$ and $n - m \neq 0$, we get $b + c - 2 > 0$.
+  have h₃₂ : b + c - 2 > 0 := by
+    by_contra h
+    have h₃₃ : b + c - 2 ≤ 0 := by
+      exact le_of_not_lt h
+    have h₃₄ : m * (b + c - 2) ≤ 0 := by
+      nlinarith [h₃₃, h₂₃]
+    have h₃₅ : (n - m) < 0 := by
+      by_contra h
+      have h₃₆ : n - m ≥ 0 := by
+        exact le_of_not_lt h
+      have h₃₇ : m * (n - m) ≥ 0 := by
+        nlinarith [h₃₆, h₂₃]
+      nlinarith [h₃₄, h₃₇, h₃₁]
+    have h₃₈ : n < m := by
+      exact lt_of_sub_neg h₃₅
+    have h₃₉ : 0 < m := by
+      exact h₀.left
+    have h₄₀ : n * m > 0 := by
+      nlinarith [h₃₈, h₃₉]
+    nlinarith [h₂₁, h₃₉, h₃₈]
+
+  -- Now, we have $a = 0$ and $b + c - 2 > 0$.
+  have ha : a = 0 := by
+    exact ha
+  have hb : b = 0 := by
+    linarith [h₃, ha, h₀.left, h₀.right]
+  have hc : c = 0 := by
+    linarith [h₃, ha, h₀.left, h₀.right]
+
+  -- Conclude that $a = b = c = 0$.
+  exact ⟨ha, hb, hc⟩
+```

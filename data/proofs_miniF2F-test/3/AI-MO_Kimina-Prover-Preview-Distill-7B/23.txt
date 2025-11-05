@@ -1,0 +1,89 @@
+-- We want to relate the product $P$ of all positive odd integers less than $10000$ to
+  -- the expressions given in the problem.
+  set P := Finset.prod (Finset.filter (fun x => ¬Even x) (Finset.range 10000)) (id : ℕ → ℕ)
+
+  -- We have the following identity:
+  -- $1 \cdot 3 \cdot 5 \cdots 9999 = \dfrac{10000!}{2^{5000} \cdot 5000!}$.
+  have hP h : P = 10000! / (2 ^ 5000 * 5000!) := by
+
+    -- Let $n$ be the set of positive odd integers less than $10000$.
+    set n := Finset.filter (fun x => ¬Even x) (Finset.range 10000)
+
+    -- Let $m$ be the set of positive even integers less than $10000$.
+    set m := Finset.filter (fun x => Even x) (Finset.range 10000)
+
+    -- Let $k$ be the set of positive integers less than $10000$.
+    set k := Finset.range 10000
+
+    -- Clearly, $n \cup m = k$.
+    have : n ∪ m = k := by
+      ext x
+      simp [m, n, k]
+      omega
+
+    -- Also, $n \cap m = \emptyset$.
+    have : n ∩ m = ∅ := by
+      ext x
+      simp [m, n]
+      omega
+
+    -- By the product of functions rule, $f(n \cup m) = f(n) \cdot f(m)$.
+    have : Finset.prod (fun x => id x) (n ∪ m) = Finset.prod (fun x => id x) n *
+        Finset.prod (fun x => id x) m := by
+      rw [Finset.prod_union]; simp [*]
+      omega
+
+    -- Then, $P = \dfrac{P \cdot m}{m} = \dfrac{k!}{m}$.
+    have : P = k.factorial / m.factorial := by
+      have : n ∪ m = k := by; assumption
+      have : n ∩ m = ∅ := by; assumption
+      rw [← Finset.prod_union]; simp [*]
+      rw [Finset.prod_filter_add_prod_filter_of_disjoint]; simp [*]
+      omega
+
+    -- The set $m$ consists of all positive powers of $2$ less than $10000$.
+    have hm : m = Finset.image (fun x => 2 * x) (Finset.range 5000) := by
+      ext x
+      simp [m]; constructor
+      · intro ⟨a, ha, hapos, hk⟩
+        omega
+      · intro ⟨b, hb, hpos⟩
+        omega
+
+    -- Then, $m! = 2^{5000} \cdot 5000!$.
+    have : m.factorial = 2 ^ 5000 * 5000! := by
+      rw [hm, Finset.factorial_image]; simp
+      rw [Finset.prod_add_distrib]; simp
+      rw [Finset.prod_filter_add_prod_filter_of_disjoint]; simp
+      · ring
+      · intro a ha b hb hab
+        omega
+
+    -- The set $k$ consists of all positive powers of $2$ less than $10000$.
+    have hk : k = Finset.image (fun x => 2 * x) (Finset.range 10000) := by
+      ext x
+      simp [k]; constructor
+      · intro ⟨a, ha, hapos, hk⟩
+        omega
+      · intro ⟨b, hb, hpos⟩
+        omega
+
+    -- Then, $k! = 2^{10000} \cdot 10000!$.
+    have : k.factorial = 2 ^ 10000 * 10000! := by
+      rw [hk, Finset.factorial_image]; simp
+      rw [Finset.prod_add_distrib]; simp
+      rw [Finset.prod_filter_add_prod_filter_of_disjoint]; simp
+      · ring
+      · intro a ha b hb hab
+        omega
+
+    -- The result is then clear.
+    rw [this, ‹P = k.factorial / m.factorial›]
+    calc
+      _ = (2 ^ 10000 * 10000!) / (2 ^ 5000 * 5000!) := by rw [‹k.factorial = 2 ^ 10000 * 10000!›,
+        ‹m.factorial = 2 ^ 5000 * 5000!›]
+      _ = _ := by rw [mul_div_mul_comm]; norm_num; trivial
+
+  -- The problem is then clear.
+  exact hP h
+```

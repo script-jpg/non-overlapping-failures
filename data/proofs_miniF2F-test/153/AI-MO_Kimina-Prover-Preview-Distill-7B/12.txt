@@ -1,0 +1,242 @@
+-- We first prove that the maximum value is achieved at $t = 2$.
+  have maximized_at_2 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 := by
+
+    -- For $t \leq 0$, $\frac{(2^t-3t)t}{4^t}$ is negative or zero, so we only consider $t > 0$.
+    by_cases ht : t ≤ 0
+    · simp_rw [div_nonpos_iff]
+      apply or_iff_left.2
+      rw [mul_nonpos_iff]
+      apply or_iff_right.2
+      right
+      intro _ h'
+      rw [le_div_iff₀] at h'
+      apply le_of_lt
+      apply lt_of_le_of_lt (a := 0) (b := (2 ^ t - 3 * t) * t / 4 ^ t) (by simp) h'
+      apply le_of_lt
+      apply lt_trans
+      · rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact ht
+      · norm_num
+
+    -- We use the fact that $t = 2$ is the point of maximum value.
+    apply le_of_sub_nonpos
+    calc _ ≤ (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 - (2 ^ t - 3 * t) * t / 4 ^ t := by
+      simp only [sub_nonpos, tsub_le_zero]
+      apply div_le_div_iff_of_pos_right (b := a - b) (by simp)
+      ring_nf
+      apply le_of_lt
+      apply lt_trans
+      · rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact ht
+      · norm_num; rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact ht
+
+    apply sub_nonpos.2
+    calc _ = (2 ^ 2 - 3 * 2) * 2 * 4 ^ t - (2 ^ t - 3 * t) * t * 4 ^ t := by
+      apply (div_sub_div _ _ (by simp) (by simp)).symm
+    -- Multiply by $4 ^ t$ to make the inequality easier.
+    _ = (2 ^ 2 - 3 * 2) * 2 * 4 ^ t - 2 ^ t * 4 ^ t * 3 * t + t ^ 2 * 4 ^ t := by
+      ring_nf
+    _ = (2 ^ 2 - 3 * 2) * 2 * (t + (2 ^ t - 3 * t) * (1 / 2) * t * 4 ^ t) := by
+      ring_nf
+    _ = (2 ^ 2 - 3 * 2) * 2 * (t + (2 ^ t - 3 * t) * (t / 2) * 4 ^ t) := by
+      congr
+      ring_nf
+    -- We use the fact that $t > 0$, so we can divide by $t$.
+    _ = (2 ^ 2 - 3 * 2) * 2 * ((1 / (2:ℝ) + (2 ^ t - 3 * t) * (1 / 2) * 4 ^ t) * t) := by
+      congr
+      rw [mul_assoc, mul_assoc, ←mul_assoc, mul_comm, ←mul_assoc, ←mul_assoc]
+      rw [mul_assoc (b := (1 / 2 + (2 ^ t - 3 * t) * (1 / 2) * 4 ^ t))]
+      congr
+      ring_nf
+    _ = (2 ^ 2 - 3 * 2) * 2 * ((1 / (2:ℝ) + (2 ^ t - 3 * t) * (1 / 2) * 4 ^ t) * t) := by
+      congr
+      ring_nf
+
+    -- Simplify the inequality to get a nice form.
+    _ ≤ (2 ^ 2 - 3 * 2) * 2 * ((1 / (2:ℝ) + (2 ^ t - 3 * t) * (1 / 2) * 4 ^ t) * t) := by
+      apply (mul_le_mul_left (by norm_num; linarith)).2
+      apply le_of_lt
+      apply lt_trans
+      · rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact ht
+      · norm_num
+
+    -- Now we prove that the inequality holds for all $t > 0$.
+    apply le_of_sub_nonpos
+    calc _ ≤ (2 ^ 2 - 3 * 2) * 2 * ((1 / (2:ℝ) + (2 ^ t - 3 * t) * (1 / 2) * 4 ^ t) * t) - (2 ^ t - 3 * t) * t * 4 ^ t := by
+      simp only [sub_nonpos, tsub_le_zero]
+      apply div_le_div_iff_of_pos_right (b := a - b) (by simp)
+      ring_nf
+      apply le_of_lt
+      apply lt_trans
+      · rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact ht
+      · norm_num; rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact ht
+
+    -- Simplify the inequality to get a nice form.
+    _ = -((2:ℝ) ^ t * (t * 4 ^ t - 8 * t - 12 * 4 ^ t + 3 * t * 4 ^ t) / 2) := by
+      ring_nf
+
+    -- We split the inequality into two parts.
+    _ ≤ t * (8 + 12 * 4 ^ t - 3 * t * 4 ^ t) / 2 - (2:ℝ) ^ t * (t * 4 ^ t - 8 * t - 12 * 4 ^ t + 3 * t * 4 ^ t) / 2 := by
+      rw [sub_self, zero_sub]
+      apply div_le_div_iff_of_pos_right (b := a - b) (by simp)
+      ring_nf
+      apply le_of_lt
+      apply lt_trans
+      · rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact ht
+      · norm_num; rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact ht
+    -- Prove the first part is nonnegative.
+    _ = (12 - 3 * t) * (t * 4 ^ t + 8) * t / (2 * (t * 4 ^ t + 8)) := by
+      ring_nf
+    _ = (12 - 3 * t) * t / 2 := by
+      rw [div_eq_mul_inv]
+      apply mul_congr
+      rw [mul_comm]
+      congr
+      apply inv_eq_of_eq_mul_left (by linarith)
+      rw [mul_comm]
+      apply add_ne_zero_of_ne (by linarith)
+    _ = 3 * (4 - t) * t / 2 := by
+      ring_nf
+
+
+    -- We now prove that the inequality holds for all $t > 0$.
+  have f_neg_for_neg_tactics : ((1:ℝ) / 12) ≥ (2 ^ t - 3 * t) * t / 4 ^ t := by
+    -- We make use of the fact that the maximum value is achieved at $t = 2$.
+    apply le_of_sub_nonpos
+    calc _ ≤ (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 - (2 ^ t - 3 * t) * t / 4 ^ t := by
+      simp only [sub_nonpos, tsub_le_zero]
+      apply div_le_div_iff_of_pos_right (b := a - b) (by simp)
+      ring_nf
+      apply le_of_lt
+      apply lt_trans
+      · rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact le_of_lt (zero_lt_two)
+      · norm_num
+
+    -- Now we prove that the inequality holds for all $t > 0$.
+    apply le_of_sub_nonpos
+    calc _ = (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 - (2 ^ t - 3 * t) * t / 4 ^ t := by
+      simp_rw [div_nonpos_iff]
+      apply or_iff_left.2
+      rw [mul_nonpos_iff]
+      apply or_iff_right.2
+      right
+      intro _ h'
+      rw [le_div_iff₀] at h'
+      apply le_of_lt
+      apply lt_of_le_of_lt (a := 0) (b := (2 ^ t - 3 * t) * t / 4 ^ t) (by simp) h'
+      apply le_of_lt
+      apply lt_trans
+      · rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact le_of_lt (zero_lt_two)
+      · norm_num
+
+    -- Simplify the inequality to get a nice form.
+    _ = -((2:ℝ) ^ t * (-8 - t * 4 ^ t + 3 * t * 4 ^ t) / 2) := by
+      ring_nf
+
+    -- We split the inequality into two parts.
+    _ ≤ t * (8 + 12 * 4 ^ t - 3 * t * 4 ^ t) / 2 - (2:ℝ) ^ t * (-8 - t * 4 ^ t + 3 * t * 4 ^ t) / 2 := by
+      rw [sub_self, zero_sub]
+      apply div_le_div_iff_of_pos_right (b := a - b) (by simp)
+      ring_nf
+      apply le_of_lt
+      apply lt_trans
+      · rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact le_of_lt (zero_lt_two)
+      · norm_num; rw [mul_comm]
+        simp only [pow_lt_pow_iff_right, lt_div_iff₀, Nat.ofNat_pos, div_mul_comm]
+        exact le_of_lt (zero_lt_two)
+    -- Prove the first part is nonnegative.
+    _ = ((1:ℝ) / 12) * ((-3 * t + 12) * (t * 4 ^ t + 8) - (-3 * t + 12) * 8) := by
+      ring_nf
+    _ = ((1:ℝ) / 12) * ((-3 * t + 12) * (t * 4 ^ t + 8 - 8)) := by
+      ring_nf
+    _ = ((1:ℝ) / 12) * ((-3 * t + 12) * t * 4 ^ t) := by
+      ring_nf
+    _ = (1:ℝ) / 12 := by
+      simp only [mul_eq_mul_right_iff, or_iff_right]
+      rw [mul_comm]
+      apply eq_of_sub_eq_zero
+      apply mul_congr
+      rw [mul_comm]
+      apply pow_ne_zero
+      linarith
+      linarith
+    _ = (1:ℝ) / 12 := by
+      linarith
+
+  -- The original statement asks for nonnegative reals, but the function can be evaluated for negative reals as well.
+  -- We split into cases according to the signs of $t$.
+  cases le_or_lt t 0 <;> cases le_or_lt (2 ^ t - 3 * t) 0 <;> simp_rw [div_nonpos_iff] <;> apply or_iff_left.2 <;> simp <;> assumption_or_determine
+  -- In the first case, the function value is nonpositive, so the inequality holds.
+  · apply le_of_nonpos
+    apply div_nonpos_of_nonpos_of_nonneg
+    assumption
+    linarith
+  -- For the other cases, we use the result we just proved.
+  · apply le_of_nonpos
+    apply div_nonpos_of_nonpos_of_nonneg
+    assumption
+    linarith
+  · apply le_of_nonpos
+    apply div_nonpos_of_nonpos_of_nonneg
+    apply le_of_lt
+    assumption
+    linarith
+  · apply le_of_nonpos
+    apply div_nonpos_of_nonpos_of_nonneg
+    apply le_of_lt
+    apply le_of_lt
+    apply lt_of_lt_of_le (a := (2:ℝ)) (b := t)
+    norm_num
+    assumption
+    linarith
+  · apply le_of_nonpos
+    apply div_nonpos_of_nonpos_of_nonneg
+    apply le_of_lt
+    apply lt_trans
+    · apply lt_of_lt_of_le (a := (2:ℝ)) (b := t)
+      norm_num
+      assumption
+    · linarith
+    · apply le_of_lt
+      apply lt_trans
+      · apply lt_of_lt_of_le (a := (2:ℝ)) (b := t)
+        norm_num
+        assumption
+      · linarith
+      · norm_num
+  · apply le_of_nonpos
+    apply div_nonpos_of_nonpos_of_nonneg
+    apply le_of_lt
+    apply lt_trans
+    · apply lt_of_lt_of_le (a := (2:ℝ)) (b := t)
+      norm_num
+      assumption
+    · linarith
+    · apply le_of_lt
+      apply lt_trans
+      · apply lt_of_lt_of_le (a := (2:ℝ)) (b := t)
+        norm_num
+        assumption
+      · linarith
+      · norm_num
+```

@@ -1,0 +1,154 @@
+-- auxiliary lemma : for positive real numbers x,y, show that √(x*y) ≤ 1/2*(x+y)
+  have auxle : ∀ x y : ℝ, x > 0 → y > 0 → Real.sqrt (x * y) ≤ 1 / 2 * (x + y) := by
+    intro x y hx hy
+    have : 0 ≤ (1 / 2 * (x + y)) ^ 2 := by
+      rw [sq_nonneg]
+    have : (Real.sqrt (x * y)) ^ 2 = x * y := by
+      rw [Real.sq_sqrt]
+      positivity
+    rw [← Real.sqrt_le_sqrt_iff] at this
+    nth_rw 2 [← mul_one (x * y)] at this
+    rw [mul_pow, sq_sqrt, mul_pow] at this
+    rw [pow_two, mul_assoc] at this
+    rw [mul_le_mul_iff_of_pos_right] at this
+    rw [mul_add] at this
+    linarith
+
+  -- Apply the inequality to a, b, and c.
+  have h₂ := auxle a b h₀.1 h₀.2.1
+  have h₃ := auxle b c h₀.2.1 h₀.2.2
+  have h₄ := auxle c a h₀.2.2 h₀.1
+
+  -- Show that 1/2 * (a+b)(b+c) ≤ b/√(b+c).
+  have h₅ : 1 / 2 * (a + b) * (b + c) ≤ b / Real.sqrt (b + c) := by
+    rw [div_eq_mul_inv, ← mul_assoc, mul_le_mul_iff_of_pos_right, mul_inv_le_iff₀]
+    · rw [← pow_le_pow_iff_left₀ _ _ (show 2≠0 by norm_num)]
+      · apply mul_nonneg
+        · apply add_nonneg
+          · exact mul_nonneg h₀.1 h₀.2.1
+          · exact zero_le_self
+        · apply add_nonneg
+          · exact mul_nonneg h₀.2.1 h₀.2.2
+          · exact zero_le_self
+      · positivity
+      · positivity
+    · positivity
+
+  -- Show that 1/2 * (b+c)(c+a) ≤ c/√(c+a).
+  have h₆ : 1 / 2 * (b + c) * (c + a) ≤ c / Real.sqrt (c + a) := by
+    rw [div_eq_mul_inv, ← mul_assoc, mul_le_mul_iff_of_pos_right, mul_inv_le_iff₀]
+    · rw [← pow_le_pow_iff_left₀ _ _ (show 2≠0 by norm_num)]
+      · apply mul_nonneg
+        · apply add_nonneg
+          · exact mul_nonneg h₀.2.1 h₀.2.2
+          · exact zero_le_self
+        · apply add_nonneg
+          · exact mul_nonneg h₀.2.2 h₀.1
+          · exact zero_le_self
+      · positivity
+      · positivity
+    · positivity
+
+  -- Show that 1/2 * (c+a)(a+b) ≤ a/√(a+b).
+  have h₇ : 1 / 2 * (c + a) * (a + b) ≤ a / Real.sqrt (a + b) := by
+    rw [div_eq_mul_inv, ← mul_assoc, mul_le_mul_iff_of_pos_right, mul_inv_le_iff₀]
+    · rw [← pow_le_pow_iff_left₀ _ _ (show 2≠0 by norm_num)]
+      · apply mul_nonneg
+        · apply add_nonneg
+          · exact mul_nonneg h₀.2.2 h₀.1
+          · exact zero_le_self
+        · apply add_nonneg
+          · exact mul_nonneg h₀.1 h₀.2.1
+          · exact zero_le_self
+      · positivity
+      · positivity
+    · positivity
+
+  -- Show that 2 ≤ √2 * √(ab + bc + ca).
+  have h₈ : 2 ≤ Real.sqrt 2 * Real.sqrt (a * b + b * c + c * a) := by
+    rw [← Real.sqrt_mul (by norm_num), ← Real.sqrt_sq (by norm_num)]
+    · rw [Real.sqrt_le_sqrt_iff] at h₁
+      linarith
+    · positivity
+    · positivity
+
+  -- Show that a/√(a+b) + b/√(b+c) + c/√(c+a) ≥ 3/√2.
+  have h₉ : a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) ≥ 3 / Real.sqrt 2 := by
+    calc
+      _ = 2 * (1 / 2 * (a + b) * (b + c) + 1 / 2 * (b + c) * (c + a) + 1 / 2 * (c + a) * (a + b)) / (Real.sqrt (a + b) * Real.sqrt (b + c) * Real.sqrt (c + a)) := by
+        -- Simplify the expression.
+        field_simp
+        ring_nf
+      _ ≥ 2 * (b / Real.sqrt (b + c) + c / Real.sqrt (c + a) + a / Real.sqrt (a + b)) / (Real.sqrt (a + b) * Real.sqrt (b + c) * Real.sqrt (c + a)) := by
+        -- Use the inequalities proved before.
+        rw [ge_iff_le, div_le_div_iff_of_pos_right, mul_le_mul_left (show 0<2 by norm_num)]
+        apply add_le_add
+        · apply add_le_add
+          · exact h₅
+          · exact h₆
+        · exact h₇
+      _ = 2 * (Real.sqrt 2 * Real.sqrt (b / Real.sqrt (b + c) * c / Real.sqrt (c + a) * (a / Real.sqrt (a + b))) + Real.sqrt 2 * Real.sqrt (c / Real.sqrt (c + a) * a / Real.sqrt (a + b) * (b / Real.sqrt (b + c))) + Real.sqrt 2 * Real.sqrt (a / Real.sqrt (a + b) * b / Real.sqrt (b + c) * (c / Real.sqrt (c + a)))) / ((Real.sqrt 2 * Real.sqrt (b / Real.sqrt (b + c) * c / Real.sqrt (c + a) * (a / Real.sqrt (a + b))))) := by
+        -- Simplify the expression.
+        iterate 3 rw [← Real.sqrt_mul (by positivity)]
+        iterate 3 rw [← Real.sqrt_mul (by positivity)]
+        field_simp
+        congr
+        ring
+        all_goals positivity
+      _ = 2 * (Real.sqrt (b / Real.sqrt (b + c) * c / Real.sqrt (c + a) * (a / Real.sqrt (a + b))) + Real.sqrt (c / Real.sqrt (c + a) * a / Real.sqrt (a + b) * (b / Real.sqrt (b + c))) + Real.sqrt (a / Real.sqrt (a + b) * b / Real.sqrt (b + c) * (c / Real.sqrt (c + a)))) * Real.sqrt 2 / (Real.sqrt (b / Real.sqrt (b + c) * c / Real.sqrt (c + a) * (a / Real.sqrt (a + b)))) := by
+        -- Simplify the expression.
+        rw [← mul_assoc, mul_div_assoc]
+        iterate 3 rw [mul_comm]
+        iterate 3 rw [mul_assoc]
+        congr
+        rw [mul_assoc, mul_comm, ← mul_assoc, ← mul_assoc]
+        norm_num
+        all_goals positivity
+      _ = 2 * (Real.sqrt (a * b + b * c + c * a) / Real.sqrt (a + b) / Real.sqrt (b + c) / Real.sqrt (c + a)) * Real.sqrt 2 / (Real.sqrt (a * b + b * c + c * a) / Real.sqrt (a + b) / Real.sqrt (b + c) / Real.sqrt (c + a)) := by
+        -- Simplify the expression.
+        congr
+        ring
+        all_goals positivity
+      _ ≥ 2 * (Real.sqrt (a * b + b * c + c * a) / Real.sqrt (a + b) / Real.sqrt (b + c) / Real.sqrt (c + a)) * (2 / Real.sqrt 2) / (Real.sqrt (a * b + b * c + c * a) / Real.sqrt (a + b) / Real.sqrt (b + c) / Real.sqrt (c + a)) := by
+        -- Use the inequality proved before.
+        apply div_le_div
+        · apply mul_le_mul_of_nonneg_left
+          · rw [ge_iff_le, div_le_div_iff_of_pos_right, ← Real.sqrt_mul (by positivity), ← Real.sqrt_mul (by positivity)]
+            -- Use the fact that √2 * √2 ≤ 2.
+            rw [← mul_assoc, mul_le_mul_iff_of_pos_right, mul_inv_le_iff₀]
+            · rw [← pow_le_pow_iff_left₀ _ _ (show 2≠0 by norm_num)]
+              · apply mul_nonneg
+                · apply add_nonneg
+                  · exact mul_nonneg h₀.1 h₀.2.1
+                  · exact zero_le_self
+                · apply add_nonneg
+                  · exact mul_nonneg h₀.2.1 h₀.2.2
+                  · exact zero_le_self
+              · positivity
+              · positivity
+            · norm_num
+            · positivity
+          · positivity
+        · simp
+          rw [mul_comm, div_eq_mul_inv]
+          apply mul_le_mul_of_nonneg_left
+          · rw [← pow_le_pow_iff_left₀ _ _ (show 2≠0 by norm_num)]
+            · apply mul_nonneg
+              · apply add_nonneg
+                · exact mul_nonneg h₀.1 h₀.2.1
+                · exact zero_le_self
+              · apply add_nonneg
+                · exact mul_nonneg h₀.2.1 h₀.2.2
+                · exact zero_le_self
+            · positivity
+            · positivity
+          · positivity
+      _ = 3 / Real.sqrt 2 := by
+        -- Simplify the expression.
+        field_simp
+        ring
+        all_goals positivity
+  
+  exact h₉
+
+```

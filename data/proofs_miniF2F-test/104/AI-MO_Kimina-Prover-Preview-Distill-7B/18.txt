@@ -1,0 +1,162 @@
+have pmod (a : ℕ) : (a : ZMod p) ≠ 0 := by
+    intro ha
+    have : (a : ZMod p) = 0 := by exact ha
+    have : a = 0 := by
+      have h : a ∈ Icc 0 p := by simp
+      have := (ZMod.natCast_zmod_eq_zero_iff p a).mp this
+      exact this
+    contradiction
+
+  -- the key lemma is that $\sum_{k=1}^{p-1} k^{-1} \cdot (k+1)^{-1} = 2$
+  have key : ∑ k in Finset.Icc 1 (p - 1), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = 2 := by
+    -- we have $\sum_{k=1}^{p-1} k^{-1} \cdot (k+1)^{-1} = \sum_{k=2}^{p} (k-1)^{-1} \cdot k^{-1}$
+    have eq1 : ∑ k in Finset.Icc 1 (p - 1), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = ∑ k in Finset.Icc 2 p, (k - 1 : ZMod p)⁻¹ * (k : ZMod p)⁻¹ := by
+      let f (x : ZMod p) := x - 1
+      have himage : (Finset.Icc 1 (p - 1)).image f = Finset.Icc 2 p := by
+        ext y
+        simp [f]
+        constructor <;> intro h
+        · obtain ⟨x, hx⟩ := h
+          rw [← hx.2]
+          constructor
+          · have : 1 ≤ x := by
+              have := hx.1.1
+              simp [show ¬x = 0 by simp [pmod x]; exact hx.1]; exact this
+            omega
+          · have : x ≤ p - 1 := by
+              have := hx.1.2
+              simp [show ¬x + 1 = 0 by simp [pmod (x + 1)]; exact hx.1]; exact this
+            omega
+        · obtain ⟨a, ha⟩ := h
+          rw [← ha]
+          constructor
+          · constructor
+            · have : 1 ≤ a + 1 := by omega
+              simp [this]
+            · have : a + 1 ≤ p - 1 := by omega
+              constructor
+              · exact this
+              · have : p ≥ 2 := by exact Nat.Prime.two_le h₀
+                omega
+          · omega
+      rw [← Finset.sum_image f himage]
+      intro x hx y hy hxy
+      simp [f] at hxy
+      simp at hx hy
+      exact eq_sub_of_add_eq hxy
+    -- we have $\sum_{k=2}^{p} (k-1)^{-1} \cdot k^{-1} = \sum_{k=2}^{p} (k-1)^{-1} - \sum_{k=2}^{p} k^{-1}$
+    have eq2 : ∑ k in Finset.Icc 2 p, (k - 1 : ZMod p)⁻¹ * (k : ZMod p)⁻¹ = ∑ k in Finset.Icc 1 (p - 1), (k : ZMod p)⁻¹ - ∑ k in Finset.Icc 2 p, (k : ZMod p)⁻¹ := by
+      have : ∑ k in Finset.Icc 2 p, (k - 1 : ZMod p)⁻¹ * (k : ZMod p)⁻¹ = ∑ k in Finset.Icc 1 (p - 1), (k : ZMod p)⁻¹ := by
+        rw [← Finset.sum_Ico_add_eq_sum_Icc]
+        · have : p - 1 + 1 = p := by omega
+          simp [this]
+        · omega
+      zify [this]
+      push_cast [this]
+      rw [← Finset.sum_Ico_add_eq_sum_Icc]
+      · have : p - 1 + 1 = p := by omega
+        simp [this]
+      · omega
+    -- we have $\sum_{k=2}^{p} (k-1)^{-1} - \sum_{k=2}^{p} k^{-1} = (p-1)^{-1} - 1^{-1} = 2$
+    have eq3 : ∑ k in Finset.Icc 2 p, (k - 1 : ZMod p)⁻¹ * (k : ZMod p)⁻¹ = 2 := by
+      rw [eq2, this]
+      simp
+      rw [Finset.sum_Icc_eq_sum_range, Finset.sum_Icc_eq_sum_range]
+      push_cast
+      rw [show p - 1 = p - 1 - 1 + 1 by omega, ← Nat.range_add 1 (p - 2)]
+      rw [Finset.sum_range_add, Finset.sum_range_add, Finset.sum_range_one, Finset.sum_range_one]
+      norm_num
+      omega
+    rw [eq1, eq3]
+
+  -- So the original sum is equal to 2 + $(p-2)^{-1} \cdot p^{-1}$
+  have eq1 : ∑ k in Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = 2 + (p - 2 : ZMod p)⁻¹ * p⁻¹ := by
+    let f (x : ZMod p) : ZMod p := x + 1
+    have himage : (Finset.Icc 1 (p - 2)).image f = Finset.Icc 2 (p - 1) := by
+      ext y
+      simp [f]
+      constructor <;> intro h
+      · obtain ⟨x, hx⟩ := h
+        rw [← hx.2]
+        constructor
+        · have : 1 ≤ x := by
+            have := hx.1.1
+            simp [show ¬x = 0 by simp [pmod x]; exact hx.1]; exact this
+          omega
+        · have : x ≤ p - 2 := by
+            have := hx.1.2
+            simp [show ¬x + 1 = 0 by simp [pmod (x + 1)]; exact hx.1]; exact this
+          omega
+      · obtain ⟨a, ha⟩ := h
+        rw [← ha]
+        constructor
+        · constructor
+          · have : 1 ≤ a - 1 := by omega
+            simp [this]
+          · have : a - 1 ≤ p - 2 := by omega
+            constructor
+            · exact this
+            · have : p ≥ 2 := by exact Nat.Prime.two_le h₀
+              omega
+        · omega
+    -- so the original sum is equal to $\sum_{k=2}^{p-1} k^{-1} \cdot (k+1)^{-1} = 2$
+    have eq1 : ∑ k in Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = ∑ k in Finset.Icc 2 (p - 1), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ := by
+      rw [← Finset.sum_image f himage]
+      intro x hx y hy hxy
+      simp [f] at hxy
+      simp at hx hy
+      exact hxy
+    rw [eq1, key]
+    simp
+    rw [← Nat.range_add 1 (p - 2), Finset.sum_range_add]
+    rw [Finset.sum_range_one, Finset.sum_range_one]
+    norm_num
+    omega
+
+  -- When $p$ is odd, the result is 2.
+  have podd : Odd p := by
+    apply Nat.Prime.odd_of_ne_two
+    exact h₀
+    by_contra!
+    rw [this] at h₁
+    omega
+
+  simp [eq1]
+  rw [ZMod.inv_coe, show (p : ZMod p) = (p : ℕ) by simp]
+  rw [ZMod.inv_coe]
+  -- When $p$ is even, the result is 2.
+  have peven : Even p := by
+    apply Nat.not_odd_iff_even.mp
+    exact Nat.not_odd_iff_even.mpr podd
+
+  have : (p : ZMod p) * (p : ZMod p)⁻¹ = 1 := by
+    apply ZMod.mul_inv
+    apply Ne.symm
+    apply ZMod.ne_of_ne_zero
+    simp
+  rw [mul_comm, this]
+
+  apply ZMod.eq_iff_modEq_nat
+  simp
+  apply Nat.modEq_iff_dvd.mpr
+  -- It remains to show that $(p-2)^{-1} \cdot p^{-1} \equiv 0 \pmod{p}$
+  obtain ⟨k, hk⟩ : ∃ k, k = (p - 2)⁻¹ := by
+    apply ZMod.inv_spec
+    apply Ne.symm
+    apply ZMod.ne_of_ne_zero
+    simp
+  simp [hk]
+  -- We have $(p-2)^{-1} \cdot p^{-1} \equiv (-2)^{-1} \cdot 1 \equiv 0 \pmod{p}$
+  rw [ZMod.inv_coe, show (p : ZMod p) = (p : ℕ) by simp]
+  simp
+  apply Nat.modEq_zero_iff_dvd.mpr
+  -- It remains to show that $p \mid p \cdot (-2)^{-1}$
+  apply Nat.dvd_mul_right
+  apply Nat.Prime.dvd_iff_not_coprime.mp
+  -- In other words, it remains to show that $p \nmid 2$
+  rw [Nat.coprime_comm]
+  apply Nat.Prime.coprime_iff_not_dvd h₀
+  simp
+  omega
+
+```

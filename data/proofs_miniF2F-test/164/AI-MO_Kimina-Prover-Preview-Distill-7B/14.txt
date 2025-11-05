@@ -1,0 +1,100 @@
+-- set $x = 2^a$ and $y = 2^b$
+  let a := Real.log x / Real.log 2
+  let b := Real.log y / Real.log 2
+
+  -- Hence, $a \neq 0$ and $b \neq 0$
+  have ha : a ≠ 0 := by
+    unfold a
+    intro ha
+    have h : x = 1 := by
+      apply Real.log_eq_zero.mp
+      apply Or.inl
+      field_simp [ha]
+    exact h₀.1 h
+  have hb : b ≠ 0 := by
+    unfold b
+    intro hb
+    have h : y = 1 := by
+      apply Real.log_eq_zero.mp
+      apply Or.inl
+      field_simp [hb]
+    exact h₀.2 h
+
+  -- We have $\log_x{2} = \frac{1}{a}$ and $\log_y{2} = \frac{1}{b}$
+  have ha' : Real.log x = 1 / a := by
+    unfold a
+    field_simp [ha]
+  have hb' : Real.log y = 1 / b := by
+    unfold b
+    field_simp [hb]
+
+  -- We have $2^a \cdot 2^b = 64$
+  have heq : 2 ^ (a + b) = 64 := by
+    apply_fun (Real.log · / Real.log 2) at h₂
+    simp only [div_div_cancel_right₀,
+      Real.log_mul, Real.log_rpow, Real.log_ofNat,
+      show 64 = (2 : ℝ) ^ 6 by norm_num] at h₂
+    rify
+    conv_lhs => rw [← h₂]
+    rw [Real.log_rpow]
+    · ring
+    · norm_num
+    · norm_num
+    · simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true]
+    · exact ha
+    · exact hb
+
+  -- Hence, $a + b = 6$
+  have heq' : a + b = 6 := by
+    apply_fun (Real.log ·) at heq
+    simp only [Real.log_rpow, Real.log_ofNat,
+      show 64 = (2 : ℝ) ^ 6 by norm_num] at heq
+    rify at heq
+    conv_lhs => rw [← heq]
+    rw [Real.log_rpow]
+    · ring
+    · norm_num
+    · norm_num
+    · simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true]
+    · exact ha
+    · exact hb
+
+  -- We have $\log_{16}{2} = \frac{a}{4}$ and $\log_{16}{2} = \frac{b}{4}$
+  have ha'' : Real.log 2 / Real.log 16 = a / 4 := by
+    rw [show 16 = 2 ^ 4 by norm_num, Real.log_pow]
+    unfold a
+    field_simp
+    rw [mul_comm]
+  have hb'' : Real.log 2 / Real.log 16 = b / 4 := by
+    rw [show 16 = 2 ^ 4 by norm_num, Real.log_pow]
+    unfold b
+    field_simp
+    rw [mul_comm]
+
+  -- We have $a = b$
+  have hab : a = b := by
+    rify
+    rw [← ha'']
+    rw [← hb'']
+    apply Real.log_injOn_pos
+    all_goals
+      rw [show (16 : ℝ) = 2 ^ 4 by norm_num, Real.log_pow]
+      simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true]
+      apply Nat.one_le_pow
+      norm_num
+
+  -- We have $a = b = 3$
+  have ha''' : a = 3 := by
+    linarith
+  have hb''' : b = 3 := by
+    linarith
+
+  -- We have $\log_2{\frac{x}{y}} = \log_2{x} - \log_2{y} = a - b = 0$
+  have hlog : Real.log (x / y) = 0 := by
+    simp only [Real.log_div, ha', hb', hab]
+    ring
+
+  -- Hence, $(\log_2{\frac{x}{y}})^2 = 0$
+  rw [hlog]
+  norm_num
+```

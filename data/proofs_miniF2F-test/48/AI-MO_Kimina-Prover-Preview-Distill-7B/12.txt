@@ -1,0 +1,338 @@
+-- We first show that m is irrational.
+  have irrational_of_mneq0 (x : ℝ) (hx : x ≠ 0) (h : x ^ 3 = 2) : Irrational x := by
+    -- Assume on the contrary that x is rational.
+    by_contra! h₀
+    -- If x is rational, then x = p / q for some p, q ∈ ℕ with q ≠ 0.
+    rw [Rat.not_irrational] at h₀
+    obtain ⟨p, q, hpq, h₀⟩ := h₀
+    -- Then x ^ 3 = p ^ 3 / q ^ 3 = 2.
+    -- So p ^ 3 = 2 * q ^ 3.
+    field_simp at h₀
+    have h₁ : p ^ 3 = 2 * q ^ 3 := by
+      calc
+        _ = q ^ 3 * x ^ 3 := by rw [mul_comm, pow_three, h₀]
+        _ = q ^ 3 * 2 := by rw [h]
+        _ = 2 * q ^ 3 := by ring
+    -- So p ^ 3 is even.
+    have even_p3 : Even (p ^ 3) := by
+      rw [h₁]
+      exact dvd_mul_right 2 (q ^ 3)
+    -- Then p is even.
+    have even_p : Even p := by
+      have : ¬Odd p := by
+        intro hp
+        rw [not_odd_iff_even] at hp
+        rw [hp] at even_p3
+        simp at even_p3
+      exact Nat.not_odd_iff_even.mpr this
+    -- Let p = 2 * k.
+    obtain ⟨k, hkp⟩ := even_p
+    -- Then (2 * k) ^ 3 = 2 * q ^ 3.
+    -- So 8 * k ^ 3 = 2 * q ^ 3.
+    -- So 4 * k ^ 3 = q ^ 3.
+    rw [hkp] at h₁
+    ring_nf at h₁
+    have h₂ : 4 * k ^ 3 = q ^ 3 := by
+      calc
+        _ = 2 * q ^ 3 / 2 * 8 / 2 := by field_simp; ring
+        _ = p ^ 3 / 2 * 8 / 2 := by rw [h₁]
+        _ = (2 * k) ^ 3 / 2 * 8 / 2 := by rw [hkp]
+        _ = _ := by ring
+    -- So q ^ 3 is even.
+    have even_q3 : Even (q ^ 3) := by
+      rw [show q ^ 3 = 4 * k ^ 3 by ring]
+      rw [mul_comm, pow_three, mul_assoc]
+      apply dvd_mul_right
+    -- Then q is even.
+    have even_q : Even q := by
+      have : ¬Odd q := by
+        intro hq
+        rw [not_odd_iff_even] at hq
+        rw [hq] at even_q3
+        simp at even_q3
+      exact Nat.not_odd_iff_even.mpr this
+    -- But then p and q are both even, contradicting to the fact that p / q is reduced.
+    have h₃ : ¬Coprime p q := by
+      rw [Nat.coprime_iff_gcd_eq_one]
+      intro h₀
+      have : 2 ∣ p.gcd q := by
+        rw [Nat.dvd_gcd_iff]
+        constructor
+        · exact even_p
+        · exact even_q
+      rw [h₀] at this
+      contradiction
+    contradiction
+
+  -- We first show that m is irrational.
+  have irrational_of_m : Irrational m := by
+    apply irrational_of_mneq0
+    · by_contra h
+      rw [h] at h₁
+      simp at h₁
+    · exact h₁
+    · by_contra h
+      rw [h] at h₂
+      simp at h₂
+
+  -- We show that m ^ 2 is irrational.
+  have irrational_of_m2 : Irrational (m ^ 2) := by
+    rw [←irrational_of_m]
+    apply Irrational.pow
+    · rw [Nat.prime_iff]
+      norm_num
+    · by_contra h
+      rw [h] at h₁
+      simp at h₁
+      rw [sq, ←sub_eq_zero] at h₁
+      have : 2 * (m + m⁻¹) = 3 * m := by
+        apply (div_eq_iff?_).mp at h₁
+        rw [h₁]
+        field_simp
+        ring
+        simp
+      have : ¬Irrational (m ^ 2) := by
+        rw [irrational_sqrt_natCast_iff]
+        use (2 * (m + m⁻¹) - 3 * m) / 2
+        rw [←this]
+        simp
+      contradiction
+
+  -- We show that n is irrational.
+  have irrational_of_n : Irrational n := by
+    apply irrational_of_mneq0
+    · by_contra h
+      rw [h] at h₂
+      simp at h₂
+    · exact h₂
+    · by_contra h
+      rw [h] at h₁
+      rw [h] at h₂
+      field_simp at h₁
+      have : (n ^ 3) ^ 2 = 2 ^ 2 := by
+        rw [h₁, h₂]
+      norm_num at this
+      linarith
+
+  -- We show that n ^ 2 is irrational.
+  have irrational_of_n2 : Irrational (n ^ 2) := by
+    rw [←irrational_of_n]
+    apply Irrational.pow
+    · rw [Nat.prime_iff]
+      norm_num
+    · by_contra h
+      rw [h] at h₂
+      simp at h₂
+      rw [sq, ←sub_eq_zero] at h₂
+      have : 4 * (n + n⁻¹) = 3 * n := by
+        apply (div_eq_iff?_).mp at h₂
+        rw [h₂]
+        field_simp
+        ring
+        simp
+      have : ¬Irrational (n ^ 2) := by
+        rw [irrational_sqrt_natCast_iff]
+        use (4 * (n + n⁻¹) - 3 * n) / 2
+        rw [←this]
+        simp
+      contradiction
+
+  -- We show that m * n is irrational.
+  have irrational_of_mn : Irrational (m * n) := by
+    rw [←irrational_of_m, ←irrational_of_n]
+    apply Irrational.mul
+    · rw [Nat.prime_iff]
+      norm_num
+    · by_contra h
+      rw [h] at h₁
+      simp at h₁
+      rw [h] at h₂
+      field_simp at h₁
+      have : 2 * 4 = 3 * (m * n) := by
+        rw [h₂] at h₁
+        apply (div_eq_iff?_).mp at h₁
+        rw [h₁]
+        field_simp
+        ring
+        simp
+      norm_num at this
+      linarith
+
+  -- We show that m * n ^ 2 is irrational.
+  have irrational_of_mn2 : Irrational (m * n ^ 2) := by
+    rw [←irrational_of_m, ←irrational_of_n2]
+    apply Irrational.mul
+    · rw [Nat.prime_iff]
+      norm_num
+    · by_contra h
+      rw [h] at h₁
+      simp at h₁
+      rw [h] at h₂
+      field_simp at h₁
+      have : 2 * (n ^ 3) = 3 * (m * n ^ 2) := by
+        apply (div_eq_iff?_).mp at h₁
+        rw [h₁]
+        field_simp
+        ring
+        simp
+      rw [h₂] at this
+      norm_num at this
+      linarith
+
+  -- We show that a = 0.
+  have h₀ : a = 0 := by
+    by_contra h
+    -- If a ≠ 0, then a / √a = √a.
+    have h₀ : a / √a = √a := by
+      field_simp
+      rw [Real.sqrt_eq_rpow]
+      simp
+      rw [div_rpow]
+      · ring_nf
+        rw [Real.rpow_natCast]
+        simp
+      · simp
+      · norm_num
+    -- a / √a is rational.
+    have h₁ : ¬Irrational (a / √a) := by
+      rw [h₀]
+      exact irrational_sqrt_natCast_iff.mpr (by norm_num)
+    -- √a is irrational.
+    have h₂ : Irrational √a := by
+      rw [irrational_sqrt_natCast_iff]
+      apply irrational_of_m
+      calc
+        (a / √a) + (m * n ^ 2) = a / √a + √a := by rw [h₀]
+        _ = (a + (m * n ^ 2) * √a) / √a := by field_simp
+        _ = 0 / √a := by rw [h₁]
+        _ = 0 := by simp
+    -- a / √a + m * n ^ 2 = 0.
+    have h₃ : ¬Irrational (a / √a + m * n ^ 2) := by
+      rw [h₁]
+      apply Irrational.add_rat
+      exact irrational_sqrt_natCast_iff.mpr (by norm_num)
+    -- √a = - (a / √a + m * n ^ 2).
+    have h₄ : √a = - (a / √a + m * n ^ 2) := by
+      linarith
+    -- √a is rational.
+    replace h₂ : ¬Irrational √a := by
+      rw [h₄]
+      apply Irrational.neg
+      rw [h₁]
+      apply Irrational.add_rat
+      exact irrational_sqrt_natCast_iff.mpr (by norm_num)
+    -- Contradiction.
+    contradiction
+
+  -- We show that b = 0.
+  have h₁ : b = 0 := by
+    -- b / 2 is rational.
+    have h₁ : ¬Irrational (b / 2) := by
+      rw [show b / 2 = (a + b * m + c * n) / 2 - (a / 2 + c * n / 2) by ring]
+      apply Irrational.sub_rat
+      · rw [h₀]
+        simp
+      · simp
+
+    -- √m * (√m - √2) is irrational.
+    have h₂ : Irrational (√m * (√m - √2)) := by
+      have eq : √m * (√m - √2) = m - √(m ^ 2 * 2) := by
+        rw [mul_sub, Real.mul_self_sqrt (by norm_num), Real.sqrt_mul (by norm_num)]
+        ring_nf
+        rw [Real.mul_self_sqrt (by norm_num)]
+        ring
+      rw [eq]
+      rw [irrational_sqrt_natCast_iff]
+      apply irrational_of_m2
+      calc
+        (m ^ 2 * 2) / 2 = m ^ 2 := by ring_nf; norm_num
+        _ = 2 * m ^ 2 / 2 := by ring
+        _ = m ^ 2 := by field_simp
+    -- b / 2 + √m * (√m - √2) = 0.
+    have h₃ : ¬Irrational (b / 2 + √m * (√m - √2)) := by
+      rw [show b / 2 + √m * (√m - √2) = b / 2 + (√m * √m - √(m ^ 2 * 2)) by ring]
+      rw [show b / 2 + (√m * √m - √(m ^ 2 * 2)) = b / 2 + (m - √(m ^ 2 * 2)) by rw [Real.mul_self_sqrt (by norm_num)]] at h₃
+      have h₄ : √(m ^ 2 * 2) = 2 * m := by
+        rw [Real.sqrt_eq_iff_eq_sq]
+        · ring_nf
+          norm_num
+        · apply Real.sqrt_nonneg
+        · suffices m * 2 ≥ 0 by linarith
+          linarith
+      rw [h₄] at h₃
+      rw [show b / 2 + (m - 2 * m) = b / 2 - m by ring] at h₃
+      linarith
+    -- b / 2 = - (√m * (√m - √2) + m) is irrational.
+    replace h₃ : Irrational (- (√m * (√m - √2) + m)) := by
+      rw [show - (√m * (√m - √2) + m) = 0 - (√m * (√m - √2) + m) by ring]
+      apply Irrational.sub_nat
+      exact h₂
+      simp
+    -- b / 2 is rational.
+    replace h₁ : ¬Irrational (b / 2) := by
+      rw [h₃]
+      apply Irrational.neg
+      apply Irrational.add_rat
+      exact irrational_sqrt_natCast_iff.mpr (by norm_num)
+    -- Contradiction.
+    contradiction
+
+  -- We show that c = 0.
+  have h₂ : c = 0 := by
+    by_contra h
+    -- If c ≠ 0, then c / 3 is rational.
+    have h₀ : c / 3 = (a + b * m + c * n) / 3 - (a / 3 + b * m / 3) := by ring
+    have h₁ : ¬Irrational (c / 3) := by
+      rw [h₀]
+      apply Irrational.sub_rat
+      · rw [h₄]
+        simp
+      · simp
+
+    -- n * (√n - √2) is irrational.
+    have h₂ : Irrational (n * (√n - √2)) := by
+      have eq : n * (√n - √2) = n * √n - √(n ^ 2 * 2) := by
+        rw [sub_mul, Real.mul_self_sqrt (by norm_num), Real.sqrt_mul (by norm_num)]
+        ring_nf
+        rw [Real.mul_self_sqrt (by norm_num)]
+        ring
+      rw [eq]
+      rw [irrational_sqrt_natCast_iff]
+      apply irrational_of_n2
+      calc
+        (n ^ 2 * 2) / 2 = n ^ 2 := by ring_nf; norm_num
+        _ = 2 * n ^ 2 / 2 := by ring
+        _ = n ^ 2 := by field_simp
+    -- c / 3 + n * (√n - √2) = 0.
+    have h₃ : ¬Irrational (c / 3 + n * (√n - √2)) := by
+      rw [show c / 3 + n * (√n - √2) = c / 3 + (√n ^ 2 - √(n ^ 2 * 2)) by ring]
+      rw [show c / 3 + (√n ^ 2 - √(n ^ 2 * 2)) = c / 3 + (n - √(n ^ 2 * 2)) by rw [Real.sq_sqrt (by norm_num)]] at h₃
+      have h₄ : √(n ^ 2 * 2) = 2 * n := by
+        rw [Real.sqrt_eq_iff_eq_sq]
+        · ring_nf
+          norm_num
+        · apply Real.sqrt_nonneg
+        · suffices n * 2 ≥ 0 by linarith
+          linarith
+      rw [h₄] at h₃
+      rw [show c / 3 + (n - 2 * n) = c / 3 - n by ring] at h₃
+      linarith
+    -- c / 3 = - (n * (√n - √2) + n) is irrational.
+    replace h₃ : Irrational (- (n * (√n - √2) + n)) := by
+      rw [show - (n * (√n - √2) + n) = 0 - (n * (√n - √2) + n) by ring]
+      apply Irrational.sub_nat
+      exact h₂
+      simp
+    -- c / 3 is rational.
+    replace h₁ : ¬Irrational (c / 3) := by
+      rw [h₃]
+      apply Irrational.neg
+      apply Irrational.add_rat
+      exact irrational_sqrt_natCast_iff.mpr (by norm_num)
+    -- Contradiction.
+    contradiction
+
+  -- We show that a = b = c = 0.
+  exact ⟨h₀, h₁, h₂⟩
+
+```

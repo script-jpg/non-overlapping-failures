@@ -1,0 +1,85 @@
+-- basic facts, 70 is the answer
+  have basic_1 : Nat.gcd 70 40 = 10 := by decide
+  have basic_2 : Nat.lcm 70 40 = 280 := by decide
+
+  -- prove n = 70, since gcd(n, 40) = 10, so 10 ∣ n, and 10 ∣ 40, so 10 ∣ lcm(n, 40)
+  have dvd_10 : 10 ∣ n := by
+    have : 10 ∣ Nat.lcm n 40 := by
+      rw [h₂]
+      exact Nat.dvd_num
+    have : 10 ∣ 40 := by decide
+    have : 10 ∣ Nat.lcm n 40 := by exact Nat.dvd_trans this (by decide)
+    exact Nat.dvd_of_dvd_lcm (by decide) this
+
+  -- prove n = 70, from the above, we have 10 ∣ n, so ∃ k, n = 10k
+  have step_1 : ∃ k, n = 10 * k := by
+    have : 10 ∣ n := by exact dvd_10
+    exact this
+
+  -- rewrite n = 10k, and we get lcm(n, 40) = lcm(10k, 40) = 280
+  rcases step_1 with ⟨k, hk⟩
+  rw [hk] at h₂
+
+  -- we have lcm(10k, 40) = 280, so 280 = 10k * 40 / gcd(10k, 40)
+  rw [Nat.lcm, Nat.gcd] at h₂
+
+  -- gcd(k, 4) = 1, because gcd(n, 40) = 10, so gcd(10k, 40) = 10gcd(k, 4), and it is a divisor of 40,
+  -- so it can only be 1, 2, or 4. the final answer is 70, so it must be 1.
+  have gcd_k_4 : Nat.gcd k 4 = 1 := by
+    have : 2 * Nat.gcd k 4 = Nat.gcd n 40 := by
+      rw [hk]
+      ring_nf
+      calc
+        2 * k.gcd 4 = 10 * k.gcd 4 / 5 := by ring_nf; rw [Nat.gcd_mul_left]; norm_num
+        _ = n.gcd 40 := by rw [← h₁]
+    have : 2 ∣ 10 * k.gcd 4 := by exact Dvd.intro (k.gcd 4) (id (Eq.symm this))
+    have : 2 ∣ 10 := by decide
+    have : 2 ∣ k.gcd 4 := by exact Nat.Coprime.dvd_of_dvd_mul_left this
+    have : k.gcd 4 < 5 := by
+      have : k.gcd 4 ∣ 4 := by exact Nat.gcd_dvd_right k 4
+      have : 0 < k.gcd 4 := by exact Nat.gcd_pos_of_pos_left k (by decide)
+      interval_cases k.gcd 4 <;> decide
+    interval_cases k.gcd 4 <;> decide
+
+  -- so gcd(10k, 40) = 10, and we have 280 = 10k * 40 / 10 = 40k
+  have simp_280 : 280 = 40 * k := by
+    have : 10 * (k.gcd 4) = 10 := by
+      calc
+        10 * (k.gcd 4) = n.gcd 40 := by rw [hk]; ring_nf; rw [Nat.gcd_mul_left, Nat.gcd_assoc]; simp [Nat.gcd_comm]
+        _ = 10 := by exact h₁
+    have : 2 * (k.gcd 4) = 1 := by
+      calc
+        2 * (k.gcd 4) = 10 * (k.gcd 4) / 5 := by ring_nf; rw [Nat.mul_div_assoc]; norm_num
+        _ = 10 / 5 := by rw [this]
+        _ = 2 := by decide
+        _ = 1 * 2 := by decide
+    have : 2 * (k.gcd 4) = 2 := by exact Nat.eq_of_sub_eq_zero this
+    have : k.gcd 4 = 1 := by
+      calc
+        k.gcd 4 = 2 * (k.gcd 4) / 2 := by rw [Nat.mul_div_assoc]; norm_num
+        _ = 2 / 2 := by rw [this]
+        _ = 1 := by decide
+    rw [hk]
+    calc
+      280 = 10 * k * 40 / 10 / (k.gcd 4) := by rw [Nat.div_eq_iff_eq_mul_right]; simp
+      _ = 10 * k * 40 / (10 * (k.gcd 4)) := by ring_nf
+      _ = 10 * k * 40 / (10 * 1) := by rw [this]
+      _ = 40 * k := by rw [Nat.mul_comm]; ring_nf; rw [mul_assoc, Nat.mul_div_assoc]; simp [Nat.gcd_comm]; exact Nat.gcd_pos_of_pos_left k (by decide); decide
+
+  -- so k = 7, and n = 70
+  have step_2 : k = 7 := by
+    have : 280 = 40 * k := by exact simp_280
+    have : 280 = 40 * 7 := by decide
+    have : 40 * k = 40 * 7 := by rw [← simp_280, ← this]
+    have : k = 7 := by exact Nat.eq_of_mul_eq_mul_left (by decide) this
+    exact this
+
+  -- done.
+  have step_3 : n = 70 := by
+    have : n = 10 * k := by exact step_1
+    have : k = 7 := by exact step_2
+    rw [this] at step_1
+    exact step_1
+
+  exact step_3
+```

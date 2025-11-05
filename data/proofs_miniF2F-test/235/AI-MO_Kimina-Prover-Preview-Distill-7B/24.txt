@@ -1,0 +1,42 @@
+have ha : ∀ n, (∃ x, x ^ 3 = n) ∧ (∃ t, t ^ 4 = n) → 4096 ≤ n := by
+    intro n ⟨h₁, h₂⟩
+
+    obtain ⟨x, hx⟩ := h₁
+    obtain ⟨t, ht⟩ := h₂
+
+    -- $n$ is a perfect $12$th power
+    have hx₁ : x ^ 12 = n ^ 4 := by rw [←ht]; ring
+    have hx₂ : x ^ 12 = n ^ 3 := by rw [←ht]; ring
+    have hn : n ^ 3 = n ^ 4 := by rw [←hx₁, hx₂]
+    have : n = 0 ∨ 1 = n ∨ 1 < n := by
+      by_cases h: n = 0
+      · tauto
+      · by_cases h': n = 1
+        · tauto
+        · have : 1 < n := by omega
+          tauto
+    rcases this with h | h | h
+
+    -- if $n = 0$, which is not the case, so contradiction 
+    · rw [h] at hn
+      tauto
+
+    -- if $n = 1$, which is not the case, so contradiction 
+    · rw [h] at hn
+      tauto
+
+    -- if $n > 1$, we can get the inequality that we want to prove
+    · have : 4096 = 2 ^ 12 := by norm_num
+      rw [this]
+      have hn: 2 ^ 12 ≤ n ^ 12 := by
+        calc
+          2 ^ 12 = (2 ^ 4) ^ 3 := by norm_num
+          _ ≤ n ^ 3 := by
+            apply Nat.pow_le_pow_of_le_left
+            linarith
+          _ = n ^ 12 := by rw [←hn]
+      have hn' : 2 ≤ n := h
+      exact hn
+
+  exact ha n ⟨h₁, h₂⟩
+```

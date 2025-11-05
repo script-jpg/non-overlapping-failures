@@ -1,0 +1,93 @@
+-- Solution 1 by srisainandan5
+
+  -- multiply (3 - 2) = 1 at the end
+  have h1 : (∏ k in Finset.range 7, 2 ^ 2 ^ k + 3 ^ 2 ^ k) = (3 ^ 128 - 2 ^ 128) * (∏ k in Finset.range 7, 3 ^ 2 ^ k - 2 ^ 2 ^ k) / (3 - 2 : ℝ) := by
+    -- (3 - 2) = 1
+    have h1 : (3 - 2 : ℝ) = 1 := by norm_num
+    -- move the product to the right-hand side
+    rw [show 1 = ∏ k in Finset.range 7, (3 ^ 2 ^ k - 2 ^ 2 ^ k) / (3 - 2 : ℝ) by simp [Finset.prod_range_succ, h1]]
+    rw [← Finset.prod_mul_distrib]
+    -- let y = ∏ k in Finset.range 7, (3 ^ 2 ^ k - 2 ^ 2 ^ k)
+    let y := ∏ k in Finset.range 7, (3 ^ 2 ^ k - 2 ^ 2 ^ k)
+    -- we want to prove that
+    -- (∏ k in Finset.range 7, (3 ^ 2 ^ k + 2 ^ 2 ^ k)) * y = 3 ^ 128 - 2 ^ 128
+    -- we can do this by induction
+    induction 7 with
+    -- the base case can be proved by norm_num
+    | zero => norm_num
+    | succ n ih =>
+      -- for the inductive step, we can use the lemma
+      -- ∏ k ∈ Finset.range n, (3 ^ 2 ^ k + 2 ^ 2 ^ k) * ∏ k ∈ Finset.range n, (3 ^ 2 ^ k - 2 ^ 2 ^ k) = 3 ^ 2 ^ n - 2 ^ 2 ^ n
+      have fin : (∏ k ∈ Finset.range n, (3 ^ 2 ^ k + 2 ^ 2 ^ k) * (∏ k ∈ Finset.range n, (3 ^ 2 ^ k - 2 ^ 2 ^ k) : ℝ)) = 3 ^ 2 ^ n - 2 ^ 2 ^ n := by
+        induction n with
+        -- the base case is trivial
+        | zero => norm_num
+        | succ n ih =>
+          -- use the inductive hypothesis
+          rw [Finset.prod_range_succ, Finset.prod_range_succ]
+          -- the multiplication of the two terms of the same index is (3 ^ 2 ^ n) ^ 2 - (2 ^ 2 ^ n) ^ 2
+          rw [ih]
+          -- the goal can be simplified to (3 ^ 2 ^ n) ^ 2 - (2 ^ 2 ^ n) ^ 2 = 3 ^ 2 ^ (n + 1) - 2 ^ 2 ^ (n + 1)
+          rw [show (3 ^ 2 ^ n) ^ 2 - (2 ^ 2 ^ n) ^ 2 = (3 ^ 2 ^ n + 2 ^ 2 ^ n) * (3 ^ 2 ^ n - 2 ^ 2 ^ n) by ring]
+          rw [show 2 ^ 2 ^ (n + 1) = (2 ^ 2 ^ n) ^ 2 by ring]
+          rw [show 3 ^ 2 ^ (n + 1) = (3 ^ 2 ^ n) ^ 2 by ring]
+          -- simplify
+          ring
+      -- let x = ∏ k ∈ Finset.range n, (3 ^ 2 ^ k + 2 ^ 2 ^ k)
+      -- let y = ∏ k ∈ Finset.range n, (3 ^ 2 ^ k - 2 ^ 2 ^ k)
+      -- we have x * y = 3 ^ 2 ^ n - 2 ^ 2 ^ n
+      -- we also have the inductive hypothesis that x * y = 3 ^ 128 - 2 ^ 128
+      -- thus we can conclude that 3 ^ 128 - 2 ^ 128 = 3 ^ 2 ^ n - 2 ^ 2 ^ n
+      have fin2 : ((3 ^ 128 - 2 ^ 128) : ℝ) = 3 ^ 2 ^ n - 2 ^ 2 ^ n := by
+        rw [@fin]
+        -- the types of the terms are correct
+        -- the result follows by norm_num
+        norm_num
+      -- the goal follows by transitivity
+      rw [← fin2]
+      clear ih fin y fin2
+      norm_cast
+  -- prove that (3 ^ 2 ^ k - 2 ^ 2 ^ k) / (3 - 2) = 3 ^ 2 ^ (k - 1) + 3 ^ 2 ^ (k - 2) +... + 2 ^ 2 ^ (k - 1) + 2 ^ 2 ^ (k - 2)
+  have h2 : ∀ k, (3 : ℝ) ^ 2 ^ k - 2 ^ 2 ^ k = (3 - 2) * (∏ k in Finset.range k, 3 ^ 2 ^ k + 2 ^ 2 ^ k) := by
+    intro k
+    -- prove by induction
+    induction k with
+    -- the base case is trivial
+    | zero => norm_num
+    | succ k ih =>
+      -- use the inductive hypothesis
+      rw [show 2 ^ k = 2 ^ (k - 1) * 2 by ring]
+      rw [show 2 ^ (k - 1) * 2 = 2 ^ (k - 1) + 2 ^ (k - 1) by ring]
+      -- we need two identities:
+      -- ∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) * (3 ^ 2 ^ k + 2 ^ 2 ^ k) = ∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) * (3 ^ 2 ^ k + 2 ^ 2 ^ k)
+      -- ∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) * (3 ^ 2 ^ k + 2 ^ 2 ^ k) = ∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) * (3 ^ 2 ^ k + 2 ^ 2 ^ k)
+      rw [Finset.prod_range_succ]
+      -- the first identity holds by definition
+      rw [ih]
+      -- the second one can be proved by simple algebraic manipulations
+      have fin3 : (3 ^ 2 ^ k + 2 ^ 2 ^ k) * (∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) : ℝ) = (∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) : ℝ) * (3 ^ 2 ^ k + 2 ^ 2 ^ k) := by ring
+      rw [show (∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) : ℝ) * (3 ^ 2 ^ k + 2 ^ 2 ^ k) * (3 - 2) = (∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) * (3 ^ 2 ^ k + 2 ^ 2 ^ k) * (3 - 2) by ring]
+      -- now we can use the two identities to simplify the expression
+      suffices ((3 ^ 2 ^ k + 2 ^ 2 ^ k) * (∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) : ℝ) * (3 - 2)) / (3 - 2) = 3 ^ 2 ^ k - 2 ^ 2 ^ k by
+        rw [this]
+        -- the division operations cancel out
+        field_simp
+      rw [show (3 ^ 2 ^ k + 2 ^ 2 ^ k) * (∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) : ℝ) * (3 - 2) = (∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) : ℝ) * (3 ^ 2 ^ k + 2 ^ 2 ^ k) * (3 - 2) by ring]
+      rw [← Finset.prod_mul_distrib]
+      rw [fin3]
+      -- the product on the RHS is of the form ∏ i ∈ Finset.range k, f i
+      -- we can use the finset.prod_range_succ identity to rewrite it as ∏ i ∈ Finset.range (k - 1), f i * f (k - 1)
+      rw [show ∏ i ∈ Finset.range k, (3 ^ 2 ^ i + 2 ^ 2 ^ i) = ∏ i ∈ Finset.range (k - 1), (3 ^ 2 ^ i + 2 ^ 2 ^ i) * (3 ^ 2 ^ (k - 1) + 2 ^ 2 ^ (k - 1)) by apply Finset.prod_range_succ]
+      -- the 3 ^ 2 ^ (k - 1) + 2 ^ 2 ^ (k - 1) terms cancel out
+      rw [ih]
+      -- the goal can be simplified
+      field_simp
+      ring
+  rw [h1]
+  -- the result follows by applying the lemma h2 for each factor
+  -- ∏ k ∈ Finset.range 7, (3 ^ 2 ^ k - 2 ^ 2 ^ k) = (3 - 2) * (3 ^ 64 + 2 ^ 64) * (3 ^ 32 + 2 ^ 32) * (3 ^ 16 + 2 ^ 16) * (3 ^ 8 + 2 ^ 8) * (3 ^ 4 + 2 ^ 4) * (3 ^ 2 + 2 ^ 2) * (3 + 2)
+  rw [Finset.prod_congr rfl h2]
+  -- all the 3 - 2 terms cancel out
+  norm_num
+
+```

@@ -1,0 +1,37 @@
+have h₁ : a 100 ^ 2 * a 1 ≤ a 100 ^ 2 * 1 := by
+    exact mul_le_mul_of_nonneg_left (by exact_mod_cast NNReal.coe_le_coe.2 (by simp)) (by simp [sq])
+  have h₂ : a 100 ^ 2 * a 1 ≤ a 100 ^ 2 := by
+    simpa [sq] using h₁
+  have h₃ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) ≤ (∑ x in Finset.range 99, a (x + 1) ^ 2) := by
+    apply Finset.sum_le_sum
+    intro x _
+    have h₄ : a (x + 1) ^ 2 * a (x + 2) ≤ a (x + 1) ^ 2 := by
+      have h₅ : a (x + 2) ≤ 1 := by
+        have h₆ : (∑ i in Finset.range 100, a (i + 1) ^ 2) = 1 := h₀
+        have h₇ : a (x + 1) ^ 2 ≤ 1 := by
+          have h₈ : (∑ i in Finset.range 100, a (i + 1) ^ 2) = 1 := h₀
+          have h₉ : a (x + 1) ^ 2 ≤ ∑ i in Finset.range 100, a (i + 1) ^ 2 := by
+            exact Finset.single_le_sum (fun i _ => sq_nonneg (a (i + 1))) (by simp [Finset.mem_range])
+          simp_all
+        have h₁₀ : a (x + 2) ≤ 1 := by
+          have h₁₁ : a (x + 2) ≤ ∑ i in Finset.range 100, a (i + 1) ^ 2 := by
+            exact Finset.single_le_sum (fun i _ => sq_nonneg (a (i + 1))) (by
+              simp_all [Finset.mem_range]
+              <;> omega)
+          simp_all
+        simp_all
+      have h₁₁ : 0 ≤ a (x + 1) ^ 2 := by positivity
+      have h₁₂ : 0 ≤ a (x + 2) := by positivity
+      nlinarith
+    simpa [sq] using h₄
+  have h₄ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 12 / 25 := by
+    calc
+      (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 ≤ (∑ x in Finset.range 99, a (x + 1) ^ 2) + a 100 ^ 2 := by
+        gcongr <;> nlinarith
+      _ = (∑ x in Finset.range 100, a (x + 1) ^ 2) - a 100 ^ 2 + a 100 ^ 2 := by
+        simp_all [Finset.sum_range_succ]
+      _ = (∑ x in Finset.range 100, a (x + 1) ^ 2) := by
+        simp_all
+      _ = 1 := by simp_all
+      _ < 12 / 25 := by norm_num
+  exact h₄

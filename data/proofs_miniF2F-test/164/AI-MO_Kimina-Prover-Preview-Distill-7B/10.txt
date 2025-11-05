@@ -1,0 +1,121 @@
+-- Let's first think about how to approach this problem. We have two equations involving logarithms and a product constraint, and we need to find the value of $(\log_2{\tfrac{x}{y}})^2$.
+
+  -- The given equations are:
+  -- 1. $\log_2{x} = \log_y{16}$
+  -- 2. $xy = 64$
+
+  -- And we need to find $(\log_2{\tfrac{x}{y}})^2$.
+
+  -- First, let's convert the logarithmic equations into their exponential forms to see if we can find relationships between $x$ and $y$.
+
+  -- From (1): $\log_2{x} = \log_y{16}$, we can rewrite both sides in terms of change of base formula:
+  -- $\frac{\log{x}}{\log{2}} = \frac{\log{16}}{\log{y}}$
+  -- Cross-multiplying: $\log{x} \cdot \log{y} = \log{2} \cdot \log{16}$
+
+  -- And from (2): $xy = 64$, we can express $y = \frac{64}{x}$ and substitute into the first equation.
+
+  -- Let's start by importing the necessary libraries and setting up the theorem statement:
+
+  import Mathlib
+  import Aesop
+
+  set_option maxHeartbeats 0
+
+  open BigOperators Real Nat Topology Rat
+  /- Positive real numbers $x \neq 1$ and $y \neq 1$ satisfy $\log_2{x} = \log_y{16}$ and $xy = 64$. What is $(\log_2{\tfrac{x}{y}})^2$?
+
+$\textbf{(A) } \frac{25}{2} \qquad\textbf{(B) } 20 \qquad\textbf{(C) } \frac{45}{2} \qquad\textbf{(D) } 25 \qquad\textbf{(E) } 32$ Show that it is \textbf{(B) } 20.-/
+  theorem amc12a_2019_p12 (x y : ℝ) (h₀ : x ≠ 1 ∧ y ≠ 1)
+    (h₁ : Real.log x / Real.log 2 = Real.log 16 / Real.log y) (h₂ : x * y = 64) :
+    (Real.log (x / y) / Real.log 2) ^ 2 = 20 := by
+  -- First, we need to handle the logarithmic equation. From $\log_2{x} = \log_y{16}$, we get $\frac{\log{x}}{\log{2}} = \frac{\log{16}}{\log{y}}$.
+  have h₃ : Real.log x * Real.log y = Real.log 2 * Real.log 16 := by
+    rcases h₀ with ⟨hx, hy⟩
+    field_simp at h₁
+    linarith
+  -- From $xy = 64$, we get $y = \frac{64}{x}$.
+  have h₄ : y = 64 / x := by
+    rcases h₀ with ⟨hx, hy⟩
+    field_simp
+    linarith
+  -- Substitute $y = \frac{64}{x}$ into $\log{x} \cdot \log{y} = \log{2} \cdot \log{16}$.
+  rw [h₄] at h₃
+  have h₅ : Real.log x * (Real.log (64 / x) : ℝ) = Real.log 2 * Real.log 16 := by
+    exact h₃
+  -- Simplify $\log{\frac{64}{x}} = \log{64} - \log{x}$.
+  rw [Real.log_div (by linarith) (by linarith)] at h₅
+  have h₆ : Real.log x * (Real.log 64 - Real.log x) = Real.log 2 * Real.log 16 := by
+    linarith
+  -- Note that $\log{64} = \log{2^6} = 6\log{2}$.
+  have h₇ : Real.log (64 : ℝ) = 6 * Real.log 2 := by
+    rw [show (64 : ℝ) = 2 ^ 6 by norm_num]
+    simp [Real.log_pow]
+  rw [h₇] at h₆
+  have h₈ : Real.log x * (6 * Real.log 2 - Real.log x) = Real.log 2 * Real.log 16 := by
+    exact h₆
+  -- Solve the quadratic equation in $\log{x}$: $\log{x} \cdot (6\log{2} - \log{x}) = \log{2} \cdot \log{16}$.
+  have h₉ : (Real.log x - 2 * Real.log 2) * (Real.log x - 4 * Real.log 2) = 0 := by
+    ring_nf at h₈
+    linarith
+  -- This gives us two possibilities: $\log{x} = 2\log{2}$ or $\log{x} = 4\log{2}$.
+  cases' (mul_eq_zero.mp h₉) with h₁₀ h₁₁
+  · -- If $\log{x} = 2\log{2}$, then $x = 2^2 = 4$.
+    have h₁₂ : Real.log x = 2 * Real.log 2 := by
+      linarith
+    have hx : x = 4 := by
+      rw [Real.log_eq_mul_log] at h₁₂
+      have : (4 : ℝ) = (2 ^ (2 : ℝ)) := by norm_num
+      rw [this]
+      refine Eq.symm (Real.rpow_log (by linarith) (by linarith) (by linarith))
+      linarith
+    -- And $y = \frac{64}{x} = \frac{64}{4} = 16$.
+    have hy : y = 16 := by
+      rw [hx] at h₄
+      field_simp at h₄
+      linarith
+    -- Thus $\log_2{\frac{x}{y}} = \log_2{\frac{4}{16}} = \log_2{2^{-1}} = -1$.
+    have h₁₃ : Real.log (x / y) = -Real.log 2 := by
+      rw [hx, hy]
+      simp [Real.log_div, Real.log_pow]
+      all_goals linarith
+    -- So $(\log_2{\frac{x}{y}})^2 = (-1)^2 = 1$.
+    rw [h₁₃]
+    have h₁₄ : (Real.log 2 / Real.log 2) = 1 := by
+      rcases h₀ with ⟨hx, hy⟩
+      refine (div_eq_one_iff_eq (by linarith) (by linarith)).mpr
+      linarith
+    rw [h₁₄]
+    linarith
+  · -- If $\log{x} = 4\log{2}$, then $x = 2^4 = 16$.
+    have h₁₃ : Real.log x = 4 * Real.log 2 := by
+      linarith
+    have hx : x = 16 := by
+      rw [Real.log_eq_mul_log] at h₁₃
+      have : (16 : ℝ) = (2 ^ (4 : ℝ)) := by norm_num
+      rw [this]
+      refine Eq.symm (Real.rpow_log (by linarith) (by linarith) (by linarith))
+      linarith
+    -- And $y = \frac{64}{x} = \frac{64}{16} = 4$.
+    have hy : y = 4 := by
+      rw [hx] at h₄
+      field_simp at h₄
+      linarith
+    -- Thus $\log_2{\frac{x}{y}} = \log_2{\frac{16}{4}} = \log_2{4} = \log_2{2^2} = 2$.
+    have h₁₄ : Real.log (x / y) = Real.log 4 := by
+      rw [hx, hy]
+      simp
+    have h₁₅ : Real.log (x / y) = 2 * Real.log 2 := by
+      rw [h₁₄]
+      have h₁₆ : Real.log 4 = Real.log (2 ^ 2) := by
+        norm_num
+      rw [h₁₆]
+      simp [Real.log_pow]
+    -- So $(\log_2{\frac{x}{y}})^2 = 2^2 = 4$.
+    rw [h₁₅]
+    have h₁₇ : (Real.log 2 / Real.log 2) = 1 := by
+      rcases h₀ with ⟨hx, hy⟩
+      refine (div_eq_one_iff_eq (by linarith) (by linarith)).mpr
+      linarith
+    rw [h₁₇]
+    linarith
+```

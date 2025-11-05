@@ -1,0 +1,71 @@
+have r1 : ∀ x, f x = 12 * x + 7 := h₀
+  have r2 : ∀ x, g x = 5 * x + 2 := h₁
+  have r3 : ∀ x, h x = Nat.gcd (f x) (g x) := h₂
+
+  -- We can list all possible values of h(x) by examining the values of f(x) and g(x).
+  -- Since f(x) = 12x + 7 and g(x) = 5x + 2, we can calculate h(x) for various x values.
+  -- For x = 1, f(1) = 19, g(1) = 7, so h(1) = gcd(19,7) = 1.
+  -- For x = 2, f(2) = 31, g(2) = 12, so h(2) = gcd(31,12) = 1.
+  -- For x = 3, f(3) = 43, g(3) = 17, so h(3) = gcd(43,17) = 1.
+  -- For x = 4, f(4) = 55, g(4) = 22, so h(4) = gcd(55,22) = 11.
+  -- For x = 5, f(5) = 67, g(5) = 27, so h(5) = gcd(67,27) = 1.
+  -- For x = 6, f(6) = 79, g(6) = 32, so h(6) = gcd(79,32) = 1.
+  -- For x = 7, f(7) = 91, g(7) = 37, so h(7) = gcd(91,37) = 1.
+  -- For x = 8, f(8) = 103, g(8) = 42, so h(8) = gcd(103,42) = 1.
+  -- For x = 9, f(9) = 115, g(9) = 47, so h(9) = gcd(115,47) = 1.
+  -- For x = 10, f(10) = 127, g(10) = 52, so h(10) = gcd(127,52) = 1.
+
+  -- It appears that the only possible values of h(x) are 1 and 11.
+  have : { range h } = {1, 11} := by
+    ext y
+    constructor
+    · intro hy
+      simp at hy
+      rcases hy with ⟨x, hx⟩
+      have y_eq_1_or_11 : y = 1 ∨ y = 11 := by
+        have eq₁ : f x = 12 * x + 7 := r1 x
+        have eq₂ : g x = 5 * x + 2 := r2 x
+        have eq₃ : y = Nat.gcd (f x) (g x) := r3 x
+        -- Since f(x) = 12x + 7 and g(x) = 5x + 2,
+        -- possible values of gcd(f(x), g(x)) are 1 and 11.
+        have : y = 1 ∨ y = 11 := by
+          rw [eq₃, eq₁, eq₂]
+          have : y ∣ 11 := by
+            have h : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 11 := by
+              have eq : 11 * (5 * x + 2) = 55 * x + 22 := by ring
+              have dvd₁ : 55 * x + 22 ∣ 12 * x + 7 := by
+                have p : 55 * x ∣ 55 * x + 22 := Nat.dvd_add_right (by simp) 22
+                have q : 55 * x ∣ 12 * x := by
+                  have : 55 * x = 12 * x + 43 * x := by ring
+                  rw [this]
+                  have : 55 * x ∣ 43 * x := Nat.dvd_mul_right 43 x
+                  exact Nat.dvd_add_right (by simp) (by simp)
+                exact (Nat.dvd_add_right p q).symm
+              exact dvd₁
+            have dvd₂ : 11 ∣ 55 * x + 22 := by
+              have : 55 * x + 22 = 11 * (5 * x + 2) := by ring
+              rw [this]
+              exact Nat.dvd_mul_left 11 (5 * x + 2)
+            have : 11 ∣ 55 * x := by
+              have : 55 * x = 11 * (5 * x) := by ring
+              rw [this]
+              exact Nat.dvd_mul_left 11 (5 * x)
+            exact (Nat.dvd_add_right this dvd₂).symm
+          apply Nat.le_of_dvd (by simp) this
+        exact this
+      rcases this with this | this
+      · left; exact this
+      · right; exact this
+    · intro hy
+      simp at hy
+      rcases hy with hy | hy
+      · use 1
+        rw [r3 1, r1 1, r2 1]
+        norm_num
+      · use 4
+        rw [r3 4, r1 4, r2 4]
+        norm_num
+
+  -- The sum of all possible values of h(x) is 1 + 11 = 12.
+  simp [this, Finset.sum_insert, Finset.sum_singleton]
+```

@@ -1,0 +1,61 @@
+-- We have coprime conditions on $p(n)$ and $p(n+1)$.
+  have h₂ : Nat.gcd (p n) (p (n + 1)) > 1 := by
+    by_contra! h₂
+    have : Nat.gcd (p n) (p (n + 1)) = 1 := by
+      rw [Nat.gcd_eq_iff_eq_prime_mul (by norm_num; omega)]
+      omega
+    omega
+
+  -- By definition, we have $p(n+1) = (n+1)^2 - (n+1) + 41 = n^2 + n + 41$.
+  have h₃ : p (n + 1) = n ^ 2 + n + 41 := by
+    rw [h₀]
+    ring
+
+  -- We have $p(n)^2 = (n^2 - n + 41)^2 = n^4 - 2n^3 + 83n^2 - 82n + 1681$.
+  have h₄ : p n ^ 2 = (n ^ 4 - 2 * n ^ 3 + 83 * n ^ 2 - 82 * n + 1681) := by
+    rw [h₀]
+    ring
+
+  -- Since $p(n)$ and $p(n+1)$ share a common factor $d > 1$, by definition of $p(n)$, $d$ divides $41$.
+  have h₅ : Nat.gcd (p n) (p (n + 1)) ∣ 41 := by
+    have ⟨d, h₅, h₆⟩ := Nat.gcd_dvd (p n) (p (n + 1))
+    rw [h₅] at h₁
+    exact h₁
+  have h₇ : Nat.gcd (p n) (p (n + 1)) ≠ 1 := by
+    exact Nat.ne_of_gt h₁
+  have h₈ : Nat.gcd (p n) (p (n + 1)) = 41 := by
+    have h₈ : Nat.gcd (p n) (p (n + 1)) = 41 ∨ Nat.gcd (p n) (p (n + 1)) = 1 := by
+      exact (Nat.dvd_prime (by norm_num)).mp h₅
+    rcases h₈ with h₈ | h₈
+    exact h₈
+    contradiction
+
+  -- There are two cases: $p(n) = 41$ or $p(n) = -41$. The second case is impossible because $p(n)$ is always positive.
+  have h₉ : p n = 41 ∨ p n = -41 := by
+    rw [h₀] at h₈
+    have h₉ := (Nat.dvd_prime (by norm_num)).mp h₈
+    rcases h₉ with ⟨k, h₉⟩
+    have h₁₀ : 1 < k := by
+      by_contra! h₁₀
+      have h₁₀ : k = 0 := by
+        omega
+      rw [h₁₀] at h₉
+      omega
+    have h₁₁ : 1 < k * (n ^ 2 - n) := by
+      nlinarith
+    have h₁₂ : k * (n ^ 2 - n) ∣ 40 := by
+      have h₁₂ : k * (n ^ 2 - n) = 40 := by
+        omega
+      exact Dvd.intro (n ^ 2 - n + 41) h₁₂
+    have h₁₃ : k ∣ 40 := by
+      exact Nat.dvd_of_dvd_mul_right_of_gcd_one h₁₂ (Nat.gcd_dvd_left (n ^ 2 - n + 41) (n ^ 2 - n))
+    interval_cases k <;> (omega | tauto)
+
+  -- The second case is impossible because $p(n)$ is always positive.
+  rcases h₉ with h₉ | h₉
+  have h₁₀ : n ^ 2 - n + 41 = 41 := by
+    omega
+  nlinarith
+  omega
+
+```

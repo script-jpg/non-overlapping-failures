@@ -1,0 +1,269 @@
+have h₄ : (Real.sin t + Real.cos t)^2 = 2 + Real.sin (2 * t) := by
+    rw [Real.sin_two_mul, Real.cos_sq_add_sin_sq]
+    ring
+
+  have h₅ : (Real.sin t - Real.cos t)^2 = 2 - Real.sin (2 * t) := by
+    rw [Real.sin_two_mul, Real.cos_sq_add_sin_sq]
+    ring
+
+  -- By squaring the given equations, 
+  -- we find that $(1+\sin t)(1+\cos t)=5/4$ implies
+  -- $\sin t + \cos t = \sqrt{5/2} \sin (t + \pi/4)$,
+  -- and $(1-\sin t)(1-\cos t)=m/n-\sqrt{k}$ implies
+  -- $\sin t + \cos t = \sqrt{2m/n} - \sqrt{k}.$
+  have h₆ : Real.sin t + Real.cos t = Real.sqrt (5 / 2) * Real.sin (t + Real.pi / 4) := by
+    calc
+      Real.sin t + Real.cos t = Real.sqrt ((Real.sin t + Real.cos t)^2) := by
+        rw [Real.sqrt_sq]
+        positivity
+      _ = Real.sqrt (5 / 2) * Real.sin (t + Real.pi / 4) := by
+        rw [h₄, Real.sin_add, Real.cos_pi_div_four, Real.sin_pi_div_four]
+        ring
+
+  have h₇ : Real.sin t + Real.cos t = Real.sqrt (2 * m / n) - Real.sqrt k := by
+    calc
+      Real.sin t + Real.cos t = Real.sqrt ((Real.sin t - Real.cos t)^2) := by
+        rw [Real.sqrt_sq]
+        positivity
+      _ = Real.sqrt (2 * m / n) - Real.sqrt k := by
+        rw [h₅, Real.sqrt_sq, sub_nonneg] <;> linarith
+
+  -- The previous equations imply
+  -- $\sqrt{5/2} \sin (t + \pi/4) = \sqrt{2m/n} - \sqrt{k}.$
+  have h₈ : Real.sqrt (5 / 2) * Real.sin (t + Real.pi / 4) = Real.sqrt (2 * m / n) - Real.sqrt k := by
+    linarith
+
+  -- Squaring and rearranging, we find that
+  -- $\sin^2 (t + \pi/4) = \frac{2m}{5n} - \frac{4k}{5} + \frac{2k\sqrt{8m/n}}{5}.$
+  have h₉ : Real.sin (t + Real.pi / 4)^2 = (2 * m / 5 - 4 * k / 5 + 2 * k * Real.sqrt (8 * m / n) / 5) := by
+    calc
+      Real.sin (t + Real.pi / 4)^2 = Real.sin t + Real.cos t = Real.sqrt (5 / 2) * Real.sin (t + Real.pi / 4) := by
+        rw [h₆]
+      _ = (Real.sqrt (5 / 2) * Real.sin (t + Real.pi / 4))^2 := by
+        rw [mul_pow]
+      _ = (Real.sqrt (2 * m / n) - Real.sqrt k)^2 := by
+        rw [h₈]
+      _ = Real.sqrt (2 * m / n)^2 - 2 * Real.sqrt (2 * m / n) * Real.sqrt k + Real.sqrt k^2 := by
+        ring
+      _ = (2 * m / n) - 2 * Real.sqrt (2 * m / n) * Real.sqrt k + k := by
+        rw [Real.sq_sqrt, Real.sq_sqrt]
+        positivity
+      _ = (2 * m / 5 - 4 * k / 5 + 2 * k * Real.sqrt (8 * m / n) / 5) := by
+        rw [mul_assoc, mul_assoc, Real.sqrt_mul, Real.sqrt_mul_self]
+        ring
+        positivity
+        suffices
+          (8 * m / n) = (2 ^ 2 * k) / (2 ^ 2 * k) * (8 * m / n)
+        · rw [this, mul_div_cancel_left₀]
+          positivity
+        · rw [mul_div_cancel_right₀]
+          ring
+
+  have h₁₀ : (5 : ℝ) ^ 2 * Real.sin (t + Real.pi / 4)^2 = (2 * m - 4 * k + 2 * k * Real.sqrt (8 * m / n)) ^ 2 := by
+    calc
+      (5 : ℝ) ^ 2 * Real.sin (t + Real.pi / 4)^2 = 25 * (Real.sin (t + Real.pi / 4)^2) := by
+        ring
+      _ = 25 * ((2 * m / 5 - 4 * k / 5 + 2 * k * Real.sqrt (8 * m / n) / 5)) := by
+        rw [h₉]
+      _ = (2 * m - 4 * k + 2 * k * Real.sqrt (8 * m / n))^2 := by
+        ring
+
+  have h₁₁ : Real.sin (t + Real.pi / 4)^2 = (2 * m - 4 * k + 2 * k * Real.sqrt (8 * m / n)) ^ 2 / (5 ^ 2) := by
+    linarith
+
+  have h₁₂ : 0 ≤ (Real.sqrt (2 * m / n) - Real.sqrt k) ^ 2 := by
+    positivity
+
+  have h₁₃ : 0 ≤ (Real.sqrt (2 * m / n) ^ 2 - Real.sqrt k ^ 2) := by
+    linarith
+
+  have h₁₄ : 0 ≤ (2 * m / n - k) := by
+    linarith
+
+  have h₁₅ : 0 ≤ Real.sqrt (2 * m / n) * Real.sqrt k := by
+    positivity
+
+  have h₁₆ : 0 ≤ (Real.sqrt (2 * m / n) - Real.sqrt k) := by
+    apply Real.sqrt_le_sqrt
+    linarith
+
+  have h₁₇ : 0 < 2 * m / n := by
+    positivity
+
+  have h₁₈ : 0 < 2 * m / n - k := by
+    linarith
+
+  have h₁₉ : 0 < (2 * m / n - k) * Real.sqrt (2 * m / n) := by
+    positivity
+
+  have h₂₀ : 0 < (2 * m / n - k) * Real.sqrt (2 * m / n) - k * Real.sqrt (8 * m / n) / 2 := by
+    calc
+      (2 * m / n - k) * Real.sqrt (2 * m / n) - k * Real.sqrt (8 * m / n) / 2
+        = (Real.sqrt (2 * m / n) - Real.sqrt k) ^ 2 / 2 := by
+          ring_nf
+          rw [Real.sq_sqrt, Real.sq_sqrt]
+          ring
+          all_goals positivity
+      _ > 0 := by
+        apply div_pos
+        apply pow_pos
+        linarith
+        norm_num
+
+  have h₂₁ : 0 < (2 * m / n - k) * Real.sqrt (2 * m / n) - (k * Real.sqrt (8 * m / n) / 2) := by
+    linarith
+
+  -- From the equation $\sin^2 (t + \pi/4) = \frac{2m}{5n} - \frac{4k}{5} + \frac{2k\sqrt{8m/n}}{5},$
+  -- we find that $\frac{2m}{5n} - \frac{4k}{5} + \frac{2k\sqrt{8m/n}}{5} \ge 0,$
+  -- or $2m - 4kn + 2k\sqrt{8m/n} \ge 0.$
+  have h₂₂ : 0 ≤ 2 * m - 4 * k * n + 2 * k * Real.sqrt (8 * m / n) := by
+    calc
+      0 ≤ Real.sin (t + Real.pi / 4) ^ 2 := by
+        positivity
+      _ = (2 * m - 4 * k * n + 2 * k * Real.sqrt (8 * m / n)) ^ 2 / (5 ^ 2) := by
+        rw [h₁₁]
+      _ ≤ (2 * m - 4 * k * n + 2 * k * Real.sqrt (8 * m / n)) ^ 2 / 0 := by
+        div_le_div_of_nonneg_left
+        · linarith
+        · norm_num
+        · positivity
+      _ = 0 := by
+        positivity
+
+  -- We find that $k = 2m/(5n) - 4n/5 + 2n\sqrt{8m/n}/5.$
+  have h₂₃ : Real.sqrt (8 * m / n) = (5 * k - 2 * m + 2 * n * Real.sqrt (8 * m / n)) / (2 * n) := by
+    calc
+      Real.sqrt (8 * m / n) = (Real.sqrt (8 * m / n) * (2 * n)) / (2 * n) := by
+        field_simp
+      _ = (2 * m - 4 * k * n + 2 * k * Real.sqrt (8 * m / n)) / (2 * n) := by
+        rw [h₂₂]
+        field_simp
+        ring
+      _ = (5 * k - 2 * m + 2 * n * Real.sqrt (8 * m / n)) / (2 * n) := by
+        field_simp
+        ring
+
+  let Q := 8 * m / n
+
+  have h₂₄ : 0 < Q := by
+    positivity
+
+  have h₂₅ : Q ^ (1 / 2 : ℝ) = 2 * Real.sqrt Q / 2 := by
+    rw [Real.sqrt_eq_rpow]
+    · rw [← Real.sqrt_mul]
+      norm_num
+      positivity
+    · norm_num
+
+  have h₂₆ : Q ^ (1 / 2 : ℝ) = Real.sqrt Q := by
+    rw [h₂₅]
+    ring
+
+  have h₂₇ : (Q ^ (1 / 2 : ℝ))^2 = Q := by
+    rw [h₂₆]
+    rw [Real.sq_sqrt]
+    positivity
+
+  have h₂₈ : (5 * k - 2 * m + 2 * n * Real.sqrt Q) ^ 2 / (2 * n) ^ 2 = (2 * m - 4 * k * n + 2 * k * Real.sqrt Q) ^ 2 / (5 * n) ^ 2 := by
+    calc
+      (5 * k - 2 * m + 2 * n * Real.sqrt Q) ^ 2 / (2 * n) ^ 2 = (5 * (k - 2 * m / n + 2 * n * Real.sqrt Q / 5)) ^ 2 / (2 * n) ^ 2 := by
+        ring
+      _ = (5 * (Real.sqrt (8 * m / n) - Real.sqrt k)) ^ 2 / (2 * n) ^ 2 := by
+        rw [h₂₃]
+        field_simp
+        ring
+      _ = (2 * m - 4 * k * n + 2 * k * Real.sqrt Q) ^ 2 / (5 * n) ^ 2 := by
+        rw [mul_pow, mul_pow]
+        rw [← Real.sq_sqrt]
+        · ring
+          positivity
+        · rw [← Real.sq_sqrt]
+          · ring
+            positivity
+          · positivity
+
+  have h₂₉ : 0 ≤ (5 * k - 2 * m + 2 * n * Real.sqrt Q) / (2 * n) := by
+    calc
+      0 ≤ Real.sqrt (8 * m / n) := by
+        positivity
+      _ = (5 * k - 2 * m + 2 * n * Real.sqrt Q) / (2 * n) := by
+        rw [h₂₃]
+        field_simp
+        ring
+
+  have h₂₁₀ : 0 ≤ (5 * k - 2 * m + 2 * n * Real.sqrt Q) ^ 2 / (2 * n) ^ 2 := by
+    positivity
+
+  have h₂₁₁ : 0 ≤ (2 * m - 4 * k * n + 2 * k * Real.sqrt Q) ^ 2 / (5 * n) ^ 2 := by
+    positivity
+
+  have h₂₁₂ : 0 ≤ (2 * m - 4 * k * n + 2 * k * Real.sqrt Q) / (5 * n) := by
+    calc
+      0 ≤ (2 * m - 4 * k * n + 2 * k * Real.sqrt Q) / (5 * n) := by
+        apply div_nonneg
+        · linarith
+        · positivity
+      _ = (2 * m - 4 * k * n + 2 * k * Real.sqrt Q) / (5 * n) := by
+        symm
+        apply div_nonneg
+        · linarith
+        · positivity
+
+  have h₂₁₃ : 0 < (5 * k - 2 * m + 2 * n * Real.sqrt Q) / (2 * n) := by
+    linarith
+
+  have h₂₁₄ : 0 < (5 * k - 2 * m + 2 * n * Real.sqrt Q) ^ 2 / (2 * n) ^ 2 := by
+    positivity
+
+  have h₂₁₅ : 0 < (2 * m - 4 * k * n + 2 * k * Real.sqrt Q) ^ 2 / (5 * n) ^ 2 := by
+    positivity
+
+  have h₂₁₆ : 0 < (2 * m - 4 * k * n + 2 * k * Real.sqrt Q) / (5 * n) := by
+    linarith
+
+  -- Squaring and rearranging, we find that
+  -- $\sqrt{8m/n} = \frac{25k^2 - 20kmn + 4n^2}{10n^2}.$
+  have h₃₀ : Real.sqrt Q = (25 * k ^ 2 - 20 * k * n + 4 * n ^ 2) / (10 * n ^ 2) := by
+    calc
+      Real.sqrt Q = (Real.sqrt Q ^ 2) ^ (1 / 2 : ℝ) := by
+        rw [h₂₆]
+      _ = (Q ^ (1 / 2 : ℝ))^2 := by
+        rw [← Real.rpow_mul]
+        · rw [h₂₇]
+          positivity
+        · norm_num
+      _ = (2 * Real.sqrt Q / 2) ^ 2 := by
+        rw [h₂₅]
+      _ = (25 * k ^ 2 - 20 * k * n + 4 * n ^ 2) ^ 2 / (10 * n ^ 2) ^ 2 := by
+        rw [h₂₈]
+        field_simp
+        ring
+      _ = (25 * k ^ 2 - 20 * k * n + 4 * n ^ 2) / (10 * n ^ 2) := by
+        rw [h₂₉, div_pow, pow_two, pow_two]
+        positivity
+
+  -- Squaring and rearranging, we find that
+  -- $Q = \frac{625k^4 - 1000k^3n + 400k^2n^2 + 80k^2n^2 - 400kn^3 + 400n^4}{10000n^4}.$
+  have h₃₁ : Q = (625 * k ^ 4 - 1000 * k ^ 3 * n + 480 * k ^ 2 * n ^ 2 - 400 * k * n ^ 3 + 400 * n ^ 4) / (10000 * n ^ 4) := by
+    calc
+      Q = Real.sqrt Q ^ 2 := by
+        rw [h₂₆]
+        rw [Real.sq_sqrt]
+        positivity
+      _ = ((25 * k - 2 * m + 2 * n * Real.sqrt Q) / (2 * n)) ^ 2 := by
+        rw [h₃₀]
+        field_simp
+        ring
+      _ = (25 * k - 2 * m + 2 * n * Real.sqrt Q) ^ 2 / (4 * n ^ 2) := by
+        rw [div_pow, pow_two]
+        ring
+      _ = (625 * k ^ 4 - 1000 * k ^ 3 * n + 480 * k ^ 2 * n ^ 2 - 400 * k * n ^ 3 + 400 * n ^ 4) / (10000 * n ^ 4) := by
+        rw [mul_pow, mul_pow, h₃₀]
+        field_simp
+        ring
+
+  -- From this fraction and the fact that $m$ and $n$ are [[relatively prime,](https://artofproblemsolving.com/wiki/index.php/Relatively_prime)] we
+  -- find that $k = 5$, $m = 1$, and $n = 2$.
+  have h₃₂ : k = 5 ∧ (m = 1 ∧ n = 2) := by
+    suffices
+      Q = (5 ^ 2 * (2 ^ 2 * k ^ 2 - 2 * 2 * k * n + 2 * 2 ^ 2 * n ^

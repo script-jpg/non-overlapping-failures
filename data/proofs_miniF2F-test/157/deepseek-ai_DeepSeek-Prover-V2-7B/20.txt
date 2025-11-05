@@ -1,0 +1,52 @@
+have step₁ : S.card = 2 := by
+    have h₁ : S = {Real.pi / 2, Real.pi / 2 + Real.pi / 2} := by
+      ext x
+      simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+      constructor
+      · intro h
+        have h₂ : 0 ≤ x := h.1
+        have h₃ : x ≤ Real.pi := h.2.1
+        have h₄ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h.2.2
+        have h₅ : x = Real.pi / 2 ∨ x = Real.pi / 2 + Real.pi / 2 := by
+          have h₆ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h₄
+          have h₇ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by linarith
+          have h₈ : Real.cos x = 0 ∨ Real.cos x = -1 ∨ Real.cos x = 1 := by
+            apply or_iff_not_imp_left.mpr
+            intro h₉
+            apply or_iff_not_imp_left.mpr
+            intro h₁₀
+            apply eq_of_sub_eq_zero
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₉)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₀)
+            have h₁₁ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h₇
+            have h₁₂ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by linarith
+            simp [Real.sin_sub_sin, Real.cos_sub_cos, mul_assoc] at h₁₁ h₁₂ ⊢
+            <;> nlinarith [Real.sin_sq_add_cos_sq x, Real.sin_le_one x, Real.cos_le_one x, Real.pi_pos.le, Real.pi_pos.le]
+          rcases h₈ with (h₉ | h₉ | h₉)
+          · -- Case: cos x = 0
+            have h₁₀ : x = Real.pi / 2 := by
+              have h₁₁ : Real.cos x = 0 := h₉
+              have h₁₂ : x = Real.pi / 2 := by
+                apply le_antisymm
+                · -- Show x ≤ Real.pi / 2
+                  apply le_of_not_gt
+                  intro h₁₃
+                  have h₁₄ : Real.cos x < 0 := by
+                    apply Real.cos_neg_of_pi_div_two_lt_of_lt
+                    · linarith
+                    · linarith
+                  nlinarith [Real.cos_le_one x, Real.neg_one_le_cos x]
+                · -- Show x ≥ Real.pi / 2
+                  apply le_of_not_gt
+                  intro h₁₃
+                  have h₁₄ : Real.cos x > 0 := by
+                    apply Real.cos_pos_of_mem_Ioo
+                    constructor <;> linarith [Real.pi_pos]
+                  nlinarith [Real.cos_le_one x, Real.neg_one_le_cos x]
+              linarith
+            simp_all
+            <;> ring_nf <;> norm_num
+            <;> nlinarith [Real.pi_pos.le]
+          · -- Case: cos x = -1
+            have h₁₀ : x = Real.pi := by
+              have h₁₁ : Real.cos x = -1 := by nlinarith

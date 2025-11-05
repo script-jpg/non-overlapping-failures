@@ -1,0 +1,146 @@
+-- For simplicity, define $a_i ^ 2 a_{i+1}$ as $b_i$
+  let b := fun i => a i ^ 2 * a (i + 1)
+
+  -- The summation of $b_i$ from $0$ to $98$ is less than $12/25$
+  have h₁ : ∑ i in Finset.range 99, b i < 12 / 25 := by
+    -- Applying Cauchy-Schwarz inequality1
+    have h₁ : (∑ i in Finset.range 99, b i) ^ 2 ≤ ((∑ i in Finset.range 99, a (i + 1) ^ 2) * (∑ i in Finset.range 99, a (i + 2) ^ 2)) := by
+      -- Cauchy-Schwarz inequality1: $\sum_{i=0}^{n-1} a_i c_i \leq \sqrt{\sum_{i=0}^{n-1} a_i ^ 2} \sqrt{\sum_{i=0}^{n-1} c_i ^ 2}$
+      apply Finset.sum_mul_sq_le_sq_mul_sq
+
+    -- Applying Cauchy-Schwarz inequality2
+    have h₂ : (∑ i in Finset.range 99, a (i + 2) ^ 2) ≤ (∑ i in Finset.range 100, a (i + 1) ^ 2) := by
+      -- Prove by adding $a_{100}^2$ to both sides
+      have h₂ : ∑ i in Finset.range 100, a (i + 1) ^ 2 = ∑ i in Finset.range 99, a (i + 1) ^ 2 + a 100 ^ 2 := by
+        rw [Finset.sum_range_succ]
+      have h₃ : ∑ i in Finset.range 99, a (i + 2) ^ 2 = ∑ i in Finset.range 99, a (i + 1) ^ 2 - a 1 ^ 2 + a 100 ^ 2 := by
+        conv =>
+          lhs
+          congr
+          ext i
+          rw [show (99 : ℕ) = 98 + 1 by decide, add_assoc, Nat.add_sub_assoc (by linarith [h₀]), Nat.add_sub_assoc (by linarith [h₀])]
+          simp only [Finset.mem_range]
+          intro hi
+          rw [show (i + 2) = (i + 1) + 1 by simp]
+      rw [h₂, h₃]
+      -- Since $x^2 \geq 0$ for all $x \in \mathbb{R}$, $a_1^2 \geq 0$
+      have h₄ : a 1 ^ 2 ≥ 0 := by
+        exact sq_nonneg (a 1)
+      linarith
+
+    -- Substituting the given condition $\sum_{n=0}^{99} a_{n+1}^2 = 1$
+    rw [h₀] at h₁ h₂
+    have h₃ : (∑ i in Finset.range 99, b i) ^ 2 ≤ 1 * (∑ i in Finset.range 99, a (i + 2) ^ 2) := by
+      exact mul_le_mul_of_nonneg_left h₁ (by linarith)
+    have h₄ : (∑ i in Finset.range 99, b i) ^ 2 ≤ 1 * 1 := by
+      exact mul_le_mul_of_nonneg_left h₃ (by linarith [h₂])
+    rw [mul_one, one_mul] at h₄
+    -- Taking square root on both sides
+    have h₅ : ∑ i in Finset.range 99, b i ≤ 1 := by
+      apply (sq_le_sq₀ (by linarith) (by linarith)).mp h₄
+    linarith
+
+  -- For $1 \leq i \leq 99$, we have $b_{i-1} + b_i \leq 2 a_i ^ 2 a_{i+1}$
+  have h₂ (i : ℕ) (hi : i ≥ 1 ∧ i ≤ 99) : b (i - 1) + b i ≤ 2 * a i ^ 2 * a (i + 1) := by
+    simp [b]
+    -- $b_{i-1} + b_i = a_{i-1}^2 a_i + a_i^2 a_{i+1} = a_i (a_{i-1}^2 + a_i a_{i+1}) \leq a_i (a_{i-1}^2 + 2 a_i a_{i+1} + a_{i+1}^2) = a_i (a_{i-1} + a_i + a_{i+1})^2 = 2 a_i ^ 2 a_{i+1} $, where the inequality is due to $a_{i-1} a_{i+1} \leq a_i^2$ and $2 a_i a_{i+1} \leq a_{i-1}^2 + a_{i+1}^2$
+    calc
+      a (i - 1) ^ 2 * a i + a i ^ 2 * a (i + 1) ≤ a i * (a (i - 1) ^ 2 + a i * a (i + 1)) := by
+        -- $a_{i-1}^2 a_i \leq a_i \cdot a_{i-1}^2$
+        apply mul_le_mul_of_nonneg_left
+        exact sq_nonneg (a (i - 1))
+        simp
+        -- $a_i^2 a_{i+1} \leq a_i \cdot a_i^2$
+        apply mul_le_mul_of_nonneg_left
+        exact sq_nonneg (a i)
+        simp
+
+      _ = a i * (a (i - 1) ^ 2 + 2 * a i * a (i + 1) + a (i + 1) ^ 2) := by
+        -- $a_{i-1}^2 a_i + a_i^2 a_{i+1} = a_i \cdot (a_{i-1}^2 + 2 a_i a_{i+1} + a_{i+1}^2)$
+        simp [add_mul]
+
+      _ = a i * (a (i - 1) + a i + a (i + 1)) ^ 2 := by
+        -- $a_{i-1}^2 + 2 a_i a_{i+1} + a_{i+1}^2 = (a_{i-1} + a_i + a_{i+1})^2$
+        ring
+
+      _ ≤ 2 * a i ^ 2 * a (i + 1) := by
+        -- $a_i \cdot (a_{i-1} + a_i + a_{i+1})^2 \leq a_i \cdot (2 a_i + a_{i+1})^2 \leq a_i \cdot (2 a_i + a_{i+1}) \cdot (a_{i-1} + a_i + a_{i+1}) \leq 2 a_i ^ 2 \cdot a_{i+1}$
+        nlinarith only [sq_nonneg (a (i - 1)), sq_nonneg (a i), sq_nonneg (a (i + 1)), sq_nonneg (a (i - 1) - a (i + 1))] y := by
+          nlinarith only [sq_nonneg (a (i - 1)), sq_nonneg (a i), sq_nonneg (a (i + 1)), sq_nonneg (a (i - 1) - a (i + 1))] y := by
+            nlinarith only [sq_nonneg (a (i - 1) - a i), sq_nonneg (a i - a (i + 1))] y := by
+              nlinarith only [sq_nonneg (a (i - 1) - a (i + 1))] y := by
+                nlinarith only [sq_nonneg (a i)] y := by
+                  linarith
+
+  -- $b_i \leq a_{i+1} \sqrt{2 a_i ^ 2 a_{i+1} - b_i}$
+  have h₃ (i : ℕ) (hi : i ≥ 1 ∧ i ≤ 99) : a (i + 1) * √(2 * a i ^ 2 * a (i + 1) - b i) ≥ b i := by
+    simp [b]
+    -- $b_i = a_i^2 a_{i+1} \leq a_{i+1} \cdot \sqrt{2 a_i^2 a_{i+1} - b_i}$
+    calc
+      a i ^ 2 * a (i + 1) ≤ a (i + 1) * (2 * a i ^ 2 * a (i + 1) - a i ^ 2 * a (i + 1)) := by
+        -- $a_i^2 a_{i+1} \leq a_{i+1} \cdot (2 a_i^2 a_{i+1} - a_i^2 a_{i+1})$
+        nlinarith only [sq_nonneg (a i), sq_nonneg (a (i + 1)), sq_nonneg (a i - a (i + 1))] y := by
+          nlinarith only [sq_nonneg (a i), sq_nonneg (a (i + 1)), sq_nonneg (a i - a (i + 1))] y := by
+            nlinarith only [sq_nonneg (a i)] y := by
+              linarith
+
+      _ = a (i + 1) * √(2 * a i ^ 2 * a (i + 1) - a i ^ 2 * a (i + 1)) ^ 2 := by
+        -- $a_{i+1} \cdot (2 a_i^2 a_{i+1} - a_i^2 a_{i+1}) = a_{i+1} \cdot \sqrt{a_i^2 a_{i+1} (2 a_i + a_{i+1})}^2$
+        rw [Real.sq_sqrt]
+        simp
+        nlinarith only [sq_nonneg (a i), sq_nonneg (a (i + 1))]
+        nlinarith only [sq_nonneg (a i), sq_nonneg (a (i + 1)), sq_nonneg (a i - a (i + 1))] y := by
+          nlinarith only [sq_nonneg (a i), sq_nonneg (a (i + 1))] y := by
+            nlinarith only [sq_nonneg (a i)] y := by
+              linarith
+
+      _ ≤ a (i + 1) * √(2 * a i ^ 2 * a (i + 1) - b i) ^ 2 := by
+        -- $a_{i+1} \cdot \sqrt{a_i^2 a_{i+1} (2 a_i + a_{i+1})} \leq a_{i+1} \cdot \sqrt{2 a_i^2 a_{i+1} - b_i}$
+        apply mul_le_mul_of_nonneg_left
+        exact Real.sqrt_le_sqrt (by nlinarith only [sq_nonneg (a i), sq_nonneg (a (i + 1)), sq_nonneg (a i - a (i + 1))])
+        simp
+
+      _ = a (i + 1) * √(2 * a i ^ 2 * a (i + 1) - b i) := by
+        rw [Real.sq_sqrt]
+        simp
+        linarith
+
+  -- $\sum_{i=0}^{98} b_i \leq \sum_{i=0}^{98} a_{i+1} \sqrt{2 a_i^2 a_{i+1} - b_i}$
+  have h₄ : ∑ i in Finset.range 99, b i ≤ ∑ i in Finset.range 99, a (i + 1) * √(2 * a i ^ 2 * a (i + 1) - b i) := by
+    apply Finset.sum_le_sum
+    simp
+    exact fun i hi => h₃ i (by simp only [Finset.mem_range] at hi ⊢; constructor; linarith; linarith)
+
+  -- Prove that $\sum_{i=0}^{98} a_{i+1} \sqrt{2 a_i^2 a_{i+1} - b_i} < \sum_{i=0}^{98} a_{i+1} ^ 2 a_{i+2} + \frac{12}{25} a_1 ^ 2 a_{100}$
+  have h₅ : ∑ i in Finset.range 99, a (i + 1) * √(2 * a i ^ 2 * a (i + 1) - b i) < ∑ i in Finset.range 99, (a i ^ 2 * a (i + 2) + 12 / 25 * a 1 ^ 2 * a 100) := by
+    -- For $1 \leq i \leq 99$, we have $a_{i+1} \sqrt{2 a_i^2 a_{i+1} - b_i} < a_{i+1} ^ 2 a_{i+2} + \frac{12}{25} a_1 ^ 2 a_{100}$
+    apply Finset.sum_lt_sum_of_nonempty
+    simp
+    intro i hi
+    simp at hi
+    -- Split into three cases: $i = 1$, $i = 99$, and $1 < i < 99$
+    match i with
+    | 0 =>
+      simp [b]
+      -- $a_1 \sqrt{2 a_0^2 a_1 - a_0^2 a_1} = a_1 \sqrt{a_0^2 a_1} = a_1 \cdot a_0 \cdot a_1 = a_0 \cdot a_1 ^ 2$
+      rw [Real.sqrt_eq_iff_eq_sq]
+      -- $a_0 \geq 0$
+      simp
+      nlinarith only [sq_nonneg (a 0), sq_nonneg (a 1)]
+      -- $a_0^2 a_1 \geq 0$
+      nlinarith only [sq_nonneg (a 0), sq_nonneg (a 1)]
+    | 99 =>
+      simp [b]
+      -- $a_{100} \sqrt{2 a_{99}^2 a_{100} - a_{99}^2 a_{100}} = a_{100} \sqrt{a_{99}^2 a_{100} (2 a_{99} + a_{100})}$
+      -- $= a_{100} \cdot a_{99} \cdot a_{100} \sqrt{2 a_{99} + a_{100}} = a_{99} \cdot a_{100} ^ 2 \sqrt{2 a_{99} + a_{100}}$
+      -- $< a_{99} \cdot a_{100} ^ 2 \cdot \frac{2 a_{99} + a_{100}}{2} + \frac{12}{25} a_1 ^ 2 a_{100}$, where the inequality is due to $a_{99} \cdot a_{100} \sqrt{2 a_{99} + a_{100}} < \frac{2 a_{99} + a_{100}}{2} \cdot a_{99} \cdot a_{100} + \frac{12}{25} a_1 ^ 2 a_{100}$
+      -- $\Leftrightarrow 0 < \frac{12}{25} a_1 ^ 2 a_{100} - a_{99} \cdot a_{100} ^ 2 \cdot (\sqrt{2 a_{99} + a_{100}} - \frac{2 a_{99} + a_{100}}{2})$
+      calc
+        a 99 * a 100 ^ 2 * √(2 * a 99 ^ 2 * a 100 - a 99 ^ 2 * a 100) < a 99 * a 100 ^ 2 * ((2 * a 99 + a 100) / 2) + 12 / 25 * a 1 ^ 2 * a 100 := by
+          apply add_lt_add_of_lt_of_le
+          apply mul_lt_mul_of_pos_left
+          -- $\sqrt{2 a_{99}^2 a_{100} - a_{99}^2 a_{100}} < \frac{2 a_{99} + a_{100}}{2}$
+          calc
+            √(2 * a 99 ^ 2 * a 100 - a 99 ^ 2 * a 100) < √((2 * a 99 + a 100) / 2) ^ 2 := by
+              -- $\sqrt{2 a_{99}^2 a_{100} - a_{99}^2 a_{100}} < \sqrt{\frac{(2 a_{99} + a_{100})^2}{4}}$
+              have h₅ : √(2 * a 99 ^ 2 * a 1

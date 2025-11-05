@@ -1,0 +1,50 @@
+-- lemmas about 1 + 1 / 2 ^ k
+  have one_div (n : ℕ) : 0 < 1 + 1 / 2 ^ n := by
+    positivity
+  have div_sub_one (n : ℕ) : 1 / 2 ^ n < 1 := by
+    rw [div_lt_one (by positivity), pow_pos (by norm_num)]
+  have times_two (n : ℕ) : 1 + 1 / 2 ^ n < 2 := by linarith
+
+  -- We will prove that $(\prod_{k=1}^{n} (1 + 1/2^k)) < 5/2$.
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+    by_cases h₁ : n = 0
+    · -- when $n = 1$, $(\prod_{k=1}^{n} (1 + 1/2^k)) = 1 + 1/2 < 5/2$.
+      simp [h₁]
+      norm_num
+    · -- for positive integer $n > 1$, we have
+      -- $(\prod_{k=1}^{n} (1 + 1/2^k)) < 5/2$ by induction.
+      have h₂ : n > 0 := by linarith
+      rw [Finset.prod_Icc_succ_top (by linarith), ih h₂]
+      -- $(\prod_{k=1}^{n} (1 + 1/2^k)) < 5/2 \Rightarrow (\prod_{k=1}^{n} (1 + 1/2^k)) * (1 + 1/2^(n+1)) < 5/2 * (1 + 1/2^(n+1))$.
+      apply mul_lt_mul_of_pos_right
+      exact ih h₂
+      -- $1 + 1/2^(n+1) < 2$.
+      apply one_div
+      positivity
+
+  -- The proof is complete!
+
+/-- Show that for positive integer $n$, $(\prod_{k=1}^{n} (1 + 1/2^k)) > 1/2$. -/
+theorem induction_pord1p1on2powkgt1on2 (n : ℕ) (h₀ : 0 < n) :
+    (∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k) > 1 / 2 := by
+  -- similar to the first, we proceed by induction.
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+    by_cases h₁ : n = 0
+    · -- when $n = 1$, $(\prod_{k=1}^{n} (1 + 1/2^k)) = 1 + 1/2 > 1/2$.
+      simp [h₁]
+      norm_num
+    · -- for positive integer $n > 1$, we have
+      -- $(\prod_{k=1}^{n} (1 + 1/2^k)) > 1/2 \Rightarrow (\prod_{k=1}^{n} (1 + 1/2^k)) * (1 + 1/2^(n+1)) > 1/2 * (1 + 1/2^(n+1))$.
+      have h₂ : n > 0 := by linarith
+      rw [Finset.prod_Icc_succ_top (by linarith), ih h₂]
+      apply mul_lt_mul_of_pos_left
+      exact ih h₂
+      -- $1 + 1/2^(n+1) > 0$.
+      positivity
+
+  -- The proof is complete!
+```

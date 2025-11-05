@@ -1,0 +1,153 @@
+-- We will show that the solution set is $\left\{ \frac{\pi}2, \frac{3\pi}2 \right\}$.
+  suffices S = {Real.pi / 2, 3 * Real.pi / 2} by
+    rw [this, Finset.card_pair (by linarith [Real.pi_pos])]
+    norm_num
+
+  ext x
+  constructor
+  · -- Let $x$ be a solution. We have
+    -- $\cos x, \sin x \in [-1,1]$, so $\frac{\pi}2 \cos x, \frac{\pi}2 \sin x \in [-\frac{\pi}2, \frac{\pi}2]$.
+    -- So $\sin \left( \frac{\pi}2 \cos x\right), \cos \left( \frac{\pi}2 \sin x\right) \in [-1,1]$.
+    -- However, if $a \in [-\frac{\pi}2, \frac{\pi}2]$, we have $\sin a \in [-\frac{\pi}2, \frac{\pi}2]$,
+    -- and if $b \in [-\frac{\pi}2, \frac{\pi}2]$, we have $\cos b \in [\frac{\sqrt[2]{2}}{2}, 1]$.
+    -- So if $x$ is a solution, we must have $\cos \left( \frac{\pi}2 \sin x\right) \in [-\frac{\pi}2, \frac{\pi}2] \cap [\frac{\sqrt[2]{2}}{2}, 1] = \{\frac{\pi}2\}$.
+    -- Therefore, $\frac{\pi}2 \sin x = 0$, which means $\sin x = 0$.
+    -- So $x \in \{\frac{\pi}2, \frac{3\pi}2\}$.
+    rintro ⟨hx₁, hx₂, hx₃⟩
+    have hx₄ : Real.cos x ∈ Set.Icc (-1) 1 := by
+      constructor
+      · exact neg_one_le_cos x
+      · exact cos_le_one x
+    have hx₅ : Real.sin x ∈ Set.Icc (-1) 1 := by
+      constructor
+      · exact neg_one_le_sin x
+      · exact sin_le_one x
+    have hx₆ : Real.cos x ∈ Set.Icc (-1) 1 := by
+      constructor
+      · exact neg_one_le_cos x
+      · exact cos_le_one x
+    have hx₇ : Real.sin x ∈ Set.Icc (-1) 1 := by
+      constructor
+      · exact neg_one_le_sin x
+      · exact sin_le_one x
+
+    have hsin : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by
+      exact hx₃
+
+    have hx₈ : Real.pi / 2 * Real.cos x ∈ Set.Icc (-Real.pi / 2) (Real.pi / 2) := by
+      constructor
+      · linarith [hx₄.left]
+      · linarith [hx₄.right]
+    have hx₉ : Real.sin (Real.pi / 2 * Real.cos x) ∈ Set.Icc (-1) 1 := by
+      apply Real.sin_mem_Icc.mpr
+      exact hx₈
+    have hx₁₀ : Real.cos (Real.pi / 2 * Real.sin x) ∈ Set.Icc (-1) 1 := by
+      apply Real.cos_mem_Icc.mpr
+      exact hx₇.left
+    have hx₁₁ : Real.cos (Real.pi / 2 * Real.sin x) ∈ Set.Icc (-1) 1 := by
+      apply Real.cos_mem_Icc.mpr
+      exact hx₇.left
+    have hx₁₂ : Real.sin (Real.pi / 2 * Real.cos x) ∈ Set.Icc (-1) 1 := by
+      apply Real.sin_mem_Icc.mpr
+      exact hx₈
+
+    -- However, if $a \in [-\frac{\pi}2, \frac{\pi}2]$, we have $\sin a \in [-\frac{\pi}2, \frac{\pi}2]$,
+    have hx_simp : Real.sin (Real.pi / 2 * Real.cos x) ∈ Set.Icc (-Real.pi / 2) (Real.pi / 2) := by
+      apply Real.sin_mem_Icc.mpr
+      constructor
+      · linarith [hx₈.left, Real.neg_pi_div_two_le_pi]
+      · linarith [hx₈.right, Real.pi_div_two_pos]
+
+    -- and if $b \in [-\frac{\pi}2, \frac{\pi}2], b \in [\frac{\sqrt{2}}{2}, 1]$.
+    have hx_cos : Real.cos (Real.pi / 2 * Real.sin x) ∈ Set.Icc (Real.sqrt 2 / 2) 1 := by
+      apply And.intro
+      · rw [←Real.sqrt_le_sqrt_iff]
+        norm_num
+        apply Real.cos_le_one
+      · rw [←Real.sqrt_le_sqrt_iff]
+        norm_num
+        apply Real.cos_le_one
+
+    -- So if $x$ is a solution, we must have $\cos \left( \frac{\pi}2 \sin x\right) \in [-\frac{\pi}2, \frac{\pi}2] \cap [\frac{\sqrt[2]{2}}{2}, 1] = \{\frac{\pi}2\}$.
+    have hx_cos_pi_div_two : Real.cos (Real.pi / 2 * Real.sin x) = Real.sqrt 2 / 2 ∨
+        Real.cos (Real.pi / 2 * Real.sin x) = 1 := by
+      apply And.eq_of_eq_and_left
+      apply And.intro
+      · apply hx_cos
+      · rw [←Real.sqrt_sq_eq_abs, Real.abs_le_self]
+        norm_num
+
+    rcases hx_cos_pi_div_two with hx_cos_pi_div_two | hx_cos_one
+    · -- If $\cos \left( \frac{\pi}2 \sin x\right) = \frac{\pi}2$, we have $\frac{\pi}2 \sin x = 0$, so $\sin x = 0$.
+      have : Real.sin x = 0 := by
+        have : Real.pi / 2 * Real.sin x = 0 := by
+          apply Real.cos_eq_sqrt_div_two_iff.mp
+          exact hx_cos_pi_div_two
+        exact mul_eq_zero.mp this
+      have : x = Real.pi / 2 ∨ x = 3 * Real.pi / 2 := by
+        apply Real.sin_eq_zero_iff.mp
+        exact this
+      rcases this with hx | hx
+      · tauto
+      · right
+        rw [hx]
+        exact Real.pi_pos
+    · -- If $\cos \left( \frac{\pi}2 \sin x\right) = 1$, then $\frac{\pi}2 \sin x = 2k\pi$ for some $k \in \mathbb{Z}$.
+      have : Real.pi / 2 * Real.sin x = 2 * Real.pi * (Real.sin x / 2 / Real.pi) := by
+        ring_nf
+        nth_rewrite 1 [←Real.pi_ne_zero]
+        field_simp
+      rw [this, Real.cos_eq_one_iff] at hx_cos_one
+      rcases hx_cos_one with ⟨k, hk⟩
+      have : k = 0 := by
+        by_contra!
+        have : Real.sin x ≠ 0 := by
+          apply Real.sin_ne_zero_of_pos_of_lt_pi
+          · exact hx₁
+          · exact lt_of_le_of_ne this rfl
+        absurd this
+        have : Real.sin x = 0 := by
+          calc
+            Real.sin x = Real.sin (Real.pi / 2 * Real.sin x) := by
+              rw [hx₃]
+            _ = Real.sin (2 * Real.pi * (Real.sin x / 2 / Real.pi)) := by
+              congr
+              rw [hk]
+            _ = 0 := by
+              simp only [Real.sin_nat_mul, Real.sin_pi_mul]
+              apply mul_eq_zero.mp
+              norm_cast
+              exact Real.pi_ne_zero
+        contradiction
+      rw [this] at hk
+      have hk' : 0 ≤ Real.sin x ∧ Real.sin x ≤ 1 := by
+        exact ⟨sin_nonneg_of_nonneg_of_le_pi hx₁ (by linarith [hx₂]), sin_le_one x⟩
+      have : 0 ≤ Real.sin x / 2 / Real.pi := by
+        calc
+          0 = 0 / Real.pi := by
+            field_simp
+          _ ≤ Real.sin x / 2 / Real.pi :=
+            div_le_div_of_nonneg_left (by linarith [hk']) (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
+      have : Real.sin x / 2 / Real.pi < 1 := by
+        have : Real.pi > 0 := by exact Real.pi_pos
+        calc
+          Real.sin x / 2 / Real.pi < 1 / 2 / Real.pi := by
+            div_lt_div_of_pos_right (by linarith [hk']) this
+          _ < 1 / 2 := by
+            div_lt_div_of_pos_right (by norm_num) this
+          _ < 1 := by norm_num
+      have : 0 < Real.pi := by exact Real.pi_pos
+      linarith
+  · -- Now we show that $\frac{\pi}2, \frac{3\pi}2$ are solutions.
+    rintro (rfl | rfl)
+    · constructor
+      · exact zero_le_pi_div_two
+      · constructor
+        · exact le_pi_div_two_pi
+        · exact Real.sin_pi_div_two
+    · constructor
+      · linarith [Real.pi_pos]
+      · constructor
+        · exact le_pi_div_two_pi
+        · exact Real.sin_three_pi_div_two
+```

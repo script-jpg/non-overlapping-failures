@@ -1,0 +1,119 @@
+-- We have $x^2-10x-29=x^2-10x-45+6=3(x^2-10x-69)+42$.
+
+  have h₅ : x ^ 2 - 10 * x - 29 = 3 * (x ^ 2 - 10 * x - 69) + 42 := by linarith
+
+  -- Therefore, $$\frac 1{x^2-10x-29}=\frac 1{3(x^2-10x-69)+42}=
+  -- \frac 1{3(x^2-10x-69)+3 \cdot 14}=\frac 1{3((x^2-10x-69)+14)}=
+  -- \frac 1{3(x^2-10x-55)}.$$
+
+  have h₆ : 1 / (x ^ 2 - 10 * x - 29) = 1 / (3 * (x ^ 2 - 10 * x - 69) + 42) := by
+    rw [h₅]
+  have h₇ : 1 / (3 * (x ^ 2 - 10 * x - 69) + 42) = 1 / (3 * (x ^ 2 - 10 * x - 69) + 3 * 14) := by
+    norm_num
+  have h₈ : 1 / (3 * (x ^ 2 - 10 * x - 69) + 3 * 14) = 1 / (3 * ((x ^ 2 - 10 * x - 69) + 14)) := by
+    ring
+  have h₉ : 1 / (3 * ((x ^ 2 - 10 * x - 69) + 14)) = 1 / (3 * (x ^ 2 - 10 * x - 55)) := by
+    ring
+  rw [h₆, h₇, h₈, h₉]
+
+  -- Similarly, $$x^2-10x-45=(x^2-10x-69)+24=3(x^2-10x-55)+12$$
+
+  have h₁₀ : x ^ 2 - 10 * x - 45 = 3 * (x ^ 2 - 10 * x - 55) + 12 := by linarith
+
+  -- Therefore, $$\frac 1{x^2-10x-45}=\frac 1{3(x^2-10x-55)+12}=
+  -- \frac 1{3(x^2-10x-55)+3 \cdot 4}=\frac 1{3((x^2-10x-55)+4)}=
+  -- \frac 1{3(x^2-10x-51)}.$$
+
+  have h₁₁ : 1 / (x ^ 2 - 10 * x - 45) = 1 / (3 * (x ^ 2 - 10 * x - 55) + 12) := by
+    rw [h₁₀]
+  have h₁₂ : 1 / (3 * (x ^ 2 - 10 * x - 55) + 12) = 1 / (3 * (x ^ 2 - 10 * x - 55) + 3 * 4) := by
+    norm_num
+  have h₁₃ : 1 / (3 * (x ^ 2 - 10 * x - 55) + 3 * 4) = 1 / (3 * ((x ^ 2 - 10 * x - 55) + 4)) := by
+    ring
+  have h₁₄ : 1 / (3 * ((x ^ 2 - 10 * x - 55) + 4)) = 1 / (3 * (x ^ 2 - 10 * x - 51)) := by
+    ring
+  rw [h₁₁, h₁₂, h₁₃, h₁₄]
+
+  -- Substitute back, we get $$\frac 1{3(x^2-10x-55)}+\frac 1{3(x^2-10x-51)}=
+  -- \frac 2{x^2-10x-69}.$$
+
+  have h₁₅ :  1 / (3 * (x ^ 2 - 10 * x - 55)) + 1 / (3 * (x ^ 2 - 10 * x - 51)) = 2 / (x ^ 2 - 10 * x - 69) := by
+    field_simp
+    ring
+  rw [h₁₅]
+
+  -- Clear denominators and we get $(x^2-10x-51)(x^2-10x-69)+(x^2-10x-55)(x^2-10x-69)=
+  -- 6(x^2-10x-55)(x^2-10x-51)$.
+
+  field_simp at h₄
+  ring_nf at h₄
+
+  -- Factorize, we get $(x-13)(x+1)(x^2-10x-51)=0$.
+
+  have h₁₆ : (x - 13) * (x + 1) * (x ^ 2 - 10 * x - 51) = 0 := by
+    linarith
+  have : (x - 13) * (x + 1) = 0 ∨ x ^ 2 - 10 * x - 51 = 0 := by
+    apply Or.elim (mul_eq_zero.mp h₁₆)
+    · intro h
+      apply Or.inl
+      linarith
+    · intro h
+      apply Or.inr
+      linarith
+  cases this with
+  | inl h =>
+    -- The positive solution to $x(x+1)=0$ is $x=0$ or $x=-1$, neither of which satisfies the
+    -- given equation.
+
+    have h₁₇ : x = 0 ∨ x = -1 := by
+      refine mul_eq_zero.mp?_
+      linarith
+    cases h₁₇ with
+    | inl h₁₈ =>
+      -- $x=0$ is not a positive number.
+      have : x = 0 := by linarith
+      have : ¬ 0 < x := by linarith
+      contradiction
+    | inr h₁₈ =>
+      -- $x=-1$ would make the given equation undefined.
+      have : x = -1 := by linarith
+      have : ¬ 0 < x := by linarith
+      contradiction
+  | inr h =>
+    -- The positive solution to $x^2-10x-51=0$ is $x=13$.
+    have h₁₉ : (x - 13) * (x + (5 - √(5^2 + 4 * 51))) * (x + (5 + √(5^2 + 4 * 51))) = 0 := by
+      ring_nf
+      nlinarith [Real.sq_sqrt (show 0 ≤ 5 ^ 2 + 4 * 51 by linarith)]
+    have h₂₀ : x = 13 ∨ x = - (5 - √(5^2 + 4 * 51)) ∨ x = - (5 + √(5^2 + 4 * 51)) := by
+      refine mul_eq_zero.mp?_
+      linarith
+    cases h₂₀ with
+    | inl h₂₁ =>
+      -- Clearly, $x=13$ is the only positive root.
+      exact h₂₁
+    | inr h₂₁ =>
+      cases h₂₁ with
+      | inl h₂₂ =>
+        -- Show that $x = -(5 - √(5^2 + 4 * 51))$ is not positive.
+        have : x = -(5 - √(5^2 + 4 * 51)) := by linarith
+        have : ¬ 0 < x := by
+          rw [this]
+          apply not_lt_of_gt
+          apply sub_neg_of_lt
+          apply Real.sqrt_lt
+          · linarith
+          · linarith
+        contradiction
+      | inr h₂₂ =>
+        -- Show that $x = -(5 + √(5^2 + 4 * 51))$ is not positive.
+        have : x = -(5 + √(5^2 + 4 * 51)) := by linarith
+        have : ¬ 0 < x := by
+          rw [this]
+          apply not_lt_of_gt
+          apply neg_neg_le_of_nonneg
+          apply add_nonneg
+          · linarith
+          · apply Real.sqrt_nonneg
+        contradiction
+
+```

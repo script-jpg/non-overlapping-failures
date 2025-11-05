@@ -1,0 +1,136 @@
+-- Prove that $S$ is a subset of $\{ \frac{\pi}{4}, \frac{3\pi}{4} \}$.
+  have h₁ : S ⊆ { Real.pi / 4, Real.pi - Real.pi / 4 } := by
+    intro x hx
+    specialize h₀ x
+    rw [hx.1] at h₀
+    simp at h₀
+    rcases h₀ with ⟨⟨hx₁, hx₂⟩, hx₃⟩
+
+    have hx₄ : Real.cos (Real.pi / 2 * Real.sin x) ≤ 1 := by
+      apply Real.cos_le_one
+
+    rw [← Real.cos_pi_sub] at hx₄
+    replace hx₄ : Real.cos (Real.pi / 2 - Real.pi / 2 * Real.sin x) ≤ 1 := by
+      linarith
+
+    have hx₅ : 0 ≤ Real.cos x := by
+      linarith
+
+    replace hx₅ : Real.cos x ^ 2 ≥ 0 := by
+      exact sq_nonneg (Real.cos x)
+
+    have hx₆ : Real.sin (Real.pi / 2 * Real.cos x) ^ 2 + Real.cos (Real.pi / 2 * Real.sin x) ^ 2 = 1 := by
+      calc
+        Real.sin (Real.pi / 2 * Real.cos x) ^ 2 + Real.cos (Real.pi / 2 * Real.sin x) ^ 2
+          = (Real.sin (Real.pi / 2 * Real.cos x) ^ 2 + Real.cos (Real.pi / 2 * Real.sin x) ^ 2) := by rfl
+        _ = 1 := by
+          rw [add_comm, <-Real.cos_sq_add_sin_sq]
+          ring_nf
+
+    nth_rw 2 [<- Real.cos_pi_sub] at hx₆
+    let θ := Real.pi / 2 * Real.cos x
+    let φ := Real.pi / 2 * Real.sin x
+    let ψ := Real.pi / 2 - φ
+
+    have hθ_le := mul_nonneg hx₂ hx₅
+    have hφ_le := mul_nonneg hx₁ (by linarith)
+    have hψ_le : 0 ≤ ψ := by
+      simp [ψ]
+      rw [show φ = Real.pi / 2 - ψ by ring]
+      linarith
+
+    have hθ φ ψ : sin θ + sin ψ = 0 ∧ cos φ - cos ψ = 0 := by
+      simp [θ, φ, ψ]
+      refine ⟨?_,?_⟩
+      · linarith [hx₃, Real.sin_pi_sub θ]
+      · linarith [hx₄, Real.cos_pi_sub φ]
+
+    have hθ' : π - θ ∈ Set.Icc (-(Real.pi / 2)) (Real.pi / 2) := by
+      refine ⟨?_,?_⟩
+      · linarith [hx₂, Real.pi_pos]
+      · linarith [hx₁, Real.pi_pos]
+
+    have hφ' : ψ ∈ Set.Icc (-(Real.pi / 2)) (Real.pi / 2) := by
+      refine ⟨?_,?_⟩
+      · linarith [hx₁, Real.pi_pos]
+      · linarith [hx₂, Real.pi_pos]
+
+    have hsinθ_eq_sinψ : Real.sin (π - θ) = Real.sin ψ := by
+      have : Real.sin (π - θ) = Real.sin θ := by
+        rw [Real.sin_pi_sub]
+      rw [this]
+      linarith [hθ.1]
+
+    have hcosφ_eq_cosψ : Real.cos φ = Real.cos ψ := by
+      linarith [hθ.2]
+
+    have hcosθ_eq_sinφ : Real.cos θ = Real.sin φ := by
+      have : Real.cos θ = Real.sin (π / 2 - θ) := by
+        rw [Real.sin_pi_div_two_sub]
+      rw [this]
+      linarith [hθ']
+
+    have hsinφ_eq_cosθ : Real.sin φ = Real.cos θ := by
+      linarith [hcosθ_eq_sinφ]
+
+    have : φ = ψ := by
+      apply Real.injOn_cos hφ' hψ_le
+      rw [hcosφ_eq_cosψ]
+    rw [this] at hθ
+    simp at hθ
+    replace this : x = Real.pi / 4 ∨ x = Real.pi - Real.pi / 4 := by
+      rcases hθ with ⟨hθ, hθ'⟩
+      · left
+        linarith [hθ]
+      · right
+        linarith [hθ']
+
+    exact this
+
+  -- Prove that $\{ \frac{\pi}{4}, \frac{3\pi}{4} \} \subseteq S$.
+  have h₂ : ({ Real.pi / 4, Real.pi - Real.pi / 4 } : Finset ℝ) ⊆ S := by
+    intro x hx
+    simp at hx
+    simp [hx]
+    rcases hx with hx | hx
+    · -- If $x = \frac{\pi}{4}$, we check that it satisfies the equation.
+      rw [hx]
+      have hx₁ : 0 ≤ Real.pi / 4 := by
+        linarith [Real.pi_pos]
+      have hx₂ : Real.pi / 4 ≤ Real.pi := by
+        linarith [Real.pi_pos]
+      have hx₃ : Real.sin (Real.pi / 2 * Real.cos (Real.pi / 4)) = Real.cos (Real.pi / 2 * Real.sin (Real.pi / 4)) := by
+        have hx₃ : Real.cos (Real.pi / 2 * Real.sin (Real.pi / 4)) = Real.cos (Real.pi / 2 * Real.cos (Real.pi / 4)) := by
+          rw [show Real.pi / 2 * Real.sin (Real.pi / 4) = Real.pi / 2 - Real.pi / 2 * Real.cos (Real.pi / 4) by ring]
+          rw [Real.cos_pi_sub]
+        have hx₄ : Real.sin (Real.pi / 2 * Real.cos (Real.pi / 4)) = Real.sin (Real.pi / 2 * Real.sin (Real.pi / 4)) := by
+          have : Real.pi / 2 * Real.cos (Real.pi / 4) = Real.pi / 2 - Real.pi / 2 * Real.sin (Real.pi / 4) := by ring
+          rw [this]
+          rw [Real.sin_pi_sub]
+        linarith
+      exact ⟨hx₁, hx₂, hx₃⟩
+    · -- If $x = \frac{3\pi}{4}$, we check that it satisfies the equation.
+      rw [hx]
+      have hx₁ : 0 ≤ Real.pi - Real.pi / 4 := by
+        linarith [Real.pi_pos]
+      have hx₂ : Real.pi - Real.pi / 4 ≤ Real.pi := by
+        linarith [Real.pi_pos]
+      have hx₃ : Real.sin (Real.pi / 2 * Real.cos (Real.pi - Real.pi / 4)) = Real.cos (Real.pi / 2 * Real.sin (Real.pi - Real.pi / 4)) := by
+        have hx₃ : Real.cos (Real.pi / 2 * Real.sin (Real.pi - Real.pi / 4)) = Real.cos (Real.pi / 2 * Real.cos (Real.pi - Real.pi / 4)) := by
+          rw [show Real.pi / 2 * Real.sin (Real.pi - Real.pi / 4) = Real.pi / 2 - Real.pi / 2 * Real.cos (Real.pi - Real.pi / 4) by ring]
+          rw [Real.cos_pi_sub]
+        have hx₄ : Real.sin (Real.pi / 2 * Real.cos (Real.pi - Real.pi / 4)) = - Real.sin (Real.pi / 2 * Real.sin (Real.pi - Real.pi / 4)) := by
+          have : Real.pi / 2 * Real.cos (Real.pi - Real.pi / 4) = Real.pi - Real.pi / 2 * Real.sin (Real.pi - Real.pi / 4) := by ring
+          rw [this]
+          rw [Real.sin_pi_sub]
+          ring
+        linarith
+      exact ⟨hx₁, hx₂, hx₃⟩
+
+  -- Combine the two inclusions to prove that $S = \{ \frac{\pi}{4}, \frac{3\pi}{4} \}$ and thus $|S| = 2$.
+  have h₃ : S = { Real.pi / 4, Real.pi - Real.pi / 4 } := by
+    exact Finset.eq_of_subset_of_subset h₁ h₂
+  rw [h₃]
+  simp
+
+```

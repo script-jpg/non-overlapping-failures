@@ -1,0 +1,196 @@
+-- suppose the contrary that there exists m such that f(m) ≠ m
+  by_contra h₂
+  push_neg at h₂
+  obtain ⟨m, hm⟩ := h₂
+
+  -- show that f is injective
+  have h₃ (x y : ℕ) (hx : 0 < x) (hy : 0 < y) (hxy : f x = f y) : x = y := by
+    -- if f(x) = f(y), then x = y
+    -- consider two cases x < y and x > y
+    by_cases h : x < y
+    · have : f x < f y := h₁ x hx
+      rw [hxy] at this
+      linarith
+    · push_neg at h
+      have : f y < f x := h₁ y hy
+      rw [hxy] at this
+      linarith
+
+  -- show that f(n) ≤ f(n + 1) for all n
+  have h₄ (n : ℕ) (hn : 0 < n) : f n ≤ f (n + 1) := by
+    -- f(n) ≤ f(n + 1) from the given condition
+    have h := h₁ n hn
+    have : f (f n) < f (n + 1) := h
+    have : f n ≤ f (f n) := by exact Nat.le_of_lt_succ h
+    linarith
+
+  -- show that f is strictly increasing
+  have h₅ (n m : ℕ) (hn : 0 < n) (hm : 0 < m) (hnm : n < m) : f n < f m := by
+    -- use the condition and induction
+    induction m, hm using Nat.le_induction with
+    | base => linarith
+    | succ m hm ih =>
+      by_cases h : n = m
+      · rw [h]
+        linarith
+      · have : n < m := hnm
+        specialize h₄ m (by linarith)
+        specialize ih (by linarith)
+        linarith
+
+  -- show that f(n) < f(f(n))
+  have h₆ (n : ℕ) (hn : 0 < n) : f n < f (f n) := by
+    -- since f is strictly increasing, f(n) < f(f(n))
+    have h := h₅ (f n) n (by linarith) hn (by linarith)
+    rw [h]
+    exact h₁ n hn
+
+  -- show that f(n) < f(n + 1) for all n
+  have h₇ (n : ℕ) (hn : 0 < n) : f n < f (n + 1) := by
+    -- f(n) < f(f(n)) < f(n + 1)
+    specialize h₆ n hn
+    specialize h₁ n hn
+    linarith
+
+  -- show that f(1) = 1
+  have h₈ : f 1 = 1 := by
+    -- f(1) = f(f(1)) < f(2)
+    have h := h₆ 1 (by norm_num)
+    -- f(1) > 0 and f(1) < f(2), so f(1) = 1
+    have : f 1 > 0 := h₀ 1
+    have : f 1 < f 2 := h
+    linarith
+
+  -- show that f(2) = 2
+  have h₉ : f 2 = 2 := by
+    -- f(2) = f(f(2)) < f(3)
+    have h := h₆ 2 (by norm_num)
+    -- f(2) > 0 and f(2) < f(3), so f(2) = 1 or f(2) = 2
+    have : f 2 > 0 := h₀ 2
+    have : f 2 < f 3 := h
+    have h' := h₇ 2 (by norm_num)
+    -- f(2) ≠ 1 from the injectivity
+    have : f 2 ≠ 1 := by
+      by_contra h
+      have : f 1 = f 2 := by rw [h₈, h]
+      exact h₂ h
+    -- so f(2) = 2
+    omega
+
+  -- show that f(3) = 3
+  have h₁₀ : f 3 = 3 := by
+    -- f(3) = f(f(3)) < f(4)
+    have h := h₆ 3 (by norm_num)
+    -- f(3) > 0 and f(3) < f(4), so f(3) = 1, 2, or 3
+    have : f 3 > 0 := h₀ 3
+    have : f 3 < f 4 := h
+    have h' := h₇ 3 (by norm_num)
+    -- f(3) ≠ 1 from the injectivity
+    have : f 3 ≠ 1 := by
+      by_contra h
+      have : f 1 = f 3 := by rw [h₈, h]
+      exact h₂ h
+    -- f(3) ≠ 2 from the injectivity
+    have : f 3 ≠ 2 := by
+      by_contra h
+      have : f 2 = f 3 := by rw [h₉, h]
+      exact h₂ h
+    -- so f(3) = 3
+    omega
+
+  -- show that f(4) = 4
+  have h₁₁ : f 4 = 4 := by
+    -- f(4) = f(f(4)) < f(5)
+    have h := h₆ 4 (by norm_num)
+    -- f(4) > 0 and f(4) < f(5), so f(4) = 1, 2, 3, or 4
+    have : f 4 > 0 := h₀ 4
+    have : f 4 < f 5 := h
+    have h' := h₇ 4 (by norm_num)
+    -- f(4) ≠ 1 from the injectivity
+    have : f 4 ≠ 1 := by
+      by_contra h
+      have : f 1 = f 4 := by rw [h₈, h]
+      exact h₂ h
+    -- f(4) ≠ 2 from the injectivity
+    have : f 4 ≠ 2 := by
+      by_contra h
+      have : f 2 = f 4 := by rw [h₉, h]
+      exact h₂ h
+    -- f(4) ≠ 3 from the injectivity
+    have : f 4 ≠ 3 := by
+      by_contra h
+      have : f 3 = f 4 := by rw [h₁₀, h]
+      exact h₂ h
+    -- so f(4) = 4
+    omega
+
+  -- show that f(5) = 5
+  have h₁₂ : f 5 = 5 := by
+    -- f(5) = f(f(5)) < f(6)
+    have h := h₆ 5 (by norm_num)
+    -- f(5) > 0 and f(5) < f(6), so f(5) = 1, 2, 3, 4, or 5
+    have : f 5 > 0 := h₀ 5
+    have : f 5 < f 6 := h
+    have h' := h₇ 5 (by norm_num)
+    -- f(5) ≠ 1 from the injectivity
+    have : f 5 ≠ 1 := by
+      by_contra h
+      have : f 1 = f 5 := by rw [h₈, h]
+      exact h₂ h
+    -- f(5) ≠ 2 from the injectivity
+    have : f 5 ≠ 2 := by
+      by_contra h
+      have : f 2 = f 5 := by rw [h₉, h]
+      exact h₂ h
+    -- f(5) ≠ 3 from the injectivity
+    have : f 5 ≠ 3 := by
+      by_contra h
+      have : f 3 = f 5 := by rw [h₁₀, h]
+      exact h₂ h
+    -- f(5) ≠ 4 from the injectivity
+    have : f 5 ≠ 4 := by
+      by_contra h
+      have : f 4 = f 5 := by rw [h₁₁, h]
+      exact h₂ h
+    -- so f(5) = 5
+    omega
+
+  -- consider two cases m < 1 and m > 1
+  by_cases h : m < 1
+  · replace h : m = 0 := by omega
+    rw [h] at hm
+    linarith
+  · push_neg at h
+    -- m > 1
+    -- suppose that f(m) ≠ m, then f(m) < m or f(m) > m
+    by_cases h : f m < m
+    · -- if f(m) < m, then f(f(m)) < f(m) from the condition
+      have : f (f m) < f m := h₁ m h
+      -- f(f(m)) < f(m) < m from the condition
+      have : f (f m) < m := Nat.lt_trans this h
+      -- f(f(m)) < m < f(m) from the condition
+      have : f (f m) < f m := Nat.lt_trans this h
+      -- but f(f(m)) = f(m) from the injectivity, which is a contradiction
+      have : f m = f (f m) := by exact h₃ m h₂
+      linarith
+    · push_neg at h
+      -- if f(m) ≥ m and f(m) ≠ m, then f(m) > m
+      replace h : f m > m := by omega
+      -- m > f⁻¹(m) from the injectivity
+      have h₈ (n : ℕ) (hn : 0 < n) : n > f n ↔ f n < n := by
+        constructor
+        · intro h
+          specialize h₃ n hn
+          linarith
+        · intro h
+          specialize h₃ n hn
+          linarith
+      -- m > f⁻¹(m) from the condition
+      have h₈ := h₈ m h
+      clear h₈
+      -- m > f⁻¹(f(m)) = m from the injectivity, which is a contradiction
+      specialize h₈ (f m) (by linarith)
+      simp [h₂] at h₈
+      linarith
+
+```

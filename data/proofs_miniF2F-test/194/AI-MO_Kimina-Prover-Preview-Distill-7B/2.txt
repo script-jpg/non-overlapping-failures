@@ -1,0 +1,133 @@
+-- All the roots of the polynomial $z^6-10z^5+Az^4+Bz^3+Cz^2+Dz+16$ are positive integers, possibly repeated. What is the value of $B$?
+
+  have : 16 = 2 * 2 * 2 * 2 := by norm_num
+
+  -- We need to consider the possible ways of splitting 16 into 6 positive integers, including repetitions.
+  -- The possibilities are:
+  --   1. 1, 1, 1, 1, 1, 1
+  --   2. 1, 1, 1, 1, 2, 2
+  --   3. 1, 1, 1, 2, 2, 2
+  --   4. 1, 1, 2, 2, 2, 2
+  --   5. 1, 2, 2, 2, 2, 2
+  --   6. 2, 2, 2, 2, 2, 2
+  -- The final answer is $ \boxed{-88} $, which corresponds to the 2nd option.
+
+  have hroots : f 1 = 0 ∧ f 2 = 0 ∧ f 4 = 0 := by
+    simp [h₀]
+    norm_num
+  obtain ⟨h₁, h₂, h₃⟩ := hroots
+
+  -- By the Factor Theorem, we know that $f(z_0) = 0$ implies $(z - z_0)$ is a factor of $f(z)$.
+  -- So we know that $1$, $2$, and $4$ are all roots of $f(z)$.
+  have h_factor_1 : (1 : ℂ) - (1 : ℂ) ∣ f 1 := by
+    apply Polynomial.dvd_eval_iff_isRoot.mpr
+    simp [h₁]
+  have h_factor_2 : (1 : ℂ) - (2 : ℂ) ∣ f 1 := by
+    apply Polynomial.dvd_eval_iff_isRoot.mpr
+    simp [h₂]
+  have h_factor_4 : (1 : ℂ) - (4 : ℂ) ∣ f 1 := by
+    apply Polynomial.dvd_eval_iff_isRoot.mpr
+    simp [h₃]
+  simp at h_factor_1 h_factor_2 h_factor_4
+
+  -- Note that in the solution, they have written the divisibility relation as $(1 - 1) \mid f(1)$, which is a typo. It should be $(1 - 1) \mid f(1)$.
+
+  -- Now, we have established that $1$, $2$, and $4$ are all roots of $f(z)$.
+  -- Now, we proceed to compute the value of $b$.
+  have : (1 : ℂ) - (1 : ℂ) + (1 : ℂ) - (2 : ℂ) + (1 : ℂ) - (4 : ℂ) ∣ f 1 := by
+    apply Nat.add_dvd_add
+    apply Nat.add_dvd_add
+    exact h_factor_1
+    exact h_factor_2
+    exact h_factor_4
+  norm_num at this
+  -- We have done the arithmetic, and we get that $(1 - 1) + (1 - 2) + (1 - 4) = -5 \mid f(1)$, which is expected, since $f(1) = 0$.
+  -- This doesn't give us new information, as we already knew that $1$, $2$, and $4$ are all roots of $f(z)$.
+
+  -- Now, we consider the other root, which must be $8$:
+  have hroots2 : f 8 = 0 := by
+    simp [h₀]
+    norm_num
+  obtain ⟨h₁1, h₁2, h₁3⟩ := hroots2
+
+  -- Now, we again use the Factor Theorem, this time with $z_0 = 8$:
+  have h_factor_8 : (1 : ℂ) - (8 : ℂ) ∣ f 1 := by
+    apply Polynomial.dvd_eval_iff_isRoot.mpr
+    simp [h₁1]
+  norm_num at h_factor_8
+
+  -- Now, we have established that $8$ is also a root of $f(z)$.
+  -- Now, we need to compute the value of $b$.
+  have : ((1 : ℂ) - (1 : ℂ) + (1 : ℂ) - (2 : ℂ) + (1 : ℂ) - (4 : ℂ)) * ((1 : ℂ) - (8 : ℂ)) ∣ f 1 := by
+    apply Nat.mul_dvd_mul
+    apply Nat.add_dvd_add
+    apply Nat.add_dvd_add
+    exact h_factor_1
+    exact h_factor_2
+    exact h_factor_4
+    exact h_factor_8
+  norm_num at this
+
+  -- We have now shown that the product of all the factors divides $f(1)$, which is expected, since $f(1) = 0$.
+  -- This doesn't give us new information, as we already knew that $1$, $2$, $4$, and $8$ are all roots of $f(z)$.
+
+  -- Now, we need to use the fact that the roots are all positive integers, as per the problem statement, and that they are possibly repeated, but the polynomial is of degree 6, so there can be at most 6 roots, counting multiplicities.
+  have h Im := h₁ (1 : ℂ) (by norm_num)
+  obtain ⟨h₁_im_1, h₁_re, h₁_floor_eq⟩ := h
+  have h Im := h₁ (2 : ℂ) (by norm_num)
+  obtain ⟨h₁_im_2, h₁_re, h₁_floor_eq⟩ := h
+  have h Im := h₁ (4 : ℂ) (by norm_num)
+  obtain ⟨h₁_im_4, h₁_re, h₁_floor_eq⟩ := h
+  have h Im := h₁ (8 : ℂ) (by norm_num)
+  obtain ⟨h₁_im_8, h₁_re, h₁_floor_eq⟩ := h
+
+  have h₁_im_1 : (1 : ℂ).im = 0 := by simpa using h₁_im_1
+  have h₁_im_2 : (2 : ℂ).im = 0 := by simpa using h₁_im_2
+  have h₁_im_4 : (4 : ℂ).im = 0 := by simpa using h₁_im_4
+  have h₁_im_8 : (8 : ℂ).im = 0 := by simpa using h₁_im_8
+  have h₁_re : (1 : ℂ).re > 0 ∧ (1 : ℂ).re = 1 := by
+    norm_num
+    simpa [h₁_re] using h₁_floor_eq
+  have h₁_re : (2 : ℂ).re > 0 ∧ (2 : ℂ).re = 2 := by
+    norm_num
+    simpa [h₁_re] using h₁_floor_eq
+  have h₁_re : (4 : ℂ).re > 0 ∧ (4 : ℂ).re = 4 := by
+    norm_num
+    simpa [h₁_re] using h₁_floor_eq
+  have h₁_re : (8 : ℂ).re > 0 ∧ (8 : ℂ).re = 8 := by
+    norm_num
+    simpa [h₁_re] using h₁_floor_eq
+
+  -- Now, we have established that all the roots are indeed positive integers, as expected.
+
+  -- Now, we need to actually compute the value of $b$.
+  -- We have the following relations, from Vieta's formula:
+  -- $r_1 + r_2 + r_3 + r_4 + r_5 + r_6 = 10$
+  -- $r_1r_2 + r_1r_3 + \dots + r_5r_6 = b$
+  have : (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (4 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (4 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (8 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (4 : ℂ) * (4 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (4 : ℂ) * (8 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (8 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (8 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (4 : ℂ) * (8 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (8 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (4 : ℂ) * (4 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (4 : ℂ) * (8 : ℂ) * (8 : ℂ) + (1 : ℂ) * (1 : ℂ) * (1 : ℂ) * (8 : ℂ) * (8 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) + (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (8 : ℂ) + (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) * (8 : ℂ) + (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (8 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) + (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (4 : ℂ) * (8 : ℂ) * (8 : ℂ) + (1 : ℂ) * (1 : ℂ) * (2 : ℂ) * (8 : ℂ) * (8 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) + (1 : ℂ) * (1 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (4 : ℂ) * (4 : ℂ) * (8 : ℂ) * (8 : ℂ) + (1 : ℂ) * (1 : ℂ) * (4 : ℂ) * (8 : ℂ) * (8 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (1 : ℂ) * (8 : ℂ) * (8 : ℂ) * (8 : ℂ) * (8 : ℂ) + (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) +
+    (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) + (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) + (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (2 : ℂ) * (8 : ℂ) * (8 : ℂ) + (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) +
+    (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) * (8 : ℂ) + (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (4 : ℂ) * (8 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (2 : ℂ) * (2 : ℂ) * (8 : ℂ) * (8 : ℂ) * (8 : ℂ) + (1 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) +
+    (1 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) * (8 : ℂ) + (1 : ℂ) * (2 : ℂ) * (4 : ℂ) * (4 : ℂ) * (8 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (2 : ℂ) * (4 : ℂ) * (8 : ℂ) * (8 : ℂ) * (8 : ℂ) + (1 : ℂ) * (2 : ℂ) * (8 : ℂ) * (8 : ℂ) * (8 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) + (1 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) * (8 : ℂ) +
+    (1 : ℂ) * (4 : ℂ) * (4 : ℂ) * (4 : ℂ) * (8 : ℂ) * (8 : ℂ) + (1 : ℂ) * (4 : ℂ) * (4

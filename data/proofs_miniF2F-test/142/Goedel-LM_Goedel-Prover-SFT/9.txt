@@ -1,0 +1,40 @@
+have : 672 = ∑ k in S, 1 := by
+    rw [← Finset.card_range_eq_sum_ones, ← Finset.prod_const]
+    refine' prod_subset (Finset.subset_univ _) fun x hx hx' => _
+    rw [Finset.mem_univ, Finset.mem_range, Nat.lt_succ_iff] at *
+    rw [Nat.succ_le_iff] at hx
+    -- 1 = -1 is the only number whose square is 1.
+    have : (k : ℤ) = 1 ∨ (k : ℤ) = -1 := by
+      have : ¬(2 : ℤ) ∣ k ∨ 2 ∣ k := by simpa only [Int.dvd_iff_emod_eq_zero, Int.emod_two] using hx'
+      have : ¬(2 : ℤ) ∣ k ∨ 2 ∣ k := by simpa only [Int.dvd_iff_emod_eq_zero, Int.emod_two] using hx'
+      -- k is odd
+      cases' this with this this
+      · left; rw [← this]
+      · right; rw [← this]
+    simp [this, Nat.factorial, mul_comm, mul_left_comm] at hx
+    simp [hx]
+  rw [← this]
+  apply Finset.card_congr
+  intro n _
+  simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_univ, true_and, Finset.mem_Icc,
+    Nat.factorial, mul_assoc, mul_comm, mul_left_comm]
+  constructor
+  · simp (config := { contextual := true }) only [Finset.mem_filter, Finset.mem_Icc,
+      Finset.mem_univ, Finset.mem_range, true_and, and_true_iff, Finset.mem_Icc,
+      Finset.mem_range, Finset.mem_univ, Finset.mem_Icc, Finset.mem_range, Finset.mem_univ,
+      Finset.mem_Icc, Finset.mem_range, Finset.mem_univ, Finset.mem_Icc, Finset.mem_range,
+      Finset.mem_univ, Finset.mem_Icc, Finset.mem_range, Finset.mem_univ]
+    intro h
+    contrapose! h
+    have h₁ := Finset.mem_Icc.mp h
+    have h₂ := Nat.lt_succ_iff.mp (Nat.le_of_dvd h₁.2 ⟨(Nat.le_of_dvd h₁.1 h.1).trans h₁.2, h.2⟩)
+    exact Nat.le_of_dvd h₁.2 h₂
+  · intro n h
+    exact ⟨h, Nat.le_of_dvd (Nat.factorial_pos _) h⟩
+  · intro n h₁ h₂
+    rw [eq_comm, mul_right_inj' two_ne_zero]
+    simp [mul_dvd_mul_iff_left (zero_lt_two.trans_le h₁)] at h₂
+    have h₃ := Finset.mem_Icc.mp h₁
+    rw [Nat.factorial_succ, mul_assoc, mul_dvd_mul_iff_left (zero_lt_two.trans_le h₁)]
+    exact h₂
+```

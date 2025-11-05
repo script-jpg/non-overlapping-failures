@@ -1,0 +1,146 @@
+-- Finset.range k = {0, 1,..., k-1}
+  have aux_finset_range (k : ℕ) : Finset.range k = {x | x < k} := by
+    ext x
+    simp
+
+  -- some lemmas about fourier transform
+  have h₄ (i : ℕ) : 0 < k → i ∈ Finset.range k → 0 < (1 / 2 : ℝ) ^ i := by
+    intro hk _
+    apply pow_pos
+    norm_num
+
+  have h₅ (i : ℕ) : 0 < k → 0 ≤ (1 / 2 : ℝ) ^ i := by
+    intro hk
+    apply pow_nonneg
+    norm_num
+
+  have h₆ (i : ℕ) : 0 < k → 1 ≤ (2 : ℝ) ^ i := by
+    intro hk
+    apply one_le_pow₀
+    norm_num
+
+  have h₇ (i : ℕ) : 0 < k → 0 < (1 : ℤ) / 2 ^ i := by
+    intro hk
+    apply one_div_pos.mpr
+    apply pow_pos
+    norm_num
+
+  have h₈ (i : ℕ) : 0 < k → 0 ≤ (1 : ℤ) / 2 ^ i := by
+    intro hk
+    apply one_div_nonneg.mpr
+    apply pow_nonneg
+    norm_num
+
+  have h₉ (i : ℕ) : 0 < k → 0 < (2 : ℤ) ^ i := by
+    intro hk
+    apply pow_pos
+    norm_num
+
+  -- rewrite y x = ∑ i in Finset.range k, Real.cos (a i + x) / 2 ^ i
+  have h₁₀ (x : ℝ) : y x = ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i := by
+    rw [h₁]
+    simp_rw [h₁]
+  -- y m = 0 → ∑ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i = 0
+  have h₁₁ : ∑ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i = 0 := by
+    rw [h₁₀] at h₂
+    norm_num at h₂
+    exact h₂
+  -- y n = 0 → ∑ i ∈ Finset.range k, Real.cos (a i + n) / 2 ^ i = 0
+  have h₁₂ : ∑ i ∈ Finset.range k, Real.cos (a i + n) / 2 ^ i = 0 := by
+    rw [h₁₀] at h₃
+    norm_num at h₃
+    exact h₃
+
+  -- subm - subn = sub (y m) (y n)
+  have h₁₃ (m n : ℝ) : m - n = ((fun x : ℝ => ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i) m - fun x : ℝ => ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i n) := by
+    simp_rw [h₁₀]
+    ring
+
+  -- ((fun x : ℝ => ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i) m - fun x : ℝ => ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i n) = ∑ i ∈ Finset.range k, (Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i)
+  have h₁₄ (m n : ℝ) : ((fun x : ℝ => ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i) m - fun x : ℝ => ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i n) = ∑ i ∈ Finset.range k, (Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i) := by
+    congr 1
+    simp_rw [h₁₀]
+    funext i
+    ring_nf
+
+  -- prove that ∑ i ∈ Finset.range k, (Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i) = 0
+  have h₁₅ : ∑ i ∈ Finset.range k, (Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i) = 0 := by
+    rw [←h₁₃ m n, h₁₁, h₁₂]
+    simp_rw [h₁₀]
+    ring
+
+  -- prove that ∑ i ∈ Finset.range k, (Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i) = 0 → ∃ t : ℤ, m - n = t * Real.pi
+  have h₁₆ (h : ∑ i ∈ Finset.range k, (Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i) = 0) : ∃ t : ℤ, m - n = t * Real.pi := by
+
+    -- aux prop, for any i < k, Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i = 0
+    have h₁₇ (i : ℕ) (hi : i < k) : Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i = 0 := by
+      -- prop, Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i = 0
+      have h₁₇ : (fun x : ℝ => ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i) m - fun x : ℝ => ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i n) = ∑ i ∈ Finset.range k, (Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i) := by
+        congr 1
+        simp_rw [h₁₀]
+        funext i
+        ring_nf
+      -- use finset.sum_sub_distrib
+      have h₁₈ : (∑ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i) - ∑ i ∈ Finset.range k, Real.cos (a i + n) / 2 ^ i = ∑ i ∈ Finset.range k, (Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i) := by
+        exact Finset.sum_sub_distrib
+      rw [←h₁₇, h₁₈] at h
+      simp_rw [h₁₀] at h
+      apply eq_sub_of_add_eq at h
+      apply congrArg (fun x => x * (2 : ℝ) ^ i) at h
+      rw [←mul_assoc, ←mul_assoc] at h
+      -- cancel common term
+      nth_rw 2 [mul_comm] at h
+      nth_rw 1 [mul_comm] at h
+      rw [mul_assoc] at h
+      simp_rw [←mul_assoc i, Finset.mul_sum] at h
+      simp_rw [←mul_sub] at h
+      -- for any i < k, Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i = 0
+      have h₁₉ : (fun x : ℝ => Real.cos (a x + m) / 2 ^ x - Real.cos (a x + n) / 2 ^ x) i = 0 := by
+        simp_rw [←h]
+        simp
+      simp_rw [h₁] at h₁₉
+      norm_num at h₁₉
+      rw [h₁₉]
+      symm
+      apply sub_eq_zero
+
+    -- then, use the aux prop to simplify the summation
+    replace h₁₇ : ∀ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i = 0 := by
+      intro i _
+      exact h₁₇ i (Nat.lt_of_mem_finset _)
+
+    -- for any i < k, Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i = 0 → ∃ t : ℤ, m - n = t * Real.pi
+    have h₁₈ (i : ℕ) (hi : i < k) : ∃ t : ℤ, Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i = t * Real.pi := by
+      apply sub_eq_zero_iff_eq.mpr
+      apply Real.cos_eq_cos_iff
+      any_goals
+      norm_cast
+      exact h₁₇ i hi
+      any_goals
+      norm_cast
+      apply sub_eq_zero_iff_eq.mpr
+      apply Real.cos_eq_cos_iff
+      any_goals
+      norm_cast
+      try linarith
+      try simp [←h₁₇]
+
+    -- simp the conclusion
+    replace h₁₈ : ∃ t : ℤ, ∑ i ∈ Finset.range k, (Real.cos (a i + m) / 2 ^ i - Real.cos (a i + n) / 2 ^ i) = t * Real.pi := by
+      obtain ⟨t, ht⟩ := h₁₈ 0 (aux_finset_range k 0)
+      use t
+      rw [ht]
+      simp_rw [Finset.sum_eq_zero_iff_of_nonneg]
+      -- all summand equal zero
+      intro i hi
+      exact (h₁₇ i hi).symm
+
+    -- result
+    obtain ⟨t, ht⟩ := h₁₈
+    use t
+    rw [h₁₃, h₁₄, ht, zero_mul]
+
+  -- prove that h₁₅ is true
+  apply h₁₆ h₁₅
+
+```

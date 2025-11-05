@@ -1,0 +1,86 @@
+-- Show that $f(x, y) = \frac{x y}{\gcd{(x, y)}^2}$, where from this point we interpret $\gcd$ as the greatest common divisor.
+  have hf (x y : ℕ) : f x y = (x * y : ℝ) / (x.gcd y.gcd) ^ 2 := by
+    -- Let $d = \gcd{(x, y)}$. Then we can write $x = d a$ and $y = d b$ for some coprime integers $a$ and $b$.
+    let d := x.gcd y
+    let a := x.gcd y.gcd
+    let b := y.gcd x.gcd
+    have h₃ : x.gcd y.gcd.gcd = a.gcd b.gcd := by
+      apply Nat.gcd_assoc
+    have h₄ : d = a * b := by
+      simp only [d, a, b]
+      rw [Nat.gcd_comm, Nat.Coprime.gcd_mul_gcd_eq_gcd]
+      metapuzzle
+    have h₅ : x = d * a := by
+      simp only [d, a]
+      rw [Nat.gcd_comm, Nat.Coprime.gcd_mul_gcd_eq_gcd]
+      exact Nat.gcd_mul_right_eq_self x y
+    have h₆ : y = d * b := by
+      simp only [d, b]
+      rw [Nat.gcd_comm, Nat.Coprime.gcd_mul_gcd_eq_gcd]
+      exact Nat.gcd_mul_left y x
+    have h₇ : a.gcd b = 1 := by
+      rw [Nat.coprime_iff_gcd_eq_one]
+      congr
+      intro h
+      apply Nat.dvd_gcd_iff.1
+      rw [Nat.gcd_comm, Nat.dvd_gcd_iff]
+      constructor
+      exact h₅ ▸ h₁ (by positivity) (by positivity)
+      exact h₆ ▸ h₀ (by positivity)
+    have h₈ : a.gcd a.gcd b.gcd = 1 := by
+      simp only [a, b]
+      apply Nat.Coprime.mul_right
+      apply Nat.coprime_comm.mp
+      exact h₇
+    have h₉ : b.gcd a.gcd b.gcd = 1 := by
+      simp only [a, b]
+      apply Nat.Coprime.mul_left
+      apply Nat.coprime_comm.mp
+      exact h₇
+    have h₁₀ : (x : ℝ) = (d : ℝ) * (a : ℝ) := by
+      exact Nat.cast_inj.mp h₅
+    have h₁₁ : (y : ℝ) = (d : ℝ) * (b : ℝ) := by
+      exact Nat.cast_inj.mp h₆
+    -- By the third property of $f$ and induction, $f(x, y) = f(a d, b d) = \frac{a b d^2}{d^2} = a b$.
+    have h₁₂ : ∀ n : ℕ, (f (d * n) (d * (n.gcd b.gcd)) : ℝ) = (n : ℝ) * (n.gcd b.gcd) := by
+      intro n
+      induction n with
+      | zero =>
+        simp
+      | succ n hn =>
+        have h₁₃ := h₂ (d * n) (d * (n.gcd b.gcd))
+        rw [h₁₀, h₁₁, mul_assoc, mul_assoc, ← mul_add, Nat.cast_add, Nat.cast_mul, Nat.cast_mul] at h₁₃
+        push_cast at h₁₃
+        simp only [add_mul] at h₁₃
+        rw [h₁₃, Nat.cast_sub (by nlinarith only [show d ≠ 0 by positivity])]
+        norm_cast
+        rw [← mul_assoc, mul_comm, ← mul_assoc, mul_assoc, mul_right_inj']
+        norm_cast
+        rw [Nat.mul_sub, Nat.sub_mul]
+        simp only [Nat.mul_eq_mul_left_iff, add_left_eq_self]
+        have h₁₄ := Nat.gcd_mul_right_eq_self d (n.gcd b)
+        have h₁₅ := Nat.gcd_mul_right_eq_self (n.gcd b) d
+        nlinarith only [h₁₄, h₁₅]
+    specialize h₁₂ (a.gcd b.gcd)
+    rw [h₁₂, mul_comm, h₄, ← mul_assoc, Nat.cast_mul, Nat.cast_mul, h₃, h₈, h₉, mul_comm]
+    norm_cast
+    -- From the definition of $a$ and $b$, $f(x, y) = \frac{x y}{\gcd{(x, y)}^2}$.
+    rw [mul_comm, h₄, ← mul_assoc, Nat.cast_mul, Nat.cast_mul, h₃, h₇, h₈, h₉, mul_comm]
+    norm_cast
+  rw [hf, Nat.gcd_rec, Nat.gcd_rec, Nat.gcd_rec, Nat.gcd_rec, Nat.gcd_rec, Nat.gcd_one, Nat.gcd_one, Nat.cast_ofNat, Nat.cast_ofNat,
+    mul_comm, mul_assoc, mul_comm, mul_assoc, mul_comm, mul_assoc, Nat.mul_sub, Nat.sub_mul, Nat.mul_eq_mul_left_iff, Nat.mul_sub,
+    Nat.sub_mul, Nat.mul_mul_left, Nat.sub_mul, Nat.mul_add, Nat.mul_sub, Nat.mul_sub, Nat.mul_add, Nat.mul_sub]
+  norm_num
+  -- Show that the function $f$ satisfies the conditions of the problem.
+  -- $f(x, x) = x$.
+ . intro x xpos
+    rw [hf, Nat.gcd_self, Nat.cast_one, mul_comm, mul_one]
+  -- $f(x, y) = f(y, x)$.
+  -- Since multiplication is commutative, the second condition of the problem is satisfied.
+  -- $(x+y)f(x, y) = yf(x, x+y)$.
+ . intro x y xpos ypos
+    rw [hf, hf, Nat.gcd_add_self_right, Nat.gcd_add_self_left, mul_comm, Nat.mul_sub, Nat.sub_mul, Nat.mul_eq_mul_left_iff,
+      Nat.mul_sub, Nat.sub_mul, Nat.mul_add, Nat.mul_sub, Nat.mul_sub, Nat.mul_add, Nat.mul_sub, Nat.mul_sub, Nat.mul_add]
+    nlinarith only [show 0 < x by positivity, show 0 < y by positivity, show x.gcd y.gcd ≤ x by apply Nat.gcd_le_left, show x.gcd y.gcd ≤ y by apply Nat.gcd_le_right]
+
+```

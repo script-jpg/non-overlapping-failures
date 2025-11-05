@@ -1,0 +1,45 @@
+-- First, we prove that, $\sum_{k=2}^{n} \frac{1}{\sqrt{k}} < 2\sqrt{n} $ for any $n$.
+  have (n : ℕ) : (∑ k in Finset.Icc (2 : ℕ) n, 1 / Real.sqrt k) < 2 * Real.sqrt n := by
+    -- We use induction on $n$.
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      -- We can assume $n \geq 2$.
+      wlog h : 2 ≤ n
+      {
+        -- The case $n = 0$ is trivial.
+        simp
+        norm_num
+        linarith[
+          Real.sqrt_pos.mpr (show (0 : ℝ) < 1 by norm_num),
+          Real.sqrt_pos.mpr (show (0 : ℝ) < 4 by norm_num)]
+      }
+      specialize ih (by linarith)
+      specialize ih (by linarith)
+      have h1 : (Finset.Icc 2 n) = (Finset.Icc 2 n) \ {n + 1} ∪ {n + 1} := by
+        rw [Finset.sdiff_union_self_eq_union]
+        simp
+        exact Finset.Nonempty.mem_singleton (n + 1)
+      have h2 : ∑ k ∈ (Finset.Icc 2 n), 1 / Real.sqrt k = ∑ k ∈ (Finset.Icc 2 n) \ {n + 1}, 1 / Real.sqrt k + 1 / Real.sqrt (n + 1) := by
+        rw [h1, Finset.sum_union]
+        simp
+        exact Finset.disjoint_sdiff_self
+      rw [h2]
+      specialize ih (by linarith)
+      have h3 : (Finset.Icc 2 n) \ {n + 1} = Finset.Icc 2 n - {n + 1} := by
+        exact Finset.Icc_sdiff_Icc_eq_Icc (by linarith) (by linarith)
+      rw [h3]
+      have h4 : Finset.sum (Finset.Icc 2 n - {n + 1}) (fun k => 1 / Real.sqrt k) < 2 * Real.sqrt n - 1 / Real.sqrt (n + 1) := by
+        specialize ih (by linarith)
+        exact sub_of_lt_add ih
+      linarith
+
+  -- We have $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} < 2\sqrt{10000}$ by the above lemma.
+  specialize this 10000
+  -- We have $2\sqrt{10000} < 198$.
+  have h1 : 2 * Real.sqrt (10000 : ℕ) < 198 := by
+    rw [Real.sqrt_eq_iff_sq_eq] <;> norm_num
+    <;> linarith
+  rw [← this] at h1
+  exact h1
+```

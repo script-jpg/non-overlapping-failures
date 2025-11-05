@@ -1,0 +1,120 @@
+-- define bunch of variables to simplify
+  have h₃ : x > 0 := by positivity
+  have h₄ : y > 0 := by positivity
+  have h₅ : Real.log x ≠ 0 := by
+    apply Real.log_ne_zero_of_pos_of_ne_one h₃ (by simpa using h₀.1)
+  have h₆ : Real.log y ≠ 0 := by
+    apply Real.log_ne_zero_of_pos_of_ne_one h₄ (by simpa using h₀.2)
+
+  -- simplify square root of $xy$ in `h₂`
+  have h₇ : √(x * y) = 8 := by
+    rw [h₂]
+    exact Real.sqrt_eq_cases.2 (by norm_num)
+
+  -- simplify log equation in `h₁`
+  have h₈ : Real.log x * Real.log y * Real.log 2 = 4 * Real.log 2 * Real.log 2 := by
+    convert h₁ using 1
+    apply_fun fun t => t * Real.log 2 * Real.log y at h₁
+    rw [mul_assoc, mul_assoc, ←mul_assoc _ _ (Real.log 2), mul_comm (Real.log y), <-mul_assoc, <-mul_assoc,
+      mul_assoc, mul_left_comm, mul_assoc, mul_left_comm]
+    conv => lhs; rw [mul_assoc, mul_comm (Real.log 2), mul_assoc, mul_assoc]
+    ring
+    · exact h₃
+    · exact h₄
+    · exact h₅
+    · exact h₆
+
+  -- simplify log equation in h₁ to a "square root" form in h₁
+  have h₁₀ : (√(Real.log x * Real.log y) * Real.log 2)^2 = (4 * Real.log 2 * Real.log 2)^2 := by
+    rw [mul_pow, mul_pow, h₈]
+    ring_nf
+
+  -- further simplify h₁₀ to h₁₁
+  have h₁₁ : Real.log x * Real.log y * Real.log 2 = 16 * Real.log 2 * Real.log 2 := by
+    have h₁₁ : (4 * Real.log 2 * Real.log 2)^2 = (16 * Real.log 2 * Real.log 2) := by ring
+    rw [h₁₁] at h₁₀
+    have h₁₂ : √(Real.log x * Real.log y) * Real.log 2 = √((16 * Real.log 2 * Real.log 2) / Real.log 2 * Real.log 2) := by
+      rw [h₁₀]
+    rw [h₁₂]
+    rw [mul_comm, Real.sqrt_mul, Real.sqrt_mul_self]
+    · apply div_nonneg
+      · norm_num
+      · apply mul_nonneg
+        · apply Real.log_nonneg
+          exact h₃
+        · apply Real.log_nonneg
+          exact h₄
+    · apply mul_nonneg
+      · norm_num
+      · apply mul_nonneg
+        · apply Real.log_nonneg
+          exact h₃
+        · apply Real.log_nonneg
+          exact h₄
+
+  -- extract common term from h₁₁
+  have h₁₂ : (Real.log x * Real.log y) = (16 * Real.log 2 * Real.log 2) / Real.log 2 * Real.log 2 := by
+    rw [mul_assoc, mul_comm (Real.log 2), mul_assoc, h₁₁]
+
+  -- cancel common term in h₁₂
+  have h₁₃ : Real.log x * Real.log y = 16 * Real.log 2 * Real.log 2 := by
+    have h₁₃ : (Real.log 2 * Real.log 2) ≠ 0 := by
+      apply mul_ne_zero
+      · exact h₅
+      · exact h₆
+    rw [h₁₂, mul_assoc, mul_assoc, mul_assoc, mul_left_comm, <-mul_assoc, <-mul_assoc,
+      mul_assoc, mul_assoc, mul_left_comm, mul_assoc, mul_assoc]
+    conv => lhs; rw [mul_assoc, mul_assoc, mul_left_comm, mul_assoc, mul_comm (Real.log 2), mul_assoc]
+    rw [div_mul_cancel₀ _ h₁₃, mul_assoc, mul_comm (Real.log 2), mul_assoc, pow_two, mul_assoc,
+      mul_left_comm, <-mul_assoc, <-mul_assoc, mul_assoc, mul_left_comm, mul_assoc]
+    ring
+    · apply mul_nonneg
+      · apply Real.log_nonneg
+        exact h₃
+      · apply Real.log_nonneg
+        exact h₄
+    · apply div_nonneg
+      · apply mul_nonneg
+        · norm_num
+        · apply mul_nonneg
+          · apply Real.log_nonneg
+            exact h₃
+          · apply Real.log_nonneg
+            exact h₄
+      · apply mul_nonneg
+        · apply Real.log_nonneg
+          exact h₃
+        · apply Real.log_nonneg
+          exact h₄
+
+  -- simplify h₁₃ to a more explicit form
+  have h₁₄ : Real.log x * Real.log y = 4 * Real.log 2 * Real.log 2 * 4 := by
+    rw [h₁₃]
+    ring
+
+  -- explicitly write out what we need to prove
+  have h₁₅ : (Real.log (x / y) / Real.log 2)^2 = 20 := by
+    -- rewrite target expression into product form
+    have : (Real.log (x / y) / Real.log 2)^2 = (Real.log x - Real.log y)^2 / (Real.log 2)^2 := by
+      rw [Real.log_div (by positivity) (by positivity)]
+      ring
+    rw [this]
+    -- prove target expression is equal to $20$ through algebraic manipulation
+    calc
+      (Real.log x - Real.log y)^2 / (Real.log 2)^2 = ((Real.log x * Real.log y) - Real.log x * Real.log 2 - Real.log 2 * Real.log y + (Real.log 2)^2) / (Real.log 2)^2 := by
+        rw [sub_sq, div_pow]
+        ring
+      _ = -2 * (Real.log x * Real.log y) / (Real.log 2)^2 + ((Real.log 2)^2 + Real.log x * Real.log 2 + Real.log 2 * Real.log y) / (Real.log 2)^2 := by ring
+      _ = -2 * (Real.log x * Real.log y) / (Real.log 2)^2 + (Real.log 2 + 1) * (Real.log 2 + Real.log x * Real.log y) / (Real.log 2)^2 := by ring
+      _ = -2 * (Real.log x * Real.log y) / (Real.log 2)^2 + (Real.log 2 + 1) * (Real.log 2 + 16 * Real.log 2 * Real.log 2 / Real.log 2 / Real.log 2) / (Real.log 2)^2 := by
+        rw [h₁₄]
+        group
+        ring
+      _ = 20 := by
+        rw [h₁₃]
+        field_simp
+        ring
+
+  -- finish up
+  exact h₁₅
+```

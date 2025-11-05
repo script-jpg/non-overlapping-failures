@@ -1,0 +1,89 @@
+-- Compute the coefficients in new basis after subtracting a multiple of the first basis vector
+  have coeff_sub (k n : ℕ) : (↑(Finset.range (n + 1) : Finset ℕ)) ^ k = ∑ i in Finset.range (n + 1), Nat.choose (n + k - i) (k - i) * (↑(Finset.range (n + 1) : Finset ℕ)) ^ i := by
+    induction k with
+    | zero => simp [Finset.range]
+    | succ k ih =>
+      rw [Finset.range_succ, Finset.mem_range] at ih ⊢
+      simp [ih, Finset.sum_add_distrib, pow_succ, Nat.choose_one_right, Nat.choose_succ_self_right, add_zero, pow_zero, Nat.cast_one, Nat.cast_add]
+
+      -- The coefficient of i = k in the sum is 0 as there are no elements in the range [k, k + 1)
+      -- The coefficient of i = k + 1 is 1 as (n + (k + 1) - (k + 1)) = n + 1 and (k + 1 - (k + 1)) = 0
+      -- Hence the sum simplifies to 0 + 1 * (n + 1) * (↑(Finset.range (n + 1) : Finset ℕ)) ^ (k + 1)
+
+  -- Compute the sum of coefficients of basis in the new basis
+  have sum_coeff (n k : ℕ) : ∑ i in Finset.range (n + 1), Nat.choose (n + i) (i - k) = (↑(Finset.range (n + 1) : Finset ℕ)) ^ k := by
+    calc
+      ∑ i in Finset.range (n + 1), Nat.choose (n + i) (i - k) = ∑ i in Finset.range (n + 1), (↑(Finset.range (n + 1) : Finset ℕ)) ^ i * Nat.choose (n + k - i) (k - i) := by
+        -- Substitute i with i + k
+        simp [Finset.sum]
+        calc
+          ∑ i in Finset.range (n + 1), Nat.choose (n + (i + k)) ((i + k) - k) * (↑(Finset.range (n + 1) : Finset ℕ)) ^ (i + k) = ∑ i in Finset.range (n + 1), Nat.choose (n + i + k) i * (↑(Finset.range (n + 1) : Finset ℕ)) ^ i := by
+            congr
+            ext i
+            rw [add_comm, Nat.sub_add_comm, Nat.choose_symm]
+            apply Nat.choose_symm
+            rw [add_comm]
+          _ = ∑ i in Finset.range (n + 1), (↑(Finset.range (n + 1) : Finset ℕ)) ^ i * Nat.choose (n + i) i := by
+            simp_rw [mul_comm, Nat.choose_comm]
+            rw [Nat.choose_symm]
+            congr
+            ext i
+            rw [Nat.add_sub_cancel', Nat.sub_sub_self, Nat.choose_symm]
+            apply Nat.choose_symm
+            rw [Nat.add_sub_cancel']
+          _ = _ := by
+            rwa [Finset.sum_comm]
+
+      _ = _ := by
+        rw [Finset.sum_comm, coeff_sub]
+
+  -- Compute the sum of the coefficients of the basis in the new basis
+  have sum_coeff' (n : ℕ) : ∑ i in Finset.range (n + 1), (↑(Finset.range (n + 1) : Finset ℕ)) ^ i = (↑(Finset.range (n + 1) : Finset ℕ)) ^ n := by
+    calc
+      ∑ i in Finset.range (n + 1), (↑(Finset.range (n + 1) : Finset ℕ)) ^ i = ∑ i in Finset.range (n + 1), Nat.choose (n + i) (i - 0) := by
+        simp [Finset.sum]
+        congr
+        ext i
+        rw [Nat.mod_eq_sub_mod, Nat.mod_eq_sub_mod]
+        have : (n + i) % 2 = i % 2 := by omega
+        have : i % 2 = (i - 0) % 2 := by simp
+        rw [←this, ←this]
+        exact Nat.choose_self_right_evenOdd (n + i) (i - 0)
+      _ = (↑(Finset.range (n + 1) : Finset ℕ)) ^ n := by
+        simpl [Finset.sum]
+
+  -- Compute the final expression and prove it is not divisible by 5
+  have : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = (1 + 2 ^ 3) ^ (n + 1) - (1 - 2 ^ 3) ^ (n + 1) := by
+    calc
+      ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = 2 * ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * (2 ^ 3) ^ k := by
+        rw [Finset.mul_sum]
+        simp [Finset.range_add, Finset.range_one, pow_add]
+        have : (2 ^ 3 : ℕ) = 1 - 2 ^ 3 := by omega
+        rw [this]
+        congr
+        ext k
+        ring_nf
+        rw [Nat.add_sub_cancel']
+        ring_nf
+        have : (1 : ℤ) - 2 ^ 3 < 0 := by norm_num
+        have : ((1 : ℤ) - 2 ^ 3) ^ k = 0 := by
+          apply pow_eq_zero
+          linarith
+        rw [this, mul_zero, sub_zero, sub_zero, add_zero]
+      _ = 2 * ((1 + 2 ^ 3) ^ (n + 1) - (1 - 2 ^ 3) ^ (n + 1)) := by
+        -- Use the formula for the sum of combinations in a row of Pascal triangle
+        rw [add_pow, sub_pow]
+        congr
+        · simp [Finset.sum_range_add, Finset.sum_range_one, pow_succ]
+          ring_nf
+        · simp [Finset.sum_range_add, Finset.sum_range_one, pow_succ]
+          ring_nf
+          omega
+      _ = _ := by
+        rw [mul_sub, mul_add, mul_one, ←add_mul, mul_assoc, mul_assoc]
+        ring_nf
+
+  -- The expression (1 + 2 ^ 3) ^ (n + 1) - (1 - 2 ^ 3) ^ (n + 1) is not divisible by 5 as the last digit alternates between 2 and 4 for consecutive n
+  obtain ⟨k, hk⟩ := Nat.exists_eq_add_of_le' (show 5 ∣ (1 + 2 ^ 3) ^ (n + 1) by omega)
+  omega
+```

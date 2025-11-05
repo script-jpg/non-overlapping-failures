@@ -1,0 +1,100 @@
+-- We start by observing that $f(128) < f(1296)$, $f(1296) < f(2048)$, and $f(2048) < f(3136)$.
+  have h1 : f 128 < f 1296 := by
+    rw [h₀ 128 (by decide), h₀ 1296 (by decide)]
+    decide
+  have h2 : f 1296 < f 2048 := by
+    rw [h₀ 1296 (by decide), h₀ 2048 (by decide)]
+    decide
+  have h3 : f 2048 < f 3136 := by
+    rw [h₀ 2048 (by decide), h₀ 3136 (by decide)]
+    decide
+
+  -- Since $f(n)$ is defined as the number of divisors of $n$ divided by the cube root of $n$,
+  -- this is equivalent to saying that $f(128) < f(1296)$, $f(1296) < f(2048)$, and $f(2048) < f(3136)$.
+  have h4 : f 128 < f 1296 := by assumption
+  have h5 : f 1296 < f 2048 := by assumption
+  have h6 : f 2048 < f 3136 := by assumption
+
+  -- We will now reach a contradiction by assuming that $N$ has more than 3 digits.
+  by_contra! h
+  -- Let $n = \lfloor N / 1000 \rfloor$, let $m$ be the number represented by the last 3 digits of $N$,
+  -- and let $k$ be the number of digits of $n$.
+  let n := N / 1000
+  let m := N % 1000
+  let k := Nat.digits 10 n |>.length
+
+  -- We can split the digits of $N$ into the first digit, the next $k-1$ digits, and the last 3 digits.
+  have h7 : N = n * 10 ^ (k - 1) + m := by
+    simp only [n, m]
+    rw [←@Nat.div_add_mod N 1000, add_comm, ←add_assoc, Nat.add_sub_cancel, add_comm]
+    apply Nat.div_add_mod
+
+  -- This means that $N \geq 1000$, or equivalently, $n \geq 1$.
+  have h8 : n ≥ 1 := by
+    by_contra! h''
+    have h9 : n = 0 := by omega
+    simp [h9] at h7
+    have h10 : m = N := by omega
+    simp [h10] at h7
+    have h11 : N = 0 := by omega
+    simp [h11] at h₁
+    specialize h₁ 1 (by decide)
+    simp [h11] at h₁
+
+  -- Since $f(N) > f(128)$, $f(N) > f(1296)$, and $f(N) > f(2048)$, it follows that $n \neq 1$.
+  have h11 : n ≠ 1 := by
+    by_contra! h''
+    simp [h''] at h7
+    have h12 : N = 1296 ∨ N = 2048 ∨ N = 3136 := by omega
+    rcases h12 with (rfl | rfl | rfl)
+    · specialize h4 (by decide); simp at h4
+    · specialize h5 (by decide); simp at h5
+    · specialize h6 (by decide); simp at h6
+
+  -- This means that $n \geq 2$, or equivalently, $N \geq 2000$.
+  have h12 : n ≥ 2 := by
+    by_contra! h''
+    have h13 : n = 0 ∨ n = 1 := by omega
+    rcases h13 with (h13 | h13)
+    · simp [h13] at h7; have h14 : m = N := by omega; simp [h14] at h7; have h15 : N = 0 := by omega; simp [h15] at h₁; specialize h₁ 1 (by decide); simp at h₁
+    · contradiction
+
+  -- Inpartilar, $n \geq 1000$, or equivalently, $N \geq 10000$.
+  have h13 : n ≥ 1000 := by
+    by_contra! h''
+    have h14 : n = 0 ∨ n = 1 ∨ n = 2 ∨ n = 3 ∨ n = 4 ∨ n = 5 ∨ n = 6 ∨ n = 7 ∨ n = 8 ∨ n = 9 := by omega
+    rcases h14 with (h14 | h14 | h14 | h14 | h14 | h14 | h14 | h14 | h14 | h14)
+    all_goals {
+      simp [h14] at h7
+      have h15 : m = N := by omega
+      simp [h15] at h7
+      have h16 : N = 0 := by omega
+      simp [h16] at h₁
+      specialize h₁ 1 (by decide)
+      simp at h₁
+    }
+
+  -- We will now show that $f(N) \leq f(10000)$, which contradicts our assumption that $f(N) > f(1296)$.
+  have h14 : f N ≤ f 10000 := by
+    have h15 : d(N) ≤ d(10000) := by
+      have h16 : N ≠ 10000 := by
+        by_contra! h17
+        rw [h17] at h12
+        omega
+      exact Nat.divisors_le_divisors h13 h16
+    rw [h₀ N (by decide), h₀ 10000 (by decide)]
+    apply Nat.le_div_of_mul_le
+    simp [h15]
+    omega
+
+  -- Since $f(N) > f(1296)$ and $f(N) \leq f(10000)$, it follows that $f(1296) < f(10000)$.
+  have h15 : f 1296 < f 10000 := by linarith only [h4, h14]
+
+  -- However, this contradicts our earlier calculation that $f(1296) > f(10000)$.
+  have h16 : f 1296 > f 10000 := by
+    rw [h₀ 1296 (by decide), h₀ 10000 (by decide)]
+    decide
+
+  -- To summarize, we have shown that $f(1296) < f(10000)$ and $f(1296) > f(10000)$, which is a contradiction.
+  linarith only [h15, h16]
+```

@@ -1,0 +1,70 @@
+-- Without loss of generality, we can assume that $a \geq b \geq c$.
+  wlog h : a ≥ b ∧ b ≥ c
+
+  · -- Prove that the inequality is invariant under the following transformations:
+    -- \{a, b, c\} = \{x, y, z\} with x ≥ y ≥ z
+    -- a = x + y - z, b = x + z - y, c = y + z - x.
+    obtain ⟨x, y, z, hx, hy, hz, ha, hb, hc⟩ : ∃ x y z : ℝ, a = x + y - z ∧ b = x + z - y ∧ c = y + z - x := by
+      use (a + b - c) / 2, (a + c - b) / 2, (b + c - a) / 2
+      use by linarith only [h₁, h₂, h₃]
+      split_ands
+      all_goals linarith
+
+    -- Transform the inequality using the substitutions:
+    -- a = x + y - z, b = x + z - y, c = y + z - x.
+    have : 0 ≤ a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) := by
+      rw [ha, hb, hc]
+      -- Simplify the expression using new variables:
+      -- x, y, z with x ≥ y ≥ z and
+      -- a = x + y - z, b = x + z - y, c = y + z - x.
+      ring_nf
+      -- Coefficients are non-negative because they are squares.
+      positivity
+    assumption
+
+  -- Now we can assume that a ≥ b ≥ c.
+  -- We can even assume that a > b > c.
+  -- First, consider the case where a > b > c.
+  by_cases h' : a > b ∧ b > c
+
+  · -- If a > b > c, then the following transformations don't change the inequality:
+    -- a → b, b → c, c → a
+    -- We get a²bc(a-b) + b²ca(b-c) + cab²(c-a)
+    --           = ab(a-b)c(a+b) + bc(b-c)a(b+c) + ca(c-a)b(c+a)
+    -- Let's see if the right-hand side is non-negative:
+    -- Case 1: a > b > c > 0
+    have : 0 ≤ a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) := by
+      -- Transform the inequality using a = b + x, b = c + y, c = a - x - y.
+      obtain ⟨x, y, h₀, h₁, h₂, h₃⟩ : ∃ x y : ℝ, a = b + x ∧ b = c + y ∧ c = a - x - y := by
+        use b - c, b - a
+        split_ands
+        all_goals linarith
+      -- Simplify the expression using new variables:
+      -- a = b + x, b = c + y, c = a - x - y.
+      rw [h₃, h₁, h₂] at h₀
+      -- Eliminate variables and get a polynomial in terms of x and y.
+      nlinarith [sq_nonneg x, sq_nonneg y, sq_nonneg (x - y)]
+    assumption
+
+  -- Now consider the case where a > c > b.
+  · -- We can even assume that a > c > b > 0.
+    -- Subtracting the two inequalities gives a > c > b.
+    have h : a > c ∧ c > b := by
+      split_ands
+      · linarith
+      · linarith
+    clear h'
+    -- Subtracting the two inequalities gives a > c > b.
+    -- Let's see if the right-hand side is non-negative:
+    -- Case 2: a > c > b > 0
+    -- Transform the inequality using a = c + x, c = b + y, b = a - x - y.
+    obtain ⟨x, y, h₀, h₁, h₂, h₃⟩ : ∃ x y : ℝ, a = c + x ∧ c = b + y ∧ b = a - x - y := by
+      use a - c, c - b
+      split_ands
+      all_goals linarith
+    -- Simplify the expression using new variables:
+    -- a = c + x, c = b + y, b = a - x - y.
+    rw [h₃, h₁, h₂] at h₀
+    -- Eliminate variables and get a polynomial in terms of x and y.
+    nlinarith [sq_nonneg x, sq_nonneg y, sq_nonneg (x - y)]
+```

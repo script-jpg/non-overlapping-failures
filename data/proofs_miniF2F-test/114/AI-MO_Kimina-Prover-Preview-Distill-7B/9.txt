@@ -1,0 +1,38 @@
+-- We suppose that $n \geq 41$, and look for a contradiction.
+  by_contra! h₂
+  -- If $n < 41$, then $p(n) = n^2 - n + 41$ is divisible by $41$.
+  have h₃ : (41 : ℕ) ∣ p n := by
+    rw [h₁]
+    apply Nat.dvd_of_mod_eq_zero
+    rw [h₀]
+    calc n ^ 2 - n + 41
+      _ = (n - 1) * n + 41 := by ring
+      _ ≡ 0 * n + 41 [ZMOD 41] := by simp [Int.ModEq, Nat.mod_succ]
+      _ ≡ 41 [ZMOD 41] := by simp [Int.ModEq]
+      _ ≡ 0 [ZMOD 41] := by simp [Int.ModEq]
+
+  -- So, any common factor of $p(n)$ and $p(n+1)$ must also be divisible by $41$.
+  have h₄ : 41 ∣ Nat.gcd (p n) (p (n + 1)) := by
+    rw [h₁]
+    apply Nat.dvd_gcd
+    · exact h₃
+    · rw [h₁]
+      apply Nat.dvd_of_mod_eq_zero
+      rw [h₀]
+      dsimp
+      calc n ^ 2 - n + 41
+        _ = (n + 1) ^ 2 - (n + 1) + 41 - 2 * n := by ring
+        _ ≡ 41 - 2 * n [ZMOD 41] := by simp [Int.ModEq, Nat.mod_succ]
+        _ ≡ 0 [ZMOD 41] := by simp [Int.ModEq]; omega
+
+  -- But $41$ cannot be greater than $1$ and divide the gcd of $p(n)$ and $p(n+1)$, so we get a contradiction.
+  have h₅ : 41 ≤ 1 := by
+    rw [show 1 = Nat.gcd 1 1 by norm_num] at h₁
+    have : 41 ∣ 1 := by
+      apply Nat.dvd_gcd_iff.2
+      rw [h₁]
+      exact h₄
+      exact h₃
+    omega
+  omega
+```

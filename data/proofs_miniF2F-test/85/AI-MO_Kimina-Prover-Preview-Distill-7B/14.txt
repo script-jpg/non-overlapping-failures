@@ -1,0 +1,164 @@
+-- 1. Assume that $n$ is not prime, then we can express $n$ as a product of two integers $n = ab$ with $1 < a < n$ and $1 < b < n$.
+  by_contra! hnp; apply Nat.not_prime_mul; all_goals
+    repeat ( split_ands with h'; right; linarith)
+
+  -- 2. From $2 ^ n - 1 = (2 ^ a - 1)(2 ^ b - 1)$, we know that $2 ^ a - 1$ and $2 ^ b - 1$ are both less than $2 ^ n - 1$.
+  have h₂ : 2 ^ n - 1 = (2 ^ a - 1) * (2 ^ b - 1) := by
+    rw [← Nat.mul_sub, ← pow_add, ← pow_mul, Nat.sub_eq_iff_eq_add]
+    · zify; rw [Nat.cast_sub]; push_cast; ring
+    · linarith
+    · nlinarith
+  have h₃ : 2 ^ a - 1 < 2 ^ n - 1 := by
+    rw [h₂]; apply Nat.lt_mul_of_pos_right; apply Nat.one_lt_pow; linarith
+  have h₄ : 2 ^ b - 1 < 2 ^ n - 1 := by
+    rw [h₂]; apply Nat.lt_mul_of_pos_left; apply Nat.one_lt_pow; linarith
+
+  -- 3. Notice that $2 ^ a - 1$ and $2 ^ b - 1$ are both greater than 1.
+  have h₅ : 1 < 2 ^ a - 1 := by
+    apply Nat.one_lt_pow; linarith; norm_num
+  have h₆ : 1 < 2 ^ b - 1 := by
+    apply Nat.one_lt_pow; linarith; norm_num
+
+  -- 4. This means that $2 ^ a - 1$ and $2 ^ b - 1$ are both divisible by some prime, and this prime must be less than $2 ^ n - 1$.
+  have h₇ := Nat.exists_prime_and_dvd h₅.ne'
+  have h₈ := Nat.exists_prime_and_dvd h₆.ne'
+
+  -- 5. Let $p$ be a prime divisor of $2 ^ a - 1$ and $q$ be a prime divisor of $2 ^ b - 1$.
+  rcases h₇ with ⟨p, hp, hnp⟩
+  rcases h₈ with ⟨q, hq, hnq⟩
+
+  have h₉ : p ∣ (2 ^ n - 1) := by
+    rw [h₂]; exact Nat.dvd_mul_right p (2 ^ b - 1)
+  have h₁₀ : q ∣ (2 ^ n - 1) := by
+    rw [h₂]; exact Nat.dvd_mul_left (2 ^ a - 1) q
+
+  -- 6. Since $p$ and $q$ are prime divisors of $2 ^ a - 1$ and $2 ^ b - 1$, they must be less than $2 ^ n - 1$.
+  have h₁₁ : p < 2 ^ n - 1 := by apply hp.dvd_iff_le_of_lt.mpr; exact h₃
+  have h₁₂ : q < 2 ^ n - 1 := by apply hq.dvd_iff_le_of_lt.mpr; exact h₄
+
+  -- 7. However, any prime divisor of $2 ^ n - 1$ must be at least $2 ^ n - 1$.
+  have h₁₃ : p ≥ 2 ^ n - 1 := by
+    -- 7.1. Assume that $p$ is a prime divisor of $2 ^ n - 1$, then $p$ is odd.
+    have hodd₁ : Odd p := by
+      apply hp.odd_of_ne_two; linarith
+
+    -- 7.2. Assume on the contrary that $p < 2 ^ n - 1$, then the order of $2$ modulo $p$ is well defined.
+    by_contra! h; let k := Nat.mod_order p 2
+    have hdef : Nat.ModEq.pow k 2 1 p := by
+      exact Nat.mod_order_dvd h
+
+    -- 7.3. By the property of order, $k$ is the minimum positive integer such that $2 ^ k \equiv 1 \pmod p$.
+    have hmin : ∀ m > 0, 2 ^ m ≡ 1 [MOD p] → k ∣ m := by
+      intro m hm hmod
+      have : k ∣ m := by
+        have nez : NeZero p := by linarith
+        rw [← ZMod.eq_iff_modEq_nat] at hmod ⊢
+        zify; exact (ZMod.natCast_eq_intCast_iff_dvd_sub (2 ^ m) 1 p).mpr hmod
+      assumption
+
+    -- 7.4. Since $2 ^ n \equiv 1 \pmod p$, $k$ is a divisor of $n$.
+    have hndvd : k ∣ n := by
+      have hmod : 2 ^ n ≡ 1 [MOD p] := by
+        have : n = Nat.log 2 (2 ^ n) := by
+          rw [Nat.log_eq_iff]; all_goals linarith
+        rw [this]; exact Nat.modEq_natCast_pow_modEq_one 2 (Nat.log 2 (2 ^ n)) p
+      exact hmin n (by linarith) hmod
+
+    -- 7.5. Then $n \ge k$.
+    have hnge : n ≥ k := by exact Nat.le_of_dvd (by linarith) hndvd
+
+    -- 7.6. Then $p ^ k \ge p$, this means $p ^ k = p$.
+    have hpeqn : p ^ k = p := by
+      have :=
+        calc
+          p ^ k ≥ p ^ 1 := by
+            apply Nat.pow_le_pow_of_le_right; linarith; norm_num
+          _ = p := by rfl
+      rw [Nat.pow_le_iff_le_right] at this
+      · exact this
+      · linarith
+
+    -- 7.7. This can only happen when $k = 1$ and $p = 2$.
+    have hkeqn : k = 1 := by
+      by_contra! hk
+      have : k ≥ 2 := by exact Nat.le_of_lt hk
+      have : p ≥ 2 := by
+        apply Nat.le_of_dvd (by linarith) hkeqn
+      linarith
+
+    -- 7.8. This means $p = 2$ and $n = 1$, which is impossible since $n > 0$.
+    have : p = 2 := by
+      rw [hk] at hpeqn; simp at hpeqn
+      exact hpeqn
+    have : n = 1 := by
+      rw [this] at hndvd; simp at hndvd
+      exact hndvd
+    linarith
+  have h₁₄ : q ≥ 2 ^ n - 1 := by
+    -- 8.1. Assume that $q$ is a prime divisor of $2 ^ n - 1$, then $q$ is odd.
+    have hodd₁ : Odd q := by
+      apply hq.odd_of_ne_two; linarith
+
+    -- 8.2. Assume on the contrary that $q < 2 ^ n - 1$, then the order of $2$ modulo $q$ is well defined.
+    by_contra! h; let k := Nat.mod_order q 2
+    have hdef : Nat.ModEq.pow k 2 1 q := by
+      exact Nat.mod_order_dvd h
+
+    -- 8.3. By the property of order, $k$ is the minimum positive integer such that $2 ^ k \equiv 1 \pmod q$.
+    have hmin : ∀ m > 0, 2 ^ m ≡ 1 [MOD q] → k ∣ m := by
+      intro m hm hmod
+      have : k ∣ m := by
+        have nez : NeZero q := by linarith
+        rw [← ZMod.eq_iff_modEq_nat] at hmod ⊢
+        zify; exact (ZMod.natCast_eq_intCast_iff_dvd_sub (2 ^ m) 1 q).mpr hmod
+      assumption
+
+    -- 8.4. Since $2 ^ n \equiv 1 \pmod q$, $k$ is a divisor of $n$.
+    have hndvd : k ∣ n := by
+      have hmod : 2 ^ n ≡ 1 [MOD q] := by
+        have : n = Nat.log 2 (2 ^ n) := by
+          rw [Nat.log_eq_iff]; all_goals linarith
+        rw [this]; exact Nat.modEq_natCast_pow_modEq_one 2 (Nat.log 2 (2 ^ n)) q
+      exact hmin n (by linarith) hmod
+
+    -- 8.5. Then $n \ge k$.
+    have hnge : n ≥ k := by exact Nat.le_of_dvd (by linarith) hndvd
+
+    -- 8.6. Then $q ^ k \ge q$, this means $q ^ k = q$.
+    have hpeqn : q ^ k = q := by
+      have =
+        calc
+          q ^ k ≥ q ^ 1 := by
+            apply Nat.pow_le_pow_of_le_right; linarith; norm_num
+          _ = q := by rfl
+      rw [Nat.pow_le_iff_le_right] at this
+      · exact this
+      · linarith
+
+    -- 8.7. This can only happen when $k = 1$ and $q = 2$.
+    have hkeqn : k = 1 := by
+      by_contra! hk
+      have : k ≥ 2 := by exact Nat.le_of_lt hk
+      have : q ≥ 2 := by
+        apply Nat.le_of_dvd (by linarith) hkeqn
+      linarith
+
+    -- 8.8. This means $q = 2$ and $n = 1$, which is impossible since $n > 0$.
+    have : q = 2 := by
+      rw [hk] at hpeqn; simp at hpeqn
+      exact hpeqn
+    have : n = 1 := by
+      rw [this] at hndvd; simp at hndvd
+      exact hndvd
+    linarith
+
+  -- 9. This is a contradiction.
+  have h₁₅ : 2 ^ n - 1 ≥ 2 ^ a - 1 := by
+    rw [h₂]; exact Nat.le_mul_of_pos_right (2 ^ a - 1) (by linarith)
+  have h₁₆ : 2 ^ n - 1 ≥ 2 ^ b - 1 := by
+    rw [h₂]; exact Nat.le_mul_of_pos_left (2 ^ b - 1) (by linarith)
+  have h₁₇ : 2 ^ n - 1 ≥ 2 ^ a - 1 := by linarith
+  have h₁₈ : 2 ^ n - 1 ≥ 2 ^ b - 1 := by linarith
+  have h₁₉ : 2 ^ n - 1 > 2 ^ n - 1 := by linarith
+  exact (lt_self_iff_false _).mp h₁₉
+```

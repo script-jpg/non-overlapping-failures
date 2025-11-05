@@ -1,0 +1,102 @@
+-- some auxilary definitions.
+  let p : ℕ → ℝ := fun i => Real.cos (a i)
+  let q : ℕ → ℝ := fun i => Real.sin (a i)
+  let s : ℕ → ℝ := fun i => p i + q i * Complex.I
+
+  -- prove that for all $i$, $p(i+x) = p(i)cos(x) - q(i)sin(x)$
+  have h1 (i : ℕ) (x : ℝ) : p (i + x) = p i * Real.cos x - q i * Real.sin x := by
+    simp [p]
+    induction' i with i ih
+    · simp
+    · rw [add_assoc, add_assoc, ih]
+      simp [q]
+      ring_nf
+
+  -- prove that for all $i$, $q(i+x) = p(i)sin(x) + q(i)cos(x)$
+  have h2 (i : ℕ) (x : ℝ) : q (i + x) = p i * Real.sin x + q i * Real.cos x := by
+    simp [q]
+    induction' i with i ih
+    · simp
+    · rw [add_assoc, add_assoc, ih]
+      simp [p]
+      ring_nf
+
+  -- prove that for all $i$, $s(i+x) = s(i) * e^x$
+  have h3 (i : ℕ) (x : ℝ) : s (i + x) = s i * Complex.exp x := by
+    simp [s]
+    rw [h1 i x, h2 i x]
+    rw [← Complex.add_re, ← Complex.add_im]
+    simp
+    ring_nf
+
+  -- prove that $y(x) = Re(s(0) * e^x)$
+  have h4 (x : ℝ) : y x = Complex.re (s 0 * Complex.exp x) := by
+    simp [y]
+    have : s 0 = p 0 + q 0 * Complex.I := by simp [s]
+    rw [this]
+    simp [Complex.add_re, Complex.mul_re, Complex.exp_re, Complex.exp_im]
+    simp
+    ring_nf
+
+  -- prove that $s(0) \neq 0$
+  have h5 : s 0 ≠ 0 := by
+    by_contra! s0
+    simp [s] at s0
+    have : (p 0)^2 + (q 0)^2 = 0 := by rw [← sq_abs]; simp; exact s0
+    have p0 : p 0 = 0 := by nlinarith
+    have q0 : q 0 = 0 := by nlinarith
+    simp [p0, q0] at h₁
+    rcases h₁ 0 with h₁ | h₁
+    · contradiction
+    · simp [h₁] at s0
+
+  -- prove that if $y(x) = 0$, then $x = m * \pi$ for some $m$
+  have h6 (x : ℝ) (hx : y x = 0) : ∃ m : ℤ, x = m * Real.pi := by
+    rw [h4] at hx
+    have hx : Complex.exp (x * Complex.I) = - Complex.re (s 0) / (Complex.im (s 0)) := by
+      rw [Complex.ext_iff] at hx ⊢
+      field_simp [h5]
+      constructor
+      · rw [← hx]
+        simp
+      · rw [← hx]
+        simp
+
+    have hx' : Complex.exp (x * Complex.I) = Complex.exp ((2 * (x / (2 * Real.pi)) * Real.pi * Complex.I)) := by
+      rw [mul_assoc, mul_div_assoc, mul_div_cancel_left₀]
+      simp [Real.pi_ne_zero]
+      ring_nf
+
+    -- so $x / (2 * \pi) = m + 1 / 2$ for some $m$
+    have ⟨m, hm⟩ : ∃ m : ℤ, x / (2 * Real.pi) = m + 1 / 2 := by
+      apply Complex.exp_eq_exp_iff.mp at hx'
+      rcases hx' with ⟨k, hk⟩
+      use m := k - 1
+      rw [sub_add_cancel, mul_comm, ← sub_mul, mul_div_cancel_left₀] at hk
+      · simp [Real.pi_ne_zero] at hk
+        norm_cast at hk
+        linarith
+      · simp [hk]
+        field_simp
+        ring_nf
+
+    -- hence $x = m * \pi$ for some $m$
+    have hm : x = (2 * m + 1) * Real.pi / 2 := by
+      field_simp at hm ⊢
+      linarith
+    use 2 * m + 1
+    rw [hm]
+    ring_nf
+
+  -- prove that if $y(x_1) = y(x_2) = 0$, then $x_2 - x_1 = m * \pi$ for some $m$
+  have h7 (x1 x2 : ℝ) (hx1 : y x1 = 0) (hx2 : y x2 = 0) : ∃ m : ℤ, x2 - x1 = m * Real.pi := by
+    apply h6 at hx1
+    apply h6 at hx2
+    rcases hx1 with ⟨m1, hm1⟩
+    rcases hx2 with ⟨m2, hm2⟩
+    use m2 - m1
+    linarith
+
+  -- prove the final result
+  apply h7 m n h₂ h₃
+```

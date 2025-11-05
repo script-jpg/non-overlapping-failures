@@ -1,0 +1,139 @@
+constructor
+
+  -- (∃ c, ∀ z, f z = 2 * z + c) → (∀ a b, f (2 * a) + 2 * f b = f (f (a + b)))
+ . rintro (⟨c, hc⟩ | ⟨rfl, hz⟩) -- pattern match on the two cases, only the second case needs to be proved
+   . intro a b -- introduce variables
+      simp [hc a, hc b, hc (a + b)] -- simplify with the hypothesis
+      ring -- use ring tactic to close the goal
+   . intro a b -- introduce variables
+      simp [hz a, hz b, hz (a + b)] -- simplify with the hypothesis
+      have h₁ : f 0 = 0 := by simp [hz 0] -- derive f 0 = 0
+      have h₂ : f 1 = 1 := by simp [hz 1]; omega -- derive f 1 = 1
+      rw [hz (2 * a), hz b, hz (a + b)] -- simplify with the hypothesis
+      congr 2 - omega -- use congruence and omega to close the goal
+
+  -- (∀ a b, f (2 * a) + 2 * f b = f (f (a + b))) → (∃ c, ∀ z, f z = 2 * z + c)
+ . intro h₀ -- pattern match on the hypothesis
+
+    -- lemma 1. $f(0) = 0$
+    have f_zero : f 0 = 0 := by
+      have h₁ := h₀ 0 0 -- set a = b = 0
+      simp at h₁ -- simplify
+      have h₂ := h₀ 0 1 -- set a = 0, b = 1
+      simp at h₂ -- simplify
+      omega -- use omega to close the goal
+
+    -- lemma 2. $f(n) = n$, when $n ∈ \mathbb{Z}^+$ (induction)
+    have f_pos (n : ℕ) : f n = n := by
+      induction' n with n ih -- perform induction
+     . exact f_zero -- base case
+     . -- inductive step
+        have h₁ := h₀ n 0
+        simp at h₁
+        rw [ih] at h₁
+        have h₂ := h₀ (n - 1) 1
+        simp at h₂
+        rw [ih] at h₂
+        omega
+
+    -- lemma 3. $f(-n) = -n$, when $n ∈ \mathbb{Z}^+$ (induction)
+    have f_neg (n : ℕ) : f (-n) = -n := by
+      induction' n with n ih -- perform induction
+     . simp [f_zero] -- base case
+     . -- inductive step
+        have h₁ := h₀ (n + 1) (-n) -- set a = n+1, b = -n
+        simp at h₁ -- simplify
+        rw [show ↑(n + 1) + (-n : ℤ) = 1 by simp; omega, ih] at h₁ -- rewrite with induction hypothesis
+        have h₂ := h₀ n (-n - 1) -- set a = n, b = -n-1
+        simp at h₂ -- simplify
+        rw [show ↑n + (-n - 1 : ℤ) = -1 by simp; omega, ih] at h₂ -- rewrite with induction hypothesis
+        have h₃ : f 1 = 1 := by simp [f_pos] -- use lemma 2
+        omega -- use omega to close the goal
+
+    -- lemma 4. $f(2n) = 2n$, when $n ∈ \mathbb{Z}^+$ (induction)
+    have f_two_n (n : ℕ) : f (2 * n) = 2 * n := by
+      induction' n with n ih -- perform induction
+     . simp [f_zero] -- base case
+     . -- inductive step
+        have h₁ := h₀ (2 * n) (-n) -- set a = 2n, b = -n
+        simp at h₁ -- simplify
+        rw [show ↑(2 * n) + (-n : ℤ) = n by simp; omega, f_neg, ih] at h₁ -- rewrite with induction hypothesis and lemma 3
+        have h₂ := h₀ (n + 1) n -- set a = n+1, b = n
+        simp at h₂ -- simplify
+        rw [show ↑(n + 1) + n = 2 * n + 1 by simp; omega, ih] at h₂ -- rewrite with induction hypothesis
+        omega -- use omega to close the goal
+
+    -- extend lemma 4 to all integers
+    replace f_two_n (n : ℤ) : f (2 * n) = 2 * n := by
+      if hn : 0 ≤ n then -- pattern match on the sign of n
+        let m := n.natAbs -- define m to be the absolute value of n
+        have habs : n = m ∨ n = -m := Int.eq_natAbs_of_zero_le hn -- use Int.eq_natAbs_of_zero_le
+        rcases habs with h | h -- consider the two cases
+       . -- case 1: n = m
+          rw [h]
+          exact f_two_n m -- apply f_two_n
+       . -- case 2: n = -m
+          rw [h]
+          replace := f_neg m -- apply f_neg
+          ring_nf at this ⊢ -- normalize the expressions
+          exact this -- use the rewritten form of f_neg
+      else -- consider the case when n < 0
+        let m := -n.natAbs -- define m to be the absolute value of -n
+        have habs : n = -m ∨ n = m := Int.eq_neg_natAbs_of_neg lt.2 -- use Int.eq_neg_natAbs_of_neg
+        rcases habs with h | h -- consider the two cases
+       . -- case 1: n = -m
+          rw [h]
+          replace := f_neg m -- apply f_neg
+          ring_nf at this ⊢ -- normalize the expressions
+          exact this -- use the rewritten form of f_neg
+       . -- case 2: n = m
+          rw [h]
+          exact f_two_n m -- apply f_two_n
+
+    -- determine f(n) = n for all n ∈ ℤ (induction)
+    replace f_pos (n : ℤ) : f n = n := by
+      induction' n using Int.induction_on with n ih -- perform induction
+     . exact f_zero -- base case
+     . -- inductive step: n > 0
+        let m := n - 1 -- define m = n-1
+        have hsub : n = m + 1 := by omega -- use omega to prove the definition of m
+        rw [hsub]
+        specialize ih m (by omega) -- apply induction hypothesis
+        have h₁ := h₀ m 1 -- set a = m, b = 1
+        simp at h₁ -- simplify
+        rw [show ↑m + 1 = n by omega, ih] at h₁ -- rewrite with induction hypothesis
+        f_two_n 1 -- apply f_two_n
+        omega -- use omega to close the goal
+     . -- inductive step: n < 0
+        let m := -n -- define m = -n
+        have hneg : n = -m := by omega -- use omega to prove the definition of m
+        rw [hneg]
+        specialize ih m (by omega) -- apply induction hypothesis
+        have h₁ := h₀ (m - 1) 1 -- set a = m-1, b = 1
+        simp at h₁ -- simplify
+        rw [show ↑(m - 1) + 1 = m by simp; omega, ih] at h₁ -- rewrite with induction hypothesis
+        have h₂ := h₀ (-m) (-1) -- set a = -m, b = -1
+        simp at h₂ -- simplify
+        rw [show ↑(-m) + (-1 : ℤ) = -m - 1 by simp, ih] at h₂ -- rewrite with induction hypothesis
+        have h₃ : f (-1) = -1 := by simp [f_pos] -- use f_pos
+        have h₄ : m = -n := by omega -- use omega to rewrite m = -n
+        rw [h₄] at h₂ -- substitute m = -n
+        omega -- use omega to close the goal
+
+    -- determine f(n) = 2n + c for all n ∈ ℤ, where c = f(1) - 2
+    use f 1 - 2 -- set c = f(1) - 2
+    intro z -- pattern match on the goal
+    induction' z using Int.induction_on with z ih -- perform induction
+   . simp [f_zero] -- trivial case
+   . -- inductive step
+      have h₁ := h₀ z 1 -- set a = z, b = 1
+      simp at h₁ -- simplify
+      rw [show z + 1 = z + 1 by rfl, ih] at h₁ -- rewrite with induction hypothesis
+      omega -- use omega to close the goal
+   . -- inductive step: z < 0
+      have hneg := ih (-z) (by omega) -- apply induction hypothesis
+      simp at hneg -- simplify
+      rw [show z = -(-z) by simp, hneg] -- rewrite with the value of f(-z)
+      omega -- use omega to close the goal
+
+```

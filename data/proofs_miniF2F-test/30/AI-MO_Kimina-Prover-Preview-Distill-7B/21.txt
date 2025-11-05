@@ -1,0 +1,148 @@
+-- Show that if $x \leq y$, then $(x, y) = (1, 1)$.
+  have h₂ : x ≤ y → (x, y) = (1, 1) := by
+    intro h₂
+    obtain ⟨hx₀, hx₁⟩ := h₀
+    have h₃ : x ^ y ^ 2 ≥ x ^ x := by
+      calc
+        x ^ y ^ 2 ≥ x ^ x ^ 2 := by apply Nat.pow_le_pow_of_le_left; apply Nat.pow_le_pow_of_le_left h₂ (by omega)
+        _ ≥ x ^ x := by apply Nat.pow_le_pow_of_le_left; omega
+    have h₄ : y ^ x ≤ y ^ y ^ 2 := by
+      calc
+        y ^ x ≤ y ^ y ^ 2 := by apply Nat.pow_le_pow_of_le_left; omega
+    rw [h₁] at h₃
+    -- If $x < y$, then $x = 1$.
+    have h₅ : x = 1 := by
+      by_contra!
+      replace this : x ^ x < y ^ x := by
+        calc
+          x ^ x < y ^ x := by apply Nat.pow_lt_pow_left; omega; omega
+          _ ≤ y ^ x := by rfl
+      calc
+        x ^ x < y ^ x := by exact this
+        _ ≤ x ^ y ^ 2 := by exact h₃
+        _ = y ^ x := by rw [h₁]
+        _ ≤ y ^ y ^ 2 := by exact h₄
+        _ < y ^ y := by apply Nat.pow_lt_pow_right; omega; all_goals omega
+        _ < y ^ x := by apply Nat.pow_lt_pow_left; omega; omega
+    -- If $x = 1$, then $1 = y^y^2 = y^y$, so $y = 1$.
+    have h₆ : y = 1 := by
+      simp only [h₅, Nat.pow_eq_self_iff] at h₄
+      cases h₄ with
+      | inl h₄ =>
+        rw [h₄] at h₁
+        simp only [h₅, Nat.pow_eq_self_iff] at h₁
+        tauto
+      | inr h₄ =>
+        simp only [Nat.pow_eq_zero_iff] at h₄
+        omega
+    replace h₄ : x = 1 := by
+      simp only [h₅, Nat.pow_eq_self_iff] at h₄
+      tauto
+      omega
+    tauto
+
+  -- Show that if $x \geq y$, then $(x, y) = (16, 2)$ or $(27, 3)$.
+  have h₃ : x ≥ y → (x, y) = (16, 2) ∨ (x, y) = (27, 3) := by
+    intro h₃
+    obtain ⟨hx₀, hx₁⟩ := h₀
+    -- If $y < x$, then $y = 1$.
+    have h₄ : y = 1 ∨ y = 2 ∨ y = 3 := by
+      by_contra!
+      replace this : y ≥ 4 := by
+        omega
+      have h₅ : x ^ y ^ 2 > y ^ x := by
+        calc
+          x ^ y ^ 2 ≥ x ^ 4 ^ 2 := by apply Nat.pow_le_pow_of_le_left; omega
+          _ > y ^ y ^ 2 := by apply Nat.pow_lt_pow_right; all_goals omega
+          _ ≥ y ^ x := by apply Nat.pow_le_pow_of_le_left; omega
+      rw [h₁] at h₅
+      omega
+    cases h₄ with
+    | inl h₄ =>
+      have h₅ : x ≥ 4 := by
+        omega
+      have h₆ : x ^ y ^ 2 > y ^ x := by
+        calc
+          x ^ y ^ 2 ≥ x ^ 4 ^ 2 := by apply Nat.pow_le_pow_of_le_left; omega
+          _ > y ^ y ^ 2 := by apply Nat.pow_lt_pow_right; all_goals omega
+          _ ≥ y ^ x := by apply Nat.pow_le_pow_of_le_left; omega
+      rw [h₁] at h₆
+      omega
+    | inr h₄ =>
+      cases h₄ with
+      | inl h₄ =>
+        -- If $y = 2$, then $x^4 = 2^x$ so $x = 16$.
+        replace h₁ : x ^ 4 = 2 ^ x := by
+          simp [h₄] at h₁
+          exact h₁
+        have h₅ : x = 16 := by
+          have h₅ : x ≤ 16 := by
+            by_contra!
+            replace this : x ≥ 17 := by
+              omega
+            have h₆ : 2 ^ x > x ^ 4 := by
+              calc
+                2 ^ x > 2 ^ 16 := by apply Nat.pow_lt_pow_right; omega; omega
+                _ ≥ 17 ^ 4 := by norm_num
+                _ ≥ x ^ 4 := by apply Nat.pow_le_pow_of_le_left; omega
+            rw [h₁] at h₆
+            absurd h₆
+            exact lt_irrefl _ (Nat.pow_pos 4 x)
+          have h₆ : x ≥ 16 := by
+            by_contra!
+            replace this : x ≤ 15 := by
+              omega
+            have h₇ : x ^ 4 > 2 ^ x := by
+              calc
+                x ^ 4 ≥ 16 ^ 4 := by apply Nat.pow_le_pow_of_le_left; omega
+                _ > 2 ^ 16 := by norm_num
+                _ ≥ 2 ^ x := by apply Nat.pow_le_pow_of_le_left; omega
+            rw [h₁] at h₇
+            absurd h₇
+            exact lt_irrefl _ (Nat.pow_pos 4 x)
+          omega
+        tauto
+      | inr h₄ =>
+        -- If $y = 3$, then $x^9 = 3^x$ so $x = 27$.
+        replace h₁ : x ^ 9 = 3 ^ x := by
+          simp [h₄] at h₁
+          exact h₁
+        have h₅ : x = 27 := by
+          have h₅ : x ≤ 27 := by
+            by_contra!
+            replace this : x ≥ 28 := by
+              omega
+            have h₆ : 3 ^ x > x ^ 9 := by
+              calc
+                3 ^ x > 3 ^ 28 := by apply Nat.pow_lt_pow_right; omega; omega
+                _ ≥ 28 ^ 9 := by norm_num
+                _ ≥ x ^ 9 := by apply Nat.pow_le_pow_of_le_left; omega
+            rw [h₁] at h₆
+            absurd h₆
+            exact lt_irrefl _ (Nat.pow_pos 9 x)
+          have h₆ : x ≥ 27 := by
+            by_contra!
+            replace this : x ≤ 26 := by
+              omega
+            have h₇ : x ^ 9 > 3 ^ x := by
+              calc
+                x ^ 9 ≥ 27 ^ 9 := by apply Nat.pow_le_pow_of_le_left; omega
+                _ > 3 ^ 26 := by norm_num
+                _ ≥ 3 ^ x := by apply Nat.pow_le_pow_of_le_left; omega
+            rw [h₁] at h₇
+            absurd h₇
+            exact lt_irrefl _ (Nat.pow_pos 9 x)
+          omega
+        tauto
+
+  cases h₂ h₃ with
+  | inl h₂ =>
+    tauto
+  | inr h₃ =>
+    cases h₃ with
+    | inl h₃ =>
+      tauto
+    | inr h₃ =>
+      tauto
+
+```

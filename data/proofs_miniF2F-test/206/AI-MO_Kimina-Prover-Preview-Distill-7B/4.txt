@@ -1,0 +1,258 @@
+-- First, we need to show that the expression under the square root is nonnegative
+  have h₂ (x : ℝ) : f x - f x ^ 2 ≥ 0 := by
+    suffices f (x + a) ≥ 0 by linarith
+    rw [h₁]
+    positivity
+  -- Show that $f(x) - f(x)^2$ is periodic with period $a$
+  have h₃ (x : ℝ) : f (x + a) - f (x + a) ^ 2 = f x - f x ^ 2 := by
+    rw [h₁, add_assoc]
+    replace h₂ x : f x - f x ^ 2 = (1 / 2 + Real.sqrt (f x - f x ^ 2)) - (1 / 2 + Real.sqrt (f x - f x ^ 2)) ^ 2 := by
+      suffices (1 / 2 + Real.sqrt (f x - f x ^ 2)) - (1 / 2 + Real.sqrt (f x - f x ^ 2)) ^ 2 = f x - f x ^ 2 by linarith
+      ring_nf
+      rw [Real.sq_sqrt]
+      linarith only [h₂ x]
+      linarith only [h₂ x]
+    rw [h₂]
+    ring_nf
+    rw [Real.sq_sqrt]
+    linarith only [h₂ x]
+    linarith only [h₂ x]
+
+  -- Define $h(x) = f(x) - f(x)^2$
+  let h (x : ℝ) := f x - f x ^ 2
+  -- Show that $h(x+a) = h(x)$
+  have h₄ (x : ℝ) : h (x + a) = h x := by simp [h, h₃]
+  -- Show that $h(0) > 0$
+  have h₅ : h 0 > 0 := by
+    simp [h]
+    suffices f 0 < 1 / 2 + f 0 by linarith
+    rw [h₁]
+    positivity
+  -- Show that $h(x)$ takes finitely many values
+  have h₆ : ∀ x, ∃ n : ℕ, h x = n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) := by
+    intro x
+    induction x using Nat.recOn with
+    | zero =>
+      use 2
+      simp [h]
+      suffices f 0 < 1 / 2 + f 0 by linarith
+      rw [h₁]
+      positivity
+    | succ x ih =>
+      obtain ⟨n, hn⟩ := ih
+      use 2
+      replace h₄ x : h x = h (x + a) := by rw [h₄]
+      rw [show x + 1 = x + a + a by ring, h₄, hn]
+      simp [h]
+      rw [h₁]
+      calc
+        _ = 1 / 2 + Real.sqrt (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) - (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) ^ 2)) := by rw [hn]
+        _ = 1 / 2 + Real.sqrt (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) * (1 - n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) )) := by congr; ring
+        _ ≥ 1 / 2 + 0 := by simp; apply Real.sqrt_nonneg
+        _ > 1 / 2 := by linarith
+        _ > _ := by linarith
+  -- Show that $h(x)$ is bounded
+  have h₇ : ∀ x, h x ≤ 1 / 2 := by
+    intro x
+    obtain ⟨n, hn⟩ := h₆ x
+    rw [hn]
+    simp
+    have : n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) ≤ 1 / 2 := by
+      induction n with
+      | zero => norm_num
+      | succ n ih =>
+        calc
+          (n + 1) / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) = n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) + 1 / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) := by ring
+          _ ≤ 1 / 2 + 1 / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) := by rel [ih]
+          _ ≤ 1 / 2 := by norm_num; norm_num
+    exact this
+  -- Show that $f(x)^2 - f(x) + 1/4$ is periodic with period $a$
+  have h₈ (x : ℝ) : f (x + a) ^ 2 - f (x + a) + 1 / 4 = f x ^ 2 - f x + 1 / 4 := by
+    rw [h₁]
+    replace h₂ x : f x - f x ^ 2 = (1 / 2 + Real.sqrt (f x - f x ^ 2)) - (1 / 2 + Real.sqrt (f x - f x ^ 2)) ^ 2 := by
+      suffices (1 / 2 + Real.sqrt (f x - f x ^ 2)) - (1 / 2 + Real.sqrt (f x - f x ^ 2)) ^ 2 = f x - f x ^ 2 by linarith
+      ring_nf
+      rw [Real.sq_sqrt]
+      linarith only [h₂ x]
+      linarith only [h₂ x]
+    rw [h₂]
+    ring_nf
+    rw [Real.sq_sqrt]
+    linarith only [h₂ x]
+    linarith only [h₂ x]
+
+  -- Show that $f(x)$ is bounded
+  have h₉ : ∀ x, f x ≤ 1 / 2 + 1 / 2 := by
+    intro x
+    have h₈ x : f (x + a) ^ 2 - f (x + a) + 1 / 4 = f x ^ 2 - f x + 1 / 4 := by exact h₈ x
+    obtain ⟨n, hn⟩ := h₆ x
+    rw [hn, h₁] at h₈ x
+    replace h₈ x : (1 / 2 + Real.sqrt (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) - (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) ^ 2)) ^ 2 - (1 / 2 + Real.sqrt (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) - (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) ^ 2)) + 1 / 4 = (1 / 2) ^ 2 - (1 / 2) + 1 / 4 := by simpa using h₈ x
+    have : Real.sqrt (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) - (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) ^ 2)) ≥ 0 := by apply Real.sqrt_nonneg
+    replace h₈ x : (1 / 2 + Real.sqrt (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) - (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) ^ 2)) ^ 2 - (1 / 2 + Real.sqrt (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) - (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) ^ 2)) * 2 ≥ 0 := by nlinarith only [this]
+    replace h₈ x : (1 / 2 + Real.sqrt (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) - (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) ^ 2)) * 2 ≤ 1 / 2 + 1 / 2 := by nlinarith only [h₈ x, Real.sqrt_nonneg (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) - (n / (2 ^ (2 ^ (2 ^ (2 ^ (2 : ℝ))))) ^ 2)]
+    linarith only [h₈ x]
+
+  -- Show that $f(x) = 1/2 + g(x)$ where $g(x)$ is periodic with period $a$
+  set g := λ x => f x - 1 / 2 with hg
+  have h₁₀ (x : ℝ) : f x = 1 / 2 + g x := by simp [hg]
+  have h₁₁ (x : ℝ) : g (x + a) = g x := by
+    rw [h₁₀, h₁₀]
+    simp [hg]
+    linarith only [h₃ x]
+
+  -- Show that $g(x) = g(-x)$ for all $x$
+  have h₁₂ (x : ℝ) : g x = g (-x) := by
+    clear h₇
+    induction x using Nat.recOn with
+    | zero => simp [hg]
+    | succ x ih =>
+      rcases lt_or_ge x 0 with hx | hx
+      · have hx : x = -x + a := by linarith
+        rw [hx, h₁₁]
+        simp
+        rw [ih]
+        tauto
+      · have hx : x = x + a := by linarith
+        rw [hx, h₁₁]
+        simp
+        rw [ih]
+        tauto
+
+  -- Show that $g(x) ≥ 0$ for all $x$
+  have h₁₃ (x : ℝ) : g x ≥ 0 := by
+    simp [hg]
+    linarith only [h₉ x]
+
+  -- Show that $g(x) * (2 - g(x)) = 1/4 - 1/4 * cos(2 * arccos(2 * g(x)))$
+  have h₁₄ (x : ℝ) : g x * (2 - g x) = 1 / 4 - 1 / 4 * Real.cos (2 * Real.arccos (2 * g x)) := by
+    rcases h₁₃ x with hx
+    have hx : 2 * g x ≤ 1 := by linarith only [h₉ x]
+    rw [show 2 * Real.arccos (2 * g x) = 2 * Real.arccos (1 - (1 - 2 * g x)) by ring]
+    rw [Real.cos_two_mul]
+    simp
+    have h : 1 - 2 * g x ≥ 0 := by linarith only [hx]
+    replace h : 1 - (1 - 2 * g x) ≥ 0 := by linarith only [h]
+    rw [Real.arccos_eq_arccos_of_le_of_le h h]
+    rw [Real.cos_arccos h h]
+    linarith only [hx]
+
+  -- Show that $g(x) * (2 - g(x))$ is periodic with period $a$
+  have h₁₅ (x : ℝ) : g (x + a) * (2 - g (x + a)) = g x * (2 - g x) := by
+    rw [h₁₁, sub_add_cancel, sub_add_cancel]
+    exact h₁₁
+
+  -- Show that $cos(2 * arccos(2 * g(x)))$ is periodic with period $a$
+  have h₁₆ (x : ℝ) : Real.cos (2 * Real.arccos (2 * g x)) = Real.cos (2 * Real.arccos (2 * g (x + a))) := by simpa using h₁₅ x
+
+  -- Show that $g(x)$ is periodic with period $2 * a$
+  have h₁₇ (x : ℝ) : g (x + 2 * a) = g x := by
+    rw [show x + 2 * a = x + a + a by ring, h₁₁, h₁₁]
+  replace h₁₇ (x : ℝ) : g (x + 2 * a) * (2 - g (x + 2 * a)) = g x * (2 - g x) := by rw [h₁₇, sub_add_cancel]
+  replace h₁₆ (x : ℝ) : Real.cos (2 * Real.arccos (2 * g x)) = Real.cos (2 * Real.arccos (2 * g (x + 2 * a))) := by rw [h₁₆, h₁₇]
+
+  -- Show that $g(x) = 1/2 * (1 + cos(2 * arccos(2 * g(x))) )$
+  have h₁₈ (x : ℝ) : g x = 1 / 2 * (1 + Real.cos (2 * Real.arccos (2 * g x))) := by
+    rcases h₁₃ x with hx
+    have hx : 2 * g x ≤ 1 := by linarith only [h₉ x]
+    have hx : 2 * g x ≥ 0 := by linarith only [h₇ x]
+    rify at hx
+    rw [show 1 + Real.cos (2 * Real.arccos (2 * g x)) = 2 * g x * 2 / (2 * g x) by]
+    · rw [mul_div_cancel_of_mul_eq_right hx.ne']
+      rw [mul_div_cancel_of_mul_eq_right hx.ne']
+      rw [two_mul, mul_assoc, mul_div_cancel_of_mul_eq_right hx.ne']
+      rw [Real.cos_two_mul, Real.cos_arccos hx.le hx.le]
+      linarith only [hx]
+    · exact hx.ne'
+
+  -- Show that $g(x)$ is bounded
+  have h₁₉ : ∀ x, g x ≤ 1 := by
+    intro x
+    rw [h₁₈ x]
+    linarith only [Real.cos_le_one (2 * Real.arccos (2 * g x))]
+
+  -- Show that $g(x) = 0$ for some $x$
+  have h₂₀ : ∃ x, g x = 0 := by
+    by_contra h
+    simp at h
+    intro x
+    specialize h₁₆ x
+    replace h₁₆ := h h₁₆
+    linarith only [h₁₃ x, h₁₉ x, h₁₆]
+
+  -- Show that $g(x) = 0$ for some positive $x$
+  have h₂₁ : ∃ x > 0, g x = 0 := by
+    by_contra h
+    simp at h
+    rcases h₂₀ with ⟨x, hx⟩
+    by_cases hx : x > 0
+    · exact ⟨x, hx, hx⟩
+    · push_neg at hx
+      rcases lt_or_ge x 0 with hx | hx
+      · replace hx : x = 0 := by linarith
+        rw [hx] at hx
+        linarith only [h hx]
+      · replace hx : x = 0 := by linarith
+        norm_num at hx
+        linarith only [h hx]
+
+  -- Show that $f(x) = 1/2$ for some $x$
+  have h₂₂ : ∃ x > 0, f x = 1 / 2 := by
+    rcases h₂₁ with ⟨x, hx, hfx⟩
+    use x
+    constructor
+    · exact hx
+    · simp [hfx, h₁₀]
+
+  -- Define $b$ as the smallest positive root of $f(x) - 1/2$
+  set b := ↑(Real.find_spec h₂₂) with hb
+  have h₂₃ : b > 0 := by
+    simp [b, Finset.memFind_spec]
+    linarith only [h₂₂]
+  have h₂₄ : f b = 1 / 2 := by
+    simp [b, Finset.memFind_spec, h₁₀]
+  have h₂₅ : ∀ x, f (x + b) = f x := by
+    intro x
+    by_cases h : b = x + b
+    · rw [h]
+      intro hx
+      simp [hx, h]
+    · suffices ∃ z > 0, f (x + z) = f x by
+        rcases this with ⟨z, hz, hz'⟩
+        have hb' : b ≤ z := by
+          apply Real.find_spec_le_of_eq
+          simpa [b, hz'] using hz
+        have : b = z := by
+          apply le_antisymm
+          · exact hb'
+          · exact hz
+        rw [this]
+        exact hz'
+      -- Show that $f(x + (b - x)) = f(x)$
+      apply h₂₂
+      simp
+      linarith only [h]
+    · -- Show that $f(x + (b - x)) = f(x)$
+      apply h₂₂
+      simp [h]
+      linarith only [h]
+
+  -- Show that $b$ is a period of $f(x)$
+  use b
+  constructor
+  · exact h₂₃
+  · intro x
+    by_cases h : b = x + b
+    · rw [h]
+      intro hx
+      simp [hx, h]
+    · have hb' : b - x > 0 := by
+        suffices b > x by linarith
+        linarith only [h]
+      have h : x + (b - x) = b := by
+        rw [sub_add_cancel]
+        linarith only [h]
+      rw [h]
+      exact h₂₅ x
+
+```

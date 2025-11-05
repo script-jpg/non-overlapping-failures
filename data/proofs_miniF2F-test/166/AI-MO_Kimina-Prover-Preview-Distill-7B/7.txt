@@ -1,0 +1,75 @@
+-- define $M_i$ as the maximum of the first $i$ elements
+  let M (i : ℕ) := max (Finset.range i) a
+  have hM {i : ℕ} (hi : i < n) : M i ∈ Finset.range i := by
+    have : M i ∈ Finset.range i ∨ M i ∈ Finset.range i := by simpa [M]
+    exact this.elim (fun h => h) (fun h => (Or.inr h).trans (max_le_left _))
+
+  -- Prove by induction that $\forall i \leq n, M_i \leq i$
+  have hMle {i : ℕ} (hi : i ≤ n) : M i ≤ i := by
+    induction' i with i ih
+    · simp [M]
+    · by_cases h : i < n
+      · have := ih (by linarith)
+        have : M i ≤ max i (a i) := max_le_right _
+        have : max i (a i) ≤ i + 1 := by
+          cases max_cases i (a i) with
+          | inl h => exact Nat.le_of_lt_succ h
+          | inr h => exact Nat.le_of_le_of_lt h (by linarith)
+        linarith
+      · push_neg at h
+        have := ih (by linarith)
+        have : M i ≤ max i (a i) := max_le_right _
+        have : max i (a i) ≤ i + 1 := by
+          cases max_cases i (a i) with
+          | inl h => exact Nat.le_of_lt_succ h
+          | inr h => exact Nat.le_of_le_of_lt h (by linarith)
+        linarith
+
+  -- define $m_i$ as the minimum of the first $i$ elements
+  let m (i : ℕ) := min (Finset.range i) a
+  have hm {i : ℕ} (hi : i < n) : m i ∈ Finset.range i := by
+    have : m i ∈ Finset.range i ∨ m i ∈ Finset.range i := by simpa [m]
+    exact this.elim (fun h => h) (fun h => (Or.inr h).trans (min_le_left _))
+
+  -- Prove by induction that $\forall i \leq n, m_i \geq i$
+  have hmge {i : ℕ} (hi : i ≤ n) : i ≤ m i := by
+    induction' i with i ih
+    · simp [m]
+    · by_cases h : i < n
+      · have := ih (by linarith)
+        have : min i (a i) ≤ M i := min_le_max _
+        have : M i ≤ i + 1 := hMle (by linarith)
+        linarith
+      · push_neg at h
+        have := ih (by linarith)
+        have : min i (a i) ≤ M i := min_le_max _
+        have : M i ≤ i + 1 := hMle (by linarith)
+        linarith
+
+  -- prove that $a_i \leq 1$ for all $i < n$
+  have hain {i : ℕ} (hi : i < n) : a i ≤ 1 := by
+    have : a i ≤ max i (a i) := le_max_left _ _
+    have : max i (a i) ≤ i + 1 := by
+      cases max_cases i (a i) with
+      | inl h => exact Nat.le_of_lt_succ h
+      | inr h => exact Nat.le_of_le_of_lt h (by linarith)
+    linarith
+
+  -- prove that $1 \leq a_i$ for all $i < n$
+  have hainb {i : ℕ} (hi : i < n) : 1 ≤ a i := by
+    have : 1 ≤ m i := by exact hminge (by linarith)
+    have : m i ≤ a i := min_le_left _ _
+    linarith
+
+  -- transform the results to a finset version (or the other way around)
+  have h1 : ∏ i ∈ Finset.range n, a i ≤ ∏ i ∈ Finset.range n, 1 := by
+    apply Finset.prod_le_prod
+    · intro i hi
+      exact hain hi
+    · intro i hi
+      exact hainb hi
+
+  simp at h1
+  exact h1
+
+```

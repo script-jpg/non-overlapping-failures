@@ -1,0 +1,102 @@
+-- lcm(a,b) = y * gcd(a,b), such that a = g * v, b = g * w.
+  obtain ⟨y, z, h₄, h₅, h₆⟩ : ∃ y z : ℕ, a = y * 6 ∧ b = z * 6 := by
+    use a/6, b/6
+    have : 6 ∣ a := by
+      exact Nat.dvd_of_mod_eq_zero h₁
+    have := Nat.dvd_gcd h₀.1 this
+    have := Nat.dvd_gcd h₀.2 this
+    rcases this with ⟨r, H⟩
+    have : r = a / 6 := by
+      rw [Nat.div_eq_iff_eq_mul_right] at H
+      exact H.symm
+      exact h₀.1
+    rw [this]
+    have : 6 ∣ b := by
+      exact Nat.dvd_of_mod_eq_zero h₂
+    have := Nat.dvd_gcd h₀.1 this
+    have := Nat.dvd_gcd h₀.2 this
+    rcases this with ⟨s, H⟩
+    use r, s
+    rw [Nat.div_eq_iff_eq_mul_right] at H
+    exact H.symm
+    exact h₀.2
+
+  -- From the above, we have v * w = 12.
+  have h₇ : y * z = 2 := by
+    have : (y * 6) * (z * 6) = a * b := by rw [h₅, h₆]
+    have := Nat.dvd_mul_left 36 (y * z)
+    have : y * z = 12 := by
+      calc
+        y * z = (y * 6) * (z * 6) / 36 := by
+          rw [← mul_assoc, ← mul_assoc, Nat.mul_div_assoc]
+          exact h₄ ▸ h₅ ▸ h₆
+        _ = a * b / 36 := by rw [this]
+        _ = 12 := by
+          have : b / 6 > 0 := by
+            exact Nat.div_pos_iff.mpr h₀.2
+          rw [mul_comm, mul_div_assoc, Nat.mul_div_assoc]
+          rw [mul_comm (6 * b / 6), ← mul_assoc, Nat.mul_div_assoc]
+          simp [h₃, this]
+          nth_rw 2 [mul_comm]
+          rw [mul_assoc, mul_comm (6 * 6), ← mul_assoc, Nat.mul_div_assoc]
+          simp
+          exact h₀.1
+          exact Nat.dvd_of_mod_eq_zero h₂
+    exact eq_of_mul_eq_mul_left this rfl
+
+  -- 12 = y * w divides l, so l >= 12.
+  have h₈ : 12 ∣ a.lcm b := by
+    rw [h₅, h₆, Nat.lcm]
+    have : y * z ∣ y * lcm 6 z := by
+      apply Nat.mul_dvd_mul_left
+      apply Nat.dvd_lcm_right
+    have := Nat.dvd_trans this (Nat.dvd_mul_right (y * z) l)
+    rw [h₇] at this
+    exact this
+  have h₉ : 12 ≤ a.lcm b := by
+    apply Nat.le_of_dvd h₀.1
+    apply h₈
+
+  -- 9 divides l.
+  have h₁₀ : 9 ∣ a.lcm b := by
+    rw [h₅, h₆, Nat.lcm]
+    have : y * z ∣ y * lcm 6 z := by
+      apply Nat.mul_dvd_mul_left
+      apply Nat.dvd_lcm_left
+    have := Nat.dvd_trans this (Nat.dvd_mul_right (y * z) l)
+    rw [h₇] at this
+    exact this
+
+  -- 4 divides l.
+  have h₁₁ : 4 ∣ a.lcm b := by
+    rw [h₅, h₆, Nat.lcm]
+    have : y * z ∣ z * lcm 6 y := by
+      apply Nat.mul_dvd_mul_right
+      apply Nat.dvd_lcm_right
+    have := Nat.dvd_trans this (Nat.dvd_mul_right (y * z) l)
+    rw [h₇] at this
+    exact this
+
+  -- Since 12, 9, and 4 all divide l, their least common multiple 36 divides l.
+  have h₁₂ : 36 ∣ a.lcm b := by
+    have h₁₂ : Nat.lcm 9 4 ∣ a.lcm b := by
+      apply Nat.lcm_dvd
+      apply h₁₀
+      apply h₁₁
+    have h₁₃ : Nat.lcm 9 4 = 36 := by
+      have : 9.Coprime 4 := by norm_num
+      rw [Nat.Coprime.lcm_eq_mul this]
+      all_goals norm_num
+    rw [h₁₃] at h₁₂
+    exact h₁₂
+
+  have h₁₃ : 36 ≤ a.lcm b := by
+    apply Nat.le_of_dvd h₀.1
+    apply h₁₂
+
+  -- Since 36 divides l and l >= 12, we get l >= 36.
+  have h₁₄ : 36 ≤ 12 := by
+    apply Nat.le_of_dvd h₁₃
+    apply h₈
+  linarith
+```

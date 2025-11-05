@@ -1,0 +1,203 @@
+-- We have defined the Fibonacci sequence as `a`, where `a 1 = 1`, `a 2 = 1`, and for any natural number `n`, `a (n + 2) = a (n + 1) + a n`.
+  -- We want to find the remainder when the `100th` term (`a 100`) is divided by 4.
+
+  -- Let's explore a pattern in the Fibonacci sequence modulo 4 to simplify our calculation.
+  -- We'll compute the first 8 terms modulo 4:
+  -- a₁ = 1 (mod 4)
+  -- a₂ = 1 (mod 4)
+  -- a₃ = a₂ + a₁ = 1 + 1 = 2 (mod 4)
+  -- a₄ = a₃ + a₂ = 2 + 1 = 3 (mod 4)
+  -- a₅ = a₄ + a₃ = 3 + 2 = 5 ≡ 1 (mod 4)
+  -- a₆ = a₅ + a₄ = 1 + 3 = 4 ≡ 0 (mod 4)
+  -- a₇ = a₆ + a₅ = 0 + 1 = 1 (mod 4)
+  -- a₈ = a₇ + a₆ = 1 + 0 = 1 (mod 4)
+  -- a₉ = a₈ + a₇ = 1 + 1 = 2 (mod 4)
+  -- a₁₀ = a₉ + a₈ = 2 + 1 = 3 (mod 4)
+
+  -- We observe that every 12 terms, the sequence repeats its pattern modulo 4.
+  -- This is known as the Pisano period. For modulus 4, the Pisano period is 12.
+
+  -- Since 100 = 12 × 8 + 4, the 100th term modulo 4 corresponds to the 4th term in our pattern.
+  -- From our calculations above, a₄ ≡ 3 (mod 4).
+
+  -- Let's formalize this in Lean:
+
+  have r1 : a 1 % 4 = 1 := by rw [h₀]
+  have r2 : a 2 % 4 = 1 := by rw [h₁]
+  have r3 : a 3 % 4 = 2 := by rw [h₂ 1]; simp [h₀, h₁]
+  have r4 : a 4 % 4 = 3 := by rw [h₂ 2]; simp [h₁, h₃]
+  have r5 : a 5 % 4 = 1 := by rw [h₂ 3]; simp [h₃, h₄]
+  have r6 : a 6 % 4 = 0 := by rw [h₂ 4]; simp [h₄, h₅]
+  have r7 : a 7 % 4 = 1 := by rw [h₂ 5]; simp [h₅, h₆]
+  have r8 : a 8 % 4 = 1 := by rw [h₂ 6]; simp [h₆, h₇]
+  have r9 : a 9 % 4 = 2 := by rw [h₂ 7]; simp [h₇, h₈]
+  have r10 : a 10 % 4 = 3 := by rw [h₂ 8]; simp [h₈, h₉]
+  have r11 : a 11 % 4 = 1 := by rw [h₂ 9]; simp [h₉, h₁₀]
+  have r12 : a 12 % 4 = 0 := by rw [h₂ 10]; simp [h₁₀, h₁₁]
+
+  -- We've established the pattern for the first 12 terms modulo 4.
+  -- Now we need to show that this pattern repeats every 12 terms.
+  -- Let's prove a general case for any natural number `n`:
+
+  -- a (12 * n + 1) % 4 = 1
+  have r13 (n : ℕ) : a (12 * n + 1) % 4 = 1 := by
+    induction n with
+    | zero => simp [h₀]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 1) % 4 = a (12 * n + 13) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 13) % 4 = (a (12 * n + 12) + a (12 * n + 11)) % 4 := by rw [h₂ (12 * n + 11)]
+      rw [t2]
+      have t3 : a (12 * n + 12) % 4 = a (12 * n + 11) % 4 := by rw [h₂ (12 * n + 10)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 2) % 4 = 1
+  have r14 (n : ℕ) : a (12 * n + 2) % 4 = 1 := by
+    induction n with
+    | zero => simp [h₁]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 2) % 4 = a (12 * n + 14) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 14) % 4 = (a (12 * n + 13) + a (12 * n + 12)) % 4 := by rw [h₂ (12 * n + 12)]
+      rw [t2]
+      have t3 : a (12 * n + 13) % 4 = a (12 * n + 12) % 4 := by rw [h₂ (12 * n + 11)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 3) % 4 = 2
+  have r15 (n : ℕ) : a (12 * n + 3) % 4 = 2 := by
+    induction n with
+    | zero => simp [h₂ 1]; simp [h₀, h₁]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 3) % 4 = a (12 * n + 15) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 15) % 4 = (a (12 * n + 14) + a (12 * n + 13)) % 4 := by rw [h₂ (12 * n + 13)]
+      rw [t2]
+      have t3 : a (12 * n + 14) % 4 = a (12 * n + 13) % 4 := by rw [h₂ (12 * n + 12)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 4) % 4 = 3
+  have r16 (n : ℕ) : a (12 * n + 4) % 4 = 3 := by
+    induction n with
+    | zero => simp [h₂ 2]; simp [h₁, h₀]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 4) % 4 = a (12 * n + 16) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 16) % 4 = (a (12 * n + 15) + a (12 * n + 14)) % 4 := by rw [h₂ (12 * n + 14)]
+      rw [t2]
+      have t3 : a (12 * n + 15) % 4 = a (12 * n + 14) % 4 := by rw [h₂ (12 * n + 13)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 5) % 4 = 1
+  have r17 (n : ℕ) : a (12 * n + 5) % 4 = 1 := by
+    induction n with
+    | zero => simp [h₂ 3]; simp [h₀, h₁]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 5) % 4 = a (12 * n + 17) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 17) % 4 = (a (12 * n + 16) + a (12 * n + 15)) % 4 := by rw [h₂ (12 * n + 15)]
+      rw [t2]
+      have t3 : a (12 * n + 16) % 4 = a (12 * n + 15) % 4 := by rw [h₂ (12 * n + 14)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 6) % 4 = 0
+  have r18 (n : ℕ) : a (12 * n + 6) % 4 = 0 := by
+    induction n with
+    | zero => simp [h₂ 4]; simp [h₁, h₀]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 6) % 4 = a (12 * n + 18) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 18) % 4 = (a (12 * n + 17) + a (12 * n + 16)) % 4 := by rw [h₂ (12 * n + 16)]
+      rw [t2]
+      have t3 : a (12 * n + 17) % 4 = a (12 * n + 16) % 4 := by rw [h₂ (12 * n + 15)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 7) % 4 = 1
+  have r19 (n : ℕ) : a (12 * n + 7) % 4 = 1 := by
+    induction n with
+    | zero => simp [h₂ 5]; simp [h₀, h₁]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 7) % 4 = a (12 * n + 19) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 19) % 4 = (a (12 * n + 18) + a (12 * n + 17)) % 4 := by rw [h₂ (12 * n + 17)]
+      rw [t2]
+      have t3 : a (12 * n + 18) % 4 = a (12 * n + 17) % 4 := by rw [h₂ (12 * n + 16)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 8) % 4 = 1
+  have r20 (n : ℕ) : a (12 * n + 8) % 4 = 1 := by
+    induction n with
+    | zero => simp [h₂ 6]; simp [h₁, h₀]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 8) % 4 = a (12 * n + 20) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 20) % 4 = (a (12 * n + 19) + a (12 * n + 18)) % 4 := by rw [h₂ (12 * n + 18)]
+      rw [t2]
+      have t3 : a (12 * n + 19) % 4 = a (12 * n + 18) % 4 := by rw [h₂ (12 * n + 17)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 9) % 4 = 2
+  have r21 (n : ℕ) : a (12 * n + 9) % 4 = 2 := by
+    induction n with
+    | zero => simp [h₂ 7]; simp [h₀, h₁]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 9) % 4 = a (12 * n + 21) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 21) % 4 = (a (12 * n + 20) + a (12 * n + 19)) % 4 := by rw [h₂ (12 * n + 19)]
+      rw [t2]
+      have t3 : a (12 * n + 20) % 4 = a (12 * n + 19) % 4 := by rw [h₂ (12 * n + 18)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 10) % 4 = 3
+  have r22 (n : ℕ) : a (12 * n + 10) % 4 = 3 := by
+    induction n with
+    | zero => simp [h₂ 8]; simp [h₁, h₀]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 10) % 4 = a (12 * n + 22) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 22) % 4 = (a (12 * n + 21) + a (12 * n + 20)) % 4 := by rw [h₂ (12 * n + 20)]
+      rw [t2]
+      have t3 : a (12 * n + 21) % 4 = a (12 * n + 20) % 4 := by rw [h₂ (12 * n + 19)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 11) % 4 = 1
+  have r23 (n : ℕ) : a (12 * n + 11) % 4 = 1 := by
+    induction n with
+    | zero => simp [h₂ 9]; simp [h₀, h₁]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 11) % 4 = a (12 * n + 23) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 23) % 4 = (a (12 * n + 22) + a (12 * n + 21)) % 4 := by rw [h₂ (12 * n + 21)]
+      rw [t2]
+      have t3 : a (12 * n + 22) % 4 = a (12 * n + 21) % 4 := by rw [h₂ (12 * n + 20)]
+      rw [t3]
+      omega
+
+  -- a (12 * n + 12) % 4 = 0
+  have r24 (n : ℕ) : a (12 * n + 12) % 4 = 0 := by
+    induction n with
+    | zero => simp [h₂ 10]; simp [h₁, h₀]
+    | succ n ih =>
+      have t1 : a (12 * (n + 1) + 12) % 4 = a (12 * n + 24) % 4 := by ring_nf
+      rw [t1]
+      have t2 : a (12 * n + 24) % 4 = (a (12 * n + 23) + a (12 * n + 22)) % 4 := by rw [h₂ (12 * n + 22)]
+      rw [t2]
+      have t3 : a (12 * n + 23) % 4 = a (12 * n + 22) % 4 := by rw [h₂ (12 * n + 21)]
+      rw [t3]
+      omega
+
+  -- Now we need to show that 100 = 12 * 8 + 4
+  have t : 100 = 12 * 8 + 4 := by norm_num
+
+  -- Therefore, a 100 % 4 = a (12 * 8 + 4) % 4 = a (12 * 8 + 1 + 3) % 4 = a (96 + 1 + 3) % 4 = a 100 % 4
+  rw [t]
+  rw [r16 8

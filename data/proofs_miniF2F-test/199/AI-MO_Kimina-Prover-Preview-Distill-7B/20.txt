@@ -1,0 +1,228 @@
+have h₄ : (k - t) ∣ k ^ 2 - t ^ 2 := by
+    apply (Nat.dvd_sub_iff_right (Nat.dvd_pow)).mpr
+    apply Nat.dvd_mul_left
+
+  -- By the factor theorem, it follows that $k-t$ divides $k^{2}-t^{2}$. -/
+  have h₅ : k ^ 2 - t ^ 2 = (k - t) * (k + t) := by
+    zify
+    rw [Int.ofNat_sub (Nat.pow_le_pow_of_le_left h₁ _), Int.ofNat_sub h₁]
+    ring
+
+  have h₆ : (k - t) ∣ (k - t) * (k + t) := by
+    apply Dvd.dvd.mul_left
+
+  -- From the above, it follows that $k-t$ divides $m$. -/
+  have h₇ : k ^ 2 - t ^ 2 = m * (k - t) := by
+    linarith
+
+  have h₈ : k - t ∣ m := by
+    rw [←h₇]
+    apply Dvd.dvd.mul_right
+    apply h₆
+
+  -- Since $m$ is prime, it follows that $k-t$ is either 1 or $m$. -/
+  replace h₈ : k - t = 1 ∨ k - t = m := by
+    apply (Nat.dvd_prime h₀.1).mp h₈
+
+  have h₉ : k - t < k := by
+    linarith
+
+  have h₁₀ : k - t > 0 := by
+    linarith
+
+  -- Since $k-t$ is positive and is either 1 or $m$, it follows that $k-t = 1$. -/
+  have h₁₁ : k - t = 1 := by
+    omega
+
+  -- Thus, $t = k - 1$. -/
+  have h₁₂ : t = k - 1 := by
+    omega
+
+  -- Since $k > t$, it follows that $k > k - 1$. -/
+  have h₁₃ : k > k - 1 := by
+    linarith
+
+  -- By the above, we get $t = k - 1$ and so $k > t$. -/
+  have h₁₄ : t < k := by
+    linarith
+
+  -- Since $k > t$, we have $k - t > 0$. -/
+  have h₁₅ : k - t > 0 := by
+    linarith
+
+  -- Since $k-t$ is equal to either 1 or $m$, we have $m = 1$ or $m = k - t$. -/
+  replace h₈ : k - t = 1 ∨ k - t = m := by
+    apply (Nat.dvd_prime h₀.1).mp h₈
+
+  rcases h₈ with h₁₆ | h₁₆
+
+  -- If $k - t = 1$, then $t = k - 1$. -/
+  · -- If $k - t = 1$, then $t = k - 1$. -/
+    have h₁₇ : t = k - 1 := by
+      omega
+
+    -- Substituting $t = k - 1$ in the original equations, we get $k^2 - m k + n = 0$ and $(k - 1)^2 - m (k - 1) + n = 0$. -/
+    rw [h₁₇] at h₃
+
+    -- Subtracting the two equations, we get $2 k - m = 1$. -/
+    have h₁₈ : 2 * k - m = 1 := by
+      zify
+      have h₁₈ : (k ^ 2 : ℤ) - m * k + n - ((k - 1) ^ 2 - m * (k - 1) + n) = 0 := by
+        linarith
+      ring_nf at h₁₈
+      linarith
+
+    -- Rearrange to get $m = 2 k - 1$. -/
+    have h₁₉ : m = 2 * k - 1 := by
+      linarith
+
+    -- Since $m$ is a prime number, $2 k - 1 > 0$ and $2 k - 1$ is a prime number. -/
+    have h₁₂ : 2 * k - 1 > 0 := by
+      linarith
+
+    have h₁₃ : Nat.Prime (2 * k - 1) := by
+      rw [←h₁₉]
+      exact h₀.1
+
+    -- From the equation $n + k^2 = m k = (2 k - 1) k = 2 k^2 - k$, we get $n = k (k - 1)$. -/
+    have h₁₄ : n = k * (k - 1) := by
+      have h₁₄ : (n : ℤ) = (k * (k - 1) : ℕ) := by
+        linarith
+      norm_cast at h₁₄
+      omega
+
+    -- Since $k$ and $k - 1$ are consecutive integers, they are coprime. -/
+    have h₁₅ : k.Coprime (k - 1) := by
+      apply Nat.coprime_self_sub_right (by linarith)
+
+    -- By the fundamental theorem of arithmetic, $n$ is a product of prime powers. Since $n = k (k - 1)$, it follows that $n$ is a product of prime powers of either $k$ or $k - 1$. -/
+    have h₁₆ : n = k ^ k - k := by
+      apply Nat.Prime.finiteMultiplicity_iff.mp
+      apply (Nat.coprime_mul_iff_left h₁₅).mpr
+      apply Nat.Prime.finiteMultiplicity_iff.mpr
+      apply Or.inl h₁₃
+
+    -- Since $n$ is a prime number, $k (k - 1) = 1$ or $k (k - 1) = p^a$ for some prime number $p$ and some positive integer $a$. But since $k$ and $k - 1$ are coprime, the only possibilities are $k = 1, k - 1 = 1$ or $k = p^b, k - 1 = 1$ for some positive integers $b$ and $a$. The first case gives $k = 2$, so $m = 2 k - 1 = 3$, $n = k (k - 1) = 2$, so $m^n + n^m + k^t + t^k = 3^2 + 2^3 + 2^1 + 1^2 = 9 + 8 + 2 + 1 = 20$. The second case gives $k - 1 = p^a$, but then $k = p^b + 1$ for some positive integers $b$ and $a$, and $k (k - 1) = p^a (p^b + 1) = n$ is prime, so $p^a = 1$ or $p^b + 1 = 1$. The first subcase gives $p = 1$, a contradiction. The second subcase gives $b = 0$, but then $k = 1$ and $t = k - 1 = 0$, contradicting $t < k$. -/
+    have h₁₇ : k = 2 := by
+      have h₁₇ : k * (k - 1) = n := by
+        omega
+      have h₁₈ : n = 1 ∨ n = p ^ a := by
+        apply (Nat.prime_pow a p).mp
+        rw [←h₁₇]
+        exact h₀.2
+      rcases h₁₈ with h₁₈ | h₁₈
+
+      -- If $n = 1$, then $k (k - 1) = 1$ and $k > 0$, so $k = 1$, but then $t = k - 1 = 0$, contradicting $t < k$. -/
+      · have h₁₉ : k * (k - 1) = 1 := by
+          linarith
+        have h₁₂ : k > 0 := by
+          omega
+        have h₁₃ : k - 1 ≥ 0 := by
+          omega
+        have h₁₄ : k * (k - 1) ≥ k := by
+          apply Nat.mul_le_mul_right
+          exact h₁₃
+        have h₁₅ : k * (k - 1) ≥ 1 := by
+          omega
+        have h₁₆ : k = 1 := by
+          linarith
+        have h₁₇ : k - 1 = 0 := by
+          linarith
+        have h₁₈ : t = 0 := by
+          omega
+        linarith
+
+      -- If $n = p^a$ for some prime number $p$ and some positive integer $a$, then $k (k - 1) = p^a$ where $k$ and $k - 1$ are coprime. Since $p$ is a prime number, it follows that $k = 1$ or $k - 1 = 1$. -/
+      · have h₁₉ : k * (k - 1) = p ^ a := by
+          linarith
+        have h₂₀ : k.Coprime (k - 1) := by
+          apply Nat.coprime_self_sub_right (by linarith)
+
+        have h₂₁ : p ∣ k ∨ p ∣ (k - 1) := by
+          apply (Nat.Prime.dvd_mul h₁₃).mp
+          rw [h₁₉]
+          apply (Nat.dvd_prime_pow h₁₃).mp
+          omega
+
+        rcases h₂₁ with h₂₁ | h₂₁
+
+        -- If $p \mid k$, then $k \geq p$, but then $k - 1 \geq p - 1$, so $p^a = k (k - 1) \geq p (p - 1) > p$, a contradiction since $p \geq 2$. -/
+        · have h₂₂ : ¬ p ∣ k - 1 := by
+            apply Nat.Prime.coprime h₁₃ h₂₀
+            exact h₂₁
+          have h₂₃ : k ≥ p := by
+            apply Nat.le_of_dvd (by linarith)
+            apply Nat.Prime.dvd_of_dvd_pow h₁₃
+            exact h₂₁
+          have h₂₄ : k - 1 ≥ p - 1 := by
+            omega
+          have h₂₅ : k * (k - 1) ≥ p * (p - 1) := by
+            apply Nat.mul_le_mul h₂₃ h₂₄
+          have h₂₆ : p * (p - 1) > p := by
+            have h₂₆ : p - 1 > 1 := by
+              omega
+            apply Nat.mul_lt_mul_of_pos_left h₂₆
+            exact Nat.Prime.two_le h₁₃
+          have h₂₇ : k * (p - 1) > p := by
+            linarith
+          have h₂₈ : p ∣ k * (k - 1) := by
+            apply (Nat.Prime.dvd_mul h₁₃).mpr
+            apply Or.inl h₂₁
+          have h₂₉ : p ∣ k - 1 := by
+            apply Nat.Prime.dvd_of_dvd_mul_right h₁₃ at h₂₈
+            exact h₂₈
+          contradiction
+
+        -- If $p \mid k - 1$, then $k - 1 \geq p$, but then $k \geq p + 1$, so $p^a = k (k - 1) \geq (p + 1) p > p$, a contradiction since $p \geq 2$. -/
+        · have h₂₂ : ¬ p ∣ k := by
+            apply Nat.Prime.coprime h₁₃ h₂₀
+            exact h₂₁
+          have h₂₃ : k - 1 ≥ p := by
+            apply Nat.le_of_dvd (by linarith)
+            apply Nat.Prime.dvd_of_dvd_pow h₁₃
+            exact h₂₁
+          have h₂₄ : k ≥ p + 1 := by
+            omega
+          have h₂₅ : k * (k - 1) ≥ (p + 1) * p := by
+            apply Nat.mul_le_mul h₂₄ h₂₃
+          have h₂₆ : (p + 1) * p > p := by
+            have h₂₆ : p ≥ 2 := by
+              exact Nat.Prime.two_le h₁₃
+            omega
+          have h₂₇ : k * (p + 1) > p := by
+            linarith
+          have h₂₈ : p ∣ k * (k - 1) := by
+            apply (Nat.Prime.dvd_mul h₁₃).mpr
+            apply Or.inr h₂₁
+          have h₂₉ : p ∣ k := by
+            apply Nat.Prime.dvd_of_dvd_mul_left h₁₃ at h₂₈
+            exact h₂₈
+          contradiction
+
+    -- Thus, $k = 2$, $t = k - 1 = 1$, $m = 2 k - 1 = 3$, and $n = k (k - 1) = 2$. -/
+    have h₁₈ : t = 1 := by
+      omega
+
+    have h₁₉ : m = 3 := by
+      omega
+
+    have h₂₀ : n = 2 := by
+      omega
+
+    -- Substituting these values, we get $m^n + n^m + k^t + t^k = 3^2 + 2^3 + 2^1 + 1^2 = 9 + 8 + 2 + 1 = 20$. -/
+    subst m n k t
+    norm_num
+
+  -- If $k - t = m$, then substituting in the original equations, we get $m k - m^2 = m k - m k = 0$ and $m (k - 1) - m^2 = m k - m - m^2 = m k - m^2 - m = 0$, so $m k - m^2 = 0$ and $m k - m^2 - m = 0$, a contradiction since $m > 0$. -/
+  · -- If $k - t = m$, then $m = 0$, which is impossible because $m$ is a prime number. -/
+    have h₁₇ : m = 0 := by
+      omega
+
+    have h₁₈ : ¬ Nat.Prime m := by
+      rw [h₁₇]
+      apply Nat.not_prime_zero
+
+
+    contradiction
+
+```

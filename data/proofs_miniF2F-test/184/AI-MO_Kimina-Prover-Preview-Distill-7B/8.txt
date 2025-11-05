@@ -1,0 +1,60 @@
+-- Since n is positive, we have $2^n$ is even.
+  have h₁ : Even (2 ^ n) := by
+    exact dvd_pow (by decide) (by omega)
+
+  -- This means that $3^{2^n} - 1$ is even.
+  have h₂ : Even (3 ^ 2 ^ n - 1) := by
+    exact Even.sub_even h₁ (by rw [Nat.one_pow]; exact Even.pow (by decide) h₀)
+
+  -- We have $2^{n+2} \leq 3^{2^n} - 1$.
+  have h₃ : 2 ^ (n + 2) ≤ 3 ^ 2 ^ n - 1 := by
+    have help : 2 ^ n + 1 ≤ 3 ^ 2 ^ n := by
+      -- This is proven by induction on n.
+      induction n with
+      | zero => simp
+      | succ n hn =>
+        rw [pow_add, pow_one, mul_comm]
+        nth_rw 2 [mul_comm]
+        rw [show 2 ^ (n + 1) * 2 = 2 ^ (n + 1) + 2 ^ (n + 1) by exact Eq.symm (Nat.add_mul_self 2 (2 ^ n))]
+        have : 2 ^ (n + 1) ≥ 2 := by
+          exact Nat.le_self_pow (by omega) 2
+        have : 2 ^ (n + 1) + 2 ^ (n + 1) ≥ 2 ^ (n + 1) + 1 := by
+          exact Nat.le_add_left 1 (2 ^ (n + 1) + 2 ^ (n + 1))
+        have help : 2 ^ (n + 1) + 2 ^ (n + 1) ≥ 3 := by
+          nth_rw 1 [show 2 = 1 + 1 by exact Eq.symm (Nat.add_one 1)] at this
+          rw [Nat.add_assoc] at this
+          exact this
+        exact Nat.pow_le_pow_of_le_right (by omega) help
+    -- The fact that $2^{n+2} \leq 3^{2^n} - 1$ is obtained by combining the above inequality with the fact that $3^{2^n} - 1$ is even.
+    omega
+
+  -- The goal is now reduced to showing that $2^{n+3} \mid 3^{2^n} - 1 - 2^{n+2}$.
+  rw [←Nat.modEq_iff_dvd' (by omega), show 3 ^ 2 ^ n - 1 - 2 ^ (n + 2) = 3 ^ 2 ^ n - 1 + (-2 ^ (n + 2)) by simp]
+  apply Nat.dvd_add
+ . -- We know that $2^{n+3} \mid 3^{2^n} - 1$.
+    have help : 2 ^ (n + 3) ∣ 3 ^ 2 ^ n - 1 := by
+      -- This is proven by induction on n.
+      induction n with
+      | zero => simp
+      | succ n hn =>
+        rw [pow_add, pow_one, mul_comm]
+        nth_rw 2 [mul_comm]
+        rw [show 2 ^ (n + 1) * 2 = 2 ^ (n + 1) + 2 ^ (n + 1) by exact Eq.symm (Nat.add_mul_self 2 (2 ^ n))]
+        have : 2 ^ (n + 1) ≥ 2 := by
+          exact Nat.le_self_pow (by omega) 2
+        have : 2 ^ (n + 1) + 2 ^ (n + 1) ≥ 2 ^ (n + 1) + 1 := by
+          exact Nat.le_add_left 1 (2 ^ (n + 1) + 2 ^ (n + 1))
+        have help : 2 ^ (n + 1) + 2 ^ (n + 1) ≥ 3 := by
+          nth_rw 1 [show 2 = 1 + 1 by exact Eq.symm (Nat.add_one 1)] at this
+          rw [Nat.add_assoc] at this
+          exact this
+        exact Nat.pow_dvd_pow 2 (Nat.le_add_right help this)
+    exact help
+ . -- We also know that $2^{n+3} \mid 2^{n+2}$.
+    rw [show n + 2 = n + 3 - 1 by omega, Nat.pow_sub, Nat.pow_succ]
+    simp
+    norm_num
+
+
+  
+```

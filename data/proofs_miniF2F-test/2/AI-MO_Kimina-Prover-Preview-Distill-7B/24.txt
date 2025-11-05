@@ -1,0 +1,157 @@
+-- cancel down the logs
+  have h3 : Real.log w = 24 * Real.log x := by
+    rw [← h0]
+    field_simp
+  have h4 : Real.log w = 40 * Real.log y := by
+    rw [← h1]
+    field_simp
+  have h5 : Real.log w = 12 * Real.log (x * y * z) := by
+    rw [← h2]
+    field_simp
+
+  -- turn the logarithms into powers
+
+  have hx := Real.log_rpow hw (show 0 ≤ x by omega)
+  have hy := Real.log_rpow hw (show 0 ≤ y by omega)
+  have hz := Real.log_rpow hw (show 0 ≤ z by omega)
+
+  rw [hx] at h3
+  rw [hy] at h4
+  rw [hz] at h5
+
+  -- swap the logarithms from the right-hand side
+
+  have h3 : Real.log w = 24 * Real.log x := by exact h3
+  have h4 : Real.log w = 40 * Real.log y := by exact h4
+  have h5 : Real.log w = 12 * Real.log (x * y * z) := by exact h5
+
+  have h6 : Real.log x ^ 24 = w := by
+    calc
+      Real.log x ^ 24 = (Real.log w) / 24 := by rw [h3]; field_simp
+      _ = Real.log w / Real.log (x ^ 24) := by rw [Real.log_rpow hw (show 0 ≤ 24 by omega)]
+      _ = x ^ 24 := by rw [← h4]
+  have h7 : Real.log y ^ 40 = w := by
+    calc
+      Real.log y ^ 40 = (Real.log w) / 40 := by rw [h4]; field_simp
+      _ = Real.log w / Real.log (y ^ 40) := by rw [Real.log_rpow hw (show 0 ≤ 40 by omega)]
+      _ = y ^ 40 := by rw [← h3]
+  have h8 : Real.log (x * y * z) ^ 12 = w := by
+    calc
+      Real.log (x * y * z) ^ 12 = (Real.log w) / 12 := by rw [h5]; field_simp
+      _ = Real.log w / Real.log ((x * y * z) ^ 12) := by rw [Real.log_rpow hw (show 0 ≤ 12 by omega)]
+      _ = (x * y * z) ^ 12 := by rw [← h3]
+
+  -- turn the multiplication of $x$, $y$ and $z$ into powers
+
+  have h9 : Real.log (x * y * z) = Real.log x + Real.log y + Real.log z := by
+    calc
+      Real.log (x * y * z) = Real.log (x * y) + Real.log z := by rw [Real.log_mul (by omega) (by omega)]
+      _ = Real.log x + Real.log y + Real.log z := by rw [Real.log_mul (by omega) (by omega)]
+
+  rw [h9] at h8
+
+  -- swap to get a system of polynomial equations
+
+  have p0 : Real.log x ^ 24 - Real.log x = 0 := by
+    calc
+      Real.log x ^ 24 - Real.log x = w - Real.log x := by rw [h6]
+      _ = 0 := by rw [h4]; field_simp
+  have p1 : Real.log y ^ 40 - Real.log y = 0 := by
+    calc
+      Real.log y ^ 40 - Real.log y = w - Real.log y := by rw [h7]
+      _ = 0 := by rw [h3]; field_simp
+  have p2 : Real.log z ^ 12 - Real.log z = 0 := by
+    calc
+      Real.log z ^ 12 - Real.log z = w - Real.log z := by rw [h8]
+      _ = 0 := by rw [h3]; field_simp
+  have p3 : Real.log x + Real.log y + Real.log z = Real.log (x * y * z) := by
+    exact h9
+
+  -- factor the polynomials and solve the equations
+
+  have q0 : Real.log x * (Real.log x ^ 23 - 1) = 0 := by
+    calc
+      Real.log x * (Real.log x ^ 23 - 1) = Real.log x ^ 24 - Real.log x := by ring
+      _ = 0 := by exact p0
+  have q1 : Real.log y * (Real.log y ^ 39 - 1) = 0 := by
+    calc
+      Real.log y * (Real.log y ^ 39 - 1) = Real.log y ^ 40 - Real.log y := by ring
+      _ = 0 := by exact p1
+  have q2 : Real.log z * (Real.log z ^ 11 - 1) = 0 := by
+    calc
+      Real.log z * (Real.log z ^ 11 - 1) = Real.log z ^ 12 - Real.log z := by ring
+      _ = 0 := by exact p2
+
+  have r0 : Real.log x ^ 23 - 1 = 0 ∨ Real.log x = 0 := by
+    exact mul_eq_zero.mp q0
+  have r1 : Real.log y ^ 39 - 1 = 0 ∨ Real.log y = 0 := by
+    exact mul_eq_zero.mp q1
+  have r2 : Real.log z ^ 11 - 1 = 0 ∨ Real.log z = 0 := by
+    exact mul_eq_zero.mp q2
+
+  have s0 : Real.log x ^ 23 = 1 ∨ Real.log x = 0 := by
+    refine (Or.inl sub_eq_zero).mp (Eq.symm (pow_eq_one_iff_of_ne_zero (show 23 ≠ 0 by omega) (by positivity))).mpr (by omega)
+  have s1 : Real.log y ^ 39 = 1 ∨ Real.log y = 0 := by
+    refine (Or.inl sub_eq_zero).mp (Eq.symm (pow_eq_one_iff_of_ne_zero (show 39 ≠ 0 by omega) (by positivity))).mpr (by omega)
+  have s2 : Real.log z ^ 11 = 1 ∨ Real.log z = 0 := by
+    refine (Or.inl sub_eq_zero).mp (Eq.symm (pow_eq_one_iff_of_ne_zero (show 11 ≠ 0 by omega) (by positivity))).mpr (by omega)
+
+  -- the only solution is 1, 1 and 1
+
+  have t0 : Real.log x = 1 := by
+    rcases r0 with t0 | t0
+    · rcases s0 with s0 | s0
+      · exact s0
+      · rw [t0] at q0
+        have : 0 < Real.log x := by positivity
+        linarith
+    · rw [t0] at q0
+      have : 0 < Real.log x := by positivity
+      linarith
+  · rw [t0] at q0
+    have : 0 < Real.log x := by positivity
+    linarith
+
+  have t1 : Real.log y = 1 := by
+    rcases r1 with r1 | r1
+    · rcases s1 with s1 | s1
+      · exact s1
+      · rw [r1] at q1
+        have : 0 < Real.log y := by positivity
+        linarith
+    · rw [r1] at q1
+      have : 0 < Real.log y := by positivity
+      linarith
+
+  have t2 : Real.log z = 1 := by
+    rcases r2 with r2 | r2
+    · rcases s2 with s2 | s2
+      · exact s2
+      · rw [r2] at q2
+        have : 0 < Real.log z := by positivity
+        linarith
+    · rw [r2] at q2
+      have : 0 < Real.log z := by positivity
+      linarith
+
+  -- swap back to the logs
+
+  have hx := Real.log_rpow hw (show 0 ≤ x by omega)
+  rw [← hx] at t0
+  have hy := Real.log_rpow hw (show 0 ≤ y by omega)
+  rw [← hy] at t1
+  have hz := Real.log_rpow hw (show 0 ≤ z by omega)
+  rw [← hz] at t2
+
+  clear hx hy hz h0 h1 h2 h3 h4 h5 h6 h7 h8 h9
+
+  -- get the final result
+
+  calc
+    Real.log w / Real.log z = 60 := by
+      have : 60 = t0 / t2 := by field_simp; rw [t0, t2]; ring
+      rw [this]
+      field_simp
+
+
+```

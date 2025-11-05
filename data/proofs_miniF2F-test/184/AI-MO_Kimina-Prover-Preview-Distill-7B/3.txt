@@ -1,0 +1,62 @@
+have h₁ : 2 ^ (n + 3) = 8 * 2 ^ n := by
+    ring
+
+  have h₂ : 2 ^ (n + 2) = 4 * 2 ^ n := by
+    ring
+
+  rw [h₁]
+  cases n with
+  | zero =>
+    -- when $n = 0$, $9 - 1 = 8$, and $8 \mod 8 = 0$.
+    norm_num
+  | succ n =>
+    -- when $n \neq 0$, we can prove by induction.
+    induction n with
+    | zero =>
+      -- when $n = 1$, $81 - 1 = 80$, and $80 \mod 16 = 8$.
+      norm_num
+    | succ n ih =>
+      -- Assume $n \geq 2$, and the remainder of $3^{2^n} - 1 \equiv 2^{n+2} \mod 2^{n+3}$.
+      -- We need to prove the remainder of $3^{2^{n + 1}} - 1 \equiv 2^{n+3} \mod 2^{n+4}$.
+      -- $2^{n+4} = 2^{n+3} \cdot 2$, and $3^{2^{n+1}} - 1 = (3^{2^n})^2 - 1 = (3^{2^n} - 1)(3^{2^n} + 1)$.
+      rw [show 2 ^ (n + 1 + 3) = 2 ^ (n + 3) * 2 by ring, Nat.mod_mul_left]
+      rw [show 3 ^ 2 ^ (n + 1) - 1 = (3 ^ 2 ^ n) ^ 2 - 1 by ring, ← Nat.sq_sub_sq]
+      rw [Nat.add_mod (3 ^ 2 ^ n) 1 (2 ^ (n + 3))] -- Replace $3^{2^n} + 1$ with $2^{n+3}$, because $(3^{2^n} + 1) \equiv 2^{n+3} \mod 2^{n+4}$.
+      rw [Nat.mul_mod (3 ^ 2 ^ n)  (2 ^ (n + 3)) (2 ^ (n + 3))] -- Replace $3^{2^n} - 1$ with $2^{n+3}$, because $(3^{2^n} - 1) \equiv 2^{n+3} \mod 2^{n+4}$.
+      rw [ih, Nat.add_mod (3 ^ 2 ^ n) 1 (2 ^ (n + 3))] -- Apply inductive hypothesis.
+      have h₃ : (2 ^ (n + 3) * 2) % (2 ^ (n + 3) * 2) = 0 := by
+        rw [Nat.mod_self]
+        simp
+      rw [h₃]
+      rw [Nat.mul_mod 8 (2 ^ n) (2 ^ n)]
+      have h₄ : 2 ^ n > 0 := by
+        exact Nat.pos_pow_of_pos n (by norm_num)
+      rw [← Nat.mul_div_assoc 8 (2 ^ n) (2 ^ n), Nat.mul_mod_eq_of_lt (by linarith)]
+      -- Now we need to prove $3^{2^n} \mod 2^{n+4} = 1$.
+      have h₅ : (3 ^ 2 ^ n) % (2 ^ (n + 4)) = 1 := by
+        -- $2^{n+4} = 16 \cdot 2^{n}$, and $3^{2^n} \equiv 1 \mod 16$.
+        have g (n : ℕ) : (3 ^ 2 ^ n) % 16 = 1 := by
+          induction n with
+          | zero =>
+            -- when $n = 0$, $3^{2^0} = 3$, and $3 \mod 16 = 3$.
+            norm_num
+          | succ n ih =>
+            -- $3^{2^{n + 1}} = (3^{2^n})^2$, and $2^{n+1} = 2 \cdot 2^n$.
+            rw [show 2 ^ (n + 1) = 2 * 2 ^ n by ring, Nat.pow_mul, Nat.pow_add]
+            simp
+            rw [mul_comm, Nat.mul_mod 9 (2 ^ n) (2 ^ n), Nat.mul_mod eq (2 ^ n) (2 ^ n)]
+            simp
+            rw [ih]
+        -- $2^{n+4} = 16 \cdot 2^{n}$, so $3^{2^n} \mod 2^{n+4} = (3^{2^n} \mod 16) \mod 2^{n+4} = 1 \mod 2^{n+4} = 1$.
+        rw [show 2 ^ (n + 4) = 16 * 2 ^ n by ring]
+        rw [Nat.mod_mul_left_mod]
+        have h₆ : 2 ^ n > 0 := by
+          exact Nat.pos_pow_of_pos n (by norm_num)
+        omega
+      rw [h₅]
+      rw [add_mod]
+      rw [show 2 ^ (n + 3) * 2 % (2 ^ (n + 3) * 2) = 0 by rw [Nat.mod_self]; simp]
+      rw [show 8 * 2 ^ n + 4 * 2 ^ n = 12 * 2 ^ n by ring]
+      rw [show 12 * 2 ^ n % (16 * 2 ^ n) = 4 * 2 ^ n by rw [Nat.mod_eq_of_lt]; omega]
+      rw [show 4 * 2 ^ n = 2 ^ (n + 2) by ring]
+```

@@ -1,0 +1,49 @@
+-- Apply the Cauchy-Schwarz inequality
+  have CS (a b : ℕ → NNReal) (n : ℕ) : (∑ x ∈ Finset.range n, a x * b x) ^ 2 ≤ (∑ x ∈ Finset.range n, a x ^ 2) * (∑ x ∈ Finset.range n, b x ^ 2) := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      specialize ih (Finset.range n) (Finset.range n)
+      simp at ih
+      rw [Finset.sum_range_succ, Finset.sum_range_succ]
+      rw [← (mul_add).pow_two]
+      linarith [← mul_self_nonneg (a n * b n), ← mul_self_nonneg (a n), ← mul_self_nonneg (b n),
+        ih]
+
+  have h₁ := CS a (fun x ↦ a (x + 1)) 100
+  simp at h₁
+  specialize CS (fun x ↦ a (x + 1)) (fun x ↦ a (x + 2)) 99
+  simp at CS
+
+  -- manipulate the inequalities to get the desired result
+  calc
+    (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 = (∑ x ∈ Finset.range 100, a (x + 1) ^ 2 * a (x + 2)) - a 100 ^ 2 * a 100 + a 100 ^ 2 * a 1 := by
+      simp [Finset.sum_range_succ]
+      ring
+    _ = (∑ x ∈ Finset.range 100, a (x + 1) * a (x + 2) * (a (x + 1) - a (x + 2))) + a 100 ^ 2 * (a 1 - a 100) := by
+      simp [Finset.sum_range_succ]
+      ring
+    _ < (∑ x ∈ Finset.range 100, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 := by
+      have : 0 ≤ ∑ x ∈ Finset.range 100, a (x + 1) ^ 2 * a (x + 2) := by
+        apply Finset.sum_nonneg (fun _ ↦ by simp)
+        intros
+        exact Nat.zero_le (a _ ^ 2 * a _)
+      linarith
+    _ = (∑ x ∈ Finset.range 100, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 := by
+      simp
+    _ ≤ (∑ x ∈ Finset.range 100, a (x + 1) ^ 2) * (∑ x ∈ Finset.range 100, a (x + 2) ^ 2) := by
+      specialize CS a (fun x ↦ a (x + 2)) 100
+      simp at CS
+      linarith
+    _ = 1 * (∑ x ∈ Finset.range 100, a (x + 2) ^ 2) := by
+      rw [h₀]
+    _ < 1 * 1 := by
+      have : 0 < ∑ x ∈ Finset.range 100, a (x + 2) ^ 2 := by
+        apply Finset.sum_pos (fun _ ↦ by simp)
+        intros
+        exact Nat.zero_lt (a _ ^ 2 * a _)
+      linarith
+    _ = 1 := by
+      simp
+
+```

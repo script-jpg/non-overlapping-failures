@@ -1,0 +1,110 @@
+-- We prove that $3x^2 y^2 = 588$ by contradiciton. If it is not true, then $3x^2 y^2 < 588$
+  by_contra h
+  push_neg at h
+
+  -- We have $y^2 + 3x^2 y^2 = 30x^2 + 517$
+  -- So $y^2 + 3x^2 y^2 - 30x^2 = 517$
+  -- So $x^2 (3y^2 - 30) \leq 517$
+  have h₁ : x ^ 2 * (3 * y ^ 2 - 30) = 517 := by linarith
+
+  have h₂ : 3 * y ^ 2 - 30 \leq 0 := by
+
+    -- $x^2 \geq 0$ as it is a square
+    have : x ^ 2 \geq 0 := by exact sq_nonneg x
+
+    -- We have $x^2 (3y^2 - 30) \leq 517$ and $x^2 \geq 0$, so $3y^2 - 30 \leq 517 \cdot 1$
+    -- So $3y^2 - 30 \leq 517$
+    have : x ^ 2 * (3 * y ^ 2 - 30) \leq 517 := by exact Int.mul_le_of_nonneg_left h h₁
+    linarith
+
+  -- As $3y^2 - 30 \leq 0$, we have $3y^2 \leq 30$
+  -- So $y^2 \leq 10$
+  have h₃ : y ^ 2 \leq 10 := by linarith
+
+  -- So $|y| \leq 3$
+  have h₄ : |y| ≤ 3 := by
+
+    -- As $y^2 \leq 10$ and $y$ is an integer, we have $|y| \leq 3$
+    have h₄ : y ^ 2 \leq |y| ^ 2 := by exact sq_le_sq.mpr (by exact abs_nonneg y)
+    have h₅ : |y| ^ 2 \leq 10 := by exact Int.lt_add_one_iff.mp (by linarith)
+    nlinarith
+
+  -- We prove that $x^2 \leq 17$
+  have h₅ : x ^ 2 \leq 17 := by
+
+    -- We have $x^2 (3y^2 - 30) = 517$
+    -- So $x^2 = \frac{517}{3y^2 - 30}$
+    -- So $x^2 \leq 517
+    have : x ^ 2 = 517 / (3 * y ^ 2 - 30) := by
+
+      -- As $x^2 (3y^2 - 30) = 517$ and $3y^2 - 30 \neq 0$ (as it is negative), we have $x^2 = \frac{517}{3y^2 - 30}$
+      have : 3 * y ^ 2 - 30 \neq 0 := by linarith
+      field_simp
+      linarith
+    have : x ^ 2 \leq 517 := by
+
+      -- $517 = |517|$, so we can write $x^2 = |x^2|$
+      have : 517 = |517| := by exact rfl
+      rw [this]
+      -- $|x^2| \leq |517|$
+      have : |x ^ 2| ≤ |517| := by exact abs_le.mp (by linarith)
+      -- So $x^2 \leq 517$
+      have : |x ^ 2| = x ^ 2 := by exact abs_of_nonneg (by exact sq_nonneg x)
+      linarith
+
+    -- We have $x^2 \leq 517$ and $3y^2 - 30 \leq 0$, so $\frac{517}{3y^2 - 30} \leq 517$
+    -- As $3y^2 - 30$ is an integer, we have $\frac{517}{3y^2 - 30} \leq 1$
+    -- So $x^2 \leq 1$
+    have : 3 * y ^ 2 - 30 ≠ 0 := by linarith
+
+    -- $\frac{517}{3y^2 - 30} \leq 517$ implies $\frac{517}{3y^2 - 30} \leq 1$
+    -- So $x^2 \leq 1$
+    have : (517 : ℤ) / (3 * y ^ 2 - 30) ≤ 1 := by
+
+      -- We have $a \leq 1$ iff $a \leq 1$ where $a = \frac{517}{3y^2 - 30}$
+      have : (517 : ℤ) / (3 * y ^ 2 - 30) ≤ 1 ↔ 517 ≤ (3 * y ^ 2 - 30) := by
+
+        -- $\frac{a}{b} \leq 1 \Leftrightarrow a \leq b$ where $b \neq 0$
+        have : (3 * y ^ 2 - 30) ≠ 0 := by linarith
+        exact (div_le_one_iff_of_neg this).mp
+      -- $517 \leq 3y^2 - 30$ implies $517 \leq 3y^2 - 30$
+      rw [this]
+      linarith
+
+    -- So $\frac{517}{3y^2 - 30} \leq 1$ and $x^2 \leq 1$
+    rw [←this]
+    exact Int.le_of_dvd (by linarith) (by linarith)
+
+  -- So $|x| \leq 4$
+  have h₆ : |x| ≤ 4 := by
+
+    -- As $x^2 \leq 17$ and $x$ is an integer, we have $|x| \leq 4$
+    have h₆ : x ^ 2 \leq |x| ^ 2 := by exact sq_le_sq.mpr (by exact abs_nonneg x)
+    have h₇ : |x| ^ 2 \leq 17 := by exact Int.lt_add_one_iff.mp (by linarith)
+    nlinarith
+
+  -- We have $x \in [-4, 4]$ and $y \in [-3, 3]$, so we can do a case analysis
+  have h₇ : x ∈ Finset.Icc (-4) 4 := by
+
+    -- $x \geq -4$ as $|x| \leq 4$
+    have : x ≥ -4 := by linarith [abs_le.mp (show |x| ≤ 4 by linarith)]
+
+    -- $x \leq 4$ as $|x| \leq 4$
+    have : x ≤ 4 := by linarith [abs_le.mp (show |x| ≤ 4 by linarith)]
+
+    exact this
+
+  have h₈ : y ∈ Finset.Icc (-3) 3 := by
+
+    -- $y \geq -3$ as $|y| \leq 3$
+    have : y ≥ -3 := by linarith [abs_le.mp (show |y| ≤ 3 by linarith)]
+
+    -- $y \leq 3$ as $|y| \leq 3$
+    have : y ≤ 3 := by linarith [abs_le.mp (show |y| ≤ 3 by linarith)]
+
+    exact this
+
+  -- We do a case analysis on $x$ and $y$
+  fin_cases h₇ <;> fin_cases h₈ <;> ( simp_all <;> omega )
+
+```

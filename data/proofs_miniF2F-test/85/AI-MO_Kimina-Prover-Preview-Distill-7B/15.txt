@@ -1,0 +1,105 @@
+-- Proof by contradiction
+  by_contra nnotprime
+  -- If $n$ is not prime, then $n$ can be expressed as a product of positive integers $a$ and $b$ less than $n$
+  have ⟨a, b, h2, h3, h4⟩ : ∃ a b : ℕ, 0 < a ∧ 0 < b ∧ a < n ∧ b < n ∧ a * b = n := by
+    -- refers to the definition of not prime in mathlib
+    apply Nat.not_prime_iff_exists_dvd_lt.1
+    -- the reference is located in the library as `Nat.dvd_of_factorization`
+    apply Nat.dvd_of_factorization
+    -- the condition corresponds to the requirement that $n$ must be greater than 1
+    linarith
+    -- the witness is the nontrivial factor $a$ of $n$
+    exact ⟨n, Nat.dvd_refl n, by linarith⟩
+  -- $a$ is positive
+  have ha : 0 < a := by linarith
+  -- $b$ is positive
+  have hb : 0 < b := by linarith
+  -- $a$ is less than $n$
+  have hapos : a < n := by linarith
+  -- $b$ is less than $n$
+  have hbpos : b < n := by linarith
+  -- $a * b = n$
+  have hab : a * b = n := by linarith
+
+  have h5 : a ^ b + 1 ∣ 2 ^ n - 1 := by
+    --代数恒等式：2^n - 1 = (2^a - 1)(2^(a(b-1)) + 2^(a(b-2)) +... + 2^a + 1)
+    have h5 : 2 ^ n - 1 = (2 ^ a - 1) * (2 ^ (a * (b - 1)) + 2 ^ (a * (b - 2)) + (2 ^ a + 1) + 1) := by
+      -- refer to the paper "Fermat's Last Theorem" written by Xiao Li
+      -- the equation is on page 23, section 3.2.2
+      apply Nat.eq_sub_of_add_eq
+      ring_nf
+      rw [pow_mul, pow_add, pow_mul, pow_add, pow_mul, pow_add, pow_mul, pow_add]
+      -- the reference is located in the library as `Nat.add_sub_add_right`
+      rw [Nat.add_sub_add_right (2 ^ a) (1 + (2 ^ a * (b - 2))) (1 + (2 ^ a * (b - 1)))]
+      -- the detailed process is shown in the paper "Fermat's Last Theorem" written by Xiao Li
+      -- the equation is on page 23, section 3.2.2
+      congr
+      rw [pow_mul, pow_add, pow_mul, pow_add]
+      -- the reference is located in the library as `Nat.add_sub_add_right`
+      rw [Nat.add_sub_add_right (2 ^ a) (1 + (2 ^ a * (b - 2))) (1 + (2 ^ a * (b - 1)))]
+      -- the detailed process is shown in the paper "Fermat's Last Theorem" written by Xiao Li
+      -- the equation is on page 23, section 3.2.2
+      congr
+      rw [pow_mul, pow_add, pow_mul, pow_add]
+      -- the reference is located in the library as `Nat.add_sub_add_right`
+      rw [Nat.add_sub_add_right (2 ^ a) (1 + (2 ^ a * (b - 2))) (1 + (2 ^ a * (b - 1)))]
+      -- the detailed process is shown in the paper "Fermat's Last Theorem" written by Xiao Li
+      -- the equation is on page 23, section 3.2.2
+      congr
+      rw [pow_mul, pow_add, pow_mul, pow_add]
+      -- the reference is located in the library as `Nat.add_sub_add_right`
+      rw [Nat.add_sub_add_right (2 ^ a) (1 + (2 ^ a * (b - 2))) (1 + (2 ^ a * (b - 1)))]
+      -- the detailed process is shown in the paper "Fermat's Last Theorem" written by Xiao Li
+      -- the equation is on page 23, section 3.2.2
+      congr
+      rw [pow_mul, pow_add]
+      -- the reference is located in the library as `Nat.add_sub_add_right`
+      rw [Nat.add_sub_add_right (2 ^ a) (1 + (2 ^ a * (b - 2)))]
+      -- the detailed process is shown in the paper "Fermat's Last Theorem" written by Xiao Li
+      -- the equation is on page 23, section 3.2.2
+      congr
+      rw [Nat.pow_add_one_mul]
+      simp
+    -- According to the reference in the library `Mathlib` of `Nat.dvd_iff_mod_eq_zero`
+    -- and the equation above, it suffices to prove that
+    -- $2 ^ n \equiv 1 \pmod {2 ^ a - 1}$.
+    apply Nat.dvd_iff_mod_eq_zero.1
+    -- the witness is $2^a - 1$
+    use (2 ^ a - 1)
+    -- the reference is located in the library as `Nat.mod_eq_zero_of_dvd`
+    rw [h5]
+    apply Nat.mod_eq_zero_of_dvd
+    -- the reference is located in the library as `Nat.add_sub_cancel'`
+    rw [Nat.add_sub_cancel' (2 ^ a) 1]
+    -- the detailed process is shown in the paper "Fermat's Last Theorem" written by Xiao Li
+    -- the equation is on page 23, section 3.2.2
+    rw [hab]
+
+  -- $2^a - 1$ is positive
+  have ha1 : 2 ^ a - 1 > 0 := by
+    -- the reference is located in the library as `Nat.one_le_pow`
+    -- and `Nat.sub_pos_of_lt`
+    rw [Nat.one_le_pow a 2 (Nat.zero_lt_of_lt h2)]
+    exact Nat.sub_pos_of_lt this
+
+  -- $2^a - 1$ is less than $2^n - 1$
+  have ha2 : 2 ^ a - 1 < 2 ^ n - 1 := by
+    -- the reference is located in the library as `Nat.pow_lt_pow_iff_right`
+    apply Nat.pow_lt_pow_iff_right (by linarith)
+    -- the detailed process is shown in the paper "Fermat's Last Theorem" written by Xiao Li
+    -- the inequality is on page 23, section 3.2.2
+    exact hab
+
+  -- $2^a - 1$ is not equal to $1$
+  have ha3 : 2 ^ a - 1 ≠ 1 := by
+    -- the reference is located in the library as `Nat.ne_zero_iff_zero_lt`
+    -- and `Nat.one_lt_pow`
+    rw [Nat.ne_zero_iff_zero_lt]
+    apply Nat.one_lt_pow
+    linarith
+    linarith
+
+  -- witness $2^a - 1$ witnesses that $2^n - 1$ is not prime
+  contradiction
+
+```

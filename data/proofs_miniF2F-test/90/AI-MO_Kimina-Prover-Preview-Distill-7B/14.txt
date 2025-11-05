@@ -1,0 +1,63 @@
+-- The equation is based on the polynomial $(x-1)(x^2+x+1)=x^3-1$ with $x=1+1/k^3$.
+  have eq (k : ℕ) : (1 : ℝ) / k ^ 3 + 1 = ((1 : ℝ) / k + 1) * (1 - 1 / k + 1 / k ^ 2) := by
+    field_simp
+    ring
+
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+    cases n with
+    | zero =>
+      norm_num
+    | succ n =>
+      -- We need to show that $\prod_{k=1}^{n+1} (1 + 1/k^3) \leq 3 - 1/(n+1)$.
+      -- By the induction hypothesis, we know that $\prod_{k=1}^n (1 + 1/k^3) \leq 3 - 1/n$.
+      rw [Finset.prod_Icc_succ_top (by linarith), ih (by linarith)]
+      -- We need to show that $(3 - 1/n)(1 + 1/(n+1)^3) \leq 3 - 1/(n+1)$.
+      -- This is equivalent to showing that $3 - 1/n + 3/(n+1)^3 - 1/(n+1)^4 \leq 3 - 1/(n+1)$.
+      -- After simplifying, this is equivalent to showing that $1/(n+1)^4 \leq 3/(n+1)^3 - 1/(n+1)^4$.
+      suffices (3 : ℝ) - 1 / (↑n + 1) - ((3 : ℝ) - 1 / ↑n) * (1 + 1 / (↑n + 1) ^ 3) ≤ 0 by linarith
+      -- This is true because $1/(n+1)^4 \leq 3/(n+1)^3 - 1/(n+1)^4$.
+      rw [sub_nonpos, ← one_div_div, div_le_one₀ (by positivity), one_div_mul_one_div (by positivity), sub_div, div_sub_one, ← sub_div]
+      field_simp
+      have : (↑n + 1) ^ 4 ≥ 16 * (↑n) ^ 3 := by
+        -- This is true because $(n+1)^4 = n^4 + 4n^3 + 6n^2 + 4n + 1 \geq 16n^3$ for $n \geq 2$.
+        -- We can prove this inequality by showing that $(n+1)^4 - 16n^3 \geq 0$.
+        -- This is equivalent to showing that $n^4 - 12n^3 + 6n^2 + 4n + 1 \geq 0$.
+        -- We can prove this inequality by showing that $n^4 - 12n^3 + 6n^2 + 4n + 1 = (n-1)^2(n^2 - 10n - 3) \geq 0$.
+        -- This is true for $n \geq 2$.
+        by_cases h : 2 ≤ n
+        · rw [show (16 : ℝ) = 16 * (1 : ℝ) by norm_num]
+          apply mul_le_mul
+          apply mul_le_mul
+          apply mul_le_mul
+          · exact pow_le_pow_left₀ (by linarith) (by linarith) (by linarith)
+          · exact h
+          · exact pow_le_pow_left₀ (by linarith) (by linarith) (by linarith)
+          · exact pow_le_pow_left₀ (by linarith) (by linarith) (by linarith)
+        · simp at h
+          interval_cases n
+          all_goals norm_num
+      -- We can prove this inequality because $1/n(n+1)^3 \leq 1/(n+1)^3$.
+      have : 1 / (↑n + 1) ^ 3 * (↑n + 1) ^ 4 ≤ 1 / (↑n + 1) ^ 3 * 16 * (↑n) ^ 3 := by
+        nth_rw 1 [mul_comm]
+        apply mul_le_mul
+        · simp
+          exact pow_le_pow_left₀ (by linarith) (by linarith) (by linarith)
+        · exact this
+        · exact pow_le_pow_left₀ (by linarith) (by linarith) (by linarith)
+        · linarith
+      -- We can prove this inequality because $1/(n+1)^4 \leq 1/16n^3$.
+      have : 1 / (↑n + 1) ^ 4 ≤ 1 / 16 * (1 / (↑n) ^ 3) := by
+        rw [div_le_div_iff₀ (by positivity) (by positivity), mul_assoc, mul_comm (16 * n ^ 3), ← mul_assoc, mul_le_mul]
+        nth_rw 1 [mul_comm]
+        apply mul_le_mul
+        · simp
+          exact pow_le_pow_left₀ (by linarith) (by linarith) (by linarith)
+        · exact pow_le_pow_left₀ (by linarith) (by linarith) (by linarith)
+        · linarith
+        · exact pow_le_pow_left₀ (by linarith) (by linarith) (by linarith)
+      -- We can prove this inequality because $1/(n+1)^4 \leq 3/(n+1)^3 - 1/(n+1)^4$.
+      linarith
+
+```

@@ -1,0 +1,66 @@
+have h₄ : ∀ m n, f (m + n) - f m - f n = 0 ∨ f (m + n) - f m - f n = 1 := by
+    intro m n
+    intro h
+    cases h with
+    | intro h₄ h₅ =>
+      exact h₄
+    | intro h₆ h₇ =>
+      rw [h₆] at h₇
+      exact h₇
+
+  -- For all positive integers $n$, $f(n)=n-1$. We prove this by strong induction.
+  have h₅ : ∀ n, f n = n - 1 := by
+    intro n
+    induction n with
+    | zero =>
+      -- The base case $n=0$ is trivial, as $f(0)=0-1=-1$, which is consistent with the result from h₁.
+      specialize h₀ 2 1 (by norm_num) (by norm_num)
+      rw [h₁] at h₀
+      norm_num at h₀
+      exact h₀
+    | succ n ih =>
+      -- The inductive step is proved by strong induction. We need to consider two cases: $n$ is even and $n$ is odd.
+      cases n.even_or_odd with
+      | inl h =>
+        -- If $n$ is even, by the property $f(m+n)-f(m)-f(n)=0 \text{ or } 1$ with $m=n$, we get $f(2n)=2f(n)+1$.
+        have h₆ : f (2 * n) = 2 * f n + 1 := by
+          specialize h₄ n n
+          rw [show n + n = 2 * n by omega]
+          rcases h₄ with h₄ | h₄ <;> rw [h₄]
+          omega
+        -- From $f(9999)=3333$, we get $f(9998)=f(9999)-1=9999-1=9998$.
+        have h₇ : f 9998 = 9998 := by
+          specialize h₀ 9999 1 (by norm_num) (by norm_num)
+          rw [h₃] at h₀
+          norm_num at h₀
+          exact h₀
+        -- We have $f(9998)=f(2 \times 4999)=2f(4999)+1$.
+        have h₈ : f 9998 = 2 * f 4999 + 1 := by
+          specialize h₆ 4999
+          norm_num at h₆
+          exact h₆
+        -- By the inductive hypothesis, $f(4999)=4999-1=4998$.
+        have h₉ : f 4999 = 4998 := by
+          specialize ih 4999
+          omega
+        -- Substituting into h₈, we get $f(9998)=2 \times 4998 + 1=9996+1=9997$.
+        have h₁₀ : f 9998 = 9997 := by
+          rw [h₉] at h₈
+          omega
+        -- This is a contradiction, as we already established that $f(9998)=9998$.
+        omega
+      | inr h =>
+        -- If $n$ is odd, by the property $f(m+n)-f(m)-f(n)=0 \text{ or } 1$ with $m=1$, we get $f(n+1)=f(n)+1$.
+        have h₆ : f (n + 1) = f n + 1 := by
+          specialize h₄ 1 n (by norm_num) (by intro h ; cases h with | inl h => omega | inr h => omega)
+          rcases h₄ with h₄ | h₄ <;> rw [h₄]
+          omega
+        -- From the inductive hypothesis, $f(n)=n-1$.
+        have h₇ := ih
+        -- So $f(n+1)=f(n)+1=n-1+1=n$.
+        omega
+
+  -- The proof is complete, and we have shown that $f(1982)=1982-1=1981$.
+  specialize h₅ 1982
+  omega
+```

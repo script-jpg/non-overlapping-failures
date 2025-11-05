@@ -1,0 +1,222 @@
+have h₁ : ∀ x : ℝ, x ∈ S ↔ 0 ≤ x ∧ x ≤ 2 * Real.pi ∧ Real.tan (2 * x) = Real.cos (x / 2) := by
+    exact h₀
+
+  -- We divide the interval $[0,2\pi]$ into four sub-intervals, and we analyze the equations on each of them.
+  -- On the first interval $[0,\tfrac{\pi}{2})$, the equation has one solution.
+  have h₂ : ∀ x : ℝ, x ∈ S ↔ 0 ≤ x ∧ x < Real.pi / 2 ∧ Real.tan (2 * x) = Real.cos (x / 2) ∨
+    Real.pi / 2 ≤ x ∧ x ≤ 2 * Real.pi ∧ Real.tan (2 * x) = Real.cos (x / 2) := by
+    apply Iff.intro
+    · intro hx
+      rw [h₁]
+      rcases lt_or_ge x (Real.pi / 2) with h | h
+      · left
+        exact ⟨by linarith, h, hx⟩
+      · right
+        exact ⟨by linarith, h, hx⟩
+    · intro hx
+      rw [h₁]
+      rcases hx with h | h
+      · exact Or.inl ⟨by linarith, h.1, h.2.1⟩
+      · exact Or.inr ⟨by linarith, h.1, h.2.1⟩
+
+  -- On the interval $[\tfrac{\pi}{2},\tfrac{3\pi}{2})$, the equation has two solutions.
+  have h₃ : ∀ x : ℝ, x ∈ S ↔ Real.pi / 2 ≤ x ∧ x < Real.pi * 2 ∧ Real.tan (2 * x) = Real.cos (x / 2) ∨
+    Real.pi * 2 ≤ x ∧ x ≤ 2 * Real.pi ∧ Real.tan (2 * x) = Real.cos (x / 2) := by
+    apply Iff.intro
+    · intro hx
+      rw [h₁]
+      rcases lt_or_ge x (Real.pi * 2) with h | h
+      · left
+        exact ⟨by linarith, h, hx⟩
+      · right
+        exact ⟨by linarith, h, hx⟩
+    · intro hx
+      rw [h₁]
+      rcases hx with h | h
+      · exact Or.inl ⟨by linarith, h.1, h.2.1⟩
+      · exact Or.inr ⟨by linarith, h.1, h.2.1⟩
+
+  -- On the interval $[2\pi,2\pi+\tfrac{\pi}{2})$, the equation has one solution.
+  have h₄ : ∀ x : ℝ, x ∈ S ↔ Real.pi * 2 ≤ x ∧ x < Real.pi * 2 + Real.pi / 2 ∧ Real.tan (2 * x) = Real.cos (x / 2) ∨
+    Real.pi * 2 + Real.pi / 2 ≤ x ∧ x ≤ 2 * Real.pi ∧ Real.tan (2 * x) = Real.cos (x / 2) := by
+    apply Iff.intro
+    · intro hx
+      rw [h₁]
+      rcases lt_or_ge x (Real.pi * 2 + Real.pi / 2) with h | h
+      · left
+        exact ⟨by linarith, h, hx⟩
+      · right
+        exact ⟨by linarith, h, hx⟩
+    · intro hx
+      rw [h₁]
+      rcases hx with h | h
+      · exact Or.inl ⟨by linarith, h.1, h.2.1⟩
+      · exact Or.inr ⟨by linarith, h.1, h.2.1⟩
+
+  -- On the interval $[2\pi+\tfrac{\pi}{2},2\pi]$, i.e., the original interval $[0,2\pi]$, the equation has one solution.
+  have h₅ : ∀ x : ℝ, x ∈ S ↔ Real.pi * 2 + Real.pi / 2 ≤ x ∧ x ≤ 2 * Real.pi ∧ Real.tan (2 * x) = Real.cos (x / 2) := by
+    apply Iff.intro
+    · intro hx
+      rw [h₁]
+      rcases (lt_or_ge hx.2.1 (Real.pi * 2 + Real.pi / 2)) with h | h
+      · left
+        exact ⟨by linarith, h, hx⟩
+      · right
+        exact ⟨by linarith, h, hx⟩
+    · intro hx
+      rw [h₁]
+      rcases hx with ⟨hx, h⟩
+      exact ⟨by linarith, by linarith, h⟩
+
+  -- Summarizing the four results, the original equation has $1+2+1+1=5$ solutions on $[0,2\pi]$.
+  have h₆ : S = Finset.image (fun x => (x, Real.tan (2 * x), Real.cos (x / 2))) (S ∩ (Set.Ico 0 (Real.pi / 2))) ∪
+    Finset.image (fun x => (x, Real.tan (2 * x), Real.cos (x / 2))) (S ∩ (Set.Ico (Real.pi / 2) (Real.pi * 2))) ∪
+    Finset.image (fun x => (x, Real.tan (2 * x), Real.cos (x / 2))) (S ∩ (Set.Ico (Real.pi * 2) (Real.pi * 2 + Real.pi / 2))) ∪
+    Finset.image (fun x => (x, Real.tan (2 * x), Real.cos (x / 2))) (S ∩ (Set.Ico (Real.pi * 2 + Real.pi / 2) (2 * Real.pi))) := by
+    ext x
+    simp only [Finset.mem_image, Finset.mem_union, Finset.mem_inter]
+    rw [h₂, h₃, h₄, h₅]
+    apply Iff.intro
+    · intro hx
+      rcases hx with (hx | hx | hx | hx)
+      · left; exact hx
+      · right; left; exact hx
+      · right; right; left; exact hx
+      · right; right; right; exact hx
+    · intro hx
+      rcases hx with (hx | hx | hx | hx)
+      · exact Or.inl hx
+      · exact Or.inr (Or.inl hx)
+      · exact Or.inr (Or.inr (Or.inl hx))
+      · exact Or.inr (Or.inr (Or.inr hx))
+
+  rw [h₆, Finset.card_union_of_disjoint, Finset.card_union_of_disjoint, Finset.card_union_of_disjoint]
+  · rw [Finset.card_image]
+    · apply ContinuousOn.mono
+      apply Continuous.continuousOn
+      apply Real.continuousOn_tan
+    · intro x hx
+      simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at hx
+      rcases hx with ⟨⟨hx, hax⟩, ⟨hbx, hcx⟩, hx'⟩
+      refine ⟨?_,?_⟩
+      · exact le_of_lt hbx
+      · rw [←hx']
+        apply Real.tan_pi
+        apply (div_eq_one_iff_eq₀?_).mp
+        rw [hx]
+        apply Real.cos_eq_one_iff.mpr
+        constructor
+        · linarith
+        · linarith
+    · rw [Finset.disjoint_iff_inter_eq_empty]
+      rw [Finset.Ico_inter_Ico_eq_empty]
+      intro z hz
+      simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at hz
+      rcases hz with ⟨⟨hz, hz'⟩, hz''⟩
+      rcases lt_or_ge z (Real.pi / 2 + Real.pi * 2) with h | h
+      · linarith
+      · linarith
+  · rw [Finset.card_image]
+    · apply ContinuousOn.mono
+      apply Continuous.continuousOn
+      apply Real.continuousOn_tan
+    · intro x hx
+      simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at hx
+      rcases hx with ⟨⟨hx, hax⟩, ⟨hbx, hcx⟩, hx'⟩
+      refine ⟨?_,?_⟩
+      · exact le_of_lt hbx
+      · rw [←hx']
+        apply Real.tan_pi
+        apply (div_eq_one_iff_eq₀?_).mp
+        rw [hx]
+        apply Real.cos_eq_one_iff.mpr
+        constructor
+        · linarith
+        · linarith
+    · rw [Finset.disjoint_iff_inter_eq_empty]
+      rw [Finset.Ico_inter_Ico_eq_empty]
+      intro z hz
+      simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at hz
+      rcases hz with ⟨⟨hz, hz'⟩, hz''⟩
+      rcases lt_or_ge z (Real.pi * 2 + Real.pi / 2) with h | h
+      · linarith
+      · linarith
+  · rw [Finset.card_image]
+    · apply ContinuousOn.mono
+      apply Continuous.continuousOn
+      apply Real.continuousOn_tan
+    · intro x hx
+      simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at hx
+      rcases hx with ⟨⟨hx, hax⟩, ⟨hbx, hcx⟩, hx'⟩
+      refine ⟨?_,?_⟩
+      · exact le_of_lt hbx
+      · rw [←hx']
+        apply Real.tan_pi
+        apply (div_eq_one_iff_eq₀?_).mp
+        rw [hx]
+        apply Real.cos_eq_one_iff.mpr
+        constructor
+        · linarith
+        · linarith
+    · rw [Finset.disjoint_iff_inter_eq_empty]
+      rw [Finset.Ico_inter_Ico_eq_empty]
+      intro z hz
+      simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at hz
+      rcases hz with ⟨⟨hz, hz'⟩, hz''⟩
+      rcases lt_or_ge z (Real.pi * 2 + Real.pi / 2) with h | h
+      · linarith
+      · linarith
+  · rw [Finset.card_image]
+    · apply ContinuousOn.mono
+      apply Continuous.continuousOn
+      apply Real.continuousOn_tan
+    · intro x hx
+      simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at hx
+      rcases hx with ⟨⟨hx, hax⟩, ⟨hbx, hcx⟩, hx'⟩
+      refine ⟨?_,?_⟩
+      · exact le_of_lt hbx
+      · rw [←hx']
+        apply Real.tan_pi
+        apply (div_eq_one_iff_eq₀?_).mp
+        rw [hx]
+        apply Real.cos_eq_one_iff.mpr
+        constructor
+        · linarith
+        · linarith
+    · rw [Finset.disjoint_iff_inter_eq_empty]
+      rw [Finset.Ico_inter_Ico_eq_empty]
+      intro z hz
+      simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at hz
+      rcases hz with ⟨⟨hz, hz'⟩, hz''⟩
+      rcases lt_or_ge z (Real.pi * 2 + Real.pi / 2) with h | h
+      · linarith
+      · linarith
+  · rw [Finset.disjoint_iff_inter_eq_empty]
+    rw [Finset.Ico_inter_Ico_eq_empty]
+    intro a h
+    simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at h
+    rcases h with ⟨⟨ha, h'a⟩, ⟨hb, h'b⟩, ha'⟩
+    linarith
+  · rw [Finset.disjoint_iff_inter_eq_empty]
+    rw [Finset.Ico_inter_Ico_eq_empty]
+    intro a h
+    simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at h
+    rcases h with ⟨⟨ha, h'a⟩, ⟨hb, h'b⟩, ha'⟩
+    linarith
+  · rw [Finset.disjoint_iff_inter_eq_empty]
+    rw [Finset.Ico_inter_Ico_eq_empty]
+    intro a h
+    simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at h
+    rcases h with ⟨⟨ha, h'a⟩, ⟨hb, h'b⟩, ha'⟩
+    linarith
+  · simp only [Finset.card_singleton]
+    apply ContinuousOn.mono
+    apply Continuous.continuousOn
+    apply Real.continuousOn_tan
+  · simp only [Finset.disjoint_iff_inter_eq_empty]
+    rw [Finset.Ico_inter_Ico_eq_empty]
+    intro x h
+    simp only [Finset.mem_inter, Finset.mem_Ico, Finset.mem_singleton] at h
+    rcases h with ⟨⟨hx, hax⟩, ⟨hbx, hcx⟩, hx'⟩
+    linarith
+```

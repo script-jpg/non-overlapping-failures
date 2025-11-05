@@ -1,0 +1,59 @@
+-- Simplify the left summand $\log_{5^k} 3^{k^2}$
+  have h1 : ∀ k ∈ Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = k * Real.logb 5 (3 ^ 2) := by
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    have hk1 : 0 < (5 : ℝ) ^ k := by positivity
+    have hk3 : 0 < (3 : ℝ) ^ (k ^ 2) := by positivity
+    rw [Real.logb_eq_mul_logb_of_pow hk1 hk3]
+    congr 1
+    · congr 1
+      ring
+    · rw [Real.logb_pow]
+      congr 1
+      ring
+
+  -- Simplify the right summand $\log_{9^k} 25^k$
+  have h2 : ∀ k ∈ Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = Real.logb 9 25 := by
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    have hk1 : 0 < (9 : ℝ) ^ k := by positivity
+    have hk2 : 0 < (25 : ℝ) ^ k := by positivity
+    rw [Real.logb_eq_mul_logb_of_pow hk1 hk2]
+    congr 1
+    · congr 1
+      ring
+    · rw [Real.logb_pow]
+      congr 1
+      ring
+
+  -- Apply the sums
+  simp_rw [h1, h2]
+  simp only [Finset.sum_const, Finset.card_Icc, Nat.cast_ofNat, Nat.cast_add, Nat.cast_one,
+    Finset.sum_const, Finset.card_Icc, Nat.cast_ofNat, Nat.cast_add, Nat.cast_one]
+
+  -- The first sum is $100 \log_5 9$ and the second sum is $100 \log_9 25$
+  have h3 : Real.logb 5 (3 ^ 2) = 2 * Real.logb 5 3 := by
+    rw [Real.logb_pow]
+    congr 1
+    norm_num
+
+  have h4 : Real.logb 9 25 = Real.logb 9 (5 ^ 2) := by
+    norm_num
+
+  have h5 : Real.logb 9 (5 ^ 2) = 2 * Real.logb 9 5 := by
+    rw [Real.logb_pow]
+    congr 1
+    norm_num
+
+  have h6 : Real.logb 5 3 * Real.logb 9 5 = 1 := by
+    overwite [Real.logb]
+    have : (5 : ℝ) ^ (Real.logb 5 3) = 3 := by
+      refine (Real.rpow_logb?_?_?_).symm
+      all_goals norm_num
+    rw [← this,
+        Real.rpow_mul (by norm_num),
+        Real.rpow_logb (by norm_num) (by norm_num) (by norm_num),
+        Real.logb_rpow (by norm_num) (by norm_num)]
+
+  linarith
+```

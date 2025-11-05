@@ -1,0 +1,48 @@
+-- We will use this lemma to convert equations on $\log$ to equations on $\log_x$, $\log_y$ and $\log_z$
+  have log_div (a b : ℕ) (ha : a > 0) (hb : b > 0) : Real.log a / Real.log b = Real.log b⁻¹ / Real.log a⁻¹ := by
+    field_simp
+    ring
+
+  -- Let $k$ be the value of $\log_w$
+  set k := Real.log w with hk
+  -- By assumption, we have that $k/x = 24$, $k/y = 40$ and $k/(x+y+z) = 12$
+  have hx : k / x = 24 := by rw [← h0, hk]; field_simp
+  have hy : k / y = 40 := by rw [← h1, hk]; field_simp
+  have hxyz : k / (x * y * z) = 12 := by rw [← h2, hk]; field_simp
+
+  -- Using the lemma, we can rewrite these equations as $\log_k x = 1/24$, $\log_k y = 1/40$ and $\log_k (x+y+z) = 1/12$
+  have log_eq hx' := log_div _ _ (by positivity) (by positivity)
+  have log_eq hy' := log_div _ _ (by positivity) (by positivity)
+  have log_eq hxyz' := log_div _ _ (by positivity) (by positivity)
+
+  rw [hk] at hx' hy' hxyz'
+  norm_num at hx' hy' hxyz'
+
+  -- Using the formula $\log(a \cdot b) = \log(a) + \log(b)$, we can rewrite the third equation as $\log_k x + \log_k y + \log_k z = 1/12$
+  have log_mul (a b : ℕ) (ha : a > 0) (hb : b > 0) : Real.log (a * b) = Real.log a + Real.log b := by
+    rw [Real.log_mul]
+    all_goals linarith
+
+  have logz := log_eq hxyz'
+  rw [log_mul (x * y) z (by positivity) (by positivity)] at logz
+  rw [log_add (x * y) z (by positivity) (by positivity)] at logz
+
+  -- We have three equations:
+  -- 1. $\log_k x = 1/24$
+  -- 2. $\log_k y = 1/40$
+    -- 3. $\log_k x + \log_k y + \log_k z = 1/12$
+  -- We can combine these to get $\log_k z = 1/12 - 1/40 - 1/24 = 1/60$
+  have logz' : Real.log w / Real.log z = 1 / 60 := by
+    calc
+      Real.log w / Real.log z = Real.log z⁻¹ / Real.log w⁻¹ := log_div z w (by positivity) (by positivity)
+      _ = (1 / 12 - (Real.log x⁻¹ + Real.log y⁻¹)) / Real.log w⁻¹ := by rw [← logz]
+      _ = (1 / 12 - (Real.log x + Real.log y) / Real.log w) / Real.log w⁻¹ := by congr; field_simp
+      _ = (1 / 12 - (Real.log x / Real.log w + Real.log y / Real.log w)) / Real.log w⁻¹ := by ring
+      _ = (1 / 12 - (1 / 24 + 1 / 40)) / Real.log w⁻¹ := by rw [hx', hy']
+      _ = 1 / 60 := by norm_num
+
+  -- And the result is $\log_k w = 60$
+  field_simp at logz'
+  norm_num at logz'
+  exact logz'
+```

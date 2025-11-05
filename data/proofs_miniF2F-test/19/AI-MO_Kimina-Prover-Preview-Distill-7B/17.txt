@@ -1,0 +1,55 @@
+-- Show that $1 - \sqrt {1 + 2x} \ne 0$
+  have h₃ : 1 - Real.sqrt (1 + 2 * x) ≠ 0 := by
+    intro h
+    rw [sub_eq_zero] at h
+    have : 1 + 2 * x = 1 := by
+      calc
+        1 + 2 * x = (Real.sqrt (1 + 2 * x)) ^ 2 := by rw [Real.sq_sqrt]; linarith only [h₀]
+        _ = 1 ^ 2 := by rw [h]
+        _ = 1 := by norm_num
+    linarith only [this]
+
+  -- Show that $1 + 2x \ge 0$
+  have h₄ : 1 + 2 * x ≥ 0 := by
+    calc
+      1 + 2 * x = (Real.sqrt (1 + 2 * x)) ^ 2 := by rw [Real.sq_sqrt]; linarith only [h₀]
+      _ ≥ 0 := by
+        have : (Real.sqrt (1 + 2 * x)) ^ 2 ≥ 0 := by exact sq_nonneg (Real.sqrt (1 + 2 * x))
+        linarith only [this]
+
+  -- Show that $1 - \sqrt {1 + 2x} < 0$
+  have h₅ : 1 - Real.sqrt (1 + 2 * x) < 0 := by
+    simp only [sub_neg, one_pos, Real.sqrt_pos, Nat.ofNat_pos, or_false]
+    exact h₄
+
+  have h₆ : 0 < (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    apply sq_pos_of_ne_zero
+    exact h₃
+
+  have h₇ : (4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    apply mul_lt_mul_of_nonneg_right
+    exact h₂
+    exact sq_nonneg (1 - Real.sqrt (1 + 2 * x))
+
+  simp only [div_mul_cancel₀ _ h₆] at h₇
+  ring_nf at h₇
+
+  have h₈ : 0 < 1 - Real.sqrt (1 + 2 * x) := by
+    linarith only [h₅, h₆]
+
+  rw [<-lt_div_iff₀' h₈] at h₇
+
+  have h₉ : Real.sqrt (1 + 2 * x) > 0 := by
+    simp only [gt_zero, Nat.ofNat_pos, or_false]
+    exact h₄
+
+  rw [Real.sqrt_lt' (by linarith only [h₀]) (by linarith only [h₄])] at h₉
+
+  ring_nf at h₉
+
+  calc
+    -(1 / 2) ≤ 3 / 4 + (15 / 8) * x := by linarith only [h₉]
+    _ = x := by linarith only [h₂]
+    _ < 45 / 8 := by linarith only [h₇]
+
+```

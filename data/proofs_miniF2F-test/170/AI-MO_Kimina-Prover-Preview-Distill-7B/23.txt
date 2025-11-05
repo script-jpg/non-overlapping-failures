@@ -1,0 +1,100 @@
+-- prove the following lemma by x ^ 3 + y ^ 3 = (x + y) ^ 3 - 3 * x * y * (x + y)
+  have log1 (x y : ℝ) : x ^ 3 + y ^ 3 = (x + y) ^ 3 - 3 * x * y * (x + y) := by ring
+
+  -- prove the following lemma by x ^ 3 - y ^ 3 = (x - y) ^ 3 + 3 * x * y * (x - y)
+  have log2 (x y : ℝ) : x ^ 3 - y ^ 3 = (x - y) ^ 3 + 3 * x * y * (x - y) := by ring
+
+  -- prove the following lemma by (x + y) ^ 3 = x ^ 3 + y ^ 3 + 3 * x * y * (x + y)
+  have log3 (x y : ℝ) : (x + y) ^ 3 = x ^ 3 + y ^ 3 + 3 * x * y * (x + y) := by ring
+
+  -- prove the following lemma by (x - y) ^ 3 = x ^ 3 - y ^ 3 - 3 * x * y * (x - y)
+  have log4 (x y : ℝ) : (x - y) ^ 3 = x ^ 3 - y ^ 3 - 3 * x * y * (x - y) := by ring
+
+  -- let $x = r^{\frac{1}{3}}$ and $y = r^{-\frac{1}{3}}$, then we have $x + y = 3$ by the assumption
+  set x := r ^ ((1 : ℝ) / 3) with hx
+  set y := r ^ ((-1 : ℝ) / 3) with hy
+  have hxy : x + y = 3 := by
+    rw [hx, hy]
+    exact h₀
+
+  -- $x^3 + y^3 = r^{\frac{1}{3}} ^ 3 + r^{-\frac{1}{3}} ^ 3 = r + r^{-1}$
+  have log5 : x ^ 3 + y ^ 3 = r + 1 / r := by
+    rw [hx, hy]
+    rw [← Real.rpow_mul_natCast (by linarith) (1 / 3) 3, ← Real.rpow_mul_natCast (by linarith) ((-1 : ℝ) / 3) 3]
+    norm_num
+    rw [mul_inv_cancel₀ (by linarith), Real.rpow_natCast_pow (by linarith), Real.rpow_natCast_pow (by linarith)]
+    norm_num
+
+  -- $x^3 - y^3 = r^{\frac{1}{3}} ^ 3 - r^{-\frac{1}{3}} ^ 3 = r - r^{-1}$
+  have log6 : x ^ 3 - y ^ 3 = r - 1 / r := by
+    rw [hx, hy]
+    rw [← Real.rpow_mul_natCast (by linarith) (1 / 3) 3, ← Real.rpow_mul_natCast (by linarith) ((-1 : ℝ) / 3) 3]
+    norm_num
+    rw [mul_inv_cancel₀ (by linarith), Real.rpow_natCast_pow (by linarith), Real.rpow_natCast_pow (by linarith)]
+    norm_num
+
+  -- $x^3 = r$, $y^3 = r^{-1}$
+  have log7 : x ^ 3 = r := by
+    rw [hx]
+    rw [← Real.rpow_mul_natCast (by linarith) (1 / 3) 3]
+    norm_num
+    rw [Real.rpow_natCast_pow (by linarith)]
+    norm_num
+  have log8 : y ^ 3 = 1 / r := by
+    rw [hy]
+    rw [← Real.rpow_mul_natCast (by linarith) ((-1 : ℝ) / 3) 3]
+    norm_num
+    rw [Real.rpow_natCast_pow (by linarith)]
+    norm_num
+
+  -- $x * y = r^{\frac{1}{3}} * r^{-\frac{1}{3}} = r^0 = 1$
+  have log9 : x * y = 1 := by
+    rw [hx, hy, ← Real.rpow_add (by linarith)]
+    norm_num
+
+  -- $x - y = r^{\frac{1}{3}} - r^{-\frac{1}{3}}$
+  have log10 : x - y = r ^ ((1 : ℝ) / 3) - 1 / r ^ ((1 : ℝ) / 3) := by
+    rw [hx, hy]
+
+  -- $x^3 - y^3 = (x - y) ^ 3 + 3 * x * y * (x - y)$
+  have log11 := log2 x y
+  rw [log7, log8, log9] at log11
+  norm_num1 at log11
+
+  -- $r - r^{-1} = (r^{\frac{1}{3}} - r^{-\frac{1}{3}}) ^ 3 + 3 * r^{\frac{1}{3}} * r^{-\frac{1}{3}} * (r^{\frac{1}{3}} - r^{-\frac{1}{3}})$
+  --         $= (r^{\frac{1}{3}} - r^{-\frac{1}{3}}) ^ 3 + 3 * (r^{\frac{1}{3}} * r^{-\frac{1}{3}}) * (r^{\frac{1}{3}} - r^{-\frac{1}{3}})$
+  --         $= (r^{\frac{1}{3}} - r^{-\frac{1}{3}}) ^ 3 + 3 * 1 * (r^{\frac{1}{3}} - r^{-\frac{1}{3}})$
+  rw [log10] at log11
+  rw [log9] at log11
+  rw [log7, log8] at log11
+
+  -- $r - r^{-1} = (r^{\frac{1}{3}} - r^{-\frac{1}{3}}) ^ 3 + 3 * (r^{\frac{1}{3}} - r^{-\frac{1}{3}})$
+  norm_num1 at log11
+
+  -- $r - r^{-1} - 3 * (r^{\frac{1}{3}} - r^{-\frac{1}{3}}) = (r^{\frac{1}{3}} - r^{-\frac{1}{3}}) ^ 3$
+  have log12 : r - 1 / r - 3 * (r ^ ((1 : ℝ) / 3) - 1 / r ^ ((1 : ℝ) / 3)) = (r ^ ((1 : ℝ) / 3) - 1 / r ^ ((1 : ℝ) / 3)) ^ 3 := by
+    linarith
+
+  -- $r - r^{-1} - 3 * (r^{\frac{1}{3}} - r^{-\frac{1}{3}}) = 3 ^ 3 - 3 * (r^{\frac{1}{3}} - r^{-\frac{1}{3}})$
+  -- Since $r^{\frac{1}{3}} + r^{-\frac{1}{3}} = 3$, we have $(r^{\frac{1}{3}} + r^{-\frac{1}{3}}) ^ 3 = 3 ^ 3$
+  -- $r + r^{-1} + 3 * (r^{\frac{1}{3}} + r^{-\frac{1}{3}}) = 3 ^ 3$
+  -- $r + r^{-1} = 3 ^ 3 - 3 * (r^{\frac{1}{3}} + r^{-\frac{1}{3}})$
+  have log13 : r - 1 / r - 3 * (r ^ ((1 : ℝ) / 3) - 1 / r ^ ((1 : ℝ) / 3)) = 3 ^ 3 - 3 * (r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3)) := by
+    field_simp
+    linarith
+
+  -- So we have $(r^{\frac{1}{3}} - r^{-\frac{1}{3}}) ^ 3 = 3 ^ 3 - 3 * 3 = 18$
+  rw [log13] at log12
+  rw [h₀] at log12
+  norm_num1 at log12
+
+  -- We want to prove that $r^3 + r^{-3} = 5778$
+  -- $r^3 + r^{-3} = (r + r^{-1}) ^ 3 - 3 * r * r^{-1} * (r + r^{-1})$
+  have log14 := log3 x y
+  rw [log5] at log14
+  norm_num1 at log14
+
+  -- $r^3 + r^{-3} = 5778$
+  rw [log12] at log14
+  linarith
+```

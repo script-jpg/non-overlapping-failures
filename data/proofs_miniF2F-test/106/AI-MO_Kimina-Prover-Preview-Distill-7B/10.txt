@@ -1,0 +1,65 @@
+have h₃ : 3 - x ≥ 0 := by linarith
+
+  -- By observing the expression, we find that $1/2 < \sqrt{3-x} - \sqrt{x+1}$ implies $3-x+x+1+2\sqrt{(3-x)(x+1)} > 1/4$
+  have h₄ : 3 - x + x + 1 + 2 * Real.sqrt ((3 - x) * (x + 1)) > (1 / 2) ^ 2 := by
+    have h₄ : 2 * Real.sqrt ((3 - x) * (x + 1)) > 0 := by
+      apply mul_pos
+      norm_num
+      apply Real.sqrt_pos.mpr
+      apply add_pos
+      linarith
+      linarith
+    linarith
+  -- which is equivalent to $\sqrt{(3-x)(x+1)} > \frac{1}{4} - 1$
+  have h₅ : Real.sqrt ((3 - x) * (x + 1)) > (1 / 4) - 1 := by
+    have h₅ : ((1 / 2) ^ 2) - (3 - x) - (x + 1) = -2 - (1 / 2) * (3 - x) - (1 / 2) * (x + 1) := by ring
+    rify at h₅
+    rw [h₅]
+    linarith
+  -- Squaring both sides, we get $(3-x)(x+1) > (\frac{1}{4} - 1)^2$.
+  have h₆ : (3 - x) * (x + 1) > ((1 / 4) - 1) ^ 2 := by
+    have h₆ : Real.sqrt ((3 - x) * (x + 1)) > 0 := by
+      apply Real.sqrt_pos.mpr
+      apply mul_pos
+      linarith
+      linarith
+    linarith
+  simp [h₀, h₁] at h₆
+
+  -- The inequality can be simplified to $x^2+2x+3-\frac{31}{16}>0$.
+  have h₇ : x ^ 2 + 2 * x + 3 - (31 / 16) > 0 := by
+    ring_nf
+    linarith
+
+  -- By the quadratic formula, we can solve that $x < -1$ or $x > 1-\frac{\sqrt{31}}{8}$.
+  have h₈ : x < -1 ∨ 1 - Real.sqrt 31 / 8 < x := by
+    let d := Real.sqrt (31 / 16)
+    have h₈ : x ^ 2 + 2 * x + 3 - (31 / 16) = (x + 1) ^ 2 - d ^ 2 := by
+      ring_nf
+      dsimp [d]
+      rw [Real.sq_sqrt]
+      linarith
+    rw [h₈]
+    simp only [d]
+    constructor
+    · intro h
+      contrapose! h
+      apply sq_nonneg
+    · intro h
+      apply (sq_pos_iff_ne_zero (by linarith)).mp
+      linarith
+
+  -- However, we can verify that $x < -1$ does not satisfy the original inequality.
+  have h₉ : ¬(-1 < x) := by
+    intro h
+    specialize @Real.sqrt_nonneg (3 + x)
+    linarith
+  have h₁₀ : -1 ≤ x := by
+    linarith
+
+  have h₁₁ : x < 1 - Real.sqrt 31 / 8 := by
+    obtain h | h := h₈
+    · linarith
+    · exact h
+  exact ⟨h₁₀, h₁₁⟩
+```

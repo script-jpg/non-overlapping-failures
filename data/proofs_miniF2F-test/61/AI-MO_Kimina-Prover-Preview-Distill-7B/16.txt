@@ -1,0 +1,142 @@
+-- The two intersection points are $(a, b)$ and $(c, d)$, where $b = a^2, d = c^2$.
+  -- And $a + b = 1$, $c + d = 1$.
+
+  -- We have $b = 1 - a$ and $d = 1 - c$.
+  have h₅ : b = 1 - a := by linarith
+  have h₆ : d = 1 - c := by linarith
+
+  -- So $1 - a = a^2$, $1 - c = c^2$
+  rw [h₅] at h₀
+  rw [h₆] at h₂
+
+  -- And $a^2 + a - 1 = 0$, $c^2 + c - 1 = 0$
+  have h₇ : a ^ 2 + a - 1 = 0 := by linarith
+  have h₈ : c ^ 2 + c - 1 = 0 := by linarith
+
+  -- $a$ and $c$ are different, so $a + c = 1$ and $ac = -1$.
+  have h₉ : a + c = 1 := by
+    have h : a ^ 2 - c ^ 2 + a - c = 0 := by linarith
+    have h₁₀ : (a - c) * (a + c + 1) = 0 := by linarith
+
+    have h₁₁ : a + c + 1 ≠ 0 := by
+      by_contra! h₁₂
+      have h₁₃ : a + c = -1 := by linarith
+      have h₁₄ : a = -1 - c := by linarith
+
+      rw [h₁₄] at h₇
+      ring_nf at h₇
+      have h₁₅ : c ^ 2 + c = -1 / 2 := by linarith
+
+      have h₁₆ : c ^ 2 + c + 1 / 2 = 0 := by linarith
+      have h₁₇ : (c + 1 / 2) ^ 2 = 0 := by nlinarith
+      have h₁₈ : c + 1 / 2 = 0 := by nlinarith
+
+      linarith
+
+    have h₁₂ : a - c = 0 := by nlinarith
+    tauto
+
+  have h₁₀ : a * c = -1 := by
+    have h : 1 + a - a ^ 2 + c - c ^ 2 = 0 := by linarith
+    have h₁₁ : 2 + (a + c) - (a ^ 2 + c ^ 2) = 0 := by linarith
+
+    have h₁₂ : (a + c) ^ 2 - 2 * a * c = a ^ 2 + c ^ 2 := by ring
+    have h₁₃ : (a + c) ^ 2 - 2 * a * c + 2 * (a + c) - 2 = a ^ 2 + c ^ 2 + 2 * (a + c) - 2 := by linarith
+
+    rw [h₉] at h₁₃
+    rw [h₁₃] at h₁₁
+    linarith
+
+  -- We can get $(a - c)^2 = 5$ from $a + c = 1$ and $ac = -1$.
+  have h₁₁ : (a - c) ^ 2 = 5 := by
+    have h : (a - c) ^ 2 + (a + c) ^ 2 - 2 * (a * c) = (a + c) ^ 2 + (a - c) ^ 2 - 2 * (a * c) + 2 * (a + c) - 2 + 2 * c * (a + c) - 2 * c ^ 2 := by ring
+    have h₁₂ : (a - c) ^ 2 + (a + c) ^ 2 - 2 * (a * c) = (a + c) ^ 2 + (a - c) ^ 2 - 2 * (a * c) + 2 * (a + c) - 2 + 2 * c * (a + c - 1) := by
+      ring_nf
+      rw [mul_sub]
+      ring
+    have h₁₃ : (a - c) ^ 2 + (a + c) ^ 2 - 2 * (a * c) = (a + c) ^ 2 + (a - c) ^ 2 - 2 * (a * c) + 2 * (a + c) - 2 := by
+      rw [h₁₂]
+      have h₁₃ : (a + c - 1) = 0 := by linarith
+      rw [h₁₃]
+      ring
+    have h₁₄ : (a + c) ^ 2 - 2 * (a * c) = 3 := by nlinarith
+    have h₁₅ : (a - c) ^ 2 = 5 := by nlinarith
+    exact h₁₅
+
+  -- Then we can calculate the distance.
+  calc
+    Real.sqrt ((a - c) ^ 2 + (b - d) ^ 2) = Real.sqrt ((a - c) ^ 2 + (1 - a - (1 - c)) ^ 2) := by rw [h₅, h₆]
+    _ = Real.sqrt ((a - c) ^ 2 + (c - a) ^ 2) := by ring_nf
+    _ = Real.sqrt ((a - c) ^ 2 + (a - c) ^ 2) := by rw [show c - a = -(a - c) by ring, neg_sq]
+    _ = Real.sqrt ((a - c) ^ 2 * 2) := by ring_nf
+    _ = Real.sqrt ((a - c) ^ 2 * Real.sqrt 2 ^ 2) := by
+      have h : Real.sqrt 2 ^ 2 = 2 := by
+        have h : (2 : ℝ) = 1 + 1 := by norm_num
+        rw [h]
+        have h₁ : (1 : ℝ) = Real.sqrt 1 ^ 2 := by
+          simp only [Real.sqrt_one]
+          ring
+        have h₂ : (2 : ℝ) = Real.sqrt 2 ^ 2 := by
+          have h₂ : (2 : ℝ) = Real.sqrt 2 ^ 2 := by
+            have h₂ : (2 : ℝ) = (2 : ℕ) := by simp
+            rw [h₂]
+            have h₃ : (2 : ℕ) = (2 : ℝ) := by simp
+            rw [h₃]
+            simp only [Nat.sqrt_eq_cases]
+            norm_num
+          exact h₂
+        rw [h₁, h₂]
+      rw [h]
+    _ = Real.sqrt ((a - c) * Real.sqrt 2) ^ 2) := by
+      have h : (a - c) ^ 2 * Real.sqrt 2 ^ 2 = ((a - c) * Real.sqrt 2) ^ 2 := by
+        have h : (a - c) ^ 2 * Real.sqrt 2 ^ 2 = (a - c) ^ 2 * (Real.sqrt 2 ^ 2) := by ring
+        rw [h]
+        have h₁ : Real.sqrt 2 ^ 2 = 2 := by
+          have h₁ : (2 : ℝ) = 1 + 1 := by norm_num
+          rw [h₁]
+          have h₂ : (1 : ℝ) = Real.sqrt 1 ^ 2 := by
+            simp only [Real.sqrt_one]
+            ring
+          have h₃ : (2 : ℝ) = Real.sqrt 2 ^ 2 := by
+            have h₃ : (2 : ℝ) = Real.sqrt 2 ^ 2 := by
+              have h₃ : (2 : ℝ) = (2 : ℕ) := by simp
+              rw [h₃]
+              have h₄ : (2 : ℕ) = (2 : ℝ) := by simp
+              rw [h₄]
+              simp only [Nat.sqrt_eq_cases]
+              norm_num
+            exact h₃
+          rw [h₂, h₃]
+        rw [h₁]
+      rw [h]
+    _ = Real.sqrt 10 := by
+      have h : ((a - c) * Real.sqrt 2) ^ 2 = 10 := by
+        have h : ((a - c) * Real.sqrt 2) ^ 2 = (a - c) ^ 2 * Real.sqrt 2 ^ 2 := by ring
+        rw [h]
+        have h₁ : Real.sqrt 2 ^ 2 = 2 := by
+          have h₁ : (2 : ℝ) = 1 + 1 := by norm_num
+          rw [h₁]
+          have h₂ : (1 : ℝ) = Real.sqrt 1 ^ 2 := by
+            simp only [Real.sqrt_one]
+            ring
+          have h₃ : (2 : ℝ) = Real.sqrt 2 ^ 2 := by
+            have h₃ : (2 : ℝ) = Real.sqrt 2 ^ 2 := by
+              have h₃ : (2 : ℝ) = (2 : ℕ) := by simp
+              rw [h₃]
+              have h₄ : (2 : ℕ) = (2 : ℝ) := by simp
+              rw [h₄]
+              simp only [Nat.sqrt_eq_cases]
+              norm_num
+            exact h₃
+          rw [h₂, h₃]
+        rw [h₁]
+        nlinarith
+      rw [h]
+      simp only [Real.sqrt_sq]
+      have h : 0 ≤ (a - c) * Real.sqrt 2 := by
+        have h : (a - c) * Real.sqrt 2 = (a - c) * Real.sqrt 2 := by rfl
+        rw [h]
+        exact mul_nonneg (sub_nonpos.mpr h₄) (Real.sqrt_nonneg 2)
+      exact Real.sqrt_sq h
+
+```

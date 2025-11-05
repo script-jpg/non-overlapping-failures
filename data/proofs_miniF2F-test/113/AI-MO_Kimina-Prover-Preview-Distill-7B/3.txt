@@ -1,0 +1,78 @@
+-- The key fact we need is that $\int_{1}^n \frac{1}{\sqrt{x}} dx = 2\sqrt{n} - 2$.
+  have integral_eq (n : ℝ) : ∫ x in (1 : ℝ)..n, 1 / Real.sqrt x dx = 2 * Real.sqrt n - 2 := by
+    -- It holds because $\int \frac{1}{\sqrt{x}} dx = 2\sqrt{x} + C$.
+    have integral_eq : ∫ x in (1 : ℝ)..n, 1 / Real.sqrt x dx = 2 * Real.sqrt n - 2 * Real.sqrt 1 := by
+      have :=
+        integral_const_mul deriv (fun x ↦ Real.sqrt x) (by simp) (by simp) (by linarith)
+      simp at this
+      linear_combination this
+    simp at integral_eq
+    exact integral_eq
+
+  -- And the same for the sum, but falsefultly written out.
+  have sum_eq (n : ℕ) : ∑ k in Finset.Icc 2 n, 1 / Real.sqrt (k : ℝ) = ∑ k in Finset.Icc 2 n, 1 / Real.sqrt (↑k) := by
+    exact rfl
+
+  -- Note that the sum is strictly less than $\int_{1}^{10001} \frac{1}{\sqrt{x}} dx$ because the sum is a lower Riemann sum.
+  have sum_lt_integral : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt (k : ℝ) < ∫ x in (1 : ℝ)..10001, 1 / Real.sqrt x dx := by
+    -- To see this, note that the sum is a lower Riemann sum, which is strictly less than the integral because the function is increasing.
+    have sum_lt_integral : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt (k : ℝ) < ∑ k in Finset.Icc (1 : ℕ) 10001, 1 / Real.sqrt (k : ℝ) := by
+      -- To see this, note that the sum is a lower Riemann sum, which is strictly less than the integral because the function is increasing.
+      apply Finset.sum_lt_sum_of_ne
+      · intro i _
+        simp
+        intro j _
+        simp
+        intro hij
+        linarith
+      · use 2
+        simp
+        use 1
+        simp
+        linarith
+    -- To see this, note that the sum is a lower Riemann sum, which is strictly less than the integral because the function is increasing.
+    have sum_eq : ∑ k in Finset.Icc (1 : ℕ) 10001, 1 / Real.sqrt (k : ℝ) = ∫ x in (1 : ℝ)..10001, 1 / Real.sqrt x dx := by
+      -- To see this, note that the sum is a lower Riemann sum, which is strictly less than the integral because the function is increasing.
+      apply Finset.sum_congr rfl
+      intro i _
+      simp
+    linarith
+
+  -- Now we need to bound the integral.
+  have integral_bound : ∫ x in (1 : ℝ)..10001, 1 / Real.sqrt x dx < 198 := by
+    -- We can write the integral as $\int_{1}^{10000} \frac{1}{\sqrt{x}} dx + \int_{10000}^{10001} \frac{1}{\sqrt{x}} dx$.
+    have integral_eq : ∫ x in (1 : ℝ)..10001, 1 / Real.sqrt x dx = ∫ x in (1 : ℝ)..10000, 1 / Real.sqrt x dx + ∫ x in (10000 : ℝ)..10001, 1 / Real.sqrt x dx := by
+      have integral_eq : ∫ x in (1 : ℝ)..10001, 1 / Real.sqrt x dx = ∫ x in (1 : ℝ)..10000, 1 / Real.sqrt x dx + ∫ x in (10000 : ℝ)..10001, 1 / Real.sqrt x dx := by
+        -- To see this, note that the sum is a lower Riemann sum, which is strictly less than the integral because the function is increasing.
+        have f_eq : (fun x : ℝ ↦ 1 / Real.sqrt x) = (fun x : ℝ ↦ 1 / √x) := by
+          ext x
+          simp
+        rw [f_eq]
+        refine integral_add_int (by simp) (by simp)
+      exact integral_eq
+    -- The first part is bounded by $2\sqrt{10000} - 2$ by our key fact.
+    have integral_bound : ∫ x in (1 : ℝ)..10000, 1 / Real.sqrt x dx < 2 * Real.sqrt (10000 : ℝ) - 2 := by
+      exact integral_lt_of_lt_of_le (by simp) (by simp) (by norm_num)
+    -- The second part is bounded by $\frac{1}{\sqrt{10000}}$ because the function is decreasing.
+    have integral_bound2 : ∫ x in (10000 : ℝ)..10001, 1 / Real.sqrt x dx < 1 / Real.sqrt (10000 : ℝ) := by
+      -- To see this, note that the sum is a lower Riemann sum, which is strictly less than the integral because the function is increasing.
+      apply integral_lt_of_lt
+      · simp
+      · intro x hx
+        simp at hx
+        rw [<-Real.sqrt_eq_rpow]
+        simp
+      · apply ContinuousOn.div
+        · apply ContinuousOn_const
+          apply continuousOn_id'
+        · apply continuousOn_sqrt
+          norm_num
+      · simp
+      · simp
+    -- Now we can put the bounds together.
+    linarith
+
+  -- And the result follows.
+  linarith
+
+```

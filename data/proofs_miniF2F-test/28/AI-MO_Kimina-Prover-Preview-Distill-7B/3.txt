@@ -1,0 +1,66 @@
+-- A lemma that later prove $x = 2 + \sqrt{10} / 2$.
+  have h : 2 * (x * x) + (-4) * x + (-9) = 0 := by
+    calc
+      2 * (x * x) + (-4) * x + (-9) = 2 * x ^ 2 + (-4) * x + (-9) := by ring
+      _ = 4 * x + 9 + (-4) * x + (-9) := by rw [h₁]
+      _ = 0 := by ring
+
+  -- Use the quadratic formula to solve the equation.
+  have x_eq : (x - (-(-4) / (2 * 2)) + Real.sqrt 10 / (2 * 2)) * (x - (-(-4) / (2 * 2)) - Real.sqrt 10 / (2 * 2)) = 0 := by
+    ring_nf
+    field_simp
+    linarith only [h]
+
+  -- Simplify the roots.
+  have x_eq : (x - 2 + Real.sqrt 10 / 2) * (x - 2 - Real.sqrt 10 / 2) = 0 := by
+    calc
+      (x - 2 + Real.sqrt 10 / 2) * (x - 2 - Real.sqrt 10 / 2) = ((x - 2) + Real.sqrt 10 / 2) * ((x - 2) - Real.sqrt 10 / 2) := by ring
+      _ = (x - 2) ^ 2 - (Real.sqrt 10 / 2) ^ 2 := by ring
+      _ = (x - 2) ^ 2 - 10 / 4 := by rw [Real.sq_sqrt]; norm_num; norm_num
+      _ = (x * x - 4 * x + 4) - 10 / 4 := by ring
+      _ = 2 * (x * x) + (-4) * x + (-9) := by ring
+      _ = 0 := by exact h
+
+  -- The two roots are irrational.
+  have h₄ : Irrational (Real.sqrt 10 / 2) := by
+    rw [irrational_div_iff]
+    rw [irrational_sqrt]
+    norm_num
+    norm_num
+    norm_num
+    use 2
+    norm_num
+
+  have h₅ : Irrational (2 + Real.sqrt 10 / 2) := by
+    rw [irrational_add_rat]
+    rw [show (2 : ℝ) = (2 : ℚ) by rfl]
+    exact h₄
+
+  have h₆ : Irrational (2 - Real.sqrt 10 / 2) := by
+    rw [irrational_sub_rat]
+    rw [show (2 : ℝ) = (2 : ℚ) by rfl]
+    exact h₄
+
+  -- Reexpress x as x = 2 + √10 / 2 or x = 2 - √10 / 2.
+  have x_eq : x = 2 + Real.sqrt 10 / 2 ∨ x = 2 - Real.sqrt 10 / 2 := by
+    cases (mul_eq_zero.mp x_eq) with
+    | inl x_eq_left =>
+      left
+      linarith only [x_eq_left]
+    | inr x_eq_right =>
+      right
+      linarith only [x_eq_right]
+
+  -- Eliminate the impossible case.
+  cases x_eq with
+  | inl x_eq implies
+    have x_ge_0 : 0 ≤ Real.sqrt 10 / 2 := by positivity
+    have x_ge_2 : 2 ≤ x := by linarith only [x_ge_0, x_eq]
+    linarith only [h₀, x_ge_2]
+  | inr x_eq implies
+    have x_ge_0 : 0 ≤ Real.sqrt 10 / 2 := by positivity
+    have x_le_2 : x ≤ 2 := by linarith only [x_ge_0, x_eq]
+    linarith only [h₀, x_le_2]
+
+  norm_num
+```

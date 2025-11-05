@@ -1,0 +1,134 @@
+-- $0 < \sqrt{a b}$ since $0 < a, b$.
+  have h₂ : 0 < Real.sqrt (a * b) := by
+    apply Real.sqrt_pos.mpr
+    simp [h₀.1, h₀.2.1]
+
+  -- $\sqrt{a b} \cdot \sqrt{a c} = \sqrt{a b \cdot a c} = \sqrt{a^2 \cdot b c} = a \cdot \sqrt{b c}$ since $0 < a, b, c$.
+  have h₃ (h : 0 < Real.sqrt (a * b) * Real.sqrt (a * c)) : Real.sqrt (a * b) * Real.sqrt (a * c) = a * Real.sqrt (b * c) := by
+    calc
+      Real.sqrt (a * b) * Real.sqrt (a * c)
+        = Real.sqrt ((a * b) * (a * c)) := by rw [Real.sqrt_mul (by linarith only [h₀.1])]; positivity
+      _ = Real.sqrt (a * a * (b * c)) := by ring_nf
+      _ = Real.sqrt (a * a) * Real.sqrt (b * c) := by rw [Real.sqrt_mul (by positivity)]; positivity
+      _ = a * Real.sqrt (b * c) := by rw [Real.sqrt_sq (by linarith only [h₀.1])]; positivity
+
+  -- $\sqrt{b c} \cdot \sqrt{c a} = \sqrt{b c \cdot c a} = \sqrt{c^2 \cdot a b} = c \cdot \sqrt{a b}$ since $0 < a, b, c$.
+  have h₄ (h : 0 < Real.sqrt (b * c) * Real.sqrt (c * a)) : Real.sqrt (b * c) * Real.sqrt (c * a) = c * Real.sqrt (a * b) := by
+    calc
+      Real.sqrt (b * c) * Real.sqrt (c * a)
+        = Real.sqrt ((b * c) * (c * a)) := by rw [Real.sqrt_mul (by linarith only [h₀.2.1])]; positivity
+      _ = Real.sqrt (c * c * (a * b)) := by ring_nf
+      _ = Real.sqrt (c * c) * Real.sqrt (a * b) := by rw [Real.sqrt_mul (by positivity)]; positivity
+      _ = c * Real.sqrt (a * b) := by rw [Real.sqrt_sq (by linarith only [h₀.2.1])]; positivity
+
+  -- $0 < \sqrt{c a}$ since $0 < c, a$.
+  have h₅ : 0 < Real.sqrt (c * a) := by
+    apply Real.sqrt_pos.mpr
+    simp [h₀.2.2, h₀.1]
+
+  -- $a / \sqrt{a + b} + b / \sqrt{b + c} + c / \sqrt{c + a} = \sqrt{a b} / \sqrt{(a + b)(a b)} + \sqrt{b c} / \sqrt{(b + c)(b c)} + \sqrt{c a} / \sqrt{(c + a)(c a)}$.
+  rw [div_div_div_eq_div_sum, div_div_div_eq_div_sum, div_div_div_eq_div_sum, Real.sqrt_div (by positivity), Real.sqrt_div (by positivity), Real.sqrt_div (by positivity)]
+
+  -- Note that $\sqrt{(a+b)(ab)} = \sqrt{a^2 b + a b^2 + 4 a b} \geq \sqrt{4ab + 4ab} = \sqrt{8ab}$.
+  have h₆ : Real.sqrt (2 * a * b) ≤ Real.sqrt ((a + b) * (a * b)) := by
+    apply Real.sqrt_le_sqrt
+    linarith only [sq_nonneg (a - b)]
+
+  -- Since $3 \leq ab + bc + ca$, we have $3 \leq 2(ab + bc + ca) - (ab + bc + ca) = a^2 b + b^2 c + c^2 a + 3abc$.
+  have h₇ : 3 ≤ a ^ 2 * b + b ^ 2 * c + c ^ 2 * a + 3 * a * b * c := by linarith only [h₁]
+
+  -- We have $a b + b c + ca \leq ab + bc + ca + 3abc = (a + b + c)(ab + bc + ca) - 3abc$.
+  have h₈ : a * b + b * c + c * a ≤ (a + b + c) * (a * b + b * c + c * a) - 3 * a * b * c := by linarith only [h₁]
+
+  -- We have $a^2 b + b^2 c + c^2 a + 3abc \leq (a + b + c)(ab + bc + ca)$.
+  have h₉ : a ^ 2 * b + b ^ 2 * c + c ^ 2 * a + 3 * a * b * c ≤ (a + b + c) * (a * b + b * c + c * a) := by linarith only [h₈, h₀.1, h₀.2.1, h₀.2.2]
+
+  -- $\sqrt{a b} \cdot \sqrt{a c} = a \cdot \sqrt{b c}$ since $0 < a, b, c$.
+  have h₁₀ : Real.sqrt (a * b) * Real.sqrt (a * c) = a * Real.sqrt (b * c) := by
+    apply h₃
+    positivity
+
+  -- $\sqrt{b c} \cdot \sqrt{c a} = c \cdot \sqrt{a b}$ since $0 < a, b, c$.
+  have h₁₁ : Real.sqrt (b * c) * Real.sqrt (c * a) = c * Real.sqrt (a * b) := by
+    apply h₄
+    positivity
+
+  -- $\sqrt{(a+b)(ab)} \cdot \sqrt{(b+c)(bc)} \cdot \sqrt{(c+a)(ca)} = (a + b + c) \cdot \sqrt{a b \cdot b c \cdot c a}$ since $0 < a, b, c$.
+  have h₁₂ : Real.sqrt ((a + b) * (a * b)) * Real.sqrt ((b + c) * (b * c)) * Real.sqrt ((c + a) * (c * a)) = (a + b + c) * Real.sqrt (a * b * (b * c * (c * a))) := by
+    calc
+      Real.sqrt ((a + b) * (a * b)) * Real.sqrt ((b + c) * (b * c)) * Real.sqrt ((c + a) * (c * a))
+        = Real.sqrt ((a + b) * (a * b)) * (Real.sqrt ((b + c) * (b * c)) * Real.sqrt ((c + a) * (c * a))) := by ring
+      _ = Real.sqrt ((a + b) * (a * b)) * (Real.sqrt ((b + c) * (b * c) * ((c + a) * (c * a)))) := by rw [Real.sqrt_mul (by positivity)]; ring
+      _ = Real.sqrt ((a + b) * (a * b)) * (Real.sqrt ((b + c) * (c + a) * (b * c * (c * a)))) := by ring
+      _ = Real.sqrt (((a + b) * (a * b)) * ((b + c) * (c + a) * (b * c * (c * a)))) := by rw [Real.sqrt_mul (by positivity)]; rw [Real.sqrt_mul (by positivity)]; ring
+      _ = (a + b + c) * Real.sqrt (a * b * (b * c * (c * a))) := by rw [mul_assoc, <-Real.sqrt_mul (by positivity) (a * b), mul_assoc, <-Real.sqrt_mul (by positivity) (b * c), mul_assoc, <-Real.sqrt_mul (by positivity) (c * a), <-mul_assoc, mul_comm (c * a) (b * c), <-mul_assoc, <-mul_assoc, <-mul_assoc, <-Real.sqrt_mul (by positivity) (a * b * (b * c * (c * a)))]; ring
+
+  -- $\sqrt{a b \cdot b c \cdot c a} = \sqrt{(a b c)^2} = a b c$ since $0 < a, b, c$.
+  have h₁₃ : Real.sqrt (a * b * (b * c * (c * a))) = a * b * c := by
+    rw [show a * b * (b * c * (c * a)) = (a * b * c) ^ 2 by ring]
+    rw [Real.sqrt_sq (by positivity)]
+
+  -- So, $\sqrt{(a+b)(ab)} \cdot \sqrt{(b+c)(bc)} \cdot \sqrt{(c+a)(ca)} = (a + b + c) \cdot \sqrt{a b \cdot b c \cdot c a} = (a + b + c) \cdot abc$ since $0 < a, b, c$.
+  have h₁₄ : Real.sqrt ((a + b) * (a * b)) * Real.sqrt ((b + c) * (b * c)) * Real.sqrt ((c + a) * (c * a)) = (a + b + c) * (a * b * c) := by
+    rw [h₁₂, h₁₃]
+
+  -- Note that $a / \sqrt{a + b} + b / \sqrt{b + c} + c / \sqrt{c + a} = \sqrt{a b} / \sqrt{(a + b)(a b)} + \sqrt{b c} / \sqrt{(b + c)(b c)} + \sqrt{c a} / \sqrt{(c + a)(c a)} \geq \sqrt{a b} / \sqrt{8 a b} + \sqrt{b c} / \sqrt{8 b c} + \sqrt{c a} / \sqrt{8 c a} = 1/2 (1/\sqrt{2} + 1/\sqrt{2} + 1/\sqrt{2}) = 3/\sqrt{2}$.
+  calc
+    _ = Real.sqrt (2 * a * b) / Real.sqrt ((a + b) * (2 * a * b)) + Real.sqrt (2 * b * c) / Real.sqrt ((b + c) * (2 * b * c)) + Real.sqrt (2 * c * a) / Real.sqrt ((c + a) * (2 * c * a)) := by rw [div_div_div_eq_div_sum, div_div_div_eq_div_sum, div_div_div_eq_div_sum, Real.sqrt_mul (by positivity), Real.sqrt_mul (by positivity), Real.sqrt_mul (by positivity)]
+    _ ≥ Real.sqrt (2 * a * b) / Real.sqrt (8 * a * b) + Real.sqrt (2 * b * c) / Real.sqrt (8 * b * c) + Real.sqrt (2 * c * a) / Real.sqrt (8 * c * a) := by
+      -- Note that $\sqrt{(a+b)(ab)} \leq \sqrt{8ab}$.
+      have h₁₅ : Real.sqrt ((a + b) * (2 * a * b)) ≤ Real.sqrt (8 * a * b) := by
+        apply Real.sqrt_le_sqrt
+        linarith only [sq_nonneg (a - b)]
+      have h₁₆ : Real.sqrt ((b + c) * (2 * b * c)) ≤ Real.sqrt (8 * b * c) := by
+        apply Real.sqrt_le_sqrt
+        linarith only [sq_nonneg (b - c)]
+      have h₁₇ : Real.sqrt ((c + a) * (2 * c * a)) ≤ Real.sqrt (8 * c * a) := by
+        apply Real.sqrt_le_sqrt
+        linarith only [sq_nonneg (c - a)]
+      have h₁₈ : 0 < Real.sqrt (8 * a * b) := by
+        apply Real.sqrt_pos.mpr
+        positivity
+      have h₁₉ : 0 < Real.sqrt (8 * b * c) := by
+        apply Real.sqrt_pos.mpr
+        positivity
+      have h₂₀ : 0 < Real.sqrt (8 * c * a) := by
+        apply Real.sqrt_pos.mpr
+        positivity
+      -- $\sqrt{a b} / \sqrt{(a + b)(a b)} \geq \sqrt{a b} / \sqrt{8 a b}$.
+      have h₂₁ : Real.sqrt (2 * a * b) / Real.sqrt ((a + b) * (2 * a * b)) ≥ Real.sqrt (2 * a * b) / Real.sqrt (8 * a * b) := by
+        apply div_le_div_of_nonneg_left
+        positivity
+        linarith only [h₁₅]
+      -- $\sqrt{b c} / \sqrt{(b + c)(b c)} \geq \sqrt{b c} / \sqrt{8 b c}$.
+      have h₂₂ : Real.sqrt (2 * b * c) / Real.sqrt ((b + c) * (2 * b * c)) ≥ Real.sqrt (2 * b * c) / Real.sqrt (8 * b * c) := by
+        apply div_le_div_of_nonneg_left
+        positivity
+        linarith only [h₁₆]
+      -- $\sqrt{c a} / \sqrt{(c + a)(c a)} \geq \sqrt{c a} / \sqrt{8 c a}$.
+      have h₂₃ : Real.sqrt (2 * c * a) / Real.sqrt ((c + a) * (2 * c * a)) ≥ Real.sqrt (2 * c * a) / Real.sqrt (8 * c * a) := by
+        apply div_le_div_of_nonneg_left
+        positivity
+        linarith only [h₁₇]
+      exact add_le_add (add_le_add h₂₁ h₂₂) h₂₃
+    _ = Real.sqrt (2 * a * b) / (Real.sqrt 8 * Real.sqrt (a * b)) + Real.sqrt (2 * b * c) / (Real.sqrt 8 * Real.sqrt (b * c)) + Real.sqrt (2 * c * a) / (Real.sqrt 8 * Real.sqrt (c * a)) := by
+      rw [Real.sqrt_mul (by positivity), Real.sqrt_mul (by positivity), Real.sqrt_mul (by positivity)]
+      rw [show (8 : ℝ) = 2 ^ 2 * 2 by norm_num, Real.sqrt_mul (by positivity)]
+      rw [show (2 : ℝ) ^ 2 = (2 ^ (2 : ℝ)) by norm_num, Real.sqrt_rpow (by positivity)]
+      rw [mul_assoc, <-Real.sqrt_mul (by positivity) (a * b), mul_assoc, <-Real.sqrt_mul (by positivity) (b * c), mul_assoc, <-Real.sqrt_mul (by positivity) (c * a), mul_assoc, <-Real.sqrt_mul (by positivity) (a * b), mul_assoc]
+      ring
+    _ = Real.sqrt (2 * a * b) / (2 * Real.sqrt 2 * Real.sqrt (a * b)) + Real.sqrt (2 * b * c) / (2 * Real.sqrt 2 * Real.sqrt (b * c)) + Real.sqrt (2 * c * a) / (2 * Real.sqrt 2 * Real.sqrt (c * a)) := by
+      rw [show (8 : ℝ) = 2 ^ 2 * 2 by norm_num, Real.sqrt_mul (by positivity)]
+      rw [show (2 : ℝ) ^ 2 = (2 ^ (2 : ℝ)) by norm_num, Real.sqrt_rpow (by positivity)]
+      rw [<-Real.sqrt_mul (by positivity) (2 * a * b), mul_comm (2 * a * b), <-Real.sqrt_mul (by positivity) (2 * b * c), mul_comm (2 * b * c), <-Real.sqrt_mul (by positivity) (2 * c * a), mul_comm (2 * c * a)]
+      ring
+    _ = 1 / (2 * Real.sqrt 2) * (Real.sqrt (2 * a * b) / Real.sqrt (a * b) + Real.sqrt (2 * b * c) / Real.sqrt (b * c) + Real.sqrt (2 * c * a) / Real.sqrt (c * a)) := by
+      rw [<-mul_div_assoc, mul_comm, mul_div_assoc, mul_comm, mul_div_assoc]
+      ring
+    _ = 1 / (2 * Real.sqrt 2) * (Real.sqrt (2 * a * b) / Real.sqrt (a * b) + Real.sqrt (2 * b * c) / Real.sqrt (b * c) + Real.sqrt (2 * c * a) / Real.sqrt (c * a)) := by rfl
+    _ = 1 / (2 * Real.sqrt 2) * (Real.sqrt (2 * a * b) / Real.sqrt (a * b) + Real.sqrt (2 * b * c) / Real.sqrt (b * c) + Real.sqrt (2 * c * a) / Real.sqrt (c * a)) := by rfl
+    _ = 1 / (2 * Real.sqrt 2) * (Real.sqrt (2 * a * b) / Real.sqrt (a * b) + Real.sqrt (2 * b * c) / Real.sqrt (b * c) + Real.sqrt (2 * c * a) / Real.sqrt (c * a)) := by rfl
+    _ ≥ 1 / (2 * Real.sqrt 2) * (1 / Real.sqrt 2 + 1 / Real.sqrt 2 + 1 / Real.sqrt 2) := by
+      -- $\sqrt{2 a b} / \sqrt{a b} = \sqrt{2 a b} / \sqrt{a b} = \sqrt{2 a b / a b} = \sqrt{2}$ since $0 < a, b$.
+      have h₂₄ : Real.sqrt (2 * a * b) / Real.sqrt (a * b) = Real.sqrt 2 := by
+        calc

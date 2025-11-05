@@ -1,0 +1,60 @@
+-- $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 < \frac{12}{25}$
+  have h₁ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 12 / 25 := by
+    -- $\sum_{n=0}^{99} a_{n+1}^2 = 1$
+    have h₂ : (∑ x in Finset.range 100, a (x + 1) ^ 2) = 1 := h₀
+    -- $\left(\sum_{n=0}^{99} a_{n+1}^2\right)^2 = 1^2 = 1$
+    have h₃ : (∑ x in Finset.range 100, a (x + 1) ^ 2) ^ 2 = 1 := by
+      rw [h₂]
+      norm_num
+    -- $\sum_{n=0}^{99} a_{n+1}^4 + 2\sum_{0\le i < j \le 99} a_{i+1}^2a_{j+1}^2 = 1$
+    have h₄ : (∑ x in Finset.range 100, a (x + 1) ^ 4) + 2 * ∑ x y
+      [Finset.mem_range x ∧ Finset.mem_range y ∧ a (x + 1) ^ 2 * a (y + 1) ^ 2 | x < y ∧ Finset.mem_range x ∧ Finset.mem_range y] = 1 := by
+      calc
+        _ = (∑ x in Finset.range 100, a (x + 1) ^ 2) ^ 2 := by
+          rw [←Finset.sum_sq]
+          rfl
+        _ = _ := h₃
+    -- $\sum_{n=0}^{99} a_{n+1}^4 + 2\sum_{0\le i < j \le 99} a_{i+1}^2a_{j+1}^2 + \sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 = 1$
+    have h₅ : (∑ x in Finset.range 100, a (x + 1) ^ 4) + 2 * ∑ x y
+      [Finset.mem_range x ∧ Finset.mem_range y ∧ a (x + 1) ^ 2 * a (y + 1) ^ 2 | x < y ∧ Finset.mem_range x ∧ Finset.mem_range y] + (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 = 1 := by
+      calc
+        _ = (∑ x in Finset.range 100, a (x + 1) ^ 2) ^ 2 := by
+          rw [←Finset.sum_sq]
+          rfl
+        _ = _ := h₃
+    -- $2\sum_{0\le i < j \le 99} a_{i+1}^2a_{j+1}^2 + \sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 \ge 0$
+    have h₆ : 2 * ∑ x y
+      [Finset.mem_range x ∧ Finset.mem_range y ∧ a (x + 1) ^ 2 * a (y + 1) ^ 2 | x < y ∧ Finset.mem_range x ∧ Finset.mem_range y] + (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 \ge 0 := by
+      apply add_nonneg
+      apply add_nonneg
+      apply mul_nonneg
+      apply mul_nonneg
+      exact Nat.cast_two_nonneg
+      apply Finset.sum_nonneg
+      intros i hi
+      exact pow_two_nonneg (a (i + 1) ^ 2)
+      exact Nat.cast_lt_ofNat.mpr hi
+      apply Finset.sum_nonneg
+      intros i hi
+      apply pow_two_nonneg
+      have hi' : i + 2 < 100 := by
+        calc
+          _ ≤ 99 := by exact hi
+          _ < _ := by norm_num
+      have : a (i + 2) ^ 2 ≥ 0 := by exact pow_two_nonneg (a (i + 2) ^ 2)
+      exact this
+      exact Nat.cast_lt_ofNat.mpr hi'
+      apply Nat.cast_lt_ofNat.mpr
+      calc
+        _ ≤ 100 := by exact Nat.le_of_lt_succ hi
+        _ < _ := by norm_num
+    -- $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 \le 1$
+    have h₇ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 ≤ 1 := by
+      linarith
+    -- $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 < 1$
+    have h₈ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 1 := by
+      linarith
+    exact h₈
+
+  exact h₁
+```

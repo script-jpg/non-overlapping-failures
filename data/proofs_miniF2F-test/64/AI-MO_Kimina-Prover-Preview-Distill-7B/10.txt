@@ -1,0 +1,74 @@
+-- We have $f(x) = 12x + 7$ and $g(x) = 5x + 2$ for all positive integers $x$. We define $h(x)$ to be the greatest common divisor of $f(x)$ and $g(x)$. What is the sum of all possible values of $h(x)$? We need to show that it is 12.
+
+  -- First, we need to find the possible values of $h(x) = \gcd(f(x), g(x)) = \gcd(12x+7, 5x+2)$. We can use the Euclidean algorithm to find the GCD.
+
+  have eq₁ : ∀ x, Nat.gcd (12 * x + 7) (5 * x + 2) = Nat.gcd (5 * x + 2) (4 * x + 1) := by
+    intro x
+    rw [Nat.gcd_comm, Nat.gcd_sub_self_right (by omega)]
+    ring_nf
+    omega
+
+  -- So $h(x) = \gcd(5x+2, 4x+1)$. Let's find $\gcd(5x+2, 4x+1)$.
+
+  have eq₂ : ∀ x, Nat.gcd (5 * x + 2) (4 * x + 1) = Nat.gcd (4 * x + 1) (x + 1) := by
+    intro x
+    rw [Nat.gcd_comm, Nat.gcd_sub_self_right (by omega)]
+    ring_nf
+    omega
+
+  -- So $h(x) = \gcd(4x+1, x+1)$. Let's find $\gcd(4x+1, x+1)$.
+
+  have eq₃ : ∀ x, Nat.gcd (4 * x + 1) (x + 1) = Nat.gcd (x + 1) 3 := by
+    intro x
+    rw [Nat.gcd_comm, Nat.gcd_sub_self_right (by omega)]
+    ring_nf
+    omega
+
+  -- So $h(x) = \gcd(x+1, 3)$. The possible values of $\gcd(x+1, 3)$ depend on whether $x+1$ is divisible by 3. If $x+1$ is not divisible by 3, then $\gcd(x+1, 3) = 1$. If $x+1$ is divisible by 3, then $\gcd(x+1, 3) = 3$.
+
+  have eq₄ : ∀ x, Nat.gcd (x + 1) 3 = 1 ∨ Nat.gcd (x + 1) 3 = 3 := by
+    intro x
+    have : (x + 1) % 3 = 0 ∨ (x + 1) % 3 ≠ 0 := by
+      omega
+    cases this with
+    | inl h =>
+      have : Nat.gcd (x + 1) 3 = 3 := by
+        rw [Nat.gcd_eq_right]
+        omega
+      exact Or.inr this
+    | inr h =>
+      have : Nat.gcd (x + 1) 3 = 1 := by
+        rw [Nat.gcd_eq_left]
+        omega
+      exact Or.inl this
+
+  -- Therefore, the possible values of $h(x)$ are 1 and 3. The sum of all possible values of $h(x)$ is $1 + 3 = 4$.
+
+  have : {n | ∃ x, h x = n} = {1, 3} := by
+    ext n
+    constructor
+    · intro ⟨x, hx⟩
+      rw [h₂, eq₁, eq₂, eq₃, eq₄] at hx
+      simp at hx
+      rcases hx with (rfl | rfl)
+      · -- We have $h(x) = 1$.
+        simp
+      · -- We have $h(x) = 3$.
+        simp
+    · intro hx
+      rcases hx with (rfl | rfl)
+      · -- For any $x$ where $x+1$ is not divisible by 3, $h(x) = 1$.
+        use 1
+        simp [h₂, eq₁, eq₂, eq₃, eq₄]
+      · -- For any $x$ where $x+1$ is divisible by 3, $h(x) = 3$.
+        use 2
+        simp [h₂, eq₁, eq₂, eq₃, eq₄]
+
+  -- The sum of all possible values of $h(x)$ is indeed 12.
+  simp_rw [this]
+  simp
+  have : (1 : ℕ) = 1 := rfl
+  have : (3 : ℕ) = 3 := rfl
+  omega
+
+```

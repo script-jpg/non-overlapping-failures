@@ -1,0 +1,109 @@
+-- -- Note that $\operatorname{gcd}(a, b) \cdot \operatorname{lcm}(a, b) = a \cdot b$.
+  have h₄ : Nat.gcd a b * Nat.lcm a b = a * b := by
+    rw [Nat.gcd_mul_lcm]
+
+  -- We want to show that $108 \le \operatorname{lcm}(a, b)$.
+  suffices 108 ≤ Nat.lcm a b by exact this
+
+  -- From the above equation, we have $a \cdot b = 6 \cdot \operatorname{lcm}(a, b)$.
+  replace h₄ : a * b = 6 * Nat.lcm a b := by
+    rw [←h₄, mul_comm]
+
+  -- Rearrange, we have $\operatorname{lcm}(a, b) = \frac{a \cdot b}{6}$.
+  have h₅ : Nat.lcm a b = a * b / 6 := by
+    refine Nat.eq_div_of_mul_eq_right (by omega) (by linarith)
+
+  -- So, to minimize $\operatorname{lcm}(a, b)$, we need to minimize $a \cdot b$.
+  suffices 108 ≤ a * b / 6 by omega
+
+  -- From the equation $a \cdot b = 6 \cdot \operatorname{lcm}(a, b)$, we have $a \cdot b$ is a multiple of $6$.
+  have h₆ : 6 ∣ a * b := by
+    rw [h₄]
+    exact Nat.dvd_mul_right 6 (Nat.lcm a b)
+
+  -- In other words, $a \cdot b$ is a multiple of $6$.
+  replace h₆ : 6 ∣ a * b := by
+    exact h₆
+
+  -- We claim that $a$ and $b$ are multiples of $3$.
+  have h₇ : 3 ∣ a := by
+      -- For a contradiction, assume that $a$ is not a multiple of $3$.
+      by_contra! h₇
+      -- Then, $a \cdot b$ is not a multiple of $3$, but $6 \cdot \operatorname{lcm}(a, b)$ is a multiple of $3$.
+      -- This is a contradiction.
+      omega
+
+  have h₈ : 3 ∣ b := by
+      -- For a contradiction, assume that $b$ is not a multiple of $3$.
+      by_contra! h₈
+      -- Then, $a \cdot b$ is not a multiple of $3$, but $6 \cdot \operatorname{lcm}(a, b)$ is a multiple of $3$.
+      -- This is a contradiction.
+      omega
+
+  -- Then, $a = 3a'$ and $b = 3b'$ for some positive integers $a'$ and $b'$.
+  rw [Nat.dvd_iff_mod_eq_zero] at h₇ h₈
+  have h₉ : a = 3 * (a / 3) := by exact Nat.mul_div_cancel' h₇
+  have h₁₀ : b = 3 * (b / 3) := by exact Nat.mul_div_cancel' h₈
+
+  -- The problem now reduces to showing that $108 \le 3a' \cdot 3b' / 6 = 9a'b'/2$.
+  suffices 24 ≤ 9 * (a / 3) * (b / 3) by omega
+
+  -- Note that $a'' = a/3$ and $b'' = b/3$ are positive integers.
+  let a'' := a / 3
+  let b'' := b / 3
+
+  -- Then, $a = 3a''$ and $b = 3b''$.
+  have h₁₁ : a = 3 * a'' := by exact (Nat.div_mul_cancel h₇).symm
+  have h₁₂ : b = 3 * b'' := by exact (Nat.div_mul_cancel h₈).symm
+
+  -- Note that $a''$ and $b''$ are positive integers.
+  have h₁₃ : 0 < a'' := by omega
+  have h₁₄ : 0 < b'' := by omega
+
+  -- We claim that $a''$ and $b''$ are relatively prime.
+  have h₁₅ : Nat.gcd a'' b'' = 1 := by
+    -- For a contradiction, assume that $a''$ and $b''$ have a common divisor $d > 1$.
+    by_contra! h₁₅
+    -- Then, $a$ and $b$ have a common divisor $3d > 3$.
+    have h₁₆ : 3 * a'' ∣ a := by exact (Nat.mul_dvd_mul_left 3 (id (Nat.dvd_refl a'')).symm)
+    have h₁₇ : 3 * a'' ∣ 3 * b := by exact Nat.mul_dvd_mul_left 3 (id (Nat.dvd_refl b'')).symm
+    have h₁₈ : 3 * a'' ∣ a.gcd b := by
+      refine Nat.dvd_gcd h₁₆ h₁₇
+    have h₁₉ : 3 * a'' ≤ a.gcd b := by
+      apply Nat.le_of_dvd (by positivity) h₁₈
+    have h₂₀ : a.gcd b ∣ 6 := by
+      rw [h₃]
+      exact Nat.gcd_dvd_gcd (by omega) (by omega)
+    apply Nat.le_of_dvd (by omega) at h₂₀
+    omega
+
+  -- Now, we need to show that $24 \le 9a'b'$, or equivalently, $a'b' \geq 3$.
+  suffices 3 ≤ (a'' : ℤ) * (b'' : ℤ) by omega
+
+  -- For a contradiction, assume that $a'b' \leq 2$.
+  by_contra! h₂₁
+  -- Note that $a''$ and $b''$ are positive integers, so there are only two cases.
+  have : (a'' : ℤ) = 1 ∨ (a'' : ℤ) = 2 := by
+    have h₂₂ : 1 ≤ (a'' : ℤ) := by omega
+    have h₂₃ : (a'' : ℤ) ≤ 2 := by omega
+    have h₂₄ : (a'' : ℤ) = 1 ∨ (a'' : ℤ) = 2 := by omega
+    exact h₂₄
+  rcases this with (h₂₂ | h₂₃)
+
+  -- If $a'' = 1$, then $b'' \leq 2$.
+  · have h₂₄ : (b'' : ℤ) = 1 ∨ (b'' : ℤ) = 2 := by
+      have h₂₅ : 1 ≤ (b'' : ℤ) := by omega
+      have h₂₆ : (b'' : ℤ) ≤ 2 := by omega
+      omega
+    rcases h₂₄ with (h₂₄ | h₂₅)
+    -- If $b'' = 1$, then $24 \leq 9 \cdot 1 \cdot 1 = 9$, which is a contradiction.
+    · omega
+    -- If $b'' = 2$, then $24 \leq 9 \cdot 1 \cdot 2 = 18$, which is a contradiction.
+    · omega
+
+  -- If $a'' = 2$, then $b'' \leq 1$.
+  · have h₂₅ : (b'' : ℤ) = 1 := by omega
+    -- If $b'' = 1$, then $24 \leq 9 \cdot 2 \cdot 1 = 18$, which is a contradiction.
+    · omega
+
+```

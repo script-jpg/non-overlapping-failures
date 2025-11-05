@@ -1,0 +1,256 @@
+-- lemma to simplify $2 * 2 ^ (3 * k)$
+  have l1 : 2 * 2 ^ (3 * k) = 2 ^ (3 * k + 1) := by
+    rw [show 2 = 2 ^ 1 by norm_num]
+    rw [←pow_add]
+    ring_nf
+
+  -- lemma to simplify $(2 * 2 ^ (3 * k)) ^ n$
+  have l2 : (2 * 2 ^ (3 * k)) ^ n = 2 ^ (3 * k + 1) * n := by
+    rw [show (2 * 2 ^ (3 * k)) ^ n = (2 ^ (3 * k + 1)) ^ n by rw [l1]]
+    rw [pow_mul]
+    ring_nf
+
+  -- $n < 5$ by induction
+  have : n < 5 := by
+    by_contra h
+    push_neg at h
+    -- we have $n \equiv 0, 1, 2, 3, 4 \pmod 5$
+    have h1 : n % 5 = 0 ∨ n % 5 = 1 ∨ n % 5 = 2 ∨ n % 5 = 3 ∨ n % 5 = 4 := by omega
+    rcases h1 with (h1 | h1 | h1 | h1 | h1)
+    -- if $n \equiv 0 \pmod 5$ then $\sum^n_{k=0}\binom{2n+1}{2k+1}2^{3k} \equiv 0 \pmod 5$
+    · have : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) ≡ 0 [MOD 5] := by
+        calc
+          _ ≡ ∑ k in Finset.range (5 * n / 5 + 1), Nat.choose (2 * (5 * n / 5) + 1) (2 * k + 1) * 2 ^ (3 * k) [MOD 5] := by
+            congr
+            ext k
+            rw [←Nat.ModEq]
+            have t1 : 2 * n + 1 = 5 * (n / 5) + 1 := by
+              have := Nat.div_add_mod n 5
+              rw [mul_comm, add_comm, <-this]
+            have t2 : 2 * (5 * n / 5) + 1 = 2 * n + 1 := by
+              have : 5 * (n / 5) = n := by
+                exact Nat.mul_div_cancel' h1
+              rw [this]
+            rw [t2]
+            have t3 : 3 * k = 3 * (k + 5 * n / 5) - 3 * (5 * n / 5) := by
+              have : 3 * (k + 5 * n / 5) = 3 * k + 3 * (5 * n / 5) := by ring
+              omega
+            rw [t3]
+            have t4 : 2 ^ (3 * (k + 5 * n / 5)) = (2 ^ 3) ^ (k + 5 * n / 5) := by
+              rw [pow_mul]
+            rw [t4]
+            have t5 : 2 ^ 3 = 8 := by norm_num
+            rw [t5]
+            have t6 : 8 ^ (k + 5 * n / 5) = 8 ^ k * 8 ^ (5 * n / 5) := by
+              rw [pow_add]
+            rw [t6]
+            have t7 : 8 ^ (5 * n / 5) = 8 ^ n := by
+              have : 5 * n / 5 = n := by
+                exact Nat.div_self h1
+              rw [this]
+            rw [t7]
+          _ ≡ ∑ i in Finset.range 5, ∑ s in Finset.range (n / 5 + 1), Nat.choose (2 * (5 * s + 1) + 1) (2 * i + 1) * 2 ^ (3 * i) [MOD 5] := by
+            apply Nat.ModEq.sum
+            · calc
+                _ ≡ ∑ k ∈ Finset.range (5 * n / 5 + 1), Nat.choose (2 * (5 * (k - 5 * n / 5) + 1) + 1) (2 * k + 1) * 2 ^ (3 * k) [MOD 5] := by
+                  congr
+                  ext k
+                  have : 2 * (5 * (k - 5 * n / 5) + 1) + 1 = 2 * (n / 5 * 5 + 1) + 1 := by
+                    rw [Nat.mul_sub, mul_one, Nat.sub_add_cancel]
+                    have t1 : 5 * (n / 5) = n := by
+                      exact Nat.mul_div_cancel' h1
+                    omega
+                  rw [this]
+                  have t2 : 2 * n + 1 = 2 * (n / 5 * 5 + 1) + 1 := by
+                    have : 2 * (n / 5 * 5) = 2 * n := by
+                      rw [Nat.mul_div_cancel' h1]
+                    omega
+                  rw [t2]
+                  have t3 : 3 * k = 3 * (k - 5 * n / 5) + 3 * (5 * n / 5) := by
+                    have : 3 * (k - 5 * n / 5) = 3 * k - 3 * (5 * n / 5) := by
+                      rw [Nat.mul_sub, mul_one]
+                    omega
+                  rw [t3]
+                  have t4 : 2 ^ (3 * (k - 5 * n / 5)) = (2 ^ 3) ^ (k - 5 * n / 5) := by
+                    rw [pow_mul]
+                  rw [t4]
+                  have t5 : 2 ^ 3 = 8 := by norm_num
+                  rw [t5]
+                  have t6 : 8 ^ (k - 5 * n / 5) = 8 ^ k * 8 ^ (5 * n / 5) := by
+                    rw [pow_add]
+                  rw [t6]
+                  have t7 : 8 ^ (5 * n / 5) = 8 ^ n := by
+                    have : 5 * n / 5 = n := by
+                      exact Nat.div_self h1
+                    rw [this]
+                  rw [t7]
+                _ ≡ ∑ s ∈ Finset.range (n / 5 + 1), ∑ i ∈ Finset.range 5, Nat.choose (2 * (5 * s + 1) + 1) (2 * i + 1) * 2 ^ (3 * i) [MOD 5] := by
+                  apply Nat.ModEq.sum
+                  · intro k
+                    simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                    intro hk1 hk2
+                    omega
+                  · intro i
+                    simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                    intro hi1 hi2
+                    omega
+                  · calc
+                      _ ≡ ∑ k ∈ Finset.range (5 * (n / 5 + 1)), Nat.choose (2 * (5 * k + 1) + 1) (2 * i + 1) * 2 ^ (3 * i) [MOD 5] := by
+                        congr
+                        ext k
+                        omega
+                      _ ≡ ∑ k ∈ Finset.range (5 * (n / 5 + 1)), Nat.choose (2 * (5 * k + 1) + 1) (2 * i + 1) * 2 ^ (3 * (k + 5 * (n / 5))) [MOD 5] := by
+                        apply Nat.ModEq.sum
+                        · intro k
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hk1 hk2
+                          omega
+                        · calc
+                            _ ≡ ∑ k ∈ Finset.range (5 * (n / 5 + 1)), Nat.choose (2 * (5 * k + 1) + 1) (2 * i + 1) * 2 ^ (3 * k) * 2 ^ (3 * (5 * (n / 5))) [MOD 5] := by
+                              congr
+                              ext k
+                              rw [Nat.pow_add]
+                            _ ≡ ∑ k ∈ Finset.range (5 * (n / 5 + 1)), Nat.choose (2 * (5 * k + 1) + 1) (2 * i + 1) * 2 ^ (3 * k) * 2 ^ (3 * n - 3 * (5 * (n / 5))) [MOD 5] := by
+                              congr
+                              ext k
+                              have t1 : 3 * (5 * (n / 5)) = 3 * n - 3 * (5 * (n / 5)) + 3 * (5 * (n / 5)) := by
+                                omega
+                            rw [t1]
+                            have t2 : 2 ^ (3 * n - 3 * (5 * (n / 5))) = 2 ^ (3 * n) * 2 ^ (-3 * (5 * (n / 5))) := by
+                              rw [Nat.pow_add]
+                              have : 3 * n = 3 * n - 3 * (5 * (n / 5)) + 3 * (5 * (n / 5)) := by
+                                omega
+                            rw [this]
+                            omega
+                          congr
+                          ext k
+                          rw [Nat.pow_add]
+                          have t1 : 3 * (5 * (n / 5)) = 3 * n - 3 * (5 * (n / 5)) + 3 * (5 * (n / 5)) := by
+                            omega
+                          rw [t1]
+                          have t2 : 2 ^ (3 * n - 3 * (5 * (n / 5))) = 2 ^ (3 * n) * 2 ^ (-3 * (5 * (n / 5))) := by
+                            rw [Nat.pow_add]
+                            have : 3 * n = 3 * n - 3 * (5 * (n / 5)) + 3 * (5 * (n / 5)) := by
+                              omega
+                            rw [this]
+                            omega
+                          rw [t2]
+                          symm
+                          rw [Nat.pow_sub]
+                          have t3 : 3 * (5 * (n / 5)) = 3 * n - 3 * (5 * (n / 5)) := by
+                            omega
+                          rw [t3]
+                          have t4 : 2 ^ (3 * n) = 2 ^ (3 * n - 3 * (5 * (n / 5))) * 2 ^ (3 * (5 * (n / 5))) := by
+                            rw [Nat.pow_add]
+                            have : 3 * n = 3 * n - 3 * (5 * (n / 5)) + 3 * (5 * (n / 5)) := by
+                                omega
+                            rw [this]
+                            omega
+                          rw [t4]
+                          rw [mul_assoc]
+                          have : 2 ^ (3 * (5 * (n / 5))) * 2 ^ (3 * (5 * (n / 5))) = 2 ^ (6 * (5 * (n / 5))) := by
+                            rw [mul_pow]
+                            have t5 : 2 ^ (3 * (5 * (n / 5))) * 2 ^ (3 * (5 * (n / 5))) = 2 ^ (3 * (5 * (n / 5)) + 3 * (5 * (n / 5))) := by
+                              rw [Nat.pow_add]
+                            rw [t5]
+                            have t6 : 3 * (5 * (n / 5)) + 3 * (5 * (n / 5)) = 6 * (5 * (n / 5)) := by
+                              omega
+                            rw [t6]
+                          rw [this]
+                          omega
+                      _ ≡ ∑ k ∈ Finset.range (5 * (n / 5 + 1)), Nat.choose (2 * (5 * k + 1) + 1) (2 * i + 1) * 2 ^ (3 * k) * 2 ^ (3 * n) [MOD 5] := by
+                        apply Nat.ModEq.sum
+                        · intro k
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hk1 hk2
+                          omega
+                        · intro k
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hk1 hk2
+                          rw [show 2 ^ (3 * n) = 2 ^ 0 * 2 ^ (3 * n) by rw [mul_one]]
+                          congr
+                          ext k
+                          omega
+                      _ ≡ ∑ k ∈ Finset.range (5 * (n / 5 + 1)), ∑ s ∈ Finset.range 5, Nat.choose (2 * (5 * k + 1) + 1) (2 * s + 1) * 2 ^ (3 * s) * 2 ^ (3 * n) [MOD 5] := by
+                        apply Nat.ModEq.sum
+                        · intro k
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hk1 hk2
+                          omega
+                        · intro i
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hi1 hi2
+                          congr
+                          ext k
+                          omega
+                      _ ≡ ∑ k ∈ Finset.range (5 * (n / 5 + 1)), ∑ s ∈ Finset.range 5, (Nat.choose (2 * (5 * k + 1) + 1) (2 * s + 1) * 2 ^ (3 * s)) * 2 ^ (3 * n) [MOD 5] := by
+                        apply Nat.ModEq.sum
+                        · intro k
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hk1 hk2
+                          omega
+                        · intro i
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hi1 hi2
+                          rw [mul_assoc]
+                          congr
+                          ext k
+                          omega
+                      _ ≡ ∑ s ∈ Finset.range 5, ∑ k ∈ Finset.range (5 * (n / 5 + 1)), Nat.choose (2 * (5 * k + 1) + 1) (2 * s + 1) * 2 ^ (3 * s) * 2 ^ (3 * n) [MOD 5] := by
+                        apply Nat.ModEq.sum
+                        · intro k
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hk1 hk2
+                          omega
+                        · intro i
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hi1 hi2
+                          congr
+                          ext s
+                          omega
+                      _ ≡ ∑ s ∈ Finset.range 5, ∑ k ∈ Finset.range (5 * (n / 5 + 1)), (Nat.choose (2 * (5 * k + 1) + 1) (2 * s + 1) * 2 ^ (3 * s)) * 2 ^ (3 * n) [MOD 5] := by
+                        apply Nat.ModEq.sum
+                        · intro k
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hk1 hk2
+                          omega
+                        · intro i
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hi1 hi2
+                          have : 2 ^ (3 * n) = 1 * 2 ^ (3 * n) := by
+                            simp only [one_mul]
+                          rw [this]
+                          rw [mul_assoc]
+                          symm
+                          rw [mul power]
+                          have t1 : 2 ^ (3 * s) * 2 ^ (3 * n) = 2 ^ (3 * s + 3 * n) := by
+                            rw [mul_pow]
+                            have : 3 * s + 3 * n = 3 * (s + n) := by
+                              omega
+                            rw [this]
+                          rw [t1]
+                          have t2 : 3 * s + 3 * n = 3 * (n + s) := by
+                            omega
+                          rw [t2]
+                          rw [mul_comm]
+                          congr
+                          ext s
+                          omega
+                      _ ≡ ∑ s ∈ Finset.range 5, (∑ k ∈ Finset.range (5 * (n / 5 + 1)), Nat.choose (2 * (5 * k + 1) + 1) (2 * s + 1) * 2 ^ (3 * s)) * 2 ^ (3 * n) [MOD 5] := by
+                        apply Nat.ModEq.sum
+                        · intro k
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hk1 hk2
+                          omega
+                        · intro i
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hi1 hi2
+                          congr
+                          ext k
+                          omega
+                      _ ≡ ∑ s ∈ Finset.range 5, (∑ k ∈ Finset.range (5 * (n / 5 + 1)), Nat.choose (2 * (5 * k + 1) + 1) (2 * s + 1) * 2 ^ (3 * s)) * 2 ^ (3 * (n / 5) * 5) [MOD 5] := by
+                        apply Nat.ModEq.sum
+                        · intro k
+                          simp only [Finset.mem_range, Nat.reduceAdd, and_imp]
+                          intro hk1 hk2
+                          have t1 :

@@ -1,0 +1,77 @@
+-- We have $a>0$, $b>0$, $a\neq b$ and each differ from their reciprocals by 1.
+  -- We need to find $a+b$.
+
+  -- First, notice that $a - 1/a = \pm 1$ means $a^2 - 1 = \pm a$.
+  have ha : a^2 - 1 = a ∨ a^2 - 1 = -a := by
+    cases' abs_cases (a - 1 / a) with h h <;> [skip; right; left] <;>
+    field_simp at h ⊢ <;> linarith
+  have hb : b^2 - 1 = b ∨ b^2 - 1 = -b := by
+    cases' abs_cases (b - 1 / b) with h h <;> [skip; right; left] <;>
+    field_simp at h ⊢ <;> linarith
+
+  -- So, $a^2 - a - 1 = 0$ or $a^2 + a - 1 = 0$.
+  have ha' : a^2 - a - 1 = 0 ∨ a^2 + a - 1 = 0 := by
+    cases' ha with ha ha <;> [skip; right; left] <;> linarith
+  have hb' : b^2 - b - 1 = 0 ∨ b^2 + b - 1 = 0 := by
+    cases' hb with hb hb <;> [skip; right; left] <;> linarith
+
+  -- The equation $x^2 - x - 1 = 0$ has two distinct positive roots.
+  -- The equation $x^2 + x - 1 = 0$ has no positive roots.
+  have h1 : ∀ x : ℝ, x^2 - x - 1 = 0 ∨ x^2 + x - 1 = 0 → 0 < x → (x = (1 + Real.sqrt 5) / 2 ∨ x = (1 - Real.sqrt 5) / 2) := by
+    intro x ⟨h, h'⟩ hx
+    have : x^2 = x + 1 := by linarith
+    have : 0 < x + 1 := by linarith
+    have : x = Real.sqrt (x + 1) := by
+      rw [← this]
+      field_simp
+    rw [this]
+    have : x + 1 = (1 + Real.sqrt 5) * (1 + Real.sqrt 5) / 2 := by
+      rw [Real.sq_sqrt (by linarith), ← this]
+      linarith
+    rw [this]
+    field_simp
+    ring_nf
+    have : Real.sqrt 5 ^ 3 = Real.sqrt 5 * 5 := by
+      rw [show 3 = 2 + 1 by linarith, pow_add, Real.sq_sqrt (by norm_num)]
+      ring
+    rw [this]
+    have : Real.sqrt 5 ^ 4 = Real.sqrt 5 * 25 := by
+      rw [show 4 = 2 + 2 by linarith, pow_add, Real.sq_sqrt (by norm_num)]
+      ring
+    rw [this]
+    ring_nf
+    tauto
+  have h1' : ∀ x : ℝ, x^2 - x - 1 = 0 → 0 < x → x = (1 + Real.sqrt 5) / 2 := by
+    intro x hx hx'
+    specialize h1 x (Or.inl hx) hx'
+    cases' h1 with h1 h1 <;> [skip; linarith]
+  have h2 : ∀ x : ℝ, x^2 + x - 1 = 0 → 0 < x → False := by
+    intro x hx hx'
+    have : x^2 = -x + 1 := by linarith
+    have : 0 > x := by linarith
+    linarith
+
+  -- Therefore, $a$ and $b$ are the distinct roots $(1+\sqrt{5})/2$ and $(1-\sqrt{5})/2$.
+  have ha'' : (a = (1 + Real.sqrt 5) / 2 ∧ 0 < a) ∨ (a = (1 - Real.sqrt 5) / 2 ∧ 0 < a) := by
+    cases' ha' with ha' ha' <;> [skip; linarith]
+  have hb'' : (b = (1 + Real.sqrt 5) / 2 ∧ 0 < b) ∨ (b = (1 - Real.sqrt 5) / 2 ∧ 0 < b) := by
+    cases' hb' with hb' hb' <;> [skip; linarith]
+
+    -- As a check, we can substitute these values into the original equations.
+    -- If $a = (1+\sqrt{5})/2$ and $b = (1-\sqrt{5})/2$, then $a-b = \sqrt{5}$.
+    -- Also, $\sqrt{5} = \sqrt{(\sqrt{5})^2} = \sqrt{5/4 \cdot 4} = \sqrt{((1+\sqrt{5})/2)^2 - 1} = \sqrt{a^2-1}$
+    -- and similarly $\sqrt{5} = \sqrt{b^2-1}$.
+    -- So, $a-b = \sqrt{a^2-1} = \sqrt{b^2-1}$.
+    -- We can also check that $a > 0$, $b > 0$, and $a \neq b$.
+
+    -- Now, we show that it is not possible that $a = (1-\sqrt{5})/2$ or $b = (1-\sqrt{5})/2$.
+  cases' ha'' with ha'' ha'' <;> [skip; linarith]
+  cases' hb'' with hb'' hb'' <;> [skip; linarith]
+  -- If $a = (1+\sqrt{5})/2$ and $b = (1+\sqrt{5})/2$, then $a = b$, contradicting $a \neq b$.
+  case h1
+  case h1
+  -- If $a = (1+\sqrt{5})/2$ and $b = (1-\sqrt{5})/2$, then $a+b = \sqrt{5}$.
+  case h1
+  field_simp
+  linarith
+```

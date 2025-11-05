@@ -1,0 +1,80 @@
+-- Let $a$ and $b$ be real numbers.
+
+  -- We need to show that $\frac{|a+b|}{1+|a+b|} \leq
+  -- \frac{|a|}{1+|a|}+\frac{|b|}{1+|b|}$.
+
+  -- By the triangle inequality, $|a + b| \leq |a| + |b|$. Since the function $f(x) = \frac{x}{1+x}$ is
+  -- increasing for $x \geq 0$, we have $\frac{|a+b|}{1+|a+b|} \leq
+  -- \frac{|a|+|b|}{1+|a|+|b|}$. Therefore, we need to show that $\frac{|a|+|b|}{1+|a|+|b|} \leq
+  -- \frac{|a|}{1+|a|}+\frac{|b|}{1+|b|}$.
+
+  have h : abs (a + b) / (1 + abs (a + b)) ≤ (abs a + abs b) / (1 + abs a + abs b) := by
+
+    -- We use the fact that $|a + b| \leq |a| + |b|$ and the function $f(x) = \frac{x}{1+x}$ is increasing for $x \geq 0$.
+
+    have h1 : abs (a + b) ≤ abs a + abs b := abs_add a b
+
+    have h2 : 1 + abs (a + b) ≤ 1 + abs a + abs b := by
+      rw [show 1 + abs a + abs b = 1 + (abs a + abs b) by ring]
+      apply add_le_add
+      norm_num
+      exact h1
+
+    have h3 : abs (a + b) / (1 + abs (a + b)) ≤ (abs a + abs b) / (1 + abs a + abs b) := by
+      apply (div_le_div_iff (by positivity) (by positivity)).mpr
+      rw [show (1 + abs a + abs b) * abs (a + b) = (abs a + abs b) * (1 + abs (a + b)) by ring]
+      apply mul_le_mul
+      exact h1
+      apply add_nonneg
+      apply add_nonneg
+      norm_num
+      all_goals exact abs_nonneg _
+
+    exact h3
+
+  -- Now, we need to show that $\frac{|a|+|b|}{1+|a|+|b|} \leq
+  -- \frac{|a|}{1+|a|}+\frac{|b|}{1+|b|}$.
+
+  have h4 : (abs a + abs b) / (1 + abs a + abs b) ≤ abs a / (1 + abs a) + abs b / (1 + abs b) := by
+
+    -- Let $x = |a|$ and $y = |b|$. Then, we need to show that $\frac{x+y}{1+x+y} \leq \frac{x}{1+x}+\frac{y}{1+y}$.
+
+    -- We can write $\frac{x+y}{1+x+y} \leq \frac{x}{1+x}+\frac{y}{1+y}$ as $(x+y)(1+x)(1+y) \leq
+    -- (x+y)(1+x+y) + y(1+x) + x(1+y)$.
+
+    -- This simplifies to $xy \leq 0$.
+
+    have h5 : 1 + abs a > 0 := by
+      apply add_pos
+      norm_num
+      apply abs_nonneg
+
+    have h6 : 1 + abs b > 0 := by
+      apply add_pos
+      norm_num
+      apply abs_nonneg
+
+    have h7 : 1 + abs a + abs b > 0 := by
+      apply add_pos
+      apply add_pos
+      norm_num
+      all_goals exact abs_nonneg _
+
+    have h8 : (abs a + abs b) / (1 + abs a + abs b) ≤ abs a / (1 + abs a) + abs b / (1 + abs b) := by
+      rw [div_le_div_iff (by positivity) (by positivity), div_le_div_iff (by positivity) (by positivity)]
+      -- We need to show that $(|a| + |b|) * (1 + |a|) * (1 + |b|) \leq |a| * (1 + |a|) * (1 + |b|) + |b| * (1 + |a|) * (1 + |b|)$.
+      ring_nf
+      rw [show |a| * |b| * 2 = 2 * |a| * |b| by ring]
+      -- This is equivalent to $|a| * |b| \leq 0$.
+      suffices |a| * |b| ≤ 0 by linarith
+      -- However, $|a| \geq 0$ and $|b| \geq 0$, so their product is non-negative.
+      apply mul_nonpos_of_nonneg_of_nonpos
+      apply abs_nonneg
+      apply abs_nonpos_of_nonpos
+      linarith
+
+    exact h8
+
+  linarith
+
+```

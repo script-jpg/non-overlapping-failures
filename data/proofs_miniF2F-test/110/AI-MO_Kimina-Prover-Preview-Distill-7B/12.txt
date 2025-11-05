@@ -1,0 +1,81 @@
+obtain ⟨ha, hb⟩ := h₀
+
+  -- The arithmetic mean of $a$ and $b$ is greater than or equal to their geometric mean.
+  have meange : (a + b) / 2 - Real.sqrt (a * b) ≥ 0 := by
+    rw [sub_nonneg]
+    apply (le_div_iff₀ (by positivity)).mpr
+    convert_to (-(Real.sqrt (a * b)) + (a + b) / 2) ^ 2 ≥ 0
+    · ring
+    · rw [Real.sq_sqrt]
+      ring
+      linarith
+    · linarith
+
+  -- The right hand side of the inequality is positive.
+  have rhspos : (a - b) ^ 2 / (8 * b) > 0 := by
+    apply div_pos
+    · apply pow_two_pos_of_ne_zero
+      linarith
+    · positivity
+
+  -- It suffices to show that $\frac{(a-b)^2}{8b}(\frac{(a-b)^2}{8b} + 2\sqrt{ab}) \leq (\frac{a+b}{2} - \sqrt{ab})^2$.
+  suffices (a - b) ^ 2 / (8 * b) * ((a - b) ^ 2 / (8 * b) + 2 * Real.sqrt (a * b)) ≤ ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 by
+    rw [mul_nonneg_iff_of_pos_right rhspos] at this
+    exact this
+
+  -- This inequality is equivalent to $(a - b)^4 \leq 8b((a - b)^2 + 8\sqrt{ab})(\frac{a+b}{2} - \sqrt{ab})^2$.
+  suffices (a - b) ^ 4 ≤ 8 * b * ((a - b) ^ 2 + 8 * Real.sqrt (a * b)) * ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 by
+    rw [le_div_iff₀ (by positivity)] at this
+    ring_nf at this
+    rw [mul_assoc, mul_comm, mul_assoc, ← mul_add, mul_assoc, mul_assoc, mul_comm, ← mul_assoc, ← mul_assoc] at this
+    apply pow_le_iff_le_sqrtsqrt (by positivity) (by positivity) |>.mpr at this
+    rw [← mul_assoc, ← mul_assoc, ← mul_assoc, div_mul_cancel₀ _ (by positivity)] at this
+    nlinarith [this]
+
+  -- This inequality is equivalent to $(a - b)^4 - 8b((a - b)^2 + 8\sqrt{ab})(\frac{a+b}{2} - \sqrt{ab})^2 \leq 0$.
+  suffices (a - b) ^ 4 - 8 * b * ((a - b) ^ 2 + 8 * Real.sqrt (a * b)) * ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 ≤ 0 by
+    linarith
+
+  -- We prove that $(a - b)^4 - 8b((a - b)^2 + 8\sqrt{ab})(\frac{a+b}{2} - \sqrt{ab})^2 = (a - b)^4 - 8b(a - b)^2(\frac{a+b}{2} - \sqrt{ab})^2 + 8b \cdot 8\sqrt{ab}(\frac{a+b}{2} - \sqrt{ab})^2 \leq 0$.
+  have eq : (a - b) ^ 4 - 8 * b * ((a - b) ^ 2 + 8 * Real.sqrt (a * b)) * ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 = (a - b) ^ 4 - 8 * b * (a - b) ^ 2 * ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 + 8 * b * 8 * Real.sqrt (a * b) * ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 := by
+    ring
+
+  -- The first part of this expression is less than or equal to $0$ due to the AM-GM inequality.
+  have : (a - b) ^ 4 - 8 * b * (a - b) ^ 2 * ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 ≤ 0 := by
+    have : (a - b) ^ 4 = (a - b) ^ 2 * (a - b) ^ 2 := by
+      ring
+    rw [this]
+    apply mul_nonpos_of_nonneg_of_nonpos
+    · apply pow_two_nonneg
+    · -- This inequality is equivalent to $(a - b)^2 \leq 4b(\frac{a+b}{2} - \sqrt{ab})^2$.
+      suffices (a - b) ^ 2 ≤ 4 * b * ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 by
+        linarith
+      -- This inequality is equivalent to $0 \leq 4(\frac{a+b}{2} - \sqrt{ab})^2 - (a - b)^2$.
+      suffices 0 ≤ 4 * ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 - (a - b) ^ 2 by
+        linarith
+      -- This inequality is equivalent to $0 \leq (2(\frac{a+b}{2} - \sqrt{ab}) - (a - b))(2(\frac{a+b}{2} - \sqrt{ab}) + (a - b))$.
+      suffices 0 ≤ (2 * ((a + b) / 2 - Real.sqrt (a * b)) - (a - b)) * (2 * ((a + b) / 2 - Real.sqrt (a * b)) + (a - b)) by
+        ring_nf at this ⊢
+        exact this
+      -- This inequality is equivalent to $0 \leq (a - b - 2\sqrt{ab} + a + b)(-2\sqrt{ab} + a + b + a - b)$, which further simplifies to $0 \leq (2a - 2\sqrt{ab})(2a - 2\sqrt{ab})$.
+      rw [show 2 * ((a + b) / 2 - Real.sqrt (a * b)) - (a - b) = a - b - 2 * Real.sqrt (a * b) + (a + b) - (a - b) by ring, show 2 * ((a + b) / 2 - Real.sqrt (a * b)) + (a - b) = - (a - b) + 2 * (a + b) - 2 * Real.sqrt (a * b) + (a - b) by ring] at this
+      rw [show a - b - 2 * Real.sqrt (a * b) + (a + b) - (a - b) = 2 * a - 2 * Real.sqrt (a * b) by ring] at this
+      rw [show - (a - b) + 2 * (a + b) - 2 * Real.sqrt (a * b) + (a - b) = 2 * a - 2 * Real.sqrt (a * b) by ring] at this
+      rw [mul_comm, ← sq] at this
+      apply sq_nonneg
+      linarith
+
+  -- The second part of this expression is less than or equal to $0$ due to the AM-GM inequality.
+  have : 8 * b * 8 * Real.sqrt (a * b) * ((a + b) / 2 - Real.sqrt (a * b)) ^ 2 ≤ 0 := by
+    apply mul_nonpos_of_nonneg_of_nonpos
+    · apply mul_nonneg
+      · apply mul_nonneg
+        · norm_num
+        · apply Real.sqrt_nonneg
+      · linarith
+    · -- This inequality is equivalent to $0 \leq ((a + b) / 2 - Real.sqrt (a * b)) ^ 2$, which is true because squares are always nonnegative.
+      apply pow_two_nonneg
+
+  -- The sum of these two parts is less than or equal to $0$, so the original expression is less than or equal to $0$.
+  linarith
+```

@@ -1,0 +1,314 @@
+-- Prove that for any number a, if sum of all numbers k such that k satisfy floor(k) * (k - floor(k)) = a * k^2 is 420,
+  -- then a = 14/11 so that p + q = 929.
+  have D : S.Nonempty := by
+    by_contra! D
+    rw [Finset.eq_empty_iff_forall_not_mem] at D
+    specialize h₀ 420
+    norm_num at h₀
+    specialize h₀ 421
+    norm_num at h₀
+    tauto
+  -- Prove that 0 ≤ a < 1 and a ≠ 0.
+  have ⟨ha₀, ha₁⟩ : 0 ≤ a ∧ a < 1 ∧ a ≠ 0 := by
+    obtain ⟨A, hA⟩ := Finset.exists_subset_univ_nonempty S D
+    simp only [top_eq_univ, Finset.univ_nonempty, true_and] at A
+    -- If a < 0, we get that the sum of the roots is negative, contradiction.
+    have h₂ : ¬a < 0 := by
+      by_contra! h₂
+      -- Prove that if a < 0, then all the roots are negative.
+      have h₃ : ∀ x ∈ S, x < 0 := by
+        intro x hx
+        specialize h₀ x
+        rw [hA] at hx
+        rw [hx]
+        rify at h₂
+        rify at hx
+        nlinarith
+      -- This implies that the sum of the roots is negative, contradiction.
+      have h₄ : ∑ i ∈ S, i < 0 := by
+        calc
+          _ = ∑ i ∈ S, i * 1 := by simp
+          _ = ∑ i ∈ S, i * (1 : ℝ) := by simp
+          _ < ∑ i ∈ S, i * 0 := by
+            -- Use the fact that `∑ i ∈ S, i * (1 : ℝ) < ∑ i ∈ S, i * (0 : ℝ)`, i.e. `∑ i ∈ S, i < 0`.
+            apply Finset.sum_lt_sum
+            · intro i hi
+              exact h₃ i hi
+            · simp
+      linarith
+    have h₃ : 0 ≤ a := by
+      by_contra! h₃
+      -- If a > 1, we get that all the roots are greater than 1.
+      have h₄ : ∀ x ∈ S, 1 < x := by
+        intro x hx
+        specialize h₀ x
+        rw [hA] at hx
+        rw [hx]
+        linarith
+      -- This implies that the sum of the roots is greater than the number of roots, contradiction.
+      have h₅ : S.card < ∑ i ∈ S, (1 : ℝ) := by
+        calc
+          _ < ∑ x ∈ S, x := by
+            apply Finset.sum_lt_sum
+            · simp
+            · intro i hi
+              exact h₄ i hi
+          _ = ∑ x ∈ S, (1 : ℝ) := by
+            rw [Finset.sum_const]
+            simp
+            rfl
+      linarith
+    -- If 1/2 ≤ a < 1, we get that all the roots are greater than 1.
+    have h₄ : ∀ x ∈ S, 1 < x := by
+      intro x hx
+      specialize h₀ x
+      rw [hA] at hx
+      rcases hx with hx | hx <;> linarith
+    -- This implies that the sum of the roots is greater than the number of roots, contradiction.
+    have h₅ : S.card < ∑ i ∈ S, (1 : ℝ) := by
+      calc
+        _ < ∑ x ∈ S, x := by
+          apply Finset.sum_lt_sum
+          · simp
+          · intro i hi
+            exact h₄ i hi
+        _ = ∑ x ∈ S, (1 : ℝ) := by
+          rw [Finset.sum_const]
+          simp
+          rfl
+    linarith
+  -- Prove that 1 ≤ a, contradiction.
+  have h₂ : 1 ≤ a := by
+    by_contra! h₂
+    -- If a < 1, we get that all the roots are less than 1.
+    have h₃ : ∀ x ∈ S, x < 1 := by
+      intro x hx
+      specialize h₀ x
+      rw [hA] at hx
+      rcases hx with hx | hx <;> linarith
+    -- This implies that the sum of the roots is less than the number of roots, contradiction.
+    have h₄ : ∑ i ∈ S, i < S.card := by
+      calc
+        _ = ∑ x ∈ S, x * (1 : ℝ) := by simp
+        _ = ∑ x ∈ S, (1 : ℝ) * x := by simp
+        _ < ∑ x ∈ S, (1 : ℝ) * (1 : ℝ) := by
+          apply Finset.sum_lt_sum
+          · intro i hi
+            exact h₃ i hi
+          · simp
+        _ = ∑ x ∈ S, (1 : ℝ) := by
+          rw [Finset.mul_sum]
+          simp
+    linarith
+  -- Prove that 1/2 ≤ a, contradiction.
+  have h₃ : 1 / 2 ≤ a := by
+    by_contra! h₃
+    -- If a < 1/2, we get that all the roots are less than 1.
+    have h₄ : ∀ x ∈ S, x < 1 := by
+      intro x hx
+      specialize h₀ x
+      rcases hx with hx | hx <;> linarith
+    -- This implies that the sum of the roots is less than the number of roots, contradiction.
+    have h₅ : ∑ i ∈ S, i < S.card := by
+      calc
+        _ = ∑ x ∈ S, x * (1 : ℝ) := by simp
+        _ = ∑ x ∈ S, (1 : ℝ) * x := by simp
+        _ < ∑ x ∈ S, (1 : ℝ) * (1 : ℝ) := by
+          apply Finset.sum_lt_sum
+          · intro i hi
+            exact h₄ i hi
+          · simp
+        _ = ∑ x ∈ S, (1 : ℝ) := by
+          rw [Finset.mul_sum]
+          simp
+    linarith
+  -- Prove that if 1/2 ≤ a < 1, then all the roots are greater than 1.
+  have h₄ : ∀ x ∈ S, 1 < x := by
+    intro x hx
+    specialize h₀ x
+    rcases hx with hx | hx <;> linarith
+  -- This implies that the sum of the roots is greater than the number of roots, contradiction.
+  have h₅ : S.card < ∑ i ∈ S, (1 : ℝ) := by
+    calc
+      _ < ∑ x ∈ S, x := by
+        apply Finset.sum_lt_sum
+        · simp
+        · intro i hi
+          exact h₄ i hi
+      _ = ∑ x ∈ S, (1 : ℝ) := by
+        rw [Finset.sum_const]
+        simp
+        rfl
+  -- then all the roots are less than 1.
+  have h₆ : ∀ x ∈ S, x < 1 := by
+    intro x hx
+    specialize h₀ x
+    rcases hx with hx | hx <;> linarith
+  -- This implies that the sum of the roots is less than the number of roots, contradiction.
+  have h₇ : ∑ i ∈ S, i < S.card := by
+    calc
+      _ = ∑ x ∈ S, x * (1 : ℝ) := by simp
+      _ = ∑ x ∈ S, (1 : ℝ) * x := by simp
+      _ < ∑ x ∈ S, (1 : ℝ) * (1 : ℝ) := by
+        apply Finset.sum_lt_sum
+        · intro i hi
+          exact h₆ i hi
+        · simp
+      _ = ∑ x ∈ S, (1 : ℝ) := by
+        rw [Finset.mul_sum]
+        simp
+  -- We get that the sum of the roots is equal to 420, which is a contradiction.
+  linarith
+
+  -- Simplify the equation.
+  replace h₀ : ∀ x : ℝ, x ∈ S ↔ (x - ⌊x⌋) * (⌊x⌋ - 1) * (⌊x⌋ - 2) = 0 := by
+    intro x
+    specialize h₀ x
+    rw [hA] at h₀
+    have h₁ : x - ⌊x⌋ ≥ 0 := by
+      suffices ⌊x⌋ ≤ x by exact.sub_nonneg.mpr this
+      exact Int.floor_le x
+    rcases h₀ with h₀ | h₀
+    · rify at h₀
+      rify
+      suffices (⌊x⌋ : ℝ) * (x - ↑⌊x⌋) = 0 by
+        tauto
+      rw [←h₀]
+      ring
+    · have : (x - ↑⌊x⌋) * (⌊x⌋ - 1) * (⌊x⌋ - 2) = 0 := by
+        rw [h₀]
+        linarith
+      tauto
+
+  -- Determine the range of x for each integer part.
+  replace h₁ : ∀ n : ℤ, n ≤ x ∧ x < n + 1 → (x - n) * (n - 1) * (n - 2) = 0 := by
+    intro n hn
+    have hn := Int.le_floor.mpr hn.left
+    have hn' := Int.lt_floor_add_one.mpr hn.right
+    rw [show ⌊x⌋ = n by exact Int.floor_eq_iff.mpr ⟨hn, hn'⟩] at h₀
+    tauto
+
+  -- Break down the sum of x into sums over each interval.
+  have h₂ : ∑ i ∈ S, i = ∑ n : ℤ, ∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2) := by
+    calc
+      _ = ∑ n : ℤ, ∑ x ∈ {x : ℝ | (x - n) * (n - 1) * (n - 2) = 0}, x := by
+        -- Expand the sum.
+        rw [Finset.sum]
+        simp
+        tauto
+      _ = ∑ n : ℤ, ∑ x ∈ {x : ℝ | n ≤ x ∧ x < n + 1}, x := by
+        -- Simplify the expression using a lemma.
+        congr
+        ext n
+        rw [show {x : ℝ | (x - n) * (n - 1) * (n - 2) = 0} = {x : ℝ | n ≤ x ∧ x < n + 1} by ext x; simp; tauto]
+      _ = ∑ n : ℤ, ∑ x ∈ Ico n (n + 1), x := by
+        -- Replace the set with an interval.
+        simp
+      _ = _ := by
+        -- This is a technical lemma for summing over intervals.
+        rw [Finset.sum_eq_sum_Ico, Finset.sum_eq_sum_Ico]
+        congr 1
+        funext n
+        rw [Finset.sum_eq_sum_Ico, Finset.sum_eq_sum_Ico]
+        simp
+
+  -- Extract the terms corresponding to n = 0, 1, 2.
+  have h₃ : (∑ n : ℤ, ∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2)) = (∑ n : {-1, 0, 1}, ∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2)) + (∑ n : ℤ \ {-1, 0, 1}, ∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2)) := by
+    -- Use a lemma to split the sum.
+    rw [Finset.sum_eq_sum_sdiff_add_sum_diff]
+    · have : {n : ℤ | n ∈ S ∧ (n - 1) ≠ 0 ∧ (n - 2) ≠ 0} = S \ {-1, 0, 1} := by
+        ext n
+        simp
+        constructor
+        · intro ⟨hn₁, hn₂, hn₃⟩
+          exact ⟨hn₁, by omega, by omega⟩
+        · intro ⟨hn₁, hn₂, hn₃⟩
+          refine ⟨hn₁,?_,?_⟩
+          · omega
+          · omega
+      rw [this]
+      clear this
+      omega
+    · omega
+
+  -- Substitute the values for n = 0, 1, 2.
+  have h₄ : (∑ n : {-1, 0, 1}, ∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2)) = 420 := by
+    calc
+      _ = ∑ n ∈ {-1, 0, 1}, ∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2) := by
+        -- Expand the sum.
+        rw [Finset.sum]
+        simp
+        tauto
+      _ = ∑ x ∈ S, x * (x - (-1)) * (-1 - 1) * (-1 - 2) + ∑ x ∈ S, x * (x - 0) * (0 - 1) * (0 - 2) + ∑ x ∈ S, x * (x - 1) * (1 - 1) * (1 - 2) := by
+        -- Simplify the expression.
+        simp
+        rw [Finset.sum_add_distrib]
+        simp
+        norm_num
+      _ = _ := by
+        -- Evaluate each sum.
+        rw [Finset.sum_const, Finset.sum_const, Finset.sum_const]
+        · simp
+          rw [hA] at h₁
+          linarith
+        · simp
+          rw [Finset.card_eq_one] at h₁
+          linarith
+        · simp
+          rw [Finset.card_eq_one] at h₁
+          linarith
+
+  have h₅ : (∑ n : ℤ \ {-1, 0, 1}, ∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2)) = 0 := by
+    -- This is a technical lemma.
+    simp
+    rw [Finset.sum_eq_sum_sdiff_add_sum_diff]
+    · omega
+    · rw [Finset.sum_eq_zero_iff]
+      -- Extract the value of n with the maximum absolute value.
+      rw [show ∀ n : ℤ \ {-1, 0, 1}, (∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2)) = 0 by
+        intro n hn
+        by_contra! h₅
+        -- Prove that the sum over the remaining terms is positive.
+        have h₆ : ∑ x ∈ S \ {n}, x * (x - n) * (n - 1) * (n - 2) > 0 := by
+          calc
+            _ = ∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2) - ↑n * (n - 1) * (n - 2) := by
+              rw [Finset.sum_eq_sum_sdiff_add_sum_diff]
+              omega
+              rfl
+            _ > 0 := by
+              linarith
+        -- Prove that the sum over the remaining terms is at most 0.
+        have h₇ : ∑ x ∈ S \ {n}, x * (x - n) * (n - 1) * (n - 2) ≤ 0 := by
+          apply Finset.sum_nonpos
+          simp
+          intro x hx
+          rw [h₀]
+          exact Int.lt_floor_add_one.mpr hx
+        linarith
+      -- It suffices to consider the case where only one term is non-zero.
+      suffices ∀ n : ℤ \ {-1, 0, 1}, (∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2)) = 0 by
+        simp [this]
+      intro n hn
+      -- Prove that the sum over the remaining terms is positive.
+      have h₆ : ∑ x ∈ S \ {n}, x * (x - n) * (n - 1) * (n - 2) > 0 := by
+        calc
+          _ = ∑ x ∈ S, x * (x - n) * (n - 1) * (n - 2) - ↑n * (n - 1) * (n - 2) := by
+            rw [Finset.sum_eq_sum_sdiff_add_sum_diff]
+            omega
+            rfl
+          _ > 0 := by
+            linarith
+      -- Prove that the sum over the remaining terms is at most 0.
+      have h₇ : ∑ x ∈ S \ {n}, x * (x - n) * (n - 1) * (n - 2) ≤ 0 := by
+        apply Finset.sum_nonpos
+        simp
+        intro x hx
+        rw [h₀]
+        exact Int.lt_floor_add_one.mpr hx
+      -- Let m be the minimum of the non-zero terms.
+      let m := min_of_eq_zero' (S \ {n}) (fun x ↦ x * (x - n) * (n - 1) * (n - 2)) _
+      have h₈ : m > 0 := by
+        apply min_of_eq_zero'.mp at h₇
+        simp at h₇
+        exact h₇
+      have h₉ : (∑ x ∈ S \ {n}, x * (x - n) * (n - 1) * (n - 2)) > 0 := by

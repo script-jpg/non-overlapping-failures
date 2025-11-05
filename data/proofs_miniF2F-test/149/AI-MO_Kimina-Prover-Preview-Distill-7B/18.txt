@@ -1,0 +1,68 @@
+-- prepare some facts for later use
+  have one_le_n : 1 ≤ n := by
+    by_cases hn : n = 0
+    · rw [hn] at *; norm_num at *
+    · have : 1 ≤ n := by exact Nat.one_le_iff_ne_zero.mpr hn
+      exact this
+
+  have nge1 : (1 : ℝ) ≤ (n : ℝ) := by
+    exact one_le_n
+
+  have ngt1 : (1 : ℝ) < (n : ℝ) := by
+    exact Nat.one_lt_iff_ne_zero.mpr hn
+
+  have iden : (1 : ℝ) = 1 := by norm_num
+
+  -- Step 1: prove an auxillary lemma that relates to the inequality
+  --  $(1+x)^{1/x} < e^x$ for all $x > 0$. This is from the standard analysis
+  --  matter, where one typically proves this by taking the logarithm and then using
+  --  Taylor's theorem.
+  have aux_ineq : ∀ x > 0, (1 + x) ^ (1 / x) < Real.exp x := by
+    intro x xpos
+    rw [Real.exp_lt_iff_lt, Real.log_lt_iff_lt, one_div, Real.log_rpow]
+    · exact (mul_lt_mul_left (xpos)).mpr (Real.log_le_sub_one_of_pos xpos)
+    · exact Real.exp_pos x
+    · exact (mul_lt_mul_left (xpos)).mpr (Real.log_le_sub_one_of_pos xpos)
+    all_goals exact add_pos (by norm_num) xpos
+
+  -- Step 2: use the above inequality to prove that
+  --  $(1+1/n)^{1/(1+1/n)} < e^{1/n}$
+  have h1 : ((1 : ℝ) + 1 / n) ^ ((1 : ℝ) / (1 + 1 / n)) < Real.exp (1 / n) := by
+    apply aux_ineq
+    apply add_pos (by norm_num) (one_div_pos.mpr one_lt_n)
+
+  -- Step 3: prove that $e^{1/n} < 2 - 1/n$ by using Taylor's theorem
+  have h2 : Real.exp (1 / n) < 2 - 1 / n := by
+    have : Real.exp (1 / n) ≤ 1 + (1 / n) + (1 / n) ^ 2 := by
+      have : (1 / n) ^ 3 ≥ 0 := by apply pow_nonneg; apply one_div_nonneg.mpr; exact hn
+      calc
+        Real.exp (1 / n) = 1 + (1 / n) + (1 / n) ^ 2 + (1 / n) ^ 3 * Real.exp (c)
+          := by [Real.exp_eq_sum, mul_add, add_assoc, <-add_assoc, <-add_assoc] ; simp ; apply exists_eq_add_of_sub_eq ; exact one_div_nonneg.mpr hn
+        _ ≤ 1 + (1 / n) + (1 / n) ^ 2 + (1 / n) ^ 3 := by linarith
+        _ ≤ 1 + (1 / n) + (1 / n) ^ 2 + (1 / n) ^ 2 := by
+          apply add_le_add_left
+          apply mul_le_mul_of_nonneg_left
+          · exact one_div_le_one_div_of_le (by norm_num) (one_div_pos.mpr one_lt_n)
+          · exact pow_le_pow_right₀ (by norm_num) (one_div_nonneg.mpr hn) 2
+        _ < 1 + (1 / n) + (1 / n) ^ 2 + (1 / n) ^ 2 + (1 / n) ^ 2 := by
+          apply add_lt_add_right
+          apply pow_lt_pow_right₀ (by norm_num) (one_div_pos.mpr one_lt_n) 2
+        _ = 2 - 1 / n := by ring
+
+  -- Step 4: use the above inequalities to prove the desired result
+  calc
+    (n : ℝ) ^ ((1 : ℝ) / n) = (1 + (1 : ℝ) / n) ^ ((1 : ℝ) / (1 + 1 / n)) * ((1 + 1 / n) ^ ((1 : ℝ) / n - 1 / (1 + 1 / n))) := by
+      rw [mul_rpow, Real.rpow_sub]
+      · ring
+      · apply add_pos (by norm_num) (one_div_pos.mpr one_lt_n)
+      · apply one_div_nonneg.mpr; exact hn
+      · apply add_pos (by norm_num) (one_div_pos.mpr one_lt_n)
+    _ < Real.exp (1 / n) * ((1 + 1 / n) ^ ((1 : ℝ) / n - 1 / (1 + 1 / n))) := by
+      apply mul_lt_mul_of_pos_right h1
+      apply Real.exp_pos
+    _ < 2 - 1 / n := by
+      apply mul_lt_mul_of_pos_left h2
+      apply one_lt_rpow (by apply add_pos (by norm_num) (one_div_pos.mpr one_lt_n)) (by norm_num)
+
+
+```

@@ -1,0 +1,276 @@
+-- All the elements of S can be written in the form $n + \frac{p}{q}$, with $n$ an integer and $0 \le \frac{p}{q} < 1$.
+  have h₂ : ∀ x ∈ S, ∃ n : ℤ, 0 ≤ (x - n) ∧ (x - n) < 1 ∧ (n : ℝ) * (x - n) = a * x ^ 2 := by
+    intro x hx
+    specialize h₀ x
+    rw [hx] at h₀
+    set n := ↑⌊x⌋
+    have hn : (n : ℝ) = ↑⌊x⌋ := by
+      exact rfl
+    have hn' : n ≤ x := by
+      exact Int.floor_le x
+    have hn'' : x < n + 1 := by
+      exact Int.lt_floor_add_one x
+    use n
+    refine ⟨?_,?_,?_⟩
+    · calc
+        0 ≤ x - n := by exact sub_nonneg.mpr hn'
+        _ ≤ x := by exact sub_le_self x
+    · calc
+        x - n < 1 := by exact sub_lt_one.mpr hn''
+        _ < x := by exact sub_pos.mpr hn''
+    · rw [hn]
+      exact h₀
+  -- Let $u$ be the number of elements of S.
+  set u := S.card
+  have hu : u = S.card := by
+    exact rfl
+  rw [← hu] at h₁
+  -- Let $B$ be the sum of the integers $n$ in the representation $n + \frac{p}{q}$ of the elements of S.
+  let B := ∑ x ∈ S, (x - (x - ⌊x⌋))
+  -- Let $C$ be the sum of the fractions $\frac{p}{q}$ in the representation $n + \frac{p}{q}$ of the elements of S.
+  let C := ∑ x ∈ S, (x - ⌊x⌋)
+  -- We have $B + C = 420$.
+  have h₃ : B + C = 420 := by
+    rw [← h₁]
+    congr
+  -- We can rewrite our equation as $n \cdot (x - n) = \frac{p}{q} \cdot x^2$.
+  have h₄ : ∀ x ∈ S, (x - ↑⌊x⌋) = a * x ^ 2 / ↑⌊x⌋ := by
+    intro x hx
+    specialize h₀ x
+    rw [hx] at h₀
+    set n := ↑⌊x⌋
+    have hn : (n : ℝ) = ↑⌊x⌋ := by
+      exact rfl
+    rw [← hn]
+    refine eq_div_of_mul_eq?_ (by exact Ne.symm (NeZero.ne' (n * (x - n))))]
+    exact h₀
+  -- We have $B = \sum_{x \in S} (x - \lfloor x \rfloor) = C$.
+  have h₅ : B = C := by
+    dsimp [B, C]
+    apply Finset.sum_congr
+    · intro x hx
+      rw [h₄ x hx]
+      exact rfl
+    · exact h₂ _ hx
+  rw [h₅] at h₃
+  -- This means that $B = C = 210$.
+  have h₆ : B = 210 := by
+    linarith only [h₃]
+  have h₇ : C = 210 := by
+    linarith only [h₃]
+  -- The sum of the elements of S is $B + C = 420$.
+  have h₈ : ∑ x ∈ S, x = 420 := by
+    rw [← h₁]
+  -- Then, the sum of the fractions $\frac{p}{q}$ in the representation $n + \frac{p}{q}$ of the elements of S is $C = 210$.
+  have h₉ : ∑ x ∈ S, (x - ↑⌊x⌋) = 210 := by
+    exact h₇
+  -- The sum of the integers $n$ in the representation $n + \frac{p}{q}$ of the elements of S is $B = 210$.
+  have h₁₀ : ∑ x ∈ S, ↑⌊x⌋ = 210 := by
+    exact h₆
+  -- Let $w$ be the number of distinct integers $n$ in the representation $n + \frac{p}{q}$ of the elements of S.
+  let w := S.card
+  have hw : w = S.card := by
+    exact rfl
+  rw [← hw] at h₁₀
+  -- Let $V$ be the sum of the distinct integers $n$ in the representation $n + \frac{p}{q}$ of the elements of S.
+  let V := ∑ x ∈ S, ↑⌊x⌋
+  -- We have $V = 210$.
+  have h₁₁ : V = 210 := by
+    exact h₁₀
+  -- The number $q$ is a divisor of $C = 210$.
+  have h₁₂ : q ∣ C := by
+    apply Nat.dvd_of_mod_eq_zero
+    have : C % q = 0 := by
+      calc
+        C % q = (∑ x ∈ S, (x - ↑⌊x⌋)) % q := by rw [h₉]
+        _ = 0 := by
+          rw [show (∑ x ∈ S, (x - ↑⌊x⌋)) % q = (∑ x ∈ S, (x - ↑⌊x⌋) % q) % q by exact Nat.mod_sum S (fun x => (x - ↑⌊x⌋))]
+          rw [show (∑ x ∈ S, (x - ↑⌊x⌋) % q) % q = (∑ x ∈ S, (x - ↑⌊x⌋)) % q by exact rfl]
+          rw [h₉]
+          apply Nat.mod_eq_zero_of_dvd
+          simp [C]
+          exact h₁
+    exact this
+  -- We have $q \le 210$.
+  have h₁₃ : q ≤ 210 := by
+    apply Nat.le_of_dvd (by exact Nat.zero_lt_succ 209)
+    exact h₁₂
+  -- We will show that $q = 3$.
+  suffices q = 3 by
+    -- From $B = 210$, we get $p = 210$.
+    have h₁₄ : p = 210 := by
+      rw [show (∑ x ∈ S, ↑⌊x⌋) = (∑ x ∈ S, (x - (x - ↑⌊x⌋))) by exact rfl] at h₁₀
+      rw [show (∑ x ∈ S, (x - ↑⌊x⌋)) = (∑ x ∈ S, (x - ↑⌊x⌋) / q * q) by exact Finset.sum_eq_mul_left]
+      rw [show (∑ x ∈ S, (x - ↑⌊x⌋) / q * q) = (∑ x ∈ S, (x - ↑⌊x⌋) / q) * q by exact Finset.sum_distrib_mul_right] at h₁₀
+      rw [h₉] at h₁₀
+      norm_num at h₁₀
+      rw [h₁₀]
+      simp [V]
+      rfl
+    -- We have $p = 210$ and $q = 3$, so $p + q = 213$.
+    simp [h₁₄]
+    exact qeq.symm (id (Eq.symm this))
+  -- Let $p$ be the number of elements of S.
+  let p := S.card
+  have hp : p = S.card := by
+    exact rfl
+  rw [← hp] at h₆
+  -- We have $p = 210$.
+  have h₁₄ : p = 210 := by
+    exact h₆
+  -- Then, the number $a = \frac{p}{q} = \frac{210}{q}$.
+  have h₁₅ : a = 210 / q := by
+    simp [h₁₄]
+    rw [hp, h₁₂]
+    simp [← h₁₄]
+    exact Rat.divInt_eq_ofNat_div
+  -- We will show that $q = 21$.
+  suffices q = 21 by
+    -- We have $p = 210$ and $q = 21$, so $p + q = 231$.
+    simp [h₁₄]
+    rw [this]
+    norm_num
+    exact Rat.divInt_eq_ofNat_div
+  -- We have $p = 210$, $B = 210$ and $V = 210$, so $w = 210$.
+  have h₁₆ : p = 210 := by
+    exact h₁₄
+  have h₁₇ : w = 210 := by
+    simp [w, h₁₆] at hp
+    rw [hp]
+    exact rfl
+  -- Then, the number $p = 210 = w \cdot p'$, where $p'$ is the number of distinct values of $n$ in the representation $n + \frac{p}{q}$ of the elements of S.
+  have h₁₈ : p = w * p := by
+    apply Nat.eq_mul_of_div_eq
+    exact h₁₇
+    exact h₁₆
+  rw [h₁₆, h₁₇] at h₁₈
+  -- We have $p' = 1$, so $p = 210 = 1 \cdot 210$.
+  have h₁₉ : p = 1 * 210 := by
+    exact h₁₈
+  simp at h₁₉
+  -- So, $q = \frac{210}{p} = \frac{210}{210} = 1$.
+  have h₂₀ : q = 1 := by
+    calc
+      q = 210 / q := by exact h₁₅
+      _ = 1 := by
+        rw [show (210 : ℚ) = (210 : ℕ) by exact rfl]
+        simp [h₁₉]
+  -- But this is not possible, because $q$ is a positive integer.
+  have h₂₁ : q > 0 := by
+    apply Nat.pos_of_dvd_of_pos
+    exact Nat.zero_lt_succ 209
+    exact h₁₂
+  -- We get a contradiction.
+  linarith only [h₂₀, h₂₁]
+
+
+# AMC 12A 2020 Problem 25 - Number theory.
+
+-/
+
+theorem amc12a_2020_p25 (a : ℚ) (S : Finset ℝ)
+    (h₀ : ∀ x : ℝ, x ∈ S ↔ ↑⌊x⌋ * (x - ↑⌊x⌋) = ↑a * x ^ 2) (h₁ : (∑ k in S, k) = 420) :
+    ↑a.den + a.num = 929 := by
+  -- All the elements of S can be written in the form $n + \frac{p}{q}$, with $n$ an integer and $0 \le \frac{p}{q} < 1$.
+  have h₂ : ∀ x ∈ S, ∃ n : ℤ, 0 ≤ (x - n) ∧ (x - n) < 1 ∧ (n : ℝ) * (x - n) = a * x ^ 2 := by
+    intro x hx
+    specialize h₀ x
+    rw [hx] at h₀
+    set n := ↑⌊x⌋
+    have hn : (n : ℝ) = ↑⌊x⌋ := by
+      exact rfl
+    have hn' : n ≤ x := by
+      exact Int.floor_le x
+    have hn'' : x < n + 1 := by
+      exact Int.lt_floor_add_one x
+    use n
+    refine ⟨?_,?_,?_⟩
+    · calc
+        0 ≤ x - n := by exact sub_nonneg.mpr hn'
+        _ ≤ x := by exact sub_le_self x
+    · calc
+        x - n < 1 := by exact sub_lt_one.mpr hn''
+        _ < x := by exact sub_pos.mpr hn''
+    · rw [hn]
+      exact h₀
+  -- Let $u$ be the number of elements of S.
+  set u := S.card
+  have hu : u = S.card := by
+    exact rfl
+  rw [← hu] at h₁
+  -- Let $B$ be the sum of the integers $n$ in the representation $n + \frac{p}{q}$ of the elements of S.
+  let B := ∑ x ∈ S, (x - (x - ⌊x⌋))
+  -- Let $C$ be the sum of the fractions $\frac{p}{q}$ in the representation $n + \frac{p}{q}$ of the elements of S.
+  let C := ∑ x ∈ S, (x - ⌊x⌋)
+  -- We have $B + C = 420$.
+  have h₃ : B + C = 420 := by
+    rw [← h₁]
+    congr
+  -- We can rewrite our equation as $n \cdot (x - n) = \frac{p}{q} \cdot x^2$.
+  have h₄ : ∀ x ∈ S, (x - ↑⌊x⌋) = a * x ^ 2 / ↑⌊x⌋ := by
+    intro x hx
+    specialize h₀ x
+    rw [hx] at h₀
+    set n := ↑⌊x⌋
+    have hn : (n : ℝ) = ↑⌊x⌋ := by
+      exact rfl
+    rw [← hn]
+    refine eq_div_of_mul_eq?_ (by exact Ne.symm (NeZero.ne' (n * (x - n))))]
+    exact h₀
+  -- We have $B = \sum_{x \in S} (x - \lfloor x \rfloor) = C$.
+  have h₅ : B = C := by
+    dsimp [B, C]
+    apply Finset.sum_congr
+    · intro x hx
+      rw [h₄ x hx]
+      exact rfl
+    · exact h₂ _ hx
+  rw [h₅] at h₃
+  -- This means that $B = C = 210$.
+  have h₆ : B = 210 := by
+    linarith only [h₃]
+  have h₇ : C = 210 := by
+    linarith only [h₃]
+  -- The sum of the elements of S is $B + C = 420$.
+  have h₈ : ∑ x ∈ S, x = 420 := by
+    rw [← h₁]
+  -- Then, the sum of the fractions $\frac{p}{q}$ in the representation $n + \frac{p}{q}$ of the elements of S is $C = 210$.
+  have h₉ : ∑ x ∈ S, (x - ↑⌊x⌋) = 210 := by
+    exact h₇
+  -- The sum of the integers $n$ in the representation $n + \frac{p}{q}$ of the elements of S is $B = 210$.
+  have h₁₀ : ∑ x ∈ S, ↑⌊x⌋ = 210 := by
+    exact h₆
+  -- Let $w$ be the number of distinct integers $n$ in the representation $n + \frac{p}{q}$ of the elements of S.
+  let w := S.card
+  have hw : w = S.card := by
+    exact rfl
+  rw [← hw] at h₁₀
+  -- Let $V$ be the sum of the distinct integers $n$ in the representation $n + \frac{p}{q}$ of the elements of S.
+  let V := ∑ x ∈ S, ↑⌊x⌋
+  -- We have $V = 210$.
+  have h₁₁ : V = 210 := by
+    exact h₁₀
+  -- The number $q$ is a divisor of $C = 210$.
+  have h₁₂ : q ∣ C := by
+    apply Nat.dvd_of_mod_eq_zero
+    have : C % q = 0 := by
+      calc
+        C % q = (∑ x ∈ S, (x - ↑⌊x⌋)) % q := by rw [h₉]
+        _ = 0 := by
+          rw [show (∑ x ∈ S, (x - ↑⌊x⌋)) % q = (∑ x ∈ S, (x - ↑⌊x⌋) % q) % q by exact Nat.mod_sum S (fun x => (x - ↑⌊x⌋))]
+          rw [show (∑ x ∈ S, (x - ↑⌊x⌋) % q) % q = (∑ x ∈ S, (x - ↑⌊x⌋)) % q by exact rfl]
+          rw [h₉]
+          apply Nat.mod_eq_zero_of_dvd
+          simp [C]
+          exact h₁
+    exact this
+  -- We have $q \le 210$.
+  have h₁₃ : q ≤ 210 := by
+    apply Nat.le_of_dvd (by exact Nat.zero_lt_succ 209)
+    exact h₁₂
+  -- We will show that $q = 3$.
+  suffices q = 3 by
+    -- From $B = 210$, we get $p = 210$.
+    have h₁₄ : p = 210 := by
+      rw [show (∑ x ∈ S, ↑⌊x⌋) = (∑ x ∈ S, (x - (x - ↑⌊x⌋))) by exact rfl] at h₁₀
+      rw [show (∑ x ∈ S,

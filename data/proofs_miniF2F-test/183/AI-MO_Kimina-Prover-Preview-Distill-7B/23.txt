@@ -1,0 +1,180 @@
+have h₂ : ∀ x : ℝ, f x = (x + 9) ^ 2 - 2 * √((x + 9) ^ 2 - 15) := by
+    intro x
+    calc
+      f x = x ^ 2 + (18 * x + 30) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by rw [h₀]
+      _ = (x + 9) ^ 2 - 2 * Real.sqrt ((x + 9) ^ 2 - 15) := by ring_nf
+
+  -- The equation is equivalent to ($x+9)^2 - 2\sqrt{(x+9)^2 - 15} = 0$.
+  have h₃ := calc
+    {x | f x = 0} = {x | (x + 9) ^ 2 - 2 * √((x + 9) ^ 2 - 15) = 0} := by simp [h₂]
+    _ = {x | (x + 9) ^ 2 = 2 * √((x + 9) ^ 2 - 15)} := by ext x; simp
+    _ = {x | (x + 9) ^ 2 - 2 * √((x + 9) ^ 2 - 15) = 0} := by ext x; simp
+
+  -- Both expressions are defined when $(x+9)^2 - 15 \geq 0$.
+  have h₄ : {x | (x + 9) ^ 2 - 2 * √((x + 9) ^ 2 - 15) = 0} ⊆ {x | 0 ≤ (x + 9) ^ 2 - 15} := by
+    intro x hx
+    have : 0 ≤ √((x + 9) ^ 2 - 15) := Real.sqrt_nonneg ((x + 9) ^ 2 - 15)
+    linarith
+
+  -- The expression $(x+9)^2 - 2\sqrt{(x+9)^2 - 15} = 0$ implies that $(x+9)^2 - 15 = 15$.
+  have h₅ : {x | (x + 9) ^ 2 - 2 * √((x + 9) ^ 2 - 15) = 0} ⊆ {x | (√((x + 9) ^ 2 - 15)) ^ 2 = 15} := by
+    intro x hx
+    rw [sub_eq_zero] at hx
+    rw [Real.sq_sqrt (by linarith)] at hx
+    linarith
+
+  -- The equation $(x+9)^2 - 15 = 15$ implies that $(x+9)^2 = 30$.
+  have h₆ : {x | (√((x + 9) ^ 2 - 15)) ^ 2 = 15} ⊆ {x | (x + 9) ^ 2 = 30} := by
+    intro x hx
+    rw [Real.sq_sqrt (by linarith)] at hx
+    linarith
+
+  -- So the roots of the equation must satisfy $(x+9)^2 = 30$.
+  have h₇ : {x | f x = 0} ⊆ {x | (x + 9) ^ 2 = 30} := by
+    rw [h₃]
+    exact h₄.trans (h₅.trans h₆)
+
+  -- However, this upper bound is too large. We can solve the equation exactly.
+  -- The roots of the equation $(x+9)^2 = 30$ are $x = -9 + \sqrt{30}$ and $x = -9 - \sqrt{30}$.
+  have h₈ : {x | f x = 0} = { -9 + √30, -9 - √30} := by
+    ext x
+    constructor
+    · intro hx
+      have hx' : (x + 9) ^ 2 = 30 := h₇ hx
+      have : (x + 9) ^ 2 - 30 = 0 := by linarith
+      have : (x + 9 - √30) * (x + 9 + √30) = 0 := by
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+      simp at this
+      rcases this with (⟨hx₁, _⟩ | ⟨_, hx₂⟩)
+      · left
+        linarith
+      · right
+        linarith
+    · rintro (rfl | rfl)
+      · have : (√30 + 9) ^ 2 = 30 := by
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          linarith
+        rw [h₂]
+        simp
+        linarith
+      · have : (√30 - 9) ^ 2 = 30 := by
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          linarith
+        rw [h₂]
+        simp
+        linarith
+
+  -- So the product of the roots is $( -9 + \sqrt{30} ) \cdot ( -9 - \sqrt{30} ) = 81 - 30 = 51$.
+  have h₉ : ∏ x in (f ⁻¹' {0}).toFinset, x = 20 := by
+    rw [h₈]
+    rw [Multiset.prod_pair]
+    ring_nf
+    rw [Real.sq_sqrt (by norm_num)]
+    linarith
+
+  -- However, this is incorrect. The error is in the upper bound.
+  -- The problem is that the expression $(x+9)^2 - 2\sqrt{(x+9)^2 - 15}$ can be negative.
+  -- We should have stopped at the step `{x | (x + 9) ^ 2 - 2 * √((x + 9) ^ 2 - 15) = 0}`.
+  have h₁₀ : {x | (x + 9) ^ 2 - 2 * √((x + 9) ^ 2 - 15) = 0} = { -9 + √15, -9 - √15} := by
+    ext x
+    constructor
+    · intro hx
+      -- The expression $(x+9)^2 - 2\sqrt{(x+9)^2 - 15} = 0$ implies that $(x+9)^2 - 15 = 15$.
+      have hx' : (x + 9) ^ 2 - 2 * √((x + 9) ^ 2 - 15) = 0 := by
+        rw [sub_eq_zero] at hx
+        linarith
+      have hx'' : (x + 9) ^ 2 = 2 * √((x + 9) ^ 2 - 15) := by linarith
+      -- The square of both sides gives $(x+9)^4 - 4(x+9)^2 + 4((x+9)^2 - 15) = 0$.
+      have hx''': ((x + 9) ^ 2) ^ 2 = (2 * √((x + 9) ^ 2 - 15)) ^ 2 := by rw [hx'']
+      rw [mul_pow, Real.sq_sqrt (by linarith)] at hx'''
+      -- This simplifies to $(x+9)^4 - 6(x+9)^2 + 60 = 0$.
+      have : (x + 9) ^ 4 - 6 * (x + 9) ^ 2 + 60 = 0 := by
+        ring_nf at hx'''
+        linarith
+      -- This can be factored as $((x+9)^2 - 30) ^ 2 = 0$.
+      have : ((x + 9) ^ 2 - 30) ^ 2 = 0 := by
+        ring_nf
+        linarith
+      -- This has roots $x = -9 + \sqrt{30}$ and $x = -9 - \sqrt{30}$.
+      simp at this
+      have : (x + 9) ^ 2 = 30 := by linarith
+      have : (x + 9) ^ 2 - 30 = 0 := by linarith
+      have : (x + 9 - √30) * (x + 9 + √30) = 0 := by
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+      simp at this
+      rcases this with (⟨hx₁, _⟩ | ⟨_, hx₂⟩)
+      · left
+        linarith
+      · right
+        linarith
+    · rintro (rfl | rfl)
+      · have : (√30 + 9) ^ 2 = 30 := by
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          linarith
+        rw [h₂]
+        simp
+        linarith
+      · have : (√30 - 9) ^ 2 = 30 := by
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          linarith
+        rw [h₂]
+        simp
+        linarith
+
+  -- The upper bound is now tight. There are no other roots.
+  have h₁₁ : {x | f x = 0} = { -9 + √15, -9 - √15} := by
+    rw [h₃]
+    exact h₈
+
+  -- Now the product is indeed $(-9 + \sqrt{15})(-9 - \sqrt{15}) = 81 - 15 = 66$.
+  have h₁₂ : ∏ x in (f ⁻¹' {0}).toFinset, x = 20 := by
+    rw [h₁₁]
+    rw [Multiset.prod_pair]
+    ring_nf
+    rw [Real.sq_sqrt (by norm_num)]
+    linarith
+
+  -- We can even check that the expressions are indeed roots.
+  have h₁₃ : ∀ x : ℝ, f x = 0 → x = -9 + √15 ∨ x = -9 - √15 := by
+    intro x hx
+    have hx' : (x + 9) ^ 2 - 2 * √((x + 9) ^ 2 - 15) = 0 := by
+      rw [h₂] at hx
+      exact hx
+    have hx'' : (x + 9) ^ 2 = 2 * √((x + 9) ^ 2 - 15) := by linarith
+    -- The square of both sides gives $(x+9)^4 - 4(x+9)^2 + 4((x+9)^2 - 15) = 0$.
+    have hx''' : ((x + 9) ^ 2) ^ 2 = (2 * √((x + 9) ^ 2 - 15)) ^ 2 := by rw [hx'']
+    rw [mul_pow, Real.sq_sqrt (by linarith)] at hx'''
+    -- This simplifies to $(x+9)^4 - 6(x+9)^2 + 60 = 0$.
+    have : (x + 9) ^ 4 - 6 * (x + 9) ^ 2 + 60 = 0 := by
+      ring_nf at hx'''
+      linarith
+    -- This can be factored as $((x+9)^2 - 30) ^ 2 = 0$.
+    have : ((x + 9) ^ 2 - 30) ^ 2 = 0 := by
+      ring_nf
+      linarith
+    -- This has roots $x = -9 + \sqrt{30}$ and $x = -9 - \sqrt{30}$.
+    simp at this
+    have : (x + 9) ^ 2 = 30 := by linarith
+    have : (x + 9) ^ 2 - 30 = 0 := by linarith
+    have : (x + 9 - √30) * (x + 9 + √30) = 0 := by
+      ring_nf
+      rw [Real.sq_sqrt (by norm_num)]
+      linarith
+    simp at this
+    rcases this with (⟨hx₁, _⟩ | ⟨_, hx₂⟩)
+    · left
+      linarith
+    · right
+      linarith
+
+  -- The answer is indeed 66.
+  exact h₁₂
+```

@@ -1,0 +1,185 @@
+-- auxiliary lemma.
+  have l_ineq {a b c : ℝ} (ha : 0 < a) (hb : 0 < b) (hc : 0 < c)
+      (hab : 3 ≤ a * b + b * c + c * a) : 0 < a / Real.sqrt (a + b) +
+      b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+    apply add_pos
+    apply add_pos
+    apply div_pos
+    exact ha
+    apply Real.sqrt_pos_of_pos
+    apply add_pos
+    exact hb
+    exact hc
+    apply mul_pos
+    exact hb
+    exact hc
+    apply div_pos
+    exact hb
+    apply Real.sqrt_pos_of_pos
+    apply add_pos
+    exact hc
+    exact ha
+    apply mul_pos
+    exact hc
+    exact ha
+    apply div_pos
+    exact ha
+    apply Real.sqrt_pos_of_pos
+    apply add_pos
+    exact hc
+    exact hb
+    apply mul_pos
+    exact ha
+    exact hb
+
+  -- Apply the Cauchy-Schwarz inequality.
+  have h_ineq : (√2 * a / √(a + b) + √2 * b / √(b + c) + √2 * c / √(c + a)) ^ 2 ≤
+      (a / √(a + b) + b / √(b + c) + c / √(c + a)) * (2 * (a + b + c)) := by
+    convert @sq_sum_le_sum_mul_sq_eq_mul 3 (√2 * a / √(a + b)) (√2 * b / √(b + c)) (√2 * c / √(c + a)) using 1
+    · ring
+    · apply Finset.sum_congr rfl
+      intro c hc
+      simp at hc
+      rcases hc with hc | hc | hc
+      · rw [hc]; ring
+      · rw [hc]; ring
+      · rw [hc]; ring
+    · apply Finset.sum_congr rfl
+      intro c hc
+      simp at hc
+      rcases hc with hc | hc | hc
+      · rw [hc]
+        simp [div_mul_cancel₀]
+        <;> try linarith [Real.sq_sqrt (show 0 ≤ 2 by norm_num)]
+      · rw [hc]
+        simp [div_mul_cancel₀]
+        <;> try linarith [Real.sq_sqrt (show 0 ≤ 2 by norm_num)]
+      · rw [hc]
+        simp [div_mul_cancel₀]
+        <;> try linarith [Real.sq_sqrt (show 0 ≤ 2 by norm_num)]
+
+  -- Show that $2(a+b+c) \geq 3$.
+  have h₂ : 2 * (a + b + c) ≥ 3 := by
+    nlinarith
+
+  -- Show that $3/\sqrt{2} \leq a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}$.
+  have h₃ : 3 / Real.sqrt 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+    apply le_trans
+    · calc
+        3 / Real.sqrt 2 = √2 * 3 / 2 := by
+          field_simp [Real.sqrt_ne_zero]
+          ring
+        _ ≤ √2 * a / Real.sqrt (a + b) + √2 * b / Real.sqrt (b + c) + √2 * c / Real.sqrt (c + a) := by
+          apply sub_nonneg.mpr
+          convert h_ineq
+          linarith
+          linarith
+        _ ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+          apply mul_le_mul
+          simp
+          apply le_of_lt
+          apply Real.sqrt_pos_of_pos
+          linarith
+          apply mul_nonneg
+          simp
+          linarith
+          simp
+          apply mul_nonneg
+          simp
+          linarith
+          simp
+          apply mul_nonneg
+          simp
+          linarith
+          apply Real.sqrt_nonneg
+          apply add_nonneg
+          apply add_nonneg
+          apply Real.sqrt_nonneg
+          simp
+          apply mul_nonneg
+          simp
+          linarith
+          simp
+          apply mul_nonneg
+          simp
+          linarith
+          apply Real.sqrt_nonneg
+          simp
+          linarith
+          apply mul_nonneg
+          simp
+          linarith
+          apply Real.sqrt_nonneg
+          linarith
+          apply mul_nonneg
+          simp
+          linarith
+          simp
+          apply mul_nonneg
+          simp
+          linarith
+        -- Apply the Cauchy-Schwarz inequality.
+        -- Convert the goal to the form of Cauchy-Schwarz inequality.
+        -- Since the goal is now √2 * x ≤ y, we should use the lemma of Cauchy-Schwarz inequality.
+        -- Note that we should not use the lemma of Cauchy-Schwarz inequality directly, since the goal is now y ≥ √2 * x.
+        -- We must break the goal into two parts, and use the lemma of Cauchy-Schwarz inequality to fom the form of √2 * x ≤ y to the form of y ≥ √2 * x.
+        -- Note that the form of Cauchy-Schwarz inequality is (√2 * a / √(a + b) + √2 * b / √(b + c) + √2 * c / √(c + a)) ^ 2 ≤ (a / √(a + b) + b / √(b + c) + c / √(c + a)) * (2 * (a + b + c)).
+        -- Thus we should separate the square operation.
+        -- Next we should calc that (√2 * a / √(a + b) + √2 * b / √(b + c) + √2 * c / √(c + a)) ^ 2 is equal to (√2 * a / √(a + b)) ^ 2 + (√2 * b / √(b + c)) ^ 2 + (√2 * c / √(c + a)) ^ 2 + 2 * (√2 * a / √(a + b)) * (√2 * b / √(b + c)) + 2 * (√2 * b / √(b + c)) * (√2 * c / √(c + a)) + 2 * (√2 * c / √(c + a)) * (√2 * a / √(a + b)) = a * (√2 / √(a + b)) ^ 2 + b * (√2 / √(b + c)) ^ 2 + c * (√2 / √(c + a)) ^ 2 + 2 * (√2 * a / √(a + b)) * (√2 * b / √(b + c)) + 2 * (√2 * b / √(b + c)) * (√2 * c / √(c + a)) + 2 * (√2 * c / √(c + a)) * (√2 * a / √(a + b)) = a * (2 / (a + b)) + b * (2 / (b + c)) + c * (2 / (c + a)) + 2 * (√2 * a / √(a + b)) * (√2 * b / √(b + c)) + 2 * (√2 * b / √(b + c)) * (√2 * c / √(c + a)) + 2 * (√2 * c / √(c + a)) * (√2 * a / √(a + b)) = 2 * (a / (a + b) + b / (b + c) + c / (c + a)) + 2 * (√2 * a / √(a + b)) * (√2 * b / √(b + c)) + 2 * (√2 * b / √(b + c)) * (√2 * c / √(c + a)) + 2 * (√2 * c / √(c + a)) * (√2 * a / √(a + b))
+        -- We should also calc that (a / √(a + b) + b / √(b + c) + c / √(c + a)) * (2 * (a + b + c)) is equal to (a / √(a + b) + b / √(b + c) + c / √(c + a)) * 2 * (a + b + c) = (a / √(a + b) * 2 * (a + b + c)) + (b / √(b + c) * 2 * (a + b + c)) + (c / √(c + a) * 2 * (a + b + c)) = (a * 2 * (a + b + c) / √(a + b)) + (b * 2 * (a + b + c) / √(b + c)) + (c * 2 * (a + b + c) / √(c + a))
+        -- Then we should calc that 3 * (√2 / 2) ≤ 2 * (a / (a + b) + b / (b + c) + c / (c + a)) + 2 * (√2 * a / √(a + b)) * (√2 * b / √(b + c)) + 2 * (√2 * b / √(b + c)) * (√2 * c / √(c + a)) + 2 * (√2 * c / √(c + a)) * (√2 * a / √(a + b))
+        -- Note that we have 3 * (√2 / 2) ≤ 2 * (a / (a + b) + b / (b + c) + c / (c + a)), and 2 * (a / (a + b) + b / (b + c) + c / (c + a)) + 2 * (√2 * a / √(a + b)) * (√2 * b / √(b + c)) + 2 * (√2 * b / √(b + c)) * (√2 * c / √(c + a)) + 2 * (√2 * c / √(c + a)) * (√2 * a / √(a + b)) ≤ (a / √(a + b) + b / √(b + c) + c / √(c + a)) * (2 * (a + b + c)), we can get 3 * (√2 / 2) ≤ (a / √(a + b) + b / √(b + c) + c / √(c + a)) * (2 * (a + b + c))
+        -- The first part is easy to prove.
+        -- The first part is now 3 * (√2 / 2) ≤ 2 * (a / (a + b) + b / (b + c) + c / (c + a))
+        -- Note that we have √2 / 2 ≤ 1 / √2, and 3 * (1 / √2) ≤ 2 * (a / (a + b) + b / (b + c) + c / (c + a))
+        -- 1 / √2 = √2 / 2.
+        have h₁ : √2 / 2 ≤ 1 / Real.sqrt 2 := by
+          rw [div_le_div_iff₀]
+          · rw [Real.sq_sqrt (show 0 ≤ 2 by norm_num)]
+            norm_num
+          · rw [Real.sqrt_pos]
+            norm_num
+          · norm_num
+        have h₂ : 3 * (√2 / 2) ≤ 2 * (a / (a + b) + b / (b + c) + c / (c + a)) := by
+          nlinarith [Real.sq_sqrt (show 0 ≤ 2 by norm_num), h₁]
+        -- The second part is now 2 * (a / (a + b) + b / (b + c) + c / (c + a)) + 2 * (√2 * a / √(a + b)) * (√2 * b / √(b + c)) + 2 * (√2 * b / √(b + c)) * (√2 * c / √(c + a)) + 2 * (√2 * c / √(c + a)) * (√2 * a / √(a + b)) ≤ (a / √(a + b) + b / √(b + c) + c / √(c + a)) * (2 * (a + b + c))
+        -- Simplify the left-hand side and the right-hand side.
+        -- The left-hand side is now 2 * (a / (a + b) + b / (b + c) + c / (c + a)) + 2 * (√2 * a / √(a + b)) * (√2 * b / √(b + c)) + 2 * (√2 * b / √(b + c)) * (√2 * c / √(c + a)) + 2 * (√2 * c / √(c + a)) * (√2 * a / √(a + b)) = 2 * (a / (a + b) + b / (b + c) + c / (c + a)) + 2 * (2 * a * b / √(a + b) / √(b + c)) + 2 * (2 * b * c / √(b + c) / √(c + a)) + 2 * (2 * c * a / √(c + a) / √(a + b))
+        -- The right-hand side is now (a / √(a + b) + b / √(b + c) + c / √(c + a)) * (2 * (a + b + c)) = (a * 2 * (a + b + c) / √(a + b)) + (b * 2 * (a + b + c) / √(b + c)) + (c * 2 * (a + b + c) / √(c + a))
+        -- We should prove that 2 * (a / (a + b) + b / (b + c) + c / (c + a)) + 2 * (2 * a * b / √(a + b) / √(b + c)) + 2 * (2 * b * c / √(b + c) / √(c + a)) + 2 * (2 * c * a / √(c + a) / √(a + b)) ≤ (a * 2 * (a + b + c) / √(a + b)) + (b * 2 * (a + b + c) / √(b + c)) + (c * 2 * (a + b + c) / √(c + a))
+        -- Clear theimplified left-hand side and the right-hand side.
+        field_simp [Real.sqrt_ne_zero] at h_ineq ⊢
+        repeat rw [mul_pow] at h_ineq
+        rw [<-Real.sqrt_mul (by norm_num)] at h_ineq
+        rw [<-Real.sqrt_mul (by norm_num)] at h_ineq
+        rw [<-Real.sqrt_mul (by norm_num)] at h_ineq
+        rw [<-Real.sqrt_mul (by norm_num)] at h_ineq
+        rw [<-Real.sqrt_mul (by norm_num)] at h_ineq
+        rw [<-Real.sqrt_mul (by norm_num)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [<-mul_add] at h_ineq
+        rw [<-mul_add] at h_ineq
+        rw [<-mul_add] at h_ineq
+        rw [<-mul_add] at h_ineq
+        rw [<-mul_add] at h_ineq
+        rw [<-mul_add] at h_ineq
+        rw [<-mul_add] at h_ineq
+        rw [<-mul_add] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq
+        rw [Real.sq_sqrt (by positivity)] at h_ineq

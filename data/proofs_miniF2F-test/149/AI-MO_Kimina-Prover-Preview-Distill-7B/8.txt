@@ -1,0 +1,67 @@
+-- prepare some facts for later use
+  have hn : 0 < n := by norm_cast
+  have hn' : (n : ℝ) ≥ 1 := by norm_cast; linarith
+  have nge4 : (n : ℝ) ≥ 4 := by
+    have : n ≥ 4 := by omega
+    norm_cast
+  have nge2 : (n : ℝ) ≥ 2 := by
+    have : n ≥ 2 := by omega
+    norm_cast
+  have ngt1 : (n : ℝ) > 1 := by
+    have : n > 1 := by omega
+    norm_cast
+  have nge3 : (n : ℝ) ≥ 3 := by
+    have : n ≥ 3 := by omega
+    norm_cast
+  have nge1 : (n : ℝ) ≥ 1 := by norm_cast; linarith
+  have ngt0 : (n : ℝ) > 0 := by norm_cast; omega
+  have ngt2 : (n : ℝ) > 2 := by
+    have : n > 2 := by omega
+    norm_cast
+  have nge : (n : ℝ) ≥ (1 : ℝ) / (n : ℝ) := by
+    have : n ≥ 1 / n := by
+      field_simp
+      apply (one_le_div (by omega)).mpr
+      omega
+    norm_cast
+
+  -- replace $n^{1/n}$ with $\exp(\frac{1}{n} \log n)$
+  rw [Real.rpow_def_of_pos ngt0]
+  let x := (1 : ℝ) / n
+  have hx : x = (1 : ℝ) / n := by rfl
+  rw [hx]
+  let y := n ^ x
+  have hy : y = n ^ x := by rfl
+  rw [hy]
+
+  -- calculate the limit of $\frac{\log n}{n}$ at $+\infty$
+  have h1 : (fun (x : ℝ) ↦ (log x) / x) →₀ 0 := by
+    apply Realtendsto_atTop_of_forall
+    intro x
+    have : 0 ≤ (log x) / x := by
+      apply div_nonneg
+      exact Real.log_nonneg x
+      linarith
+    linarith
+
+  -- replace $y$ with $\exp(\log y)$
+  rw [Real.rpow_def_of_pos]
+  let z := log y
+  have hz : z = log y := by rfl
+  rw [hz]
+  let w := exp z
+  have hw : w = exp z := by rfl
+  rw [hw]
+  rw [Real.exp_log]
+  linarith
+
+  -- translate the limit into the inequality
+  have h2 : 0 < (n : ℝ) ^ ((1 : ℝ) / n) - 1 := by
+    apply sub_pos.mpr
+    apply Real.one_lt_rpow
+    linarith
+    apply one_lt_exp
+    apply Real.log_pos
+    linarith
+  linarith
+```

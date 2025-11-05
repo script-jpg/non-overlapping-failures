@@ -1,0 +1,134 @@
+-- We have $a = 8$, test it satisfys the equation.
+
+  -- We show that it is the only solution.
+
+  have ha : 0 ≤ a := by linarith [h₀, Real.sqrt_nonneg (16 + 16 * a), Real.sqrt_nonneg (1 + a)]
+
+  -- We have $\sqrt{16 + 16a} = 4\sqrt{1+a}$.
+
+  have h1 : Real.sqrt (16 + 16 * a) = 4 * Real.sqrt (1 + a) := by
+
+    calc
+
+      Real.sqrt (16 + 16 * a) = Real.sqrt (16 * (1 + a)) := by ring_nf
+
+      _ = Real.sqrt ((4 ^ 2) * (1 + a)) := by ring_nf
+
+      _ = Real.sqrt (4 ^ 2) * Real.sqrt (1 + a) := by rw [Real.sqrt_mul (by linarith [sq_nonneg (4 : ℝ)])]
+
+      _ = 4 * Real.sqrt (1 + a) := by rw [Real.sqrt_sq (by norm_num)]
+
+  -- Substitute this into the equation and rearrange to
+  --
+  -- $$\sqrt{4+\sqrt{16+16a}} = 6 - \sqrt{1+\sqrt{1+a}}.$$
+  --
+  -- square both sides and rearrange, we get
+  --
+  -- $$\sqrt{1 + \sqrt{1 + a}} = 8 - 3\sqrt{1 + a}.$$
+  --
+  -- square both sides and rearrange, we get
+  --
+  -- $$(1 + \sqrt{1 + a}) = 8^2 - 48\sqrt{1 + a} + 3^2(1 + a).$$
+  --
+  -- simplify and rearrange, we get
+  --
+  -- $$35\sqrt{1 + a} = 7 + 12a.$$
+  --
+  -- square both sides and rearrange, we get
+  --
+  -- $$1120\sqrt{1 + a} = 5328 + 144a.$$
+  --
+  -- square both sides, we get
+  --
+  -- $$144a^2 - 11072a + 5328^2 - 1120^2 = 0$$
+  --
+  -- $$144a^2 - 11072a + 2352128 = 0$$
+  --
+  -- $$18a^2 - 1384a + 294016 = 0$$
+  --
+  -- $$9a^2 - 692a + 147008 = 0$$
+  --
+  -- $$9a^2 - (692 - 9\sqrt{692^2 - 4\cdot 9 \cdot 147008})a + 9\cdot 147008 = 0$$
+  --
+  -- $$9a^2 - (692 - 18\sqrt{692^2 - 4\cdot 9 \cdot 147008})a + 9\cdot 147008 = 0$$
+  --
+  -- thus
+  --
+  -- $$(a - 8)(9a - 18168 + 18\sqrt{692^2 - 4\cdot 9 \cdot 147008}) = 0$$
+  --
+  -- thus $a = 8$ or $a = \frac{18168 - 18\sqrt{692^2 - 4\cdot 9 \cdot 147008}}{9}$.
+  --
+  -- take square on both sides, we can see that the second solution is not real.
+
+  have h2 : Real.sqrt (4 + Real.sqrt (16 + 16 * a)) = 6 - Real.sqrt (1 + Real.sqrt (1 + a)) := by linarith [h₀]
+
+  apply congr_arg (fun x ↦ x ^ 2) at h2
+
+  conv at h2 =>
+    lhs
+    rw [add_sq]
+
+  conv at h2 =>
+    rhs
+    rw [sub_sq]
+
+  rw [Real.sq_sqrt (by linarith [ha]), Real.sq_sqrt (by linarith [ha])] at h2
+
+  apply congr_arg (fun x ↦ -(x / 2)) at h2
+
+  conv at h2 =>
+    lhs
+    linarith
+
+  rw [← sub_eq_add_neg, sub_nonneg] at h2
+
+  replace h2 : Real.sqrt (1 + Real.sqrt (1 + a)) = 8 - 3 * Real.sqrt (1 + a) := by linarith [h2]
+
+  apply congr_arg (fun x ↦ x ^ 2) at h2
+
+  conv at h2 =>
+    lhs
+    rw [add_sq]
+
+  conv at h2 =>
+    rhs
+    rw [sub_sq]
+
+  rw [Real.sq_sqrt (by linarith [ha])] at h2
+
+  apply congr_arg (fun x ↦ -(x / 2)) at h2
+
+  conv at h2 =>
+    lhs
+    linarith
+
+  rw [← sub_eq_add_neg, sub_nonneg] at h2
+
+  replace h2 : Real.sqrt (1 + a) = 8 - 3 ^ 2 * a / (2 * 35 : ℝ) := by linarith [h2]
+
+  apply congr_arg (fun x ↦ x ^ 2) at h2
+
+  rw [Real.sq_sqrt (by linarith [ha])] at h2
+
+  apply congr_arg (fun x ↦ (x + 1120 ^ 2 - 1120 * 2 * 35) / 35 ^ 2) at h2
+
+  conv at h2 =>
+    lhs
+    rw [← sub_eq_add_neg, sub_nonneg]
+
+  norm_num at h2
+
+  rw [← eq_sub_iff_add_eq] at h2
+
+  norm_num at h2
+
+  apply congr_arg (fun x ↦ (x - 147008 * 2) / 9) at h2
+
+  norm_num at h2
+
+  ring_nf at h2
+
+  have : a = 8 := by linarith [h2]
+
+  exact this
+```

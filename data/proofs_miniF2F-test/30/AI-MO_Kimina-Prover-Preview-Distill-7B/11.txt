@@ -1,0 +1,206 @@
+rcases h₀ with ⟨hx, hy⟩
+
+  -- Show that $x < y$.
+  have h₂ : x < y := by
+    -- Assume on the contrary that $x \geq y$.
+    by_contra! h₃
+
+    -- By properties of exponentiation, $y^x < x^y$.
+    have h₄ : y ^ x < x ^ y := by
+      apply Nat.pow_lt_pow_left
+     . exact h₃
+     . exact hy
+
+    -- This implies $y^x \neq x^y$, a contradiction.
+    have h₅ : y ^ x ≠ x ^ y := by
+      exact Nat.ne_of_lt h₄
+
+    contradiction
+
+  -- Show that $x^y \mid y^x$.
+  have h₆ : x ^ y ∣ y ^ x := by
+    rw [←h₁]
+    apply Nat.pow_dvd_pow
+
+  -- Since $x < y$, we have $x^x \mid x^y$.
+  have h₇ : x ^ x ∣ x ^ y := by
+    apply Nat.pow_dvd_pow
+
+  -- By transitivity, we have $x^x \mid y^x$.
+  have h₈ : x ^ x ∣ y ^ x := by
+    exact Nat.dvd_trans h₇ h₆
+
+  -- Since $y^x \neq 0$, we have $x^x \neq 0$.
+  have h₉ : x ^ x ≠ 0 := by
+    exact Nat.ne_of_dvd_ne_zero h₈ (by positivity)
+
+  -- Show that $x \mid y$.
+  have h₁₀ : x ∣ y := by
+    -- Assume on the contrary that $x \nmid y$.
+    by_contra! h₁₁
+
+    -- Then, by prime factorization, there exists a prime $p$ such that $p \mid x$ but $p \nmid y$.
+    have h₁₂ : ∃ p : ℕ, p.Prime ∧ p ∣ x ∧ ¬p ∣ y := by
+      exact Nat.exists_prime_and_dvd_of_not_dvd h₁₁
+
+    rcases h₁₂ with ⟨p, hₖp, hₗp, hₘp⟩
+
+    -- We have $p \mid x^x$ but $p \nmid y^x$.
+    have h₁₃ : p ∣ x ^ x := by
+      apply Nat.dvd_pow hₖp.pos
+
+    have h₁₄ : ¬p ∣ y ^ x := by
+      rw [Nat.prime_iff.mp hₖp]
+      apply Nat.Prime.not_dvd_pow hₖp.not_dvd y hₘp
+
+    -- This is a contradiction.
+    have h₁₅ : p ∣ y ^ x := by
+      exact Nat.dvd_trans h₁₃ h₈
+
+    contradiction
+
+  -- Now, we have $x \mid y$ and $x < y$, so we can write $y = x z$ for some positive integer $z > 1$.
+  have h₁₆ : ∃ z : ℕ, z > 1 ∧ y = x * z := by
+    let S := Finset.filter (fun m => m > 1 ∧ x ∣ m) (Finset.Icc 2 (y / x))
+    let z' := Finset.image (fun m => y / x * m) S
+    let z := z'.min' (by use 2; simp; use 1; simp; omega)
+
+    have h₁₆ : 1 < z := by
+      simp [z]
+      rw [Finset.min'_mem]
+      simp
+      use 2
+      simp
+      use 1
+      simp
+      omega
+
+    have h₁₇ : z ∈ S := by
+      simp [S, h₁₆]
+      rw [Finset.mem_image]
+      use y / x
+      simp
+      constructor
+     . omega
+     . apply Nat.dvd_mul_right
+
+    simp at h₁₇
+
+    rcases h₁₇ with ⟨h₁₇, h₁₈⟩
+    use z
+    constructor
+   . exact h₁₇
+   . rw [h₁₈]
+      ac_rfl
+
+  rcases h₁₆ with ⟨z, h₁₆, h₁₇⟩
+
+  -- We have $x^{x z^2} = (x z)^x$.
+  rw [h₁₇] at h₁
+
+  -- By properties of exponentiation, $x^x \mid (x z)^x$.
+  have h₁₈ : x ^ x ∣ (x * z) ^ x := by
+    apply Nat.pow_dvd_pow
+
+  -- Since $x \mid x$ and $x \nmid z$, we have $x^x \mid x z$.
+  have h₁₉ : x ^ x ∣ x * z := by
+    apply Nat.Coprime.dvd_mul_left
+   . apply Nat.Coprime.pow_left
+      exact Nat.Prime.coprime_iff_not_dvd.mpr h₁₀
+   . exact Nat.dvd_refl x
+
+  -- We have $x z \mid y$.
+  have h₂₀ : x * z ∣ y := by
+    exact Nat.dvd_of_mul_dvd_mul_left h₁₈
+
+  -- This implies $x z \mid x$.
+  have h₂₁ : x * z ∣ x := by
+    convert Nat.dvd_of_mod_eq_zero h₂₀
+    rw [h₁₇]
+
+  -- Since $z > 1$, this is a contradiction.
+  have h₂₂ : x * z > x := by
+    have h₂₂ : x * z > x * 1 := by
+      apply Nat.mul_lt_mul_left
+     . exact h₂₃
+     . exact h₁₆
+    rw [mul_one] at h₂₂
+    exact h₂₂
+
+  contradiction
+
+  -- Assume that $x = 1$.
+  by_cases h₁₈ : x = 1
+
+  -- In this case, we have $y^2 = y$, which implies $y = 1$.
+  · simp [h₁₈] at h₁
+    have h₁₉ : y ^ 2 = y := by
+      rw [←h₁]
+      simp
+
+    have h₂₀ : y = 1 := by
+      nlinarith
+
+    simp [h₁₈, h₂₀]
+
+  -- Now, assume that $x \neq 1$.
+  by_contra! h₂₃
+
+  -- Since $x \neq 1$, we have $\ln(x) > 0$.
+  have h₂₄ : Real.log x > 0 := by
+    apply Real.log_pos
+    exact Nat.one_lt_of_ne_zero h₂₃
+
+  -- We have $y^2 \ln(x) = x \ln(y)$.
+  have h₂₅ : y ^ 2 * Real.log x = x * Real.log y := by
+    rw [h₁]
+    simp [Real.log_rpow, h₁₈]
+
+  -- By properties of logarithms, $x \ln(y) = \ln(y^x)$.
+  have h₂₆ : x * Real.log y = Real.log (y ^ x) := by
+    rw [Real.log_rpow]
+    linarith
+
+  -- In particular, $\ln(y^x) > 0$.
+  have h₂₇ : Real.log (y ^ x) > 0 := by
+    linarith [h₂₅, h₂₄]
+
+  -- This implies $y^x > 1$.
+  have h₂₈ : y ^ x > 1 := by
+    exact (Real.log_pos_iff (by positivity)).mp h₂₇
+
+  -- We have $y^2 \ln(x) > 0$.
+  have h₂₉ : y ^ 2 * Real.log x > 0 := by
+    apply mul_pos
+   . exact h₂₄
+   . exact Nat.pos_pow_of_pos 2 h₂₃
+
+  -- Since $y^2 \ln(x) = x \ln(y)$, we have $x \ln(y) > 0$.
+  have h₃₀ : x * Real.log y > 0 := by
+    linarith [h₂₅, h₂₉]
+
+  -- In particular, $\ln(y) > 0$.
+  have h₃₁ : Real.log y > 0 := by
+    by_contra!
+    have h₃₁ : x * Real.log y ≤ 0 := by
+      apply mul_nonpos_of_nonneg_of_nonpos
+     . exact Nat.cast_nonneg x
+     . exact this
+
+    linarith [h₃₀, h₃₁]
+
+  -- This implies $y > 1$.
+  have h₃₂ : y > 1 := by
+    exact (Real.log_pos_iff (by positivity)).mp h₃₁
+
+  -- Now, we have $y > 1$ and $x \mid y$.
+  have h₃₃ : x ∣ y := by
+    exact h₁₀
+
+  -- Since $y > 1$, we have $x > 1$.
+  have h₃₄ : x > 1 := by
+    exact Nat.one_lt_of_dvd h₃₂ h₃₃
+
+  linarith [h₂₃, h₃₄]
+
+```

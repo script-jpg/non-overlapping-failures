@@ -1,0 +1,149 @@
+-- Note that $a + b + c > 0$.
+  have h₂ : 0 < a + b + c := by
+    linarith only [h₀]
+
+  have weight_pos : 0 < a + b := by
+    linarith only [h₀]
+
+  have weight_pos' : 0 < b + c := by
+    linarith only [h₀]
+
+  have weight_pos'' : 0 < c + a := by
+    linarith only [h₀]
+
+  -- Apply the Cauchy-Schwarz inequality.
+  have CS_ineq : ∀ x y z, (x ^ 2 + y ^ 2 + z ^ 2) * (u ^ 2 + v ^ 2 + w ^ 2) ≥ (x * u + y * v + z * w) ^ 2 := by
+    intro x y z u v w
+    have : 0 ≤ (x * v - y * u) ^ 2 + (y * w - z * v) ^ 2 + (z * u - x * w) ^ 2 := by
+      apply add_nonneg
+      apply add_nonneg
+      apply sq_nonneg
+      apply sq_nonneg
+      apply sq_nonneg
+    linarith only [this]
+
+  -- Set $x = \sqrt{a} \sqrt{a+b}$, $y = \sqrt{b} \sqrt{b+c}$, $z = \sqrt{c} \sqrt{c+a}$, $u = \sqrt{a+b} / \sqrt{2}$, $v = \sqrt{b+c} / \sqrt{2}$, $w = \sqrt{c+a} / \sqrt{2}$.
+  specialize CS_ineq (Real.sqrt a * Real.sqrt (a + b)) (Real.sqrt b * Real.sqrt (b + c)) (Real.sqrt c * Real.sqrt (c + a)) (Real.sqrt (a + b) / Real.sqrt 2) (Real.sqrt (b + c) / Real.sqrt 2) (Real.sqrt (c + a) / Real.sqrt 2)
+
+  -- Simplify the inequality.
+  rw [← Real.sqrt_mul (by positivity), ← Real.sqrt_mul (by positivity), ← Real.sqrt_mul (by positivity)] at CS_ineq
+  rw [← Real.sqrt_sq (by positivity), ← Real.sqrt_sq (by positivity), ← Real.sqrt_sq (by positivity)] at CS_ineq
+  simp [div_pow] at CS_ineq
+  norm_num at CS_ineq
+
+  -- Show that the left-hand side of the inequality is equal to $(a + b + c) \sqrt{2}$.
+  have left_eq : (Real.sqrt a * Real.sqrt (a + b)) ^ 2 * ((Real.sqrt (a + b) / Real.sqrt 2) ^ 2) + (Real.sqrt b * Real.sqrt (b + c)) ^ 2 * ((Real.sqrt (b + c) / Real.sqrt 2) ^ 2) + (Real.sqrt c * Real.sqrt (c + a)) ^ 2 * ((Real.sqrt (c + a) / Real.sqrt 2) ^ 2) = (a + b + c) * Real.sqrt 2 := by
+    rw [mul_pow, mul_pow, mul_pow]
+    rw [Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)]
+    ring_nf
+    rw [Real.sq_sqrt (by positivity)]
+    ring_nf
+    rw [show a * b * 2 + a * c * 2 + b * c * 2 = 2 * (a * b + a * c + b * c) by ring, mul_comm, mul_add, mul_add, ← mul_assoc, Real.sq_sqrt (by positivity)]
+    ring_nf
+
+  -- Show that the right-hand side of the inequality is equal to $3 \sqrt{2}$.
+  have right_eq : (Real.sqrt a * Real.sqrt (a + b) / Real.sqrt 2 + Real.sqrt b * Real.sqrt (b + c) / Real.sqrt 2 + Real.sqrt c * Real.sqrt (c + a) / Real.sqrt 2) ^ 2 = 3 * Real.sqrt 2 := by
+    rw [add_pow_two, add_pow_two, mul_pow, div_pow, div_pow, Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)]
+    norm_num
+    rw [Real.sq_sqrt (by positivity)]
+    norm_num
+    rw [show 2 * Real.sqrt 2 ^ 2 = 2 * (Real.sqrt 2 ^ 2) by ring, Real.sq_sqrt (by positivity)]
+    norm_num
+    rw [mul_comm, mul_add, mul_add, mul_assoc, Real.sq_sqrt (by positivity)]
+    linarith only [h₁]
+
+  -- Substitute these equalities into the inequality, and then simplify.
+  rw [left_eq, right_eq] at CS_ineq
+  rw [ge_iff_le, mul_le_mul_left (by norm_num), Real.sqrt_le_sqrt (by positivity)] at CS_ineq
+  norm_num at CS_ineq
+
+  -- Simplify and we get the desired inequality.
+  linarith only [CS_ineq]
+
+
+/-- For positive real numbers a, b, c, such that $3 \leq ab+bc+ca$, show that $3/\sqrt{2} \leq a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}$.-/
+
+theorem algebra_abpbcpcageq3_sumaonsqrtapbgeq3onsqrt2' (a b c : ℝ) (h₀ : 0 < a ∧ 0 < b ∧ 0 < c)
+    (h₁ : 3 ≤ a * b + b * c + c * a) :
+    3 / Real.sqrt 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+  -- Substitute $a' = \sqrt{a}, b' = \sqrt{b}, c' = \sqrt{c}$.
+  let a' := Real.sqrt a
+  let b' := Real.sqrt b
+  let c' := Real.sqrt c
+
+  -- Prove positivity of $a', b', c'$.
+  have ha' : 0 < a' := by
+    simp [a']
+    exact h₀.left
+  have hb' : 0 < b' := by
+    simp [b']
+    exact h₀.right.left
+  have hc' : 0 < c' := by
+    simp [c']
+    exact h₀.right.right
+
+  -- Transform $a, b, c$ in terms of $a', b', c'$.
+  have ha : a = a' ^ 2 := by
+    simp [a']
+    exact Eq.symm (Real.sq_sqrt (by linarith only [h₀.left]))
+  have hb : b = b' ^ 2 := by
+    simp [b']
+    exact Eq.symm (Real.sq_sqrt (by linarith only [h₀.right.left]))
+  have hc : c = c' ^ 2 := by
+    simp [c']
+    exact Eq.symm (Real.sq_sqrt (by linarith only [h₀.right.right]))
+
+  -- Transform the condition.
+  have h₁' : 3 ≤ a' * b' * 2 + a' * c' * 2 + b' * c' * 2 := by
+    rw [ha, hb, hc] at h₁
+    linarith only [h₁]
+
+  -- Apply the Cauchy-Schwarz inequality.
+  have CS_ineq : ∀ x y z, (x ^ 2 + y ^ 2 + z ^ 2) * (u ^ 2 + v ^ 2 + w ^ 2) ≥ (x * u + y * v + z * w) ^ 2 := by
+    intro x y z u v w
+    have : 0 ≤ (x * v - y * u) ^ 2 + (y * w - z * v) ^ 2 + (z * u - x * w) ^ 2 := by
+      apply add_nonneg
+      apply add_nonneg
+      apply sq_nonneg
+      apply sq_nonneg
+      apply sq_nonneg
+    linarith only [this]
+
+  -- Set $x = \sqrt{a'} \sqrt{a' + b'}$, $y = \sqrt{b'} \sqrt{b' + c'}$, $z = \sqrt{c'} \sqrt{c' + a'}$, $u = \sqrt{a' + b'}/\sqrt{2}$, $v = \sqrt{b' + c'}/\sqrt{2}$, $w = \sqrt{c' + a'}/\sqrt{2}$.
+  specialize CS_ineq (Real.sqrt a' * Real.sqrt (a' + b')) (Real.sqrt b' * Real.sqrt (b' + c')) (Real.sqrt c' * Real.sqrt (c' + a')) (Real.sqrt (a' + b') / Real.sqrt 2) (Real.sqrt (b' + c') / Real.sqrt 2) (Real.sqrt (c' + a') / Real.sqrt 2)
+
+  -- Simplify the inequality.
+  rw [← Real.sqrt_mul (by positivity), ← Real.sqrt_mul (by positivity), ← Real.sqrt_mul (by positivity)] at CS_ineq
+  rw [← Real.sqrt_sq (by positivity), ← Real.sqrt_sq (by positivity), ← Real.sqrt_sq (by positivity)] at CS_ineq
+  simp [div_pow] at CS_ineq
+  norm_num at CS_ineq
+
+  -- Show that the left-hand side of the inequality is equal to $(a' + b' + c') \sqrt{2}$.
+  have left_eq : (Real.sqrt a' * Real.sqrt (a' + b')) ^ 2 * ((Real.sqrt (a' + b') / Real.sqrt 2) ^ 2) + (Real.sqrt b' * Real.sqrt (b' + c')) ^ 2 * ((Real.sqrt (b' + c') / Real.sqrt 2) ^ 2) + (Real.sqrt c' * Real.sqrt (c' + a')) ^ 2 * ((Real.sqrt (c' + a') / Real.sqrt 2) ^ 2) = (a' + b' + c') * Real.sqrt 2 := by
+    rw [mul_pow, mul_pow, mul_pow]
+    rw [Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)]
+    ring_nf
+    rw [Real.sq_sqrt (by positivity)]
+    ring_nf
+    rw [show a' * b' * 2 + a' * c' * 2 + b' * c' * 2 = 2 * (a' * b' + a' * c' + b' * c') by ring, mul_comm, mul_add, mul_add, ← mul_assoc, Real.sq_sqrt (by positivity)]
+    ring_nf
+
+  -- Show that the right-hand side of the inequality is equal to $3 \sqrt{2}$.
+  have right_eq : (Real.sqrt a' * Real.sqrt (a' + b') / Real.sqrt 2 + Real.sqrt b' * Real.sqrt (b' + c') / Real.sqrt 2 + Real.sqrt c' * Real.sqrt (c' + a') / Real.sqrt 2) ^ 2 = 3 * Real.sqrt 2 := by
+    rw [add_pow_two, add_pow_two, mul_pow, div_pow, div_pow, Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)]
+    norm_num
+    rw [Real.sq_sqrt (by positivity)]
+    norm_num
+    rw [show 2 * Real.sqrt 2 ^ 2 = 2 * (Real.sqrt 2 ^ 2) by ring, Real.sq_sqrt (by positivity)]
+    norm_num
+    rw [mul_comm, mul_add, mul_add, mul_assoc, Real.sq_sqrt (by positivity)]
+    linarith only [h₁']
+
+  -- Substitute these equalities into the inequality, and then simplify.
+  rw [left_eq, right_eq] at CS_ineq
+  rw [ge_iff_le, mul_le_mul_left (by norm_num), Real.sqrt_le_sqrt (by positivity)] at CS_ineq
+  norm_num at CS_ineq
+
+  -- Simplify and we get the desired inequality.
+  linarith only [CS_ineq]
+```

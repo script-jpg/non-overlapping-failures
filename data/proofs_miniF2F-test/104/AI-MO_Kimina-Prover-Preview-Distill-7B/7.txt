@@ -1,0 +1,151 @@
+have pge_1 : 1 ≤ p := by exact Nat.Prime.one_le h₀
+
+  have pge_6 : 6 < p := by exact Nat.lt_sub_of_add_lt (by rw [show 6 = 5 + 1 by simp, ← @Nat.sub_add_comm p 5]
+      apply Nat.le_add_right_of_le
+      linarith)
+
+  have pge_5 : 5 < p := by exact Nat.lt_sub_of_add_lt (by rw [show 5 = 4 + 1 by simp, ← @Nat.sub_add_comm p 4]
+      apply Nat.le_add_right_of_le
+      linarith)
+
+  have pge_4 : 4 < p := by exact Nat.lt_sub_of_add_lt (by rw [show 4 = 3 + 1 by simp, ← @Nat.sub_add_comm p 3]
+      apply Nat.le_add_right_of_le
+      linarith)
+
+  have pge_3 : 3 < p := by exact Nat.lt_sub_of_add_lt (by rw [show 3 = 2 + 1 by simp, ← @Nat.sub_add_comm p 2]
+      apply Nat.le_add_right_of_le
+      linarith)
+
+  have pge_2 : 2 < p := by exact Nat.lt_sub_of_add_lt (by rw [show 2 = 1 + 1 by simp, ← @Nat.sub_add_comm p 1]
+      apply Nat.le_add_right_of_le
+      linarith)
+
+  have pge : 0 < p := by exact Nat.Prime.pos h₀
+
+  have pmod_p : p = 0 := by exact rfl
+
+  -- Let $k \in \{1, 2, \ldots, p-2\}$.
+  let k : Finset.Icc 1 (p - 2) := @Finset.mem_Icc (1 : ℕ) (p - 2) k
+
+  -- We have
+  -- $(k+1)^{-1} \cdot k^{-1} = k \cdot (k+1) \cdot (2k+1)^{-1}$
+  -- for all $k \neq 0, -1, -2$.
+  have h2 (k : ℕ) (hk : k ∈ Finset.Icc 1 (p - 2)) : (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = k * ((k : ZMod p) + 1) * ((2 * k + 1) : ZMod p)⁻¹ := by
+    simp at hk
+    have h2 : k > 0 := by exact Nat.lt_sub_of_add_lt (by rw [show 1 = 0 + 1 by simp]; apply Nat.le_add_right_of_le; exact hk.1)
+    have h3 : k ≠ 0 := by exact Nat.ne_of_gt h2
+    have h4 : k + 1 ≠ 0 := by
+      intro h
+      have : k = -1 := by exact eq_neg_of_add_eq_zero_left h
+      exact Nat.not_eq_neg_of_lt hk.1 this
+    have h5 : 2 * k + 1 ≠ 0 := by
+      intro h
+      have : k = -1/2 := by exact eq_neg_div_of_add_eq_zero_left h
+      exact Nat.not_eq_neg_of_lt hk.1 this
+    suffices h : (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = k * ((k : ZMod p) + 1) * ((2 * k + 1) : ZMod p)⁻¹
+    · exact h
+    apply ZMod.mul_eq_mul
+    · rw [ZMod.inv_mul, mul_assoc]
+      simp
+      rw [ZMod.inv_mul, mul_assoc]
+      simp
+    · rw [mul_assoc, ZMod.inv_mul, mul_assoc]
+      simp
+      rw [ZMod.inv_mul, mul_assoc]
+      simp
+    · rw [ZMod.mul_inv_cancel h3, ZMod.mul_inv_cancel h4, ZMod.mul_inv_cancel h5]
+      ring
+
+  -- We have
+  -- $k \cdot (k+1) \cdot (2k+1)^{-1} = (2k+1) \cdot (2k+3)^{-1}$
+  -- for all $k \neq 0, -1, -2$.
+  have h3 (k : ℕ) (hk : k ∈ Finset.Icc 1 (p - 2)) : k * ((k : ZMod p) + 1) * ((2 * k + 1) : ZMod p)⁻¹ = (2 * k + 1) * ((2 * k + 3) : ZMod p)⁻¹ := by
+    simp at hk
+    have h2 : k > 0 := by exact Nat.lt_sub_of_add_lt (by rw [show 1 = 0 + 1 by simp]; apply Nat.le_add_right_of_le; exact hk.1)
+    have h3 : k ≠ 0 := by exact Nat.ne_of_gt h2
+    have h4 : k + 1 ≠ 0 := by
+      intro h
+      have : k = -1 := by exact eq_neg_of_add_eq_zero_left h
+      exact Nat.not_eq_neg_of_lt hk.1 this
+    have h5 : 2 * k + 1 ≠ 0 := by
+      intro h
+      have : k = -1/2 := by exact eq_neg_div_of_add_eq_zero_left h
+      exact Nat.not_eq_neg_of_lt hk.1 this
+    have h6 : 2 * k + 3 ≠ 0 := by
+      intro h
+      have : k = -3/2 := by exact eq_neg_div_of_add_eq_zero_left h
+      exact Nat.not_eq_neg_of_lt hk.1 this
+    suffices h : k * ((k : ZMod p) + 1) * ((2 * k + 1) : ZMod p)⁻¹ = (2 * k + 1) * ((2 * k + 3) : ZMod p)⁻¹
+    · exact h
+    apply ZMod.mul_eq_mul
+    · rw [mul_comm, mul_assoc, mul_assoc, ← mul_assoc (2 * k + 1), mul_inv_cancel₀ h2, mul_one, mul_comm]
+    · rw [mul_comm, mul_assoc, mul_assoc, ← mul_assoc (2 * k + 1), mul_inv_cancel₀ h2, mul_one, inv_mul_cancel₀ h6]
+    · simp
+      rw [mul_comm, mul_assoc, mul_assoc, ← mul_assoc (2 * k + 1), mul_inv_cancel₀ h2, mul_one]
+      exact h4
+    · simp
+      rw [mul_comm, mul_assoc, mul_assoc, ← mul_assoc (2 * k + 1), mul_inv_cancel₀ h2, mul_one]
+      exact h5
+
+  -- By the above identities, the sum
+  -- $$\sum_{k=1}^{p-2} k^{-1} \cdot (k+1)^{-1}$$
+  -- can be transformed to
+  -- $$\sum_{k=1}^{p-2} (2k+1)^{-1} \cdot (2k+3)^{-1}$$
+  -- Then we have
+  -- $$(2k+1)^{-1} \cdot (2k+3)^{-1} = \frac{1}{2} \cdot ((2k+1)^{-1} - (2k+3)^{-1}),$$
+  -- which allows us to telescope the sum:
+  -- $$\sum_{k=1}^{p-2} (2k+1)^{-1} \cdot (2k+3)^{-1} = \frac{1}{2} \cdot ((2 \cdot 1 + 1)^{-1} - (2 \cdot (p - 2) + 1)^{-1}).$$
+  have h4 : (∑ k in Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) = (1 / 2 : ZMod p) * ((2 * 1 + 1 : ZMod p)⁻¹ - (2 * (p - 2) + 1 : ZMod p)⁻¹) := by
+    rw [Finset.sum_congr rfl h2, Finset.sum_congr rfl h3]
+    rw [← Finset.sum_range_sub (show 1 ≤ p - 2 by exact Nat.le_sub_one_of_lt h₁)]
+    simp
+    rw [Finset.sum_Icc_succ_top (show 1 ≤ p - 2 by exact Nat.le_sub_one_of_lt h₁)]
+    rw [Finset.sum_Icc_succ_top (show 1 ≤ p - 2 by exact Nat.le_sub_one_of_lt h₁)]
+    rw [show 1 + 1 = 2 by simp, show (p - 2) + 1 = p - 1 by omega]
+    simp
+    rw [mul_assoc, mul_inv_cancel₀ (by omega), mul_one, mul_assoc, mul_inv_cancel₀ (by omega), mul_one, sub_neg_eq_add, mul_comm, mul_assoc, mul_inv_cancel₀ (by omega), mul_one, ← mul_assoc, mul_inv_cancel₀ (by omega), mul_one]
+    rfl
+
+  -- Since $p$ is odd, $2 \cdot (p - 2) + 1 = 2p - 3 = p + (p - 3) = p + (-3) = -3 \pmod{p}$.
+  have h5 : (2 * (p - 2) + 1 : ZMod p) = (-3 : ZMod p) := by
+    calc
+      (2 * (p - 2) + 1 : ZMod p) = (2 * p - 3 : ZMod p) := by omega
+      _ = (p + (p - 3) : ZMod p) := by rw [show 2 * p = p + p by ring]
+      _ = (p + (-3 : ZMod p) : ZMod p) := by simp
+      _ = (-3 : ZMod p) := by rw [ZMod.add_neg_eq_self]; exact Nat.Prime.dvd_iff_eq h₀.mpr (by omega); exact Nat.Prime.pos h₀
+
+  -- We have $(-3)^{-1} = -3^{-1} = -p \cdot 3^{-1} \pmod{p}$.
+  have h6 : (-3 : ZMod p)⁻¹ = -3⁻¹ := by
+    simp
+
+  have h7 : (-3 : ZMod p)⁻¹ = -p * 3⁻¹ := by
+    calc
+      (-3 : ZMod p)⁻¹ = (-1) * 3⁻¹ := by exact Eq.symm (neg_mul_inv_of_ne_zero 3 (by simp))
+      _ = -p * 3⁻¹ := by rw [show (-1 : ZMod p) = -p by exact Eq.symm (neg_eq_neg_one_mul p)]; ring
+
+  -- Since $p \equiv 1 \pmod{3}$, $3^{-1} = 1 \pmod{3}$.
+  have h8 : (3 : ZMod p)⁻¹ = 1 := by
+    have : (3 : ZMod p) * 1 = (3 : ZMod p) := by simp
+    suffices (3 : ZMod p)⁻¹ * ((3 : ZMod p) * 1) = (3 : ZMod p)⁻¹ * (3 : ZMod p)
+    · simp at this
+      exact this
+    apply ZMod.mul_eq_mul
+    · simp
+    · exact Eq.symm (neg_mul_inv_of_ne_zero 3 (by simp))
+    · exact Ne.symm (ne_of_lt (Nat.Prime.one_lt h₀))
+    · simp
+
+  -- We have $-p \cdot 3^{-1} = -1 \pmod{p}$.
+  have h9 : (-p * 3⁻¹ : ZMod p) = -1 := by
+    calc
+      (-p * 3⁻¹ : ZMod p) = (-1) * (p * 3⁻¹) := by ring
+      _ = (-1) * 1 := by rw [mul_inv_cancel₀ (by exact Nat.Prime.ne_zero h₀), mul_one]
+      _ = -1 := by ring
+
+  -- Therefore, the sum
+  -- $$\sum_{k=1}^{p-2} k^{-1} \cdot (k+1)^{-1} = \frac{1}{2} \cdot ((2 \cdot 1 + 1)^{-1} - (-3)^{-1}) = \frac{1}{2} \cdot (1 - (-1)) = \frac{1}{2} \cdot 2 = 1$$
+  -- $ = 2 \pmod{p}.$
+  rw [h4, h5, h6, h7, h8, h9]
+  simp
+
+```

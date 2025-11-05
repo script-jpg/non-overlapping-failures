@@ -1,0 +1,125 @@
+-- We shall prove that $D_n$ is even when $n$ is divisible by $3$, and odd otherwise.
+  have h (n : ℕ) : Even (d (3 * n)) ∧ Odd (d (3 * n + 1)) ∧ Even (d (3 * n + 2)) := by
+    induction n with
+    | zero =>
+      simp [h₀, h₁, h₂]
+      rify
+      -- After appropriate rearrangements, we can discover that
+      -- $D_3-d_0$, $D_4-d_1$, $D_5-d_2$ are all equal to $1$.
+      have h₃' : d 3 - d 0 = 1 := by rw [h₃ 3 (by norm_num), h₀, h₁, h₂]; rfl
+      have h₄' : d 4 - d 1 = 1 := by rw [h₃ 4 (by norm_num), h₀, h₁, h₂, h₃]; rfl
+      have h₅' : d 5 - d 2 = 1 := by rw [h₃ 5 (by norm_num), h₀, h₁, h₂, h₃, h₄']; rfl
+      rw [h₀, h₁, h₂]
+      refine ⟨?_,?_,?_⟩
+      · rw [← Nat.div_add_mod _ 3, h₃', Nat.zero_add, Nat.add_mod, Nat.zero_mod, h₀]
+        exact Nat.even_iff.mpr rfl
+      · rw [← Nat.div_add_mod _ 3, h₄', Nat.zero_add, Nat.add_mod, Nat.zero_mod, h₁]
+        exact Odd.one_mod
+      · rw [← Nat.div_add_mod _ 3, h₅', Nat.zero_add, Nat.add_mod, Nat.zero_mod, h₂]
+        exact Nat.even_iff.mpr rfl
+    | succ n hn =>
+      -- We shall perform induction to discover that $D_3(D_{3n+3})$ is equal to
+      -- $D_{3n}(D_{3n+3})-D_{3n-1}(D_{3n+2})+D_{3n-2}(D_{3n+1})+D_{3n-3}(D_{3n})$.
+      have h₆ : d (3 * (n + 1)) = d (3 * n) * d (3 * n + 3) - d (3 * n - 1) * d (3 * n + 2) + d (3 * n - 2) * d (3 * n + 1) + d (3 * n - 3) * d (3 * n) := by
+        rw [h₃ (3 * (n + 1)) (by omega), show 3 * (n + 1) - 3 = 3 * n by omega, show 3 * (n + 1) - 1 = 3 * n + 2 by omega, show 3 * (n + 1) - 2 = 3 * n + 1 by omega, show 3 * (n + 1) - 3 = 3 * n by omega]
+        rw [Nat.add_mod, Nat.add_mod _ (3 * n), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        ring_nf
+        rw [<-Nat.pow_add_one]
+        have h₇ : 3 * n ≤ 3 * n + 1 := by omega
+        have h₈ : 3 * n - 1 ≤ 3 * n + 1 := by omega
+        have h₉ : 3 * n - 2 ≤ 3 * n + 1 := by omega
+        have h₁₀ : 3 * n - 3 ≤ 3 * n + 1 := by omega
+        rw [Nat.add_mod (3 * n) (3 * n + 1), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        rw [Nat.add_mod (3 * n - 1) (3 * n + 1), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        rw [Nat.add_mod (3 * n - 2) (3 * n + 1), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        rw [Nat.add_mod (3 * n - 3) (3 * n + 1), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        simp only [Nat.reduceAdd, Nat.reduceMod, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
+        simp only [Finsupp.coe_add, Finsupp.coe_smul, Finsupp.coe_mk, Nat.cast_add, Nat.cast_mul,
+          Nat.cast_ofNat, Nat.cast_one, Subtype.mk.injEq]
+        rw [h₇, h₈, h₉, h₁₀]
+        ring
+      -- After appropriate rearrangements, we can discover that
+      -- $D_{3n}(D_{3n+3})-D_{3n-1}(D_{3n+2})+D_{3n-2}(D_{3n+1})+D_{3n-3}(D_{3n})$
+      -- is equal to $D_{3n}(D_{3n+3}-D_{3n-1})+D_{3n-2}(D_{3n+1}-D_{3n-3})$.
+      have h₇ : d (3 * n) * d (3 * n + 3) - d (3 * n - 1) * d (3 * n + 2) + d (3 * n - 2) * d (3 * n + 1) + d (3 * n - 3) * d (3 * n) = d (3 * n) * (d (3 * n + 3) - d (3 * n - 1)) + d (3 * n - 2) * (d (3 * n + 1) - d (3 * n - 3)) := by
+        ac_rfl
+      rw [h₆, h₇]
+      rw [h₃ (3 * n) (by omega), h₃ (3 * n + 3) (by omega), h₃ (3 * n - 1) (by omega), h₃ (3 * n + 2) (by omega), h₃ (3 * n - 2) (by omega), h₃ (3 * n - 3) (by omega)]
+      rw [show 3 * n - 3 - 3 = 3 * n - 6 by omega, show 3 * n + 3 - 3 = 3 * n by omega, show 3 * n - 1 - 3 = 3 * n - 4 by omega, show 3 * n + 1 - 3 = 3 * n - 2 by omega, show 3 * n - 2 - 3 = 3 * n - 5 by omega]
+      rw [Nat.add_mod (3 * n) (3 * n + 3), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+      rw [Nat.add_mod (3 * n - 1) (3 * n + 3), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+      rw [Nat.add_mod (3 * n - 2) (3 * n + 3), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+      rw [Nat.add_mod (3 * n - 3) (3 * n + 3), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+      simp only [Nat.reduceAdd, Nat.reduceMod, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
+      simp only [Finsupp.coe_add, Finsupp.coe_smul, Finsupp.coe_mk, Nat.cast_add, Nat.cast_mul,
+        Nat.cast_ofNat, Nat.cast_one, Subtype.mk.injEq]
+      rw [show 3 * n - 6 = 3 * (n - 2) by omega, show 3 * n + 3 = 3 * (n + 1) by omega, show 3 * n - 2 = 3 * (n - 1) - 1 by omega, show 3 * n - 5 = 3 * (n - 2) - 2 by omega]
+      -- We can discover that $D_{3n}(D_{3n+3}-D_{3n-1})+D_{3n-2}(D_{3n+1}-D_{3n-3})$
+      -- is equal to $D_{3n}(D_{3n+3}-D_{3n-1})-D_{3n-2}(D_{3n+3}-D_{3n-1})$.
+      have h₈ : d (3 * n) * (d (3 * n + 3) - d (3 * n - 1)) + d (3 * n - 2) * (d (3 * n + 1) - d (3 * n - 3)) = d (3 * n) * (d (3 * n + 3) - d (3 * n - 1)) - d (3 * n - 2) * (d (3 * n + 3) - d (3 * n - 1)) := by
+        have g₅ : d (3 * n + 1) - d (3 * n - 3) = d (3 * n + 3) - d (3 * n - 1) := by
+          rw [h₃ (3 * n + 1) (by omega), h₃ (3 * n - 1) (by omega), h₃ (3 * n + 3) (by omega), h₃ (3 * n - 3) (by omega)]
+          rw [show 3 * n + 1 - 3 = 3 * n - 2 by omega, show 3 * n - 1 - 3 = 3 * n - 4 by omega, show 3 * n + 3 - 3 = 3 * n by omega, show 3 * n - 3 - 3 = 3 * n - 6 by omega]
+          rw [Nat.add_mod (3 * n + 3) (3 * n + 1), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+          rw [Nat.add_mod (3 * n - 1) (3 * n + 1), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+          rw [Nat.add_mod (3 * n + 3) (3 * n - 1), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+          rw [Nat.add_mod (3 * n - 3) (3 * n - 1), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+          simp only [Nat.reduceAdd, Nat.reduceMod, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
+          simp only [Finsupp.coe_add, Finsupp.coe_smul, Finsupp.coe_mk, Nat.cast_add, Nat.cast_mul,
+            Nat.cast_ofNat, Nat.cast_one, Subtype.mk.injEq]
+          ac_rfl
+        rw [g₅]
+      rw [h₈]
+      -- After appropriate rearrangements, we can discover that
+      -- $D_{3n}(D_{3n+3}-D_{3n-1})-D_{3n-2}(D_{3n+3}-D_{3n-1})$ is equal to
+      -- $(D_{3n}-D_{3n-2})(D_{3n+3}-D_{3n-1})$.
+      have h₉ : d (3 * n) * (d (3 * n + 3) - d (3 * n - 1)) - d (3 * n - 2) * (d (3 * n + 3) - d (3 * n - 1)) = (d (3 * n) - d (3 * n - 2)) * (d (3 * n + 3) - d (3 * n - 1)) := by
+        ac_rfl
+      rw [h₉]
+      -- We can discover that $D_{3n}-D_{3n-2}$ is equal to $D_{3n-3}$.
+      have g₆ : d (3 * n) - d (3 * n - 2) = d (3 * n - 3) := by
+        rw [h₃ (3 * n) (by omega), h₃ (3 * n - 2) (by omega), h₃ (3 * n - 3) (by omega)]
+        rw [show 3 * n - 3 - 3 = 3 * n - 6 by omega, show 3 * n - 2 - 3 = 3 * n - 5 by omega]
+        rw [Nat.add_mod (3 * n) (3 * n - 3), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        rw [Nat.add_mod (3 * n - 2) (3 * n - 3), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        rw [Nat.add_mod (3 * n) (3 * n - 6), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        simp only [Nat.reduceAdd, Nat.reduceMod, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
+        simp only [Finsupp.coe_add, Finsupp.coe_smul, Finsupp.coe_mk, Nat.cast_add, Nat.cast_mul,
+          Nat.cast_ofNat, Nat.cast_one, Subtype.mk.injEq]
+        rw [show 3 * n - 5 = 3 * n - 6 + 1 by omega, show 3 * n - 6 = 3 * (n - 2) by omega]
+        rw [Nat.add_mod (3 * n) (3 * (n - 2)), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        rw [Nat.add_mod (3 * n - 6) (3 * (n - 2)), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        simp only [Nat.reduceAdd, Nat.reduceMod, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
+        simp only [Finsupp.coe_add, Finsupp.coe_smul, Finsupp.coe_mk, Nat.cast_add, Nat.cast_mul,
+          Nat.cast_ofNat, Nat.cast_one, Subtype.mk.injEq]
+        omega
+      -- We can discover that $D_{3n+3}-D_{3n-1}$ is equal to $D_{3n+2}$.
+      have g₇ : d (3 * n + 3) - d (3 * n - 1) = d (3 * n + 2) := by
+        rw [h₃ (3 * n + 3) (by omega), h₃ (3 * n - 1) (by omega), h₃ (3 * n + 2) (by omega)]
+        rw [show 3 * n + 3 - 3 = 3 * n by omega, show 3 * n - 1 - 3 = 3 * n - 4 by omega]
+        rw [Nat.add_mod (3 * n + 3) (3 * n + 2), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        rw [Nat.add_mod (3 * n - 1) (3 * n + 2), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        rw [Nat.add_mod (3 * n + 3) (3 * n), Nat.zero_add, Nat.add_mod, Nat.zero_mod, Nat.zero_mod]
+        simp only [Nat.reduceAdd, Nat.reduceMod, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
+        simp only [Finsupp.coe_add, Finsupp.coe_smul, Finsupp.coe_mk, Nat.cast_add, Nat.cast_mul,
+          Nat.cast_ofNat, Nat.cast_one, Subtype.mk.injEq]
+        omega
+      rw [g₆, g₇]
+      rw [h₂, h₃, h₃, h₀, h₁]
+      simp only [Nat.reduceAdd, Nat.reduceMod, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
+      simp only [Finsupp.coe_add, Finsupp.coe_smul, Finsupp.coe_mk, Nat.cast_add, Nat.cast_mul,
+        Nat.cast_ofNat, Nat.cast_one, Subtype.mk.injEq]
+      zify
+      rw [show (3 : ℤ) * ↑n - 3 * (↑n - 2 : ℤ) = 3 * (↑n - (↑n - 2)) by ring]
+      rw [Int.natCast_sub, Int.natCast_sub]
+      ring
+  -- Now we perform induction to discover that $D_n$ is even when $n$ is divisible by $3$,
+  -- and odd otherwise.
+  have h' (n : ℕ) : Even (d (3 * n)) ∧ Odd (d (3 * n + 1)) ∧ Even (d (3 * n + 2)) := by
+    induction n with
+    | zero => simp [h₀, h₁, h₂]
+    | succ n hn =>
+      -- Now we shall prove that $D_{3n+3}$ is even when $n$ is even, and odd when $n$ is odd.
+      have h₁₀ : Even (d (3 * (n + 1))) ∧ Odd (d (3 * (n + 1) + 1)) ∧ Even (d (3 * (n + 1) + 2)) := by
+        have h₁₁ : 3 * (n + 1) = 3 * n + 3 := by omega
+        have g₇ : Even (d (3 * n + 3)) ∧ Odd (d (3 * n

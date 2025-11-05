@@ -1,0 +1,174 @@
+have pge1 : 1 ≤ p := by exact Nat.Prime.one_le h₀
+
+  have pge2 : 2 ≤ p := by exact Nat.Prime.two_le h₀
+
+  have pge3 : 3 ≤ p := by exact Nat.Prime.le_of_lt_succ h₀ (by norm_num)
+
+  have pge4 : 4 ≤ p := by exact Nat.Prime.le_of_lt_succ h₀ (by norm_num)
+
+  have pge5 : 5 ≤ p := by exact Nat.Prime.le_of_lt_succ h₀ (by norm_num)
+
+  have pge6 : 6 ≤ p := by exact Nat.Prime.le_of_lt_succ h₀ (by norm_num)
+
+  have pgt : 7 < p := by exact Nat.lt_of_le_of_ne h₁ (by exact id (Ne.symm (Nat.ne_of_lt_succ h₀)))
+
+  -- For all $k$ between $1$ and $p-2$, we have $(k \cdot (k+1))^{-1} = -2 \cdot k^{-1} + 2 \cdot (k+1)^{-1}$ in $\mathbb{Z}/p\mathbb{Z}$.
+
+  have h (k : ZMod p) : k * (k + 1) ≠ 0 := by
+    apply mul_ne_zero_iff.mpr
+    constructor
+    · by_contra! h
+      have : k = 0 := by exact mul_eq_zero.mp h
+      rw [this] at h₁
+      norm_cast at h₁
+      linarith
+    · by_contra! h
+      have : k = -1 := by exact mul_eq_zero.mp h
+      rw [this] at h₁
+      norm_cast at h₁
+      linarith
+
+  have h' (k : ZMod p) : (k + 1) * (k + 2) ≠ 0 := by
+    apply mul_ne_zero_iff.mpr
+    constructor
+    · by_contra! h
+      have : k + 1 = 0 := by exact mul_eq_zero.mp h
+      rw [this] at h₁
+      norm_cast at h₁
+      linarith
+    · by_contra! h
+      have : k + 2 = 0 := by exact mul_eq_zero.mp h
+      rw [this] at h₁
+      norm_cast at h₁
+      linarith
+
+  have h'' (k : ZMod p) : k * (k + 2) ≠ 0 := by
+    apply mul_ne_zero_iff.mpr
+    constructor
+    · by_contra! h
+      have : k = 0 := by exact mul_eq_zero.mp h
+      rw [this] at h₁
+      norm_cast at h₁
+      linarith
+    · by_contra! h
+      have : k + 2 = 0 := by exact mul_eq_zero.mp h
+      rw [this] at h₁
+      norm_cast at h₁
+      linarith
+
+  have h'' (k : ZMod p) : (k + 1) * (k + 3) ≠ 0 := by
+    apply mul_ne_zero_iff.mpr
+    constructor
+    · by_contra! h
+      have : k + 1 = 0 := by exact mul_eq_zero.mp h
+      rw [this] at h₁
+      norm_cast at h₁
+      linarith
+    · by_contra! h
+      have : k + 3 = 0 := by exact mul_eq_zero.mp h
+      rw [this] at h₁
+      norm_cast at h₁
+      linarith
+
+  -- Notice that for all $k$, we have $k \cdot (k+1)^{-1} = (k \cdot (k+1))^{-1} = -2 \cdot k^{-1} + 2 \cdot (k+1)^{-1}$.
+
+  have h₁ (k : ZMod p) : k * (k + 1)⁻¹ = -2 * k⁻¹ + 2 * (k + 1)⁻¹ := by
+    have : k * (k + 1)⁻¹ = (-2) * k⁻¹ + 2 * (k + 1)⁻¹ := by
+      calc
+        _ = ((-2) * (k * (k + 1)))⁻¹ := by
+          rw [mul_inv_cancel₀]
+          apply h
+        _ = ((-2) * k * (k + 1))⁻¹ := by ring_nf
+        _ = _ := by
+          rw [mul_inv_mul (mul_ne_zero_iff.mpr (by constructor; linarith; linarith))]
+    exact this
+
+  -- We have $$-2 \cdot \sum_{k=1}^{p-2} k^{-1} + 2 \cdot \sum_{k=1}^{p-2} (k+1)^{-1} = -2 \cdot \sum_{k=1}^{p-2} k^{-1} + 2 \cdot \sum_{k=2}^{p-1} k^{-1} = -2 \cdot 1 + 2 \cdot 1 = -2 + 2 = 0.$$
+
+  have h₂ : -2 * ∑ k ∈ Finset.Icc 1 (p - 2), k⁻¹ + 2 * ∑ k ∈ Finset.Icc 1 (p - 2), (k + 1)⁻¹ = 0 := by
+    calc
+      _ = -2 * ∑ k ∈ Finset.Icc 1 (p - 2), k⁻¹ + 2 * ∑ k ∈ Finset.Icc 2 (p - 1), k⁻¹ := by
+        rw [Finset.sum_Icc_succ_top (by linarith), Finset.sum_Icc_succ_top (by linarith)]
+        rw [inv_add, inv_add]
+        congr <;> norm_num
+      _ = -2 * (∑ k ∈ Finset.Icc 1 (p - 2), k⁻¹) + 2 * (∑ k ∈ Finset.Icc 1 (p - 2), k⁻¹) := by
+        congr
+        rw [← Finset.sum_Icc_succ_top (by linarith)]
+        rw [← Finset.sum_Icc_succ_top (by linarith)]
+        rw [inv_add, inv_add]
+        congr <;> norm_num
+      _ = 0 := by ring
+
+  -- Since $-2 \cdot \sum_{k=1}^{p-2} k^{-1} + 2 \cdot \sum_{k=2}^{p-1} k^{-1} = 0$, we have $$\sum_{k=1}^{p-2} k^{-1} \cdot (k+1)^{-1} = \sum_{k=1}^{p-2} k^{-1} \cdot (-2) + \sum_{k=1}^{p-2} (k+1)^{-1} \cdot 2 = -2 \cdot \sum_{k=1}^{p-2} k^{-1} + 2 \cdot \sum_{k=2}^{p-1} k^{-1} = 0.$$
+
+  have h''' (k : ZMod p) : k * (k + 1)⁻¹ = -2 * k⁻¹ + 2 * (k + 1)⁻¹ := by exact h₁ k
+
+  rw [Finset.sum_congr rfl h''']
+  replace h'' : ∑ k ∈ Finset.Icc 1 (p - 2), (-2) * k⁻¹ + 2 * (k + 1)⁻¹ = 0 := by
+    rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_Icc, Finset.card_Icc]
+    simp
+    norm_num
+    exact Nat.Prime.two_le h₀
+
+  -- Since $p$ is a prime number, it is clear that $-2 \cdot \sum_{k=1}^{p-2} k^{-1} + 2 \cdot \sum_{k=1}^{p-2} (k+1)^{-1} \equiv -2 \cdot 1 + 2 \cdot 1 = 0 \pmod{p}$.
+
+  rw [← h₂]
+  simp
+
+  have : Fact (Nat.Prime p) := ⟨h₀⟩
+
+  -- It is easy to show that $\sum_{k=1}^{p-1} k^{-1} = 0$. We use the notation $\sum_{k=1}^{p-1} k^{-1}$ to mean $\sum_{k=1}^{p-2} k^{-1} + (p-1)^{-1}$.
+
+  have h'''' (k : ZMod p) : (p - 1) * k⁻¹ = -1 * k⁻¹ := by
+    calc
+      _ = (0 - 1) * k⁻¹ := by
+        rw [← Finset.sum_Icc_succ_top (by linarith)]
+        rw [Finset.sum_Icc_succ_top (by linarith)]
+        rw [inv_add]
+        simp
+        exact Nat.Prime.one_le h₀
+      _ = _ := by ring
+
+  -- We have $\sum_{k=1}^{p-1} k^{-1} = \sum_{k=1}^{p-2} k^{-1} + (p-1)^{-1} = \sum_{k=1}^{p-2} k^{-1} + (-1)^{-1} \cdot p^{-1} = \sum_{k=1}^{p-2} k^{-1} + (-1)^{-1} \cdot 0 = \sum_{k=1}^{p-2} k^{-1}.$
+
+  have h'''' (k : ZMod p) : (p - 1) * k⁻¹ = -1 * k⁻¹ := by exact h''''
+
+  rw [show p - 1 = (p - 1) by rfl, Finset.sum_eq_sum_Icc_succ_top (by linarith), h'''']
+  simp
+  norm_cast
+  rw [show p - 1 = p - 1 by rfl, ← mul_neg_one, mul_inv_cancel₀, neg_one_mul, mul_inv_cancel₀]
+  pick_goal 2
+  · rw [neg_add_cancel]
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · exact Nat.Prime.one_le h₀
+  · exact Nat.Prime.two_le h₀
+  · rfl
+
+```

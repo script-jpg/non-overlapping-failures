@@ -1,0 +1,57 @@
+-- A trivial lemma that $\log w / \log x$ implies $x^{\log w / \log x} = w$.
+  have logxw : x ^ (Real.log w / Real.log x) = w := by
+    rw [Real.log_div_log_eq_rpow, div_eq_iff_eq_mul, mul_comm, Real.log_rpow]
+   . exact (Nat.one_lt_iff_ne_zero.2 ht.1).trans hw
+   . exact ht.1
+   . exact (Nat.one_lt_iff_ne_zero.2 ht.1).trans hw
+  -- A trivial lemma that $\log w / \log y$ implies $y^{\log w / \log y} = w$.
+  have logyw : y ^ (Real.log w / Real.log y) = w := by
+    rw [Real.log_div_log_eq_rpow, div_eq_iff_eq_mul, mul_comm, Real.log_rpow]
+   . exact (Nat.one_lt_iff_ne_zero.2 ht.2.1).trans hw
+   . exact ht.2.1
+   . exact (Nat.one_lt_iff_ne_zero.2 ht.2.1).trans hw
+  -- A trivial lemma that $\log w / \log (x * y * z)$ implies $(x * y * z)^{\log w / \log (x * y * z)} = w$.
+  have logxyzw : (x * y * z) ^ (Real.log w / Real.log (x * y * z)) = w := by
+    rw [Real.log_div_log_eq_rpow, div_eq_iff_eq_mul, mul_comm, Real.log_rpow]
+   . exact (Nat.one_lt_iff_ne_zero.2 ht.2.2).trans hw
+   . exact ht.2.2
+   . exact (Nat.one_lt_iff_ne_zero.2 ht.2.2).trans hw
+  -- By assumption, we have $w = x ^ {24}$, $w = y ^ {40}$ and $w = (xyz) ^ {12}$.
+  have wxeq : w = x ^ 24 := by
+    rw [← h0]
+    exact (Real.log_rpow (Nat.one_lt_iff_ne_zero.2 ht.1) hw).symm
+  have yweq : w = y ^ 40 := by
+    rw [← h1]
+    exact (Real.log_rpow (Nat.one_lt_iff_ne_zero.2 ht.2.1) hw).symm
+  have xyzweq : w = (x * y * z) ^ 12 := by
+    rw [← h2]
+    exact (Real.log_rpow (Nat.one_lt_iff_ne_zero.2 ht.2.2) hw).symm
+  -- We have $w ^ 3 = (x ^ {24}) ^ 3$ so that
+  have two_eq : w ^ 3 = (x ^ 24) ^ 3 := by rw [← wxeq]
+  -- $w ^ 3 = x ^ {72}$.
+  rw [← Nat.pow_mul] at two_eq
+  -- We also have $w ^ 3 = (y ^ {40}) ^ 3$ so that
+  have three_eq : w ^ 3 = (y ^ 40) ^ 3 := by rw [← yweq]
+  -- $w ^ 3 = y ^ {120}$.
+  rw [← Nat.pow_mul] at three_eq
+  -- We have $w ^ 3 = (xyz) ^ {12}$ and so
+  have four_eq : w ^ 3 = (x * y * z) ^ 12 := by rw [← xyzweq]
+  -- $(xyz) ^ {12} = x ^ {12} y ^ {12} z ^ {12}$.
+  rw [mul_pow, mul_pow] at four_eq
+  -- We have $x ^ {72} = x ^ {12} y ^ {12} z ^ {12}$.
+  rw [← four_eq, ← two_eq, pow_right_inj₀] at hw
+  -- So $x ^ {60} = y ^ {12} z ^ {12}$.
+  simp at hw
+  -- We have $y ^ {120} = y ^ {12} z ^ {12}$.
+  rw [← three_eq, ← hw, pow_right_inj₀] at hw
+  -- So $y ^ {108} = z ^ {12}$.
+  simp at hw
+  -- We finally have $z ^ {12} = y ^ {108}$ and so $\log_z w = 108 \log_y w = 108 * 40 = 4320$.
+  rw [← hw, pow_right_inj₀] at hw
+  simp at hw
+  rw [logxw, logyw, logz, log_mul, log_mul, log_pow, log_pow, log_pow, hw]
+  norm_num
+  -- Justification for each condition for right-injectivity of exponentiation:
+  -- see above for all the `Nat.one_lt_iff_ne_zero` conditions.
+  all_goals exact (Nat.one_lt_iff_ne_zero.2 ht).trans hw
+```

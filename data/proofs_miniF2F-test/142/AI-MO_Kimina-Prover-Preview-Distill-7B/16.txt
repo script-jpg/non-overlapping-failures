@@ -1,0 +1,237 @@
+-- Let $p$ be a prime number and $k$ a natural number. Then, the number of factors of $p$ in $k!$ is given by
+  -- \[\sum_{i=1}^{\infty}{\left\lfloor\frac{k}{p^i}\right\rfloor}.\]
+  have h₀' (p k : ℕ) (hp : p.Prime) : (Nat.factorization k).p = ∑ i, (k / p ^ i).floor₊ := by
+    rw [Nat.factorization_eq_primeFactorsList_count _ hp]
+    have : Finset.image (fun x => p ^ x) (Finset.Ico 1 (Nat.log p k + 1)) = Finset.Ico (p ^ 1) (p ^ (Nat.log p k + 1)) := by
+      apply Finset.eq_of_subset_of_card_le
+      · intro a ha
+        simp only [Finset.mem_image, Finset.mem_Ico]
+        rcases ha with ⟨c, hc⟩
+        simp only [Finset.mem_Ico] at hc
+        refine ⟨?_,?_⟩
+        · exact Nat.one_le_pow (p := p) (c := c) (by simpa using hc.1)
+        · rw [←Nat.log_add_one_eq_of_lt (by simpa using hc.2)]
+          calc
+            _ ≤ p ^ c := by apply Nat.pow_le_pow_right; norm_num; simpa using hc.1
+            _ < _ := by apply Nat.pow_lt_pow_left; norm_num; exact hc.2
+      · apply Finset.card_le_card
+        simp only [Finset.mem_image, Finset.mem_Ico, Finset.card_Ico]
+        exact Nat.card_Ico_le_card_Ico _
+    rw [←Finset.sum_image]
+    · apply Finset.sum_congr rfl
+      intro a ha
+      simp only [Finset.mem_Ico] at ha
+      rw [←Nat.log_add_one_eq_of_lt (by simp [hp] at ha.2; linarith)]
+      simp only [Finset.mem_image, Finset.mem_Ico, Nat.log_prime_pow]
+      refine ⟨?_,?_⟩
+      · rw [←Nat.lt_pow_succ_iff_log_lt]
+        · calc _ < p ^ a := by apply Nat.pow_lt_pow_left; norm_num; exact ha.2
+          _ < _ := by apply Nat.pow_lt_pow_right; norm_num; simp [hp]
+        · apply Nat.one_lt_pow; norm_num; simp [hp]
+      · apply Nat.le_log_of_pow_le; norm_num; rw [Nat.pow_le_pow_iff_right (by simp [hp])]
+        exact ha.2
+    · intro x hx
+      simp only [Finset.mem_image, Finset.mem_Ico] at hx
+      rcases hx with ⟨a, ha⟩
+      simp only [Finset.mem_image, Finset.mem_Ico]
+      refine ⟨?_,?_⟩
+      · refine Nat.one_le_pow (p := p) (c := a) (by simpa using ha.1)
+        rw [←Nat.log_add_one_eq_of_lt (by simpa using ha.2)]
+        calc _ ≤ p ^ a := by apply Nat.pow_le_pow_left; norm_num; exact ha.1
+      · rw [←Nat.lt_pow_succ_iff_log_lt]
+        · apply Nat.pow_le_pow_right; norm_num; exact ha.2
+        · apply Nat.one_lt_pow; norm_num; simp [hp]
+    · apply Finset.image_subset
+      · intro a ha
+        simp only [Finset.mem_image, Finset.mem_Ico] at ha
+        rcases ha with ⟨c, hc⟩
+        simp only [Finset.mem_Ico] at hc
+        refine ⟨?_,?_⟩
+        · exact Nat.one_le_pow (p := p) (c := c) (by simpa using hc.1)
+        · rw [←Nat.log_add_one_eq_of_lt (by simpa using hc.2)]
+          calc
+            _ ≤ p ^ c := by apply Nat.pow_le_pow_right; norm_num; simpa using hc.1
+            _ < _ := by apply Nat.pow_lt_pow_left; norm_num; exact hc.2
+      · apply Finset.card_le_card
+        simp only [Finset.mem_image, Finset.mem_Ico, Finset.card_Ico]
+        exact Nat.card_Ico_le_card_Ico _
+    · rfl
+
+  -- Let $p$ be a prime number. Let $k$ be a natural number. Then, the number of factors of $p$ in $\prod_{i=1}^{k} i!$ is
+  -- \[\sum_{m=1}^{\infty}{\left(\sum_{i=1}^{\infty}{\left\lfloor\frac{m}{p^i}\right\rfloor}\right)}.\]
+  have h₁ (p k : ℕ) (hp : p.Prime) : ∑ m ∈ Finset.Icc 1 k, ∑ i, (m / p ^ i).floor₊ = ∑ i, (k / p ^ i).floor₊ := by
+    -- This is an application of Fubini's theorem.
+    calc _ = ∑ m ∈ Finset.Icc 1 k, ∑ i, (m / p ^ i).floor₊ := by rw [Finset.sum_eq_sum_image]; rfl; apply Finset.card_image_le
+         _ = ∑ i, ∑ m ∈ Finset.Icc 1 k, (m / p ^ i).floor₊ := by rw [Finset.sum_comm]
+         _ = ∑ i, (k / p ^ i).floor₊ := by
+            -- We can switch the summation and the limit because the expression is non-singular.
+            rw [Finset.sum_congr rfl]
+            intro a ha
+            rw [Finset.sum_congr rfl]
+            intro x hx
+            have (a x : ℕ) : (a / p ^ x).floor₊ = (k / p ^ x).floor₊ := by
+              rw [Nat.floor_eq_iff, Nat.floor_eq_iff]
+              apply Nat.div_add_mod_eq_of_lt
+              · calc _ < p ^ x := by apply Nat.pow_lt_pow_left; norm_num; exact ha.2
+                _ < _ := by apply Nat.pow_lt_pow_right; norm_num; rw [Nat.pow_le_pow_iff_right (by simp [hp])]
+                  exact ha.1.2
+              · calc _ ≤ p ^ x - 1 := by apply Nat.sub_one_lt_of_le; apply Nat.pow_le_pow_right; norm_num; exact ha.2
+                _ ≤ _ := by simp
+            simpa only [Nat.div_one, this, Finset.mem_Icc, Finset.mem_image]
+            simp only [Finset.mem_image, Finset.mem_Icc, Finset.card_Icc]
+            refine ⟨?_,?_⟩
+            · rw [Nat.le_sub_one_iff_lt]
+              calc _ < p ^ x := by apply Nat.pow_lt_pow_left; norm_num; exact ha.2
+              _ < _ := by apply Nat.pow_lt_pow_right; norm_num; rw [Nat.pow_le_pow_iff_right (by simp [hp])]
+                exact ha.1.2
+            · apply Nat.succ_le_succ
+              exact Nat.le_trans (Nat.le_of_pred_lt ha.1.1) ha.1.2
+
+  -- Let $p$ be a prime number. Then, the number of factors of $p$ in $\prod_{i=1}^k i!$ is equal to
+  -- \[\sum_{m=1}^k{\left(\sum_{i=1}^\infty{\left\lfloor\frac{m}{p^i}\right\rfloor}\right)} = \sum_{i=1}^\infty{\left\lfloor\frac{k}{p^i}\right\rfloor}.\]
+  have h₁' (p k : ℕ) (hp : p.Prime) : ∑ m ∈ Finset.Icc 1 k, ∑ i, (m / p ^ i).floor₊ = ∑ i, (k / p ^ i).floor₊ := by
+    rw [Finset.sum_congr rfl]
+    intro a ha
+    rw [Finset.sum_congr rfl]
+    intro x hx
+    have (a x : ℕ) : (a / p ^ x).floor₊ = (k / p ^ x).floor₊ := by
+      rw [Nat.floor_eq_iff, Nat.floor_eq_iff]
+      apply Nat.div_add_mod_eq_of_lt
+      · calc _ < p ^ x := by apply Nat.pow_lt_pow_left; norm_num; exact ha.2
+        _ < _ := by apply Nat.pow_lt_pow_right; norm_num; rw [Nat.pow_le_pow_iff_right (by simp [hp])]
+          exact ha.1.2
+      · calc _ ≤ p ^ x - 1 := by apply Nat.sub_one_lt_of_le; apply Nat.pow_le_pow_right; norm_num; exact ha.2
+        _ ≤ _ := by simp
+    simpa only [Nat.div_one, this, Finset.mem_Icc, Finset.mem_image]
+    simp only [Finset.mem_image, Finset.mem_Icc, Finset.card_Icc]
+    refine ⟨?_,?_⟩
+    · rw [Nat.le_sub_one_iff_lt]
+      calc _ < p ^ x := by apply Nat.pow_lt_pow_left; norm_num; exact ha.2
+      _ < _ := by apply Nat.pow_lt_pow_right; norm_num; rw [Nat.pow_le_pow_iff_right (by simp [hp])]
+        exact ha.1.2
+    · apply Nat.succ_le_succ
+      exact Nat.le_trans (Nat.le_of_pred_lt ha.1.1) ha.1.2
+
+  -- Let $S$ be the set of perfect squares that are divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  -- Let $p$ be a prime number. Let $k$ be a natural number. Then, the number of factors of $p$ in $k^2$ is given by
+  -- \[2 \cdot v_p(k!) = 2 \cdot \sum_{i=1}^\infty{\left\lfloor\frac{k}{p^i}\right\rfloor}.\]
+  have h₂ (p k : ℕ) (hp : p.Prime) : (Nat.factorization (k!)).p = 2 * (∑ i, (k / p ^ i).floor₊) := by
+    have := h₀' p k hp
+    convert this
+    · rw [Nat.factorization_eq_primeFactorsList_count _ hp, ←Finset.sum_mul]
+      apply Finset.sum_congr rfl
+      intro a ha
+      simp only [Finset.mem_Ico] at ha
+      rw [Finset.sum_const]
+      · simp only [Finset.mem image, Finset.mem_Ico, Nat.log_prime_pow]
+        refine ⟨?_,?_⟩
+        · rw [←Nat.lt_pow_succ_iff_log_lt]
+          · calc _ < p ^ a := by apply Nat.pow_lt_pow_left; norm_num; exact ha.2
+            _ < _ := by apply Nat.pow_lt_pow_right; norm_num; simp [hp]
+          · apply Nat.one_lt_pow; norm_num; simp [hp]
+        · apply Nat.le_log_of_pow_le; norm_num; rw [Nat.pow_le_pow_iff_right (by simp [hp])]
+          exact ha.2
+      · simp [hp]
+    · simp [hp]
+
+  -- Let $p$ be a prime number. Let $k$ be a natural number. Then, the number of factors of $p$ in $\prod_{i=1}^k i^2$ is
+  -- \[\sum_{m=1}^k{2 \cdot \left(\sum_{i=1}^\infty{\left\lfloor\frac{m}{p^i}\right\rfloor}\right)} = \sum_{i=1}^\infty{2 \cdot \left\lfloor\frac{k}{p^i}\right\rfloor}.\]
+  have h₂' (p k : ℕ) (hp : p.Prime) : ∑ m ∈ Finset.Icc 1 k, (Nat.factorization (m!)).p = 2 * ∑ i, (k / p ^ i).floor₊ := by
+    calc _ = ∑ m ∈ Finset.Icc 1 k, 2 * (∑ i, (m / p ^ i).floor₊) := by
+        apply Finset.sum_congr rfl
+        intro a ha
+        rw [h₂ p a hp]
+      _ = _ := by
+        nth_rewrite 2 [←Finset.sum_mul]
+        apply Finset.sum_congr rfl
+        intro x hx
+        simp only [Finset.mem_Icc] at hx
+        rw [Finset.sum_const]
+        · simp only [Finset.mem_image, Finset.mem_Icc, Nat.log_prime_pow]
+          refine ⟨?_,?_⟩
+          · rw [←Nat.lt_pow_succ_iff_log_lt]
+            · calc _ < p ^ x := by apply Nat.pow_lt_pow_left; norm_num; exact hx.2
+              _ < _ := by apply Nat.pow_lt_pow_right; norm_num; simp [hp]
+            · apply Nat.one_lt_pow; norm_num; simp [hp]
+          · apply Nat.le_log_of_pow_le; norm_num; rw [Nat.pow_le_pow_iff_right (by simp [hp])]
+            exact hx.2
+        · simp [hp]
+
+  -- Let $S$ be the set of perfect squares that are divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  -- We can see that $S$ is the set of perfect squares whose prime factorization is such that the exponent of each prime number
+  -- is at most the number of times this prime appears as a factor in the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  have h₃ : S = {k | 1 ≤ k ∧ k * k ∣ ∏ i in Finset.Icc 1 9, i!} := by
+    ext k
+    simp only [Set.mem_setOf_eq, Set.mem_image, Set.mem_Icc, and_imp]
+    constructor
+    · intro h
+      rw [h.2]
+      exact ⟨h.1, h₀' k _ h.2.1⟩
+    · intro h
+      rw [h₀' k _ h.1]
+      exact ⟨h.1, h.2⟩
+
+  -- We can alternatively describe the set $S$ as the set of perfect squares whose prime factorization is such that
+  -- the exponent of each prime number is at most $2 \cdot \sum_{i=1}^{\infty}{\left\lfloor\frac{9}{p^i}\right\rfloor}$.
+  have h₃' (k : ℕ) : k ∈ S ↔ 1 ≤ k ∧ (∀ p, p.Prime → (Nat.factorization k).p ≤ 2 * ∑ i, (9 / p ^ i).floor₊) := by
+    constructor
+    · intro hk
+      rw [h₃] at hk
+      simpa using hk.2
+    · intro hk
+      rw [h₃]
+      refine ⟨hk.1,?_⟩
+      intro p hp
+      rcases le_or_gt (Nat.factorization k).p 0 with h | h
+      · simp [h]
+      apply le_trans h
+      have := h₂' p 9 hp
+      linarith
+
+  -- We can alternatively describe the set $S$ as the set of perfect squares whose prime factorization is such that
+  -- the exponent of each prime number is at most $\sum_{i=1}^{\infty}{\left\lfloor\frac{18}{p^i}\right\rfloor}$.
+  have h₄ (k : ℕ) : k ∈ S ↔ 1 ≤ k ∧ (∀ p, p.Prime → (Nat.factorization k).p ≤ ∑ i, (18 / p ^ i).floor₊) := by
+    constructor
+    · intro hk
+      rw [h₃'] at hk
+      simpa using hk.2
+    · intro hk
+      rw [h₃']
+      refine ⟨hk.1,?_⟩
+      intro p hp
+      rcases le_or_gt (Nat.factorization k).p 0 with h | h
+      · simp [h]
+      apply le_trans h
+      have := h₀' p 9 hp
+      linarith
+
+  -- Then, the cardinality of $S$ is the product of the number of choices for each prime number.
+  -- For each prime number $p$, there are $2 \cdot \sum_{i=1}^{\infty}{\left\lfloor\frac{9}{p^i}\right\rfloor} + 1$
+  -- possible values for the exponent of $p$ in the prime factorization of a perfect square divisor of the product
+  -- $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  have h₅ : (S.card : ℝ) = ∏ p ∈ Finset.Icc 1 9, (2 * ∑ i, (18 / p ^ i).floor₊ + 1) := by
+    rw [h₄]
+    apply Set.ncard_eq_of_bijective
+    · intro x hx
+      rw [h₃']
+      refine ⟨?_,?_⟩
+      · linarith
+      intro p hp
+      rcases le_or_gt (Nat.factorization x).p 0 with h | h
+      · simp [h]
+      apply le_trans h
+      have := h₀' p 9 hp
+      linarith
+    · intro n hn
+      use n
+      simp only [Set.mem_setOf_eq, h₃', ge_iff_le]
+      have hn := hn (n.factorization n) n.primeFactorsList
+      refine ⟨?_,?_⟩
+      · simp only [Nat.factorization_eq_primeFactorsList_count, Finsupp.coe_add, Finsupp.coe_smul,
+        nsmul_eq_mul, Nat.cast_mul, Nat.cast_ofNat,  one_mul, Finsupp.coe_smul, one_smul]
+        suffices h : n.factorization n ∉ n.primeFactorsList by
+          contradiction
+        intro h
+        simpa using h
+      · intro p hp
+        rc

@@ -1,0 +1,55 @@
+have : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+
+  -- Start by collecting a few facts we will need.
+  have : n.factorial ∣ (n + 2).factorial := by
+    apply Nat.factorial_dvd_factorial
+    omega
+
+  have : n.factorial ∣ (n + 1).factorial := by
+    apply Nat.factorial_dvd_factorial
+    omega
+
+  have : 0 < n.factorial := by
+    exact Nat.factorial_pos n
+
+  have : 0 < (n + 1).factorial := by
+    exact Nat.factorial_pos (n + 1)
+
+  have : 0 < (n + 2).factorial := by
+    exact Nat.factorial_pos (n + 2)
+
+  have : n.factorial ≤ (n + 2).factorial := by
+    omega
+
+  -- Let's rewrite $(n+2)!$ and $(n+1)!$ in terms of $n!.$
+  rw [Nat.factorial_succ, Nat.factorial_succ]
+
+  -- Simplify the expression.
+  field_simp
+
+  -- Let's analyze the result: \[ \frac{(n+2)!-(n+1)!}{n!}
+  -- = \frac{(n+2)(n+1)n! - (n+1)n!}{n!} = (n+2)(n+1) - (n+1) = (n+1)(n+2-1) = n(n+2)
+  have : ((n + 2).factorial - (n + 1).factorial) / n.factorial = n * (n + 2) := by
+    simp [Nat.factorial_succ]
+    rw [Nat.mul_sub, Nat.sq_sub_sq]
+    ring
+    -- Show n + 1 ≠ 0
+    rw [show n + 1 = (n - 1 + 2) by omega, Nat.sub_add_cancel]
+    exact Nat.Prime.ne_zero this
+    -- Show n + 2 ≠ 0
+    linarith
+
+  -- So we want to show that n(n+2) is a perfect square.
+  rw [this]
+
+  -- For this, it suffices to show that $n(n+2)$ is a perfect square.
+  have : ∃ x : ℕ, x ^ 2 = n * (n + 2) := by
+    use n + 1
+    rw [Nat.add_sub_cancel, sq]
+    linarith
+
+  -- Let's analyze the result: \[ n(n+2) = (n+1)^2 - 1 = x^2 \]
+  -- for some integer $x$. This is equivalent to  $x^2 = (n+1)^2 - 1$
+  -- or  $x^2 = n^2 + 2n + 1 - 1 = n^2 + 2n = n(n+2)$
+  rwa [show n * (n + 2) = (n + 1)^2 - 1 by linarith] at this
+```

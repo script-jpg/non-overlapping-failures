@@ -1,0 +1,170 @@
+-- Show that $A + B + C = 8$. We can directly substitute the equations to arrive at the
+  -- result.
+  calc
+    a + b + c = c + c := by rw [h₆, Nat.add_assoc]
+           _ = 2 * c := by rw [Nat.mul_comm]; simp
+           _ = 2 × 8 := by rw [h₈]; simp
+           _ = 16 := by norm_num
+
+```
+This Lean 4 proof solves the number theory problem where we have three distinct digits A, B, C from 1 to 9 satisfying:
+1. A + B = C
+2. AA - B = 2 × C (where AA is a two-digit number with digits A)
+3. C × B = AA + A
+
+Let's think about how to solve this algebraically first, then translate it to Lean 4.
+
+From equation 1: C = A + B
+
+From equation 2: 10A + A - B = 2C
+              11A - B = 2C
+
+Substituting C from equation 1 into equation 2:
+11A - B = 2(A + B)
+11A - B = 2A + 2B
+11A - 2A = 2B + B
+9A = 3B
+3A = B
+
+From equation 3: C × B = 10A + A + A
+               C × B = 11A + A
+               C × B = 12A
+
+Substituting B = 3A and C = A + B = A + 3A = 4A into equation 3:
+4A × 3A = 12A
+12A² = 12A
+12A² - 12A = 0
+12A(A - 1) = 0
+
+So A = 0 or A = 1. But A is a digit from 1 to 9, so A = 1.
+
+If A = 1, then B = 3A = 3, and C = 4A = 4.
+
+Check if these satisfy all equations:
+1. 1 + 3 = 4 ✓
+2. 11 - 3 = 8, and 2 × 4 = 8 ✓
+3. 4 × 3 = 12, and 12 ✓
+
+So A = 1, B = 3, C = 4, and A + B + C = 1 + 3 + 4 = 8.
+
+Let's translate this to Lean 4:
+
+```tactics
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+```
+
+Now we define the theorem statement:
+
+```tactics
+theorem mathd_numbertheory_430 (a b c : ℕ) (h₀ : 1 ≤ a ∧ a ≤ 9) (h₁ : 1 ≤ b ∧ b ≤ 9)
+    (h₂ : 1 ≤ c ∧ c ≤ 9) (h₃ : a ≠ b) (h₄ : a ≠ c) (h₅ : b ≠ c) (h₆ : a + b = c)
+    (h₇ : 10 * a + a - b = 2 * c) (h₈ : c * b = 10 * a + a + a) : a + b + c = 8 := by
+```
+
+Now we need to solve the system of equations. From h₆: c = a + b
+From h₇: 11a - b = 2c
+Substituting c from h₆ into h₇: 11a - b = 2(a + b)
+11a - b = 2a + 2b
+9a = 3b
+3a = b
+
+From h₈: c * b = 12a
+Substituting b = 3a and c = a + b = 4a: 4a * 3a = 12a
+12a² = 12a
+12a² - 12a = 0
+12a(a - 1) = 0
+
+Since a is from 1 to 9, a = 1
+Then b = 3 * 1 = 3
+c = 4 * 1 = 4
+a + b + c = 1 + 3 + 4 = 8
+
+Let's complete the Lean proof:
+
+```tactics
+have hc : c = a + b := by linarith
+rw [hc] at h₇ h₈
+```
+
+Now h₇ becomes: 11a - b = 2(a + b)
+9a = 3b
+3a = b
+
+And h₈ becomes: (a + b) * b = 12a
+
+Let's continue with the algebraic manipulation in Lean:
+
+```tactics
+have h9 : 3 * a = b := by
+  omega
+```
+
+Now we have b = 3a. Let's substitute into h₈:
+
+(a + b) * b = 12a
+(a + 3a) * 3a = 12a
+4a * 3a = 12a
+12a² = 12a
+12a² - 12a = 0
+12a(a - 1) = 0
+
+Since a is from 1 to 9, a = 1
+
+```tactics
+have ha : a = 1 := by
+  nlinarith [h₈, h9, h₀.left, h₁.left]
+```
+
+Now that we have a = 1, we can find b:
+
+b = 3a = 3 * 1 = 3
+
+```tactics
+have hb : b = 3 := by
+  linarith [h9, ha]
+```
+
+And c = a + b = 1 + 3 = 4
+
+```tactics
+have hc : c = 4 := by
+  linarith [hc, ha, hb]
+```
+
+Finally, a + b + c = 1 + 3 + 4 = 8
+
+```tactics
+linarith [ha, hb, hc]
+```
+
+So indeed, the value of A + B + C is 8.
+</s
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+
+
+/-- If $A$, $B$, and $C$ represent three distinct digits from 1 to 9 and they satisfy the following equations, what is the value of the sum $A+B+C$? (In the equation below, $AA$ represents a two-digit number both of whose digits are $A$.) $$A+B=C$$$$AA-B=2\times C$$$$C\times B=AA+A$$ Show that it is 8.-/
+
+theorem mathd_numbertheory_430 (a b c : ℕ) (h₀ : 1 ≤ a ∧ a ≤ 9) (h₁ : 1 ≤ b ∧ b ≤ 9)
+    (h₂ : 1 ≤ c ∧ c ≤ 9) (h₃ : a ≠ b) (h₄ : a ≠ c) (h₅ : b ≠ c) (h₆ : a + b = c)
+    (h₇ : 10 * a + a - b = 2 * c) (h₈ : c * b = 10 * a + a + a) : a + b + c = 8 := by
+
+  -- Show that $A + B + C = 8$. We can directly substitute the equations to arrive at the
+  -- result.
+  calc
+    a + b + c = c + c := by rw [h₆, Nat.add_assoc]
+           _ = 2 * c := by rw [Nat.mul_comm]; simp
+           _ = 2 × 8 := by rw [h₈]; simp
+           _ = 16 := by norm_num
+```

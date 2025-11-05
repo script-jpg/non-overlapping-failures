@@ -1,0 +1,273 @@
+-- Notice that if $f(k) < f(N)$ for some $k$, then $f(k^2) < f(N^2)$, since
+  -- $$f(k^2) = \frac{d(k^2)}{\sqrt[3]{k^2}} = \frac{2d(k)}{k^{2/3}} = 2\left(\frac{d(k)}{\sqrt[3]{k}}\right) = 2f(k) < 2f(N) = f(N^2).$$
+
+  -- This means that if $(k_1,k_2,\dots,k_m)$ are the factors of $N$ other than $1$ and $N$ itself, then
+  -- $$f(N^2) = \frac{d(N^2)}{\sqrt[3]{N^2}} = \frac{2d(N) + m + 2}{N^{2/3}} = 2\left(\frac{d(N)}{\sqrt[3]{N}}\right) + \frac{m + 2}{N^{2/3}} = 2f(N) + \frac{m + 2}{N^{2/3}} > 2f(N).$$
+
+  -- So in particular, if $f(k) < f(N)$ for some $k \neq 1,N$, then $f(k^2) < f(N^2)$, which implies
+  -- $$f(k) < f(N) < f(N^2) < f(k^2),$$
+
+  -- We have that $f(360) < f(361)$, $f(361) < f(360^2)$, and $f(360^2) < f(361^2)$.
+
+  have h2 (x : ℕ) : 0 < x → (Nat.divisors x).card = x.gcdCount := by
+    intro hx
+    rw [←Nat.gcdCount_eq_divisorCount hx]
+    congr
+    ext d
+    rw [Nat.mem_divisors]
+    constructor
+    · exact Nat.gcd_dvd_right x d
+    · exact Nat.gcd_dvd_left x d
+
+  -- Let $p$ be a prime number. We have that
+  -- $$f(p) = \frac{d(p)}{\sqrt[3]{p}} = \frac{2}{p^{1/3}} < \frac{2}{N^{1/3}} = \frac{d(N)}{\sqrt[3]{N}} = f(N)$$
+
+  -- because $N$ is not prime. This shows that $N$ is not prime.
+  have h3 (N p : ℕ) (hN : 2 ≤ N) (hp : Nat.Prime p) : ¬ f p < f N := by
+    have hp3 := Nat.Prime.two_le hp
+    have h5 : p ^ 2 > N := by
+      by_contra! h5
+      have h6 : p ^ 2 ≤ N := by linarith only [h5]
+      have h7 : p ≤ N := by exact Nat.le_of_pow_le_pow_left h6 hp2
+      have h8 : f N < f p := by
+        apply h₁
+       . exact Nat.Prime.ne_zero hp
+       . exact Ne.symm (NeZero.ne' p)
+       . exact h7
+       . exact h6
+      linarith only [h8, hp3]
+    have h4 : d p = 2 := by
+      rw [Nat.divisors_prime hp]
+      simp
+      rfl
+    have h6 : f p < f N := by
+      rw [h₀ p (Nat.Prime.ne_zero hp), h₀ N hN]
+      rw [h4]
+      suffices Nat.sqrt p < N / 2 by
+        calc
+          2 * (p ^ (3 : ℝ)⁻¹) = 2 / p ^ ((3 : ℝ)⁻¹) * p ^ ((3 : ℝ)⁻¹) := by field_simp
+          _ < N ^ (3 : ℝ)⁻¹ * p ^ ((3 : ℝ)⁻¹) := by
+            apply (mul_lt_mul_iff_of_pos_right (by positivity)).mpr
+            rw [←Real.rpow_natCast, ←Real.rpow_mul (by positivity)]
+            apply (Real.rpow_lt_rpow_iff (by positivity) (by positivity) (by norm_num)).mpr
+            linarith only [h6]
+            norm_num
+            positivity
+          _ = N ^ (3 : ℝ)⁻¹ * (p ^ (3 : ℝ)⁻¹) := by field_simp
+          _ = N ^ (3 : ℝ)⁻¹ * ((3 : ℝ)⁻¹) := by
+            rw [Nat.cast_coe, ←Real.rpow_natCast, ←Real.rpow_mul (by positivity)]
+            rw [Real.rpow_inv_rpow (by positivity) (by norm_num)]
+            norm_num
+            positivity
+          _ = (N * (3 : ℝ)⁻¹) ^ (3 : ℝ)⁻¹ := by
+            rw [←Real.rpow_mul (by positivity), ←Real.rpow_natCast, ←Real.rpow_mul (by norm_num)]
+            ring
+            norm_num
+            positivity
+      apply Real.rpow_lt_rpow
+     . norm_num
+     . norm_num
+     . calc
+          0 < N / 2 - 1 := by
+            linarith only [h5]
+          _ = (N - 2) / 2 := by
+            ring_nf
+          _ ≤ (N - 1) / 2 := by
+            apply Nat.sub_le_sub_right
+            simp
+            exact hN
+      linarith only [h5]
+    apply lt_of_le_of_lt (h₁ _?_)
+   . exact Nat.Prime.ne_zero hp
+   . exact Ne.symm (NeZero.ne' p)
+   . exact id (Ne.symm (NeZero.ne' N))
+   . exact h5
+
+  -- Let $p$ be a prime number such that $p < N$. We have that
+  -- $$f(p) = \frac{d(p)}{\sqrt[3]{p}} = \frac{2}{p^{1/3}} > \frac{2}{N^{1/3}} = \frac{d(N)}{\sqrt[3]{N}} = f(N)$$
+
+  -- because $N$ is not prime. This shows that $N$ is not prime.
+  have h3' (N p : ℕ) (hN : 2 ≤ N) (hp : Nat.Prime p) : ¬ f N < f p := by
+    have hp3 := Nat.Prime.two_le hp
+    have h5 : N ^ 2 > p ^ 2 := by
+      by_contra! h5
+      have h6 : N ^ 2 ≤ p ^ 2 := by linarith only [h5]
+      have h7 : N ≤ p := by exact Nat.le_of_pow_le_pow_left h6 (by norm_num)
+      have h8 : f p < f N := by
+        apply h₁
+       . exact Nat.Prime.ne_zero hp
+       . exact Ne.symm (NeZero.ne' p)
+       . exact h7
+       . exact h6
+      linarith only [h8, hp3]
+    have h4 : d N = 2 := by
+      rw [Nat.divisors_prime hp]
+      simp
+      rfl
+    have h6 : f N < f p := by
+      rw [h₀ N hN, h₀ p (Nat.Prime.ne_zero hp), h4]
+      suffices Nat.sqrt N < p / 2 by
+        calc
+          2 * (N ^ (3 : ℝ)⁻¹) = 2 / N ^ ((3 : ℝ)⁻¹) * N ^ ((3 : ℝ)⁻¹) := by field_simp
+          _ < p ^ (3 : ℝ)⁻¹ * N ^ ((3 : ℝ)⁻¹) := by
+            apply (mul_lt_mul_iff_of_pos_right (by positivity)).mpr
+            rw [←Real.rpow_natCast, ←Real.rpow_mul (by positivity)]
+            apply (Real.rpow_lt_rpow_iff (by positivity) (by positivity) (by norm_num)).mpr
+            linarith only [h6]
+            norm_num
+            positivity
+          _ = p ^ (3 : ℝ)⁻¹ * (N ^ (3 : ℝ)⁻¹) := by field_simp
+          _ = p ^ (3 : ℝ)⁻¹ * ((p ^ (3 : ℝ)⁻¹) ^ (3 : ℝ)⁻¹) := by
+            rw [Nat.cast_coe, ←Real.rpow_natCast, ←Real.rpow_mul (by norm_num)]
+            rw [Real.rpow_inv_rpow (by positivity) (by norm_num)]
+            norm_num
+            positivity
+          _ = (p * (3 : ℝ)⁻¹) ^ (3 : ℝ)⁻¹ := by
+            rw [←Real.rpow_mul (by positivity), ←Real.rpow_natCast, ←Real.rpow_mul (by norm_num)]
+            ring
+            norm_num
+            positivity
+      apply Real.rpow_lt_rpow
+     . norm_num
+     . norm_num
+     . calc
+          0 < p / 2 - 1 := by
+            linarith only [h5]
+          _ = (p - 2) / 2 := by
+            ring_nf
+          _ ≤ (p - 1) / 2 := by
+            apply Nat.sub_le_sub_right
+            simp
+            exact Nat.Prime.two_le hp
+      linarith only [h5]
+    apply lt_of_le_of_lt (h₁ _?_)
+   . exact Nat.Prime.ne_zero hp
+   . exact Ne.symm (NeZero.ne' N)
+   . exact h5
+   . exact hN
+
+  -- Let $p$ be a prime number such that $p < N$. We have that
+  -- $$f(p^2) = \frac{d(p^2)}{\sqrt[3]{p^2}} = \frac{3}{p^{2/3}} < \frac{3}{N^{2/3}} < \frac{2}{N^{1/3}} = \frac{d(N)}{\sqrt[3]{N}} = f(N)$$
+
+  -- This shows that $N$ is not the second largest prime.
+  have h4 (N p : ℕ) (hN : 2 ≤ N) (hp : Nat.Prime p) (h5 : p < N) : ¬ f p < f N := by
+    have hp3 := Nat.Prime.two_le hp
+    have h6 : p ^ 2 < N ^ 2 := by
+      exact Nat.pow_lt_pow_left h5 2
+    have h7 : p ^ 2 < N ^ 2 := by exact h6
+    apply h3' N p
+   . exact hN
+   . exact hp
+   . exact Nat.Prime.two_le hp
+   . exact h7
+
+  -- Let $p$ be a prime number such that $p > N$. We have that
+  -- $$f(p^2) = \frac{d(p^2)}{\sqrt[3]{p^2}} = \frac{3}{p^{2/3}} > \frac{3}{N^{2/3}} > \frac{2}{N^{1/3}} = \frac{d(N)}{\sqrt[3]{N}} = f(N)$$
+
+  -- This shows that $N$ is not the second smallest prime.
+  have h4' (N p : ℕ) (hN : 2 ≤ N) (hp : Nat.Prime p) (h5 : N < p) : f N < f p := by
+    have hp3 := Nat.Prime.two_le hp
+    have h6 : N ^ 2 < p ^ 2 := by
+      exact Nat.pow_lt_pow_left (by linarith only [h5]) 2
+    have h7 : N ^ 2 < p ^ 2 := by exact h6
+    apply h3 p N
+   . exact Nat.Prime.ne_zero hp
+   . exact hp
+   . exact hN
+   . exact h7
+
+  -- Let $p$ be a prime number such that $p > N$. We have that
+  -- $$f(p) = \frac{d(p)}{\sqrt[3]{p}} = \frac{2}{p^{1/3}} > \frac{2}{N^{1/3}} = \frac{d(N)}{\sqrt[3]{N}} = f(N)$$
+
+  -- This shows that $N$ is not the smallest prime.
+  have h5 (N p : ℕ) (hN : 2 ≤ N) (hp : Nat.Prime p) (h6 : N < p) : ¬ f N < f p := by
+    have hp3 := Nat.Prime.two_le hp
+    have h7 : f p > f N := by
+      rw [h₀ p (Nat.Prime.ne_zero hp), h₀ N hN]
+      rw [Nat.divisors_prime hp]
+      simp
+      suffices p ^ (3 : ℝ)⁻¹ < 2 * (N ^ (3 : ℝ)⁻¹) by
+        calc
+          2 * (p ^ (3 : ℝ)⁻¹) = (2 ^ (3 : ℝ)⁻¹) * p ^ (3 : ℝ)⁻¹ := by
+            rw [←Real.rpow_mul (by positivity), mul_one_div, Real.rpow_div]
+            ring
+            norm_num
+            positivity
+          _ < (2 ^ (3 : ℝ)⁻¹) * (N ^ (3 : ℝ)⁻¹) := by
+            apply mul_lt_mul_of_pos_left
+           . exact h7
+           . exact Real.rpow_pos_of_pos (by positivity) (3⁻¹)
+          _ = 2 * (N ^ (3 : ℝ)⁻¹) := by
+            rw [mul_comm, mul_comm (3⁻¹), ←Real.rpow_mul (by positivity)]
+            norm_num
+      apply Real.rpow_lt_rpow
+     . norm_num
+     . norm_num
+     . calc
+          0 < N ^ (3 : ℝ)⁻¹ := by
+            apply Real.rpow_pos_of_pos
+            exact Nat.cast_pos'.mpr hN
+          _ < p ^ (3 : ℝ)⁻¹ := by
+            apply Real.rpow_lt_rpow
+           . exact Nat.cast_pos'.mpr hN
+           . exact le_of_lt (Nat.Prime.one_lt hp)
+           . exact h6
+     . exact le_of_lt (Nat.Prime.one_lt hp)
+    apply lt_of_le_of_lt (h₁ _?_)
+   .. exact Nat.Prime.ne_zero hp
+   .. exact Ne.symm (NeZero.ne' p)
+   .. exact id (Ne.symm (NeZero.ne' N))
+   .. exact h6
+
+  -- Let $p$ be a prime number such that $N < p < N^2$. We have that
+  -- $$f(p) = \frac{d(p)}{\sqrt[3]{p}} = \frac{2}{p^{1/3}} < \frac{2}{N^{1/3}} = \frac{d(N)}{\sqrt[3]{N}} = f(N)$$
+
+  -- This shows that $N$ is the smallest number with this property.
+  have h5' (N p : ℕ) (hN : 2 ≤ N) (hp : Nat.Prime p) (h6 : N < p) (h7 : p < N ^ 2) : f N < f p := by
+    have hp3 := Nat.Prime.two_le hp
+    have h8 : f p > f N := by
+      rw [h₀ p (Nat.Prime.ne_zero hp), h₀ N hN]
+      rw [Nat.divisors_prime hp]
+      simp
+      suffices p ^ (3 : ℝ)⁻¹ < 2 * (N ^ (3 : ℝ)⁻¹) by
+        calc
+          2 * (p ^ (3 : ℝ)⁻¹) = 2 / p ^ ((3 : ℝ)⁻¹) * p ^ ((3 : ℝ)⁻¹) := by field_simp
+          _ < 2 / N ^ ((3 : ℝ)⁻¹) * p ^ ((3 : ℝ)⁻¹) := by
+            apply mul_lt_mul_of_pos_right
+           . apply (mul_lt_mul_iff_of_pos_right (by positivity)).mpr
+              rw [←Real.rpow_natCast, ←Real.rpow_mul (by positivity)]
+              apply (Real.rpow_lt_rpow_iff (by positivity) (by positivity) (by norm_num)).mpr
+              exact h7
+              norm_num
+              positivity
+           . apply Real.rpow_pos_of_pos
+              exact Nat.cast_pos'.mpr hN
+          _ = 2 * (N ^ (3 : ℝ)⁻¹) := by
+            rw [←mul_assoc, mul_comm, ←Real.rpow_mul (by positivity)]
+            norm_num
+            rw [←Real.rpow_natCast]
+            positivity
+      apply Real.rpow_lt_rpow
+     . norm_num
+     . norm_num
+     . calc
+          0 < N ^ (3 : ℝ)⁻¹ := by
+            apply Real.rpow_pos_of_pos
+            exact Nat.cast_pos'.mpr hN
+          _ < p ^ (3 : ℝ)⁻¹ := by
+            apply Real.rpow_lt_rpow
+           . exact Nat.cast_pos'.mpr hN
+           . exact le_of_lt (Nat.Prime.one_lt hp)
+           . exact h6
+     . exact le_of_lt (Nat.Prime.one_lt hp)
+    apply lt_of_le_of_lt (h₁ _?_)
+   .. exact Nat.Prime.ne_zero hp
+   .. exact Ne.symm (NeZero.ne' p)
+   .. exact id (Ne.symm (NeZero.ne' N))
+   .. exact h6
+
+  -- Let $p$ be a prime number such that $N^2 < p$. We have that
+  -- $$f(p) = \frac{d(p)}{\sqrt[3]{p}} = \frac{2}{p^{1/3}} < \frac{2}{N^{2/3}} < \frac{3}{N^{2/3}} = \frac{d(N^2)}{\sqrt[3]{N^2}} = f(N^2)$$
+
+  -- This shows that $N$ is not the third smallest prime.
+  have h6 (N p : ℕ) (hN

@@ -1,0 +1,128 @@
+-- $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 < \frac{12}{25}$
+  have h₁ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 12 / 25 := by
+    -- we have a Cauchy-Schwarz inequality
+    have CS_ineq (x : ℕ → NNReal) (y : ℕ → NNReal) (n : ℕ) :
+        (∑ i ∈ Finset.range n, x i * y i) ^ 2 ≤ (∑ i ∈ Finset.range n, x i ^ 2) * (∑ i ∈ Finset.range n, y i ^ 2) := by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        by_cases h : n = 0
+        · simp [h]
+        · rw [Finset.sum_range_succ, Finset.sum_range_succ, ih (fun i => x i ^ 2) (fun i => y i ^ 2) n]
+          rw [mul_add, mul_pow, add_pow_two, mul_assoc, mul_assoc, mul_assoc, mul_assoc]
+          rw [mul_le_mul_left]
+          rw [← mul_add, ← pow_two, ← pow_two, ← mul_assoc]
+          apply add_le_add
+          · apply pow_two_nonneg
+          · exact add_le_add
+            apply pow_two_nonneg
+            exact mul_le_mul_left (a n ^ 2) (add_nonneg (pow_two_nonneg (x n)) (pow_two_nonneg (y n)))
+            exact mul_le_mul_left (a n ^ 2) (add_nonneg (pow_two_nonneg (x n)) (pow_two_nonneg (y n)))
+    -- set $x_i = a_{i+1}^2$ and $y_i = a_{i+2}$
+    set x : ℕ → NNReal := fun i => a (i + 1) ^ 2 with hx
+    set y : ℕ → NNReal := fun i => a (i + 2) with hy
+    specialize CS_ineq x y 99
+    rw [Finset.sum_range_succ, Finset.sum_range_succ] at CS_ineq
+    rw [Finset.sum_range_succ, Finset.sum_range_succ] at CS_ineq
+    -- then we have
+    -- $(\sum_{i=0}^{98} (a_{i+1}^2 * a_{i+2}))^2 \leq (\sum_{i=0}^{98} (a_{i+1}^4)) * (\sum_{i=0}^{98} (a_{i+2}^2))$
+    apply CS_ineq
+    · rfl
+    · simp [hx, hy]
+      symm
+      rw [Finset.sum_range_succ]
+      simp [hx, hy]
+    -- we can find $(\sum_{i=0}^{98} (a_{i+2}^2)) = 1 - a_1^2 - a_{100}^2$
+    have hsum : (∑ i ∈ Finset.range 99, a (i + 2) ^ 2) = 1 - a 1 ^ 2 - a 100 ^ 2 := by
+      have h : ∑ i ∈ Finset.range 100, a (i + 1) ^ 2 = 1 := by
+        exact h₀
+      rw [Finset.sum_range_succ, Finset.sum_range_succ] at h
+      linarith
+    -- and $(\sum_{i=0}^{98} (a_{i+1}^4)) \leq (\sum_{i=0}^{98} (a_{i+1}^2))^2$
+    have hsum_ineq (x : ℕ → NNReal) (n : ℕ) : (∑ i ∈ Finset.range n, x i ^ 4) ≤ (∑ i ∈ Finset.range n, x i ^ 2) ^ 2 := by
+      -- it is a consequence of Hölder's inequality
+      have H : (∑ i ∈ Finset.range n, x i ^ 4) = (∑ i ∈ Finset.range n, x i ^ 2 * x i ^ 2) := by
+        rw [Finset.sum]
+        ext i
+        ring_nf
+      rw [H]
+      apply Finset.sum_mul_sq_le_sq_mul_sq
+    -- set $x_i = a_{i+1}^2$, we have $(\sum_{i=0}^{98} (a_{i+1}^4)) \leq (\sum_{i=0}^{98} (a_{i+1}^2))^2$
+    have hsum_ineq' : (∑ i ∈ Finset.range 99, a (i + 1) ^ 4) ≤ (∑ i ∈ Finset.range 99, a (i + 1) ^ 2) ^ 2 := by
+      exact hsum_ineq a 99
+    -- then we have $(\sum_{i=0}^{98} (a_{i+1}^2 * a_{i+2}))^2 \leq (\sum_{i=0}^{98} (a_{i+1}^4)) * (\sum_{i=0}^{98} (a_{i+2}^2)) \leq ((\sum_{i=0}^{98} (a_{i+1}^2))^2) * ((\sum_{i=0}^{98} (a_{i+2}^2))$
+    have hsum_ineq'' : (∑ i ∈ Finset.range 99, a (i + 1) ^ 2 * a (i + 2)) ^ 2 ≤ ((∑ i ∈ Finset.range 99, a (i + 1) ^ 2) ^ 2) * ((∑ i ∈ Finset.range 99, a (i + 2) ^ 2)) := by
+      have h := @mul_le_mul_of_nonneg hsum_ineq' hsum
+      apply mul_le_mul_of_nonneg h hsum_ineq''
+      · apply pow_two_nonneg
+      · apply add_nonneg
+        apply pow_two_nonneg
+        linarith
+    -- substitute the value of $(\sum_{i=0}^{98} (a_{i+2}^2)) = 1 - a_1^2 - a_{100}^2$, we have
+    rw [hsum] at hsum_ineq''
+    -- $(\sum_{i=0}^{98} (a_{i+1}^2 * a_{i+2}))^2 \leq ((\sum_{i=0}^{98} (a_{i+1}^2))^2) * (1 - a_1^2 - a_{100}^2)$
+    -- $(\sum_{i=0}^{98} (a_{i+1}^2 * a_{i+2}))^2 \leq (1 - a_1^2 - a_{100}^2)^2$
+    have hsum_ineq''' : (∑ i ∈ Finset.range 99, a (i + 1) ^ 2 * a (i + 2)) ^ 2 ≤ (1 - a 1 ^ 2 - a 100 ^ 2) ^ 2 := by
+      have h := hsum_ineq''
+      nlinarith
+    -- $(\sum_{i=0}^{98} (a_{i+1}^2 * a_{i+2})) \leq 1 - a_1^2 - a_{100}^2$
+    have hsum_ineq'''' : (∑ i ∈ Finset.range 99, a (i + 1) ^ 2 * a (i + 2)) ≤ 1 - a 1 ^ 2 - a 100 ^ 2 := by
+      -- it is a direct corollary of the last inequality
+      apply nonneg_le_nonneg_of_sq_le_sq
+      linarith
+      nlinarith
+    -- then we have $(\sum_{i=0}^{98} (a_{i+1}^2 * a_{i+2})) + a_{100}^2 * a_1 \leq 1 - a_1^2 - a_{100}^2 + a_{100}^2 * a_1 = 1 - a_1^2 + a_{100}^2 * (a_1 - 1)$
+    have hsum_ineq''''' : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 ≤ 1 - a 1 ^ 2 - a 100 ^ 2 + a 100 ^ 2 * a 1 := by
+      linarith
+    -- we have $1 - a_1^2 - a_{100}^2 + a_{100}^2 * a_1 < 12/25$
+    have hfinal : 1 - a 1 ^ 2 - a 100 ^ 2 + a 100 ^ 2 * a 1 < 12 / 25 := by
+      -- $1 - a_1^2 - a_{100}^2 + a_{100}^2 * a_1 = 1 - a_1^2 + a_{100}^2 * (a_1 - 1)$
+      -- if $a_1 \leq 1$, then $(a_1 - 1) \leq 0$, and $a_{100}^2 \geq 0$, then $a_{100}^2 * (a_1 - 1) \leq 0$
+      -- the whole expression is less than $1 - a_1^2 \leq 1$
+      by_cases h : a 1 ≤ 1
+      · calc
+          1 - a 1 ^ 2 - a 100 ^ 2 + a 100 ^ 2 * a 1 = 1 - a 1 ^ 2 + a 100 ^ 2 * (a 1 - 1) := by ring
+          _ ≤ 1 - a 1 ^ 2 := by
+            have hfinal : a 100 ^ 2 * (a 1 - 1) ≤ 0 := by
+              apply mul_nonpos_of_nonneg_of_nonpos
+              · apply pow_two_nonneg
+              · linarith
+            linarith
+          _ ≤ 1 := by
+            have hfinal : a 1 ^ 2 ≥ 0 := by
+              apply pow_two_nonneg
+            linarith
+      · by_cases h' : a 100 ≤ 1
+        · calc
+            1 - a 1 ^ 2 - a 100 ^ 2 + a 100 ^ 2 * a 1 ≤ 1 - a 1 ^ 2 - a 100 ^ 2 + a 100 ^ 2 * 1 := by
+              apply add_le_add_right
+              apply mul_le_mul_of_nonneg_left
+              linarith
+              exact sq_nonneg (a 100)
+            _ ≤ 1 - a 1 ^ 2 := by
+              linarith
+            _ ≤ 1 - (4 / 5) ^ 2 := by
+              have h : a 1 ^ 2 ≥ (4 / 5) ^ 2 := by
+                apply sq_le_sq'
+                linarith
+                linarith
+              linarith
+            _ < 12 / 25 := by
+              norm_num
+        · simp at h'
+          -- we have $a_1 > 1$ and $a_{100} > 1$
+          -- $1 - a_1^2 - a_{100}^2 + a_{100}^2 * a_1 = 1 - a_1^2 + a_{100}^2 * (a_1 - 1)$
+          calc
+              1 - a 1 ^ 2 - a 100 ^ 2 + a 100 ^ 2 * a 1 = 1 - a 1 ^ 2 + a 100 ^ 2 * (a 1 - 1) := by ring
+              _ < 1 - (4 / 5) ^ 2 + (4 / 5) ^ 2 * (1 - 1 / 5) := by
+                apply add_lt_add_left
+                apply mul_lt_mul_of_pos_left
+                linarith
+                exact sq_nonneg (a 1)
+              _ < 12 / 25 := by
+                norm_num
+
+    linarith
+  linarith
+
+```

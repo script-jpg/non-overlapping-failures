@@ -1,0 +1,56 @@
+-- We start by importing the necessary libraries and setting up the theorem statement. We need Mathlib for the mathematical foundations and Aesop for the automated tactics.
+
+  import Mathlib
+  import Aesop
+
+  set_option maxHeartbeats 0
+
+  open BigOperators Real Nat Topology Rat
+
+  -- Now we need to prove that the sum $1 + 2 + 2^2 + \dots + 2^{100}$ leaves a remainder of 3 when divided by 7.
+
+  -- The key insight is that this sum is a geometric series, which can be expressed in closed form as $2^{101} - 1$.
+
+  have h : (∑ k in Finset.range 101, 2 ^ k) = 2 ^ 101 - 1 := by
+    rw [Finset.sum_range_succ]
+    rw [Finset.sum_range_succ]
+    rw [Finset.sum_range_succ]
+    rw [Finset.sum_range_succ]
+    norm_num
+
+  -- We will use the fact that $2^3 \equiv 1 \pmod{7}$, which will help us simplify the expression $2^{101}$.
+
+  have h1 : 2 ^ 3 % 7 = 1 := by norm_num
+
+  -- Since $101 = 3 \cdot 33 + 2$, we can write $2^{101} = (2^3)^{33} \cdot 2^2$.
+
+  have h2 : 101 = 3 * 33 + 2 := by norm_num
+
+  have h3 : 2 ^ 101 = (2 ^ 3) ^ 33 * 2 ^ 2 := by
+    rw [h2]
+    ring
+
+  -- Using the property of modular arithmetic, we can simplify $2^{101}$ modulo 7.
+
+  have h4 : 2 ^ 101 % 7 = 2 ^ 2 % 7 := by
+    rw [h3]
+    have : (2 ^ 3) ^ 33 % 7 = 1 := by
+      have : (2 ^ 3) ^ 33 % 7 = ((2 ^ 3) % 7) ^ 33 % 7 := by
+        exact Nat.pow_mod ((2 ^ 3) % 7) 33 7
+      rw [this, h1]
+      norm_num
+    rw [this]
+    norm_num
+
+  -- Finally, we can compute the remainder of $2^{101} - 1$ when divided by 7.
+
+  have h5 : (2 ^ 101 - 1) % 7 = 3 := by
+    have : (2 ^ 101 - 1) % 7 = (2 ^ 101 % 7 - 1 % 7) % 7 := by
+      exact Nat.sub_mod (2 ^ 101) 1 7
+    rw [this, h4]
+    norm_num
+
+  -- Combining the results, we complete the proof.
+
+  rw [h, h5]
+```

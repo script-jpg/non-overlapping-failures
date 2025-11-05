@@ -1,0 +1,157 @@
+-- Introduce prime divisors $a$, $b$ and $c$ such that $2^a$ is the largest power of $2$ dividing $m$ and $2^b$ is the largest power of $2$ dividing $n$, and
+  -- $3^c$ is the largest power of $3$ dividing $m$ and $3^c$ is the largest power of $3$ dividing $n$.
+  obtain ⟨a, b, c, h₂, h₃, h₄, h₅, h₆, h₇⟩ := Nat.exists_prime_pow_dvd_gcd_mul_lcm m n
+
+  -- The largest power of $2$ dividing $m$ is $2^a$.
+  have h₈ : Nat.gcd m n / (Nat.gcd (m / 2 ^ a) n ) = 2 ^ a := by
+    rw [Nat.div_eq_iff_eq_mul_left]
+    · apply Nat.gcd_mul_left
+    · rw [h₅, h₆, Nat.mul_div_cancel]
+      omega
+
+  -- The largest power of $3$ dividing $m$ is $3^c$.
+  have h₉ : Nat.gcd m n / (Nat.gcd m (n / 3 ^ c) ) = 3 ^ c := by
+    rw [Nat.div_eq_iff_eq_mul_left]
+    · apply Nat.gcd_mul_left
+    · rw [h₄, h₆, Nat.mul_div_cancel]
+      omega
+
+  -- From h₈ and h₉, we have $2^a3^c = 6$.
+  rw [h₇] at h₈ h₉
+  rw [h₈, h₉] at h₀
+  have h₁₀ : 2 ^ a * 3 ^ c = 6 := by
+    rw [<-h₀]
+    convert h₈
+    convert h₉
+    ac_rfl
+
+  -- From h₁₀, $a = 1$ and $c = 1$.
+  have h₁₁ : a = 1 := by
+    have h₁₂ : 2 ^ a ∣ 6 := by
+      rw [<-h₁₀]
+      apply Nat.dvd_mul_right
+    have h₁₃ : 2 ^ a > 1 := by
+      rcases Nat.eq_zero_or_pos a with ha | ha
+      · rw [ha, pow_zero] at h₁₂
+        linarith only [h₁₂]
+      · rw [Nat.pos_iff_ne_zero]
+        exact Nat.pos_of_mul_pos_right h₁₂
+    have h₁₄ : 2 ^ a ≤ 2 ^ 1 := by
+      apply Nat.le_of_dvd (by linarith only [Nat.two_pos])
+      rw [<-h₁₀]
+      apply Nat.dvd_mul_right
+    apply Nat.pow_le_pow_iff_right (by linarith only [Nat.two_pos]) at h₁₄
+    exact h₁₄
+
+  have h₁₅ : c = 1 := by
+    have h₁₆ : 3 ^ c ∣ 6 := by
+      rw [<-h₁₀]
+      apply Nat.dvd_mul_left
+    have h₁₇ : 3 ^ c > 1 := by
+      rcases Nat.eq_zero_or_pos c with hc | hc
+      · rw [hc, pow_zero] at h₁₆
+        linarith only [h₁₆]
+      · rw [Nat.pos_iff_ne_zero]
+        exact Nat.pos_of_mul_pos_left h₁₆
+    have h₁₈ : 3 ^ c ≤ 3 ^ 1 := by
+      apply Nat.le_of_dvd (by linarith only [Nat.succ_pos' 2])
+      rw [<-h₁₀]
+      apply Nat.dvd_mul_left
+    apply Nat.pow_le_pow_iff_right (by linarith only [Nat.succ_pos' 2]) at h₁₈
+    exact h₁₈
+
+  simp [h₁₁, h₁₅] at h₁₀
+  simp [h₁₀] at h₈ h₉
+
+  -- From h₈, $m = 2 ^ 1 * 3 ^ 1 * k$ for some positive integer $k$.
+  have h₁₉ : ∃ k : ℕ, k > 0 ∧ m = 2 ^ 1 * 3 ^ 1 * k := by
+    rw [h₈] at h₅
+    apply exists_eq_mul_right_of_dvd at h₅
+    use m / 2 ^ 1
+    · omega
+    · omega
+
+  rcases h₁₉ with ⟨k, hₖ, h₂₀⟩
+
+  -- From h₉, $n = 2 ^ 1 * 3 ^ 1 * l$ for some positive integer $l$.
+  have h₂₁ : ∃ l : ℕ, l > 0 ∧ n = 2 ^ 1 * 3 ^ 1 * l := by
+    rw [h₉] at h₄
+    apply exists_eq_mul_right_of_dvd at h₄
+    use n / 3 ^ 1
+    · omega
+    · omega
+
+  rcases h₂₁ with ⟨l, hₗ, h₂₂⟩
+
+  -- $l$ is a divisor of $2^1 * 3^1 * k$.
+  have h₂₃ : l ∣ 2 ^ 1 * 3 ^ 1 * k := by
+    rw [<-h₂₂, <-h₂₀]
+    apply Nat.dvd_lcm_left
+
+  -- $l$ is a divisor of $3^1 * k$.
+  have h₂₄ : l ∣ 3 ^ 1 * k := by
+    rw [<-h₂₂]
+    apply Nat.dvd_lcm_right
+
+  -- From h₂₃ and h₂₄, $l \leq 3^1 * k$.
+  have h₂₅ : l ≤ 3 ^ 1 * k := by
+    apply Nat.le_of_dvd (by apply Nat.greatest_common_divisor_le_left; omega)
+    exact h₂₄
+
+  -- If $l < 3^1 * k$, then $l$ is a proper divisor of $3^1 * k$.
+  have h₂₆ : l < 3 ^ 1 * k ∨ l = 3 ^ 1 * k := by
+    by_cases h₂₇ : l < 3 ^ 1 * k
+    · left; exact h₂₇
+    · right; apply Nat.le_antisymm h₂₇ h₂₅
+
+  -- If $l < 3^1 * k$, then $l$ is a proper divisor of $3^1 * k$.
+  rcases h₂₆ with h₂₇ | h₂₈
+
+  -- The least possible value of $m+n$ is 60.
+  · rw [h₂₂, h₂₀, h₂₇, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc]
+    omega
+
+  -- $l = 3^1 * k$.
+  have h₂₉ : l = 3 ^ 1 * k := by
+    omega
+
+  -- The least possible value of $m+n$ is 60.
+  rw [h₂₂, h₂₀, h₂₈, h₂₉, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc]
+  omega
+
+  -- $l$ is a divisor of $2^1 * 3^1 * k$.
+  have h₂₃ : l ∣ 2 ^ 1 * 3 ^ 1 * k := by
+    rw [<-h₂₂, <-h₂₀]
+    apply Nat.dvd_lcm_left
+
+  -- $l$ is a divisor of $2^1 * 3^1$.
+  have h₂₄ : l ∣ 2 ^ 1 * 3 ^ 1 := by
+    rw [<-h₂₂]
+    apply Nat.dvd_lcm_right
+
+  -- From h₂₃ and h₂₄, $l \leq 2^1 * 3^1$.
+  have h₂₅ : l ≤ 2 ^ 1 * 3 ^ 1 := by
+    apply Nat.le_of_dvd (by apply Nat.greatest_common_divisor_le_right; omega)
+    exact h₂₄
+
+  -- If $l < 2^1 * 3^1$, then $l$ is a proper divisor of $2^1 * 3^1$.
+  have h₂₆ : l < 2 ^ 1 * 3 ^ 1 ∨ l = 2 ^ 1 * 3 ^ 1 := by
+    by_cases h₂₇ : l < 2 ^ 1 * 3 ^ 1
+    · left; exact h₂₇
+    · right; apply Nat.le_antisymm h₂₇ h₂₅
+
+  -- If $l < 2^1 * 3^1$, then $l$ is a proper divisor of $2^1 * 3^1$.
+  rcases h₂₆ with h₂₇ | h₂₈
+
+  -- The least possible value of $m+n$ is 60.
+  · rw [h₂₂, h₂₀, h₂₇, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc]
+    omega
+
+  -- $l = 2^1 * 3^1$.
+  have h₂₉ : l = 2 ^ 1 * 3 ^ 1 := by
+    omega
+
+  -- The least possible value of $m+n$ is 60.
+  rw [h₂₂, h₂₀, h₂₈, h₂₉, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_assoc]
+  omega
+```

@@ -1,0 +1,62 @@
+-- We want to show that the set of 4-digit positive integers with only even digits divisible by 5 has cardinality 100.
+
+  -- Create a function to count the number of such integers in the range [1000, 9999].
+  let f : ℕ → ℕ
+    | 0 => 0
+    | n + 1 =>
+      -- Check if the number has only even digits.
+      if h : ∀ d : ℕ, d ∈ Nat.digits 10 (n + 1) → Even d then
+        -- Check if the number is divisible by 5.
+        if h' : 5 ∣ (n + 1) then
+          -- Count this number.
+          1 + f n
+        -- Otherwise, count 0.
+        else 0
+      -- Otherwise, count 0.
+      else 0
+
+  -- Now we want to show that the function f correctly counts the number of integers in the set S.
+  have h₁ : S.card = f 9999 := by
+    -- Create a bijection between the set S and the range [0, f 9999).
+    have h₂ : S ≃ Finset.range (f 9999) := by
+      -- Use the fact that S is finite and has a bijection with the range [0, |S|).
+      simp [Finset.card_eq_card_toFinset, h₀]
+      -- Show that the function f correctly counts the elements in S.
+      refine Eq.symm (Finset.card_eq_of_bijective?_)
+      -- Verify that the function f is indeed a bijection.
+      intro n m hₙ hₘ h
+      -- Use the properties of the function f to show injectivity.
+      by_cases h' : n < m
+     . have h'' := h' hₙ hₘ h
+        -- Now we have a contradiction with the definition of the function f.
+        simp [f] at h'' hₙ
+        -- Now we have a number n with n < m such that f n = f m.
+        -- This means that either the number has no such digits, or it is divisible by 5, or both.
+        -- But if n < m, then the digits are the same, the divisibility condition is the same, and n ≠ m.
+        -- Thus we get a contradiction.
+        omega
+     . by_cases h'' : n > m
+       . have h''' := h'' hₙ hₘ h
+          -- Now we have a contradiction with the definition of the function f.
+          simp [f] at h''' hₘ
+          -- Now we have a number m with n > m such that f n = f m.
+          -- This means that either the number has no such digits, or it is divisible by 5, or both.
+          -- But if n > m, then the digits are the same, the divisibility condition is the same, and n ≠ m.
+          -- Thus we get a contradiction.
+          omega
+       . omega
+
+    -- Now we can show that the cardinalities are equal.
+    exact Finset.card_eq_of_bijective h₂
+
+  -- Now we want to show that f 9999 = 100.
+  have h₂ : f 9999 = 100 := by
+    -- Simplify the function f.
+    simp [f]
+    -- Now we need to show that there are exactly 100 numbers in the range [1000, 9999] that have only even digits and are divisible by 5.
+    native_decide
+
+  -- Now we can substitute the value of f 9999 to get the final result.
+  rw [h₂] at h₁
+  exact h₁
+```

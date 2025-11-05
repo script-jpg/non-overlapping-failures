@@ -1,0 +1,66 @@
+-- We shall use `mod 2` arithmetic to simplify the proof.
+  -- `d` modulo 2 is a sequence `a_n` such that
+  -- `a_0 = 0`, `a_1 = 0`, `a_2 = 1` and `a_n = a_{n-1} + a_{n-3}`.
+  let a : ℕ → ℕ := fun n => d n % 2
+
+  -- We shall show that `(a_0, a_1, a_2,...)` is a periodic sequence.
+  -- Let `p` be its period.
+  have h₄ : a 0 = 0 := by simp [a, h₀]
+  have h₅ : a 1 = 0 := by simp [a, h₁]
+  have h₆ : a 2 = 1 := by simp [a, h₂]
+  have h₇ : ∀ n ≥ 3, a n = a (n - 1) + a (n - 3) := fun n hn => by simp [a, h₃ n hn]
+
+  -- To find the period of `a`,
+  -- we compute the first few values of `a`.
+  have h₈ : a 3 = 1 := by rw [h₇ 3 (by norm_num), h₅, h₆]; norm_num
+  have h₉ : a 4 = 1 := by rw [h₇ 4 (by norm_num), h₆, h₈]; norm_num
+  have h₁₀ : a 5 = 0 := by rw [h₇ 5 (by norm_num), h₈, h₆]; norm_num
+  have h₁₁ : a 6 = 0 := by rw [h₇ 6 (by norm_num), h₉, h₈]; norm_num
+  have h₁₂ : a 7 = 1 := by rw [h₇ 7 (by norm_num), h₁₀, h₉]; norm_num
+  have h₁₃ : a 8 = 1 := by rw [h₇ 8 (by norm_num), h₉, h₁₀]; norm_num
+  have h₁₄ : a 9 = 0 := by rw [h₇ 9 (by norm_num), h₁₂, h₁₀]; norm_num
+  have h₁₅ : a 10 = 0 := by rw [h₇ 10 (by norm_num), h₁₃, h₁₂]; norm_num
+  have h₁₆ : a 11 = 1 := by rw [h₇ 11 (by norm_num), h₁₄, h₁₃]; norm_num
+  have h₁₇ : a 12 = 1 := by rw [h₇ 12 (by norm_num), h₁₅, h₁₄]; norm_num
+  have h₁₈ : a 13 = 0 := by rw [h₇ 13 (by norm_num), h₁₆, h₁₅]; norm_num
+  have h₁₉ : a 14 = 0 := by rw [h₇ 14 (by norm_num), h₁₇, h₁₆]; norm_num
+  have h₂₀ : a 15 = 1 := by rw [h₇ 15 (by norm_num), h₁₈, h₁₇]; norm_num
+
+  -- We observe that `a_0 = a_6 = a_12 = a_18 =... = 0`,
+  -- `a_1 = a_7 = a_13 = a_19 =... = 0`, and
+  -- `a_2 = a_8 = a_14 = a_20 =... = 1`.
+  -- Therefore, the period of `a` is `6`.
+  have h₅' : ∀ n, a n = a (n + 6) := by
+    intro n
+    induction n using Nat.twoStepInduction with
+    | zero => rw [h₅, h₅, h₉, h₉]
+    | one => rw [h₆, h₆, h₁₀, h₁₀]
+    | more n ih0 ih1 =>
+      rw [h₇ (n + 7) (by linarith only [ih0, ih1])]
+      rw [h₇ (n + 6) (by linarith only [ih0, ih1])]
+      rw [ih0, ih1]
+      ring
+
+  -- Using the periodicity of `a`,
+  -- we have:
+  -- `a_2021 = a_{6 * 336 + 5} = a_5 = 0`,
+  -- `a_2022 = a_{6 * 337 - 0} = a_0 = 0`, and
+  -- `a_2023 = a_{6 * 337 - 1} = a_1 = 0`.
+  have h₂₁ : a 2021 = 0 := by calc _ = a 5 := by rw [h₅' 5]; norm_num
+                                _ = 0 := by rw [h₁₀]
+  have h₂₂ : a 2022 = 0 := by calc _ = a 0 := by rw [h₅' 0]; norm_num
+                                _ = 0 := by rw [h₅]
+  have h₂₃ : a 2023 = 1 := by calc _ = a 1 := by rw [h₅' 1]; norm_num
+                                _ = 0 := by rw [h₆]
+
+  -- Therefore, `d_2021`, `d_2022`, and `d_2023` are even, even, and odd, respectively.
+  -- which is `(E,O,E)` in the problem's notation.
+  refine ⟨?_,?_,?_⟩
+  · rw [← Even.modEq_zero_iff, h₂₁]
+    omega
+  · rw [← Odd.modEq_one_iff, h₂₂]
+    omega
+  · rw [← Even.modEq_zero_iff, h₂₃]
+    omega
+
+```

@@ -1,0 +1,40 @@
+-- We have $\sum_{k=0}^{n} 2^k = 2^{n+1} - 1$.
+  have hsum : ∀ n, (∑ k in Finset.range (n + 1), 2 ^ k) = 2 ^ (n + 1) - 1 := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      rw [Finset.sum_range_succ, ih, pow_succ]
+      ring
+
+  -- So, $\sum_{k=0}^{100} 2^k = 2^{101} - 1$.
+  have h : (∑ k in Finset.range 101, 2 ^ k) = 2 ^ 101 - 1 := hsum 100
+
+  -- We also have $2^3 \equiv 1 \pmod{7}$.
+  have h2 : 2 ^ 3 ≡ 1 [MOD 7] := by
+    rfl
+
+  -- So, $2^{3n} \equiv 1 \pmod{7}$.
+  have h2n : ∀ n, 2 ^ (3 * n) ≡ 1 [MOD 7] := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      rw [mul_succ, pow_add, pow_mul, Nat.ModEq.mul ih rfl]
+      exact Nat.ModEq.refl 1
+
+  -- We have $2^{101} = 2^{3 \cdot 33 + 2} = 2^{3 \cdot 33} \cdot 2^2$.
+  have h101 : 2 ^ 101 = 2 ^ (3 * 33) · 2 ^ 2 := by
+    norm_num
+
+  -- So, $2^{101} \equiv 2^{3 \cdot 33} \cdot 2^2 \equiv 1 \cdot 4 \equiv 4 \pmod{7}$.
+  have h101mod : 2 ^ 101 ≡ 4 [MOD 7] := by
+    rw [h101]
+    exact Nat.ModEq.mul (h2n 33) (by rfl)
+
+  -- So, $2^{101} - 1 \equiv 4 - 1 \equiv 3 \pmod{7}$.
+  rw [h, Nat.ModEq.sub (by exact Nat.one_le_pow 101 2) (Nat.one_le_pow 1 7)]
+  exact h101mod
+```

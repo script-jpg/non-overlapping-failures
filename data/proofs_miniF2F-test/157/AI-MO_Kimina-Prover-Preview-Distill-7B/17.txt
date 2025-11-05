@@ -1,0 +1,80 @@
+-- Prove that the solution set is exactly $\left\{\frac{\pi}{2}, \frac{3\pi}{2} \right\}$.
+  have h₁ : S = {Real.pi / 2, Real.pi - Real.pi / 2} := by
+    ext x
+    constructor
+    -- Show that $x \in S \Rightarrow x = \frac{\pi}{2} \lor x = \frac{3\pi}{2}$.
+    · intro h
+      simp only [Finset.mem_insert, Finset.mem_singleton] at h
+      rcases h with ⟨h₁, h₂, h₃⟩
+      rw [h₃]
+      clear h₃
+      -- Show that $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right) \Rightarrow x = \frac{\pi}{2} \lor x = \frac{3\pi}{2}$.
+      have h₄ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by
+        simpa using h₁
+      -- Transform $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$ to $\sin \left( \frac{\pi}2 \cos x\right)=\sin \left(\frac{\pi}{2} - \frac{\pi}2 \sin x\right)$.
+      have h₅ : Real.sin (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 - Real.pi / 2 * Real.sin x) := by
+        rw [Real.cos_eq_sin_pi_div_two_sub]
+        simpa [h₄]
+      -- Show that $\sin a = \sin b \Rightarrow a = b \lor a = \pi - b \pmod{2\pi}$.
+      rw [Real.sin_eq_sin_iff] at h₅
+      obtain ⟨h₅, h₆⟩ | h₅ := h₅
+      -- If $\frac{\pi}2 \cos x = \frac{\pi}2 - \frac{\pi}2 \sin x$, show that $\cos x = 1 - \sin x$.
+      · have h₇ : Real.cos x = 1 - Real.sin x := by
+          apply congr_arg (fun x ↦ (·) / (Real.pi / 2)) at h₅
+          rw [mul_div_cancel_left₀] at h₅
+          · linarith
+          · simp only [mul_eq_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_div]
+        -- Show that $\cos x + \sin x = 1 \Rightarrow x = \frac{\pi}{2}$.
+        have h₈ : Real.cos x + Real.sin x = 1 := by
+          linarith
+        have h₉ : Real.cos x = 0 := by
+          nlinarith [Real.cos_sq_add_sin_sq x]
+        simp [h₉] at h₈
+        linarith
+      -- If $\frac{\pi}2 \cos x = \pi - (\frac{\pi}2 - \frac{\pi}2 \sin x)$, show that $\cos x = -1 + \sin x$.
+      · have h₇ : Real.cos x = -1 + Real.sin x := by
+          apply congr_arg (fun x ↦ (·) / (Real.pi / 2)) at h₆
+          rw [mul_div_cancel_left₀] at h₆
+          · linarith
+          · simp only [mul_eq_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_div]
+        -- Show that $\cos x = \sin x - 1 \Rightarrow x = \frac{3\pi}{2}$.
+        have h₈ : Real.cos x + Real.sin x = 1 := by
+          linarith
+        have h₉ : Real.sin x = 0 := by
+          nlinarith [Real.cos_sq_add_sin_sq x]
+        simp [h₉] at h₈
+        linarith
+    -- Show that $x = \frac{\pi}{2} \Rightarrow x \in S$.
+    · intro h
+      simp only [Finset.mem_insert, Finset.mem_singleton]
+      rcases h with h | h
+      · constructor
+        · linarith
+        · rw [h]
+          constructor
+          · exact Real.pi_pos
+          · rw [Real.sin_pi_div_two, Real.cos_pi_div_two]
+            rw [h]
+            norm_num
+      · constructor
+        · linarith
+        · rw [h]
+          constructor
+          · linarith
+          · have h₁ : 0 ≤ Real.pi := by exact Real.pi_nonneg
+            have h₂ : Real.sin (Real.pi - Real.pi / 2) = Real.sin (Real.pi / 2) := by
+              rw [show Real.pi - Real.pi / 2 = Real.pi / 2 by ring]
+            have h₃ : Real.cos (Real.pi - Real.pi / 2) = -Real.cos (Real.pi / 2) := by
+              rw [show Real.pi - Real.pi / 2 = Real.pi / 2 by ring]
+              rw [Real.cos_pi_sub]
+            rw [Real.sin_pi_div_two, Real.cos_pi_div_two] at *
+            norm_num at *
+            rw [h₂, h₃]
+            norm_num
+
+  -- Show that $S = \left\{\frac{\pi}{2}, \frac{3\pi}{2} \right\} \Rightarrow S.card = 2$.
+  rw [h₁]
+  rw [Finset.card_pair]
+  linarith
+
+```

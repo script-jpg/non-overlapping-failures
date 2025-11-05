@@ -1,0 +1,75 @@
+-- Show that it can be restricted to two-digit integers, rather than any positive integer.
+
+  have h₂ : (10 * a + b) ^ 3 > 1000000 := by
+    calc
+      (10 * a + b) ^ 3 = 912673 := h₁
+      _ > 1000000 := by norm_num
+
+  have h₃ : a ≥ 1 := h₀.1
+
+  have h₄ : a < 10 := by
+    have h₄ : a ≤ 9 := h₀.2.1
+    omega
+
+  have h₅ : b ≤ 9 := h₀.2.2
+
+  -- Show that $a = 10 \cdot a + b$ for some integer $c$.
+
+  have h₆ : ∃ c, c = 10 * a + b := by
+    use a
+    omega
+
+  rcases h₆ with ⟨c, rfl⟩
+
+  -- Show that $c$ is a two-digit integer.
+
+  have h₇ : c ≥ 100 := by
+    calc
+      c ^ 3 = 912673 := h₁
+      _ ≥ 100 ^ 3 := by norm_num
+
+  have h₈ : c < 1000 := by
+    calc
+      c ^ 3 = 912673 := h₁
+      _ < 1000 ^ 3 := by norm_num
+
+  -- Show that $a + b = 16$.
+
+  have h₉ : a + b = 16 := by
+    -- Show that $c > 1000000^{1 / 3}$ and $c < 1000000^{1 / 3} + 1000000^{1 / 3}$. 
+
+    have h_{10} : c > 1000000 ^ (1 / 3 : ℝ) := by
+      calc
+        c > 1000000 := h₇
+        _ = 1000000 ^ (1 : ℝ) := by simp
+        _ = 1000000 ^ (1 / 3 : ℝ) * 1000000 ^ (2 / 3 : ℝ) := by rw [← Real.rpow_add]; norm_num
+        _ > 1000000 ^ (1 / 3 : ℝ) * 1 := by
+          apply mul_lt_mul_of_pos_right
+          · rw [Real.rpow_lt_rpow_iff]; norm_num; norm_num; norm_num
+          · norm_num
+        _ = 1000000 ^ (1 / 3 : ℝ) := by ring
+
+    have h_{11} : c < (1000000 + 1000000 ^ (2 / 3 : ℝ)) := by
+      calc
+        c < 1000000 + 1000000 ^ (2 / 3 : ℝ) := by
+          rw [← Real.rpow_add]; norm_num
+          rw [← Real.rpow_add]; norm_num
+        _ < 1000000 + 1000000 ^ (2 / 3 : ℝ) + 1000000 ^ (2 / 3 : ℝ) := by
+          apply add_lt_add
+          · norm_num
+          · rw [Real.rpow_lt_rpow_iff]; norm_num; norm_num; norm_num
+        _ = 1000000 + 2 * 1000000 ^ (2 / 3 : ℝ) := by ring
+
+    -- Show that $1000000^{1 / 3} > 100$, and so $c > 100$.
+
+    have h_{12} : c > 100 := by
+      have h_{12} : (1000000 : ℝ) ^ (1 / 3 : ℝ) > 100 := by
+        rw [Real.rpow_lt_rpow_iff]; norm_num; norm_num; norm_num
+      linarith only [h_{10}, h_{12}]
+
+    -- We know that $c$ is a two-digit integer, so we can try all possible values of $c$ to find the value of $c$.
+
+    interval_cases c <;> norm_num at h₁ <;> omega
+
+  exact h₉
+```

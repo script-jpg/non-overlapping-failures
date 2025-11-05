@@ -1,0 +1,48 @@
+have step₁ : S.card = 6 := by
+    have h₁ : S = {Real.pi / 2, 2 * Real.pi - Real.pi / 2, 2 * Real.pi / 3, 4 * Real.pi / 3, 5 * Real.pi / 3, 7 * Real.pi / 3} := by
+      ext x
+      simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+      constructor
+      · intro h
+        have h₂ : 0 < x := h.1
+        have h₃ : x ≤ 2 * Real.pi := h.2.1
+        have h₄ : 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) = 0 := h.2.2
+        have h₅ : x = Real.pi / 2 ∨ x = 2 * Real.pi - Real.pi / 2 ∨ x = 2 * Real.pi / 3 ∨ x = 4 * Real.pi / 3 ∨ x = 5 * Real.pi / 3 ∨ x = 7 * Real.pi / 3 := by
+          -- Use the fact that cos(3x) can be expressed in terms of sin x and cos x
+          have h₆ : Real.cos (3 * x) = 4 * Real.cos x ^ 3 - 3 * Real.cos x := by
+            rw [Real.cos_three_mul]
+          rw [h₆] at h₄
+          have h₇ : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := Real.sin_sq_add_cos_sq x
+          have h₈ : 0 < x := h₂
+          have h₉ : x ≤ 2 * Real.pi := h₃
+          have h₁₀ : 0 < 2 * Real.pi := by linarith [Real.pi_pos]
+          have h₁₁ : Real.cos x ≥ -1 := by
+            nlinarith [Real.cos_sq_add_sin_sq x]
+          have h₁₂ : Real.sin x ≥ -1 := by
+            nlinarith [Real.cos_sq_add_sin_sq x]
+          have h₁₃ : Real.sin x ≤ 1 := by
+            nlinarith [Real.cos_sq_add_sin_sq x]
+          have h₁₄ : Real.cos x ≤ 1 := by
+            nlinarith [Real.cos_sq_add_sin_sq x]
+          -- Use the above bounds to narrow down the possible values of x
+          have h₁₅ : x = Real.pi / 2 ∨ x = 2 * Real.pi - Real.pi / 2 ∨ x = 2 * Real.pi / 3 ∨ x = 4 * Real.pi / 3 ∨ x = 5 * Real.pi / 3 ∨ x = 7 * Real.pi / 3 := by
+            apply or_iff_not_imp_left.mpr
+            intro h₁₆
+            apply or_iff_not_imp_left.mpr
+            intro h₁₇
+            apply or_iff_not_imp_left.mpr
+            intro h₁₈
+            apply or_iff_not_imp_left.mpr
+            intro h₁₉
+            apply or_iff_not_imp_left.mpr
+            intro h₂₀
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₆)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₇)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₈)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₉)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₂₀)
+            ring_nf at h₄ ⊢
+            norm_num at *
+            <;>
+            (try
+              nlinarith [Real.pi_pos, Real.pi_le_four,

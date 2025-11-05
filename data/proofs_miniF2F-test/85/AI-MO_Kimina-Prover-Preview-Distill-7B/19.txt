@@ -1,0 +1,33 @@
+-- Assume $n$ is not prime.
+  by_contra! h₂
+  -- Then $n$ has a divisor $d$ such that $1 < d < n$.
+  obtain ⟨d, h₃, h₄, h₅⟩ := Nat.not_prime_iff_exists_dvd_lt.mp h₂
+  -- Let $k = n / d$.
+  let k := n / d
+  -- We have $n = d \cdot k$.
+  have h₆ : n = d * k := by rw [←Nat.mul_div_cancel' h₃]; norm_cast
+  -- I claim that $2^d - 1$ divides $2^n - 1$.
+  have h₇ : 2 ^ d - 1 ∣ 2 ^ n - 1 := by
+    rw [h₆]
+    apply Nat.pow_mul_sub_one_dvd_pow_mul_sub_one
+  -- Since $2^n - 1$ is prime, it follows that $2^d - 1 = 1$ or $2^d - 1 = 2^n - 1$.
+  rw [Nat.dvd_prime h₁] at h₇
+  rcases h₇ with h₇ | h₇
+  -- The former case is impossible because $d < n$.
+  · rw [Nat.pow_eq_one_iff] at h₇
+    have : d = 1 := by
+      apply_fun (· + 1) at h₇
+      simp only [Nat.sub_add_cancel, zero_add] at h₇
+      exact h₇
+    rw [this] at h₆
+    linarith
+  -- The latter case is impossible because $2^d - 1 < 2^n - 1$.
+  · rw [h₇] at h₁
+    have : 2 ^ d - 1 < 2 ^ n - 1 := by
+      calc
+      _ = 2 ^ d := by omega
+      _ < 2 ^ n := by apply Nat.pow_lt_pow_of_lt; omega; omega
+      _ = _ := by omega
+    linarith
+
+```

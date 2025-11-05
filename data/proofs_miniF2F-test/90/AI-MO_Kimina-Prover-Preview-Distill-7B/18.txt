@@ -1,0 +1,62 @@
+-- Define a sequence $a_n = \prod_{k=1}^n (1 + 1/k^3) - n - 1$.
+  let a (n : ℕ) : ℝ := (∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3) - (↑n : ℝ) - 1
+
+  -- We want to show that $a_n \leq 0$.
+  suffices H : ∀ n, 0 < n → a n ≤ 0 by
+    intro n hn
+    have := H n hn
+    have : (3 : ℝ) - 1 / ↑n = (3 - 1 / ↑n) - 1 + 1 := by norm_num
+    rw [this]
+    have : (∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3) = (a n) + (↑n : ℝ) + 1 := by simp [a]
+    rw [this]
+    linarith
+
+  -- We have $a_1 = 0$.
+  have H₁ : a 1 = 0 := by simp [a]
+
+  -- Let's show that $a_{n+1} \leq a_n$.
+  have H₂ : ∀ n, 0 < n → a (n + 1) ≤ a n := by
+    intro n hn
+    have : a (n + 1) = (1 + (1 : ℝ) / (n + 1) ^ 3) * a n + (1 + (1 : ℝ) / (n + 1) ^ 3) - (1 + ↑n) := by
+      simp [a]
+      iterate 1 rw [Finset.prod_Icc_succ_top (by linarith)]
+      ring
+    rw [this]
+    calc
+      (1 + (1 : ℝ) / (n + 1) ^ 3) * a n + (1 + (1 : ℝ) / (n + 1) ^ 3) - (1 + ↑n)
+        _ = (1 + (1 : ℝ) / (n + 1) ^ 3) * a n + (1 : ℝ) / (n + 1) ^ 3 - n := by ring
+      _ ≤ a n + (1 : ℝ) / (n + 1) ^ 3 - n := by
+        -- We have $1 + 1/(n+1)^3 \leq 1 + 1/n$.
+        have h₁ : (1 : ℝ) / (n + 1) ^ 3 ≤ (1 : ℝ) / n ^ 3 := by
+          apply one_div_le_one_div_of_le (by simp) (by simp; omega)
+        have h₂ : (1 : ℝ) / (n + 1) ^ 3 - n ≤ (1 : ℝ) / n ^ 3 - n := by
+          apply sub_le_sub_right h₁
+        have h₃ : (1 + (1 : ℝ) / n ^ 3) * a n ≥ a n := by
+          nlinarith [H n]
+        linarith
+      _ = a n := by ring
+
+  -- By induction, we have $a_n \leq 0$ for all $n \geq 1$.
+  intro n hn
+  induction n with
+  | zero => linarith
+  | succ n ih =>
+    case eq_zero =>
+      -- Base case
+      simp [a]
+      have h₁ : (1 : ℝ) ≤ n + 1 := by simp; omega
+      have h₂ : 1 / (1 : ℝ) ≤ 1 / n := by
+        apply one_div_le_one_div_of_le (by simp) (by simp; omega)
+      have h₃ : (1 : ℝ) / (n + 1) ≤ 1 / n := by
+        apply one_div_le_one_div_of_le (by simp) (by simp; omega)
+      have h₄ : (1 : ℝ) / (n + 1) ^ 3 ≤ 1 / n ^ 3 := by
+        apply pow_le_pow_left₀ (by simp) h₃ 3
+      have := (h₄.trans $ one_div_le_one_div_of_le (by simp) (by simp; omega))
+      linarith
+    | succ n =>
+      -- Inductive step
+      have h₅ : a (n + 1) ≤ a n := H₂ n (by simp; omega)
+      have h₆ : a n ≤ 0 := ih (by simp; omega)
+      linarith
+
+```

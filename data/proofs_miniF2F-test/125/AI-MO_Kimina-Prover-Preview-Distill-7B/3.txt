@@ -1,0 +1,103 @@
+have ha : a = 2 ^ k - d := by omega
+
+  -- Prove that $d<2^k$
+  have hd : d < 2 ^ k := by
+    rw [ha] at h₂
+    linarith only [h₂.right.right]
+
+  -- Prove that $d>2^{k-1}$
+  have hd' : d > 2 ^ (k - 1) := by
+    rw [ha] at h₂
+    linarith only [h₂.right.left]
+
+  -- Prove that $a$ is even or $d$ is even
+  -- (each of them is enough to prove that $d=2^k-1$)
+  have h₆ : Even a ∨ Even d := by
+    rw [h₂.left] at ha
+    apply ha.toEven_or_odd
+    by_contra!
+    absurd h₁
+    simp [this]
+
+  -- Prove that $c=2^hm-2b$
+  have hc : c = 2 ^ m * (2 ^ k - a) - 2 * b := by
+    rw [←h₄, ←h₅]
+    rify
+    ring_nf
+
+  -- Prove that $2^{m}\geqslant 2b+1$
+  have h₇ : 2 ^ m ≥ 2 * b + 1 := by
+    by_contra!
+    have : c < 2 ^ m := by
+      calc
+        _ = 2 ^ m * (2 ^ k - a) - 2 * b := hc
+        _ < 2 ^ m * (2 ^ k - a) := by rel [this]
+        _ ≤ 2 ^ m * 2 ^ k := by
+          apply mul_le_mul_of_nonneg_left
+          rw [Nat.le_antisymm]
+          apply Nat.one_le_pow
+          omega
+          apply Nat.zero_le_pow
+          omega
+        _ = 2 ^ m * 2 ^ k - 0 := by simp
+        _ ≤ 2 ^ m * 2 ^ k - b := by omega
+        _ = b := by
+          rw [Nat.mul_sub, Nat.mul_one]
+          apply Nat.sub_le_sub_right
+          rw [Nat.le_antisymm]
+          apply Nat.one_le_pow
+          omega
+          apply Nat.zero_le_pow
+          omega
+    linarith only [this, h₂.right.right]
+
+  -- Prove that $b$ is even or $2^{m}$ is even (it is enough to prove that $b=2^{m}-1$)
+  have h₈ : Even b ∨ Even (2 ^ m) := by
+    by_contra!
+    have : c % 2 = 1 := by
+      rw [hc]
+      apply Nat.mod_eq_of_modEq
+      apply Nat.mod_eq_of_modEq
+      apply Nat.mod_eq_of_modEq
+      apply Nat.mod_eq_of_modEq
+      apply Nat.zero_mod
+      by_contra!; simp_all
+    have : b % 2 = 1 := by
+      by_contra!; simp_all
+    have : c % 2 = 0 := by
+      rw [h₅]
+      rw [Nat.add_mod, this]
+      apply Nat.odd_iff.mp
+      apply Odd.add_odd
+      rw [Nat.odd_iff.mp]
+      all_goals assumption
+    rw [this] at ‹c % 2 = 1›
+    contradiction
+
+  -- Split the goal to two cases
+  -- (it is enough to prove that $a=1$ and $d=2^k-1$)
+  cases h₆ with
+  | inl h₆ =>
+    rw [h₂.left] at ha
+    -- If $a$ is even...
+    -- Use the fact that $a$ is odd to get a contradiction
+    have : ¬Odd a := by
+      rw [h₆] at ha
+      rw [ha, Nat.add_sub_cancel, Nat.add_one, Nat.zero_add, Nat.not_odd_iff_even]
+      apply Nat.even_mul
+      apply Nat.even_sub
+      omega
+      exact hd'
+    contradiction
+  | inr h₆ =>
+    -- If $d$ is even...
+    -- Use the fact that $d$ is odd to get a contradiction
+    have : ¬Odd d := by
+      rw [h₆] at ha
+      rw [ha, Nat.add_sub_cancel, Nat.add_one, Nat.zero_add, Nat.not_odd_iff_even]
+      apply Nat.even_mul
+      apply Nat.even_sub
+      omega
+      exact hd
+    contradiction
+```

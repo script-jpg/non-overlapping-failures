@@ -1,0 +1,192 @@
+-- $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9! = 1^{504} \cdot 2^{504} \cdot 3^{504} \cdot \hdots \cdot 9^{504}$
+  have h₁ : ∏ i in Finset.Icc 1 9, i! = ∏ i in Finset.Icc 1 9, i ^ 504 := by
+    apply Finset.prod_congr rfl
+    intro a ha
+    rw [Finset.mem_Icc] at ha
+    change _ = _
+    let term := fun (a : ℕ) ↦ a ^ a
+    have : ¬a = 0 := by
+      by_contra h
+      subst a
+      symm
+      simp at term
+      have : 0 ^ 0 = 1 := by
+        apply Nat.zero_pow
+        exact Nat.zero_ne_of_lt ha.1
+      rw [this] at term
+      norm_num at term
+    rw [Finset.prod_univ_eq_prod_range, Finset.prod_range_succ]
+    simp only [term]
+    iterate 9 rw [Nat.pow_add]
+    rw [Nat.pow_mul, Nat.pow_one]
+    congr
+    ext x
+    zify
+    rw [Nat.cast_sub]
+    push_cast
+    have : (↑(a - 1) : ℕ) = (↑(a - 1) : ℤ) := by
+      norm_cast
+      rw [Nat.cast_sum, Nat.cast_add, Nat.cast_one]
+      zify
+      rw [Nat.cast_sub]
+      push_cast
+      ring
+    rw [this]
+    ring
+    case a => exact Nat.zero_ne_of_lt ha.1
+    all_goals
+      zify
+      rw [Nat.cast_sub]
+      push_cast
+      ring
+      exact Nat.zero_ne_of_lt ha.1
+
+  -- A number is a square if and only if all the exponents in its prime factorization are even.
+  have h₂ (x : ℕ) : (∀ p : ℕ, p ∈ S ↔ 0 < p ∧ (p * p : ℕ) ∣ x) ↔ ∃ y : ℕ, x = y ^ 2 := by
+    constructor
+    · intro h
+      let y := x.factorization.prod (· ∣ x)
+      use y
+      rw [<-Nat.factorization_prod_pow_eq_self]
+      intro p hp
+      have hp₀ : p ∈ S ↔ 0 < p ∧ p ∣ x := by
+        rw [h]
+        constructor
+        · intro h
+          exact ⟨h.2, h.1⟩
+        · intro h
+          exact ⟨h.2, h.1⟩
+      have hp₁ := hp₀.1
+      have hp₂ : p ∣ x := hp.2
+      have : p ∈ x.primeFactors := by
+        rw [Nat.mem_primeFactors]
+        exact ⟨hp₁, Nat.Prime.two_le hp, hp₂⟩
+      rw [Nat.factorization_le_iff_dvd this]
+      by_cases h : Even (x.factorization p)
+      · symm
+        exact Dvd.intro (x.factorization p / 2) (id (Eq.symm this))
+      · simp at h
+        have : p = 2 := by
+          rw [<-Nat.Prime.even_iff hp]
+          simp [h]
+        rw [this] at hp₂
+        have : 2 ∣ x := hp₂
+        have : 4 ∣ x := by
+          exact Nat.pow_dvd_pow_of_dvd h this
+        have : 4 ∣ x.factorization 2 := Nat.dvd_of_dvd_pow this
+        have : Even (x.factorization 2) := by
+          exact ⟨x.factorization 2 / 2, by omega⟩
+        have : Even (x.factorization p) := by
+          rw [this]
+          exact Nat.even_iff.mpr rfl
+        contradiction
+      exact hp.1
+    · intro ⟨y, hy⟩
+      intro p hp
+      constructor
+      · rw [hy] at hy
+        rw [<-Nat.pow_dvd_pow_iff]
+        rw [<-Nat.factorization_prod_pow_eq_self] at hy
+        rw [hy]
+        simp
+        exact Nat.Prime.two_le hp
+      · rw [hy] at hy
+        rw [<-Nat.pow_dvd_pow_iff]
+        rw [<-Nat.factorization_prod_pow_eq_self] at hy
+        rw [hy]
+        exact Nat.dvd_prod_of_mem (Nat.mem_primeFactors hp) (fun x => x ∈ S)
+
+  -- The product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ has prime factorization
+  -- $p_1^{504} \cdot p_2^{504} \cdot p_3^{504} \cdot \hdots \cdot p_9^{504}$, where $p_i$ is the $i$th prime.
+  have h₃ : ∏ i in Finset.Icc 1 9, i ^ 504 = ∏ i in Finset.Icc 1 9, Nat.Prime.pow 504 (Nat.prime i) := by
+    apply Finset.prod_congr rfl
+    intro a ha
+    rw [Finset.mem_Icc] at ha
+    rw [<-Nat.primeFactorsProd]
+    have : a ≠ 0 := by
+      by_contra h
+      subst a
+      symm
+      simp at ha
+    rw [Nat.factorization_prod_pow_eq_self]
+    exact this
+    exact Nat.Prime.two_le ha
+
+  -- Therefore, the number of squares that divide it is
+  -- $\prod_{i=1}^{9} \left( \left\lfloor \frac{504}{2^i} \right\rfloor + 1 \right)$
+  have h₄ : (S.card : ℕ) = ∏ i in Finset.Icc 1 9, (504 / 2 ^ i).add 1 := by
+    rw [h₁, h₂, h₃]
+    have : (fun (a : ℕ) ↦ a ^ a) = (fun (a : ℕ) ↦ ∏ i in Finset.Icc 1 9, (Nat.Prime.pow 504 (Nat.prime i)) ^ a) := by
+      apply Finset.prod_congr rfl
+      intro a ha
+      rw [Finset.mem_Icc] at ha
+      simp only [Finset.prod_Icc_succ_top, Finset.prod_Icc_succ_top, Nat.pow_mul]
+      have : a ≠ 0 := by
+        by_contra h
+        subst a
+        symm
+        simp at ha
+      rw [Nat.factorization_prod_pow_eq_self]
+      exact this
+      exact Nat.Prime.two_le ha
+    rw [this]
+    apply Finset.prod_congr rfl
+    intro a ha
+    rw [Finset.mem_Icc] at ha
+    change _ = _
+    rw [Finset.prod_mul_distrib]
+    have : ∏ i ∈ Finset.Icc 1 9, ((Nat.Prime.pow 504 (Nat.prime a)) ^ a).factorization = Finsupp.prod (fun i ↦ (Nat.Prime.pow 504 (Nat.prime a)).factorization) (Finset.Icc 1 9) := by
+      simp only [Finset.prod_image, Nat.cast_pow, Nat.cast_prime]
+      apply Finsupp.prod_congr
+      rw [Nat.primeFactors_prod_pow]
+      exact ha.2
+      exact Nat.Prime.two_le ha
+    rw [this]
+    intro p hp
+    rw [<-Nat.factorization_prod_pow_eq_self] at hp
+    rw [hp]
+    by_cases h : a = 0
+    · symm
+      rw [h]
+      simp
+      have : ¬p = 0 := by
+        by_contra h
+        subst p
+        symm
+        simp at ha
+      rw [<-Nat.zero_pow this]
+      norm_num
+    · have : a ≠ 0 := by
+        by_contra h
+        subst a
+        symm
+        simp at ha
+      rw [Nat.pow_dvd_pow_iff]
+      have : p ∣ Nat.prime a := by
+        rw [Nat.Prime.dvd_prime_iff_eq this ha.2]
+        exact hp.2
+      rw [<-Nat.factorization_le_iff_dvd this]
+      have : a ≤ 504 := by
+        rw [<-Nat.factorization_le_iff_dvd (by simp)]
+        exact Nat.Prime.dvd_factorization (Nat.prime_lt' hp) |>.mpr hp.2
+      omega
+    constructor
+    · intro h
+      exact ⟨Nat.prime_le_prime_iff_le hp h.2.2 h.1, h.2.1, h.2.2⟩
+    · intro h
+      have : p ∈ Finset.Icc 1 9 := by
+        rw [Finset.mem_Icc]
+        exact ⟨h.2.1, h.2.2⟩
+      rw [<-ne_eq]
+      intro hp₀
+      have : p.factorization (504 / 2 ^ a) = 0 := by
+        rw [<-Nat.factorization_le_iff_dvd (Nat.Prime.pos h.1) hp₀]
+        exact Nat.Prime.not_dvd_pow (Nat.prime_lt' hp) |>.mpr hp.2
+      rw [this] at h
+      norm_num at h
+
+  -- Evaluating this product yields 672.
+  norm_num at h₄
+  exact h₄
+
+```

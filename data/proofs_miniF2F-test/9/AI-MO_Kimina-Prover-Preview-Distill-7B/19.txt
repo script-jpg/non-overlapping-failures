@@ -1,0 +1,69 @@
+-- Without loss of generality, we can assume $a \geq b \geq c$.
+  wlog h : a ≥ b ∧ b ≥ c
+  · -- Prove that the conditions are satisfied for some ordering of $a$, $b$ and $c$.
+    have h₀' : 0 < a + b - c := by linarith
+    have h₁' : 0 < b + c - a := by linarith
+    have h₂' : 0 < c + a - b := by linarith
+    have h₃' : 0 ≤ b - c := by linarith
+    have h₄' : 0 ≤ c - a := by linarith
+    have h₅' : 0 ≤ a - b := by linarith
+    -- Prove that the inequality is symmetric.
+    have F (x y z : ℝ) (h : x ≥ y ∧ y ≥ z) : x ^ 2 * y * (x - y) + y ^ 2 * z * (y - z) + z ^ 2 * x * (z - x) =
+        y ^ 2 * x * (y - x) + x ^ 2 * z * (x - z) + z ^ 2 * y * (z - y) := by
+      calc _ = x ^ 2 * y * (x - y) + y ^ 2 * z * (y - z) + z ^ 2 * x * (z - x) := by rfl
+           _ = x ^ 2 * y * (y - x) + y ^ 2 * z * (z - x) + z ^ 2 * x * (z - y) := by ring
+           _ = y ^ 2 * x * (y - x) + x ^ 2 * z * (x - z) + z ^ 2 * y * (z - y) := by ring
+    -- Apply the hypothesis for $a \geq b \geq c$.
+    specialize this (a + b - c) (b + c - a) (c + a - b) (by linarith) (by linarith) (by linarith)
+    -- Show that the original expression is equal to the left-hand side of the equivalent inequality.
+    have : a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) = a * b * (a ^ 2 - b ^ 2) + b * c * (b ^ 2 - c ^ 2) + c * a * (c ^ 2 - a ^ 2) := by
+      ring
+    rw [this]
+    simp_rw [←F]
+    -- Apply the hypothesis and simplify.
+    simp [this, h₀', h₁', h₂', h₃', h₄', h₅']
+  -- It suffices to prove that $a^2b(a-b) + b^2c(b-c) + c^2a(c-a) \geq 0$.
+  suffices : a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) ≥ 0
+  · exact this
+  -- We split into two cases.
+  split_ifs with h'
+  · -- Suppose that $a \geq c$.
+    -- We can write the expression as $a^2b(a-b) + b^2c(b-c) + c^2a(c-a) = ab(a-c)(a-b) + bc(b-c)(b-a) + ca(c-a)(c-b)$.
+    have H : a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) = a * b * (a - c) * (a - b) + b * c * (b - c) * (b - a) + c * a * (c - a) * (c - b) := by
+      ring
+    rw [H]
+    -- Prove that $b-c \leq a-c$.
+    have h'' : b - c ≤ a - c := by linarith
+    -- Prove that $c-a \leq b-a$.
+    have h'' : c - a ≤ b - a := by linarith
+    -- Prove that $a-b \leq c-b$.
+    have h'' : a - b ≤ c - b := by linarith
+    -- Apply the first part of the lemma with $x = b-c$, $y = c-a$, $z = a-b$.
+    apply add_nonneg
+    · apply add_nonneg
+      · apply mul_nonneg
+        · linarith
+        · apply mul_nonneg h'' h''
+      · apply mul_nonneg h' h''
+    · apply mul_nonneg h' h''
+  · -- Suppose that $a \leq c$.
+    -- We can write the expression as $a^2b(a-b) + b^2c(b-c) + c^2a(c-a) = ab(a-b)(a-c) + bc(b-c)(b-a) + ca(c-a)(c-b)$.
+    have H : a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) = a * b * (a - b) * (a - c) + b * c * (b - c) * (b - a) + c * a * (c - a) * (c - b) := by
+      ring
+    rw [H]
+    -- Prove that $a-c \leq b-c$.
+    have h'' : a - c ≤ b - c := by linarith
+    -- Prove that $c-a \leq c-b$.
+    have h'' : c - a ≤ c - b := by linarith
+    -- Prove that $a-b \leq a-c$.
+    have h'' : a - b ≤ a - c := by linarith
+    -- Apply the first part of the lemma with $x = a-c$, $y = a-b$, $z = b-c$.
+    apply add_nonneg
+    · apply add_nonneg
+      · apply mul_nonneg
+        · linarith
+        · apply mul_nonneg h'' h''
+      · apply mul_nonneg h'' h''
+    · apply mul_nonneg h' h''
+
+```

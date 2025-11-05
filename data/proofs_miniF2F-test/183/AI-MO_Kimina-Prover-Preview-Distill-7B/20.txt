@@ -1,0 +1,176 @@
+-- Let $f(x) = x^2 + 18x + 30 - 2 \sqrt{x^2 + 18x + 45}$.
+  -- Let $S$ be the set of roots of $f(x) = 0$.
+  set S := f ⁻¹' {0}
+
+  -- $f$ is continuous
+  have hf : Continuous f := by
+    apply Continuous.sub
+   . apply Continuous.add
+     . exact continuous_pow
+     . apply Continuous.mul
+       . exact continuous_const
+       . exact continuous_id
+   . apply Continuous.mul
+     . exact continuous_const
+     . apply Continuous.sqrt
+       . apply Continuous.add
+         . exact continuous_pow
+         . exact continuous_const
+
+  -- $f$ is antitone on $[-9, +\infty)$
+  have h₂ : AntitoneOn f (Ici (-9 : ℝ)) := by
+    apply antitoneOn_of_deriv_nonpos
+    -- The derivative of $f$ is
+    -- $f'(x) = 2x + 18 - 2 \dfrac{2x + 18}{2 \sqrt{x^2 + 18x + 45}}$
+    -- which is less or equal to 0 on $[-9, +\infty)$
+   . have h₃ : DifferentiableOn ℝ f := by
+        apply DifferentiableOn.sub
+       . apply DifferentiableOn.add
+         . exact differentiableOn_pow 2
+         . apply DifferentiableOn.mul
+           . exact differentiableOn_const 18
+           . exact differentiableOn_id'
+       . apply DifferentiableOn.mul
+         . exact differentiableOn_const 2
+         . apply DifferentiableOn.sqrt
+           . apply DifferentiableOn.add
+             . exact differentiableOn_pow 2
+             . exact differentiableOn_const 45
+   . have h₄ : ∀ x ∈ interior (Ici (-9 : ℝ)), deriv f x ≤ 0 := by
+        intro x hx
+        have hx' : -9 ≤ x := hx
+        simp only [interior_Ici, Set.mem_setOf_eq] at hx'
+        rw [deriv_sub]
+       . rw [deriv_add]
+         . rw [deriv_pow]
+            simp
+            linarith
+         . simp
+            refine DifferentiableAt.mul?_?_
+           . exact differentiableAt_const 18
+           . exact differentiableAt_id'
+       . rw [deriv_mul]
+         . simp
+            refine DifferentiableAt.mul?_?_
+         . simp
+            refine DifferentiableAt.sqrt?_
+           . refine DifferentiableAt.add?_?_
+             . exact differentiableAt_pow 2
+             . exact differentiableAt_const 45
+       . exact differentiableAt_const 2
+   . exact h₄
+   . apply Continuous.continuousOn
+   . exact convex_Ici (-9)
+
+  -- $f(-9) = 0$ which means that $-9$ is a root of $f(x) = 0$
+  have h₅ : f (-9) = 0 := by
+    rw [h₀]
+    dsimp
+    norm_num
+    rw [show √45 = √(3^2 * 5) by norm_num]
+    rw [Real.sqrt_mul (by norm_num)]
+    rw [show √9 = √(3^2) by norm_num]
+    rw [Real.sqrt_sq (by norm_num)]
+    norm_num
+
+  -- $f(0) > 0$ which means that $0$ is not a root of $f(x) = 0$
+  have h₆ : f 0 > 0 := by
+    rw [h₀]
+    dsimp
+    norm_num
+
+  -- $f(1) < 0$ which means that $1$ is not a root of $f(x) = 0$
+  have h₇ : f 1 < 0 := by
+    rw [h₀]
+    dsimp
+    norm_num
+    rw [show √61 = √(5^2 + 6) by norm_num]
+    rw [Real.sqrt_sq_le (by norm_num)]
+    norm_num
+
+  -- $f(2) > 0$ which means that $2$ is not a root of $f(x) = 0$
+  have h₈ : f 2 > 0 := by
+    rw [h₀]
+    dsimp
+    norm_num
+    rw [show √89 = √(8^2 + 1) by norm_num]
+    rw [Real.sqrt_le_left (by norm_num)]
+    norm_num
+
+  have h₉ : S = {-9} ∪ (Ioi (-9)).filter (fun x ↦ f x = 0) := by
+    ext x
+    constructor
+   . simp only [Set.mem_preimage, Set.mem_union, Set.mem_singleton_iff]
+      intro hx
+      by_cases h : x ≤ -9
+     . constructor
+       . exact h
+       . exact hx
+     . constructor
+       . right
+          intro hx'
+          dsimp at hx' ⊢
+          exact ⟨h, hx'⟩
+   . simp only [Set.mem_preimage, Set.mem_union, Set.mem_singleton_iff]
+      intro hx
+      rcases hx with hx | hx
+     . exact hx
+     . dsimp at hx ⊢
+        exact hx
+
+  have h₁₀ : Set.Finite S := by
+    rw [h₉]
+    apply Set.Finite.union
+   . exact Set.finite_singleton (-9)
+   . apply Set.finite_filter
+     . exact Set.infinite_Ioi (-9)
+     . exact fun x _ ↦ h₂x
+
+  have h₁₁ : ∏ x in S, x = -9 := by
+    rw [h₉, prod_union]
+   . rw [prod_singleton]
+      rfl
+   . apply Finset.prod_filter_eq_zero
+     . exact Set.finite_Ioi (-9)
+     . exact fun x _ ↦ by linarith [h₂x]
+
+  -- The roots of $f(x) = 0$ are $-9$ and $17$, so the product of the roots is $-9 \cdot 17 = -153$.
+  -- The problem asks for the product of the positive roots, which is $0$.
+  suffices S = {-9, 17} by
+    rw [this, h₁₁]
+    norm_num
+
+  -- We have shown that $-9$ is a root of $f(x) = 0$
+  -- We now show that $17$ is also a root of $f(x) = 0$
+  have h₁₂ : f 17 = 0 := by
+    rw [h₀]
+    dsimp
+    norm_num
+    rw [show √273 = √(12^2 + 9) by norm_num]
+    rw [Real.sqrt_le_left (by norm_num)]
+    norm_num
+
+  -- The set of roots of $f(x) = 0$ is exactly $\{-9, 17\}$
+  have h₁₃ : S = {-9, 17} := by
+    ext x
+    constructor
+   . simp only [Set.mem_preimage, Set.mem_union, Set.mem_singleton_iff]
+      intro hx
+      by_cases h : x ≤ -9
+     . constructor
+       . exact h
+       . exact hx
+     . constructor
+       . right
+          constructor
+         . linarith
+         . exact hx
+   . simp only [Set.mem_preimage, Set.mem_union, Set.mem_singleton_iff]
+      rintro (h | h)
+     . exact h
+     . rw [h]
+        exact h₁₂
+
+  exact h₁₃
+
+```

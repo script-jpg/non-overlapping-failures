@@ -1,0 +1,80 @@
+have h₂ : Real.logb 4 (Real.logb 4 n) = Real.logb 2 (Real.logb 16 n) := by
+    rw [h₁]
+  -- Change of base formula:
+  -- logb a b = logb c b / logb c a
+  have h₃ : ∀ a b c : ℝ, a > 0 ∧ a ≠ 1 := by
+    intro a b c
+    exact Real.logb_eq_logb_of_pos_of_ne_one (by linarith) (by linarith) (by linarith)
+  -- logb 4 x = logb 2 x / logb 2 4
+  have h₄ := h₃ 2 n 4
+  simp at h₄
+  -- logb 16 x = logb 2 x / logb 2 16
+  have h₅ := h₃ 2 n 16
+  simp at h₅
+  -- logb 4 n / logb 16 n = (logb 2 n / logb 2 4) / (logb 2 n / logb 2 16)
+  rw [h₄, h₅] at h₂
+  -- = logb 2 16 / logb 2 4
+  field_simp at h₂
+  -- logb 2 16 = logb 2 (2^4) = 4
+  have h₆ : Real.logb 2 16 = 4 := by
+    rw [Real.logb_eq_iff_rpow_eq] <;> (norm_num)
+  -- logb 2 4 = logb 2 (2^2) = 2
+  have h₇ : Real.logb 2 4 = 2 := by
+    rw [Real.logb_eq_iff_rpow_eq] <;> (norm_num)
+  -- logb 2 n ≠ 0
+  have h₈ : Real.logb 2 n ≠ 0 := by
+    by_contra! h₈
+    -- logb 2 n = 0 -> n = 2^0 = 1
+    have h₉ : n = 1 := by
+      rw [Real.logb_eq_iff_rpow_eq] at h₈
+      <;> (try norm_num) <;> linarith
+    -- -> logb 4 n = 0
+    have h₁₀ : Real.logb 4 n = 0 := by
+      rw [h₉]
+      simp
+    -- -> 0 = logb 2 (logb 16 n)
+    rw [h₁₀] at h₂
+    simp at h₂
+    -- but logb 2 (logb 16 n) ≠ 0
+    have h₁₁ : Real.logb 2 (Real.logb 16 n) ≠ 0 := by
+      by_contra! h₁₁
+      -- logb 2 x = 0 -> x = 2^0 = 1
+      have h₁₂ : Real.logb 16 n = 1 := by
+        rw [Real.logb_eq_iff_rpow_eq] at h₁₁
+        <;> (try norm_num) <;> linarith
+      -- -> n = 16^1 = 16
+      have h₁₃ : n = 16 := by
+        rw [h₁₂] at h₅
+        rw [Real.logb_eq_iff_rpow_eq] at h₅
+        <;> (try norm_num) <;> linarith
+      -- -> 2 = logb 2 16 = 4
+      rw [h₁₃] at h₆
+      norm_num at h₆
+    contradiction
+  -- Therefore, 2^(2^2) = 2^4 = 16 = n
+  have h₉ : n = 16 := by
+    rw [h₆, h₇] at h₂
+    field_simp at h₂
+    have h₁₀ : (Real.logb 2 n) ^ 2 = 4 := by
+      rw [←h₂]
+      ring
+    have h₁₁ : Real.logb 2 n = 2 := by
+      have h₁₁ : Real.logb 2 n = 2 ∨ Real.logb 2 n = -2 := by
+        apply sq_eq_sq_iff_eq_or_eq_neg.mp
+        linarith
+      cases' h₁₁ with h₁₁ h₁₁
+      · exact h₁₁
+      · -- logb 2 n = -2 -> 0 = 2^(-2) ≠ 0
+        have h₁₂ : n = (2 : ℝ) ^ (-2 : ℝ) := by
+          rw [Real.logb_eq_iff_rpow_eq] at h₁₁
+          <;> (try norm_num) <;> linarith
+        norm_num at h₁₂
+        linarith
+    have h₁₂ : n = 2 ^ (2 : ℝ) := by
+      rw [Real.logb_eq_iff_rpow_eq] at h₁₁
+      <;> (try norm_num) <;> linarith
+    norm_cast at h₁₂
+  -- 1 + 6 = 7
+  rw [h₉]
+  norm_num
+```

@@ -1,0 +1,186 @@
+-- Prove that $a = \frac{\pi}{4}$ is a solution.
+  have h₁ : ((Real.pi / 4 : ℝ) ∈ S) := by
+    rw [h₀]
+    constructor
+    · exact div_nonneg Real.pi_nonneg (by norm_num)
+    constructor
+    · exact Real.pi_nonneg
+    · rw [Real.sin_pi_div_two]
+      rw [Real.cos_pi_div_two]
+      simp
+
+  -- Prove that $b = \frac{3\pi}{4}$ is a solution.
+  have h₂ : ((3 * Real.pi / 4 : ℝ) ∈ S) := by
+    rw [h₀]
+    constructor
+    · exact mul_nonneg (by norm_num) (Real.pi_nonneg)
+    constructor
+    · exact Real.pi_nonneg
+    · have h₃ : Real.sin (3 * Real.pi / 4) = Real.sqrt 2 / 2 := by
+        rw [show 3 * Real.pi / 4 = Real.pi - Real.pi / 4 by ring]
+        rw [Real.sin_pi_sub]
+        rw [Real.sin_pi_div_four]
+      have h₄ : Real.cos (3 * Real.pi / 4) = -Real.sqrt 2 / 2 := by
+        rw [show 3 * Real.pi / 4 = Real.pi - Real.pi / 4 by ring]
+        rw [Real.cos_pi_sub]
+        rw [Real.cos_pi_div_four]
+        ring
+      rw [h₃, h₄]
+      field_simp
+
+  -- Prove that the set $S$ does not contain any other solutions.
+  have h₃ : ∀ x ∈ S, x = Real.pi / 4 ∨ x = 3 * Real.pi / 4 := by
+    intro x hx
+    rw [h₀] at hx
+    rcases hx with ⟨hx₁, hx₂, hx₃⟩
+
+    have h_{!} : ∀ x : ℝ, 0 ≤ x ∧ x ≤ Real.pi → Real.cos x ≤ 1 := by
+      intro x hx
+      exact Real.cos_le_one x
+    have h_{!} : ∀ x : ℝ, 0 ≤ x ∧ x ≤ Real.pi → Real.sin x ≥ 0 := by
+      intro x hx
+      exact Real.sin_nonneg_of_nonneg_of_le_pi hx₁ hx₂
+    have h_{!} : Real.sin (Real.pi / 2) = 1 := by
+      exact Real.sin_pi_div_two
+    have h_{!} : Real.cos (Real.pi / 2) = 0 := by
+      exact Real.cos_pi_div_two
+
+    -- Evaluate $\cos x$ and $\sin x$ for the solutions we found.
+    have h₄ : Real.cos x ≤ 1 := by
+      exact (h_{!} x ⟨hx₁, hx₂⟩)
+    have h₅ : Real.sin x ≥ 0 := by
+      exact (h_{!} x ⟨hx₁, hx₂⟩)
+
+    have h₆ : Real.cos (Real.pi / 2 * Real.cos x) ≤ 1 := by
+      exact (h_{!} (Real.pi / 2 * Real.cos x) (by constructor <;> nlinarith [Real.pi_nonneg, h₄, Real.cos_sq_add_sin_sq x])
+    have h₇ : Real.sin (Real.pi / 2 * Real.cos x) ≥ 0 := by
+      apply (h_{!} (Real.pi / 2 * Real.cos x) (by constructor <;> nlinarith [Real.pi_nonneg, h₄, Real.cos_sq_add_sin_sq x])).mpr
+      nlinarith [Real.pi_nonneg, h₄]
+
+    have h₈ : Real.cos (Real.pi / 2 * Real.sin x) ≤ 1 := by
+      exact (h_{!} (Real.pi / 2 * Real.sin x) (by constructor <;> nlinarith [Real.pi_nonneg, h₅, Real.cos_sq_add_sin_sq x]))
+    have h₉ : Real.sin (Real.pi / 2 * Real.sin x) ≥ 0 := by
+      apply (h_{!} (Real.pi / 2 * Real.sin x) (by constructor <;> nlinarith [Real.pi_nonneg, h₅, Real.cos_sq_add_sin_sq x])).mpr
+      nlinarith [Real.pi_nonneg, h₅]
+
+    -- Prove that $\sin(\frac{\pi}{2} \cos x) \neq 0$.
+    have h₁₀ : Real.sin (Real.pi / 2 * Real.cos x) ≠ 0 := by
+      by_contra! h
+      have h₁₁ : Real.cos (Real.pi / 2 * Real.cos x) = 1 := by
+        exact (Real.sin_eq_zero_iff.1 h).symm
+      have h₁₂ : Real.cos x = 0 := by
+        nlinarith [Real.cos_sq_add_sin_sq x, Real.cos_le_one (Real.pi / 2 * Real.cos x), h₁₁, Real.sin_sq_le_one (Real.pi / 2 * Real.sin x), h₅]
+      have h₁₃ : Real.sin x = 1 := by
+        exact (Real.cos_eq_zero_iff.1 h₁₂).symm
+      have h₁₄ : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := by
+        exact Real.sin_sq_add_cos_sq x
+      rw [h₁₃, h₁₂] at h₁₄
+      simp at h₁₄
+
+    -- Prove that $\cos(\frac{\pi}{2} \sin x) \neq 0$.
+    have h₁₅ : Real.cos (Real.pi / 2 * Real.sin x) ≠ 0 := by
+      by_contra! h
+      have h₁₆ : Real.sin (Real.pi / 2 * Real.sin x) = 1 := by
+        exact (Real.cos_eq_zero_iff.1 h).symm
+      have h₁₇ : Real.sin x = 0 := by
+        nlinarith [Real.cos_sq_add_sin_sq x, Real.cos_sq_le_one (Real.pi / 2 * Real.cos x), h₁₆, Real.sin_sq_le_one (Real.pi / 2 * Real.sin x), h₄]
+      have h₁₈ : Real.cos x = 1 := by
+        exact (Real.sin_eq_zero_iff.1 h₁₇).symm
+      have h₁₉ : Real.cos x ^ 2 + Real.sin x ^ 2 = 1 := by
+        exact Real.cos_sq_add_sin_sq x
+      rw [h₁₈, h₁₇] at h₁₉
+      simp at h₁₉
+
+    -- Show that $\sin x = \cos x$.
+    have h₁₇ : Real.sin x = Real.cos x := by
+      have h₁₈ : Real.sin (Real.pi / 2 * Real.cos x) / Real.sin (Real.pi / 2 * Real.sin x) = 1 := by
+        exact (div_eq_one_iff_eq h₁₀ h₉).mpr hx₃
+      have h₁₉ : Real.sin (Real.pi / 2 * Real.cos x) * Real.cos (Real.pi / 2 * Real.sin x) = Real.cos (Real.pi / 2 * Real.cos x) * Real.sin (Real.pi / 2 * Real.sin x) := by
+        exact (div_eq_div_iff h₁₀ h₉ h₈ h₇).mp h₁₈
+      have h₂₀ : Real.sin (Real.pi / 2 * Real.cos x) * Real.cos (Real.pi / 2 * Real.sin x) - Real.cos (Real.pi / 2 * Real.cos x) * Real.sin (Real.pi / 2 * Real.sin x) = 0 := by
+        exact (h₁₉).symm
+      have h₂₁ : Real.sin (Real.pi / 2 * Real.cos x - Real.pi / 2 * Real.sin x) = 0 := by
+        exact (Real.sin_sub_eq_zero_iff.2 h₂₀).mpr h₃
+      have h₂₂ : Real.pi / 2 * Real.cos x - Real.pi / 2 * Real.sin x = Real.pi / 2 * (Real.cos x - Real.sin x) := by
+        ring
+      rw [h₂₂] at h₂₁
+      nth_rw 2 [←mul_one (Real.pi / 2)] at h₂₁
+      rw [mul_assoc] at h₂₁
+      nth_rw 1 [←one_mul (Real.pi / 2)] at h₂₁
+      rw [mul_right_inj' (by norm_num)] at h₂₁
+      have h₂₃ : Real.cos x - Real.sin x = 0 := by
+        exact (mul_eq_zero.mp h₂₁).symm
+      exact sub_eq_zero.mp h₂₃
+
+    -- Show that $\cos x = \frac{\sqrt{2}}{2}$.
+    have h₁₈ : Real.cos x = Real.sqrt 2 / 2 := by
+      have h₁₉ : Realcos x ^ 2 + Real.sin x ^ 2 = 1 := by
+        exact Real.cos_sq_add_sin_sq x
+      rw [←h₁₇] at h₁₉
+      have h₂₀ : 2 * Real.cos x ^ 2 = 1 := by
+        linarith only [h₁₉]
+      have h₂₁ : Real.cos x ^ 2 = 1 / 2 := by
+        linarith only [h₂₀]
+      rw [h₂₁] at h₂₀
+      have h₂₂ : Real.cos x = Real.sqrt (1 / 2) ∨ Real.cos x = -Real.sqrt (1 / 2) := by
+        exact eq_or_eq_neg_of_sq_eq_sq (Real.cos x) (Real.sqrt (1 / 2)) (by rw [Real.sq_sqrt (by norm_num)]; norm_num) h₂₀
+      rcases h₂₂ with h₂₂ | h₂₂
+      · rw [h₂₂]
+        rw [Real.sqrt_eq_iff_eq_sq (by norm_num)]
+        norm_num
+      · linarith only [h₂₂, Real.cos_sq_add_sin_sq x, Real.sin_nonneg_of_nonneg_of_le_pi hx₁ hx₂]
+
+    -- Show that $\sin x = \frac{\sqrt{2}}{2}$.
+    have h₁₉ : Real.sin x = Real.sqrt 2 / 2 := by
+      exact (h₁₇.symm.trans h₁₈)
+
+    -- Show that $\cos x = \sin x \geq 0$ implies that $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$.
+    have h₂₀ : x = Real.pi / 4 ∨ x = 3 * Real.pi / 4 := by
+      have h₂₁ : Real.cos x = Real.sin x := by
+        exact h₁₇.symm
+      have h₂₂ : Real.cos x ≥ 0 := by
+        exact (h_{!} x ⟨hx₁, hx₂⟩).mpr hx₃
+      have h₂₃ : Real.sin x ≥ 0 := by
+        exact (h_{!} x ⟨hx₁, hx₂⟩).mpr hx₃
+      have h₂₄ : Real.cos x ^ 2 = Real.sin x ^ 2 := by
+        exact congr_arg (· ^ 2) h₂₁
+      have h₂₅ : Real.cos x ^ 2 + Real.sin x ^ 2 = 1 := by
+        exact Real.cos_sq_add_sin_sq x
+      rw [h₂₄] at h₂₅
+      have h₂₆ : Real.cos x ^ 2 = 1 / 2 := by
+        linarith only [h₂₅]
+      have h₂₇ : Real.cos x = Real.sqrt (1 / 2) ∨ Real.cos x = -Real.sqrt (1 / 2) := by
+        exact eq_or_eq_neg_of_sq_eq_sq (Real.cos x) (Real.sqrt (1 / 2)) (by rw [Real.sq_sqrt (by norm_num)]; norm_num) h₂₆
+      rcases h₂₇ with h₂₇ | h₂₇
+      · rw [h₂₇] at h₂₄
+        have h₂₈ : Real.sin x = Real.sqrt (1 / 2) := by
+          exact (h₂₄.symm.trans h₂₇)
+        have h₂₉ : Real.sqrt (1 / 2) = Real.sqrt 2 / 2 := by
+          rw [show (1 / 2 : ℝ) = (2 : ℝ) / (2 ^ 2) by ring]
+          field_simp
+        rw [h₂₈, h₂₉] at hx
+        left
+        exact (Real.pi_div_four).symm
+      · rw [h₂₇] at h₂₄
+        have h₂₈ : Real.sin x = -Real.sqrt (1 / 2) := by
+          exact (h₂₄.symm.trans h₂₇)
+        have h₂₉ : 0 ≤ Real.sin x := by
+          exact (h_{!} x ⟨hx₁, hx₂⟩).mpr hx₃
+        linarith only [h₂₈, h₂₉]
+
+    exact h₂₀
+
+  -- Prove that $S = \{\frac{\pi}{4}, \frac{3\pi}{4}\}$.
+  have h₄ : S = {Real.pi / 4, 3 * Real.pi / 4} := by
+    ext x
+    constructor
+    · intro hx
+      simp [h₃ x hx]
+    · intro hx
+      rcases hx with hx | hx
+      · exact h₁.symm ▸ hx
+      · exact h₂.symm ▸ hx
+
+  -- Prove that the cardinality of $S$ is $2$.
+  rw [h₄, Finset.card_pair (by linarith [Real.pi_pos])]
+```

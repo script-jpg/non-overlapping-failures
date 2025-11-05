@@ -1,0 +1,127 @@
+-- The roots of $f$ are all positive integer, so we may write $f(z) = (z - r₁)(z - r₂)...(z - r₆)$.
+  have h₂ : ∀ r : ℂ, f r = 0 → r = 1 ∨ r = 2 ∨ r = 4 ∨ r = 8 ∨ r = 16 ∨ r = 1 ∨ r = 2 ∨ r = 4 ∨ r = 8 ∨ r = 16 ∨ r = 1 ∨ r = 2 ∨ r = 4 ∨ r = 8 ∨ r = 16 := by
+    intro r hr
+    specialize h₁ r hr
+    rcases h₁ with ⟨_, h₁, h₂⟩
+    have h₃ : r.re > 0 := by exact h₁
+    have h₄ : (r.re : ℤ) > 0 := by exact_mod_cast h₁
+    replace h₄ : (r.re : ℤ) ≤ 16 := by
+      by_contra!
+      have h₅ : f 17 = 17 ^ 6 - 10 * 17 ^ 5 + a * 17 ^ 4 + b * 17 ^ 3 + c * 17 ^ 2 + d * 17 + 16 := by exact h₀ 17
+      simp [h₅] at hr
+      have h₆ : (17 : ℂ) = 1 ∨ (17 : ℂ) = 2 ∨ (17 : ℂ) = 4 ∨ (17 : ℂ) = 8 ∨ (17 : ℂ) = 16 ∨ (17 : ℂ) = 1 ∨ (17 : ℂ) = 2 ∨ (17 : ℂ) = 4 ∨ (17 : ℂ) = 8 ∨ (17 : ℂ) = 16 ∨ (17 : ℂ) = 1 ∨ (17 : ℂ) = 2 ∨ (17 : ℂ) = 4 ∨ (17 : ℂ) = 8 ∨ (17 : ℂ) = 16 := by exact h₂
+      simp at h₆
+    have h₅ : r.re = 1 ∨ r.re = 2 ∨ r.re = 4 ∨ r.re = 8 ∨ r.re = 16 := by
+      interval_cases r.re <;> norm_cast at *
+      rw [show (1 : ℂ) = 1 ∨ (1 : ℂ) = 2 ∨ (1 : ℂ) = 4 ∨ (1 : ℂ) = 8 ∨ (1 : ℂ) = 16 ∨ (1 : ℂ) = 1 ∨ (1 : ℂ) = 2 ∨ (1 : ℂ) = 4 ∨ (1 : ℂ) = 8 ∨ (1 : ℂ) = 16 ∨ (1 : ℂ) = 1 ∨ (1 : ℂ) = 2 ∨ (1 : ℂ) = 4 ∨ (1 : ℂ) = 8 ∨ (1 : ℂ) = 16]
+      all_goals
+        simpa using h₆
+    rcases h₅ with (h₅ | h₅ | h₅ | h₅ | h₅)
+    all_goals
+      rw [h₅]
+      try simp [h₀]
+      try linarith
+      try simp [Complex.add_re, Complex.mul_re, pow_two, pow_succ] at hr
+      try simp [Complex.add_re, Complex.mul_re, pow_two, pow_succ] at hr
+      try rw [h₅] at hr
+      simp [h₀] at hr
+      clear h₀
+      have h₆ := Complex.eq_of_sub_eq_zero hr
+      simp [h₆]
+      norm_cast
+
+  -- We can factor out $(z - 1)$, $(z - 2)$, $(z - 4)$, $(z - 8)$, and $(z - 16)$.
+  have h₃ : ∀ z, f z = 0 → (z - 1) * (z - 2) * (z - 4) * (z - 8) * (z - 16) * (z - 1) * (z - 2) * (z - 4) * (z - 8) * (z - 16) * (z - 1) * (z - 2) * (z - 4) * (z - 8) * (z - 16) = 0 := by
+    intro z hz
+    have h₄ : z = 1 ∨ z = 2 ∨ z = 4 ∨ z = 8 ∨ z = 16 ∨ z = 1 ∨ z = 2 ∨ z = 4 ∨ z = 8 ∨ z = 16 ∨ z = 1 ∨ z = 2 ∨ z = 4 ∨ z = 8 ∨ z = 16 := by exact h₂ z hz
+    rcases h₄ with (h₄ | h₄ | h₄ | h₄ | h₄ | h₄ | h₄ | h₄ | h₄ | h₄ | h₄ | h₄ | h₄ | h₄ | h₄)
+    all_goals
+      rw [h₄]
+      simp
+
+  -- We get a linear system of equations by considering the coefficients of the polynomial $f(z) = (z - 1)(z - 2)(z - 4)(z - 8)(z - 16)(z - 1)(z - 2)(z - 4)(z - 8)(z - 16)(z - 1)(z - 2)(z - 4)(z - 8)(z - 16)$.
+  let s : Finset (Fin 3 × ℕ) := Finset.toFinset $ List.range 3 ×ˢ Finset.range 16
+  let w : Finset (Fin 3 × ℕ) → ℂ := fun i => (-1 : ℂ) ^ (i.1) * (17 : ℂ) ^ (i.2)
+  have h₄ : ∃! g : Fin 3 → ℂ, ((w i).sum i ∈ s) = g.map (fun i => i.1) ∑ i ∈ s, (w i) • (C i) := by
+    -- This is a standard result in mathematics (that a polynomial is determined by its roots and its leading coefficient).
+    -- However, we need to make sure we are not dividing by zero.
+    have g₁ : ((w i).sum i ∈ s) = 0 := by
+      simp [s, w]
+      simp [Finset.sum_eq_zero]
+      use (fun i => 1)
+      simp
+    have g₂ : (∀ j ∈ s, w j ≠ 0) := by
+      intro j hj
+      simp [w]
+      simp at hj
+      linarith
+    have g₃ : ∃! g : Fin 3 → ℂ, ((w i).sum i ∈ s) = g.map (fun i => i.1) ∑ i ∈ s, (w i) • (C i) := by
+      -- This is a standard result in mathematics (that a polynomial is determined by its roots and its leading coefficient).
+      -- However, we need to make sure we are not dividing by zero.
+      apply existsUnique_of_exists_of_unique
+      · use fun i => 0
+        simp
+      · intro g h
+        ext x
+        simp at h
+        rcases h with (h | h) <;> simp [h]
+    exact g₃
+  rcases h₄ with ⟨g, h₄⟩
+  -- Now we evaluate this at $z = 0, 1, 2$ to get a system of equations for the coefficients.
+  have h₅ : ∀ z : ℕ × ℕ, ((w i).sum i ∈ s) = (C i) • (z ^ i) := by
+    intro z
+    simp [w]
+    simp [s]
+    have h₅ : ∀ z : ℕ × ℕ, ((@Polynomial.map _ _ Complex.id (Fin 3 → ℂ) (C 0) (C 1) (C 2) (C 3) (C 4) (C 5) (C 6) (C 7) (C 8) (C 9) (C 10) (C 11) (C 12) (C 13) (C 14) (C 15) (C 16) (C 17) (C 18) (C 19) (C 20) (C 21) (C 22) (C 23) (C 24) (C 25) (C 26) (C 27) (C 28) (C 29) (C 30) (C 31) (C 32) (C 33) (C 34) (C 35) (C 36) (C 37) (C 38) (C 39) (C 40) (C 41) (C 42) (C 43) (C 44) (C 45) (C 46) (C 47) (C 48) (C 49) (C 50) (C 51) (C 52) (C 53) (C 54) (C 55) (C 56) (C 57) (C 58) (C 59) (C 60) (C 61) (C 62) (C 63)), (C 0) ^ z, (C 1) ^ z, (C 2) ^ z, (C 3) ^ z, (C 4) ^ z, (C 5) ^ z, (C 6) ^ z, (C 7) ^ z, (C 8) ^ z, (C 9) ^ z, (C 10) ^ z, (C 11) ^ z, (C 12) ^ z, (C 13) ^ z, (C 14) ^ z, (C 15) ^ z, (C 16) ^ z, (C 17) ^ z, (C 18) ^ z, (C 19) ^ z, (C 20) ^ z, (C 21) ^ z, (C 22) ^ z, (C 23) ^ z, (C 24) ^ z, (C 25) ^ z, (C 26) ^ z, (C 27) ^ z, (C 28) ^ z, (C 29) ^ z, (C 30) ^ z, (C 31) ^ z, (C 32) ^ z, (C 33) ^ z, (C 34) ^ z, (C 35) ^ z, (C 36) ^ z, (C 37) ^ z, (C 38) ^ z, (C 39) ^ z, (C 40) ^ z, (C 41) ^ z, (C 42) ^ z, (C 43) ^ z, (C 44) ^ z, (C 45) ^ z, (C 46) ^ z, (C 47) ^ z, (C 48) ^ z, (C 49) ^ z, (C 50) ^ z, (C 51) ^ z, (C 52) ^ z, (C 53) ^ z, (C 54) ^ z, (C 55) ^ z, (C 56) ^ z, (C 57) ^ z, (C 58) ^ z, (C 59) ^ z, (C 60) ^ z, (C 61) ^ z, (C 62) ^ z, (C 63) ^ z) x
+      simp
+      symm
+      rw [←Polynomial.map_add]
+      symm
+      apply Polynomial.eq_of_degree_lt
+      simp
+      calc
+        _ < ((@Polynomial.degree _ _ Complex.id (Fin 3 → ℂ) (C 0) (C 1) (C 2) (C 3) (C 4) (C 5) (C 6) (C 7) (C 8) (C 9) (C 10) (C 11) (C 12) (C 13) (C 14) (C 15) (C 16) (C 17) (C 18) (C 19) (C 20) (C 21) (C 22) (C 23) (C 24) (C 25) (C 26) (C 27) (C 28) (C 29) (C 30) (C 31) (C 32) (C 33) (C 34) (C 35) (C 36) (C 37) (C 38) (C 39) (C 40) (C 41) (C 42) (C 43) (C 44) (C 45) (C 46) (C 47) (C 48) (C 49) (C 50) (C 51) (C 52) (C 53) (C 54) (C 55) (C 56) (C 57) (C 58) (C 59) (C 60) (C 61) (C 62) (C 63)),.degree) := by apply Polynomial.degree_lt_degree; swap; apply Polynomial.degree_C; simp
+        _ = _ := by
+          rw [Polynomial.degree]
+          rw [Multiset.card]
+          simp
+          rfl
+    apply eq_or_eq_neg_of_sq_eq_sq
+    norm_num
+    rw [Polynomial.map_neg]
+    rw [Polynomial.map_add]
+    apply Polynomial.eval_eq_degree
+    swap
+    simp
+    calc
+      _ < ((@Polynomial.degree _ _ Complex.id (Fin 3 → ℂ) (C 0) (C 1) (C 2) (C 3) (C 4) (C 5) (C 6) (C 7) (C 8) (C 9) (C 10) (C 11) (C 12) (C 13) (C 14) (C 15) (C 16) (C 17) (C 18) (C 19) (C 20) (C 21) (C 22) (C 23) (C 24) (C 25) (C 26) (C 27) (C 28) (C 29) (C 30) (C 31) (C 32) (C 33) (C 34) (C 35) (C 36) (C 37) (C 38) (C 39) (C 40) (C 41) (C 42) (C 43) (C 44) (C 45) (C 46) (C 47) (C 48) (C 49) (C 50) (C 51) (C 52) (C 53) (C 54) (C 55) (C 56) (C 57) (C 58) (C 59) (C 60) (C 61) (C 62) (C 63)),.degree) := by apply Polynomial.degree_lt_degree; swap; apply Polynomial.degree_C; simp
+      _ = _ := by
+        rw [Polynomial.degree]
+        rw [Multiset.card]
+        simp
+        rfl
+    norm_num
+    simp
+  have h₆ := h₅ 0
+  have h₇ := h₅ 1
+  have h₈ := h₅ 2
+  simp at h₆ h₇ h₈
+  clear h₅
+  have h₆ : f 0 = 0 := by
+    specialize h₀ 0
+    simp at h₀
+    rw [h₀]
+    simp
+  have h₇ : f 1 = 0 := by
+    specialize h₀ 1
+    simp at h₀
+    rw [h₀]
+    simp
+  have h₈ : f 2 = 0 := by
+    specialize h₀ 2
+    simp at h₀
+    rw [h₀]
+    simp
+  simp [h₀] at h₆ h₇ h₈
+  clear h₀
+  -- We get a system of equations by considering the coefficients of the polynomial $f(z) = (z - 1)(z - 2)(z - 4)(z - 8)(z - 16)(z - 1)(z - 2)(z - 4)(z - 8)(z - 16)(z - 1)(z -

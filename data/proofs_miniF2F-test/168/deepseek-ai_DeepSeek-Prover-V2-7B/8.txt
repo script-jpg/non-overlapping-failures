@@ -1,0 +1,55 @@
+have h₂ : a ^ 3 = 8 := by linear_combination h₀
+  have h₃ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := h₁
+  have h₄ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := by linear_combination h₃
+  have h₅ : Complex.abs (a - b) ≤ 2 * Real.sqrt 21 := by
+    -- Use the triangle inequality and properties of complex numbers to bound the distance.
+    have h₆ : Complex.abs (a - b) ≤ Complex.abs a + Complex.abs b := by
+      simpa using Complex.abs.add_le (a - b) (b)
+    have h₇ : Complex.abs a ≤ 2 * Real.sqrt 3 := by
+      -- Calculate the maximum modulus of a solution to z^3 = 8.
+      have h₈ : a ^ 3 = 8 := by linear_combination h₀
+      have h₉ : a = 2 ∨ a = -1 + Real.sqrt 3 * Complex.I ∨ a = -1 - Real.sqrt 3 * Complex.I := by
+        apply or_iff_not_imp_left.mpr
+        intro h
+        apply or_iff_not_imp_left.mpr
+        intro h'
+        apply mul_left_cancel₀ (sub_ne_zero.mpr h)
+        apply mul_left_cancel₀ (sub_ne_zero.mpr h')
+        ring_nf at h₈ ⊢
+        norm_cast at h₈ ⊢
+        simp_all [Complex.ext_iff, pow_two, pow_three]
+        <;> norm_num
+        <;> ring_nf at * <;> norm_num at *
+        <;>
+        (try {
+          nlinarith [Real.sqrt_nonneg 3, Real.sq_sqrt (show (0 : ℝ) ≤ 3 by norm_num)]
+        }) <;>
+        (try {
+          field_simp [Complex.ext_iff, pow_two, pow_three] at * <;>
+          ring_nf at * <;>
+          norm_num at * <;>
+          nlinarith [Real.sqrt_nonneg 3, Real.sq_sqrt (show (0 : ℝ) ≤ 3 by norm_num)]
+        }) <;>
+        (try {
+          aesop
+        })
+      rcases h₉ with (rfl | rfl | rfl) <;> simp [Complex.abs, Complex.normSq, pow_two, pow_three]
+      <;> norm_num <;>
+      ring_nf <;>
+      norm_num <;>
+      apply le_of_pow_le_pow_left two_ne_zero (by positivity) <;>
+      ring_nf <;>
+      norm_num <;>
+      nlinarith [Real.sqrt_nonneg 3, Real.sq_sqrt (show (0 : ℝ) ≤ 3 by norm_num)]
+    have h₈ : Complex.abs b ≤ 8 := by
+      -- Calculate the maximum modulus of a solution to z^3 - 8z^2 - 8z + 64 = 0.
+      have h₉ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := by linear_combination h₄
+      have h₁₀ : Complex.abs (b ^ 3) = Complex.abs (8 * b ^ 2 + 8 * b - 64) := by rw [h₉]
+      simp [Complex.abs.map_pow] at h₁₀
+      have h₁₁ : Complex.abs b ≤ 8 := by
+        cases' le_total 0 (Complex.re b) with h h <;>
+        cases' le_total 0 (Complex.im b) with h' h' <;>
+        simp_all [Complex.abs, Complex.normSq, pow_two, pow_three] <;>
+        ring_nf at * <;>
+        norm_num at * <;>
+        nlinarith [sq_nonneg

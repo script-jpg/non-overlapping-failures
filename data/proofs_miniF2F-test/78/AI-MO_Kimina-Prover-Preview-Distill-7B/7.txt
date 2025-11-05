@@ -1,0 +1,148 @@
+-- $\mathrm{gcd}(a, b) \mid 6$
+  have : a.gcd b ∣ 6 := by rw [← h₃] ; apply Nat.dvd_self
+
+  -- $6 \mid \mathrm{gcd}(a, b)$
+  have : 6 ∣ a.gcd b := by
+    have : 6 = 2 * 3 := by norm_num
+    rw [this]
+    constructor
+    ·
+      -- $2 \mid \mathrm{gcd}(a, b)$
+      have h₁ : 2 ∣ a := by
+        have : a % 2 = 0 := by
+          have : a % 10 = 2 := h₁
+          omega
+        exact Nat.dvd_of_mod_eq_zero this
+      have h₂ : 2 ∣ b := by
+        have : b % 2 = 0 := by
+          have : b % 10 = 4 := h₂
+          omega
+        exact Nat.dvd_of_mod_eq_zero this
+      exact Nat.dvd_gcd h₁ h₂
+    · -- $3 \mid \mathrm{gcd}(a, b)$
+      have h₁ : 3 ∣ a := by
+        have : 0 < a := h₀.left
+        have : a % 3 = 0 := by omega
+        exact Nat.dvd_of_mod_eq_zero this
+      have h₂ : 3 ∣ b := by
+        have : 0 < b := h₀.right
+        have : b % 3 = 0 := by omega
+        exact Nat.dvd_of_mod_eq_zero this
+      exact Nat.dvd_gcd h₁ h₂
+
+  -- therefore $\mathrm{gcd}(a, b) = 6$
+  have hgcd : a.gcd b = 6 := by
+    have : a.gcd b = 2 * 3 := by
+      exact Nat.dvd_antisymm_iff.mp ⟨this, ‹6 ∣ a.gcd b›⟩
+    rw [this]
+    norm_num
+
+  -- $a = 6a'$ and $b = 6b'$
+  have ha : a = 6 * a / 6 := by exact Eq.symm (Nat.div_mul_cancel a hgcd)
+  have hb : b = 6 * b / 6 := by exact Eq.symm (Nat.div_mul_cancel b hgcd)
+
+  -- $a'$ and $b'$ are coprime
+  have : Nat.gcd (a / 6) (b / 6) = 1 := by
+    have hgcd : a.gcd b = 6 * Nat.gcd (a / 6) (b / 6) := by
+      rw [← hgcd, Nat.gcd_mul_left, Nat.gcd_mul_right]
+      have : Nat.gcd 6 (a / 6) = 1 := by
+        have : 6 = 2 * 3 := by norm_num
+        rw [this]
+        apply Nat.Coprime.mul
+        · exact Nat.coprime_two_left.mpr (Nat.odd_iff.mpr (by omega))
+        · exact Nat.coprime_three_left.mpr (by omega)
+      rw [this, Nat.gcd_comm (a / 6), Nat.gcd_mul_left, Nat.mul_right_comm]
+    rw [hgcd]
+    apply Nat.eq_one_of_mul_eq_self_left?_
+    exact Nat.gcd_ne_zero_left (by positivity)
+
+  -- $a'$ is a multiple of $3$
+  have : 3 ∣ a / 6 := by
+    have : 3 ∣ a := by
+      have : a % 3 = 0 := by omega
+      exact Nat.dvd_of_mod_eq_zero this
+    rw [ha]
+    exact Nat.dvd_mul_left 3 (a / 6)
+
+  -- $b'$ is a multiple of $2$
+  have : 2 ∣ b / 6 := by
+    have : 2 ∣ b := by
+      have : b % 2 = 0 := by omega
+      exact Nat.dvd_of_mod_eq_zero this
+    rw [hb]
+    exact Nat.dvd_mul_left 2 (b / 6)
+
+  -- let $a' = 3a''$ and $b' = 2b''$
+  let a'' := a / 6 / 3
+  let b'' := b / 6 / 2
+
+  -- $a''$ and $b''$ are coprime
+  have : Nat.gcd a'' b'' = 1 := by
+    have : a / 6 = 3 * a'' := by omega
+    rw [ha] at this
+    have : b / 6 = 2 * b'' := by omega
+    rw [hb] at this
+    have : 6 * a'' = Nat.gcd (6 * a'' ) (6 * b'') := by
+      symm
+      apply Nat.gcd_mul_left
+    rw [this]
+    exact Nat.eq_one_of_mul_eq_self_left?_
+    rw [← this]
+    exact Nat.gcd_ne_zero_left (by positivity)
+
+  -- $a'' \ge 1$ and $b'' \ge 1$
+  have ha : 1 ≤ a'' := by
+    by_contra!
+    have : a / 6 = 0 := by omega
+    have : a = 0 := by omega
+    linarith
+  have hb : 1 ≤ b'' := by
+    by_contra!
+    have : b / 6 = 0 := by omega
+    have : b = 0 := by omega
+    linarith
+
+  -- $a' = 3a'' \ge 3$ and $b' = 2b'' \ge 2$
+  have ha : 3 ≤ a / 6 := by omega
+  have hb : 2 ≤ b / 6 := by omega
+
+  -- $a' * b' = 6 * a'' * b''$
+  have hab : a / 6 * b / 6 = 6 * a'' * b'' := by
+    have : 6 * (a / 6) = 6 * a'' := by omega
+    rw [this]
+    have : 6 * (b / 6) = 6 * b'' := by omega
+    rw [this]
+    ring
+
+  -- $a' * b' \ge 3 * 2 = 6$
+  have hab : 6 ≤ a / 6 * b / 6 := by omega
+
+  -- $6 \mid \mathrm{lcm}(a, b)$
+  have hlcm : 6 ∣ a.lcm b := by
+    have : a.lcm b = a * b / a.gcd b := by exact rfl
+    rw [this, hgcd]
+    exact Nat.dvd_mul_left 6 (a * b / 6)
+
+  -- $\mathrm{lcm}(a, b) \ge 6 / 6 * a' * b' = 6 * a'' * b''$
+  have hlcm : 6 * a'' * b'' ≤ a.lcm b := by
+    have : 6 * a'' * b'' = a / 6 * b / 6 := by omega
+    rw [this]
+    have : a / 6 * b / 6 ≤ a.lcm b := by
+      have : a.lcm b = a * b / a.gcd b := by exact rfl
+      rw [this, hgcd]
+      apply Nat.div_le_of_le_mul
+      have : a * b = a / 6 * 6 * (b / 6) := by omega
+      rw [this]
+      apply Nat.mul_le_mul_left
+      exact Nat.lt_succ_le (Nat.div_mul_cancel a hgcd)
+    exact Nat.le_trans ‹6 * a'' * b'' = a / 6 * b / 6› ‹a / 6 * b / 6 ≤ a.lcm b›
+
+  -- $6 \mid \mathrm{lcm}(a, b)$ and $\mathrm{lcm}(a, b) \ge 6$ gives $\mathrm{lcm}(a, b) \ge 6$
+  apply Nat.le_of_dvd (by positivity) at hlcm
+  exact hlcm
+
+  -- when $a = 6$, $b = 12$, $\mathrm{lcm}(a, b) = 12 = 6 * 1 * 2$
+  use 6
+  use 12
+  norm_num
+```

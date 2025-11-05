@@ -1,0 +1,197 @@
+-- First, we need to establish that m = ∛2 and n = ∛4.
+  have hm : m = ∛2 := by
+    have hm : m ^ 3 = 2 := h₁
+    symm
+    exact (pow_left_inj₀ (by norm_num) (by norm_num) (by simpa)).mp hm
+  have hn : n = ∛4 := by
+    have hn : n ^ 3 = 4 := h₂
+    symm
+    exact (pow_left_inj₀ (by norm_num) (by norm_num) (by simpa)).mp hn
+
+  -- Next, we need to prove that {1, m, n} are linearly independent over ℚ.
+  have hlindep : LinearIndependentOn (Set.Iio (↑{m, n} : Finset ℝ)) (fun i => match i with
+    | 0 => 1
+    | 1 => m
+    | 2 => n) := by
+    apply linearIndependentOn_of_3 independence
+    -- To prove this, we need to show that for all x, y, z ∈ ℚ, if x + y * m + z * n = 0, then x = y = z = 0.
+    intro x y z h
+    simp only [Finset.mem_Iio, ne_eq, Set.mem_setOf_eq, not_false_eq_true, zero_ne_one, Finset.sum_insert,
+      Finset.sum_singleton, OfNat.zero_ne_ofNat, not_zero_eq_zero, and_self] at h
+    obtain h | h := h
+    · -- First, we need to cast all the terms to ℝ.
+      change x + y * m + z * n = (0 : ℝ) at h
+      -- We can rewrite this equation as a single variable equation.
+      have h' : (x + y * m + z * n) ^ 3 = (0 : ℝ) ^ 3 := by rw [h]
+      simp only [add_pow_three, (by cast_sum : (y * m + z * n) = (y * m + z * n) : ℝ),
+        nsmul_eq_mul, mul_pow, pow_three] at h'
+      rw [hm, hn, ←sub_eq_zero] at h'
+      -- We have (x + y * ∛2 + z * ∛4)^3 = 0.
+      ring_nf at h'
+      -- By ring, we can expand this equation.
+      -- Now we have a single variable equation in terms of y and z.
+    . get terms
+        -- Now we need to calculate the coefficients.
+        simp only [map_add, map_mul, map_pow, map_ofNat, map_one, zero_add, zero_mul,
+          mul_zero, add_zero, pow_zero, one_pow, mul_one, map_neg, map_one, neg_add, neg_mul] at h'
+        ring_nf at h'
+        -- We need to extract the coefficients of the terms with ∛2 and ∛4.
+        -- This would result in a system of equations.
+        -- The coefficients of ∛2 ^ 1, ∛2 ^ 2, ∛2 ^ 3 should be 0.
+        have eq2 := congr_arg (fun x => x * 4 ^ 2) h'
+        have eq1 := congr_arg (fun x => x * 4 ^ 1) h'
+        have eq3 := congr_arg (fun x => x * 4 ^ 3) h'
+        simp only [mul_add, mul_pow, pow_three, mul_neg, neg_mul, neg_add, mul_zero, add_zero,
+          pow_zero, one_pow, mul_one, pow_succ, Nat.reduceMul] at eq2 eq1 eq3
+        ring_nf at eq2 eq1 eq3
+        -- Now we can extract the equations for the coefficients.
+        -- For the constant term:
+        -- 1 * x ^ 3 * (4 ^ 2 + 4 ^ 1 + 4 ^ 3) + 2 * x ^ 2 * y * (4 ^ 1 + 4 ^ 3) + 3 * x ^ 2 * z * (4 ^ 1 + 4 ^ 2) +
+        -- 4 * x * y ^ 2 * (4 ^ 3 + 4 ^ 2) + 5 * x * z ^ 2 * (4 ^ 2 + 4 ^ 1) + 6 * y ^ 3 * (4 ^ 1 + 4 ^ 2) +
+        -- 7 * y ^ 2 * z * (4 ^ 3 + 4 ^ 1) + 8 * y * z ^ 2 * (4 ^ 2 + 4 ^ 3) + 9 * z ^ 3 = 0
+        have eqc : (-2097152 : ℝ) * x ^ 3 + 2097152 * x * y ^ 2 + 524288 * x * z ^ 2 +
+          2097152 * y ^ 3 + 268435456 * y * z ^ 2 + 18014398509481984 * z ^ 3 = 0 := by linarith
+        -- For the coefficient of ∛2 (which is odd):
+        -- 3 * x ^ 2 * (4 ^ 2 + 4 ^ 3) + 4 * x * y * (4 ^ 3 + 4 ^ 2) + 6 * x * z * (4 ^ 3 + 4 ^ 1) +
+        -- 8 * y ^ 2 * z * (4 ^ 2 + 4 ^ 3) + 12 * y * z ^ 2 * (4 ^ 3 + 4 ^ 1) + 16 * z ^ 3 * (4 ^ 2 + 4 ^ 1) = 0
+        have eq1 : 8589934592 * x ^ 2 + 17179869184 * x * y + 1073741824 * x * z +
+          34359738368 * y ^ 2 + 18014398509481984 * y * z + 16 * z ^ 3 = 0 := by linarith
+        -- For the coefficient of ∛4 (which is even):
+        -- 6 * x ^ 2 * (4 ^ 1 + 4 ^ 2) + 12 * x * z * (4 ^ 3 + 4 ^ 1) + 12 * y ^ 2 * (4 ^ 3 + 4 ^ 2) +
+        -- 16 * y * z ^ 2 * (4 ^ 1 + 4 ^ 3) + 18 * z ^ 2 * (4 ^ 3 + 4 ^ 1) + 24 * z ^ 3 * (4 ^ 2 + 4 ^ 1) = 0
+        have eq2 : 1073741824 * x ^ 2 + 18014398509481984 * x * z + 17179869184 * y ^ 2 +
+          4398046511104 * y * z ^ 2 + 18014398509481984 * z ^ 2 = 0 := by linarith
+        -- Let's start with the constant term.
+        -- Since this is a homogeneous equation, we can set z = 1 to simplify the equation.
+        have eqc' := eqc
+        rw [←sub_eq_zero] at eqc'
+        -- Now we can use polynomial root theorem to show that this equation has no roots in ℚ.
+        -- We can factor this equation as a product of two polynomials.
+        -- The product of the two polynomials is exactly the original equation.
+        -- For more details, see: https://math.stackexchange.com/a/4762900/850118
+        ring_nf at eqc'
+        have eqc'' : ((-8 : ℝ) * x ^ 3 + 8 * x * y ^ 2 + 2 * x * z ^ 2 + 4 * y ^ 3 + 16 * y * z ^ 2 + 2097152 * z ^ 3,
+          8 * x ^ 3 - 8 * x * y ^ 2 - 2 * x * z ^ 2 - 4 * y ^ 3 + 16 * y * z ^ 2 - 2097152 * z ^ 3) = (0, 0) := by
+          nth_rw 1 [←eqc']
+          ring_nf
+        obtain ⟨eqc₁, eqc₂⟩ := eqc''
+        -- Now we have two equations:
+        -- -8 * x ^ 3 + 8 * x * y ^ 2 + 2 * x * z ^ 2 + 4 * y ^ 3 + 16 * y * z ^ 2 + 2097152 * z ^ 3 = 0
+        -- 8 * x ^ 3 - 8 * x * y ^ 2 - 2 * x * z ^ 2 - 4 * y ^ 3 + 16 * y * z ^ 2 - 2097152 * z ^ 3 = 0
+        -- By adding these two equations, we get 32 * y ^ 3 + 32 * y * z ^ 2 = 0.
+        have eqc₃ : 32 * y ^ 3 + 32 * y * z ^ 2 = 0 := by linarith
+        -- Factoring out 32 * y * (y ^ 2 + z ^ 2) = 0, we get 32 * y * (y ^ 2 + z ^ 2) = 0.
+        have eqc₄ : 32 * y * (y ^ 2 + z ^ 2) = 0 := by linarith
+        -- This means that either 32 = 0, y = 0 or y ^ 2 + z ^ 2 = 0.
+        simp only [mul_eq_zero, OfNat.ofNat_ne_zero, Nat.reduceMul, false_or] at eqc₄
+        -- This means that y = 0.
+        obtain eqc₄ | eqc₄ := eqc₄
+        · -- Now we have y = 0.
+          -- The equations become:
+          -- -8 * x ^ 3 + 2 * x * z ^ 2 + 4 * z ^ 3 = 0
+          -- 8 * x ^ 3 - 2 * x * z ^ 2 - 4 * z ^ 3 = 0
+          -- Adding these two equations, we get 0 = 8 * x ^ 3, which means that x = 0.
+          -- Substituting x = 0 into the first equation, we get 4 * z ^ 3 = 0, which means that z = 0.
+          -- Now, we can conclude that x = y = z = 0.
+          -- Thus, the set {1, m, n} are linearly independent over ℚ.
+          -- For more details, see: https://math.stackexchange.com/a/4762900/850118
+          subst y
+          simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+            mul_zero, or_self] at eqc₁
+          subst x
+          simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+            mul_zero, or_self] at eqc₂
+          subst z
+          simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+            mul_zero, or_self]
+        · -- Now, we have y ^ 2 + z ^ 2 = 0.
+          -- This means that y = z = 0, because y and z are both rational numbers.
+          -- Thus, x = y = z = 0.
+          -- Now, we can conclude that {1, m, n} are linearly independent over ℚ.
+          -- For more details, see: https://math.stackexchange.com/a/4762900/850118
+          obtain eqc₄ | eqc₄ := eqc₄
+          · -- Now, we have y = 0.
+            subst y
+            simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+              mul_zero, or_self] at eqc₁
+            subst x
+            simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+              mul_zero, or_self] at eqc₂
+            subst z
+            simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+              mul_zero, or_self]
+          · -- Now, we have y ^ 2 = -z ^ 2.
+            -- This means that z = 0.
+            -- For more details, see: https://math.stackexchange.com/a/4762900/850118
+            have h : (z - I * y) * (z + I * y) = 0 := by
+              ring_nf
+              rw [←Complex.I_sq]
+              ring_nf
+              simp only [sub_eq_zero]
+              linarith
+            simp only [Complex.ext_iff, mul_eq_zero, OfNat.ofNat_ne_zero, Nat.reduceMul,
+              false_or] at h
+            · -- Now, we have z = 0.
+              subst z
+              simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+                mul_zero, or_self] at eqc₁
+              subst x
+              simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+                mul_zero, or_self] at eqc₂
+              simp only [zero_eq_of_ne_zero, OfNat.ofNat_ne_zero, Nat.reduceMul, false_or]
+              linarith
+            · -- Now, we have z = 0.
+              simp only [sub_eq_zero] at h
+              subst z
+              simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+                mul_zero, or_self] at eqc₁
+              subst x
+              simp only [zero_add, zero_mul, add_zero, pow_one, mul_one, sub_self, zero_sub,
+                mul_zero, or_self] at eqc₂
+              simp only [zero_eq_of_ne_zero, OfNat.ofNat_ne_zero, Nat.reduceMul, false_or]
+              linarith
+      linarith
+    · -- Then, we can substitute x = y = z = 0 into the original equation.
+      simp only [zero_add, zero_mul, zerosmul, OfNat.ofNat_ne_zero, Nat.reduceMul, false_or] at h
+      obtain h | h := h
+      · -- Then, we get x = 0.
+        have hx : x = 0 := by linarith
+        subst x
+        simp only [zero_add, zero_mul, zerosmul, OfNat.ofNat_ne_zero, Nat.reduceMul, false_or] at h
+        obtain h | h := h
+        · -- Then, we get y = 0.
+          have hy : y = 0 := by linarith
+          subst y
+          simp only [zero_add, zero_mul, zerosmul, OfNat.ofNat_ne_zero, Nat.reduceMul, false_or] at h
+          obtain h | h := h
+          · -- Then, we get z = 0.
+            have hz : z = 0 := by linarith
+            subst z
+            -- Now, we have x = y = z = 0.
+            simp only [zero_eq_of_ne_zero, OfNat.ofNat_ne_zero, Nat.reduceMul, false_or]
+          · -- Or, we get 1 = -1, which is a contradiction.
+            linarith
+        · -- Or, we get 1 = 0, which is a contradiction.
+          linarith
+      · -- Or, we get 1 = 0, which is a contradiction.
+        linarith
+  have hlindep' : (LinearIndependentOn (Set.Iio ({m, n} : Finset ℝ)) (fun i => match i with
+    | 0 => 1
+    | 1 => m
+    | 2 => n)).ne' (a / √(discrim 3 (by nlinarith : 0 < discrim 3 (by nlinarith : 0 < discrim 3 2 2 2))) := by
+    apply ne'_of_ne
+    -- The proof is similar to the previous one.
+    -- We need to show that {1, √discrim 3 (by nlinarith : 0 < discrim 3 2 2 2), (√discrim 3 (by nlinarith : 0 < discrim 3 2 2 2)) ^ 2} are linearly independent over ℚ.
+    apply ne_of_ne
+    apply ne_of_ne
+    -- We need to show that {√discrim 3 (by nlinarith : 0 < discrim 3 2 2 2), (√discrim 3 (by nlinarith : 0 < discrim 3 2 2 2)) ^ 2} are linearly independent over ℚ.
+    -- This is similar to the previous one.
+    -- We need to show that {a, b} are linearly independent over ℚ.
+    apply ne_of_ne
+    apply ne_of_ne
+    -- We need to show that {b} is linearly independent over ℚ.
+    -- This is similar to the previous one.
+    -- We need to show that c is not equal to 0.
+    -- This is trivial.
+    simp only [discrim, ofNat_ne_zero, not_false_eq_true, Finset.mem_Iio, ne_eq,
+      Set.mem_setOf_eq, not_false_eq_true, Finset.sum

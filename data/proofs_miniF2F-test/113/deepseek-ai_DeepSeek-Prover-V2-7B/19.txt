@@ -1,0 +1,39 @@
+have h : ∀ n : ℕ, n ≥ 2 → (∑ k in Finset.Icc (2 : ℕ) n, 1 / Real.sqrt k) < 198 := by
+    intro n hn
+    induction' hn with n hn IH
+    · -- Base case: n = 2
+      norm_num [Finset.sum_Icc_succ_top]
+      <;>
+      apply lt_of_sub_pos
+      <;>
+      field_simp [Real.sqrt_eq_zero]
+      <;>
+      nlinarith [Real.sqrt_nonneg 2, Real.sq_sqrt (by positivity : (0 : ℝ) ≤ 2)]
+    · -- Inductive step: assume the statement holds for n, prove for n + 1
+      cases n with
+      | zero => contradiction
+      | succ n =>
+        by_cases h : n + 1 ≤ 2
+        · -- If n + 1 ≤ 2, then n < 2, so n = 1
+          norm_num [Finset.sum_Icc_succ_top] at * <;>
+          simp_all [Finset.sum_Icc_succ_top] <;>
+          norm_num [Real.sqrt_eq_zero] at * <;>
+          nlinarith [Real.sqrt_nonneg 2, Real.sq_sqrt (by positivity : (0 : ℝ) ≤ 2)]
+        · -- If n + 1 > 2, use the inductive hypothesis
+          have h₁ : (n + 1 : ℝ) ≥ 2 := by
+            norm_cast
+            linarith
+          have h₂ : Real.sqrt (n + 1) ≥ 0 := Real.sqrt_nonneg _
+          have h₃ : (∑ k in Finset.Icc (2 : ℕ) (n + 1), 1 / Real.sqrt k) =
+            (∑ k in Finset.Icc (2 : ℕ) n, 1 / Real.sqrt k) + 1 / Real.sqrt (n + 1) := by
+            rw [Finset.sum_Icc_succ_top (by linarith : 2 ≤ n + 1)]
+          rw [h₃]
+          have h₄ : (1 : ℝ) / Real.sqrt (n + 1) ≤ 1 := by
+            apply div_le_one_of_le
+            · apply Real.le_sqrt_of_sq_le
+              nlinarith
+            · positivity
+          have h₅ : (∑ k in Finset.Icc (2 : ℕ) n, 1 / Real.sqrt k) < 198 := IH
+          nlinarith [Real.sq_sqrt (by positivity : (0 : ℝ) ≤ (n + 1 : ℝ))]
+  have h₁ : (∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k) < 198 := h 10000 (by linarith)
+  exact h₁

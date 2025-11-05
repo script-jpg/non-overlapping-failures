@@ -1,0 +1,103 @@
+have h₄ : (Real.sin t)^2 + (Real.cos t)^2 = 1 := Real.sin_sq_add_cos_sq t
+
+  -- some expansion
+  have : (Real.sin t)^2 + Real.sin t * Real.cos t + Real.cos t ^ 2 = 5 / 4 := by
+    calc
+      Real.sin t ^ 2 + Real.sin t * Real.cos t + Real.cos t ^ 2 = (Real.sin t + Real.cos t)^2 - Real.sin t * Real.cos t := by ring
+      _ = (1 + Real.sin t) * (1 + Real.cos t) - 1 / 2 * (1 - (Real.sin t)^2 - (Real.cos t)^2) := by ring
+      _ = 5 / 4 - 1 / 2 * (1 - (Real.sin t)^2 - (Real.cos t)^2) := by rw [h₂]
+      _ = 5 / 4 - 1 / 2 * (1 - 1) := by rw [h₄]
+      _ = 5 / 4 := by norm_num
+
+
+  -- some expansion done
+  have : (Real.sin t)^2 - Real.sin t * Real.cos t + Real.cos t ^ 2 = 3 / 4 := by
+    calc
+      Real.sin t ^ 2 - Real.sin t * Real.cos t + Real.cos t ^ 2 = (Real.sin t - Real.cos t)^2 + Real.sin t * Real.cos t := by ring
+      _ = (1 - Real.sin t) * (1 - Real.cos t) + 1 / 2 * (1 - (Real.sin t)^2 - (Real.cos t)^2) := by ring
+      _ = (1 - Real.sin t) * (1 - Real.cos t) + 1 / 2 * (1 - 1) := by rw [h₄]
+      _ = (1 - Real.sin t) * (1 - Real.cos t) := by norm_num
+      _ = 5 / 4 := by rw [h₃]; ring_nf; rw [Real.sq_sqrt]; ring_nf; linarith
+      _ = 3 / 4 := by linarith
+
+  -- so we have
+  have h₅ : Real.sin t * Real.cos t = 1 / 4 := by linarith
+  have h₆ : (Real.sin t)^2 + (Real.cos t)^2 = 1 := Real.sin_sq_add_cos_sq t
+  have h₇ : (Real.sin t - Real.cos t)^2 = 1 / 2 := by
+    calc
+      (Real.sin t - Real.cos t)^2 = (Real.sin t)^2 - 2 * (Real.sin t * Real.cos t) + (Real.cos t)^2 := by ring
+      _ = (Real.sin t)^2 + (Real.cos t)^2 - 2 * (Real.sin t * Real.cos t) := by ring
+      _ = 1 - 2 * (1 / 4) := by rw [h₆, h₅]
+      _ = 1 / 2 := by norm_num
+
+  -- from $x^2 = a$, we have two cases: $x = \sqrt a$ or $x = -\sqrt a$
+  have h₈ : Real.sin t - Real.cos t = Real.sqrt (1 / 2) ∨ Real.sin t - Real.cos t = -Real.sqrt (1 / 2) := by
+    refine (sq_eq_sq_iff_eq_or_eq_neg).mp?_
+    rw [← h₇]
+    rw [Real.sq_sqrt]
+    norm_num
+
+  -- some conclusions
+  obtain h₈ | h₈ := h₈
+ .   -- for the first case, we have
+      -- $(1 - \sin t)(1 - \cos t) = 1 - \sin t - \cos t + \sin t * \cos t = 1/4 - \sqrt{1/2} = m / n - \sqrt{k}$
+      have h₉ : m / n - Real.sqrt k = 1 / 4 - Real.sqrt (1 / 2) := by rw [h₈]; ring_nf; rw [h₅]; ring_nf
+      obtain ⟨h₉, h₁₀⟩ := h₉
+      rw [← h₉] at h₁₀
+      have h₁₁ : (m / n - 1 / 4) ^ 2 = (Real.sqrt (1 / 2)) ^ 2 := by rw [h₁₀]
+      rw [Real.sq_sqrt] at h₁₁
+      norm_num at h₁₁
+      -- from that, we have m / n = (1 / 4) + 1 / 2 = 3 / 4
+      have h₁₂ : m / n = 3 / 4 := by
+        calc
+          m / n = (m / n - 1 / 4) + 1 / 4 := by ring
+          _ = - 1 / 2 + 1 / 4 := by rw [h₁₁]
+          _ = 3 / 4 := by norm_num
+      -- and we are given that m and n are coprime, so we can solve n = 4 and m = 3
+      have h₁₃ : n = 4 := by
+        apply Rat.div_int_inj
+        · exact h₁
+        · exact (div_eq_of_eq_mul_right (by norm_num)).mpr h₁₂
+        · exact Int.emod_nonneg _ (by norm_num)
+        · norm_num
+      have h₁₄ : m = 3 := by rw [h₁₃] at h₁₂; norm_num at h₁₂; assumption
+      subst h₁₃ h₁₄
+      -- then we can solve k = 1
+      have h₁₅ : (1 : ℝ) = 1 / 4 + Real.sqrt k := by linarith
+      have h₁₆ : (3 / 4 : ℝ) = Real.sqrt k := by linarith
+      have h₁₇ : k = (3 / 4 : ℝ) ^ 2 := by rw [← h₁₆]; exact Real.sq_sqrt (by linarith)
+      norm_num at h₁₇
+      -- the goal is m + n + k = 27, and that is 3 + 4 + 1 = 27
+      subst h₁₇
+      norm_num
+ .   -- for the second case, we have
+      -- $(1 - \sin t)(1 - \cos t) = 1 - \sin t - \cos t + \sin t * \cos t = 1/4 + \sqrt{1/2} = m / n - \sqrt{k}$
+      have h₉ : m / n - Real.sqrt k = 1 / 4 + Real.sqrt (1 / 2) := by rw [h₈]; ring_nf; rw [h₅]; ring_nf
+      obtain ⟨h₉, h₁₀⟩ := h₉
+      rw [← h₉] at h₁₀
+      have h₁₁ : (m / n - 1 / 4) ^ 2 = (Real.sqrt (1 / 2)) ^ 2 := by rw [h₁₀]
+      rw [Real.sq_sqrt] at h₁₁
+      norm_num at h₁₁
+      -- from that, we have m / n = (1 / 4) + 1 / 2 = 3 / 4
+      have h₁₂ : m / n = 3 / 4 := by
+        calc
+          m / n = (m / n - 1 / 4) + 1 / 4 := by ring
+          _ = 1 / 2 + 1 / 4 := by rw [h₁₁]
+          _ = 3 / 4 := by norm_num
+      -- and we are given that m and n are coprime, so we can solve n = 4 and m = 3
+      have h₁₃ : n = 4 := by
+        apply Rat.div_int_inj
+        · exact h₁
+        · exact (div_eq_of_eq_mul_right (by norm_num)).mpr h₁₂
+        · exact Int.emod_nonneg _ (by norm_num)
+        · norm_num
+      have h₁₄ : m = 3 := by rw [h₁₃] at h₁₂; norm_num at h₁₂; assumption
+      subst h₁₃ h₁₄
+      -- then we have (n + 1 / 2 * n ^ 2) / 2 ^ 2 = 3 / 4
+      have h₁₅ : (1 : ℝ) = 1 / 4 + Real.sqrt k := by linarith
+      have h₁₆ : (3 / 4 : ℝ) = Real.sqrt k := by linarith
+      have h₁₇ : k = (3 / 4 : ℝ) ^ 2 := by rw [← h₁₆]; exact Real.sq_sqrt (by linarith)
+      norm_num at h₁₇
+      -- which gives us 1 = 3 / 4, a contradiction
+      linarith
+```

@@ -1,0 +1,62 @@
+-- The auxillary lemma `aux1` is to prove the estimate that the difference between the inductive hypothesis and the inductive step is $1 / (n + 1) * (3 - 1 / n)$.
+  have aux1 : ∀ n : ℕ, 0 < n → (3 : ℝ) - 1 / ↑n - (1 + (1 : ℝ) / (n + 1) ^ 3) = 1 / (n + 1) * (3 - 1 / ↑n) := by
+    intro n h
+    field_simp
+    ring_nf
+
+  -- The auxillary lemma `aux2` is to prove the estimate that the inductive step is greater than the inductive hypothesis.
+  have aux2 : ∀ n : ℕ, 0 < n → (1 + (1 : ℝ) / (n + 1) ^ 3) ≥ 1 / (n + 1) * (3 - 1 / ↑n) + 1 := by
+    intro n h
+    specialize aux1 (n + 1) (by omega)
+    rw [show ↑(n + 1) = (n : ℝ) + 1 by norm_cast] at aux1
+    field_simp
+    specialize aux1 at h
+    have : (3 : ℝ) - 1 / ↑n > 0 := by calc
+      (3 : ℝ) - 1 / ↑n ≥ 3 - 1 / 1 := by rel [h]
+      _ > 0 := by norm_num
+    have : (3 : ℝ) - 1 / ↑n - 1 / (↑n + 1) * (3 - 1 / ↑n) ≥ 0 := by
+      calc
+        (3 : ℝ) - 1 / ↑n - 1 / (↑n + 1) * (3 - 1 / ↑n) = (3 : ℝ) - 1 / ↑n * (1 - 1 / (↑n + 1)) - 1 / (↑n + 1) := by ring
+        _ = (3 : ℝ) - 1 / ↑n * (↑n + 1 - 1) / (↑n + 1) - 1 / (↑n + 1) := by
+          congr
+          rw [mul_comm, <-mul_div_assoc, div_self (by omega), mul_one]
+        _ = (3 : ℝ) - (1 / ↑n + 1 / (↑n + 1)) := by
+          congr
+          rw [mul_div_assoc, mul_comm, <-mul_div_assoc, div_self (by omega), mul_one,
+              add_mul, mul_comm, <-mul_div_assoc, div_self (by omega), mul_one]
+        _ > 0 := by
+          apply sub_pos.mpr
+          calc
+            (3 : ℝ) > 1 / ↑n + 1 / (↑n + 1) := by
+              apply add_lt_add
+              · calc
+                  (3 : ℝ) > 1 := by norm_num
+                  _ ≥ 1 / ↑n := by rel [h]
+                done
+              · calc
+                  (3 : ℝ) > 1 := by norm_num
+                  _ ≥ 1 / (↑n + 1) := by rel [h]
+                done
+            _ = 1 / ↑n + 1 / (↑n + 1) := by
+              congr
+              rw [mul_div_assoc, mul_comm, <-mul_div_assoc, div_self (by omega), mul_one,
+                  add_mul, mul_comm, <-mul_div_assoc, div_self (by omega), mul_one]
+    linarith
+
+  -- The auxillary lemma `aux3` is to prove the estimate that the inductive step is greater than $1 + 1 / (n + 1) * (3 - 1 / n)$.
+  have aux3 : ∀ n : ℕ, 0 < n → (1 + (1 : ℝ) / (n + 1) ^ 3) ≥ 1 + 1 / (↑n + 1) * (3 - 1 / ↑n) := by
+    intro n h
+    specialize aux2 n h
+    linarith
+
+  -- We start the induction. The base case is trivial.
+  induction n, h₀ with
+  | zero => linarith
+  | succ n h₀ ih =>
+    -- The induction hypothesis is $∏_{k=1}^n (1 + 1/k^3) ≤ 3 - 1/n$.
+    change 3 - 1 / ↑n ≤ 3 - 1 / ↑n + 1 / (↑n + 1) * (3 - 1 / ↑n) at ih
+    rw [show (3 : ℝ) - 1 / ↑n + 1 / (↑n + 1) * (3 - 1 / ↑n) = (3 : ℝ) - 1 / (↑n + 1) by field_simp; ring] at ih
+    specialize aux3 n h₀
+    linarith
+
+```

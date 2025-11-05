@@ -1,0 +1,43 @@
+have h₂ : a ^ 3 = 8 := by linear_combination h₀
+  have h₃ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := h₁
+  have h₄ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := by linear_combination h₃
+  have h₅ : a = 2 := by
+    have h₅ : a ^ 3 = 8 := h₂
+    have h₆ : a = 2 := by
+      have h₇ : a ^ 3 - 8 = 0 := by linear_combination h₀
+      have h₈ : (a - 2) * (a ^ 2 + 2 * a + 4) = 0 := by linear_combination h₇
+      have h₉ : a - 2 = 0 ∨ a ^ 2 + 2 * a + 4 = 0 := by simpa [sub_eq_zero] using h₈
+      cases' h₉ with h₉ h₉
+      · exact by
+          apply eq_of_sub_eq_zero
+          simpa using h₉
+      · have h₁₀ : a ^ 2 + 2 * a + 4 = 0 := h₉
+        have h₁₁ : (a + 1) ^ 2 + 3 = 0 := by linear_combination h₁₀
+        have h₁₂ : (a + 1) ^ 2 = -3 := by linear_combination h₁₁
+        have h₁₃ : (a + 1) ^ 2 ≥ 0 := by apply sq_nonneg
+        have h₁₄ : -3 ≥ 0 := by linarith
+        linarith
+    exact h₆
+  have h₆ : b = 2 ∨ b = -4 + 4 * Complex.I ∨ b = -4 - 4 * Complex.I := by
+    have h₆ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := h₁
+    have h₇ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := by linear_combination h₄
+    rw [eq_comm] at h₇
+    have h₈ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := by linear_combination h₁
+    have h₉ : (b - 2) * (b ^ 2 - 6 * b - 32) = 0 := by linear_combination h₈
+    have h₁₀ : b - 2 = 0 ∨ b ^ 2 - 6 * b - 32 = 0 := by simpa [sub_eq_zero] using h₉
+    cases' h₁₀ with h₁₀ h₁₀
+    · have h₁₁ : b = 2 := by
+        apply eq_of_sub_eq_zero
+        simpa using h₁₀
+      exact Or.inl h₁₁
+    · have h₁₁ : b ^ 2 - 6 * b - 32 = 0 := h₁₀
+      have h₁₂ : b = -4 + 4 * Complex.I ∨ b = -4 - 4 * Complex.I := by
+        apply or_iff_not_imp_left.mpr
+        intro h₁₃
+        apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₃)
+        rw [← sub_eq_zero] at h₁₁ ⊢
+        ring_nf at h₁₁ ⊢
+        norm_cast at h₁₁ ⊢
+        simp [Complex.ext_iff, pow_two, pow_three] at h₁₁ ⊢
+        constructor <;> ring_nf at h₁₁ ⊢ <;>
+        nlinarith [sq_nonneg (b.re + 4), sq_nonneg (b.im - 4), sq_nonneg (b.re - 4), sq_nonneg (b.im + 4)]

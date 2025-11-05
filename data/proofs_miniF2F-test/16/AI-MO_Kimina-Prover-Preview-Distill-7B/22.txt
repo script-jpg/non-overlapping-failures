@@ -1,0 +1,148 @@
+-- Prove that $f$ is injective.
+  have h₂ : ∀ x y : ℕ, 0 < x → 0 < y → f x = f y → x = y := by
+    intro x y hx hy hxy
+    have hx' : 0 < x + 1 := by omega
+    have hy' : 0 < y + 1 := by omega
+    have hxy' : 0 < f x := h₀ x
+    have hy'' : 0 < f y := h₀ y
+    -- Specialize the inequality $f(n+1) > f(f(n))$ to $x$ and $y$.
+    have h₁ x hx' : f (f x) < f (x + 1) := h₁ x hx'
+    have h₁ y hy' : f (f y) < f (y + 1) := h₁ y hy'
+    -- Since $f(x) = f(y)$, we have $f(f(x)) = f(f(y))$.
+    have hxy'' : f (f x) = f (f y) := by rw [hxy]
+    -- Combine the inequalities to get $f(x+1) > f(y+1)$ and $f(y+1) > f(x+1)$, which implies $f(x+1) = f(y+1)$.
+    have hxy''' : f (x + 1) > f (y + 1) := by linarith
+    have hxy'''' : f (y + 1) > f (x + 1) := by linarith
+    have hxy''''' : f (x + 1) = f (y + 1) := by linarith
+    -- Now we have $f(x+1) = f(y+1)$ and $f(x+1) > f(y+1)$, which is a contradiction.
+    linarith
+
+  -- Let $x$ be the smallest number such that $f(x) \neq x$.
+  by_contra!
+  have h₃ : ∃ x, 0 < x ∧ f x ≠ x := this
+  obtain ⟨x, hx, hne⟩ := h₃
+  let x' := x
+
+  -- Note that $f(x') = x' + a$ for some positive integer $a$.
+  have h₄ : ∃ a, 0 < a ∧ f x' = x' + a := by
+    obtain ⟨a, ha⟩ := hne
+    have ha' : a > 0 := by
+      by_contra! ha''
+      have ha' : a = 0 := by omega
+      simp only [ha', zero_add] at ha
+      contradiction
+    use a
+  obtain ⟨a, ha, hax⟩ := h₄
+
+  -- We have $f(x'+1) > f(f(x')) = f(x'+a)$.
+  have h₅ : f (x' + 1) > f (x' + a) := by
+    specialize h₁ x' hx
+    rw [hax] at h₁
+    exact h₁
+
+  -- Note that $x' + a < x' + 1$ if $a < 1$.
+  have h₆ : x' + a < x' + 1 ↔ a < 1 := by
+    by_cases ha' : a < 1
+    · simp [ha']
+    · constructor
+      · intro h
+        by_contra! ha''
+        have ha' : a = 1 := by omega
+        simp [ha'] at h
+      · intro h
+        omega
+
+  -- If $a < 1$, we have $x' + a < x' + 1$, and hence $f(x' + a) < f(x' + 1) = f(x' + 1)$, which is a contradiction.
+  have h₇ : ¬ (a < 1) := by
+    by_contra! ha'
+    rw [h₆] at ha'
+    have hlt : f (x' + a) < f (x' + 1) := by
+      exact h₁ x' hx
+    linarith
+
+  -- Therefore $a > 1$.
+  have ha' : a > 1 := by
+    by_contra! ha''
+    have ha' : a = 1 := by omega
+    simp [ha'] at hax
+    contradiction
+
+  -- We have $f(x' + a) > f(f(x' + 1)) > f(f(x' + a))$.
+  have h₈ : f (x' + a) > f (f (x' + 1)) ∧ f (f (x' + 1)) > f (f (x' + a)) := by
+    have h₈ : f (x' + a) > f (f (x' + 1)) := by
+      specialize h₁ (x' + 1) (by positivity)
+      rw [hax] at h₁
+      exact h₁
+    have h₉ : f (f (x' + 1)) > f (f (x' + a)) := by
+      specialize h₁ (x' + a) (by positivity)
+      exact h₁
+    exact ⟨h₈, h₉⟩
+
+  -- Note that $f(f(x' + a)) > f(x' + a)$ if $f(x' + a) > x' + a$.
+  have h₁₀ : f (f (x' + a)) > f (x' + a) ↔ f (x' + a) > x' + a := by
+    by_cases h' : f (x' + a) > x' + a
+    · simp [h']
+    · constructor
+      · intro h
+        by_contra! h''
+        have h''' : f (x' + a) = x' + a := by omega
+        simp [h'''] at h
+      · intro h
+        omega
+
+  -- If $f(x' + a) > x' + a$, we have $f(f(x' + a)) > f(x' + a) > f(x' + a)$, which is a contradiction.
+  have h₁₁ : ¬ (f (x' + a) > x' + a) := by
+    by_contra! h
+    have h' : f (x' + a) > x' + a := by
+      exact h
+    have h'' : f (f (x' + a)) > f (x' + a) := by
+      specialize h₁₀ (x' + a) (by positivity) h'
+      exact h₁₀
+    have h''' : f (x' + a) > f (f (x' + a)) := by
+      exact h₈.right
+    linarith
+
+  -- Therefore $f(x' + a) < x' + a$.
+  have h₁₂ : f (x' + a) < x' + a := by
+    by_contra! h
+    have h' : f (x' + a) = x' + a := by omega
+    simp [h'] at h₁₁
+    contradiction
+
+  -- We have $x' + 1 < x' + a$ if $x' + 1 < x' + a$.
+  have h₁₃ : x' + 1 < x' + a ↔ 1 < a := by
+    by_cases ha' : 1 < a
+    · simp [ha']
+    · constructor
+      · intro h
+        by_contra! ha''
+        have ha' : a = 1 := by omega
+        simp [ha'] at h
+      · intro h
+        omega
+
+  -- If $1 < a$, we have $x' + 1 < x' + a$, and hence $f(x' + 1) < f(x' + a) = f(x' + a)$, which is a contradiction.
+  have h₁₄ : ¬ (1 < a) := by
+    by_contra! ha'
+    rw [h₁₃] at ha'
+    have hlt : f (x' + 1) < f (x' + a) := by
+      specialize h₁ x' hx
+      rw [hax] at h₁
+      exact h₁
+    linarith
+
+  -- Therefore $a = 1$.
+  have ha' : a = 1 := by
+    by_contra! ha''
+    have ha' : a < 1 ∨ 1 < a := by omega
+    cases ha' with
+    | inl ha' =>
+      contradiction
+    | inr ha' =>
+      contradiction
+
+  -- This is a contradiction.
+  simp [ha'] at hax
+  contradiction
+
+```

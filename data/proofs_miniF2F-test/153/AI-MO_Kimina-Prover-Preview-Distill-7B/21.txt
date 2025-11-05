@@ -1,0 +1,108 @@
+-- We need the following lemma to perform derivative calculations later on.
+  have h1 : 0 < t ^ 2 → t * t / 4 ^ t ≤ 1 / 8 := by
+    intro h1
+
+    -- Perform some transformations to the inequality.
+    have h2 : t * t / 4 ^ t ≤ 1 / 8 := by
+      calc
+
+        _ = (t / 2) ^ 2 / 4 ^ t := by field_simp; ring_nf
+        _ ≤ (t / 2) ^ 2 / (2 * t) := by qify; apply div_le_div_of_nonneg_left; apply pow_le_pow_left₀; any_goals linarith; exact h1
+        _ = (t / 2) / (2 * t) * ((t / 2) / (2 * t)) := by field_simp
+        _ = 1 / 8 := by field_simp; ring_nf
+
+    calc
+
+      _ = (2 ^ t - 3 * t) * t / 4 ^ t + (t * t - 2 ^ t * 3 * t) / (t * 4 ^ t) := by ring_nf; field_simp; ring_nf
+      _ ≤ (2 ^ t - 3 * t) * t / 4 ^ t + 1 / 8 := by linarith
+      _ ≤ (2 ^ t - 3 * t) * t / 4 ^ t + 1 / 8 * (1 / 4) := by norm_num
+      _ = (2 ^ t - 3 * t) * t / 4 ^ t + 1 / 32 := by ring_nf
+
+    -- Derivative calculations to show that the maximum value is attained at $t = 1.$
+    have h3 : (2 ^ t - 3 * t) * t / 4 ^ t + 1 / 32 ≤ (2 ^ t - 3 * t) * t / 4 ^ t + 1 / 32 + 1 / 8 * (1 / 4 - t) := by
+      apply add_le_add_left
+      apply mul_le_mul_of_nonneg_left
+      pick_goal 2
+      · apply sub_le0
+        apply div_le_div_of_nonneg_left
+        norm_num
+        exact h1
+      · norm_num
+        apply sub_nonneg.mpr
+        apply one_le_div_pow_of_one_le_of_nonneg
+        pick_goal 2
+        · norm_num
+        · norm_num
+        · exact h1
+      · norm_num
+
+    have h4 : (2 ^ t - 3 * t) * t / 4 ^ t + 1 / 32 + 1 / 8 * (1 / 4 - t) ≤ (2 ^ t - 3 * t) * t / 4 ^ t := by
+      ring_nf
+      apply sub_le0
+      apply mul_le_mul_of_nonpos_right
+      · apply one_le_div_pow_of_one_le_of_nonneg
+        any_goals norm_num
+        linarith
+      · norm_num
+
+    linarith
+
+  -- Consider the case when $t \le 0.$
+  by_cases h1 : t ≤ 0
+  · have h2 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ 0 := by
+      apply div_nonpos_of_nonneg_of_nonpos
+      · apply mul_nonneg
+        · apply pow_nonneg
+          norm_num
+        · linarith
+      · linarith
+    linarith
+
+  -- Consider the case when $t > 0.$
+  · by_cases h2 : t ≤ 1
+    · -- When $0 < t \le 1$, we make use of the fact that $2^t-3t \le 0$ to obtain an upper bound.
+      have h3 : 2 ^ t - 3 * t ≤ 0 := by
+        apply sub_nonpos.mpr
+        apply le_of_lt
+        apply pow_lt_pow_iff_right₀
+        any_goals norm_num
+        linarith
+
+      have h4 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ 0 := by
+        apply div_nonpos_of_nonpos_of_nonneg
+        · apply mul_nonpos
+          · apply pow_nonneg
+            norm_num
+          · linarith
+        · linarith
+
+      linarith
+
+    · -- When $t \ge 1$, we show that $(2^t-3t)\cdot t/4^t \le (2^t-3)\cdot 1/4^t \le 1/4^2 \le 1/12.$
+      have h3 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (2 ^ t - 3) * 1 / 4 ^ t := by
+        apply div_le_div_of_nonneg_right
+        pick_goal 2
+        · apply sub_nonpos.mpr
+          apply one_le_pow₀
+          any_goals norm_num
+          linarith
+        · linarith
+        · apply pow_nonneg
+          norm_num
+
+      have h4 : (2 ^ t - 3) * 1 / 4 ^ t ≤ 1 / 4 ^ 2 := by
+        apply div_le_div_of_nonneg_left
+        · apply sub_nonpos.mpr
+          apply one_le_pow₀
+          any_goals norm_num
+          linarith
+        · norm_num
+        · apply pow_le_pow_left₀
+          any_goals norm_num
+          linarith
+
+      have h5 : 1 / 4 ^ 2 ≤ 1 / 12 := by norm_num
+
+      linarith
+
+```

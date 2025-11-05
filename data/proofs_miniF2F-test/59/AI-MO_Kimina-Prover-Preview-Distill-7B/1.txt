@@ -1,0 +1,49 @@
+-- We have a Diophantine equation. Let's rearrange it a bit first.
+  -- $3x^2 y^2 + y^2 - 30x^2 = 517$
+  -- $y^2 (3x^2 + 1) - 30x^2 = 517$
+  -- $y^2 (3x^2 + 1) = 30x^2 + 517$
+  have h₁ : y ^ 2 * (3 * x ^ 2 + 1) = 30 * x ^ 2 + 517 := by
+    linarith only [h₀]
+
+  -- Let's think about how to solve this. One approach is to factorize one of the sides.
+  -- Notice that $3x^2 + 1$ is always positive (for any integer $x$).
+  have h₂ : 3 * x ^ 2 + 1 ≥ 1 := by
+    linarith only [sq_nonneg x]
+
+  -- Also, $3x^2 + 1$ and $x$ are coprime. This is because $3x^2 + 1$ is congruent to 1 modulo 3.
+  have h₃ : IsCoprime (3 * x ^ 2 + 1) x := by
+    apply IsCoprime.add_mul_left_left
+    apply IsCoprime.pow_left
+    apply isCoprime_three_right
+
+  -- We can even conclude that $3x^2 + 1$ and $30x^2 + 517$ are coprime.
+  have h₄ : IsCoprime (3 * x ^ 2 + 1) (30 * x ^ 2 + 517) := by
+    apply IsCoprime.symm
+    rw [h₁]
+    exact IsCoprime.symm h₃
+
+  -- Now, let's bound the values. Since $3x^2 + 1$ is positive and $x$ is an integer, we can conclude that
+  -- $3x^2 + 1$ divides $30x^2 + 517$.
+  apply Int.dvd_of_mul_dvd_mul_left (by linarith only [h₂]) at h₄
+  -- This implies that $3x^2 + 1 \leq 30x^2 + 517$.
+  have h₅ : 3 * x ^ 2 + 1 ≤ 30 * x ^ 2 + 517 := by
+    apply Int.le_of_dvd?_ h₄
+    linarith only [h₂]
+
+  -- Rearrange the inequality and we get $3x^2 \leq 516$.
+  have h₆ : 3 * x ^ 2 ≤ 516 := by
+    linarith only [h₅]
+
+  -- This implies $x^2 \leq 172$.
+  have h₇ : x ^ 2 ≤ 172 := by
+    linarith only [h₆]
+
+  -- So $|x| \leq 13$.
+  have h₈ : x.natAbs ≤ 13 := by
+    rw [show (172 : ℕ) = 13 ^ 2 + 3 by norm_num]
+    apply Int.natAbs_le_of_sq_le_sq
+    linarith only [h₇]
+
+  -- Now we can try all integer values of $x$ in the range $-13 \leq x \leq 13$.
+  interval_cases x <;> norm_num at h₄ <;> omega
+```

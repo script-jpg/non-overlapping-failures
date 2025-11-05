@@ -1,0 +1,89 @@
+have h₃ : 3 - x ≥ 0 := by simpa using h₀
+  have h₄ : 1 / (4:ℝ) < (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 := by calc
+    1 / (4:ℝ) = (1 / 2) ^ 2 := by norm_num
+    _ < (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 := by nlinarith [h₂]
+
+  -- \sqrt{3-x} - \sqrt{x+1} > 1/2
+  -- Square both sides:
+  -- (\sqrt{3-x} - \sqrt{x+1})^2 > 1/4
+  -- Simplify:
+  -- 3-x + x+1 - 2*\sqrt{(3-x)*(x+1)} > 1/4
+  -- Simplify:
+  -- 4 - 2*\sqrt{(3-x)*(x+1)} > 1/4
+  -- Simplify:
+  -- 15/4 > \sqrt{(3-x)*(x+1)}
+  -- Square again:
+  -- (15/4)^2 > (3-x)*(x+1)
+  -- Simplify:
+  -- 225/16 > (3-x)*(x+1)
+  -- Expand:
+  -- 225/16 > 3*x+3-x^2 - x-1
+  -- Expand:
+  -- 225/16 > 2*x+2-x^2
+  -- Bring everything to left:
+  -- 225/16 - 2*x - 2 + x^2 > 0
+  -- Simplify:
+  -- x^2 + 2*x - 15/8 > 0
+  have h₅ : 0 < (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 - 1 / (4:ℝ) := by
+    calc
+      0 < (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 := by nlinarith [h₃, Real.sqrt_nonneg (3 - x), Real.sqrt_nonneg (x + 1)]
+      _ < 1 / (4:ℝ) := by linarith [h₄]
+
+  -- square it
+  have h₆ : 0 ≤ (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 - 1 / (4:ℝ) := by
+    calc
+      0 < (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 - 1 / (4:ℝ) := h₅
+      _ ≤ (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 - 1 / (4:ℝ) := by linarith
+
+  -- notice that square it is actually:
+  -- (\sqrt{3-x} - \sqrt{x+1})^2 - 1/4 > 0
+  -- 3-x + x+1 - 2*\sqrt{(3-x)*(x+1)} - 1/4 > 0
+  -- 4 - 2*\sqrt{(3-x)*(x+1)} - 1/4 > 0
+  -- 15/4 > \sqrt{(3-x)*(x+1)}
+  -- square again:
+  -- (15/4)^2 > (3-x)*(x+1)
+  -- 225/16 > (3-x)*(x+1)
+  -- 225/16 > 3*x+3-x^2 - x-1
+  -- 225/16 > 2*x+2-x^2
+  -- x^2 + 2*x - 15/8 > 0
+  have h₇ : (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 - 1 / (4:ℝ) =
+      (Real.sqrt (3 - x)) ^ 2 - 2 * Real.sqrt (3 - x) * Real.sqrt (x + 1) + (Real.sqrt (x + 1)) ^ 2 - 1 / (4:ℝ) := by ring
+  have h₈ : (Real.sqrt (3 - x)) ^ 2 = 3 - x := Real.sq_sqrt (by linarith)
+  have h₉ : (Real.sqrt (x + 1)) ^ 2 = x + 1 := Real.sq_sqrt (by linarith)
+  rw [h₇, h₈, h₉] at h₆
+
+  have h₁₀ : 0 ≤ x + 1 := by linarith
+  have h₁₁ : 0 ≤ 3 - x := by linarith
+  have h₁₂ : 0 ≤ 3 - x + (x + 1) - 2 * Real.sqrt (3 - x) * Real.sqrt (x + 1) := by
+    calc
+      0 ≤ (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 := by positivity
+      _ = 3 - x + (x + 1) - 2 * Real.sqrt (3 - x) * Real.sqrt (x + 1) := by ring
+
+  -- so far, we have x^2 + 2*x - 15/8 > 0
+  have h₁₃ : 0 < 3 - x + (x + 1) - 2 * Real.sqrt (3 - x) * Real.sqrt (x + 1) - 1 / (4:ℝ) := by linarith
+  have h₁₄ : 0 < 4 - 2 * Real.sqrt (3 - x) * Real.sqrt (x + 1) - 1 / (4:ℝ) := by linarith
+  have h₁₅ : 0 < 15 / (4:ℝ) - Real.sqrt (3 - x) * Real.sqrt (x + 1) := by linarith
+  have h₁₆ : 0 ≤ Real.sqrt (3 - x) * Real.sqrt (x + 1) := by positivity
+  have h₁₇ : 15 / (4:ℝ) > Real.sqrt (3 - x) * Real.sqrt (x + 1) := by linarith
+  have h₁₈ : 15 / (4:ℝ) ^ 2 > (Real.sqrt (3 - x) * Real.sqrt (x + 1)) ^ 2 := by nlinarith [h₁₇, h₁₆]
+  have h₁₉ : 15 / (4:ℝ) ^ 2 > (Real.sqrt (3 - x)) ^ 2 * (Real.sqrt (x + 1)) ^ 2 := by ring_nf at h₁₈ ⊢; assumption
+  rw [h₈, h₉] at h₁₉
+
+  -- square again, to get a quadratic inequality
+  -- (15/4)^2 > (3-x)*(x+1)
+  -- 225/16 > (3-x)*(x+1)
+  -- 225/16 > 3*x+3-x^2 - x-1
+  -- 225/16 > 2*x+2-x^2
+  -- x^2 + 2*x - 15/8 > 0
+  have h₂₀ : 0 ≤ (x - -1) * (x - (-1 + Real.sqrt 31 / 8)) := by nlinarith
+  have h₂₁ : 0 ≤ x + 1 := by linarith
+  have h₂₂ : x < -1 + Real.sqrt 31 / 8 := by nlinarith
+
+  -- it is easy to verify that -1 ≤ x and x < 1-\dfrac{\sqrt{127}}{32} implies
+  -- 0 ≤ 3 - x ∧ 0 ≤ x + 1 ∧ 1 / 2 < Real.sqrt (3 - x) - Real.sqrt (x + 1)
+  have h₂₃ : -1 ≤ x := by linarith
+  have h₂₄ : x < 1 - Real.sqrt 31 / 8 := by linarith
+
+  -- so just prove that -1 ≤ x and x < 1-\dfrac{\sqrt{127}}{32}
+  exact ⟨h₂₃, h₂₄⟩
+```

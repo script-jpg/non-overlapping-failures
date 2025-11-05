@@ -1,0 +1,76 @@
+-- 2^n - 1 has a factorization: if n = ab, then 2^a - 1 divides 2^n - 1.
+  have h₂ (a b : ℕ) (h : a * b = n) : Nat.Prime (2 ^ a - 1) → 2 ^ a - 1 ∣ 2 ^ n - 1 := by
+    rw [Nat.pow_mul]
+    apply Nat.sub_dvd_pow_sub_pow
+
+  -- So long as 2^n - 1 is not prime, we can find a smaller number that divides it.
+  have h₃ (a : ℕ) (h : 1 < a) (ha : a < n) : Nat.Prime (2 ^ a - 1) → 2 ^ a - 1 ∣ 2 ^ n - 1 := by
+    apply h₂
+    apply Nat.dvd_trans (show a * a ∣ n by apply Nat.mul_dvd_mul_left; assumption)
+    exact Nat.pow_dvd_pow a ha
+
+  -- We just need to rule out the case where $n$ is composite.
+  suffices n.Prime by exact this
+
+  -- Assume on the contrary that $n$ is composite.
+  by_contra! h
+  rw [Nat.not_prime_iff_exists_dvd_lt (show 1 < n by omega)] at h
+
+  -- Now we find a prime factor $p$ of $n$.
+  obtain ⟨p, hp, hnp⟩ := h
+
+  -- $p$ is the smallest prime factor of $n$.
+  obtain ⟨r, hr, hpr⟩ := Nat.find_spec hnp
+  have hrp : Nat.Prime r := by
+    apply Nat.prime_of_dvd_prime (show 1 < r by omega) hp
+  have hrndvd : r ∣ n := by
+    apply Nat.prime_dvd_of_dvd_mul_left hrp (show p ∣ n by omega)
+
+  -- $2^r - 1$ divides $2^n - 1$.
+  have h₂ := h₂ r p (show r * p = n by omega) hrndvd
+
+  -- $2^r - 1$ is greater than 1.
+  have h₄ : 1 < 2 ^ r - 1 := by
+    apply Nat.one_lt_sub_of_lt
+    simp
+    apply Nat.pow_lt_pow_right (show 1 < 2 by omega) (show r < n by omega)
+
+  -- $2^r - 1$ is not prime.
+  replace h₄ : 1 < 2 ^ r - 1 ∧ 1 < p := by
+    constructor
+   . assumption
+   . apply Nat.Prime.one_lt
+      exact hp
+
+  -- So it is a composite number.
+  replace h₄ : 1 < 2 ^ r - 1 ∧ 1 < r := by
+    constructor
+   . assumption
+   . apply Nat.Prime.one_lt
+      exact hrp
+
+  -- Now we derive a contradiction from this.
+  apply h at h₄
+  rcases h₄ with ⟨q, hq, hqr⟩
+  have hqndvd : q ∣ 2 ^ r - 1 := by
+    apply Nat.le_of_dvd at hq
+    omega
+  have hqpr : Nat.Prime q := by
+    apply Nat.prime_of_dvd_prime hq h₂
+  have hqrdvd : q ∣ r := by
+    apply Nat.prime_dvd_of_dvd_mul_left hqpr
+    apply Nat.dvd_trans hqndvd
+    apply Nat.pow_dvd_pow 2
+    omega
+  have : q ≤ r := by
+    apply Nat.le_of_dvd (show r > 0 by omega) at hqrdvd
+    exact hqrdvd
+  have : q.Prime := by exact hqpr
+  have : r.Prime := by exact hrp
+  apply Nat.le_of_dvd at hqr
+  rw [Nat.prime_dvd_prime_iff_eq] at hqr
+ . linarith
+ . assumption
+ . assumption
+
+```

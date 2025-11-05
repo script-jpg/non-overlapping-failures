@@ -1,0 +1,343 @@
+-- Prove that the determinant of the coefficient matrix is positive.
+  have h₀ : 0 < a 0 * (a 4 * a 8 - a 5 * a 7) - a 1 * (a 3 * a 8 - a 5 * a 6) + a 2 * (a 3 * a 7 - a 4 * a 6) := by
+    apply add_pos
+    · apply sub_pos.mpr
+      apply mul_pos
+      · exact h₀.left
+      · apply mul_pos
+        · apply sub_pos.mpr
+          exact h₅
+        · apply sub_pos.mpr
+          exact h₆
+    · apply sub_pos.mpr
+      apply mul_neg_of_neg_of_pos
+      · exact h₁.left
+      · apply mul_pos
+        · exact h₅
+        · exact h₆
+    · apply mul_neg_of_pos_of_neg
+      · apply mul_pos
+        · exact h₀.left
+        · exact h₀.right.left
+      · apply sub_neg
+        exact h₃
+
+  -- The determinant is equal to $a_1 *(a_2 *a_3-a_4 *a_5)+a_2 *(a_0 *a_3-a_4 *a_6)+a_3 *(a_0 *a_5-a_2 *a_6)$.
+  have h₁ : a 0 * (a 4 * a 8 - a 5 * a 7) - a 1 * (a 3 * a 8 - a 5 * a 6) + a 2 * (a 3 * a 7 - a 4 * a 6) =
+      a 1 * (a 2 * a 3 - a 4 * a 5) + a 2 * (a 0 * a 3 - a 4 * a 6) + a 3 * (a 0 * a 5 - a 2 * a 6) := by
+    ring
+
+  -- Prove that the expression above is equal to the determinant of the coefficient matrix.
+  have h₂ : a 1 * (a 2 * a 3 - a 4 * a 5) + a 2 * (a 0 * a 3 - a 4 * a 6) + a 3 * (a 0 * a 5 - a 2 * a 6) =
+      a 0 * (a 4 * a 8 - a 5 * a 7) - a 1 * (a 3 * a 8 - a 5 * a 6) + a 2 * (a 3 * a 7 - a 4 * a 6) := by
+    rw [←h₁]
+
+  -- The determinant is positive.
+  have h₅ : 0 < a 1 * (a 2 * a 3 - a 4 * a 5) + a 2 * (a 0 * a 3 - a 4 * a 6) + a 3 * (a 0 * a 5 - a 2 * a 6) := by
+    rw [←h₂]
+    exact h₀
+
+  -- Prove that $x$, $y$, and $z$ are zero.
+  have h₆ : x = 0 := by
+    -- Subtract the second equation from the first equation.
+    have h₆ : a 1 * (y * (a 3 - a 4) + (a 5 - a 8) * x) + a 2 * (z * (a 3 - a 4) + (a 6 - a 7) * x) = 0 := by
+      linarith only [h₇, h₈]
+
+    -- Prove that the coefficients of $y$ and $z$ are nonnegative.
+    have h₇ : 0 ≤ a 1 * (a 3 - a 4) + a 2 * (a 6 - a 7) := by
+      apply add_nonneg
+      · apply mul_nonneg
+        · exact h₁.left
+        · apply le_of_lt
+          exact h₅.left
+      · apply mul_nonneg
+        · apply le_of_lt
+          exact h₁.right.left
+        · apply le_of_lt
+          exact h₁.right.right
+
+    have h₈ : 0 ≤ a 1 * (a 5 - a 8) + a 2 * (a 6 - a 7) := by
+      apply add_nonneg
+      · apply mul_nonneg
+        · apply le_of_lt
+          exact h₅.left
+        · apply le_of_lt
+          exact h₅.right.left
+      · apply mul_nonneg
+        · exact h₁.left
+        · apply le_of_lt
+          exact h₅.right.right
+
+    -- Prove that $y$ and $z$ are zero.
+    have h₉ : y = 0 := by
+      apply eq_zero_of_ne_zero_of_mul_left_eq_zero
+      · exact h₇
+      · by_contra!
+        have h₁₀ : a 1 * (y * (a 3 - a 4) + (a 5 - a 8) * x) + a 2 * (z * (a 3 - a 4) + (a 6 - a 7) * x) < 0 := by
+        -- Prove that the coefficients of $y$ and $x$ are positive.
+        have h₁₀ : 0 < a 1 * (a 3 - a 4) + a 2 * (a 5 - a 8) := by
+          apply add_pos
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.left
+            · exact h₁.left
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.left
+            · apply le_of_lt
+              exact h₅.right.right
+        -- Prove that the coefficients of $z$ and $x$ are positive.
+        have h₁₁ : 0 < a 1 * (a 6 - a 7) + a 2 * (a 3 - a 4) := by
+          apply add_pos
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.left
+            · apply le_of_lt
+              exact h₅.left
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.right
+            · exact h₁.left
+        -- Use these coefficients to bound the product.
+        apply mul_pos
+        · exact h₁₀
+        · apply add_pos
+          · apply mul_pos
+            · exact h₁.left
+            · by_contra!
+              have h₁₂ : a 3 - a 4 ≤ 0 := by
+                apply sub_nonpos.mpr
+                by_contra!
+                have h₁₂ : a 5 - a 8 ≤ 0 := by
+                  apply sub_nonpos.mpr
+                  exact this
+                linarith only [h₁.left, h₁₂]
+              apply le_of_lt at h₁₂
+              exact h₁.right.left
+            · exact h₁.right.right
+          · apply mul_pos
+            · exact h₁.left
+            · by_contra!
+              have h₁₃ : a 6 - a 7 ≤ 0 := by
+                apply sub_nonpos.mpr
+                exact this
+              linarith only [h₁.right.left, h₁₃]
+            · apply le_of_lt
+              exact h₁.right.right
+        · by_contra!
+          linarith only [h₆, h₁₀, h₁₁, this]
+
+      · by_contra!
+        have h₁₁ : a 1 * (y * (a 3 - a 4) + (a 5 - a 8) * x) + a 2 * (z * (a 3 - a 4) + (a 6 - a 7) * x) > 0 := by
+        -- Prove that the coefficients of $y$ and $x$ are positive.
+        have h₁₁ : 0 < a 1 * (a 3 - a 4) + a 2 * (a 5 - a 8) := by
+          apply add_pos
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.left
+            · exact h₁.left
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.left
+            · apply le_of_lt
+              exact h₅.right.right
+        -- Prove that the coefficients of $z$ and $x$ are positive.
+        have h₁₂ : 0 < a 1 * (a 6 - a 7) + a 2 * (a 3 - a 4) := by
+          apply add_pos
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.left
+            · apply le_of_lt
+              exact h₅.left
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.right
+            · exact h₁.left
+        -- Use these coefficients to bound the product.
+        apply mul_pos
+        · exact h₁₁
+        · apply add_pos
+          · apply mul_pos
+            · exact h₁.left
+            · by_contra!
+              have h₁₃ : a 3 - a 4 ≤ 0 := by
+                apply sub_nonpos.mpr
+                by_contra!
+                have h₁₃ : a 5 - a 8 ≤ 0 := by
+                  apply sub_nonpos.mpr
+                  exact this
+                linarith only [h₁.right.left, h₁₃]
+              apply le_of_lt at h₁₃
+              exact h₁.right.right
+            · exact h₁.right.right
+          · apply mul_pos
+            · exact h₁.left
+            · by_contra!
+              have h₁₄ : a 6 - a 7 ≤ 0 := by
+                apply sub_nonpos.mpr
+                exact this
+              linarith only [h₁.right.left, h₁₄]
+            · apply le_of_lt
+              exact h₁.right.right
+        · by_contra!
+          linarith only [h₆, h₁₁, h₁₂, this]
+
+    have h₁₀ : z = 0 := by
+      apply eq_zero_of_ne_zero_of_mul_left_eq_zero
+      · exact h₈
+      · by_contra!
+        have h₁₁ : a 1 * (y * (a 3 - a 4) + (a 5 - a 8) * x) + a 2 * (z * (a 3 - a 4) + (a 6 - a 7) * x) < 0 := by
+        -- Prove that the coefficients of $y$ and $x$ are positive.
+        have h₁₁ : 0 < a 1 * (a 3 - a 4) + a 2 * (a 5 - a 8) := by
+          apply add_pos
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.left
+            · exact h₁.left
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.left
+            · apply le_of_lt
+              exact h₅.right.right
+        -- Prove that the coefficients of $z$ and $x$ are positive.
+        have h₁₂ : 0 < a 1 * (a 6 - a 7) + a 2 * (a 3 - a 4) := by
+          apply add_pos
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.left
+            · apply le_of_lt
+              exact h₅.left
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.right
+            · exact h₁.left
+        -- Use these coefficients to bound the product.
+        apply mul_pos
+        · exact h₁₁
+        · apply add_pos
+          · apply mul_pos
+            · exact h₁.left
+            · by_contra!
+              have h₁₃ : a 3 - a 4 ≤ 0 := by
+                apply sub_nonpos.mpr
+                exact this
+              linarith only [h₁.right.left, h₁₃]
+            · exact h₁.right.right
+          · apply mul_pos
+            · exact h₁.left
+            · by_contra!
+              have h₁₄ : a 6 - a 7 ≤ 0 := by
+                apply sub_nonpos.mpr
+                exact this
+              linarith only [h₁.right.left, h₁₄]
+            · apply le_of_lt
+              exact h₁.right.right
+        · by_contra!
+          linarith only [h₆, h₁₁, h₁₂, this]
+
+      · by_contra!
+        have h₁₂ : a 1 * (y * (a 3 - a 4) + (a 5 - a 8) * x) + a 2 * (z * (a 3 - a 4) + (a 6 - a 7) * x) > 0 := by
+        -- Prove that the coefficients of $y$ and $x$ are positive.
+        have h₁₂ : 0 < a 1 * (a 3 - a 4) + a 2 * (a 5 - a 8) := by
+          apply add_pos
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.left
+            · exact h₁.left
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.left
+            · apply le_of_lt
+              exact h₅.right.right
+        -- Prove that the coefficients of $z$ and $x$ are positive.
+        have h₁₃ : 0 < a 1 * (a 6 - a 7) + a 2 * (a 3 - a 4) := by
+          apply add_pos
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.left
+            · apply le_of_lt
+              exact h₅.left
+          · apply mul_pos
+            · apply sub_pos.mpr
+              exact h₅.right.right
+            · exact h₁.left
+        -- Use these coefficients to bound the product.
+        apply mul_pos
+        · exact h₁₂
+        · apply add_pos
+          · apply mul_pos
+            · exact h₁.left
+            · by_contra!
+              have h₁₄ : a 3 - a 4 ≤ 0 := by
+                apply sub_nonpos.mpr
+                exact this
+              linarith only [h₁.right.left, h₁₄]
+            · exact h₁.right.right
+          · apply mul_pos
+            · exact h₁.left
+            · by_contra!
+              have h₁₅ : a 6 - a 7 ≤ 0 := by
+                apply sub_nonpos.mpr
+                exact this
+              linarith only [h₁.right.left, h₁₅]
+            · apply le_of_lt
+              exact h₁.right.right
+        · by_contra!
+          linarith only [h₆, h₁₂, h₁₃, this]
+
+    linarith only [h₉, h₁₀]
+
+  have h₇ : y = 0 := by
+    -- Subtract the third equation from the first equation.
+    have h₇ : a 2 * (x * (a 1 - a 3) + (a 4 - a 8) * y) + a 3 * (z * (a 1 - a 3) + (a 2 - a 7) * y) = 0 := by
+      linarith only [h₇, h₉]
+
+    -- Prove that the coefficients of $x$ and $z$ are nonnegative.
+    have h₈ : 0 ≤ a 2 * (a 1 - a 3) + a 3 * (a 4 - a 8) := by
+      apply add_nonneg
+      · apply mul_nonneg
+        · apply le_of_lt
+          exact h₅.right.left
+        · apply le_of_lt
+          exact h₅.left
+      · apply mul_nonneg
+        · apply le_of_lt
+          exact h₅.right.right
+        · apply le_of_lt
+          exact h₅.right.left
+
+    have h₉ : 0 ≤ a 2 * (a 2 - a 7) + a 3 * (a 1 - a 3) := by
+      apply add_nonneg
+      · apply mul_nonneg
+        · apply le_of_lt
+          exact h₅.right.right
+        · apply le_of_lt
+          exact h₅.left
+      · apply mul_nonneg
+        · apply le_of_lt
+          exact h₅.right.left
+        · apply le_of_lt
+          exact h₅.right.right
+
+    -- Prove that $x$ and $z$ are zero.
+    have h₁₀ : x = 0 := by
+      apply eq_zero_of_ne_zero_of_mul_left_eq_zero
+      · exact h₈
+      · by_contra!
+        have h₁₁ : a 2 * (x * (a 1 - a 3) + (a 4 - a 8) * y) + a 3 * (z * (a 1 - a 3) + (a 2 - a 7) * y) < 0 := by
+          -- Prove that the coefficients of $x$ and $y$ are positive.
+          have h₁₁ : 0 < a 2 * (a 1 - a 3) + a 3 * (a 4 - a 8) := by
+            apply add_pos
+            · apply mul_pos
+              · apply sub_pos.mpr
+                exact h₅.left
+              · exact h₅.right.left
+            · apply mul_pos
+              · apply sub_pos.mpr
+                exact h₅.right.right
+              · apply le_of_lt
+                exact h₅.left
+          -- Prove that the coefficients of $z$ and $y$ are positive.
+          have h₁₂ : 0 < a 2 * (a 2 - a 7) + a 3 * (a 1 - a 3) := by
+            apply add_pos
+            · apply mul

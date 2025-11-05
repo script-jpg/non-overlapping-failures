@@ -1,0 +1,318 @@
+have hn : 2001 = 3 * 23 * 29 := by norm_num
+
+  -- Factor 2001 into three distinct positive integers
+  rcases h₁ with h₁ | h₁ | h₁
+  -- Case $i = 1$
+  · rw [h₁] at hn
+    -- Solve for $m$ and $o$
+    replace hn : m = 3 ∧ o = 23 ∨ m = 23 ∧ o = 3 := by
+      by_cases h₃ : m = 3
+      -- Subcase $m = 3$
+      · rw [h₃] at hn
+        -- Solve for $o$
+        replace hn : o = 23 := by
+          calc
+            o = 1 * 3 * o / 1 / 3 := by ring_nf
+            _ = 2001 / 1 / 3 := by rw [h₁, hn]
+            _ = 667 := by norm_num
+        left
+        exact ⟨h₃, hn⟩
+      -- Subcase $m \neq 3$
+      · by_cases h₄ : o = 3
+        -- Subcase $o = 3$
+        · rw [h₄] at hn
+          -- Solve for $m$
+          replace hn : m = 23 := by
+            calc
+              m = 1 * m * 3 / 1 / 3 := by ring_nf
+              _ = 2001 / 1 / 3 := by rw [h₁, hn]
+              _ = 667 := by norm_num
+          right
+          exact ⟨by linarith, hn⟩
+        -- Subcase $o \neq 3$
+        · by_cases h₅ : m = 23
+          -- Subcase $m = 23$
+          · rw [h₅] at hn
+            -- Solve for $o$
+            replace hn : o = 3 := by
+              calc
+                o = 3 * 23 * o / 3 / 23 := by ring_nf
+                _ = 2001 / 3 / 23 := by rw [h₁, hn]
+                _ = 29 := by norm_num
+            right
+            exact ⟨by linarith, hn⟩
+          -- Subcase $m \neq 23$
+          · rw [h₅, h₄] at h₀
+            tauto
+        rw [h₁] at hn
+        simp only [ false_or ] at hn
+        tauto
+    rcases hn with hn | hn
+    -- Obtain the values of $i, m$ and $o$
+    · rw [h₁, hn.1, hn.2]
+      -- Compute the sum
+      norm_num
+    -- Obtain the values of $i, m$ and $o$
+    · rw [h₁, hn.1, hn.2]
+      -- Compute the sum
+      norm_num
+  -- Case $i \neq 1$
+  · by_cases h₃ : i ∣ 2001
+    -- Case $i \mid 2001$
+    · replace h₃ : ∃ k, 2001 = i * k := by exact h₃
+      rcases h₃ with ⟨k, h₃⟩
+      rw [←h₃] at h₁
+      -- Rewrite the equation
+      replace h₁ : m * o = k := by
+        calc
+          m * o = i * m * o / i := by rw [Nat.mul_assoc]; simp only [ Nat.pos_iff_ne_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, mul_div_cancel_left₀]
+          _ = 2001 / i := by rw [h₁, h₃]
+          _ = i * k / i := by rw [h₃]
+          _ = k := by rw [mul_div_cancel_left₀]; exact h₃
+      -- Apply the case for $i = 1$ to $m * o = k$
+      rcases (by_cases m_eq_1 : m = 1) with m_eq_1 | m_eq_1
+      -- Case $m = 1
+      · rw [m_eq_1] at h₁
+        -- Solve for $o$
+        replace h₁ : o = k := by
+          calc
+            o = 1 * o := by rfl
+            _ = i * 1 * o / i := by rw [Nat.mul_assoc]; simp only [ Nat.pos_iff_ne_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, mul_div_cancel_left₀]
+            _ = k / i := by rw [h₁]
+            _ = k := by rw [div_self]; exact h₃
+        rw [h₁] at h₃
+        -- Solve for $i$
+        replace h₃ : i = 3 ∨ i = 23 ∨ i = 29 := by
+          have h₄ : i ≤ 29 := by
+            by_contra! h₄
+            suffices h₅ : 2001 > 2001 by linarith
+            calc
+              2001 = i * k := h₃
+              _ > 30 * k := by linarith
+              _ ≥ 30 * 30 := by suffices h₆ : k ≥ 30 by linarith
+                                                by_contra! h₆
+                                                suffices h₇ : k < 30 by linarith
+                                                calc
+                                                   k = k * 1 := by rfl
+                                                   _ < 30 * 1 := by linarith
+                                                   _ < 30 * 29 := by norm_num
+              _ > 900 := by norm_num
+            tauto
+          interval_cases i <;> norm_num at h₃ <;> tauto
+        rcases h₃ with h₃ | h₃ | h₃
+        -- Case $i = 3
+        · rw [h₃] at h₁
+          -- Case $i = 3$, $m = 1$, and $o \neq 1, 3, 23, 29$
+          replace h₃ : o ≠ 1 := by
+            by_contra! h₃
+            rw [h₃] at h₁
+            tauto
+          replace h₃ : o ≠ 3 := by
+            by_contra! h₃
+            rw [h₁, h₃] at h₀
+            tauto
+          replace h₃ : o ≠ 23 := by
+            by_contra! h₃
+            rw [h₃] at h₀
+            tauto
+          replace h₃ : o ≠ 29 := by
+            by_contra! h₃
+            rw [h₃] at h₀
+            tauto
+          rcases (by_cases o_eq_1 : o = 1) with o_eq_1 | o_eq_1
+          -- Case $o \neq 1$
+          · rw [o_eq_1] at h₀
+            tauto
+          -- Case $o \neq 1$
+          · rcases (by_cases o_eq_3 : o = 3) with o_eq_3 | o_eq_3
+            -- Case $o = 3$
+            · rw [o_eq_3] at h₀
+              tauto
+            -- Case $o \neq 3$
+            · rcases (by_cases o_eq_23 : o = 23) with o_eq_23 | o_eq_23
+              -- Case $o = 23$
+              · rw [o_eq_23] at h₀
+                tauto
+              -- Case $o \neq 23$
+              · rcases (by_cases o_eq_29 : o = 29) with o_eq_29 | o_eq_29
+                -- Case $o = 29$
+                · rw [o_eq_29] at h₀
+                  tauto
+                -- Case $o \neq 29$
+                · have h₄ : k > 29 := by
+                    by_contra! h₄
+                    suffices h₅ : 2001 > 2001 by linarith
+                    calc
+                      2001 = i * k := h₃
+                      _ = 3 * k := by rw [h₃]
+                      _ ≤ 3 * 29 := by linarith
+                      _ < 2001 := by norm_num
+                    tauto
+                  replace o_eq_1 : o > 1 := by
+                    by_contra! o_eq_1
+                    suffices h₅ : o ≤ 1 by linarith
+                    calc
+                      o = o * 1 := by rfl
+                      _ ≤ 1 * 1 := by linarith
+                      _ ≤ 1 * 29 := by norm_num
+                      _ ≤ 29 := by nth_rw 2 [mul_comm]; rw [mul_le_mul_right]; linarith
+                    tauto
+                  have h₅ : o + k > 29 + 1 := by linarith
+                  replace h₄ : 29 + 1 < k := by linarith
+                  linarith
+        -- Case $i = 23$
+        · rw [h₃] at h₁
+          replace h₃ : o ≠ 1 := by
+            by_contra! h₃
+            rw [h₃] at h₀
+            tauto
+          replace h₃ : o ≠ 3 := by
+            by_contra! h₃
+            rw [h₁, h₃] at h₀
+            tauto
+          replace h₃ : o ≠ 23 := by
+            by_contra! h₃
+            rw [h₃] at h₀
+            tauto
+          replace h₃ : o ≠ 29 := by
+            by_contra! h₃
+            rw [h₃] at h₀
+            tauto
+          rcases (by_cases o_eq_1 : o = 1) with o_eq_1 | o_eq_1
+          -- Case $o \neq 1$
+          · rw [o_eq_1] at h₀
+            tauto
+          -- Case $o \neq 1$
+          · rcases (by_cases o_eq_3 : o = 3) with o_eq_3 | o_eq_3
+            -- Case $o = 3$
+            · rw [o_eq_3] at h₀
+              tauto
+            -- Case $o \neq 3$
+            · rcases (by_cases o_eq_23 : o = 23) with o_eq_23 | o_eq_23
+              -- Case $o = 23$
+              · rw [o_eq_23] at h₀
+                tauto
+              -- Case $o \neq 23$
+              · rcases (by_cases o_eq_29 : o = 29) with o_eq_29 | o_eq_29
+                -- Case $o = 29$
+                · rw [o_eq_29] at h₀
+                  tauto
+                -- Case $o \neq 29$
+                · have h₄ : k > 29 := by
+                    by_contra! h₄
+                    suffices h₅ : 2001 > 2001 by linarith
+                    calc
+                      2001 = i * k := h₃
+                      _ = 23 * k := by rw [h₃]
+                      _ ≤ 23 * 29 := by linarith
+                      _ < 2001 := by norm_num
+                    tauto
+                  replace o_eq_1 : o > 1 := by
+                    by_contra! o_eq_1
+                    suffices h₅ : o ≤ 1 by linarith
+                    calc
+                      o = o * 1 := by rfl
+                      _ ≤ 1 * 1 := by linarith
+                      _ ≤ 1 * 29 := by norm_num
+                      _ ≤ 29 := by nth_rw 2 [mul_comm]; rw [mul_le_mul_right]; linarith
+                    tauto
+                  have h₅ : o + k > 29 + 1 := by linarith
+                  replace h₄ : 29 + 1 < k := by linarith
+                  linarith
+        -- Case $i = 29$
+        · rw [h₃] at h₁
+          replace h₃ : o ≠ 1 := by
+            by_contra! h₃
+            rw [h₃] at h₀
+            tauto
+          replace h₃ : o ≠ 3 := by
+            by_contra! h₃
+            rw [h₁, h₃] at h₀
+            tauto
+          replace h₃ : o ≠ 23 := by
+            by_contra! h₃
+            rw [h₃] at h₀
+            tauto
+          replace h₃ : o ≠ 29 := by
+            by_contra! h₃
+            rw [h₃] at h₀
+            tauto
+          rcases (by_cases o_eq_1 : o = 1) with o_eq_1 | o_eq_1
+          -- Case $o \neq 1$
+          · rw [o_eq_1] at h₀
+            tauto
+          -- Case $o \neq 1$
+          · rcases (by_cases o_eq_3 : o = 3) with o_eq_3 | o_eq_3
+            -- Case $o = 3$
+            · rw [o_eq_3] at h₀
+              tauto
+            -- Case $o \neq 3$
+            · rcases (by_cases o_eq_23 : o = 23) with o_eq_23 | o_eq_23
+              -- Case $o = 23$
+              · rw [o_eq_23] at h₀
+                tauto
+              -- Case $o \neq 23$
+              · rcases (by_cases o_eq_29 : o = 29) with o_eq_29 | o_eq_29
+                -- Case $o = 29$
+                · rw [o_eq_29] at h₀
+                  tauto
+                -- Case $o \neq 29$
+                · have h₄ : k > 29 := by
+                    by_contra! h₄
+                    suffices h₅ : 2001 > 2001 by linarith
+                    calc
+                      2001 = i * k := h₃
+                      _ = 29 * k := by rw [h₃]
+                      _ ≤ 29 * 29 := by linarith
+                      _ < 2001 := by norm_num
+                    tauto
+                  replace o_eq_1 : o > 1 := by
+                    by_contra! o_eq_1
+                    suffices h₅ : o ≤ 1 by linarith
+                    calc
+                      o = o * 1 := by rfl
+                      _ ≤ 1 * 1 := by linarith
+                      _ ≤ 1 * 29 := by norm_num
+                      _ ≤ 29 := by nth_rw 2 [mul_comm]; rw [mul_le_mul_right]; linarith
+                    tauto
+                  have h₅ : o + k > 29 + 1 := by linarith
+                  replace h₄ : 29 + 1 < k := by linarith
+                  linarith
+      -- Case $i \nmid 2001$
+      · by_cases h₄ : i > 1
+        -- Case $i > 1$
+        · by_cases h₅ : i * i > 2001
+          -- Case $i \cdot i > 2001$
+          · rw [←h₁] at h₅
+            -- Rewrite the equation
+            replace h₅ : 2001 / (i * i) < 2 := by
+              calc
+                2001 / (i * i) = 2001 / (i * i) * 1 := by rfl
+                _ < 2 * (i * i) / (i * i) := by rw [mul_lt_mul_right]; exact h₅; linarith
+                _ = 2 := by rw [div_mul_cancel₀]; linarith; exact h₄
+            replace h₅ : 2001 / (i * i) = 1 := by
+              have h₆ : 2001 / (i * i) ≤ 1 := by
+                refine Nat.le_of_lt_succ?_
+                exact Nat.lt_succ_of_lt h₅
+              suffices h₇ : 2001 / (i * i) ≠ 0 by exact Nat.eq_one_of_le_one h₆ h₇
+              suffices h₈ : i * i > 1 by exact Nat.ne_of_gt (Nat.div_ne_zero_iff.mpr h₈)
+              suffices h₉ : i > 1 by exact Nat.mul_pos_iff.mpr ⟨h₄, h₄⟩
+              exact h₅
+            -- Solve for $o$
+            replace h₁ : o = 2001 / (i * i) := by
+              calc
+                o = o * (i * i) / (i * i) := by rw [mul_div_cancel₀]; ring; exact h₄
+                _ = 2001 / (i * i) := by rw [h₁]
+            rw [h₁, h₅] at h₀
+            -- Solve for $i$
+            replace h₀ : i + 1 < 3 * i := by
+              linarith
+            replace h₀ : 2 * i < 3 * i := by
+              linarith
+            linarith
+          -- Case $i \cdot i \leq 2001$
+          · simp only [ not_lt] at h₅
+            apply Nat.le_of_mul_le_mul_left h₅
+            linarith
+        -- Case $i \leq 1$
+        · by_cases h₆

@@ -1,0 +1,129 @@
+-- A sufficient condition for first order induction.
+  have : ∃ m : ℕ, ∀ n : ℕ, m ≥ n → (n + 1) * a ^ n * b ^ n * c ^ n * (a + b + c) ≤ n * a ^ (n + 1) * b ^ (n + 1) * c ^ (n + 1) := by
+    use 0
+    intro n
+    simp only [Nat.ofNat_zero, zero_add, mul_one, zero_mul, Nat.cast_zero, zero_pow, mul_zero, add_zero, zero_sub, neg_sub, neg_add]
+    simp only [pow_one, mul_assoc]
+    linarith
+
+  -- Lifting the variable to reals.
+  generalize ha : (a : ℝ) = x
+  generalize hb : (b : ℝ) = y
+  generalize hc : (c : ℝ) = z
+
+  -- Boring calculations.
+  have : 0 ≤ x := by linarith
+  have : 0 ≤ y := by linarith
+  have : 0 ≤ z := by linarith
+
+  have : x < y + z := by linarith
+  have : y < x + z := by linarith
+  have : z < x + y := by linarith
+
+  have : x + y + z > 0 := by linarith
+
+  rw [←ha, ←hb, ←hc]
+
+  -- We will do first order induction on n.
+  let rec f : (n : ℕ) → (n ≥ 1 → x ^ n * y ^ n * z ^ n * (x + y + z) ≤ n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1))
+  | 0 => by aesop
+  | n + 1 =>
+    intro h₁
+    obtain ⟨h₁, h₂⟩ := h₁
+    -- Lifting the variable to reals.
+    change x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z) ≤ (n + 1) * x ^ (n + 2) * y ^ (n + 2) * z ^ (n + 2) at h₂
+    -- We have 0 < n + 1.
+    have : ((n : ℝ) + 1) > 0 := by
+      linarith only [h₁]
+    have : (n : ℝ) ≥ 1 := by
+      linarith only [h₁]
+    -- Rearrange the inequality to get a quadratic inequality.
+    have h₃ : ((n : ℝ) + 1) * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z) ≤ (n + 1) * x ^ (n + 2) * y ^ (n + 2) * z ^ (n + 2) := by
+      linarith only [h₂]
+    replace h₃ : x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z) ≤ n * x ^ (n + 2) * y ^ (n + 2) * z ^ (n + 2) + x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z) - ((n : ℝ) - 1) * x ^ (n + 2) * y ^ (n + 2) * z ^ (n + 2) := by
+      linarith only [h₃]
+    -- We can do some algebra to get the next part of the inequality.
+    have h₄ : n * x ^ (n + 2) * y ^ (n + 2) * z ^ (n + 2) + x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z) - ((n : ℝ) - 1) * x ^ (n + 2) * y ^ (n + 2) * z ^ (n + 2) = (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1)) * (x + y + z - (1 - (n : ℝ)⁻¹) * x * y * z) := by
+      field_simp
+      ring
+    rw [h₄] at h₃
+    -- The term n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) is positive.
+    have : n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) > 0 := by
+      positivity
+    have : n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z - (1 - (n : ℝ)⁻¹) * x * y * z) > 0 := by
+      positivity
+    -- Factoring and simplifying the inequality.
+    have h₅ : (x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z)) * ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) ≤ (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1)) * (x + y + z - (1 - (n : ℝ)⁻¹) * x * y * z) := by
+      linarith only [h₃]
+    replace h₅ : ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) ≤ (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z) / (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1))) / ((1 - (n : ℝ)⁻¹) * x * y * z) := by
+      calc
+        ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) = ((x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z)) * ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) / (x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z))) := by
+          field_simp
+          ring
+        _ ≤ ((n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1)) * (x + y + z - (1 - (n : ℝ)⁻¹) * x * y * z)) / (x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z))) := by
+          rw [mul_comm (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1)), mul_comm (x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z)), div_le_div_iff_of_pos_right (by positivity)] at h₅
+          exact (div_le_iff₀?_).mpr h₅
+          positivity
+        _ = (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) / (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1))) * ((x + y + z - (1 - (n : ℝ)⁻¹) * x * y * z) / ((1 - (n : ℝ)⁻¹) * x * y * z)) := by
+          field_simp
+          ring
+        _ = (1 - (n : ℝ)⁻¹)⁻¹ * ((x + y + z - (1 - (n : ℝ)⁻¹) * x * y * z) / ((1 - (n : ℝ)⁻¹) * x * y * z)) := by
+          rw [mul_div_assoc]
+          field_simp
+          ring
+        _ = ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) / ((1 - (n : ℝ)⁻¹) * x * y * z) := by
+          field_simp
+          ring
+    -- Simplifying the inequality.
+    rw [div_eq_iff] at h₅
+    field_simp at h₅
+    ring_nf at h₅
+    -- Factoring the inequality.
+    have h₆ : (x - z + y) * (x * y * z) * ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) ≤ (1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z * (x + y + z) - (1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z) + (1 - (1 - (n : ℝ)⁻¹)) * (x + y + z) * (x * y * z)) := by
+      ring_nf
+      linarith only [h₅]
+    -- The term (1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z * (x + y + z) - (1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z) + (1 - (1 - (n : ℝ)⁻¹)) * (x + y + z) * (x * y * z)) is equal to 
+    -- (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z) / (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1))) * ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y).
+    have h₇ : (1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z * (x + y + z) - (1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z) + (1 - (1 - (n : ℝ)⁻¹)) * (x + y + z) * (x * y * z)) = (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1) * (x + y + z) / (n * x ^ (n + 1) * y ^ (n + 1) * z ^ (n + 1))) * ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) := by
+      field_simp
+      ring
+    rw [h₇] at h₆
+    clear h₇
+    -- We can cancel the term (1 - (n : ℝ)⁻¹) * x * y * z.
+    replace h₆ : (x - z + y) * ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) ≤ (1 - (n : ℝ)⁻¹) * x * y * z * (x + y + z) - (1 - (n : ℝ)⁻¹) * x * y * z * (1 - (n : ℝ)⁻¹) * x * y * z + (1 - (1 - (n : ℝ)⁻¹)) * (x + y + z) * (1 - (n : ℝ)⁻¹) * x * y * z := by
+      calc
+        (x - z + y) * ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) = (x * y * z) * ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) * (x / (x * y * z) - z / (x * y * z) + y / (x * y * z)) := by
+          field_simp
+          ring
+        _ ≤ ((1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z * (x + y + z) - (1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z) + (1 - (1 - (n : ℝ)⁻¹)) * (x + y + z) * (x * y * z)) / (x * y * z)) * ((1 - (n : ℝ)⁻¹) * x * y * z - z + x + y) := by
+          rw [mul_div_assoc]
+          apply div_le_div_of_nonneg_right
+          positivity
+          (config := { positivity:= true }) nlinarith only [h₆]
+        _ = (1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z * (x + y + z) - (1 - (n : ℝ)⁻¹) * x * y * z * (x * y * z) + (1 - (1 - (n : ℝ)⁻¹)) * (x + y + z) * (x * y * z)) / (x * y * z) := by
+          field_simp
+          ring
+        _ = (1 - (n : ℝ)⁻¹) * x * y * z * (x + y + z) - (1 - (n : ℝ)⁻¹) * x * y * z * (1 - (n : ℝ)⁻¹) * x * y * z + (1 - (1 - (n : ℝ)⁻¹)) * (x + y + z) * (1 - (n : ℝ)⁻¹) * x * y * z := by
+          field_simp
+          ring
+    -- Simplifying the inequality.
+    rw [div_eq_mul_inv] at h₆
+    field_simp at h₆
+    ring_nf at h₆
+    -- Factoring the inequality.
+    have h₇ : (1 - (1 - (n : ℝ)⁻¹) * x * y * z) * (x * y * z - (1 - (n : ℝ)⁻¹) * x * y * z) ≤ 3 * x * y * z := by
+      nlinarith only [h₆, this]
+    simp only [one_mul, mul_sub, sub_mul, mul_assoc] at h₇
+    rw [mul_one, mul_one] at h₇
+    -- The result is equivalent to 
+    -- (1 - (1 - (n : ℝ)⁻¹) * x * y * z) * (x * y * z - (1 - (n : ℝ)⁻¹) * x * y * z) ≤ 3 * x * y * z.
+    linarith only [h₇]
+  -- doing induction
+  obtain ⟨m, h₀⟩ := this
+  specialize h₀ 1 (by linarith)
+  rw [mul_one, mul_one, mul_one, mul_one, mul_one, mul_one, mul_one, mul_one, mul_one, (by norm_num : 1 + 1 = 2)] at h₀
+  replace h₀ : x * y * z * (x + y + z) ≤ 3 * x * y * z := by
+    linarith only [h₀]
+  nlinarith only [h₀, this]
+
+```

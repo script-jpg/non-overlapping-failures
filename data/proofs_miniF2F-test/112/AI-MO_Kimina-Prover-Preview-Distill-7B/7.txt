@@ -1,0 +1,124 @@
+-- Simplify the left summand $\log_{5^k} 3^{k^2}$
+  have h1 : ∀ k ∈ Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = k * Real.logb 5 (3 ^ 2) := by
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    have : 0 < 5 ^ k := by norm_num
+    have : 0 < 3 ^ k ^ 2 := by positivity
+    rw [Real.logb]  -- Use the change of base formula
+    field_simp
+    ring_nf
+    -- Simplify the expression to the form $k \cdot \log_5 9$
+    rw [show (3 ^ 2 : ℝ) = 9 by norm_num]
+    have : 0 < 5 := by norm_num
+    have : 0 < 9 := by norm_num
+    rw [Real.log_mul]
+    nth_rw 2 [show 9 = 3 ^ 2 by norm_num]
+    rw [Real.log_pow]
+    ring_nf
+    field_simp
+    -- Show that the simplified form is equal to the original expression
+    rw [Real.logb_eq_iff_rpow_eq]
+    all_goals {
+      rw [show (5 : ℝ) = (5 : ℝ) ^ 1 by norm_num, show (9 : ℝ) = (9 : ℝ) ^ 1 by norm_num]
+      rw [Real.rpow_mul]
+      · rw [Real.rpow_logb]
+        all_goals linarith
+      all_goals linarith
+    }
+    all_goals positivity
+
+  -- Simplify the right summand $\log_{9^k} 25^k$
+  have h2 : ∀ k ∈ Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = Real.logb 9 25 := by
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    have : 0 < 9 ^ k := by norm_num
+    have : 0 < 25 ^ k := by positivity
+    rw [Real.logb]  -- Use the change of base formula
+    field_simp
+    ring_nf
+    -- Simplify the expression to a constant
+    have : 0 < 25 := by norm_num
+    have : 0 < 9 := by norm_num
+    rw [Real.log_mul]
+    nth_rw 2 [show 25 = 5 ^ 2 by norm_num]
+    rw [Real.log_pow]
+    ring_nf
+    field_simp
+    -- Show that the simplified form is equal to the original expression
+    rw [Real.logb_eq_iff_rpow_eq]
+    all_goals {
+      rw [show (9 : ℝ) = (9 : ℝ) ^ 1 by norm_num, show (25 : ℝ) = (25 : ℝ) ^ 1 by norm_num]
+      rw [Real.rpow_mul]
+      · rw [Real.rpow_logb]
+        all_goals linarith
+      all_goals linarith
+    }
+    all_goals positivity
+
+  -- Simplify the entire expression to $21{,}000$
+  calc
+    ((∑ k in Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2)) *
+        ∑ k in Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k)) = (∑ k in Finset.Icc 1 20, k * Real.logb 5 (3 ^ 2)) * (∑ k in Finset.Icc 1 100, Real.logb 9 25) := by
+      congr 1
+      · simp_rw [h1]
+      · simp_rw [h2]
+    _ = (Real.logb 5 (3 ^ 2)) * (Finset.card (Finset.Icc 1 20) * Real.logb 9 25) := by
+      rw [Finset.sum_mul, Finset.sum_const]
+      · congr 1
+        · simp only [Finset.mem_Icc, Finset.mem_Ico, Finset.mem_singleton, reduceIco]
+          intro a ha b hb _
+          calc
+            (a : Finset.Icc 1 20) = a := by simp
+            _ = a.card := by simp
+            _ = (a + 1 - 1) * (b + 1 - b) := by rw [Nat.add_sub_cancel, Nat.sub_self, Nat.add_sub_cancel]; rfl
+            _ = (a + 1 - b) * (b + 1 - b) := by rw [Nat.add_sub_cancel, Nat.add_sub_cancel]
+            _ = (a + 1 - b) * 1 := by rw [Nat.sub_self]
+            _ = (a + 1 - b) := by simp
+            _ = (a + 1) - b := by rw [Nat.add_sub_cancel]
+            _ = a - b + 1 := by rw [Nat.add_sub_cancel]
+            _ = (a - b) + 1 := by simp
+            _ = 20 - 1 + 1 := by rw [ha, hb]
+            _ = 20 := by simp
+            _ = (20 : ℝ) := by norm_num
+    _ = (Real.logb 5 9) * (20 * (Real.logb 9 25)) := by
+      congr 1
+      · have : 0 < 9 := by norm_num
+        rw [Real.logb]
+        field_simp
+        ring_nf
+        rw [show (9 : ℝ) ^ 2 = 9 ^ (2 : ℝ) by norm_num]
+        rw [Real.log_rpow]
+        · rw [show (9 : ℝ) = (9 : ℝ) ^ 1 by norm_num]
+          rw [Real.rpow_mul]
+          · rw [Real.rpow_logb]
+            all_goals linarith
+          all_goals linarith
+        all_goals linarith
+      · have : 0 < 9 := by norm_num
+        rw [Real.logb]
+        field_simp
+        ring_nf
+        rw [show (9 : ℝ) ^ 2 = 9 ^ (2 : ℝ) by norm_num]
+        rw [Real.log_rpow]
+        · rw [show (9 : ℝ) = (9 : ℝ) ^ 1 by norm_num]
+          rw [Real.rpow_mul]
+          · rw [Real.rpow_logb]
+            all_goals linarith
+          all_goals linarith
+        all_goals linarith
+    _ = 20 * (Real.logb 5 9 * Real.logb 9 25) := by
+      ring
+    _ = 20 * (Real.logb 5 25) := by
+      rw [Real.logb_mul_logb]
+      · ring
+      all_goals positivity
+    _ = 20 * (Real.logb 5 (5 ^ 2)) := by
+      norm_num
+    _ = 20 * (2 * Real.logb 5 5) := by
+      rw [Real.logb_pow]
+      ring
+    _ = 20 * (2 * 1) := by
+      rw [Real.logb_self_eq_one]
+      all_goals positivity
+    _ = 21000 := by norm_num
+```

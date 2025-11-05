@@ -1,0 +1,47 @@
+-- We have an arithmetic sequence, so the difference is constant
+  have h₆ : a (m + 2) - a (m + 1) = a (m + 1) - a m := by linarith [h₁ m]
+
+  -- We can compute $a_4$ using the difference
+  have h₇ : a 4 = 7 * x - 29 := by
+    have : a 4 - a 3 = a 3 - a 2 := h₆
+    linarith
+
+  -- We can compute $x$ from the condition that $a_4$ is on the line
+  have h₈ : ∃ m, a m = 0 := by
+    by_contra! h
+    have : ∀ n, a (n + 1) = a n + (a 1 - a 0) := by
+      intro n
+      have : a (n + 1) - a n = a 1 - a 0 := by
+        rw [h₆, Nat.sub_add_comm]
+        linarith
+      linarith
+    have : ∀ n, a n = a 0 + n * (a 1 - a 0) := by
+      intro n
+      induction n with
+      | zero => exact Eq.symm (this 0)
+      | succ n ih =>
+        rw [Nat.add_sub_assoc]
+        simp [this n, ih]
+    specialize this 4
+    linarith
+
+  obtain ⟨i, hi⟩ := h₈
+  have : a i = a 1 + (i - 1) * (a 2 - a 1) := by
+    specialize h₆ i
+    rw [← Nat.sub_add_comm (i - 1)] at h₆
+    linarith
+  rw [h₂, h₃] at this
+  have hx : x = 802 / 3 := by linarith
+
+  -- Find $n$ such that $a_n = 2009$
+  by_cases h : n > 1
+ . have : a n = a 1 + (n - 1) * (a 2 - a 1) := by
+      specialize h₆ n
+      rw [← Nat.sub_add_comm (n - 1)] at h₆
+      linarith
+    rw [h₂, h₃, hx] at this
+    have : (n : ℝ) = 502 := by linarith
+    norm_cast at this
+ . simp at h
+    interval_cases n <;> simp [h₂, h₃, hx] at h₅ <;> linarith
+```

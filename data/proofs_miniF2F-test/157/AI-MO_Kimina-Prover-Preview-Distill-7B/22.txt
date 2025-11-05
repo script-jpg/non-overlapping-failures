@@ -1,0 +1,194 @@
+-- Prove that $S$ is a subset of $\{ \frac{\pi}{4}, \frac{3\pi}{4} \}$.
+  have h₁ : S ⊆ { Real.pi / 4, Real.pi - Real.pi / 4 } := by
+    intro x hx
+    specialize h₀ x
+    rw [h₀] at hx
+    rcases hx with ⟨hx, xlepi, heq⟩
+
+    -- Simplify the equation $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$.
+    have heq : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by
+      exact heq
+
+    -- Rewrite the equation using the co-function identity.
+    rw [← Real.cos_pi_div_two_sub,
+      ← Real.sin_pi_div_two_sub,
+      Real.sin_pi_div_two, Real.cos_pi_div_two] at heq
+
+    -- Simplify the equation to $\sin(\frac{\pi}{2} \cos x) = \sin(\frac{\pi}{2} + \frac{\pi}{2} \sin x)$.
+    replace heq : Real.sin (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 + Real.pi / 2 * Real.sin x) := by
+      linarith
+
+    -- Since $\sin x = y \Leftrightarrow x = \arcsin y$, we have $\frac{\pi}2 \cos x = \frac{\pi}2 + \frac{\pi}2 \sin x + 2\pi k$ or $\frac{\pi}2 \cos x = \pi - (\frac{\pi}2 + \frac{\pi}2 \sin x) + 2\pi k$.
+    rw [← Real.sin_eq_sin_iff] at heq
+    rcases heq with ⟨k, hk | hk⟩ | hk
+
+    -- The first case is impossible.
+    · have hk : 2 * k = 1 := by
+        have : 2 * k = 0 := by linarith
+        omega
+      omega
+
+    -- The second case implies $\cos x = -\sin x$, or $\tan x = -1$.
+    · have hk : Real.cos x = - Real.sin x := by
+        linarith
+      rw [← Real.tan_eq_sin_div_cos, Real.tan_eq_neg_one_iff] at hk
+      rcases hk with ⟨k, hk⟩
+      right
+      -- We have $\tan x = -1$ if and only if $x = \frac{3\pi}{4} + 2\pi k$.
+      have hk : k = 0 := by
+        have : 2 * k = 0 := by
+          rw [show Real.pi / 2 * (-Real.sin x) = Real.pi / 2 * Real.sin (Real.pi - x) by rw [Real.sin_pi_sub]; ring]
+          rw [← Real.tan_eq_sin_div_cos, Real.tan_eq_neg_one_iff] at hk
+          rcases hk with ⟨k', hk'⟩
+          rw [← hk'] at hk
+          ring_nf at hk
+          rw [← Real.arctan_tan] at hk
+          have : Real.arctan (-1) = -Real.pi / 4 := by
+            have : Real.arctan (-1) = - Real.arctan 1 := by
+              rw [show (-1 : ℝ) = -1 * 1 by norm_num]
+              rw [Real.arctan_mul]
+              simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_mul, one_mul]
+            rw [this, Real.arctan_one]
+          rw [this] at hk
+          have : Real.pi / 2 * (-Real.sin x) = Real.pi / 2 * Real.sin (Real.pi - x) := by
+            rw [show Real.pi / 2 * (-Real.sin x) = Real.pi / 2 * Real.sin (Real.pi - x) by rw [Real.sin_pi_sub]; ring]
+          rw [this] at hk
+          rw [← Real.arctan_tan] at hk
+          have : Real.arctan (Real.pi / 2 * Real.sin (Real.pi - x)) = Real.pi / 4 := by
+            rw [Real.arctan_eq_of_eq_tan]
+            rw [show Real.pi / 2 * Real.sin (Real.pi - x) = Real.tan (Real.pi / 4) by rw [Real.tan_pi_div_four]]
+          rw [this] at hk
+        omega
+      rw [hk] at xlepi
+      replace xlepi : x = Real.pi - Real.pi / 4 := by
+        linarith
+      rw [xlepi]
+      simp only [Set.mem_insert_iff, Set.mem_singleton_iff, or_true, true_and]
+
+    -- The third case implies $\frac{\pi}2 \cos x = \frac{\pi}2 - (\frac{\pi}2 + \frac{\pi}2 \sin x)$, or $\cos x = 1 + \sin x$.
+    · have hk : Real.cos x = 1 + Real.sin x := by
+        linarith
+      rw [← Real.cos_sq_add_sin_sq] at hk
+      ring_nf at hk
+      rw [show Real.pi * Real.pi = Real.pi ^ 2 by ring] at hk
+      have hk : (Real.cos x + Real.sin x + 1) * (Real.cos x - Real.sin x - 1) = 0 := by
+        linarith
+      rw [mul_eq_zero] at hk
+      rcases hk with hk | hk
+
+      -- Suppose $\cos x + \sin x + 1 = 0$.
+      · have hcos : -1 ≤ Real.cos x ∧ Real.cos x ≤ 1 := by
+          exact Real.cos_mem_Icc x
+        have hsin : -1 ≤ Real.sin x ∧ Real.sin x ≤ 1 := by
+          exact Real.sin_mem_Icc x
+        have hsin : Real.sin x = -1 := by
+          linarith
+        have hcos : Real.cos x = 0 := by
+          linarith
+        have : Real.cos x ^ 2 + Real.sin x ^ 2 = 1 := by
+          exact Real.cos_sq_add_sin_sq x
+        rw [hcos, hsin] at this
+        norm_num at this
+
+      -- Suppose $\cos x - \sin x - 1 = 0$.
+      · have hk : Real.cos x = 1 := by
+          linarith
+        rw [Real.cos_eq_one_iff] at hk
+        rcases hk with ⟨k, hk⟩
+        rw [hk] at xlepi
+        replace xlepi : x = 0 ∨ x = Real.pi := by
+          omega
+        rcases xlepi with xlepi | xlepi
+        · rw [xlepi]
+          simp only [Set.mem_insert_iff, Set.mem_singleton_iff, or_true, true_and]
+        · rw [xlepi]
+          simp only [Set.mem_insert_iff, Set.mem_singleton_iff, or_false, false_and]
+
+  -- Prove that $\{ \frac{\pi}{4}, \frac{3\pi}{4} \} \subseteq S$.
+  have h₂ : { Real.pi / 4, Real.pi - Real.pi / 4 } ⊆ S := by
+    intro x hx
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hx
+    rcases hx with hx | hx
+
+    -- $\frac{\pi}{4} \in S$ since $\sin(\frac{\pi}{2} \cos \frac{\pi}{4}) = \sin(\frac{\pi}{2} + \frac{\pi}{2} \sin \frac{\pi}{4})$.
+    · rw [hx]
+      simp only [Set.mem_setOf_eq, Finset.mem_singleton]
+      constructor
+      · have : 0 ≤ Real.pi / 4 := by
+          linarith [Real.pi_pos]
+        exact this
+      · have : Real.pi / 4 ≤ Real.pi := by
+          linarith [Real.pi_pos]
+        exact this
+      · have : Real.sin (Real.pi / 2 * Real.cos (Real.pi / 4)) = Real.cos (Real.pi / 2 * Real.sin (Real.pi / 4)) := by
+          have : Real.cos (Real.pi / 4) = Real.sqrt 2 / 2 := by
+            exact Real.cos_pi_div_four
+          rw [this]
+          have : Real.sin (Real.pi / 4) = Real.sqrt 2 / 2 := by
+            exact Real.sin_pi_div_four
+          rw [this]
+          ring_nf
+          rw [show √2 ^ 3 = √2 * √2 ^ 2 by ring]
+          rw [show √2 ^ 2 = 2 by norm_num]
+          ring_nf
+        exact this
+
+    -- $\frac{3\pi}{4} \in S$ since $\sin(\frac{\pi}{2} \cos \frac{3\pi}{4}) = \sin(\frac{\pi}{2} + \frac{\pi}{2} \sin \frac{3\pi}{4})$.
+    · rw [hx]
+      simp only [Set.mem_setOf_eq, Finset.mem_singleton]
+      constructor
+      · have : 0 ≤ Real.pi - Real.pi / 4 := by
+          linarith [Real.pi_pos]
+        exact this
+      · have : Real.pi - Real.pi / 4 ≤ Real.pi := by
+          linarith [Real.pi_pos]
+        exact this
+      · rw [sub_eq_add_neg]
+        have : Real.cos (Real.pi - Real.pi / 4) = - Real.cos (Real.pi / 4) := by
+          exact Real.cos_pi_sub (Real.pi / 4)
+        rw [this]
+        have : Real.sin (Real.pi - Real.pi / 4) = Real.sin (Real.pi / 4) := by
+          exact Real.sin_pi_sub (Real.pi / 4)
+        rw [this]
+        have : Real.cos (Real.pi / 4) = Real.sqrt 2 / 2 := by
+          exact Real.cos_pi_div_four
+        rw [this]
+        have : Real.sin (Real.pi / 4) = Real.sqrt 2 / 2 := by
+          exact Real.sin_pi_div_four
+        rw [this]
+        ring_nf
+        rw [show √2 ^ 3 = √2 * √2 ^ 2 by ring]
+        rw [show √2 ^ 2 = 2 by norm_num]
+        ring_nf
+
+  -- Combine the two inclusions to get $S = \{ \frac{\pi}{4}, \frac{3\pi}{4} \}$.
+  have h₃ : S = { Real.pi / 4, Real.pi - Real.pi / 4 } := by
+    ext x
+    simp only [Set.mem_setOf_eq, Finset.mem_insert, Finset.mem_singleton]
+    constructor
+    · intro hx
+      have hx: x ∈ S := by
+        simp only [Set.mem_setOf_eq] at hx
+        exact hx
+      have hx: x ∈ { Real.pi / 4, Real.pi - Real.pi / 4 } := by
+        exact h₁ hx
+      simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hx
+      rcases hx with hx | hx
+      · rw [hx]
+      · rw [hx]
+    · intro hx
+      have hx: x ∈ { Real.pi / 4, Real.pi - Real.pi / 4 } := by
+        simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hx
+        rcases hx with hx | hx
+        · rw [hx]
+        · rw [hx]
+      have hx: x ∈ S := by
+        exact h₂ hx
+      simp only [Set.mem_setOf_eq] at hx
+      exact hx
+
+  -- Now we can compute the cardinality of $S$.
+  rw [h₃]
+  rw [Set.encard_pair]
+  linarith [Real.pi_pos]
+```

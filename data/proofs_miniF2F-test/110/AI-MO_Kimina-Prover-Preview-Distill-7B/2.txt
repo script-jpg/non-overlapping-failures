@@ -1,0 +1,45 @@
+obtain ⟨h₀a, h₀b⟩ := h₀
+
+  -- The arithmetic mean is greater than the geometric mean.
+  have hmean : (a + b) / 2 ≥ Real.sqrt (a * b) := by
+    rw [ge_iff_le, <-sq_le_sq₀, mul_pow, Real.sq_sqrt, mul_assoc, <-sq_sub_sq]
+
+    have hsq : 0 ≤ (a - b) ^ 2 := sq_nonneg _
+
+    -- Since $b \leq a$, we have $a - b \geq 0$.
+    have hab : 0 ≤ a - b := sub_nonneg_of_le h₁
+
+    -- Since $a$ and $b$ are positive, $ab > 0$.
+    have habprod : 0 < a * b := mul_pos h₀a h₀b
+
+    -- We get the result because $a - b \geq 0$ and $ab > 0$.
+    exact div_le_div_of_nonneg_left hsq (by positivity)
+
+  -- The difference between the arithmetic and geometric means is equal to $\frac{(a-b)^2}{2(a+b)}$.
+  have hdifference : (a + b) / 2 - Real.sqrt (a * b) = (a - b) ^ 2 / (2 * (a + b)) := by
+    rw [sub_eq_iff_eq_add, <-Real.sqrt_sq, <-sq_sub_sq, div_eq_mul_inv]
+
+    -- Since $a$ and $b$ are positive, $ab > 0$.
+    have habprod : 0 < a * b := mul_pos h₀a h₀b
+
+    -- The equality holds because $a + b > 0$ and $\sqrt{ab} > 0$.
+    field_simp
+    qify
+    rw [inv_eq_one_div, <-mul_div_assoc, div_mul_cancel₀ _ (by positivity), one_mul]
+    ring
+    exact mul_pos h₀a h₀b
+
+  -- Substituting the difference into the inequality, we get $\frac{(a-b)^2}{2(a+b)} \leq \frac{(a-b)^2}{8b}$.
+  rw [hdifference]
+
+  -- Since $(a-b)^2 \geq 0$, it is enough to show that $\frac{1}{2(a+b)} \leq \frac{1}{8b}$.
+  suffices 1 / (2 * (a + b)) ≤ 1 / (8 * b) by
+    exact (mul_le_mul_iff_of_pos_left hsq).mpr this
+
+  -- It holds because $0 < 2(a+b) < 8b$.
+  qify
+  rw [inv_le_inv₀, mul_assoc, mul_assoc, mul_le_mul_left (by positivity)]
+  norm_num
+  rw [mul_lt_mul_iff_of_pos_right (by positivity)]
+  linarith
+```

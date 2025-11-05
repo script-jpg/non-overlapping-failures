@@ -1,0 +1,106 @@
+-- We first prove that the maximum value is attained when $t = 2$.
+  have maximized_at_2 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 := by
+
+    -- We start by moving all the terms to the left hand side so that we can cancel some terms.
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+
+    -- We multiply both sides by $4^t$.
+    have both_sides_pos : 0 < (4 : ℝ) ^ t ∧ 0 < (4 : ℝ) ^ (2 : ℝ) := by
+      constructor
+      · exact ne_of_gt (pow_pos (by norm_num) t)
+      · exact ne_of_gt (pow_pos (by norm_num) 2)
+
+    -- Now, the goal reads `(2 ^ t - 3 * t) * t / 4 ^ t * (4 ^ t) ≤ (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 * (4 ^ t)`.
+    -- The left-hand side simplifies to `(2 ^ t - 3 * t) * t`, and the right-hand side simplifies to `2 * (2 ^ 2 - 3 * 2)`.
+    simp only [mul_div_cancel₀ _ (by positivity), mul_comm _ (4 ^ 2), ← pow_add, mul_assoc]
+    -- The goal becomes: `(2 ^ t - 3 * t) * t ≤ 2 * (2 ^ 2 - 3 * 2)`
+    suffices (2 ^ t - 3 * t) * t - 2 * (2 ^ 2 - 3 * 2) ≤ 0 by linarith
+
+  . -- We do this by subtracting a series of terms.
+        suffices (2 ^ t - 3 * t) * t - 2 * (2 ^ 2 - 3 * 2) ≤ 0 by linarith
+
+          -- The first subtraction shows that `2 ^ t * t - 2 * 2 ^ t` is non-positive.
+          have first_sub : (2 ^ t - 3 * t) * t - 2 * (2 ^ 2 - 3 * 2) ≤ 2 * (2 ^ t - 2 ^ 2) - 3 * t * t - 2 * (2 ^ 2 - 3 * 2) := by
+            have first : 0 ≤ 2 * (3 * t - 2 ^ t) := by positivity
+            linarith
+
+          -- The second subtraction shows that `2 ^ t * 2 - 2 * 3 * t` is non-positive.
+          have second_sub : 2 * (2 ^ t - 2 ^ 2) - 3 * t * t - 2 * (2 ^ 2 - 3 * 2) ≤ 3 * (2 ^ t - 2 * 2) - 3 * t * t := by
+            have second : 0 ≤ 3 * (2 ^ t - 2 ^ 2) := by positivity
+            linarith
+
+          -- The third subtraction shows that `2 ^ t * 2 - 2 * 2 * 2` is non-positive.
+          have third_sub : 3 * (2 ^ t - 2 ^ 2) - 3 * t * t ≤ 0 := by
+            have third : 0 ≤ (2 ^ t - 2 ^ 2) := by
+              calc
+                0 = (1 : ℝ) ^ (2 : ℝ) := by norm_num
+                _ ≤ (1 : ℝ) ^ t := by rw [Real.rpow_le_rpow_left]; norm_num; linarith
+                _ = (2 ^ t - 2 ^ 2) + 1 := by ring
+            positivity
+
+          linarith
+
+    -- We are left with proving that `2 * (2 ^ 2 - 2 ^ t) + 3 * t * t ≤ 0`.
+    suffices 2 * (2 ^ 2 - 2 ^ t) + 3 * t * t ≤ 0 by linarith
+
+    -- We show that it suffices to prove that $0 \leq \frac{2^{-t}}{4} + \frac{t^2}{4} + \frac{3 t}{4}$.
+    suffices 0 ≤ (2 ^ (-t) / 4) + (t ^ 2 / 4) + (3 * t / 4) by
+      -- Multiply both sides by $2^t$ to get `2 * (2 ^ 2 - 2 ^ t) + 3 * t * t ≤ 0$.
+      suffices (2 ^ (-t) / 4) + (t ^ 2 / 4) + (3 * t / 4) ≤ 0 → 2 * (2 ^ 2 - 2 ^ t) + 3 * t * t ≤ 0 by contrapose!; intro h; exact this h
+      intro h
+      calc
+        2 * (2 ^ 2 - 2 ^ t) + 3 * t * t = 2 * (2 ^ (2 - t) - 1) * 2 ^ t := by ring
+        _ = 2 * (2 ^ (2 - t) - 1) * (4 ^ t / 4 ^ t) := by congr; field_simp
+        _ = 2 * (2 ^ (2 - t) - 1) * (2 ^ (-t) / 4 ^ t) * 4 ^ t := by ring
+        _ ≤ 2 * (0 - 1) * (2 ^ (-t) / 4 ^ t) * 4 ^ t := by gcongr
+        _ = - 2 * (2 ^ (-t) / 4 ^ t) * 4 ^ t := by ring
+        _ = - 2 * (2 ^ (-t) * 4 ^ t) := by rw [mul_div_cancel₀ _ (by positivity)]
+        _ = - 2 * 1 := by rw [← Real.rpow_add (by norm_num)]; norm_num
+        _ = -2 := by ring
+        _ ≤ 0 := by positivity
+
+    -- Now, we need to show that $0 \leq \frac{2^{-t}}{4} + \frac{t^2}{4} + \frac{3 t}{4}$.
+    rw [div_le_iff₀ (by positivity), ← sub_nonneg]
+    calc
+
+      -- The terms $\frac{2^{-t}}{4} + \frac{3t}{4}$ are always non-negative.
+      have always_nonneg : (2 ^ (-t) / 4) + (3 * t / 4) ≥ 0 := by
+        calc
+          (2 ^ (-t) / 4) + (3 * t / 4) = \frac{3 t + 2 ^ (-t)}{4} := by ring
+          _ ≥ 0 := by positivity
+
+      -- We show that $\frac{t^2}{4} + \frac{3 t + 2^{-t}}{4} ≥ 0$ by showing that $t^2 + 3t + 2^{-t} ≥ 0$.
+      suffices (t ^ 2 + 3 * t + (2 : ℝ) ^ (-t)) / 4 ≥ 0 by linarith
+
+      -- We do this by showing that $t^2 + 3 t + 2^{-t} ≥ 0$.
+      suffices t ^ 2 + 3 * t + (2 : ℝ) ^ (-t) ≥ 0 by linarith
+
+      -- We first consider the case when $t ≥ 0$.
+      by_cases h : t ≥ 0
+      · -- We show that $t^2 + 3t ≥ 0$ when $t ≥ 0$.
+        have t_pos: t ^ 2 + 3 * t ≥ 0 := by
+          calc
+            t ^ 2 + 3 * t = t * (t + 3) := by ring
+            _ ≥ 0 := by positivity
+
+        calc
+          t ^ 2 + 3 * t + (2 : ℝ) ^ (-t) ≥ t ^ 2 + 3 * t + 0 := by gcongr; simp
+          _ ≥ 0 := by linarith
+
+      -- Now, we consider the case when $t < 0$.
+      · -- We first show that $t ^ 2 + 3 * t + (2 : ℝ) ^ (-t) ≥ 0$.
+        have t_neg: t ^ 2 + 3 * t + (2 : ℝ) ^ (-t) ≥ 0 := by
+          calc
+            t ^ 2 + 3 * t + (2 : ℝ) ^ (-t) ≥ t ^ 2 + 3 * t + 1 := by gcongr; simp
+            _ = (t + 1) ^ 2 + t + 1 := by ring
+            _ ≥ 0 := by positivity
+
+        calc
+          t ^ 2 + 3 * t + (2 : ℝ) ^ (-t) ≥ t ^ 2 + 3 * t + 1 := by gcongr; simp
+          _ ≥ 0 := by linarith
+
+  -- We now prove that the maximum value is indeed $\frac{1}{12}$. We do this by substituting $t = 2$.
+  rw [div_le_div_iff₀ (by positivity) (by positivity), one_mul]
+  suffices (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 = 1 / 12 by linarith
+  norm_num
+```

@@ -1,0 +1,71 @@
+have h₃ : x > 0 := by
+    by_contra h
+    have : x ≤ 0 := by linarith
+    have : Real.log x ≤ 0 := Real.log_nonpos (by linarith) (by linarith)
+    have : Real.log 16 > 0 := Real.log_pos (by norm_num)
+    have : Real.log y ≠ 0 := by
+      intro h'
+      simp_all
+      <;> aesop
+    have : Real.log x / Real.log 2 = Real.log 16 / Real.log y := h₁
+    field_simp at this
+    nlinarith [Real.log_pos (by norm_num : (1 : ℝ) < 2), Real.log_pos (by norm_num : (1 : ℝ) < 16)]
+  
+  have h₄ : y > 0 := by
+    by_contra h
+    have : y ≤ 0 := by linarith
+    have : x * y = 64 := h₂
+    have : x * y ≤ 0 := by nlinarith
+    nlinarith
+  
+  have h₅ : Real.log 16 = 4 * Real.log 2 := by
+    rw [show (16 : ℝ) = 2 ^ 4 by norm_num]
+    simp [Real.log_rpow]
+    <;> ring
+    <;> norm_num
+    <;> linarith
+  
+  have h₆ : Real.log x = 4 * Real.log 2 * (Real.log y) / Real.log y := by
+    have h₆ : Real.log y ≠ 0 := by
+      intro h₆
+      simp_all [h₆]
+      <;> norm_num at *
+      <;> nlinarith
+    field_simp [h₆] at h₁ h₅ ⊢
+    <;> ring_nf at * <;> nlinarith
+  
+  have h₇ : x = 16 := by
+    have h₇ : Real.log x = 4 * Real.log 2 := by
+      have h₇ : Real.log x = 4 * Real.log 2 * (Real.log y) / Real.log y := h₆
+      have h₈ : Real.log y ≠ 0 := by
+        intro h₈
+        simp_all
+        <;> aesop
+      field_simp [h₈] at h₇ ⊢
+      <;> nlinarith
+    have h₈ : x = 16 := by
+      have h₈ : Real.log x = Real.log 16 := by
+        rw [h₇]
+        have h₉ : Real.log 16 = 4 * Real.log 2 := h₅
+        rw [h₉]
+        <;> ring
+        <;> field_simp [Real.log_mul, Real.log_rpow] <;> linarith
+      have h₉ : x = 16 := by
+        apply Real.log_injOn_pos (Set.mem_Ioi.mpr h₃) (Set.mem_Ioi.mpr (by positivity))
+        linarith
+      exact h₉
+    exact h₈
+  
+  have h₈ : y = 4 := by
+    have h₈ : x * y = 64 := h₂
+    rw [h₇] at h₈
+    have h₉ : (16 : ℝ) * y = 64 := by linarith
+    have h₁₀ : y = 4 := by
+      apply Eq.symm
+      nlinarith
+    exact h₁₀
+  
+  have h₉ : (Real.log (x / y) / Real.log 2) ^ 2 = 20 := by
+    have h₉ : x = 16 := h₇
+    have h₁₀ : y = 4 := h₈
+    have h₁₁ : Real.log (x / y) = Real.log (16 / 4) := by rw [h₉, h₁₀] <

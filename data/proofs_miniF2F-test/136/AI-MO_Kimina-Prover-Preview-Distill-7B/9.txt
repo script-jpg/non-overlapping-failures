@@ -1,0 +1,69 @@
+-- We first prove that the three roots are all distinct.
+  have h₂ : ∀ x ∈ ({Real.cos (2 * Real.pi / 7), Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} : Set ℝ),
+    f x = 0 := by
+    intro x hx
+    rw [h₁]
+    simp at hx
+    rcases hx with (rfl | rfl | rfl) <;> simp
+
+  -- Since the three roots are distinct, the cubic polynomial has three distinct roots, which implies that it is
+  -- irreducible over $\mathbb{Q}$.
+  have h₃ : Irr reducible over ℚ (C 1 + C a * X + C b * X ^ 2 + C c * X ^ 3) := by
+    rw [irreducible_iff_natDegree_eq] <;> try simp
+    rw [Cubic.natDegree_eq_iff leadingCoeff_ne_zero]
+    have : (C 1 + C a * X + C b * X ^ 2 + C c * X ^ 3 : ℚ[X]).leadingCoeff = 1 := by simp
+    rw [this]
+    norm_num
+
+  -- By the factor theorem, if a polynomial of degree $n$ with coefficients in a ring $R$ has a root $r$, then
+  -- it is divisible by $X - r$ over $R$.
+  have h₄ :=
+    Multiset.map (fun r => (X - C r) : Multiset (α := ℝ) ℝ) (f ⁻¹' {0}) ⊆
+    Multiset.map (fun r => (X - C r) : Multiset (α := ℝ) ℝ) ({Real.cos (2 * Real.pi / 7),
+      Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} : Set ℝ) := by
+    rw [Multiset.map_image]
+    apply Multiset.subset_congr
+    intro r hr
+    rw [← h₀] at h₂
+    have h₃ : r ∈ f ⁻¹' {0} := by simp at hr; exact hr
+    symm at h₃
+    rw [← h₁] at h₃
+    simp at h₃
+    rcases h₃ with (rfl | rfl | rfl) <;> assumption
+
+  -- Since the polynomial is cubic, it has three roots ( possibly non-distinct), so it must be equal to
+  -- the product of three linear polynomials.
+  have h₅ :
+    C 1 + C a * X + C b * X ^ 2 + C c * X ^ 3 =
+      C (1 - a + b - c) * (X - C (Real.cos (2 * Real.pi / 7))) *
+      (X - C (Real.cos (4 * Real.pi / 7))) * (X - C (Real.cos (6 * Real.pi / 7))) := by
+    rw [X_sub_C_inj]
+    apply (Multiset.map_inj _ _).mp
+    simp [Multiset.map_image]
+    apply Finset.prod_comp
+    rw [← Finset.prod_multiset_prod_iff]
+    apply Multiset.eq_congr
+    intro r hr
+    rw [Multiset.mem_toFinset] at hr
+    simp at hr
+    rcases hr with (rfl | rfl | rfl) <;> assumption
+    exact h₃
+
+  -- By comparing the constant terms, we get $abc = \frac{1}{{1 - a + b - c}}$.
+  have h₆ : a * b * c = 1 / (1 - a + b - c) := by
+    have := congr_arg (·.constant) h₅
+    simp at this
+    rw [this]
+    ring
+
+  -- By comparing the coefficient of $x^3$, we get $1 - a + b - c = 1$, so $abc = 1$.
+  have h₇ : 1 - a + b - c = 1 := by
+    have := congr_arg (·.coeff 3) h₅
+    simp at this
+    linarith
+
+  rw [h₇] at h₆
+  simp at h₆
+  linarith
+
+```

@@ -1,0 +1,181 @@
+have h₁ : (∑ k in S, k) = 2016 ↔ (∑ k in S, k) = 2016 := rfl
+
+  have h₂ :
+      (∑ k in S, k) = 2016 ↔
+        2016 ∈ S ∧ S.card \ 2016 = 1 ∧
+        (∀ n : ℕ, n ∈ S → n ≠ 2016 → n < 2016) := by
+    apply Iff.intro
+    · intro h
+      have : 2016 ∈ S := by
+        apply Finset.mem_of_ne_card
+        simp [h]
+      constructor
+      · exact this
+      · rw [Finset.card_eq_two_add_one_iff]
+        constructor
+        · apply Finset.disjoint_iff_ne.mpr
+          apply Finset.disjoint_iff_ne.mpr
+          exact h
+        · intro a ha b hb hab
+          apply Finset.disjoint_iff_ne.mpr
+          simp only [Finset.mem_toFinset, Finset.mem_singleton] at ha hb
+          rcases ha with ha | ha <;> rcases hb with hb | hb <;> rw [ha, hb] at hab <;> norm_num at hab
+      · intro n hn
+        have : n ∈ S := by
+          apply Finset.mem_of_ne_card
+          simp [h]
+        exact fun a ↦ this a
+    · intro ⟨h1, h2, h3⟩
+      have : S 2016 = 1 := by
+        apply Finset.card_eq_one_of_mem h1
+      have : S.toFinset = S.erase 2016 ∪ {2016} := by
+        apply Finset.coe_ite_eq
+        simp
+      rw [this, Finset.sum_union]
+      · rw [Finset.sum_erase_eq_sub, h2]
+        norm_num
+      · simp
+        intro a ha
+        rcases ha with ha | ha
+        · rcases ha with ha | ha
+          · rw [ha]
+            contradiction
+          · rw [ha]
+            simp at h3
+            exact h3
+        · simp
+          exact h3 a ha
+      · rw [Finset.disjoint_iff_ne.mpr, Finset.disjoint_iff_ne.mpr]
+        apply Finset.disjoint_iff_ne.mpr
+        rw [Finset.mem_toFinset, Finset.mem_singleton]
+        intro a ha b hb hab
+        rcases ha with ha | ha <;> rcases hb with hb | hb
+        · rw [ha, hb] at hab
+          norm_num at hab
+        · rw [ha] at hb
+          simp [hab]
+        · rw [hb] at ha
+          simp [hab]
+
+  have h₃ : (∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n) ↔
+    (∃ p, p ∈ Nat.divisors n ∧ p ≠ 1 ∧ p ≠ n ∧ (Nat.divisors p).card = 4) := by
+      apply Iff.intro
+      · intro ⟨m, h1, h2⟩
+        have : m ≠ 1 := by
+          intro ha
+          rw [ha] at h1
+          simp at h1
+        have : m ≠ (m : Nat) := by
+          intro ha
+          rw [ha] at h1
+          simp at h1
+        have h3 : m ≠ n := by
+          intro ha
+          rw [ha] at h2
+          norm_num at h2
+        rw [←Nat.mem_divisors] at h2 ⊢
+        have h4 : n ∈ Nat.divisors m := by
+          simp
+          exact h2
+        have h5 : m ∈ Nat.divisors m := by
+          simp
+        constructor
+        · exact h4
+        · rw [Nat.mem_divisors] at h5
+          obtain ⟨h5, h6⟩ := h5
+          rw [h6] at h1 h4
+          simp [h4] at h1
+          obtain ⟨p, k, hp⟩ := h1
+          rw [hk] at h5
+          simp [h5] at hp
+          exact ⟨p, hp⟩
+        · intro p hp
+          rw [Nat.mem_divisors] at hp
+          obtain ⟨hp1, hp2⟩ := hp
+          rw [hp2]
+          intro q hq
+          rw [Nat.mem_divisors] at hq
+          obtain ⟨hq1, hq2⟩ := hq
+          rw [hq2] at hp1
+          rw [hp1] at hq1
+          norm_num at hq1
+          all_goals {
+            by_contra! h_contra
+            have : p < n := by
+              exact Nat.lt_of_le_of_ne hq1 (\$h_contra)
+            have : p > n := by
+              exact Nat.lt_of_lt_of_le h_contra hp2
+            have : ¬ p < n := by
+              push_neg
+              exact Nat.le_of_dvd (by positivity) hp1
+            have : ¬ p > n := by
+              push_neg
+              exact Nat.le_of_dvd (by positivity) hq1
+            contradiction
+          }
+        · intro p ⟨hp1, hp2, hp3, hp4⟩
+          have : p ≠ n := by
+            intro ha
+            rw [ha] at hp3
+            simp at hp3
+          have : p ∣ n := by
+            rw [hp3]
+            exact Nat.dvd_mul_left (n := p) (m := n - p)
+          rw [Nat.mem_divisors] at this
+          obtain ⟨h1, h2⟩ := this
+          obtain ⟨k, h2⟩ := h2
+          rw [←h2, Nat.mul_div_cancel, ←h2, Nat.mul_div_cancel] at hp4
+          simp [h1] at hp4
+          have : (n - p) ∣ n := by
+            rw [h2, Nat.mul_comm, Nat.mul_dvd_mul_iff_left (by positivity)]
+            exact Nat.dvd_mul_right (n := p) (m := n - p)
+          rw [Nat.mem_divisors] at this
+          obtain ⟨h3, h4⟩ := this
+          obtain ⟨k, h4⟩ := h4
+          rw [h2, h4, Nat.mul_div_cancel, h2, h4, Nat.mul_div_cancel] at hp1
+          simp [h3] at hp1
+          rw [hp1, Nat.mul_div_cancel, hp1, Nat.mul_div_cancel] at hp2
+          simp [h4] at hp2
+          refine ⟨p * k,?_⟩
+          rw [hp3]
+          ring
+      · intro ⟨p, hp1, hp2, hp3⟩
+        have : p ≠ 1 := by
+          intro ha
+          rw [ha] at hp2
+          simp at hp2
+        have : p ≠ n := by
+          intro ha
+          rw [ha] at hp2
+          norm_num at hp2
+        use p * (n / p)
+        have : n / p ≠ 1 := by
+          intro ha
+          rw [ha] at hp2
+          simp at hp2
+        rw [Nat.div_mul_cancel this]
+        have : n / p ≠ n := by
+          intro ha
+          rw [ha] at hp2
+          norm_num at hp2
+        rw [Nat.div_ne_self this]
+        rw [Nat.mem_divisors] at hp1
+        obtain ⟨hp11, hp12⟩ := hp1
+        rw [Nat.mem_divisors] at hp3
+        obtain ⟨hp31, hp32⟩ := hp3
+        simp [hp32] at hp11
+        simp [hp11] at hp32
+        rw [hp31, hp12]
+        ring
+        exact hp2
+        exact hp31
+
+  simp_rw [h₃, h₂, h₀]
+  simp
+  calc
+    (∑ k ∈ Finset.Icc 2010 2019, id k) = id 2016 + ∑ k ∈ Finset.Icc 2010 2019, id k := by rfl
+    _ = 2016 + ∑ k ∈ Finset.Icc 2010 2019, id k := by rfl
+    _ = 2016 + 4 := by apply Finset.sum_congr rfl; rfl
+    _ = 2016 := by norm_num
+
+```

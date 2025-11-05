@@ -1,0 +1,107 @@
+-- We prove that for any two integers $x$ and $y$, $x^5 \ne y^2 + 4$.
+  -- First, consider the case when $x = 0$.
+  by_cases hx : x = 0
+  · -- If $x = 0$, then $x^5 = 0$, so $y^2 + 4 = 0$, which implies $y^2 = -4$.
+    rw [hx]
+    have : y ^ 2 + 4 = 0 := by linarith
+    have : y ^ 2 = -4 := by linarith
+    -- This is impossible because $y^2 \ge 0$ for any integer $y$.
+    have : y ^ 2 ≥ 0 := sq_nonneg y
+    linarith
+
+  -- Now, consider the case when $x \ne 0$.
+  · -- We will prove that $x^5 \ne y^2 + 4$ by considering the equation modulo 11.
+    have h1 : x ^ 5 % 11 = 0 ∨ x ^ 5 % 11 = 1 ∨ x ^ 5 % 11 = 10 := by
+      -- By Fermat's Little Theorem, $x^{10} \equiv 1 \pmod{11}$ for $x \not\equiv 0 \pmod{11}$.
+      have h1 : x ^ 10 % 11 = 1 := by
+        have h1 : x ^ 10 = (x ^ 5) ^ 2 := by ring
+        rw [h1]
+        have h2 : (x ^ 5 % 11) ^ 2 % 11 = 1 := by
+          have : x ^ 10 % 11 = 1 := by
+            apply Int.ModEq.pow
+            exact Int.ModEq.pow_card_sub_one_eq_one (by norm_num) hx
+          rw [← this]
+          omega
+        have h3 : (x ^ 5 % 11) ^ 2 % 11 - 1 = 0 := by omega
+        have h4 : (x ^ 5 % 11 - 1) * (x ^ 5 % 11 + 1) = 0 := by
+          ring_nf
+          rw [← h3]
+          ring
+        have h5 : x ^ 5 % 11 - 1 = 0 ∨ x ^ 5 % 11 + 1 = 0 := by
+          apply Int.mul_eq_zero.mp h4
+        rcases h5 with (h5 | h5)
+        · left; linarith
+        · right; omega
+      -- Now, we need to determine the possible values of $x^5 \bmod 11$.
+      -- Since $x^{10} \equiv 1 \pmod{11}$, the order of $x$ modulo 11 is 10.
+      -- Therefore, the order of $x^5$ modulo 11 is 2, so $(x^5)^2 \equiv 1 \pmod{11}$.
+      -- This means $x^5 \equiv \pm 1 \pmod{11}$.
+      have h2 : (x ^ 5 % 11) ^ 2 % 11 = 1 := by
+        have : (x ^ 5 % 11) ^ 2 % 11 = (x ^ 10 % 11) := by
+          rw [show x ^ 10 = (x ^ 5) ^ 2 by ring]
+          apply Int.ModEq.pow
+          exact Int.ModEq.refl _
+        omega
+      -- Now we show that $x^5 \bmod 11$ can only be 0, 1, or 10.
+      have h3 : x ^ 5 % 11 = 0 ∨ x ^ 5 % 11 = 1 ∨ x ^ 5 % 11 = 10 := by
+        have : x ^ 5 % 11 = 0 ∨ x ^ 5 % 11 = 1 ∨ x ^ 5 % 11 = 2 ∨ x ^ 5 % 11 = 3 ∨ x ^ 5 % 11 = 4 ∨ x ^ 5 % 11 = 5 ∨ x ^ 5 % 11 = 6 ∨ x ^ 5 % 11 = 7 ∨ x ^ 5 % 11 = 8 ∨ x ^ 5 % 11 = 9 ∨ x ^ 5 % 11 = 10 := by
+          omega
+        rcases this with (h5 | h5 | h5 | h5 | h5 | h5 | h5 | h5 | h5 | h5 | h5)
+        · exact Or.inl h5
+        · exact Or.inr (Or.inl h5)
+        · exfalso; omega
+        · exfalso; omega
+        · exfalso; omega
+        · exfalso; omega
+        · exfalso; omega
+        · exfalso; omega
+        · exact Or.inr (Or.inr h5)
+        · exact Or.inr (Or.inr h5)
+      exact h3
+    -- Now, consider $y^2 + 4 \bmod 11$.
+    have h2 : (y ^ 2 + 4) % 11 = 5 ∨ (y ^ 2 + 4) % 11 = 6 := by
+      -- We determine the possible values of $y^2 \bmod 11$.
+      have h2 : y ^ 2 % 11 = 0 ∨ y ^ 2 % 11 = 1 ∨ y ^ 2 % 11 = 3 ∨ y ^ 2 % 11 = 4 ∨ y ^ 2 % 11 = 5 ∨ y ^ 2 % 11 = 9 := by
+        have h2 : y % 11 = 0 ∨ y % 11 = 1 ∨ y % 11 = 2 ∨ y % 11 = 3 ∨ y % 11 = 4 ∨ y % 11 = 5 ∨ y % 11 = 6 ∨ y % 11 = 7 ∨ y % 11 = 8 ∨ y % 11 = 9 ∨ y % 11 = 10 := by
+          omega
+        rcases h2 with (h2 | h2 | h2 | h2 | h2 | h2 | h2 | h2 | h2 | h2 | h2)
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+        · rw [Int.add_emod, Int.mul_emod]
+          norm_num [h2]
+      -- Now, we can determine the possible values of $(y^2 + 4) \bmod 11$.
+      have h3 : (y ^ 2 + 4) % 11 = 4 ∨ (y ^ 2 + 4) % 11 = 5 ∨ (y ^ 2 + 4) % 11 = 7 ∨ (y ^ 2 + 4) % 11 = 9 ∨ (y ^ 2 + 4) % 11 = 10 := by
+        rcases h2 with (h2 | h2 | h2 | h2 | h2 | h2)
+        · omega
+        · exact Or.inl h2
+        · omega
+        · omega
+        · exact Or.inr (Or.inl h2)
+        · exact Or.inr (Or.inr h2)
+      rcases h3 with (h3 | h3 | h3 | h3 | h3)
+      · omega
+      · exact Or.inl h3
+      · omega
+      · omega
+      · exact Or.inr (Or.inl h3)
+    -- Since $x^5 \bmod 11 \in \{0, 1, 10\}$ and $(y^2 + 4) \bmod 11 \in \{4, 5, 7, 9, 10\}$, they cannot be equal.
+    omega
+```

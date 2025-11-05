@@ -1,0 +1,101 @@
+-- A lemma that later use several times: if a < b, then (a + √b) / 2 is not a square root of an integer.
+  have hsqrt {a b : ℕ} (hab : a < b) : ¬∃ k : ℕ, √((a + √b) / 2) = k := by
+    intro ⟨k, hk⟩
+    have hlt : (√((a + √b) / 2)) ^ 2 < (√((a + √b) / 2) + 1) ^ 2 := by
+      rw [pow_two, pow_two]
+      apply Nat.lt_succ
+      apply lt_trans
+      · simp [hab]
+      · apply Real.sqrt_lt_sqrt
+        · simp
+        · simp
+    have hgt : (k + 1) ^ 2 > k ^ 2 := Nat.lt_pow_succ_iff.mpr (by simp)
+    have heq : √((a + √b) / 2) ^ 2 = k ^ 2 := by
+      rw [hk]
+      simp
+    rcases eq_or_ne a b with h | h
+    · simp [h, hk]
+    · have h : ((a + √b) / 2) ≠ (√((a + √b) / 2) ^ 2) := by
+        rw [← heq]
+        apply ne_of_gt
+        apply lt_trans
+        · simp [hab]
+        · apply Real.sqrt_lt_sqrt
+          · simp
+          · simp
+      simp [h]
+
+  -- We first prove that $x = (2 + \sqrt{11}) / 2$.
+  have : x = (2 + √11) / 2 := by
+    -- Cancel the denominator.
+    field_simp at h₂ ⊢
+    -- We have $4x = 2x^2 - 9.$
+    have h₄ : 4 * x = 2 * x ^ 2 - 9 := by
+      linarith only [h₁]
+    -- Substitute $x = (a + \sqrt{b}) / c$ into the equation.
+    rw [h₂] at h₄
+    field_simp at h₄
+    rw [mul_add, mul_div, mul_div_cancel_right₀] at h₄
+    -- Multiply both sides by $2c$.
+    have h₅ : (√11 + 2) * (2 * c) = (2 * c) ^ 2 - 18 := by
+      linarith only [h₄]
+    -- Move the constant part to the right.
+    have h₆ : (√11 + 2) * (2 * c) + 18 = (2 * c) ^ 2 := by
+      linarith only [h₅]
+    -- We get $(2 * c) ^ 2$ is a square.
+    have h7 : ∃ k : ℕ, (2 * c) ^ 2 = k ^ 2 := by
+      use (√11 + 2) * (2 * c) + 18
+      rw [h₆]
+    rcases h7 with ⟨k, hk⟩
+    -- Let $t$ be the square root of $11 + 2 * c ^ 2 + 2 * \sqrt{11 * c ^ 2}$.
+    have h8 : ∃ t : ℕ, t ≥ 2 * c ∧ √(11 + 2 * c ^ 2 + 2 * √(11 * c ^ 2)) = t := by
+      rcases eq_or_ne (2 * c) k with h | h
+      · use k
+        simp [h]
+        rw [hk]
+        simp
+      · use (2 * c) + 1
+        simp [h.1]
+        rw [hk]
+        simp [h.1, h.2]
+        rw [← Nat.sqrt_eq_iff_eq_sq]
+        · ring_nf
+          rw [mul_assoc, ← mul_assoc]
+          simp [h.1, h.2]
+        · linarith only [h.1, h.2]
+    rcases h8 with ⟨t, htn, ht⟩
+    -- $t$ is not a square root of an integer.
+    specialize hsqrt (by linarith only [ht])
+    -- We have $11 + 2c^2 + 2\sqrt{11c^2} = t^2$.
+    have h9 : 11 + 2 * c ^ 2 + 2 * √(11 * c ^ 2) = t ^ 2 := by
+      rw [← ht, h₆]
+    -- Thereby $11$ is a square.
+    have h10 : ∃ s : ℕ, s ^ 2 = 11 := by
+      use √(11 + 2 * c ^ 2 + 2 * √(11 * c ^ 2)) - (2 * c)
+      rw [← h9]
+      ring_nf
+      rw [sub_mul, mul_sub, mul_sub, ← pow_two, mul_assoc, mul_assoc]
+      simp
+      all_goals
+        try linarith
+    rcases h10 with ⟨s, hs⟩
+    -- impossible.
+    specialize hsqrt (by norm_num)
+    simp [hs] at hsqrt
+    tauto
+
+  -- We now compute $a + b + c$.
+  have : (2 : ℝ) = (2 : ℕ) := by
+    simp
+  rw [this, div_eq_div_iff (by simp) (by simp), pow_two] at h₂
+  field_simp at h₂
+  rw [mul_add, mul_one] at h₂
+  -- We get $a = 2$, $b = 11$ and $c = 2$.
+  have : √11 = (Real.sqrt 11) := by
+    simp
+  rw [this] at h₂
+  simp [h₂]  -- Simplifies to true.
+  norm_num
+  -- Conclude that $a + b + c = 26$.
+  linarith only [h₃]
+```

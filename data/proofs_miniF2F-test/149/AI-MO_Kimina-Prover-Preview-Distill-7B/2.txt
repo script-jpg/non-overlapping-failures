@@ -1,0 +1,59 @@
+-- prepare some simple facts for later use
+  have hn : 0 < (n : ℝ) := by simp
+  have hn1 : 0 < (n : ℝ) + 1 := by simp
+  have hn2 : 0 < (n : ℝ) - 1 := by
+    by_contra h
+    simp at h
+    have : (n : ℝ) ≤ 1 := by linarith
+    norm_cast at this
+    linarith
+
+  -- write the goal as comparison between $n$ and $(2 - 1/n)^n$ and apply `Nat.pow_lt_pow_iff_left`
+  have : (n : ℝ) < (2 - 1 / n) ^ n := by
+    have : 1 / n ≤ 1 := by
+      simp; norm_cast; simp
+    rw [←Real.rpow_le_rpow_iff_left₀ (by linarith) this]
+    -- prove the auxillary fact that $2 - 1/n > 0$
+    norm_cast; rw [div_eq_iff]; norm_cast; linarith
+    -- prove the goal by induction
+    induction n with
+    | zero => norm_num
+    | succ n ih =>
+      have : (2 - 1 / (n + 1) : ℝ) ^ (n + 1) = (2 - 1 / (n + 1)) * (2 - 1 / (n + 1)) ^ n := by ring
+      rw [this]
+      have : (2 - 1 / (n + 1) : ℝ)  ≤ 2 - 1 / n := by
+        rw [←sub_nonneg, sub_add]
+        norm_cast; simp
+        have : (n : ℝ) * 2 - 1 ≤ 2 * n - 1 := by
+          simp; norm_cast; simp
+          linarith
+        qify at this
+        linarith
+      -- apply the induction hypothesis
+      have : (2 - 1 / (n + 1) : ℝ) ^ n < 2 - 1 / n := by
+        apply ih
+        norm_cast; linarith
+        norm_cast; linarith
+      -- do some calculation to reach the goal
+      calc
+        _ ≤ (2 - 1 / (n + 1)) * (2 - 1 / n) := by apply mul_le_mul; linarith; linarith; norm_cast; linarith
+        _ = (2 - 1 / n) * (2 - 1 / n) - 1 / (n + 1) * (2 - 1 / n) := by ring
+        _ < (2 - 1 / n) * (2 - 1 / n) := by
+          have : 0 < (2 - 1 / n) := by
+            have : (1 : ℝ) < 2 := by norm_num
+            rw [←div_eq_iff] at this
+            norm_cast at this
+            linarith
+          apply sub_lt_self; apply mul_pos; assumption; norm_cast; linarith
+        _ < _ := by
+          have : (2 - 1 / n) ^ 2 = (2 - 1 / n) * (2 - 1 / n) := by ring
+          rw [this]
+          apply sq_lt_sq'
+          linarith
+          norm_cast; linarith
+          norm_cast; linarith
+  rw [Real.rpow_lt_iff_natCast_lt] at this
+  norm_cast at this
+  norm_cast
+  assumption
+```

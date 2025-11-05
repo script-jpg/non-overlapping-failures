@@ -1,0 +1,33 @@
+norm_num [Finset.sum_range_succ, add_comm] at h₀ ⊢
+  have h₁ : a 100 ^ 2 * a 1 ≤ a 100 ^ 2 * 1 := by
+    exact mul_le_mul_of_nonneg_left (by norm_cast; exact NNReal.coe_le_coe.mpr (by simp)) (sq_nonneg _)
+  have h₂ : a 100 ^ 2 * a 1 ≤ a 100 ^ 2 := by
+    exact le_trans h₁ (by simp [sq])
+  have h₃ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) ≤ (∑ x in Finset.range 99, a (x + 1) ^ 2) := by
+    apply Finset.sum_le_sum
+    intro x _
+    have h₄ : a (x + 1) ^ 2 * a (x + 2) ≤ a (x + 1) ^ 2 * 1 := by
+      exact mul_le_mul_of_nonneg_left (by norm_cast; exact NNReal.coe_le_coe.mpr (by simp)) (sq_nonneg _)
+    simpa [mul_one] using h₄
+  have h₄ : (∑ x in Finset.range 99, a (x + 1) ^ 2) ≤ 1 := by
+    have h₅ : (∑ x in Finset.range 99, a (x + 1) ^ 2) ≤ ∑ x in Finset.range 100, a (x + 1) ^ 2 := by
+      apply Finset.sum_le_sum_of_subset_of_nonneg
+      · intro x hx
+        simp only [Finset.mem_range] at hx ⊢
+        omega
+      · intro x _ _
+        exact sq_nonneg _
+    simpa [h₀] using h₅
+  have h₅ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 12 / 25 := by
+    calc
+      (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 ≤ (∑ x in Finset.range 99, a (x + 1) ^ 2) + a 100 ^ 2 * a 1 := by
+        exact add_le_add h₃ (by simp)
+      _ ≤ 1 + a 100 ^ 2 * a 1 := by
+        exact add_le_add h₄ (by simp)
+      _ < 12 / 25 := by
+        have h₆ : (a 100 : ℝ) ^ 2 ≥ 0 := by positivity
+        have h₇ : (a 1 : ℝ) ≥ 0 := by positivity
+        norm_num at *
+        nlinarith [sq_nonneg (a 100 ^ 2 - 1 / 5), sq_nonneg (a 1 - 1 / 5)]
+  exact h₅
+```

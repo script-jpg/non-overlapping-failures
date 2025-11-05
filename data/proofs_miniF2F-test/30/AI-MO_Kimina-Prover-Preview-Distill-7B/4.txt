@@ -1,0 +1,263 @@
+have h₂ : x ^ (y ^ 2) = y ^ x := by
+    exact h₁
+
+  -- Prove that $x$ and $y$ are coprime.
+  have h₃ : x.Coprime y := by
+    -- Suppose that $x$ and $y$ have a common prime factor $p$.
+    by_contra! h₃
+    let p : ℕ := Nat.Prime.natAbs (Nat.Prime.two_le h₃)
+
+    -- Prove that $p$ divides $x$ and $y$.
+    have h₄ : p ∣ x ∧ p ∣ y := by
+      constructor
+      · exact (Nat.Prime.dvd_iff_not_coprime p h₃).mp h₃
+      · exact (Nat.Prime.dvd_iff_not_coprime p h₃).mp h₃
+
+    have h₅ : p ∣ x ^ y ^ 2 ∧ p ∣ y ^ x := by
+      constructor
+      · exact Nat.dvd_trans h₄.left (Nat.dvd_pow_self p y (by omega))
+      · exact Nat.dvd_trans h₄.right (Nat.dvd_pow_self p x (by omega))
+
+    -- Show that $p$ divides $x$ and $y$ only to the first power.
+    have h₆ : (p ∣ x ^ y ^ 2).factorization = (p ∣ y ^ x).factorization := by
+      rw [h₂]
+      exact rfl
+
+    have h₇ : p ∣ x ^ y ^ 2 ∧ p ∣ y ^ x := by
+      exact ⟨h₅.left, h₅.right⟩
+
+    -- Write $x = p^a$ and $y = p^b$ for some integers $a$ and $b$.
+    have h₈ : (p ∣ x ^ y ^ 2).factorization = (p ∣ y ^ x).factorization := by
+      exact h₆
+
+    rw [Nat.Prime.factorization_pow, Nat.Prime.factorization_pow] at h₈
+    rw [Nat.Prime.factorization_pow, Nat.Prime.factorization_pow] at h₇
+
+    -- Let $a := (p ∣ x ^ y ^ 2).factorization$ and $b := (p ∣ y ^ x).factorization$.
+    let a := (p ∣ x ^ y ^ 2).factorization
+    let b := (p ∣ y ^ x).factorization
+
+    -- Then $a = b$.
+    have h₈ : a = b := by
+      exact id (Eq.symm h₈)
+
+    -- We have $x = p^a$ and $y = p^b$.
+    have h₉ : x = p ^ a := by
+      rw [←Nat.factorization_eq factorization_eq_zero_iff (Nat.Prime.ne_zero p)]
+      rw [Nat.factorization_pow, Nat.factorization_pow, ←h₈]
+      simp only [a, b]
+      rw [Nat.factorization_eq_iff_dvd (Nat.Prime.ne_zero p) (by omega)]
+      apply Nat.dvd_trans (by exact Nat.dvd_prime_pow p (Nat.Prime.two_le h₃)) h₅.left
+    have h₁₀ : y = p ^ b := by
+      rw [←Nat.factorization_eq factorization_eq_zero_iff (Nat.Prime.ne_zero p)]
+      rw [Nat.factorization_pow, Nat.factorization_pow, ←h₈]
+      simp only [a, b]
+      rw [Nat.factorization_eq_iff_dvd (Nat.Prime.ne_zero p) (by omega)]
+      apply Nat.dvd_trans (by exact Nat.dvd_prime_pow p (Nat.Prime.two_le h₃)) h₅.right
+
+    -- Substituting into $x^{y^2} = y^x$, we get $p^{a·y^2} = p^{b·x}$.
+    have h₁₁ : p ^ (a * y ^ 2) = p ^ (b * x) := by
+      rw [h₉, h₁₀] at h₂
+      exact h₂
+
+    -- Then $a·y^2 = b·x$.
+    have h₁₂ : a * y ^ 2 = b * x := by
+      exact (Nat.pow_right_injective (by exact Nat.Prime.one_lt p) (by omega)).mp h₁₁
+
+    -- Substituting $x = p^a$ and $y = p^b$ into $a·y^2 = b·x$, we get $a·p^{2b} = b·p^a$.
+    have h₁₃ : a * p ^ (2 * b) = b * p ^ a := by
+      rw [h₉, h₁₀] at h₁₂
+      rw [h₁₂]
+      ring_nf
+
+    -- We have $p^a$ divides $a$ or $p^b$ divides $b$.
+    have h₁₄ : p ^ a ∣ a ∨ p ^ b ∣ b := by
+      by_contra!
+      let r := a % p
+      let s := b % p
+
+      -- By Fermat's Little Theorem, $p^a$ divides $r$ and $p^b$ divides $s$.
+      have h₁₅ : p ^ a ∣ r ∧ p ^ b ∣ s := by
+        constructor
+        · rw [Nat.Prime.dvd_pow_iff_dvd r (Nat.Prime.two_le h₃)]
+          exact Nat.mod_mod_dvd a p
+        · rw [Nat.Prime.dvd_pow_iff_dvd s (Nat.Prime.two_le h₃)]
+          exact Nat.mod_mod_dvd b p
+
+      -- Then $p^a$ divides $a - r$ and $p^b$ divides $b - s$.
+      have h₁₆ : p ^ a ∣ a - r ∧ p ^ b ∣ b - s := by
+        constructor
+        · rw [Nat.dvd_sub (by exact Nat.dvd_refl a) h₁₅.left]
+          exact Nat.dvd_refl r
+        · rw [Nat.dvd_sub (by exact Nat.dvd_refl b) h₁₅.right]
+          exact Nat.dvd_refl s
+
+      -- Write $a = p^a * k + r$ and $b = p^b * l + s$ for some integers $k$ and $l$.
+      have h₁₇ : ∃ k, a = p ^ a * k + r := by
+        exact h₁₆.left
+      have h₁₈ : ∃ l, b = p ^ b * l + s := by
+        exact h₁₆.right
+
+      -- Substituting $a = p^a * k + r$ and $b = p^b * l + s$ into $a·p^{2b} = b·p^a$,
+      -- we get $p^{3b}·k + p^{2b}·r = p^{3a}·l + p^{2a}·s$.
+      have h₁₉ : k * p ^ (3 * b) + r * p ^ (2 * b) = l * p ^ (3 * a) + s * p ^ a := by
+        obtain ⟨k, hk⟩ := h₁₇
+        obtain ⟨l, hl⟩ := h₁₈
+        rw [hk, hl] at h₁₃
+        linarith
+
+      -- From this equality, we have $p^{2b}·r = p^{2a}·s$.
+      have h₂₀ : r * p ^ (2 * b) = s * p ^ (2 * a) := by
+        linarith
+
+      -- Substituting $r = a % p$ and $s = b % p$ into $p^{2b}·r = p^{2a}·s$,
+      -- we get $p^{2b}·(a % p) = p^{2a}·(b % p)$.
+      have h₂₁ : p ^ (2 * b) * (a % p) = p ^ (2 * a) * (b % p) := by
+        linarith
+
+      -- From this equality, we have $p$ divides $a$ or $p$ divides $b$.
+      have h₂₂ : p ∣ a % p ∨ p ∣ b % p := by
+        by_contra! h₂₂
+        let t := a % p % p
+        have h₂₃ : t < p := by
+          rw [Nat.mod_lt (by omega)]
+        have h₂₄ : p ^ (2 * b) * t = p ^ (2 * a) * p := by
+          apply Nat.mul_right_cancel (by exact Nat.Prime.one_lt p)
+          rw [Nat.mul_comm (a % p) p, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_comm (b % p) _, h₂₁]
+        have h₂₅ : p ^ (2 * b) * t = p ^ (2 * a + 1) := by
+          rw [h₂₄]
+          ring_nf
+        have h₂₆ : p ∣ p ^ (2 * a + 1) := by
+          exact Nat.Prime.dvd_of_dvd_pow (Nat.Prime.one_lt h₃) (by omega)
+        have h₂₇ : p ∣ p ^ (2 * b) * t := by
+          exact Nat.dvd_mul_left p (p ^ (2 * b) * t)
+        have h₂₈ : p ∣ t := by
+          exact Nat.Prime.dvd_of_dvd_mul_right_of_pos (Nat.Prime.one_lt h₃) h₂₇
+        have h₂₉ : t < p := by
+          exact h₂₃
+        have h₃₀ : t = 0 := by
+          exact (Nat.Prime.dvd_iff_eq h₃).mp h₂₈
+        rw [h₃₀] at h₂₈
+        linarith
+
+      -- From this, we have $p$ divides $a$ or $p$ divides $b$.
+      have h₂₃ : p ∣ a ∨ p ∣ b := by
+        by_contra! h₂₃
+        let r := a % p
+        let s := b % p
+        have h₂₄ : a % p > 0 := by
+          apply Nat.mod_pos_of_pos_left a h₃
+        have h₂₅ : b % p > 0 := by
+          apply Nat.mod_pos_of_pos_left b h₃
+        have h₂₆ : r < p := by
+          rw [Nat.mod_lt (by omega)]
+        have h₂₇ : s < p := by
+          rw [Nat.mod_lt (by omega)]
+        have h₂₈ : r > 0 := by
+          exact Nat.lt_of_le_of_ne (Nat.mod_le a (by omega)) (ne_of_gt h₂₄)
+        have h₂₉ : s > 0 := by
+          exact Nat.lt_of_le_of_ne (Nat.mod_le b (by omega)) (ne_of_gt h₂₅)
+        have h₂₁₀ : p ∣ r ∨ p ∣ s := by
+          exact h₂₂ r s
+        have h₂₁₁ : r < p := by
+          exact h₂₄
+        have h₂₁₂ : s < p := by
+          exact h₂₅
+        have h₂₁₃ : r = 0 ∨ r = p := by
+          exact (Nat.dvd_iff_mod_eq_zero (Nat.Prime.two_le h₃)).mp h₂₁₀
+        have h₂₁₄ : s = 0 ∨ s = p := by
+          exact (Nat.dvd_iff_mod_eq_zero (Nat.Prime.two_le h₃)).mp h₂₁₀
+        have h₂₁₅ : r > 0 := by
+          exact h₂₈
+        have h₂₁₆ : s > 0 := by
+          exact h₂₉
+        have h₂₁₇ : r = 0 := by
+          exact Nat.le_antisymm h₂₁₃ (Nat.le_of_lt_succ h₂₁₅)
+        have h₂₁₈ : s = 0 := by
+          exact Nat.le_antisymm h₂₁₄ (Nat.le_of_lt_succ h₂₁₆)
+        have h₂₁₉ : r > 0 := by
+          exact h₂₈
+        have h₂₂₀ : s > 0 := by
+          exact h₂₉
+        have h₂₂₁ : r = p := by
+          exact Nat.le_antisymm h₂₁₇ (Nat.le_of_lt_succ h₂₂₀)
+        have h₂₂₂ : s = p := by
+          exact Nat.le_antisymm h₂₁₈ (Nat.le_of_lt_succ h₂₂₁)
+        have h₂₂₃ : r < p := by
+          exact h₂₄
+        have h₂₂₄ : s < p := by
+          exact h₂₅
+        linarith
+
+      -- From this, we have $p$ divides $x$ or $p$ divides $y$.
+      have h₂₄ : p ∣ x ∨ p ∣ y := by
+        rw [h₉, h₁₀]
+        exact h₂₃
+
+      have h₂₅ : p ≤ x ∨ p ≤ y := by
+        rcases h₂₄ with h₂₄ | h₂₄
+        · apply Nat.le_of_dvd h₄.left h₂₄
+        · apply Nat.le_of_dvd h₄.right h₂₄
+
+      have h₂₆ : x ≥ p ^ a ∨ y ≥ p ^ b := by
+        rcases h₂₅ with h₂₅ | h₂₅
+        · apply Nat.le_of_dvd h₄.left
+          apply Nat.ordProj_dvd x
+        · apply Nat.le_of_dvd h₄.right
+          apply Nat.ordProj_dvd y
+
+      have h₂₇ : x = p ^ a ∨ y = p ^ b := by
+        rcases h₂₆ with h₂₆ | h₂₆
+        · apply Nat.le_antisymm h₂₆ (Nat.le_of_dvd h₄.left (Nat.ordProj_dvd x))
+        · apply Nat.le_antisymm h₂₆ (Nat.le_of_dvd h₄.right (Nat.ordProj_dvd y))
+
+      -- Substituting $x = p^a$ and $y = p^b$ into $a·y^2 = b·x$, we get $a·p^{2b} = b·p^a$.
+      have h₂₈ : a * p ^ (2 * b) = b * p ^ a := by
+        rw [h₉, h₁₀] at h₁₂
+        linarith
+
+      -- From this equality, we have $p^{2b}·a = p^{2a}·b$.
+      have h₂₉ : p ^ (2 * b) * a = p ^ (2 * a) * b := by
+        linarith
+
+      -- We have $p^a$ divides $b$ or $p^b$ divides $a$.
+      have h₃₀ : p ^ b ∣ b ∨ p ^ a ∣ a := by
+        by_contra! h₃₀
+        let r := a % p
+        let s := b % p
+
+        -- By Fermat's Little Theorem, $p^a$ divides $r$ and $p^b$ divides $s$.
+        have h₃₁ : p ^ a ∣ r ∧ p ^ b ∣ s := by
+          constructor
+          · rw [Nat.Prime.dvd_pow_iff_dvd r (Nat.Prime.two_le h₃)]
+            exact Nat.mod_mod_dvd a p
+          · rw [Nat.Prime.dvd_pow_iff_dvd s (Nat.Prime.two_le h₃)]
+            exact Nat.mod_mod_dvd b p
+
+        -- Then $p^a$ divides $a - r$ and $p^b$ divides $b - s$.
+        have h₃₂ : p ^ a ∣ a - r ∧ p ^ b ∣ b - s := by
+          constructor
+          · rw [Nat.dvd_sub (by exact Nat.dvd_refl a) h₃₁.left]
+            exact Nat.dvd_refl r
+          · rw [Nat.dvd_sub (by exact Nat.dvd_refl b) h₃₁.right]
+            exact Nat.dvd_refl s
+
+        -- Write $a = p^a * k + r$ and $b = p^b * l + s$ for some integers $k$ and $l$.
+        have h₃₃ : ∃ k, a = p ^ a * k + r := by
+          exact h₃₂.left
+        have h₃₄ : ∃ l, b = p ^ b * l + s := by
+          exact h₃₂.right
+
+        -- Substituting $a = p^a * k + r$ and $b = p^b * l + s$ into $a·p^{2b} = b·p^a$,
+        -- we get $p^{3b}·k + p^{2b}·r = p^{3a}·l + p^{2a}·s$.
+        have h₃₅ : k * p ^ (3 * b) + r * p ^ (2 * b) = l * p ^ (3 * a) + s * p ^ a := by
+          obtain ⟨k, hk⟩ := h₃₃
+          obtain ⟨l, hl⟩ := h₃₄
+          rw [hk, hl] at h₂₈
+          linarith
+
+        -- From this equality, we have $p^{2b}·r = p^{2a}·s$.
+        have h₃₆ : r * p ^ (2 * b) = s * p ^ (2 * a) := by
+          linarith
+
+        -- Substituting $r = a % p$ and $s = b % p$ into $p^{2b}·r = p^{2a}·s

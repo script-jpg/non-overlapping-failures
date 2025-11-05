@@ -1,0 +1,38 @@
+-- intro the conditions in the theorem and denote the logarithm base 2 for x and y as a and b
+  obtain ⟨hx, hy⟩ := h₀
+  obtain ⟨a, b, ha, hb⟩ := Aesop.logb_eq_log_div_log x 2 (by norm_num; simp; exact hx)
+  obtain ⟨c, d, hc, hd⟩ := Aesop.logb_eq_log_div_log y 2 (by norm_num; simp; exact hy)
+
+  -- restate the conditions in terms of a, b, c, d
+  rw [ha, hb] at h₁
+  rw [ha, hb, hc, hd] at h₂
+
+  -- simplify the equation h₂ by using x = 2^a and y = 2^b
+  have h₂ : (2 ^ a) * (2 ^ b) = 2 ^ (a + b) := by
+    calc _ = (2 ^ (a + b)) ^ (1 : ℝ) := by rw [Real.rpow_add (by norm_num)]; simp
+         _ = (2 ^ (a + b)) ^ (b * (1 : ℝ) / b) := by simp; rw [←mul_div_assoc]; norm_num; exact hy
+         _ = (2 ^ a * 2 ^ b) ^ (b / b) := by rw [Real.rpow_mul (by norm_num), Real.rpow_add (by norm_num)]
+         _ = _ := by rw [←mul_div_assoc]; norm_num; exact hy
+
+  rw [h₂] at h₁
+  rw [←Real.log_rpow (by norm_num), ←Real.log_rpow (by norm_num)] at h₁
+  rw [mul_div_mul_right _ _ (show b ≠ 0 by rw [←hb]; exact hy)] at h₁
+  rw [div_eq_mul_inv, mul_comm, Real.log_mul_log] at h₁
+  rw [Real.log_rpow (by norm_num), Real.log_rpow (by norm_num)] at h₁
+
+  -- simplify the goal
+  rw [Real.log_div_log, ←hb, ←ha]
+  rw [←mul_div_assoc; norm_num; rw [←add_mul]; norm_num]
+
+  -- the goal is now (b - a)^2 = 20 * log 2 ^ 2, and we only need to prove b - a = log 2 * sqrt (20)
+  suffices b - a = Real.log 2 * Real.sqrt 20 by
+    rw [this, mul_pow, Real.sq_sqrt (by norm_num)]
+    ring_nf; rw [Real.sq_sqrt (by norm_num)]
+    ring_nf; norm_num; any_goals exact hx
+
+  -- using quadratic equations to prove the simple relationship between a, b and log 2
+  calc _ = Real.log 2 * Real.log 2 * (2 * 20 / (Real.log 2 * Real.log 2)) := by field_simp; ring
+       _ = Real.log 2 * Real.log 2 * ((a - b) ^ 2) := by rw [mul_assoc, ←pow_two, mul_div_assoc, ←mul_assoc]; simp; exact h₁
+       _ = Real.log 2 * Real.log 2 * ((a + b) * (a - b)) := by congr; rw [←mul_assoc]; rw [←Real.log_mul_log]; ring; apply mul_pos; norm_num; exact hx; exact hy
+       _ = _ := by rw [←h₂, mul_assoc, Real.mul_log_rpow (by norm_num) (by norm_num), ←mul_assoc, mul_div_assoc]; simp; ring; all_goals apply Real.log_rpow; norm_num; exact hx
+```

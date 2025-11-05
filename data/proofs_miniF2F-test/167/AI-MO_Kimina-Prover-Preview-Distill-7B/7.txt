@@ -1,0 +1,163 @@
+-- show that if $x<1$ then $x(x+1/n)<1$
+  have h₂ (x : ℝ) (hx : x < 1 : ℝ) (n : ℕ) : x * (x + 1 / n) < 1 := by
+    ring_nf
+    field_simp
+    linarith only [hx, show (n : ℝ) ≥ 1 by norm_cast]
+
+  -- define the set of all sequence satisfying the condition
+  let S := {x | ∀ n > 0, 0 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1 }
+
+  -- show that the sequence is increasing when $0<x<1$
+  have h₃ {x} (hx : 0 < x ∧ x < 1) : ∀ n > 0, f n x < f (n + 1) x := by
+    intro n hn
+    calc
+      _ < f n x * (f n x + 1 / n) := by
+        apply mul_lt_mul_of_pos_left
+       . exact hx.left
+       . apply add_pos_of_pos_right
+          apply one_div_pos.mpr
+          linarith only [hn]
+      _ = _ := by rw [h₁]
+
+  -- show that $S$ is bounded above by 1
+  have h₄ : S ⊆ {x | x ≤ 1} := by
+    intro x hx
+    by_contra h
+    simp at h
+    have h' := hx.left
+    specialize h₃ h'.left
+    linarith only [h, h₃]
+
+  -- show that $S$ is nonempty by constructing an explicit element
+  have h₅ : S.Nonempty := by
+    use exp (log (1 / (1 - (1 / (20 * 400 * 400))))
+    apply_fun log
+    iterate 2 rw [exp_log]
+    field_simp
+    norm_num
+    linarith only [show 0<(1:ℝ)/400 by norm_num, show 0<(1:ℝ)/20 by norm_num]
+
+    -- show that $x_1 = 1 / \sqrt{20} - 1 / (20 \, \sqrt{20})$ satisfies the condition
+    have h₆ : 1 / √(20:ℝ) - 1 / (20 * √(20:ℝ)) ∈ S := by
+      apply_fun exp
+      rw [log_exp]
+      dsimp [S]
+      intro n hn
+      by_cases h : 0 = n
+     . subst h
+        rw [h₀]
+        constructor
+       . positivity
+       . constructor
+         . field_simp
+            rw [←one_div, div_lt_div_iff₀]
+           . norm_num
+           . norm_num
+           . positivity
+         . field_simp
+            rw [←one_div, one_div_lt_one_div]
+           . norm_num
+           . norm_num
+           . positivity
+     . have h' : 0 < n := by positivity
+        rw [one_div_lt_one]
+       . field_simp
+          rw [←one_div, one_div_lt_one]
+         . norm_num
+         . positivity
+       . rw [one_div_lt_one]
+         . field_simp
+            apply mul_pos
+           . norm_num
+           . exact h'
+         . positivity
+       . have : 0 < (20 * 400 * 400 : ℝ) := by norm_num
+          apply Real.log_lt_log
+         . positivity
+         . linarith only [this]
+
+    -- show that $x_1 = 1 / \sqrt{20} - 1 / (20 \, \sqrt{20})$ is the greatest element of $S$
+    have h₇ : ∀ b ∈ S, b ≤ 1 / √(20:ℝ) - 1 / (20 * √(20:ℝ)) := by
+      intro b hb
+      obtain ⟨hb, h₂⟩ := hb
+      obtain ⟨a, h₂⟩ := h₅
+      have h₃ := h₂ 1 (by norm_num)
+      replace h₃ := h₃.left
+      have h₄ := h₂ 2 (by norm_num)
+      replace h₄ := h₄.left
+      have h₅ := h₂ 3 (by norm_num)
+      replace h₅ := h₅.left
+      simp [h₀] at h₃
+      simp [h₁] at h₄
+      simp [h₁] at h₅
+      ring_nf at h₃ h₄ h₅
+      field_simp at h₃ h₄ h₅
+      rw [←(exp (log b)), ←exp (log (1 / √(20:ℝ) - 1 / (20 * √(20:ℝ)))), ←log (a * (a + 1 / 1))] at h₃
+      rw [←log (a * (a + 1 / 2))] at h₄
+      rw [←log (a * (a + 1 / 3))] at h₅
+      replace h₃ : log b ≤ log (a * (a + 1 / 1)) := by exact h₃
+      replace h₄ : log (a * (a + 1 / 2)) ≤ log (a * (a + 1 / 1)) := by exact h₄
+      replace h₅ : log (a * (a + 1 / 3)) ≤ log (a * (a + 1 / 1)) := by exact h₅
+      have h₆ : 0 < a * (a + 1 / 1) := by positivity
+      have h₇ : 0 < a * (a + 1 / 2) := by positivity
+      have h₈ : 0 < a * (a + 1 / 3) := by positivity
+      have h₉ : 0 < a + 1 / 1 := by linarith only [h₆]
+      have h₁₀ : 0 < a + 1 / 2 := by linarith only [h₇]
+      have h₁₁ : 0 < a + 1 / 3 := by linarith only [h₈]
+      have h₁₂ : a * (a + 1 / 1) < a * (a + 1 / 2) := by
+        apply mul_lt_mul_of_pos_left
+       . linarith only [h₉]
+       . positivity
+      have h₁₃ : a * (a + 1 / 2) < a * (a + 1 / 3) := by
+        apply mul_lt_mul_of_pos_left
+       . linarith only [h₁₀]
+       . positivity
+      have h₁₄ : a * (a + 1 / 3) < a * (a + 1 / 1) := by
+        apply mul_lt_mul_of_pos_left
+       . linarith only [h₁₁]
+       . positivity
+      have h₁₅ : log (a * (a + 1 / 1)) ≤ log (a * (a + 1 / 1)) := by exact id (le_refl _)
+      have h₁₆ : log (a * (a + 1 / 2)) ≤ log (a * (a + 1 / 2)) := by exact id (le_refl _)
+      have h₁₇ : log (a * (a + 1 / 3)) ≤ log (a * (a + 1 / 3)) := by exact id (le_refl _)
+      have log_inj := Real.log_le_log_iff (by positivity) (by positivity)
+      simp [log_inj] at h₃ h₄ h₅ h₁₅ h₁₆ h₁₇
+      linarith only [h₁₂, h₁₃, h₁₄, h₁₅, h₁₆, h₁₇]
+
+  -- show that $S$ is continuous
+  have h₈ : ContinuousOn S (fun x ↦ 1 / √(20:ℝ) - 1 / (20 * √(20:ℝ))) := by
+    apply ContinuousOn.sub
+   . apply ContinuousOn.div
+     . exact continuousOn_const
+     . apply ContinuousOn.sqrt
+        exact continuousOn_const
+     . exact continuousOn_const
+     . apply ContinuousOn.sqrt
+        exact continuousOn_const
+   . apply ContinuousOn.div
+     . exact continuousOn_const
+     . exact continuousOn_const
+     . apply ContinuousOn.mul
+       . exact continuousOn_const
+       . exact continuousOn_id
+     . exact continuousOn_const
+
+  -- show that $S$ is compact
+  have h₉ : CompactOn S (fun x ↦ 1 / √(20:ℝ) - 1 / (20 * √(20:ℝ))) := by
+    apply ContinuousOn.comp_continuousOn
+    exact h₈
+
+  -- use the lemma of fixed point to show that $S$ is nonempty
+  have h₁₀ : ∃ x, x = 1 / √(20:ℝ) - 1 / (20 * √(20:ℝ)) := by
+    apply @fun x ↦ x
+    exact h₅
+  iterate 2 rw [←log_exp] at h₁₀
+  specialize h₇ (1 / √(20:ℝ) - 1 / (20 * √(20:ℝ)))
+  simp [h₉] at h₇
+  rcases h₁₀ with ⟨x, hx⟩
+  use x
+  constructor
+ . exact h₇
+ . intro b hb
+    rw [eq_comm] at hb
+    exact h₇ hb
+```

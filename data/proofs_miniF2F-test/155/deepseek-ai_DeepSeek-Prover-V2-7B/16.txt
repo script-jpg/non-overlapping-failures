@@ -1,0 +1,48 @@
+have step₁ : S.card = 5 := by
+      have h₁ : S = {0, Real.pi / 2, Real.pi, (3 * Real.pi) / 2, 2 * Real.pi} := by
+        ext x
+        simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+        constructor
+        -- Prove that if x satisfies the equation, then x is one of the known values.
+        · intro h
+          have h₂ : 0 ≤ x := by linarith
+          have h₃ : x ≤ 2 * Real.pi := by linarith
+          have h₄ : Real.tan (2 * x) = Real.cos (x / 2) := by linarith
+          have h₅ : Real.tan (2 * x) = Real.sin (2 * x) / Real.cos (2 * x) := by rw [Real.tan_eq_sin_div_cos]
+          rw [h₅] at h₄
+          have h₆ : Real.cos (x / 2) = Real.cos (x / 2) := by rfl
+          have h₇ : Real.sin (2 * x) / Real.cos (2 * x) = Real.cos (x / 2) := by simp_all
+          have h₈ : Real.cos (2 * x) ≠ 0 ∨ Real.cos (2 * x) = 0 := by apply Classical.em
+          cases h₈ with
+          | inl h₉ =>
+            have h₁₀ : Real.sin (2 * x) = Real.cos (x / 2) * Real.cos (2 * x) := by
+              field_simp [h₉] at h₇ ⊢ <;> nlinarith
+            have h₁₁ : x = 0 ∨ x = Real.pi / 2 ∨ x = Real.pi ∨ x = (3 * Real.pi) / 2 ∨ x = 2 * Real.pi := by
+              have h₁₂ : Real.sin (2 * x) = 2 * Real.sin x * Real.cos x := by rw [Real.sin_two_mul]
+              have h₁₃ : Real.cos (2 * x) = 2 * Real.cos x ^ 2 - 1 := by rw [Real.cos_two_mul]
+              have h₁₄ : Real.cos (x / 2) = Real.cos (x / 2) := by rfl
+              simp_all [Real.cos_sq, Real.sin_sq, mul_assoc]
+              apply or_iff_not_imp_left.mpr
+              intro h₁₅
+              apply or_iff_not_imp_left.mpr
+              intro h₁₆
+              apply or_iff_not_imp_left.mpr
+              intro h₁₇
+              apply or_iff_not_imp_left.mpr
+              intro h₁₈
+              apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₅)
+              apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₆)
+              apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₇)
+              apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₈)
+              ring_nf at *
+              norm_num at *
+              <;> (try
+                nlinarith [Real.sin_sq_add_cos_sq x, Real.sin_sq_add_cos_sq (x / 2),
+                  Real.sin_le_one x, Real.sin_le_one (x / 2),
+                  Real.cos_le_one x, Real.cos_le_one (x / 2),
+                  sq_nonneg (Real.sin x + Real.cos x),
+                  sq_nonneg (Real.sin x - Real.cos x),
+                  sq_nonneg (Real.cos x + Real.sin x),
+                  sq_nonneg (Real.cos x - Real.sin x),
+                  Real.pi_pos.le])
+              <;> nlinarith [Real.pi

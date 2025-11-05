@@ -1,0 +1,127 @@
+constructor <;> intro h
+
+  · -- First, we prove that, if a function satisfies the condition, it is of the form $f(z) = 0$ or $f(z) = 2z + c$.
+    -- We begin by proving that $f(0) = 0$.
+
+    have h1 : f 0 = 0 := by
+      -- For $a = b = 0$, we get $f(0) + 2f(0) = f(f(0))$, so $f(f(0)) = 3f(0)$.
+      have h1 := h 0 0
+      simp at h1
+      rw [add_comm] at h1
+      -- So $f(f(0)) = 3f(0) = f(0) + 2f(0)$.
+      have h2 : f (f 0) = f 0 + 2 * f 0 := by linarith
+      -- So $f(0) = 0$.
+      have h3 : f 0 = 0 := by
+        have h4 := h 0 1
+        simp at h4
+        rw [h2] at h4
+        apply Int.eq_zero_of_add_eq_zero at h4
+        exact h4
+      exact h3
+    -- Next, we prove that, for all $z$, $f(z) = 0$ or there exists a $c$ such that, for all $z$, $f(z) = 2z + c$.
+
+    have h2 : ∀ z, f z = 0 ∨ ∃ c, ∀ z, f z = 2 * z + c := by
+      intro z
+      -- Let $c = f(1) - 2$. We prove that, for all $z$, $f(z) = 2z + c$.
+      refine Or.inl (f 0)?_
+      use f 1 - 2
+      intro z
+      -- We use the fact that $f(0) = 0$.
+      rw [h1]
+      -- We draw a commutative diagram:
+
+      -- From the left side: $f(2 \cdot 0) + 2f(z) = f(f(0 + z))$ so $f(f(z)) = 2f(z)$
+      -- From the right side: $f(2z) + 2f(z) = f(f(z + z))$
+      have h3 := h 0 z
+      simp at h3
+      -- So $f(f(z)) = 2f(z)$
+      have h4 : f (f z) = 2 * f z := by
+        rw [h1] at h3
+        linarith
+      -- So $f(f(z)) = f(2z) + 2f(z) - 2f(z) = f(2z)$
+      have h5 : f (f z) = f (2 * z) := by
+        have h6 := h z z
+        simp at h6
+        rw [h4] at h6
+        linarith
+      -- Therefore, $f(2z) = 2f(z)$
+      have h6 : f (2 * z) = 2 * f z := by
+        rw [←h5]
+        exact h3
+      -- Now we show that $f(z) = 2z + c$ where $c = f(1) - 2$.
+      -- First, we draw another commutative diagram:
+
+      -- From the left side: $f(2 \cdot 1) + 2f(z) = f(f(1 + z))$ so $f(f(1 + z)) = 2f(z) + 2$
+      -- From the right side: $f(2z) + 2f(z) = f(f(z + z))$ so $f(f(z + z)) = 2f(z) + 2f(z) = 4f(z)$
+      -- So $f(f(1 + z)) = 4f(z)$
+      have h7 := h 1 z
+      simp at h7
+      rw [h6] at h7
+      replace h7 : f (f (1 + z)) = 4 * f z := by linarith
+      -- Second, we draw another commutative diagram:
+
+      -- From the left side: $f(2 \cdot (1 + z)) + 2f(1 + z) = f(f((1 + z) + (1 + z)))$ so $f(f((1 + z) + (1 + z))) = 2f(1 + z) + 2f(1 + z) = 4f(1 + z)$
+      -- From the right side: $f(2z) + 2f(z) = f(f(z + z))$ so $f(f(z + z)) = 2f(z) + 2f(z) = 4f(z)$
+      -- So $f(f((1 + z) + (1 + z))) = 4f(z)$
+      have h8 := h (1 + z) (1 + z)
+      simp at h8
+      rw [h6] at h8
+      replace h8 : f (f ((1 + z) + (1 + z))) = 4 * f (1 + z) := by linarith
+      -- So $4f(z) = 4f(1 + z)$, and, finally, $f(f(1 + z)) = 2f(z)$
+      have h9 : f (f (1 + z)) = 2 * f z := by
+        linarith
+      -- We have $f(f(1 + z)) = 2f(z)$ and $f(f(1 + z)) = 4f(z)$, so $2f(z) = 4f(z)$, and $f(z) = 2f(z)$.
+      rw [h7] at h9
+      replace h9 : f z = 2 * f z := by linarith
+      -- Then $f(z) = 2z + c$ where $c = f(1) - 2$.
+      rw [←h9]
+      ring
+    -- Now, we need to prove that, for all $z$, $f(z) = c$ for some $c$.
+    -- We use the fact that, for all $z$, $f(z) = 0$ or there exists a $c$ such that, for all $z$, $f(z) = 2z + c$.
+    -- If, for all $z$, $f(z) = 0$ then, for all $z$, $f(z) = 2z + 0$.
+    -- So, for all $z$, $f(z) = 2z + c$ where $c = 0$.
+    have h3 : ∀ z, f z = 2 * z + (f 1 - 2) := by
+      intro z
+      specialize h2 z
+      cases h2 with
+      | inl h2 =>
+        rw [h2]
+        ring
+      | inr h2 =>
+        obtain ⟨c, h2⟩ := h2
+        have h3 := h 1 z
+        simp at h3
+        rw [h2] at h3
+        have h4 := h z z
+        simp at h4
+        rw [h2] at h4
+        linarith
+    -- Now, we prove that $f(1) - 2 = 0$.
+    have h4 : f 1 - 2 = 0 := by
+      -- For $z = 1$, $f(f(1)) = 2f(1)$ and, also, $f(f(1)) = 2f(1) + 2$.
+      -- So $2f(1) = 2f(1) + 2$, and $f(1) = 1$.
+      specialize h3 (f 1)
+      rw [h3] at h3
+      ring_nf at h3
+      rw [h1] at h3
+      ring_nf at h3
+      linarith
+    -- Finally, we get $f(z) = 2z$ for all $z$.
+    simp [h4] at h3
+    -- We check that, for all $a, b$, $f(2a) + 2f(b) = 2(2a) + 2(2b) = 4a + 4b = f(f(a + b)) = f(2(a + b)) = 2(2(a + b)) = 4a + 4b$.
+    exact h3
+
+  · -- Now, we prove that, if $f(z) = 0$ for all $z$ or there exists a $c$ such that, for all $z$, $f(z) = 2z + c$, then it satisfies the functional equation.
+    -- We do the disjunction twice.
+
+    rcases h with h | h
+    · -- If $f(z) = 0$ for all $z$, it is straightforward that $f(2a) + 2f(b) = f(f(a + b))$.
+      simp [h]
+    · -- Now, we suppose that there exists a $c$ such that, for all $z$, $f(z) = 2z + c$.
+      rcases h with ⟨c, h⟩
+      intro a b
+      -- It is straightforward that $f(2a) + 2f(b) = 2(2a) + c + 2(2b) + c = 4a + 2c + 4b = f(f(a + b)) = 2f(a + b) + c = 2(2(a + b) + c) + c = 4a + 2c + 4b$.
+      rw [h (2 * a), h b, h (a + b)]
+      ring
+
+```

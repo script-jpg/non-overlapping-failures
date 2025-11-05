@@ -1,0 +1,72 @@
+-- The function $f$ has the property that $f(a\cdot b)=f(a)+f(b)$ for all positive rational numbers $a$ and $b$.
+  have hf_mul : ∀ x > 0, ∀ y > 0, f (x * y) = f x + f y := h₀
+
+  -- For every prime number $p$, $f(p)=p$.
+  have hf_primes : ∀ p, Nat.Prime p → f p = p := h₁
+
+  -- We want to show that $f(\frac{25}{11})<0$.
+  show f (25 /. 11) < 0
+
+  -- First, I need to express $\frac{25}{11}$ as a product of positive rational numbers.
+  have h25_11 : (25 : ℚ) / 11 = (5 : ℚ) * (5 : ℚ) * (1 / 11) := by norm_num
+
+  rw [h25_11]
+
+  -- Using the multiplicative property of $f$, I can write $f(\frac{25}{11})$ as a sum of $f(5)$, $f(5)$, and $f(\frac{1}{11})$.
+  have h_f25_11 : f (5 : ℚ) + f (5 : ℚ) + f (1 / 11 : ℚ) < 0 := by
+
+    -- From the multiplicative property, I get $f(\frac{25}{11}) = f(5) + f(5) + f(\frac{1}{11})$.
+    have h_f25_11 : f (5 : ℚ) + f (5 : ℚ) + f (1 / 11 : ℚ) = f (25 /. 11) := by
+      calc
+        f (5 : ℚ) + f (5 : ℚ) + f (1 / 11 : ℚ) = f ((5 : ℚ) * (5 : ℚ) * (1 / 11)) := by
+          rw [hf_mul (5 : ℚ) (by norm_num) (5 : ℚ) (by norm_num), hf_mul (5 : ℚ) (by norm_num) (1 / 11 : ℚ) (by norm_num)]
+          norm_num
+        _ = f (25 /. 11) := by norm_num
+
+    rw [←h_f25_11]
+
+    -- I need to show that $f(5) + f(5) + f(\frac{1}{11}) < 0$.
+    -- Using the property of $f$ on prime numbers, I know $f(5) = 5$.
+    have h5 : f (5 : ℚ) = 5 := by
+      have h5' : f (5 : ℚ) = f (5 : ℕ) := by
+        norm_cast
+      have h5'' : f (5 : ℕ) = 5 := by
+        have h5 : Nat.Prime 5 := by norm_num
+        exact hf_primes 5 h5
+      rw [h5', h5'']
+
+    rw [h5]
+
+    -- Now I need to find $f(\frac{1}{11})$.
+    have h11 : f (1 / 11 : ℚ) = - f (11 : ℚ) := by
+      have h11' : f (1 / 11 : ℚ) + f (11 : ℚ) = f (1 : ℚ) := by
+        rw [hf_mul (1 / 11 : ℚ) (by norm_num) (11 : ℚ) (by norm_num)]
+        norm_num
+      have h11'' : f (1 : ℚ) = 0 := by
+        have h1 : f (1 : ℚ) = f (1 : ℕ) := by
+          norm_cast
+        have h1' : f (1 : ℕ) = 1 := by
+          have h1 : Nat.Prime 1 := by
+            norm_num
+          exact hf_primes 1 h1
+        rw [h1, h1']
+      linarith
+
+    rw [h11]
+
+    -- Using the property of $f$ on prime numbers, I know $f(11) = 11$.
+    have h11 : f (11 : ℚ) = 11 := by
+      have h11' : f (11 : ℚ) = f (11 : ℕ) := by
+        norm_cast
+      have h11'' : f (11 : ℕ) = 11 := by
+        have h11 : Nat.Prime 11 := by norm_num
+        exact hf_primes 11 h11
+      rw [h11', h11'']
+
+    rw [h11]
+
+    -- So now I have $f(\frac{25}{11}) = 5 + 5 - 11 = -1 < 0$.
+    linarith
+
+  linarith
+```

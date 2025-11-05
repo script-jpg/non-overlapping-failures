@@ -1,0 +1,42 @@
+have step₁ : S.card = 5 := by
+    have h₁ : S = {0, Real.pi / 2, Real.pi, (3 * Real.pi) / 2, 2 * Real.pi} := by
+      ext x
+      simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+      constructor
+      · intro h
+        have h₂ : 0 ≤ x := h.1
+        have h₃ : x ≤ 2 * Real.pi := h.2.1
+        have h₄ : Real.tan (2 * x) = Real.cos (x / 2) := h.2.2
+        have h₅ : Real.cos (x / 2) ≥ -1 := Real.neg_one_le_cos (x / 2)
+        have h₆ : Real.tan (2 * x) = Real.sin (2 * x) / Real.cos (2 * x) := by simp [Real.tan_eq_sin_div_cos]
+        rw [h₆] at h₄
+        have h₇ : Real.cos (2 * x) = 2 * Real.cos (x) ^ 2 - 1 := by rw [Real.cos_two_mul]
+        have h₈ : Real.sin (2 * x) = 2 * Real.sin (x) * Real.cos (x) := by rw [Real.sin_two_mul]
+        rw [h₇, h₈] at h₄
+        have h₉ : Real.cos (x / 2) = Real.cos (x / 2) := by rfl
+        have h₁₀ : Real.cos (x / 2) ^ 2 = (1 + Real.cos x) / 2 := by
+          have := Real.cos_sq (x / 2)
+          ring_nf at * <;> nlinarith [Real.cos_sq_add_sin_sq x]
+        have h₁₁ : Real.sin (x / 2) ^ 2 = (1 - Real.cos x) / 2 := by
+          have := Real.sin_sq (x / 2)
+          ring_nf at * <;> nlinarith [Real.cos_sq_add_sin_sq x]
+        have h₁₂ : x = 0 ∨ x = Real.pi / 2 ∨ x = Real.pi ∨ x = (3 * Real.pi) / 2 ∨ x = 2 * Real.pi := by
+          have h₁₃ : Real.cos x = 0 ∨ Real.cos x = 1 ∨ Real.cos x = -1 := by
+            apply or_iff_not_imp_left.mpr
+            intro h₁₄
+            apply or_iff_not_imp_left.mpr
+            intro h₁₅
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₄)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₅)
+            nlinarith [sq_nonneg (Real.cos x + 1), sq_nonneg (Real.cos x - 1),
+              Real.sin_sq x, Real.cos_sq x, sq_nonneg (Real.sin x), sq_nonneg (Real.cos x - 1 / 2),
+              sq_nonneg (Real.cos x + 1 / 2), sq_nonneg (Real.sin x - Real.cos x),
+              sq_nonneg (Real.sin x + Real.cos x)]
+          rcases h₁₃ with (h₁₄ | h₁₄ | h₁₄) <;>
+          (try {
+            have h₁₅ : x = 0 ∨ x = Real.pi := by
+              apply or_iff_not_imp_left.mpr
+              intro h₁₆
+              apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₆)
+              nlinarith [Real.tan_eq_sin_div_cos (2 * x), Real.sin_two_mul x, Real.cos_two_mul x,
+                Real.sin_sq_add_cos_

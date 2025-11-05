@@ -1,0 +1,61 @@
+-- some auxilary inequalities
+  have h₄ : 0 < a ^ 2 := by nlinarith
+  have h₅ : 0 < Int.floor (a ^ 2) := by
+    have : 0 ≤ Int.floor (a ^ 2) := by exact Int.floor_nonneg.mpr (by nlinarith)
+    by_contra h
+    simp at h
+    have := @Int.floor_lt (a ^ 2) (by exact h₅)
+    linarith
+  have h₆ : 0 < Int.floor (1 / a) := by
+    have : 0 ≤ Int.floor (1 / a) := by exact Int.floor_nonneg.mpr (by positivity)
+    by_contra h
+    simp at h
+    have := @Int.floor_lt (1 / a) (by exact h₆)
+    linarith
+  have h₇ : 1 / a < 1 := by
+    have : 1 / a < 1 / 0 := by linarith
+    linarith
+  -- $a^2$ is in $(2,3)$ and $a^{-1}$ is in $(0,1)$
+  rw [Int.floor_eq_iff] at h₁
+  rcases h₁ with ⟨h₁,h₁'⟩
+  have h₈ : a ^ 2 - 2 = 1 / a := by linarith
+  -- we have $a * a^{-1} = 1$ and `h₈` says $a^3-2a^2 = 1$
+  have h₉ : a * (1 / a) = 1 := by field_simp
+  have h₁₀ : a ^ 3 - 2 * a ^ 2 - 1 = 0 := by
+    apply_fun (· * a) at h₈
+    linarith
+  -- we have $(a-1)(a^2-a-1)=0$ and because of $a>0$ we have $a^2-a-1=0$
+  have h₁₁ : (a - 1) * (a ^ 2 - a - 1) = 0 := by
+    ring_nf
+    linarith
+  have h₁₂ : a ^ 2 - a - 1 = 0 := by
+    cases (mul_eq_zero.mp h₁₁) with
+    | inl h => linarith
+    | inr h => linarith
+  -- by solving quadratic equation $a^2-a-1=0$ we have $a = \frac{1+\sqrt{5}}{2}$ or $a = \frac{1-\sqrt{5}}{2}$, but only the first case is valid due to $a>0$
+  have h₁₃ : a = (1 + √5) / 2 ∨ a = (1 - √5) / 2 := by
+    have h : a ^ 2 - a - 1 = (a - (1 + √5) / 2) * (a - (1 - √5) / 2) := by
+      field_simp
+      ring_nf
+      rw [Real.sq_sqrt (by norm_num)]
+      ring
+    rw [h] at h₁₂
+    cases (mul_eq_zero.mp h₁₂) with
+    | inl h => left; linarith
+    | inr h => right; linarith
+  have h₁₄ : a = (1 + √5) / 2 := by
+    cases h₁₃ with
+    | inl h => exact h
+    | inr h =>
+      have h₁₅ : a < 0 := by
+        rw [h]
+        linarith
+      linarith
+  -- we have $\langle a^{-1}\rangle=\langle a^2\rangle$ and $a^2-a-1=0$ so we can compute $a^{12}-144a^{-1}$
+  have h₁₆ : a ^ 12 - 144 * (1 / a) = 233 := by
+    rw [h₁₄]
+    field_simp
+    ring_nf
+    nlinarith
+  exact h₁₆
+```

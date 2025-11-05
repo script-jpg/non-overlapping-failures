@@ -1,0 +1,85 @@
+-- We can observe that the fraction can be simplified to:
+  have h₂ : (1 /. 2 + 1 /. 3 + 1 /. 7 + 1 /. ↑n) = 41 /. 42 + 1 /. ↑n := by norm_num
+
+  -- its integral if and only if 1/n is of the form k/42 for some integer k.
+  have h₃ : (41 /. 42 + 1 /. ↑n).den = 1 ↔ 1 /. ↑n = (↑k) /. 42 for some integer k := by
+    constructor
+    · intro h
+      have h₄ : (41 /. 42 + 1 /. ↑n).den = 1 := by assumption
+      have h₅ : (41 /. 42).den = 42 := by norm_num
+      have h₆ : (41 /. 42).num = 41 := by norm_num
+      have h₇ : (1 /. ↑n).den = ↑n := by norm_num
+      have h₈ : (1 /. ↑n).num = 1 := by norm_num
+      rw [←Rat.num_add_den h₄] at h₅ h₆
+      rw [Rat.num_add_den h₅ h₆] at h₄
+      rw [Rat.num_add_den h₇ h₈] at h₄
+      have h₉ : (↑k : ℚ) = (↑k : ℤ) := by norm_cast
+      rw [h₉, ← Rat.num_div_den h₄] at h₅
+      have : (↑k : ℤ).den = 1 := by
+        rw [← h₅]
+        apply Rat.den_den
+      have : (↑k : ℤ) = (↑k : ℚ) := by norm_cast
+      rw [this] at h₅
+      exact h₅
+    · intro h
+      have h₅ : 1 /. ↑n = (↑k) / 42 := by assumption
+      have h₆ : (1 /. ↑n).num = 1 := by norm_num
+      have h₇ : (1 /. ↑n).den = ↑n := by norm_num
+      rw [h₅] at h₆ h₇
+      have h₈ : (↑k : ℚ).den = 1 := by
+        rw [← h₆, h₇]
+        apply Rat.den_den
+      have : (↑k : ℤ) = (↑k : ℚ) := by norm_cast
+      rw [this] at h₈
+      have h₉ : (↑k : ℤ).den = 1 := by
+        rw [h₈]
+        rfl
+      have : (↑k : ℤ) = k := by
+        rw [h₉]
+        rfl
+      rw [this] at h₅
+      exact h₅
+
+  rw [h₂] at h₁
+  rw [h₃] at h₁
+  obtain ⟨k, h₁⟩ := h₁
+  have h₄ : k ≥ 0 := by
+    by_contra!
+    have : (↑k : ℚ) < 0 := by
+      apply Rat.lt_of_pow_lt (by norm_num : 2 ≠ 0)
+      calc
+        (↑k : ℚ) ^ 2 < (0 : ℚ) ^ 2 := by apply pow_lt_pow_left; assumption; norm_num
+        _ = 0 := by norm_num
+    rw [h₁] at this
+    have : (1 : ℚ) < 0 := by
+      calc
+        (1 : ℚ) = 41 / 42 + 1 / ↑n := by rw [h₁]
+        _ < 0 := by linarith
+    norm_num at this
+  have h₅ : k ≤ 41 := by
+    by_contra!
+    rw [not_le] at this
+    have : (41 : ℚ) < (↑k : ℚ) := by
+      apply Rat.lt_of_pow_lt (by norm_num : 2 ≠ 0)
+      calc
+        (41 : ℚ) = 41 / 42 + 1 := by norm_num
+        _ < 41 / 42 + 1 / ↑n := by linarith
+        _ = (↑k : ℚ) := by rw [h₁]
+    rw [h₁] at this
+    have : (0 : ℚ) < 0 := by
+      calc
+        (0 : ℚ) = 1 - 41 / 42 := by norm_num
+        _ < 1 - 1 / ↑n := by linarith
+        _ = (↑k : ℚ) - 41 / 42 := by rw [h₁]
+        _ < 0 := by assumption
+    norm_num at this
+  have h₆ : k ≤ 42 := by exact Nat.le_add_one_of_lt h₅
+  interval_cases k
+  -- When k = 0, we get n = 42, this satisfies all of (A) - (D) but not (E).
+  -- When k = 42, we get n = 42, this satisfies all of (A) - (D) but not (E).
+  -- All other values of k give n < 42, and so do not satisfy (A).
+  all_goals norm_num at h₁
+  all_goals omega
+  all_goals norm_num at h₁
+  all_goals omega
+```

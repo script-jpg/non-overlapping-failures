@@ -1,0 +1,101 @@
+-- it is enough to show that the sequence is strictly increasing and bounded by 1
+  suffices ∃! a, ∀ n, 0 < n → f n a < f (n + 1) a ∧ f (n + 1) a < 1 by
+    obtain ⟨a, ⟨ha₁, ha₂⟩⟩ := this
+    use a
+    use ha₁
+    apply le_of_lt
+    apply ha₂
+  -- we show that the sequence is determined by its second term
+  suffices ∃! b : ℝ, 0 < b ∧ b < b * (b + 1) ∧ b * (b + 1) < 1 by
+    obtain ⟨b, ⟨hb₁, hb₂⟩⟩ := this
+    use b
+    apply le_of_lt
+    apply hb₁
+    apply le_of_lt
+    specialize h₁ b 1
+    simp only [one_add_one, Nat.ofNat_pos, zero_lt_one, true_and] at hb₂
+    rw [h₁]
+    rw [mul_assoc]
+    apply hb₂
+  -- we show that the set is nonempty by calculating the third term
+  suffices ∃ b : ℝ, 0 < b ∧ b < b * (b + 1) ∧ b * (b + 1) < 1 by
+    apply this
+    apply le_of_lt
+    apply lt_of_lt_of_le (b * (b + 1))
+    calc
+      0 = 0 * (1 : ℝ) := by simp
+      _ < b * (b + 1) := by assumption
+  -- we show that the set is bounded
+  suffices b * (b + 1) < 1 → b < 1 by
+    apply this
+    intro hb
+    have hb' : b * (b + 1) < 1 := by assumption
+    nlinarith
+  -- we show that the set is nonempty
+  suffices 0 < √ 2 - 1 ∧ (√ 2 - 1) < (√ 2 - 1) * ((√ 2 - 1) + 1) ∧ (√ 2 - 1) * ((√ 2 - 1) + 1) < 1 by
+    obtain ⟨b, ⟨hb₁, hb₂⟩⟩ := this
+    use √ 2 - 1
+    constructor
+    · exact hb₁
+    · constructor
+      · exact hb₂
+      · calc
+          (√ 2 - 1) * ((√ 2 - 1) + 1)
+              = (√ 2 - 1) * √ 2 := by rw [add_sub_cancel]
+          _ < 1 := by assumption
+  -- calculate the third term
+  constructor
+  · have h2 : (1 : ℝ) < √ 2 := by
+      apply (Real.lt_sqrt (by linarith)).mpr
+      linarith
+    constructor
+    · calc
+        0 < 1 := by linarith
+        _ < √ 2 := by assumption
+    · constructor
+      · calc
+          √ 2 - 1 < √ 2 := by linarith
+          _ < √ 2 * √ 2 := by apply Real.lt_mul_of_pos_right; linarith; linarith
+          _ = 2 := by norm_num
+          _ = 2 - 1 := by norm_num
+          _ = √ 2 - 1 + (√ 2 - 1) := by ring
+      · calc
+          (√ 2 - 1) * ((√ 2 - 1) + 1)
+              = (√ 2 - 1) * √ 2 := by rw [add_sub_cancel]
+          _ < √ 2 * √ 2 := by apply mul_lt_mul_of_nonneg; apply Real.sqrt_nonneg; linarith; linarith; norm_num
+          _ = 2 := by norm_num
+          _ = 1 + 1 := by norm_num
+          _ < 1 + (√ 2 - 1) := by linarith
+          _ = √ 2 - 1 + 1 + 1 := by ring
+          _ = √ 2 - 1 + 2 := by ring
+          _ < √ 2 - 1 + 1 := by linarith
+  -- prove that the value is unique
+  intro b ⟨hb₁, hb₂⟩
+  intro c ⟨hc₁, hc₂⟩
+  -- prove that $b < c$
+  have hbc : b < c := by linarith
+  trans √ 2 - 1
+  · -- prove that $b < \sqrt{2} - 1$
+    calc
+      b < b * (b + 1) := by assumption
+      _ < b * (c + 1) := by apply mul_lt_mul_of_pos_left; assumption; linarith
+      _ = b * c + b := by ring
+      _ < c * c + b := by apply add_lt_add_left; assumption
+      _ = c + b := by ring
+      _ < c := by linarith
+  · -- prove that $c < \sqrt{2} - 1$
+    calc
+      c < c * (c + 1) := by assumption
+      _ = c * c + c := by ring
+      _ < c * (c + 1) + c := by linarith
+      _ = c * c + 2 * c := by ring
+      _ < c * c + b + c := by linarith
+      _ = c * c + c + b := by ring
+      _ = c * (c + 1) + b := by ring
+      _ < b * (c + 1) + b := by apply add_lt_add_left; assumption
+      _ = b * c + b + b := by ring
+      _ < b * (b + 1) + b := by apply add_lt_add_right; apply mul_lt_mul_of_pos_left; assumption; linarith
+      _ = b + b := by ring
+      _ < b + c := by linarith
+      _ = c := by linarith
+```

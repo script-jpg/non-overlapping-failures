@@ -1,0 +1,74 @@
+-- First, note that $f(1) = 0$ must hold, since $f(1 \cdot 1) = f(1) + f(1)$ implies $f(1) = 0$.
+  have h_f1 : f 1 = 0 := by
+    specialize h₀ 1 1 (by norm_num) (by norm_num)
+    simp at h₀
+    linarith
+
+  -- Next, we note that $f$ behaves like a logarithm function on prime numbers.
+  have h_f_prime (p : ℕ) (hp : Nat.Prime p) : f p = logb p p := by
+    specialize h₁ p hp
+    rw [h₁]
+    rw [logb_self_eq_one (by norm_cast; exact Nat.Prime.ne_zero hp)] at *
+    linarith
+
+  -- On composites, we can show by induction that $f(x) = k \cdot f(x_1)$ where $x = k \cdot x_1$.
+  have h_f_comp (k r : ℕ) (hk : k > 0) (hr : r > 0) (hrk : r < k) : f (k * r) = (f k) * r := by
+    induction r with
+    | zero => linarith
+    | succ r ih =>
+      by_cases hk' : k = 1
+      · rw [hk']
+        simp
+      · have : k * r < k * (r + 1) := by simp; linarith
+        specialize h₀ (k * r) k (by positivity) (by positivity)
+        rw [show k * (r + 1) = k * r + k by ring] at h₀
+        rw [ih] at h₀
+        rw [mul_add, h₀]
+        rw [hk', h_f1] at *
+        simp at *
+        linarith
+
+  -- Moreover, we can show that on fractions, $f(\frac{p}{q}) = f(p) - f(q)$.
+  have h_f_frac (p q : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p < q) : f (p / q) = f p - f q := by
+    rw [div_eq_mul_inv, h₀, h_f1]
+    rw [inv_inv]
+    have : q * q⁻¹ = 1 := by exact CommGroupWithZero.mul_inv_cancel q
+    rw [this]
+    simp
+    rw [hp, h_f_prime, h_f_prime, hq, h_f_prime]
+    linarith
+
+  -- We can generalize the previous result to rational numbers.
+  have h_f_frac' (p q : ℕ) (hp : p.Coprime q) (hq : Nat.Prime q) : f (p / q) = f p - f q := by
+    apply h_f_frac
+    · exact Nat.coprime_of_lt_prime hp (by linarith)
+    · exact hq
+    · exact Nat.coprime_of_lt_prime hq (by linarith)
+
+  -- We can even generalize it to any rational numbers using the multiplicative property.
+  have h_f_rat (x : ℚ) (hx : x > 0) : f x = (∑ p ∈ x.primeFactors, x.factorization p * f p) - (∑ p ∈ x.primeFactors, x.factorization p * f (p ^ x.factorization p)) := by
+    rw [rpow_natCast, Real.tsum_natCast]
+    rw [←irreducibleFactors_mul]
+    rw [h₀, ←Real.tsum_natCast, ←Real.tsum_mul_natCast]
+    rw [factors_mul, Nat.factorization_mul hx.ne.symm]
+    rw [Nat.factorization_mul hx.ne.symm]
+    rw [Nat.Prime.factorization]
+    rw [Nat.Prime.factorization]
+    simp
+    linarith
+
+  -- Now we can compute each of the numbers.
+  have : (25 : ℚ) / 11 = 5 * (5 / 11) := by norm_num
+  rw [this, h_f_rat] at *
+  have : (11 : ℚ) / 11 = 1 := by norm_num
+  rw [this, h_f_rat] at *
+  clear * - h_f1 h_f_prime h_f_comp
+  norm_num
+  have : f 89 = 1 := by
+    specialize h₁ 89 (by norm_num)
+    rw [h₁]
+    have : 11 * 11 = 121 := by norm_num
+    rw [this] at *
+    linarith
+  linarith
+```

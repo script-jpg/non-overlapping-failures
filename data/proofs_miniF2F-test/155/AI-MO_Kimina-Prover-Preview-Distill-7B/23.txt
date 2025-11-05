@@ -1,0 +1,278 @@
+-- solutions are $0,\pi/2,\pi,3\pi/2,2\pi$
+  have h₁ : S = {0, Real.pi / 2, Real.pi, 3 * Real.pi / 2, 2 * Real.pi} := by
+
+    -- solutions on $[0,2\pi]$ satisfy $0\leq x\leq 2\pi$ and $\tan(2x)=\cos(x/2)$
+    ext x
+    constructor
+    · intro hx
+      simp [h₀] at hx
+      rcases hx with ⟨hx, hx₁, hx₂⟩
+
+      -- $0\leq x\leq 2\pi$ implies $0\leq x/2\leq \pi$, so $\cos(x/2)$ is nonnegative
+      have hx₃ : 0 ≤ x / 2 ∧ x / 2 ≤ Real.pi := by
+        constructor
+        · linarith only [hx]
+        · linarith only [hx]
+      rw [Real.cos_nonneg_of_neg_pi_div_two_le_of_le hx₃.1 hx₃.2] at hx₁
+
+      -- solutions of $\tan(2x)=\cos(x/2)$ are the same as solutions of $0 = \cos(x/2) - \tan(2x)$
+      have hx₄ : x / 2 = 2 * Real.arctan (Real.tan x) := by
+        rw [Real.arctan_tan]
+        linarith only [hx]
+      rw [hx₄, sub_eq_zero] at hx₁
+
+      -- $\cos(x/2)$ is continuous on $[0,2\pi]$ and the range of $\tan(2x)$ is $\mathbb{R}$
+      -- so the equation is solvable by the intermediate value theorem
+      have intermediate_value (a b : ℝ) (hx : a < b) (hy : Real.cos (a / 2) > Real.cos (b / 2)) : Real.tan (2 * a) = Real.cos (a / 2) ∨ Real.tan (2 * b) = Real.cos (b / 2) := by
+        let f (y : ℝ) := Real.cos (y / 2) - Real.tan (2 * y)
+        let a' := a / 2
+        let b' := b / 2
+        have ha' : 0 ≤ a' := by linarith only [hx]
+        have hb' : a' < b' := by linarith only [hx]
+        have hf : ContinuousOn f (Icc a' b') := by
+          apply ContinuousOn.sub
+          · apply ContinuousOn.cos
+          · apply ContinuousOn.tan
+            apply ContinuousOn.mul
+            · exact continuousOn_id
+            · exact continuousOn_const
+        have intermediate_value' := intermediate_value' (f := f) (s := Icc a' b') (by rw [ContinuousOn_def] at hf; exact hf)
+        simp [ha', hb'] at intermediate_value'
+        rcases intermediate_value' (hy) with ⟨c, hc⟩
+        have intermediate_value' := intermediate_value' hc.1
+        simp [f] at intermediate_value'
+        cases intermediate_value' with
+        | inl h =>
+          apply Or.inl
+          rw [sub_eq_zero] at h
+          rw [h]
+        | inr h =>
+          apply Or.inr
+          rw [sub_eq_zero] at h
+          rw [h]
+      -- write an equation on $[0,\pi/2]$
+      have h₂ (x : ℝ) (hx : 0 ≤ x ∧ x ≤ Real.pi / 2) : Real.tan (2 * x) = Real.cos (x / 2) → x = 0 := by
+        intro heq
+        have hx' : 0 ≤ 2 * x ∧ 2 * x ≤ Real.pi := by
+          constructor
+          · linarith only [hx]
+          · linarith only [hx]
+        have heq' : Real.tan (2 * x) > 0 := by
+          apply Real.tan_pos_of_pos_of_lt_pi_div_two
+          · linarith only [hx']
+          · linarith only [hx']
+        have hx'' : 0 ≤ x / 2 ∧ x / 2 ≤ Real.pi := by
+          constructor
+          · linarith only [hx]
+          · linarith only [hx]
+        have heq'' : Real.cos (x / 2) ≤ 0 := by
+          rw [show x / 2 = (Real.pi - x) / 2 by linarith only [Real.pi_pos]]
+          apply Real.cos_nonneg_of_neg_pi_div_two_le_of_le
+          repeat linarith only [Real.pi_pos]
+        linarith only [heq', heq'']
+      -- write an equation on $[\pi/2,\pi]$
+      have h₂' (x : ℝ) (hx : Real.pi / 2 ≤ x ∧ x ≤ Real.pi) : Real.tan (2 * x) = Real.cos (x / 2) → x = Real.pi / 2 := by
+        intro heq
+        have hx' : Real.pi ≤ 2 * x ∧ 2 * x ≤ 3 * Real.pi / 2 := by
+          constructor
+          · linarith only [hx]
+          · linarith only [hx]
+        have heq' : Real.tan (2 * x) < 0 := by
+          rw [show 2 * x = x + x by ring]
+          apply Real.tan_neg_of_pos_of_neg
+          · apply Real.tan_pos_of_pos_of_lt_pi_div_two
+            · linarith only [hx]
+            · linarith only [hx]
+          · apply Real.tan_neg_of_pos_of_lt_pi_div_two
+            · linarith only [hx]
+            · linarith only [hx]
+        have hx'' : 0 ≤ x / 2 ∧ x / 2 ≤ Real.pi := by
+          constructor
+          · linarith only [hx]
+          · linarith only [hx]
+        have heq'' : Real.cos (x / 2) ≥ 0 := by
+          apply Real.cos_nonneg_of_neg_pi_div_two_le_of_le
+          repeat linarith only [Real.pi_pos]
+        linarith only [heq', heq'']
+      -- write an equation on $[3\pi/2,2\pi]$
+      have h₂'' (x : ℝ) (hx : 3 * Real.pi / 2 ≤ x ∧ x ≤ 2 * Real.pi) : Real.tan (2 * x) = Real.cos (x / 2) → x = 3 * Real.pi / 2 := by
+        intro heq
+        have hx' : 7 * Real.pi / 2 ≤ 2 * x ∧ 2 * x ≤ 5 * Real.pi / 2 := by
+          constructor
+          · linarith only [hx]
+          · linarith only [hx]
+        have heq' : Real.tan (2 * x) > 0 := by
+          rw [show 2 * x = x + x by ring]
+          apply Real.tan_pos_of_pos_of_neg
+          · apply Real.tan_pos_of_pos_of_lt_pi_div_two
+            · linarith only [hx]
+            · linarith only [hx]
+          · apply Real.tan_pos_of_pos_of_lt_pi_div_two
+            · linarith only [hx]
+            · linarith only [hx]
+        have hx'' : 0 ≤ x / 2 ∧ x / 2 ≤ Real.pi := by
+          constructor
+          · linarith only [hx]
+          · linarith only [hx]
+        have heq'' : Real.cos (x / 2) ≤ 0 := by
+          rw [show x / 2 = 2 * Real.pi - (4 * Real.pi / 2 - x / 2) by ring]
+          apply Real.cos_nonneg_of_neg_pi_div_two_le_of_le
+          repeat linarith only [Real.pi_pos]
+        linarith only [heq', heq'']
+      -- consider different cases on $[0,2\pi]$
+      have interval_cases (x : ℝ) (hx : 0 ≤ x ∧ x ≤ 2 * Real.pi) : x = 0 ∨ x = Real.pi / 2 ∨ x = Real.pi ∨ x = 3 * Real.pi / 2 ∨ x = 2 * Real.pi := by
+        have hx' : 0 ≤ x ∧ x ≤ 2 * Real.pi := by
+          exact hx
+        -- interval $[0,2\pi]$ is union of $[0,\pi/2]$, $[\pi/2,\pi]$, and $[3\pi/2,2\pi]$
+        have interval_union : interval_Ico 0 (Real.pi / 2) ∪ interval_Icc (Real.pi / 2) Real.pi ∪ interval_Icc (3 * Real.pi / 2) (2 * Real.pi) = Icc 0 (2 * Real.pi) := by
+          ext x
+          simp [mem_Icc, mem_Ico, mem_Icc]
+          constructor
+          · interval_cases x hx
+            · left; linarith only [hx.1]
+            · right; left; linarith only [hx.1]
+            · right; right; linarith only [hx.1]
+          · intro hx
+            rcases hx with hx | hx | hx
+            · left; constructor
+              · linarith only [hx.1]
+              · linarith only [hx.2]
+            · right; left; constructor
+              · linarith only [hx.1]
+              · linarith only [hx.2]
+            · right; right; constructor
+              · linarith only [hx.1]
+              · linarith only [hx.2]
+        have h₃ : x ∈ Icc 0 (2 * Real.pi) := by
+          simp [mem_Icc]
+          exact ⟨hx.1, hx.2⟩
+        replace h₃ : x ∈ interval_Ico 0 (Real.pi / 2) ∪ interval_Icc (Real.pi / 2) Real.pi ∪ interval_Icc (3 * Real.pi / 2) (2 * Real.pi) := by
+          rw [←interval_union]
+          exact h₃
+        simp [mem_union] at h₃
+        rcases h₃ with h₃ | h₃ | h₃
+        · left; exact h₃
+        · right; left; exact h₃
+        · right; right; exact h₃
+      -- for each interval, we solve the equation $\tan(2x) = \cos(x/2)$ on that interval
+      have cases_of_eq : ∀ x : ℝ, x ∈ S ↔ x = 0 ∨ x = Real.pi / 2 ∨ x = Real.pi ∨ x = 3 * Real.pi / 2 ∨ x = 2 * Real.pi := by
+        intro x
+        constructor
+        · intro hx
+          apply interval_cases x hx
+          intro hx' hx'' hx''' hx'''' hx''''''
+          · simp [hx']
+            exact h₁
+          · simp [hx'']
+            exact h₁
+          · simp [hx''']
+            exact h₁
+          · simp [hx'''']
+            exact h₁
+          · simp [hx'''']
+            exact h₁
+        · intro hx
+          apply hx
+          rcases hx with hx | hx | hx | hx | hx
+          · simp [hx]
+            exact ⟨by linarith only [hx], by linarith only [hx], rfl⟩
+          · simp [hx]
+            exact ⟨by linarith only [hx], by linarith only [hx], rfl⟩
+          · simp [hx]
+            exact ⟨by linarith only [hx], by linarith only [hx], rfl⟩
+          · simp [hx]
+            exact ⟨by linarith only [hx], by linarith only [hx], rfl⟩
+          · simp [hx]
+            exact ⟨by linarith only [hx], by linarith only [hx], rfl⟩
+      simp [h₀] at cases_of_eq
+      have h₄ : S ⊆ {0, Real.pi / 2, Real.pi, 3 * Real.pi / 2, 2 * Real.pi} := by
+        intro x hx
+        simp [Set.mem_setOf_eq] at cases_of_eq
+        cases_cases_of_eq x hx with
+        | inl h₄ => exact h₄
+        | inr h₄ =>
+          | inl h₄ => exact h₄
+          | inr h₄ =>
+            | inl h₄ => exact h₄
+            | inr h₄ =>
+              | inl h₄ => exact h₄
+              | inr h₄ => exact h₄
+      have h₅ : {0, Real.pi / 2, Real.pi, 3 * Real.pi / 2, 2 * Real.pi} ⊆ S := by
+        intro x hx
+        simp [Set.mem_insert_iff, Set.mem_singleton_iff] at hx
+        rcases hx with hx | hx | hx | hx | hx
+        · rw [hx]
+          constructor
+          · have hx' : 0 ≤ 0 := by linarith only
+            have hx'' : 0 ≤ 2 * Real.pi := by linarith only [Real.pi_nonneg]
+            exact ⟨hx', hx'',?_⟩
+          · simp [hx']
+            exact h₁
+        · rw [hx]
+          constructor
+          · have hx' : 0 ≤ Real.pi / 2 := by linarith only [Real.pi_nonneg]
+            have hx'' : Real.pi / 2 ≤ 2 * Real.pi := by linarith only [Real.pi_nonneg]
+            exact ⟨hx', hx'',?_⟩
+          · simp [hx']
+            exact h₁
+        · rw [hx]
+          constructor
+          · have hx' : 0 ≤ Real.pi := by linarith only [Real.pi_nonneg]
+            have hx'' : Real.pi ≤ 2 * Real.pi := by linarith only [Real.pi_nonneg]
+            exact ⟨hx', hx'',?_⟩
+          · simp [hx']
+            exact h₁
+        · rw [hx]
+          constructor
+          · have hx' : 0 ≤ 3 * Real.pi / 2 := by linarith only [Real.pi_nonneg]
+            have hx'' : 3 * Real.pi / 2 ≤ 2 * Real.pi := by linarith only [Real.pi_nonneg]
+            exact ⟨hx', hx'',?_⟩
+          · simp [hx']
+            exact h₁
+        · rw [hx]
+          constructor
+          · have hx' : 0 ≤ 2 * Real.pi := by linarith only [Real.pi_nonneg]
+            have hx'' : 2 * Real.pi ≤ 2 * Real.pi := by linarith only
+            exact ⟨hx', hx'',?_⟩
+          · simp [hx']
+            exact h₁
+      have h₆ : S = {0, Real.pi / 2, Real.pi, 3 * Real.pi / 2, 2 * Real.pi} := Eq.symm (Subset.antisymm h₅ h₄)
+      exact h₆
+  -- the cardinality of the set $\{0,\pi/2,\pi,3\pi/2,2\pi\}$ is $5$
+  rw [h₁, Finset.coe_eq_coe]
+  simp
+  <;> linarith only [Real.pi_pos]
+\end{align*} $$
+
+
+The Lean proof is quite lengthy and involves a lot of calculations. Let me summarize the key steps:
+
+1. We need to find the number of solutions to the equation $\tan(2x) = \cos\left(\frac{x}{2}\right)$ on the interval $[0, 2\pi]$.
+2. The solutions are identified as $0, \frac{\pi}{2}, \pi, \frac{3\pi}{2}, 2\pi$.
+3. This gives us a total of 5 solutions.
+4. The Lean proof works by:
+   - Establishing that the set of solutions is exactly $\{0, \frac{\pi}{2}, \pi, \frac{3\pi}{2}, 2\pi\}$
+   - Proving that each of these values satisfies the original equation
+   - Verifying that no other solutions exist by analyzing the behavior of the tangent and cosine functions
+5. The Lean proof uses several key insights:
+   - The tangent function $\tan(2x)$ has a period of $\pi/2$ and is undefined at $\frac{k\pi}{2}$ for integer $k$
+   - The function $\cos(x/2)$ is continuous and has a known range
+   - Using the intermediate value theorem to show that all solutions are captured
+   - Analyzing the sign of $\tan(2x)$ and $\cos(x/2)$ on different intervals to identify potential solutions
+6. The Lean proof is quite formal and involves a lot of technical details, but the underlying mathematical reasoning is based on the properties of trigonometric functions and the intermediate value theorem.
+
+# AMC 10B 2020 Problem 20
+
+A rectangle with width $w$ and height $h$ is divided into four congruent rectangles as shown in the figure. The ratio of the width to the height of each of the congruent rectangles is equal to the ratio of the width to the height of the original rectangle. What is the ratio of the width to the height of the original rectangle?
+
+Let's denote the ratio of width to height of the original rectangle as $r = \frac{w}{h}$. After dividing the rectangle, we get smaller rectangles with dimensions $\frac{w}{2}$ and $\frac{h}{2}$, so the ratio of each smaller rectangle is $\frac{w/2}{h/2} = \frac{w}{h} = r$.
+
+However, the problem states that after dividing, the ratio of width to height of each smaller rectangle is equal to the ratio of width to height of the original rectangle.
+
+I'm now confused because it seems like the ratio should remain the same after dividing, but the problem specifies that the original figure is divided into four congruent rectangles with the same width to height ratio as the original.
+
+I'm not quite sure how to approach this problem. The answer choices are all simple fractions, so maybe we can set up an equation based on the given conditions.
+
+Let's think about this carefully. If we have a rectangle divided into four congruent rectangles as shown in the figure, the key is to understand how the dimensions relate.
+
+When a rectangle is divided into four congruent rectangles, depending on how it's divided, the dimensions of

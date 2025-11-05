@@ -1,0 +1,83 @@
+obtain ⟨ha, hb⟩ := h₀
+
+  -- The arithmetic mean of $a$ and $b$ is greater than or equal to their geometric mean.
+  have h2 : (a + b) / 2 - Real.sqrt (a * b) ≥ 0 := by
+    have h2 : (Real.sqrt a - Real.sqrt b) ^ 2 ≥ 0 := sq_nonneg _
+    have h3 : (Real.sqrt a + Real.sqrt b) ^ 2 ≥ 0 := sq_nonneg _
+    have h4 : Real.sqrt (a * b) = Real.sqrt a * Real.sqrt b := by
+      rw [Real.sqrt_eq_iff_mul_eq] <;> try positivity
+      <;> linarith
+    linarith
+
+  -- The final result is proven by showing that the difference between the arithmetic and geometric means is less than or equal to the difference between the quadratic mean of $a$ and $b$ and the arithmetic mean of $a$ and $b$.
+  have h3 : (a + b) / 2 - Real.sqrt (a * b) ≤ (a - b) ^ 2 / (8 * b) := by
+    have h5 : (Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2
+      * (8 * b) / (Real.sqrt a - Real.sqrt b) ^ 2
+      / (Real.sqrt a + Real.sqrt b) ^ 2 / (Real.sqrt a - Real.sqrt b) ^ 2
+      / (Real.sqrt a + Real.sqrt b) ^ 2 ≤ (a - b) ^ 2 := by
+      have h5 : (Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2
+      / (Real.sqrt a - Real.sqrt b) ^ 2
+      / (Real.sqrt a + Real.sqrt b) ^ 2 / (Real.sqrt a - Real.sqrt b) ^ 2
+      / (Real.sqrt a + Real.sqrt b) ^ 2 = (Real.sqrt a - Real.sqrt b) ^ 2
+        / (Real.sqrt a + Real.sqrt b) ^ 2 := by
+        field_simp
+        linarith
+      rw [this]
+      have h6 : (Real.sqrt a - Real.sqrt b) ^ 2 / (Real.sqrt a + Real.sqrt b) ^ 2
+        ≤ (Real.sqrt a - Real.sqrt b) ^ 2 / (Real.sqrt a - Real.sqrt b) ^ 2 := by
+        apply div_le_div_of_nonneg_left
+        · apply sq_nonneg
+        · linarith
+        · apply sq_nonneg
+      have h7 : (Real.sqrt a - Real.sqrt b) ^ 2 / (Real.sqrt a - Real.sqrt b) ^ 2
+        ≤ (a - b) ^ 2 / (Real.sqrt a - Real.sqrt b) ^ 2 := by
+        apply div_le_div_of_nonneg_right
+        · apply sq_nonneg
+        · linarith
+        · linarith
+      trans (Real.sqrt a - Real.sqrt b) ^ 2 / (Real.sqrt a + Real.sqrt b) ^ 2
+        * (Real.sqrt a - Real.sqrt b) ^ 2 / (Real.sqrt a - Real.sqrt b) ^ 2
+        * (Real.sqrt a + Real.sqrt b) ^ 2 / (Real.sqrt a - Real.sqrt b) ^ 2
+        * (Real.sqrt a + Real.sqrt b) ^ 2
+      · rw [mul_comm, mul_div_assoc, mul_div_assoc, mul_div_assoc]
+        apply le_of_eq
+        ring
+      · apply mul_le_mul
+        · apply pow_two_nonneg
+        · apply pow_two_nonneg
+        · linarith
+        · linarith
+      · apply mul_le_mul
+        · apply pow_two_nonneg
+        · apply pow_two_nonneg
+        · linarith
+        · linarith
+    have h6 : (Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2
+      / (Real.sqrt a - Real.sqrt b) ^ 2
+      / (Real.sqrt a + Real.sqrt b) ^ 2 / (Real.sqrt a - Real.sqrt b) ^ 2
+      / (Real.sqrt a + Real.sqrt b) ^ 2
+      = (a - b) ^ 2 / (8 * b) := by
+      field_simp
+      have h7 : (Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2
+        = (Real.sqrt a * Real.sqrt a - Real.sqrt b * Real.sqrt b) ^ 2 := by
+        ring_nf
+        rw [←Real.sq_sqrt, ←Real.sq_sqrt]
+        linarith
+        all_goals positivity
+      rw [h7]
+      rw [←Real.sq_sqrt, ←Real.sq_sqrt]
+      ring_nf
+      field_simp
+      rw [mul_assoc, mul_assoc, ←mul_sub, ←mul_sub]
+      rw [mul_add, mul_add, mul_sub, mul_sub]
+      rw [←pow_two, ←pow_two]
+      ring
+      all_goals positivity
+    rw [h6] at h5
+    apply le_of_mul_le_mul_left h5
+    apply ne_of_gt
+    apply div_pos
+    all_goals linarith
+  exact h3
+
+```

@@ -1,0 +1,64 @@
+-- ht₁ : 10 ∣ n
+  have ht₁ : 10 ∣ n := by
+    have : 10 = Nat.gcd n 40 := by rw [h₁]
+    apply Nat.dvd_gcd
+    · exact Dvd.intro_left (n.gcd 40) rfl
+    · exact Nat.gcd_dvd_right n 40
+
+  -- ht₂ : 280 ∣ n * 40
+  have ht₂ : 280 ∣ n * 40 := by
+    rw [← Nat.gcd_mul_lcm n 40]
+    have : 280 = Nat.lcm n 40 := by rw [h₂]
+    apply Nat.dvd_lcm_left
+    rw [this]
+    exact Nat.gcd_dvd_left n 40
+
+  -- ht₃ : 280 = n * 4 / 10
+  have ht₃ : 280 = n * 4 / 10 := by
+    have : 280 = n * 40 / 10 := by
+      refine Int.natCast_inj.mp?_
+      rw [Int.natCast_sub, Int.natCast_dvd]
+      · rw [ht₂]
+      · norm_num
+    rw [this]
+    ac_rfl
+
+  -- ht₄ : 700 = n * 4
+  have ht₄ : 700 = n * 4 := by
+    have : 700 = 280 * 10 / 4 := by norm_num
+    rw [this, ht₃]
+    omega
+
+  -- show that 70 ∣ n
+  have ht₅ : 70 ∣ n := by
+    have : 700 = 70 * 10 := by norm_num
+    rw [this] at ht₄
+    have : 70 ∣ n * 4 := by
+      exact Nat.dvd_mul_left 70 (n * 4)
+    have : 70 ∣ n := by
+      exact Nat.Coprime.dvd_of_dvd_mul_right (by norm_num) this
+    assumption
+
+  -- ht₆ : ∃ k, n = 70 * k
+  have ht₆ : ∃ k, n = 70 * k := by
+    have : 70 ∣ n := by exact ht₅
+    exact Nat.exists_eq_mul_left_of_dvd this
+
+  -- ht₇ : k = 1
+  have ht₇ : k = 1 := by
+    rcases ht₆ with ⟨k, hk⟩
+    have hk₁ : 70 * k.gcd 40 = 10 := by rw [hk, h₁]
+    simp at hk₁
+    have hk₂ : 70 * k.lcm 40 = 280 := by rw [hk, h₂]
+    simp at hk₂
+    have : 70 * k = 70 * 1 := by
+      calc
+        70 * k = 70 * k.gcd 40 * k.lcm 40 := by rw [mul_assoc, hk₁, hk₂]
+        _ = 10 * 280 := by norm_num
+        _ = 70 * 1 := by norm_num
+    omega
+
+  -- finally, n = 70
+  rcases ht₆ with ⟨k, hk⟩
+  rw [hk, ht₇]
+```

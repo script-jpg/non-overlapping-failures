@@ -1,0 +1,104 @@
+constructor
+
+  -- The answer is $f(z) = 0$ for all $z$ or $f(z) = 2z + c$ for all $z$ where $c$ is a constant.
+
+  · intro hf
+
+    -- We simplify the given condition by setting $a = 0$ and $b = z$.
+
+    have h₁ : ∀ z, f (f z) = f 0 + 2 * f z := by
+      intro z
+      have := hf 0 z
+      simp at this
+      linear_combination this
+
+    -- We show that $f(0) = 0$ by setting $a = b = 0$.
+
+    have h₂ : f 0 = 0 := by
+      have := hf 0 0
+      simp at this
+      linear_combination this
+
+    -- We show that $f(z) = 0$ for all $z$ or $f(z) = 2z + c$ for all $z$ where $c = f(1) - 2$.
+
+    have h₃ : ∀ z, f z = 0 ∨ f z = 2 * z + (f 1 - 2) := by
+      intro z
+      by_cases h : f z = 0
+      · left; exact h
+      · right
+        -- It suffices to show that $f(z) = 2z + (f(1) - 2)$ for all $z$.
+
+        suffices ∀ z, f z = 2 * z + (f 1 - 2) by
+          intro z
+          exact this z
+
+        -- We set $a = z$ and $b = 1$ to get $f(2z) + 2f(1) = f(f(z + 1))$.
+
+        have h₄ : ∀ z, f (2 * z) + 2 * f 1 = f (f (z + 1)) := by
+          intro z
+          have := hf z 1
+          simp at this
+          linear_combination this
+
+        -- We show that $f(2z) = 2f(z)$ for all $z$.
+
+        have h₅ : ∀ z, f (2 * z) = 2 * f z := by
+          intro z
+          by_cases h : z = 0
+          · simp [h, h₂]
+          · have h₆ := h₄ z
+            have h₇ := h₄ (2 * z - 1)
+            simp at h₆ h₇
+            rw [h₇] at h₆
+            rw [h₆]
+            ring
+
+        -- We show that $f(z) = 2f(1)$ for all $z$.
+
+        have h₆ : ∀ z, f z = 2 * f 1 := by
+          intro z
+          by_cases h : z = 0
+          · simp [h, h₂]
+          · rw [(h₅ (2 * z - 1)).symm]
+            simp at h
+            rw [h]
+            ring
+
+        -- We conclude that $f(z) = 2z + (f(1) - 2)$ for all $z$.
+
+        simp_rw [h₆]
+        simp
+        ring
+
+    -- We discard the case $f(z) = 0$ for all $z$.
+
+    have h₄ : ¬∀ z, f z = 0 := by
+      intro h
+      have := h 1
+      have := hf 1 1
+      simp [h] at this
+      linarith only
+
+    simp [h₄] at h₃
+
+    -- We set $c = f(1) - 2$.
+
+    set c := f 1 - 2 with c_eq
+
+    -- We show that $f(z) = 2z + c$ for all $z$.
+
+    ext z
+    exact h₃ z
+
+  · -- We check that the functions $f(z) = 0$ for all $z$ or $f(z) = 2z + c$ for all $z$ where $c$ is a constant satisfy the given condition.
+
+    intro hz a b
+
+    rcases hz (a + b) with (hz | ⟨c, hz⟩)
+
+    · simp [hz]
+
+    · simp [hz]
+      ring
+
+```

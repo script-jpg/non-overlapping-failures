@@ -1,0 +1,174 @@
+-- Auxiliary lemma: if all the numbers in a list are divisors of some natural number $n$,
+  -- then the product of all numbers in the list is a divisor of $n$.
+  have h₀' {L : List ℕ} (h : ∀ l ∈ L, l ∣ n) : ∏ l in L, l ∣ n := by
+    induction' L with l L
+    · simp
+    · rw [List.prod_cons]
+      exact Nat.dvd_trans h l?_
+      exact h l
+
+  -- Auxiliary lemma: the number of appears of a prime number $p$ in $n!$ is exactly
+  -- $\sum_{i \ge 1} \left\lfloor \frac{n}{p^i} \right\rfloor$.
+  have h₁ (p n : ℕ) (hp : 0 < p) : (p ^ n).factorization ∑ i ≥ 1, (n / p ^ i) := by
+    calc
+      (p ^ n).factorization = n.factorization p := by rw [Nat.factorization_prime_pow hp]
+      _ = ∑ i ≥ 1, ∑ k ≥ 1, (n / p ^ i).factorization p := by
+        rw [Nat.Prime.factorization_pow hp, Nat.Prime.factorization]
+        have h : n.factorization p = ∑ i ≥ 1, (n / p ^ i).factorization p := by
+          apply Nat.eq_sum_factorization hp
+          exact Nat.dvd_of_mod_eq_zero rfl
+        exact h
+      _ = ∑ i ≥ 1, (n / p ^ i) := by
+        apply Nat.sum_congr rfl
+        intro i _
+        rw [Nat.factorization_prime_pow hp]
+
+  -- Auxiliary lemma: if two numbers are coprime, then the number of perfect squares
+  -- that divide both of them is exactly the number of perfect squares that divides their product.
+  have h₂ (a b : ℕ) (hab : a.Coprime b) : (Nat.divisors a).filter (fun d => d.isSquare) ≃ (Nat.divisors b).filter (fun d => d.isSquare) := by
+    apply Nat.Coprime.card_divisors_mul hab
+    simp
+
+  -- Let $S$ be the set of perfect squares that divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  -- We want to count the number of elements in $S$.
+  set S := {k | 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i!}
+
+  -- We first prove that $S$ is finite.
+  have h₃ : S.Finite := by
+    simp [S]
+    apply Set.Finite.exists_finset_subset_and_eq
+    use {k | 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i!}
+    simp
+    apply Set.Finite.subset (Finset.finite_toSet _)
+
+  -- We prove that $S$ has $672$ elements.
+  have h₄ : S.card = 672 := by
+    -- We prove that $S$ is the product of the set of numbers that divides one of the factor and
+    -- the set of numbers that divides the product of all the other factors.
+    have h₄ : S = ((Finset.Icc 1 9).prod (fun i => i!)).divisors.filter (fun d => d.isSquare) := by
+      simp [S]
+      rw [Finset.card_filter]
+      h₁
+      (by norm_num)
+      have h₄ : ∏ k ∈ Finset.Icc 1 9, k! ≠ 0 := by
+        simp
+      exact h₄
+    rw [h₄]
+
+    -- We prove that the number of perfect squares that divides a product of numbers is the product
+    -- of the number of perfect squares that divides each of the numbers.
+    have h₅ (n : ℕ) : (Nat.divisors n).filter (fun d => d.isSquare) ≃
+      Nat.divisors (n.factorization 2) × Nat.divisors (n.factorization 3) × Nat.divisors (n.factorization 5) × Nat.divisors (n.factorization 7) := by
+      apply Nat.Coprime.card_divisors_mul
+      apply Nat.Coprime.card_divisors_mul
+      apply Nat.Coprime.card_divisors_mul
+      · intro h₅ h₆
+        exact Nat.Coprime.symm (Nat.coprime_primes h₅ h₆)
+      · intro h₅
+        exact Nat semi-prime_iff_n_pf
+        exact Nat.not_eq_zero_iff_zero_lt.mpr h₅
+      · intro h₅
+        exact Nat semi-prime_iff_n_pf
+        exact Nat.not_eq_zero_iff_zero_lt.mpr h₅
+      · intro h₅
+        exact Nat semi-prime_iff_n_pf
+        exact Nat.not_eq_zero_iff_zero_lt.mpr h₅
+
+    -- We prove that the number of perfect squares that divides the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$
+    -- is equal to the product of the number of perfect squares that divides each of the factor.
+    have h₆ : ((Finset.Icc 1 9).prod (fun i => i!)).divisors.filter (fun d => d.isSquare) ≃
+      Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 2) ×
+      Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 3) ×
+      Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 5) ×
+      Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 7) := by
+      rw [←Finset.prod_filter]
+      apply Finset.prod_congr rfl
+      intro x _ _ _
+      rw [h₅]
+
+    -- We now just need to prove that the product of the number of perfect squares that divides each of the factor
+    -- is equal to $672$.
+    have h₇ : Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 2).card * Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 3).card *
+      Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 5).card * Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 7).card = 672 := by
+      simp
+      have h₁ (p n : ℕ) (hp : 0 < p) : (p ^ n).factorization ∑ i ≥ 1, (n / p ^ i) := by
+        calc
+          (p ^ n).factorization = n.factorization p := by rw [Nat.factorization_prime_pow hp]
+          _ = ∑ i ≥ 1, ∑ k ≥ 1, (n / p ^ i).factorization p := by
+            rw [Nat.Prime.factorization_pow hp, Nat.Prime.factorization]
+            have h : n.factorization p = ∑ i ≥ 1, (n / p ^ i).factorization p := by
+              apply Nat.eq_sum_factorization hp
+              exact Nat.dvd_of_mod_eq_zero rfl
+            exact h
+          _ = ∑ i ≥ 1, (n / p ^ i) := by
+            apply Nat.sum_congr rfl
+            intro i _
+            rw [Nat.factorization_prime_pow hp]
+
+      -- We explicitly compute the number of appears of the prime numbers $2$, $3$, $5$ and $7$ in the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+      have h₈ : Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 2 = 33 := by
+        apply Nat.eq_sum_factorization Nat.prime_two
+        exact Nat.dvd_of_mod_eq_zero rfl
+      have h₉ : Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 3 = 15 := by
+        apply Nat.eq_sum_factorization Nat.prime_three
+        exact Nat.dvd_of_mod_eq_zero rfl
+      have h₁₀ : Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 5 = 6 := by
+        apply Nat.eq_sum_factorization Nat.prime_five
+        exact Nat.dvd_of_mod_eq_zero rfl
+      have h₁₁ : Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 7 = 3 := by
+        apply Nat.eq_sum_factorization Nat.prime_seven
+        exact Nat.dvd_of_mod_eq_zero rfl
+
+      -- Then we compute the number of perfect squares that divides each of the factor.
+      have h₁₂ : Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 2).card = 8 := by
+        rw [h₈]
+        rw [←Nat.factorization_le_iff_dvd (by norm_num)]
+        have h : (Nat.factorization 2).prod (Nat.factorization 3) × (Nat.factorization 5).prod (Nat.factorization 7) = 2 ^ 2 * 3 ^ 2 * 5 ^ 2 * 7 ^ 2 := by
+          simp
+        rw [h]
+        rw [Finset.prod_prime_factorization (Finset.Icc 1 9).filter (fun i => i!)]
+        simp
+      have h₁₃ : Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 3).card = 6 := by
+        rw [h₉]
+        rw [←Nat.factorization_le_iff_dvd (by norm_num)]
+        have h : (Nat.factorization 2).prod (Nat.factorization 3) × (Nat.factorization 5).prod (Nat.factorization 7) = 2 ^ 2 * 3 ^ 2 * 5 ^ 2 * 7 ^ 2 := by
+          simp
+        rw [h]
+        rw [Finset.prod_prime_factorization (Finset.Icc 1 9).filter (fun i => i!)]
+        simp
+      have h₁₄ : Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 5).card = 4 := by
+        rw [h₁₀]
+        rw [←Nat.factorization_le_iff_dvd (by norm_num)]
+        have h : (Nat.factorization 2).prod (Nat.factorization 3) × (Nat.factorization 5).prod (Nat.factorization 7) = 2 ^ 2 * 3 ^ 2 * 5 ^ 2 * 7 ^ 2 := by
+          simp
+        rw [h]
+        rw [Finset.prod_prime_factorization (Finset.Icc 1 9).filter (fun i => i!)]
+        simp
+      have h₁₅ : Nat.divisors (Nat.prod (Finset.Icc 1 9).filter (fun i => i!).factorization 7).card = 3 := by
+        rw [h₁₁]
+        rw [←Nat.factorization_le_iff_dvd (by norm_num)]
+        have h : (Nat.factorization 2).prod (Nat.factorization 3) × (Nat.factorization 5).prod (Nat.factorization 7) = 2 ^ 2 * 3 ^ 2 * 5 ^ 2 * 7 ^ 2 := by
+          simp
+        rw [h]
+        rw [Finset.prod_prime_factorization (Finset.Icc 1 9).filter (fun i => i!)]
+        simp
+
+      -- We just need to substitute all the values that we explicitly compute.
+      rw [h₁₂, h₁₃, h₁₄, h₁₅]
+      simp
+
+    -- We just need to rewrite what we proven before to get the final answer.
+    rw [←h₆, ←Finset.card_eq_coe_toFinsetCard, Nat.card_eq_coe_toFinsetCard]
+    simp
+    rw [Nat.divisors_mul, Nat.divisors_mul, Nat.divisors_mul]
+    · rw [h₇]
+      simp
+    · rfl
+    · rfl
+
+  -- We just need to rewrite the final answer.
+  rw [←h₄]
+  apply Set.ncard_eq_toFinset_card (by exact h₃)
+  simp
+
+```

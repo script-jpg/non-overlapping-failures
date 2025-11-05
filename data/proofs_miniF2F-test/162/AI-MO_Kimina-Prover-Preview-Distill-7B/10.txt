@@ -1,0 +1,29 @@
+-- According to the reference answer, we prove it in two cases: $n=0$ and $n=m+1$.
+  induction n with
+  | zero => contradiction -- since we assume $n>0$
+  | succ m ih =>
+    -- $P(0)$ : $(1+0\cdot x)\leq (1+x)^0$
+    cases m with
+    | zero =>
+      simp
+    -- $P(m+1)$ : $(1+(m+1)\cdot x)\leq (1+x)^{m+1}$.
+    | succ m =>
+      -- We need to use the induction hypothesis $(1+mx)\leq (1+x)^m$.
+      have ih := ih (by linarith)
+      -- Since $x>-1$, $1+x>0$.
+      have hx : 0 < 1 + x := by linarith
+      -- We have $(1+mx)\cdot (1+x) \leq (1+x)^m \cdot (1+x)$.
+      have h := Nat.mul_le_mul_right (1 + x) ih
+      -- The left side is $(1+mx)\cdot (1+x) = 1 + (m+1)x + mx^2$.
+      have : (1 + ↑(m + 1) * x) = (1 + ↑m * x) * (1 + x) -(m * x ^ 2) := by
+        simp [pow_succ]
+        ring
+      -- The right side is $(1+x)^{m+1} = (1+x)^m \cdot (1+x)$.
+      have : (1 + x) ^ (↑(m + 1) : ℕ) = (1 + x) ^ m * (1 + x) := by
+        simp [pow_succ]
+      -- We have $(1+mx)\cdot (1+x) \leq (1+x)^m \cdot (1+x)$.
+      -- Substituting the equalities above into this inequality, we get $1 + (m+1)x + mx^2 \leq (1+x)^{m+1}$.
+      -- Since $mx^2\geq 0$, we get $(1+mx)\leq (1+x)^m \Rightarrow 1 + (m+1)x \leq (1+x)^{m+1}$.
+      linarith
+
+```

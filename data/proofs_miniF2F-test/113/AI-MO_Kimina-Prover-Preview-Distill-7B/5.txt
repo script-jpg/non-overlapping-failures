@@ -1,0 +1,116 @@
+-- The key fact we need is that $\sum_{k=2}^\infty \frac{1}{\sqrt{k}}$ is divergent.
+  -- If we trun off the first $n$ terms, we can approximate the sum by the tail.
+  have h {p : ℕ} (hp : 2 ≤ p) : ∑ k in Finset.Icc 2 p, 1 / Real.sqrt k ≥ 1 / Real.sqrt p := by
+    calc
+      _ ≥ 1 / Real.sqrt p := by
+        apply Finset.sum_le_sum
+        · intro _ _
+          apply le_of_eq
+          rw [Finset.mem_Icc]
+          refine ⟨by norm_num,?_⟩
+          apply Nat.le_self_pow
+          · norm_num
+          · exact hp
+        · simp
+        · simp
+
+  -- So it is enough to prove that $198 - \sum_{k=2}^{10000} \frac{1}{\sqrt{k}} > 0$.
+  suffices 198 - ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k > 0 by linarith
+
+  -- We can split the sum to two parts: $\sum_{k=2}^{5000} \frac{1}{\sqrt{k}}$ and $\sum_{k=5001}^{10000} \frac{1}{\sqrt{k}}$
+  -- And we will approximate them by integrals.
+  have p : 198 - ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k = ∑ k ∈ Finset.Icc 5001 10000, 1 / Real.sqrt k - ∑ k ∈ Finset.Icc 2 5000, 1 / Real.sqrt k := by
+    calc
+      _ = 198 - (∑ k ∈ Finset.Icc 2 5000, 1 / Real.sqrt k + ∑ k ∈ Finset.Icc 5001 10000, 1 / Real.sqrt k) := by ring
+      _ = 198 - ∑ k ∈ Finset.Icc 2 5000, 1 / Real.sqrt k - ∑ k ∈ Finset.Icc 5001 10000, 1 / Real.sqrt k := by ring
+      _ = _ := by
+        rw [Nat.Icc_eq_cons_Ioc, Nat.Icc_eq_cons_Ico]
+        simp
+        congr <;> rfl
+
+  -- We bound the two sums by integrals.
+  -- $\sum_{k=2}^{5000} \frac{1}{\sqrt{k}} < \int_{1}^{5000} \frac{1}{\sqrt{x}} \, dx$
+  have sum_lt_int1 : ∑ k ∈ Finset.Icc 2 5000, 1 / Real.sqrt k < ∫ x in (1 : ℝ)..5000, 1 / Real.sqrt x := by
+    calc
+      _ < ∑ k ∈ Finset.Icc 2 5000, 1 / Real.sqrt (k + 1) := by
+        apply Finset.sum_lt_sum
+        · intro _ _
+          apply div_lt_div_of_pos_right
+          · norm_num
+          · apply Real.sqrt_le_sqrt
+            · norm_num
+            · exact Nat.cast_lt_cast.mpr rfl
+        · simp
+        · simp
+      _ = ∑ k ∈ Finset.Icc 3 5001, 1 / Real.sqrt k := by
+        rw [Finset.sum_Ico_eq_sum_Ioc, Nat.Ico_succ_right, Nat.Icc_eq_cons_Ioc, Nat.Icc_eq_cons_Ico]
+        simp
+        norm_num
+        rfl
+      _ < _ := by
+        apply Finset.sum_lt_sum
+        · intro _ _
+          apply div_lt_div_of_pos_right
+          · apply Real.sqrt_le_sqrt
+            · norm_num
+            · exact Nat.cast_lt_cast.mpr rfl
+          · norm_num
+        · simp
+        · simp
+
+  -- $\sum_{k=5001}^{10000} \frac{1}{\sqrt{k}} < \int_{5000}^{10000} \frac{1}{\sqrt{x}} \, dx$
+  have sum_lt_int2 : ∑ k ∈ Finset.Icc 5001 10000, 1 / Real.sqrt k < ∫ x in (5000 : ℝ)..10000, 1 / Real.sqrt x := by
+    calc
+      _ < ∑ k ∈ Finset.Icc 5001 10000, 1 / Real.sqrt (k + 1) := by
+        apply Finset.sum_lt_sum
+        · intro _ _
+          apply div_lt_div_of_pos_right
+          · apply Real.sqrt_le_sqrt
+            · norm_num
+            · exact Nat.cast_lt_cast.mpr rfl
+          · norm_num
+        · simp
+        · simp
+      _ = ∑ k ∈ Finset.Icc 5002 10001, 1 / Real.sqrt k := by
+        rw [Finset.sum_Ico_eq_sum_Ioc, Nat.Ico_succ_right, Nat.Icc_eq_cons_Ioc, Nat.Icc_eq_cons_Ico]
+        simp
+        norm_num
+        rfl
+      _ < _ := by
+        apply Finset.sum_lt_sum
+        · intro _ _
+          apply div_lt_div_of_pos_right
+          · apply Real.sqrt_le_sqrt
+            · norm_num
+            · exact Nat.cast_lt_cast.mpr rfl
+          · norm_num
+        · simp
+        · simp
+
+  -- So we have $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} < \int_{1}^{10000} \frac{1}{\sqrt{x}} \, dx$
+  have sum_lt_int : ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k < ∫ x in (1 : ℝ)..10000, 1 / Real.sqrt x := by
+    calc
+      _ = ∑ k ∈ Finset.Icc 2 5000, 1 / Real.sqrt k + ∑ k ∈ Finset.Icc 5001 10000, 1 / Real.sqrt k := by ring
+      _ < ∫ x in (1 : ℝ)..5000, 1 / Real.sqrt x + ∫ x in (5000 : ℝ)..10000, 1 / Real.sqrt x := by rel [sum_lt_int1, sum_lt_int2]
+      _ = _ := by simp
+
+  -- The integral $\int_{1}^{10000} \frac{1}{\sqrt{x}} \, dx$ is equal to $198$.
+  have integral_eq : ∫ x in (1 : ℝ)..10000, 1 / Real.sqrt x = 198 := by
+    calc
+      _ = ∫ x in (1 : ℝ)..10000, Real.sqrt x ⁻¹¹ := by
+        congr
+        funext x
+        · simp
+        · rw [Real.sqrt_eq_rpow]
+          field_simp
+      _ = (Real.sqrt 10000 - Real.sqrt 1)⁻¹¹ := by
+        rw [integral_div, Real.sqrt_def, Real.sqrt_def]
+        congr
+        · norm_num
+        · norm_num
+      _ = 198 := by norm_num
+
+  -- So $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} < 198$
+  linarith
+
+```

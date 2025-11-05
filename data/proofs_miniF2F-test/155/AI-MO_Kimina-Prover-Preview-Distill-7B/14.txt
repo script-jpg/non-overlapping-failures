@@ -1,0 +1,219 @@
+-- Prove that $2 \, \tan(x) \, \cos^2(x) = \sin(2x)$.
+  have h_cos_sq_eq_sin_two_x (x : ℝ) : 2 * Real.tan (x) * (Real.cos (x)) ^ 2 = Real.sin (2 * x) := by
+    rw [Real.sin_two_mul]
+    rw [Real.tan_eq_sin_div_cos]
+    ring
+
+  -- Prove that $\cos(\tfrac{x}{2}) \neq 0$.
+  have h_cos_half_ne_zero (x : ℝ) (hx : 0 ≤ x ∧ x ≤ 2 * Real.pi) : Real.cos (x / 2) ≠ 0 := by
+    apply ne_of_gt
+    apply Real.cos_pos_of_mem_Ioo
+    constructor
+    · linarith
+    · linarith
+    · apply le_trans
+      apply div_le_iff₀ (by linarith) (by linarith)
+      linarith
+
+  -- Prove that $\tan(2x) = \cos(\tfrac{x}{2})$ if and only if $\sin(4x) = \cos(\tfrac{x}{2})$.
+  have h_tan_eq_cos_iff_sin_eq_cos : ∀ x : ℝ, Real.tan (2 * x) = Real.cos (x / 2) ↔ Real.sin (4 * x) = Real.cos (x / 2) := by
+    intro x
+    constructor
+    · intro h
+      -- We have $\sin(4x) = 2 \, \sin(2x) \, \cos(2x) = 2 \, \tan(x) \, \cos^2(x) = \sin(2x)$.
+      calc
+        Real.sin (4 * x) = 2 * Real.sin (2 * x) * Real.cos (2 * x) := by rw [show 4 * x = 2 * (2 * x) by ring, Real.sin_two_mul]
+        _ = 2 * Real.tan (x) * (Real.cos (x)) ^ 2 := by rw [Real.sin_two_mul, h_cos_sq_eq_sin_two_x]
+        _ = Real.sin (2 * x) := by rw [h]
+        _ = Real.sin (4 * x) := by rw [show 4 * x = 2 * (2 * x) by ring, Real.sin_two_mul]
+    · intro h
+      -- If $\sin(4x) = \cos(\tfrac{x}{2})$, then $2 \, \tan(x) \, \cos^2(x) = \cos(\tfrac{x}{2})$.
+      have h₁ : 2 * Real.tan (x) * (Real.cos (x)) ^ 2 = Real.sin (4 * x) := by
+        rw [h_cos_sq_eq_sin_two_x]
+        ring
+      -- So $\tan(2x) = \sin(4x) / (2 \, \cos^2(x)) = \cos(\tfrac{x}{2})$.
+      have h₂ : Real.cos (x) ≠ 0 := by
+        by_contra!
+        have h₃ : Real.cos (x / 2) ≠ 0 := by
+          apply ne_of_gt
+          apply Real.cos_pos_of_mem_Ioo
+          constructor
+          · linarith
+          · linarith
+          · apply le_trans
+            apply div_le_iff₀ (by linarith) (by linarith)
+            linarith
+        have h₄ : Real.cos (x / 2) = 0 := by
+          calc
+            Real.cos (x / 2) = 0 := by assumption
+            _ = 2 * Real.tan (x) * (Real.cos (x)) ^ 2 := by rw [h]
+            _ = 2 * 0 * (Real.cos (x)) ^ 2 := by rw [this]
+            _ = 0 := by ring
+        contradiction
+      rw [h] at h₁
+      field_simp [h₂] at h₁
+      linarith
+
+
+  -- Let $S$ be the set of solutions to $\tan(2x) = \cos(\tfrac{x}{2})$ on the interval $[0, 2\pi]$.
+  -- We show that $s \in S$, if and only if, $s = \tfrac{2k_1 \pi}{5}$ or $s = \tfrac{(2k_2 + 1) \pi}{3}$, where $k_1, k_2 \in \mathbb{Z}$.
+  have hS : S = {2 * Real.pi * (k_1 / 5) | k_1 ∈ Finset.Icc 0 4 ∨ 2 * Real.pi * (k_2 + 1) / 3 | k_2 ∈ Finset.Icc 0 2} := by
+    ext x
+    constructor
+    · intro hx
+      -- We have $0 \leq x \leq 2\pi$.
+      have ⟨hx₀, hx₁, hx₂⟩ := h₀ x hx
+      -- Break the proof into three steps:
+      -- 1. $\cos(\tfrac{x}{2}) \neq 0$.
+      -- 2. $\sin(4x) = \cos(\tfrac{x}{2})$.
+      -- 3. $x = \tfrac{2k_1 \pi}{5}$ or $x = \tfrac{(2k_2 + 1) \pi}{3}$, where $k_1, k_2 \in \mathbb{Z}$.
+      refine (Or.inl?_) (Or.inr?_)
+      -- Step 1 and 2, respectively.
+      · -- We have $\cos(\tfrac{x}{2}) \neq 0$.
+        have h_cos_half_ne_zero := h_cos_half_ne_zero x ⟨hx₀, hx₁⟩
+        -- We have $\sin(4x) = \cos(\tfrac{x}{2})$.
+        rw [h_tan_eq_cos_iff_sin_eq_cos] at hx₂
+        -- Step 3.
+        calc
+          x = Real.pi / 2 + (2 * x - Real.pi / 2) := by ring
+          _ = Real.pi / 2 + 2 * (x - Real.pi / 4) := by ring
+          _ = Real.pi / 2 + 2 * (2 * Real.pi * (x / (2 * Real.pi)) - Real.pi / 4) := by congr!; ring
+          _ = Real.pi / 2 + 2 * ((2 * Real.pi * (x / (2 * Real.pi))) - (2 * Real.pi * (1 / 4))) := by ring
+          _ = Real.pi / 2 + 2 * (2 * Real.pi * (x / (2 * Real.pi) - 1 / 4)) := by ring
+          _ = Real.pi / 2 + 4 * Real.pi * (x / (2 * Real.pi) - 1 / 4) := by rw [mul_sub]; ring
+          _ = 2 * Real.pi * (1 / 2 + (x / (2 * Real.pi) - 1 / 4)) := by rw [add_mul, mul_div_cancel₀]; ring
+          _ = 2 * Real.pi * (1 / 2 + x / (2 * Real.pi) - 1 / 4) := by ring
+          _ = 2 * Real.pi * (x / (2 * Real.pi) + 1 / 4) := by ring
+          _ = 2 * Real.pi * (k_1 / 5) := by
+            rw [show 1 / 2 + x / (2 * Real.pi) - 1 / 4 = x / (2 * Real.pi) + 1 / 4 by ring, <-mul_div_assoc, mul_div_cancel₀, <-mul_div_assoc]
+            rw [div_eq_mul_inv, <-mul_div_assoc, mul_comm _ (1 / 4), <-mul_div_assoc]
+            rw [div_eq_mul_inv, show (4 : ℝ) = 2 ^ 2 by norm_num, pow_two, <-mul_div_assoc, mul_div_cancel₀]
+            simp
+            rw [mul_sub, mul_div_cancel₀, <-mul_div_assoc, mul_div_cancel₀, <-mul_div_assoc]
+            ring
+            · apply mul_nonneg
+              · apply mul_nonneg
+                · norm_num
+                · exact hx₀
+              · norm_num
+            · apply mul_nonneg
+              · apply mul_nonneg
+                · exact hx₁
+                · norm_num
+              · norm_num
+          have h_k₁ : 1 ≤ k_1 := by
+            rw [<-Nat.cast_le, <-Int.cast_one, <-x, Real.pi_pos]
+            linarith
+          have h_k₁' : k_1 ≤ 5 := by
+            rw [<-Nat.cast_le, <-Int.cast_five, <-x, Real.pi_pos]
+            linarith
+          -- Therefore, $k_1 \in \{1, 2, 3, 4, 5\}$.
+          exact ⟨by rw [show (5 : ℝ) = (5 : ℕ) by norm_num, <-Int.cast_five]; exact Int.cast_le.mpr h_k₁', by rw [show (1 : ℝ) = (1 : ℕ) by norm_num, <-Int.cast_one]; exact Int.cast_le.mpr h_k₁⟩
+      · -- Step 1 and 2, respectively.
+        have h_cos_half_ne_zero := h_cos_half_ne_zero x ⟨hx₀, hx₁⟩
+        -- We have $\sin(4x) = \cos(\tfrac{x}{2})$.
+        rw [h_tan_eq_cos_iff_sin_eq_cos] at hx₂
+        -- Step 3.
+        calc
+          x = Real.pi / 2 + (2 * x - Real.pi / 2) := by ring
+          _ = Real.pi / 2 + 2 * (x - Real.pi / 4) := by ring
+          _ = Real.pi / 2 + 2 * (2 * Real.pi * (x / (2 * Real.pi)) - Real.pi / 4) := by congr!; ring
+          _ = Real.pi / 2 + 2 * ((2 * Real.pi * (x / (2 * Real.pi))) - (2 * Real.pi * (1 / 4))) := by ring
+          _ = Real.pi / 2 + 2 * (2 * Real.pi * (x / (2 * Real.pi) - 1 / 4)) := by ring
+          _ = Real.pi / 2 + 4 * Real.pi * (x / (2 * Real.pi) - 1 / 4) := by rw [mul_sub]; ring
+          _ = 2 * Real.pi * (1 / 2 + (x / (2 * Real.pi) - 1 / 4)) := by rw [add_mul, mul_div_cancel₀]; ring
+          _ = 2 * Real.pi * (1 / 2 + x / (2 * Real.pi) - 1 / 4) := by ring
+          _ = 2 * Real.pi * (x / (2 * Real.pi) + 1 / 4) := by ring
+          _ = 2 * Real.pi * (k_2 + 1) / 3 := by
+            rw [show 1 / 2 + x / (2 * Real.pi) - 1 / 4 = x / (2 * Real.pi) + 1 / 4 by ring, <-mul_div_assoc, mul_div_cancel₀, <-mul_div_assoc]
+            rw [div_eq_mul_inv, <-mul_div_assoc, mul_comm _ (1 / 4), <-mul_div_assoc]
+            rw [div_eq_mul_inv, show (4 : ℝ) = 2 ^ 2 by norm_num, pow_two, <-mul_div_assoc, mul_div_cancel₀]
+            simp
+            rw [mul_sub, mul_div_cancel₀, <-mul_div_assoc, mul_div_cancel₀, <-mul_div_assoc]
+            ring
+            · apply mul_nonneg
+              · apply mul_nonneg
+                · norm_num
+                · exact hx₀
+              · norm_num
+            · apply mul_nonneg
+              · apply mul_nonneg
+                · exact hx₁
+                · norm_num
+              · norm_num
+          have h_k₂ : 0 ≤ k_2 := by
+            rw [<-Nat.cast_le, <-Int.cast_zero, <-x, Real.pi_pos]
+            linarith
+          have h_k₂' : k_2 ≤ 2 := by
+            rw [<-Nat.cast_le, <-Int.cast_two, <-x, Real.pi_pos]
+            linarith
+          -- Therefore, $k_2 \in \{0, 1, 2\}$.
+          exact ⟨by rw [show (5 : ℝ) = (5 : ℕ) by norm_num, <-Int.cast_five]; exact Int.cast_le.mpr h_k₁', by rw [show (1 : ℝ) = (1 : ℕ) by norm_num, <-Int.cast_one]; exact Int.cast_le.mpr h_k₂⟩
+    · intro hx
+      -- We have $x = \tfrac{2k_1 \pi}{5}$ or $x = \tfrac{(2k_2 + 1) \pi}{3}$, where $k_1, k_2 \in \mathbb{Z}$.
+      -- We show that $s \in S$, that is, $0 \leq s \leq 2\pi$ and $\tan(2s) = \cos(\tfrac{s}{2})$.
+      rcases hx with hx | hx
+      · -- Suppose that $x = \tfrac{2k_1 \pi}{5}$ for some $k_1 \in \{0, 1, 2, 3, 4\}$.
+        obtain ⟨k_1, hk₁, h₀, h₂⟩ := hx
+        -- We have $0 \leq x \leq 2\pi$.
+        have ⟨hx₀, hx₁⟩ : 0 ≤ x ∧ x ≤ 2 * Real.pi := by
+          refine ⟨?_,?_⟩
+          · linarith
+          · rw [hx]
+            calc
+              2 * Real.pi * (k_1 / 5) ≤ 2 * Real.pi * (4 / 5) := by rw [mul_le_mul_right]; norm_num; exact Nat.zero_le k_1
+              _ ≤ 2 * Real.pi * 1 := by norm_num
+              _ = 2 * Real.pi := by ring
+        -- We have $\tan(2x) = \sin(4x) / \cos(2x)$.
+        have h₃ : Real.tan (2 * x) = Real.sin (4 * x) / Real.cos (2 * x) := by
+          rw [Real.tan_eq_sin_div_cos, show 4 * x = 2 * (2 * x) by ring, Real.sin_two_mul]
+          rw [div_eq_mul_inv, mul_comm, Real.cos_two_mul]
+          · ring
+          · rw [mul_comm]
+            apply ne_of_gt
+            apply Real.cos_pos_of_mem_Ioo
+            constructor
+            · linarith
+            · linarith
+            · apply le_trans
+              apply div_le_iff₀ (by linarith) (by linarith)
+              linarith
+        -- We have $\sin(4x) = \cos(\tfrac{x}{2})$.
+        have h₄ : Real.sin (4 * x) = Real.cos (x / 2) := by
+          rw [hx]
+          rw [show 4 * (2 * Real.pi * (k_1 / 5)) = 2 * Real.pi * (4 * k_1 / 5) by ring, Real.sin_two_mul, <-mul_div_assoc, mul_comm (4 * k₁)]
+          rw [show 2 * Real.pi * (4 * k_1 / 5) = 2 * (2 * Real.pi * (2 * k_1 / 5)) by ring, Real.sin_two_mul]
+          rw [show 2 * Real.pi * (2 * k_1 / 5) = 2 * Real.pi * (k_1 / 5) + 2 * Real.pi * (k_1 / 5) by ring, Real.sin_add]
+          rw [add_comm, <-Real.sin_pi_sub]
+          rw [<-Real.cos_sq_add_sin_sq]
+          rw [Real.cos_sq]
+          ring_nf
+          rw [show Real.pi * (2 * k_1 / 5) = (2 * Real.pi * (k_1 / 5)) by ring, <-mul_div_assoc]
+          rw [show 2 * (2 * Real.pi * (k_1 / 5)) = 2 * Real.pi * (2 * k_1 / 5) by ring, Real.sin_two_mul]
+          rw [show 2 * Real.pi * (2 * k_1 / 5) = 2 * Real.pi * (k_1 / 5) + 2 * Real.pi * (k_1 / 5) by ring, Real.sin_add]
+          rw [add_comm, <-Real.sin_pi_sub]
+          rw [<-Real.cos_sq_add_sin_sq]
+          rw [Real.cos_sq]
+          ring_nf
+          rw [show Real.pi * (2 * k_1 / 5) = (2 * Real.pi * (k_1 / 5)) by ring, <-mul_div_assoc]
+          rw [show 2 * (2 * Real.pi * (k_1 / 5)) = 2 * Real.pi * (2 * k_1 / 5) by ring, Real.sin_two_mul]
+          rw [show 2 * Real.pi * (2 * k_1 / 5) = 2 * Real.pi * (k_1 / 5) + 2 * Real.pi * (k_1 / 5) by ring, Real.sin_add]
+          rw [add_comm, <-Real.sin_pi_sub]
+          rw [<-Real.cos_sq_add_sin_sq]
+          rw [Real.cos_sq]
+          ring
+          all_goals
+            rw [mul_comm]
+            apply mul_nonneg
+            · exact Real.pi_nonneg
+            · norm_cast
+              apply div_nonneg
+              · exact Nat.zero_le k_1
+              · exact zero_le_five
+          · rw [mul_comm]
+            apply ne_of_gt
+            apply Real.cos_pos_of_mem_Ioo
+            constructor
+            · linarith
+            · linarith
+            · apply le

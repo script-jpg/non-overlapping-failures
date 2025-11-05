@@ -1,0 +1,156 @@
+-- estimate the sum by integral
+  have h1 (k : ℕ) : (k : ℝ) < 10000 → 1 / Real.sqrt k ≤ 2 / (Real.sqrt (k : ℝ) * Real.sqrt (k + 1 : ℝ)) := by
+    intro hk
+    have : 0 < Real.sqrt k := by apply Real.sqrt_pos_of_pos (by norm_num)
+    have : 0 < Real.sqrt (k + 1 : ℝ) := by
+      apply Real.sqrt_pos_of_pos
+      have : 0 < (k : ℝ) := by norm_num
+      linarith
+    have : 0 < Real.sqrt k * Real.sqrt (k + 1 : ℝ) := by positivity
+    have h : (Real.sqrt (k + 1 : ℝ) - Real.sqrt k) * (Real.sqrt (k + 1 : ℝ) + Real.sqrt k) = 1 := by
+      calc
+        (Real.sqrt (k + 1 : ℝ) - Real.sqrt k) * (Real.sqrt (k + 1 : ℝ) + Real.sqrt k)
+          = (Real.sqrt (k + 1 : ℝ)) ^ 2 - (Real.sqrt k) ^ 2 := by ring
+        _ = (k + 1 : ℝ) - (k : ℝ) := by rw [Real.sq_sqrt (by norm_num)]; rw [Real.sq_sqrt (by norm_num)]
+        _ = 1 := by norm_num
+    have h' : 0 < (Real.sqrt (k + 1 : ℝ) - Real.sqrt k) := by
+      apply sub_pos.mpr
+      apply Real.sqrt_lt_sqrt (by norm_num) (by linarith)
+    have h'' : 0 < (Real.sqrt (k + 1 : ℝ) + Real.sqrt k) := by positivity
+    calc
+      1 / Real.sqrt k = (Real.sqrt (k + 1 : ℝ) - Real.sqrt k) / (Real.sqrt k * Real.sqrt (k + 1 : ℝ)) := by
+        rw [h]
+        field_simp
+      _ = ((Real.sqrt (k + 1 : ℝ)) ^ 2 - (Real.sqrt k) ^ 2) / (Real.sqrt k * Real.sqrt (k + 1 : ℝ)) := by
+        rw [h]
+      _ = (Real.sqrt (k + 1 : ℝ) + Real.sqrt k) * (Real.sqrt (k + 1 : ℝ) - Real.sqrt k) / (Real.sqrt k * Real.sqrt (k + 1 : ℝ)) := by ring
+      _ = (Real.sqrt (k + 1 : ℝ) + Real.sqrt k) / (Real.sqrt k * Real.sqrt (k + 1 : ℝ)) * (Real.sqrt (k + 1 : ℝ) - Real.sqrt k) := by ring
+      _ ≤ (Real.sqrt (k + 1 : ℝ) + Real.sqrt k) / (Real.sqrt k * Real.sqrt (k + 1 : ℝ)) * (2 * (Real.sqrt (k + 1 : ℝ) - Real.sqrt k)) := by
+        have : 0 ≤ (Real.sqrt (k + 1 : ℝ) - Real.sqrt k) := by
+          apply sub_nonneg.mpr
+          apply Real.sqrt_le_sqrt
+          linarith
+        have : 0 ≤ (Real.sqrt (k + 1 : ℝ) + Real.sqrt k) := by positivity
+        nlinarith
+      _ = 2 / (Real.sqrt k * Real.sqrt (k + 1 : ℝ)) * ((Real.sqrt (k + 1 : ℝ) - Real.sqrt k) * (Real.sqrt (k + 1 : ℝ) + Real.sqrt k)) := by ring
+      _ = 2 / (Real.sqrt k * Real.sqrt (k + 1 : ℝ)) * 1 := by rw [h]
+      _ = 2 / (Real.sqrt k * Real.sqrt (k + 1 : ℝ)) := by ring
+
+  -- split the sum into several parts
+  -- $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} = \sum_{k=2}^{10000} \frac{1}{\sqrt{k}+\sqrt{k+1}}$
+  have h2 : (∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k) = ∑ k in Finset.Icc (2 : ℕ) 10000, 2 / (Real.sqrt k + Real.sqrt (k + 1 : ℕ) : ℝ) := by
+    apply Finset.sum_congr rfl
+    intro x hx
+    rw [Finset.mem_Icc] at hx
+    rw [two_div, one_div, add_mul, ←mul_div, div_mul_cancel₀, mul_comm, mul_div, div_right_comm, div_self, mul_one]
+    norm_cast
+    rw [Nat.cast_add, Nat.cast_add, Nat.cast_add, Nat.cast_add, Nat.cast_add, Nat.cast_add, Nat.cast_add]
+    norm_cast
+    symm
+    apply h1
+    linarith
+
+  rw [h2]
+
+  -- now $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}+\sqrt{k+1}} < \sum_{k=2}^{10000} \frac{2}{\sqrt{k}\sqrt{k+1}}$
+  have h3 : ∑ k in Finset.Icc (2 : ℕ) 10000, 2 / (Real.sqrt k + Real.sqrt (k + 1 : ℕ) : ℝ) < ∑ k in Finset.Icc (2 : ℕ) 10000, 2 / ((Real.sqrt k : ℝ) * (Real.sqrt (k + 1 : ℕ) : ℝ)) := by
+    apply Finset.sum_lt_sum
+    intro i hi
+    simp at hi
+    have : 0 < (Real.sqrt i : ℝ) := by
+      apply Real.sqrt_pos_of_pos
+      norm_cast
+      omega
+    have : 0 < (Real.sqrt (i + 1 : ℕ) : ℝ) := by
+      apply Real.sqrt_pos_of_pos
+      norm_cast
+      omega
+    have : 0 < (Real.sqrt i : ℝ) * (Real.sqrt (i + 1 : ℕ) : ℝ) := by positivity
+    refine (div_lt_div_iff?_?_).mpr?_
+    · norm_num
+    · exact ne_of_gt (mul_pos this)
+    · refine (add_pos?_?_).mpr?_
+      · exact this
+      · exact Real.sqrt_pos_of_pos (by norm_cast; omega)
+
+  -- $\sum_{k=2}^{10000} \frac{2}{\sqrt{k}\sqrt{k+1}} = 2 \cdot \sum_{k=2}^{10000} \frac{1}{\sqrt{k}\sqrt{k+1}}$
+  have h4 : ∑ k in Finset.Icc (2 : ℕ) 10000, 2 / ((Real.sqrt k : ℝ) * (Real.sqrt (k + 1 : ℕ) : ℝ)) = 2 * ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / ((Real.sqrt k : ℝ) * (Real.sqrt (k + 1 : ℕ) : ℝ)) := by
+    rw [Finset.mul_sum]
+
+  rw [h3, h4]
+
+  -- $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}\sqrt{k+1}} = \sum_{k=2}^{10000} \frac{1}{\sqrt{k}} \cdot \frac{1}{\sqrt{k+1}}$
+  have h5 : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / ((Real.sqrt k : ℝ) * (Real.sqrt (k + 1 : ℕ) : ℝ)) = ∑ k in Finset.Icc (2 : ℕ) 10000, (1 / Real.sqrt k : ℝ) * (1 / Real.sqrt (k + 1 : ℕ) : ℝ) := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      simp at hx
+      have : 0 < (Real.sqrt x : ℝ) := by
+        apply Real.sqrt_pos_of_pos
+        norm_cast
+        omega
+      have : 0 < (Real.sqrt (x + 1 : ℕ) : ℝ) := by
+        apply Real.sqrt_pos_of_pos
+        norm_cast
+        omega
+      refine Eq.symm (mul_div_mul_right _ _ (ne_of_gt (Real.sqrt_pos_of_pos (by norm_cast; omega)) ) (ne_of_gt (Real.sqrt_pos_of_pos (by norm_cast; omega) )) )
+      norm_cast
+      rw [Nat.cast_add, Nat.cast_add]
+      norm_cast
+
+  rw [h5]
+
+  -- approximate the sum by telescoping sum
+  -- $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} \cdot \frac{1}{\sqrt{k+1}} < \sum_{k=2}^{10000} \frac{1}{\sqrt{k-1}} \cdot \frac{1}{\sqrt{k}}$
+  have h6 (x : ℕ) (hx : 3 ≤ x) : (1 / Real.sqrt x : ℝ) * (1 / Real.sqrt (x + 1 : ℕ) : ℝ) < (1 / Real.sqrt (x - 1 : ℕ) : ℝ) * (1 / Real.sqrt x : ℝ) := by
+    have : 0 < (Real.sqrt (x - 1 : ℕ) : ℝ) := by
+      apply Real.sqrt_pos_of_pos
+      norm_cast
+      omega
+    have : 0 < (Real.sqrt x : ℝ) := by
+      apply Real.sqrt_pos_of_pos
+      norm_cast
+      omega
+    have : 0 < (Real.sqrt (x + 1 : ℕ) : ℝ) := by
+      apply Real.sqrt_pos_of_pos
+      norm_cast
+      omega
+    refine (mul_lt_mul_iff_of_pos_left?_).mpr?_
+    · rw [Real.sqrt_lt_sqrt_iff (by positivity) (by positivity)]
+      calc
+        (x - 1 : ℕ) + 1 < x + 1 := by
+          refine Nat.add_lt_add_right?_ 1
+          apply Nat.sub_one_lt_of_lt (by linarith) (by norm_num)
+        _ = x := by norm_num
+      linarith
+    · exact ne_of_gt (one_div_pos (x - 1) this)
+    · exact ne_of_gt (one_div_pos x this)
+
+  -- the telescoping sum is $1/2 (1/2 + 1/\sqrt{10000}) < 1/2 (1/2 + 1/100)$
+  have h7 : ∑ k in Finset.Icc (2 : ℕ) 10000, (1 / Real.sqrt (k - 1 : ℕ) : ℝ) * (1 / Real.sqrt k : ℝ) = 1 / 2 * (1 / 2 + 1 / (Real.sqrt 10000 : ℝ)) := by
+    norm_cast
+    rw [Finset.sum_Icc_eq_sum_range_sub_range]
+    have : 2 = 1 + 1 := by norm_num
+    rw [this, Finset.sum_range_add, add_comm, ←add_assoc, Nat.sub_add_cancel (by norm_num)]
+    have : 10000 = 100 ^ 2 := by norm_num
+    rw [this, Real.sqrt_sq (by norm_num)]
+    simp
+    norm_num
+
+  have h8 : 1 / 2 * (1 / 2 + 1 / (Real.sqrt 10000 : ℝ)) < 1 / 2 * (1 / 2 + 1 / (100 : ℝ)) := by
+    apply mul_lt_mul_of_nonneg_left
+    · rw [Real.sqrt_lt_sqrt_iff (by positivity) (by positivity)]
+      norm_num
+      omega
+    · positivity
+    · norm_num
+    · positivity
+
+  have h9 : 1 / 2 * (1 / 2 + 1 / (100 : ℝ)) = 99 / 200 := by norm_num
+
+  rw [h7, h9, lt_div_iff (by norm_num)]
+
+  -- so the sum is less than 99/200
+  -- then conclude the theorem
+  linarith
+
+```

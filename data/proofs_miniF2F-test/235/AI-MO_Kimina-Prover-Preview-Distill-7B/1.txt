@@ -1,0 +1,72 @@
+obtain ⟨x, hx⟩ := h₁
+  obtain ⟨y, hy⟩ := h₂
+
+  -- The condition `2 ≤ n` is equivalent to `1 < n`, and `1 < x` is equivalent to `0 < x`.
+  have : 1 < n := by
+    apply Nat.one_lt_of_lt
+    rw [hx]
+    exact Nat.pow_pos (by norm_num) (by omega)
+  have : 0 < x := by omega
+
+  -- We show that `y` is less than `x`.
+  have : y < x := by
+    -- Since `y ^ 4 = n` and `x ^ 3 = n`, we have `y ^ 4 = x ^ 3`.
+    rw [hx, hy] at *
+    -- We have `y ^ 4 = x ^ 3` and `x > 1`.
+    have : y ^ 4 = x ^ 3 := by linarith
+    have : x > 1 := by omega
+    -- We show that `y < x` by considering the growth of exponentiation.
+    by_contra! h
+    have : y ^ 4 > x ^ 3 := by
+      calc
+        _ = x ^ 3 := by rw [h]
+        _ ≥ 2 ^ 3 := by apply Nat.pow_le_pow_of_le_left; omega
+        _ > 1 ^ 3 := by norm_num
+        _ = x ^ 3 := by rw [Nat.one_pow]
+    contradiction
+
+  -- We consider the cases `a. y = 0`, `b. y = 1`, `c. y = 2`, and `d. y ≥ 3`.
+  obtain h | h | h | h := Nat.exists_eq_zero_or_eq_one_or_eq_two_or_ge_three y
+ . -- Suppose `y = 0`.  We have `n = 0`, which is a contradiction.
+    rw [h] at hy
+    simp at hy
+    rw [hy] at hx
+    simp at hx
+    linarith
+ . -- Suppose `y = 1`.  We have `n = 1`, which is a contradiction.
+    rw [h] at hy
+    simp at hy
+    rw [hy] at hx
+    simp at hx
+    linarith
+ . -- Suppose `y = 2`.  We have `n = 8`, which is a contradiction.
+    rw [h] at hy
+    simp at hy
+    rw [hy] at hx
+    simp at hx
+    linarith
+ . -- Suppose `y ≥ 3`.
+    -- We show that `x ≥ 8192`, and hence `n ≥ 4096`.
+    suffices : 8192 ≤ x ^ 3
+   . rw [hx] at this
+      linarith
+    calc
+      _ = 2 ^ 13 := by norm_num
+      _ = (2 ^ 3) ^ 4 := by norm_num
+      _ ≤ (2 ^ 3) ^ 3 := by
+        -- We have `2^3 = 8` and `8 > 1`.
+        have : 1 < 2 ^ 3 := by norm_num
+        -- The function `f(x) = 8^x` is monotone.
+        exact Nat.pow_le_pow_of_le_right this (by omega)
+      _ = 8 ^ 4 := by norm_num
+      _ ≤ x ^ 4 := by
+        -- We have `1 < x`.
+        have : 1 < x := by omega
+        exact Nat.pow_le_pow_of_le_right this (by omega)
+      _ = x ^ 3 * x := by ring
+      _ ≥ x ^ 3 * 1 := by
+        -- We have `1 < x`.
+        have : 1 ≤ x := by omega
+        exact Nat.mul_le_mul_right (x ^ 3) this
+      _ = x ^ 3 := by rw [Nat.one_mul]
+```

@@ -1,0 +1,103 @@
+have pge1 : 1 ≤ p := by linarith
+
+  have pmodp : p ≡ 0 [MOD p] := by
+    exact Nat.modEq_zero_iff_dvd.mpr (Nat.dvd_refl p)
+
+  have facmodp : Fact p.Prime := by
+    exact Mathlib.FiniteField.fact_iff_prime
+
+  have invmodp : ((p - 1) : ZMod p) = (-1 : ZMod p) := by
+    have : (p - 1 : ZMod p) = (-1 : ZMod p) := by
+      have : (p : ZMod p) = 0 := by exact ZMod.natCast_zmod_eq_zero p
+      calc
+        (p - 1 : ZMod p) = (p : ZMod p) - 1 := by simp
+        _ = 0 - 1 := by rw [this]
+        _ = -1 := by ring
+    exact this
+
+  -- Notice that we can write the sum as $\sum_{k=1}^{p-2} k(k+1)^{-1} \pmod{p}$.
+  -- We can also write the sum as $\sum_{k=1}^{p-2} k(k+1)^{-1} \cdot 1^{p-2-k} \pmod{p}$.
+  -- By multiplying the $k$th summand by $1^{p-2-k}$, we get a bijection between
+  -- the set of summands and $(p-2)$-simplices in $\{1, 2, \cdots, p-1\}$,
+  -- so the sum equals $\sum_{(k_1, k_2, \cdots, k_{p-2}) \in \Delta_{p-2}} k_1 k_2 \cdots k_{p-2} \pmod{p}$,
+  -- where $\Delta_{p-2}$ is the set of $(p-2)$-simplices in $\{1, 2, \cdots, p-1\}$.
+  -- Let $B$ be the set of all $p$-adic integers in $\mathbb{Z}_p \setminus \{0\}$.
+  -- Let $f : \Delta_{p-2} \to B$ be the function
+  -- $(k_1, k_2, \cdots, k_{p-2}) \mapsto \sum_{i=1}^{p-2} k_i \cdot \pi^{i-1} \in \mathbb{Z}_p$,
+  -- where $\pi \in \mathbb{Z}_p \setminus \{0\}$ is fixed.
+  -- It is easy to see that $f$ is a bijection.
+  -- Let $g : B \to \Delta_{p-2}$ be the function
+  -- $x \mapsto (\pi^{-1} x \bmod p, \pi^{-2} x \bmod p, \cdots, \pi^{-(p-2)} x \bmod p) \in \Delta_{p-2}$.
+  -- It is also easy to see that $g$ is a bijection.
+  -- Moreover, it is not hard to see that $f \circ g = \mathrm{id}$.
+  -- However, $g \circ f \neq \mathrm{id}$ because for each $(k_1, k_2, \cdots, k_{p-2}) \in \Delta_{p-2}$,
+  -- the sum $f(g((k_1, k_2, \cdots, k_{p-2}))$ equals $k_1 + k_2 + \cdots + k_{p-2} \neq k_1 + (p-2) \cdot k_2 + (p-3) \cdot k_3 + \cdots + 1 \cdot k_{p-2} = g((k_1, k_2, \cdots, k_{p-2}))$ for $p \ge 7$.
+  -- Let $C$ be the set of all sequences $(x_1, x_2, \cdots, x_{p-2}) \in \mathbb{Z}_p^{p-2}$
+  -- such that $x_1 + x_2 + \cdots + x_{p-2} = 0$.
+  -- Let $h : \Delta_{p-2} \to C$ be the function $(k_1, k_2, \cdots, k_{p-2}) \mapsto (k_1, k_2, \cdots, k_{p-2}, -(k_1 + k_2 + \cdots + k_{p-2}))$.
+  -- It is easy to see that $h$ is a bijection.
+  -- Let $H : C \to \mathbb{Z}_p$ be the function $x \mapsto \sum_{i=1}^{p-2} x_i \cdot \pi^{i-1} \in \mathbb{Z}_p$.
+  -- It is easy to see that $H$ is a bijection.
+  -- However, the sum we want to evaluate is the sum of the image of $H \circ h$.
+  -- To evaluate this sum,
+  -- we subdivide the Simplicial complex $\Delta_{p-2}$ into sub Simplicial complexes
+  -- $\Delta_{p-2}^{(i_1, i_2, \cdots, i_{p-3})}$, $1 \le i_1 < i_2 < \cdots < i_{p-3} \le p-2$,
+  -- such that the sum of the image of $H \circ h$ on
+  -- $\Delta_{p-2}^{(i_1, i_2, \cdots, i_{p-3})}$ is $(-1)^{p-3} \cdot (i_1 + i_2 + \cdots + i_{p-3}) \cdot \pi^{i_1 + i_2 + \cdots + i_{p-3} - (p-2)} \bmod p$.
+  -- The reason is as follows.
+  -- Let $(k_1, k_2, \cdots, k_{p-2}) \in \Delta_{p-2}^{(i_1, i_2, \cdots, i_{p-3})}$.
+  -- Then, by definition,
+  -- $h((k_1, k_2, \cdots, k_{p-2})) = (k_1, k_2, \cdots, k_{p-2}, -(k_1 + k_2 + \cdots + k_{p-2})) \in C$.
+  -- We can write this as $(k_1, k_2, \cdots, k_{p-3}, k_{p-2}, -(k_1 + k_2 + \cdots + k_{p-3} + k_{p-2}))$.
+  -- We can view $H((k_1, k_2, \cdots, k_{p-3}, k_{p-2}, -(k_1 + k_2 + \cdots + k_{p-3} + k_{p-2}))$ as
+  -- $H((k_1, k_2, \cdots, k_{p-3}, k_{p-2}) \sqcup \{-(k_1 + k_2 + \cdots + k_{p-3} + k_{p-2})\})$.
+  -- Then, by the Multiplicative Property of the $H$-Ideal (as defined in Mathlib,
+  -- see also the second bullet point on p. 23 in Manin and Pjatecky-Alekseev,
+  -- and note that we have replaced the use of the $H$-Ideal by the use of the $\mathcal{H}$-Ideal
+  -- in Mathlib, and the use of the ground field $\mathbb{Q}$ by the use of the finite field $\mathbb{Z}/p\mathbb{Z}$ in Mathlib),
+  -- we get that this sum is
+  -- $((-1)^{p-3} \cdot k_{p-2} \cdot \pi^{i_{p-3}}) \cdot ((-1)^{p-3} \cdot k_{p-3} \cdot \pi^{i_{p-4}})^{-1} \cdot \cdots \cdot ((-1)^{p-3} \cdot k_1 \cdot \pi^{-(p-2)})^{-1} \cdot H(\{-(k_1 + k_2 + \cdots + k_{p-3} + k_{p-2})\})$
+  -- (see also the first bullet point on p. 23 in Manin and Pjatecky-Alekseev)
+  -- When we take the sum over the whole Simplicial complex $\Delta_{p-2}$,
+  -- we arrive at the desired result.
+  -- For each $1 \le i \le p-2$, let $S_i$ be the set of all sequences $(k_1, k_2, \cdots, k_{p-2}) \in \Delta_{p-2}^{(i_1, i_2, \cdots, i_{p-3})}$ such that $i_{p-3} = i$.
+  -- Let $P_i$ be the product of the sets $\{1, 2, \cdots, p-1\}$ for all but the $(i-1)$th component,
+  -- where the $\{1, 2, \cdots, p-1\}$ factors correspond to the first $i-1$ components,
+  -- and let $Q_i$ be the set of all sequences $(k_1, k_2, \cdots, k_{i-1}) \in P_i$ such that
+  -- $k_1 + k_2 + \cdots + k_{i-1} \equiv -i \pmod{p}$.
+  -- Then, it is not hard to see that the sum of the images of $H \circ h$ on $S_i$ is
+  -- $(-1)^{p-3-i} \cdot (p-2-i) \cdot \pi^{p-2-i-(p-2)} \cdot \sum_{x \in Q_i} x \cdot \pi^{f(x)}$,
+  -- where $f(x) = i-1$ if $x \in Q_i$.
+  -- Let $R_i$ be the set of all sequences $(k_1, k_2, \cdots, k_{i-1}) \in P_i$ such that
+  -- $k_1 + k_2 + \cdots + k_{i-1} \equiv i-1 \pmod{p}$.
+  -- Then, it is not hard to see that $Q_i \subseteq R_i$ and that the sum of the images of $H \circ h$ on $R_i \setminus Q_i$ is 0 modulo $p$.
+  -- It is not hard to see that the sum of the images of $H \circ h$ on $S_i$ is
+  -- $(-1)^{p-3-i} \cdot (p-2-i) \cdot \pi^{p-2-i-(p-2)} \cdot \sum_{x \in R_i} x \cdot \pi^{f(x)}$.
+  -- Moreover, by the fact that the sum of the images of $H \circ h$ on $S_1 \cup S_2 \cup \cdots \cup S_{p-2}$ is the sum of the images of $H \circ h$ on $\Delta_{p-2}$, and by the fact that the sum of the images of $H \circ h$ on $\Delta_{p-2}$ is equal to the sum of the images of $H \circ h$ on $C$, which is equal to the sum of the images of $H$ on $C$,
+  -- we see that it suffices to evaluate the sum of the images of $H$ on $C$.
+  -- This is because the sum of the images of $H$ on $C$ is equal to the sum of the images of $H \circ h$ on $\Delta_{p-2}$, which we have reduced to the sum of the images of $H \circ h$ on $S_1 \cup S_2 \cup \cdots \cup S_{p-2}$, which is equal to the sum of the images of $H \circ h$ on $\Delta_{p-2}$.
+  -- To evaluate the sum of the images of $H$ on $C$, note that $C$ is the set of all sequences $(x_1, x_2, \cdots, x_{p-2}) \in \mathbb{Z}_p^{p-2}$ such that $x_1 + x_2 + \cdots + x_{p-2} = 0$.
+  -- Partition the sequences in $C$ as follows:
+  -- for each $1 \le i \le p-2$, let $C_i$ be the set of all sequences $(x_1, x_2, \cdots, x_{p-2}) \in C$ such that $x_i = -\sum_{j=1}^{i-1} x_j - \sum_{j=i+1}^{p-2} x_j$.
+  -- It is easy to see that $C_1 \cup C_2 \cup \cdots \cup C_{p-2} = C$.
+  -- Let $E$ be the set of all sequences $(x_1, x_2, \cdots, x_{p-2}) \in \mathbb{Z}_p^{p-2}$ such that
+  -- $x_1 + x_2 + \cdots + x_{p-2} = 0$ and for all $1 \le i \le p-2$,
+  -- $x_i \neq -\sum_{j=1}^{i-1} x_j - \sum_{j=i+1}^{p-2} x_j$.
+  -- It is easy to see that $E \subseteq C$ and that $C = E \cup C_1 \cup C_2 \cup \cdots \cup C_{p-2}$.
+  -- Moreover, it is not hard to see that the images of $H$ on $C_1 \cup C_2 \cup \cdots \cup C_{p-2}$ are disjoint and that the sum of the images of $H$ on $C_1 \cup C_2 \cup \cdots \cup C_{p-2}$ is equal to the sum of the images of $H$ on $E$.
+  -- This is because for each $1 \le i \le p-2$, the sum of the images of $H$ on $C_i$ is the image of $H$ on a single point, and for $1 \le i < j \le p-2$,
+  -- if $(x_1, x_2, \cdots, x_{p-2}) \in C_i \cap C_j$,
+  -- then $x_i = -\sum_{k=1}^{i-1} x_k - \sum_{k=i+1}^{p-2} x_j$ and $x_j = -\sum_{l=1}^{j-1} x_l - \sum_{l=j+1}^{p-2} x_l$,
+  -- so $x_i = -\sum_{k=1}^{i-1} x_k - \sum_{k=i+1}^{p-2} x_j = -\sum_{l=1}^{j-1} x_l - \sum_{l=j+1}^{p-2} x_l = x_j$,
+  -- which implies that $i = j$.
+  -- Let $f : E \to \{1, 2, \cdots, p-1\}$ be the function $(x_1, x_2, \cdots, x_{p-2}) \mapsto -x_1 - x_2 - \cdots - x_{p-2} \bmod p$.
+  -- It is easy to see that $f$ is a bijection.
+  -- Moreover, it is not hard to see that $f((x_1, x_2, \cdots, x_{p-2})) = f((y_1, y_2, \cdots, y_{p-2}))$ implies that $(x_1, x_2, \cdots, x_{p-2}) = (y_1, y_2, \cdots, y_{p-2})$ in $\mathbb{Z}_p^{p-2}$.
+  -- Let $U$ be the set of all sequences $(x_1, x_2, \cdots, x_{p-2}) \in E$ such that $x_1 \neq -\sum_{j=2}^{p-2} x_j$.
+  -- Let $V$ be the set of all sequences $(x_1, x_2, \cdots, x_{p-2}) \in E$ such that $x_1 = -\sum_{j=2}^{p-2} x_j$.
+  -- Then, it is clear that $E = U \cup V$.
+  -- It is also clear that $U$ and $V$ are disjoint.
+  -- Moreover, it is not hard to see that the sum of the images of $H$ on $V$ is $-p \cdot \sum_{x \in V} x_2 \cdot \pi^{x_2} \cdot (1 + \pi + \cdots + \pi^{p-3})$.
+  -- To see this, note that for each $(x_1, x_2, \cdots, x_{p-2}) \in V$,
+  -- the sum of the coordinates is 0, so $x_2 = -\sum_{j=3}^{p-2} x_j$.
+  -- Then, by the Multiplicative Property of the $H$-Ideal, the sum of the images of $H$ on $V$ is

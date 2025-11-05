@@ -1,0 +1,41 @@
+-- The AM-GM inequality.
+  have amgm (a b : ℝ) : a ^ 2 + b ^ 2 + (a - b) ^ 2 ≥ 0 := by
+    linarith only [sq_nonneg (a ^ 2 - b ^ 2), sq_nonneg (a - b)]
+
+  -- AM-GM inequality for three variables.
+  have amgm3 (a b c : ℝ) : a ^ 2 + b ^ 2 + c ^ 2 ≥ a * b + b * c + c * a := by
+    calc
+      a ^ 2 + b ^ 2 + c ^ 2 = (a ^ 2 + b ^ 2 + (a - b) ^ 2) + (b ^ 2 + c ^ 2 + (b - c) ^ 2) + (c ^ 2 + a ^ 2 + (c - a) ^ 2) - (a ^ 2 + b ^ 2 + (a - b) ^ 2) - (b ^ 2 + c ^ 2 + (b - c) ^ 2) - (c ^ 2 + a ^ 2 + (c - a) ^ 2) + (a ^ 2 + b ^ 2 + (a - b) ^ 2) + (b ^ 2 + c ^ 2 + (b - c) ^ 2) + (c ^ 2 + a ^ 2 + (c - a) ^ 2) := by ring
+      _ ≥ 0 + 0 + 0 - (a ^ 2 + b ^ 2 + (a - b) ^ 2) - (b ^ 2 + c ^ 2 + (b - c) ^ 2) - (c ^ 2 + a ^ 2 + (c - a) ^ 2) + (a ^ 2 + b ^ 2 + (a - b) ^ 2) + (b ^ 2 + c ^ 2 + (b - c) ^ 2) + (c ^ 2 + a ^ 2 + (c - a) ^ 2) := by linarith only [amgm a b, amgm b c, amgm c a]
+      _ = 2 * a ^ 2 + 2 * b ^ 2 + 2 * c ^ 2 - 2 * a * b - 2 * b * c - 2 * c * a := by ring
+      _ = (a ^ 2 + b ^ 2 + (a - b) ^ 2) + (b ^ 2 + c ^ 2 + (b - c) ^ 2) + (c ^ 2 + a ^ 2 + (c - a) ^ 2) - (a ^ 2 + b ^ 2 + (a - b) ^ 2) - (b ^ 2 + c ^ 2 + (b - c) ^ 2) - (c ^ 2 + a ^ 2 + (c - a) ^ 2) + a * b + b * c + c * a := by ring
+      _ ≥ 0 := by linarith only [amgm a b, amgm b c, amgm c a]
+
+  -- The desired inequality is equivalent to $2/(x+y) + 2/(y+z) + 2/(z+x) - 9/(x+y+z) \geq 0$.
+  apply le_of_sub_nonneg
+  rw [div_le_div_iff₀, sub_nonneg]
+  calc
+    0 ≤ (2 / (x + y) + 2 / (y + z) + 2 / (z + x)) * (x + y + z) - (9 : ℝ) := by
+      -- Expand the expression.
+      field_simp
+      rw [div_sub_div]
+      -- The expression is equal to $(x ^ 2 + y ^ 2 + (x - y) ^ 2) + (y ^ 2 + z ^ 2 + (y - z) ^ 2) + (z ^ 2 + x ^ 2 + (z - x) ^ 2) - 2 \cdot (x \cdot y + y \cdot z + z \cdot x) \cdot (x + y + z) + 9 \cdot (x + y + z) ^ 2$ over $(x + y) \cdot (y + z) \cdot (z + x)$.
+      -- Hence, it is sufficient to prove that $(x ^ 2 + y ^ 2 + (x - y) ^ 2) + (y ^ 2 + z ^ 2 + (y - z) ^ 2) + (z ^ 2 + x ^ 2 + (z - x) ^ 2) - 2 \cdot (x \cdot y + y \cdot z + z \cdot x) \cdot (x + y + z) + 9 \cdot (x + y + z) ^ 2 \geq 0$.
+      -- This can be rearranged as $(x ^ 2 + y ^ 2 + (x - y) ^ 2) + (y ^ 2 + z ^ 2 + (y - z) ^ 2) + (z ^ 2 + x ^ 2 + (z - x) ^ 2) - 2 \cdot (x \cdot y + y \cdot z + z \cdot x) \cdot (x + y + z) + 3 \cdot (x + y + z) ^ 2 \geq 0$.
+      -- It can be further rearranged as $(x - y) ^ 2 + (y - z) ^ 2 + (z - x) ^ 2 + 6 \cdot (x ^ 2 + y ^ 2 + z ^ 2 - x \cdot y - y \cdot z - z \cdot x) + 3 \cdot (x + y + z) ^ 2 \geq 0$.
+      -- However, $(x - y) ^ 2 + (y - z) ^ 2 + (z - x) ^ 2 = 2 \cdot (x ^ 2 + y ^ 2 + z ^ 2 - x \cdot y - y \cdot z - z \cdot x)$, so actually it is sufficient to prove that $9 \cdot (x + y + z) ^ 2 \geq 0$, which is true because $9 \cdot (x + y + z) ^ 2 \geq 0$.
+      suffices ((x - y) ^ 2 + (y - z) ^ 2 + (z - x) ^ 2) + 3 * (x ^ 2 + y ^ 2 + z ^ 2 - x * y - y * z - z * x) + 3 * (x + y + z) ^ 2 ≥ 0 by linarith only [this]
+      -- Prove each summand is nonnegative.
+      positivity
+    _ = (9 * (x + y + z) ^ 2) / ((x + y) * (y + z) * (z + x)) := by
+      -- Reorganize the terms.
+      field_simp
+      ring
+    _ ≤ ((x + y) * (y + z) * (z + x)) / ((x + y) * (y + z) * (z + x)) := by
+      -- It is equal to proving $9 \leq (x + y + z)^2$.
+      refine div_le_div_of_nonneg_left (by positivity) (by positivity)
+      suffices (x - y) ^ 2 + (y - z) ^ 2 + (z - x) ^ 2 ≥ 0 by linarith only [this]
+      positivity
+    _ = 1 := by field_simp
+
+```

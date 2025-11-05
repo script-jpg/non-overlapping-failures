@@ -1,0 +1,49 @@
+-- The first step is to simplify the expression using logarithm properties.
+  have h₁ : ∀ k ∈ Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = k * Real.logb 5 (3 ^ k ^ 2) :=
+    fun k hk => Real.logb_pow (5 ^ k) (3 ^ k ^ 2) (1 / k) ▸ by field_simp
+  have h₂ : ∀ k ∈ Finset.Icc 1 20, k * Real.logb 5 (3 ^ k ^ 2) = 2 * k ^ 2 * Real.logb 5 3 :=
+    fun k hk => calc
+      _ = k * (Real.logb 5 (3 ^ k) + k * Real.logb 5 3) := by
+        rw [Real.logb_pow]
+        congr 1
+        rw [Real.logb_pow]
+        ring_nf
+        simp at hk
+        omega
+      _ = _ := by ring
+  have h₃ : ∀ k ∈ Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = k * Real.logb 9 (25 ^ k) :=
+    fun k hk => Real.logb_pow (9 ^ k) (25 ^ k) (1 / k) ▸ by field_simp
+  have h₄ : ∀ k ∈ Finset.Icc 1 100, k * Real.logb 9 (25 ^ k) = (Real.logb 9 25) * k ^ 2 :=
+    fun k hk => calc
+      _ = k * (Real.logb 9 (25 ^ k) + (Real.logb 9 25) * k) := by
+        rw [Real.logb_pow]
+        congr 1
+        rw [Real.logb_pow]
+        ring_nf
+        simp at hk
+        omega
+      _ = _ := by ring
+
+  simp_rw [h₁, h₂, h₃, h₄]
+
+  -- The second step is to simplify the expression further.
+  have h₅ : ∑ k in Finset.Icc 1 20, k * (Real.logb 5 3 + k * Real.logb 5 3) = Real.logb 5 3 * ∑ k in Finset.Icc 1 20, (2 * k ^ 2) := by
+    rw [Finset.mul_sum]
+    simp
+    rw [Finset.sum_add_distrib, Finset.sum_const]
+    ring_nf
+    simp
+    simp
+  have h₆ : 2 * (∑ k ∈ Finset.Icc 1 20, k ^ 2) = 140 := by native_decide
+  have h₇ : (∑ k ∈ Finset.Icc 1 100, k ^ 2) = 338350 := by native_decide
+  have h₈ : Real.logb 9 25 = 2 := by
+    rw [Real.logb_eq_iff_rpow_eq] <;> norm_num
+  have h₉ : Real.logb 5 3 * 2 = 2 * Real.logb 5 3 := by ring
+
+  -- The third step is to substitute the calculated values and simplify to get the final result.
+  simp_rw [h₅, h₆, h₇, h₈, h₉]
+  ring_nf
+  rw [Real.logb_eq_iff_rpow_eq]
+  norm_num
+  <;> linarith
+```

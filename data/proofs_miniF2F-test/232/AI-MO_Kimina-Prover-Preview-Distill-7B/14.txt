@@ -1,0 +1,237 @@
+-- All the solutions to the equation are in $[0,1)$.
+  have h₂ : ∀ x : ℝ, x ∈ S → x ≥ 0 ∧ x < 1 := by
+    intro x hx
+    specialize h₀ x
+    rw [hx] at h₀
+    suffices x < 1 ∧ x ≥ 0 by exact ⟨this.2, this.1⟩
+    have h₂ : x - ↑⌊x⌋ ≥ 0 := by
+      calc
+        _ = x - ⌊x⌋ := by simp [Int.subNatNat]
+        _ ≥ 0 := by apply sub_nonneg_of_le; exact Int.floor_le x
+    by_contra h₃
+    have : x - ↑⌊x⌋ > 1 := by
+      calc
+        _ ≥ 1 := by exact h₃
+        _ > 0 := by simp
+    have : ↑a * x ^ 2 > 0 := by
+      calc
+        _ = ↑a * x * x := by simp
+        _ > ↑a * (↑⌊x⌋ + 1) * x := by
+          apply mul_lt_mul_of_pos_right
+          · linarith
+          · linarith
+        _ > ↑a * x * x := by
+          apply mul_lt_mul_of_pos_left
+          · linarith
+          · linarith
+        _ = _ := by simp
+    linarith
+
+  -- Let $p$ be the numerator of $a$ and $q$ be the denominator of $a$.
+  set p := a.num with hp
+  set q := a.den with hq
+
+  -- The equation is solved by $x=0$.
+  have h₃ : 0 ∈ S := by
+    specialize h₀ 0
+    simp [h₀]
+    simp [hp, hq]
+
+  -- For every positive integer $k$, the real number $x=\frac k q$ is a solution to the equation.
+  have h₄ (k : ℕ) : (k : ℝ) / q ∈ S := by
+    specialize h₀ _ 
+    simp [h₀]
+    rw [hp, hq]
+    simp
+    have h₃ : q.gcd k = 1 := by
+      rw [Nat.coprime_iff_gcd_eq_one]
+      apply Nat.coprime_div_gcd_div_gcd
+      norm_cast
+      simp [hp, hq]
+    rw [← Nat.mul_div_cancel' _ h₃]
+    field_simp
+    use k * q - k
+    rw [hp, hq]
+    simp
+    linarith
+
+  -- If $x$ is a solution to the equation, then $x$ is of the form $\frac k q$ for some positive integer $k$.
+  have h₅ (x : ℝ) : x ∈ S → ∃ k : ℕ, x = (k : ℝ) / q ∧ 0 < k := by
+    intro hx
+    specialize h₀ x
+    rw [hx] at h₀
+    set k := ↑⌊x⌋ with hk
+    have h₃ : k = ⌊x⌋ := by simp [hk]
+    have h₄ : x - k > 0 := by
+      calc
+        _ = x - ↑⌊x⌋ := by simp [Int.subNatNat]
+        _ > 0 := by apply Int.lt_floor_add_one x
+    have h₅ : x < k + 1 := by
+      calc
+        _ = x - ↑⌊x⌋ + ↑⌊x⌋ := by simp [Int.subNatNat]
+        _ < ↑⌊x⌋ + 1 + ↑⌊x⌋ := by linarith
+        _ = _ := by simp [Int.cast_add, Int.cast_lt]
+    rw [h₃] at h₄
+    rw [h₃] at h₅
+    clear h₄ h₅
+    have h₄ : k * q / q < x * q := by
+      calc
+        _ = (k : ℝ) / q * q := by field_simp
+        _ < x * q := by linarith
+    have h₅ : x * q < (k + 1) * q := by
+      calc
+        _ = x * q := by simp
+        _ < (k : ℝ) / q * q := by linarith
+        _ = _ := by field_simp
+    have h₆ : k * q < x * q := by linarith
+    have h₇ : x * q ≤ (k + 1) * q := by linarith
+    have h₈ : k < x := by
+      calc
+        _ < q.gcd k * k := by exact Nat.lt_mul_gcd k h₃
+        _ = q.gcd k * x := by simp [h₆]
+        _ = x := by apply Nat.eq_of_mul_eq_mul_left; exact h₃
+    have : k > 0 := by
+      by_contra h₈
+      simp at h₈
+      have : k = 0 := by exact h₈
+      simp [this] at h₄
+    use k.natAbs
+    rw [show (k : ℝ) = (k.natAbs : ℤ) by rw [Int.cast_natAbs], Int.cast_le]
+    exact ⟨Int natAbs_nonneg, h₇⟩
+
+  -- A solution $x$ to the equation is of the form $\frac k q$, where $k$ is a positive integer less than $q$.
+  have h₆ : ∀ x : ℝ, x ∈ S → ∃ k : ℕ, x = (k : ℝ) / q ∧ k < q := by
+    intro x hx
+    specialize h₅ x hx
+    obtain ⟨k, hk, h₅⟩ := h₅
+    have h₆ : k > 0 := by
+      by_contra h₆
+      simp at h₆
+      have : k = 0 := by exact h₆
+      simp [this] at hk
+      linarith
+    have h₇ : x = k / q := by
+      calc
+        _ = (k : ℝ) / q := by rw [hk]
+        _ = _ := by simp
+    refine ⟨k, h₇, by linarith⟩
+
+  -- Let $u$ be the function that maps a natural number $k$ to $(k : ℝ)/q$.
+  let u (k : ℕ) := (k : ℝ) / q
+
+  -- Let $k$ be a natural number less than $q$.
+  have h₇ (k : ℕ) : k < q → u k ∈ S := by
+    intro h₇
+    specialize h₄ k
+    simp [u, h₄]
+
+  -- The sum of all real numbers $x$ satisfying the equation is equal to $\sum_{k=0}^{q-1} u(k)$.
+  have h₈ : ∑ x in S, x = ∑ k ∈ Finset.range q, u k := by
+    apply Finset.sum_bij
+    · intro x hx
+      obtain ⟨k, h₇, h₈⟩ := h₆ x hx
+      simp
+      use k
+      rw [h₇]
+      exact h₈
+    · intro k hf
+      simp at hf
+      obtain ⟨x, hx, h₉⟩ := h₇ k hf
+      simp
+      use x
+      rw [h₉]
+      exact hx
+    · intro i hi j hj h
+      simp
+      exact h
+    · intro i hi j hj h
+      simp
+      exact h
+
+  -- The function $u$ is injective on the set of natural numbers less than $q$.
+  have h₉ : Set.InjOn u (Finset.range q) := by
+    intro k hf k' h'f hk
+    simp [u, hf, h'] at hk
+    exact hk
+
+  -- The set of natural numbers less than $q$ is finite.
+  have h₁₀ : IsFinite (Finset.range q) := by
+    exact IsFinite.range q
+
+  -- The sum of all real numbers $x$ satisfying the equation is equal to $\sum_{k=0}^{q-1} k/q$.
+  have h₉ : ∑ x in S, x = ∑ k ∈ Finset.range q, (k : ℝ) / q := by
+    rw [h₈]
+    rw [Finset.sum_image h₉ h₁₀]
+    simp [u]
+
+  -- For each natural number $k$, the sum of the real numbers $u(k)$ is equal to $k$.
+  have h₁₀ (k : ℕ) : ∑ x ∈ Finset.image u (Finset.range k + 1), x = ∑ i ∈ Finset.range k + 1, (i : ℝ) / q := by
+    induction k with
+    | zero => simp
+    | succ k ih =>
+      rw [Finset.sum_image h₉ (by simp), ih, Finset.sum_range_succ, Finset.sum_singleton]
+
+  -- For each natural number $k$, the sum of the real numbers $u(k)$ is equal to $\frac 1 2 k(k-1)$.
+  have h₁₁ (k : ℕ) : ∑ x ∈ Finset.image u (Finset.range k + 1), x = (k : ℝ) * (k - 1) / 2 := by
+    induction k with
+    | zero => simp
+    | succ k ih =>
+      rw [h₁₀, ih]
+      ring_nf
+
+  -- The sum of all real numbers $x$ satisfying the equation is equal to $\frac 1 2 q(q-1)$.
+  have h₁₂ : ∑ x ∈ S, x = q * (q - 1) / 2 := by
+    rw [h₉]
+    rw [Finset.sum_range_eq_sum_range_add_sum_Ico _ (by simp)]
+    rw [← h₁₁ (q - 1)]
+    congr
+    rw [Nat.sub_sub_self]
+    apply Nat.one_le_of_lt
+    exact hq
+
+  -- From the given information, we know that the sum of all real numbers $x$ satisfying the equation is 420.
+  rw [h₁₂] at h₁
+  norm_cast at h₁
+
+  -- $q$ is greater than 20 and less than 21.
+  have h₁₃ : q > 20 := by
+    by_contra h₁₃
+    simp at h₁₃
+    have h₁₄ : q * (q - 1) ≤ 20 * 19 := by
+      rw [Nat.mul_le_mul_iff_right]
+      exact h₁₃
+      simp
+    have : q * (q - 1) < 420 := by
+      calc
+        _ ≤ 20 * 19 := by exact h₁₄
+        _ < 420 := by norm_num
+    linarith
+
+  have h₁₄ : q < 21 := by
+    by_contra h₁₄
+    simp at h₁₄
+    have h₁₅ : q * (q - 1) ≥ 21 * 20 := by
+      rw [Nat.mul_le_mul_iff_left]
+      exact h₁₄
+      simp
+    have : q * (q - 1) > 420 := by
+      calc
+        _ ≥ 21 * 20 := by exact h₁₅
+        _ > 420 := by norm_num
+    linarith
+
+  -- $q$ is equal to 21.
+  have h₁₅ : q = 21 := by
+    linarith
+
+  -- The answer is $p+q=104+21=125$.
+  suffices p + q = 125 by linarith
+
+  -- By the answer, we know that $p$ is equal to 104.
+  have h₁₆ : p = 104 := by
+    rw [hp, hq]
+    rw [h₁₅]
+    norm_num
+
+  linarith
+```

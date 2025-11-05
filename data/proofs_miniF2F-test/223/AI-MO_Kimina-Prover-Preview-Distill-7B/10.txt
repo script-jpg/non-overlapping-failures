@@ -1,0 +1,91 @@
+have ineq_aux (a b : ℝ) : 0 ≤ abs a - abs b ↔ a * b ≥ 0 := by
+    constructor
+    · intro h
+      by_cases ha : 0 ≤ a
+      · by_cases hb : 0 ≤ b
+        · rw [abs_of_nonneg ha, abs_of_nonneg hb] at h
+          apply sub_nonneg.mp at h
+          apply mul_nonneg h hb
+        · rw [abs_of_nonneg ha, abs_of_neg (not_le.mp hb)]
+          apply sub_nonneg.mp at h
+          apply mul_nonpos_of_nonneg_of_nonpos h (not_le.mp hb)
+      · by_cases hb : 0 ≤ b
+        · rw [abs_of_neg (not_le.mp ha), abs_of_nonneg hb]
+          apply sub_nonneg.mp at h
+          apply mul_nonpos_of_nonpos_of_nonneg h hb
+        · rw [abs_of_neg (not_le.mp ha), abs_of_neg (not_le.mp hb)]
+          apply sub_nonneg.mp at h
+          apply mul_nonneg (not_le.mp h) (not_le.mp h)
+
+    · intro h
+      by_cases ha : 0 ≤ a
+      · by_cases hb : 0 ≤ b
+        · rw [abs_of_nonneg ha, abs_of_nonneg hb]
+          apply sub_nonneg.mpr
+          apply mul_nonneg ha hb
+        · rw [abs_of_nonneg ha, abs_of_neg (not_le.mp hb)]
+          apply sub_nonneg.mpr
+          apply mul_nonpos_of_nonneg_of_nonpos ha (not_le.mp hb)
+      · by_cases hb : 0 ≤ b
+        · rw [abs_of_neg (not_le.mp ha), abs_of_nonneg hb]
+          apply sub_nonneg.mpr
+          apply mul_nonpos_of_nonpos_of_nonneg (not_le.mp ha) hb
+        · rw [abs_of_neg (not_le.mp ha), abs_of_neg (not_le.mp hb)]
+          apply sub_nonneg.mpr
+          apply mul_nonneg (not_le.mp h) (not_le.mp h)
+
+  -- We divide the problem into 3 cases according to the sign of x
+  obtain h | h | h := lt_trichotomy x 0 <;> obtain h' | h' | h' := le_or_lt (abs x) 1 <;> Aesop
+
+  -- Case : $x < 0$ and $|x| < 1$
+  · -- We have $|x-1| = 1-x$, $|x| = -x$ and $|x+1| = x+1$
+    rw [abs_of_neg (by linarith), abs_of_neg (by linarith), abs_of_pos (by linarith)] at h₀
+    -- The equation simplifies to $1-x - x + x+1 = x+2$, which further simplifies to $x = -2$
+    have : x = -2 := by linarith
+    -- This contradicts the assumption $|x| < 1$
+    rw [this] at h'
+    norm_num at h'
+
+  -- Case : $x < 0$ and $|x| ≥ 1$
+  · -- We have $|x-1| = 1-x$, $|x| = -x$ and $|x+1| = x+1$
+    rw [abs_of_neg (by linarith), abs_of_neg (by linarith), abs_of_pos (by linarith)] at h₀
+    -- The equation simplifies to $1-x - x + x+1 = x+2$, which further simplifies to $x = -2$
+    have : x = -2 := by linarith
+    -- This contradicts the assumption $|x| ≥ 1$
+    rw [this] at h'
+    norm_num at h'
+
+  -- Case : $x ≥ 0$
+  · -- We discuss the relation between $x$ and $1$
+    obtain h | h := le_or_lt x 1 <;> obtain h' | h' := le_or_lt (abs x) 1 <;> Aesop
+
+    -- Case : $x ≥ 0$, $|x| ≤ 1$ and $x < 1$
+    · -- We have $|x-1| = 1-x$, $|x| = x$ and $|x+1| = x+1$
+      rw [abs_of_neg (by linarith), abs_of_pos (by linarith), abs_of_pos (by linarith)] at h₀
+      -- The equation simplifies to $1-x + x + x+1 = x+2$, which further simplifies to $0 ≤ 0$
+      -- In this case, we have $0 ≤ x ≤ 1$
+      constructor <;> linarith
+
+    -- Case : $x ≥ 0$, $|x| ≤ 1$ and $x ≥ 1$
+    · -- We have $|x-1| = x-1$, $|x| = x$ and $|x+1| = x+1$
+      rw [abs_of_pos (by linarith), abs_of_pos (by linarith), abs_of_pos (by linarith)] at h₀
+      -- The equation simplifies to $x-1 + x + x+1 = x+2$, which further simplifies to $x = 1$
+      have : x = 1 := by linarith
+      -- In this case, we have $0 ≤ x ≤ 1$
+      constructor <;> linarith
+
+    -- Case : $x ≥ 0$, $|x| ≥ 1$ and $x < 1$
+    · -- We have $|x-1| = 1-x$, $|x| = x$ and $|x+1| = x+1$
+      rw [abs_of_neg (by linarith), abs_of_pos (by linarith), abs_of_pos (by linarith)] at h₀
+      -- The equation simplifies to $1-x + x + x+1 = x+2$, which further simplifies to $0 ≤ 0$
+      -- In this case, we have $0 ≤ x ≤ 1$
+      constructor <;> linarith
+
+    -- Case : $x ≥ 0$, $|x| ≥ 1$ and $x ≥ 1$
+    · -- We have $|x-1| = x-1$, $|x| = x$ and $|x+1| = x+1$
+      rw [abs_of_pos (by linarith), abs_of_pos (by linarith), abs_of_pos (by linarith)] at h₀
+      -- The equation simplifies to $x-1 + x + x+1 = x+2$, which further simplifies to $x = 1$
+      have : x = 1 := by linarith
+      -- In this case, we have $0 ≤ x ≤ 1$
+      constructor <;> linarith
+```

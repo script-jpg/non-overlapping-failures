@@ -1,0 +1,202 @@
+--tactics A
+  -- We prove that for a polynomial with positive integer roots, the coefficients are nonpositive.
+  have hA {w : ℂ} (hw : w ≠ 0) (hw' : ∀ x : ℂ, c = x - w * x ^ k ↔ 0 < x ∧ 0 < k ∧ k ≤ 5) : c ≤ 0 := by
+    -- Define D as the set of positive integers at most 5.
+    set D := {x : ℂ | 0 < x ∧ x ≤ 5} with hD
+    have hD_card : D.card = 5 := by
+      apply eq_comm.trans
+      apply Set.ncard_eq_of_bijective
+      case b => exact λn _ ↦ n + 1
+      simp
+      intro x hx y hy hxy
+      simp at hx hy
+      apply bijective_iff_existsUnique.mpr
+      use x - 1
+      simp
+      constructor
+      · intro h
+        simp at h
+        omega
+      · intro h
+        simp at h
+        omega
+    have hd : ∀ d ∈ D, 0 < d ∧ d ≤ 5 := by
+      intro d hd
+      simp [hD] at hd
+      exact hd
+    specialize hw' c
+    rcases hw' with ⟨dd, hd⟩ | ⟨dd, hd⟩
+    · -- If c is a root of the polynomial, then c is in D.
+      have hc : c ∈ D := by
+        rw [hD]
+        simp
+        constructor
+        · simpa [dd]
+        · apply le_of_lt
+          calc
+            _ < (w.pow k)⁻¹ := by
+              apply inv_lt_inv₀
+              · simpa [hw]
+              · exact lt_of_le_of_ne (hd.2) hw'
+              · apply ne_of_lt
+                apply pow_pos
+                exact hw.2
+            _ ≤ _ := by
+              apply inv_le_iff₀.mpr
+              · simpa [hw]
+              · apply le_of_lt
+                apply pow_pos
+                exact hw.2
+      specialize hd hc
+      rcases hd with ⟨dd', h⟩
+      have hc' : c = w * c ^ k := by
+        rw [h.2]
+        ring
+      let T := {m : ℂ | m ≠ 0 ∧ m ∈ D}
+      have hT : T.card = 5 := by
+        apply eq_comm.trans
+        apply Set.ncard_eq_of_bijective
+        case b => exact λn _ ↦ w * (n + 1) ^ k
+        simp
+        intro m hm x hx
+        simp at hm hx
+        simp [hD] at hx
+        apply bijective_iff_existsUnique.mpr
+        use m - w * m ^ k
+        simp
+        constructor
+        · intro h
+          simp at h
+          absurd hw'
+          use m
+          simp [hD] at hm
+          exact hm.2
+        · intro h
+          simp at h
+          replace h := h.2
+          rw [h]
+          ring
+      have hl : Multiset.card T.toMultiset = 5 := by
+        simp [hT]
+      have hr : Multiset.card (w * (k + 1) ^ k :: T.toMultiset) = 6 := by
+        rw [Multiset.card_cons_of_not_mem, Multiset.card_eq_of_ne_zero, hT]
+        simp
+        intro h
+        simp at h
+        apply ne_of_lt
+        apply lt_of_lt_of_le (show 5 ≤ 6 by simp)
+        apply Multiset.count_cons
+        simp
+        intro h'
+        simp at h'
+        apply Multiset.count_eq_card_of_not_mem _ h'
+        simp [hD] at hm
+        rcases hm with ⟨_, mle⟩
+        rcases mle with ⟨_, _⟩
+        apply lt_of_le_of_lt (show 5 ≤ 5 by simp) (show 5 < 6 by simp)
+      have h counted : Count w (w * (k + 1) ^ k :: Multiset.map (fun x ↦ x - w * x ^ k) T.toMultiset) = 0 := by
+        simp only [Count.count_eq_card_of_ne_zero, Multiset.card_map, Multiset.card_cons_of_not_mem, Multiset.card_eq_of_ne_zero, hT, Multiset.count_cons]
+        simp [hD] at hd
+        rcases hd with ⟨dd', h⟩
+        have h := h.1
+        replace h : w * (c ^ k - (w * c ^ k) ^ k) = 0 := by
+          rw [h.2]
+          ring
+        simp at h
+        rcases h with h | h
+        · simpa [hw] using h
+        · apply ne_of_lt
+          apply pow_pos
+          exact hw.2
+      apply_fun (fun x => x + 1) at counted
+      rw [Multiset.map_add_distrib, Multiset.map_ofNat, Multiset.card_cons_of_mem (show _ ∈ T.toMultiset by simp [hT])] at counted
+      simp at counted
+      apply_fun (fun x => x - 1) at counted
+      rw [Multiset.map_sub_distrib, Multiset.map_ofNat, Multiset.card_cons_of_not_mem _ (by simp [hT])] at counted
+      simp at counted
+      rw [counted] at hr
+      omega
+    · -- We know that c is a root of the polynomial, so...
+      rcases hw' with ⟨dd', h⟩
+      specialize hd dd'
+      rcases hd with ⟨dd, h⟩
+      rcases h with ⟨dd', h⟩
+      have hc : c = w * c ^ k := by
+        rw [h.2]
+        ring
+      have hw : w ≠ 0 := by
+        intro hw
+        simp [hw] at hc
+        rw [hc] at dd
+        ring_nf at dd
+        simp at dd
+        apply ne_of_lt
+        apply lt_of_lt_of_le (show -2 < 0 by simp)
+        apply Multiset.count_lt_card_of_mem (show _ ∈ T.toMultiset by simp [hT])
+      have hc' : c ∈ D := by
+        simp [hD]
+        constructor
+        · rw [dd]
+          apply lt_of_lt_of_le (show 0 < -2 by simp) (show -2 ≤ 5 by simp)
+        · rw [dd]
+          simp
+      specialize hA hw (fun x hx ↦ hc')
+      specialize hA hw'
+      omega
+
+  --tactics B
+  -- We factor the polynomial.
+  have hB : ∀ x : ℂ, (x - 1) * (x - 2) * (x - 3) * (x - 4) * (x - 5) * (x - 6) =
+      x ^ 6 - 10 * x ^ 5 + (-88) * x ^ 4 + 510 * x ^ 3 - 1840 * x ^ 2 + 3120 * x - 16 * 5 * 6 * 7 * 8 := by
+    intro x
+    ring
+  set P := fun x => x ^ 6 - 10 * x ^ 5 + (-88) * x ^ 4 + 510 * x ^ 3 - 1840 * x ^ 2 + 3120 * x - 16 * 5 * 6 * 7 * 8 with hP
+  have hB {x : ℂ} : P x = (x - 1) * (x - 2) * (x - 3) * (x - 4) * (x - 5) * (x - 6) := by
+    rw [hP]
+    ring
+
+  --tactics C
+  -- We use the fact that f and P have the same roots.
+  have hC : ∀ z, f z = 0 ↔ P z = 0 := by
+    intro z
+    constructor
+    · intro hf
+      rw [hB] at hf
+      rw [←hf]
+      exact h₁ z hf
+    · intro hP
+      specialize h₁ z hP
+      rw [hB] at h₁
+      exact h₁
+
+  --tactics D
+  -- We use the fact that the coefficients of f are real numbers.
+  have hD : ∀ x : ℂ, f x = 0 → x.im = 0 ∧ 0 < x.re ∧ ↑(Int.floor x.re) = x.re := by
+    intro x hx
+    have hx' := h₁ x hx
+    simp [h₁] at hx'
+    exact hx'
+
+  --tactics E
+  -- We determine the value of B.
+  have hE : ∀ x : ℂ, f x = 0 → (x ^ 6 - 10 * x ^ 5 + (↑b : ℂ) * x ^ 4 + ↑b * x ^ 3 * 42 + ↑b * x ^ 2 * 72 + ↑b * x * 90 + (↑c : ℂ) * x ^ 3 + ↑d * x ^ 2 + ↑c * x * 8 + (↑c : ℂ) * 8 + (↑d : ℂ) * 8 + 16 = 0) := by
+    intro x hx
+    specialize hC x hx
+    rw [hB] at hC
+    rw [hC] at hx
+    ring_nf at hx
+    ring_nf
+    exact hx
+
+  rcases hC 1 (hD 1 (by norm_num)) with ⟨_, h₀, rfl⟩
+  rcases hC 2 (hD 2 (by norm_num)) with ⟨_, h₁, rfl⟩
+  rcases hC 3 (hD 3 (by norm_num)) with ⟨_, h₂, rfl⟩
+  rcases hC 4 (hD 4 (by norm_num)) with ⟨_, h₃, rfl⟩
+  rcases hC 5 (hD 5 (by norm_num)) with ⟨_, h₄, rfl⟩
+  rcases hC 6 (hD 6 (by norm_num)) with ⟨_, h₅, rfl⟩
+  simp at h₀ h₁ h₂ h₃ h₄ h₅
+  simp [hD] at h₃ h₄ h₅
+  norm_cast at h₃ h₄ h₅
+  linarith
+
+```

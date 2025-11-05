@@ -1,0 +1,207 @@
+-- some auxiliary statements
+
+  -- y is a continuous function
+  have continuous : Continuous fun (x : ℝ) => y x := by
+    rw [Function.continuous]
+    intro x
+    apply Continuous.sum
+    intro i hi
+    apply Continuous.div
+    apply Continuous.cos
+    apply Continuous.add
+    exact continuous_const a i
+    exact continuous_id'
+    apply Nat.zero_le
+    rw [div_self]
+    intro h
+    rw [h] at h₁
+    simp at h₁
+    have : 2 ^ k ≤ ∑ i ∈ Finset.range k, 1 := by
+      apply Finset.sum_le_sum
+      intro i hi
+      calc
+        2 ^ k = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 := by norm_num
+          _ ≤ 1 := by tauto
+    rw [show ∑ i ∈ Finset.range k, 1 = k by simp] at this
+    have : 2 ^ k ≤ 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 := by linarith
+    classical
+    exact lt_of_le_of_ne this (Ne.symm h)
+
+  -- y is strictly decreasing
+  have strictlyAnti : StrictAnti fun (x : ℝ) => y x := by
+    rw [StrictAnti]
+    intro x y hxy
+    apply lt_of_le_of_ne
+    apply Continuouslemma.continuousWithinAt continuous
+    simp
+    by_contra! h
+    have h' := h₁ x
+    have h'' := h₁ y
+    simp at h' h''
+    rw [h', h''] at h
+    classically
+    linarith
+
+  -- y is injective
+  have injective : InjOn y (Icc (m - n) (m - n + Real.pi)) := by
+    rw [InjOn]
+    intro x₁ hx₁ x₂ hx₂ h
+    have hx₁ : y x₁ ≥ 0 := by
+      rw [h₁]
+      apply Finset.sum_nonneg
+      intro i hi
+      apply Real.cos_nonneg_of_neg_pi_div_two_le_of_le
+      have : a i - x₁ ≤ a i - m := by linarith
+      have : a i - x₁ ≥ a i - (m - n + Real.pi) := by linarith
+      apply this
+      apply le_of_lt
+      apply lt_trans?_ h.2
+      apply lt_of_lt_of_le?_ hx₁.2
+      exact lt_trans?_ h.1.2
+      exact lt_of_le_of_ne (Nat.zero_le k) (Ne.symm h.1.1)
+      exact lt_of_le_of_ne (Nat.zero_le k) (Ne.symm h.2.1)
+    have hx₂ : y x₂ ≥ 0 := by
+      rw [h₁]
+      apply Finset.sum_nonneg
+      intro i hi
+      apply Real.cos_nonneg_of_neg_pi_div_two_le_of_le
+      have : a i - x₂ ≤ a i - n := by linarith
+      have : a i - x₂ ≥ a i - (m - n + Real.pi) := by linarith
+      apply this
+      apply le_of_lt
+      apply lt_trans?_ h.2
+      apply lt_of_lt_of_le?_ hx₂.2
+      apply lt_trans?_ h.1.2
+      exact lt_trans?_ h.2.1
+      exact lt_of_le_of_ne (Nat.zero_le k) (Ne.symm h.1.1)
+      exact lt_of_le_of_ne (Nat.zero_le k) (Ne.symm h.2.1)
+    have hx₁ : y x₁ < y (x₁ + k * Real.pi) := by
+      apply strictlyAnti.lt_iff.lt
+      apply lt_trans h.1.1
+      apply lt_of_lt_of_le h.1.2
+      apply lt_of_lt_of_le h.2.1
+      apply add_lt_add_iff_right.mpr
+      exact Nat.mul_pos h.1.1.1 h.1.1.2
+    have hx₂ : y x₂ < y (x₂ + k * Real.pi) := by
+      apply strictlyAnti.lt_iff.lt
+      apply lt_trans h.1.1
+      apply lt_of_lt_of_le h.1.2
+      apply lt_of_lt_of_le h.2.2
+      apply add_lt_add_iff_right.mpr
+      exact Nat.mul_pos h.2.1.1 h.2.1.2
+    have hx₁ : y x₁ ≤ y x₂ := by
+      apply strictlyAnti.le_iff.le
+      contrapose h
+      exact lt_of_le_of_ne (le_of_eq h) hx₁
+    have hx₂ : y x₂ ≤ y x₁ := by
+      apply strictlyAnti.le_iff.le
+      contrapose h
+      exact lt_of_le_of_ne (le_of_eq h) hx₂
+    have hx₁ : y x₁ = y x₂ := by
+      linarith
+    apply le_antisymm hx₁ hx₂
+
+  -- write y0 = y (m - n) as 0 ≤ y0 ≤ 0
+  have y0_nonneg : 0 ≤ y (m - n) := by
+    rw [h₁]
+    apply Finset.sum_nonneg
+    intro i hi
+    apply Real.cos_nonneg_of_neg_pi_div_two_le_of_le
+    have : a i - (m - n) ≤ a i - n := by linarith
+    have : a i - (m - n) ≥ a i - (m - n + Real.pi) := by
+      linarith [Real.pi_pos]
+    apply this
+    apply le_of_lt
+    apply lt_trans?_ h₂.2
+    apply lt_of_lt_of_le?_ (show 0 ≤ ∑ i ∈ Finset.range k, 1 / 2 ^ i by positivity)
+    exact lt_trans?_ h₂.1.2
+    exact lt_of_le_of_ne (Nat.zero_le k) (Ne.symm h₂.1.1)
+    exact lt_of_le_of_ne (Nat.zero_le k) (Ne.symm h₂.2.1)
+
+  have y0_nonpos : y (m - n) ≤ 0 := by
+    rw [h₁]
+    apply Finset.sum_nonpos
+    intro i hi
+    apply Real.cos_nonpos_of_neg_pi_div_two_le_of_le
+    have : a i - (m - n) ≤ a i - m := by linarith
+    have : a i - (m - n) ≥ -(m - n + Real.pi) := by linarith [Real.pi_pos]
+    apply this
+    apply le_of_lt
+    apply lt_trans?_ h₂.1.2
+    apply lt_of_lt_of_le h₂.1.1
+    exact lt_trans?_ h₂.2
+    exact lt_of_le_of_ne (Nat.zero_le k) (Ne.symm h₂.1.1)
+    exact lt_of_le_of_ne (Nat.zero_le k) (Ne.symm h₂.2.1)
+
+  have y0_eq_zero : y (m - n) = 0 := by
+    linarith
+
+  -- given y (m - n) = 0, prove m - n = m * pi
+  have y0_eq_zero' {x : ℝ} (hx : y x = 0) : ∃ t : ℤ, x = t * Real.pi := by
+    -- a lemma about unique continuity of arccos
+    have continuous_arccos : Continuous fun (x : ℝ) => arccos x := by
+      rw [Continuous]
+      intro x hx
+      apply arccos_continuous
+    have continuous_arccos' : Continuous fun (x : ℝ) => -arccos x := by
+      apply Continuous.neg
+      apply continuous_arccos
+
+    -- prove that arccos is injective on [-1, 1]
+    have arccos_inj : InjOn arccos (Icc (-1) 1) := by
+      rw [InjOn]
+      intro x hx y hy h
+      apply Real.arccos_injOn_Icc.mp
+      simp at hx hy
+      apply h
+      linarith
+
+    -- prove that arccos is injective on [-1, 1]
+    have arccos_inj' : InjOn arccos (Icc (-1) 1) := by
+      rw [InjOn]
+      intro x hx y hy h
+      apply Real.arccos_injOn_Icc.mpr
+      simp at hx hy
+      apply h
+      linarith
+
+    have h3 :=
+      arccos_inj'
+      (Real.arccos (y x) - Real.arccos (-1)) <;> try apply (continuous_arccos?_)
+      <;> try simp
+      <;> try (rw [continuous_arccos] at continuous_arccos')
+      <;> try (rw [continuous_arccos'] at continuous_arccos)
+      <;> try exact Nat.one_le_of_lt h.2.2
+      <;> try (rw [Nat.cast_one] at h.2.2)
+      <;> try exact h.1.1
+      <;> try exact h.1.2
+      <;> try exact le_of_lt h.2.1
+      <;> try exact le_of_lt_of_le h.2.2
+      <;> try exact arccos_nonneg (y x)
+
+    -- write y x = 0 as -arccos 0 = arccos 0
+    rw [← sub_eq_zero] at hx
+    -- write -arccos (y x) = arccos (-1)
+    have h4 : -arccos (y x) = arccos (-1) := by
+      rw [hx]
+      norm_num
+    -- so x = arccos 0 - arccos (-1)
+    have h5 := (h3 y hy (show -1 ∈ Icc (-1) 1 by norm_num) (show y x ∈ Icc (-1) 1 by simp [hx]) h).1
+    have h6 := (h4 ▸ h3 y hy (show -1 ∈ Icc (-1) 1 by norm_num) (show y x ∈ Icc (-1) 1 by simp [hx]) h).1
+    have h7 : x = ((arccos 0 - arccos (-1)) : ℝ) := by
+      calc
+        x = arccos 0 - arccos (-1) := by linarith
+        _ = ((arccos 0 - arccos (-1)) : ℝ) := by norm_cast
+    use ((arccos 0 - arccos (-1)) / Real.pi)
+    rw [h7]
+    field_simp
+
+  -- to prove m - n = t * pi, consider y (m - n) = 0
+  -- and use the lemma y0_eq_zero'
+  use ((m - n) / Real.pi)
+  -- we need to prove that m - n = ((m - n) / Real.pi) * Real.pi
+  field_simp
+  -- we can cancel the pi in the denominator
+  rw [y0_eq_zero' (show y (m - n) = 0 by assumption)]
+
+```

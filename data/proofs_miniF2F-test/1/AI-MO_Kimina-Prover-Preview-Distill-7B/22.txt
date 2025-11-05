@@ -1,0 +1,28 @@
+-- First, we consider the possible values of cubes modulo 7.
+  -- For any integer $a$, $a^3 \equiv 0, 1, \text{or } 6 \pmod{7}$.
+  have h1 cube_mod7 (a : ℤ) : a ^ 3 ≡ 0 [ZMOD 7] ∨ a ^ 3 ≡ 1 [ZMOD 7] ∨ a ^ 3 ≡ 6 [ZMOD 7] := by
+    have h : a % 7 = 0 ∨ a % 7 = 1 ∨ a % 7 = 2 ∨ a % 7 = 3 ∨ a % 7 = 4 ∨ a % 7 = 5 ∨ a % 7 = 6 := by
+      omega
+    rcases h with (h | h | h | h | h | h | h) <;> simp [h, pow_three, Int.ModEq, Int.add_emod, Int.mul_emod]
+
+  -- Next, we consider the possible values of $4x^3 - 7y^3$ modulo 7.
+  -- Since $7y^3 \equiv 0 \pmod{7}$, $4x^3 - 7y^3 \equiv 4x^3 \pmod{7}$.
+  -- Thus $4x^3 - 7y^3 \equiv 0, 4, \text{or } 24 \pmod{7}$.
+  have h2 four_mul_cube_mod7 (x : ℤ) : 4 * x ^ 3 ≡ 0 [ZMOD 7] ∨ 4 * x ^ 3 ≡ 4 [ZMOD 7] ∨ 4 * x ^ 3 ≡ 24 [ZMOD 7] := by
+    rcases h1 x with (h | h | h)
+    all_goals
+      simp [h, Int.ModEq, Int.add_emod, Int.mul_emod]
+
+  -- Since $2003 \equiv 6 \pmod{7}$, and $4x^3 - 7y^3 \not\equiv 6 \pmod{7}$, we have a contradiction.
+  intro h
+  have h3 : 4 * x ^ 3 - 7 * y ^ 3 ≡ 2003 [ZMOD 7] := by
+    simp [Int.ModEq, h]
+  have h4 : 4 * x ^ 3 ≡ 2003 + 7 * y ^ 3 [ZMOD 7] := by
+    exact Int.ModEq.add_right_cancel' (-7 * y ^ 3) h3
+  have h5 : 4 * x ^ 3 ≡ 6 [ZMOD 7] := by
+    simp [Int.ModEq, Int.add_emod, Int.mul_emod, add_comm] at h4
+    exact h4
+  rcases h2 x with (h | h | h)
+  all_goals
+    omega
+```

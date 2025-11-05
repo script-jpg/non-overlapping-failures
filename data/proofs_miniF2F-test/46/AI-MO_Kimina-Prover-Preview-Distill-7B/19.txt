@@ -1,0 +1,123 @@
+-- We shall show that $a = \sqrt{a^2} = \sqrt{2} + 1$, and use this to compute the value of $a^{12} - 144a^{-1}$.
+  have h₄ : a = √(a ^ 2) := by
+    symm
+    rw [Real.sqrt_eq_iff_eq_sq (by positivity) (by positivity)]
+    nlinarith
+
+  -- Note that $\sqrt{2} < a < \sqrt{3}$.
+  have h₅ : √2 < a := by
+    rw [lt_iff_le_and_ne]
+    constructor
+    · rw [Real.le_sqrt]
+      · nlinarith
+      · positivity
+    · by_contra!
+      subst this
+      have : a ^ 2 = 2 := by nlinarith
+      nlinarith
+
+  have h₆ : a < √3 := by
+    rw [Real.sqrt_lt]
+    · nlinarith
+    · positivity
+
+  -- Note that $a^4 - 4a^2 + 1 = 0$, and let $b = a + a^{-1}$. Then $b^2 = 5$.
+  have h₇ : a ^ 4 - 4 * a ^ 2 + 1 = 0 := by
+    calc
+      a ^ 4 - 4 * a ^ 2 + 1 = (a ^ 2) ^ 2 - 4 * a ^ 2 + 1 := by ring
+      _ = (a ^ 2 - 2) ^ 2 - 3 := by ring
+      _ = (a - √2) ^ 2 * (a + √2) ^ 2 - 3 := by
+        rw [mul_pow, ← sub_sq, ← sq_sub_sq, Real.sq_sqrt (by norm_num)]
+        ring
+      _ = 0 := by nlinarith
+
+  let b := a + a⁻¹
+  have h₈ : b ^ 2 = 5 := by
+    simp [b]
+    calc
+      (a + a⁻¹) ^ 2 = a ^ 2 + 2 + a⁻¹ ^ 2 := by
+        field_simp
+        ring
+      _ = a ^ 2 + a⁻¹ ^ 2 + 2 := by ring
+      _ = a ^ 2 + (a ^ 2)⁻¹ + 2 := by field_simp
+      _ = 2 + 2 := by
+        rw [h₇]
+        field_simp
+        linarith
+      _ = 4 := by norm_num
+      _ = 5 - 1 := by norm_num
+      _ = (a ^ 2 - 1) ^ 2 - 1 := by
+        rw [sub_pow, add_sub, ← pow_two, ← sq_sub_sq, Real.sq_sqrt (by norm_num)]
+        ring
+      _ = (a - 1) ^ 2 * (a + 1) ^ 2 - 1 := by
+        rw [mul_pow, ← sub_sq, ← sq_sub_sq, Real.sq_sqrt (by norm_num)]
+        ring
+      _ = ((a - 1) * (a + 1)) ^ 2 - 1 := by
+        rw [mul_pow]
+      _ = (a ^ 2 - 1) ^ 2 - 1 := by
+        rw [← sq_sub_sq, Real.sq_sqrt (by norm_num)]
+      _ = (a ^ 2 - 2) ^ 2 - 1 := by
+        rw [sub_pow, add_sub, ← pow_two, ← sq_sub_sq, Real.sq_sqrt (by norm_num)]
+        ring
+      _ = (a ^ 2 - 2) ^ 2 - 4 := by
+        rw [sub_pow, add_sub, ← pow_two, ← sq_sub_sq, Real.sq_sqrt (by norm_num)]
+        ring
+      _ = 4 := by
+        rw [h₇]
+        linarith
+      _ = 5 - 1 := by norm_num
+      _ = 5 := by norm_num
+
+  -- Note that $a^{2n} + a^{-2n}$ is an integer.
+  have h₉ (n : ℕ) : a ^ (2 * n) + a ^ (-2 * n) = ((a + a⁻¹) ^ 2 - 2) ^ n + ((a + a⁻¹) ^ 2 - 2) ^ n := by
+    induction n with
+    | zero =>
+      simp
+      rw [h₈]
+      ring
+    | succ n ih =>
+      rw [mul_two, pow_add, pow_two, <-mul_assoc, ih, h₈]
+      ring_nf
+
+  -- Note that $a^{2n+1} + a^{-2n+1}$ is an integer.
+  have h₁₀ (n : ℕ) : a ^ (2 * n + 1) + a ^ (-2 * n + 1) = ((a + a⁻¹) ^ 2 - 2) ^ n * (a + a⁻¹) + ((a + a⁻¹) ^ 2 - 2) ^ n * (a + a⁻¹) := by
+    induction n with
+    | zero =>
+      simp
+      rw [h₈]
+      ring
+    | succ n ih =>
+      rw [mul_add, mul_assoc, pow_add, pow_two, <-mul_assoc, ih, h₈]
+      ring_nf
+
+  -- Now, we use these to compute $a^{12} - 144a^{-1}$.
+  calc
+    a ^ 12 - 144 * (1 / a) = a ^ 12 - a ^ (-1) * 144 * (1 / a) * a / a := by
+      field_simp
+      ring
+    _ = a ^ 12 - 144 * (a + a⁻¹) / (a ^ 2 - 1) := by
+      field_simp
+      ring_nf
+      nlinarith
+    _ = a ^ 12 - 144 * (a + a⁻¹) / ((a ^ 2 - 2) ^ 2 - 1) := by
+      congr
+     . rw [h₈]
+     . norm_num
+    _ = a ^ 12 - 144 * (a + a⁻¹) / ((a + a⁻¹) ^ 2 - 1) := by
+      congr
+     . ring
+     . rw [h₈]
+        norm_num
+    _ = a ^ 12 - 144 * (a + a⁻¹) / ((a + a⁻¹) ^ 2 - 2) := by
+      congr
+     . ring
+     . rw [h₈]
+        norm_num
+    _ = 233 := by
+      rw [div_eq_iff (by positivity)]
+      norm_cast
+      rw [<-h₉, <-h₁₀]
+      ring_nf
+      nlinarith
+
+```

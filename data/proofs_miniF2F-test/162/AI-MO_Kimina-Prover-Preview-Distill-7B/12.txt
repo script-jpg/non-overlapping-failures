@@ -1,0 +1,64 @@
+-- Note that $(1+x)^n$ is equal to $1 + \binom{n}{1}x + \binom{n}{2}x^2 + \cdots + x^n$.
+  have eq : (1 + x) ^ (n : ℕ) = ∑ i : Finset ℕ, (choose n i) * x ^ i := by
+    rw [Finset.sum_finset_pow]
+    simp
+  rw [eq]
+
+  -- We can make a pointwise estimate for each summand.
+  have h_i (i : ℕ) (hi : i ≤ n) : (choose n i) * x ^ i ≤ (choose n i) * (↑n * x) ^ i := by
+    -- For each index $i$, we can find an upper bound for the term $(1+x)^i$.
+    induction' i with i ih
+    -- When $i=0$, the qiquadratic version of the estimate is applicable.
+    · simp
+      rw [← mul_one ((1 + x) ^ n), ← mul_one (1 + ↑n * x ^ n)]
+      apply mul_le_mul
+      apply Finset.sum_le_sum
+      intro i _
+      apply le_of_eq
+      rw [add_zero]
+      apply add_le_add
+      exact ih
+      exact Nat.zero_le ((1 + x) ^ n)
+      exact zero_le_one
+    -- When $i$ is a succ i, the inductive hypothesis is applicable.
+    · rw [Finset.sum_range_succ]
+      apply mul_le_mul
+      apply Finset.sum_le_sum
+      intro i _
+      apply le_of_eq
+      rw [mul_zero, zero_mul]
+      apply add_le_add
+      exact ih
+      apply le_of_lt
+      apply Finset.sum_pos
+      intro j _
+      apply le_of_lt
+      apply Nat.lt_succ_iff.mpr
+      exact Nat.zero_lt_of_ne_zero h₁
+      simp
+    -- As long as we can show that $(1 + n x)^i \leq (1 + x)^i$, we can add the inductive step.
+    apply ih
+    apply le_of_lt
+    apply Nat.lt_succ_iff.mpr
+    exact Nat.zero_lt_of_ne_zero h₁
+
+  -- The inductive step is essentially the same as the inductive step in `Mathlib`texttt{Nat.pow_le_sum choose n i * x^i}.
+  induction' n with n ih
+  -- When $n=0$, the inequality is trivial.
+  · simp
+  -- When $n$ is a succ n, we make use of the inductive hypothesis.
+  · rw [Finset.sum_range_succ, one_pow, mul_one, ← add_mul]
+    apply add_le_add
+    apply Finset.sum_le_sum
+    intro i _
+    apply le_of_eq
+    apply mul_le_mul
+    exact h_i
+    exact ih
+    exact Nat.zero_le ((1 + x) ^ n)
+    apply le_of_lt
+    apply Nat.lt_succ_iff.mpr
+    exact Nat.zero_lt_of_ne_zero h₁
+    simp
+
+```

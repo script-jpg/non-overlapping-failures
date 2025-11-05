@@ -1,0 +1,116 @@
+rcases h₁ with ⟨k, hkgt, hk⟩
+
+  havehk1 : 2 ^ k > 0 := by positivity
+
+  have hpos : 0 < (a + b ^ 2) * (b + a ^ 2) := by
+    apply Nat.mul_pos
+    · apply Nat.add_pos
+      · exact h₀.left
+      · exact Nat.pow_pos b (by norm_num)
+    · apply Nat.add_pos
+      · exact h₀.right
+      · exact Nat.pow_pos a (by norm_num)
+
+  -- Show that k ≥ 2.
+  have hkeq1 : k = 1 ∨ k ≥ 2 := by
+    by_contra! hkne1
+    have hk1 : k = 1 := by omega
+    rw [hk1] at hk
+    simp at hk
+
+    have : a ≤ b := by
+      by_contra! hcb
+      have : b + a ^ 2 > b + b ^ 2 := by
+        apply Nat.lt_add_of_pos_right
+        suffices b < b ^ 2 by omega
+        refine Nat.lt_self_pow?_ hcb
+        omega
+      rw [hk] at this
+      simp at this
+    have : b + a ^ 2 ≤ 2 * b := by omega
+    have : 2 * b ≤ (a + b ^ 2) * (b + a ^ 2) := by nlinarith
+    rw [hk] at this
+    linarith
+
+  rcases hkeq1 with hkeq1 | hkeq1
+  -- Case 1 : k = 1
+  · rw [hkeq1] at hk
+    have : a + b ^ 2 ≤ 2 * a := by
+      by_contra! hca
+      have : b + a ^ 2 > 2 * a := by
+        calc
+          b + a ^ 2 > a + a ^ 2 := by apply Nat.lt_add_of_pos_left; exact hca
+          _ = 2 * a := by ring
+      rw [hk] at this
+      simp at this
+      nlinarith
+    have : b + a ^ 2 ≤ 2 * b := by
+      by_contra! hcb
+      have : a + b ^ 2 > 2 * b := by
+        calc
+          a + b ^ 2 > b + b ^ 2 := by apply Nat.lt_add_of_pos_right; exact hcb
+          _ = 2 * b := by ring
+      rw [hk] at this
+      simp at this
+      nlinarith
+    have : a = 1 ∧ b = 1 := by
+      nth_rw 1 [← Nat.mul_le_mul_iff_left (by norm_num)] at this
+      nth_rw 2 [← Nat.mul_le_mul_iff_left (by norm_num)] at this
+      nth_rw 3 [← Nat.mul_le_mul_iff_left (by norm_num)] at this
+      exact this
+    rcases this with ⟨ha, hb⟩
+    rfl
+    exact hb
+  -- Case 2 : k ≥ 2
+  · have hkeq1 : 2 ^ k = (2 ^ 1) ^ k := by rw [Nat.pow_one, Nat.pow_mul]; simp
+    rw [hkeq1] at hk
+    have h2hk : 2 ^ 1 ∣ 2 ^ k := by
+      rw [hk]
+      apply Nat.dvd_pow_self; norm_num
+    have h2hk1 : 2 ^ 1 ∣ (a + b ^ 2) * (b + a ^ 2) := by
+      rw [hk]
+      apply dvd_mul_of_dvd_left; apply Nat.dvd_pow_self; norm_num
+    rw [Nat.Prime.dvd_mul] at h2hk1
+    rw [Nat.prime_iff]; norm_num at h2hk1
+    cases h2hk1 with
+    | inl h2hk1 =>
+      have ha1 : 2 ^ 1 ∣ a + b ^ 2 := by exact h2hk1
+      have hle : 2 ^ 1 ≤ a + b ^ 2 := by exact Nat.le_of_dvd hpos ha1
+      have ha1 : 2 ∣ a := by
+        apply Nat.dvd_of_dvd_mul_right_of_pos at hle
+        exact hle
+        apply Nat.Prime.dvd_of_dvd_pow; norm_num; exact h2hk1
+      rw [Nat.prime_iff]; norm_num at ha1
+      cases ha1 with
+      | inl ha1 =>
+        have hle2 : a < 2 := by
+          apply Nat.le_of_lt_succ
+          calc
+            a < 2 ^ 1 := by exact hlt
+            _ = 2 := by norm_num
+        linarith
+      | inr ha1 =>
+        have ha1 : a = 0 := by
+          omega
+        simp [ha1] at h₀
+    | inr h2hk1 =>
+      have ha1 : 2 ^ 1 ∣ b + a ^ 2 := by exact h2hk1
+      have hle : 2 ^ 1 ≤ b + a ^ 2 := by exact Nat.le_of_dvd hpos ha1
+      have ha1 : 2 ∣ b := by
+        apply Nat.dvd_of_dvd_mul_right_of_pos at hle
+        exact hle
+        apply Nat.Prime.dvd_of_dvd_pow; norm_num; exact h2hk1
+      rw [Nat.prime_iff]; norm_num at ha1
+      cases ha1 with
+      | inl ha1 =>
+        have hle2 : b < 2 := by
+          apply Nat.le_of_lt_succ
+          calc
+            b < 2 ^ 1 := by exact hlt
+            _ = 2 := by norm_num
+        linarith
+      | inr ha1 =>
+        have hb1 : b = 0 := by
+          omega
+        simp [hb1] at h₀
+```

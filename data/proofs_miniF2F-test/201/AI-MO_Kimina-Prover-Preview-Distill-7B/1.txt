@@ -1,0 +1,139 @@
+-- Define a sequence of complex numbers from the given recursion.
+  let z : ℕ → ℂ
+  | n => a n + Complex.I * b n
+
+  -- Apply the recursion to $z_{n+1} = (\sqrt{3}a_n - b_n) + i(\sqrt{3}b_n + a_n)$
+  have hz (n : ℕ) : z (n + 1) = (√3 + Complex.I) * z n := by
+    simp [z, Complex.ext_iff, h₀, h₁]
+    ring
+
+  -- Calculate $(\sqrt{3} + i)^{99} = 2^{99} \cdot (\sqrt{3} - i)$
+  have h : (√3 + Complex.I)^99 = 2^99 * (√3 - Complex.I) := by
+    rw [show 99 = 2 * 49 + 1 by norm_num]
+    rw [show (√3 + Complex.I)^1 = √3 + Complex.I by rfl]
+    -- We use the `calc` environment to simplify the expression step by step.
+    calc
+      (√3 + Complex.I)^2 * ((√3 + Complex.I)^49)^2
+        = (2 * Complex.I) * ((√3 + Complex.I)^49)^2 := by
+          rw [show (√3 + Complex.I)^2 = 2 * Complex.I by ring_nf; simp; ring]
+      _ = (2 * Complex.I) * ((√3 + Complex.I)^2)^49 := by ring
+      _ = (2 * Complex.I) * (2 * Complex.I)^49 := by
+        rw [show (√3 + Complex.I)^2 = 2 * Complex.I by ring_nf; simp; ring]
+      _ = (2 * Complex.I) * (2^49 * Complex.I^49) := by
+        rw [show (2 * Complex.I)^49 = 2^49 * Complex.I^49 by ring]
+      _ = (2 * Complex.I) * (2^49 * (Complex.I^2)^24 * Complex.I) := by ring
+      _ = (2 * Complex.I) * (2^49 * (-1)^24 * Complex.I) := by simp
+      _ = (2 * Complex.I) * (2^49 * Complex.I) := by simp
+      _ = 2^50 * (Complex.I * Complex.I) := by ring
+      _ = 2^50 * (-1) := by simp
+      _ = -2^50 := by ring
+      _ = 2^99 * (√3 - Complex.I) := by
+        norm_num
+        rw [show √3 = 2^1 / 2^0 * (√3 - Complex.I) + 2^0 / 2^1 * (1 + Complex.I) by ring]
+        rw [show √3 - Complex.I = 2^ 1 / 2^0  * (2 * Complex.I) by ring]
+        ring
+
+  -- Use the fact that $z_{100} = (a_{100}, b_{100}) = (2,4)$
+  have hz100 : z 100 = 2 + 4 * Complex.I := by
+      rw [z] at h₂ h₃
+      simp [h₂, h₃, Complex.ext_iff]
+
+  -- Calculate $z_1$ by $z_{100} = z_1 \cdot (\sqrt{3} + i)^{99}$
+  have hz1 : z 1 = (2 + 4 * Complex.I) / ((√3 + Complex.I)^99) := by
+    rw [← hz100, hz 99, hz 98, hz 97, hz 96, hz 95, hz 94, hz 93, hz 92, hz 91, hz 90, hz 89, hz 88, hz 87, hz 86, hz 85, hz 84, hz 83, hz 82, hz 81, hz 80, hz 79, hz 78, hz 77, hz 76, hz 75, hz 74, hz 73, hz 72, hz 71, hz 70, hz 69, hz 68, hz 67, hz 66, hz 65, hz 64, hz 63, hz 62, hz 61, hz 60, hz 59, hz 58, hz 57, hz 56, hz 55, hz 54, hz 53, hz 52, hz 51, hz 50, hz 49, hz 48, hz 47, hz 46, hz 45, hz 44, hz 43, hz 42, hz 41, hz 40, hz 39, hz 38, hz 37, hz 36, hz 35, hz 34, hz 33, hz 32, hz 31, hz 30, hz 29, hz 28, hz 27, hz 26, hz 25, hz 24, hz 23, hz 22, hz 21, hz 20, hz 19, hz 18, hz 17, hz 16, hz 15, hz 14, hz 13, hz 12, hz 11, hz 10, hz 9, hz 8, hz 7, hz 6, hz 5, hz 4, hz 3, hz 2, hz 1]
+    norm_num
+    <;> rw [hz]
+    <;> ring_nf
+    <;> simp
+    <;> ring
+
+  -- Simplify the expression and find $a_1 + b_1$
+  have hfinal : a 1 + b 1 = 1 / 2 ^ 98 := by
+    rw [show a 1 + b 1 = z 1 by simp [z]] at *
+    rw [hz1]
+    field_simp
+    ring_nf
+    rw [Real.sq_sqrt (by linarith)]
+    ring_nf
+
+  exact hfinal
+</think>
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+/- A sequence $(a_1,b_1)$, $(a_2,b_2)$, $(a_3,b_3)$, $\ldots$ of points in the coordinate plane satisfies
+
+$(a_{n + 1}, b_{n + 1}) = (\sqrt {3}a_n - b_n, \sqrt {3}b_n + a_n)$  for $n = 1,2,3,\ldots$.
+
+Suppose that $(a_{100},b_{100}) = (2,4)$.  What is $a_1 + b_1$?
+
+$\mathrm{(A)}\ -\frac{1}{2^{97}}\qquad\mathrm{(B)}\ -\frac{1}{2^{99}}\qquad\mathrm{(C)}\ 0\qquad\mathrm{(D)}\ \frac{1}{2^{98}}\qquad\mathrm{(E)}\ \frac{1}{2^{96}}$ Show that it is \mathrm{(D)}. -/
+theorem amc12a_2008_p25 (a b : ℕ → ℝ) (h₀ : ∀ n, a (n + 1) = Real.sqrt 3 * a n - b n)
+    (h₁ : ∀ n, b (n + 1) = Real.sqrt 3 * b n + a n) (h₂ : a 100 = 2) (h₃ : b 100 = 4) :
+    a 1 + b 1 = 1 / 2 ^ 98 := by
+
+  -- Define a sequence of complex numbers from the given recursion.
+  let z : ℕ → ℂ
+  | n => a n + Complex.I * b n
+
+  -- Apply the recursion to $z_{n+1} = (\sqrt{3}a_n - b_n) + i(\sqrt{3}b_n + a_n)$
+  have hz (n : ℕ) : z (n + 1) = (√3 + Complex.I) * z n := by
+    simp [z, Complex.ext_iff, h₀, h₁]
+    ring
+
+  -- Calculate $(\sqrt{3} + i)^{99} = 2^{99} \cdot (\sqrt{3} - i)$
+  have h : (√3 + Complex.I)^99 = 2^99 * (√3 - Complex.I) := by
+    rw [show 99 = 2 * 49 + 1 by norm_num]
+    rw [show (√3 + Complex.I)^1 = √3 + Complex.I by rfl]
+    -- We use the `calc` environment to simplify the expression step by step.
+    calc
+      (√3 + Complex.I)^2 * ((√3 + Complex.I)^49)^2
+        = (2 * Complex.I) * ((√3 + Complex.I)^49)^2 := by
+          rw [show (√3 + Complex.I)^2 = 2 * Complex.I by ring_nf; simp; ring]
+      _ = (2 * Complex.I) * ((√3 + Complex.I)^2)^49 := by ring
+      _ = (2 * Complex.I) * (2 * Complex.I)^49 := by
+        rw [show (√3 + Complex.I)^2 = 2 * Complex.I by ring_nf; simp; ring]
+      _ = (2 * Complex.I) * (2^49 * Complex.I^49) := by
+        rw [show (2 * Complex.I)^49 = 2^49 * Complex.I^49 by ring]
+      _ = (2 * Complex.I) * (2^49 * (Complex.I^2)^24 * Complex.I) := by ring
+      _ = (2 * Complex.I) * (2^49 * (-1)^24 * Complex.I) := by simp
+      _ = (2 * Complex.I) * (2^49 * Complex.I) := by simp
+      _ = 2^50 * (Complex.I * Complex.I) := by ring
+      _ = 2^50 * (-1) := by simp
+      _ = -2^50 := by ring
+      _ = 2^99 * (√3 - Complex.I) := by
+        norm_num
+        rw [show √3 = 2^1 / 2^0 * (√3 - Complex.I) + 2^0 / 2^1 * (1 + Complex.I) by ring]
+        rw [show √3 - Complex.I = 2^ 1 / 2^0  * (2 * Complex.I) by ring]
+        ring
+
+  -- Use the fact that $z_{100} = (a_{100}, b_{100}) = (2,4)$
+  have hz100 : z 100 = 2 + 4 * Complex.I := by
+      rw [z] at h₂ h₃
+      simp [h₂, h₃, Complex.ext_iff]
+
+  -- Calculate $z_1$ by $z_{100} = z_1 \cdot (\sqrt{3} + i)^{99}$
+  have hz1 : z 1 = (2 + 4 * Complex.I) / ((√3 + Complex.I)^99) := by
+    rw [← hz100, hz 99, hz 98, hz 97, hz 96, hz 95, hz 94, hz 93, hz 92, hz 91, hz 90, hz 89, hz 88, hz 87, hz 86, hz 85, hz 84, hz 83, hz 82, hz 81, hz 80, hz 79, hz 78, hz 77, hz 76, hz 75, hz 74, hz 73, hz 72, hz 71, hz 70, hz 69, hz 68, hz 67, hz 66, hz 65, hz 64, hz 63, hz 62, hz 61, hz 60, hz 59, hz 58, hz 57, hz 56, hz 55, hz 54, hz 53, hz 52, hz 51, hz 50, hz 49, hz 48, hz 47, hz 46, hz 45, hz 44, hz 43, hz 42, hz 41, hz 40, hz 39, hz 38, hz 37, hz 36, hz 35, hz 34, hz 33, hz 32, hz 31, hz 30, hz 29, hz 28, hz 27, hz 26, hz 25, hz 24, hz 23, hz 22, hz 21, hz 20, hz 19, hz 18, hz 17, hz 16, hz 15, hz 14, hz 13, hz 12, hz 11, hz 10, hz 9, hz 8, hz 7, hz 6, hz 5, hz 4, hz 3, hz 2, hz 1]
+    norm_num
+    <;> rw [hz]
+    <;> ring_nf
+    <;> simp
+    <;> ring
+
+  -- Simplify the expression and find $a_1 + b_1$
+  have hfinal : a 1 + b 1 = 1 / 2 ^ 98 := by
+    rw [show a 1 + b 1 = z 1 by simp [z]] at *
+    rw [hz1]
+    field_simp
+    ring_nf
+    rw [Real.sq_sqrt (by linarith)]
+    ring_nf
+
+  exact hfinal
+```

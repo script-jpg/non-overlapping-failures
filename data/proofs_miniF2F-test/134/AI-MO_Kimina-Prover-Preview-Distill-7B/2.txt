@@ -1,0 +1,74 @@
+-- Solution 1
+  -- We have
+  -- $\begin{aligned}(2+3)(2^2+3^2)(2^4+3^4)(2^8+3^8)(2^{16}+3^{16})(2^{32}+3^{32})(2^{64}+3^{64}) &= ((2+3)(2^2+3^2))((2^4+3^4)(2^8+3^8))((2^{16}+3^{16})(2^{32}+3^{32}))(2^{64}+3^{64})\\ &= ((2+3)(2^2+3^2)(2^4+3^4)(2^8+3^8))((2^{16}+3^{16})(2^{32}+3^{32})(2^{64}+3^{64}))\\ &= ((2+3)(2^2+3^2)(2^4+3^4)(2^8+3^8)(2^{16}+3^{16})(2^{32}+3^{32})(2^{64}+3^{64})) \end{aligned}$
+  -- By the difference of squares factorization, we have $(2+3)(2^2+3^2)(2^4+3^4)(2^8+3^8)(2^{16}+3^{16})(2^{32}+3^{32})(2^{64}+3^{64}) = ((3^2-2^2)(3^4-2^4)(3^8-2^8)(3^{16}-2^{16})(3^{32}-2^{32})(3^{64}-2^{64})(3^{128}-2^{128})) = (3^{128}-2^{128})$.
+
+  -- Solution 2
+  -- Define $a_k = 2^{2^k} + 3^{2^k}$.
+  set a := fun k => 2 ^ 2 ^ k + 3 ^ 2 ^ k with a_def
+  have a_pos (k : ℕ) : 0 < a k := by
+    simp [a]
+    intro k
+    induction k with
+    | zero => norm_num
+    | succ k ih => have := Nat.pow_lt_pow_of_lt (show 1 < 3 by norm_num) (show 1 < 2 ^ 2 ^ k by linarith [ih]) ; linarith
+  have id (n : ℕ) : ∏ k ∈ Finset.range n, a k = ∑ k ∈ Finset.range (n + 1), (-1) ^ k * 3 ^ ((2 ^ n - 1) * 2 ^ k) := by
+    induction n with
+    | zero =>
+      simp [Finset.prod_range_succ, Finset.sum_range_succ]
+      -- For $n = 0$, we have $(3 ^ 1 - 2 ^ 1) = 3 ^ 1 - 2 ^ 1$.
+      congr 2
+      ext k
+      rw [pow_succ]
+      ring
+    | succ n ih =>
+      rw [Finset.prod_range_succ, Finset.sum_range_succ]
+      rw [Finset.prod_range_succ, Finset.sum_range_succ]
+      -- For $n + 1$, we have $(3 ^ 2 ^ n - 2 ^ 2 ^ n) \cdot (3 ^ 2 ^ n + 2 ^ 2 ^ n) = 3 ^ 2 ^ {n + 1} - 2 ^ 2 ^ {n + 1}$.
+      congr 2
+      calc _
+      _ = (∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ ((2 ^ (n + 1) - 1) * 2 ^ k)) * (2 ^ 2 ^ (n + 1) + 3 ^ 2 ^ (n + 1)) := by rw [ih] ; rfl
+      _ = (∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ ((2 ^ (n + 1) - 1) * 2 ^ k)) * (3 ^ 2 ^ (n + 1) - (-1) ^ 2 ^ (n + 1)) := by congr 2 ; rw [neg_pow, pow_mul, neg_pow, neg_mul, ←pow_mul, ←pow_mul, pow_add, neg_add, neg_neg] ; rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ ((2 ^ (n + 1) - 1) * 2 ^ k) * (3 ^ 2 ^ (n + 1) - (-1) ^ 2 ^ (n + 1)) := by rw [Finset.mul_sum]
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ ((2 ^ (n + 1) - 1) * 2 ^ k) * 3 ^ 2 ^ (n + 1) - ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ ((2 ^ (n + 1) - 1) * 2 ^ k) * (-1) ^ 2 ^ (n + 1) := by rw [Finset.sum_sub_distrib]
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ ((2 ^ (n + 1) - 1) * 2 ^ k + 2 ^ (n + 1)) - ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ ((2 ^ (n + 1) - 1) * 2 ^ k + 2 ^ (n + 1)) := by congr 2 ; nth_rw 1 [←pow_add]; rw [←pow_add]; congr 1; rw [add_assoc, add_comm, add_assoc, add_comm]
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1)) + ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ (k + 1) * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1)) := by rw [add_sub_add_right, sub_eq_add_neg, ←neg_mul, neg_neg, ←pow_mul, ←pow_mul]; ring_nf
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1)) + ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ (k + 1) * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1)) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1)) + ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ (k + 1) * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1)) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1)) + ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ (k + 1) * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1)) := by ac_rfl
+      _ = (∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1))) * (1 + 1) := by rw [Finset.sum_add_distrib, Finset.sum_congr]; rfl; intro k hk; rw [Finset.mem_range] at hk; rw [mul_add, mul_one]; nth_rw 1 [add_comm]; rw [←add_assoc, ←add_assoc, ←add_assoc]; simp at hk; omega
+      _ = (∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1))) * 2 := by rw [add_comm, mul_assoc]; simp
+      _ = (∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1)) * 2) * 3 ^ (2 ^ (n + 1) * (2 ^ (n + 1) - 1)) := by rw [Finset.mul_sum]; nth_rw 1 [←pow_one 3]; rw [←pow_add]; congr 1; rw [mul_assoc, mul_comm]; simp
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1) + (2 ^ (n + 1) * (2 ^ (n + 1) - 1))) := by rw [Finset.mul_sum]; congr 1; rw [add_assoc, mul_add]; rw [mul_assoc, mul_comm], mul_assoc, mul_comm; simp
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1 + (2 ^ (n + 1) - 1))) := by rw [Nat.mul_add, Nat.mul_comm, Nat.pow_add]
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 1 + 2 ^ (n + 1) - 1)) := by rw [←Nat.add_sub_assoc, Nat.add_sub_add_right, Nat.add_comm]
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by rw [add_comm, ←Nat.add_sub_assoc, Nat.add_sub_add_right, Nat.add_comm]
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n + 1 + 1), (-1) ^ k * 3 ^ (2 ^ (n + 1) * (2 ^ k + 2 ^ (n + 1))) := by ac_rfl
+      _ = ∑ k ∈ Finset.range (n +

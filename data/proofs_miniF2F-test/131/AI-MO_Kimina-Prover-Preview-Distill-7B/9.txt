@@ -1,0 +1,41 @@
+-- The function $f$ is multiplicative and $f(p) = p$ for every prime $p$.
+  -- We need to show that $f(25/11) < 0$.
+
+  -- We first show that $f(1) = 0$.
+  have hF1 : f 1 = 0 := by
+    specialize h₀ 1 (by norm_num) 1 (by norm_num)
+    rw [show (1 : ℚ) * 1 = (1 : ℚ) by norm_num] at h₀
+    simp at h₀
+    exact h₀
+
+  -- We show that $f(m) = m$ for any positive integer $m$.
+  have hFm (m : ℕ) : f (m) = m := by
+    have hFm : ∀ m : ℕ, m ≠ 0 → ∀ n : ℕ, n ≠ 0 → f (m / n) = m / n := by
+      intro m hm m'
+      induction' m with m hm
+      · simp [hF1]
+      · simp_rw [show m + 1 = m + 1 / 1 by norm_num]
+        specialize h₀ (m / 1) (by positivity) (m + 1) (by positivity)
+        rw [hm (by positivity) (by positivity)] at h₀
+        rw [show m / 1 * (m + 1) = m * (m + 1) by field_simp] at h₀
+        rw [hm (by positivity) (by positivity)] at h₀
+        rw [h₀]
+        field_simp
+        rw [Nat.cast_add]
+        field_simp
+        norm_cast
+    exact hFm m (by positivity) (m') (by positivity)
+
+  -- We show that $f(m) = m$ for any positive rational number $m$.
+  have hFq (m : ℚ) (hm : 0 < m) : f m = m := by
+    rw [Rat.exists_mul_left] at hm
+    obtain ⟨m, m', hm⟩ := hm
+    have := m'
+    rw [← hm]
+    exact hFm m (by positivity) m' (by positivity)
+
+  -- Since $f$ is multiplicative, $f(m) = m$ for any positive rational number $m$.
+  -- $f(25/11) = f(25)/f(11) = 25/11 < 0$.
+  rw [hFq (25 / 11) (by norm_num)]
+  norm_num
+```

@@ -1,0 +1,107 @@
+-- Since $a, b, c$ are the sides of a triangle, we first prove that it is non-degenerate
+  -- by proving that all angles are less than $180°$ (otherwise one of $b, c, a$ would be longer
+  -- than the sum of the other two), and then using the law of cosines to derive a contradiction
+  -- if the triangle is degenerate.
+  have h : ∃ p : ℝ, 0 < p ∧ p < 1 ∧ a ^ 2 = b ^ 2 + c ^ 2 - 2 * b * c * p ∧ cosSq angleA = 1 - p ^ 2 ∧ angleA < π := by
+    use (1 - b * c * (1 - cosSq angleA) / (2 * b * c))
+    refine ⟨?_,?_,?_,?_,?_⟩
+    · apply div_pos
+      apply mul_pos
+      · linarith
+      · apply mul_pos
+        · linarith
+        · exact cos_sq_add_sin_sq angleA
+      · linarith
+    · apply div_lt_one_of_pos
+      · apply mul_pos
+        · apply mul_pos
+          · linarith
+          · linarith
+        · exact cos_sq_add_sin_sq angleA
+      · linarith
+    · rw [div_mul_eq_mul_div, mul_comm, mul_div_assoc, mul_comm (b * c), ←mul_assoc, div_eq_iff (by linarith)]
+      ring_nf
+      rw [cos_sq_add_sin_sq angleA, div_eq_iff (by linarith)]
+      ring
+    · apply cos_lt_one
+      apply ne_of_lt
+      apply lt_of_lt_of_le angleA
+      · apply lt_of_lt_of_le pi_pos
+      · exact pi_gt_three
+    · apply lt_of_le_of_ne
+      · rw [cos_sq_add_sin_sq angleA]
+      · symm
+        apply ne_of_lt
+        apply lt_of_lt_of_le pi_pos
+        apply le_of_lt pi_gt_three
+  obtain ⟨p, hp, hp_lt_one, h₁, h₁', h₁''⟩ := h
+
+  -- From the law of cosines $a^2 = b^2 + c^2 - 2bc\cos A$, we get $\cos A = 1 - p^2$.
+  have h₂ : cos angleA = 1 - p ^ 2 := by
+    apply cos_eq_iff_sq_add_sin_sq_eq_one
+    · rw [←h₁']
+      ring
+    · rw [sq_eq_sq_iff_abs_eq_abs, abs_eq_abs]
+      rw [cos_sq_add_sin_sq angleA]
+      ring
+  replace h₂ : angleA = arccos (1 - p ^ 2) := by
+    rw [arccos_cos]
+    · exact h₁''
+    · simp
+    · simp
+      apply le_of_lt
+      exact h₁
+  -- Then using the fact that $\cos(arccos(x)) = x$ for $x \in [-1, 1]$ and $1 - p^2 \in [-1, 1]$,
+  -- we get that $\cos(angleA) = 1 - p^2$.
+  have h₃ : cos angleA = 1 - p ^ 2 := by
+    rw [h₂, cos_arccos]
+    · nlinarith
+    · nlinarith
+    · exact h₁
+
+  -- From the law of cosines, we also have the two following relations:
+  -- $b^2 = a^2 + c^2 - 2ac\cos B$ and $c^2 = a^2 + b^2 - 2ab\cos C$.
+  have h₄ : b ^ 2 = a ^ 2 + c ^ 2 - 2 * a * c * cos angleB := by
+    have h₄ : cos angleB = 1 - p ^ 2 := by
+      rw [h₁', h₂]
+      ring
+    rw [h₄, cos_sq_add_sin_sq angleB]
+    ring_nf
+  have h₅ : c ^ 2 = a ^ 2 + b ^ 2 - 2 * a * b * cos angleC := by
+    have h₅ : cos angleC = p ^ 2 := by
+      rw [h₁', h₂]
+      ring
+    rw [h₅, cos_sq_add_sin_sq angleC]
+    ring_nf
+
+  -- Then, we get
+  -- $\cos B = 1 - p^2$ and $\cos C = p^2$.
+  have h₆ : cos angleB = 1 - p ^ 2 := by
+    rw [h₄, h₁', h₂]
+    ring
+  have h₇ : cos angleC = p ^ 2 := by
+    rw [h₅, h₁', h₂]
+    ring
+
+  -- Using the formula $\cos(\alpha + \beta + \gamma) = \cos\alpha\cos\beta\cos\gamma - \sin\alpha\sin\beta\sin\gamma$,
+  -- the fact that $\sin^2\alpha + \cos^2\alpha = 1$ and $\sin\alpha > 0$ for $0 < \alpha < 180°$,
+  -- we get $\cos(angleA + angleB + angleC) = -p^3$.
+  have h₈ : cos (angleA + angleB + angleC) = -p ^ 3 := by
+    rw [cos_add_add, h₃, h₆, h₇]
+    ring_nf
+    rw [cos_sq_add_sin_sq angleA, cos_sq_add_sin_sq angleB, cos_sq_add_sin_sq angleC, h₁', cos_sq_add_sin_sq angleC]
+    ring
+
+  -- Since $angleA + angleB + angleC = \pi$ (this follows from the fact that the sum of the
+  -- angles in a triangle is $180°$), we get $-p^3 = \cos(\pi) = -1$ and $p = 1$.
+  simp at h₈
+  have h₉ : p = 1 := by
+    have h₈ : p ^ 3 = 1 := by
+      linarith
+    rw [←pow_left_inj₀ (by norm_num) (by norm_num) (by rw [pow_eq_one_iff])]
+      exact h₈
+
+  -- But this is a contradiction, because $p < 1$.
+  linarith
+
+```

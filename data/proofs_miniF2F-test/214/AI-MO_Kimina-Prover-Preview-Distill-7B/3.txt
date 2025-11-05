@@ -1,0 +1,157 @@
+-- aux lemma, given $n>2$ rational number $x$ satisfies $x=\tan(x)$, then $x<0$.
+  have l_neg_of_gt_two_tan {x : ℚ} (h : 2 < x) (hx : x = tan x) : x < 0 := by
+    -- Since $\tan(x)$ is increasing on $(-90^\circ, 90^\circ)$, we have $(x-90^\circ)\tan(x)>0$.
+    have h₁ : (x - 90) * tan x > 0 := by
+      simp [tan]
+      rcases hx with _ / heq / _
+      rw [← heq]
+      simp
+      refine lt_of_sub_neg?_
+      refine (lt_trans?_ (lt_of_sub_pos?_)).trans?_
+      · simp
+      · exact h
+      · refine sub_neg.mpr?_
+        refine (lt_trans?_ (lt_trans?_ (lt_trans?_ (Nat.zero_lt_two.trans h)))).trans?_
+        · simp
+        · exact Nat.two_lt_of_lt_sub h
+        · exact Nat.lt_two_sub_of_lt h
+    -- Since $x$ is increasing on $(0, 180)$, we have $0<\tan(x)-x$.
+    have h₂ : 0 < tan x - x := by
+      simp [tan]
+      rw [heq]
+      simp
+      refine sub_pos.mpr?_
+      refine lt_trans?_ (lt_trans?_ (Nat.zero_lt_two.trans h))
+      · exact Nat.two_lt_of_lt_sub h
+      · exact Nat.lt_two_sub_of_lt h
+    -- Since $x=\tan(x)$, we have $x(x-90)>0$.
+    have h₃ : x * (x - 90) > 0 := by
+      simp [mul_sub]
+      simp [hx]
+      exact h₁
+    have : 0 < x := by
+      by_contra!
+      replace this : x = 0 := by exact le_antisymm this rfl
+      simp [this] at h₂
+    -- Since $x(x-90)>0$ and $x>0$, we have $x-90>0$.
+    have h₄ : x - 90 > 0 := by
+      apply pos_of_mul_pos_right h₃ this
+    linarith only [h₄]
+
+  -- Since $m/n<90$, we have $m<90n$.
+  have h₃ : m < 90 * m.den := by
+    refine (lt_mul_iff_one_lt_left (by simp)).mpr?_
+    refine (h₂.trans?_).trans?_
+    · exact Nat.num_lt_denom.mpr h₀
+    · exact Nat.lt_two_sub_of_lt h₀
+    · refine (div_lt_iff₀?_).mpr?_
+      · simp
+      · refine Nat.lt_two_sub_of_lt h₀
+  -- Since $m<90n$, we have $\frac mn<90$.
+  have h₄ : m / m.den < (90 * m.den) / m.den := by
+    rcases lt_of_lt_of_le _ h₃ with h | h
+    · exact (div_lt_div_iff_of_pos_right (by simp)).mpr h
+    · rw [h]
+      exact (div_le_div_iff_of_pos_right (by simp)).mpr (by simp)
+
+  -- Since $\sum_{k=1}^{35}\sin 5k=\tan \frac mn,$ we have $\frac mn=\tan^{-1}\left(\sum_{k=1}^{35}\sin 5k\right)$.
+  have h₅ : m / m.den = (Real.arctan (∑ k in Finset.Icc (1 : ℕ) 35, Real.sin (5 * k * Real.pi / 180))):= by
+    rw [h₁]
+    simp [Real.arctan_tan]
+
+  -- Since $\tan(x)$ is increasing on $(-90^\circ, 90^\circ)$, and $\frac mn \in (-90, 90)$, we have $\frac mn < \tan^{-1}\left(\sum_{k=1}^{35}\sin 5k\right)$.
+  have h₆ : m / m.den < Real.arctan (∑ k ∈ Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180)) := by
+    rw [h₅]
+    exact l_neg_of_gt_two_tan (by rw [h₄]; simp) (by rw [h₄]; simp)
+
+  -- Since $\frac mn=\tan^{-1}\left(\sum_{k=1}^{35}\sin 5k\right),$ we have $\tan(\frac mn)< \tan\left(\tan^{-1}\left(\sum_{k=1}^{35}\sin 5k\right)\right)=\sum_{k=1}^{35}\sin 5k.
+  have h₇ : tan (m / m.den) < ∑ k ∈ Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180) := by
+    rw [h₅] at h₆
+    have : -Real.pi / 2 < m / m.den := by
+      simp
+      linarith only [h₆]
+    have this' : m / m.den < Real.pi / 2 := by
+      linarith only [h₆]
+    exact (Real.tan_lt_tan_iff_of_lt_of_lt_pi_div_two this this').mpr h₆
+
+  -- We prove that $\sum_{k=1}^{35}\sin 5k=1-\cos 175$.
+  have h₈ : ∑ k ∈ Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180) = 1 - Real.cos (175 * Real.pi / 180) := by
+    simp
+    have : 5 * (1 : ℕ) * Real.pi / 180 = Real.pi / 36 := by linarith only
+    have : 5 * (35 : ℕ) * Real.pi / 180 = (175 : ℝ) * Real.pi / 180 := by linarith only
+    rw [this, this]
+    have : (1 : ℝ) = 36 * (Real.pi / 36) := by simp
+    nth_rw 1 [this]
+    rw [Finset.sum_Icc_eq_sum_range, Finset.sum_range_succ, ← Finset.sum_range_succ']
+    have : ∑ k ∈ Finset.range 34, (-1) ^ k * Real.sin ((2 * k + 1) * (Real.pi / 2) ) = ∑ k ∈ Finset.range 34, (-1) ^ k * Real.cos ((2 * k + 1) * (Real.pi / 2) - (Real.pi / 2)) := by
+      congr
+      ext k
+      rw [Real.cos_sub_pi_div_two]
+    rw [this]
+    rw [Finset.sum_congr rfl this]
+    intro k hk
+    rw [← mul_assoc, ← mul_assoc, ← Real.cos_sub]
+    ring_nf
+    rw [← Real.cos_pi_div_div_two_mul]
+    ring_nf
+    have : 2 * Real.pi * (1 : ℤ) = (2 : ℤ) * Real.pi := by simp
+    rw [this]
+    have : (2 : ℤ) * Real.pi * (1 : ℤ) = (2 : ℤ) * Real.pi * (1 : ℤ) := by simp
+    rw [this]
+    omega
+
+  -- We prove that $\tan(\frac{m}{n})=1-\cos(175^\circ)$.
+  have h₉ : tan (m / m.den) = 1 - Real.cos (175 * Real.pi / 180) := by
+    rw [h₈] at h₇
+    have : -Real.pi / 2 < 1 - Real.cos (175 * Real.pi / 180) := by
+      suffices 0 < Real.cos (175 * Real.pi / 180) by
+        linarith only [this]
+      apply Real.cos_pos_of_mem_Ioo
+      constructor
+      · linarith only [h₂]
+      · linarith only [h₂]
+    have this' : 1 - Real.cos (175 * Real.pi / 180) < Real.pi / 2 := by
+      have : Real.cos (175 * Real.pi / 180) < 1 := by
+        apply Real.cos_lt_one
+        simp
+        linarith only [h₂]
+      linarith only [this]
+    exact (Real.arctan_tan this this').mpr h₇
+
+  -- Since $\tan(\frac{m}{n})=1-\cos(175^\circ)$, we have $\frac{m}{n}=\tan^{-1}(1-\cos(175^\circ))$.
+  have h₁₀ : m / m.den = Real.arctan (1 - Real.cos (175 * Real.pi / 180)) := by
+    rw [← h₉]
+    simp [Real.arctan_tan]
+
+  -- Since $\frac{m}{n}=\tan^{-1}(1-\cos(175^\circ))$, we have $\frac{m}{n}<90$.
+  have h₁₁ : m / m.den < Real.arctan (1 - Real.cos (175 * Real.pi / 180)) := by
+    rw [h₁₀]
+    exact l_neg_of_gt_two_tan (by nth_rw 1 [← Real.pi_div_two]; linarith only [h₂]) (by rw [h₉]; linarith only [h₂])
+
+  -- Since $1-\cos(175^\circ)>0$, we have $\tan^{-1}(1-\cos(175^\circ))<90$.
+  have h₁₂ : Real.arctan (1 - Real.cos (175 * Real.pi / 180)) < Real.pi / 2 := by
+    suffices 1 - Real.cos (175 * Real.pi / 180) < Real.pi / 2 by
+      exact (Real.arctan_lt_pi_div_two this).mpr this
+    have : Real.cos (175 * Real.pi / 180) < 1 := by
+      apply Real.cos_lt_one
+      simp
+      linarith only [h₂]
+    linarith only [this]
+
+  -- Since $\frac{m}{n}=\tan^{-1}(1-\cos(175^\circ))$, we have $\frac{m}{n}<\frac{m}{n}+\tan^{-1}(1-\cos(175^\circ))$.
+  have h₁₃ : m / m.den < m / m.den + Real.arctan (1 - Real.cos (175 * Real.pi / 180)) := by
+    exact add_lt_add_right h₁₁ (Real.arctan (1 - Real.cos (175 * Real.pi / 180)))
+
+  -- We have $\frac{m}{n}+\tan^{-1}(1-\cos(175^\circ))=\frac{m}{n}+\tan^{-1}(\tan(\frac{m}{n}))=\frac{m}{n}+\frac{m}{n}=\frac{2m}{n}$.
+  have h₁₄ : m / m.den + Real.arctan (1 - Real.cos (175 * Real.pi / 180)) = 2 * (m / m.den) := by
+    rw [h₁₀]
+    ring_nf
+
+  -- Since $\frac{m}{n}<\frac{2m}{n}$, we have $1<2$.
+  have h₁₅ : 1 < 2 := by
+    linarith only [h₁₃, h₁₄]
+
+  -- This is a contradiction.
+  trivial
+
+```

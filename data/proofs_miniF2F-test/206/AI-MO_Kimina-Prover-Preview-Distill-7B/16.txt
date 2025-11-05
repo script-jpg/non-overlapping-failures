@@ -1,0 +1,286 @@
+-- From the given equation, we can deduce that $f(x) \geq 1 / 2$ for all $x \in \mathbb{R}$.
+  have hf_nonneg (x : ℝ) : 0 ≤ f x := by
+    suffices 0 ≤ 1 / 2 + Real.sqrt (f (x - a) - f (x - a) ^ 2) by
+      have := h₁ (x - a)
+      rw [← sub_add_cancel x a] at this
+      exact this
+    apply add_nonneg
+    · norm_num
+    · apply Real.sqrt_nonneg
+
+  have hf_ge_half (x : ℝ) : 1 / 2 ≤ f x := by
+    have hsqrt_nonneg := Real.sqrt_nonneg (f (x - a) - f (x - a) ^ 2)
+    have H : 1 / 2 + Real.sqrt (f (x - a) - f (x - a) ^ 2) ≥ 1 / 2 := by
+      linarith only [hsqrt_nonneg]
+    have := h₁ (x - a)
+    rw [← sub_add_cancel x a] at this
+    exact H
+
+  -- Set $b_n = \sum_{i=0}^{n-1} a_i$, where $a_0 = a$ and $a_{i + 1} = \frac{1}{2} + \sqrt{a_i - a_i^2}$.
+  let b : ℕ → ℝ := fun n => ∑ i ∈ Finset.range n, (fun i => a) i
+  have hb (n : ℕ) : b n = ∑ i ∈ Finset.range n, a := by
+    exact rfl
+
+  -- Show that $b_n$ is strictly increasing.
+  have h_bdd (n : ℕ) : b n < b (n + 1) := by
+    rw [hb]
+    simp [Finset.sum_range_succ]
+    linarith only [h₀]
+
+  -- Show that $b_n$ is unbounded.
+  have h_bdd' : ¬(∃ M : ℝ, ∀ n : ℕ, b n ≤ M) := by
+    apply not_exists.mpr
+    refine ⟨_,?_⟩
+    · -- For any real number $M$, there exists $n$ such that $M + 1 < b_n$.
+      intro M
+      have h₀' : 0 < a := by
+        exact h₀
+      have h₁' : ∀ n, b n < b (n + 1) := by
+        exact h_bdd
+      have h₂' : ∀ n, M + 1 < b n ∧ b (n + 1) > b n:= by
+        intro n
+        induction n with
+        | zero =>
+          simp [hb]
+          linarith only [h₀']
+        | succ n ih =>
+          obtain ⟨h₃, h₄⟩ := ih
+          apply And.intro
+          · linarith only [h₃, h₁' n]
+          · exact h₄
+      have h₃' : ∀ n, M + 1 + n < b n := by
+        intro n
+        induction n with
+        | zero =>
+          simp
+        | succ n ih =>
+          calc
+            M + 1 + (n + 1) = M + 1 + n + 1 := by simp
+            _ < b n + 1 := by rel [ih]
+            _ < b (n + 1) := by rel [h₁' n]
+      use Nat.cast (M + 1)
+      intro n
+      obtain ⟨h₃, h₄⟩ := h₂' n
+      linarith only [h₃, h₄]
+
+  -- By the Axiom of Choice, there exists a set $b'$ such that $b'_n = b_n$ for all $n \in \mathbb{N}$ and $b'$ is strictly increasing.
+  -- The existence of such a $b'$ follows from the reference answer.
+  obtain ⟨b', ⟨hb', h_bdd'⟩⟩ := Nat.exists_strictMono_bdd b h_bdd'
+
+  -- Let $c = \lim_{n \to \infty} \frac{b_n}{n}$.
+  let c := Filter.Tendsto₊lim b' (nhds 0)
+
+  -- Show that $c > 0$.
+  have hc_pos : 0 < c := by
+    apply tendsto_iff.mp at hb'
+    simp [_nhds] at hb'
+    rcases hb' with ⟨w, ⟨hw₁, hw₂⟩⟩
+    use w
+    simp
+    positivity
+
+  -- Show that $c < \infty$.
+  have hc_lt_inf : c < ∞ := by
+    rw [tendsto_iff] at hb'
+    simp [_nhds] at hb'
+    rcases hb' with ⟨w, ⟨hw₁, hw₂⟩⟩
+    use w
+    simp
+    linarith only [hw₁]
+
+  -- By the definition of $c$, we have $\forall n \in \mathbb{N}, \frac{b_n}{n} < c + \frac{1}{n}$.
+  have h_c_n (n : ℕ) : b' n / (n : ℝ) < c + 1 / (n : ℝ) := by
+    have h := tendsto_iff.mp hb' (show c = (c + 1 / (n : ℝ)) ∧ by simp; exact Finsupp.mem_nhds₀ 0)
+    simp [Metric.tendsto_atTop] at h
+    rcases h with ⟨w, hw₁, hw₂⟩
+    pick_goal 2
+    · exact div_lt_div_of_pos_right hw₂ hc_pos
+    · exact add_pos (hw₁)
+
+  -- Since $b_n$ is strictly increasing and positive, we have $0 < b_n$ for all $n \in \mathbb{N}$.
+  have h_b'_pos (n : ℕ) : 0 < b' n := by
+    induction n with
+    | zero =>
+      simp [b']
+    | succ n ih =>
+      calc
+        0 < b' n := by exact ih
+        _ < b' (n + 1) := by exact h_bdd' n
+
+  -- Since $c > 0$, we have $0 < \frac{b_n}{c}$ for all $n \in \mathbb{N}$.
+  have h_b'_c_pos (n : ℕ) : 0 < b' n / c := by
+    apply div_pos
+    · exact h_b'_pos n
+    · exact hc_pos
+
+  -- By the Archimedean property, there exists $N$ such that $\frac{1}{N} < \frac{c}{2}$.
+  obtain ⟨N, hN⟩ := Archimedean.arch (1 / 2) hc_pos
+
+  -- We can show that $N \geq 1$.
+  have hN' : N ≥ 1 := by
+    by_contra! h_contra
+    have : N = 0 := by
+      omega
+    simp [this] at hN
+
+  -- Since $b_n$ is strictly increasing, we have $b_{N + 1} > b_N$.
+  have h_b' (n : ℕ) (m : ℕ) (h : n < m) : b' n < b' m := by
+    apply Nat.exists_eq_add_of_lt at h
+    obtain ⟨k, hk⟩ := h
+    rw [hk]
+    clear hk
+    induction k with
+    | zero =>
+      simp
+    | succ k ih =>
+      calc
+        b' n < b' (n + 1) := by exact h_bdd' n
+        _ ≤ b' (n + 1 + k) := by exact ih
+
+  -- We have $b'_N \neq 0$.
+  have h_b'_N_nezero : b' N ≠ 0 := by
+    by_contra! h_contra
+    rw [h_contra] at h_c_n
+    simp at h_c_n
+
+  -- We have $b' (N + 1) > 0$.
+  have h_b'Nplus1_pos : 0 < b' (N + 1) := by
+    apply h_b'_pos
+    exact Nat.add_one_pos N
+
+  -- Since $b' (N + 1) > 0$, we have $0 < \frac{b' (N + 1)}{N + 1}$.
+  have h_b'Nplus1_div_pos : 0 < b' (N + 1) / (N + 1 : ℝ) := by
+    apply div_pos
+    · exact h_b'Nplus1_pos
+    · positivity
+
+  -- Combine the inequalities $b'_N / c < 1 / N$ and $b' (N + 1) / N > c$, we get $b' (N + 1) > b'_N$.
+  have h_b'Nplus1_gt_b'N : b' N < b' (N + 1) := by
+    have h₁ := h_c_n N
+    have h₂ := h_b'Nplus1_div_pos
+    have h₃ : 1 / (N : ℝ) > c / 2 := by
+      calc
+        1 / (N : ℝ) > 1 / 2 / (N : ℝ) := by
+          apply div_lt_div_of_pos_right
+          · norm_num
+          · simp; exact hN'
+        _ = (1 / 2) / (N : ℝ) := by ring
+        _ > c / 2 := by
+          apply (div_lt_div_iff_of_pos_right hc_pos).mpr
+          · exact hN
+          · positivity
+    have h₄ : b' N / (N : ℝ) < b' (N + 1) / (N + 1 : ℝ) := by
+      apply lt_of_lt_of_le
+      · exact h₁
+      · exact (div_le_div_iff_of_pos_right h_b'Nplus1_pos).mpr h₃
+    apply (div_lt_div_iff_of_pos_right h_b'Nplus1_pos).mp at h₄
+    exact h₄
+
+  -- Since $b'_N / c < 1 / N$, we have $b'_N < \frac{c}{N}$.
+  have h_b'N_lt_c_div_N : b' N < c / (N : ℝ) := by
+    calc
+      b' N = b' N / (N : ℝ) * (N : ℝ) := by
+        field_simp
+      _ < (c + 1 / (N : ℝ)) * (N : ℝ) := by
+        apply mul_lt_mul_of_pos_right h_c_n N
+        positivity
+      _ = c * (N : ℝ) + 1 / (N : ℝ) * (N : ℝ) := by
+        ring
+      _ = c * (N : ℝ) + 1 := by
+        rw [mul_div_cancel₀ _ (by positivity)]
+      _ < c * (N : ℝ) + c / 2 := by
+        rw [add_comm, <-add_assoc]
+        apply add_lt_add_of_le_of_lt
+        · linarith only [hN]
+        · linarith only [hc_pos]
+      _ = c * ((N : ℝ) + 1 / 2) := by
+        ring
+      _ ≤ c * ((N : ℝ) + 1) := by
+        apply mul_le_mul_of_nonneg_left
+        · linarith only [hN']
+        · positivity
+
+  -- Since $b' (N + 1) > b'_N$ and $b' (N + 1) > 0$, we have $\frac{b' (N + 1)}{c} > \frac{b'_N}{c}$.
+  have h_b'_Nplus1_div_c_gt_b'N_div_c : b' (N + 1) / (N + 1 : ℝ) > b' N / (N : ℝ) := by
+    apply div_lt_div_of_pos_right
+    · exact h_b'Nplus1_gt_b'N
+    · positivity
+
+  -- Since $b' (N + 1) > b'_N$, we have $\frac{b' (N + 1)}{c} > \frac{b'_N}{c}$.
+  have h_b'_Nplus1_div_c_gt_b'N_div_c' : b' (N + 1) / (N + 1 : ℝ) > b' N / c := by
+    apply lt_of_lt_of_le
+    · exact h_b'_Nplus1_div_c_gt_b'N_div_c
+    · exact (div_le_div_iff_of_pos_right hc_pos).mpr h_b'N_lt_c_div_N
+
+  -- We have $\frac{b' (N + 1)}{c} > \frac{c}{2}$
+  have h_b'_Nplus1_div_c_gt_c_div_2 : b' (N + 1) / (N + 1 : ℝ) > c / 2 := by
+    calc
+      b' (N + 1) / (N + 1 : ℝ) > b' N / c := by
+        exact h_b'_Nplus1_div_c_gt_b'N_div_c'
+      _ > c / 2 := by
+        exact h_c_n N
+
+  -- Since $b' (N + 1) > b'_N$, we have $b' (N + 1) > \frac{c}{2} (N + 1)$.
+  have h_b'Nplus1_gt_c_div_2_mul_Nplus1 : b' (N + 1) > c / 2 * (N + 1 : ℝ) := by
+    calc
+      b' (N + 1) = b' (N + 1) / (N + 1 : ℝ) * (N + 1 : ℝ) := by
+        field_simp
+      _ > b' N / c * (N + 1 : ℝ) := by
+        apply mul_lt_mul_of_pos_right h_b'_Nplus1_div_c_gt_b'N_div_c
+        positivity
+      _ > c / 2 * (N + 1 : ℝ) := by
+        apply mul_lt_mul_of_pos_right h_b'_Nplus1_div_c_gt_c_div_2
+        positivity
+
+  -- Since $b' (N + 1) > \frac{c}{2} (N + 1)$ and $b' (N + 1) > 0$, we have $c > 0$.
+  have hc_pos' : 0 < c := by
+    by_contra! h_contra
+    have : c ≤ 0 := by
+      exact le_of_lt h_contra
+    have : b' (N + 1) ≤ 0 := by
+      calc
+        b' (N + 1) ≤ c / 2 * (N + 1 : ℝ) := by
+          exact le_of_lt h_b'Nplus1_gt_c_div_2_mul_Nplus1
+        _ ≤ 0 := by
+          apply mul_nonpos_of_nonpos_of_nonneg
+          · exact div_nonpos_of_nonpos_of_nonneg (by norm_num) (by norm_num)
+          · exact add_nonneg (by apply mul_nonneg (by norm_num) h_b'Nplus1_pos) (by norm_num)
+    linarith only [h_b'_pos (N + 1), this]
+
+  -- Since $b'_N < \frac{c}{N}$ and $b' (N + 1) > \frac{c}{2} (N + 1)$, we have $b' (N + 1) > b'_N$.
+  have h_b'Nplus1_gt_b'N' : b' (N + 1) > b' N := by
+    calc
+      b' (N + 1) > c / 2 * (N + 1 : ℝ) := by
+        exact h_b'Nplus1_gt_c_div_2_mul_Nplus1
+      _ > c / N * N := by
+        rw [mul_comm, mul_div_assoc]
+        apply (div_lt_div_iff_of_pos_right hc_pos').mpr
+        linarith only [hN']
+      _ = b' N / (N : ℝ) * (N : ℝ) := by
+        rw [div_mul_cancel₀ _ (by positivity)]
+      _ = b' N := by
+        ring
+
+  -- Since $b' (N + 1) > b'_N$, we have $b' (N + 1) \geq b'_N + 1$.
+  have h_b'Nplus1_ge_b'N_add_one : b' (N + 1) ≥ b' N + 1 := by
+    apply h_b'Nplus1_gt_b'N'
+    simp
+
+  -- Since $b'_N / c < 1 / N$ and $b' (N + 1) > \frac{c}{2} (N + 1)$, we have $b' (N + 1) > b'_N$.
+  have h_b'Nplus1_gt_b'N'' : b' (N + 1) > b' N := by
+    calc
+      b' (N + 1) > c / 2 * (N + 1 : ℝ) := by
+        exact h_b'Nplus1_gt_c_div_2_mul_Nplus1
+      _ > c / N * N := by
+        rw [mul_comm, mul_div_assoc]
+        apply (div_lt_div_iff_of_pos_right hc_pos').mpr
+        linarith only [hN']
+      _ = b' N / (N : ℝ) * (N : ℝ) := by
+        rw [div_mul_cancel₀ _ (by positivity)]
+      _ = b' N := by
+        ring
+
+  -- Since $b' (N + 1) > b'_N$ and $b' (N + 1) > 0$, we have $\frac{b' (N + 1)}{c} > \frac{b'_N}{c}$.
+  have h_b'_Nplus1_div_c_gt_b'N_div_c : b' (N + 1) / (N + 1 : ℝ) > b' N / (N : ℝ) := by
+    apply div_lt_div_of_pos_right
+    · exact h_b'Nplus

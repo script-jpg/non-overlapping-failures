@@ -1,0 +1,235 @@
+-- Show that if $x^2 = y^3$, then $(x, y)$ is equal to $(1, 1)$, $(8, 4)$, or $(27, 9)$.
+  have h (x y : ℕ) (h₀ : 0 < x ∧ 0 < y) (h₁ : x ^ 2 = y ^ 3) :
+      (x = 1 ∧ y = 1) ∨ (x = 8 ∧ y = 4) ∨ (x = 27 ∧ y = 9) := by
+    -- Assume that $x = a^3$ and $y = a^2$ for some $a$.
+    by_cases h₂ : x = 1
+    · -- If $x = 1$, then $y = 1$.
+      simp_all
+      exact Or.inl ⟨h₂, by simp_all⟩
+    · -- Assume that $x \neq 1$, so $a \geq 2$.
+      let a := x.gcd y
+      have h₃ : a ≠ 0 := by
+        simp [a]
+        obtain ⟨h₃, h₄⟩ := h₀
+        exact Nat.pos_of_ne_zero (by linarith)
+      have h₄ : a ∣ x := by
+        simp [a]
+      have h₅ : a ∣ y := by
+        simp [a]
+      let x' := x / a
+      let y' := y / a
+      have h₆ : x = a * x' := by
+        simp [x', a]
+        refine Nat.mul_div_cancel'?_
+        exact Nat.gcd_dvd_left x y
+      have h₇ : y = a * y' := by
+        simp [y', a]
+        refine Nat.mul_div_cancel'?_
+        exact Nat.gcd_dvd_right x y
+      have h₈ : x' ^ 2 = y' ^ 3 := by
+        calc
+          x' ^ 2 = (x / a) ^ 2 := by simp [x']
+          _ = x ^ 2 / a ^ 2 := by refine Nat.div_pow x _ a _; exact Nat.gcd_dvd_left x y
+          _ = y ^ 3 / a ^ 2 := by rw [h₁]
+          _ = (y / a) ^ 3 := by refine Nat.div_pow y _ a _; exact Nat.gcd_dvd_right x y
+          _ = y' ^ 3 := by simp [y']
+      have h₉ : x'.gcd y' = 1 := by
+        have h₉ : Nat.gcd x' y' ∣ x' := by exact Nat.gcd_dvd_left x' y'
+        have h₁₀ : Nat.gcd x' y' ∣ y' := by exact Nat.gcd_dvd_right x' y'
+        have h₁₁ : Nat.gcd x' y' ∣ a := by
+          refine Nat.dvd_gcd_iff.mpr ⟨?_,?_⟩
+          · exact Nat.dvd_trans h₁₀ h₉
+          · exact Nat.dvd_trans h₉ h₁₁
+        have h₁₂ : Nat.gcd x' y' ≠ 0 := by
+          obtain ⟨h₁₂, h₁₃⟩ := h₀
+          exact Nat.pos_of_ne_zero (by linarith)
+        have h₁₃ : a ≠ 0 := by simp [a]; exact Nat.pos_of_ne_zero (by linarith)
+        by_contra! h₁₄
+        have : 2 ∣ (x'.gcd y') ∧ 2 ∣ a := by
+          refine ⟨?_,?_⟩
+          · exact (Nat.dvd_gcd_iff.mpr ⟨h₉, h₁₀⟩).mpr (by norm_num)
+          · exact Nat.dvd_trans (by norm_num) h₁₁
+        have : 2 ∣ x' := by exact Nat.dvd_of_dvd_gcd_left this
+        have : 2 ∣ y' := by exact Nat.dvd_of_dvd_gcd_right this
+        have h₁₅ : 2 ∣ x ^ 2 := by
+          rw [h₆, Nat.mul_dvd_mul_iff_left (by norm_num)]
+          exact Nat.dvd_of_dvd_pow this (by norm_num)
+        have h₁₆ : 2 ∣ y ^ 3 := by
+          rw [h₇, Nat.mul_dvd_mul_iff_left (by norm_num)]
+          exact Nat.dvd_of_dvd_pow this (by norm_num)
+        have h₁₇ : 2 ∣ x := by exact Nat.dvd_of_dvd_pow h₁₅ (by norm_num)
+        have h₁₈ : 2 ∣ y := by exact Nat.dvd_of_dvd_pow h₁₆ (by norm_num)
+        have h₁₉ : 2 ∣ (x ^ 2).gcd (y ^ 3) := by
+          refine Nat.dvd_gcd_iff.mpr ⟨?_,?_⟩
+          · exact Nat.dvd_pow (by norm_num) h₁₇
+          · exact Nat.dvd_pow (by norm_num) h₁₈
+        have h₂₀ : (x ^ 2).gcd (y ^ 3) = a := by
+          refine Nat.eq_div_of_mul_eq_right?_ rfl
+          rw [h₆, h₇, ←Nat.pow_mul, ←Nat.pow_mul]
+          rw [←Nat.pow_div (by norm_num), ←Nat.pow_div (by norm_num)]
+          exact Nat.gcd_mul_left a x y
+        rw [h₂₀] at h₁₉
+        have h₂₁ : 2 ∣ a := by exact Nat.dvd_of_dvd_gcd_right h₁₉
+        have h₂₂ : 2 ∣ a := by exact Nat.dvd_of_dvd_gcd_left h₁₉
+      have h₁₅ : a ≠ 0 := by simp [a]; exact Nat.pos_of_ne_zero (by linarith)
+      have h₁₆ : x' ≠ 0 := by
+        by_contra! h₁₆
+        rw [h₁₆] at h₆
+        simp at h₆
+        obtain ⟨h₁₇, h₁₈⟩ := h₀
+        exact Nat.eq_zero_of_dvd_of_lt h₁₇ h₁₈ h₂
+      have h₁₇ : y' ≠ 0 := by
+        by_contra! h₁₇
+        rw [h₁₇] at h₇
+        simp at h₇
+        obtain ⟨h₁₈, h₁₉⟩ := h₀
+        exact Nat.eq_zero_of_dvd_of_lt h₁₈ h₁₉ h₂
+      have h₁₈ : x' ^ 2 = y' ^ 3 := by exact h₈
+      obtain h₁₈ | h₁₈ := sq_eq_sq_iff_eq_or_eq_neg.mp (id (Eq.symm h₁₈))
+      · -- If $x' = y'$, then $a = 1$.
+        have h₁₉ : a = 1 := by
+          calc
+            a = x.gcd y := by simp [a]
+            _ = x' ^ 2.gcd y' ^ 2 := by rw [h₆, h₇, Nat.mul_div_cancel_left x' (by obtain ⟨h₁₈, h₁₉⟩ := h₀; linarith), Nat.mul_div_cancel_left y' (by obtain ⟨h₁₈, h₁₉⟩ := h₀; linarith)]
+            _ = (x' ^ 2).gcd (y' ^ 2) := by refine Eq.symm (Nat.gcd_pow_left x' (by norm_num))
+            _ = (x' ^ 2).gcd (y' ^ 3) := by rw [h₁₈]
+            _ = x' ^ 2 := by refine Nat.gcd_eq_left_of_dvd (by norm_num); simp [h₁₆]
+            _ = y' ^ 3 := by rw [h₁₈]
+            _ = y' ^ 2 * y' := by simp [h₁₇]
+            _ = (y' ^ 2).gcd (y' ^ 2) * y' := by rw [Nat.mul_gcd_right (y' ^ 2) (by simp [h₁₇])]
+            _ = y' := by rw [Nat.gcd_self_mul_right (by simp [h₁₇])]
+        have h₂₀ : x = x' ^ 2 := by
+          calc
+            x = a * x' := by simp [x', a]
+            _ = 1 * x' := by rw [h₁₉]
+            _ = x' := by rw [one_mul x']
+        have h₂₁ : y = y' ^ 3 := by
+          calc
+            y = a * y' := by simp [y', a]
+            _ = 1 * y' := by rw [h₁₉]
+            _ = y' := by rw [one_mul y']
+        have h₂₂ : x' = y' := by exact h₁₈
+        have h₂₃ : a = 1 := by exact h₁₉
+        simp_all
+        obtain h₂₄ | h₂₄ := h₂₂
+        all_goals {
+          have h₂₅ : x = 1 := by exact h₂₄ ▸ h₂₀
+          have h₂₆ : y = 1 := by exact h₂₄ ▸ h₂₁
+          simp_all
+        }
+      · -- If $x' = -y'$, then $y' ^ 3 = (-y') ^ 2 = y' ^ 2$, so $y' = 0$, which is a contradiction.
+        have h₂₃ : y' ^ 3 = y' ^ 2 := by
+          calc
+            y' ^ 3 = (-y') ^ 2 := by rw [h₁₈]
+            _ = (-1) ^ 2 * y' ^ 2 := by rw [←sq, mul_pow]; simp
+            _ = y' ^ 2 := by norm_num
+        have h₂₄ : y' = 0 := by
+          rw [pow_eq_pow_iff_of_ne_zero (by norm_num)] at h₂₃
+          exact h₂₃
+          exact Nat.not_eq_zero_of_lt h₃
+        have h₂₅ : y' ≠ 0 := by
+          by_contra! h₂₅
+          obtain ⟨h₂₆, h₂₇⟩ := h₀
+          exact Nat.eq_zero_of_dvd_of_lt h₂₆ h₂₇ h₂
+        contradiction
+    -- Now we have $x = a^3$ and $y = a^2$ for some $a$.
+    obtain ⟨h₃, h₄⟩ := h₂
+    have h₅ : a ^ 3 = x := by exact id (Eq.symm h₃)
+    have h₆ : a ^ 2 = y := by exact id (Eq.symm h₄)
+    have h₇ : a ≥ 2 := by
+      by_contra! h₇
+      have h₈ : a ^ 2 < 2 ^ 2 := by
+        calc
+          a ^ 2 = a * a := by rw [pow_two]
+          _ ≤ 1 * a := by rel [h₇]
+          _ = a := by rw [one_mul]
+          _ ≤ 1 := by rel [h₇]
+          _ < 2 := by norm_num
+      obtain ⟨h₈, h₉⟩ := h₀
+      exact Nat.lt_irrefl 2 (by linarith)
+    have h₈ : x ^ 2 = (a ^ 3) ^ 2 := by rw [h₅]
+    have h₉ : y ^ 3 = (a ^ 2) ^ 3 := by rw [h₆]
+    have h₁₀ : (a ^ 3) ^ 2 = (a ^ 2) ^ 3 := by rw [h₈, ←h₉, h₁]
+    have h₁₁ : a ^ 6 = a ^ 6 := by exact rfl
+    have h₁₂ : a ^ 3 = a ^ 2 := by exact Nat.eq_of_mul_eq_mul_left h₁₁ h₁₀
+    have h₁₃ : a ^ 3 - a ^ 2 = 0 := by exact Nat.sub_eq_zero_of_eq h₁₂
+    have h₁₄ : a ^ 2 * (a - 1) = 0 := by
+      calc
+        a ^ 2 * (a - 1) = a ^ 3 - a ^ 2 := by rw [Nat.mul_sub, pow_succ]; simp
+        _ = 0 := by exact h₁₃
+    have h₁₅ : a ^ 2 = 0 ∨ a - 1 = 0 := by exact Nat.mul_eq_zero.mp h₁₄
+    obtain h₁₅ | h₁₅ := h₁₅
+    · -- If $a^2 = 0$, then $a = 0$, which is a contradiction.
+      have h₁₆ : a = 0 := by exact Nat.eq_zero_of_ne_zero (by linarith) h₁₅
+      have h₁₇ : a ≥ 1 := by exact Nat.one_le_iff_ne_zero.mpr h₁₅
+      exact Nat.lt_irrefl 1 (by linarith)
+    · -- If $a - 1 = 0$, then $a = 1$.
+      have h₁₆ : a = 1 := by exact Nat.eq_of_sub_eq_zero h₁₅
+      simp_all
+      obtain h₁₇ | h₁₇ := h₁₆
+      · -- If $a = 1$, then $x = 1$ and $y = 1$.
+        simp_all
+        left
+        simp_all
+      · -- This case is impossible.
+        simp_all
+        linarith
+
+  -- Show that if $x^3 = y^2$, then $(x, y)$ is equal to $(1, 1)$ or $(8, 4)$.
+  have h' (x y : ℕ) (h₀ : 0 < x ∧ 0 < y) (h₁ : x ^ 3 = y ^ 2) :
+      (x = 1 ∧ y = 1) ∨ (x = 8 ∧ y = 4) := by
+    -- Assume that $y = a^3$ and $x = a^2$ for some $a$.
+    by_cases h₂ : x = 1
+    · -- If $x = 1$, then $y = 1$.
+      simp_all
+      exact Or.inl ⟨h₂, by simp_all⟩
+    · -- Assume that $x \neq 1$, so $a \geq 2$.
+      let a := y.gcd x
+      have h₃ : h₂ = x.gcd y := by exact Nat.gcd_comm x y
+      have h₄ : a ≠ 0 := by
+        simp [a]
+        obtain ⟨h₃, h₄⟩ := h₀
+        exact Nat.pos_of_ne_zero (by linarith)
+      have h₅ : a ∣ y := by
+        simp [a]
+      have h₆ : a ∣ x := by
+        simp [a]
+      let y' := y / a
+      let x' := x / a
+      have h₇ : y = a * y' := by
+        simp [y', a]
+        refine Nat.mul_div_cancel'?_
+        exact Nat.gcd_dvd_right x y
+      have h₈ : x = a * x' := by
+        simp [x', a]
+        refine Nat.mul_div_cancel'?_
+        exact Nat.gcd_dvd_left x y
+      have h₉ : y' ^ 2 = x' ^ 3 := by
+        calc
+          y' ^ 2 = (y / a) ^ 2 := by simp [y']
+          _ = y ^ 2 / a ^ 2 := by rw [Nat.div_pow y _ a _]; exact Nat.gcd_dvd_right x y
+          _ = x ^ 3 / a ^ 2 := by rw [h₁]
+          _ = (x / a) ^ 3 := by rw [Nat.div_pow x _ a _]; exact Nat.gcd_dvd_left x y
+          _ = x' ^ 3 := by simp [x']
+      have h₁₀ : y'.gcd x' = 1 := by
+        have h₁₀ : Nat.gcd y' x' ∣ y' := by exact Nat.gcd_dvd_right y' x'
+        have h₁₁ : Nat.gcd y' x' ∣ x' := by exact Nat.gcd_dvd_left y' x'
+        have h₁₂ : Nat.gcd y' x' ∣ a := by
+          refine Nat.dvd_gcd_iff.mpr ⟨?_,?_⟩
+          · exact Nat.dvd_trans h₁₁ h₁₀
+          · exact Nat.dvd_trans h₁₀ h₁₂
+        have h₁₃ : Nat.gcd y' x' ≠ 0 := by
+          by_contra! h₁₃
+          rw [Nat.gcd_eq_zero_iff] at h₁₃
+          obtain ⟨h₁₄, h₁₅⟩ := h₁₃
+          exact h₁₅
+        have h₁₄ : a ≠ 0 := by simp [a]; exact Nat.pos_of_ne_zero (by linarith)
+        by_contra! h₁₅
+        have : 2 ∣ (y'.gcd x') ∧ 2 ∣ a := by
+          refine ⟨?_,?_⟩
+          · exact (Nat.dvd_gcd_iff.mpr ⟨h₁₁, h₁₀⟩).mpr (by norm_num)
+          · exact Nat.dvd_trans (by norm_num) h₁₂
+        have : 2 ∣ y' := by exact Nat.dvd_of_dvd_gcd_left this
+        have : 2 ∣ x' := by exact Nat.dvd_of_dvd_gcd_right this
+        have h₁₅ : 2 ∣ y ^ 2 := by
+          rw [h₇,

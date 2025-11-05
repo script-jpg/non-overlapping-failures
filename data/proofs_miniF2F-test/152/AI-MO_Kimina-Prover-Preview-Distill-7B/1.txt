@@ -1,0 +1,159 @@
+-- Bezout's identity: If $a$ and $b$ are integers, then there exist integers $x$ and $y$ such that $ax + by = \gcd(a, b)$.
+  have bezout (m n : ℕ) : m.gcd n ≠ 0 → ∃ x y, m * x + n * y = m.gcd n := by
+    intro h
+    have := Nat.gcd_dvd m n
+    have := Nat.gcd_dvd_right m n
+    suffices ∃ x y, m * x + n * y = m.gcd n by
+      exact this
+    obtain ⟨x, y, hxy⟩ := Nat.gcd_eq_gcd_ab m n
+    use x, y
+    rw [hxy]
+    exact h
+
+  -- Given $\gcd(m, n) = 8$, there exist integers $x$ and $y$ such that $mx + ny = 8$.
+  have bezout_mn := bezout m n h₁
+
+  -- Given $\gcd(m, n) = 8$, there exist integers $x'$ and $y'$ such that $mx' + ny' = 8$.
+  obtain ⟨x, y, hxy⟩ := bezout_mn
+
+  -- Given $\mathrm{lcm}(m, n) = 112$, there exist integers $x''$ and $y''$ such that $(m \cdot n) \cdot x'' + (m \cdot n) \cdot y'' = 112$.
+  have bezout_lcm (m n : ℕ) (h : m.lcm n = 112) : ∃ x y, (m * n) * x + (m * n) * y = 112 := by
+    rw [← h]
+    by_cases m₀ : m = 0
+    · rw [m₀]
+      use 0, 112
+      simp
+    · by_cases n₀ : n = 0
+      · rw [n₀]
+        use 112, 0
+        simp
+      · have := Nat.gcd_mul_lcm m n
+        rw [h] at this
+        have := Nat.dvd_lcm m n
+        have := Nat.dvd_mul_left (m * n) m
+        have := Nat.dvd_mul_right (m * n) n
+        have := Nat.dvd_mul_add_mul (m * n) (m * n) x y
+        rw [← this] at *
+        have : m * n * (x * 2) + (m * n) * (y * 2) = m * n * 28 := by omega
+        have :=
+          calc
+            m * n * x + m * n * y = m * n * 28 := by omega
+            _ = m * n * (28 - 14) + m * n * 14 := by omega
+            _ = m * n * 14 + m * n * 14 := by omega
+            _ = m * n * (14 + 14) := by omega
+            _ = m * n * 28 := by omega
+            _ = m * n * (14 * 2) := by omega
+            _ = (m * n * 14) * 2 := by omega
+            _ = 112 * 2 := by omega
+            _ = 224 := by omega
+        have : m * n * 14 = 112 * 14 := by omega
+        zify at this ⊢
+        have : ((m : ℤ) * (n : ℤ) : ℕ) * (14 : ℤ) = (112 : ℤ) * (14 : ℤ) := by norm_cast at this ⊢; assumption
+        rw [Nat.cast_mul] at this
+        rw [Int.mul_eq_mul_right_iff] at this
+        simp at this
+        have : |(14 : ℤ) * (m * n - 112)| ≤ 0 := by omega
+        have : |(14 : ℤ) * (m * n - 112)| ≥ 0 := AbsoluteValue.nonneg _ (14 * (m * n - 112))
+        have : |(14 : ℤ) * (m * n - 112)| = 0 := by omega
+        zify at this ⊢
+        simp at this
+        simp [this] at *
+        omega
+
+  -- Given $\mathrm{lcm}(m, n) = 112$, there exist integers $x'$ and $y'$ such that $(m \cdot n) \cdot x' + (m \cdot n) \cdot y' = 112$.
+  have bezout_lcm_mn := bezout_lcm m n h₂
+
+  -- There exist integers $a$, $b$, $c$, and $d$ such that $(m \cdot a + n \cdot b) \cdot c + (m \cdot n) \cdot d = 8 \cdot c + 112 \cdot d$.
+  have bezout_abcd : ∃ a b c d, (m * a + n * b) * c + (m * n) * d = 8 * c + 112 * d := by
+    obtain ⟨x, y, hxy⟩ := bezout_mn
+    obtain ⟨x', y', hxy'⟩ := bezout_lcm_mn
+    use x * 14, y * 14, 1, x' - 14 * (m * n) * y
+    rw [hxy, hxy']
+    omega
+
+  -- There exist integers $a'$, $b'$, $c'$, and $d'$ such that $m \cdot (a' \cdot 14 + c' \cdot n) + n \cdot (b' \cdot 14 + d' \cdot m) = 8 \cdot c' + 112 \cdot d'$.
+  have bezout_a'b'cd' : ∃ a' b' c' d', m * (a' * 14 + c' * n) + n * (b' * 14 + d' * m) = 8 * c' + 112 * d' := by
+    obtain ⟨a, b, c, d, hcd⟩ := bezout_abcd
+    use a * 14, b * 14, c * 14, d * 14
+    rw [hcd]
+    omega
+
+  -- Let $x = a' \cdot 14 + c' \cdot n$ and $y = b' \cdot 14 + d' \cdot m$.
+  obtain ⟨a', b', c', d', hxy⟩ := bezout_a'b'cd'
+
+  -- $m \mid x$ and $n \mid x$.
+  have hm_dvd_x : m ∣ x := by
+    obtain ⟨k, hk⟩ := Nat.gcd_dvd_right m n
+    use 14 * a' + c' * n
+    rw [hk]
+    omega
+
+  have hn_dvd_x : n ∣ x := by
+    use 14 * b' + d' * m
+    rw [hxy]
+    omega
+
+  have h_dvd_x : m.gcd n ∣ x := by
+    apply Nat.dvd_trans hn_dvd_x
+    apply Nat.dvd_trans hm_dvd_x
+    apply Nat.gcd_dvd
+
+  -- $m \mid y$ and $n \mid y$.
+  have hm_dvd_y : m ∣ y := by
+    use 14 * a' - c' * m
+    rw [hxy]
+    omega
+
+  have hn_dvd_y : n ∣ y := by
+    use 14 * b' - d' * n
+    rw [hxy]
+    omega
+
+  have h_dvd_y : m.gcd n ∣ y := by
+    apply Nat.dvd_trans hn_dvd_y
+    apply Nat.dvd_trans hm_dvd_y
+    apply Nat.gcd_dvd
+
+  -- $m \mid x + y$ and $n \mid x + y$.
+  have hm_dvd_xp_y : m ∣ x + y := by
+    exact Nat.dvd_add hm_dvd_x hm_dvd_y
+
+  have hn_dvd_xp_y : n ∣ x + y := by
+    exact Nat.dvd_add hn_dvd_x hn_dvd_y
+
+  have h_dvd_xp_y : m.gcd n ∣ x + y := by
+    apply Nat.dvd_trans hm_dvd_xp_y
+    apply Nat.dvd_trans hn_dvd_xp_y
+    apply Nat.gcd_dvd
+
+  -- $x + y \mid 72$.
+  have hxy_dvd_72 : x + y ∣ 72 := by
+    rw [hxy]
+    have h₁ : 14 * (14 * (a' + b') - 14) + (14 * (a' - b') + (n * d' * 14 + m * c' * 14)) = n * (d' * 14) + m * (c' * 14) := by omega
+    have h₂ : n * (d' * 14) + m * (c' * 14) = 8 * (c' * 14) + 112 * (d' * 14) := by omega
+    rw [h₁, h₂]
+    have h₃ : 8 * (c' * 14) + 112 * (d' * 14) = 8 * (c' * 14 + 112 * d') := by omega
+    rw [h₃]
+    have h₄ : 14 * (c' * 14 + 112 * d') = ((c' * 14 + 112 * d') * 14) := by omega
+    rw [h₄]
+    have h₅ : (c' * 14 + 112 * d') * 14 ≤ 72 := by omega
+    nth_rw 2 [← Nat.mul_le_mul_iff_of_pos_left (show 0 < 14 by norm_num)]
+    exact h₅
+
+  -- $x + y \mid m + n$ because $\gcd(m, n) = 8$ and $x + y \mid 72$.
+  have hxy_dvd_mn : x + y ∣ m + n := by
+    rw [hxy]
+    have h₁ : m + n = 8 * (14 * (a' + b') - 14) + (8 * (a' - b') + (n * c' * 14 + m * d' * 14)) := by omega
+    have h₂ : 8 * (14 * (a' + b') - 14) + (8 * (a' - b') + (n * c' * 14 + m * d' * 14)) = 8 * (14 * (a' + b') - 14 + (a' - b')) + (n * c' * 14 + m * d' * 14) := by omega
+    rw [h₁, h₂]
+    have h₃ : 8 * (14 * (a' + b') - 14 + (a' - b')) + (n * c' * 14 + m * d' * 14) = ((14 * (a' + b') - 14 + (a' - b')) * 8) + (n * c' * 14 + m * d' * 14) := by omega
+    rw [h₃]
+    have h₄ : (14 * (a' + b') - 14 + (a' - b')) * 8 ≤ 72 := by omega
+    nth_rw 2 [← Nat.mul_le_mul_iff_of_pos_left (show 0 < 8 by norm_num)]
+    exact h₄
+
+  rw [hxy]
+  apply Nat.le_of_dvd (show 0 < 8 by norm_num)
+  exact Nat.dvd_add hxy_dvd_mn hxy_dvd_72
+
+```

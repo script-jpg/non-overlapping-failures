@@ -1,0 +1,118 @@
+-- First, prove that if an element satisfies the equation, then it is in the set
+  have h₁ (n : ℕ) : ((↑n + (1000 : ℝ)) / 70 = Int.floor (Real.sqrt n)) ↔ 0 < n ∧ (↑n + (1000 : ℝ)) / 70 = Int.floor (Real.sqrt n) := by
+    constructor
+    · intro h
+      exact ⟨by omega, h⟩
+    · intro h
+      exact h.2
+
+  -- Define function f that maps real numbers to real numbers
+  let f : ℝ → ℝ := fun x => (x + 1000) / 70
+
+  -- Define function g that maps natural numbers to integers
+  let g : ℕ → ℤ := fun n => Int.floor (Real.sqrt n)
+
+  -- Show that f is strictly increasing
+  have hf : StrictMono f := by
+    intros x y h
+    simp [f]
+    rw [add_lt_add_iff_right]
+    exact (div_lt_div_iff₀ (by norm_num) (by norm_num)).mpr h
+
+  -- Show that g is strictly increasing
+  have hg : StrictMono g := by
+    intro n m h
+    simp [g]
+    rw [Real.floor_lt]
+    rw [Real.lt_sqrt]
+    simp
+    exact ⟨by omega, h⟩
+
+  -- Define h as the composition of g and f
+  let h : ℝ → ℤ := fun x => (g ∘ f) x
+
+  -- Show that h is strictly increasing
+  have hh : StrictMono h := by
+    intro x y h
+    simp [h, hg, hf]
+
+  -- Prove that the set S is the preimage of 0 under h
+  have hS : S = h ⁻¹' {0} := by
+    ext n
+    constructor
+    · intro hn
+      simp [h]
+      rw [hS] at hn
+      simp at hn
+      exact hn
+    · intro hn
+      simp [h]
+      rw [hS]
+      simp
+      exact hn
+
+  -- Show that h is injective
+  have hInj : InjOn h (Set.range h) := by
+    intro n m hneq
+    simp [h] at hneq
+    exact hh.injective hneq
+
+  -- Show that 0 is in the image of h
+  have h0 : 0 ∈ Set.range h := by
+    use (61.32458543550424 : ℝ)
+    simp [h]
+    norm_num
+
+  -- Show that h is surjective onto its image
+  have hSurj : SurjOn h (Set.range h) := by
+    intro n
+    simp
+    exact ⟨n, by omega⟩
+
+  -- Use the fact that 0 is in the image of h to find a number in S that maps to 0
+  have ⟨n, hn⟩ := hSurj 0
+
+  -- Use the fact that h is injective and surjective to show that the preimage of 0 is a singleton set
+  have hNodup : n ∈ S → n = 610501234567890 := by
+    intro hnS
+    simp [hS] at hnS
+    simp [h] at hn
+    have hneq : h n = h 610501234567890 := by
+      rw [hn, hnS]
+    exact hInj.injective hneq
+
+  -- Show that n is in S
+  have hnS : n ∈ S := by
+    simp [hS]
+    simp [h]
+    exact Eq.symm hn
+
+  -- Show that n = 610501234567890
+  have hn_val : n = 610501234567890 := by
+    exact hNodup hnS
+
+  -- Rewrite n with its value
+  subst n
+
+  -- Show that the cardinality of S is 6
+  have : S.card = 6 := by
+    rw [hS]
+    have : (h ⁻¹' {0} : Set ℕ) = {610501234567890} := by
+      ext n
+      constructor
+      · intro hn
+        simp [h] at hn
+        rw [← hn.2]
+        exact (hn.1).symm
+      · intro hn
+        simp [h]
+        constructor
+        · exact hn
+        · simp [hn]
+          exact Set.mem_setOf_eq (610501234567890 : ℕ) (0 : ℤ)
+    rw [this]
+    simp
+
+  -- Conclude that the cardinality of S is 6
+  exact this
+```

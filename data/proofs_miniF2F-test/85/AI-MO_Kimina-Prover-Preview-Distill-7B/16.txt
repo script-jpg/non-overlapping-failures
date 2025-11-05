@@ -1,0 +1,53 @@
+-- Assume $2^n - 1$ is a prime number.
+  -- Since $n$ is a positive integer, $n \geq 1$.
+  have h₂ : n ≥ 1 := by exact Nat.Prime.one_le h₁
+
+  -- Assume for contradiction that $n$ is not prime, i.e., $n$ is composite.
+  by_contra h
+  rw [Nat.not_prime_iff_exists_dvd_ne] at h
+
+  -- Then there exists a divisor $m$ of $n$ such that $1 < m < n$.
+  obtain ⟨m, ⟨hm₁, hm₂⟩, hm₃⟩ := h
+
+  -- Since $m$ is a divisor of $n$, we can write $n = m \cdot k$ for some $k \in \mathbb{N}$.
+  obtain ⟨k, hk⟩ := hm₁
+
+  -- We have $n \geq 1$, so $m \cdot k \geq 1$.
+  -- Since $m \geq 1$ and $k \geq 1$, we have $m \geq 1$ and $k \geq 1$.
+  have h₃ : m ≥ 1 := by exact Nat.Prime.one_le hm₂
+  have h₄ : k ≥ 1 := by
+    by_contra h₄
+    simp at h₄
+    rw [h₄] at hk
+    simp at hk
+    linarith
+
+  -- Since $m \geq 2$, we have $2^m - 1 \geq 2^2 - 1 = 3$.
+  have h₅ : 2 ^ m - 1 ≥ 3 := by
+    have : 2 ^ m ≥ 2 ^ 2 := by
+      apply Nat.pow_le_pow_of_le
+      norm_num
+      exact h₃
+    omega
+
+  -- Since $2^m - 1 \geq 3$, we have $2^m - 1 > 1$.
+  have h₆ : 2 ^ m - 1 > 1 := by omega
+
+  -- Since $m \mid n$, we have $2^m - 1 \mid 2^n - 1$.
+  have h₇ : 2 ^ m - 1 ∣ 2 ^ n - 1 := by
+    rw [hk]
+    rw [Nat.pow_mul]
+    rw [Nat.sub_dvd_pow_sub_pow]
+    norm_num
+    exact Nat.dvd_refl (2 ^ m - 1)
+
+  -- Since $2^n - 1$ is prime and $1 < 2^m - 1 < 2^n - 1$, we have a contradiction.
+  apply Nat.not_prime_of_dvd_of_lt at h₇
+  apply h₇
+  · exact hm₂
+  · exact h₆
+  · exact Nat.lt_sub_one_of_lt (by linarith)
+
+  -- Therefore, $n$ must be prime.
+
+```

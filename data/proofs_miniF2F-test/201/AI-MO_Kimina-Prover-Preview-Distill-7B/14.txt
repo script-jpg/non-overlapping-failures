@@ -1,0 +1,86 @@
+-- Define a sequence of complex numbers from the given recurrence.
+  let z : ℕ → ℂ := fun n => a n + Complex.I * b n
+
+  -- Show that the recurrence can be expressed in terms of complex numbers.
+  have h (n : ℕ) : z (n + 1) = (Real.sqrt 3 + Complex.I) * z n := by
+    simp [z]
+    rw [h₀, h₁]
+    ring
+    <;> simp [Complex.I_sq]; ring
+
+  -- By induction, the recurrence can be expressed as a geometric series.
+  have h' (n : ℕ) : z n = z 0 * (Real.sqrt 3 + Complex.I) ^ n :=
+    Complex.iterate_mul h n |>.symm
+
+  -- Notice that $(\sqrt{3} + i)^2 = 2(\sqrt{3} + i)$, so
+  -- $(\sqrt{3} + i)^n = 2^{n-1} (\sqrt{3} + i)$ for $n \geq 1$.
+  have h'' (n : ℕ) : (Real.sqrt 3 + Complex.I) ^ n = 2 ^ (n - 1) * (Real.sqrt 3 + Complex.I) :=
+    by induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [pow_succ, ih, pow_succ, Complex.ext_iff, Complex.I_sq, mul_assoc, <-add_mul]
+      ring
+      <;> simp [Complex.I_sq]; ring
+
+  -- Apply this to $z_1$ and $z_{100}$.
+  have h'' z 1 : z 1 = z 0 * (Real.sqrt 3 + Complex.I) := by
+    apply h'
+    <;> simp
+  simp [z] at h'' z 1
+
+  have h'' z 100 : z 100 = z 0 * (Real.sqrt 3 + Complex.I) ^ 100 := by
+    apply h'
+  simp [z] at h'' z 100
+
+  -- Use the fact that $z_{100} = 2 + 4i$ and $z_1 = a + bi$.
+  rw [h'', h, h₂, show 2 + Complex.I * 4 = (2 + Complex.I * 2) * (1 + Complex.I * 2) by ring] at h'''
+  rw [h₀, h₁] at h'' z 1
+  simp [z] at h'' z 1
+
+  -- We find that $z_0 = \frac{1}{2^{98}} (\sqrt{3} - i)$.
+  replace h'' z 1 : z 0 = (Real.sqrt 3 - Complex.I) * (1 / 2 ^ 98) := by
+    rw [h'''] at h''
+    symm at h''
+    rw [mul_assoc, Complex.ext_iff] at h''
+    simp [Complex.I_sq] at h''
+    field_simp
+    simp at h''
+    obtain ⟨h', h''⟩ := h''
+    rw [show a + b = a - (-b) by ring, <-sub_eq_add_neg, sub_eq_zero] at h'
+    rw [show a + b = a + (-b) by ring, <-add_neg_cancel, add_eq_zero_iff_eq_neg] at h''
+    ring_nf at h' h''
+    have : (3 : ℝ) ^ 49 * (12 + a * 49 * 2 + b * 49 * 2 + a ^ 2 + b ^ 2) = 0 := by
+      rw [<-h', <-h'', mul_add, mul_add, mul_assoc]
+      simp
+      ring
+    simp at this
+    obtain (⟨ax, ay⟩ | ⟨bx, by⟩ | ⟨cx, cy⟩) := this
+    · -- If the real part is zero, then $a = -\sqrt{3}$.
+      have : a = -Real.sqrt 3 := by
+        obtain ⟨_, this⟩ := ax
+        linarith
+      rw [this, h', h''] at h'''
+      simp at h'''
+      ring_nf at h'''
+      linarith [show Real.sqrt 3 ^ 3 = Real.sqrt 3 * 3 by simp [pow_succ]]
+    · -- If the imaginary part is zero, then $b = -\sqrt{3}$.
+      have : b = -Real.sqrt 3 := by
+        obtain ⟨_, this⟩ := bx
+        linarith
+      rw [h', this, h'', <-Complex.I_mul_I] at h'''
+      simp at h'''
+      ring_nf at h'''
+      linarith
+    · -- Otherwise, the value is not zero, a contradiction.
+      obtain ⟨this, this'⟩ := cx
+      rw [show a ^ 2 + b ^ 2 = (a - b * I).normSq by simp [Complex.normSq]] at this'
+      have : 0 < (a - b * I).normSq := by positivity
+      linarith
+
+  -- Thus, $a_1 + b_1 = z_1 = \frac{1}{2^{98}} (\sqrt{3} - i)$.
+  rw [h'', <-Complex.ext_iff, Complex.I_sq]
+  ring_nf
+  rw [Real.sqrt_eq_rpow]
+  field_simp
+
+```

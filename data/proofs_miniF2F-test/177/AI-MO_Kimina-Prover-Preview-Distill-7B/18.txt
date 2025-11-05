@@ -1,0 +1,238 @@
+constructor
+
+  -- First, a lemma that will be used later.
+
+  · intro f h
+
+    have h' (a b : ℤ) : f (2 * b) + 2 * f a = f (f (a + b)) := by
+      rw [←h a b]
+      ring_nf
+
+    -- Prove that $f$ is periodic with period $2 * f 0$.
+
+    have period (a : ℤ) : f (a + 2 * f 0) = f a := by
+
+      -- To prove this, we need to show that $f(2 * a) = f(2 * a + 2 * f(0))$.
+
+      have (a : ℤ) : f (2 * a) = f (2 * a + 2 * f 0) := by
+
+        -- We have $f(2 * a) + 2 * f(0) = f(f(a))$ by setting $b = 0$ in the given equation.
+
+        have h₁ := h a 0
+
+        simp only [zero_add] at h₁
+
+        -- We also have $f(2 * 0) + 2 * f(a) = f(f(a + 0))$, i.e., $f(0) + 2 * f(a) = f(f(a))$.
+
+        have h₂ := h 0 a
+
+        simp only [add_zero] at h₂
+
+        -- So, $f(2 * a) + 2 * f(0) = f(0) + 2 * f(a)$, and so $f(2 * a) = 2 * f(a) - f(0)$.
+
+        have h₃ : f (2 * a) = 2 * f a - f 0 := by linear_combination (h₁ - h₂) / 2
+
+        -- Reducing modulo $f(0)$, we get $f(2 * a) + 2 * f(0) = f(0) + 2 * f(a)$, so $f(2 * a) = 2 * f(a) - f(0)$.
+
+        have h₄ : f (2 * a) + 2 * f 0 = f 0 + 2 * f a := by rw [h₃]; ring
+
+        -- So, $2 * f(a) = f(2 * a) + f(0)$.
+
+        have h₅ : 2 * f a = f (2 * a) + f 0 := by linarith
+
+        -- On the other hand, we also have $f(2 * a) + 2 * f(a + 2 * f(0)) = f(f(a + 2 * f(0) + a)) = f(f(2 * a + 2 * f(0)))$.
+
+        have h₆ := h (a + 2 * f 0) a
+
+        -- Substitute $b = a$ and $a = a + 2 * f(0)$ to the original equation.
+
+        simp only [add_assoc, add_comm, h₅] at h₆
+
+        -- So, $f(2 * a) + 2 * f(a + 2 * f(0)) = f(f(2 * a + 2 * f(0))) = f(f(2 * a) + 2 * f(0))$.
+
+        rw [add_comm] at h₆
+
+        -- And by the lemma `add_eq_add_iff_eq_sub`, we have $f(2 * a) + 2 * f(a + 2 * f(0)) = f(f(2 * a) + 2 * f(0))$ if and only if
+        -- $f(2 * a) = f(2 * a) + 2 * f(0) - 2 * f(a + 2 * f(0))$.
+
+        have h₇ : f (2 * a) + 2 * f (a + 2 * f 0) = f (f (2 * a) + 2 * f 0) ↔ f (2 * a) = f (2 * a) + 2 * f 0 - 2 * f (a + 2 * f 0) := by
+          apply Iff.symm
+          exact add_eq_add_iff_eq_sub (f (2 * a)) (2 * f (a + 2 * f 0)) (2 * f 0)
+
+        -- We can simplify the statement as $f(2 * a) = f(2 * a) + 2 * f(0) - 2 * f(a + 2 * f(0))$.
+
+        replace h₇ : 2 * f (a + 2 * f 0) = 2 * f 0 := by linarith [h₆, h₇]
+
+        -- Dividing both sides by $2$, we get $f(a + 2 * f(0)) = f(0)$.
+
+        replace h₇ : f (a + 2 * f 0) = f 0 := by omega
+
+        -- So, $f(a + 2 * f(0)) = f(a)$.
+
+        replace h₇ : f (a + 2 * f 0) = f a := by linarith
+
+        -- Therefore, $f$ is periodic with period $2 * f(0)$.
+
+        exact h₇
+
+      -- Now consider $a + 2 * f(0)$ and $a$.
+
+      have (a : ℤ) : f (a + 2 * f 0) = f a := this a
+
+      have (a : ℤ) : f (a + 2 * f 0 + 2 * f 0) = f (a + 2 * f 0) := this (a + 2 * f 0)
+
+      rw [add_assoc] at this
+
+      -- So, $f(a + 4 * f(0)) = f(a + 2 * f(0)) = f(a)$.
+
+      replace this : f (a + 4 * f 0) = f (a + 2 * f 0) := by exact this
+
+      -- But we want $f(a + 2 * f(0)) = f(a)$.
+
+      replace this : f (a + 2 * f 0) = f a := by exact this
+
+      -- Therefore, $f$ is periodic with period $2 * f(0)$.
+
+      exact this
+
+    -- Prove that $f$ is constant on each residue class with respect to $2 * f(0)$.
+
+    have constant_on_residue_class (a : ℤ) : ∀ k, f (a + k * (2 * f 0)) = f a := by
+
+      -- We will prove that $f$ is constant on the union of the residue class of $a$ and $a + f(0)$.
+
+      have (a : ℤ) : ∀ k, f (a + k * (2 * f 0)) = f a ∨ f (a + k * (2 * f 0)) = f (a + 2 * f 0) := by
+
+        intro k
+
+        induction k with
+
+        | zero => simp
+
+        | succ k ih =>
+          -- We know that $f(a + k * (2 * f(0))) = f(a)$ or $f(a + k * (2 * f(0))) = f(a + 2 * f(0))$.
+
+          -- If $f(a + k * (2 * f(0))) = f(a)$, then
+          -- $f(a + (k + 1) * (2 * f(0))) = f(a + k * (2 * f(0)) + 2 * f(0)) = f(f(a + k * (2 * f(0)) + a)) = f(f(a) + a)$
+          -- by setting $a' = a + k * (2 * f(0))$ and $b' = a$ in the original equation.
+          case inl ih =>
+            left
+
+            rw [Int.add_mul_eq_add_mul_right (2 * f 0) k a]
+            have h₁ := h (a + k * (2 * f 0)) a
+
+            -- We have $f(2 * a') + 2 * f(b') = f(f(a' + b'))$ where $a' = a + k * (2 * f(0))$ and $b' = a$.
+
+            simp only [add_comm, add_left_comm, add_right_comm, add_assoc, ih] at h₁
+
+            -- So, $f(2 * (a + k * (2 * f(0))) + 2 * f(a) = f(f(a + k * (2 * f(0)) + a)) = f(f(a) + a)$.
+
+            have h₂ : f (2 * (a + k * (2 * f 0)) + 2 * f a) = f (f a + a) := by
+              rw [h₁]
+
+            -- But $2 * (a + k * (2 * f(0))) + 2 * f(a) = 2a + 2 * k * (2 * f(0)) + 2 * f(a) = 2 * (a + f(0)) + 2 * f(a)$
+            -- $= 2 * (a + f(0)) + 2 * f(a + k * (2 * f(0))) = f(f(a + k * (2 * f(0)) + a)) = f(f(a) + a)$.
+
+            rw [show a + k * (2 * f 0) = a + f 0 + k * (2 * f 0) + f 0 by ring, add_mul, add_mul] at h₂
+            rw [add_comm, add_assoc, add_comm] at h₂
+            rw [show 2 * (a + f 0) + 2 * f a = 2 * (a + f 0 + f a) by ring] at h₂
+
+            -- So, $f(2 * (a + f(0))) + 2 * f(a) = f(f(a) + a)$.
+
+            have h₃ : f (2 * (a + f 0)) + 2 * f a = f (f a + a) := by linear_combination (h₂ - h₁) / 2
+
+            -- Therefore, $f(2 * (a + f(0))) = f(f(a) + a) - 2 * f(a)$.
+
+            replace h₃ : f (2 * (a + f 0)) = f (f a + a) - 2 * f a := by omega
+
+            -- But we know that $f(2 * (a + f(0))) = f(2 * a + 2 * f(0)) = f(f(0) + a + a) = f(f(a) + a)$
+
+            rw [show 2 * (a + f 0) = f 0 + a + a by ring, add_comm, ← two_mul] at h₃
+
+            -- So, $f(f(a) + a) - 2 * f(a) = f(f(a) + a)$, and so $f(a) = 0$.
+
+            rw [add_comm, add_assoc, add_comm] at h₃
+            omega
+
+          -- If $f(a + k * (2 * f(0))) = f(a + 2 * f(0))$, then
+          -- $f(a + (k + 1) * (2 * f(0))) = f(a + k * (2 * f(0)) + 2 * f(0)) = f(f(a + k * (2 * f(0))) + a)) = f(f(a + 2 * f(0)) + a)$
+          -- by setting $a' = a + k * (2 * f(0))$ and $b' = a$ in the original equation.
+          case right =>
+            right
+
+            rw [Int.add_mul_eq_add_mul_right (2 * f 0) k a]
+            have h₁ := h (a + k * (2 * f 0)) a
+
+            -- We have $f(2 * a') + 2 * f(b') = f(f(a' + b'))$ where $a' = a + k * (2 * f(0))$ and $b' = a$.
+
+            simp only [add_comm, add_left_comm, add_right_comm, add_assoc, ih] at h₁
+
+            -- So, $f(2 * (a + k * (2 * f(0))) + 2 * f(a) = f(f(a + k * (2 * f(0)) + a)) = f(f(a + 2 * f(0)) + a)$.
+
+            have h₂ : f (2 * (a + k * (2 * f 0)) + 2 * f a) = f (f (a + 2 * f 0) + a) := by
+              rw [h₁]
+
+            -- But $2 * (a + k * (2 * f(0))) + 2 * f(a) = 2a + 2 * k * (2 * f(0)) + 2 * f(a) = 2 * (a + f(0)) + 2 * f(a)$
+            -- $= 2 * (a + f(0)) + 2 * f(a + k * (2 * f(0))) = f(f(a + k * (2 * f(0)) + a)) = f(f(a + 2 * f(0)) + a)$.
+
+            rw [show a + k * (2 * f 0) = a + f 0 + k * (2 * f 0) + f 0 by ring, add_mul, add_mul] at h₂
+            rw [add_comm, add_assoc, add_comm] at h₂
+            rw [show 2 * (a + f 0) + 2 * f a = 2 * (a + f 0 + f a) by ring] at h₂
+
+            -- So, $f(2 * (a + f(0))) + 2 * f(a) = f(f(a + 2 * f(0)) + a)$.
+
+            have h₃ : f (2 * (a + f 0)) + 2 * f a = f (f (a + 2 * f 0) + a) := by linear_combination (h₂ - h₁) / 2
+
+            -- Therefore, $f(2 * (a + f(0))) = f(f(a + 2 * f(0)) + a) - 2 * f(a)$.
+
+            replace h₃ : f (2 * (a + f 0)) = f (f (a + 2 * f 0) + a) - 2 * f a := by omega
+
+            -- But we know that $f(2 * (a + f(0))) = f(2 * a + 2 * f(0)) = f(f(0) + a + a) = f(f(a) + a)$
+
+            rw [show 2 * (a + f 0) = f 0 + a + a by ring, add_comm, ← two_mul] at h₃
+
+            -- So, $f(f(a + 2 * f(0)) + a) - 2 * f(a) = f(f(a) + a)$, and so $f(a + 2 * f(0)) = 2 * f(a)$.
+
+            rw [add_comm, add_assoc, add_comm] at h₃
+            omega
+
+      -- Now we need to prove that $f(a) = f(a + m * (2 * f(0)))$ for all $m ≥ 0$.
+
+      have (a : ℤ) : ∀ k, f (a + k * (2 * f 0)) = f a := by
+
+        -- We will prove this by induction on $k$.
+
+        intro k
+
+        induction k with
+
+        | zero => simp
+
+        | succ k ih =>
+          -- The case $k = 0$ is trivial.
+
+          -- For $k + 1$, we need to use the result for $k$ and the result for $k + 1$.
+
+          replace ih := this a k
+
+          -- We have $f(a + k * (2 * f(0))) = f(a)$ or $f(a + k * (2 * f(0))) = f(a + 2 * f(0))$.
+
+          cases ih with
+          | inl ih =>
+            rw [show a + (k + 1) * (2 * f 0) = a + k * (2 * f 0) + 2 * f 0 by ring]
+            have h₁ := h (a + k * (2 * f 0)) a
+
+            -- We have $f(2 * a') + 2 * f(b') = f(f(a' + b'))$ where $a' = a + k * (2 * f(0))$ and $b' = a$.
+
+            simp only [add_comm, add_left_comm, add_right_comm, add_assoc, ih] at h₁
+
+            -- So, $f(2 * (a + k * (2 * f(0))) + 2 * f(a) = f(f(a + k * (2 * f(0)) + a)) = f(f(a) + a)$.
+
+            have h₂ : f (2 * (a + k * (2 * f 0)) + 2 * f a) = f (f a + a) := by
+              rw [h₁]
+
+            -- But $2 * (a + k * (2 * f(0))) + 2 * f(a) = 2a + 2 * k * (2 * f(0)) + 2 * f(a) = 2 * (a + f(0)) + 2 * f(a)$
+            -- $= 2 * (a + f(0)) + 2 * f(a + k * (2 * f(0))) = f(f(a + k * (2 * f(0)) + a)) = f(f(a) + a)$.
+
+            rw [show a + k * (2 * f 0) = a + f 0 + k * (2 * f 0) + f 0 by ring, add_mul, add_mul] at h₂
+            rw [add_comm, add_assoc, add_comm]

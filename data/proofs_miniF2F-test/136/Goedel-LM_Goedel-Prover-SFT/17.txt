@@ -1,0 +1,33 @@
+rw [Set.ext_iff] at h₁
+  have h₂ : ∀ x : ℝ,
+      x ∈ f ⁻¹' {0} ↔ f x = 0 ∧ (x = cos (2 * Real.pi / 7) ∨ x = cos (4 * Real.pi / 7) ∨ x = cos (6 * Real.pi / 7)) := by
+    simpa only [Set.mem_singleton_iff, Set.mem_preimage] using h₁
+  simp_rw [h₀, Set.mem_singleton_iff] at h₂
+  have h₃ : ∀ x, f x = 0 ↔ x = cos (2 * Real.pi / 7) ∨ x = cos (4 * Real.pi / 7) ∨ x = cos (6 * Real.pi / 7) := by
+    intro x
+    specialize h₂ x
+    rw [h₂]
+    constructor <;> intro h
+    · rw [and_iff_left_iff_imp] at h
+      tauto
+    rw [eq_comm, or_iff_not_imp_left] at h
+    rcases h with (rfl | rfl | rfl) <;> simp [Real.cos_add]
+  show b * c = 1 / 32
+  have h₄ : b * c = (cos (6 * Real.pi / 7) - cos (2 * Real.pi / 7)) / (2 * sin (Real.pi / 7)) *
+      sin (Real.pi / 7) := by
+    have : b = -cos (2 * Real.pi / 7) - 2 * cos (4 * Real.pi / 7) := by
+      simpa only [inv_neg, mul_neg, h₃, ← eq_neg_iff_add_eq_zero] using
+        (h₃ (cos (2 * Real.pi / 7))).2 (by simp)
+    have : c = cos (6 * Real.pi / 7) - cos (2 * Real.pi / 7) := by
+      simpa only [inv_neg, mul_neg, h₃, ← eq_neg_iff_add_eq_zero] using
+        (h₃ (cos (6 * Real.pi / 7))).2 (by simp)
+    rw [this, this]
+    ring_nf
+    norm_num
+    field_simp
+    ring_nf
+  rw [h₄, show cos (6 * Real.pi / 7) = cos (Real.pi - (2 * Real.pi / 7)) by ring]
+  simp [cos_sub]
+  ring_nf
+  norm_num
+```

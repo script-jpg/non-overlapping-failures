@@ -1,0 +1,125 @@
+-- lemma, prove that $1 + 1 / k ^ 3 \leq 1 + 1 / (k - 1) / k ^ 2$.
+  have r1 {k : ℕ} (hk : 1 ≤ k) : (1 : ℝ) + 1 / k ^ 3 ≤ 1 + 1 / (k - 1) / k ^ 2 := by
+    rcases le_or_lt k 1 with hk | hk
+    · simp at hk
+      norm_num
+    · have c1 : k ^ 2 ≥ 1 := by
+        exact one_le_pow₀ hk
+      have c2 : (k - 1) * k ^ 2 ≥ 1 * 1 := by
+        apply mul_le_mul
+        · simp at hk
+          exact hk
+        · exact c1
+        all_goals norm_num
+      have : 1 / (k - 1) / k ^ 2 ≤ 1 / (k - 1) / 1 := one_div_le_one_div_of_le c2 (by norm_num)
+      apply le_of_one_div_le_one_div
+      · rw [mul_comm]
+        exact this
+      · exact one_le_pow₀ hk
+      · apply le_of_lt
+        apply lt_trans
+        · norm_num
+        · one_div_lt_one_div_of_lt (by norm_num) (fun a ↦ Nat.lt_add_one_iff.mp a)
+      · norm_num
+
+  -- Since $1 / k ^ 2 \leq 1 / (k - 1) / k ^ 2$ for $k \geq 1$, we have
+  -- $1 + 1 / k ^ 3 \leq 1 + 1 / (k - 1) / k ^ 2 \leq 1 + 1 / (k - 1) \prod_{k=1}^n (1 + 1 / k ^ 2)$
+  have r2 {k : ℕ} (hk : 1 ≤ k) : (1 : ℝ) + 1 / k ^ 3 ≤ 1 + 1 / (k - 1) * ∏ i ∈ Finset.Icc 1 k, (1 + 1 / i ^ 2) := by
+    have : 1 + 1 / k ^ 3 ≤ 1 + 1 / (k - 1) / k ^ 2 := r1 hk
+    have c1 : ∏ i ∈ Finset.Icc 1 k, (1 + 1 / i ^ 2) ≥ 1 := by
+      nth_rw 2 [←Finset.prod_Icc_succ_top (fun i ↦ 1 + 1 / i ^ 2) 1 k]
+      simp
+      apply Finset.prod_nonneg
+      simp
+    have c2 : 1 + 1 / (k - 1) / k ^ 2 ≤ 1 + 1 / (k - 1) * (∏ i ∈ Finset.Icc 1 k, (1 + 1 / i ^ 2)) := by
+      apply add_le_add_left
+      apply mul_le_mul
+      · simp
+        exact hk
+      · exact one_div_le_one_div_of_le c1 (by norm_num)
+      · exact le_of_lt
+        apply lt_trans
+        · norm_num
+        · one_div_lt_one_div_of_lt (by norm_num) (fun a ↦ Nat.lt_add_one_iff.mp a)
+      · norm_num
+    exact le_trans this c2
+
+  -- Prove that $1 + 1 / k ^ 2 \leq 2 - 1 / k ^ 1$ for $k \geq 1$.
+  have r3 {k : ℕ} (hk : 1 ≤ k) : (1 : ℝ) + 1 / k ^ 2 ≤ 2 - 1 / k := by
+    have c1 : k ^ 2 ≥ 1 := by exact one_le_pow₀ hk
+    have c2 : (k - 1) * k ≥ 1 * 1 := by
+      apply mul_le_mul
+      · simp at hk
+        exact hk
+      · exact c1
+      · apply le_of_lt
+        exact Nat.lt_add_one_iff.mp hk
+      · norm_num
+    have : 1 / k ^ 2 ≤ 1 / (k - 1) / k := one_div_le_one_div_of_le c2 (by norm_num)
+    have : 1 / (k - 1) / k ≤ 1 / (k - 1) * (2 - 1 / k) := by
+      apply mul_le_mul
+      · simp
+        exact hk
+      · exact one_div_le_one_div_of_le c1 (by norm_num)
+      · exact le_of_lt
+        apply lt_trans
+        · norm_num
+        · one_div_lt_one_div_of_lt (by norm_num) (fun a ↦ Nat.lt_add_one_iff.mp a)
+      · field_simp
+        ring_nf
+        have : (k : ℝ) ^ 2 - 1 ≥ 0 := by
+          rw [sq_sub_one]
+          exact Nat.one_le_pow₀ hk
+        exact this
+    exact le_trans this (le_of_add_le_add this (by norm_num))
+
+  -- Prove that $1 + 1 / k ^ 3 \leq 3 - 1 / k$ for $k \geq 1$.
+  have r4 {k : ℕ} (hk : 1 ≤ k) : (1 : ℝ) + 1 / k ^ 3 ≤ 3 - 1 / k := by
+    have : 1 + 1 / k ^ 3 ≤ 1 + 1 / (k - 1) * (∏ i ∈ Finset.Icc 1 k, (1 + 1 / i ^ 2)) := r2 hk
+    have : 1 + 1 / (k - 1) * (∏ i ∈ Finset.Icc 1 k, (1 + 1 / i ^ 2)) ≤ 3 - 1 / (k : ℝ) := by
+      have c1 : ∏ i ∈ Finset.Icc 1 k, (1 + 1 / i ^ 2) ≤ 2 - 1 / k := by
+        have c1 := r3 hk
+        have c2 := r3 (Nat.le_add_left 1 (k - 1))
+        simp at c2
+        have c3 : (k - 1) ^ 2 ≥ 1 := by
+          apply one_le_pow₀
+          exact Nat.le_add_left 1 (k - 1)
+        have c4 : (1 : ℝ) / (k - 1) * (2 - 1 / k) ≤ 2 - 1 / k := by
+          apply sub_le_sub_left
+          apply div_le_iff₀ (by norm_num).mpr
+          rw [mul_comm]
+          exact le_of_lt
+          apply lt_trans
+          · norm_num
+          · exact Nat.lt_add_one_iff.mp hk
+        exact le_trans c2 c3
+      have c2 : (1 : ℝ) + 1 / (k - 1) * (∏ i ∈ Finset.Icc 1 k, (1 + 1 / i ^ 2)) ≤ (1 : ℝ) + 1 / (k - 1) * (2 - 1 / k) := by
+        apply add_le_add_left
+        apply mul_le_mul
+        · simp
+          exact hk
+        · exact one_div_le_one_div_of_le (Finset.prod_nonneg (fun i ↦ 1 + 1 / i ^ 2) (by simp)) (by norm_num)
+        · exact le_of_lt
+          apply lt_trans
+          · norm_num
+          · apply lt_of_lt_of_le (by norm_num) (fun a ↦ Nat.lt_add_one_iff.mp a)
+        · norm_num
+      exact le_trans c2 c1
+    exact le_trans this (le_of_add_le_add this (by norm_num))
+
+  -- Apply the lemma to $n$ and then prove the result by induction.
+  have r5 : (1 : ℝ) + 1 / n ^ 3 ≤ 3 - 1 / (n : ℝ) := r4 (by exact Nat.le_add_left 1 (n - 1))
+  have : ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 ≤ (3 : ℝ) - 1 / ↑n := by
+    induction n with
+    | zero => contradiction
+    | succ n ih =>
+      by_cases hn : n = 0
+      · simp [hn, r5]
+      · have : n > 0 := by exact Nat.zero_lt_of_ne_zero hn
+        have c1 : ∏ k ∈ Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / k ^ 3 = (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3) * (1 + 1 / (n + 1) ^ 3) := by
+          rw [Finset.prod_Icc_succ_top, Nat.add_one, Nat.add_one]
+          simp
+        rw [c1, ih]
+        exact (le_mul_iff_one_le_left (by norm_num)).mpr (r5 this)
+  exact this
+```

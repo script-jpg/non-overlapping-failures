@@ -1,0 +1,55 @@
+-- multiply h₁ by y, h₂ by z, and h₃ by x
+  have h₄ : x * y + 1 = 4 * y := by  field_simp at h₁; assumption
+  have h₅ : y * z + 1 = 1 * z := by  field_simp at h₂; assumption
+  have h₆ : z * x + 1 = 7 / 3 * x := by  field_simp at h₃; assumption
+
+  -- substitute y from h₄ into h₅, and then substitute z from h₅ into h₆
+  have h₇ : (4 * y - 1) * z + 1 = 7 / 3 * x := by    nth_rewrite 1 [←h₄] at h₅;   rw [←h₅] at h₆; assumption
+  have h₈ : (4 * (z * x + 1) - 1) * z + 1 = 7 / 3 * x := by  nth_rewrite 2 [←h₆] at h₇; rw [←h₇] at h₈; assumption
+
+  -- simplify h₈ and we get the following equation
+  have h₉ : 4 * z * x * z + 2 * z + 1 = 7 / 3 * x := by  linarith
+  have h₁₀ : 4 * z * x * z + 2 * z + 1 - 7 / 3 * x = 0 := by  linarith
+
+  -- view h₁₀ as a quadratic equation in z and solve for z
+  have h₁₁ : (z - 1 / 6) * (4 * x * z + 7 / 3 - 2) = 0 := by  rw [←h₁₀]; ring
+
+  -- because of h₀, the latter part cannot be zero, so z = 1/6
+  have h₁₂ : z - 1 / 6 = 0 ∨ 4 * x * z + 7 / 3 - 2 = 0 := by  rw [mul_eq_zero]; assumption
+  have h₁₃ : z = 1 / 6 := by
+    rcases h₁₂ with (h₁₂ | h₁₂)
+    · assumption
+    · linarith
+
+  -- we get x * y * z = x * y * (1/6) = x * (1/6 * y) = x * (1/6 * (4 - x/3)) = x/3 - x²/18
+  have h₁₄ : x * y * z = x / 3 - x ^ 2 / 18 := by
+    rw [h₁₃]
+    have : x * y * (1 / 6) = x / 3 - x ^ 2 / 18 := by ring
+    nth_rewrite 1 [←this]
+    field_simp at h₁; ring_nf at h₁; rw [show 4 * x - x ^ 2 * (1 / 3) = x * (1 / 6 * (4 - x / 3)) by ring]; simp; linarith
+
+  -- from h₁₄, we get x * y * z = x * y * (1/6) = (x/3 - x²/18) = (4 - x/3)/6 - (x²/18 * 1/6)
+  have h₁₅ : x * y * z = (4 - x / 3) / 6 - (x ^ 2 / 18) / 6 := by
+    nth_rewrite 1 [←h₁₄]
+    field_simp; ring_nf
+
+  -- from h₁₅, we get x * y * z = (4 - x / 3) / 6 - (x ^ 2 / 18) / 6
+  have h₁₆ : x * y * z = 1 := by
+    by_contra!
+    have h₁₆ : ((4 - x / 3) / 6 - (x ^ 2 / 18) / 6) - 1 = 0 := by rw [←h₁₅]; ring_nf
+    have h₁₇ : (x - 3) * (x - 3) = 0 := by   ring_nf at h₁₆; linarith
+    have h₁₈ : x - 3 = 0 := by   rw [mul_eq_zero] at h₁₇; linarith
+    have h₁₉ : x = 3 := by  linarith
+    rw [h₁₉] at h₄
+    have h₂₀ : 3 * y + 1 = 12 := by  linarith
+    have h₂₁ : 3 * y = 11 := by  linarith
+    have h₂₂ : y = 11 / 3 := by  linarith
+    rw [h₁₉, h₂₂] at h₁
+    have h₂₃ : (4 - 11 / 3) * 3 + 1 = 4 * 3 := by  linarith
+    have h₂₄ : (4 - 11 / 3) * 3 + 1 ≠ 4 * 3 := by  simp
+    contradiction
+
+  -- done.
+  exact h₁₆
+
+```

@@ -1,0 +1,74 @@
+-- estimate the sum by integral
+  have : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k ≤ ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x := by
+    apply Finset.sum_le_sum_of_subset_of_nonneg
+    · -- show that the interval is subset
+      apply Finset.Icc_subset_Icc
+      repeat norm_num
+    · -- show that the sum terms are nonneg
+      intro k hk
+      apply one_div_nonneg.mpr
+      positivity
+  -- calculate the integral
+  have : ∫ x in (2 : ℝ)..10000, 1 / Real.sqrt x = 197.995 := by
+    have : ∫ x in (2 : ℝ))..10000, 1 / Real.sqrt x = ∫ x in (2 : ℝ)..100, 1 / Real.sqrt x + ∫ x in 100..10000, 1 / Real.sqrt x := by
+      rw [←Finset.Ico_union_Ico_eq_Icc]
+      norm_num
+    rw [this]
+    -- calculate the two integrals
+    have : ∫ x in (2 : ℝ)..100, 1 / Real.sqrt x = 197.5 := by
+      -- calculate the primitive
+      have : ∫ x in (2 : ℝ)..100, 1 / Real.sqrt x = ∫ x in (2 : ℝ)..100, 2 / (2 * Real.sqrt x) := by
+        congr 1
+        ext x
+        field_simp
+      rw [this]
+      -- use the fundamental theorem of calculus
+      rw [←sub_eq_zero]
+      norm_num
+      have : (fun x ↦ 2 * x) = (fun x ↦ 2 * x) := rfl
+      rw [←this]
+      -- calculate the integral
+      calc
+        ∫ x in (2 : ℝ)..100, 2 / (2 * Real.sqrt x) = (2 * (100 : ℝ) / 2) - (2 * (2 : ℝ) / 2) := by
+          rw [←sub_eq_zero]
+          apply integral_const_mul
+          field_simp
+          -- show the integrable
+          simp
+          apply ContinuousOn.div
+          · apply ContinuousOn_const
+          · apply ContinuousOn_id
+          all_goals first | simp | apply sqrt_continuousOn
+        _ = 197.5 := by norm_num
+    have : ∫ x in (100 : ℝ)..10000, 1 / Real.sqrt x = 0.495 := by
+      -- calculate the primitive
+      have : ∫ x in (100 : ℝ)..10000, 1 / Real.sqrt x = ∫ x in (100 : ℝ)..10000, 2 / (2 * Real.sqrt x) := by
+        congr 1
+        ext x
+        field_simp
+      rw [this]
+      -- use the fundamental theorem of calculus
+      rw [←sub_eq_zero]
+      norm_num
+      have : (fun x ↦ 2 * x) = (fun x ↦ 2 * x) := rfl
+      rw [←this]
+      -- calculate the integral
+      calc
+        ∫ x in (100 : ℝ)..10000, 2 / (2 * Real.sqrt x) = (2 * (10000 : ℝ) / 2) - (2 * (100 : ℝ) / 2) / 2 := by
+          rw [←sub_eq_zero]
+          apply integral_const_mul
+          field_simp
+          -- show the integrable
+          simp
+          apply ContinuousOn.div
+          · apply ContinuousOn_const
+          · apply ContinuousOn_id
+          all_goals first | simp | apply sqrt_continuousOn
+        _ = 0.495 := by norm_num
+    rw [this]
+    norm_num
+    -- estimate the error
+  apply le_trans this
+  norm_num
+
+```

@@ -1,0 +1,68 @@
+-- A trivial fact: for positive natural numbers m and n with m ≤ n, 2^m divides 2^n.
+  have h' (h : m ≤ n : ℕ) : 2 ^ m ∣ 2 ^ n := by
+    exact Nat.pow_dvd_pow_iff_le_right'.mpr h
+
+  -- A_rw [h₀ (2 ^ n), h₀ (2 ^ m)]
+  rw [h₀, h₀]
+  trans ∑ k ∈ Finset.range 3, 4 ^ (2 ^ m) * (6 ^ (2 ^ m)) ^ (k : ℕ) * 9 ^ (2 ^ m) * (6 ^ (2 ^ m)) ^ (k : ℕ) * 2 ^ (↑m * (↑n - ↑m)) * (6 ^ (2 ^ m)) ^ (n - m) * 9 ^ (2 ^ m) * (6 ^ (2 ^ m)) ^ (n - m)
+  · -- Rewrite f(2^n) as ∑_{k=0}^2 4^(2^m) * (6^(2^m))^k * 9^(2^m) * (6^(2^m))^k
+    congr 1
+    rw [Finset.sum_mul]
+    congr 1
+    ext x
+    simp only [Finset.mem_range, Finset.sum_range_succ, Finset.sum_range_zero]
+    rcases x with x | x
+    · rw [←Nat.pow_add, pow_mul, ←pow_add]
+      simp only [one_pow, mul_one, pow_zero, mul_zero, add_zero]
+      rw [←Nat.mul_add_one, Nat.pow_add, pow_mul, ←pow_add]
+      omega
+    · rw [add_comm, ←Nat.pow_add, pow_mul, ←pow_add]
+      simp only [one_pow, mul_one, pow_zero, mul_zero, add_zero]
+      rw [←Nat.mul_add_one, Nat.pow_add, pow_mul, ←pow_add]
+      omega
+    · rw [pow_zero, mul_one, pow_zero, mul_one]
+      symm
+      apply Nat.mul_dvd_mul_left
+      rw [←Nat.pow_add, pow_mul, ←pow_add]
+      omega
+  · -- Show that the summands of the above sum divide f(2^m) respectively.
+    apply Finset.sum_dvd_sum
+    · intro i hi
+      simp only [Finset.mem_range] at hi
+      rw [h₀]
+      norm_num
+      apply Nat.pow_dvd_pow 4
+      apply Nat.pow_dvd_pow 9
+      omega
+    · intro i hi
+      simp only [Finset.mem_range] at hi
+      rcases i with i | i
+      · rw [h₀]
+        norm_num
+        apply Nat.pow_dvd_pow 4
+        apply Nat.pow_dvd_pow 9
+        omega
+      · rw [h₀]
+        norm_num
+        apply Nat.pow_dvd_pow 4
+        apply Nat.pow_dvd_pow 9
+        omega
+  · -- Show that the summands of the above sum are all positive.
+    intro i hi
+    simp only [Finset.mem_range] at hi
+    apply add_pos
+    · apply add_pos
+      · apply Nat.pow_pos
+        omega
+      · apply Nat.pow_pos
+        omega
+    · apply Nat.pow_pos
+      omega
+  · -- Show that the summands of f(2^m) divides the summands of the above sum.
+    intro i hi
+    simp only [Finset.mem_range] at hi
+    apply Nat.mul_dvd_mul
+    apply Nat.pow_dvd_pow 4
+    apply Nat.pow_dvd_pow 9
+    omega
+```

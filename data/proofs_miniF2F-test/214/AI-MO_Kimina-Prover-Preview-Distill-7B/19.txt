@@ -1,0 +1,142 @@
+-- We want to show that $\sum_{k=1}^{35}\sin 5k=\tan \frac mn$.
+  have h₃ : ∑ k in Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180) = 5 * Real.tan (Real.pi / 12) := by
+    simp
+
+    -- Replace `C` with `A` because we need to use absolute value.
+    have h₄ : ∀ k ∈ Finset.Icc 1 35, 5 * k * Real.pi / 180 = 2 * Real.pi * (5 * k / 180) := by
+      intro k h₅
+      simp at h₅
+      simp
+      ring_nf
+
+    -- Calculate the summation.
+    have h₆ : ∑ k in Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180) = ∑ k in Finset.Icc (5 : ℤ) 175, Real.sin (2 * Real.pi * (k / 180)) := by
+      calc
+        _ = ∑ k in Finset.Icc 1 35, Real.sin (2 * Real.pi * (5 * k / 180)) := by
+          congr
+          simp only [Finset.mem_Icc, Nat.succ_eq_add_one, Nat.reduceSub, h₄]
+        _ = ∑ k in Finset.Icc (5 : ℤ) 175, Real.sin (2 * Real.pi * (k / 180)) := by
+          norm_cast
+
+    rw [h₆]
+
+    -- Convert the summation to an integral.
+    have h₇ : ∑ k in Finset.Icc (5 : ℤ) 175, Real.sin (2 * Real.pi * (k / 180)) = ∑ k in Finset.Icc 0 175, Real.sin (2 * Real.pi * (k / 180)) - Real.sin (2 * Real.pi * (0 / 180)) := by
+      rw [← Finset.add_sum_Ico_eq_sum_Icc (b := 5)]
+      simp
+
+    rw [h₇]
+
+    -- integral of sin is -cos.
+    have h₈ : ∑ k in Finset.Icc 0 175, Real.sin (2 * Real.pi * (k / 180)) - Real.sin (2 * Real.pi * (0 / 180)) = (1 / (2 * Real.pi)) * (-Real.cos (2 * Real.pi * (175 / 180)) + Real.cos (2 * Real.pi * (0 / 180))) := by
+      rw [Finset.sum_natCast_eq_sum_range, Finset.sum_range_succ']
+      simp
+      rw [← Nat.cast_sum, ← Nat.cast_sum]
+      congr 1
+      simp
+      rw [← Real.cos_sub_cos]
+      ring_nf
+      -- The term `n * ↑π * (1 / 180)` is always equal to `2 * π * (n / 180)`.
+      have h₉ : ∀ n : ℕ, (n * ↑π * (1 / 180) : ℝ) = 2 * Real.pi * (n / 180) := by
+        intro n
+        ring_nf
+      rw [h₉, h₉]
+      ring_nf
+      simp
+      ring_nf
+      -- Simplify the expression.
+      have h₁₀ : Real.cos (2 * Real.pi * (175 / 180)) = Real.cos (Real.pi / 12) := by
+        rw [show 2 * Real.pi * (175 / 180) = Real.pi - Real.pi / 12 by ring_nf, Real.cos_pi_sub]
+      rw [h₁₀]
+      simp
+      ring_nf
+      by_contra!
+      exact absurd (Real.cos_le_one (2 * Real.pi * (175 / 180))) this
+      by_contra!
+      exact absurd (Real.cos_le_one (2 * Real.pi * (175 / 180))) this
+
+    rw [h₈]
+
+    -- $\frac{1}{2\pi}$ is the reciprocal of $2\pi$.
+    have h₁₁ : (1 : ℝ) / (2 * Real.pi) = (2 * Real.pi)⁻¹ := by
+      field_simp
+    rw [h₁₁]
+    simp
+
+    -- Calculate the result.
+    have h₁₂ : (2 * Real.pi) * Real.tan (Real.pi / 12) * (2 * Real.pi)⁻¹ = 5 * Real.tan (Real.pi / 12) := by
+      field_simp
+      ring_nf
+      rw [Real.sq_pi]
+      ring_nf
+    rw [h₁₂]
+
+  have h₄ : m = 5 * Real.pi / 12 := by
+    rw [← Mathlib.Tactic real_tan_pi_div_twelve]
+    rw [h₃] at h₁
+    exact h₁
+
+  have h₅ : Real.pi > 0 := by
+    exact Real.pi_pos
+
+  --$m+n=177$.
+  have h₆ : (m.num : ℝ) / m.den < 90 := by
+    exact_mod_cast h₂
+
+  have h₇ : m = (5 * Real.pi / 12) := by
+    exact h₄
+
+  -- $\frac{m}{n}=\frac{15}{12}=\frac{5}{4}$.
+  have h₈ : (m.num : ℝ) / m.den = (5 : ℚ) / 4 := by
+    rw [h₇] at h₆
+    have h₈ : (m.num : ℝ) / m.den = 5 * Real.pi / 12 / (5 * Real.pi / 12 + (↑m.den : ℝ) * Real.pi / 180) := by
+      field_simp
+      rw [h₆]
+      ring_nf
+      have h( denominators : (m.den : ℝ) > 0 ) : 5 * Real.pi / 12 + (↑m.den : ℝ) * Real.pi / 180 > 0 := by
+        linarith [Real.pi_pos]
+      have denominators : (m.den : ℝ) > 0 := by
+        exact_mod_cast Nat.pos_denoms.mpr h₂
+      linarith [h( denominators )]
+    rw [h₈]
+    have h₉ : 5 * Real.pi / 12 + (↑m.den : ℝ) * Real.pi / 180 = 5 * Real.pi / 12 + (↑m.den * 2 * Real.pi / 360) := by
+      ring_nf
+      rw [Real.pi_pos]
+      linarith
+    rw [h₉]
+    have h₁₀ : (↑m.den * 2 * Real.pi / 360 : ℝ) = (↑m.den / 180 : ℚ) * Real.pi := by
+      field_simp
+      ring_nf
+      rw [Nat.cast_div]
+      have h₁₁ : (m.den : ℝ) > 0 := by
+        exact_mod_cast Nat.pos_denoms.mpr h₂
+      linarith [h₁₁]
+    rw [h₁₀]
+    have h₁₁ : (5 : ℚ) / 4 = 5 * (Real.pi / 12) / (5 * (Real.pi / 12) + (↑m.den / 180 : ℚ) * Real.pi) := by
+      field_simp
+      ring_nf
+      rw [Nat.cast_div]
+      have h₁₂ : (m.den : ℝ) > 0 := by
+        exact_mod_cast Nat.pos_denoms.mpr h₂
+      have h₁₃ : 5 * (Real.pi / 12) + (↑m.den / 180 : ℚ) * Real.pi > 0 := by
+        linarith [Real.pi_pos]
+      linarith [h₁₂, h₁₃]
+    rw [h₁₁]
+    exact h₈
+
+  have h₉ : m.num = 5 := by
+    rw [h₈]
+    have h₉ : (m.num : ℝ) = (5 : ℚ) := by
+      exact_mod_cast h₈
+    exact_mod_cast h₉
+
+  have h₁₀ : m.den = 4 := by
+    rw [h₈]
+    have h₁₀ : (m.den : ℝ) = (4 : ℚ) := by
+      exact_mod_cast h₈
+    exact_mod_cast h₁₀
+
+  rw [h₉, h₁₀]
+
+
+```

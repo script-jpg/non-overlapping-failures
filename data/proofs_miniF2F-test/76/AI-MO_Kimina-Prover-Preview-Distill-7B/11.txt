@@ -1,0 +1,309 @@
+-- First, we show that the set of positive integers $n$ that satisfy the equation is {19, 20, 21, 44, 45, 46}.
+  have heq : S = {19, 20, 21, 44, 45, 46} := by
+    -- We divide the proof into two parts: proving that {19, 20, 21, 44, 45, 46} is a subset of S, and proving that S is a subset of {19, 20, 21, 44, 45, 46}.
+    apply Finset.ext
+    intro n
+    constructor
+    -- First, we prove that {19, 20, 21, 44, 45, 46} is a subset of S.
+    · -- We show that each of 19, 20, 21, 44, 45, 46 satisfies the equation.
+      rintro (rfl | rfl | rfl | rfl | rfl | rfl)
+      -- 19 satisfies the equation because (19 + 1000) / 70 = 15 and floor(sqrt(19)) = 4.
+      · norm_num [Int.floor_eq_iff]
+        have sqrt19 : 4 < Real.sqrt 19 := by
+          rw [Real.lt_sqrt] <;> norm_num
+        have sqrt19' : Real.sqrt 19 < 5 := by
+          rw [Real.sqrt_lt] <;> norm_num
+        exact ⟨(by norm_num), by
+          rw [div_eq_iff (by norm_num)]
+          constructor <;> linarith [sqrt19, sqrt19']⟩
+      -- 20 satisfies the equation because (20 + 1000) / 70 = 15 and floor(sqrt(20)) = 4.
+      · norm_num [Int.floor_eq_iff]
+        have sqrt20 : 4 < Real.sqrt 20 := by
+          rw [Real.lt_sqrt] <;> norm_num
+        have sqrt20' : Real.sqrt 20 < 5 := by
+          rw [Real.sqrt_lt] <;> norm_num
+        exact ⟨(by norm_num), by
+          rw [div_eq_iff (by norm_num)]
+          constructor <;> linarith [sqrt20, sqrt20']⟩
+      -- 21 satisfies the equation because (21 + 1000) / 70 = 15 and floor(sqrt(21)) = 4.
+      · norm_num [Int.floor_eq_iff]
+        have sqrt21 : 4 < Real.sqrt 21 := by
+          rw [Real.lt_sqrt] <;> norm_num
+        have sqrt21' : Real.sqrt 21 < 5 := by
+          rw [Real.sqrt_lt] <;> norm_num
+        exact ⟨(by norm_num), by
+          rw [div_eq_iff (by norm_num)]
+          constructor <;> linarith [sqrt21, sqrt21']⟩
+      -- 44 satisfies the equation because (44 + 1000) / 70 = 15 and floor(sqrt(44)) = 6.
+      · norm_num [Int.floor_eq_iff]
+        have sqrt44 : 6 < Real.sqrt 44 := by
+          rw [Real.lt_sqrt] <;> norm_num
+        have sqrt44' : Real.sqrt 44 < 7 := by
+          rw [Real.sqrt_lt] <;> norm_num
+        exact ⟨(by norm_num), by
+          rw [div_eq_iff (by norm_num)]
+          constructor <;> linarith [sqrt44, sqrt44']⟩
+      -- 45 satisfies the equation because (45 + 1000) / 70 = 15 and floor(sqrt(45)) = 6.
+      · norm_num [Int.floor_eq_iff]
+        have sqrt45 : 6 < Real.sqrt 45 := by
+          rw [Real.lt_sqrt] <;> norm_num
+        have sqrt45' : Real.sqrt 45 < 7 := by
+          rw [Real.sqrt_lt] <;> norm_num
+        exact ⟨(by norm_num), by
+          rw [div_eq_iff (by norm_num)]
+          constructor <;> linarith [sqrt45, sqrt45']⟩
+      -- 46 satisfies the equation because (46 + 1000) / 70 = 15 and floor(sqrt(46)) = 6.
+      · norm_num [Int.floor_eq_iff]
+        have sqrt46 : 6 < Real.sqrt 46 := by
+          rw [Real.lt_sqrt] <;> norm_num
+        have sqrt46' : Real.sqrt 46 < 7 := by
+          rw [Real.sqrt_lt] <;> norm_num
+        exact ⟨(by norm_num), by
+          rw [div_eq_iff (by norm_num)]
+          constructor <;> linarith [sqrt46, sqrt46']⟩
+    -- Next, we prove that S is a subset of {19, 20, 21, 44, 45, 46}.
+    · intro n
+      intro hn
+      rw [h₀] at hn
+      rcases hn with ⟨hnpos, heq⟩
+      -- Let m = floor(sqrt(n))
+      let m := Int.floor (Real.sqrt n)
+      -- We show that m = floor(sqrt(n)) < (n + 1000) / 70 = m + 1, which implies that m < n < (m + 1)^2.
+      have hm1 : m = (Int.floor (Real.sqrt n)) := by rfl
+      have hsqrt1 : m ≤ Real.sqrt n := by
+        rw [hm1]
+        exact Int.floor_le (Real.sqrt n)
+      have hsqrt2 : Real.sqrt n < m + 1 := by
+        rw [hm1]
+        exact Int.lt_floor_add_one (Real.sqrt n)
+      have hmul1 : m * 70 ≤ n + 1000 := by
+        rw [hm1]
+        apply Int.mul_le_of_le_div
+        norm_num
+        rw [← heq]
+        exact Int.floor_le (n + (1000 : ℝ)) / 70
+      have hmul2 : n + 1000 < (m + 1) * 70 := by
+        rw [← heq]
+        exact Int.lt_mul_of_lt_div_right (n + (1000 : ℝ)) (by norm_num)
+      -- We prove that m ≥ 4.
+      have hge : m ≥ 4 := by
+        by_contra! h
+        -- If m < 4, then n < 49.
+        have hnsq : n < 49 := by
+          have : Real.sqrt n < 7 := by
+            calc
+              Real.sqrt n < m + 1 := by exact hsqrt2
+              _ ≤ 4 + 1 := by rel [h]
+              _ = 5 := by norm_num
+          rw [Real.sqrt_lt] at this
+          norm_num at this
+          exact this
+        -- We prove that n < 49 is impossible.
+        interval_cases n
+        all_goals
+          exfalso
+          simp [hm1] at hsqrt1
+          all_goals
+            calc
+              4 = (4 : ℝ) / 70 * 70 := by norm_num
+              _ ≤ (Int.floor (Real.sqrt n)) * 70 := by
+                rw [← hm1]
+                exact (Int.floor_le (Real.sqrt n)) _
+              _ ≤ (Real.sqrt n) * 70 := by
+                rw [mul_comm]
+                exact Int.floor_le (Real.sqrt n) _
+              _ < 7 * 70 := by
+                exact (Int.lt_mul_of_lt_div_right (Real.sqrt n) (by norm_num)).mpr hnsq
+              _ = (7 * 70 : ℝ) := by norm_num
+        all_goals
+          apply LE.le.trans?_ hnsq
+          rw [← Real.sqrt_mul]
+          norm_num
+          exact Real.sqrt_pos_of_pos (by norm_num : (0 : ℝ) < n)
+      -- We prove that m ≤ 7.
+      have hle : m ≤ 7 := by
+        by_contra! h
+        -- If m > 7, then n > 49.
+        have hnsq : 49 < n := by
+          have : 7 < Real.sqrt n := by
+            calc
+              7 = (7 : ℝ) / 70 * 70 := by norm_num
+              _ < (Int.floor (Real.sqrt n)) * 70 := by
+                rw [← hm1]
+                exact Int.lt_floor_add_one (Real.sqrt n)
+              _ = Real.sqrt n * 70 := by
+                rw [mul_comm]
+                rw [← hm1]
+                exact Eq.symm (Int.floor_eq_iff.2 (by rel [h])).mpr (by norm_num)
+              _ < (Real.sqrt n + 1) * 70 := by
+                exact mul_lt_mul_of_pos_right (by exact Int.lt_add_one (Real.sqrt n)) (by norm_num)
+          rw [Real.lt_sqrt] at this
+          norm_num at this
+          exact this
+        -- We prove that n > 49 is impossible.
+        interval_cases n
+        all_goals
+          exfalso
+          simp [hm1] at hsqrt2
+          all_goals
+            calc
+              (7 : ℝ) * 70 ≤ (7 : ℝ) * 70 / 70 * 70 := by
+                rw [← div_mul_cancel₀ _ (by norm_num)]
+              _ = (Int.floor (Real.sqrt n) + 1) * 70 := by
+                rw [mul_comm]
+                rw [← hm1]
+                ring
+              _ ≤ (Real.sqrt n + 1) * 70 := by
+                apply Int.floor_le
+              _ < n + 1000 := by
+                exact (Int.lt_mul_of_lt_div_right (Real.sqrt n) (by norm_num)).mpr hnsq
+              _ = (n + 1000 : ℝ) := by norm_num
+        all_goals
+          apply LE.le.trans hnsq?_
+          rw [← Real.sqrt_mul]
+          norm_num
+          exact Real.sqrt_pos_of_pos (by norm_num : (0 : ℝ) < n)
+      -- We prove that m ≠ 7.
+      have hne : m ≠ 7 := by
+        by_contra! h
+        -- If m = 7, then n = 49.
+        have hn : n = 49 := by
+          rw [h] at hm1
+          rw [hm1] at hsqrt2
+          apply_fun (· ^ 2) at hsqrt2
+          rw [Real.sq_sqrt] at hsqrt2
+          norm_num at hsqrt2
+          exact hsqrt2
+          exact le_of_lt (Real.lt_sqrt (by norm_num) (by norm_num))
+        -- We prove that n = 49 is impossible.
+        simp [hn] at heq
+        norm_num at heq
+      -- Therefore, 4 ≤ m ≤ 6.
+      interval_cases m
+      -- If m = 4, then 16 ≤ n < 25.
+      · -- In this case, n = 16, 17, 18, 19, 20, 21, 22, 23, or 24.
+        have hnsq : 16 ≤ n ∧ n < 25 := by
+          constructor
+          · rw [← heq]
+            norm_num
+          · rw [← heq]
+            norm_num
+        interval_cases n
+        all_goals
+          exfalso
+          simp [hm1] at hsqrt1
+          all_goals
+            norm_num [hm1] at heq
+            -- We prove that floor(sqrt(16)) ≠ 4.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(17)) ≠ 4.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(18)) ≠ 4.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(19)) ≠ 4.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(20)) ≠ 4.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(21)) ≠ 4.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(22)) ≠ 4.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(23)) ≠ 4.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(24)) ≠ 4.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+        -- We prove that m ≠ 4.
+        · by_contra! h
+          norm_num [h] at hm1
+      -- If m = 5, then 25 ≤ n < 36.
+      · -- In this case, n = 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, or 35.
+        have hnsq : 25 ≤ n ∧ n < 36 := by
+          constructor
+          · rw [← heq]
+            norm_num
+          · rw [← heq]
+            norm_num
+        interval_cases n
+        all_goals
+          exfalso
+          simp [hm1] at hsqrt1
+          all_goals
+            norm_num [hm1] at heq
+            -- We prove that floor(sqrt(25)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(26)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(27)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(28)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(29)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(30)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(31)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(32)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(33)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(34)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(35)) ≠ 5.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+        -- We prove that m ≠ 5.
+        · by_contra! h
+          norm_num [h] at hm1
+      -- If m = 6, then 36 ≤ n < 49.
+      · -- In this case, n = 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, or 48.
+        have hnsq : 36 ≤ n ∧ n < 49 := by
+          constructor
+          · rw [← heq]
+            norm_num
+          · rw [← heq]
+            norm_num
+        interval_cases n
+        all_goals
+          exfalso
+          simp [hm1] at hsqrt1
+          all_goals
+            norm_num [hm1] at heq
+            -- We prove that floor(sqrt(36)) ≠ 6.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(37)) ≠ 6.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(38)) ≠ 6.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(39)) ≠ 6.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(40)) ≠ 6.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(41)) ≠ 6.
+            · norm_num [Int.floor_eq_iff] at hsqrt1
+              linarith only [hsqrt1]
+            -- We prove that floor(sqrt(42))

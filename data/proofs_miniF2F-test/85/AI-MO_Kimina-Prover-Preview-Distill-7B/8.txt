@@ -1,0 +1,68 @@
+-- 1. Assume that $n$ is not prime. This means there exist integers $a$ and $b$ such that $1 < a < n$ and $1 < b < n$ with $n = ab$.
+
+  by_contra! hnp; -- By contradiction, assume $n$ is not prime.
+
+  obtain ⟨a, b, hnpab, ha, hb, hneq⟩ := Nat.not_prime_iff_exists_dvd_lt.mp hnp
+
+  -- 2. Since $2^n - 1$ is prime, it must be divisible by $2^a - 1$ because $n = ab$.
+
+  have h₂ : 2 ^ n - 1 = (2 ^ a - 1) * (2 ^ (a * (b - 1)) + 2 ^ (a * (b - 2)) +... + 2 ^ a + 1) := by
+
+    rw [hneq, pow_mul, sub_eq_add_neg]
+
+    have : 1 < a := by
+
+      exact lt_of_le_of_ne ha (id (Ne.symm hnpab))
+
+    have : 1 < (2 : ℕ) ^ a - 1 := by
+
+      rw [Nat.one_lt_sub_iff_lt, pow_lt_pow_iff_right (by norm_num)]
+
+      tauto
+
+    refine Nat.sub_dvd_pow_sub_pow (by linarith) (by linarith)
+
+  -- 3. This shows that $2^a - 1$ divides $2^n - 1$. Since $2^n - 1$ is prime, $2^a - 1$ must be either 1 or itself divisible by $2^n - 1$.
+
+  have h₃ : 2 ^ a - 1 ∣ 2 ^ n - 1 := by
+
+    rw [h₂]
+
+    exact Dvd.intro_left (2 ^ (a * (b - 1)) + 2 ^ (a * (b - 2)) +... + 2 ^ a + 1) rfl
+
+  -- 4. But $2^a - 1 > 1$ since $a > 1$. This means $2^a - 1$ cannot be 1. Therefore, $2^a - 1$ must be divisible by $2^n - 1$, forcing $2^n - 1$ to equal $2^a - 1$.
+
+  have h₄ : 2 ^ a - 1 ≠ 1 := by
+
+    refine Nat.ne_of_gt (by linarith [Nat.one_lt_sub_iff_lt.mpr (lt_of_lt_of_le (Nat.two_pow_pos a) (by linarith))])
+
+  have h₅ : 2 ^ n - 1 ∣ 2 ^ a - 1 := by
+
+    rw [h₂]
+
+    exact Nat.dvd_add_self_left.mpr <| Nat.dvd_trans (by exact Nat.dvd_refl (2 ^ a - 1)) (Nat.dvd_refl (2 ^ (a * (b - 1)) + 2 ^ (a * (b - 2)) +... + 2 ^ a + 1))
+
+  -- 5. Since $2^n - 1$ divides $2^a - 1$ and $2^a - 1 > 1$, we have $2^n - 1 ≤ 2^a - 1$. However, this is impossible because $n > a$ and the function $x ↦ 2^x - 1$ is strictly increasing.
+
+  have h₆ : 2 ^ n - 1 ≤ 2 ^ a - 1 := by
+
+    apply Nat.le_of_dvd
+
+    · exact Nat.zero_lt_sub_of_lt h₁
+
+    · exact h₅
+
+  -- 6. We reach a contradiction because $n > a$ implies $2^n - 1 > 2^a - 1$.
+
+  have h₇ : 2 ^ n - 1 > 2 ^ a - 1 := by
+
+    have : 2 ^ n > 2 ^ a := by
+
+      rw [pow_lt_pow_iff_right (by norm_num)]
+
+      exact lt_of_lt_of_le hb hneq
+
+    exact Nat.sub_lt_sub_right this
+
+  linarith only [h₆, h₇]
+```

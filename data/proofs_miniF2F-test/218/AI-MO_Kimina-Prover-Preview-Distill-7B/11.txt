@@ -1,0 +1,44 @@
+-- Find the remainder when $1 + 2 + 2^2 + 2^3 + \dots + 2^{100}$ is divided by 7. Show that it is 3.
+
+  -- Step 1: Identify the pattern of powers of 2 modulo 7.
+  have h1 : ∀ k, 2 ^ k % 7 = 1 ∨ 2 ^ k % 7 = 2 ∨ 2 ^ k % 7 = 4 := by
+    intro k
+    induction k with
+    | zero => simp
+    | succ k ih =>
+      rcases ih with (h | h | h)
+      · left
+        simp [h]
+        rw [Nat.pow_succ]
+        simp
+      · right
+        left
+        simp [h]
+        rw [Nat.pow_succ]
+        simp
+      · right
+        right
+        simp [h]
+        rw [Nat.pow_succ]
+        simp
+
+  -- Step 2: Calculate the sum of the remainders for each term in the sequence.
+  have h2 : (∑ k in Finset.range 101, 2 ^ k % 7) % 7 = 3 := by
+    have : ∑ k in Finset.range 101, 2 ^ k % 7 = 3 := by
+      -- The sum of the remainders is equal to the remainder of the sum because addition is congruential.
+      simp [Finset.sum_nat_mod]
+      -- The sequence of powers of 2 modulo 7 repeats every 3 terms: 1, 2, 4, 1, 2, 4,...
+      -- There are 101 terms in total, so 33 full cycles of 3 terms, plus an additional term of 1.
+      -- Sum of one cycle (3 terms): 1 + 2 + 4 = 7, which is 0 modulo 7.
+      -- Sum of 33 cycles: 33 * 0 = 0 modulo 7.
+      -- The additional term is 1 (which is the remainder of 2^100 divided by 7).
+      native_decide
+    omega
+
+  -- Step 3: Establish the connection between the sum of remainders and the remainder of the sum.
+  have h3 : (∑ k in Finset.range 101, 2 ^ k) % 7 = (∑ k in Finset.range 101, 2 ^ k % 7) % 7 := by
+    exact Nat.mod_eq_of_mod_eq h2
+
+  -- Step 4: Combine the above results to conclude that the remainder is indeed 3.
+  rw [h3, h2]
+```

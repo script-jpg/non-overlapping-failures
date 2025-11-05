@@ -1,0 +1,179 @@
+-- prove a2b2c2geq3 by Cauchy-schwarz inequality
+  have h2 : 3 * (a * b * c) ≤ (a * b + b * c + c * a) * (a + b + c) := by
+    let f : Fin 1 → ℝ := ⟨a * b + b * c + c * a⟩
+    let g : Fin 1 → ℝ := ⟨a + b + c⟩
+    have : (∑ i ∈ Finset.univ, f i ^ 2) * (∑ i ∈ Finset.univ, g i ^ 2) ≥ (∑ i ∈ Finset.univ, f i * g i) ^ 2 := by
+      apply Finset.sum_mul_sq_le_sq_mul_sq
+    simp at this
+    linarith
+
+  -- let xy be a+b, yz be b+c, zx be c+a, and w = a, x = b, y = c, z = a+b+c
+  let xy := a + b
+  let yz := b + c
+  let zx := c + a
+  let w := a
+  let x := b
+  let y := c
+  let z := a + b + c
+
+  -- show that wxy + xz + yzw = ab + bc + ca
+  have hwxy_xz_yzw : w * x * y + x * y * z + y * z * w = a * b + b * c + c * a := by
+    unfold w x y z xy yz zx
+    ring
+
+  -- show that xy + yz + zw + wx + xy = 2(a + b + c)
+  have hxy_yz_zw_wx_xy : xy + yz + z * w + w * x + xy = 2 * (a + b + c) := by
+    unfold xy yz z w x
+    ring_nf
+
+  -- show that a3b3c3 = abc
+  have habc : a * a * b * b * c * c = a * b * c := by
+    ring
+
+  -- show that wxyz = abc
+  have hwxyz : w * x * y * z = a * b * c := by
+    unfold w x y z
+    ring
+
+  -- show that xy + yz + zw + wx + xy = 2(a + b + c)
+  have hxy_yz_zw_wx_xy' : z * w * x * y + w * x * z * y + x * y * w * z + y * z * x * w + z * w * x * y * z * w * x * y = 4 * (a + b + c) * (a * b + b * c + c * a) := by
+    unfold z w x y; ring_nf
+    <;> rw [← habc]
+    <;> ring
+
+  -- show that 2 * (a * b * c) ≤ (a * b + b * c + c * a) * (a + b + c)
+  have hsin : 2 * (a * b * c) ≤ (a * b + b * c + c * a) * (a + b + c) := by
+    rw [<-habc, <-hwxyz, <-mul_assoc, <-mul_assoc, mul_comm z, mul_assoc, mul_assoc, mul_assoc]
+    linarith [hxy_yz_zw_wx_xy', h₁, h₀.left, h₀.right.left, h₀.right.right]
+
+  -- show that 0 < a * b, 0 < b * c, 0 < c * a
+  have hab_pos : 0 < a * b := by
+    apply mul_pos
+    exact h₀.left
+    exact h₀.right.left
+  have hbc_pos : 0 < b * c := by
+    apply mul_pos
+    exact h₀.right.left
+    exact h₀.right.right
+  have hca_pos : 0 < c * a := by
+    apply mul_pos
+    exact h₀.right.right
+    exact h₀.left
+
+  -- show that 0 < a * b * (a + b), 0 < b * c * (b + c), 0 < c * a * (c + a)
+  have habxy_pos : 0 < (a * b) * xy := by
+    apply mul_pos
+    exact hab_pos
+    apply add_pos
+    exact h₀.left
+    exact h₀.right.left
+  have hbcyz_pos : 0 < (b * c) * yz := by
+    apply mul_pos
+    exact hbc_pos
+    apply add_pos
+    exact h₀.right.left
+    exact h₀.right.right
+  have hcazx_pos : 0 < (c * a) * zx := by
+    apply mul_pos
+    exact hca_pos
+    apply add_pos
+    exact h₀.right.right
+    exact h₀.left
+
+  -- show that 0 < √(a + b), 0 < √(b + c), 0 < √(c + a)
+  have hsqrtxy_pos : 0 < Real.sqrt xy := by
+    apply Real.sqrt_pos_of_pos
+    apply add_pos
+    exact h₀.left
+    exact h₀.right.left
+  have hsqrtyz_pos : 0 < Real.sqrt yz := by
+    apply Real.sqrt_pos_of_pos
+    apply add_pos
+    exact h₀.right.left
+    exact h₀.right.right
+  have hsqrtzx_pos : 0 < Real.sqrt zx := by
+    apply Real.sqrt_pos_of_pos
+    apply add_pos
+    exact h₀.right.right
+    exact h₀.left
+
+  -- show that 0 < a / √(a + b)
+  have ha_div : 0 < a / Real.sqrt (a + b) := by
+    apply div_pos
+    exact h₀.left
+    exact hsqrtxy_pos
+  -- show that 0 < b / √(b + c)
+  have hb_div : 0 < b / Real.sqrt (b + c) := by
+    apply div_pos
+    exact h₀.right.left
+    exact hsqrtyz_pos
+  -- show that 0 < c / √(c + a)
+  have hc_div : 0 < c / Real.sqrt (c + a) := by
+    apply div_pos
+    exact h₀.right.right
+    exact hsqrtzx_pos
+
+  -- show that 0 < a / √(a + b) + b / √(b + c) + c / √(c + a)
+  have hsum_div : 0 < a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+    apply add_pos
+    apply add_pos
+    exact ha_div
+    exact hb_div
+    exact hc_div
+
+  -- show that 3 / √2 ≤ 3 * √(a * b * c) / √((a * b + b * c + c * a) * (a + b + c))
+  have h : 3 / Real.sqrt 2 ≤ 3 * Real.sqrt (a * b * c) / Real.sqrt ((a * b + b * c + c * a) * (a + b + c)) := by
+    -- show that 3 / √2 = 3 * √(a * b * c) / √((a * b + b * c + c * a) * (a + b + c))
+    have heq : 3 / Real.sqrt 2 = 3 * Real.sqrt (a * b * c) / Real.sqrt ((a * b + b * c + c * a) * (a + b + c)) := by
+      rw [div_eq_iff (by linarith [Real.sqrt_pos.2 (show (0:ℝ) < 2 by norm_num)]),
+        Real.sqrt_eq_iff_eq_sq (by positivity) (by positivity)]
+      ring_nf
+      rw [Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)]
+      linarith [h₂, h₀.left, h₀.right.left, h₀.right.right]
+    rw [heq]
+
+    -- show that 0 < 3 * Real.sqrt (a * b * c) / Real.sqrt ((a * b + b * c + c * a) * (a + b + c))
+    have hpos : 0 < 3 * Real.sqrt (a * b * c) / Real.sqrt ((a * b + b * c + c * a) * (a + b + c)) := by
+      apply div_pos
+      apply mul_pos
+      exact h₀.left
+      apply Real.sqrt_pos_of_pos
+      exact mul_pos h₀.right.left h₀.right.right
+      apply mul_pos
+      apply Real.sqrt_pos_of_pos
+      exact mul_pos h₀.right.left h₀.right.right
+      apply add_pos
+      exact mul_pos h₀.left h₀.right.left
+      exact mul_pos h₀.left h₀.right.left
+
+    -- show that 3 * √(a * b * c) / √((a * b + b * c + c * a) * (a + b + c)) ≤ 3 * √(a * b * c) / √(2 * (a * b * c))
+    have hineq : 3 * Real.sqrt (a * b * c) / Real.sqrt ((a * b + b * c + c * a) * (a + b + c)) ≤ 3 * Real.sqrt (a * b * c) / Real.sqrt (2 * (a * b * c)) := by
+      have hsqrt : Real.sqrt (2 * (a * b * c)) ≤ Real.sqrt ((a * b + b * c + c * a) * (a + b + c)) := by
+        apply Real.sqrt_le_sqrt
+        linarith [hsin, h₀.left, h₀.right.left, h₀.right.right]
+      apply div_le_div_of_nonneg_left
+      exact hpos
+      exact sqrt_nonneg (2 * (a * b * c))
+      exact sqrt_nonneg ((a * b + b * c + c * a) * (a + b + c))
+      exact hsqrt
+
+    apply le_of_eq
+    rw [div_eq_mul_inv, mul_comm, <-mul_assoc, mul_div_mul_right _ _ (by positivity), one_div_mul_cancel (by positivity)]
+    rw [mul_assoc, mul_comm (2:ℝ), mul_assoc, <-mul_div_assoc, mul_div_cancel_left₀ _ (by positivity)]
+    exact h
+
+  -- show that 3 * √(a * b * c) / √(2 * (a * b * c)) ≤ 3 / √2
+  have h' : 3 * Real.sqrt (a * b * c) / Real.sqrt (2 * (a * b * c)) ≤ 3 / Real.sqrt 2 := by
+    -- show that 3 * √(a * b * c) / √(2 * (a * b * c)) = 3 / √2
+    have heq : 3 * Real.sqrt (a * b * c) / Real.sqrt (2 * (a * b * c)) = 3 / Real.sqrt 2 := by
+      rw [div_eq_iff (by positivity), div_eq_iff (by norm_num), Real.sqrt_eq_iff_eq_sq (by positivity) (by norm_num)]
+      ring_nf
+      rw [Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)]
+      linarith [h₀.left, h₀.right.left, h₀.right.right, hab_pos, hbc_pos, hca_pos]
+    -- show that 3 / √2 ≤ 3 / √2
+    exact le_of_eq heq
+
+  -- show that 3 / √2 ≤ a / √(a + b) + b / √(b + c) + c / √(c + a)
+  apply le_trans h
+  exact hsum_div
+```

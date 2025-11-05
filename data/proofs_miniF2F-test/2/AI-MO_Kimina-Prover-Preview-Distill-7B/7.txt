@@ -1,0 +1,66 @@
+-- Let $a = \log w$, $b = \log x$, $c = \log y$ and $d = \log z$.
+  let a := Real.log w
+  let b := Real.log x
+  let c := Real.log y
+  let d := Real.log z
+
+  -- Apply the base change formula to $\log_x w = 24$ to get $\log w = 24 \log x$, or $a = 24 b$.
+  have h_a_b : a = 24 * b := by
+    have h : 0 < Real.log x := by
+      apply Real.log_pos
+      norm_cast
+      exact ht.left
+    field_simp at h0
+    linarith only [h0]
+
+  -- Apply the base change formula to $\log_y w = 40$ to get $\log w = 40 \log y$, or $a = 40 c$.
+  have h_a_c : a = 40 * c := by
+    have h : 0 < Real.log y := by
+      apply Real.log_pos
+      norm_cast
+      exact ht.right.left
+    field_simp at h1
+    linarith only [h1]
+
+  -- Apply the base change formula to $\log_{xyz} w = 12$ to get $\log w = 12 \log (xyz)$, or $a = 12 (b + c + d)$.
+  have h_a_d : a = 12 * (b + c + d) := by
+    have h : 0 < Real.log (x * y * z) := by
+      apply Real.log_pos
+      norm_cast
+      exact ht.right.right
+    field_simp at h2
+    linarith only [h2]
+
+  -- Eliminate $a$ from the equations to get $24 b = 40 c = 12 (b + c + d)$.
+  have h_b_c : 24 * b = 40 * c := by linarith only [h_a_b, h_a_c]
+  have h_b_c_d : 40 * c = 12 * (b + c + d) := by linarith only [h_a_c, h_a_d]
+  have h_b_d : 24 * b = 12 * (b + c + d) := by linarith only [h_a_b, h_a_d]
+
+  -- Solve the system of equations to get $b = 3 c$ and $d = 2 c$.
+  have h_b_eq : b = 3 * c := by linarith only [h_b_c]
+  have h_d_eq : d = 2 * c := by linarith only [h_b_c_d, h_b_eq]
+
+  -- Apply the base change formula to get $\log_z w = \log_z (w) = \frac{\log w}{\log z} = \frac{a}{d}$.
+  have h_z : Real.log w / Real.log z = a / d := by
+    field_simp
+    field_simp at h2
+    exact (div_eq_div_iff?_?_).mpr (id (Eq.symm h2))
+    apply ne_of_gt
+    apply Real.log_pos
+    norm_cast
+    exact ht.right.right
+
+  -- Substitute $a = 40 c$ and $d = 2 c$ to get $\log_z w = \frac{40 c}{2 c} = 20$.
+  have h_final : a / d = 60 := by
+    rw [h_a_c, h_d_eq]
+    have h : c ≠ 0 := by
+      by_contra h
+      rw [h] at h_a_c
+      linarith only [h_a_c, hw]
+    field_simp
+    linarith only [h_b_eq]
+
+  -- Conclude that $\log_z w = 20$.
+  rw [h_z, h_final]
+
+```

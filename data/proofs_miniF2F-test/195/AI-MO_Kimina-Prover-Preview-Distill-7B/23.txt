@@ -1,0 +1,65 @@
+-- We have: a^2 * b^3 = 32/27
+  --         a/b^3 = 27/4
+  -- Let's solve for a and b.
+
+  -- From the second equation, a = 27/4 * b^3
+  have ha : a = 27 / 4 * b^3 := by
+    have hb : b^3 ≠ 0 := by
+      by_contra! hb
+      have : a / b^3 = 0 := by
+        field_simp [hb]
+      rw [this] at h₁
+      norm_num at h₁
+    field_simp [hb] at h₁ ⊢
+    linarith
+
+  -- Substituting a = 27/4 * b^3 into the first equation:
+  -- (27/4 * b^3)^2 * b^3 = 32/27
+  -- (729/16 * b^6) * b^3 = 32/27
+  -- 729/16 * b^9 = 32/27
+  -- b^9 = 32/27 * 16/729 = 512/19683 = 2^9 / 3^9
+  -- b = 2/3
+  have hb : b = 2 / 3 := by
+    have h₂ : a^2 * b^3 = 32 / 27 := h₀
+    rw [ha] at h₂
+    ring_nf at h₂
+    have hc : (b^3)^2 * b^3 = (b^9 : ℝ) := by
+      ring_nf
+    rw [hc] at h₂
+    have hd : b^9 = 2^9 / 3^9 := by
+      have h : (b^9 : ℝ) = 512 / 19683 := by
+        linarith
+      rw [h]
+      norm_num
+    have he : b = 2 / 3 := by
+      have h : b^9 - 2^9 / 3^9 = 0 := by
+        linarith
+      have h_factor : (b - 2 / 3) * (b^8 + (2 / 3) * b^7 + (2 / 3)^2 * b^6 + (2 / 3)^3 * b^5 + (2 / 3)^4 * b^4 + (2 / 3)^5 * b^3 + (2 / 3)^6 * b^2 + (2 / 3)^7 * b + (2 / 3)^8) = 0 := by
+        ring_nf
+        linarith
+      cases' (mul_eq_zero.mp h_factor) with hb1 hb2
+      · -- b - 2/3 = 0
+        linarith
+      · -- b^8 + (2/3)*b^7 + (2/3)^2*b^6 + (2/3)^3*b^5 + (2/3)^4*b^4 + (2/3)^5*b^3 + (2/3)^6*b^2 + (2/3)^7*b + (2/3)^8 = 0
+        have h_pos : b^8 + (2/3)*b^7 + (2/3)^2*b^6 + (2/3)^3*b^5 + (2/3)^4*b^4 + (2/3)^5*b^3 + (2/3)^6*b^2 + (2/3)^7*b + (2/3)^8 > 0 := by
+          have h : b^8 + (2/3)*b^7 + (2/3)^2*b^6 + (2/3)^3*b^5 + (2/3)^4*b^4 + (2/3)^5*b^3 + (2/3)^6*b^2 + (2/3)^7*b + (2/3)^8 = (19683*b^8 + 14580*b^7 + 6480*b^6 + 2160*b^5 + 648*b^4 + 216*b^3 + 72*b^2 + 24*b + 8) / 19683 := by
+            ring_nf
+          rw [h]
+          have h1 : 19683*b^8 + 14580*b^7 + 6480*b^6 + 2160*b^5 + 648*b^4 + 216*b^3 + 72*b^2 + 24*b + 8 > 0 := by
+            have hb : 0 ≤ b := by nlinarith
+            nlinarith
+          have h2 : 19683 > 0 := by norm_num
+          positivity
+        linarith
+    exact he
+
+  -- From a = 27/4 * b^3 and b = 2/3, we get a = 27/4 * (2/3)^3 = 27/4 * 8/27 = 2
+  have ha2 : a = 2 := by
+    rw [hb] at ha
+    ring_nf at ha ⊢
+    linarith
+
+  -- a + b = 2 + 2/3 = 8/3
+  rw [ha2, hb]
+  norm_num
+```

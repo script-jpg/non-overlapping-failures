@@ -1,0 +1,180 @@
+-- Lemma 1: If $x \in \mathbb{R}_{>0}$ and $x(x + \frac{1}{n}) \leq 1$ for all $n \geq 1$, then $x \leq \frac{1}{4}$.
+  have lm1 (x : ℝ) (h₀ : x > 0) (h₁ : ∀ n ≥ 1, x * (x + 1 / n) ≤ 1) : x ≤ 1 / 4 := by
+    -- Set $n = 4x^2 - 1$.
+    let n := 4 * x ^ 2 - 1
+
+    -- Prove $n \geq 1$.
+    have hnp : n ≥ 1 := by
+      simp [n]
+      suffices 4 * x ^ 2 ≥ 1 by linarith
+      suffices x ≥ 1 / 2 by nlinarith
+      linarith
+
+    -- Prove $x(x + 1/n) > 1$ for $n = 4x^2 - 1$.
+    have h' := h₁ n hnp
+    simp [n] at h'
+
+    -- Trivial calculation.
+    have h'' : (x * (4 * x ^ 2 - 1 + 1 / (4 * x ^ 2 - 1) : ℝ) : ℝ) = (4 * x ^ 2 + 3 * x - 1) / (4 * x ^ 2 - 1 : ℝ) := by
+      field_simp
+      ring
+    rw [h''] at h'
+    have : 4 * x ^ 2 + 3 * x - 1 > 0 := by calc
+      4 * x ^ 2 + 3 * x - 1 > (4 * x ^ 2 - 1 : ℝ) := by linarith
+      _ > 0 := by positivity
+    linarith
+
+
+  -- Lemma 2: If $x \in \mathbb{R}_{>0}$ and $x(x + \frac{1}{n}) \leq 1$ for all $n \geq 1$, then $x \geq \frac{1}{4}$.
+  have lm2 (x : ℝ) (h₀ : x > 0) (h₁ : ∀ n ≥ 1, x * (x + 1 / n) ≤ 1) : x ≥ 1 / 4 := by
+    -- Set $n = 4x^2 - 1$.
+    let n := 4 * x ^ 2 - 1
+
+    -- Prove $n \geq 1$.
+    have hnp : n ≥ 1 := by
+      simp [n]
+      suffices 4 * x ^ 2 ≥ 1 by linarith
+      suffices x ≥ 1 / 2 by nlinarith
+      linarith
+
+    -- Prove $x(x + 1/n) > 1$ for $n = 4x^2 - 1$.
+    have h' := h₁ n hnp
+    simp [n] at h'
+
+    -- Trivial calculation.
+    have h'' : (x * (4 * x ^ 2 - 1 + 1 / (4 * x ^ 2 - 1) : ℝ) : ℝ) = (4 * x ^ 2 + 3 * x - 1) / (4 * x ^ 2 - 1 : ℝ) := by
+      field_simp
+      ring
+    rw [h''] at h'
+    have : 4 * x ^ 2 + 3 * x - 1 < 0 := by calc
+      4 * x ^ 2 + 3 * x - 1 < (4 * x ^ 2 - 1 : ℝ) := by linarith
+      _ < 0 := by nlinarith
+    linarith
+
+  -- Lemma 3: If $x \in \mathbb{R}_{>0}$ and $x(x + \frac{1}{n}) \leq 1$ for all $n \geq 1$, then $x = \frac{1}{4}$.
+  have lm3 (x : ℝ) (h₀ : x > 0) (h₁ : ∀ n ≥ 1, x * (x + 1 / n) ≤ 1) : x = 1 / 4 := by linarith [lm1 x h₀ h₁, lm2 x h₀ h₁]
+
+
+  -- Prove that the sequence is defined only for $x \geq 1/4$.
+  have h₀' : ∀ x n, n ≥ 1 → x * (x + 1 / n) ≥ 1 → x ≥ 1 / 4 := by
+    intro x n hnp h'
+    have : ∀ n ≥ 1, x * (x + 1 / n) ≥ 1 := by
+      intro n hn
+      induction n with
+      | zero => linarith
+      | succ n ih =>
+        by_cases h'' : n = 0
+        · rw [h'']
+          simp [hnp]
+        · have : n ≥ 1 := by omega
+          exact (x * (x + 1 / (n + 1) : ℝ) ≥ 1) <;> (try omega)
+    exact lm3 x h₀ this
+
+  -- Prove that the sequence is defined only for $x \leq 1/4$.
+  have h₀'' : ∀ x n, n ≥ 1 → x * (x + 1 / n) ≤ 1 → x ≤ 1 / 4 := by
+    intro x n hnp h'
+    have : ∀ n ≥ 1, x * (x + 1 / n) ≤ 1 := by
+      intro n hn
+      induction n with
+      | zero => linarith
+      | succ n ih =>
+        by_cases h'' : n = 0
+        · rw [h'']
+          simp [hnp]
+        · have : n ≥ 1 := by omega
+          exact (x * (x + 1 / (n + 1) : ℝ) ≤ 1) <;> (try omega)
+    exact lm2 x h₀ this
+
+  -- Prove that the sequence is strictly increasing for $x \in (0, 1/4)$.
+  have h₁' : ∀ x n, 0 < n → x * (x + 1 / n) < 1 → 0 < x ∧ x < x * (x + 1 / n) := by
+    intro x n hnpos h'np
+    have hnpos : x > 0 := by linarith
+    have h'np : x < x * (x + 1 / n) := by calc
+      x < x * (x + 1 / n) * (x + 1 / n) := by linarith
+      _ = x * (x + 1 / n) * (x + 1 / n) := by ring
+    exact ⟨hneg, h'np⟩
+
+  -- Prove that the sequence is strictly increasing for $x \in (0, 1/4)$.
+  have h₁'' : ∀ x n, 0 < n → x * (x + 1 / n) < 1 → x * (x + 1 / n) < x * (x + 1 / n) * (x + 1 / n) := by
+    intro x n hnpos h'np
+    calc
+      x * (x + 1 / n) < x * (x + 1 / n) * (x + 1 / n) := by linarith
+      _ = x * (x + 1 / n) * (x + 1 / n) := by ring
+
+  -- Prove that the sequence is bounded for $x \in (0, 1/4)$.
+  have h₁''' : ∀ x n, 0 < n → x * (x + 1 / n) < 1 → x < 1 := by
+    intro x n hnpos h'np
+    linarith
+
+  -- Lemma 4: If $x \in \mathbb{R}_{>0}$ and $x(x + \frac{1}{n}) < 1$ for all $n \geq 1$, then $x = 1$.
+  have lm4 (x : ℝ) (h₀ : x > 0) (h₁ : ∀ n ≥ 1, x * (x + 1 / n) < 1) : x = 1 := by
+    have hnp : ∀ n ≥ 1, x * (x + 1 / n) ≤ 1 := by
+      intro n hn
+      specialize h₁ n hn
+      linarith
+    suffices x ≥ 1 by linarith
+    apply h₀''
+    intro n hn
+    specialize h₁ n hn
+    exact h₁
+
+  -- Lemma 5: If $x \in \mathbb{R}_{>0}$ and $x(x + \frac{1}{n}) < 1$ for all $n \geq 1$, then $x = 1$.
+  have lm5 (x : ℝ) (h₀ : x > 0) (h₁ : ∀ n ≥ 1, x * (x + 1 / n) < 1) : x = 1 := by
+    have hnp : ∀ n ≥ 1, x * (x + 1 / n) ≥ 1 := by
+      intro n hn
+      specialize h₁ n hn
+      linarith
+    suffices x ≤ 1 by linarith
+    apply h₀''
+    intro n hn
+    specialize h₁ n hn
+    exact h₁
+
+  -- Prove the existence and uniqueness of $x_1$.
+  use 1 / 4
+  constructor
+  · -- Prove that $x_1 = 1/4$ works.
+    intro n hnpos
+    have hn_pos: n > 0 := by linarith
+    have hn_ge_1 : n ≥ 1 := by omega
+    refine ⟨?_,?_,?_⟩
+    · -- Prove that $0 < x_n$.
+      induction n with
+      | zero => linarith
+      | succ n ih =>
+        · linarith
+        · specialize h₁' (1 / 4) n hn_ge_1
+          simp at h₁'
+          exact h₁'
+    · -- Prove that $x_n < x_{n+1}$.
+      induction n with
+      | zero =>
+        simp
+        linarith
+      | succ n ih =>
+        have : n + 1 ≥ 1 := by omega
+        specialize h₁'' (1 / 4) n this
+        exact h₁''
+    · -- Prove that $x_{n+1} < 1$.
+      induction n with
+      | zero =>
+        simp
+        linarith
+      | succ n ih =>
+        have : n + 1 ≥ 1 := by omega
+        specialize h₁''' (1 / 4) n this
+        exact h₁'''
+  · -- Prove that $x_1 = 1/4$ is the only solution.
+    intro a h
+    have h₀ := h 1
+    simp [h₀] at h
+    have h' := h 2
+    simp at h'
+    rw [h₀] at h'
+    have : a * (a + 1 / 2) ≥ 1 := by calc
+      a * (a + 1 / 2) = a * (a + 1 / 2) * (a + 1 / 2) := by rw [mul_assoc, <-mul_mul_assoc]; simp; linarith
+      _ ≥ 1 := by rw [<-h']; linarith
+    specialize h₀'' a 2 (by simp) this
+    linarith
+
+```

@@ -1,0 +1,58 @@
+-- We have an arithmetic sequence, so the difference is constant.
+  have h₆ : ∀ m, a (m + 1) - a m = a (m + 2) - a (m + 1) := by
+    intro m
+    exact h₁ m
+
+  -- The difference is $3x + 8$.
+  have h₇ : ∀ m, a (m + 1) - a m = 3 * x + 8 := by
+    intro m
+    induction m using Nat.twoStepInduction with
+    | zero => simp [h₂, h₃]
+    | one => simp [h₃, h₄]
+    | more m ih1 ih2 =>
+      have : a (m + 3) - a (m + 2) = 3 * x + 8 := by
+        have : a (m + 3) - a (m + 2) = a (m + 2) - a (m + 1) := by
+          apply h₆ (m + 2)
+          simp
+        rw [this, ih2]
+        linarith [ih1]
+      linarith [this]
+
+  -- Therefore, $x = 24$.
+  have hx : x = 24 := by
+    have h₈ := h₇ 1
+    have h₉ := h₇ 2
+    linarith [h₈, h₉]
+
+  -- The $n$th term is $2009$.
+  have h₈ : ∀ m, a (m + 1) = a m + 3 * x + 8 := by
+    intro m
+    specialize h₇ m
+    linarith [h₇]
+
+  have h₉ : a 1 = 2 * x - 3 := h₂
+  have h₁₀ : a 2 = 5 * x - 11 := h₃
+  have h₁₁ : a 3 = 3 * x + 1 := h₄
+  have h₁₂ : a n = 2009 := h₅
+
+  -- We have $a_{n+1} = a_n + 3x + 8$.
+  have h₁₃ : a (n + 1) = a n + 3 * x + 8 := by
+    apply h₈ n
+
+  rw [h₁₂] at h₁₃
+  norm_num [hx] at h₁₃
+  have : a (n + 1) = 2009 := by
+    linarith [h₁₃]
+  have h₁₄ : n + 1 = 502 := by
+    have h₁₅ : a (502 : ℕ) = 2009 := by
+      norm_num [h₉, hx, h₈]
+    have h₁₆ : a (502 : ℕ) = a (n + 1) := by
+      rw [this]
+    rw [←h₁₅] at h₁₆
+    have : n + 1 = 502 := by
+      apply Nat.eq_of_le_of_lt_succ
+      · linarith [h₁₆]
+      · linarith [h₁₆]
+    exact this
+  linarith [h₁₄]
+```

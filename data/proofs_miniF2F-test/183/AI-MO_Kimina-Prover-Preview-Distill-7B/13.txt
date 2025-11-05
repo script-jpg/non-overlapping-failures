@@ -1,0 +1,54 @@
+-- Let us first show that, if $x$ is a root, then $x^2 + 18x + 45 = (x + 3)(x + 5)$.
+  have h₂ (x : ℝ) : x ^ 2 + (18 * x + 30) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) = 0 ↔
+      (x + 3) * (x + 5) = 0 ∧ 0 ≤ x ^ 2 + (18 * x + 45) := by
+    -- Notice that, if $x^2 + 18x + 45 < 0$, then the square root is undefined in the reals.
+    constructor
+    · intro h
+      have : 0 ≤ x ^ 2 + (18 * x + 45) := by
+        have h' : Real.sqrt (x ^ 2 + (18 * x + 45)) isReal := by
+          apply Real.isReal_sqrt
+          simp [h']
+        simp [h'] at h'
+      simp [h₀] at h
+      -- Then, we rearrange the equation to isolate the square root.
+      have : 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) = x ^ 2 + (18 * x + 30) := by linarith
+      -- Square both sides to eliminate the square root.
+      apply_fun (· ^ 2) at this
+      simp [mul_pow] at this
+      -- We get a quadratic equation.
+      have : x ^ 2 * (x ^ 2 + 18 * x + 45) = 0 := by linarith
+      simp [mul_eq_zero] at this
+      exact ⟨this, ‹0 ≤ x ^ 2 + (18 * x + 45)›⟩
+    · rintro ⟨h, h'⟩
+      -- If $x^2 + 18x + 45 = 0$, the equation is clearly satisfied.
+      have : x ^ 2 + (18 * x + 30) = 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by
+        rw [h]
+        simp
+        rw [show (45 : ℝ) = 3 ^ 2 * 5 by norm_num]
+        rw [show (x ^ 2 + 18 * x + 45) = (x + 3) ^ 2 * (x + 5) by ring_nf]
+        rw [Real.sqrt_mul (by positivity)]
+        simp
+        ring_nf
+      simp [h₀]
+      linarith
+
+  -- With this done, we can characterize the roots.
+  have h₃ : f ⁻¹' {0} = {-5, -3} := by
+    ext x
+    constructor
+    · intro hx
+      have h₄ := (h₂ x).1 hx
+      -- We have (x + 3)(x + 5) = 0, so x = -5 or x = -3.
+      simp [mul_eq_zero] at h₄
+      rcases h₄ with (rfl | rfl)
+      · right; rfl
+      · left; rfl
+    · rintro (rfl | rfl)
+      · rw [h₀]; norm_num
+      · rw [h₀]; norm_num
+
+  -- Finally, compute the product.
+  rw [h₃]
+  simp
+
+```

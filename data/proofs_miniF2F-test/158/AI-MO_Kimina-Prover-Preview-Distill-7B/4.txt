@@ -1,0 +1,63 @@
+-- 证明这个不等式的一个方法是从A-G不等式 准备
+  have l_amgm (x y : ℝ) (hx : 0 < x) (hy : 0 < y) : x * y ≤ (1 / 2) * (x ^ 2 + y ^ 2) := by
+    have : 0 ≤ (x - y) ^ 2 := by positivity
+    ring_nf at this
+    linarith
+
+  -- 原不等式等价于
+  -- $\frac{a^2}{b} + b + \frac{c^2}{d} + d \geq a + b + c + d$
+  -- 即 $\frac{a^2}{b} + \frac{c^2}{d} \geq a + c$
+  suffices h : a ^ 2 / b + b + c ^ 2 / d + d ≥ a + c + b + d by linarith
+
+  -- 进一步等价于 $\frac{a^2}{b} + b + \frac{c^2}{d} + d - a - c \geq b + d$
+  suffices h' : a ^ 2 / b + b + c ^ 2 / d + d - a - c ≥ b + d by linarith
+
+  -- 使用 AM-GM 不等式
+  have h₁ : a ^ 2 / b + b ≥ 2 * a := by
+    have : a ^ 2 / b + b = (1 / 2) * (a ^ 2 / b + b) + (1 / 2) * (a ^ 2 / b + b) := by ring
+    rw [this]
+    linarith [l_amgm (a / √b) (√b) (by positivity) (by positivity)]
+
+  have h₂ : c ^ 2 / d + d ≥ 2 * c := by
+    have : c ^ 2 / d + d = (1 / 2) * (c ^ 2 / d + d) + (1 / 2) * (c ^ 2 / d + d) := by ring
+    rw [this]
+    linarith [l_amgm (c / √d) (√d) (by positivity) (by positivity)]
+
+  -- 我们得到 $\frac{a^2}{b} + b + \frac{c^2}{d} + d \geq 2a + 2c$
+  -- 而 $2a + 2c \geq a + c + a + c = 2(a + c)$，因此需要一个更好的方法
+  -- 考虑到不等式 $\frac{a^2}{b} + b \geq 2a$ 中等号在 $a = b$ 时成立
+  -- 因此可以 farmcd 的方法
+  have h₁' : a ^ 2 / b + b ≥ a + c + a - c := by
+    have : a ^ 2 / b + b = a ^ 2 / b + b - a * c + a * c := by ring
+    rw [this]
+    apply le_of_sub_nonneg
+    calc
+      _ = (a ^ 2 / b + b - a * c) + a * c := by ring
+      _ = (a / √b - √b) ^ 2 / 2 + a * c := by rw [l_amgm (a / √b) (√b) (by positivity) (by positivity)]
+      _ ≥ 0 + a * c := by positivity
+      _ = a * c := by ring
+
+    have : a ^ 2 / b + b - a * c = (1 / 2) * (a / √b - √b) ^ 2 + (1 / 2) * (a / √b + √b) ^ 2 - a * c := by ring
+    rw [this]
+    have : (1 / 2) * (a / √b - √b) ^ 2 + (1 / 2) * (a / √b + √b) ^ 2 - a * c ≥ 0 + a * c - a * c := by positivity
+    linarith
+
+  have h₂' : c ^ 2 / d + d ≥ a + c + c - a := by
+    have : c ^ 2 / d + d = c ^ 2 / d + d - a * c + a * c := by ring
+    rw [this]
+    apply le_of_sub_nonneg
+    calc
+      _ = (c ^ 2 / d + d - a * c) + a * c := by ring
+      _ = (c / √d - √d) ^ 2 / 2 + a * c := by rw [l_amgm (c / √d) (√d) (by positivity) (by positivity)]
+      _ ≥ 0 + a * c := by positivity
+      _ = a * c := by ring
+
+    have : c ^ 2 / d + d - a * c = (1 / 2) * (c / √d - √d) ^ 2 + (1 / 2) * (c / √d + √d) ^ 2 - a * c := by ring
+    rw [this]
+    have : (1 / 2) * (c / √d - √d) ^ 2 + (1 / 2) * (c / √d + √d) ^ 2 - a * c ≥ 0 + a * c - a * c := by positivity
+    linarith
+
+  -- 进而我们得到 $a / b + b + c / d + d \geq a + c + 2 * b + 2 * d - a - c = b + d$
+  -- 即 $a / b + b + c / d + d \geq a + c + b + d$
+  linarith
+```

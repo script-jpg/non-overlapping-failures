@@ -1,0 +1,100 @@
+-- Set $a_n = \prod_{k=1}^n (1 + 1/k^3)$.
+  let a := fun n => (∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3)
+  -- Set $b_n = 3 - 1/n$.
+  let b := fun n => (3 : ℝ) - 1 / ↑n
+
+  -- We want to show that $a_n \leq b_n$ for all positive integers $n$.
+  have h₁ : a n ≤ b n := by
+    -- We will show that $a_n \leq b_n$ for all positive integers $n$ using induction.
+    induction n with
+    -- The base case $n = 0$ does not make sense since we assume $n > 0$.
+    | zero => contradiction
+    -- The base case $n = 1$.
+    | succ n ih => 
+      cases n with
+      | zero =>
+        simp [a, b]
+      -- The inductive step $n \to n+1$.
+      | succ n =>
+        simp [Finset.prod_Icc_succ_top, a, b]
+        -- We have $1 + 1/(n+1)^3 \leq 1 + 3/(n+1)^2 - 1/(n+1)^3$.
+        have h₂ : (1 : ℝ) + 1 / ((n + 1) ^ 3 : ℝ) ≤ 1 + 3 / (n + 1) ^ 2 - 1 / ((n + 1) ^ 3 : ℝ) := by
+          calc
+            (1 : ℝ) + 1 / ((n + 1) ^ 3 : ℝ) ≤ (1 : ℝ) + 3 / (n + 1) ^ 2 := by
+              norm_num
+              rw [show (3 : ℝ) = 2 + 1 by norm_num, add_sq, add_assoc]
+              simp
+              rw [add_assoc, add_comm]
+              simp
+              rw [div_le_div_iff_of_pos_right]
+              norm_num
+              simp
+              norm_num
+            _ ≤ 1 + 3 / (n + 1) ^ 2 - 1 / ((n + 1) ^ 3 : ℝ) := by
+              norm_num
+              rw [show (3 : ℝ) = 2 + 1 by norm_num, add_sq, add_assoc]
+              simp
+              rw [add_assoc, add_comm]
+              simp
+              rw [div_sub_div_same]
+              norm_num
+              simp
+              norm_num
+        -- We have $3 - 1/n \leq 3 - 1/(n+1)$.
+        have h₃ : 3 - 1 / ((n + 1) : ℝ) ≤ 3 - 1 / (n : ℝ) := by
+          norm_num
+          rw [show (1 : ℝ) = 1 * n / n by field_simp]
+          rw [show (1 : ℝ) = 1 * (n + 1) / n by field_simp]
+          nth_rw 1 [show n = n + 1 - 1 by simp]
+          rw [← Nat.cast_sub (by omega)]
+          field_simp
+          ring
+          linarith
+        -- Apply the induction hypothesis to get $a_n \leq b_n$.
+        apply Nat.add_one_le_of_lt at h₀
+        apply ih at h₀
+        linarith
+
+  -- A lemma that $3 - 1/n \leq 3 - 1/(n+1)$ for all positive integers $n$.
+  have h₄ : ∀ n : ℕ, 0 < n → 3 - 1 / ((n : ℝ) + 1) ≤ 3 - 1 / (n : ℝ) := by
+    intro n h₀
+    rw [show (3 : ℝ) = 3 - 1 / (n : ℝ) + 1 / (n : ℝ) by ring, add_assoc]
+    symm
+    rw [add_comm, ← add_assoc]
+    simp
+    rw [div_sub_div_same]
+    field_simp
+    ring
+    linarith
+
+  -- Since $a_n \leq b_n$ and $3 - 1/n \leq 3 - 1/(n+1)$ for all positive integers $n$,
+  -- we have $a_n \leq 3 - 1/(n+1) \leq 3 - 1/n$ for all positive integers $n$.
+  have h₅ : ∀ n : ℕ, 0 < n → a n ≤ 3 - 1 / (n + 1) := by
+    intro n h₀
+    induction n with
+    | zero => contradiction
+    | succ n ih => 
+      cases n with
+      | zero =>
+        simp [a, b]
+      | succ n =>
+        rw [show (3 : ℝ) - 1 / ((n + 1) + 1) = 3 - 1 / ((n + 1) : ℝ) - 1 / ((n + 1) : ℝ) * (1 / (n + 1 : ℝ)) by ring]
+        apply sub_le_sub_right
+        simp
+        apply mul_le_mul_of_nonneg_left
+        linarith
+        simp
+        simp
+
+  -- The statement to be proved is just a consequence of the above lemma.
+  rw [show (3 : ℝ) - 1 / (n : ℝ) = 3 - 1 / (n + 1) + 1 / ((n + 1) : ℝ) by ring]
+  rw [show (3 : ℝ) - 1 / ((n + 1) : ℝ) = (3 - 1 / (n : ℝ)) * (1 - 1 / ((n + 1) ^ 2 : ℝ)) * (1 + 1 / ((n + 1) ^ 2 : ℝ)) by ring]
+  suffices (3 - 1 / (n : ℝ)) * (1 - 1 / ((n + 1) ^ 2 : ℝ)) ≤ 1 by
+    rw [mul_le_iff_le_one_right] at this
+    linarith
+    simp
+    simp
+  rw [show (3 - 1 / (n : ℝ)) = 3 - 1 / (n + 1) + 1 / ((n + 1) : ℝ) by ring]
+  simp [h₅]
+
+```

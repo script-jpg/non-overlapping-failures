@@ -1,0 +1,69 @@
+-- We have
+  -- $f(x) = 12x + 7$
+  have hf : f = fun x => 12 * x + 7 := by
+    funext x
+    exact h₀ x
+
+  -- $g(x) = 5x + 2$
+  have hg : g = fun x => 5 * x + 2 := by
+    funext x
+    exact h₁ x
+
+  -- $h(x) = \gcd(f(x), g(x))$
+  have hh : h = fun x => Nat.gcd (f x) (g x) := by
+    funext x
+    exact h₂ x
+
+  -- The possible values of $h(x)$ are 1, 3, 9
+  -- So the sum of all possible values of $h(x)$ is 1 + 3 + 9 = 13
+  suffices (Set.range h).toFinset = {1, 3, 9} by
+    simp [this, Finset.sum]
+  suffices (Set.range h) = {1, 3, 9} by
+    simp [this, Finset.sum]
+
+  ext y
+  simp [hf, hg, hh]
+  constructor
+  · -- $h(x) \in \{1, 3, 9\}$
+    intro hy
+    rcases hy with ⟨x, hx⟩
+    have hy' : Nat.gcd (12 * x + 7) (5 * x + 2) = y := by
+      exact hx
+    have : y ∣ 12 * x + 7 := by
+      exact Nat.gcd_dvd_left (12 * x + 7) (5 * x + 2)
+    have : y ∣ 5 * x + 2 := by
+      exact Nat.gcd_dvd_right (12 * x + 7) (5 * x + 2)
+    have : y ∣ 75 * x + 1 = Nat.gcd (12 * x + 7) (5 * x + 2) * 15 + 1 := by
+      calc
+        _ = (12 * x + 7) * 15 + (5 * x + 2) := by
+          ring
+        _ = _ := by
+          rw [← hy']
+          ring
+    have : y ∣ 1 := by
+      apply Nat.dvd_trans this
+      apply Nat.dvd_trans?_ this
+      apply Nat.gcd_dvd_left
+      norm_num
+    have : y = 1 := by
+      exact Nat.eq_one_of_dvd_one this
+    exact Or.inl this
+  · -- if $y \in \{1, 3, 9\}$, then there exists $x$ such that $h(x) = y$
+    intro hy
+    rcases hy with hy | hy | hy
+    · -- $y = 1$
+      use 1
+      simp [hy]
+      norm_num
+      exact Nat.gcd_one_left
+    · -- $y = 3$
+      use 1
+      simp [hy]
+      norm_num
+      exact rfl
+    · -- $y = 9$
+      use 13
+      simp [hy]
+      norm_num
+      exact rfl
+```

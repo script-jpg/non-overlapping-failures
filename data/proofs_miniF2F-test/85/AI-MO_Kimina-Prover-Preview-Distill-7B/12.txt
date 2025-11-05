@@ -1,0 +1,94 @@
+-- 1. Assume $2^n - 1$ is a prime number.
+  -- 2. If $n$ is not prime, then we can write $n = ab$ where $1 < a < n$ and $1 < b < n$.
+  -- 3. Thus, $2^n - 1 = 2^{ab} - 1 = (2^a - 1)(2^{a(b-1)} + 2^{a(b-2)} + \cdots + 2^a + 1)$.
+  -- 4. This shows that $2^n - 1$ is composite, contradicting our assumption.
+  -- 5. Therefore, $n$ must be prime.
+  contrapose! h₁
+  apply Nat.not_prime_of_dvd_of_ne
+  -- Checking the condition `n > 1` is sufficient to ensure the existence of a proper divisor.
+  · have : n > 1 := by
+      revert h₁
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        simp
+        intro h
+        rcases h with rfl | h
+        · simp at h₁
+        · simp
+          exact ih h₁
+      -- Checking the case $n = 1$ directly.
+    -- Applying the lemma `Nat.exists_prime_and_dvd` to get a prime factor of $n$.
+    have ⟨p, hp, hpdvd⟩ := Nat.exists_prime_and_dvd this
+    -- Excluding the case $p = 2$ since $n$ is odd.
+    have hp_odd : Odd p := by
+      apply Nat.Prime.odd_of_ne_two
+      rw[← hp]
+      by_contra!
+      simp at this
+      absurd h₁
+      rw[this]
+      exact Nat.not_prime_one
+    -- 2. If $n$ is not prime, then we can write $n = ab$ where $1 < a < n$ and $1 < b < n$.
+    rcases hpdvd with ⟨a, ha⟩
+    have : 1 < a := by
+      by_contra!
+      -- 3. Thus, $2^n - 1 = 2^{ab} - 1 = (2^a - 1)(2^{a(b-1)} + 2^{a(b-2)} + \cdots + 2^a + 1)$.
+      -- 4. This shows that $2^n - 1$ is composite, contradicting our assumption.
+      -- 5. Therefore, $n$ must be prime.
+      simp at this
+      rw[this, mul_zero] at ha
+      simp at ha
+    have : a < n := by
+      by_contra!
+      simp at this
+      rw[this, mul_one] at ha
+      simp at ha
+    -- 6. Now we show that $2 ^ a - 1$ divides $2 ^ n - 1$.
+    have h₂ : p ∣ 2 ^ n - 1 := by
+      rw[ha]
+      apply Nat.dvd_of_mod_eq_zero
+      have : 0 < a := by
+        by_contra!
+        simp at this
+        rw[this] at ha
+        simp at ha
+      rw[← Nat.pow_mul]
+      apply Nat.mod_eq_of_modEq
+      exact Nat.modEq_of_dvd
+      apply Nat.dvd_trans (by simp)
+      apply Nat.pow_dvd_pow
+      omega
+    -- 7. If $2 ^ a - 1$ is prime, then it must be equal to $2 ^ n - 1$ since it divides $2 ^ n - 1$.
+    have h₃ : 2 ^ a - 1 = 1 ∨ 2 ^ a - 1 = 2 ^ n - 1 := by
+      rw[← Nat.dvd_prime h₁] at h₂
+      apply Nat.dvd_prime h₂
+    -- 8. However, $2 ^ a - 1$ is odd since $a > 1$, so it cannot be equal to $2 ^ n - 1$ which is even.
+    have h₄ : 2 ^ a - 1 = 1 := by
+      rcases h₃ with h₃ | h₃
+      · exact h₃
+      · by_contra!
+        have : Odd (2 ^ a - 1) := by
+          apply Nat.Odd.sub_even
+          · simp
+          · apply Nat.odd_pow
+            simp[h₄]
+        have : Even (2 ^ a - 1) := by
+          rw[h₃]
+          apply Nat.Odd.sub_odd
+          · simp
+          · apply Nat.odd_pow
+            simp[h₄]
+        absurd this
+        exact Nat.not_even_iff_odd.mpr this
+    -- 9. Then $2 ^ a - 1 = 1$ implies $2 ^ a = 2$, so $a = 1$.
+    have h₅ : a = 1 := by
+      have : 2 ^ a = 2 ^ 1 := by
+        apply Nat.eq_of_sub_eq_zero
+        rw[← h₄]
+        simp
+      exact Nat.pow_right_injective (by simp) this
+    -- 10. This contradicts the assumption $a > 1$.
+    absurd ha
+    simp[h₅]
+```

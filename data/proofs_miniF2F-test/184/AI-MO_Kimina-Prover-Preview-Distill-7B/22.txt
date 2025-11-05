@@ -1,0 +1,101 @@
+have h₁ : 2 ^ (n + 3) = 8 * 2 ^ n := by
+    ring
+
+  have h₂ : 2 ^ (n + 2) = 4 * 2 ^ n := by
+    ring
+
+  rw [h₁]
+
+  have h₃ : 3 ≡ 1 + 2 [MOD 2 ^ n] := by
+    exact Nat.ModEq.add_right_cancel' (Nat.one_mod_eq_one.mpr (even_iff_two_dvd.mp (Nat.even_pow' n 2)))
+
+  -- (1 + 2)^2 ≡ 1 + 2^2 [MOD 2^3]
+  have h₄ : 3 ^ 2 ≡ 1 + 2 ^ 2 [MOD 2 ^ 3] := by
+    have : 2 ^ 3 = 8 := by
+      ring
+    rw [this]
+    have : 3 ^ 2 = 9 := by
+      ring
+    rw [this]
+    rfl
+    exact Nat.modEq_iff_dvd.mpr (by, 9 - 1 = 8)
+
+  -- 3^(2^n) ≡ 1 + 2^(n+1) [MOD 2^(n+3)]
+  have h₅ : 3 ^ 2 ^ n ≡ 1 + 2 ^ (n + 1) [MOD 2 ^ (n + 3)] := by
+    induction n with
+    | zero => simp [Nat.ModEq]; rfl
+    | succ n hn =>
+      -- 3^(2^(n+1)) ≡ (3^(2^n))^2 ≡ (1 + 2^(n+1))^2 [MOD 2^(n+3)]
+      calc
+        3 ^ 2 ^ (n + 1) = (3 ^ 2 ^ n) ^ 2 := by
+          rw [pow_succ]
+        _ ≡ (1 + 2 ^ (n + 1)) ^ 2 [MOD 2 ^ (n + 3)] := by
+          apply Nat.ModEq.pow
+          exact hn
+        _ = 1 + 2 ^ (n + 2) + (2 ^ (n + 1)) ^ 2 := by
+          ring
+        _ ≡ 1 + 2 ^ (n + 2) [MOD 2 ^ (n + 3)] := by
+          rw [add_assoc]
+          apply Nat.ModEq.add_right
+          have h₆ : (2 ^ (n + 1)) ^ 2 = 2 ^ (2 + 2 * (n + 1)) := by
+            ring
+          rw [h₆]
+          have h₇ : 2 + 2 * (n + 1) ≥ (n + 3) := by
+            Nat.le_sub_one_of_lt h₀
+            gcongr
+            omega
+          exact Nat.pow_mod_eq_pow_mod h₇
+        _ ≡ _ [MOD 2 ^ (n + 3)] := by
+          exact Nat.ModEq.symm (Nat.ModEq.trans (id (Nat.ModEq.symm h₄)) (id (Nat.ModEq.symm hn)))
+
+  -- (1 + 2^(n+1))^2 = 1 + 2^(n+2) + 2^(2(n+1))
+  have h₆ : 1 + 2 ^ (n + 2) + (2 ^ (n + 1)) ^ 2 = (1 + 2 ^ (n + 1)) ^ 2 := by
+    ring
+
+  calc
+    (3 ^ 2 ^ n - 1) % 2 ^ (n + 3) = ((3 ^ 2 ^ n - 1) % 2 ^ (n + 3)) % 2 ^ (n + 3) := by
+      exact Nat.mod_mod_eq_of_mod_eq h₃
+    _ = ((3 ^ 2 ^ n - 1) % 2 ^ (n + 3) + 2 ^ (n + 3)) % 2 ^ (n + 3) := by
+      have : (3 ^ 2 ^ n - 1) % 2 ^ (n + 3) < 2 ^ (n + 3) := by
+        exact Nat.mod_lt (3 ^ 2 ^ n - 1) (by, 2 ^ (n + 3) > 0)
+      rw [Nat.add_mod_self_right this]
+    _ = ((3 ^ 2 ^ n - 1) + 2 ^ (n + 3)) % 2 ^ (n + 3) := by
+      exact Nat.add_mod (3 ^ 2 ^ n - 1) (2 ^ (n + 3)) 2 ^ (n + 3)
+    _ = (3 ^ 2 ^ n - 1 + 2 ^ (n + 3)) % 2 ^ (n + 3) := by
+      exact Nat.add_mod (3 ^ 2 ^ n - 1) (2 ^ (n + 3)) 2 ^ (n + 3)
+    _ = (3 ^ 2 ^ n - 1 + 2 ^ (n + 2) * 2) % 2 ^ (n + 3) := by
+      congr
+      rw [h₂]
+    _ = (3 ^ 2 ^ n + 2 ^ (n + 2) * 2 - 1) % 2 ^ (n + 3) := by
+      exact Nat.add_mod (3 ^ 2 ^ n - 1) (2 ^ (n + 2) * 2) 2 ^ (n + 3)
+    _ = (3 ^ 2 ^ n + (2 ^ (n + 2) * 2 - 1)) % 2 ^ (n + 3) := by
+      exact Nat.add_mod (3 ^ 2 ^ n) (2 ^ (n + 2) * 2 - 1) 2 ^ (n + 3)
+    _ = (3 ^ 2 ^ n + (1 + 2 ^ (n + 2) - 1)) % 2 ^ (n + 3) := by
+      congr
+      rw [← Nat.add_sub_assoc (3 ^ 2 ^ n) (2 ^ (n + 2) * 2)]
+      congr
+      exact Nat.add_mod_eq_zero_iff_dvd.mpr (Nat.add_mod_eq_zero_iff_dvd.mp hn)
+    _ = (3 ^ 2 ^ n + 2 ^ (n + 2)) % 2 ^ (n + 3) := by
+      refine Nat.add_mod_right (3 ^ 2 ^ n) (1 + 2 ^ (n + 2)) (2 ^ (n + 3))?_
+      exact Nat.mod_lt (3 ^ 2 ^ n) (by, 2 ^ (n + 2) < 2 ^ (n + 3))
+    _ = (3 ^ 2 ^ n + 4 * 2 ^ n) % 2 ^ (n + 3) := by
+      rw [h₃]
+    _ = ((3 ^ 2 ^ n - 1) + 4 * 2 ^ n + 1) % 2 ^ (n + 3) := by
+      exact Nat.add_mod (3 ^ 2 ^ n + 4 * 2 ^ n) 1 2 ^ (n + 3)
+    _ = ((3 ^ 2 ^ n - 1) + (4 * 2 ^ n + 1)) % 2 ^ (n + 3) := by
+      exact Nat.add_mod (3 ^ 2 ^ n + 4 * 2 ^ n) 1 2 ^ (n + 3)
+    _ = ((3 ^ 2 ^ n - 1) + (1 + 2 ^ (n + 1) * 2 * 2)) % 2 ^ (n + 3) := by
+      refine Nat.add_mod_right (3 ^ 2 ^ n + 4 * 2 ^ n) 1 2 ^ (n + 3)
+      exact Nat.mod_lt (3 ^ 2 ^ n) (by, 4 * 2 ^ n < 8 * 2 ^ n = 2 ^ (n + 3))
+    _ = ((3 ^ 2 ^ n - 1) + (1 + 2 ^ (n + 1) * 2) * 2) % 2 ^ (n + 3) := by
+      ring
+    _ = ((3 ^ 2 ^ n - 1) + (1 + 2 ^ (n + 1)) * 2) % 2 ^ (n + 3) := by
+      refine Nat.add_mod_right (3 ^ 2 ^ n + (1 + 2 ^ (n + 1) * 2)) 2 ^ (n + 3)
+      exact Nat.add_mod (3 ^ 2 ^ n) (1 + 2 ^ (n + 1) * 2) 2 ^ (n + 3)
+    _ = (3 ^ 2 ^ n - 1 + (1 + 2 ^ (n + 1))) % 2 ^ (n + 3) := by
+      exact Nat.add_mod (3 ^ 2 ^ n - 1) (1 + 2 ^ (n + 1)) 2 ^ (n + 3)
+    _ = (3 ^ 2 ^ n) % 2 ^ (n + 3) := by
+      simp [Nat.add_sub_cancel]
+    _ = _ := by
+      exact Nat.mod_eq_of_modEq h₅
+```

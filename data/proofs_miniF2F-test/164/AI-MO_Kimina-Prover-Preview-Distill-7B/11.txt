@@ -1,0 +1,82 @@
+-- Some useful facts of logarithm.
+  have log_le(x y : ℝ) (hx : 0 < x) (hy : 0 < y) (hxy : x ≤ y) : Real.log x ≤ Real.log y := by
+    apply Real.log_le_log
+    all_goals linarith
+  have log_lt(x y : ℝ) (hx : 0 < x) (hy : 0 < y) (hxy : x < y) : Real.log x < Real.log y := by
+    apply Real.log_lt_log
+    all_goals linarith
+  have log2_ne_zero : Real.log 2 ≠ 0 := by
+    intro h
+    have : Real.log 2 = 0 := by
+      exact h
+    have : 0 < Real.log 2 := by
+      exact Real.log_pos (by norm_num)
+    linarith
+  have log16_ne_zero : Real.log 16 ≠ 0 := by
+    intro h
+    have : Real.log 16 = 0 := by
+      exact h
+    have : 0 < Real.log 16 := by
+      exact Real.log_pos (by norm_num)
+    linarith
+
+  -- We want to calculate $(\log_2{\frac{x}{y}})^2$.
+  suffices (Real.log (x / y) / Real.log 2) ^ 2 = 20 by
+    rw [this]
+
+  -- Note that we have $\log_2{x} = \log_y{16}$,
+  -- so $\log_2{x} = \frac{\log_2{16}}{\log_2{y}} = \frac{4}{\log_2{y}}$.
+  have h₃ : Real.log x / Real.log 2 = 4 / Real.log y := by
+    field_simp
+    rw [h₁]
+    have : Real.log 16 = 4 * Real.log 2 := by
+      rw [show (16 : ℝ) = 2 ^ 4 by norm_num]
+      simp [Real.log_pow]
+    rw [this]
+    field_simp
+
+  -- We also have $x \cdot y = 64$,
+  -- so $\log_2{x} + \log_2{y} = \log_2{64} = 6$.
+  have h₄ : Real.log x + Real.log y = 6 := by
+    have : Real.log (x * y) = Real.log 64 := by
+      rw [h₂]
+    rw [Real.log_mul (by linarith) (by linarith), Real.log_eq_iff_rpow_eq (by norm_num) (by norm_num) (by linarith)] at this
+    norm_num at this
+    exact this
+
+  -- We shall use the identity $(a + b)^2 - 4ab = (a - b)^2$
+  -- to get $(\log_2{x} - \log_2{y})^2 = (\log_2{x} + \log_2{y})^2 - 4\log_2{x}\log_2{y} = 36 - 4\log_2{x}\log_2{y}$.
+  have h₅ : (Real.log x - Real.log y) ^ 2 = 36 - 4 * (Real.log x * Real.log y) := by
+    have : (Real.log x - Real.log y) ^ 2 = (Real.log x + Real.log y) ^ 2 - 4 * (Real.log x * Real.log y) := by
+      ring
+    rw [this, h₄]
+    nlinarith
+
+  -- Combining this with the fact that $\log_2{x} = \frac{4}{\log_2{y}}$,
+  -- we get $(\log_2{x} - \frac{4}{\log_2{x}})^2 = 36 - 4\log_2{x}\cdot\frac{4}{\log_2{x}} = 36 - 16 = 20$.
+  have h₆ : (Real.log x - 4 / Real.log y) ^ 2 = 20 := by
+    have : (Real.log x - 4 / Real.log y) ^ 2 = (Real.log x - Real.log y) ^ 2 - 4 * (Real.log x * (4 / Real.log y)) := by
+      ring
+    rw [this, h₅]
+    have : Real.log x * (4 / Real.log y) = 4 * Real.log x / Real.log y := by
+      ring
+    rw [this, h₃]
+    norm_num
+
+  -- But $(\log_2{\frac{x}{y}})^2 = (\log_2{x} - \log_2{y})^2$,
+  -- so $(\log_2{\frac{x}{y}})^2 = 20$.
+  have h₇ : (Real.log (x / y) / Real.log 2) ^ 2 = (Real.log x - Real.log y) ^ 2 := by
+    calc
+      (Real.log (x / y) / Real.log 2) ^ 2 = (Real.log x - Real.log y) ^ 2 / (Real.log 2) ^ 2 := by rw [←Real.log_div (by linarith) (by linarith), ← pow_two, Real.log_div (by norm_num) (by norm_num)]
+                                      _ = (Real.log x - Real.log y) ^ 2 / (Real.log 2) ^ 2 := by norm_num
+                                      _ = (Real.log x - Real.log y) ^ 2 := by
+                                        field_simp
+                                        have : 0 < Real.log 2 := by
+                                          have : 0 < (2 : ℝ) := by norm_num
+                                          exact Real.log_pos this
+                                        nlinarith
+
+  rw [h₇]
+  nlinarith
+
+```

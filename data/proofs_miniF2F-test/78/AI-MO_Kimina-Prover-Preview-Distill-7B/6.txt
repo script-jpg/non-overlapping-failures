@@ -1,0 +1,120 @@
+-- -- Express a and b in terms of their greatest common divisor
+  -- We write a = 6 * m and b = 6 * n, where m and n are coprime integers.
+  have ⟨m, hm⟩ : ∃ m : ℕ, a = 6 * m := by
+    use (a / 6)
+    exact (Nat.div_mul_cancel' h₃).symm
+  have h₄ : 0 < m := by
+    rw [hm]
+    linarith [h₀.left]
+  have ⟨n, hn⟩ : ∃ n : ℕ, b = 6 * n := by
+    use (b / 6)
+    exact (Nat.div_mul_cancel' h₃).symm
+  have h₅ : 0 < n := by
+    rw [hn]
+    linarith [h₀.right]
+
+  -- -- Since a = 6 * m and b = 6 * n, we have gcd(m, n) = 1.
+  -- It follows that lcm(m, n) = m * n.
+  have h₆ : Nat.gcd m n = 1 := by
+    rw [hm, hn] at h₃
+    exact Nat.Coprime.dvd_mul_left (Nat.coprime_comm.mp?_)
+    exact h₃
+
+  have h₇ : Nat.lcm m n = m * n := by
+    rw [Nat.lcm_eq_iff_coprime]
+    exact h₆
+
+  -- From the problem, we have 6 * m ≡ 2 (mod 10) and 6 * n ≡ 4 (mod 10).
+  have h₈ : 6 * m % 10 = 2 := by
+    rw [hm]
+    exact h₁
+  have h₉ : 6 * n % 10 = 4 := by
+    rw [hn]
+    exact h₂
+
+  -- From 6 * m ≡ 2 (mod 10), we get m ≡ 2 * 6⁻¹ (mod 10)
+  have h₁₀ : m % 10 = 2 * 6⁻¹ := by
+    -- Multiply both sides of the congruence by 6⁻¹.
+    symm
+    rw [← Nat.mul_inv_cancel (By norm_num : Nat.Coprime 6 10)]
+    -- Add 10 to the right-hand side.
+    omega
+  -- From 6 * n ≡ 4 (mod 10), we get n ≡ 4 * 6⁻¹ (mod 10)
+  have h₁₁ : n % 10 = 4 * 6⁻¹ := by
+    -- Multiply both sides of the congruence by 6⁻¹.
+    symm
+    rw [← Nat.mul_inv_cancel (By norm_num : Nat.Coprime 6 10)]
+    -- Add 10 to the right-hand side.
+    omega
+
+  -- Multiplying the congruences m ≡ 2 * 6⁻¹ (mod 10) and n ≡ 4 * 6⁻¹ (mod 10),
+  -- we get m * n ≡ 8 * 6⁻¹ ^ 2 (mod 10).
+  have h₁₂ : (m * n) % 10 = 8 * (6⁻¹ ^ 2) % 10 := by
+    rw [Nat.mul_mod]
+    congr
+    · omega
+    · omega
+
+  -- As 6 * m * (6 * n) = 36 * (m * n) ≡ 8 * (mod 10),
+  -- we get m * n ≡ 8 * 36⁻¹ (mod 10).
+  have h₁₃ : (m * n) % 10 = 8 * (36⁻¹ ^ 2) % 10 := by
+    -- Multiply both sides of the congruence by 6 * n.
+    rw [hm, hn] at h₁₂
+    rw [show 36 = 6 * 6 by norm_num, Nat.mul_assoc] at h₁₂
+    rw [Nat.mul_mod] at h₁₂
+    congr
+    · omega
+    · omega
+
+  -- Since 36 * x ≡ 1 (mod 10) for x = 36⁻¹, we have (36⁻¹ ^ 2) % 10 = 6.
+  have h₁₄ : (36⁻¹ ^ 2) % 10 = 6 := by
+    have : 36 * 6 ^ 2 % 10 = 1 := by norm_num
+    rw [← Nat.ModEq] at this
+    -- Since 6 * 6 = 36 ≡ 1 (mod 10), we get 6 * 6 * x ≡ 1 * x (mod 10) for any x.
+    replace : 6 ^ 2 * 36 * 6 ^ 2 % 10 = 6 ^ 2 * 1 % 10 := by
+      calc
+        _ = (6 * 6 ^ 2) * 36 % 10 := by rw [Nat.mul_mod, ← Nat.mul_assoc]; rfl
+        _ = 1 * 36 % 10 := by rw [this]
+        _ = 1 * 6 ^ 2 * 36 % 10 := by rw [Nat.mul_mod, ← Nat.mul_assoc]; rfl
+    rw [Nat.mul_assoc, Nat.mul_mod] at this
+    -- Replace the multiplication by 6 ^ 2 in the left-hand side by a congruence relation.
+    replace : 6 ^ 2 * (36⁻¹ ^ 2) % 10 = 6 ^ 2 * 6 % 10 := by
+      calc
+        _ = (6 ^ 2 * (36⁻¹ ^ 2) * 36) % 10 := by rw [Nat.mul_mod]; rfl
+        _ = (6 ^ 2 * 1) % 10 := by rw [← this]
+        _ = 6 ^ 2 * 6 % 10 := by rw [Nat.mul_mod, ← Nat.mul_assoc]; rfl
+    -- Multiplying both sides by 6 ^ 2.
+    rw [show 8 * (36⁻¹ ^ 2) = 6 ^ 2 * (36⁻¹ ^ 2) * 8 / 6 ^ 2 by norm_num] at h₁₃
+    rw [Nat.mul_div_assoc] at h₁₃
+    -- If the congruence relation holds, then so does the non-congruence relation.
+    have : 6 ^ 2 * (36⁻¹ ^ 2) % 10 = 6 := by omega
+    rw [this] at h₁₃
+    rw [h₁₃]
+
+  -- Substituting m * n ≡ 8 * 36⁻¹ (mod 10) and (36⁻¹ ^ 2) % 10 = 6
+  -- into m * n = lcm(a, b) = 6 * m * n, we get lcm(a, b) ≡ 8 * 6 (mod 10).
+  have h₁₅ : (Nat.lcm a b) % 10 = 8 * 6 % 10 := by
+    rw [hn, hm, Nat.lcm_eq_iff_coprime]
+    exact h₇
+    rw [h₆]
+    exact h₁₄
+
+  -- Therefore, lcm(a, b) ≡ 48 ≡ 8 (mod 10).
+  have h₁₆ : (Nat.lcm a b) % 10 = 8 := by
+    norm_num at h₁₅
+    exact h₁₅
+
+  -- List all non-negative integers that are 8 mod 10 and are at least 6 * 6 = 36.
+  have h₁₇ : ∀ n : ℕ, n % 10 = 8 ∧ 6 ≤ n → 108 ≤ n := by
+    intro n ⟨h₁₇, h₁₈⟩
+    by_cases h₁₉ : n < 108
+    · -- If n is a positive integer that is 8 mod 10 and is at least 6, then n ≥ 108.
+      interval_cases n <;> norm_num at h₁₇ h₁₈
+    · -- Otherwise, n ≥ 108.
+      omega
+
+  -- Since lcm(a, b) is non-negative, and is 8 mod 10, and is at least 6, it is at least 108.
+  specialize h₁₇ (Nat.lcm a b) h₁₆
+  exact h₁₇
+
+```

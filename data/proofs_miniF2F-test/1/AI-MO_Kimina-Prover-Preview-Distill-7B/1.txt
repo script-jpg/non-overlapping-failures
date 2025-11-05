@@ -1,0 +1,174 @@
+-- proof by contradiction
+  by_contra h
+  -- we derive a congruence condition modulo 7
+  have h1 (x y : ℤ) : 4 * x ^ 3 - 7 * y ^ 3 ≡ 4 * x ^ 3 [ZMOD 7] := by
+    rw [Int.modEq_iff_dvd]
+    intro h
+    -- it suffices to show that $4x^3$ and $2003$ differ by a multiple of $7$
+    have : (7 * y ^ 3 : ℤ) = 7 * y ^ 3 := rfl
+    rw [this] at h
+    apply Int.dvd_sub at h
+    apply Dvd.dvd.mul_left at h
+    rw [←mul_one (4 * x ^ 3 : ℤ)] at h
+    exact h
+  -- we derive another congruence condition modulo 7
+  have h2 (x y : ℤ) : 4 * x ^ 3 - 7 * y ^ 3 ≡ 4 * y ^ 3 [ZMOD 7] := by
+    rw [Int.modEq_iff_dvd]
+    intro h
+    -- it suffices to show that $4y^3$ and $2003$ differ by a multiple of $7$
+    have : (7 * x ^ 3 : ℤ) = 7 * x ^ 3 := rfl
+    rw [this] at h
+    apply Int.dvd_sub at h
+    apply Dvd.dvd.mul_left at h
+    rw [←mul_one (4 * y ^ 3 : ℤ)] at h
+    exact h
+  have d1 := h1 x y
+  have d2 := h2 x y
+  rw [h] at d1 d2
+  -- now we need to show that the two congruence conditions are incompatible
+  -- we simplify both congruences
+  simp at d1 d2
+  ring_nf at d1 d2
+  -- we derive a condition on $x^3$
+  have r1 : 4 * x ^ 3 ≡ 5 * 7 [ZMOD 7] := by
+    have : 4 * x ^ 3 = 2003 + 7 * (-y ^ 3) := by linarith
+    rw [this]
+    apply Int.ModEq.add_right
+    apply Int.modEq_zero_iff_dvd.mpr
+    exact Int.dvd_neg.mpr rfl
+  -- we derive a condition on $y^3$
+  have r2 : 4 * y ^ 3 ≡ 6 * 7 [ZMOD 7] := by
+    have : 4 * y ^ 3 = 2003 + 7 * (-x ^ 3) := by linarith
+    rw [this]
+    apply Int.ModEq.add_right
+    apply Int.modEq_zero_iff_dvd.mpr
+    exact Int.dvd_neg.mpr rfl
+  have s1 := Int.ModEq.mul_right 4 (r1)
+  have s2 := Int.ModEq.mul_right 4 (r2)
+  simp at s1 s2
+  -- we derive a condition on $x^3$
+  have g1 : x ^ 3 ≡ 5 [ZMOD 7] := by
+    have : x ^ 3 = 4 * x ^ 3 - 3 * 7 := by linarith
+    rw [this]
+    apply Int.ModEq.sub_right
+    simp
+    exact s1
+  -- we derive a condition on $y^3$
+  have g2 : y ^ 3 ≡ 6 [ZMOD 7] := by
+    have : y ^ 3 = 4 * y ^ 3 - 3 * 7 := by linarith
+    rw [this]
+    apply Int.ModEq.sub_right
+    simp
+    exact s2
+  have g3 := Int.ModEq.pow 3 g1
+  have g4 := Int.ModEq.pow 3 g2
+  simp at g3 g4
+  -- we derive a condition on $x^9$
+  have g5 : x ^ 9 ≡ 5 ^ 3 [ZMOD 7] := by
+    have : x ^ 9 = (x ^ 3) ^ 3 := by ring
+    rw [this]
+    apply Int.ModEq.pow 3
+    exact g3
+  simp at g5
+  -- we derive a condition on $y^9$
+  have g6 : y ^ 9 ≡ 6 ^ 3 [ZMOD 7] := by
+    have : y ^ 9 = (y ^ 3) ^ 3 := by ring
+    rw [this]
+    apply Int.ModEq.pow 3
+    exact g4
+  simp at g6
+  have g7 : x ^ 9 ≡ 6 [ZMOD 7] := by
+    have : x ^ 9 = 5 * 7 + 5 := by linarith
+    rw [this]
+    apply Int.ModEq.add_right
+    apply Int.modEq_zero_iff_dvd.mpr
+    exact Int.dvd_neg.mpr rfl
+  have g8 : y ^ 9 ≡ 6 [ZMOD 7] := by
+    have : y ^ 9 = 6 * 7 + 6 := by linarith
+    rw [this]
+    apply Int.ModEq.add_right
+    apply Int.modEq_zero_iff_dvd.mpr
+    exact Int.dvd_neg.mpr rfl
+  -- we derive a condition on $x^9 y^9$
+  have g9 : x ^ 9 * y ^ 9 ≡ 6 * 6 [ZMOD 7] := by
+    have : x ^ 9 * y ^ 9 = (x * y) ^ 9 := by ring
+    rw [this]
+    apply Int.ModEq.pow 9
+    exact Int.ModEq.mul g7 g8
+  simp at g9
+  -- we derive a condition on $(xy)^9$
+  have g10 : (x * y) ^ 9 ≡ 6 * 6 [ZMOD 7] := by
+    exact Int.ModEq.symm g9
+  -- now we need to show that the two congruences are incompatible
+  have g11 : (x * y) ^ 9 ≡ 1 [ZMOD 7] := by
+    have : 7 ∣ (x * y) ^ 9 - 1 := by
+      -- we need to show that $7 | (xy)^9 - 1$
+      -- we simplify the original equation modulo 7
+      have h3 : x ^ 3 ≡ 6 [ZMOD 7] := by
+        have : x ^ 3 = (x ^ 3 - 6) + 6 := by linarith
+        rw [this]
+        apply Int.ModEq.add_right
+        apply Int.modEq_zero_iff_dvd.mpr
+        have : (3 * 7 : ℤ) = 3 * (7 : ℤ) := rfl
+        rw [this] at h
+        apply Int.dvd_sub at h
+        apply Dvd.dvd.mul_left at h
+        exact h
+      have h4 : (x * y) ^ 3 ≡ 6 [ZMOD 7] := by
+        have : (x * y) ^ 3 = x ^ 3 * y ^ 3 := rfl
+        rw [this]
+        apply Int.ModEq.mul
+        exact h3
+        have : y ^ 3 ≡ 6 [ZMOD 7] := by
+          exact g2
+        exact this
+      have h5 : (x * y) ^ 9 ≡ ((x * y) ^ 3) ^ 3 [ZMOD 7] := by
+        have : (x * y) ^ 9 = ((x * y) ^ 3) ^ 3 := by ring
+        rw [this]
+      have h6 : (x * y) ^ 9 ≡ 6 ^ 3 [ZMOD 7] := by
+        exact Int.ModEq.trans h5 (Int.ModEq.pow 3 g4)
+      simp at h6
+      apply Int.ModEq.trans h6
+      -- it suffices to show that $6^3$ is congruent to $1$ modulo $7$
+      -- this can be directly verified by calculation
+      have : 6 ^ 3 = 6 * 6 * 6 := rfl
+      rw [this]
+      apply Int.ModEq.mul
+      apply Int.ModEq.mul
+      all_goals exact rfl
+    exact Int.ModEq.symm this
+  -- we derive a condition on $(xy)^9$
+  have g12 : (x * y) ^ 9 ≡ 6 [ZMOD 7] := by
+    exact Int.ModEq.symm g10
+  rw [show (6 : ℤ) = 6 * 7 + 1 by linarith] at g12
+  apply Int.ModEq.add_right at g12
+  apply Int.modEq_zero_iff_dvd.mpr at g12
+  -- now we need to show that $7 | 1$, which is a contradiction
+  have g13 : (7 : ℤ) ∣ 1 := by
+    exact g12
+  -- however, $7$ doesn't divide $1$
+  have g14 : ¬(7 : ℤ) ∣ 1 := by
+    -- we prove this by contradiction
+    by_contra g14
+    -- we need to show that $7$ only has positive divisors
+    have g15 : ∀ (a : ℤ), a ∣ 1 → a = 1 := by
+      intro a ga
+      have ga1 : |a| ∣ 1 := by
+        exact Int.natAbs_dvd_of_dvd ga
+      have ga2 : |a| = 1 := by
+        exact Int.eq_one_of_dvd_one ga1
+      have ga3 : a = |a| ∨ a = -|a| := by
+        exact Int.eq_abs_or_neg_abs a
+      rcases ga3 with ga3 | ga3
+      · rw [ga3, ga2]
+      · rw [ga3, Int.neg_one_mul, (by exact rfl : (1 : ℤ) = 1 * 1)]
+        apply Int.mul_dvd_mul_left
+        simp only [Int.reduceAbs]
+        exact ga1
+    have g16 := g15 7 g14
+    -- since $7$ divides $1$, we have $7 = 1$
+    by_contra _
+    tauto
+  -- contradiction
+  contradiction
+```

@@ -1,0 +1,121 @@
+-- define a predicate $f$ such that $f(x)$ is the statement that $p$ divides $x^p - x$
+  let f : ℕ → Prop := fun x => p ∣ x ^ p - x
+
+  -- show that $f(0)$ is true
+  have hf0 : f 0 := by
+    simp [f]
+    rw [Nat.pow_zero, Nat.zero_pow _]
+
+    -- either $p$ divides $0^p - 0$ or it doesn't
+    by_cases h : ¬ p ∣ 0 ^ p - 0
+    · exact h ⊥
+    · exact h
+
+  -- show that $f(1)$ is true
+  have hf1 : f 1 := by
+    simp [f]
+    rw [Nat.one_pow]
+
+    -- either $p$ divides $1^p - 1$ or it doesn't
+    by_cases h : ¬ p ∣ 1 ^ p - 1
+    · exact h ⊥
+    · exact h
+
+  -- show that $f(a-1)$ implies $f(a)$
+  have hfma1 hfma : f (a - 1) → f a := by
+    intro h
+
+    -- rewrite $a$ as $a-1+1$ and apply the binomial theorem
+    rw [show a = a - 1 + 1 by omega, Nat.pow_add]
+    simp [Nat.pow_one]
+
+    -- suppose $p$ divides $(a-1)^p - (a-1)$
+    by_cases h' : p ∣ (a - 1) ^ p - (a - 1)
+    · exact h'
+
+    -- otherwise, show that $p$ divides $C^p_a - C^p_{a-1}$ using induction
+    have h'' : p ∣ Nat.choose p a - Nat.choose p (a - 1) := by
+      have : Nat.choose p a - Nat.choose p (a - 1) = (a - 1) ^ p - (a - 1) + (Nat.choose p a - Nat.choose p (a - 1) - (a - 1) ^ p + (a - 1)) := by
+        simp
+        rw [Nat.add_sub_assoc]
+        simp
+        rw [← Nat.add_sub_assoc]
+        simp
+        omega
+      rw [this]
+      have : p ∣ (a - 1) ^ p - (a - 1) + (Nat.choose p a - Nat.choose p (a - 1) - (a - 1) ^ p + (a - 1)) := by
+        apply Nat.dvd_add
+        · exact h'
+        · have : p ∣ Nat.choose p (a - 1) - (a - 1) := by
+            calc
+              p ∣ (a - 1) ^ p - (a - 1) := h'
+            _ = (a - 1) ^ p - (a - 1) - (a - 1) ^ p + (a - 1) := by omega
+          rw [← Nat.add_sub_assoc]
+          apply Nat.dvd_sub
+          · apply Nat.dvd_pow
+            exact Nat.dvd_refl _
+          · exact Nat.dvd_refl _
+        apply Nat.dvd_sub
+        · apply Nat.dvd_pow
+          exact Nat.dvd_refl _
+        · exact h''
+      exact this
+
+    -- show that $p$ divides $a^p - a$
+    have : p ∣ a ^ p - a := by
+      calc
+        p ∣ Nat.choose p a - Nat.choose p (a - 1) := h''
+        _ = a ^ p - a := by
+          rw [← Nat.choose_mul_pow_sub_add_pow _ h₀]
+          simp
+    exact this
+
+  -- show that $f(a)$ implies $f(a+1)$
+  have hfma hfma1 : f a → f (a + 1) := by
+    intro h
+
+    -- show that $p$ divides $(a+1)^p - (a+1)$ using induction
+    have h' : p ∣ (a + 1) ^ p - (a + 1) := by
+      have : (a + 1) ^ p - (a + 1) = a ^ p - a + (Nat.choose p a - Nat.choose p (a - 1)) + (a ^ p - a - (a - 1) ^ p + (a - 1)) := by
+        simp
+        rw [Nat.add_sub_assoc]
+        simp
+        rw [Nat.add_sub_assoc, Nat.add_sub_assoc]
+        simp
+        omega
+      rw [this]
+      have : p ∣ a ^ p - a + (Nat.choose p a - Nat.choose p (a - 1)) + (a ^ p - a - (a - 1) ^ p + (a - 1)) := by
+        apply Nat.dvd_add
+        · apply Nat.dvd_add
+          · exact h
+          · apply Nat.dvd_pow
+            exact Nat.dvd_refl _
+        · apply Nat.dvd_add
+          · apply Nat.dvd_choose_pow
+            exact Nat.Prime.one_lt h₁
+          · apply Nat.dvd_sub
+            · exact Nat.dvd_pow h₁
+            · exact Nat.dvd_pow h₁
+      exact this
+    exact h'
+
+  -- show that $f(0)$ is true
+  have hf0 : f 0 := by
+    simp [f]
+    rw [Nat.pow_zero, Nat.zero_pow _]
+
+    -- either $p$ divides $0^p - 0$ or it doesn't
+    by_cases h : ¬ p ∣ 0 ^ p - 0
+    · exact h ⊥
+    · exact h
+
+  -- use induction to show that $f(a)$ is true for all natural numbers $a$
+  have hfall : ∀ a, f a := by
+    intro a
+    induction a using Nat.strong_induction_on with
+    | h(a) => exact hfma1 (Nat.Prime.two_le h₁) (h hf0 (Nat.zero_le a))
+
+  -- conclude the proof
+  simp [f] at hfall
+  exact hfall a
+```

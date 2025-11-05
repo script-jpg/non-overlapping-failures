@@ -1,0 +1,53 @@
+-- First, we find the prime factorization of 500, which is $500 = 2^2 \cdot 5^3$.
+  have h₁ : Nat.primeFactors 500 = {2, 5} := by native_decide
+
+  -- The divisors of 500 are determined by the exponents of 2 and 5 in its prime factorization.
+  -- For the exponent of 2, we can choose 0, 1, or 2.
+  -- For the exponent of 5, we can choose 0, 1, 2, or 3.
+  -- Therefore, the number of divisors is $3 \cdot 4 = 12$.
+  have h₂ : Nat.divisors 500 = {
+      2 ^ 0 * 5 ^ 0, 2 ^ 0 * 5 ^ 1, 2 ^ 0 * 5 ^ 2, 2 ^ 0 * 5 ^ 3,
+      2 ^ 1 * 5 ^ 0, 2 ^ 1 * 5 ^ 1, 2 ^ 1 * 5 ^ 2, 2 ^ 1 * 5 ^ 3,
+      2 ^ 2 * 5 ^ 0, 2 ^ 2 * 5 ^ 1, 2 ^ 2 * 5 ^ 2, 2 ^ 2 * 5 ^ 3
+  } := by
+    symm
+    rw [Nat.divisors_eq_iff]
+    constructor
+    · -- If d is a divisor of 500, then d is of the form 2^a * 5^b with a ≤ 2 and b ≤ 3.
+      intro d hd
+      have h₃ : d ∈ Nat.divisors 500 := hd
+      simp at h₃
+      rcases h₃ with ⟨a, b, ha, hb, hab⟩
+      have : a ≤ 2 := by omega
+      have : b ≤ 3 := by omega
+      omega
+    · -- If d is of the form 2^a * 5^b with a ≤ 2 and b ≤ 3, then d is a divisor of 500.
+      intro d
+      use d.factorization 2, d.factorization 5
+      constructor
+      · native_decide
+      · constructor
+        · native_decide
+        · constructor
+          · native_decide
+          · rify
+            rw [←Nat.factorization_def _ (by norm_num) (by not_prime_zero)]
+            rw [←Nat.factorization_def _ (by norm_num) (by not_prime_zero)]
+            simp [d]
+
+  -- By substituting the divisors of 500 into the sum, we get $A = 1 + 5 + 25 + 125 + 2 + 10 + 50 + 250 + 4 + 20 + 100 + 500 = 1 + 5 + 25 + 125 + 2 + 10 + 50 + 250 + 4 + 20 + 100 + 500$.
+  have h₃ : a = 1 + 5 + 25 + 125 + 2 + 10 + 50 + 250 + 4 + 20 + 100 + 500 := by
+    rw [h₀, h₂, Finset.sum]
+    simp [Nat.divisors, Finset.mem_insert, Finset.mem_singleton]
+    rfl
+
+  -- The prime factorization of $A$ can be determined by observing that $A = (1 + 5 + 25 + 125) \cdot (2 + 10 + 50 + 250) \cdot (4 + 20 + 100 + 500) = 156 \cdot 372 \cdot 616$.
+  -- Further factorizing, we get $A = (1 + 5 + 25 + 125) \cdot (2 + 10 + 50 + 250) \cdot (4 + 20 + 100 + 500) = 1 + 5 + 25 + 125 + 2 + 10 + 50 + 250 + 4 + 20 + 100 + 500$.
+  have h₄ : Nat.primeFactors a = {2, 5} := by native_decide
+
+  -- Therefore, the sum of the distinct prime divisors of $A$ is $2 + 5 = 7$.
+  rw [h₄]
+  simp
+
+
+```

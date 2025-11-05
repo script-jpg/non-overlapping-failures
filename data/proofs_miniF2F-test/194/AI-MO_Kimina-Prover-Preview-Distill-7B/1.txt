@@ -1,0 +1,285 @@
+-- The roots are $1$, $2$, $4$ and $e^{i\theta}$ for some $\theta$.
+  have h₂ : f 1 = 0 := by
+    rw [h₀]
+    norm_num
+  have h₃ : f 2 = 0 := by
+    rw [h₀]
+    norm_num
+  have h₄ : f 4 = 0 := by
+    rw [h₀]
+    norm_num
+  have h₅ : f (Complex.exp (Complex.I * (2 * Real.pi / 3))) = 0 := by
+    rw [h₀]
+    simp [Complex.exp_mul_I]
+    norm_num
+    -- The last step is true because $1+2+4+e^{i\theta}=10$ and $e^{i\theta}$ has magnitude $1$.
+    congr
+    10
+    simp
+    norm_num
+
+  -- As a polynomial over $\mathbb{Z}[x]$, $f(x)$ is equal to $(x-1)(x-2)(x-4)(x-e^{i\theta})$.
+  let p : ℂ[X] :=.X ^ 6 - 10 *.X ^ 5 + a *.X ^ 4 + b *.X ^ 3 + c *.X ^ 2 + d *.X + 16
+  let q : ℂ[X] := (Complex.I ** 6 - 10 * Complex.I ** 5 + a * Complex.I ** 4 + b * Complex.I ** 3 + c * Complex.I ** 2 + d * Complex.I + 16).re subst X
+
+  -- We can factor out the known roots.
+  have h₆ : p = (X - C 1) * (X - C 2) * (X - C 4) * (X - C (Complex.exp (Complex.I * (2 * Real.pi / 3)))) := by
+    let p :=.X ^ 6 - 10 *.X ^ 5 + a *.X ^ 4 + b *.X ^ 3 + c *.X ^ 2 + d *.X + 16
+    induction' p.degree with p IH
+    -- We use induction on the degree of the polynomial.
+    match p with
+    | X ↦
+      simp
+    | C c ↦
+      simp
+    |.X ^ n + p_1 ↦
+      have h₇ := IH (by simp)
+      -- If the degree of the polynomial is $n$, we can use the inductive hypothesis.
+      induction' p_1_degree with p_1 IH
+      match p_1 with
+      | X ↦
+        simp
+        rfl
+      | C c ↦
+        simp
+        exact lcongr (fun x ↦ x - c) h₇
+      -- For a general polynomial, we can factor out a root.
+      |.X ^ m + q + r ↦
+        have h₈ := IH (by simp)
+        -- By the inductive hypothesis, we can factor out a root from the polynomial of degree $n-1$.
+        have h₉ := h₈ <| Or.inr <| Or.inl <| Or.inr <| Or.inl
+        have h₁₀ := h₈ <| Or.inr <| Or.inl <| Or.inr <| Or.inr
+        have h₁₁ := h₈ <| Or.inr <| Or.inr <| Or.inl
+        have h₁₂ := h₈ <| Or.inr <| Or.inr <| Or.inr
+        match m with
+        | 0 => simp at h₉
+        | 1 => simp at h₁₀
+        | 2 => simp at h₁₁
+        | 3 => simp at h₁₂
+        -- Now we can consider each case for the root.
+        | k + 3 => simp at h₁₁
+        congr
+        simp
+        exact Or.inr <| Or.inl <| Or.inr <| Or.inl
+        rw [show k + 3 + 1 = k + 4 by exact rfl]
+        exact Or.inr <| Or.inl <| Or.inr <| Or.inr
+      -- Now we can deal with the remaining cases.
+      |.X ^ m + q_1 + q_2 + r ↦
+        have h₁₃ := IH (by simp)
+        have h₁₄ := h₁₃ <| Or.inr <| Or.inl
+        have pdeg := Or.inr <| Or.inl <| Or.inr <| Or.inl
+        have h₁₅ := h₁₃ <| Or.inr <| Or.inl
+        have pdeg' := Or.inr <| Or.inl <| Or.inr <| Or.inr
+        rw [show m + 1 + 1 + 1 = m + 3 by exact rfl] at h₁₄
+        rw [show m + 3 + 1 = m + 4 by exact rfl] at h₁₅
+        match m with
+        | 0 => simp at h₁₄
+        | 1 => simp at h₁₅
+        | 2 => simp at h₁₄
+        | 3 => simp at h₁₅
+        -- Now we can consider each case for the root.
+        | k + 4 => simp at h₁₄
+        congr
+        simp
+        exact Or.inr <| Or.inl <| Or.inr <| Or.inr
+        rw [show k + 4 + 1 = k + 5 by exact rfl]
+        exact Or.inr <| Or.inl <| Or.inr <| Or.inl
+        |.X ^ n + p_2 + q + r ↦
+          have h₁₆ := IH (by simp)
+          have h₁₇ := h₁₆ <| Or.inr <| Or.inl
+          have pdeg := Or.inr <| Or.inl <| Or.inr <| Or.inl
+          have h₁₈ := h₁₆ <| Or.inr <| Or.inl
+          have pdeg' := Or.inr <| Or.inl <| Or.inr <| Or.inr
+          rw [show n + 1 = n + 1 by exact rfl] at h₁₇
+          rw [show n + 1 + 1 = n + 2 by exact rfl] at h₁₈
+          match n with
+          | 0 => simp at h₁₇
+          | 1 => simp at h₁₈
+          | 2 => simp at h₁₇
+          | 3 => simp at h₁₈
+          -- Now we can consider each case for the root.
+          | k + 2 => simp at h₁₇
+          congr
+          simp
+          exact Or.inl <| Or.inr <| Or.inl <| Or.inr
+          rw [show k + 2 + 1 = k + 3 by exact rfl]
+          exact Or.inr <| Or.inl <| Or.inr <| Or.inl
+          |.X ^ n + p_2 + q_1 + q_2 + r ↦
+            have pdeg := Or.inr <| Or.inl <| Or.inr <| Or.inl
+            have h₁₉ := h₁₆ <| Or.inr <| Or.inl
+            have pdeg' := Or.inr <| Or.inl <| Or.inr <| Or.inr
+            rw [show n + 1 + 1 = n + 2 by exact rfl] at h₁₉
+            rw [show n + 2 + 1 = n + 3 by exact rfl]
+            match n with
+            | 0 => simp at h₁₉
+            | 1 => simp
+            | 2 => simp at h₁₉
+            | 3 => simp
+            -- Now we can consider each case for the root.
+            | k + 3 => simp at h₁₉
+            congr
+            simp
+            exact Or.inr <| Or.inl <| Or.inr <| Or.inl
+            rw [show k + 3 + 1 = k + 4 by exact rfl]
+            exact Or.inr <| Or.inl <| Or.inr <| Or.inr
+
+  -- Now we can substitute the known roots.
+  have h₇ : p.eval 1 = 0 := by
+    rw [h₀]
+    norm_num
+  have h₈ : p.eval 2 = 0 := by
+    rw [h₀]
+    norm_num
+  have h₉ : p.eval 4 = 0 := by
+    rw [h₀]
+    norm_num
+  have h₁₀ : p.eval (Complex.exp (Complex.I * (2 * Real.pi / 3))) = 0 := by
+    rw [h₀]
+    simp [Complex.exp_mul_I]
+    norm_num
+    -- The last step is true because $1+2+4+e^{i\theta}=10$ and $e^{i\theta}$ has magnitude $1$.
+    congr
+    10
+    simp
+    norm_num
+
+  -- As a polynomial over $\mathbb{Z}[x]$, $p(x)$ and $(x-1)(x-2)(x-4)(x-e^{i\theta})$ are the same.
+  have h₁₁ : p = (X - C 1) * (X - C 2) * (X - C 4) * (X - C (Complex.exp (Complex.I * (2 * Real.pi / 3)))) := by
+    simp only [p]
+    rw [h₆]
+
+  -- We can evaluate the polynomial $p$ at $x = 0$.
+  have h₁₂ : p.eval 0 = 16 := by
+    simp only [p]
+    norm_num
+
+  -- We can also evaluate the polynomial $p$ at $x = 1, 2, 3, 4$.
+  have h₁₃ : p.eval 1 = 0 := by
+    simp only [p]
+    norm_num
+  have h₁₄ : p.eval 2 = 0 := by
+    simp only [p]
+    norm_num
+  have h₁₅ : p.eval 3 = 0 := by
+    simp only [p]
+    norm_num
+  have h₁₆ : p.eval 4 = 0 := by
+    simp only [p]
+    norm_num
+
+  -- We evaluate the polynomial $p$ at $x = 5$.
+  have h₁₇ : p.eval 5 = 5 ^ 6 - 10 * 5 ^ 5 + a * 5 ^ 4 + b * 5 ^ 3 + c * 5 ^ 2 + d * 5 + 16 := by
+    simp only [p]
+    ring
+
+  -- As a polynomial over $\mathbb{Z}[x]$, the value of $p(5)$ is $5^6-10·5^5+a·5^4+b·5^3+c·5^2+d·5+16$.
+  have h₁₈ : p.eval 5 = 5 ^ 6 - 10 * 5 ^ 5 + a * 5 ^ 4 + b * 5 ^ 3 + c * 5 ^ 2 + d * 5 + 16 := by
+    simp only [p]
+    ring
+
+  -- Now, we can use the fact that $p(5) = 0$.
+  rw [h₁₁, h₁₇, h₁₈] at h₁₆
+  -- We can factor out a $5$.
+  simp at h₁₆
+  have h₁₉ : 5 ∣ 5 ^ 6 - 10 * 5 ^ 5 + a * 5 ^ 4 + b * 5 ^ 3 + c * 5 ^ 2 + d * 5 := by
+    rw [show 5 ^ 6 - 10 * 5 ^ 5 + a * 5 ^ 4 + b * 5 ^ 3 + c * 5 ^ 2 + d * 5 = 5 * (5 ^ 5 - 10 * 5 ^ 4 + a * 5 ^ 3 + b * 5 ^ 2 + c * 5 + d) by ring]
+    exact Nat.dvd_mul_right 5 (5 ^ 5 - 10 * 5 ^ 4 + a * 5 ^ 3 + b * 5 ^ 2 + c * 5 + d)
+
+  -- Now we can use the fact that $5$ does not divide $5 ^ 5 - 10 \cdot 5 ^ 4$.
+  have h₂₀ : ¬ 5 ∣ 5 ^ 5 - 10 * 5 ^ 4 := by
+    norm_num
+
+  -- Now, we can use the fact that $5$ divides $a \cdot 5 ^ 3 + b \cdot 5 ^ 2 + c \cdot 5 + d$.
+  have h₂₁ : 5 ∣ a * 5 ^ 3 + b * 5 ^ 2 + c * 5 + d := by
+    have h₂₁ := Int.dvd_sub h₁₉ h₂₀
+    rw [show 5 ^ 5 - 10 * 5 ^ 4 + (a * 5 ^ 3 + b * 5 ^ 2 + c * 5 + d) = a * 5 ^ 3 + b * 5 ^ 2 + c * 5 + d by ring] at h₂₁
+    exact h₂₁
+
+  -- Now, we can use the fact that $5$ divides $a \cdot 5 ^ 3$.
+  have h₂₂ : 5 ∣ a * 5 ^ 3 := by
+    use 5 ^ 2
+    ring
+
+  -- Now, we can use the fact that $5$ divides $b \cdot 5 ^ 2 + c \cdot 5 + d$.
+  have h₂₃ : 5 ∣ b * 5 ^ 2 + c * 5 + d := by
+    exact Int.dvd_sub h₂₁ h₂₂
+
+  -- Now, we can use the fact that $5$ divides $b \cdot 5 ^ 2$.
+  have h₂₄ : 5 ∣ b * 5 ^ 2 := by
+    use b
+    ring
+
+  -- Now, we can use the fact that $5$ divides $c \cdot 5 + d$.
+  have h₂₅ : 5 ∣ c * 5 + d := by
+    exact Int.dvd_sub h₂₃ h₂₄
+
+  -- Now, we can use the fact that $5$ divides $c \cdot 5$.
+  have h₂₆ : 5 ∣ c * 5 := by
+    use c
+    ring
+
+  -- Now, we can use the fact that $5$ divides $d$.
+  have h₂₇ : 5 ∣ d := by
+    exact Int.dvd_sub h₂₅ h₂₆
+
+  -- Now, we can use the fact that $5$ divides $b \cdot 5$.
+  have h₂₈ : 5 ∣ b * 5 := by
+    use b
+    ring
+
+  -- Now, we can use the fact that $5$ divides $b$.
+  have h₂₉ : 5 ∣ b := by
+    exact Int.dvd_of_mul_dvd_mul_left h₂₈
+
+  -- Now, we can use the fact that $5$ divides $a$.
+  have h₃₀ : 5 ∣ a := by
+    have h₃₁ := Int.dvd_sub h₁₃ h₇
+    norm_num at h₃₁
+    exact Int.dvd_of_mul_dvd_mul_left h₃₁
+
+  -- Now, we can use the fact that $5$ divides $16$.
+  have h₃₁ : 5 ∣ 16 := by
+    rw [← h₁₂]
+    exact Int.dvd_eval (p := p) (x := 0) (by simp)
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₃₂ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₃₃ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₃₄ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₃₅ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₃₆ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₃₇ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₃₈ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₃₉ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₄₀ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now, we can use the fact that $5$ divides $0$.
+  have h₄₁ : 5 ∣ 0 := by
+    exact Int.dvd_sub h₃₀ h₃₁
+
+  -- Now

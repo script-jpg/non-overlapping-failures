@@ -1,0 +1,129 @@
+-- We want to relate the product $P$ of all positive odd integers less than 10000 to factorials.
+  -- To that end, let's relate $P$ to the factorial of 10000.
+  have h1 : Finset.prod (Finset.filter (fun x => ¬Even x) (Finset.range 10000)) (id : ℕ → ℕ) =
+    10000! / 2 ^ 5000 / 5000! := by
+    -- To prove this, we will construct a bijection between the set of all odd integers less than
+    -- 10000 and the set of all unordered pairs of distinct integers in $[5000]$
+    -- such that their sum is even.
+    let S := Finset.filter (fun x => ¬Even x) (Finset.range 10000)
+    let T := ((Finset.range 5000) : Finset ℕ) ×ˢ (Finset.range 5000).erase 0
+    let f : ℕ → ℕ × ℕ := fun i => (i.val % 5000, i.val % 5000 + 5000)
+    -- The function $f$ is clearly a surjection from $S$ to $T$.
+    have h1 : Set.BijOn f T S := by
+      simp [Set.BijOn]
+      refine ⟨?_,?_,?_⟩
+      {
+        -- To prove that $f$ is an surjection, given $a < 5000$ and $b < 5000$, we can find
+        -- $i < 10000$ such that $f(i) = (a, b)$.
+        intro a b ha hb
+        use (a + b) % 10000
+        simp [f]
+        constructor
+        {
+          simp [ha, hb]
+          omega
+        }
+        (
+          (Nat.even_iff (b + 1) % 2).symm ▸
+          (Nat.even_iff (a + 1) % 2).symm ▸ Even.two_dvd (a + 1) ▸
+          Nat.mul_mod_right 2 (b + 1) (b + 1 + 5000 % 2)
+        )
+      }
+      {
+        -- Next, we prove that $f$ is an injective.
+        intro i j fij
+        simp [f] at fij
+        simp [S] at fij
+        obtain ⟨⟩ := fij
+        omega
+      }
+      {
+        -- Finally, we prove that $f$ is a surjection.
+        intro k
+        simp [S] at k
+        obtain ⟨i, h⟩ := k
+        simp [T] at h
+        simp [f]
+        rcases h with ⟨⟩
+        omega
+      }
+    -- Because $f$ is a surjection, we have $\#S \leq \#T$.
+    have h2 := Finset.card_le_card_of_mem f h1
+    simp at h2
+
+    -- Because $T$ is a set of unordered pairs of distinct integers in $[5000]$
+    -- such that their sum is even.
+    have h3 : (Finset.card T) = 10000! / 2 ^ 5000 / 5000! := by
+      rw [Finset.card_eq_finsetCard, Finset.card_eq_finsetCard]
+      rw [Finset.card_product, ← Finset.card_range, ← Finset.card_erase_of_mem]
+      simp
+      rw [add_comm, mul_comm, Finset.card_range, Finset.card_eq_finsetCard,
+        ← Nat.div_div_eq_div_mul, Nat.factorial_eq_mul_factorial_succ]
+      simp
+      rfl
+    rw [h3] at h2
+    exact h2
+
+  -- This is almost the desired result, except that there is an extra factor of $5000!$ in the
+  -- denominator.
+  -- To fix this, we will construct a bijection between the set of all odd integers less than
+  -- 10000 and $S' = Finset.range 5000$.
+  have h2 : Finset.prod (Finset.filter (fun x => ¬Even x) (Finset.range 10000)) (id : ℕ → ℕ) =
+    10000! / (2 ^ 5000 * 5000!) := by
+    -- To that end, let $f$ be the function that maps $i$ to $i/2$.
+    let f : ℕ → ℕ := fun i => i / 2
+    -- The function $f$ is a bijection between $S$ and $S'$.
+    have h1 : Set.BijOn f (Finset.range 5000) S := by
+      simp [Set.BijOn]
+      refine ⟨?_,?_,?_⟩
+      {
+        -- To prove that $f$ is an surjection, given $i' < 5000$, we can find $i < 10000$ such that
+        -- $f(i) = i'$
+        intro i'
+        use 2 * i'
+        simp [f]
+        constructor
+        {
+          intro _ _
+          omega
+        }
+        {
+          intro _ _
+          omega
+        }
+      }
+      {
+        -- Next, we prove that $f$ is an injective.
+        intro i j hij
+        simp [f] at hij
+        exact hij
+      }
+      {
+        -- Finally, we prove that $f$ is a surjection.
+        intro k
+        simp [S] at k
+        obtain ⟨i, h⟩ := k
+        simp [f] at h
+        use i * 2
+        simp [h]
+        omega
+      }
+    -- Because $f$ is a surjection, we have $\#S \leq \#T$.
+    have h2 := Finset.card_le_card_of_mem f h1
+    simp at h2
+
+    -- Because $S$ is the set of all odd integers less than $10000$, we have
+    -- $\#S = P = \prod_{ odd \ i < 10000 } i$
+    let T : Finset ℕ := (Finset.range 5000).erase 0
+    have h3 : (Finset.card T) = 5000 - 1 := by
+      rw [Finset.card_eq_finsetCard, Finset.card_eq_finsetCard, Finset.card_range,
+        Finset.card_erase_of_mem]
+      simp
+    replace h3 : (Finset.card T) = 4999 := by
+      simp [h3]
+    rw [h3] at h2
+    omega
+
+  -- This proves the desired result.
+  rw [h2]
+```

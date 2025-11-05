@@ -1,0 +1,186 @@
+-- prove a lemma that x^2 < 3 / (2 * (x + y + z))
+  -- where x = (a / (a + b)) ^ (1 / 2), y = (b / (b + c)) ^ (1 / 2), z = (c / (c + a)) ^ (1 / 2)
+  have lm (x y z : ℝ) (hx : x > 0) (hy : y > 0) (hz : z > 0) (h : x ^ 2 * (x + y + z) < 3 / 2) :
+      x ^ 2 < 3 / (2 * (x + y + z)) := by
+    have : x ^ 2 * (x + y + z) * (2 * (x + y + z)) > 0 := by positivity
+    apply (div_lt_div_iff_of_pos_right this).mp
+    linarith
+
+  -- transform the inequality x^2 < 3 / (2 * (x + y + z)) to x < sqrt(3 / (2 * (x + y + z)))
+  have lm' (x y z : ℝ) (hx : x > 0) (hy : y > 0) (hz : z > 0) (h : x ^ 2 * (x + y + z) < 3 / 2) :
+      x < Real.sqrt (3 / (2 * (x + y + z))) := by
+    specialize lm x y z hx hy hz h
+    rw [Real.sqrt_lt' (by positivity)] at lm
+    linarith
+
+  -- show that (a / sqrt(a + b)) ^ 2 = a ^ 2 / (a + b)
+  have sqrt_div_sq (a b : ℝ) (hb : 0 < b) : (a / Real.sqrt b) ^ 2 = a ^ 2 / b := by
+    rw [div_pow, Real.sq_sqrt (by linarith)]
+    field_simp
+
+  -- show that a / sqrt(a + b) ≥ 3 / (2 * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)))
+  -- where x = a / sqrt(a + b), y = b / sqrt(b + c), z = c / sqrt(c + a)
+  have h₀ (a b c : ℝ) (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) :
+      a / Real.sqrt (a + b) ≥ 3 / (2 * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a))) := by
+
+    -- where x = a / sqrt(a + b), y = b / sqrt(b + c), z = c / sqrt(c + a)
+    let x := a / Real.sqrt (a + b)
+    let y := b / Real.sqrt (b + c)
+    let z := c / Real.sqrt (c + a)
+
+    -- show that x, y, z are positive
+    have hx : x > 0 := div_pos ha (Real.sqrt_pos.mpr (add_pos ha hb))
+    have hy : y > 0 := div_pos hb (Real.sqrt_pos.mpr (add_pos hb hc))
+    have hz : z > 0 := div_pos hc (Real.sqrt_pos.mpr (add_pos hc ha))
+
+    -- show that x^2 * (x + y + z) < 3 / 2
+    have h : x ^ 2 * (x + y + z) < 3 / 2 := by
+      -- calc x^2 * (x + y + z) = (a / sqrt(a + b))^2 * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a))
+      -- = a^2 / (a + b) * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a))
+      -- = a / sqrt(a + b) * (a * (a + b) / (a + b)) * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a))
+      -- = a / sqrt(a + b) * a * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)) / (a + b)
+      -- = a * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)) / (a + b)
+      -- Similarly, we have b * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)) / (b + c)
+      -- c * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)) / (c + a)
+      -- Then, the sum of these three inequalities is
+      -- a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a) ≥ 3 * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)) / (sqrt(a + b) + sqrt(b + c) + sqrt(c + a))
+      -- We can get 1 ≥ 3 / (sqrt(a + b) + sqrt(b + c) + sqrt(c + a))
+      --        sqrt(a + b) + sqrt(b + c) + sqrt(c + a) ≥ 3
+      -- sqrt(a + b) + sqrt(b + c) + sqrt(c + a) ≥ sqrt(3 * (a + b + c))
+      -- Thus, we have 3 ≤ a * b + b * c + c * a
+      calc
+        x ^ 2 * (x + y + z) = (a / Real.sqrt (a + b)) ^ 2 * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) := by rfl
+        _ = (a ^ 2 / (a + b)) * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) := by rw [sqrt_div_sq a b hb]
+        _ = a * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / (a + b) := by field_simp
+        _ < 3 / 2 := by
+          have t : a * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / (a + b) < 3 / 2 := by
+            have : a * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / (a + b) < 3 := by
+              calc
+                a * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / (a + b)
+                  ≤ a * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / (3 : ℝ) := by
+                    have : (a + b) / 3 ≥ 1 := by linarith [show a + b ≥ 3 by linarith [sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]]
+                    calc
+                      a * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / (a + b)
+                        ≤ a * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / 3 := by
+                        exact (div_le_div_iff_of_pos_right (show 0 < a + b by linarith [ha, hb])).mpr (mul_le_mul_of_nonneg_left (show 0 ≤ (a + b) / 3 by linarith) (by positivity))
+                      _ ≤ a * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / (3 : ℝ) := by
+                        refine div_le_div_of_nonneg_left?_ (by norm_num)
+                        exact mul_le_mul_of_nonneg_left (show 0 ≤ a by linarith) (by positivity)
+                _ ≤ 3 * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / 3 := by
+                  rw [mul_div_cancel_left₀]
+                  exact le_of_lt (show (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / 3 * 3 < a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) (by positivity)
+                _ = a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+                  ring_nf
+            linarith
+          linarith
+        linarith
+
+    -- apply the lemma to show that x < 3 / (2 * (x + y + z))
+    specialize lm' x y z hx hy hz h
+    -- transform the inequality to a / sqrt(a + b) < 3 / (2 * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)))
+    calc
+      -- a / sqrt(a + b) < 3 / (2 * (a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)))
+      x < Real.sqrt (3 / (2 * (x + y + z))) := by
+        exact lm' a b c ha hb hc h
+      _ = 3 / (2 * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a))) := by
+        congr
+        field_simp
+
+  -- show that 3 * (a / sqrt(3 * (a + b + c))) ≤ a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)
+  -- where x = a / sqrt(a + b), y = b / sqrt(b + c), z = c / sqrt(c + a)
+  have h₁ (a b c : ℝ) (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) :
+      3 * (a / Real.sqrt (3 * (a + b + c))) ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+
+    -- where x = a / sqrt(a + b), y = b / sqrt(b + c), z = c / sqrt(c + a)
+    let x := a / Real.sqrt (a + b)
+    let y := b / Real.sqrt (b + c)
+    let z := c / Real.sqrt (c + a)
+
+    -- show that x, y, z are positive
+    have hx : x > 0 := div_pos ha (Real.sqrt_pos.mpr (add_pos ha hb))
+    have hy : y > 0 := div_pos hb (Real.sqrt_pos.mpr (add_pos hb hc))
+    have hz : z > 0 := div_pos hc (Real.sqrt_pos.mpr (add_pos hc ha))
+
+    -- show that 1 / (sqrt(a + b)) < 1 / (sqrt(3 * (a + b + c)))
+    -- where a > 0, b > 0, c > 0
+    have h₂ (a b c : ℝ) (ha : 0 < a) : 1 / Real.sqrt (a + b) < 1 / Real.sqrt (3 * (a + b + c)) := by
+      calc
+        1 / Real.sqrt (a + b) < 1 / Real.sqrt (3 * (a + b + c)) := by
+          apply one_div_lt_one_div_of_lt
+          simp
+          linarith [show 0 < a + b by linarith [ha, hb], show 0 < 3 * (a + b + c) by positivity]
+          linarith [show a + b ≤ 3 * (a + b + c) by linarith [show 0 ≤ a by linarith, show 0 ≤ b by linarith, show 0 ≤ c by linarith]]
+
+    -- show that x < 3 / (2 * (x + y + z))
+    specialize h₀ a b c ha hb hc
+    -- show that 3 / (2 * (x + y + z)) ≤ 3 / (2 * x) + 3 / (2 * y) + 3 / (2 * z)
+    have h₃ : 3 / (2 * (x + y + z)) ≤ 3 / (2 * x) + 3 / (2 * y) + 3 / (2 * z) := by
+      field_simp
+      linarith [h₀, show 0 < x by linarith, show 0 < y by linarith, show 0 < z by linarith]
+    -- transform the inequality to 3 * x < 3 / (2 * (x + y + z))
+    have h₄ : 3 * x < 3 / (2 * (x + y + z)) := by
+      calc
+        3 * x = x * (3 * (a + b + c) / (3 * (a + b + c))) := by
+          field_simp
+        _ < x * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) / (3 * (a + b + c) / (3 * (a + b + c))) := by
+          rw [div_self]
+          rw [div_eq_mul_one_div] at h₂
+          specialize h₂ ha
+          linarith [h₂]
+        _ = 3 / (2 * (x + y + z)) := by
+          field_simp
+          ring_nf
+
+    -- show that 3 * (a / sqrt(3 * (a + b + c))) ≤ 3 * x
+    have h₅ : 3 * (a / Real.sqrt (3 * (a + b + c))) ≤ 3 * x := by
+      calc
+        3 * (a / Real.sqrt (3 * (a + b + c))) = (Real.sqrt 3 * Real.sqrt (a + b + c) * (a / Real.sqrt (3 * (a + b + c)))) / (Real.sqrt 3 * Real.sqrt (a + b + c)) := by
+          field_simp
+        _ = (Real.sqrt 3 * Real.sqrt (a + b + c) * (a / (Real.sqrt 3 * Real.sqrt (a + b + c)))) / (Real.sqrt 3 * Real.sqrt (a + b + c)) := by
+          ring_nf
+        _ = a / (Real.sqrt 3 * Real.sqrt (a + b + c) / Real.sqrt (a + b + c)) / Real.sqrt 3 := by
+          field_simp
+        _ = a / Real.sqrt 3 / Real.sqrt (a + b + c) / Real.sqrt (a + b + c) / Real.sqrt 3 := by
+          field_simp
+        _ = a / Real.sqrt 3 / Real.sqrt (a + b + c) / Real.sqrt 3 := by
+          congr
+          symm
+          apply div_div_eq_div_mul
+          rfl
+          positivity
+          positivity
+        _ = a / Real.sqrt 3 / (Real.sqrt (a + b + c) / Real.sqrt 3) := by
+          field_simp
+        _ = a / Real.sqrt (a + b) := by
+          rw [div_div, mul_comm, <-div_div, div_mul_cancel_right₀]
+          rw [Real.sqrt_div (by linarith), Real.sqrt_div (by norm_num)]
+          congr
+          rw [<-Real.sqrt_mul (by norm_num)]
+          rw [Real.sqrt_mul (by norm_num)]
+          rw [<-Real.sqrt_mul (by norm_num)]
+          ring_nf
+          norm_num
+
+    -- show that 3 * x ≤ a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)
+    have h₆ : 3 * x ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+      calc
+        3 * x ≤ 3 / (2 * (x + y + z)) := by
+          apply le_of_lt
+          exact h₄
+        _ ≤ 3 / (2 * x) + 3 / (2 * y) + 3 / (2 * z) := by
+          exact h₃
+        _ = 3 * x / 2 + 3 * y / 2 + 3 * z / 2 := by
+          field_simp
+        _ ≤ x + y + z := by
+          linarith [show 0 ≤ x by linarith, show 0 ≤ y by linarith, show 0 ≤ z by linarith]
+        _ = a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+          rw [div_div, div_div, div_div]
+          rw [Real.sq_sqrt (by linarith), Real.sq_sqrt (by linarith), Real.sq_sqrt (by linarith)]
+          ring_nf
+
+    -- combine the above results
+    linarith
+
+  -- show that 3 ≤ a * b + b * c + c * a implies 3 * (a / sqrt(3 * (a + b + c))) ≤ a / sqrt(a + b) + b / sqrt(b + c) + c / sqrt(c + a)
+  -- where a > 0, b > 0, c > 0
+  have h₂ (a b c : ℝ) (ha : 0 < a

@@ -1,0 +1,226 @@
+-- Let us first note that $(xy)^2 = 64^2 = 4096$.
+
+  -- Let $u = \log_2{x}$ and $v = \log_2{y}$. Then:
+
+  -- 1. $u = \frac{\log{x}}{\log{2}}$ and $v = \frac{\log{y}}{\log{2}}$.
+
+  -- 2. $\log_2{x} = \log_y{16}$ implies $\frac{\log{x}}{\log{2}} = \frac{\log{16}}{\log{y}}$ which implies $u \log{y} = v \log{2}$.
+
+  -- 3. $xy = 64$ implies $\log{(xy)} = \log{64}$ which implies $\log{x} + \log{y} = 6 \log{2}$.
+
+  have h₃ : y < 0 ∨ y > 0 := by
+    by_contra! h₃
+    cases h₃ with
+    | inl h₃ =>
+      -- In this case, we have $\log{y} = 0$.
+      -- Thus, $\log_2{x} = \frac{\log{x}}{\log{2}} = \frac{\log{0}}{\log{2}} = \frac{\log{0}}{0}$ which is undefined.
+      -- Hence, $y \neq 0$.
+      have : 0 < y := by
+        rw [h₃]
+        exact (lt_of_le_of_ne h₃.1 (by simpa)).2 h₃.2
+      absurd h₃.2
+      exact this
+    | inr h₃ =>
+      -- In this case, we have $\log{y} = 0$.
+      -- Thus, $\log_2{x} = \frac{\log{x}}{\log{2}} = \frac{\log{0}}{\log{2}} = \frac{\log{0}}{0}$ which is undefined.
+      -- Hence, $y \neq 0$.
+      have : 0 < y := by
+        rw [h₃]
+        exact (lt_of_le_of_ne h₃.1 (by simpa)).2 h₃.2
+      absurd h₃.2
+      exact this
+
+  rcases h₃ with h₃ | h₃ <;> {
+    have h₄ : (Real.log (x / y) / Real.log 2) ^ 2 = (Real.log (x / y) ^ 2) / (Real.log 2 ^ 2) := by
+      rw [div_pow]
+    rw [h₄]
+    have h₅ : Real.log (x / y) ^ 2 = (Real.log x - Real.log y) ^ 2 := by
+      rw [Real.log_div (by linarith) (by linarith)]
+    rw [h₅]
+    have h₆ : (Real.log x - Real.log y) ^ 2 = (Real.log x ^ 2 - 2 * Real.log x * Real.log y + Real.log y ^ 2) := by
+      ring
+    rw [h₆]
+    have h₇ : Real.log x ^ 2 - 2 * Real.log x * Real.log y + Real.log y ^ 2 = (Real.log x ^ 2 - Real.log x * Real.log y) + (Real.log y ^ 2 - Real.log x * Real.log y) := by
+      ring
+    rw [h₇]
+    have h₈ : (Real.log x ^ 2 - Real.log x * Real.log y) / Real.log 2 ^ 2 = (Real.log x / Real.log 2) ^ 2 * (Real.log y / Real.log 2) / (Real.log 2 ^ 2) := by
+      field_simp
+      ring
+    have h₉ : (Real.log y ^ 2 - Real.log x * Real.log y) / Real.log 2 ^ 2 = (Real.log y / Real.log 2) ^ 2 * (Real.log x / Real.log 2) / (Real.log 2 ^ 2) := by
+      field_simp
+      ring
+    rw [h₈, h₉]
+    -- Now, let's set $u = \log_2{x}$ and $v = \log_2{y}$.
+    let u := (Real.log x) / (Real.log 2)
+    let v := (Real.log y) / (Real.log 2)
+    -- Then, $(u, v)$ satisfies the equation system:
+    -- 1. $u \log{2} = v \log{2}$
+    -- 2. $v \log{2} = 4u \log{2}$
+    -- 3. $u + v = 6 \log{2} / \log{2} = 6$.
+    have h₁₀ : u * Real.log 2 = v * Real.log 2 := by
+      simp [u, v]
+      rw [h₁]
+      field_simp
+      ring
+    have h₁₁ : v * Real.log 2 = 4 * u * Real.log 2 := by
+      simp [u, v]
+      rw [h₁]
+      field_simp
+      ring
+    have h₁₂ : u + v = 6 := by
+      simp [u, v]
+      rw [h₂]
+      field_simp
+      ring_nf
+      rw [Real.log_mul (by norm_num) (by linarith), Real.log_mul (by norm_num) (by linarith)]
+      simp
+      have h₁₂ : Real.log (64 : ℝ) = 6 * Real.log (2 : ℝ) := by
+        calc
+          Real.log (64 : ℝ) = Real.log (2 ^ (6 : ℕ)) := by norm_num
+          _ = 6 * Real.log (2 : ℝ) := by simp [Real.log_pow]
+      rw [h₁₂]
+      ring
+    -- By solving this system, we get $(u, v) = (\frac{4}{3}, \frac{14}{3})$ or $(u, v) = (8, -2)$.
+    have h₁₃ : (u - 8) * (u - 4 / 3) = 0 := by
+      calc
+        (u - 8) * (u - 4 / 3) = u ^ 2 - 8 * u - (4 / 3) * u + 8 * (4 / 3) := by ring
+        _ = u ^ 2 - 12 * u + 32 / 3 := by ring
+        _ = (u + v) ^ 2 - 16 * (u + v) + 32 / 3 := by rw [←h₁₂]; ring
+        _ = 6 ^ 2 - 16 * 6 + 32 / 3 := by rw [h₁₂]
+        _ = 0 := by norm_num
+    simp at h₁₃
+    rcases h₁₃ with h₁₃ | h₁₃
+    · -- If $(u, v) = (8, -2)$, then $(\log_2{\frac{x}{y}})^2 = (\log_2{x} - \log_2{y})^2 = (u - v)^2 = (8 - (-2))^2 = 100$.
+      have h₁₄ : Real.log (x / y) = 10 := by
+        simp [u, v]
+        calc
+          Real.log (x / y) = Real.log x - Real.log y := by simp [Real.log_div]
+          _ = u * Real.log 2 - v * Real.log 2 := by rw [h₁₀, h₁₁]
+          _ = (u - v) * Real.log 2 := by ring
+          _ = (8 - (-2)) * Real.log 2 := by rw [h₁₃]
+          _ = 10 * Real.log 2 := by ring
+          _ = 10 * (Real.log (2 ^ (10 : ℕ))) := by rw [Real.log_pow]
+          _ = 10 * (10 * Real.log 2) := by rw [Real.log_pow]
+          _ = 100 * Real.log 2 := by ring
+          _ = 10 := by rw [mul_comm (100 : ℝ), ←mul_assoc, mul_right_comm, Real.log_two_mul_two]
+          _ = (Real.log (2 ^ (10 : ℕ))) := by rw [Real.log_pow]
+          _ = Real.log (2 ^ 10) := by rw [Real.log_pow]
+      rw [h₁₄]
+      norm_num
+      exact (log_ne_zero_iff (by norm_num) (by norm_num)).2 h₀.1
+    · -- If $(u, v) = (\frac{4}{3}, \frac{14}{3})$, then $(\log_2{\frac{x}{y}})^2 = (\log_2{x} - \log_2{y})^2 = (u - v)^2 = (\frac{4}{3} - \frac{14}{3})^2 = \frac{100}{9}$.
+      have h₁₄ : Real.log (x / y) = -10 / 3 := by
+        simp [u, v]
+        calc
+          Real.log (x / y) = Real.log x - Real.log y := by simp [Real.log_div]
+          _ = u * Real.log 2 - v * Real.log 2 := by rw [h₁₀, h₁₁]
+          _ = (u - v) * Real.log 2 := by ring
+          _ = (4 / 3 - (14 / 3)) * Real.log 2 := by rw [h₁₃]
+          _ = -10 / 3 * Real.log 2 := by ring
+          _ = -10 / 3 * (Real.log (2 ^ (10 : ℕ))) := by rw [Real.log_pow]
+          _ = -10 / 3 * (10 * Real.log 2) := by rw [Real.log_pow]
+          _ = -100 / 3 * Real.log 2 := by ring
+          _ = (-10 / 3) := by rw [mul_comm (-100 / 3 : ℝ), ←mul_assoc, mul_right_comm, Real.log_two_mul_two]; norm_num
+          _ = Real.log (2 ^ (-10 / 3 : ℤ)) := by rw [Real.log_rpow]
+      rw [h₁₄]
+      norm_num
+      exact (log_ne_zero_iff (by norm_num) (by norm_num)).2 h₀.1
+  }
+}
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+/- Positive real numbers $x \neq 1$ and $y \neq 1$ satisfy $\log_2{x} = \log_y{16}$ and $xy = 64$. What is $(\log_2{\tfrac{x}{y}})^2$?
+
+$\textbf{(A) } \frac{25}{2} \qquad\textbf{(B) } 20 \qquad\textbf{(C) } \frac{45}{2} \qquad\textbf{(D) } 25 \qquad\textbf{(E) } 32$ Show that it is \textbf{(B) } 20.-/
+
+theorem amc12a_2019_p12 (x y : ℝ) (h₀ : x ≠ 1 ∧ y ≠ 1)
+    (h₁ : Real.log x / Real.log 2 = Real.log 16 / Real.log y) (h₂ : x * y = 64) :
+    (Real.log (x / y) / Real.log 2) ^ 2 = 20 := by
+  have h₃ : y < 0 ∨ y > 0 := by
+    by_contra! h₃
+    cases h₃ with
+    | inl h₃ =>
+      -- In this case, we have $\log{y} = 0$.
+      -- Thus, $\log_2{x} = \frac{\log{x}}{\log{2}} = \frac{\log{0}}{\log{2}} = \frac{\log{0}}{0}$ which is undefined.
+      -- Hence, $y \neq 0$.
+      have : 0 < y := by
+        rw [h₃]
+        exact (lt_of_le_of_ne h₃.1 (by simpa)).2 h₃.2
+      absurd h₃.2
+      exact this
+    | inr h₃ =>
+      -- In this case, we have $\log{y} = 0$.
+      -- Thus, $\log_2{x} = \frac{\log{x}}{\log{2}} = \frac{\log{0}}{\log{2}} = \frac{\log{0}}{0}$ which is undefined.
+      -- Hence, $y \neq 0$.
+      have : 0 < y := by
+        rw [h₃]
+        exact (lt_of_le_of_ne h₃.1 (by simpa)).2 h₃.2
+      absurd h₃.2
+      exact this
+  rcases h₃ with h₃ | h₃ <;> {
+    have h₄ : (Real.log (x / y) / Real.log 2) ^ 2 = (Real.log (x / y) ^ 2) / (Real.log 2 ^ 2) := by
+      rw [div_pow]
+    rw [h₄]
+    have h₅ : Real.log (x / y) ^ 2 = (Real.log x - Real.log y) ^ 2 := by
+      rw [Real.log_div (by linarith) (by linarith)]
+    rw [h₅]
+    have h₆ : (Real.log x - Real.log y) ^ 2 = (Real.log x ^ 2 - 2 * Real.log x * Real.log y + Real.log y ^ 2) := by
+      ring
+    rw [h₆]
+    have h₇ : Real.log x ^ 2 - 2 * Real.log x * Real.log y + Real.log y ^ 2 = (Real.log x ^ 2 - Real.log x * Real.log y) + (Real.log y ^ 2 - Real.log x * Real.log y) := by
+      ring
+    rw [h₇]
+    have h₈ : (Real.log x ^ 2 - Real.log x * Real.log y) / Real.log 2 ^ 2 = (Real.log x / Real.log 2) ^ 2 * (Real.log y / Real.log 2) / (Real.log 2 ^ 2) := by
+      field_simp
+      ring
+    have h₉ : (Real.log y ^ 2 - Real.log x * Real.log y) / Real.log 2 ^ 2 = (Real.log y / Real.log 2) ^ 2 * (Real.log x / Real.log 2) / (Real.log 2 ^ 2) := by
+      field_simp
+      ring
+    rw [h₈, h₉]
+    -- Now, let's set $u = \log_2{x}$ and $v = \log_2{y}$.
+    let u := (Real.log x) / (Real.log 2)
+    let v := (Real.log y) / (Real.log 2)
+    -- Then, $(u, v)$ satisfies the equation system:
+    -- 1. $u \log{2} = v \log{2}$
+    -- 2. $v \log{2} = 4u \log{2}$
+    -- 3. $u + v = 6 \log{2} / \log{2} = 6$.
+    have h₁₀ : u * Real.log 2 = v * Real.log 2 := by
+      simp [u, v]
+      rw [h₁]
+      field_simp
+      ring
+    have h₁₁ : v * Real.log 2 = 4 * u * Real.log 2 := by
+      simp [u, v]
+      rw [h₁]
+      field_simp
+      ring
+    have h₁₂ : u + v = 6 := by
+      simp [u, v]
+      rw [h₂]
+      field_simp
+      ring_nf
+      rw [Real.log_mul (by norm_num) (by linarith), Real.log_mul (by norm_num) (by linarith)]
+      simp
+      have h₁₂ : Real.log (64 : ℝ) = 6 * Real.log (2 : ℝ) := by
+        calc
+          Real.log (64 : ℝ) = Real.log (2 ^ (6 : ℕ)) := by norm_num
+          _ = 6 * Real.log (2 : ℝ) := by simp [Real.log_pow]
+      rw [h₁₂]
+      ring
+    -- By solving this system, we get $(u, v) = (\frac{4}{3}, \frac{14}{3})$ or $(u, v) = (8, -2)$.
+    have h₁₃ : (u - 8) * (u - 4 / 3) = 0 := by
+      calc
+        (u - 8) * (u - 4 / 3) = u ^ 2 - 8 * u - (4 / 3) * u + 8 * (4 / 3) := by ring
+        _ = u ^ 2 - 12 * u + 32 / 3 := by ring
+        _ = (u + v) ^ 2 - 16 * (u + v) + 32 / 3 := by rw [←h₁₂]; ring
+        _ = 6 ^ 2 - 16 * 6 + 32 / 3 := by rw [h₁₂]
+        _ = 0 := by norm_num
+    simp at h₁₃
+    rcases h₁₃ with h₁₃ | h₁₃
+    · -- If $(u,

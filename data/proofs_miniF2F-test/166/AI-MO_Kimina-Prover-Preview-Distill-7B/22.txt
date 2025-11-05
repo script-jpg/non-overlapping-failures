@@ -1,0 +1,72 @@
+-- define a probability mass function $p(i) = \frac{1}{n}$
+  let p : ℕ → NNReal := fun _ => (1 : NNReal) / (n : NNReal)
+
+  -- define a probability measure $P$ on the power set of $[0, n)$
+  let P : Set (Finset.range n) → NNReal := fun s => (∑ x in s, a x)
+
+  -- clearly, $P$ is a measure since $\sum_{i=0}^{n-1} a_i = n$
+  have hP : IsMeasure P := by
+    simp [IsMeasure, Finset.sum, h₀]
+
+  -- define the set function $\mu$ to be the counting measure
+  let μ : Set (Finset.range n) → NNReal := fun s => s.card
+
+  -- $\mu$ is a measure since $s$ is finite
+  have hμ : IsMeasure μ := by
+    simp [IsMeasure, Finset.card, Finset.sum]
+
+  -- $\mu$ is the Lebesgue measure on the power set of $[0, n)$
+  have hμP : μ = Lebesgue Measure P := by
+    apply Eq.symm
+    refine Eq.mpr?_
+    simp only [Lebesgue, Finset.sum_coe_sort]
+    simp [Set.mem_range]
+
+  -- refine our assumption that $a$ is a probability mass function
+  have h₁ : (∑ i ∈ Finset.range n, p i) = 1 := by
+    simp [Finset.sum_const, Finset.card_range, one_div, mul_div_cancel_right₀]
+    norm_cast
+
+  -- refine our assumption that $P$ is a probability measure
+  have h₂ : P (∅ : Finset.range n) = 0 := by simp [P, Finset.sum_empty]
+
+  -- define the measure space
+  let X : MeasureSpace (Finset.range n) := ⟨Finset.range n, hμ, hP⟩
+
+  -- define the random variable $f(i) = a_i$
+  let f : NNReal := fun i => a i
+
+  -- $f$ is measurable since the domain is finite
+  have : Measurable f := by
+    simp [measurable]
+
+  -- expectation of $f$ under $\mu$ is $\sum_{i=0}^{n-1} a_i / n = 1$
+  have h₃ : (Equiv expectation f μ) = 1 := by
+    simp [Equiv, f, μ, Finset.sum, h₀, h₁]
+
+  -- expectation of $f$ under $P$ is $\sum_{i=0}^{n-1} a_i^2 / n \leq 1$
+  have h₄ : (Equiv expectation f P) ≤ 1 := by
+    simp [Equiv, f, P, Finset.sum, Finset.card]
+    apply div_le_one (by norm_num)
+    exact sq_sum_le_card_mul_sum_sq a n
+
+  -- $\sum_{i=0}^{n-1} a_i^2 / n = \sum_{i=0}^{n-1} a_i / n \cdot a_i = 1 \cdot \sum_{i=0}^{n-1} a_i = \sum_{i=0}^{n-1} a_i = n$
+  have h₅ : (Equiv expectation f P) = (∑ i ∈ Finset.range n, a i) / (n : NNReal) := by
+    simp [Equiv, f, P, Finset.sum]
+    rw [div_eq_iff (by norm_num)]
+    ring
+    exact h₀
+
+  -- since $P$ is a probability measure, we have $\sum_{i=0}^{n-1} a_i^2 / n \leq 1$
+  have h₆ : (∑ i ∈ Finset.range n, a i ^ 2) / (n : NNReal) ≤ 1 := by
+    rw [h₅] at h₄
+    exact h₄
+
+  -- by AM-GM, $\sum_{i=0}^{n-1} a_i \leq n$
+  have h₇ : (∑ i ∈ Finset.range n, a i) ≤ (n : NNReal) := by
+    apply (div_le_one (by norm_num)).mp at h₆
+    exact h₆
+
+  -- hence $\prod_{i=0}^{n-1} a_i \leq 1$
+  simp [Finset.prod]; exact h₇
+```

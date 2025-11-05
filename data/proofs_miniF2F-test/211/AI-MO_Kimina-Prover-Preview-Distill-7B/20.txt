@@ -1,0 +1,50 @@
+-- AB is a two-digit number, so $1 \leq A \leq 9$ and $B \leq 9$.
+  rcases h₀ with ⟨ha₁, ha₂, hb⟩
+
+  -- $100 \leq AB^3 = 912673$, so $AB \geq \sqrt[3]{1000}$.
+  have h₂ : a * 10 + b ≥ 100 ^ (3 : ℝ) := by
+    calc
+      _ = (a * 10 + b) ^ 3 ^ (1 / 3 : ℝ) := by rw [← Real.rpow_mul (by positivity)]; field_simp
+      _ ≥ (100 : ℝ) ^ (1 / 3 : ℝ) := by
+        rw [← Real.rpow_le_rpow_iff (by positivity) (by positivity) (by norm_num)]
+        simp [h₁]
+      _ = 100 ^ (3 : ℝ) := by field_simp
+
+  -- Since $1000 \leq 912673$, this gives us no useful information.
+  have : ¬ a * 10 + b ≥ 1000 := by simp; linarith
+
+  -- $912673 < 1000000$, so $AB < 1000000$.
+  have h₃ : a * 10 + b < 1000 := by
+    calc
+      _ = (a * 10 + b) ^ 3 ^ (1 / 3 : ℝ) := by rw [← Real.rpow_mul (by positivity)]; field_simp
+      _ ≤ (912673 : ℝ) ^ (1 / 3 : ℝ) := by
+        rw [← Real.rpow_le_rpow_iff (by positivity) (by positivity) (by norm_num)]
+        simp [h₁]
+      _ < 1000 := by norm_num
+
+  -- So $AB$ is a three-digit number.
+  have : (a * 10 + b) ≥ 100 := by linarith
+
+  -- This gives us $A \neq 0$.
+  have h₄ : a ≠ 0 := by
+    by_contra! h₄
+    have : a = 0 := by linarith
+    have : a * 10 + b = b := by rw [this]; ring
+    rw [this] at h₄
+    omega
+
+  -- $A + B = 16$.
+  have h₅ : a + b = 16 := by
+    revert h₁
+    -- Let $A' = 0$ if $A = 0$ and $A'$ = $A$ otherwise.
+    -- Let $B' = 0$ if $B = 0$ and $B'$ = $B$ otherwise.
+    -- Let $AB' = 10A' + B'$.
+    -- By the above, $AB^3 = 912673$ and $A + B = A' + B'$.
+    -- The claim follows.
+    interval_cases a <;> interval_cases b <;> norm_num
+    all_goals
+      simp [h₁]
+
+  -- The claim follows.
+  exact h₅
+```

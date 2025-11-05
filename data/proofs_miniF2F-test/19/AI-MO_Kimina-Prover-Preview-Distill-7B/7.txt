@@ -1,0 +1,106 @@
+-- show that sqrt(1 + 2x) is less than 1 + x
+  have h3 : Real.sqrt (1 + 2 * x) < 1 + x := by
+    apply Real.sqrt_lt
+    linarith
+    linarith
+    intro t
+    rw [Real.sqrt_eq_iff_eq_sq] at t
+    linarith
+    linarith
+
+  -- show that 1 - sqrt(1 + 2x) is positive
+  have h4 : 0 < 1 - Real.sqrt (1 + 2 * x) := by
+    linarith
+
+  -- show that 4 * x ^ 2 / (1 - √(1 + 2x)) ^ 2 < 2 * x + 9 is equivalent to
+  -- (1 - sqrt(1 + 2x))^2 < (2 * x + 9) / 4 * (1 - sqrt(1 + 2x)) ^ 2
+  have h5 : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 2 * x + 9 ↔
+    (1 - Real.sqrt (1 + 2 * x)) ^ 2 < (2 * x + 9) / 4 * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    constructor
+    · intro h
+      have : 0 < 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+        apply div_pos
+        linarith
+        linarith
+      have aux : 0 < (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+        apply sq_pos_of_pos
+        linarith
+      have : 0 < (2 * x + 9) / 4 * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+        apply mul_pos
+        linarith
+        apply sq_pos_of_pos
+        linarith
+      have : (1 - Real.sqrt (1 + 2 * x)) ^ 2 * (4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2) < (1 - Real.sqrt (1 + 2 * x)) ^ 2 * (2 * x + 9) := by
+        apply mul_lt_mul_of_pos_left
+        assumption
+        exact aux
+      rw [mul_div_assoc] at this
+      exact this
+    · intro h
+      have : 0 < (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+        apply sq_pos_of_pos
+        linarith
+      have : 0 < (2 * x + 9) / 4 * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+        apply mul_pos
+        linarith
+        apply sq_pos_of_pos
+        linarith
+      have : (1 - Real.sqrt (1 + 2 * x)) ^ 2 * (4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2) < (1 - Real.sqrt (1 + 2 * x)) ^ 2 * (2 * x + 9) / 4 * (1 - Real.sqrt (1 + 2 * x)) ^ 2) := by
+        apply mul_lt_mul_of_pos_left
+        assumption
+        exact this
+      rw [mul_div_assoc] at this
+      exact this
+
+  -- show that the inequality is equivalent to 1 - sqrt(1 + 2x) < (45 / 8 - x) * (1 - sqrt(1 + 2x))
+  have h6 : (1 - Real.sqrt (1 + 2 * x)) ^ 2 < (2 * x + 9) / 4 * (1 - Real.sqrt (1 + 2 * x)) ^ 2 ↔
+    1 - Real.sqrt (1 + 2 * x) < (45 / 8 - x) * (1 - Real.sqrt (1 + 2 * x)) := by
+    constructor
+    · intro h
+      have : 0 < (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+        apply sq_pos_of_pos
+        linarith
+      have aux : 0 < 1 - Real.sqrt (1 + 2 * x) := by
+        linarith
+      have : 1 - Real.sqrt (1 + 2 * x) < (45 / 8 - x) := by
+        apply (div_lt_iff₀' this).mp
+        linarith
+      linarith
+    · intro h
+      have : 0 < 1 - Real.sqrt (1 + 2 * x) := by
+        linarith
+      have : 0 < (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+        apply sq_pos_of_pos
+        linarith
+      apply (div_lt_div_iff₀' this).mpr
+      linarith
+
+  -- combine the inequalities
+  rw [h5, h6]
+
+  -- we split the goal into two
+  constructor
+
+  -- first, show that 1 - √(1 + 2x) < (45 / 8 - x) * (1 - √(1 + 2x)) implies -1 / 2 ≤ x
+  · intro h
+    contrapose! h
+    have : 45 / 8 - x ≤ 1 - Real.sqrt (1 + 2 * x) := by
+      linarith
+    have : 0 ≤ 45 / 8 - x := by linarith
+    have : x ≤ Real.sqrt (1 + 2 * x) := by
+      apply Real.le_sqrt_of_sq_le
+      linarith
+    linarith
+
+  -- next, show that -1 / 2 ≤ x implies 1 - √(1 + 2x) < (45 / 8 - x) * (1 - √(1 + 2x))
+  · intro h
+    have aux : 45 / 8 - x > 1 - Real.sqrt (1 + 2 * x) := by
+      have : (45 / 8 - x) ^ 2 > (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+        apply sq_lt_sq'
+        linarith
+        linarith
+        linarith
+      apply (sq_lt_sq₀_iff₀ (by linarith) (by linarith)).mp at this
+      linarith
+    linarith
+```

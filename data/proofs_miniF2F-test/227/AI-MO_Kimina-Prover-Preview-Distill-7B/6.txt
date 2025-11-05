@@ -1,0 +1,48 @@
+-- multiply h₁ by y, h₂ by z, and h₃ by x and add them up
+  have : (x + 1 / y) * y + (y + 1 / z) * z + (z + 1 / x) * x = 4 * y + 1 * z + 7 / 3 * x := by
+    rw [h₁, h₂, h₃]
+  have : x * y + 1 + y * z + 1 + z * x + 1 = 4 * y + z + 7 / 3 * x := by
+    linarith only [this]
+  have : x * y + y * z + z * x + 3 = 4 * y + z + 7 / 3 * x := by
+    linarith only [this]
+
+  -- If we can prove $xyz = 1$, then we can compute the desired value.
+  suffices goal : x * y * z = 1 by
+    rw [goal]
+    norm_num
+
+  -- It suffices to prove that $(xyz)^2 = 1$.
+  suffices goal : (x * y * z)^2 = 1 by
+    rw [sq_eq_one_iff] at goal
+    exact goal
+
+  -- Notice that $(xyz)^2 = (xy)(yz)(zx)$.
+  rw [show (x * y * z)^2 = (x * y) * (y * z) * (z * x) by ring]
+  -- Substitute the desired equality.
+  rw [show x * y + y * z + z * x = 4 * y + z + 7 / 3 * x - 3 by linarith only [this]]
+  -- Use the `AM-GM` inequality.
+  try apply le_of_sub_nonpos
+  -- We have $(xy - 1)^2 + (yz - 1)^2 + (zx - 1)^2 \leq 0$.
+  apply add_nonpos_of_nonpos_of_nonpos
+  -- We have $(xy - 1)^2 \leq 0$.
+  apply add_nonpos_of_nonpos_of_nonpos
+  -- We have $(xy - 1)^2 \leq 0$.
+  apply sq_nonpos_of_nonneg
+  -- We have $xy \geq 0$ because $x,y \geq 0$.
+  apply mul_nonneg
+  exact h₀.left
+  exact h₀.right.left
+  -- We have $(yz - 1)^2 \leq 0$.
+  apply sq_nonpos_of_nonneg
+  -- We have $yz \geq 0$ because $y,z \geq 0$.
+  apply mul_nonneg
+  exact h₀.right.left
+  exact h₀.right.right
+  -- We have $(zx - 1)^2 \leq 0$.
+  apply sq_nonpos_of_nonneg
+  -- We have $zx \geq 0$ because $z,x \geq 0$.
+  apply mul_nonneg
+  exact h₀.right.right
+  exact h₀.left
+
+```

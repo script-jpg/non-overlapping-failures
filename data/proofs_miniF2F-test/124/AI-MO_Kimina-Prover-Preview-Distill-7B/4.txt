@@ -1,0 +1,90 @@
+-- Let $a$ and $b$ be real numbers.
+  -- We need to show that $\frac{|a+b|}{1+|a+b|} \leq \frac{|a|}{1+|a|} + \frac{|b|}{1+|b|}$.
+
+  set x := abs a with hx
+  set y := abs b with hy
+  set z := abs (a + b) with hz
+
+  -- Note that $|a+b| \leq |a| + |b|$ by the triangle inequality.
+  have h1 : z ≤ x + y := by
+    rw [hz, hx, hy]
+    exact abs_add a b
+
+  -- Note that $|a| \geq 0$, $|b| \geq 0$ and $|a+b| \geq 0$.
+  have h2 : x ≥ 0 := by
+    rw [hx]
+    exact abs_nonneg a
+  have h3 : y ≥ 0 := by
+    rw [hy]
+    exact abs_nonneg b
+  have h4 : z ≥ 0 := by
+    rw [hz]
+    exact abs_nonneg (a + b)
+```
+
+  -- We consider two cases.
+  by_cases h : x + y = 0 ∨ x = 0 ∨ y = 0
+  -- If $x + y = 0$ or $x = 0$ or $y = 0$, then it is straightforward to check that
+  -- $\frac{z}{1+z} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+  · rcases h with (h | h | h)
+    · simp [h, hx, hy]
+      norm_num
+    · simp [h, hx]
+      norm_num
+      linarith only [abs_nonneg b, h2]
+    · simp [h, hy]
+      norm_num
+      linarith only [abs_nonneg a, h3]
+
+  -- Now assume that $x + y \neq 0$, $x \neq 0$ and $y \neq 0$.
+  -- We have $\frac{z}{1+z} = \frac{z}{1+z} \cdot \frac{x+y}{x+y} = \frac{z(x+y)}{(1+z)(x+y)}$.
+  have h5 : z / (1 + z) = z * (x + y) / ((1 + z) * (x + y)) := by
+    field_simp
+    ring
+  rw [h5]
+
+  -- We have $\frac{z(x+y)}{(1+z)(x+y)} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+  -- It is enough to show that $\frac{z(x+y)}{(1+z)(x+y)} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+  have h6 : z * (x + y) / ((1 + z) * (x + y)) ≤ x / (1 + x) + y / (1 + y) := by
+```
+
+    -- $\frac{z(x+y)}{(1+z)(x+y)} \leq \frac{x}{1+x} + \frac{y}{1+y}$.
+    -- It is enough to show that $z(x+y)(1+x)(1+y) \leq x(1+y)(1+z) + y(1+x)(1+z)$.
+    suffices h6 : z * (x + y) * (1 + x) * (1 + y) ≤ x * (1 + y) * (1 + z) + y * (1 + x) * (1 + z) by
+      have h6 : (1 + z) * (x + y) > 0 := by
+        have h6 : 1 + z > 0 := by
+          rw [hz]
+          exact one_lt_add_abs _
+        have h7 : x + y > 0 := by
+          linarith only [h2, h3]
+        exact mul_pos h6 h7
+      have h7 : (1 + x) * (1 + y) > 0 := by
+        have h7 : 1 + x > 0 := by
+          rw [hx]
+          exact one_lt_add_abs _
+        have h8 : 1 + y > 0 := by
+          rw [hy]
+          exact one_lt_add_abs _
+        exact mul_pos h7 h8
+      exact (div_le_div_iff h6 h7).mpr h6
+
+    -- $z(x+y)(1+x)(1+y) \leq x(1+y)(1+z) + y(1+x)(1+z)$.
+    -- It is enough to show that $z(x+y)(1+x)(1+y) - x(1+y)(1+z) - y(1+x)(1+z) \leq 0$.
+    suffices h7 : z * (x + y) * (1 + x) * (1 + y) - x * (1 + y) * (1 + z) - y * (1 + x) * (1 + z) ≤ 0 by
+      linarith only [h7]
+
+    -- Note that $z \leq x + y$ and $x, y > 0$, so $0 < z \leq x + y$.
+    have hzpos : 0 < z := by
+      rw [hz]
+      exact abs_pos.mpr (by linarith only [h2, h3])
+    have h7 : z * (x + y) - x * (1 + y) - y * (1 + x) ≤ 0 := by
+      calc
+        _ = z * (x + y) - (x + y) - x * y - y * x := by ring
+        _ ≤ z * (x + y) - (x + y) := by
+          linarith only [hzpos, h2, h3]
+        _ = _ := by ring
+    linarith only [h7]
+
+  exact h6
+
+```

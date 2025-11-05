@@ -1,0 +1,117 @@
+-- $0 < \sqrt{a+b}$, $0 < \sqrt{b+c}$, $0 < \sqrt{c+a}$.
+  have h₂ : 0 < Real.sqrt (a + b) := by
+    apply Real.sqrt_pos_of_pos
+    linarith
+  have h₃ : 0 < Real.sqrt (b + c) := by
+    apply Real.sqrt_pos_of_pos
+    linarith
+  have h₄ : 0 < Real.sqrt (c + a) := by
+    apply Real.sqrt_pos_of_pos
+    linarith
+
+  -- $3/\sqrt{2} = \sqrt{9/2} \leq \sqrt{a^2/(a+b)} + \sqrt{b^2/(b+c)} + \sqrt{c^2/(c+a)}$.
+  have h₅ : 3 / Real.sqrt 2 = Real.sqrt (9 / 2) := by
+    rw [div_eq_iff (by norm_num)]
+    rw [Real.sqrt_eq_iff_eq_sq]
+    norm_num
+    rw [← Real.sqrt_mul (by norm_num)]
+    norm_num
+    linarith
+  have h₆ : Real.sqrt (9 / 2) ≤ a ^ 2 / Real.sqrt (a + b) + b ^ 2 / Real.sqrt (b + c) + c ^ 2 / Real.sqrt (c + a) := by
+    have h₆ : (a ^ 2 / Real.sqrt (a + b) + b ^ 2 / Real.sqrt (b + c) + c ^ 2 / Real.sqrt (c + a))  ^ 2
+      ≥ (9 / 2) := by
+      -- $x^2$ is convex on $[0, \infty)$, so by Jensen's inequality,
+      -- $(a^2/(a+b) + b^2/(b+c) + c^2/(c+a))^2 \geq (3^2)/(3((a+b)+(b+c)+(c+a))/2) = 9/2$.
+      have h₆ : ((a ^ 2)  / Real.sqrt (a + b))  ^ 2 = (a ^ 4)  / ((Real.sqrt (a + b))  ^ 2) := by ring_nf
+      have h₇ : ((b ^ 2)  / Real.sqrt (b + c))  ^ 2 = (b ^ 4)  / ((Real.sqrt (b + c))  ^ 2) := by ring_nf
+      have h₈ : ((c ^ 2)  / Real.sqrt (c + a))  ^ 2 = (c ^ 4)  / ((Real.sqrt (c + a))  ^ 2) := by ring_nf
+      have h₉ : (a ^ 2 / Real.sqrt (a + b) + b ^ 2 / Real.sqrt (b + c) + c ^ 2 / Real.sqrt (c + a))  ^ 2
+        = (a ^ 4 / (Real.sqrt (a + b))  ^ 2 + b ^ 4 / (Real.sqrt (b + c))  ^ 2 + c ^ 4 / (Real.sqrt (c + a))  ^ 2) + 2 * ((a ^ 2 * b ^ 2) / (Real.sqrt (a + b) * Real.sqrt (b + c)) + (b ^ 2 * c ^ 2) / (Real.sqrt (b + c) * Real.sqrt (c + a)) + (c ^ 2 * a ^ 2) / (Real.sqrt (c + a) * Real.sqrt (a + b))) := by
+        ring_nf
+      have g : ∀ x y : ℝ, (x + y)  ^ 2 ≥ 4  * x * y := by
+        intro x y
+        suffices (x - y)  ^ 2 ≥ 0 by linarith
+        exact sq_nonneg (x - y)
+      have h₁₀ : (a ^ 2 / Real.sqrt (a + b))  ^ 2 + (b ^ 2 / Real.sqrt (b + c))  ^ 2 + (c ^ 2 / Real.sqrt (c + a))  ^ 2 ≥ (a ^ 2 * b ^ 2) / (Real.sqrt (a + b) * Real.sqrt (b + c)) + (b ^ 2 * c ^ 2) / (Real.sqrt (b + c) * Real.sqrt (c + a)) + (c ^ 2 * a ^ 2) / (Real.sqrt (c + a) * Real.sqrt (a + b)) := by
+        have h₁₀ := g ((a ^ 2 / Real.sqrt (a + b)) ^ 2) ((b ^ 2 / Real.sqrt (b + c)) ^ 2)
+        have h₁₁ := g ((b ^ 2 / Real.sqrt (b + c)) ^ 2) ((c ^ 2 / Real.sqrt (c + a)) ^ 2)
+        have h₁₂ := g ((c ^ 2 / Real.sqrt (c + a)) ^ 2) ((a ^ 2 / Real.sqrt (a + b)) ^ 2)
+        linarith
+      have h₁₁ : (a ^ 4)  / ((Real.sqrt (a + b))  ^ 2) + (b ^ 4)  / ((Real.sqrt (b + c))  ^ 2) + (c ^ 4)  / ((Real.sqrt (c + a))  ^ 2) ≥ (a ^ 2 * b ^ 2) / (Real.sqrt (a + b) * Real.sqrt (b + c)) + (b ^ 2 * c ^ 2) / (Real.sqrt (b + c) * Real.sqrt (c + a)) + (c ^ 2 * a ^ 2) / (Real.sqrt (c + a) * Real.sqrt (a + b)) := by
+        have h₁₁ : ((a ^ 2)  / Real.sqrt (a + b))  ^ 2 ≥ (a ^ 2 * b ^ 2) / (Real.sqrt (a + b) * Real.sqrt (b + c)) := by
+          calc
+            ((a ^ 2)  / Real.sqrt (a + b))  ^ 2 = (a ^ 4)  / ((Real.sqrt (a + b))  ^ 2) := by ring_nf
+            _ = (a ^ 4)  / ((Real.sqrt (a + b))  ^ 2) * (Real.sqrt (b + c) * Real.sqrt (b + c)) / (Real.sqrt (b + c) * Real.sqrt (b + c)) := by
+              rw [div_mul_cancel₀ _ (by linarith)]
+            _ = (a ^ 2 * Real.sqrt (b + c))  ^ 2 / ((Real.sqrt (a + b))  ^ 2 * Real.sqrt (b + c) * Real.sqrt (b + c)) := by ring_nf
+            _ ≥ (a ^ 2 * b ^ 2) / ((Real.sqrt (a + b))  ^ 2 * Real.sqrt (b + c) * Real.sqrt (b + c)) := by
+              apply div_le_div_of_nonneg_right
+              apply pow_two_le_pow_two
+              rw [mul_assoc]
+              apply mul_le_mul
+              exact sq_nonneg a
+              linarith
+              rw [mul_assoc]
+              apply mul_le_mul
+              rw [Real.sq_sqrt (by linarith)]
+              linarith
+              apply Real.sqrt_nonneg
+              linarith
+              apply Real.sqrt_nonneg
+              linarith
+            _ ≥ (a ^ 2 * b ^ 2) / (Real.sqrt (a + b) * Real.sqrt (b + c)) := by
+              rw [mul_div_mul_right _ _ (by linarith)]
+              rw [div_le_div_iff₀ (by positivity) (by linarith)]
+              rw [Real.sq_sqrt (by linarith)]
+              linarith
+        have h₁₂ : (b ^ 4)  / ((Real.sqrt (b + c))  ^ 2) + (c ^ 4)  / ((Real.sqrt (c + a))  ^ 2) ≥ (b ^ 2 * c ^ 2) / (Real.sqrt (b + c) * Real.sqrt (c + a)) + (c ^ 2 * a ^ 2) / (Real.sqrt (c + a) * Real.sqrt (a + b)) := by
+          calc
+            (b ^ 4)  / ((Real.sqrt (b + c))  ^ 2) + (c ^ 4)  / ((Real.sqrt (c + a))  ^ 2)
+              = (b ^ 4)  / ((Real.sqrt (b + c))  ^ 2) * (Real.sqrt (c + a) * Real.sqrt (c + a)) / (Real.sqrt (c + a) * Real.sqrt (c + a)) + (c ^ 4)  / ((Real.sqrt (c + a))  ^ 2) * (Real.sqrt (b + c) * Real.sqrt (b + c)) / (Real.sqrt (b + c) * Real.sqrt (b + c)) := by
+                rw [div_mul_cancel₀ _ (by linarith), div_mul_cancel₀ _ (by linarith)]
+            _ = (b ^ 2 * Real.sqrt (c + a))  ^ 2 / ((Real.sqrt (b + c))  ^ 2 * Real.sqrt (c + a) * Real.sqrt (c + a)) + (c ^ 2 * Real.sqrt (b + c))  ^ 2 / ((Real.sqrt (c + a))  ^ 2 * Real.sqrt (b + c) * Real.sqrt (b + c)) := by ring_nf
+            _ ≥ (b ^ 2 * c ^ 2) / ((Real.sqrt (b + c))  ^ 2 * Real.sqrt (c + a) * Real.sqrt (c + a)) + (c ^ 2 * a ^ 2) / ((Real.sqrt (c + a))  ^ 2 * Real.sqrt (b + c) * Real.sqrt (b + c)) := by
+              apply add_le_add
+              · apply div_le_div_of_nonneg_right
+                apply pow_two_le_pow_two
+                rw [mul_assoc]
+                apply mul_le_mul
+                exact sq_nonneg b
+                linarith
+                rw [mul_assoc]
+                apply mul_le_mul
+                rw [Real.sq_sqrt (by linarith)]
+                linarith
+                apply Real.sqrt_nonneg
+                linarith
+                apply Real.sqrt_nonneg
+                linarith
+              · apply div_le_div_of_nonneg_right
+                apply pow_two_le_pow_two
+                rw [mul_assoc]
+                apply mul_le_mul
+                exact sq_nonneg c
+                linarith
+                rw [mul_assoc]
+                apply mul_le_mul
+                rw [Real.sq_sqrt (by linarith)]
+                linarith
+                apply Real.sqrt_nonneg
+                linarith
+                apply Real.sqrt_nonneg
+                linarith
+            _ = (b ^ 2 * c ^ 2) / (Real.sqrt (b + c) * Real.sqrt (c + a)) + (c ^ 2 * a ^ 2) / (Real.sqrt (c + a) * Real.sqrt (a + b)) := by
+              rw [mul_div_mul_right _ _ (by linarith), mul_div_mul_right _ _ (by linarith)]
+              rw [div_le_div_iff₀ (by positivity) (by linarith)]
+              rw [div_le_div_iff₀ (by positivity) (by linarith)]
+              rw [Real.sq_sqrt (by linarith), Real.sq_sqrt (by linarith)]
+              linarith
+        linarith
+      linarith
+    linarith
+  have h₇ : 3 / Real.sqrt 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+    rw [h₅, h₆]
+    apply Real.sqrt_le_sqrt
+    linarith
+  exact h₇
+```

@@ -1,0 +1,123 @@
+-- check by induction on n
+
+  induction' n with n ind
+
+  -- check the base case
+
+ . simp
+
+    -- check that 11 divides 0
+
+    rw [Int.natCast_zify] at *
+
+    apply Int.dvd_sub
+
+    · apply Int.dvd.pow
+
+     -- check that 11 divides 10
+
+     norm_num
+
+    · apply Int.dvd.pow
+
+     -- check that 11 divides 1
+
+     norm_num
+
+  -- check the inductive step
+
+ . rw [pow_add, pow_add]
+
+    -- check that 11 divides $10^n-(-1)^n$
+
+    zify at ind ⊢
+
+    push_cast at ind ⊢
+
+    -- check that $10^{n+1}-(-1)^{n+1} = (10^n-(-1)^n) + 11*(10^{n-1}+10^{n-2}+...+10+1)$
+
+    have : (10 : ℤ) ^ (n + 1) - (-1 : ℤ) ^ (n + 1) = (10 ^ n - (-1) ^ n) + 11 * (10 ^ n / 11 + 10 ^ (n - 1) +... + 10 + 1) := by
+
+      rcases Nat.even_or_odd n with evenn | oddn
+
+      -- if $n$ is even
+
+     . simp [evenn]
+
+        ring_nf
+
+        -- check that 11 divides $10^{2k+1}+1$
+
+        have : (-1 : ℤ) ^ (2 * k + 1) = -1 := by
+
+          rw [pow_mul, pow_one, neg_one_pow]
+
+          simp
+
+        rw [this]
+
+        conv =>
+          lhs
+          arg 2
+          arg 1
+          rw [pow_add, pow_add]
+
+        ring_nf
+
+        -- simplify the conclusion
+
+        rw [add_assoc, add_assoc, add_comm, ← add_assoc]
+
+        simp
+
+        -- simplify the goal
+
+        have : (10 ^ k - 1 + 10 ^ k * 10) * 11 = (10 ^ k - 1 + 10 ^ k * 10) * 11 / 11 * 11 := by rw [Int.ediv_mul_cancel]; rfl
+
+        rw [this]
+
+        -- if $n$ is odd
+
+       . simp [oddn]
+
+          ring_nf
+
+          -- check that 11 divides $10^{2k+1}-1$
+
+          have : (-1 : ℤ) ^ (2 * k + 1) = -1 := by
+
+            rw [pow_mul, pow_one, neg_one_pow]
+
+            simp
+
+          rw [this]
+
+          conv =>
+            lhs
+            arg 2
+            arg 1
+            rw [pow_add, pow_add]
+
+          ring_nf
+
+          -- simplify the conclusion
+
+          rw [add_comm, ← sub_add, sub_neg_eq_add, add_comm]
+
+          simp
+
+          -- simplify the goal
+
+          have : (10 ^ k + 1 + 10 ^ k * 10) * 11 = (10 ^ k + 1 + 10 ^ k * 10) * 11 / 11 * 11 := by rw [Int.ediv_mul_cancel]; rfl
+
+          rw [this]
+
+        -- exact the inductive hypothesis
+
+        apply Int.dvd_add ind
+
+        -- check that 11 divides $11*(10^{n-1}+10^{n-2}+...+10+1)$
+
+        apply Int.dvd_mul_right
+
+```

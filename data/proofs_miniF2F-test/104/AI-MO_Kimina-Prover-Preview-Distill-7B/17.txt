@@ -1,0 +1,125 @@
+-- We begin by observing that for a prime $p \ge 7$, the sum can be rewritten by substituting $i = p - 1 - j$.
+  -- This allows us to transform the sum into a more manageable form.
+  have h₁' : p ≥ 3 := by
+    by_contra! h
+    have : p = 1 ∨ p = 2 := by interval_cases p
+    rcases this with (rfl | rfl)
+    all_goals norm_num
+  have h₃ : p - 2 ≥ 1 := by
+    linarith
+  -- Define a helper function `g` for the summation
+  let g (i : ZMod p) := if i < 1 ∨ i > p - 2 then 0 else (i : ZMod p)⁻¹ * ((i : ZMod p) + 1)⁻¹
+  -- Define another helper function `f` for the transformed summation
+  let f (i : ZMod p) := if i = 0 then p⁻¹ else (i : ZMod p)⁻¹ * ((-i : ZMod p) + 1)⁻¹
+  -- Prove that $g(i) + f(i) = 1$ for all $i \in \mathbb{Z}_p$
+  have h₄ : ∀ i ∈ Finset.Icc 1 (p - 2), g i + f i = 1 := by
+    intro i hi
+    simp only [Finset.mem_Icc] at hi
+    by_cases h : i < 1 ∨ i > p - 2
+    · simp [g, h]
+      have : ¬ i ≥ 1 := by
+        by_contra! h'
+        have : i = 1 := by linarith
+        simp [this] at h
+      have : ¬ i ≤ p - 2 := by
+        by_contra! h'
+        have : i = p - 2 := by linarith
+        simp [this] at h
+      simp [h, this]
+    · simp [g, h]
+      have : i ≥ 1 := by
+        by_contra! h'
+        have : i = 0 := by linarith
+        simp [this] at h
+      have : i ≤ p - 2 := by
+        by_contra! h'
+        have : i = p - 1 := by linarith
+        simp [this] at h
+      simp [h]
+      -- For $i \in [1, p-2]$, we have $i \neq 0$ and $p - 1 - i \neq 0$
+      have h₁'' : i ≠ 0 := by
+        by_contra! h'
+        have : i = 0 := by linarith
+        simp [this] at h
+      have h₁''':= Int.modEq_iff_dvd.mpr rfl
+      have : (p - 1 - i : ZMod p) = (-i : ZMod p) + 1 := by
+        rw [Int.modEq_iff_dvd, add_comm]
+        apply Int.modEq_iff_dvd.mpr
+        rw [Int.reduceSub]
+        ring
+      rw [this]
+      -- The sum of the reciprocals of $i$ and $p - 1 - i$ is equal to the sum of the reciprocals of $i$ and $i + 1$
+      have h₅ : (p : ZMod p)⁻¹ + (p - 1 - i : ZMod p)⁻¹ = i⁻¹ + (i + 1)⁻¹ := by
+        rw [Int.modEq_iff_dvd, add_comm]
+        apply Int.modEq_iff_dvd.mpr
+        rw [Int.reduceSub]
+        ring
+        -- Both $i$ and $i + 1$ are coprime to $p$
+        rcases h₃ with h₃ | h₃
+        · have : i ≤ p - 2 := by
+            exact h₃
+          apply IsCoprime.mul_right
+          apply isCoprime_of_lt_prime
+          linarith
+          linarith
+          exact h₁
+        · have : i ≥ 1 := by
+            exact h₂
+          apply IsCoprime.mul_right
+          apply isCoprime_of_lt_prime
+          linarith
+          linarith
+          exact h₁
+      rw [add_assoc, add_comm, add_assoc, h₅]
+      simp only [add_right_inj, add_left_inj]
+      -- The sum telescopes to give $2$
+  have h₅ : ∑ i ∈ Finset.Icc 1 (p - 2), g i = 2 := by
+    have h₆ : ∑ i ∈ Finset.Icc 1 (p - 2), g i + ∑ i ∈ Finset.Icc 1 (p - 2), f i = ∑ i ∈ Finset.Icc 1 (p - 2), (g i + f i) := by
+      rw [Finset.sum_add_distrib]
+    rw [h₄] at h₆
+    simp at h₆
+    have h₇ : ∑ i ∈ Finset.Icc 1 (p - 2), f i = 0 := by
+      rw [Finset.sum_eq_zero_iff]
+      · simp only [Finset.mem_Icc, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, Finset.sum]
+        intro i hi
+        simp [f]
+        constructor
+        · intro h
+          simp [h]
+          rw [Int.modEq_iff_dvd, add_comm]
+          apply Int.modEq_iff_dvd.mpr
+          rw [Int.reduceSub]
+          ring
+          -- Since $i \in [1, p-2]$, neither $i$ nor $i + 1$ is equal to $0 \pmod p$
+          rcases h₃ with h₃ | h₃
+          · have : i ≤ p - 2 := by
+              exact h₃
+            apply IsCoprime.mul_right
+            apply isCoprime_of_lt_prime
+            linarith
+            linarith
+            exact h₁
+          · have : i ≥ 1 := by
+              exact h₂
+            apply IsCoprime.mul_right
+            apply isCoprime_of_lt_prime
+            linarith
+            linarith
+            exact h₁
+        · simp [h₃, h₁]
+      · simp [Finset.Nonempty.Icc]
+        use (p - 2)
+        simp [h₃]
+        norm_num
+        exact id (Eq.symm h₁)
+    rw [h₇] at h₆
+    simp at h₆
+    exact h₆
+  -- Since the sum of $g(i)$ from $1$ to $p-2$ is $2$, it follows that the sum of $1/i(i+1)$ from $1$ to $p-2$ is also $2$
+  simp only [ Finset.sum_eq_sum_filter_add_sum_filter_not, Finset.filter_filter, Finset.filter_singleton, Finset.sum_singleton, g] at h₅
+  simp at h₅
+  simp only [Finset.filter_eq_filter, Finset.filter_Icc_succ_top (by linarith), Finset.Icc_succ_top, Finset.sum_Icc_succ_top (by linarith)] at h₅
+  simp at h₅
+  exact h₅
+
+```

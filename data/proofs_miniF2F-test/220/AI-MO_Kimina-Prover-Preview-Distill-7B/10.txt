@@ -1,0 +1,186 @@
+have h₂ : Real.cos x ≠ 0 := by
+    intro h
+    simp [h] at h₀
+    norm_num at h₀
+
+  have h₃ : Real.sin x ≠ 0 := by
+    intro h
+    simp [h] at h₀
+    norm_num at h₀
+
+  have h₄ : Real.sin x + Real.cos x ≠ 0 := by
+    intro h
+    simp [h] at h₀
+    norm_num at h₀
+
+  have h₅ : Real.sin x - Real.cos x ≠ 0 := by
+    intro h
+    have : Real.sin x = Real.cos x := by linarith
+    have : Real.sin x ^ 2 = Real.cos x ^ 2 := by rw [this]
+    have : Real.sin x ^ 2 + Real.cos x ^ 2 = 2 * Real.cos x ^ 2 := by linarith
+    have : 1 = 2 * Real.cos x ^ 2 := by rw [Real.sin_sq_add_cos_sq x] at this; assumption
+    have : Real.cos x ^ 2 = 1/2 := by linarith
+    have : Real.cos x = 1 / √2 ∨ Real.cos x = - 1 / √2 := by
+      rw [sq_eq_sq_iff_eq_or_eq_neg] at this
+      obtain ⟨a, ha⟩ := (eq_or_eq_neg_of_sq_eq_sq (by norm_num) this).1
+      use a
+      rw [ha]
+    obtain (h | h) := this
+   . have : Real.cos x > 0 := by
+        rw [h]
+        exact one_div_pos.mpr (show (0:ℝ)<2 by norm_num)
+      have : Real.sin x > 0 := by linarith
+      have : Real.sin x + Real.cos x > 0 := by linarith
+      linarith
+   . have : Real.cos x < 0 := by
+        rw [h]
+        exact one_div_neg.mpr (show (0:ℝ)<2 by norm_num)
+      have : Real.sin x < 0 := by linarith
+      have : Real.sin x + Real.cos x < 0 := by linarith
+      linarith
+
+  have h₆ : Real.sin x * Real.cos x ≠ 0 := by
+    rw [mul_ne_zero_iff]
+    constructor
+   . exact h₃
+   . exact h₂
+
+  have e₁ : Real.tan x = Real.sin x / Real.cos x := by exact Real.tan_eq_sin_div_cos x
+
+  have e₂ : (1 / Real.cos x + Real.tan x) * (1 / Real.sin x + 1 / Real.tan x) = 1 / Real.sin x + 1 / Real.cos x := by
+    rw [add_mul, add_mul, mul_div_cancel₀]
+   . ring
+   . exact h₂
+   . exact h₃
+   . exact h₄
+
+  have e₃ : (1 / Real.cos x + Real.tan x) * (1 / Real.sin x + 1 / Real.tan x) = (1 + Real.sin x) / Real.cos x := by
+    rw [e₁]
+   . field_simp
+      ring
+   . exact h₂
+   . exact h₃
+   . exact h₄
+
+  have e₄ : 1 / Real.sin x + 1 / Real.cos x = (Real.cos x + Real.sin x) / (Real.sin x * Real.cos x) := by
+    rw [add_div]
+   . exact h₆
+
+  rw [e₄] at e₃
+  rw [e₃] at e₂
+  rw [e₁] at e₂
+  rw [mul_div_cancel₀] at e₂
+ . have e₅ : (Real.cos x + Real.sin x) * (Real.cos x - Real.sin x) = 1 := by
+      calc
+        (Real.cos x + Real.sin x) * (Real.cos x - Real.sin x) = Real.cos x ^ 2 - Real.sin x ^ 2 := by ring
+        _ = Real.cos x ^ 2 + Real.sin x ^ 2 - 2 * Real.sin x ^ 2 := by ring
+        _ = 1 - 2 * Real.sin x ^ 2 := by rw [Real.sin_sq_add_cos_sq x]
+        _ = 1 := by linarith
+  rw [e₅] at e₂
+  replace e₂: m = 22/7 * (1 / Real.sin x) := by linarith
+  have e₆ : 1 / Real.sin x = (m * 7 - 22) / 154 := by
+    calc
+      1 / Real.sin x = 22 / 7 * (1 / Real.sin x) / (22 / 7) := by field_simp
+      _ = m / (22 / 7) := by rw [e₂]
+      _ = ((m * 7 - 22) / 154) * 154 / 7 := by field_simp
+      _ = (m * 7 - 22) / 154 := by ring
+  replace e₆ : m * 7 - 22 = 154 / Real.sin x := by field_simp [e₆]
+  have : 0 ≤ 154 / Real.sin x := by linarith
+  have : 0 < 154 / Real.sin x := by linarith
+  have : 154 / Real.sin x = 154 / |Real.sin x| := by
+    nth_rw 1 [← div_self (show Real.sin x ≠ 0 by assumption)]
+    rw [abs_of_ne (show Real.sin x ≠ 0 by assumption)]
+  have : |Real.sin x| = Real.sin x ^ 2 / Real.sin x := by
+    field_simp [pow_two]
+  rw [this] at e₆
+  replace e₆ : m * 7 - 22 = 154 ^ 2 / (Real.sin x * 154) := by
+    calc
+      m * 7 - 22 = 154 / Real.sin x := by rw [e₆]
+      _ = 154 ^ 2 / (Real.sin x * 154) := by field_simp
+  clear e₅
+  have e₇ : m * 7 - 22 = 154 ^ 2 / (Real.sin x * 154) := by exact e₆
+
+  have h₇ : 0 < m := by
+    by_contra!
+    have : m ≤ 0 := by linarith
+    have : m * 7 - 22 ≤ -22 := by linarith
+    have : 154 ^ 2 / (Real.sin x * 154) ≤ 0 := by
+      apply div_nonpos_of_nonneg_of_nonpos
+     . apply pow_two_nonneg
+     . linarith
+    linarith
+
+  have h₈ : 0 < 154 ^ 2 / (Real.sin x * 154) := by
+    rw [div_pos_iff]
+    left
+    apply And.intro
+   . apply pow_two_pos_of_ne_zero
+      exact h₃
+   . norm_num
+
+  have h₉ : m * 7 - 22 = 154 ^ 2 / (Real.sin x * 154) := by exact e₇
+
+  have e₈ : 0 < m * 7 - 22 := by linarith
+  have e₉ : m * 7 - 22 = (m * 7 - 22) * (154 / 154) := by field_simp
+  have e₁₀ : m * 7 - 22 = (m * 7 - 22) * (Real.sin x * 154 / 154) / (Real.sin x) := by
+    rw [e₉, mul_div_cancel_left₀]
+   . exact h₃
+  have e₁₁ : m * 7 - 22 = (m * 7 - 22) * (Real.sin x * 154 / 154) * (1 / Real.sin x) := by
+    calc
+      m * 7 - 22 = (m * 7 - 22) * (Real.sin x * 154 / 154) / (Real.sin x) := by rw [e₁₀]
+      _ = (m * 7 - 22) * (Real.sin x * 154 / 154) * (1 / Real.sin x) := by field_simp
+  have e₁₂ : (m * 7 - 22) * (Real.sin x * 154 / 154) * (1 / Real.sin x) = 154 ^ 2 / 154 := by
+    rw [mul_assoc, mul_comm, mul_div_cancel₀] 
+   . exact h₆
+   . exact h₇
+   . linarith
+  rw [e₁₂] at e₁₁
+  replace e₁₁ : m * 7 - 22 = 154 ^ 2 / 154 := by linarith
+  clear e₈
+  have e₁₃ : m * 7 - 22 = 154 ^ 2 / 154 := by exact e₁₁
+
+  have h₁₀ : m < 22 / 7 := by
+    by_contra!
+    have : m * 7 - 22 ≥ 0 := by linarith
+    linarith
+
+  have num_pos : 0 < m.num := by
+    by_contra!
+    have : m.num ≤ 0 := by linarith
+    have : m.num = 0 := by linarith
+    rw [this] at h₁
+    norm_num at h₁
+    linarith
+
+  have den_pos : 0 < m.den := by
+    by_contra!
+    have : m.den ≤ 0 := by linarith
+    have : m.den = 0 := by linarith
+    rw [this] at h₁
+    norm_num at h₁
+    linarith
+
+  have h₁₁ : m.num = 154 ^ 2 := by
+    norm_cast at e₁₃
+    rw [mul_comm _ (m * 7 - 22), ← Rat.num_div_den m] at e₁₃
+    apply Rat.den_eq_den_of_num_eq_num at e₁₃
+    rw [e₁₃]
+
+  replace h₁₁ : m.num = 154 ^ 2 := by exact h₁₁
+  clear h₆
+  have h₁₂ : m.den = 154 := by
+    norm_cast at e₁₃
+    rw [mul_comm _ (m * 7 - 22), ← Rat.num_div_den m] at e₁₃
+    apply Rat.den_eq_den_of_num_eq_num at e₁₃
+    rw [e₁₃]
+
+  have h₁₃ : m = 154 ^ 2 / 154 := by
+    norm_cast at e₁₃
+    rw [← Rat.num_div_den m, e₁₃]
+    rw [h₁₁, h₁₂]
+
+  rw [h₁₃]
+  norm_num
+  linarith
+
+```

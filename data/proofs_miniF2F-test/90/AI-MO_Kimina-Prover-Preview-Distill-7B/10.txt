@@ -1,0 +1,174 @@
+-- Let `f(n+1) = 3 - 1 / (n+1)`.
+  let f (n : ℕ) := 3 - 1 / (n : ℝ)
+  have f_def: f = fun n => 3 - 1 / (n : ℝ) := rfl
+  -- `f` is positive and decreasing.
+  have fpos: ∀ n, 0 < f n := by
+    intro n
+    simp [f_def]
+    intro _
+    norm_num
+  have fmono: StrictAntiOn f (Set.Ici 1) := by
+    intro n _ m _ _th
+    simp [f_def]
+    norm_num
+    rw [one_div_lt_one_div (by linarith) (by linarith)]
+    linarith
+  -- We prove `∏ 1 ≤ k ≤ n, (1 + 1 / k ^ 3) ≤ f n` in `Mathlib`.
+
+  have h : ∀ n, ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 ≤ f n := by
+    intro n
+    induction n with
+    | zero => norm_num at h₀
+    | succ n ih =>
+      by_cases h' : n = 0
+      · rw [h']
+        simp [f_def]
+        norm_num
+      · have : n ≥ 1 := by
+          refine Nat.one_le_iff_ne_zero.mpr?_
+          rw [h']
+          exact Nat.zero_ne_succ 0
+        have nge1: n ≥ 1 := by
+          apply Nat.one_le_iff_ne_zero.mpr
+          rw [h']
+          exact Nat.zero_ne_succ 0
+        have fnnge1: f n ≥ f (n + 1) := by
+          simp [f_def]
+          have : 1 / (n + 1 : ℝ) ≤ 1 / (n : ℝ) := by
+            apply one_div_le_one_div_of_le
+            norm_num
+            linarith
+          linarith
+        have ih := ih
+        rw [Finset.prod_Icc_succ_top (by linarith)] at ih
+        have : ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 * (1 + (1 : ℝ) / (n + 1) ^ 3) ≤ (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3) * f (n + 1) := by
+          apply mul_le_mul
+          · exact ih
+          · apply le_of_lt
+            apply StrictAntiOn.lt_iff_lt.mpr
+            apply fmono
+            simp
+            simp [h']
+          · apply le_of_lt
+            apply StrictAntiOn.lt_iff_lt.mpr
+            apply fmono
+            simp
+            simp [h']
+          · apply mul_nonneg
+            · norm_num
+            · intro k _ _
+              norm_num
+        linarith
+  -- `f n = 3 - 1 / (n : ℝ)`
+  rw [←f_def] at h
+  -- Let `g(n+1) = 3 - 1 / (n+1) - ∏ 1 ≤ k ≤ n, (1 + 1 / k ^ 3)`.
+  let g (n : ℕ) := 3 - 1 / (n + 1 : ℝ) - ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3
+  have g_def: g = fun n => 3 - 1 / (n + 1 : ℝ) - ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 := rfl
+  -- We prove `g(n) ≥ 0` for all `n ≥ 1` in `Mathlib`.
+  have hng: ∀ n, 0 ≤ g n ∧  g n < 1 / (n + 1 : ℝ) := by
+    intro n
+    simp [g_def]
+    induction n with
+    | zero => norm_num
+    | succ n ih =>
+      have gnpos: 0 < g n := by
+        simp [g_def]
+        have: 0 < ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 := by
+          apply Finset.prod_pos
+          intro k _ _
+          norm_num
+        linarith
+      have g1: g n = 3 - 1 / (n + 1 : ℝ) - ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 := by simp [g_def]
+      have g2: 3 - 1 / ((n + 1) + 1 : ℝ) - ∏ k ∈ Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / k ^ 3
+        = 3 - 1 / (n + 1 : ℝ) - (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3) * (1 + 1 / (n + 1) ^ 3) := by
+        rw [Finset.prod_Icc_succ_top (by linarith)]
+        have h1: (fun x ↦ 1 + (1 : ℝ) / x ^ 3) = (fun x ↦ 1 + (1 : ℝ) / (x : ℝ) ^ 3) := by exact funext rfl
+        rw [←h1]
+        congr 1
+        rw [Finset.prod_Icc_succ_top (by linarith)]
+        rw [Finset.prod_Icc_succ_top (by linarith)]
+        simp
+        ring_nf
+        rw [add_assoc]
+        apply add_left_cancel
+        apply mul_right_cancel₀
+        intro h
+        apply h₀
+        linarith
+      rw [g2]
+      have h3: 3 - 1 / (n + 1 : ℝ) - (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3) * (1 + 1 / (n + 1) ^ 3) ≤
+        3 - 1 / (n + 1 : ℝ) - (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3) := by
+        apply sub_le_sub_left
+        apply mul_le_mul_of_nonneg_left
+        · linarith
+        · apply le_of_lt
+          apply StrictAntiOn.lt_iff_lt.mpr
+          apply fmono
+          simp
+          simp [h']
+          · apply mul_nonneg
+            · norm_num
+            · intro k _ _
+              norm_num
+      have h4: 3 - 1 / (n + 1 : ℝ) - (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3) = g n := by simp [g_def]
+      rw [h4]
+      constructor
+      · linarith
+      · have : 0 ≤ 3 - 1 / ((n + 1) + 1 : ℝ) - ∏ k ∈ Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / k ^ 3 := by
+          apply sub_nonneg_of_le
+          have h1: ∏ k ∈ Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / k ^ 3
+            = ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 * (1 + 1 / (n + 1) ^ 3) := by
+            rw [Finset.prod_Icc_succ_top (by linarith)]
+          rw [h1]
+          apply mul_le_mul_of_nonneg_left
+          · apply le_of_lt
+            apply StrictAntiOn.lt_iff_lt.mpr
+            apply fmono
+            simp
+            simp [h']
+            · apply mul_nonneg
+              · norm_num
+              · intro k _ _
+                norm_num
+          · linarith
+        linarith
+  -- So we have `3 - 1 / (n + 1) - ∏ 1 ≤ k ≤ n, (1 + 1 / k ^ 3) ≥ 0`
+  have : 0 ≤ g n := by
+    simp [g_def]
+    have: 0 < ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 := by
+      apply Finset.prod_pos
+      intro k _ _
+      norm_num
+    linarith
+  -- which is equivalent to `∏ 1 ≤ k ≤ n, (1 + 1 / k ^ 3) ≤ 3 - 1 / (n + 1)`.
+  have : ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 ≤ 3 - 1 / (n + 1 : ℝ) := by
+    have : 3 - 1 / ((n + 1) : ℝ) = f (n + 1) := by simp [f_def]
+    rw [this]
+    have gnonneg: 0 ≤ g n := by
+      simp [g_def]
+      have: 0 < ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 := by
+        apply Finset.prod_pos
+        intro k _ _
+        norm_num
+      linarith
+    have : g n ≥ 0 := by
+      simp [g_def]
+      have: 0 < ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 := by
+        apply Finset.prod_pos
+        intro k _ _
+        norm_num
+      linarith
+    have : 3 - 1 / (n + 1 : ℝ) - ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 ≥ 0 := by
+      linarith
+    linarith
+  -- By the assumption, we have `3 - 1 / (n + 1) ≤ 3 - 1 / n`.
+  have : 3 - 1 / (n + 1 : ℝ) ≤ 3 - 1 / n := by
+    apply sub_le_sub_left
+    apply one_div_le_one_div_of_le
+    norm_num
+    norm_num
+    linarith
+  -- So we have `∏ 1 ≤ k ≤ n, (1 + 1 / k ^ 3) ≤ 3 - 1 / n`.
+  linarith
+
+```

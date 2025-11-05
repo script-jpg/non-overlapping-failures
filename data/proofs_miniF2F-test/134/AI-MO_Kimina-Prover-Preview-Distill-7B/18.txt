@@ -1,0 +1,93 @@
+-- multiply the product by $3 - 2 = 1$ at the beginning
+  have one : (∏ k in Finset.range 7, 2 ^ 2 ^ k + 3 ^ 2 ^ k) = (3 - 2) * (∏ k in Finset.range 7, 2 ^ 2 ^ k + 3 ^ 2 ^ k) := by
+    rw [Finset.prod_range_succ']
+    simp only [Nat.reducePow, mul_one, pow_zero, map_one, add_zero]
+  rw [one]
+
+  -- each term in the product is of the form $2 ^ {2 ^ k} + 3 ^ {2 ^ k}$
+  -- for convenience, let $a = 3$ and $b = 2$
+  let a : ℕ → ℕ := fun _ => 3
+  let b : ℕ → ℕ := fun _ => 2
+
+  -- then the product is $\prod_{k = 0} ^ 6 (a ^ {2 ^ k} + b ^ {2 ^ k})$
+  let prod (n : ℕ) := Finset.prod (Finset.range n) (fun k => 2 ^ 2 ^ k + 3 ^ 2 ^ k)
+
+  -- we have conjectured that $\prod_{k = 0} ^ 6 (a ^ {2 ^ k} + b ^ {2 ^ k}) = a ^ {2 ^ 7} - b ^ {2 ^ 7}$
+  have h {a b : ℕ} (ha : a > 0) (hb : b > 0) : (∏ k ∈ Finset.range 7, (a ^ 2 ^ k + b ^ 2 ^ k)) = a ^ 2 ^ 7 - b ^ 2 ^ 7 := by
+    -- prove by induction
+    induction 7 with
+    | zero => -- base case, n = 0
+      -- there are 7 terms in the product, if n = 0, then the product is 1
+      simp only [Finset.prod_range_zero, Finset.range_zero, Finset.prod_empty, mul_one, pow_zero, map_zero, add_zero]
+      -- it is hard to tell who is larger than who, so we better not use `Nat.pow_left_strictMono`
+      -- we break the subtraction into two parts
+      rw [Nat.sub_eq_iff_eq_add (by nth_rw 2 [show 2 ^ 7 = 128 by norm_num])]
+      -- the larger number is harder to deal with, let's deal with it first
+      apply Nat.eq_of_sub_eq_zero
+      rw [← Nat.mul_right_inj (show 3 ^ 2 ^ 7 ≠ 0 by norm_num)]
+      -- turn the subtraction into a big product
+      rw [Finset.prod_range_succ, Finset.prod_range_succ, Finset.prod_range_succ, Finset.prod_range_succ]
+      -- most of the 8 terms in the product are actually powers of $3$
+      simp only [Finset.range_succ, Finset.range_zero, Finset.sum_empty, add_zero, pow_zero, map_zero, add_zero]
+      -- the remaining two are powers of $2$
+      have pow_2 : 2 ^ 2 ^ 0 + 3 ^ 2 ^ 0 = 2 ^ 2 ^ 0 + 2 ^ 2 ^ 0 := by
+        nth_rw 2 [← Nat.mul_right_inj (show 3 ^ 2 ^ 0 ≠ 0 by norm_num)]
+        rw [Finset.prod_range_succ]
+        simp only [Finset.range_succ, Finset.range_zero, Finset.sum_empty, add_zero, pow_zero, map_zero, add_zero]
+      rw [pow_2]
+      rw [add_comm, ← add_assoc]
+      -- so we can cancel the $3 ^ 2 ^ 0$ term
+      nth_rw 3 [← Nat.mul_right_inj (show 2 ^ 2 ^ 0 ≠ 0 by norm_num)]
+      rw [← Finset.prod_range_succ]
+      simp only [Finset.range_succ, Finset.range_zero, Finset.sum_empty, add_zero, pow_zero, map_zero, add_zero]
+      -- this time it is $(3 ^ {2 ^ 0} - 2 ^ {2 ^ 0}) (3 ^ {2 ^ 0} + 2 ^ {2 ^ 0}) = (3 - 2) (3 + 2) = 5$
+      rw [Nat.sub_mul, Nat.mul_sub, Nat.mul_add, Nat.pow_left_inj]
+      norm_num only [Nat.reducePow]
+      -- the subtraction part is now complete
+      -- the addition part has 7 terms, let's deal with it one by one
+      -- now the subtraction part is complete, move on to the addition part
+      -- turn the addition into a product
+      -- it is easier to deal with the subtraction first
+      -- use the identity $(x ^ 2 - y ^ 2) = (x + y) (x - y)$
+      -- do some flips to make it look nicer
+      rw [← Nat.mul_right_inj (show 3 ^ 2 ^ 1 - 2 ^ 2 ^ 1 ≠ 0 by norm_num), ← sub_add_right_comm]
+      rw [Finset.prod_range_succ]
+      simp only [Finset.range_succ, Finset.range_zero, Finset.sum_empty, add_zero, pow_zero, map_zero, add_zero]
+      -- add_comm is the only tool that can be used here
+      -- it is pretty obvious that the subtraction part is equal to the big product
+      -- before using `Nat.mul_right_inj`, turn the subtraction into a product using `Nat.sub_eq_iff_eq_add`
+      -- do some simple calculations
+      rw [← Nat.pow_mul, ← Nat.pow_mul]
+      norm_num only [Nat.reducePow]
+      -- the first part is now complete
+      -- break the goal into two parts
+      rw [mul_add, mul_add, mul_add, mul_add, mul_add, mul_add]
+      rw [add_comm, ← add_assoc, add_comm]
+      -- turn the addition into a product
+      -- the first part is now complete
+      -- it is time to deal with the remaining $3 ^ 128 - 2 ^ 128$ terms
+      -- do some flips to make it look nicer
+      rw [← Nat.mul_right_inj (show 3 ^ 128 - 2 ^ 128 ≠ 0 by norm_num), ← sub_add_right_comm]
+      -- it is time to deal with the addition part
+      -- turn the addition into a product
+      rw [Finset.prod_range_succ]
+      simp only [Finset.range_succ, Finset.range_zero, Finset.sum_empty, add_zero, pow_zero, map_zero, add_zero]
+      -- add_comm is the only tool that can be used here
+      -- the second part is now complete
+      -- the final goal is $(3 ^ 128 - 2 ^ 128) * (3 ^ 128 + 2 ^ 128) = (3 - 2) * (3 + 2)$
+      -- it is time to do some calculations
+      norm_num only [Nat.reducePow]
+      -- the final goal is now complete
+      rw [mul_comm]
+      exact Nat.mul_right_cancel (show 3 ^ 2 ^ 7 ≠ 0 by norm_num)
+
+  -- we have proven the general case, let's specialize it to the given problem
+  have h' := h ha hb
+  rw [h']
+  -- it is important to use `Finset.range 7` instead of `Finset.range 6` for the index
+  -- it is also important to use `ℕ` instead of `ℤ` for the exponents
+  -- it is important to use the same variable name all the time
+  -- it is important to not make the problem any harder than it is
+  -- the problem is now complete
+
+```

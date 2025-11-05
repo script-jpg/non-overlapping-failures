@@ -1,0 +1,47 @@
+-- We will show that $D_n$ is even when $n$ is odd and $D_n$ is odd when $n$ is even.
+  have h (n : ℕ) : (n % 2 = 0 ∧ d n % 2 = 0) ∨ (n % 2 = 1 ∧ d n % 2 = 1) := by
+    -- Using strong induction on $n$
+    induction' n using Nat.strong_induction_on with n ih
+    -- The base cases $n = 0, 1, 2$ are solved by $h₀, h₁, h₂$
+    match n with
+    | 0 => simp [h₀]
+    | 1 => simp [h₁]
+    | 2 => simp [h₂]
+    | n + 3 =>
+      -- The induction step is performed by a 3x3 matrix whose entries are either 0 or 1
+      -- Each case is a linear combination of the previous terms
+      -- The term $D_n$ is expressed in terms of $D_{n-1}, D_{n-2}, D_{n-3}$
+      -- The term $D_{n+3}$ is expressed in terms of $D_{n+2}, D_{n+1}, D_{n}$
+      -- Thus, the parity of $D_{n+3}$ only depends on the parity of $D_{n+1}$
+      have : d (n + 3) % 2 = (d (n + 2) % 2 + d (n + 1) % 2) % 2 := by
+        rw [h₃ (n + 3) (by linarith)]
+        ac_rfl
+      rw [this]
+      -- Prove by cases
+      rcases ih (n + 2) (by linarith) with (h | h)
+      · rw [h.2]
+        rcases ih (n + 1) (by linarith) with (h' | h')
+        · rw [h'.2]
+          simp
+        · rw [h'.1]
+          simp
+      · rw [h.2]
+        rcases ih (n + 1) (by linarith) with (h' | h')
+        · rw [h'.1]
+          simp
+        · rw [h'.2]
+          simp
+
+  -- Apply the lemma to $n = 2021, 2022, 2023$
+  have h₁ := h 2021
+  have h₂ := h 2022
+  have h₃ := h 2023
+  -- $2021$ is odd, $2022$ is even, and $2023$ is odd
+  repeat rw [Nat.mod_eq_of_lt] at h₁ h₂ h₃
+  rw [Nat.odd_iff] at h₁ h₃
+  rw [Nat.even_iff] at h₂
+  -- The parities are $(E, O, E)$
+  refine ⟨?_,?_,?_⟩ <;> simp [h₁, h₂, h₃]
+
+
+```

@@ -1,0 +1,111 @@
+--2
+  --We first define a function that represents the recurrence relation for $a_n$ and $b_n$.
+  let f : ℝ × ℝ → ℝ × ℝ := fun x => (Real.sqrt 3 * x.1 - x.2, Real.sqrt 3 * x.2 + x.1)
+
+  --3
+  --We prove by induction that $(a_n, b_n) = f^{n-1} (a_1, b_1)$ for all $n \geq 1$.
+  have h : ∀ n : ℕ, ((a, b) : ℕ → ℝ × ℝ) = fun n => f^[n] (a 0, b 0) := by
+    intro n
+    induction n with
+    | zero => rfl
+    | succ n ih =>
+      rw [Fin.iterate_succ_apply', ih]
+      simp [f]
+      rw [h₀, h₁]
+      ring
+
+  --4
+  --We apply the result for $n = 100$.
+  have h' := h 100
+  simp at h'
+
+  --5
+  --We compute the eigenvalues of $f$.
+  have h₀ : ∀ x, f x = (-(1 / 2) * Complex.I + 1) * x ∧ f x = (-(1 / 2) * Complex.I + 1) * x := by
+    intro x
+    constructor
+    · calc
+        f x = (Real.sqrt 3 * x.1 - x.2, Real.sqrt 3 * x.2 + x.1) := by simp [f]
+        _ = ((Real.sqrt 3 * x.1 - x.2) - (1 / 2)*Complex.I * x.1 + (1 / 2)*Complex.I * x.2, (Real.sqrt 3 * x.2 + x.1) - (1 / 2)*Complex.I * x.2 + (1 / 2)*Complex.I * x.1) := by ring_nf
+        _ = ((-(1 / 2) * Complex.I + 1) * x.1, (-(1 / 2) * Complex.I + 1) * x.2) := by congr; ring
+        _ = (-(1 / 2) * Complex.I + 1) * x := by simp
+    · calc
+        f x = (Real.sqrt 3 * x.1 - x.2, Real.sqrt 3 * x.2 + x.1) := by simp [f]
+        _ = ((Real.sqrt 3 * x.1 - x.2) - (1 / 2)*Complex.I * x.1 + (1 / 2)*Complex.I * x.2, (Real.sqrt 3 * x.2 + x.1) - (1 / 2)*Complex.I * x.2 + (1 / 2)*Complex.I * x.1) := by ring_nf
+        _ = ((-(1 / 2) * Complex.I + 1) * x.1, (-(1 / 2) * Complex.I + 1) * x.2) := by congr; ring
+        _ = x * (-(1 / 2) * Complex.I + 1) := by simp
+
+  --6
+  --We compute the eigenvalues of $f^{n}$.
+  have h₁ (n : ℕ) : ∀ x, f^[n] x = ((-(1 / 2) * Complex.I + 1) ^ n) * x ∧ f^[n] x = ((-(1 / 2) * Complex.I + 1) ^ n) * x := by
+    intro x
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [Fin.iterate_succ_apply']
+      constructor
+      · rw [ih]
+        calc
+          f^[n + 1] x = f (f^[n] x) := by simp [Fin.iterate_succ_apply']
+          _ = f ((-(1 / 2) * Complex.I + 1) ^ n * x) := by rw [ih]
+          _ = (-(1 / 2) * Complex.I + 1) * (-(1 / 2) * Complex.I + 1) ^ n * x := by congr
+          _ = (-(1 / 2) * Complex.I + 1) ^ (n + 1) * x := by ring
+          _ = ((-(1 / 2) * Complex.I + 1) ^ (n + 1)) * x := by simp
+      · calc
+          f^[n + 1] x = f (f^[n] x) := by simp [Fin.iterate_succ_apply']
+          _ = f ((-(1 / 2) * Complex.I + 1) ^ n * x) := by rw [ih]
+          _ = ((-(1 / 2) * Complex.I + 1) ^ n * x) * (-(1 / 2) * Complex.I + 1) := by congr
+          _ = ((-(1 / 2) * Complex.I + 1) ^ (n + 1)) * x := by ring
+          _ = ((-(1 / 2) * Complex.I + 1) ^ (n + 1)) * x := by simp
+
+  --7
+  --We compute the value of $(a_1, b_1)$ using the result for $n = 100$.
+  have h' := h 100
+  simp at h'
+  rw [h'] at h₀
+  have h'' := h₁ 99
+  specialize h'' (a 0, b 0)
+  rw [h''] at h₀
+  --We show that $(-(1 / 2) * Complex.I + 1) ^ 99 = 1 / 2 ^ 98$
+  have h₁ : (-(1 / 2) * Complex.I + 1) ^ 99 = 1 / 2 ^ 98 := by
+    have h : (-(1 / 2) * Complex.I + 1) = (1 / 2) * Complex.I + (1 / 2) * (1 - Complex.I) := by ring_nf; simp; ring
+    rw [h]
+    rw [pow_add, pow_mul, Complex.abs_add_mul_I, mul_pow]
+    rw [Complex.abs_add_mul_I, ← re_add_im]
+    simp
+    have h' : √3 ^ 2 = 3 := by simp [Real.sq_sqrt]
+    rw [show √3 ^ 3 = √3 ^ 2 * √3 by ring, h']
+    simp
+    ring_nf
+    rw [← Complex.ofReal_pow, Complex.ofReal_pow, Complex.ofReal_pow]
+    rw [show (1 : ℂ) = (1 : ℝ) by simp, show (2 : ℂ) = (2 : ℝ) by simp, show (3 : ℂ) = (3 : ℝ) by simp]
+    rw [Complex.normSq]
+    simp
+    ring
+  rw [h₁] at h₀
+  --We conclude that $a_1 + b_1 = 1 / 2 ^ 98$
+  have h'' : a 0 + b 0 = 1 / 2 ^ 98 := by
+    have h : (a 0 - b 0) * ↑Complex.I * ((1 - Complex.I) / 2) * 2 ^ 98 = 0 := by
+      rw [← h₀]
+      ring_nf
+      simp
+      ring
+    simp at h
+    rcases h with h | h
+    · simp [h]
+    · have h : (a 0 - b 0) * ↑Complex.I = 0 := by
+        calc
+          (a 0 - b 0) * ↑Complex.I = (a 0 - b 0) * ↑Complex.I * ((1 - Complex.I) / 2) * 2 ^ 98 / ((1 - Complex.I) / 2) * 2 ^ 98 := by field_simp
+          _ = 0 / ((1 - Complex.I) / 2) * 2 ^ 98 := by rw [h]
+          _ = 0 := by simp
+      simp at h
+      rcases h with h | h
+      · simp [h]
+      · simp [h] at h₀
+        rcases h₀ with h₀ | h₀
+        · simp [h₀]
+        · simp [h₀]
+  rw [h'']
+  simp
+
+```

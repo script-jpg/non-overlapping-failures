@@ -1,0 +1,58 @@
+-- -- Let $d = m \ gcd \ n$. We have $d = 8$, so $m = 8x$ and $n = 8y$ for some positive integers $x$ and $y$
+  let d := m.gcd n
+  have hd : d = 8 := by rw [h₁]
+  have h₃ : m = 8 * m / d ∧ n = 8 * n / d := by
+    rw [hd]
+    have hm : m = m.gcd n * (m / m.gcd n) := by
+      rw [Nat.gcd_mul_div_self_left]
+    have hn : n = m.gcd n * (n / m.gcd n) := by
+      rw [Nat.gcd_mul_div_self_right]
+    have hmx : m / m.gcd n = m / 8 := by rw [hd]
+    have hny : n / m.gcd n = n / 8 := by rw [hd]
+    rw [hm, hn, hmx, hny]
+
+
+  -- The least common multiple of $m$ and $n$ is 112. What is the least possible value of $m+n$? We prove it is 72.
+  have h₄ : m.lcm n = 112 := by rw [h₂]
+  have hgcd : m.gcd n = 8 := by rw [h₁]
+  have hlcm : m.lcm n = m * n / 8 := by
+    rw [hgcd]
+    rw [Nat.lcm, Nat.mul_div_assoc]
+    have hm : 0 < m := by linarith
+    have hn : 0 < n := by linarith
+    have hmn : 0 < m * n := by nlinarith
+    exact Nat.div_eq_of_eq_mul_right (by linarith) (by linarith) hmn
+  have h₅ : m * n = 896 := by
+    rw [hlcm] at h₄
+    linarith
+  rw [h₄] at hlcm
+
+  -- We have $m = 8x$ and $n = 8y$, hence $m \cdot n = 64 \cdot x \cdot y = 896$. So $x \cdot y = 14$.
+  have h₆ : m * n = 896 := by assumption
+  rw [h₃.1, h₃.2] at h₆
+  have h₇ : m / 8 * n / 8 = 14 := by
+    linarith
+
+  -- Let $x = m / 8$ and $y = n / 8$. We have $x \cdot y = 14$.
+  let x := m / 8
+  let y := n / 8
+  have h₈ : x * y = 14 := by rw [h₇]
+  have h₉ : m = 8 * x ∧ n = 8 * y := by rw [h₃.1, h₃.2]
+  have h₁₀ : m + n = 8 * (x + y) := by
+    rw [h₉.1, h₉.2]
+    linarith
+
+  -- Hence, $m + n = 8(x + y)$ and $x \cdot y = 14$. What is the least possible value of $m + n$?
+  have h₁₁ : 72 ≤ m + n := by
+    rw [h₁₀]
+    -- We have $x \cdot y = 14$, so possible values of $(x, y)$ are $(1, 14), (2, 7), (7, 2), (14, 1)$.
+    -- Hence, the least possible value of $x + y$ is 8, and the least possible value of $m + n$ is 72.
+    have hxy : x * y = 14 := by assumption
+    have x_val : x ≤ 14 := by nlinarith
+    have y_val : y ≤ 14 := by nlinarith
+    have xy_val : x ≥ 1 := by nlinarith
+    have yx_val : y ≥ 1 := by nlinarith
+    interval_cases x <;> interval_cases y <;> omega
+  exact h₁₁
+
+```

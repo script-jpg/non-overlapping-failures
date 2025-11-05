@@ -1,0 +1,327 @@
+have sq_two (n : ℕ) : 2 ^ (2 * n) = 4 ^ n := by
+    induction' n with n ih
+    · rfl
+    · rw [pow_add, ih, pow_succ]
+      ring
+
+  -- Note that $2^3 \equiv 3 \pmod{5}$.
+  have two_pow_three_mod_5 : 2 ^ 3 ≡ 3 [MOD 5] := by rfl
+
+  -- Note that for any $k$, $\binom{2n+1}{2k+1} \equiv \binom{2n+1}{2k} \pmod{5}$.
+  have Nat.choose_eq_mod_5 (n k : ℕ) : Nat.choose (2 * n + 1) (2 * k + 1) ≡ Nat.choose (2 * n + 1) (2 * k) [MOD 5] := by
+    rw [Nat.choose_eq_factorial_div_factorial, Nat.choose_eq_factorial_div_factorial]
+    simp only [Nat.factorial_succ, Nat.mul_mod, Nat.sub_mod, Nat.add_mod, Nat.mod_self]
+    ring_nf
+    rw [←mul_assoc, Nat.mul_mod, Nat.mul_mod, two_pow_three_mod_5, Nat.mul_mod, Nat.mul_mod]
+    symm
+    rw [Nat.mul_mod, Nat.mul_mod, Nat.mul_mod, Nat.mul_mod, two_pow_three_mod_5, Nat.mul_mod, Nat.mul_mod]
+    rfl
+
+  -- Let $S$ be the set of integers $k$ such that $0 \le k \le n$ and $k \equiv r \pmod{4}$.
+  let S (n r : ℕ) := {k ∈ Finset.range (n + 1) | k ≡ r [MOD 4]}
+  let s (n r : ℕ) := Finset.filter (fun k ↦ k ≡ r [MOD 4]) (Finset.range (n + 1))
+
+  -- Note that if $k \in S$, then $\binom{2n+1}{2k+1} \equiv \binom{2n+1}{2k} \pmod{5}$.
+  have S_0 (n k : ℕ) (hs : k ∈ S n 0) : Nat.choose (2 * n + 1) (2 * k + 1) ≡ Nat.choose (2 * n + 1) (2 * k) [MOD 5] := by
+    simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod] at hs
+    exact Nat.choose_eq_mod_5 n k
+
+  -- Note that if $k \in S$, then $2^{3k} \equiv 3^k \pmod{5}$.
+  have two_pow_threek_mod_5 (n k : ℕ) (hs : k ∈ S n 0) : 2 ^ (3 * k) ≡ 3 ^ k [MOD 5] := by
+    simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod] at hs
+    have : 3 * k = 2 * (2 * k) + k := by ring
+    rw [this, pow_add, pow_mul, two_pow_three_mod_5]
+    congr 1
+    rw [Nat.pow_mod]
+    norm_num
+    rw [two_pow_three_mod_5]
+
+  -- If $r \in \{1, 2, 3\}$, then $\sum_{k \in S} \binom{2n+1}{2k+1} 2^{3k} \equiv 0 \pmod{5}$.
+  have sum_congr_mod_5 (n r : ℕ) (hr : r ∈ Icc 1 (4 - 1)) : ∑ k ∈ S n r, Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) ≡ 0 [MOD 5] := by
+    induction' r using Nat.strong_induction_on with r ih
+    cases' hr with hr ih'
+    · rw [Finset.mem_Icc] at hr
+      interval_cases r
+      -- base case : r = 0
+      · rw [Finset.mem_Icc] at hr
+        exfalso
+        exact Nat.not_lt_of_le hr hr'
+      -- inductive step : r = 1
+      · have : S n 1 = {n - 1} := by
+          ext k
+          simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod]
+          constructor
+          · intro hk
+            have : k ≤ n := by
+              apply Finset.mem_range.mp
+              apply_fun (· % 4) at hk
+              rw [Nat.mod_eq_of_lt] at hk
+              simp at hk
+              exact hk
+            interval_cases k
+            · rfl
+            · simp at hk
+          · intro hk
+            simp only [Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+            cases' hk with hk hk
+            · rw [hk]
+              simp only [Finset.mem_singleton, Finset.mem_range, Nat.reduceSub]
+              omega
+            · simp only [Finset.mem_singleton, Finset.mem_range, Nat.reduceSub]
+              omega
+        rw [this]
+        simp only [Finset.filter_singleton, Finset.mem_singleton, Nat.reduceSub, Nat.choose_self]
+        norm_num
+        rw [two_pow_threek_mod_5, Nat.modEq_zero_iff_dvd]
+        omega
+      -- inductive step : r = 2
+      · have : S n 2 = {k ∈ Finset.range (n - 1 + 1) | k ≡ 0 [MOD 4]} := by
+          ext k
+          simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod]
+          constructor
+          · intro hk
+            simp at hk
+            cases' hk with hk hk
+            · rw [hk]
+              simp only [Finset.mem_singleton, Finset.mem_range]
+              omega
+            · simp only [Finset.mem_singleton, Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+              omega
+          · intro hk
+            simp only [Finset.mem_range, Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+            constructor
+            · apply Nat.mod_lt
+              exact hk.2
+            · apply_fun (· % 4) at hk
+              simp only [Nat.reduceMod, Nat.mod_eq_of_lt] at hk
+              simp only [Finset.mem_setOf_eq]
+              omega
+        rw [this]
+        apply Finset.sum_eq_card_nsmul_mod_eq_zero
+        · simp only [Finset.card_filter]
+          rw [Nat.sub_add_cancel]
+          omega
+        · by_cases hn : n = 0
+          · simp only [hn, Finset.card_filter]
+            rify
+            rw [Nat.cast_sub]
+            norm_num
+            omega
+          · rw [Nat.sub_add_cancel]
+            omega
+    · simp at hr
+      have : S n (r + 1) = {k ∈ Finset.filter (fun k ↦ k ≡ r + 1 [MOD 4]) (Finset.range n)} := by
+        ext k
+        simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod]
+        constructor
+        · intro hk
+          simp at hk
+          cases' hk with hk hk
+          · rw [Nat.add_mod]
+            simp only [Finset.mem_singleton, Nat.reduceAdd, Nat.reduceMod, Nat.mod_eq_of_lt]
+            omega
+          · simp only [Finset.mem_singleton, Nat.reduceAdd, Nat.reduceMod, Nat.mod_eq_of_lt]
+            omega
+        · intro hk
+          simp only [Finset.mem_range, Nat.reduceMod]
+          constructor
+          · apply Nat.mod_lt
+            exact hk.2
+          · apply_fun (· % 4) at hk
+            simp only [Nat.reduceMod, Nat.mod_eq_of_lt] at hk
+            simp only [Finset.mem_setOf_eq]
+            omega
+      rw [this]
+      apply Finset.sum_eq_card_nsmul_mod_eq_zero
+      · rw [Finset.card_filter]
+        simp only [Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+        omega
+      · by_cases hn : n = 0
+        · simp only [hn, Finset.card_filter]
+          rify
+          rw [Nat.cast_sub]
+          norm_num
+          omega
+        · rw [Nat.sub_add_cancel]
+          omega
+
+  -- If $r \in \{1, 2, 3\}$, then $\sum_{k \in S} \binom{2n+1}{2k} 2^{3k} \equiv 0 \pmod{5}$.
+  have sum_congr_mod_5' (n r : ℕ) (hr : r ∈ Icc 1 (4 - 1)) : ∑ k ∈ S n r, Nat.choose (2 * n + 1) (2 * k) * 2 ^ (3 * k) ≡ 0 [MOD 5] := by
+    simp only [Finset.mem_Icc] at hr
+    interval_cases r
+    -- base case : r = 0
+    · rw [Finset.mem_Icc] at hr
+      exfalso
+      exact Nat.not_lt_of_le hr hr'
+    -- inductive step : r = 1
+    · have : S n 1 = {n - 1} := by
+        ext k
+        simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod]
+        constructor
+        · intro hk
+          have : k ≤ n := by
+            apply Finset.mem_range.mp
+            apply_fun (· % 4) at hk
+            rw [Nat.mod_eq_of_lt] at hk
+            simp at hk
+            exact hk
+          interval_cases k
+          · rfl
+          · simp at hk
+        · intro hk
+          simp only [Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+          cases' hk with hk hk
+          · rw [hk]
+            simp only [Finset.mem_singleton, Finset.mem_range, Nat.reduceSub]
+            omega
+          · simp only [Finset.mem_singleton, Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+            omega
+      rw [this]
+      simp only [Finset.filter_singleton, Finset.mem_singleton, Nat.reduceSub, Nat.choose_self]
+      norm_num
+      rw [two_pow_threek_mod_5, Nat.modEq_zero_iff_dvd]
+      omega
+    -- inductive step : r = 2
+    · have : S n 2 = {k ∈ Finset.range (n - 1 + 1) | k ≡ 0 [MOD 4]} := by
+        ext k
+        simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod]
+        constructor
+        · intro hk
+          simp at hk
+          cases' hk with hk hk
+          · rw [hk]
+            simp only [Finset.mem_singleton, Finset.mem_range]
+            omega
+          · simp only [Finset.mem_singleton, Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+            omega
+        · intro hk
+          simp only [Finset.mem_range, Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+          constructor
+          · apply Nat.mod_lt
+            exact hk.2
+          · apply_fun (· % 4) at hk
+            simp only [Nat.reduceMod, Nat.mod_eq_of_lt] at hk
+            simp only [Finset.mem_setOf_eq]
+            omega
+      rw [this]
+      apply Finset.sum_eq_card_nsmul_mod_eq_zero
+      · simp only [Finset.card_filter]
+        rw [Nat.sub_add_cancel]
+        omega
+      · by_cases hn : n = 0
+        · simp only [hn, Finset.card_filter]
+          rify
+          rw [Nat.cast_sub]
+          norm_num
+          omega
+        · rw [Nat.sub_add_cancel]
+          omega
+    -- inductive step : r = 3
+    · have : S n 3 = {k ∈ Finset.filter (fun k ↦ k ≡ 2 [MOD 4]) (Finset.range n)} := by
+        ext k
+        simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod]
+        constructor
+        · intro hk
+          simp at hk
+          cases' hk with hk hk
+          · rw [Nat.add_mod]
+            simp only [Finset.mem_singleton, Nat.reduceAdd, Nat.reduceMod, Nat.mod_eq_of_lt]
+            omega
+          · simp only [Finset.mem_singleton, Nat.reduceAdd, Nat.reduceMod, Nat.mod_eq_of_lt]
+            omega
+        · intro hk
+          simp only [Finset.mem_range, Nat.reduceMod]
+          constructor
+          · apply Nat.mod_lt
+            exact hk.2
+          · apply_fun (· % 4) at hk
+            simp only [Nat.reduceMod, Nat.mod_eq_of_lt] at hk
+            simp only [Finset.mem_setOf_eq]
+            omega
+      rw [this]
+      apply Finset.sum_eq_card_nsmul_mod_eq_zero
+      · rw [Finset.card_filter]
+        simp only [Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+        omega
+      · by_cases hn : n = 0
+        · simp only [hn, Finset.card_filter]
+          rify
+          rw [Nat.cast_sub]
+          norm_num
+          omega
+        · rw [Nat.sub_add_cancel]
+          omega
+
+  -- If $r \in \{1, 2, 3\}$, then $\sum_{k \in S} \binom{2n+1}{2k+1} 2^{3k} \equiv \sum_{k \in S} \binom{2n+1}{2k} 2^{3k} \pmod{5}$.
+  have sum_congr_mod_5'' (n r : ℕ) (hr : r ∈ Icc 1 (4 - 1)) : ∑ k ∈ S n r, Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) ≡ ∑ k ∈ S n r, Nat.choose (2 * n + 1) (2 * k) * 2 ^ (3 * k) [MOD 5] := by
+    apply Finset.sum_congr
+    · apply Finset.filter_congr
+      intro k _
+      simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod]
+      exact S_0 n k _
+    · apply Finset.filter_congr
+      intro k _
+      simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod]
+      exact two_pow_threek_mod_5 n k _
+
+  -- Let $A_n = \sum_{k \in S} \binom{2n+1}{2k+1} 2^{3k}$
+  let A (n : ℕ) := ∑ k ∈ S n 1, Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)
+  -- Let $B_n = \sum_{k \in S} \binom{2n+1}{2k} 2^{3k}$.
+  let B (n : ℕ) := ∑ k ∈ S n 0, Nat.choose (2 * n + 1) (2 * k) * 2 ^ (3 * k)
+
+  -- We have $A_n \equiv B_n \pmod{5}$.
+  have AmodB (n : ℕ) : A n ≡ B n [MOD 5] := by
+    unfold A B
+    apply sum_congr_mod_5''
+    · simp
+    · simp
+
+  -- We have $A_n \equiv 0 \pmod{5}$.
+  have Amod5 (n : ℕ) : A n ≡ 0 [MOD 5] := by
+    induction' n with n ih
+    · unfold A
+      simp
+    · unfold A
+      simp only [Finset.mem_filter, Finset.mem_range, Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+      cases' ih with ih ih
+      · rw [Nat.add_mod, ih, add_comm, Nat.add_mod, ih, Nat.add_mod]
+        norm_num
+        rw [Nat.mul_mod, Nat.mul_mod, Nat.mul_mod, Nat.mul_mod, two_pow_three_mod_5]
+        norm_num
+      · simp only [Finset.mem_singleton, Finset.mem_range, Nat.reduceSub, Nat.reduceMod, Nat.mod_eq_of_lt]
+        interval_cases n
+        · norm_num
+        · norm_num
+        · norm_num
+
+  -- We have $B_{n+1} \equiv B_n \pmod{5}$.
+  have BmodB (n : ℕ) : B (n + 1) ≡ B n [MOD 5] := by
+    unfold A B
+    rw [show (2 * (n + 1) + 1) = (2 * n + 1) + 2 by ring, show (2 * (n + 1) + 1) = 2 * (n + 1) + 1 by ring]
+    have : S (n + 1) 0 = {k ∈ Finset.range (n + 1) | k ≡ 0 [MOD 4]} := by
+      ext k
+      simp only [S, Finset.mem_filter, Finset.mem_range, Nat.reduceMod]
+      constructor
+      · intro hk
+        simp at hk
+        cases' hk with hk hk
+        · rw [Nat.add_mod]
+          simp only [Finset.mem_singleton, Nat.reduceAdd, Nat.reduceMod, Nat.mod_eq_of_lt]
+          omega
+        · simp only [Finset.mem_singleton, Nat.reduceAdd, Nat.reduceMod, Nat.mod_eq_of_lt]
+          omega
+      · intro hk
+        simp only [Finset.mem_range, Nat.reduceMod]
+        constructor
+        · apply Nat.mod_lt
+          exact hk.2
+        · apply_fun (· % 4) at hk
+          simp only [Nat.reduceMod, Nat.mod_eq_of_lt] at hk
+          simp only [Finset.mem_setOf_eq]
+          omega
+    rw [this]
+    apply Finset.sum_eq_card_nsmul_mod_eq_zero
+    · simp only [Finset.card_filter]
+      rw [Nat.sub_add_cancel]
+      omega
+    · by_cases hn : n = 0

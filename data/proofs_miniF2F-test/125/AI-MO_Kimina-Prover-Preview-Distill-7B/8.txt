@@ -1,0 +1,50 @@
+have ha : a = 2 ^ k - d := by omega
+
+  -- We have $a d = b c$ so $2^k d - d^2 = b c$.
+  rw [ha, Nat.mul_sub, h₃] at h₄
+  -- We have $b < c < d$ so $b c < c d < d^2$.
+  have hcd : b * c < c * d := by nlinarith
+  have hcd' : c * d < d * d := by nlinarith
+  -- We have $2^k d - d^2 < d^2$ which is $2^k d < 2 d^2$ which is $d (2^k - 2 d) < 0$.
+  have : d * (2 ^ k - 2 * d) < 0 := by linarith
+  -- Because $d > 0$ we have $2^k - 2 d < 0$ which is $2^k < 2 d$ which is $2^{k-1} < d$.
+  replace : 2 ^ (k - 1) < d := by
+    apply lt_of_mul_lt_mul_right (n := d)
+    linarith
+    linarith
+  -- We have $a = 2^k - d < 2^k - 2^{k-1} = 2^{k-1}$.
+  replace ha : a < 2 ^ (k - 1) := by
+    apply lt_of_lt_of_le
+   . linarith
+   . rw [ha]
+      suffices 2 ^ k - d ≤ 2 ^ (k - 1) from by omega
+      suffices 2 ^ (k - 1) * 2 - 2 ^ (k - 1) ≤ 2 ^ (k - 1) from by convert this using 1; ring
+      suffices 2 ^ (k - 1) * (2 - 1) ≤ 2 ^ (k - 1) from by convert this using 1; ring
+      rw [Nat.pow_succ]
+      omega
+  -- Prove that $a$ is odd and $2^{k-1}$ is even which is a contradiction.
+  have h_even : Even d := by
+    -- We have $a < 2^{k-1}$ so $a$ is less than $2^{k-1}$.
+    suffices a < 2 ^ (k - 1) from by
+      have : a % 2 = 1 := by
+        apply Nat.odd_iff.mp
+        apply Nat.mod_eq_of_lt
+        linarith
+      have : 2 ^ (k - 1) % 2 = 0 := by
+        rw [Nat.pow_succ]
+        simp
+      omega
+    assumption
+  have h_odd : Odd d := by
+    -- We have $d > a$ and $a$ is odd so $d$ is odd.
+    rcases h₁ with ⟨l, hl⟩
+    have : a ≤ d := by omega
+    have : Odd (d : ℕ) := by
+      apply Nat.Odd.of_mul_left
+      apply Nat.odd_iff.mpr
+      rwa [hl, Nat.mul_sub] at this
+    assumption
+  -- It is impossible that $d$ is both odd and even.
+  omega
+
+```

@@ -1,0 +1,179 @@
+-- We will use the Intermediate Value Theorem (IVT) to show that there are at least 6 solutions.
+  -- Let f(x) = 1 - 3\sin(x) + 5\cos(3x).
+  -- We will evaluate f at 6 points in the interval (0, 2π] and show that the function changes sign between each pair of points.
+  --
+  -- * f(0) = 1 - 0 + 5 = 6 > 0
+  -- * f(π/6) = 1 - 3*(1/2) + 5*(√3/2) = (1 - 3/2 + 5√3/2) = (-1/2 + 5√3/2) > 0
+  -- * f(π/2) = 1 - 3*1 + 5*0 = 1 - 3 = -2 < 0
+  -- * f(2π/3) = 1 - 3*(-1/2) + 5*(-1/2) = (1 + 3/2 - 5/2) = 0
+  -- * f(3π/4) = 1 - 3*(-√2/2) + 5*(√2/2) = (1 + 3√2/2 + 5√2/2) = (1 + 4√2) > 0
+  -- * f(π) = 1 - 0 + 5*(-1) = 1 - 5 = -4 < 0
+  -- * f(3π/2) = 1 - 3*(-1) + 5*0 = 1 + 3 = 4 > 0
+  -- * f(5π/4) = 1 - 3*(-√2/2) + 5*(-√2/2) = (1 - 3√2/2 - 5√2/2) = (1 - 4√2) < 0
+  -- * f(4π/3) = 1 - 3*(-1/2) + 5*0 = 1 + 3/2 = 5/2 > 0
+  -- * f(3π/2) = 1 - 0 + 5*(-1) = 1 - 5 = -4 < 0
+  -- * f(5π/3) = 1 - 3*(1/2) + 5*(√3/2) = (1 - 3/2 + 5√3/2) = (-1/2 + 5√3/2) > 0
+  -- * f(11π/6) = 1 - 3*(√3/2) + 5*(√3/2) = (1 - 3√3/2 + 5√3/2) = (1 + √3/2) > 0
+  -- * f(2π) = 1 - 0 + 5*(-1) = 1 - 5 = -4 < 0
+
+  -- Since there are at least 6 sign changes, there must be at least 6 solutions in the interval [0, 2π].
+  have h₁ : 6 ≤ S.card := by
+    suffices 6 ≤ (Finset.Ioc (0 : ℝ) (2 * Real.pi)).card by linarith
+    rw [Finset.Ioc]
+    suffices (fun (x : ℝ) ↦ 0 < x ∧ x < 2 * Real.pi) ⁻¹' (Finset.Icc (-(1 : ℝ)) (1 : ℝ)).card ≥ 6 by linarith
+    -- The function f(x) = 1 - 3\sin(x) + 5\cos(3x) is continuous.
+    -- By the IVT, the preimage of every value in (f(x_{i-1}), f(x_i)) is nonempty for each i.
+    -- We will use this to show that the cardinality of the set of solutions is at least 6.
+    have hf₀ : Continuous fun x ↦ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) := by
+      continuity
+    -- Let f(x) = 1 - 3\sin(x) + 5\cos(3x).
+    let f := fun x ↦ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x)
+    -- IVT: f⁻¹ ((a,b)) is nonempty for all a,b with f(x₁) < a < f(x₂) < b < f(x₃) for some x₁ < x₂ < x₃
+    have h₁ (a b : ℝ) (h₂ : a < b) (h₃ : f (0 : ℝ) < a) : (f ⁻¹' (Ioo a b)).nonempty := by
+      specialize @Real.Ioo_subset_Icc h₂.le h₂
+      suffices ∃ x ∈ f ⁻¹' (Icc a b), x ∈ Ioo 0 (2 * Real.pi) by
+        simp
+        obtain ⟨x, hx₁, hx₂⟩ := this
+        use x
+        refine ⟨⟨hx₂,?_⟩, hx₁⟩
+        suffices 0 < 2 * Real.pi by linarith
+        exact mul_pos zero_lt_two Real.pi_pos
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), 0 < x ∧ x < 2 * Real.pi by
+        simp at this
+        obtain ⟨x, hx₁, hx₂⟩ := this
+        use x
+        refine ⟨⟨hx₂,?_⟩, hx₁⟩
+        suffices 0 < 2 * Real.pi by linarith
+        exact mul_pos zero_lt_two Real.pi_pos
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Icc a b by
+        simp at this
+        obtain ⟨x, hx₁, hx₂⟩ := this
+        use x
+        refine ⟨⟨hx₂,?_⟩, hx₁⟩
+        simpa using hx₂
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Ioo a b by
+        simp at this
+        obtain ⟨x, hx₁, hx₂⟩ := this
+        use x
+        refine ⟨⟨hx₂,?_⟩, hx₁⟩
+        suffices a < f x by linarith
+        exact hx₂
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Ioo a b ∧ 0 < x ∧ x < 2 * Real.pi by
+        simp at this
+        obtain ⟨x, hx₁, hx₂, hx₃, hx₄⟩ := this
+        use x
+        refine ⟨⟨hx₄, hx₃⟩, hx₂⟩
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Ioo a b ∧ 0 < x ∧ x < 2 * Real.pi by
+        simp at this
+        obtain ⟨x, hx₁, hx₂, hx₃, hx₄⟩ := this
+        use x
+        refine ⟨⟨hx₄, hx₃⟩, hx₂⟩
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Ioo a b ∧ x ∈ Ioo 0 (2 * Real.pi) by
+        simp at this
+        obtain ⟨x, hx₁, hx₂, hx₃, hx₄⟩ := this
+        use x
+        refine ⟨⟨hx₄, hx₃⟩, hx₂⟩
+        suffices 0 < 2 * Real.pi by linarith
+        exact mul_pos zero_lt_two Real.pi_pos
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Ioo a b ∧ 0 < x ∧ x < 2 * Real.pi by
+        simp at this
+        obtain ⟨x, hx₁, hx₂, hx₃, hx₄⟩ := this
+        use x
+        refine ⟨⟨hx₄, hx₃⟩, hx₂⟩
+      apply @ IVT_Ioo_subset f ⁻¹' (Icc a b) (by simpa) (f ⁻¹' (Icc a b)) (by simpa)
+     . infer_instance
+     . exact continuousOn_of_forall_continuousAt hf₀
+     . simp
+        exact ⟨h₃, (by linarith [h₃])⟩
+    -- Similarly, f(x₁) < a < f(x₂) < b < f(x₃) implies that f⁻¹ ((a,b)) is nonempty.
+    have h₁' (a b : ℝ) (h₂ : a < b) (h₃ : f (2 * Real.pi) < a) : (f ⁻¹' (Ioo a b)).nonempty := by
+      specialize @Real.Icc_subset_Ioi h₂
+      suffices ∃ x ∈ f ⁻¹' (Icc a b), x ∈ Ioo 0 (2 * Real.pi) by
+        simp
+        obtain ⟨x, hx₁, hx₂⟩ := this
+        use x
+        refine ⟨⟨hx₂,?_⟩, hx₁⟩
+        suffices 0 < 2 * Real.pi by linarith
+        exact mul_pos zero_lt_two Real.pi_pos
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), 0 < x ∧ x < 2 * Real.pi by
+        simp at this
+        obtain ⟨x, hx₁, hx₂⟩ := this
+        use x
+        refine ⟨⟨hx₂,?_⟩, hx₁⟩
+        suffices 0 < 2 * Real.pi by linarith
+        exact mul_pos zero_lt_two Real.pi_pos
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Icc a b by
+        simp at this
+        obtain ⟨x, hx₁, hx₂⟩ := this
+        use x
+        refine ⟨⟨hx₂,?_⟩, hx₁⟩
+        simpa using hx₂
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Ioo a b by
+        simp at this
+        obtain ⟨x, hx₁, hx₂⟩ := this
+        use x
+        refine ⟨⟨hx₂,?_⟩, hx₁⟩
+        suffices a < f x by linarith
+        exact hx₂
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Ioo a b ∧ 0 < x ∧ x < 2 * Real.pi by
+        simp at this
+        obtain ⟨x, hx₁, hx₂, hx₃, hx₄⟩ := this
+        use x
+        refine ⟨⟨hx₄, hx₃⟩, hx₂⟩
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Ioo a b ∧ 0 < x ∧ x < 2 * Real.pi by
+        simp at this
+        obtain ⟨x, hx₁, hx₂, hx₃, hx₄⟩ := this
+        use x
+        refine ⟨⟨hx₄, hx₃⟩, hx₂⟩
+        suffices 0 < 2 * Real.pi by linarith
+        exact mul_pos zero_lt_two Real.pi_pos
+      suffices ∃ x ∈ Ioo (f ⁻¹' (Icc a b)) (f ⁻¹' (Icc a b)), f x ∈ Ioo a b ∧ x ∈ Ioo 0 (2 * Real.pi) by
+        simp at this
+        obtain ⟨x, hx₁, hx₂, hx₃, hx₄⟩ := this
+        use x
+        refine ⟨⟨hx₄, hx₃⟩, hx₂⟩
+      apply @ IVT_Ioo_subset f ⁻¹' (Icc a b) (by simpa) (f ⁻¹' (Icc a b)) (by simpa)
+     . infer_instance
+     . exact continuousOn_of_forall_continuousAt hf₀
+     . simp
+        exact ⟨h₃, (by linarith [h₃])⟩
+    -- We will use the IVT to show that there are at least 6 solutions.
+    -- Let f(x) = 1 - 3\sin(x) + 5\cos(3x).
+    let f := fun x : ℝ ↦ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x)
+    -- f is continuous
+    have hf₀ : Continuous f := by continuity
+    have h_f_0 : f 0 = 6 := by simp [f]; norm_num
+    have h_f_1 : f (Real.pi / 6) = (1 + 5 * Real.sqrt 3 / 2 - 3 / 2) := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_2 : f (Real.pi / 2) = -2 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_3 : f (2 * Real.pi / 3) = 0 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_4 : f (3 * Real.pi / 4) = (1 + 4 * Real.sqrt 2) / 2 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_5 : f (Real.pi) = -4 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_6 : f (3 * Real.pi / 2) = 4 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_7 : f (5 * Real.pi / 4) = (1 - 4 * Real.sqrt 2) / 2 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_8 : f (4 * Real.pi / 3) = 5 / 2 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_9 : f (3 * Real.pi / 2) = -4 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_10 : f (11 * Real.pi / 6) = (1 + Real.sqrt 3) / 2 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+    have h_f_11 : f (2 * Real.pi) = -4 := by simp [f]; ring_nf; rw [Real.cos_three_mul, Real.sin_three_mul]; simp; ring
+
+    -- The function f(x) = 1 - 3\sin(x) + 5\cos(3x) is continuous.
+    -- By the IVT, the preimage of every value in (f(x_{i-1}), f(x_i)) is nonempty for each i.
+    -- We will use this to show that the cardinality of the set of solutions is at least 6.
+    have h₂ : 6 ≤ (Finset.Ioo 0 (2 * Real.pi)).card := by
+      -- There are 6 subintervals in the partition {0, π/6, π/2, 2π/3, 3π/4, π, 3π/2, 5π/4, 4π/3, 3π/2, 11π/6, 2π}.
+      -- We will show that there are at least 6 solutions in the interval (0, 2π].
+      -- f(0) = 6 > 0
+      -- f(π/6) = (1 + 5√3/2 - 3/2) > 0
+      -- f(π/2) = -2 < 0
+      -- f(2π/3) = 0
+      -- f(3π/4) = (1 + 4√2)/2 > 0
+      -- f(π) = -4 < 0
+      -- f(3π/2) = 4 > 0
+      -- f(5π/4) = (1 - 4√2)/2 < 0
+      -- f(4π/3) = 5/2 > 0
+      -- f(3π/2) = -4 < 0
+      -- f(11π/6) = (1 + √3)/2 > 0
+      -- f(2π) = -4 < 0
+
+      -- IVT: f⁻¹ ((a,b)) is nonempty for all a,b with f(x₁) < a < f(x₂) < b < f(x₃) for some x₁ < x₂ < x₃
+      -- There are 6 sign changes, so there must be at least 6 solutions in the interval [0, 2π].
+      have h₃ : (f ⁻¹' (Ioo (6 : ℝ) (1 + 5 * Real.sqrt

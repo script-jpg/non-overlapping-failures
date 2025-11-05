@@ -1,0 +1,141 @@
+-- Notice that if $N$ is the unique positive integer such that $f(N) > f(n)$ for all $n \neq N$,
+  -- then $f(N) \geq f(n)$ for all $n$.
+  have h₂ : ∀ n, 0 < n → f n ≤ f N := by
+    intro n hn
+    by_contra! h₂
+    specialize h₁ n h₂ hn
+    linarith
+
+  -- Let $k = d(N)$, the number of divisors of $N$.
+  let k := (Nat.divisors N).card
+  -- Then $f(N) = \frac{k}{N^{1/3}}$.
+  have h₃ : f N = (Nat.divisors N).card / N ^ ((1 : ℝ) / 3) := by
+    exact h₀ N (by positivity)
+
+  -- We have $f(n) \leq f(N)$ for all $n$, but suppose $n$ has the same number of divisors as $N$.
+  -- If $f(n) < f(N)$ whenever $n$ has the same number of divisors as $N$ but smaller cube root,
+  -- then $f(N)^3 \leq d(N)$.
+  have h₄ : (f N) ^ 3 ≤ (Nat.divisors N).card := by
+    by_contra! h₄
+    let n' := Nat.find (fun n => (Nat.divisors n).card = k ∧ n < N ∧ f n > f N)
+    have h₅ : n' < N := by apply Nat.find_lt_of_lt_of_decidable (by simp; exact h₄)
+    have h₆ : (Nat.divisors n' ).card = k := by simp [n']
+    have h₇ : n' ≠ N := by simp [n']; linarith
+    have h₈ := h₁ n' h₇ (by positivity)
+    have h₉ : f n' > f N := by linarith
+    have h₁₀ : (f N) ^ 3 < (f n') ^ 3 := by refine (Nat.pow_lt_pow_iff_left?_).mpr h₉; simp
+    have h₁₁ : (f n') ^ 3 ≤ (Nat.divisors n' ).card := by exact h₄
+    rw [h₆] at h₁₁
+    linarith
+
+  -- But $f(N)^3 = \frac{k}{N^{1/3}} \cdot \frac{k}{N^{1/3}} \cdot \frac{k}{N^{1/3}} = \frac{k^3}{N}$.
+  have h₁₂ : (f N) ^ 3 = (Nat.divisors N).card / N := by
+    calc
+      _ = ((Nat.divisors N).card / N ^ ((1 : ℝ) / 3)) ^ 3 := by rw [h₃]
+      _ = ((Nat.divisors N).card ^ 3) / (N ^ ((1 : ℝ) / 3) * N ^ ((1 : ℝ) / 3) * N ^ ((1 : ℝ) / 3)):= by field_simp; ring
+      _ = ((Nat.divisors N).card ^ 3) / (N ^ (((1 : ℝ) / 3) + (1 / 3) + (1 / 3))) := by rw [Real.rpow_add (by positivity) (1 / 3) (1 / 3)]; rw [Real.rpow_add (by positivity) (1 / 3) (1 / 3)]; congr 1; ring
+      _ = _ := by rw [← Real.rpow_natCast, ← Real.rpow_mul (by positivity), ← Real.rpow_natCast, ← Real.rpow_mul (by positivity)]; ring_nf; norm_num
+
+  -- So we have $k^3/N \leq k$, and therefore $k^2 \leq N$.
+  have h₁₃ : k ^ 2 ≤ N := by
+    have : (N : ℝ) ≠ 0 := by norm_cast; positivity
+    have h₁₃ : ((Nat.divisors N).card : ℝ) / N ≤ (↑((Nat.divisors N).card) / √[3]{N}) ^ 3 := by
+      calc
+        _ = ((Nat.divisors N).card : ℝ) / N := by simp
+        _ ≤ ((Nat.divisors N).card : ℝ) / N ^ ((1 : ℝ) / 3) * ((Nat.divisors N).card : ℝ) / N ^ ((1 : ℝ) / 3) * ((Nat.divisors N).card : ℝ) / N ^ ((1 : ℝ) / 3) := by
+          refine Nat.div_le_div (by simp) (by simp)?_
+          rw [mul_pow]
+          refine Nat.div_le_div (by simp) (by simp)?_
+          rw [mul_pow]
+          refine Nat.div_le_div (by simp) (by simp)?_
+          rw [mul_pow]
+          apply mul_nonneg <;> apply Nat.div_nonneg <;> simp
+        _ = _ := by
+          rw [← h₃, ← Real.rpow_natCast, ← Real.rpow_mul (by positivity), ← Real.rpow_natCast, ← Real.rpow_mul (by positivity), mul_div_assoc]
+          norm_cast
+          rw [← Real.rpow_mul (by positivity), ← Real.rpow_mul (by positivity)]
+          norm_num
+          rw [mul_div_assoc, mul_div_assoc]
+          simp
+    rw [← h₄, h₁₂] at h₁₃
+    clear h₁₂
+    have h₁₄ : (((Nat.divisors N).card : ℝ) / N) * (N : ℝ) ≤ ((↑((Nat.divisors N).card) / √[3]{N}) ^ 3) * (N : ℝ) := by
+      refine mul_le_mul_of_nonneg_right h₁₃ (by positivity)
+    simp at h₁₄
+    have h₁₅ : ((↑((Nat.divisors N).card) : ℝ) / √[3]{N}) ^ 3 * N = (k ^ 2 * N) / N := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul (by positivity), ← Real.rpow_natCast, ← Real.rpow_mul (by positivity), mul_div_assoc]
+      norm_cast
+      rw [← Real.rpow_mul (by positivity), ← Real.rpow_mul (by positivity)]
+      norm_num
+      rw [mul_div_assoc, mul_div_assoc]
+      simp
+    rw [h₁₅] at h₁₄
+    simp at h₁₄
+    norm_cast at h₁₄
+    rw [Nat.div_div_eq_div_mul] at h₁₄
+    simp at h₁₄
+    have : Nat.chineseRemainder 2 2 k k ^ 2 := by
+      apply Nat.chineseRemainder_eq_mul
+      <;> norm_cast
+      <;> rw [Nat.pow_le_pow_iff_left (by norm_num)]
+      <;> omega
+    have : 0 < k := by
+      by_contra! This
+      have : k = 0 := by exact Nat.eq_zero_of_le_zero This
+      simp [This] at h₁₄
+    omega
+
+  -- Now we show that $N = 1998$.
+  have h₁₄ : N = 1998 := by
+    by_contra! h₁₄
+    let m := 1998
+    have hm : Nat.divisors m = {1, 2, 3, 6, 333, 666, 999, 1998} := by
+      simp [m]
+      native_decide
+    have hm' : (Nat.divisors m).card = 8 := by simp [hm]
+    have h₁₅ : f m < f N := by
+      specialize h₁ m (by simp; rw [h₁₄]; simp) (by positivity)
+      simp [h₁₄, hm']
+    have h₁₆ : (f N) ^ 3 > (Nat.divisors N).card := by
+      have h₁₆ : (Nat.divisors N).card = 8 := by
+        by_contra! h₁₆
+        by_cases h₁₇ : k = 0
+        · simp [h₁₇] at h₁₃
+          omega
+        · have h₁₈ : k ≥ 9 := by omega
+          have : (f N) ^ 3 > (Nat.divisors N).card := by
+            rw [h₁₂]
+            calc
+              _ = ((Nat.divisors N).card : ℝ) / N ^ ((1 : ℝ) / 3) * ((Nat.divisors N).card : ℝ) / N ^ ((1 : ℝ) / 3) * ((Nat.divisors N).card : ℝ) / N ^ ((1 : ℝ) / 3) := by
+                rw [mul_pow]
+                refine Nat.div_le_div (by simp) (by simp)?_
+                rw [mul_pow]
+                refine Nat.div_le_div (by simp) (by simp)?_
+                rw [mul_pow]
+                apply mul_nonneg <;> apply Nat.div_nonneg <;> simp
+              _ > ((Nat.divisors N).card : ℝ) / N := by
+                refine Nat.div_lt_div_of_pos_right?_ (by simp) (by positivity)
+                apply Nat.div_pos?_ (by positivity)
+                simp
+              _ ≥ 9 * 9 * 9 := by
+                refine (div_le_div_iff₀ (by simp) (by positivity)).mpr?_
+                rw [mul_comm]
+                apply mul_le_mul
+                apply mul_le_mul_of_nonneg_right h₁₃ (by positivity)
+                simp
+                rw [mul_comm]
+                apply mul_le_mul_of_nonneg_right h₁₃ (by positivity)
+                simp
+                positivity
+              _ > 8 := by norm_num
+          linarith
+      rw [h₁₆] at h₁₃
+      linarith
+    have h₁₇ : (f m) ^ 3 ≤ (Nat.divisors m).card := by exact h₄
+    simp [hm', h₁₄] at h₁₇
+    norm_num at h₁₇
+    linarith
+
+  -- The answer is $1 + 9 + 9 + 8 = 27$.
+  simp [h₁₄]
+```

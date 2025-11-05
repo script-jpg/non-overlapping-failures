@@ -1,0 +1,134 @@
+-- show that $a_i = 1$ for all $i$ by induction
+  have eq : ∀ i ∈ Finset.range n, a i = 1 := by
+    -- intro $i$ and proof $a_i = 1$
+    intro i hi
+    -- find the expression of $a_i$
+    have hi' : i = Finset.range n.erase i ∪ {i} := by
+      rw [Finset.mem_erase] at hi
+      simp [hi]
+    -- suppose $a_i \neq 1$, then $\prod_{i=1}^n a_i < 1$
+    by_contra! ne
+    rw [hi'] at h₀ ⊢
+    rw [Finset.prod_union, Finset.prod_erase] at h₀ ⊢
+    -- $\sum_{i \in \{i\} \cup (\{0,\ldots,i-1,i+1,\ldots,n-1\})} a_i = n$
+    have hcard : n = ∑ x ∈ Finset.range n.erase i ∪ {i}, a x := by
+      rw [h₀]
+    -- $\sum_{j \in \{i\}} a_j = a_i$
+    have hcard' : ∑ j ∈ {i}, a j = a i := by
+      simp [Finset.sum_singleton]
+    -- $\sum_{j \in \{0,\ldots,i-1,i+1,\ldots,n-1\}} a_j = n - a_i$
+    have hcard'' : ∑ j ∈ Finset.range n.erase i, a j = n - a i := by
+      calc
+        _ = ∑ j ∈ Finset.range n.erase i ∪ {i}, a j - ∑ j ∈ {i}, a j := by
+          rw [Finset.sum_erase_add]
+        _ = n - a i := by
+          rw [hcard, hcard']
+    -- $\prod_{j \in \{i\} \cup (\{0,\ldots,i-1,i+1,\ldots,n-1\})} a_j = a_i \cdot \prod_{j \in \{0,\ldots,i-1,i+1,\ldots,n-1\}} a_j$
+    have hprod : ∏ x ∈ Finset.range n.erase i ∪ {i}, a x = a i * ∏ x ∈ Finset.range n.erase i, a x := by
+      rw [Finset.prod_union]
+      rw [Finset.prod_erase]
+      simp
+    -- $\prod_{j \in \{0,\ldots,i-1,i+1,\ldots,n-1\}} a_j = \prod_{j \in \{0,\ldots,i-1,i+1,\ldots,n-1\}} a_j$
+    have hprod' : ∏ j ∈ Finset.range n.erase i, a j = ∏ j ∈ Finset.range n.erase i, a j := by
+      rfl
+    -- case $a_i \neq 1$ and $a_i > 0$
+    by_cases h : a i > 0
+    · -- if $a_i > 0$, then $\prod_{j \in \{0,\ldots,i-1,i+1,\ldots,n-1\}} a_j > 0$
+      have hprodpos : ∏ x ∈ Finset.range n.erase i, a x > 0 := by
+        apply Finset.prod_pos
+        · intro j hj
+          apply Nat.zero_lt_of_ne_zero
+          apply h
+        · exact fun i _ => h
+      -- use AM-GM inequality, $\prod_{j \in \{0,\ldots,i-1,i+1,\ldots,n-1\}} a_j \leq (\frac{n - a_i}{n - 1})^{n - 1}$
+      have hprod_amgm : ∏ x ∈ Finset.range n.erase i, a x ≤ (√'(n - a i) / √'(n - 1)) ^ (n - 1) := by
+        apply Finset.prod_le_prod
+        · intro i hi
+          apply Nat.zero_lt_of_ne_zero
+          apply h
+        · intro i hi
+          apply le_of_lt
+          have hn : 1 ≤ n := by
+            by_contra! h
+            simp at h
+            rw [h] at hcard''
+            simp [hcard''] at hprodpos
+          have hi : (n : ℝ) - a i > 0 := by
+            linarith
+          have hi' : (n : ℝ) - 1 > 0 := by
+            linarith
+          apply lt_of_lt_of_le
+          · apply Real.finset_prod_rpow
+            · intro j hj
+              apply Nat.zero_lt_of_ne_zero
+              apply h
+            · simp at hi
+              apply le_of_lt
+              apply Real.lt_rpow_neg
+              · linarith
+              · linarith
+              · simp at hi'
+                linarith
+          · apply Real.finset_prod_rpow_le_pow
+            · simp at hi
+            · apply le_of_lt
+              apply Real.lt_rpow_neg
+              · linarith
+              · linarith
+              · simp at hi'
+                linarith
+      -- $\prod a_i = a_i \cdot \prod_{j \in \{0,\ldots,i-1,i+1,\ldots,n-1\}} a_j$
+      have hprod_eq_prod := Eq.symm (Finset.prod_union {i} (Finset.range n.erase i))
+      have hprod_amgm_eq : a i * ∏ x ∈ Finset.range n.erase i, a x ≤ 1 := by
+        calc
+          _ = ∏ x ∈ Finset.range n, a x := by
+            rw [hprod_eq_prod]
+          _ = 1 := by
+            rw [h₀]
+      -- use the fact that $a_i \neq 1$ and $a_i > 0$, we have $1 < a_i \cdot \prod_{j \in \{0,\ldots,i-1,i+1,\ldots,n-1\}} a_j$
+      have hprod_gt_prod : 1 < a i * ∏ x ∈ Finset.range n.erase i, a x := by
+        calc
+          _ = 1 * 1 := by
+            simp
+          _ < a i * 1 := by
+            apply (mul_lt_mul_left h).mpr
+            exact Nat.one_lt_of_ne_zero h
+          _ = a i := by
+            simp
+          _ ≠ 1 := by
+            exact ne.symm ne
+      -- we get a contradiction
+      linarith
+    · -- if $a_i = 0$, then $\prod_{j \in \{0,\ldots,i-1,i+1,\ldots,n-1\}} a_j = 0$
+      simp at h
+      have hprod : ∏ x ∈ Finset.range n.erase i, a x = 0 := by
+        apply Finset.prod_eq_zero
+        · simp at h
+          apply fun a_1 => h a_1
+        · exact fun i _ => h
+      -- use the fact that $a_i = 0$, we have $1 < \prod_{j \in \{i\} \cup (\{0,\ldots,i-1,i+1,\ldots,n-1\})} a_j$
+      have hprod_gt_prod : 1 < ∏ x ∈ Finset.range n, a x := by
+        calc
+          _ = 1 * 1 := by
+            simp
+          _ = 1 * ∏ x ∈ Finset.range n.erase i, a x := by
+            rw [hprod]
+          _ < (∏ x ∈ Finset.range n.erase i ∪ {i}, a x) := by
+            apply (mul_lt_mul_left (show 1 > 0 by simp)).mpr
+            exact Nat.one_lt_of_ne_zero h
+          _ = n := by
+            rw [h₀]
+          _ = ∑ x ∈ Finset.range n, a x := by
+            simp
+      -- we get a contradiction
+      linarith
+
+  -- compute the value of $\prod_{i=1}^n a_i$
+  have hprod : (∏ x ∈ Finset.range n, a x) = 1 := by
+    apply Finset.prod_eq
+    · simp [eq]
+    · exact fun i _ => eq i
+  -- exact the fact that $\prod_{i=1}^n a_i \leq 1$
+  exact hprod.trans_le?_
+  trivial
+```

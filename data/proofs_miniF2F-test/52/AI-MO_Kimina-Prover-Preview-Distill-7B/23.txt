@@ -1,0 +1,35 @@
+-- auxiliary lemma : if $a \equiv b \pmod{m}$, then $a = b + km$ for some $k \in \Z$.
+  have aux {a b m : ℤ} (h : a ≡ b [ZMOD m]) : ∃ k : ℤ, a = b + k * m := by
+    refine Int.modEq_iff_dvd.mp?_
+    exact h
+
+  have h1 : 24 * x ≡ 15 [ZMOD 1199] := by simp_all
+
+  obtain ⟨k, hk⟩ := aux h1
+
+
+  -- Since $24 x = 15 + 1199 k$, we have $24 x - 15 = 1199 k$, which implies $24 x - 15$ is a multiple of 1199.
+  have h2 : 24 * x - 15 = 1199 * k := by
+    rw [hk]
+    ring
+
+  -- Since $24 x - 15$ is a multiple of 1199, we have $24 x - 15 \equiv 0 \pmod{1199}$.
+  have h3 : 24 * x - 15 ≡ 0 [ZMOD 1199] := by
+    refine Int.modEq_zero_iff_dvd.mpr?_
+    rw [Int.dvd_neg]
+    use k
+    linarith only [h2]
+
+  -- Because $24 x \equiv 15 \pmod{1199}$ and $24 x - 15 \equiv 0 \pmod{1199}$, we have $15 \equiv 0 \pmod{1199}$.
+  have h4 : 15 ≡ 0 [ZMOD 1199] := by
+    trans 24 * x
+   . exact h1
+   . exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm h3)) (id h1))
+
+  -- $15 \equiv 0 \pmod{1199}$ is impossible, because 1199 is greater than 15.
+  have h5 : 15 ≡ 0 [ZMOD 1199] := h4
+
+  rw [Int.modEq_zero_iff_dvd] at h5
+  norm_num at h5
+
+```

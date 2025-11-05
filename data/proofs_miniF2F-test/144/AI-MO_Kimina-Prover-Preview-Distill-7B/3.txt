@@ -1,0 +1,59 @@
+-- A trivial lemma that the norm of a square is the square of the norm.
+  have h₀ (z : ℂ) : Complex.normSq (z ^ 2) = Complex.normSq z ^ 2 := by
+    simp [Complex.normSq]
+  -- A lemma that the norm of a sum is less than or equal to the sum of norms.
+  have h₁ (z w : ℂ) : Complex.normSq (z + w) ≤ Complex.normSq z + Complex.normSq w := by
+    simp [Complex.normSq]
+    apply abs_real_add_le
+  -- A lemma about the norm of a complex number.
+  have h₂ (z : ℂ) : Complex.normSq z = z.re ^ 2 + z.im ^ 2 := by
+    simp [Complex.normSq]
+
+  have hzne0 : z ≠ 0 := by
+    rintro rfl
+    simp at h₀
+
+  -- Expand the norms in the equation.
+  rw [h₀, h₁, h₂] at h₀
+  simp at h₀
+
+  -- Prove that $z$ has positive real part.
+  have hzrepos : 0 < z.re := by
+    nlinarith
+
+  -- Use the identity $|z|^2 = z \cdot \overline{z}$ to simplify the equation.
+  rw [Complex.normSq_eq_mul_conj, mul_conj] at h₀
+  rw [Complex.mul_re, Complex.mul_im, h₂] at h₀
+
+  -- Simplify the equation.
+  replace h₀ : z.re * (z.re ^ 2 + z.im ^ 2 + 6 * z.re - 2 * z.im - 18) = 0 := by
+    ring_nf
+    field_simp
+    linarith only [h₀]
+
+  -- Since $z \neq 0$, the term in the parenthesis must be zero.
+  simp [hzne0] at h₀
+
+  -- Now we need to show that $z + \frac 6 z = -2$.
+  -- Use the identity $z + \frac 6 z = |z|^2 \left(\frac 1 z + \frac 6 {z^2}\right)$ to simplify the expression.
+  calc
+    z + 6 / z = z * (1 + 6 / z ^ 2) := by
+      field_simp
+      ring
+    _ = z * (z + 6 / z ^ 2) / (z + 6 / z ^ 2).normSq := by
+      field_simp
+    _ = Complex.normSq z * (z + 6 / z ^ 2) / Complex.normSq (z + 6 / z ^ 2) := by
+      simp
+    _ = Complex.normSq z * (1 + 6 / z ^ 2) / Complex.normSq (1 + 6 / z ^ 2) := by
+      congr
+      ring
+    _ = _ := by
+      -- Now we can use the fact that $z.re > 0$.
+      field_simp
+      ring_nf
+      nth_rw 1 [h₀]
+      ring_nf
+      simp
+      field_simp
+      ring
+```

@@ -1,0 +1,42 @@
+-- Simplify the left summand $\log_{5^{k}} 3^{k^{2}}$ to $\frac{2\log 3}{\log 5}$.
+  have h1(k: ℕ): Real.logb (5 ^ k) (3 ^ k ^ 2) = 2 * Real.log 3 / Real.log 5 := by
+    rw [Real.logb]
+    calc
+      _ = (k ^ 2 * Real.log 3) / (k * Real.log 5) := by
+        simp [Real.log_pow]
+        rw [mul_comm k (Real.log 3), ←mul_assoc, Real.log_pow, ←Real.log_pow_sub_log_div_log]
+        simp
+      _ = _ := by
+        field_simp
+        ring_nf
+
+  -- Simplify the right summand $\log_{9^{k}} 25^{k}$ to $\frac{2\log 5}{\log 3}$.
+  have h2(k: ℕ): Real.logb (9 ^ k) (25 ^ k) = 2 * Real.log 5 / Real.log 3 := by
+    rw [Real.logb]
+    calc
+      _ = (k * Real.log 25) / (k * Real.log 9) := by
+        simp [Real.log_pow]
+        rw [mul_comm k (Real.log 25), ←mul_assoc, Real.log_pow, ←Real.log_pow_sub_log_div_log]
+        simp
+      _ = _ := by
+        field_simp
+        ring_nf
+        rw [Real.log_pow, Real.log_pow]
+        ring_nf
+
+  -- Combine the two sums.
+  calc
+    ((∑ k in Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2)) *
+        ∑ k in Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k))
+      = ((∑ k in Finset.Icc 1 20, 2 * Real.log 3 / Real.log 5) *
+          ∑ k in Finset.Icc 1 100, (2 * Real.log 5 / Real.log 3)) := by
+        congr 1
+        funext k
+        rw [h1, h2]
+    _ = 2 * Real.log 3 / Real.log 5 * Finset.card (Finset.Icc 1 20) * (2 * Real.log 5 / Real.log 3) * Finset.card (Finset.Icc 1 100) := by
+      rw [←Finset.sum_const, ←Finset.sum_const, Finset.sum_mul_card]
+      simp
+    _ = 21000 := by
+      field_simp
+      norm_num
+```

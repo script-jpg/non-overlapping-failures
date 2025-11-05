@@ -1,0 +1,297 @@
+-- The greatest common divisor of $n$ and $40$ is $10$, so $n$ is divisible by $10$ but not by $20$ or $40$.
+  have h₃ : 10 ∣ n := by
+    rw [←h₁]
+    apply Nat.gcd_dvd_left
+
+  have h₄ : ¬ 20 ∣ n := by
+    intro h
+    have : Nat.gcd n 40 = 20 := by
+      rw [h]
+      simp
+    contradiction
+
+  have h₅ : ¬ 40 ∣ n := by
+    intro h
+    have : Nat.gcd n 40 = 40 := by
+      rw [h]
+      simp
+    contradiction
+
+  -- Then we can get the prime factorization of $n$.
+  -- $n = 2^a \times 5^b \times k$, where $k$ is relatively prime to $10$.
+  have h₆ : ∀ a b k, a < 2 ∧ b < 1 ∧ k > 0 ∧ Nat.Coprime k 10 ∧ n = 2 ^ a * 5 ^ b * k →
+      a = 1 ∧ b = 1 ∧ k = 7 := by
+    intro a b k ⟨ha, hb, hk1, hk2, hnk⟩
+
+    -- $n$ is divisible by $2$ but not by $4$.
+    have h₇ : 2 ∣ n ∧ ¬ 4 ∣ n := by
+      constructor
+      · apply Nat.dvd_trans (by norm_num) hnk
+      · contrapose! h₄
+        apply Nat.dvd_trans h₄ (by norm_num)
+
+    -- $n$ is divisible by $5$ but not by $25$.
+    have h₈ : 5 ∣ n ∧ ¬ 25 ∣ n := by
+      constructor
+      · apply Nat.dvd_trans (by norm_num) hnk
+      · contrapose! h₃
+        apply Nat.dvd_trans h₃ (by norm_num)
+
+    -- So $a = 1$ and $b = 1$.
+    have h₉ : a = 1 := by
+      by_contra!
+      replace this : a = 0 ∨ a = 1 := by
+        omega
+      cases this with
+      | inl h₁₀ =>
+        simp [h₁₀] at hnk
+        have : 2 * 5 ^ b * k = 2 * 5 * 5 * 5 ^ (b - 1) * k := by
+          nth_rw 2 [←pow_one 5]
+          rw [←pow_add]
+          omega
+        rw [this]
+        replace h₇ : ¬ 4 ∣ 2 * 5 ^ b * k := by
+          intro h
+          by_cases h₁₁ : 5 ^ b * k = 0
+          · rw [h₁₁] at h
+            omega
+          · have : 4 ∣ 2 * (5 ^ b * k) := by
+              apply Nat.dvd_mul_left
+            rw [←h] at this
+            simp at this
+            have : 2 ∣ 5 ^ b * k := by
+              apply Nat.dvd_of_mul_dvd_mul_left this
+            have : 2 ∣ 5 ^ b := by
+              apply Nat.dvd_of_dvd_mul_right_of_gcd_one h₁₁ this
+            rw [Nat.dvd_prime_pow Nat.prime_two] at this
+            rcases this with ⟨c, hc⟩
+            have : c > 0 := by
+              omega
+            have : c = 1 := by
+              omega
+            simp [this] at hc
+            omega
+          · exact h₇
+        have : 5 ^ b * k = 5 * 5 ^ (b - 1) * k := by
+          rw [←pow_one 5]
+          rw [←pow_add]
+          omega
+        rw [this] at h₈
+        replace h₈ : ¬ 25 ∣ 5 * (5 ^ (b - 1) * k) := by
+          intro h
+          by_cases h₁₁ : 5 ^ (b - 1) * k = 0
+          · rw [h₁₁] at h
+            omega
+          · have : 25 ∣ 5 * (5 ^ (b - 1) * k) := by
+              apply Nat.dvd_mul_left
+            rw [←h] at this
+            simp at this
+            have : 5 ∣ 5 ^ (b - 1) * k := by
+              apply Nat.dvd_of_mul_dvd_mul_left this
+            rw [Nat.dvd_prime_pow Nat.prime_five] at this
+            rcases this with ⟨c, hc⟩
+            have : c > 0 := by
+              omega
+            have : c = 1 := by
+              omega
+            simp [this] at hc
+            omega
+          · exact h₈
+        have : b = 1 := by
+          by_contra!
+          replace this : b = 0 ∨ b = 1 := by
+            omega
+          cases this with
+          | inl h₁₁ =>
+            simp [h₁₁] at h₈
+            simp [h₇, h₈]
+          | inr h₁₂ =>
+            rw [h₁₂] at h₈
+            simp [h₇, h₈]
+        assumption
+
+    have h₁₀ : b = 1 := by
+      by_contra!
+      replace this : b = 0 ∨ b = 1 := by
+        omega
+      cases this with
+      | inl h₁₁ =>
+        simp [h₁₁] at h₇
+        have : 2 ^ a * 5 * k = 2 ^ a * 5 ^ 1 * k := by
+          nth_rw 2 [←pow_one 5]
+          rw [←pow_add]
+          omega
+        rw [this] at h₈
+        replace h₈ : ¬ 25 ∣ 2 ^ a * (5 ^ 1 * k) := by
+          intro h
+          by_cases h₁₂ : 2 ^ a * (5 ^ 1 * k) = 0
+          · rw [h₁₂] at h
+            omega
+          · have : 25 ∣ 5 * (2 ^ a * (5 ^ 1 * k)) := by
+              apply Nat.dvd_mul_left
+            rw [h] at this
+            simp at this
+            have : 5 ∣ 2 ^ a * (5 ^ 1 * k) := by
+              apply Nat.dvd_of_mul_dvd_mul_left this
+            rw [Nat.dvd_prime_pow Nat.prime_five] at this
+            rcases this with ⟨c, hc⟩
+            have : c > 0 := by
+              omega
+            have : c = 1 := by
+              omega
+            simp [this] at hc
+            omega
+          · exact h₈
+        have : 2 ^ a * (5 ^ 1 * k) = 2 ^ 1 * (5 ^ 1 * k) := by
+          rw [h₉]
+        rw [this] at h₇
+        simp [h₇, h₈]
+      | inr h₁₂ =>
+        simp [h₁₂] at h₈
+        simp [h₇, h₈]
+
+    -- Now we use the lcm condition to find $k$.
+    have h₁₁ : 2 ^ 1 * 5 ^ 1 * k = 2 ^ 1 * 5 ^ 1 * 7 := by
+      apply Nat.eq_of_mul_eq_mul_left (by norm_num)
+      rw [h₉, h₁₀] at h₅
+      have : 2 ^ a * 5 ^ b * k = 2 ^ 1 * 5 ^ 1 * k := by
+        rw [h₉, h₁₀]
+      rw [this] at h₅
+      exact h₅
+
+    simp [mul_assoc] at h₁₁
+    exact h₁₁
+
+  -- $n$ is coprime to $21$.
+  have h₇ : n.Coprime 21 := by
+    -- Assume on the contrary that it is not coprime to $21$.
+    intro h
+    have h₈ : 3 ∣ n := by
+      have : 3 ∣ 21 := by norm_num
+      apply Nat.dvd_trans h this
+    have : 4 ∣ n := by
+      have : 4 ∣ 40 := by norm_num
+      apply Nat.dvd_trans this h₁
+    have : 12 ∣ n := by
+      rw [show 12 = Nat.lcm 3 4 by norm_num]
+      apply Nat.lcm_dvd h₈ this
+    have : 280 = 12 * (280 / 12) := by
+      rw [←Nat.div_mul_cancel (by norm_num)]
+    rw [this] at h₂
+    have : 12 ∣ 280 := by
+      apply Nat.dvd_of_mul_dvd_mul_left h₂
+    absurd this
+    norm_num
+
+  -- By the Chinese Remainder Theorem, it suffices to prove that $n$ is congruent to $1$ modulo $4$ and $7$.
+  suffices n = 1 * 4 * 7 from this
+  apply Nat.chineseRemainder h₇ (by norm_num)
+
+  -- Since $n$ is coprime to $21$, it is congruent to $1$ modulo $3$ and $7$.
+  have h₈ : n ≡ 1 [MOD 3] := by
+    rw [←Nat.coprime_iff_gcd_eq_one]
+    exact h₇
+  have h₉ : n ≡ 1 [MOD 7] := by
+    rw [←Nat.coprime_iff_gcd_eq_one]
+    exact h₇
+
+  -- It suffices to prove that $n$ is congruent to $1$ modulo $4$.
+  suffices n ≡ 1 [MOD 4] from h₈
+  apply Nat.ModEq.trans (id (Nat.ModEq.symm this)) h₈
+
+  -- Since $n$ is divisible by $10$, it is congruent to $0$ modulo $5$.
+  have h₁₀ : n ≡ 0 [MOD 5] := by
+    rw [Nat.modEq_zero_iff_dvd]
+    exact h₃
+
+  -- Then it suffices to prove that $n$ is congruent to $1$ modulo $20$.
+  suffices n ≡ 1 [MOD 20] from h₁₀
+  apply Nat.ModEq.trans (id (Nat.ModEq.symm this)) h₁₀
+
+  -- Since $n$ is congruent to $1$ modulo $3$ and $1$ modulo $20$, it is congruent to $1$ modulo $60$.
+  have h₁₁ : n ≡ 1 [MOD 60] := by
+    rw [←Nat.chineseRemainder h₈ (by norm_num)]
+    exact h₉
+
+  -- Then it suffices to prove that $n$ is congruent to $1$ modulo $4$.
+  suffices n ≡ 1 [MOD 4] from h₁₁
+  apply Nat.ModEq.trans (id (Nat.ModEq.symm this)) h₁₁
+
+  -- Assume on the contrary that it is not congruent to $1$ modulo $4$.
+  by_contra! h₁₂
+  have h₁₃ : n % 4 < 4 := by
+    apply Nat.mod_lt
+    norm_num
+  replace h₁₂ : n % 4 = 0 ∨ n % 4 = 2 := by
+    omega
+  clear h₁₃
+
+  -- Then it follows from the gcd condition that $n$ is divisible by $20$.
+  have h₁₄ : 20 ∣ n := by
+    rcases h₁₂ with
+    | inl h₁₂ =>
+      have h₁₃ : n % 2 = 0 := by
+        apply Nat.dvd_iff_mod_eq_zero.mp h₁₂
+      have : n % 20 < 20 := by
+        apply Nat.mod_lt
+        norm_num
+      replace h₁₃ : n % 20 = 0 ∨ n % 20 = 10 := by
+        omega
+      rcases this with
+      | inl h₁₃ =>
+        exact Nat.dvd_of_mod_eq_zero h₁₃
+      | inr h₁₃ =>
+        have h₁₄ : Nat.gcd n 40 < 10 := by
+          rw [Nat.gcd, Nat.gcd_def]
+          have : (Finset.Ico 0 10).filter (· ∣ n ∧ · ∣ 40) = {0, 10} := by
+            ext x
+            simp
+            constructor
+            · intro ⟨h₁, h₂⟩
+              have h₁₃ : x ∣ n := by
+                apply Nat.dvd_trans h₁ h₁₂
+              have h₁₄ : x ∣ 40 := by
+                apply Nat.dvd_trans h₂ (by norm_num)
+              suffices x = 0 ∨ x = 10 from by
+                omega
+              apply Nat.le_of_dvd (by norm_num) h₁₃
+          rw [this]
+          simp
+        omega
+    | inr h₁₂ =>
+      have h₁₃ : n % 2 = 0 := by
+        apply Nat.dvd_iff_mod_eq_zero.mp h₁₂
+      have : n % 20 < 20 := by
+        apply Nat.mod_lt
+        norm_num
+      replace h₁₃ : n % 20 = 0 ∨ n % 20 = 10 := by
+        omega
+      rcases this with
+      | inl h₁₃ =>
+        exact Nat.dvd_of_mod_eq_zero h₁₃
+      | inr h₁₃ =>
+        have h₁₄ : Nat.gcd n 40 < 10 := by
+          rw [Nat.gcd, Nat.gcd_def]
+          have : (Finset.Ico 0 10).filter (· ∣ n ∧ · ∣ 40) = {0, 10} := by
+            ext x
+            simp
+            constructor
+            · intro ⟨h₁, h₂⟩
+              have h₁₃ : x ∣ n := by
+                apply Nat.dvd_trans h₁ h₁₂
+              have h₁₄ : x ∣ 40 := by
+                apply Nat.dvd_trans h₂ (by norm_num)
+              suffices x = 0 ∨ x = 10 from by
+                omega
+              apply Nat.le_of_dvd (by norm_num) h₁₃
+          rw [this]
+          simp
+        omega
+
+  -- Now it is a matter of simple linear arithmetic to show that $n$ is divisible by $280$.
+  have h₁₅ : 280 ∣ n := by
+    rw [show 280 = Nat.lcm 40 7 from by norm_num]
+    apply Nat.lcm_dvd h₁₄ h₃
+  rw [h₁₅] at h₂
+  omega
+```

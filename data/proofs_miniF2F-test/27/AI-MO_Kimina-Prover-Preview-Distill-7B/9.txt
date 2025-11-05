@@ -1,0 +1,28 @@
+-- set $p = 4 ^ (n + 1) + 20$.
+  let p := 4 ^ (n + 1) + 20
+
+  -- use mathematical induction
+  induction n with
+  -- when $n = 0$
+  | zero =>
+    use 2
+    ring_nf; omega
+  -- when $n = n + 1$
+  | succ n ih =>
+    -- write $4 ^ (n + 1 + 1) + 20$ as $5 * 4 ^ (n + 1) + 20$
+    have h1 : p = 5 * 4 ^ (n + 1) + 20 := by ring_nf
+    rw [show 4 ^ (n + 1 + 1) = 4 * 4 ^ (n + 1) by ring_nf, h1]
+    -- try to simplify the expression
+    have h2 : 5 * 4 ^ (n + 1) + 20 = 4 * (5 * 4 ^ (n + 1)) + 4 * 5 := by ring_nf
+    rw [h2]
+    -- in this case, we can use the induction hypothesis ih
+    have h3 : 12 ∣ 5 * 4 ^ (n + 1) + 20 := by
+      -- we have $12 \mid 4^{n+1} + 20$, multiply $5$ on both sides
+      have : 5 * (4 ^ (n + 1) + 20) := Nat.mul_dvd_mul_left 5 ih
+      rw [show 5 * 4 ^ (n + 1) + 20 = 5 * (4 ^ (n + 1) + 20) by ring_nf] at this
+      exact this
+    -- rewrite $4 * (5 * 4 ^ (n + 1) + 20)$ as $4 * p$
+    rw [h1]
+    -- everything simplifies to this
+    exact Nat.dvd_add_iff_right.mpr h3
+```

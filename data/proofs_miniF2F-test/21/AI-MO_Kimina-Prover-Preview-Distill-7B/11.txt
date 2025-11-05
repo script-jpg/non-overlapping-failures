@@ -1,0 +1,45 @@
+-- We prove that for any two integers x and y, x^5 cannot be equal to y^2 + 4.
+  -- Assume x^5 = y^2 + 4.
+  intro h
+
+  -- We consider this equation modulo 11.
+  -- By Fermat's Little Theorem, for any integer a, a^11 ≡ a (mod 11).
+  -- Therefore, a^5 ≡ a (mod 11) and a^2 ≡ a (mod 11) by considering a^11 - a = 0.
+  -- So x^5 ≡ x (mod 11) and y^2 ≡ y (mod 11).
+  -- This implies x ≡ y + 4 (mod 11).
+  have h1: x^5 ≡ x [ZMOD 11] := by
+    have : x^11 ≡ x [ZMOD 11] := Int.ModEq.pow_card_sub_one_eq_self _ (by norm_num)
+    exact this.trans ( Int.ModEq.mul_right (x^5) ( Int.ModEq.symm this))
+  have h2: y^2 ≡ y [ZMOD 11] := by
+    have : y^11 ≡ y [ZMOD 11] := Int.ModEq.pow_card_sub_one_eq_self _ (by norm_num)
+    exact this.trans ( Int.ModEq.mul_right (y^2) ( Int.ModEq.symm this))
+  have h3: x ≡ y + 4 [ZMOD 11] := by
+    have h4: y + 4 ≡ (y^2 + 4) [ZMOD 11] := by
+      exact Int.ModEq.add_left 4 (h2.symm)
+    rw [← h] at h4
+    exact h4.trans h1.symm
+
+  -- However, checking all possible values, we find that this is impossible.
+  -- The possible values for x mod 11 are 0 through 10.
+  -- For each value, we compute x - (y + 4) mod 11, which should be 0 if x^5 = y^2 + 4.
+  -- But for all values, we find a contradiction.
+  have h5: ∀ x : ℤ, x % 11 = 0 ∨ x % 11 = 1 ∨ x % 11 = 2 ∨ x % 11 = 3 ∨ x % 11 = 4 ∨ x % 11 = 5 ∨ x % 11 = 6 ∨ x % 11 = 7 ∨ x % 11 = 8 ∨ x % 11 = 9 ∨ x % 11 = 10 := by
+    omega
+  have h6: ∀ x : ℤ, (x - (4 + y)) % 11 = 7 ∨ (x - (4 + y)) % 11 = 8 ∨ (x - (4 + y)) % 11 = 9 ∨ (x - (4 + y)) % 11 = 10 ∨ (x - (4 + y)) % 11 = 0 ∨ (x - (4 + y)) % 11 = 1 ∨ (x - (4 + y)) % 11 = 2 ∨ (x - (4 + y)) % 11 = 3 ∨ (x - (4 + y)) % 11 = 4 ∨ (x - (4 + y)) % 11 = 5 ∨ (x - (4 + y)) % 11 = 6 := by
+    intro x
+    rcases h5 y with (h | h | h | h | h | h | h | h | h | h | h)
+    all_goals {
+      omega
+    }
+  have h7: (∃ (x : ℤ), x % 11 = 0 ∨ x % 11 = 1 ∨ x % 11 = 2 ∨ x % 11 = 3 ∨ x % 11 = 4 ∨ x % 11 = 5 ∨ x % 11 = 6 ∨ x % 11 = 7 ∨ x % 11 = 8 ∨ x % 11 = 9 ∨ x % 11 = 10) ∧ (∀ (x : ℤ), (x - (4 + y)) % 11 = 7 ∨ (x - (4 + y)) % 11 = 8 ∨ (x - (4 + y)) % 11 = 9 ∨ (x - (4 + y)) % 11 = 10 ∨ (x - (4 + y)) % 11 = 0 ∨ (x - (4 + y)) % 11 = 1 ∨ (x - (4 + y)) % 11 = 2 ∨ (x - (4 + y)) % 11 = 3 ∨ (x - (4 + y)) % 11 = 4 ∨ (x - (4 + y)) % 11 = 5 ∨ (x - (4 + y)) % 11 = 6) → False := by
+    intro h
+    rcases h with ⟨h5, h6⟩
+    rcases h5 with ⟨x, hx⟩
+    specialize h6 x
+    rcases hx with (hx | hx | hx | hx | hx | hx | hx | hx | hx | hx | hx)
+    all_goals {
+      rw [hx] at h6
+      simp at h6
+    }
+  exact h7 ⟨h5, h6⟩ ⟨x, h3⟩
+```

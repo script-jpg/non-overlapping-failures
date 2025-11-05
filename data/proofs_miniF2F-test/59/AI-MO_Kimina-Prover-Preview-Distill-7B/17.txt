@@ -1,0 +1,44 @@
+-- We shall rewrite the equation in a more convenient form.
+  replace h₀ : (3 * x ^ 2 + 1) * (y ^ 2 - 10) = 12 * x ^ 2 - 503 := by linarith
+
+  -- Notice that $12x^2 - 503$ must be an [[integer]] multiple of $3x^2 + 1$. We will show that it is equal to $28$.
+  have h₁ : 3 * x ^ 2 + 1 ∣ 12 * x ^ 2 - 503 := by
+    use y ^ 2 - 10
+    exact h₀.symm
+
+  -- Since $3x^2 + 1$ and $12x^2 - 503$ are both positive, we may apply the [[Euclidean algorithm]].
+  have h₂ : 3 * x ^ 2 + 1 ≤ 12 * x ^ 2 - 503 := by
+    apply Int.le_of_dvd (by norm_num) h₁
+
+  -- Euclidean algorithm: $\operatorname{gcd}(12x^2 - 503, 3x^2 + 1) = \operatorname{gcd}(3x^2 + 1, 12x^2 - 503 - 4(3x^2 + 1)) = \operatorname{gcd}(3x^2 + 1, 12x^2 - 503 - 12x^2 - 4) = \operatorname{gcd}(3x^2 + 1, -507)$.
+  have h₃ : 3 * x ^ 2 + 1 ∣ 507 := by
+    rw [← Int.modEq_zero_iff_dvd]
+    have : (3 * x ^ 2 + 1) % (12 * x ^ 2 - 503) = 507 := by
+      calc _ = (3 * x ^ 2 + 1) % (12 * x ^ 2 - 503 - 4 * (3 * x ^ 2 + 1)) := by rw [Int.emod_sub_left (3 * x ^ 2 + 1) h₁]
+           _ = (3 * x ^ 2 + 1) % (-507) := by congr; linarith
+           _ = 507 := by omega
+    exact this.symm
+
+  -- We will now show that $3x^2 + 1$ is a positive divisor of $507$. This is because it is positive (obvious) and it divides $507$ (from above).
+  have h₄ : 3 * x ^ 2 + 1 > 0 := by linarith
+
+  -- Factorize $507$ to get $3 \times 13^2$. It has only three [[positive]] [[divisors]]: $1$, $13$ and $507$.
+  have h₅ : (3 * x ^ 2 + 1) ∈ Finset.filter (fun n ↦ n ≠ 0) (Int.ofNat_le_cast.mp h₄) ∩ (Int.ofNat_le_cast.mp h₄) \ {1, 507} := by
+    simp only [Finset.mem_inter, Finset.mem_Icc, Finset.mem_singleton, Set.mem_singleton_iff,
+      Set.mem_sub, Set.mem_singleton, lowerBounds, ne_eq, Set.mem_setOf_eq, and_imp]
+    have : (Int.ofNat_le_cast.mp h₄) = 507 := by omega
+    rw [this]
+    refine ⟨?_,?_⟩
+    · exact Int.ofNat_le_cast.mpr h₄
+    · rw [this]
+      simp only [Finset.coe_Icc, Finset.coe_singleton, Set.mem_Icc, Set.mem_singleton,
+        Set.mem_setOf_eq, sub_eq_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
+        Set.mem_setOf_eq]
+      omega
+
+  -- Now we may enumerate all the possibilities and show that only $3x^2 + 1 = 13$ works.
+  simp only [Finset.mem_filter] at h₅
+  revert h₅
+  revert x y h₀
+  decide
+```

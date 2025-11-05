@@ -1,0 +1,177 @@
+-- Factorize $z^3 - 8 = 0$ as $(z-2)(z^2 + 2z + 4) = 0$
+  have hz38 : (a - 2) * (a ^ 2 + 2 * a + 4) = 0 := by
+    calc
+      (a - 2) * (a ^ 2 + 2 * a + 4) = a ^ 3 - 8 := by ring
+      _ = 0 := h₀
+
+  -- Factorize $z^3 - 8z^2 - 8z + 64 = 0$ as $(z-2)(z^2 - 6z + 32) = 0$
+  have hz38z64 : (b - 2) * (b ^ 2 - 6 * b + 32) = 0 := by
+    calc
+      (b - 2) * (b ^ 2 - 6 * b + 32) = b ^ 3 - 8 * b ^ 2 - 8 * b + 64 := by ring
+      _ = 0 := h₁
+
+  -- Show that $a = 2$ or $a^2 + 2a + 4 = 0$
+  have ha : a = 2 ∨ a ^ 2 + 2 * a + 4 = 0 := by
+    cases (mul_eq_zero.mp hz38) with
+    | inl h => left; exact eq_of_sub_eq_zero h
+    | inr h => right; exact h
+
+  -- Show that $b = 2$ or $b^2 - 6b + 32 = 0$
+  have hb : b = 2 ∨ b ^ 2 - 6 * b + 32 = 0 := by
+    cases (mul_eq_zero.mp hz38z64) with
+    | inl h => left; exact eq_of_sub_eq_zero h
+    | inr h => right; exact h
+
+  -- Define the polynomial $a^2 + 2a + 4$ and prove it equals $0$ when $a$ is a solution
+  set P : Polynomial ℂ := Polynomial.X ^ 2 + Polynomial.C 2 * Polynomial.X + Polynomial.C 4 with hP
+  have hP0 : P.eval a = 0 := by
+    simp [hP]
+    rw [ha.2]
+    ring
+
+  -- Define the polynomial $b^2 - 6b + 32$ and prove it equals $0$ when $b$ is a solution
+  set Q : Polynomial ℂ := Polynomial.X ^ 2 - Polynomial.C 6 * Polynomial.X + Polynomial.C 32 with hQ
+  have hQ0 : Q.eval b = 0 := by
+    simp [hQ]
+    rw [hb.2]
+    ring
+
+  -- Show that $a \neq 2$ by proving $P \neq 0$
+  have hPne : P ≠ 0 := by
+    intro h
+    have : P.eval 2 = 0 := by
+      rw [h]
+      simp
+    simp [hP] at this
+    norm_num at this
+
+  -- Show that $b \neq 2$ by proving $Q \neq 0$
+  have hQne : Q ≠ 0 := by
+    intro h
+    have : Q.eval 2 = 0 := by
+      rw [h]
+      simp
+    simp [hQ] at this
+    norm_num at this
+
+  -- Prove that $a^2 + 2a + 4 \neq 0$ for any $a \in A$
+  have hPne0 : ∀ a : ℂ, (a ^ 2 + 2 * a + 4 = 0 → P.eval a = 0) := by
+    intro a h
+    simp [hP]
+    exact h
+
+  -- Prove that $b^2 - 6b + 32 \neq 0$ for any $b \in B$
+  have hQne0 : ∀ b : ℂ, (b ^ 2 - 6 * b + 32 = 0 → Q.eval b = 0) := by
+    intro b h
+    simp [hQ]
+    exact h
+
+  -- Prove that $a \in A \implies a \in \{2, z, z^2\}$ where $z = e^{2\pi i / 3} \sqrt{3}i$
+  have hA : ∀ a : ℂ, a ∈ ({2, (-1 / 2 + √3 * Complex.I / 2), (-1 / 2 - √3 * Complex.I / 2)} : Set ℂ) := by
+    intro a
+    by_cases ha' : a = 2
+    · simp [ha']
+    · rw [ha.2] at hP0
+      -- Prove that $a^2 + 2a + 4 = 0 \implies a \in \{z, z^2\}$
+      have ha'' : (a - (-1 / 2 + √3 * Complex.I / 2)) * (a - (-1 / 2 - √3 * Complex.I / 2)) = 0 := by
+        ring_nf
+        field_simp [Complex.ext_iff, ha']
+        rw [←Complex.cos_sq_add_sin_sq]
+        norm_num
+      simp at ha''
+      cases ha'' with
+      | inl h => simp [h]
+      | inr h => simp [h]
+
+  -- Prove that $b \in B \implies b \in \{2, 3 + \sqrt{7}, 3 - \sqrt{7}\}$
+  have hB : ∀ b : ℂ, b ∈ ({2, 3 + √7, 3 - √7} : Set ℂ) := by
+    intro b
+    by_cases hb' : b = 2
+    · simp [hb']
+    · rw [hb.2] at hQ0
+      -- Prove that $b^2 - 6b + 32 = 0 \implies b \in \{3 + \sqrt{7}, 3 - \sqrt{7}\}$
+      have hb'' : (b - (3 + √7)) * (b - (3 - √7)) = 0 := by
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        ring
+        field_simp [Complex.ext_iff, hb']
+        rw [←Complex.cos_sq_add_sin_sq]
+        norm_num
+      simp at hb''
+      cases hb'' with
+      | inl h => simp [h]
+      | inr h => simp [h]
+
+  -- Define the set $A \times B = \{(a, b) | a \in A \land b \in B\}$
+  let AB := { AB | AB = ⟨a, b⟩ ∧ a ∈ A ∧ b ∈ B }
+
+  -- Define the function $d: A \times B \to \mathbb{R}$ by $d(a, b) = |a - b|$
+  let d (AB : AB) := Complex.abs (AB.1 - AB.2)
+
+  -- Show that $d(a, b) \leq 2\sqrt{21}$ for all $(a, b) \in A \times B$
+  have h : ∀ AB ∈ AB, d AB ≤ 2 * Real.sqrt 21 := by
+    intro AB ABmem
+    rw [d]
+    simp only [AB, Set.mem_setOf_eq, AB, Prod.mk.injEq]
+    obtain ⟨a, b, ha, hb⟩ := AB
+    obtain ⟨ha1, ha2⟩ := hA a
+    obtain ⟨hb1, hb2⟩ := hB b
+    cases ha1 with
+    | inl ha1 => cases hb1 with
+      | inl hb1 => -- $a = 2, b = 2$
+        simp [ha1, hb1]
+      | inr hb2 => -- $a = 2, b = 3 + \sqrt{7}$
+        simp [ha1, hb2]
+        ring_nf
+        have h7 : √7 ^ 3 = √7 * 7 := by
+          rw [show √7 ^ 3 = √7 ^ 2 * √7 by ring]
+          rw [Real.sq_sqrt (by norm_num)]
+          ring
+        rw [h7]
+        norm_num
+        ring_nf
+        rw [Real.sqrt_mul (by norm_num)]
+        norm_num
+    | inr ha2 => cases hb1 with
+      | inl hb1 => -- $a = z, b = 2$
+        simp [ha2, hb1]
+        ring_nf
+        have h7 : √7 ^ 3 = √7 * 7 := by
+          rw [show √7 ^ 3 = √7 ^ 2 * √7 by ring]
+          rw [Real.sq_sqrt (by norm_num)]
+          ring
+        rw [h7]
+        norm_num
+        ring_nf
+        rw [Real.sqrt_mul (by norm_num)]
+        norm_num
+    | inr ha2 => cases hb2 with
+      | inr hb2 => -- $a = z, b = 3 - \sqrt{7}$
+        simp [ha2, hb2]
+        ring_nf
+        have h7 : √7 ^ 3 = √7 * 7 := by
+          rw [show √7 ^ 3 = √7 ^ 2 * √7 by ring]
+          rw [Real.sq_sqrt (by norm_num)]
+          ring
+        rw [h7]
+        norm_num
+        ring_nf
+        rw [Real.sqrt_mul (by norm_num)]
+        norm_num
+
+  -- Prove that $2\sqrt{21}$ is the greatest distance between a point in $A$ and a point in $B$
+  constructor
+  · -- Show that $2\sqrt{21}$ is achievable
+    use ⟨(-1 / 2 + √3 * Complex.I / 2), (3 + √7)⟩
+    have hComplex.abs : Complex.abs ((-1 / 2 + √3 * Complex.I / 2) - (3 + √7)) = 2 * Real.sqrt 21 := by
+      simp [Complex.abs, Complex.normSq]
+      ring_nf
+      rw [Real.sqrt_mul (by norm_num)]
+      norm_num
+    rw [hComplex.abs]
+    exact mul_nonneg (by norm_num) (by norm_num)
+  · -- Show that $2\sqrt{21}$ is an upper bound
+    intro ABmem
+    exact h ABmem
+
+```

@@ -1,0 +1,75 @@
+have h₁ : ∀ k : ℕ, k ∈ Finset.Icc 1 n → (1 : ℝ) + 1 / k ^ 3 ≤ 3 - 1 / ↑n := by
+    intro k hk
+    have hk' : k ≥ 1 := by
+      simp only [Finset.mem_Icc] at hk
+      linarith
+    have h₂ : (k : ℝ) ≥ 1 := by exact_mod_cast hk'
+    have h₃ : (1 : ℝ) / k ^ 3 ≤ 1 := by
+      have h₄ : (k : ℝ) ≥ 1 := by exact_mod_cast hk'
+      have h₅ : (k : ℝ) ^ 3 ≥ 1 := by
+        exact one_le_pow_of_one_le h₄ 3
+      have h₆ : (1 : ℝ) / k ^ 3 ≤ 1 := by
+        rw [div_le_iff (by positivity)]
+        nlinarith
+      exact h₆
+    have h₄ : (1 : ℝ) + 1 / k ^ 3 ≤ 3 - 1 / ↑n := by
+      cases n with
+      | zero => simp_all
+      | succ n =>
+        cases n with
+        | zero =>
+          norm_num [Finset.prod_Icc_succ_top] at * <;> norm_num at * <;> nlinarith
+        | succ n =>
+          field_simp [Finset.prod_Icc_succ_top] at *
+          refine' le_of_sub_nonneg _
+          field_simp
+          ring_nf
+          positivity
+    exact h₄
+  calc
+    (∏ k in Finset.Icc 1 n, (1 + (1 : ℝ) / k ^ 3)) ≤ ∏ k in Finset.Icc 1 n, (3 - 1 / ↑n : ℝ) := by
+      exact Finset.prod_le_prod (fun x _ => by
+        have hx : (1 : ℝ) + 1 / x ^ 3 ≥ 1 := by
+          have hx' : (1 : ℝ) / x ^ 3 ≥ 0 := by positivity
+          linarith
+        linarith) h₁
+    _ = (3 - 1 / ↑n : ℝ) ^ n := by
+      simp [Finset.prod_const]
+    _ = (3 - 1 / ↑n : ℝ) ^ n := by rfl
+    _ ≤ (3 - 1 / ↑n : ℝ) ^ n := by linarith
+    _ ≤ (3 : ℝ) - 1 / ↑n := by
+      have h₅ : (3 : ℝ) - 1 / ↑n ≥ 0 := by
+        cases n with
+        | zero => norm_num
+        | succ n =>
+          apply le_of_sub_nonneg
+          field_simp
+          ring_nf
+          positivity
+      have h₆ : (3 : ℝ) - 1 / ↑n ≥ 0 := by
+        cases n with
+        | zero => norm_num
+        | succ n =>
+          apply le_of_sub_nonneg
+          field_simp
+          ring_nf
+          positivity
+      exact
+        calc
+          ((3 - 1 / ↑n : ℝ) ^ n : ℝ) ≤ (3 - 1 / ↑n : ℝ) ^ 1 := by
+            apply pow_le_pow_of_le_one (by linarith) (by
+              cases n with
+              | zero => norm_num
+              | succ n =>
+                apply le_of_sub_nonneg
+                field_simp
+                ring_nf
+                positivity
+            ) (by
+              cases n with
+              | zero => norm_num
+              | succ n =>
+                linarith [Nat.zero_le (n + 1)]
+            )
+          _ = (3 - 1 / ↑n : ℝ) := by simp
+    _ = (3 : ℝ) - 1 / ↑n := by

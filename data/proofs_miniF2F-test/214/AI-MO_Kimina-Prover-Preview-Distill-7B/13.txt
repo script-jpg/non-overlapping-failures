@@ -1,0 +1,153 @@
+-- auxiliary lemma that is useful for the calculation of sum of sine
+  have l_1 (n : ℕ) (α : ℝ) : ∑ k in Finset.Icc 1 n, Real.sin (k * α) = (∑ k in Finset.Icc 1 n, Real.cos (k * α * Real.pi / 180)) := by
+    congr
+    ext x
+    have : x * α * Real.pi / 180 = x * (Real.pi / 180 * α) := by ring
+    rw [this]
+    symm
+    rw [Real.sin_neg]
+    ring_nf
+
+  -- auxilary lemma for the calculation of sum of cosine
+  have l_2 (n : ℕ) (α : ℝ) : ∑ k in Finset.Icc 1 n, Real.cos (k * α) = (Real.sin (↑n * α * Real.pi / 180) - Real.sin (α * Real.pi / 180)) / (2 * Real.sin (α * Real.pi / 360)) := by
+    classical
+    have : 0 < Real.sin (α * Real.pi / 360) := by
+      have : 0 < α * Real.pi / 360 := by
+        apply div_pos
+        exact Nat.cast_pos'.mpr α.zero_lt_of_ne_zero
+        exact pi_pos
+      rw [sin_pos_iff]
+      exact this
+    have : Real.sin (α * Real.pi / 360) ≠ 0 := by exact fun a ↦ this (id (Eq.symm a))
+    have t : ∑ k ∈ Finset.Icc 1 n, Real.cos (k * α) = ∑ k ∈ Finset.Icc 1 n, Real.sin ((k * α * Real.pi / 180)) := by
+      congr
+      ext x
+      have : x * α * Real.pi / 180 = x * (Real.pi / 180 * α) := by ring
+      rw [this]
+      symm
+      rw [Real.sin_neg]
+      ring_nf
+    rw [t]
+    have : ∑ k ∈ Finset.Icc 1 n, Real.sin (k * (α * Real.pi / 180)) = ∑ k ∈ Finset.Icc 1 n, Real.sin ((k + 1) * (α * Real.pi / 180) - α * Real.pi / 180) := by
+      congr
+      ext x
+      rw [←Finset.sum_Ico_add_eq_sum_Icc]
+      simp
+      ring_nf
+    rw [this]
+    have : ∑ k ∈ Finset.Icc 1 n, Real.sin ((k + 1) * (α * Real.pi / 180) - α * Real.pi / 180) = Real.sin (n * (α * Real.pi / 180)) - Real.sin (α * Real.pi / 180) := by
+      nth_rw 1 [←Real.sin_sub_sin]
+      rw [Finset.sum_Ico_eq_sum_Icc, ←Finset.sum_Icc_succ_top (by omega)]
+      simp
+    rw [this]
+
+  have h₃ := l_1 35 (5 * Real.pi / 180)
+  have h₄ := l_2 35 (5 * Real.pi / 180)
+  rw [h₃, h₄] at h₁
+  have : 5 * Real.pi / 180 = 1 * (5 * Real.pi / 180) := by
+    congr
+    rfl
+  rw [this] at h₁
+  have : 35 * (5 * Real.pi / 180) = 7 * (5 * Real.pi / 180 * 5) := by
+    ring
+  rw [this] at h₁
+  have : 5 * Real.pi / 180 * 5 = Real.pi / 36 := by ring_nf; rw [pi_pos]; ring
+  rw [this] at h₁
+  have : Real.sin (7 * (Real.pi / 36)) = Real.sin (7 * (Real.pi / 180 * 5)) := by
+    congr
+    rw [←Real.sin_pi_sub]
+    ring_nf
+  rw [this] at h₁
+  clear this
+  have : 7 * (Real.pi / 180) * 5 = 7 * (Real.pi / 36) + (Real.pi / 36) := by
+    ring_nf; rw [pi_pos]; ring
+  rw [this] at h₁
+  have : Real.sin (7 * (Real.pi / 36) + (Real.pi / 36)) = Real.sin (7 * (Real.pi / 36)) * Real.cos (Real.pi / 36) + Real.cos (7 * (Real.pi / 36)) * Real.sin (Real.pi / 36) := by apply Real.sin_add
+  rw [this] at h₁
+  have : Real.sin (7 * (Real.pi / 36)) * Real.cos (Real.pi / 36) = Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) := by
+    have : Real.cos (Real.pi / 36) = Real.sin (Real.pi / 2 - (Real.pi / 36)) := by
+      have : Real.pi / 2 - (Real.pi / 36) = Real.pi / 2 - Real.pi / 36 := by rfl
+      rw [this]
+      apply Real.sin_pi_div_two_sub
+    rw [this]
+  rw [this] at h₁
+  have : Real.sin (Real.pi / 2 - (Real.pi / 36)) * Real.sin (7 * (Real.pi / 36)) = Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) := by ring
+  rw [this] at h₁
+  clear this
+  have : Real.cos (7 * (Real.pi / 36)) = Real.cos (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) / Real.sin (Real.pi / 2 - (Real.pi / 36)) := by
+    nth_rw 1 [←Real.sin_pi_div_two_sub]
+    rw [←div_eq_iff]
+    have : Real.sin (Real.pi / 2 - (Real.pi / 36)) ≠ 0 := by
+      have : 0 < Real.sin (Real.pi / 2 - (Real.pi / 36)) := by
+        apply Real.sin_pos_of_pos_of_lt_pi
+        linarith
+        linarith
+      linarith
+    exact div_self this
+  rw [this] at h₁
+  have : (Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) / Real.sin (Real.pi / 2 - (Real.pi / 36)) + Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) / (2 * Real.sin (Real.pi / 36))) / Real.sin (Real.pi / 36) = (Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) * (1 / Real.sin (Real.pi / 36)) / Real.sin (Real.pi / 36) + Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) * (1 / Real.sin (Real.pi / 36)) / (2 * Real.sin (Real.pi / 36))) := by ring
+  rw [this] at h₁
+  have : 1 / Real.sin (Real.pi / 36) / Real.sin (Real.pi / 36) = (Real.cot (Real.pi / 36) * Real.csc (Real.pi / 36)) * 2 / 2 := by
+    have : Real.cot (Real.pi / 36) = Real.cos (Real.pi / 36) / Real.sin (Real.pi / 36) := by
+      rw [cot_eq_cos_div_sin]
+    rw [this]
+    have : Real.csc (Real.pi / 36) = 1 / Real.sin (Real.pi / 36) := by
+      rw [csc_eq_one_div_sin]
+    rw [this]
+    field_simp
+    ring
+  rw [this] at h₁
+  clear this
+  have : (Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) * (Real.cot (Real.pi / 36) * Real.csc (Real.pi / 36)) * 2 / 2 / Real.sin (Real.pi / 36) + Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) * (1 / Real.sin (Real.pi / 36)) / (2 * Real.sin (Real.pi / 36))) = (Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) * (Real.cot (Real.pi / 36) * Real.csc (Real.pi / 36)) / 2 + Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36)) * (1 / Real.sin (Real.pi / 36)) / (2 * Real.sin (Real.pi / 36))) := by ring
+  rw [this] at h₁
+  have : Real.sin (Real.pi / 2 - (Real.pi / 36)) = Real.sin (Real.pi / 2 - (Real.pi / 36) * 35) * 35 / 35 := by
+    field_simp
+  rw [this] at h₁
+  clear this
+  have : (Real.sin (7 * (Real.pi / 36)) * (Real.sin (Real.pi / 2 - (Real.pi / 36) * 35) * 35 / 35) * (Real.cot (Real.pi / 36) * Real.csc (Real.pi / 36)) / 2 + Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36) * 35) * (1 / Real.sin (Real.pi / 36)) / (2 * Real.sin (Real.pi / 36))) = (Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36) * 35) * (Real.cot (Real.pi / 36) * Real.csc (Real.pi / 36)) / 2 + Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36) * 35) * (1 / Real.sin (Real.pi / 36)) / (2 * Real.sin (Real.pi / 36))) / 35 := by ring
+  rw [this] at h₁
+  field_simp at h₁
+  have : 2 * Real.sin (Real.pi / 36) * Real.sin (7 * (Real.pi / 36)) * (Real.cot (Real.pi / 36) * Real.csc (Real.pi / 36)) + 2 * Real.sin (Real.pi / 36) * Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36) * 35) / Real.sin (Real.pi / 36) = 2 * Real.sin (Real.pi / 36) * Real.sin (7 * (Real.pi / 36)) * (Real.cot (Real.pi / 36) * Real.csc (Real.pi / 36)) + 2 * Real.sin (Real.pi / 36) * Real.sin (7 * (Real.pi / 36)) * Real.sin (Real.pi / 2 - (Real.pi / 36) * 35) / Real.sin (Real.pi / 36) := by ring
+  rw [this] at h₁
+  have : Real.sin (Real.pi / 2 - (Real.pi / 36) * 35) = Real.sin (Real.pi / 2 - 35 * (Real.pi / 36)) := by
+    congr
+    ring
+  rw [this] at h₁
+  clear this
+  have : Real.pi / 2 - 35 * (Real.pi / 36) = -(Real.pi / 2) := by ring_nf; rw [pi_pos]; ring
+  rw [this] at h₁
+  have : Real.sin (-(Real.pi / 2)) = -Real.sin (Real.pi / 2) := by apply Real.sin_neg
+  rw [this] at h₁
+  have : Real.sin (Real.pi / 2) = 1 := by apply Real.sin_pi_div_two
+  rw [this] at h₁
+  norm_num at h₁
+  have : -(2 * Real.sin (Real.pi / 36) * Real.sin (7 * (Real.pi / 36)) * (Real.cot (Real.pi / 36) * Real.csc (Real.pi / 36))) = Real.sin (15 * (Real.pi / 180)) / Real.sin (Real.pi / 36) - Real.sin (7 * (Real.pi / 180)) / Real.sin (Real.pi / 36) := by
+    have : 15 * (Real.pi / 180) = 35 * (Real.pi / 36) + (Real.pi / 36) := by
+      ring_nf; rw [pi_pos]; ring
+    rw [this]
+    have : 7 * (Real.pi / 180) = 35 * (Real.pi / 36) + (Real.pi / 36) - (Real.pi / 36) := by
+      ring_nf; rw [pi_pos]; ring
+    rw [this]
+    have : Real.sin (35 * (Real.pi / 36) + (Real.pi / 36)) = Real.sin (35 * (Real.pi / 36)) * Real.cos (Real.pi / 36) + Real.cos (35 * (Real.pi / 36)) * Real.sin (Real.pi / 36) := by apply Real.sin_add
+    rw [this]
+    have : Real.sin (35 * (Real.pi / 36) + (Real.pi / 36) - (Real.pi / 36)) = Real.sin (35 * (Real.pi / 36)) * Real.cos (Real.pi / 36) - Real.cos (35 * (Real.pi / 36)) * Real.sin (Real.pi / 36) := by apply Real.sin_sub; apply add_comm
+    rw [this]
+    ring_nf
+    nth_rw 1 [←Real.sin_pi_sub]
+    rw [←Real.sin_pi_div_two_sub]
+    ring_nf
+    rw [Real.sin_pi_div_two]
+    ring
+  rw [this] at h₁
+  have : (Real.sin (15 * (Real.pi / 180)) / Real.sin (Real.pi / 36) - Real.sin (7 * (Real.pi / 180)) / Real.sin (Real.pi / 36)) / Real.sin (Real.pi / 36) = Real.sin (15 * (Real.pi / 180)) / (Real.sin (Real.pi / 36) * Real.sin (Real.pi / 36)) - Real.sin (7 * (Real.pi / 180)) / (Real.sin (Real.pi / 36) * Real.sin (Real.pi / 36)) := by ring
+  rw [this] at h₁
+  have : Real.sin (15 * (Real.pi / 180)) / (Real.sin (Real.pi / 36) * Real.sin (Real.pi / 36)) - Real.sin (7 * (Real.pi / 180)) / (Real.sin (Real.pi / 36) * Real.sin (Real.pi / 36)) = (Real.sin (15 * (Real.pi / 180)) - Real.sin (7 * (Real.pi / 180))) / (Real.sin (Real.pi / 36) * Real.sin (Real.pi / 36)) := by ring
+  rw [this] at h₁
+  have : Real.sin (15 * (Real.pi / 180)) - Real.sin (7 * (Real.pi / 180)) = 2 * Real.cos (11 * (Real.pi / 180)) * Real.sin (4 * (Real.pi / 180)) := by
+    have : 15 * (Real.pi / 180) = 7 * (Real.pi / 180) + (Real.pi / 9) := by
+      ring_nf; rw [pi_pos]; ring
+    rw [this]
+    have : 7 * (Real.pi / 180) = 7 * (Real.pi / 180) + (Real.pi / 9) - (Real.pi / 9) := by
+      ring_nf; rw [pi_pos]; ring
+    rw [this]
+    have : Real.sin (7 * (Real.pi / 180) + (Real.pi / 9)) - Real.sin (7 * (Real.pi / 180) - (Real.pi / 9)) = 2 * Real.cos (7 * (Real.pi / 180

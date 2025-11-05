@@ -1,0 +1,66 @@
+simp only [Nat.log, Real.logb, Real.log_rpow, Real.log_pow, mul_comm, Nat.cast_mul,
+    Nat.cast_pow] at h₁
+  norm_num at h₁
+  have : n ≠ 0 := by linarith
+  have A : n ≤ 16 := by
+    by_contra hnle
+    apply lt_irrefl 16
+    simp only [not_le] at hnle
+    have h₂ := Real.log_lt_log (by simp only [pos_iff_ne_zero, hnle.ne']) hnle
+    rw [Real.log_rpow zero_lt_two, Real.log_rpow zero_lt_two] at h₂
+    norm_num at h₂
+  interval_cases n <;> norm_num at h₁
+  have B : 4 ∣ n := by
+    have := h₁
+    simp only [Nat.log, Real.logb, Real.log_rpow, Real.log_pow, mul_comm, Nat.cast_mul,
+      Nat.cast_pow] at this
+    norm_num at this
+    rw [Real.log_rpow zero_lt_two, Real.log_rpow zero_lt_two] at this
+    norm_num at this
+    apply Nat.dvd_of_mod_eq_zero
+    rw [← Nat.mod_add_div n 4]
+    have h₃ := Nat.pow_mod_pow_of_dvd 2 this
+    rw [show 16 = 4 ^ 2 by norm_num, Nat.pow_mod_pow_of_dvd 2 (Nat.dvd_of_mod_eq_zero h₃)]
+    norm_num
+  apply le_antisymm (_root_.trans A (Nat.le_of_dvd zero_lt_two B))
+  have : 16 ≤ n := by
+    rw [← Nat.div_mul_cancel B]
+    exact mul_le_mul_left' (Nat.le_of_dvd zero_lt_two A) _
+  apply (le_div_iff (by norm_num : 0 < 16)).mp
+  rw [Nat.le_div_iff_mul_le (by norm_num : 0 < 16)]
+  calc
+    16 * (Nat.log n / Nat.log 16) ≤ n :=
+      mul_le_of_le_one_right (Nat.log_pos <| by norm_num : 0 < Nat.log 16)
+        (Nat.le_of_dvd (Nat.log_pos <| by norm_num : 0 < Nat.log 16) <|
+          Nat.dvd_of_mod_eq_zero <| Nat.mod_eq_zero_of_dvd B)
+    _ ≤ 2 ^ (n.factorization 2) * (n.factorization 2) :=?_
+    _ = n := by
+      rw [Nat.mul_div_assoc n (Nat.log_pos <| by norm_num : 0 < Nat.log 16), ←
+        Nat.mod_add_div n 4]
+      have h₃ : n.factorization 2 = 3 := by
+        rw [← Nat.mod_add_div n 4, Nat.add_comm, Nat.add_assoc]
+        norm_num
+        rw [← Nat.mod_add_div n 4, Nat.add_comm, Nat.add_assoc, Nat.add_mod_left]
+        norm_num
+        rw [← Nat.mod_add_div n 4, Nat.add_comm, Nat.add_assoc, Nat.add_mod_left,
+          Nat.pow_mod_pow_of_dvd 2 (Nat.dvd_of_mod_eq_zero h₃)]
+        norm_num
+      rw [h₃, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ]
+      norm_num
+      rw [Nat.pow_mod_pow_of_dvd 2 (Nat.dvd_of_mod_eq_zero B), Nat.pow_mod_pow_of_dvd 2 B]
+      norm_num
+  have : n.factorization 2 = 3 := by
+    rw [← Nat.mod_add_div n 4, Nat.add_comm, Nat.add_assoc, Nat.add_mod_left]
+    norm_num
+    rw [← Nat.mod_add_div n 4, Nat.add_comm, Nat.add_assoc, Nat.add_mod_left,
+      Nat.pow_mod_pow_of_dvd 2 (Nat.dvd_of_mod_eq_zero <| Nat.mod_eq_zero_of_dvd B),
+      Nat.pow_succ, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ]
+    norm_num
+    rw [Nat.pow_mod_pow_of_dvd 2 (Nat.dvd_of_mod_eq_zero <| Nat.mod_eq_zero_of_dvd B),
+      Nat.pow_succ, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ]
+    norm_num
+  rw [this, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ,
+    Nat.pow_succ, Nat.pow_succ, Nat.pow_succ]
+  norm_num
+  exact h₀
+```

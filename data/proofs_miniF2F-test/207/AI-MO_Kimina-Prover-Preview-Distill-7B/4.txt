@@ -1,0 +1,38 @@
+-- We will use the fact that a sequence like this one satisfies a linear recurrence relation.
+  -- I need a lemma that states this more precisely.
+
+  -- Let $a, b, x, y$ be real numbers such that $ax+by=1$ and $ax^2+by^2=q$.
+  -- Then $ax^n+by^n$ is a linear function of $q$ and the previous terms.
+  have lin_rec (a b x y n : ℝ) (h₀ : a * x + b * y = 1) (h₁ : a * x ^ 2 + b * y ^ 2 = q) :
+    a * x ^ (n + 2) + b * y ^ (n + 2) = (x + y) * (a * x ^ (n + 1) + b * y ^ (n + 1)) -
+      x * y * (a * x ^ n + b * y ^ n) := by
+
+    -- We will prove this by induction on n.
+    induction n with
+    | zero => simp [pow_one]; ring
+    | succ n ih =>
+      rw [pow_succ, pow_succ, ih]
+      ring
+
+  -- The lemma is now proved. We can apply it to our specific problem.
+  have h₄ : a * x ^ 3 + b * y ^ 3 = (x + y) * (a * x ^ 2 + b * y ^ 2) - x * y * (a * x + b * y) := by
+    apply lin_rec
+    linarith
+  rw [h₀, h₁] at h₄
+  replace h₄ : q = 9 + x * y := by linarith
+  have h₅ : a * x ^ 4 + b * y ^ 4 = (x + y) * (a * x ^ 3 + b * y ^ 3) - x * y * (a * x ^ 2 + b * y ^ 2) := by
+    apply lin_rec
+    linarith
+  rw [h₄, h₁] at h₅
+  replace h₅ : 42 = (x + y) * 16 - x * y * 7 := by linarith
+  have h₆ : (x + y) * 7 - x * y * 2 = 14 := by linarith
+  have h₇ : x * y = 2 * (x + y) - 7 := by linarith
+
+  -- Now that we've derived this, we can finish the problem.
+  have h₈ : a * x ^ 5 + b * y ^ 5 = (x + y) * (a * x ^ 4 + b * y ^ 4) - x * y * (a * x ^ 3 + b * y ^ 3) := by
+    apply lin_rec
+    linarith
+  rw [h₃, h₄] at h₈
+  rw [h₇] at h₈
+  linarith
+```

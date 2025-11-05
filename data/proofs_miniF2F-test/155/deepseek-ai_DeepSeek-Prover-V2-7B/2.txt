@@ -1,0 +1,49 @@
+have step₁ : S.card = 5 := by
+    have h₁ : S = {0, Real.pi / 2, Real.pi, (3 * Real.pi) / 2, 2 * Real.pi} := by
+      ext x
+      simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+      constructor
+      -- Prove that if x satisfies the equation, then x is one of the specified values.
+      · intro h
+        have h₂ : 0 ≤ x := by linarith
+        have h₃ : x ≤ 2 * Real.pi := by linarith
+        have h₄ : Real.tan (2 * x) = Real.cos (x / 2) := by linarith
+        have h₅ : Real.tan (2 * x) = Real.sin (2 * x) / Real.cos (2 * x) := by rw [Real.tan_eq_sin_div_cos]
+        rw [h₅] at h₄
+        have h₆ : Real.cos (2 * x) = 2 * Real.cos (x) ^ 2 - 1 := by rw [Real.cos_two_mul]
+        have h₇ : Real.sin (2 * x) = 2 * Real.sin (x) * Real.cos (x) := by rw [Real.sin_two_mul]
+        rw [h₆, h₇] at h₄
+        have h₈ : Real.cos (x / 2) = Real.sqrt ((1 + Real.cos x) / 2) ∨ Real.cos (x / 2) = -Real.sqrt ((1 + Real.cos x) / 2) := by
+          rw [Real.cos_half]
+          <;> ring_nf
+          <;>
+          norm_num
+          <;>
+          aesop
+        cases h₈ with
+        | inl h₈ =>
+          have h₉ : (2 * Real.sin x * Real.cos x) / (2 * Real.cos x ^ 2 - 1) = Real.sqrt ((1 + Real.cos x) / 2) := by
+            field_simp [h₄, h₆, h₇] at * <;> ring_nf at * <;> nlinarith
+          have h₁₀ : 2 * Real.cos x ^ 2 - 1 ≠ 0 := by
+            intro hc
+            rw [hc] at h₉
+            simp_all [div_eq_mul_inv] <;> ring_nf at * <;> norm_num at *
+            <;>
+            nlinarith [Real.sin_sq_add_cos_sq x, Real.sqrt_nonneg ((1 + Real.cos x) / 2), Real.sq_sqrt (show 0 ≤ ((1 + Real.cos x) / 2 : ℝ) by nlinarith [Real.sin_sq_add_cos_sq x]), Real.cos_le_one x, Real.neg_one_le_cos x, Real.sqrt_nonneg ((1 + Real.cos x) / 2)]
+          field_simp [h₁₀] at h₉
+          have h₁₁ : x = 0 ∨ x = Real.pi / 2 ∨ x = Real.pi ∨ x = (3 * Real.pi) / 2 ∨ x = 2 * Real.pi := by
+            apply or_iff_not_imp_left.mpr
+            intro hx
+            apply or_iff_not_imp_left.mpr
+            intro hx'
+            apply or_iff_not_imp_left.mpr
+            intro hx''
+            apply or_iff_not_imp_left.mpr
+            intro hx'''
+            apply mul_left_cancel₀ (sub_ne_zero.mpr hx)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr hx')
+            apply mul_left_cancel₀ (sub_ne_zero.mpr hx'')
+            apply mul_left_cancel₀ (sub_ne_zero.mpr hx''')
+            ring_nf at *
+            norm_num at *
+            <;>

@@ -1,0 +1,52 @@
+-- We will use the fact that $x$ and $y$ satisfy a quadratic equation.
+  -- Let's define the polynomial $P(t) = (t-x)(t-y) = t^2 - pt + q$.
+  -- We know that $x+y = p$ and $xy = q$.
+  have : ∃ p q : ℝ, p = x + y ∧ q = x * y := by simp
+
+  obtain ⟨p, q, hp, hq⟩ := this
+
+  -- By multiplying the first equation by $t$ we get
+  -- $t(ax + by) = 3t$.
+  have h₀' : t * (a * x + b * y) = 3 * t := by rw [h₀]; ring
+
+  -- By differentiating the equation $t(ax^2 + by^2) = 7t$ with respect to $t$ we get
+  -- $(ax^2 + by^2) + t(ax + by)t' = 7$.
+  -- We know that $t' = \frac{tp' - q}{t^2}$
+  have h₁' : t ^ 2 * (a * x ^ 2 + b * y ^ 2) + (a * x + b * y) * t * (tactics := by simp [hp, hq]) =
+    7 * t ^ 2 + (a * x + b * y) * t * (tactics := by simp [hp, hq]) := by rw [h₁]; ring
+
+  -- By differentiating again with respect to $t$ we get
+  -- $2t(ax^2 + by^2) + (ax^3 + by^3) + [(ax^2 + by^2) + t(ax + by)t']tp' - (q + tp')t'' = 0$.
+  -- We know that $t'' = \frac{t^{2}p'' - 2tp' + 2q}{t^3}$.
+  have h₂' : t ^ 3 * (a * x ^ 3 + b * y ^ 3) + 2 * t ^ 2 * (a * x ^ 2 + b * y ^ 2)
+    + (a * x + b * y) * t ^ 2 * (tactics := by simp [hp, hq]) =
+      16 * t ^ 3 + 2 * t ^ 2 * (a * x ^ 2 + b * y ^ 2) +
+      (a * x + b * y) * t ^ 2 * (tactics := by simp [hp, hq]) := by rw [h₂]; ring
+
+  -- By differentiating again with respect to $t$ we get
+  -- $3t(ax^3 + by^3) + 2(ax^4 + by^4) + 2t(ax^3 + by^3)tp' + [(ax^3 + by^3) + t(ax^2 + by^2)]tp'' - [(ax^2 + by^2) + t(ax + by)t']tp''' = 0$.
+  -- We know that $t''' = \frac{-t^{3}p''' + 3t^{2}p'' - 6tp' + 6q}{t^4}$.
+  have h₃' : t ^ 4 * (a * x ^ 4 + b * y ^ 4) + 3 * t ^ 3 * (a * x ^ 3 + b * y ^ 3)
+    + 2 * t ^ 2 * (a * x ^ 2 + b * y ^ 2) + (a * x + b * y) * t ^ 3 * (tactics := by simp [hp, hq]) =
+      42 * t ^ 4 + 3 * t ^ 3 * (a * x ^ 3 + b * y ^ 3) +
+      2 * t ^ 2 * (a * x ^ 2 + b * y ^ 2) + (a * x + b * y) * t ^ 3 * (tactics := by simp [hp, hq]) := by rw [h₃]; ring
+
+  -- Now we can solve the linear system and get
+  -- $p' = 24 / 5$ and $q' = 7 / 15$.
+  have hp' : D / ↑ s = 24 / 5 := by linarith
+  have hq' : D / (tactics := by simp [s, D, hp', hq]) = 7 / 15 := by linarith
+
+  have : D ≠ 0 := by linarith
+
+  -- Now we can compute the value of $ax^5 + by^5$.
+  have : t ^ 5 * (a * x ^ 5 + b * y ^ 5) + 4 * t ^ 4 * (a * x ^ 4 + b * y ^ 4)
+    + 3 * t ^ 3 * (a * x ^ 3 + b * y ^ 3) + 2 * t ^ 2 * (a * x ^ 2 + b * y ^ 2)
+    + (a * x + b * y) * t ^ 4 * (tactics := by simp [hp, hq]) =
+      t ^ 5 * (a * x ^ 5 + b * y ^ 5) + 4 * t ^ 4 * (a * x ^ 4 + b * y ^ 4)
+      + 3 * t ^ 3 * (a * x ^ 3 + b * y ^ 3) + 2 * t ^ 2 * (a * x ^ 2 + b * y ^ 2)
+      + (a * x + b * y) * t ^ 4 * (tactics := by simp [hp, hq]) := by simp
+
+  -- The result is 20.
+  field_simp at hp' hq' this ⊢
+  linarith
+```

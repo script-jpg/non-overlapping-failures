@@ -1,0 +1,303 @@
+-- Clearly, $a \neq 0$.
+  have ha : a ≠ 0 := by
+    by_contra! ha
+    have h' := h₁
+    simp [ha] at h'
+    exact h' 0 (by simp; exact h₀ 0)
+
+  -- Also, $a$ cannot be equal to $1$ as it would make the equation equivalent to $\lfloor x \rfloor = x$, which would make the sum equal to $0$.
+  have ha' : a ≠ 1 := by
+    by_contra! ha'
+    have h' := h₁
+    simp [ha'] at h'
+    exact h' 0 (by simp; exact h₀ 0)
+
+  -- We can verify that $x \in S$ if and only if $x \geq 0$ and $x \notin \mathbb{Q}$.
+  have h₂ : ∀ x : ℝ, x ∈ S ↔ x ≥ 0 ∧ Irrational x := by
+    intro x
+    constructor
+    · intro hx
+      -- Clearly, $x \geq 0$.
+      have hx' : x ≥ 0 := by
+        by_contra! hx'
+        have h'' := hx
+        simp at h''
+        have := h₀ x
+        simp [hx'] at this
+        linarith
+      -- We can deduce that $x \notin \mathbb{Q}$ from the equation.
+      have hx'' : Irrational x := by
+        by_contra! hx''
+        have h'' := hx
+        simp [hx''] at h''
+        have h''' : ↑(x.num) * x = ↑(x.den) * (⌊x⌋ * (x - ↑⌊x⌋)) := by
+          rw [h₀] at h''
+          field_simp at h''
+          linarith
+        have : x = 0 ∨ x = 1 := by
+          by_contra! h''
+          suffices (↑x.den : ℝ) ≠ 0 by
+            have : (↑x.num : ℝ) = (↑x.den : ℝ) * (⌊x⌋ * (x - ↑⌊x⌋)) := by
+              rw [h'''] at this
+              field_simp at this
+              linarith
+            field_simp at this
+            cases' this with h₃ h₄
+            · left; linarith
+            · right; rw [h₄] at h''; simp [h''] at h''
+          exact (Rat.den_ne_zero x).elim fun a ↦ by norm_num [a] at h''
+          norm_num
+        cases' this with h₃ h₄
+        · simp [h₃] at hx''
+        · simp [h₄] at hx''
+      exact ⟨hx', hx''⟩
+    · rintro ⟨hx', hx''⟩
+      simp at hx''
+      simp [hx', hx'']
+      -- If $x \geq 0$ and $x \notin \mathbb{Q}$, then $x \in S$.
+      have h' := hx
+      simp [hx', hx''] at h'
+      exact h'
+  simp only [h₂] at h₀
+  have h₃ : S = Set.Irrational ∩ Set.Ici 0 := by
+    ext x
+    simp [h₂]
+  -- The sum of all nonnegative irrational numbers satisfying the equation is 420.
+  have h₄ : ∑ x ∈ S, x = 420 := by
+    rw [h₃] at h₁
+    exact h₁
+  -- We can deduce that $a < 1$.
+  have ha'' : a < 1 := by
+    -- Assume that $a \geq 1$.
+    by_contra! ha''
+    -- Then the function $f(x)=x^2 - a x$ is increasing on $[0, +\infty)$.
+    let f (x : ℝ) := x ^ 2 - a * x
+    have hf : MonotoneOn f (Set.Ici 0) := by
+      intro x hx y hy hxy
+      simp [f]
+      -- If $0 \leq x \leq y$, then $f(x) \leq f(y)$.
+      suffices x ^ 2 - a * x - (y ^ 2 - a * y) ≤ 0 by linarith
+      simp
+      rw [le_sub_iff_addle, sub_nonneg]
+      ring_nf
+      -- Since $a \geq 1$ and $0 \leq x \leq y$, we have $x^2 - a x \leq y^2 - a y$.
+      apply mul_le_mul (le_refl _) _ (by linarith) (by linarith)
+      exact sq_nonneg (y - x)
+    -- We can deduce that $f(x) \geq 0$ for all $x \in [0, +\infty)$ from the monotonicity of $f$ and the fact that $f(0) = 0$.
+    have hf' : ∀ x ∈ Set.Ici 0, f x ≥ 0 := by
+      intro x hx
+      specialize @hf 0 (by simp) x hx
+      simp [f] at hf
+      linarith
+    -- Then the function $f$ is nonnegative on $[0, 420]$.
+    have hf'' : ∀ x ∈ Set.Icc 0 420, f x ≥ 0 := by
+      intro x hx
+      simp at hx
+      have : x ∈ Set.Ici 0 := by simp; linarith
+      exact hf' x this
+    -- Then we have $f(x) \geq 0$ for all $x \in S$.
+    have hf''' : ∀ x ∈ S, f x ≥ 0 := by
+      intro x hx
+      simp [h₃] at hx
+      exact hf'' x hx
+    -- Then we have $0 \geq \sum_{x \in S} f(x) = \sum_{x \in S} x^2 - a x = \sum_{x \in S} x (x - a)$.
+    have h₅ : 0 ≥ ∑ x ∈ S, f x := by
+      rw [Finset.sum_sub_distrib]
+      simp [f]
+      conv inl =>
+        strategy => simpa using h₄
+      -- Since $a \geq 1$, $x - a \leq 0$ for all $x \in [0, 420]$.
+      -- We can deduce that $\sum_{x \in S} x (x - a) \leq 0$ from $f(x) \geq 0$ for all $x \in S$.
+      apply Finset.sum_le_sum
+      simp
+      intro x hx
+      have h₆ : x ∈ S := by
+        simp [h₃] at hx ⊢
+        exact hx
+      exact mul_nonpos_of_nonneg_of_nonpos (hf''' x h₆) (by linarith)
+    -- Let $T$ be the set of all positive irrational numbers in $[0, 420]$.
+    let T := Set.Irrational ∩ Set.Ioc 0 420
+    -- We can deduce that $S \subseteq T$.
+    have hS : S ⊆ T := by
+      intro x hx
+      simp [h₃] at hx
+      simp [T]
+      refine ⟨⟨hx.2,?_⟩,?_⟩
+      · linarith
+      · exact hx.1
+    -- We can deduce that $T \subseteq S$.
+    have hT : T ⊆ S := by
+      intro x hx
+      simp [h₃, h₄] at hx ⊢
+      refine ⟨⟨?_,?_⟩,?_⟩
+      · linarith
+      · exact hx.2.1
+      · exact hx.1
+    -- Then $S = T$ since $S \subseteq T$ and $T \subseteq S$.
+    have hST : S = T := Set.Subset.antisymm hS hT
+    -- The sum of all positive irrational numbers in $[0, 420]$ is 420.
+    have hT' : ∑ x ∈ T, x = 420 := by
+      rw [← hST] at h₄
+      exact h₄
+    -- We can deduce that $T = \emptyset$ since $T \subseteq [0, 420]$ and $f(x) \geq 0$ for all $x \in T$.
+    have hT'' : T = Set.univ := by
+      by_contra! hT''
+      simp [T] at hT''
+      have hT''' : Set.Iio 420 ⊆ T := by
+        intro x hx
+        have hx' : x ∈ Set.Icc (0 : ℝ) 420 := by
+          simp at hx ⊢
+          constructor <;> linarith
+        simp [h₃] at hx' ⊢
+        exact hx'
+      have hT'''' : Set.Iio 420 ⊆ Set.univ := Set.Iio_subset_univ _
+      rw [← hST] at hT''''
+      have hx (x : ℝ) (hx : x ∈ Set.Iio 420) : x ∈ Set.univ := by
+        simpa using hT'''' x hx
+      have hN := Set.not_mem_univ 420
+      have h₆ := hx 420 (by linarith)
+      contradiction
+    -- Then $S = \emptyset$ since $S = T$ and $T = \emptyset$.
+    rw [hT''] at hST
+    simp at hST
+    -- Then $a = 0$ since $S = \emptyset$.
+    suffices S = Set.univ by
+      rw [this] at h₄
+      simp at h₄
+      exact ha h₄
+    suffices T = Set.univ by
+      rw [this] at hST
+      exact hST.symm
+    -- We can deduce that $T = \emptyset$ from $T \subseteq [0, 420]$ and $f(x) \geq 0$ for all $x \in T$.
+    simp [T]
+    intro x hx
+    have hx' : x ∈ Set.Icc (0 : ℝ) 420 := by
+      simp at hx ⊢
+      constructor <;> linarith
+    have hN := Set.not_mem_univ x
+    suffices (fun x : ℝ ↦ x ∈ Set.Iio x) x = Set.univ by
+      rw [this] at hN
+      contradiction
+    ext y
+    simp
+    intro h
+    have h' := hf'''' (f := fun x => x * (x - a)) x
+      (hx.1) hx' (by linarith)
+    -- Since $a \geq 1$, $x - a \leq 0$ for all $x \in [0, 420]$.
+    -- We can deduce that $x (x - a) \leq 0$ from $f(x) \geq 0$ for all $x \in S$.
+    have : x * (x - a) ≤ 0 := by
+      suffices x - a ≤ 0 by exact mul_nonpos_of_nonneg_of_nonpos (by linarith) this
+      linarith
+    -- Then $x (x - a) > 0$ since $x \in S$ and $x \geq 0$ and $x \notin \mathbb{Q}$.
+    have : 0 < x ∧ Irrational x := by
+      refine ⟨hx.1, hx.2⟩
+    simp [this.1, this.2] at this
+    linarith
+  -- We can deduce that $a > 0$.
+  have ha''' : a > 0 := by
+    -- Assume that $a \leq 0$.
+    by_contra! ha'''
+    -- Then the function $f(x)=x^2 - a x$ is decreasing on $[0, +\infty)$.
+    let f (x : ℝ) := x ^ 2 - a * x
+    have hf : AntitoneOn f (Set.Ici 0) := by
+      intro x hx y hy hxy
+      simp [f]
+      -- If $0 \leq x \leq y$, then $f(x) \geq f(y)$.
+      suffices x ^ 2 - a * x - (y ^ 2 - a * y) ≥ 0 by linarith
+      simp
+      rw [le_sub_iff_addle, sub_nonneg]
+      ring_nf
+      -- Since $a \leq 0$ and $0 \leq x \leq y$, we have $x^2 - a x \geq y^2 - a y$.
+      apply mul_le_mul (le_refl _) _ (by linarith) (by linarith)
+      exact sq_nonneg (y - x)
+    -- We can deduce that $f(x) \geq 0$ for all $x \in [0, +\infty)$ from the monotonicity of $f$ and the fact that $f(0) = 0$.
+    have hf' : ∀ x ∈ Set.Ici 0, f x ≥ 0 := by
+      intro x hx
+      specialize @hf x hx 0 (by simp) (by simp; linarith) (by linarith)
+      simp [f] at hf
+      linarith
+    -- Then the function $f$ is nonnegative on $[0, 420]$.
+    have hf'' : ∀ x ∈ Set.Icc 0 420, f x ≥ 0 := by
+      intro x hx
+      simp at hx
+      have : x ∈ Set.Ici 0 := by simp; linarith
+      exact hf' x this
+    -- We can deduce that $0 \geq \sum_{x \in S} f(x) = \sum_{x \in S} x^2 - a x = \sum_{x \in S} x (x - a)$.
+    have h₅ : 0 ≥ ∑ x ∈ S, f x := by
+      rw [Finset.sum_sub_distrib]
+      simp [f]
+      conv inl =>
+        strategy => simpa using h₄
+      -- Since $a \leq 0$ and $x \geq 0$, $x - a \geq 0$ for all $x \in [0, 420]$.
+      -- We can deduce that $\sum_{x \in S} x (x - a) \geq 0$ from $f(x) \geq 0$ for all $x \in S$.
+      apply Finset.sum_le_sum
+      simp
+      intro x hx
+      have h₆ : x ∈ S := by
+        simp [h₃] at hx ⊢
+        exact hx
+      exact mul_nonneg (by linarith) (by linarith)
+    -- Then $a = 0$ since $a \geq 0$ and $a \leq 0$.
+    suffices a = 0 by contradiction
+    linarith
+  -- Then $0 < a < 1$.
+  have ha'''' : 0 < a ∧ a < 1 := ⟨ha''', ha''⟩
+  clear ha''
+
+  -- Since $0 < a < 1$, there exists a unique $b \in (0, 1)$ such that $a = b (1 - b)$.
+  let b := (1 + Real.sqrt (1 - a * 4)) / 2
+  have h₅ : a = b * (1 - b) := by
+    simp [b]
+    ring_nf
+    rw [Real.sq_sqrt (by linarith)]
+    ring_nf
+    simp
+    linarith
+  have ha : a = b * (1 - b) := h₅
+  have hb : b ∈ Set.Ioo 0 1 := by
+    simp
+    constructor
+    · -- We can deduce that $b > 0$ from $a > 0$.
+      suffices Real.sqrt (1 - a * 4) > -1 by linarith
+      rw [Real.sqrt_lt]
+      simp
+      linarith
+      apply lt_of_le_of_lt (by norm_num)
+      simp
+      linarith
+    · -- We can deduce that $b < 1$ from $a < 1$.
+      suffices -1 < Real.sqrt (1 - a * 4) by linarith
+      rw [Real.sqrt_lt]
+      simp
+      linarith
+      apply lt_of_le_of_lt (by norm_num)
+      simp
+      linarith
+  -- Then $b$ satisfies the equation $2 b^2 - 2 b + a = 0$.
+  have h₆ : 2 * b ^ 2 - 2 * b + a = 0 := by
+    rw [h₅]
+    ring_nf
+    rw [Real.sq_sqrt]
+    ring_nf
+    linarith
+    apply Real.sqrt_nonneg
+  -- Then the discriminant is $4 \sqrt {1 - a \cdot 4} > 0$.
+  have hd : discrim 2 (-2) a = Real.sqrt (1 - a * 4) * Real.sqrt (1 - a * 4) := by
+    simp [discrim]
+    rw [mul_assoc, ← pow_two, Real.sq_sqrt]
+    simp
+    linarith
+    apply Real.sqrt_nonneg
+  have hdiscrim_pos : 0 < discrim 2 (-2) a := by
+    rw [hd]
+    suffices 0 < Real.sqrt (1 - a * 4) by linarith
+    rw [Real.sqrt_pos]
+    linarith
+    rw [h₅]
+    apply mul_pos
+    · linarith
+    · linarith
+  -- Then $b$ is a root of the equation $2 x^2 - 2 x + a = 0$.
+  have h₇ : 2 * b ^ 2 - 2 * b + a = 0 := by
+    exact h₆
+  --

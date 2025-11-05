@@ -1,0 +1,88 @@
+-- We need the following lemma about the complex number $\omega=\exp{\frac{3\pi i}{7}}$:
+  -- $\omega+\omega^{2}+\omega^{3}+\omega^{4}+\omega^{5}+\omega^{6}=-1$.
+  have hω (ω : ℂ) (hω : ω = Complex.exp (3 * Real.pi * Complex.I / 7)) : ω + ω^2 + ω^3 + ω^4 + ω^5 + ω^6 = -1 := by
+    -- Notice that $\omega$ is a primitive $7$th root of unity.
+    have hω' : IsPrimitiveRoot ω 7 := by
+      rw [IsPrimitiveRoot, Complex.isPrimitiveRoot_iff]
+      use -1
+      simp [hω, Complex.exp_mul_I]
+      have : Complex.exp (3 * Real.pi * Complex.I / 7) ≠ 1 := by
+        by_contra h
+        have : Complex.exp (3 * Real.pi * Complex.I / 7) = 1 := by
+          exact h
+        have : Complex.exp (-3 * Real.pi * Complex.I / 7) = 1 := by
+          rw [←@Complex.exp_neg _ _ (-3 * Real.pi * Complex.I / 7)]
+          simp [this]
+        have : Complex.exp (-3 * Real.pi * Complex.I / 7) = -1 := by
+          rw [Complex.exp_eq_neg_one_iff]
+          use 1
+          simp [Real.pi_pos]
+          constructor
+          · rw [mul_comm]
+            field_simp
+            rw [←mul_assoc, mul_comm, ←mul_assoc]
+            simp [Real.pi_pos]
+          · field_simp
+            rw [←mul_assoc]
+            simp [Real.pi_pos]
+        contradiction
+      constructor
+      · nth_rw 1 [←Complex.exp_zero]
+        rw [Complex.exp_eq_zero_iff]
+        simp
+        by_contra h
+        have : ¬ Complex.exp (3 * Real.pi * Complex.I / 7) ≠ 1 := by
+          exact h
+        contradiction
+      · -- By definition, $\omega$ is a primitive $7$th root of unity.
+        exact Complex.isPrimitiveRoot_iff_prime_pow_cardRootHom (by norm_num) (by norm_cast)
+
+    -- Because $\omega$ is a primitive $7$th root of unity, we have
+    -- $\omega+\omega^{2}+\omega^{3}+\omega^{4}+\omega^{5}+\omega^{6}=-1$.
+    have := Complex primitive_roots_cardHom_eq_sum_pow (n := 7) (by norm_num) hω'
+    simp at this
+    rw [←this]
+
+  -- Euler's formula.
+  have hEuler (x : ℝ) : Real.cos x + Complex.exp (x * Complex.I) = 2 * Real.cos x := by
+    rw [Complex.exp_ofReal_mul_I, ←Complex.cos_add_sin_I]
+    simp
+
+  -- We need the following lemma about the real part of $\exp{(a+bi)}$ for $a, b \in \mathbb{R}$:
+  -- $\operatorname{Re}(\exp{(a+bi)})=e^{a}\cos{b}$.
+  have hRe (a b : ℝ) : Real.cos (↑a + b * Real.pi * Complex.I) = Real.exp a * Real.cos b := by
+    rw [Complex.cos_add_sin_I]
+    rw [Complex.exp_ofReal_mul_I]
+    simp
+
+  -- Apply Euler's formula to $\omega=\exp{\frac{3\pi i}{7}}$ and get $\omega+\omega^{2}+\omega^{3}+\omega^{4}+\omega^{5}+\omega^{6}=-1$.
+  have hω' (ω : ℂ) (hω : ω = Complex.exp (3 * Real.pi * Complex.I / 7)) : ω + ω^2 + ω^3 + ω^4 + ω^5 + ω^6 = -1 := by
+    have := hω ω (by simp [hω])
+    assumption
+
+  -- Substitute $\omega=\exp{\frac{3\pi i}{7}}$ to get $\cos{\frac{3\pi}{7}}+\cos{\frac{6\pi}{7}}+\cos{\frac{9\pi}{7}}=-\frac{1}{2}$.
+  have hω'' (ω : ℂ) (hω : ω = Complex.exp (3 * Real.pi * Complex.I / 7)) : Real.cos (3 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) + Real.cos (9 * Real.pi / 7) = -1 / 2 := by
+    -- Apply Euler's formula to $\omega=\exp{\frac{3\pi i}{7}}$ and get $\omega+\omega^{2}+\omega^{3}+\omega^{4}+\omega^{5}+\omega^{6}=-1$.
+    have h := hω' ω (by simp [hω])
+    apply_fun fun x => x.re at h
+    simp [hEuler, pow_mul, Complex.exp_ofReal_mul_I, hRe, ←Real.cos_add_sin_I] at h
+    ring_nf at h ⊢
+    -- Use the fact that $\cos{(\pi+x)}=-\cos{x}$ to get $\cos{\frac{3\pi}{7}}-\cos{\frac{2\pi}{7}}+\cos{\frac{\pi}{7}}=-\frac{1}{2}$.
+    have : Real.cos (9 * Real.pi / 7) = Real.cos (Real.pi / 7) := by
+      ring_nf
+      rw [show 7 * Real.pi / 7 = Real.pi by field_simp]
+      simp
+    rw [this] at h
+    have : Real.cos (6 * Real.pi / 7) = Real.cos (2 * Real.pi / 7) := by
+      ring_nf
+      rw [show 6 * Real.pi / 7 = Real.pi - Real.pi / 7 by ring, show 6 * Real.pi / 7 = Real.pi - 2 * Real.pi / 7 by ring]
+      simp [Real.cos_pi_sub]
+    rw [this] at h
+    linarith only [h]
+
+  -- We need to show that $\cos{\frac{\pi}{7}}-\cos{\frac{2\pi}{7}}+\cos{\frac{3\pi}{7}}=\frac{1}{2}$.
+  -- Use the fact that $\cos{\frac{3\pi}{7}}-\cos{\frac{2\pi}{7}}+\cos{\frac{\pi}{7}}=-\frac{1}{2}$ to get the desired result.
+  have : Real.cos (3 * Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (Real.pi / 7) = 1 / 2 := by
+    linarith only [hω'']
+  linarith only [this]
+```

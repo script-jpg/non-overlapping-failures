@@ -1,0 +1,54 @@
+-- We need Vieta's formula here.
+  -- Factor quadratic
+  have h₂ (x : ℝ) : x ^ 3 + a * x ^ 2 + b * x + c = (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7)) := by
+    rw [←h₀]
+    apply_fun @Set.InjOn f
+    · intro y
+      simp [h₁]
+      -- Prove that cos(2π/7), cos(4π/7), cos(6π/7) are pairwise distinct
+      intro h
+      fin_cases h <;> simp [Real.cos_pi_div] <;> try linarith
+    · intro y
+      simp
+      apply h₀
+  -- Vieta's formula
+  have h₃ : ∀ k : ℕ, (fun x ↦ x ^ 3 + a * x ^ 2 + b * x + c) (Real.cos (2 * Real.pi / 7) * ↑↑(7 : ℕ) / (2 * ↑↑(7 : ℕ))) ^ k = 0 := by
+    intro k
+    rw [Finset.mem_preimage] at h₁
+    obtain ⟨x, hx⟩ := h₁
+    simp at hx
+    obtain (rfl | rfl | rfl) := hx
+    all_goals
+      rw [h₂]
+      simp
+      rw [show (2 : ℝ) * (2 * Real.pi / 7) = Real.pi / 7 + Real.pi / 2 by ring]
+      exact Real.cos_add_pi_div_two (Real.pi / 7)
+  have h₄ := h₃ 3
+  have h₅ := h₃ 2
+  have h₆ := h₃ 1
+  simp at h₄ h₅ h₆
+  rw [pow_three, pow_two, id1] at h₄ h₅ h₆
+  apply_fun (fun x => x * ((2 : ℝ) * (2 * Real.pi / 7) - Real.pi / 2) * ((2 : ℝ) * (2 * Real.pi / 7) - Real.pi / 2)) at h₄
+  apply_fun (fun x => x * ((2 : ℝ) * (2 * Real.pi / 7) - Real.pi / 2)) at h₅
+  simp at h₄ h₅
+  rw [show ((2 : ℝ) * (2 * Real.pi / 7) - Real.pi / 2) * ((2 : ℝ) * (2 * Real.pi / 7) - Real.pi / 2) = ((2 : ℝ) * (2 * Real.pi / 7) - Real.pi / 2) ^ 2 by ring] at h₄
+  have h₇ : ((2 : ℝ) * (2 * Real.pi / 7) - Real.pi / 2) ^ 2 ≠ 0 := by
+    ring_nf
+    simp
+    linarith only [Real.pi_pos]
+  rw [pow_two] at h₇
+  -- Simplify the expression
+  rw [show (2 * Real.pi / 7 + Real.pi / 2) * (2 * Real.pi / 7 + Real.pi / 2) = (2 * Real.pi / 7) ^ 2 + Real.pi / 2 * (2 * Real.pi / 7) * 2 + (Real.pi / 2) ^ 2 by ring] at h₄
+  rw [show (2 * Real.pi / 7 - Real.pi / 2) * (2 * Real.pi / 7 - Real.pi / 2) = (2 * Real.pi / 7) ^ 2 - Real.pi / 2 * (2 * Real.pi / 7) * 2 + (Real.pi / 2) ^ 2 by ring] at h₅
+  apply_fun (fun x => (48 * (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2 * (8 * Real.pi ^ 3 * 310009 - 498032 * Real.pi ^ 2 * 127697) * 48) / (2 * Real.pi / 7) ^ 2 / (48 * (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2) * x) at h₄
+  apply_fun (fun x => (48 * (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2 * x) / (2 * Real.pi / 7) ^ 2 / (48 * (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2)) at h₅
+  simp at h₄ h₅
+  rw [show (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2 * (8 * Real.pi ^ 3 * 310009 - 498032 * Real.pi ^ 2 * 127697) * 48 / (2 * Real.pi / 7) ^ 2 / (48 * (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2) = 1 / ((2 * Real.pi / 7) ^ 2) * ((8 * Real.pi ^ 3 * 310009 - 498032 * Real.pi ^ 2 * 127697) * 48 / (48 * (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2)) * ((2 * Real.pi / 7) ^ 2 * Real.pi ^ 2 / Real.pi ^ 2) by ring] at h₄
+  rw [show (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2 * x / (2 * Real.pi / 7) ^ 2 / (48 * (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2) = 1 / ((2 * Real.pi / 7) ^ 2) * (x / (48 * (2 * Real.pi / 7) ^ 2 * Real.pi ^ 2)) * ((2 * Real.pi / 7) ^ 2 * Real.pi ^ 2 / Real.pi ^ 2) by ring] at h₅
+  rw [div_self] at h₄ h₅
+  simp [h₇] at h₄ h₅
+  rw [show 8 * Real.pi ^ 3 * 310009 - 498032 * Real.pi ^ 2 * 127697 = Real.pi ^ 2 * (8 * Real.pi * 310009 - 498032 * 127697) by ring] at h₄
+  rw [show x = 8 * Real.pi ^ 3 * 310009 - 498032 * Real.pi ^ 2 * 127697 by linarith]
+  linarith only [h₄, Real.pi_pos]
+
+```

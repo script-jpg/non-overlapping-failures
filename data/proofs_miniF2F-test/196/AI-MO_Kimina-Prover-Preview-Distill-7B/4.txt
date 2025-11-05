@@ -1,0 +1,80 @@
+by_cases hm : m = 0
+
+  -- if m = 0, then n = 0, which is not positive
+  · rw [hm] at h₃
+    have : n = 0 := by
+      have : n * 0 = 0 := by
+        rw [← h₃]
+        ring
+      rw [mul_zero] at this
+      exact this
+    rw [this] at h₁
+    have : ¬Even 0 := by
+      rw [not_even_iff_odd]
+      norm_num
+    contradiction
+
+  -- if m ≠ 0, then n ≠ 0
+  · have hn : n ≠ 0 := by
+      by_contra! hn
+      rw [hn] at h₃
+      have : m * 0 = 0 := by
+        rw [← h₃]
+        ring
+      rw [mul_zero] at this
+      have : ¬Even 0 := by
+        rw [not_even_iff_odd]
+        norm_num
+      contradiction
+
+    by_cases h : m < n
+
+    -- if m < n, then m * n > 0, which is a contradiction
+    · have : m * n > 0 := by
+        apply Nat.mul_pos
+        exact hm
+        exact hn
+      rw [h₃] at this
+      norm_num at this
+
+    -- if m > n, then solve the problem
+    · simp at h
+      have : m = n + 2 := by
+        exact Nat.eq_add_of_sub_eq h
+      rw [this] at h₃
+      have : n > 13 := by
+        have : n * n < 288 := by
+          calc
+            n * n = n * (n + 2) := by ring
+            _ < m * n := by rw [← h₃]; apply Nat.mul_lt_mul_of_pos_right; exact hn
+            _ = 288 := by rw [h₃]
+        have : n * n < 288 := by exact this
+        have : n < 18 := by
+          rw [not_le] at this
+          exact this
+        by_contra!
+        have : n * n > 288 := by
+          calc
+            n * n > 17 * 17 := by apply Nat.mul_lt_mul_of_pos_right; exact hn; exact this
+            _ = 289 := by norm_num
+            _ > 288 := by norm_num
+        linarith
+
+      have : n * (n + 2) = 288 := by
+        rw [← this, h₃]
+      ring_nf at this
+      have : n ≤ 16 := by
+        by_contra!
+        have : n * n > 288 := by
+          calc
+            n * n > 16 * 16 := by apply Nat.mul_lt_mul_of_pos_right; exact hn; exact this
+            _ = 256 := by norm_num
+            _ > 288 := by norm_num
+        linarith
+
+      -- try all possible values of n
+      interval_cases n
+      all_goals
+        revert this
+        decide
+```

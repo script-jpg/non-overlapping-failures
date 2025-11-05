@@ -1,0 +1,155 @@
+-- check by induction
+
+  induction' n with n ih
+
+  -- check the base case
+
+  · simp
+
+  -- use the `Int.dvd_iff_emod_eq_zero` lemma, we need to simplify `(10 ^ n - (-1 : ℤ) ^ n) % 11` to `0`.
+
+  · have : (10 ^ n - (-1 : ℤ) ^ n) % 11 = 0 := by
+
+      -- simplify the expression step by step.
+
+      -- turn `10 ^ n` into `9 ^ n * 10`, so that we have `9 ^ n * 10 - (-1)^n`
+
+      have r1 : (10 ^ n - (-1 : ℤ) ^ n) % 11 = (9 ^ n * 10 - (-1 : ℤ) ^ n) % 11 := by
+
+        have : 10 ^ n = 9 ^ n * 10 := by
+
+          rw [show 10 = 9 + 1 by norm_num, add_pow]
+
+          rw [Nat.add_one_pow, Nat.mul_comm]
+
+        rw [this]
+
+      -- turn `9 ^ n * 10 - (-1)^n` into `9 ^ n * 10 - (-1)^n * 1`, so that we can use `Int.sub_emod`
+
+      have r2 : (9 ^ n * 10 - (-1 : ℤ) ^ n) % 11 = (9 ^ n * 10 - (-1 ^ n * 1)) % 11 := by
+
+        nth_rw 2 [pow_one]
+
+      -- use `Int.sub_emod` to get `(9 ^ n * 10 - (-1 ^ n * 1)) % 11 = (9 ^ n * 10 % 11 - (-1 ^ n * 1) % 11) % 11`
+
+      have r3 : (9 ^ n * 10 - (-1 ^ n * 1)) % 11 = ((9 ^ n * 10 % 11) - (-1 ^ n * 1) % 11) % 11 := by
+
+        exact Int.sub_emod (9 ^ n * 10) (-1 ^ n * 1)
+
+      -- use `Int.mul_emod` to simplify both `9 ^ n * 10 % 11` and `-1 ^ n * 1 % 11`
+
+      have r4 : ((9 ^ n * 10 % 11) - (-1 ^ n * 1) % 11) % 11 = ((9 ^ n % 11 * 10 % 11) - (-1 ^ n % 11 * 1 % 11)) % 11 := by
+
+        rw [Int.mul_emod, Int.mul_emod, Int.add_emod, Int.sub_emod]
+
+      -- simplify, we get `(9 ^ n % 11 * 10 % 11 - (-1 ^ n % 11)) % 11`
+
+      have r5 : ((9 ^ n % 11 * 10 % 11) - (-1 ^ n % 11 * 1 % 11)) % 11 = ((9 ^ n % 11 * 10 % 11 - (-1 ^ n % 11)) % 11) := by
+
+        simp
+
+      -- use `Int.mul_emod` to simplify `9 ^ n % 11`
+
+      have r6 : (9 ^ n % 11 * 10 % 11 - (-1 ^ n % 11)) % 11 = ((9 % 11) ^ n * 10 % 11 - (-1 ^ n % 11)) % 11 := by
+
+        rw [pow_mod]
+
+      -- turn `(9 % 11) ^ n * 10 % 11` into `(9 % 11) ^ n % 11 * 10 % 11`, so that we can use `Int.sub_emod`
+
+      have r7 : ((9 % 11) ^ n * 10 % 11 - (-1 ^ n % 11)) % 11 = (((9 % 11) ^ n % 11 * 10 % 11) - (-1 ^ n % 11)) % 11 := by
+
+        nth_rw 2 [pow_one]
+
+      -- use `Int.sub_emod` to get `((9 % 11) ^ n % 11 * 10 % 11 - (-1 ^ n % 11)) % 11 = ((9 % 11) ^ n % 11 * 10 % 11 % 11 - (-1 ^ n % 11) % 11) % 11`
+
+      have r8 : ((9 % 11) ^ n % 11 * 10 % 11 - (-1 ^ n % 11)) % 11 = (((9 % 11) ^ n % 11 * 10 % 11) - (-1 ^ n % 11)) % 11 := by
+
+        exact Int.sub_emod ((9 % 11) ^ n % 11 * 10 % 11) (-1 ^ n % 11)
+
+      -- simplify, we get `((9 % 11) ^ n % 11 * 10 % 11 - (-1 ^ n % 11)) % 11`
+
+      have r9 : ((9 % 11) ^ n % 11 * 10 % 11 - (-1 ^ n % 11)) % 11 = (((9 % 11) ^ n % 11 * 10) - (-1 ^ n % 11)) % 11 := by
+
+        simp
+
+      -- use `Int.mul_emod` to simplify `(-1 ^ n % 11)`
+
+      have r10 : ((9 % 11) ^ n % 11 * 10 - (-1 ^ n % 11)) % 11 = (((9 % 11) ^ n % 11 * 10) - (-1 % 11) ^ n) % 11 := by
+
+        rw [pow_mod]
+
+      -- simplify, we get `((9 % 11) ^ n % 11 * 10 - (-1 % 11) ^ n) % 11`
+
+      have r11 : ((9 % 11) ^ n % 11 * 10 - (-1 % 11) ^ n) % 11 = (10 * ((9 % 11) ^ n % 11) - (-1 % 11) ^ n) % 11 := by
+
+        simp
+
+      -- turn `(9 % 11) ^ n % 11` into `(9 % 11) ^ n % 11`, so we can use `Int.ModEq.mul_left`
+
+      have r12 : (10 * ((9 % 11) ^ n % 11) - (-1 % 11) ^ n) % 11 = (10 * ((9 % 11) ^ n % 11) % 11 - (-1 % 11) ^ n % 11) % 11 := by
+
+        exact Int.sub_emod (10 * ((9 % 11) ^ n % 11)) ((-1 % 11) ^ n)
+
+      -- use `Int.ModEq.mul_left` to get `(10 * ((9 % 11) ^ n % 11) % 11 - (-1 % 11) ^ n % 11) % 11 = (10 * ((9 % 11) ^ n % 11) % 11 % 11 - (-1 % 11) ^ n % 11) % 11`
+
+      have r13 : (10 * ((9 % 11) ^ n % 11) % 11 - (-1 % 11) ^ n % 11) % 11 = ((10 * ((9 % 11) ^ n % 11) % 11) - (-1 % 11) ^ n % 11) % 11 := by
+
+        exact Int.emod_sub_emod (10 * ((9 % 11) ^ n % 11) % 11) ((-1 % 11) ^ n % 11)
+
+      -- simplify, we get `((10 * ((9 % 11) ^ n % 11) % 11) - (-1 % 11) ^ n % 11) % 11`
+
+      have r14 : (10 * ((9 % 11) ^ n % 11) % 11 - (-1 % 11) ^ n % 11) % 11 = (10 * ((9 % 11) ^ n % 11) - (-1 % 11) ^ n) % 11 := by
+
+        simp
+
+      rw [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14]
+
+      -- at this step, we should simplify `(9 % 11) ^ n % 11`.
+
+      -- decide the type of `(9 % 11) ^ n % 11`, so that we can use `Int.emod_eq_of_lt`
+
+      have t1 : (9 % 11 : ℤ) ^ n % 11 ∈ Set.Icc 0 10 := by
+
+        simp
+
+        -- show that `0 ≤ (9 % 11) ^ n % 11`
+
+        have t1 : 0 ≤ (9 % 11 : ℤ) ^ n % 11 := by
+
+          apply Int.emod_nonneg
+
+          exact Int.zero_le (↑9 % 11)
+
+        -- show that `(9 % 11) ^ n % 11 < 11`
+
+        have t2 : (9 % 11 : ℤ) ^ n % 11 < 11 := by
+
+          apply Int.emod_lt_of_pos
+
+          exact Int.zero_lt (↑9 % 11)
+
+        -- combine the two inequalities
+
+        exact ⟨t1, t2⟩
+
+      rw [(by simp : (11 : ℤ) = (11 : ℕ)), ←Nat.mod_eq_of_dvd] at t1
+
+      -- simplify the expression to `((10 * (9 % 11) ^ n % 11) - (-1 % 11) ^ n) % 11 = 0`
+
+      rcases t1 with ⟨h1, h2⟩
+
+      rw [Int.sub_emod, Int.mul_emod, Int.mul_emod, Int.add_emod, Int.sub_emod]
+
+      -- turn `((10 * (9 % 11) ^ n % 11) - (-1 % 11) ^ n) % 11 = 0` into `(10 * (9 % 11) ^ n % 11 - (-1 % 11) ^ n) % 11 = 0`
+
+      simp only [Int.reduceSub, Int.reduceMul, Int.reduceAdd]
+
+      -- we have `(10 * (9 % 11) ^ n % 11 - (-1 % 11) ^ n) % 11 = 0`
+
+      -- use `Int.ModEq.dvd` to show that `11 ∣ 10 * ((9 % 11) ^ n % 11) - (-1 % 11) ^ n`
+
+      exact Int.emod_eq_zero_int.mp this
+
+    exact Int.dvd_of_emod_eq_zero this
+
+```

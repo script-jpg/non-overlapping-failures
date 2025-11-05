@@ -1,0 +1,101 @@
+-- Let $c_n = a_n + i b_n$.  Then \[ c_{n + 1} = (\sqrt {3}a_n - b_n) + i(\sqrt {3}b_n + a_n) = \sqrt{3}(a_n + i b_n) + (-1 + i) = (\sqrt{3} + i) c_n - (1 - i). \]
+  let c (n : ℕ) := a n + I * b n
+  have h (n : ℕ) : c (n + 1) = (Real.sqrt 3 + I) * c n - (1 - I) := by
+    simp [c, h₀, h₁]
+    ring
+    -- complex.ext_iff
+    do
+      simp
+      ring
+  -- The recurrence can be solved explicitly, and we can find that
+  -- \[ c_n = (\sqrt{3} - i) (\sqrt{3} + i)^{n - 1} c_1 + (1 - i) \frac{(\sqrt{3} + i)^{n - 1} - 1} {(\sqrt{3} + i) - 1}.
+  have h' (n : ℕ) : c (n + 1) = (Real.sqrt 3 - I) * (Real.sqrt 3 + I) ^ n * c 1 - (1 - I) * ((Real.sqrt 3 + I) ^ n - 1) / ((Real.sqrt 3 + I) - 1) := by
+    induction n with
+    | zero => simp [h]
+    | succ n ih =>
+      rw [h (n + 1), ih]
+      -- field_simp
+      -- (1 - I) / ((√3 + I) - 1) = (√3 - 1)/2 - I
+      have z : ((Real.sqrt 3 + I) - 1)⁻¹ = (Real.sqrt 3 - 1) / 2 - I := by
+        rw [inv_sub, inv_I]
+        field_simp
+        ring
+        simp
+        ring
+      rw [z]
+      -- (Real.sqrt 3 + I) * (Real.sqrt 3 - I) = 2
+      have z : (Real.sqrt 3 + I) * (Real.sqrt 3 - I) = 2 := by
+        ring_nf
+        simp
+        ring
+      rw [z]
+      simp [mul_sub, mul_add, pow_add]
+      ring
+  -- Note that $c_1$ is real, and $(\sqrt{3} - i) (\sqrt{3} + i)^{99}$
+  have z : ((Real.sqrt 3 - I) * (Real.sqrt 3 + I) ^ 99 * c 1).im = 0 := by
+    simp [c]
+    apply sub_eq_zero.mpr
+    apply add_eq_of_eq_sub
+    rw [← inv3]
+    apply mul_inv_cancel₀
+    have : ((Real.sqrt 3 + I) ^ 99).im = 0 := by
+      -- √3 + i = 2 * (1/2 + √3/2 * I) = 2 * e^ (π/6 * I)
+      have z : (Real.sqrt 3 + I) = 2 * (1 / 2 + Real.sqrt 3 / 2 * I) := by
+        ring_nf
+        simp
+        ring
+      -- Then, √3 + i has norm 2, and argument π/6
+      have z' : (Real.sqrt 3 + I).im = 1 := by simp
+      -- Its 99-th power has norm 2^99, and argument 99 * π/6 = 16 * π + 3 * π/2
+      have z'' : ((Real.sqrt 3 + I) ^ 99).im = 0 := by
+        rw [z, ← Complex.ofReal_pow, Complex.ofReal_im, pow_mul]
+        simp
+        norm_num
+        rw [Complex.ofReal_im]
+        simp
+      exact z''
+    apply add_eq_of_eq_sub
+    apply sub_eq_zero_of_eq
+    have : (Real.sqrt 3 - I).im = 0 := by simp
+    rwa [mul_zero, add_zero, this]
+  -- By assumption, the imaginary part of $c_{100} = a_{100} + i b_{100} = 2 + 4 i$ is non-zero, so we can conclude that $(\sqrt{3} - i) (\sqrt{3} + i)^{99} = 2 + 4 i$.
+  have h'' : ((Real.sqrt 3 - I) * (Real.sqrt 3 + I) ^ 99 * c 1) = 2 + 4 * I := by
+    have : ((Real.sqrt 3 - I) * (Real.sqrt 3 + I) ^ 99 * c 1) = c 100 := by
+      rw [h' 99]
+      simp [h₂, h₃]
+    rw [this, h₂, h₃]
+    ring
+  -- We can now explicitly solve for $c_1$.
+  have c1_eq : c 1 = (2 + 4 * I) / ((Real.sqrt 3 - I) * (Real.sqrt 3 + I) ^ 99) := by
+    rw [mul_comm, h'']
+    field_simp
+  have c1_eq' : c 1 = 1 / 2 ^ 98 := by
+    simp [c1_eq]
+    -- (√3 - 1)/2 - I
+    have : ((Real.sqrt 3 - 1) / 2 - I)⁻¹ = 2 / (Real.sqrt 3 - 1 + I) := by
+      field_simp
+    rw [this]
+    -- (4 + (√3 + I) ^ 99 * (1 - I)) / (2 + (√3 + I) ^ 99) = 1 / 2 ^ 98
+    field_simp
+    ring
+    by_contra!
+    have : ((Real.sqrt 3 + I) ^ 99).re = 0 := by
+      have : (4 + (Real.sqrt 3 + I) ^ 99 * (1 - I)).re = 0 := by
+        rw [← mul_one (2 + (Real.sqrt 3 + I) ^ 99)]
+        simp
+      rw [← add_re, this]
+      norm_num
+    have : (Real.sqrt 3 + I) ^ 99 = 0 := by
+      apply Complex.ext
+      <;> simp [this]
+    have : (Real.sqrt 3 + I) ^ 99 ≠ 0 := by
+      apply pow_ne_zero
+      apply Complex.ext_iff.mpr
+      simp
+    contradiction
+  -- and find that $a_1 + b_1 = c_1 = \frac{1} {2^{98}}$.
+  rw [← c1_eq', ← h' 1, h₀, h₁]
+  simp
+  ring
+
+```

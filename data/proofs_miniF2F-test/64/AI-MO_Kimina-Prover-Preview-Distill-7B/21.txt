@@ -1,0 +1,162 @@
+-- We have $f(x) = 12x + 7$ and $g(x) = 5x + 2$.
+  have hg₁ (x : ℕ+) : g x = 5 * x + 2 := h₁
+  have hf₁ (x : ℕ+) : f x = 12 * x + 7 := h₀
+
+  -- Define $h(x)$ to be the greatest common divisor of $f(x)$ and $g(x)$.
+  have h_def (x : ℕ+) : h x = Nat.gcd (f x) (g x) := h₂
+
+  -- What is the sum of all possible values of $h(x)$? Show that it is 12.
+  have h_range : Set.range h = {1, 5, 7, 11} := by
+
+    -- Firstly, let's show that the range of $h$ is a subset of $\{1, 5, 7, 11\}$.
+    have h_range_subset : Set.range h ⊆ {1, 5, 7, 11} := by
+      intro y
+      rintro ⟨x, hx⟩
+      rw [h_def x] at hx
+      simp
+      -- Let $\gcd(f(x),g(x)) = d$. Then $d$ divides $12x + 7$ and $d$ divides $5x + 2$.
+      have ⟨hf, hg⟩ := hx
+      have hf' : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 12 * x + 7 := Nat.gcd_dvd_left _ _
+      have hg' : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 5 * x + 2 := Nat.gcd_dvd_right _ _
+      have h_dvd₁ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 7 * (5 * x + 2) := by
+        apply Nat.dvd_mul_left
+        apply Nat.gcd_dvd_right
+      have h_dvd₂ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 12 * (5 * x + 2) := by
+        apply Nat.dvd_mul_left
+        apply Nat.gcd_dvd_left
+      have h_dvd₃ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 12 * (5 * x + 2) - (7 * (5 * x + 2)) := by
+        apply Nat.dvd_sub
+        apply Nat.dvd_trans h_dvd₂
+        norm_num
+        apply Nat.dvd_trans h_dvd₁
+        norm_num
+      have h_dvd₄ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 12 * (5 * x + 2) - 7 * (5 * x + 2) := by
+        rw [Nat.sub_eq_iff_eq_add (by omega)]
+        apply Nat.dvd_add
+        apply Nat.dvd_trans h_dvd₃
+        norm_num
+        apply Nat.dvd_trans h_dvd₄
+        norm_num
+
+      -- Moreover, $d$ divides $7$ or $d$ divides $x + 1$.
+      have h_dvd₅ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 7 * (x + 1) := by
+        have h_dvd₆ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 12 * (5 * x + 2) - 5 * (12 * x + 7) := by
+          apply Nat.dvd_sub
+          apply Nat.dvd_trans h_dvd₂
+          norm_num
+          apply Nat.dvd_trans h_dvd₁
+          norm_num
+        rw [show 12 * (5 * x + 2) - 5 * (12 * x + 7) = 7 * (x + 1) by omega] at h_dvd₆
+        exact h_dvd₆
+
+      -- Then $d$ must be a divisor of $7$ or $x + 1$.
+      have h_dvd₇ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 7 ∨ Nat.gcd (12 * x + 7) (5 * x + 2) ∣ x + 1 := by
+        apply (Nat.dvd_eq_one_or_eq_self_of_dvd_mul_left (by positivity) h_dvd₅).mp
+
+      -- Let's show that $x + 1$ is bounded, this will help us to show that the range of $h$ is finite.
+      have h_bdd : x + 1 ≤ 7 * (x + 1) := by
+        linarith
+
+      -- Let $y = x + 1$, we get $y \mid 7$ or $y \mid 7(x + 1)$.
+      rcases h_dvd₇ with (h_dvd₇ | h_dvd₇)
+      · -- If $y \mid 7$, then $y = 1$ or $y = 7$.
+        apply Nat.le_of_dvd (by positivity) at h_dvd₇
+        have : y ∈ ({1, 7} : Finset ℕ) := by
+          simp
+          apply Or.inl
+          exact h_dvd₇
+        simp at this
+        rcases this with (rfl | rfl)
+        · simp
+        · have : x + 1 = 7 := by exact h_dvd₇
+          have : x = 6 := by omega
+          simp [this]
+      · -- If $y \mid 7(x + 1)$, then $y = 1$ or $y = 5$ or $y = 7$ or $y = 11$.
+        have h_dvd₈ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 11 * (x + 1) := by
+          have h_dvd₉ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 7 * (x + 1) + 4 * (12 * x + 7) := by
+            apply Nat.dvd_add
+            apply Nat.dvd_trans h_dvd₄
+            norm_num
+            apply Nat.dvd_trans (by norm_num)
+            apply Nat.gcd_dvd_left
+          rw [show 7 * (x + 1) + 4 * (12 * x + 7) = 11 * (x + 1) by omega] at h_dvd₉
+          exact h_dvd₉
+        have h_dvd₁₀ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 11 ∨ Nat.gcd (12 * x + 7) (5 * x + 2) ∣ x + 1 := by
+          apply (Nat.dvd_eq_one_or_eq_self_of_dvd_mul_left (by positivity) h_dvd₈).mp
+        rcases h_dvd₁₀ with (h_dvd₁₀ | h_dvd₁₀)
+        · -- If $y \mid 11$, then $y = 1$ or $y = 11$.
+          apply Nat.le_of_dvd (by positivity) at h_dvd₁₀
+          have : y ∈ ({1, 11} : Finset ℕ) := by
+            simp
+            apply Or.inr
+            exact h_dvd₁₀
+          simp at this
+          rcases this with (rfl | rfl)
+          · simp
+          · have : x + 1 = 11 := by exact h_dvd₁₀
+            have : x = 10 := by omega
+            simp [this]
+        · -- If $y \mid 7(x + 1)$, then $y = 1$ or $y = 5$ or $y = 7$ or $y = 11$.
+          have h_dvd₁₁ : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 7 * (x + 1) := by
+            apply Nat.gcd_dvd_right
+            apply Nat.gcd_pos_of_pos_left
+            positivity
+          apply Nat.le_of_dvd (by positivity) at h_dvd₁₁
+          have : y ∈ ({1, 5, 7, 11} : Finset ℕ) := by
+            simp
+            apply Or.inr
+            apply Or.inr
+            apply Or.inl
+            exact h_dvd₁₁
+          simp at this
+          rcases this with (rfl | rfl | rfl | rfl)
+          · simp
+          · have : x + 1 = 5 := by exact h_dvd₁₁
+            have : x = 4 := by omega
+            simp [this]
+          · have : x + 1 = 7 := by exact h_dvd₁₁
+            have : x = 6 := by omega
+            simp [this]
+          · have : x + 1 = 11 := by exact h_dvd₁₁
+            have : x = 10 := by omega
+            simp [this]
+
+    -- Now let's show that $\{1, 5, 7, 11\}$ is a subset of the range of $h$.
+    have h_subset_range : {1, 5, 7, 11} ⊆ Set.range h := by
+      intro k
+      simp
+      -- For each $y \in \{1, 5, 7, 11\}$, let's find an $x$ such that $h(x) = y$.
+      rcases k with (rfl | rfl | rfl | rfl)
+      · -- If $y = 1$, we choose $x = 1$.
+        use 1
+        simp [h_def]
+        rfl
+      · -- If $y = 5$, we choose $x = 3$.
+        use 3
+        simp [h_def]
+        rfl
+      · -- If $y = 7$, we choose $x = 5$.
+        use 5
+        simp [h_def]
+        rfl
+      · -- If $y = 11$, we choose $x = 4$.
+        use 4
+        simp [h_def]
+        rfl
+
+    -- By the above, the range of $h$ equal $\{1, 5, 7, 11\}$.
+    exact Eq.symm (Set.Subset.antisymm h_range_subset h_subset_range)
+
+  -- Let's compute the sum of the range of $h$.
+  have sum_range_h : ∑ k in (Set.range h).toFinset, k = 12 := by
+    simp [h_range]
+    rw [Finset.sum_insert]
+    rw [Finset.sum_insert]
+    rw [Finset.sum_insert]
+    rw [Finset.sum_singleton]
+    rfl
+
+  -- What is the sum of all possible values of $h(x)$? Show that it is 12.
+  rw [← sum_range_h]
+
+```

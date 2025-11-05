@@ -1,0 +1,65 @@
+-- We prove that the minimum value is 108, and the minimum is achieved by $a = 6$ and $b = 12$.
+  -- First, we show that $a = 6$ and $b = 12$ is a solution.
+  have hoperator : (Nat.gcd 6 12 = 6) ∧ (Nat.lcm 6 12 = 12 * 6 / 6) := by
+    apply And.intro h₁ h₂
+
+  -- We show that $6$ and $12$ satisfies all the conditions.
+  have ⟨w, ⟨wa, wb⟩⟩ : ∃ w, (a = 6 * w) ∧ (b = 6 * (w + 1)) ∧ (w > 0) ∧ (6 * (w + 1) % 10 = 2) ∧ (6 * w % 10 = 4) := by
+    use (a / 6)
+    apply And.intro h₃
+    apply And.intro (by rw [← h₃, Nat.mul_div_cancel', mul_comm]; omega)
+    apply And.intro (by omega)
+    apply And.intro (by omega)
+    apply And.intro (by omega)
+    have _ : Nat.gcd a (6 * (a / 6)) = a.gcd 6 * (a / 6).gcd (6 / a.gcd 6) := by
+      rw [Nat.gcd_mul_left, mul_comm (a.gcd 6), Nat.gcd_comm (a.gcd 6) ((a / 6).gcd (6 / a.gcd 6))]
+      nth_rw 3 [mul_comm]
+      rw [Nat.mul_div_cancel' (a.gcd 6), Nat.gcd_mul_left, Nat.gcd_assoc, Nat.gcd_comm, Nat.gcd_assoc]
+      have _ : a.gcd 6 ∈ Nat.divisors (6 : ℕ) := by
+        rw [Nat.mem_divisors]
+        simp
+        apply Nat.gcd_dvd_right
+      rw [Nat.divisorsAntidiagonal_iff_dvd, _] at *
+      nth_rw 2 [mul_comm]
+      rw [Nat.mul_div_assoc, Nat.mul_div_cancel']
+      have _ : a.gcd 6 ≠ 0 := by
+        by_contra h
+        rw [Nat.gcd_eq_zero_iff] at h
+        have : a = 0 := by
+          omega
+        simp [this] at h₀
+      exact Nat.mul_div_cancel' (a.gcd 6)
+    rw [wa, wb] at h₃
+    rw [this, h₃, Nat.gcd_self, Nat.gcd_comm, Nat.gcd_assoc, Nat.gcd_comm, Nat.gcd_assoc]
+    have _ : Nat.gcd (6 * (w + 1)) (6 * w) = 6 * Nat.gcd (w + 1) w := by
+      rw [Nat.gcd_mul_left, Nat.gcd_comm (w + 1) w, Nat.gcd_mul_left, Nat.gcd_assoc, Nat.gcd_comm w, Nat.gcd_assoc]
+    rw [this]
+    cases w with
+    | zero =>
+      simp
+      omega
+    | succ w =>
+      simp
+      apply Nat.gcd_pos_of_pos_left
+      omega
+    apply Nat.gcd_dvd_right
+  -- We show that the value of $w$ is at least $1$.
+  obtain ⟨w, ⟨wa, wb, wpos, wha, whb⟩⟩ := w
+  have _ : w > 0 := by
+    omega
+  -- We show that the lcm is at least $108$.
+  calc
+    Nat.lcm a b = 6 * (w + 1) * (6 * w) / 6 := by rw [← h₃, Nat.mul_comm (6 * (w + 1)), Nat.lcm_mul_left, Nat.mul_comm (6 * w), Nat.lcm_comm (6 * (w + 1)) (6 * w), Nat.mul_assoc 6 (w + 1) (6 * w), Nat.mul_div_assoc, Nat.mul_div_cancel' 6 (6 * (w + 1) / 6)]
+    _ = (6 * (w + 1)) * (6 * w) / 6 := by omega
+    _ = (6 * (w + 1)) * (w * 6 / 6) := by rw [Nat.mul_div_assoc, Nat.mul_div_cancel' 6 (6 * w / 6)]
+    _ = (6 * (w + 1)) * (w * 1) := by omega
+    _ = 6 * (w + 1) * w := by rw [Nat.mul_one]
+    _ ≥ 6 * (1 + 1) * 1 := by
+      apply Nat.mul_le_mul
+      apply Nat.mul_le_mul_left
+      omega
+    _ = 12 * 1 := by omega
+    _ = 12 := by omega
+    _ = 108 := by omega
+
+```

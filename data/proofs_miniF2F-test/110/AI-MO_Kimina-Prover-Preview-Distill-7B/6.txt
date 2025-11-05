@@ -1,0 +1,100 @@
+have t0 : 0 < Real.sqrt a := by
+    apply Real.sqrt_pos_of_pos
+    exact h₀.left
+
+  have t1 : 0 < Real.sqrt b := by
+    apply Real.sqrt_pos_of_pos
+    exact h₀.right
+
+  have t2 : 0 < Real.sqrt (a * b) := by
+    apply Real.sqrt_pos_of_pos
+    apply mul_pos
+    exact h₀.left
+    exact h₀.right
+
+  have t3 : 0 < (a - b) ^ 2 := by
+    apply sq_pos_of_ne_zero
+    linarith only [h₁, h₀.left, h₀.right]
+
+  have t4 : 0 < (a - b) ^ 2 / (8 * b) := by
+    apply div_pos
+    exact t3
+    apply mul_pos
+    norm_num
+    exact h₀.right
+
+  -- The main inequality that we want to prove:
+  have t5 : (a + b) / 2 - Real.sqrt (a * b) ≤ (a - b) ^ 2 / (8 * b) := by
+
+    -- First, we transform the left-hand side to a perfect square:
+    calc (a + b) / 2 - Real.sqrt (a * b)
+      _ = 1 / 2 * (Real.sqrt a - Real.sqrt b) ^ 2 := by
+        ring_nf
+        rw [sub_sq, Real.sq_sqrt, Real.sq_sqrt]
+        ring
+        exact h₀.left
+        exact h₀.right
+
+    -- Then, we prove that the right-hand side is greater than or equal to this perfect square:
+    _ ≤ (a - b) ^ 2 / (8 * b) := by
+
+      -- We start by transforming the right-hand side to a perfect square:
+      calc (a - b) ^ 2 / (8 * b)
+        _ = 1 / 8 * (Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2 := by
+          ring_nf
+          rw [sub_sq, Real.sq_sqrt, Real.sq_sqrt]
+          ring
+          exact h₀.left
+          exact h₀.right
+
+      -- To prove the main inequality, we now need to show that:
+      -- $(Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2 ≤ 4 * (a - b) ^ 2$
+      suffices (Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2 ≤ 4 * (a - b) ^ 2 by
+        rw [mul_comm] at this
+        apply (div_le_div_iff_of_pos_right t4).mpr
+        nth_rw 1 [mul_comm]
+        exact this
+
+      -- We prove this by showing that:
+      -- $(Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2 ≤ 4 * (Real.sqrt a - Real.sqrt b) ^ 2$
+      -- And then use that to show $(Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2 ≤ 4 * (a - b) ^ 2$
+      have t6 : (Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2 ≤ 4 * (Real.sqrt a - Real.sqrt b) ^ 2 := by
+        rw [mul_comm]
+        apply mul_le_mul_of_nonneg_left
+        exact sq_nonneg (Real.sqrt a - Real.sqrt b)
+        apply sq_le_sq'
+        apply sub_le_sub_left
+        exact Real.sqrt_le_sqrt (le_of_lt h₀.left)
+        apply Real.sqrt_le_sqrt
+        exact h₁
+
+      have t7 : (Real.sqrt a - Real.sqrt b) ^ 2 * (Real.sqrt a + Real.sqrt b) ^ 2 ≤ 4 * (a - b) ^ 2 := by
+        apply le_trans'
+        exact t6
+        have h2 : 4 * (Real.sqrt a - Real.sqrt b) ^ 2 ≤ 4 * (a - b) ^ 2 := by
+          suffices (Real.sqrt a - Real.sqrt b) ^ 2 ≤ (a - b) ^ 2 by
+            apply mul_le_mul_of_nonneg_left
+            exact this
+            norm_num
+            exact sq_nonneg (a - b)
+          apply sq_le_sq'
+          apply sub_le_sub_left
+          exact Real.sqrt_le_sqrt (le_of_lt h₀.left)
+          apply Real.sqrt_le_sqrt
+          exact h₁
+        apply le_trans'
+        exact h2
+        norm_num
+
+      exact t7
+
+    apply (le_div_iff₀ t4).mpr
+    rw [mul_comm]
+    apply mul_le_mul_of_nonneg_left
+    exact t5
+    norm_num
+    exact sq_nonneg (a - b)
+
+  exact t5
+
+```

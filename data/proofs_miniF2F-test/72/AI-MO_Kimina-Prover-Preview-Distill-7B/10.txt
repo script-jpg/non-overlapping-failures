@@ -1,0 +1,51 @@
+-- The property of this proof is that it proves that if a number is both a perfect square and a perfect cube,
+  -- then it is a perfect sixth power. This is a more general result, and with some additional number theory
+  -- knowledge, one can see that this is the case.
+  -- For instance, if $x^2 = n$ and $y^3 = n$, then $x^2 = y^3$, so $y = x^2$. Thus $n = x^6$.
+  obtain ⟨x, hx⟩ := h₁
+  obtain ⟨y, hy⟩ := h₂
+  -- Now, from $x^2 = n$ and $y^3 = n$, we get $x^2 = y^3$.
+  have hxy : x ^ 2 = y ^ 3 := by rw [← hx, ← hy]
+  -- Now, we can conclude that $x = y^2$.
+  have hxy : x = y ^ 2 := by
+    calc
+      x = x ^ 6 := by ring
+      _ = (x ^ 2) ^ 3 := by ring
+      _ = (y ^ 3) ^ 3 := by rw [← hxy]
+      _ = y ^ 9 := by ring
+      _ = (y ^ 3) ^ 3 := by ring
+      _ = y ^ 2 := by rw [← pow_succ', Nat.pow_left_injective]
+  -- Now, we can substitute $x = y^2$ into $x^2 = n$ to get $y^6 = n$.
+  rw [hx] at hx
+  rw [hx] at hx
+  have hyy : y ^ 6 = n := by
+    calc
+      y ^ 6 = (y ^ 3) ^ 2 := by ring
+      _ = n ^ 2 := by rw [← hy]
+      _ = n := by rw [pow_two, hx]
+  -- Now, we have $y^6 = n$, so $n$ is a perfect sixth power.
+  -- Now, let's prove that $64 \leq n$.
+  -- We know that $10 \leq n$, so we can check the possible values of $n$.
+  -- Since $n$ is a perfect square and a perfect cube, it has to be a perfect sixth power.
+  -- The sixth powers are $1, 64, 4096, \cdots$.
+  -- So, the smallest possibility is $64$.
+  by_contra! h
+  have hlt : n < 64 := h
+  have lt : y < 2 := by
+    by_contra! le
+    have : y ^ 6 ≥ 64 := by calc
+      y ^ 6 = y ^ 6 := rfl
+      _ ≥ 2 ^ 6 := by apply Nat.pow_le_pow_of_le_left; exact le
+      _ = 64 := rfl
+    linarith
+  -- Now, we have $y < 2$, so $y = 0$ or $y = 1$.
+  have : y = 0 ∨ y = 1 := by interval_cases y
+  rcases this with (rfl | rfl)
+  -- If $y = 0$, then $n = 0$, which is a contradiction to $10 \leq n$.
+  · rw [hy] at hx
+    linarith
+  -- If $y = 1$, then $n = 1$, which is also a contradiction to $10 \leq n$.
+  · rw [hy] at hx
+    linarith
+
+```

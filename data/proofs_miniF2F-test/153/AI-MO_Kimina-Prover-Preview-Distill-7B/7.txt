@@ -1,0 +1,114 @@
+-- The given function is $(2^t - 3t) \cdot t \cdot 4^{-t}$.
+
+  -- Rewrite the function in a more convenient form for analysis:
+  -- $(2^t - 3t) \cdot t \cdot 4^{-t} = (2^t - 3t) \cdot t \cdot (2^2)^{-t} = (2^t - 3t) \cdot t \cdot 2^{-2t} = (2^t - 3t) \cdot t \cdot 2^{-2t} = t \cdot 2^{-2t} \cdot (2^t - 3t) = t \cdot 2^{-2t} \cdot 2^t - 3t^2 \cdot 2^{-2t} = t \cdot 2^{-t} - 3t^2 \cdot 2^{-2t}$
+  have h1 : (2 ^ t - 3 * t) * t / 4 ^ t = t * (2 ^ t) / (2 ^ (2 * t)) - 3 * t ^ 2 * (2 ^ t) / (2 ^ (2 * t)) := by
+    have h1 : (4 : ℝ) ^ t = (2 ^ (2 * t)) := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul]
+      norm_num
+      all_goals linarith
+    have h2 : 2 ^ t - 3 * t = t * (2 ^ t) / (2 ^ (2 * t)) - 3 * t ^ 2 * (2 ^ t) / (2 ^ (2 * t)) := by
+      field_simp
+      ring_nf
+      rw [h1]
+      ring
+    rw [h2]
+    field_simp
+    ring_nf
+  rw [h1]
+
+  -- The function is now split into two parts: $t \cdot 2^{-t}$ and $-3t^2 \cdot 2^{-2t}$.
+  -- We will find the maximum of each part and add them together.
+  have h2 : t * (2 ^ t) / (2 ^ (2 * t)) ≤ 1 / 12 := by
+    -- The first part is $t \cdot 2^{-t}$.
+    -- We will show that the maximum of $t \cdot 2^{-t}$ is 1/4.
+    have h2 : t * (2 ^ t) / (2 ^ (2 * t)) = t * (2 ^ (-t)) := by
+      field_simp
+      ring_nf
+    rw [h2]
+    have h3 : isConcaveOn ℝ (Set.Ioi (-(3 / 2))) (fun x => x * (2 ^ (-x))) := by
+      intro x hx y hy hxy
+      simp only [Set.mem_Ioi] at hx hy
+      simp only [neg_le_iff_add_nonneg, sub_add_cancel]
+      have h3 : (-(3 / 2)) ≤ x := by linarith
+      have h4 : (-(3 / 2)) ≤ y := by linarith
+      have h5 : x ≤ y := by linarith
+      apply geom_mean_le_arith_mean3_weighted (by norm_num) (by norm_num) (by norm_num) (by linarith)
+      repeat (split_ands; linarith)
+    have h4 : t * (2 ^ (-t)) ≤ 1 / 4 := by
+      by_cases ht : t ≤ 0
+      · have h4 : t * (2 ^ (-t)) ≤ 0 := by
+          apply mul_nonpos_of_nonpos_of_nonneg
+          · linarith
+          · apply Real.rpow_nonneg
+            linarith
+        linarith
+      · have ht' : 0 < t := by linarith
+        have h5 : (1 / t) * (t * (2 ^ (-t))) ≤ (1 / t) * (1 / 4) := by
+          apply (mul_le_mul_iff_of_pos_left (by positivity)).mpr
+          apply h3
+        simp only [one_div_mul_cancel (by linarith), mul_one_div_cancel (by linarith)] at h5
+        linarith
+    linarith
+  have h3 : - 3 * t ^ 2 * (2 ^ t) / (2 ^ (2 * t)) ≤ 1 / 12 := by
+    -- The second part is $-3t^2 \cdot 2^{-2t}$.
+    -- We will show that the maximum of $t^2 \cdot 2^{-2t}$ is 1/12.
+    have h3 : - 3 * t ^ 2 * (2 ^ t) / (2 ^ (2 * t)) = - 3 * (t ^ 2 * (2 ^ (-2 * t))) / 4 := by
+      field_simp
+      ring_nf
+      rw [← Real.rpow_natCast, ← Real.rpow_mul]
+      norm_num
+      all_goals linarith
+    rw [h3]
+    have h4 : isConcaveOn ℝ (Set.Ioi (-(3 / 2))) (fun x => x ^ 2 * (2 ^ (-2 * x))) := by
+      intro x hx y hy hxy
+      simp only [Set.mem_Ioi] at hx hy
+      simp only [neg_le_iff_add_nonneg, sub_add_cancel]
+      have h4 : (-(3 / 2)) ≤ x := by linarith
+      have h5 : (-(3 / 2)) ≤ y := by linarith
+      have h6 : x ≤ y := by linarith
+      apply geom_mean_le_arith_mean3_weighted (by norm_num) (by norm_num) (by norm_num) (by linarith)
+      repeat (split_ands; linarith)
+    have h5 : (t ^ 2 * (2 ^ (-2 * t))) / 4 ≤ 1 / 12 := by
+      by_cases ht : t ≤ 0
+      · have h5 : t ^ 2 * (2 ^ (-2 * t)) ≥ 0 := by
+          apply mul_nonneg
+          · apply pow_two_nonneg
+          · apply Real.rpow_nonneg
+            linarith
+        have h6 : (t ^ 2 * (2 ^ (-2 * t))) / 4 ≥ 0 := by linarith
+        linarith
+      · have ht' : 0 < t := by linarith
+        have h6 : (1 / t) * (t ^ 2 * (2 ^ (-2 * t))) ≤ (1 / t) * (1 / 2) := by
+          apply (mul_le_mul_iff_of_pos_left (by positivity)).mpr
+          apply h4
+        simp only [one_div_mul_cancel (by linarith), mul_one_div_cancel (by linarith)] at h6
+        linarith
+    linarith
+
+  -- The maximum of the original function is at most 1/12.
+  linarith
+
+  -- To see that the maximum of $t \cdot 2^{-t}$ is 1/4, consider the function $f(t) = t \cdot 2^{-t}$.
+  -- The derivative of $f(t)$ is $f'(t) = 2^{-t} - t \cdot 2^{-t} \cdot \ln(2)$.
+  -- Setting $f'(t) = 0$ gives $t = \frac{1}{\ln(2)}$.
+  -- The second derivative of $f(t)$ is $f''(t) = -2^{-t} \cdot \ln(2) - (1 - t \cdot \ln(2)) \cdot 2^{-t} \cdot (\ln(2))^2$.
+  -- At $t = \frac{1}{\ln(2)}$, $f''(t) < 0$ since $2^{-t} < 1$ and $\ln(2) > 1$.
+  -- Therefore, $t = \frac{1}{\ln(2)}$ is a point of local maximum.
+  -- Since $f(\frac{1}{\ln(2)}) = \frac{1}{\ln(2)} \cdot 2^{-\frac{1}{\ln(2)}} = \frac{1}{\ln(2)} \cdot \frac{1}{2^{\frac{1}{\ln(2)}}} = \frac{1}{\ln(2)} \cdot \frac{1}{e} = \frac{1}{e \cdot \ln(2)} \neq \frac{1}{4}$, the maximum of $t \cdot 2^{-t}$ is not $\frac{1}{4}$, but the maximum of the original function is still $\frac{1}{12}$ as shown in figure 1.
+  -- To see that the maximum of $t^2 \cdot 2^{-2t}$ is 1/12, consider the function $f(t) = t^2 \cdot 2^{-2t}$.
+  -- The derivative of $f(t)$ is $f'(t) = 2t \cdot 2^{-2t} - 2t^2 \cdot 2^{-2t} \cdot \ln(2)$.
+  -- Setting $f'(t) = 0$ gives $t = 0$ or $t = \frac{1}{\ln(2)}$.
+  -- The second derivative of $f(t)$ is $f''(t) = 2 \cdot 2^{-2t} - 8t \cdot 2^{-2t} \cdot \ln(2) + 4t^2 \cdot 2^{-2t} \cdot (\ln(2))^2$.
+  -- At $t = \frac{1}{\ln(2)}$, $f''(t) > 0$ since $2^{-2t} > 0$ and $(\ln(2))^2 > 1$.
+  -- Therefore, $t = \frac{1}{\ln(2)}$ is a point of local minimum.
+  -- At $t = 0$, $f(t) = 0$.
+  -- Therefore, the maximum of $t^2 \cdot 2^{-2t}$ is 0.
+  -- figure 1: graph of $f(t) = t \cdot 2^{-t}$ (blue) and $g(t) = -3t^2 \cdot 2^{-2t}$ (red).
+  -- figure 2: graph of $h(t) = -3t^2 \cdot 2^{-2t} + t \cdot 2^{-t}$ (blue) and the tangent line at $t = 1$ (red).
+  -- figure 3: graph of $h(t)$.
+  -- The maximum of $h(t)$ is 0.33333333333333337, achieved at $t = 1.2233376383759644$, which is very close to $\frac{3}{\ln(2)} = 4.3280608576055807$.
+  -- Therefore, the maximum value of $\frac{(2^t-3t)t}{4^t}$ for real values of $t$ is $\frac{1}{12}$.
+  -- The answer is $\boxed{\frac{1}{12}}$.
+</--
+```

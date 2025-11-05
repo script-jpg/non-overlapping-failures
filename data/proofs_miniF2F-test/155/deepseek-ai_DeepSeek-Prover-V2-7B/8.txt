@@ -1,0 +1,39 @@
+have step1 : S.card = 5 := by
+    have h₁ : S = {0, Real.pi / 2, Real.pi, (3 * Real.pi) / 2, 2 * Real.pi} := by
+      ext x
+      simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+      constructor
+      · intro h
+        have h₂ : 0 ≤ x := h.1
+        have h₃ : x ≤ 2 * Real.pi := h.2.1
+        have h₄ : Real.tan (2 * x) = Real.cos (x / 2) := h.2.2
+        have h₅ : x = 0 ∨ x = Real.pi / 2 ∨ x = Real.pi ∨ x = (3 * Real.pi) / 2 ∨ x = 2 * Real.pi := by
+          have h₆ : 0 ≤ x := h₂
+          have h₇ : x ≤ 2 * Real.pi := h₃
+          have h₈ : Real.tan (2 * x) = Real.cos (x / 2) := h₄
+          have h₉ : Real.tan (2 * x) = Real.sin (2 * x) / Real.cos (2 * x) := by simp [Real.tan_eq_sin_div_cos]
+          rw [h₉] at h₈
+          have h₁₀ : Real.cos (2 * x) = 2 * Real.cos x ^ 2 - 1 := by rw [Real.cos_two_mul]
+          have h₁₁ : Real.sin (2 * x) = 2 * Real.sin x * Real.cos x := by rw [Real.sin_two_mul]
+          rw [h₁₀, h₁₁] at h₈
+          have h₁₂ : Real.cos (x / 2) = Real.sqrt ((1 + Real.cos x) / 2) ∨ Real.cos (x / 2) = -Real.sqrt ((1 + Real.cos x) / 2) := by
+            apply or_iff_not_imp_left.mpr
+            intro h₁₃
+            apply mul_left_cancel₀ (sub_ne_zero_of_ne h₁₃)
+            nlinarith [Real.cos_sq_add_sin_sq x, Real.sqrt_nonneg ((1 + Real.cos x) / 2),
+              Real.sq_sqrt (show 0 ≤ ((1 + Real.cos x) / 2) by nlinarith [Real.cos_sq_add_sin_sq x]),
+              sq_nonneg (Real.cos x - 1), sq_nonneg (Real.cos x + 1)]
+          cases h₁₂ with
+          | inl h₁₂ =>
+            have h₁₃ : (2 * Real.sin x * Real.cos x) / (2 * Real.cos x ^ 2 - 1) = Real.sqrt ((1 + Real.cos x) / 2) := by linarith
+            have h₁₄ : 2 * Real.cos x ^ 2 - 1 ≠ 0 := by
+              intro h
+              rw [h] at h₁₃
+              field_simp [show Real.sqrt ((1 + Real.cos x) / 2) ≥ 0 by
+                apply Real.sqrt_nonneg] at h₁₃
+              <;> nlinarith [Real.sin_sq_add_cos_sq x, Real.cos_le_one x, Real.sqrt_nonneg ((1 + Real.cos x) / 2),
+                Real.sq_sqrt (show 0 ≤ ((1 + Real.cos x) / 2) by nlinarith [Real.cos_sq_add_sin_sq x]),
+                sq_nonneg (Real.sin x), sq_nonneg (Real.cos x), sq_nonneg (Real.sin x - Real.cos x),
+                Real.cos_sq_add_sin_sq x]
+            field_simp at h₁₃
+            have h₁₅ : x = 0 ∨ x = Real.pi / 2 ∨ x = Real.pi

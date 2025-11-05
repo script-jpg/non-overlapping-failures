@@ -1,0 +1,155 @@
+-- We have two systems of equations:
+  -- 1. $b = a^2$ and $a + b = 1$
+  -- 2. $d = c^2$ and $c + d = 1$
+  -- Thus we have $a^2 + a = 1$ and $c^2 + c = 1$
+  have h₅ : a ^ 2 + a = 1 := by rw [h₀] at h₁; exact h₁
+  have h₆ : c ^ 2 + c = 1 := by rw [h₂] at h₃; exact h₃
+
+  -- Now we have $a^2 + a = 1$ and $c^2 + c = 1$
+  -- Subtracting these two equations, we get $(a^2 - c^2) + (a - c) = 0$
+  -- Thus $(a - c)(a + c + 1) = 0$
+  have h₇ : (a - c) * (a + c + 1) = 0 := by linarith
+
+  -- Since $a \neq c$, we have $a - c \neq 0$
+  -- Thus $a + c + 1 = 0$
+  have h₈ : a + c + 1 = 0 := by
+    have : a - c ≠ 0 := sub_ne_zero.mpr h₄
+    exact eq_zero_of_ne_zero_of_mul_left_eq_zero (sub_ne_zero.mpr h₄) h₇
+
+  -- We have $a + c + 1 = 0$, thus $c = -a - 1$
+  have h₉ : c = -a - 1 := by linarith
+
+  -- We also have $a^2 + a = 1$, thus $a^2 = 1 - a$
+  have h₁₀ : a ^ 2 = 1 - a := by linarith
+
+  -- And $c^2 + c = 1$, thus $c^2 = 1 - c$
+  have h₁₁ : c ^ 2 = 1 - c := by linarith
+
+  -- Then $c^2 - c = 1 - c - c = 1 - 2c$
+  have h₁₂ : c ^ 2 - c = 1 - 2 * c := by linarith
+
+  -- And $c^2 + c = 1$, thus $c^2 = 1 - c$
+  have h₁₃ : c ^ 2 = 1 - c := by linarith
+
+  -- Now we have $a^2 = 1 - a$ and $c^2 = 1 - c$
+  -- Thus $a^2 - c^2 = 1 - a - (1 - c) = c - a$
+  have h₁₄ : a ^ 2 - c ^ 2 = c - a := by linarith
+
+  -- Now we have $a^2 - c^2 = 1 - a - (1 - c) = c - a$
+  -- We can rewrite it as $(a - c)(a + c) = -(a - c)$
+  have h₁₅ : (a - c) * (a + c) = -(a - c) := by linarith
+
+  -- If $a - c \neq 0$, then we can divide both sides by $a - c$
+  -- Thus $a + c = -1$
+  have h₁₆ : a + c = -1 := by
+    have : a - c ≠ 0 := sub_ne_zero.mpr h₄
+    apply (mul_left_inj' this).mp
+    linarith
+
+  -- But we have $a + c + 1 = 0$, thus $a + c = -1$
+  have h₁₇ : a + c = -1 := by linarith
+
+  -- Now we have $c = -a - 1$ and $a + c = -1$
+  -- Thus $a + (-a - 1) = -1$
+  -- Which is true
+  have h₁₈ : -1 = -1 := by rfl
+
+  -- Now we want to compute the distance between the two points $(a, b)$ and $(c, d)$
+  -- Which is $\sqrt{(a - c)^2 + (b - d)^2}$
+  -- Since $b = a^2$ and $d = c^2$, this is $\sqrt{(a - c)^2 + (a^2 - c^2)^2}$
+  -- Since $a^2 - c^2 = (a - c)(a + c)$, this is $\sqrt{(a - c)^2 + (a - c)^2(a + c)^2}$
+  have h₁₉ : Real.sqrt ((a - c) ^ 2 + (b - d) ^ 2) = Real.sqrt ((a - c) ^ 2 + (a - c) ^ 2 * (a + c) ^ 2) := by
+    rw [h₀, h₂]
+    ring
+
+  -- Since $a + c = -1$, this is $\sqrt{(a - c)^2 + (a - c)^2(-1)^2} = \sqrt{(a - c)^2 + (a - c)^2} = \sqrt{2(a - c)^2}$
+  have h₂₀ : Real.sqrt ((a - c) ^ 2 + (a - c) ^ 2 * (a + c) ^ 2) = Real.sqrt ((a - c) ^ 2 + (a - c) ^ 2 * (-1) ^ 2) := by
+    rw [h₁₇]
+  have h₂₁ : Real.sqrt ((a - c) ^ 2 + (a - c) ^ 2 * (-1) ^ 2) = Real.sqrt ((a - c) ^ 2 + (a - c) ^ 2) := by
+    norm_num
+
+  -- Now we have $\sqrt{2(a - c)^2}$
+  -- Since $(a - c)^2 \geq 0$, this is $\sqrt{2} \cdot |a - c|$
+  have h₂₂ : Real.sqrt ((a - c) ^ 2 + (a - c) ^ 2) = Real.sqrt ((a - c) ^ 2 * 2) := by ring_nf
+
+  -- Since $(a - c)^2 \geq 0$ and $2 > 0$, this is $\sqrt{2} \cdot \sqrt{(a - c)^2} = \sqrt{2} \cdot |a - c|$
+  have h₂₃ : Real.sqrt ((a - c) ^ 2 * 2) = Real.sqrt 2 * Real.sqrt ((a - c) ^ 2) := by
+    rw [Real.sqrt_mul (by positivity)]
+  have h₂₄ : Real.sqrt ((a - c) ^ 2) = |a - c| := by
+    rw [Real.sqrt_sq_eq_abs]
+
+  -- Now we have $\sqrt{2} \cdot |a - c|$
+  -- Since $a \neq c$, $|a - c| = a - c$ if $a > c$ and $|a - c| = c - a$ if $c > a$
+  -- But from $h₉ : c = -a - 1$ and $h₁₀ : a ^ 2 = 1 - a$, we can deduce that $a > c$
+  -- Thus $|a - c| = a - c$
+  have h₂₅ : |a - c| = a - c := by
+    rw [h₉]
+    suffices 0 ≤ a - (-a - 1) by
+      rw [sub_nonneg] at this
+      exact abs_of_nonneg this
+    linarith [h₁₀, sq_nonneg a]
+
+  -- Thus $\sqrt{2} \cdot |a - c| = \sqrt{2} \cdot (a - c)$
+  have h₂₆ : Real.sqrt 2 * Real.sqrt ((a - c) ^ 2) = Real.sqrt 2 * (a - c) := by
+    rw [h₂₄, h₂₅]
+
+  -- Now we have $\sqrt{2} \cdot (a - c)$
+  -- From $h₇ : (a - c) * (a + c + 1) = 0$ and $h₁₇ : a + c = -1$, we have $a - c \neq 0$
+  -- Thus $(a - c)^2 > 0$
+  have h₂₇ : (a - c) ^ 2 > 0 := by
+    have : a - c ≠ 0 := sub_ne_zero.mpr h₄
+    exact sq_pos_of_ne_zero this
+
+  -- Since $(a - c)^2 > 0$, $|a - c| > 0$
+  have h₂₈ : |a - c| > 0 := by
+    rw [h₂₅]
+    linarith
+
+  -- Thus $a - c > 0$
+  have h₂₉ : a - c > 0 := by
+    suffices 0 ≤ a - c by linarith
+    rw [h₂₅] at h₂₈
+    exact abs_nonneg
+
+  -- Thus $\sqrt{2} \cdot |a - c| > 0$
+  have h₃₀ : Real.sqrt 2 * |a - c| > 0 := by
+    apply mul_pos
+    exact Real.sqrt_pos.mpr (by norm_num)
+    exact h₂₈
+
+  -- Now we have $\sqrt{2} \cdot (a - c) > 0$
+  -- Thus $a - c > 0$
+  have h₃₁ : a - c > 0 := by
+    suffices 0 ≤ a - c by linarith
+    rw [h₂₅] at h₃₀
+    exact abs_nonneg
+
+  -- But from $h₉ : c = -a - 1$ and $h₁₀ : a ^ 2 = 1 - a$, we have $a > c$
+  -- Thus $a - c > 0$
+  have h₃₂ : a - c > 0 := by
+    linarith [h₉, h₁₀]
+
+  -- Thus we have $\sqrt{2} \cdot (a - c) = \sqrt{2} \cdot (a - c)$
+  have h₃₃ : Real.sqrt 2 * (a - c) = Real.sqrt 2 * (a - c) := by rfl
+
+  -- Now we need to compute $(a - c) \cdot \sqrt{2}$
+  -- From $h₇ : (a - c) * (a + c + 1) = 0$ and $h₁₇ : a + c = -1$, we have $a - c \neq 0$
+  -- Thus $(a - c)^2 > 0$
+  have h₃₄ : (a - c) ^ 2 > 0 := by
+    have : a - c ≠ 0 := sub_ne_zero.mpr h₄
+    exact sq_pos_of_ne_zero this
+
+  -- Now we have $\sqrt{2} \cdot (a - c) > 0$
+  have h₃₅ : Real.sqrt 2 * (a - c) > 0 := by
+    apply mul_pos
+    exact Real.sqrt_pos.mpr (by norm_num)
+    exact h₂₈
+
+  -- Now we have $\sqrt{(a - c)^2 + (b - d)^2} = \sqrt{2} \cdot (a - c)$
+  -- From $h₃₅ : \sqrt{2} \cdot (a - c) > 0$, we have $\sqrt{2} \cdot (a - c) = \sqrt{2} \cdot (a - c)$
+  have h₃₆ : Real.sqrt ((a - c) ^ 2 + (b - d) ^ 2) = Real.sqrt 10 := by
+    rw [h₁₉, h₂₀, h₂₁, h₂₂, h₂₃, h₂₄, h₂₅, h₂₆, h₃₅]
+    nlinarith [h₃₄, sq_nonneg (a - c)]
+
+  exact h₃₆
+```

@@ -1,0 +1,365 @@
+-- We start by noting that if $N$ is a solution then $N$ is not 1.
+  have h1 : N ≠ 1 := by
+    intro h1
+    specialize h₁ 1 (by intro; simp [h1])
+    rw [h₀ 1 (by norm_num), h₀ N (by intro; intro h; simp [h1] at h; exact h.2)] at h₁
+    norm_num at h₁
+
+  -- We now show that $N$ has exactly 4 prime factors, and that $N$ has digits $2,2,2,2,1$ in that order.
+  have h2 : (List.sum (Nat.digits 10 N)) = 9 := by
+    -- We first show that $N$ has exactly 4 prime factors, that $N$ is not a perfect cube, and that $N$ is not the product of three or more distinct primes.
+    have h2_1 : (Nat.Prime N.factorization 2) ∧
+      (Nat.Prime N.factorization 3) ∧
+      (Nat.Prime N.factorization 5) ∧
+      (Nat.Prime N.factorization 7) ∧
+      ¬(N.factorization 11 > 0) := by
+      -- We first show that $N$ is not a perfect cube.
+      have h1 := h₁ 8 (by norm_num)
+      simp [h₀ 8 (by norm_num), h₀ N (by intro; intro h; simp [h1] at h; exact h.2)] at h1
+      norm_num at h1
+      -- We now show that $N$ has exactly 3 prime factors, and that $N$ is not a perfect square.
+      have h2_1 : (Nat.Prime N.factorization 2) ∧
+        (Nat.Prime N.factorization 3) ∧
+        (Nat.Prime N.factorization 5) ∧
+        (Nat.Prime N.factorization 7) ∧
+        ¬(N.factorization 11 > 0) := by
+        -- We first show that $N$ is not a perfect square.
+        have h2 := h₁ 4 (by norm_num)
+        simp [h₀ 4 (by norm_num), h₀ N (by intro; intro h; simp [h1] at h; exact h.2)] at h2
+        norm_num at h2
+        simp at h2
+        -- We now show that $N$ has exactly 3 prime factors.
+        have h3 : ((N.primeFactorsList.map
+          (fun p => Nat.factorization N p))
+          : Multiset ℕ) = {2, 2, 2, 2, 1} := by
+          apply List.toMultiset_inj.mp
+          simp
+          rw [List.toMultiset_toFinset, Multiset.toFinset_insert, Multiset.toFinset_singleton]
+          simp
+          have h3 : (N / 2).factorization 2 ≥ 1 := by
+            simp
+            apply Nat.le_of_dvd
+            intro h
+            simp at h
+            rw [←h]
+            decide
+          have h4 : (N / 2 / 2).factorization 2 ≥ 1 := by
+            simp
+            apply Nat.le_of_dvd
+            intro h
+            simp at h
+            rw [←h]
+            decide
+          have h5 : (N / 2 / 2 / 2).factorization 2 ≥ 1 := by
+            simp
+            apply Nat.le_of_dvd
+            intro h
+            simp at h
+            rw [←h]
+            decide
+          have h6 : (N / 2 / 2 / 2 / 2).factorization 2 ≥ 1 := by
+            simp
+            apply Nat.le_of_dvd
+            intro h
+            simp at h
+            rw [←h]
+            decide
+          have h7 : (N / 2 / 2 / 2 / 2 / 1).factorization 2 ≥ 1 := by
+            simp
+            apply Nat.le_of_dvd
+            intro h
+            simp at h
+            rw [←h]
+            decide
+          simp [h3, h4, h5, h6, h7]
+          aesop
+        have h3 : (List.sum (Nat.digits 10 N)) = 9 := by
+          simp
+          apply Nat.le_antisymm
+          have h3 : (Nat.digits 10 N) = [2, 2, 2, 2, 1] := by
+            rw [←List.toMultiset_toFinset, Multiset.toFinset_insert, Multiset.toFinset_singleton]
+            simp
+            rw [←List.toMultiset]
+            simp [h2_1]
+          rw [h3]
+          decide
+        exact h3
+      exact h2_1
+
+    -- We now show that $f(N) > f(n)$ for all $n < N$.
+    have h2_2 : ∀ n, 0 < n → n < N → f n < f N := by
+      intro n hn h
+      specialize h₁ n h
+      apply lt_trans h₁ h
+    -- We now show that $f(N) > f(n)$ for all $n > N$.
+    have h2_3 : ∀ n, 0 < n → N < n → f n < f N := by
+      intro n hn h
+      specialize h₁ N (by intro; linarith only [h])
+      apply lt_trans (h₁ n (by intro; linarith only [h]) (by linarith only [h])) h
+    -- We now show that $f(N) > f(n)$ for all $n ≠ N$.
+    have h2_4 : ∀ n, n ≠ N → 0 < n → f n < f N := by
+      intro n h1 hn
+      specialize h₁ n hn
+      apply lt_trans h₁ h
+    -- We now show that $N$ is a perfect square.
+    have h2_5 : √N ^ 2 = N := by
+      have h2_5 : Nat.exists k, k < 2 ∧ N = k := by
+        decide
+      obtain ⟨k, hk, h⟩ := h2_5
+      cases' k with k
+     . have h2_5 : 2 ∈ Nat.divisors N := by
+          simp [Nat.divisors]
+          decide
+        have h2_6 : N ≠ 2 := by
+          intro h
+          rw [←h] at h1
+          simp [h₀] at h1
+        absurd h2_6
+        simp
+        exact h2_5
+      cases' k with k
+     . have h2_5 : 3 ∈ Nat.divisors N := by
+          simp [Nat.divisors]
+          decide
+        have h2_6 : N ≠ 3 := by
+          intro h
+          rw [←h] at h1
+          simp [h₀] at h1
+        absurd h2_6
+        simp
+        exact h2_5
+      linarith only [h]
+    -- We now show that $N$ is a perfect cube.
+    have h2_6 : ∛N ^ 3 = N := by
+      have h2_6 : Nat.exists k, k < 3 ∧ N = k := by
+        decide
+      obtain ⟨k, hk, h⟩ := h2_6
+      cases' k with k
+     . have h2_6 : 1 ∈ Nat.divisors N := by
+          simp [Nat.divisors]
+          decide
+        have h2_7 : N ≠ 1 := by
+          intro h
+          rw [←h] at h1
+          simp [h₀] at h1
+        absurd h2_7
+        simp
+        exact h2_6
+      cases' k with k
+     . have h2_6 : 2 ∈ Nat.divisors N := by
+          simp [Nat.divisors]
+          decide
+        have h2_7 : N ≠ 2 := by
+          intro h
+          rw [←h] at h1
+          simp [h₀] at h1
+        absurd h2_7
+        simp
+        exact h2_6
+      linarith only [h]
+    -- We now show that $N$ is the product of four or more distinct primes.
+    have h2_7 : ¬(N.factorization 11 > 0) := by
+      by_contra! h
+      have h1 : 11 ∈ Nat.divisors N := by
+        simp [Nat.divisors]
+        rw [show 11 = 11 ^ 1 by norm_num]
+        apply Nat.pow_dvd_of_le_factorization
+        omega
+        omega
+      have h2 : N ≠ 11 := by
+        intro h
+        rw [←h] at h1
+        simp [h₀] at h1
+      absurd h2
+      simp
+      exact h
+    have h2_8 : (Nat.Prime N.primeFactorsList 2) ∧
+      (Nat.Prime N.primeFactorsList 3) ∧
+      (Nat.Prime N.primeFactorsList 5) ∧
+      (Nat.Prime N.primeFactorsList 7) ∧
+      (Nat.Prime N.primeFactorsList 11) := by
+      apply And.intro
+      -- We show that $2 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          simp [h2_1]
+        have h1 : 2 < N := by
+          by_contra! h
+          rw [show 2 = 2 ^ 1 by norm_num] at h
+          have h2 : 2 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+      -- We show that $3 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          norm_num
+        have h1 : 3 < N := by
+          by_contra! h
+          rw [show 3 = 3 ^ 1 by norm_num] at h
+          have h2 : 3 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+      -- We show that $5 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          norm_num
+        have h1 : 5 < N := by
+          by_contra! h
+          rw [show 5 = 5 ^ 1 by norm_num] at h
+          have h2 : 5 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+      -- We show that $7 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          norm_num
+        have h1 : 7 < N := by
+          by_contra! h
+          rw [show 7 = 7 ^ 1 by norm_num] at h
+          have h2 : 7 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+      -- We show that $11 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          exact h2_7
+        have h1 : 11 < N := by
+          by_contra! h
+          rw [show 11 = 11 ^ 1 by norm_num] at h
+          have h2 : 11 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+
+    have h2_9 : (Nat.Prime N.primeFactorsList 11) ∧
+      (Nat.Prime N.primeFactorsList 13) ∧
+      (Nat.Prime N.primeFactorsList 17) ∧
+      (Nat.Prime N.primeFactorsList 19) ∧
+      (Nat.Prime N.primeFactorsList 23) := by
+      apply And.intro
+      -- We show that $11 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          exact h2_7
+        have h1 : 11 < N := by
+          by_contra! h
+          rw [show 11 = 11 ^ 1 by norm_num] at h
+          have h2 : 11 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+      -- We show that $13 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          norm_num
+        have h1 : 13 < N := by
+          by_contra! h
+          rw [show 13 = 13 ^ 1 by norm_num] at h
+          have h2 : 13 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+      -- We show that $17 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          norm_num
+        have h1 : 17 < N := by
+          by_contra! h
+          rw [show 17 = 17 ^ 1 by norm_num] at h
+          have h2 : 17 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+      -- We show that $19 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          norm_num
+        have h1 : 19 < N := by
+          by_contra! h
+          rw [show 19 = 19 ^ 1 by norm_num] at h
+          have h2 : 19 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+      -- We show that $23 \in Nat.primeFactorsList N$.
+     . simp [Nat.primeFactorsList]
+        constructor
+       . intro h
+          rw [←h]
+          norm_num
+        have h1 : 23 < N := by
+          by_contra! h
+          rw [show 23 = 23 ^ 1 by norm_num] at h
+          have h2 : 23 ^ 1 ∣ N ^ 3 := by
+            rw [←h]
+            exact pow_dvd_pow_of_dvd h2_6
+          rw [Prime.pow_dvd_iff_dvd (Nat.prime_iff.mp (by norm_num)) h] at h2
+          simp [h₀] at h2
+        simp [h1]
+
+    have h2_10 : Nat.exists k, k < 2 ∧ N = k := by
+      decide
+    obtain ⟨k, hk, h⟩ := h2_10
+    cases' k with k
+   . have h2_10 : 2 ∈ Nat.divisors N := by
+        simp [Nat.divisors]
+        decide
+      have h2_11 : N ≠ 2 := by
+        intro h
+        rw [←h] at h1
+        simp [h₀] at h1
+      absurd h2_11
+      simp
+      exact h2_10
+    cases' k with k
+   . have h2_10 : 3 ∈ Nat.divisors N := by
+        simp [Nat.divisors]
+        decide
+      have h2_11 : N ≠ 3 := by
+        intro h
+        rw [←h] at h1
+        simp [h₀] at h1
+      absurd h2_11
+      simp
+      exact h2_10
+    linarith only [h]

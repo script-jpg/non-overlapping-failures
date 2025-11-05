@@ -1,0 +1,81 @@
+-- Show that $0 \leq 4x^2 / (1 - \sqrt{1 + 2x})^2$.
+  have h₃ : 0 ≤ 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    apply div_nonneg
+    · apply mul_nonneg
+      · norm_num
+      · apply pow_two_nonneg
+    · apply pow_two_nonneg
+
+  -- Show that $0 < 2x + 9$.
+  have h₄ : 0 < 2 * x + 9 := by
+    linarith [h₀]
+
+  -- Show that $4x^2 / (1 - \sqrt{1 + 2x})^2 < 2x + 9$.
+  have h₅ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 2 * x + 9 := h₂
+
+  -- Show that $0 \leq 4x^2 / (1 - \sqrt{1 + 2x})^2 / (2x + 9)$.
+  have h₆ : 0 ≤ 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 / (2 * x + 9) := by
+    apply div_nonneg
+    · apply div_nonneg
+      · apply mul_nonneg
+        · norm_num
+        · apply pow_two_nonneg
+    · linarith [h₀]
+    · linarith [h₄]
+
+  -- Show that $0 < 1 - \sqrt{1 + 2x} / \sqrt{2x + 9}$.
+  have h₇ : 0 < 1 - Real.sqrt (1 + 2 * x) / Real.sqrt (2 * x + 9) := by
+    calc
+      1 - Real.sqrt (1 + 2 * x) / Real.sqrt (2 * x + 9)
+        = Real.sqrt (2 * x + 9) ^ 2 / (Real.sqrt (2 * x + 9) ^ 2) - Real.sqrt (1 + 2 * x) / Real.sqrt (2 * x + 9) := by
+            field_simp [h₄.ne']
+      _ = Real.sqrt (2 * x + 9) ^ 2 / (Real.sqrt (2 * x + 9) ^ 2) - Real.sqrt (1 + 2 * x) * Real.sqrt (2 * x + 9) / (Real.sqrt (2 * x + 9) ^ 2) := by
+            congr
+            refine Eq.symm (Real.mul_sqrt?_?_)
+            · linarith [h₀]
+            · linarith [h₀]
+      _ = Real.sqrt (2 * x + 9) ^ 2 / (Real.sqrt (2 * x + 9) ^ 2) - Real.sqrt ((1 + 2 * x) * (2 * x + 9)) / (Real.sqrt (2 * x + 9) ^ 2) := by
+            congr
+            refine Eq.symm (Real.sqrt_mul?_?_)
+            · linarith [h₀]
+            · linarith [h₀]
+      _ = Real.sqrt (2 * x + 9) ^ 2 / (Real.sqrt (2 * x + 9) ^ 2) - Real.sqrt (2 * x + 9) ^ 2 / (Real.sqrt (2 * x + 9) ^ 2) := by
+            congr
+            refine (Real.sqrt_eq_iff_eq_sq?_?_).mp?_
+            all_goals
+              ring_nf
+              linarith [h₀]
+      _ = 0 := by
+            ring
+
+  -- Show that $0 \leq (1 - \sqrt{1 + 2x}) / \sqrt{2x + 9}$.
+  have h₈ : 0 ≤ 1 - Real.sqrt (1 + 2 * x) / Real.sqrt (2 * x + 9) := by
+    linarith [h₇]
+
+  -- Show that $4x^2 / (1 - \sqrt{1 + 2x})^2 / (2x + 9) = (1 - \sqrt{1 + 2x}) / \sqrt{2x + 9}$.
+  have h₉ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 / (2 * x + 9) = 1 - Real.sqrt (1 + 2 * x) / Real.sqrt (2 * x + 9) := by
+    field_simp [h₁]
+    ring_nf
+    congr
+    · ring_nf
+      rw [Real.sq_sqrt (by linarith [h₀])]
+
+    · ring_nf
+      rw [mul_comm, Real.mul_sqrt (by linarith [h₀])]
+      simp
+      linarith [h₀]
+
+  -- Show that $1 - \sqrt{1 + 2x} / \sqrt{2x + 9} \leq 1 - \sqrt{1 + 2x} / \sqrt{2x + 9}$.
+  have h₁₀ : 1 - Real.sqrt (1 + 2 * x) / Real.sqrt (2 * x + 9) ≤ 1 - Real.sqrt (1 + 2 * x) / Real.sqrt (2 * x + 9) := by
+    exact le_rfl
+
+  -- Combine all the results to get the range of $x$.
+  have h₁₁ : -(1 / 2) ≤ x ∧ x < 45 / 8 := by
+    by_cases h₁₂ : x < 45 / 8
+    · exact ⟨by linarith [h₀, h₁₂], h₁₂⟩
+    · simp at h₁₂
+      linarith [h₀, h₁₂]
+
+  exact h₁₁
+
+```

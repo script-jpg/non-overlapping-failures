@@ -1,0 +1,105 @@
+-- Let $P_n$ be the product $\prod_{k=1}^n (1 + 1/k^3)$.
+  let P : ℕ → ℝ := fun n => ∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3
+
+  -- We will show that $P_n \leq 3 - 1/n$ by induction on $n$.
+  have h₁ : ∀ n, 0 < n → P n ≤ (3 : ℝ) - 1 / ↑n := by
+    intro n h
+    induction n with
+    | zero => linarith
+    | succ n ih =>
+      by_cases h' : n = 0
+      · simp [h']
+        norm_num
+      · have : 0 < n := by
+          refine Nat.pos_of_ne_zero?_
+          exact h'
+        have : n + 1 = ↑n + 1 := by simp
+        rw [this, P, Finset.prod_Icc_succ_top, ih this, one_add_one_div]
+        have : 1 < (↑n + 1 : ℝ) ^ 3 := by
+          simp
+          refine Nat.cast_lt_ofNat?_
+          exact Nat.add_one_le_of_lt this
+        have : 1 / (↑n + 1 : ℝ) ^ 3 < 1 / 1 := by
+          simp
+          apply one_div_lt_one_div_of_lt
+          norm_num
+          exact Nat.one_le_pow 3 this
+        have : 1 / (↑n + 1 : ℝ) ^ 3 * (3 - 1 / ↑n) < (3 - 1 / ↑n) := by
+          apply mul_lt_mul_of_pos_right
+          exact this
+          norm_num
+        have : 1 / (↑n + 1 : ℝ) ^ 3 * (3 - 1 / ↑n) ≤ 1 / (↑n + 1 : ℝ) ^ 3 * (3 - 1 / (n + 1 : ℕ)) := by
+          apply mul_le_mul_of_nonneg_left
+          apply sub_le_sub_left
+          rw [one_div_le_iff]
+          group
+          rw [Nat.cast_add, Nat.cast_one]
+          gcongr
+          exact Nat.le_add_right 1 n
+          norm_num
+          exact ih this
+        linarith
+
+  -- The key insight is that the induction step reduces to an inequality
+  -- between products: $\prod_{k=1}^n (1 + 1/k^3) \cdot (1 + 1/(n+1)^3) \leq \prod_{k=1}^n (1 + 1/k^3) \cdot (3 - 1/(n+1))$.
+  have h₂ : ∀ n, 0 < n → P n * (1 + 1 / (↑n + 1 : ℝ) ^ 3) ≤ P n * (3 - 1 / (↑n + 1 : ℝ)) := by
+    intro n h
+    have : 1 < (↑n + 1 : ℝ) ^ 3 := by
+      simp
+      refine Nat.cast_lt_ofNat?_
+      exact Nat.add_one_le_of_lt h
+    have : 1 / (↑n + 1 : ℝ) ^ 3 < 1 / 1 := by
+      simp
+      apply one_div_lt_one_div_of_lt
+      norm_num
+      exact Nat.one_le_pow 3 this
+    have : 1 / (↑n + 1 : ℝ) ^ 3 * P n < 1 / 1 * P n := by
+      apply mul_lt_mul_of_pos_left
+      exact this
+      exact le_of_lt h
+    have : 1 / (↑n + 1 : ℝ) ^ 3 * P n ≤ 1 / (↑n + 1 : ℝ) ^ 3 * (3 - 1 / ↑n) := by
+      apply mul_le_mul_of_nonneg_left
+      apply sub_le_sub_left
+      rw [one_div_le_iff]
+      group
+      rw [Nat.cast_add, Nat.cast_one]
+      gcongr
+      exact Nat.le_add_right 1 n
+      norm_num
+      exact ih h
+    have : 1 / (↑n + 1 : ℝ) ^ 3 * (3 - 1 / ↑n) ≤ 1 / (↑n + 1 : ℝ) ^ 3 * (3 - 1 / (n + 1 : ℕ)) := by
+      apply mul_le_mul_of_nonneg_left
+      apply sub_le_sub_left
+      rw [one_div_le_iff]
+      group
+      rw [Nat.cast_add, Nat.cast_one]
+      gcongr
+      exact Nat.le_add_right 1 n
+      norm_num
+      exact ih h
+    linarith
+
+  -- We can chain the induction step inequality to get that
+  -- $P_{n+1} \leq 3 - 1/(n+1)$ for any positive $n$.
+  have h₃ : ∀ n, 0 < n → P n * (3 - 1 / (↑n + 1 : ℝ)) ≤ (3 : ℝ) - 1 / (↑n + 1 : ℝ) := by
+    intro n h
+    have : n = 0 ∨ 0 < n := by exact Nat.eq_zero_or_pos n
+    cases this with
+    | inl h' =>
+      rw [h']
+      norm_num
+    | inr h' =>
+      have : n + 1 = ↑n + 1 := by simp
+      rw [this]
+      refine le_of_eq?_
+      rw [P, Finset.prod_Icc_succ_top, one_add_one_div, ih h']
+      norm_num
+      exact Nat.add_one_le_of_lt h'
+
+  -- Therefore, we can inductively conclude that $P_n \leq 3 - 1/n$ for any positive $n$.
+  intro n h
+  specialize h₁ n h
+  specialize h₃ n h
+  linarith
+
+```

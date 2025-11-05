@@ -1,0 +1,254 @@
+-- some auxiliary lemmas for later use
+  have l_0 : ∀ x, Real.cos (x + 2 * Real.pi) = Real.cos x := by
+    intro x
+    rw [show x + 2 * Real.pi = x + Real.pi + Real.pi by ring]
+    exact Real.cos_add_pi_add_pi x
+
+  have l_0' : ∀ x, Real.sin (x + 2 * Real.pi) = Real.sin x := by
+    intro x
+    rw [show x + 2 * Real.pi = x + Real.pi + Real.pi by ring]
+    exact Real.sin_add_pi_add_pi x
+
+  have l_1 : ∀ x, Real.cos (x + Real.pi) = -Real.cos x := by
+    intro x
+    rw [Real.cos_add_pi]
+  have l_1' : ∀ x, Real.sin (x + Real.pi) = -Real.sin x := by
+    intro x
+    rw [Real.sin_add_pi]
+
+  -- replace `m-n` by `m` in the goal and do a substitution for the goal
+  apply_fun fun x => x + n at h₂
+  rw [show m - n + n = m by ring] at h₂
+  rw [show n = m - (m - n) by ring] at h₃
+
+  -- some auxilary calculations
+  have l_2 : ∀ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i + Real.sin (a i + m) / 2 ^ i * Real.pi  = (Real.cos (a i + m) + Real.sin (a i + m) * Real.pi) / 2 ^ i := by
+    intro i _
+    ring
+
+  have l_3 : ∀ i ∈ Finset.range k, Real.cos (a i + m - (m - n)) / 2 ^ i + Real.sin (a i + m - (m - n)) / 2 ^ i * Real.pi  = (Real.cos (a i + m - (m - n)) + Real.sin (a i + m - (m - n)) * Real.pi) / 2 ^ i := by
+    intro i _
+    ring
+
+  -- do simplification to `h₂` and `h₃` by applying `l_2` and `l_3`
+  simp_rw [l_2] at h₂
+  simp_rw [l_3] at h₃
+
+  -- extract `cos` and `sin` from the sum
+  have l_4 : ∃ f g : Finset ℕ → ℝ, (∀ i ∈ Finset.range k, f i = Real.cos (a i + m)) ∧ (∀ i ∈ Finset.range k, g i = Real.sin (a i + m)) ∧ (∑ i in Finset.range k, (f i + g i * Real.pi) / 2 ^ i) = 0 := by
+    use fun i => Real.cos (a i + m), fun i => Real.sin (a i + m)
+    constructor
+    · intro i _
+      rfl
+    · constructor
+      · intro i _
+        rfl
+      · rw [Finset.sum_div]
+        rw [←h₂]
+  obtain ⟨f, g, h_f, h_g, h₁⟩ := l_4
+
+  -- do similar manipulation to `h₃`
+  replace h₃ : ∃ f' g' : Finset ℕ → ℝ, (∀ i ∈ Finset.range k, f' i = Real.cos (a i + m - (m - n))) ∧ (∀ i ∈ Finset.range k, g' i = Real.sin (a i + m - (m - n))) ∧ (∑ i in Finset.range k, (f' i + g' i * Real.pi) / 2 ^ i) = 0 := by
+    use fun i => Real.cos (a i + m - (m - n)), fun i => Real.sin (a i + m - (m - n))
+    constructor
+    · intro i _
+      rfl
+    · constructor
+      · intro i _
+        rfl
+      · rw [Finset.sum_div]
+        rw [←h₃]
+  obtain ⟨f', g', h_f', h_g', h₃⟩ := h₃
+
+  -- replace `f` and `f'` by `f - f'` in `h₁` and `h₃` and do simplification
+  replace h₁ : ∃ f'' g : Finset ℕ → ℝ, (∀ i ∈ Finset.range k, f'' i = (Real.cos (a i + m) - Real.cos (a i + m - (m - n))) / 2 ^ i) ∧ (∀ i ∈ Finset.range k, g i = Real.sin (a i + m) - Real.sin (a i + m - (m - n)) / 2 ^ i) ∧ (∑ i in Finset.range k, (f'' i + g i * Real.pi) / 2 ^ i) = 0 := by
+    use fun i => (Real.cos (a i + m) - Real.cos (a i + m - (m - n))) / 2 ^ i, fun i => Real.sin (a i + m) - Real.sin (a i + m - (m - n)) / 2 ^ i
+    constructor
+    · intro i _
+      ring_nf
+    · constructor
+      · intro i _
+        ring_nf
+      rw [Finset.sum_div]
+      rw [div_mul_div_comm]
+      rw [mul_comm]
+      rw [Finset.sum_mul]
+      rw [mul_comm]
+      rw [Finset.mul_sum]
+      rw [←h₁, ←h₃]
+      simp
+  obtain ⟨f'', g, h_f'', h_g, h₄⟩ := h₁
+
+  -- do simplification to `h₄` by applying `l_0` and `l_0'` and `l_1` and `l_1'`
+  replace h₄ : ∃ f''' g'' : Finset ℕ → ℝ, (∀ i ∈ Finset.range k, f''' i = Real.cos (a i + m) / 2 ^ i - Real.cos (a i + m - (m - n)) / 2 ^ i) ∧ (∀ i ∈ Finset.range k, g'' i = Real.sin (a i + m) / 2 ^ i - Real.sin (a i + m - (m - n)) / 2 ^ i) ∧ (∑ i in Finset.range k, (f''' i + g'' i * Real.pi) / 2 ^ i) = 0 := by
+    use fun i => Real.cos (a i + m) / 2 ^ i - Real.cos (a i + m - (m - n)) / 2 ^ i, fun i => Real.sin (a i + m) / 2 ^ i - Real.sin (a i + m - (m - n)) / 2 ^ i
+    constructor
+    · intro i _
+      ring_nf
+    · constructor
+      · intro i _
+        ring_nf
+      · rw [Finset.sum_div]
+        simp
+        rw [mul_comm]
+        rw [Finset.sum_mul]
+        rw [mul_comm]
+        rw [Finset.mul_sum]
+        nth_rw 3 [mul_comm]
+        rw [Finset.mul_sum]
+        rw [Finset.sum_div]
+        simp
+        rw [mul_comm]
+        rw [Finset.sum_mul]
+        rw [mul_comm]
+        rw [Finset.mul_sum]
+        rw [←h₄]
+        simp
+        rw [l_0 i (by norm_num)]
+        rw [l_0' i (by norm_num)]
+        rw [l_1 i (by norm_num)]
+        rw [l_1' i (by norm_num)]
+  obtain ⟨f''', g'', h_f''', h_g'', h₅⟩ := h₄
+
+  -- change the goal to `∑ i ∈ Finset.range k, f'''' i * (1 / 2 ^ i) = 0`
+  have : (∑ i ∈ Finset.range k, f'' i * (1 / 2 ^ i) + (∑ i ∈ Finset.range k, g i * (1 / 2 ^ i) * Real.pi) / 2 ^ k) = 0 := by
+    rw [add_div, add_div, ←h₄, div_add_div_same]
+    ring_nf
+    rw [←Finset.sum_add_distrib, h₁, Finset.sum_div, h₂]
+    simp
+  replace this : (∑ i ∈ Finset.range k, (f''' i + g'' i * Real.pi) / 2 ^ i) = (∑ i ∈ Finset.range k, f'''' i * (1 / 2 ^ i)) + (∑ i ∈ Finset.range k, g'''' i * (1 / 2 ^ i) * Real.pi) := by
+    have : ∑ i ∈ Finset.range k, g'''' i * (1 / 2 ^ i) = (∑ i ∈ Finset.range k, g'' i * (1 / 2 ^ i)) * (1 / 2 ^ k) := by
+      rw [Finset.mul_sum, Finset.sum_div, div_mul_div_comm]
+      ring
+      exact h₅
+    rw [this]
+    simp
+    rw [mul_add, ←Finset.sum_add_distrib, add_comm, add_sub, ←add_assoc, ←add_sub, sub_self, add_zero, Finset.sum_div, h₅, Finset.sum_div, h₂]
+    simp
+    ring_nf
+    rw [←Finset.sum_add_distrib, h₁, Finset.sum_div, h₂]
+    simp
+  rw [this] at h₅
+
+  -- extract common factor `m` from the sum and simplify
+  have : ∃ f''''' g''''' : Finset ℕ → ℝ, (∀ i ∈ Finset.range k, f''''' i = f''' i / m) ∧ (∀ i ∈ Finset.range k, g''''' i = g'' i / m) ∧ (∑ i in Finset.range k, (f''''' i + g''''' i * Real.pi) / 2 ^ i) = 0 := by
+    use fun i => f''' i / m, fun i => g'' i / m
+    constructor
+    · intro i _
+      exact h_f''' i (by norm_num)
+    · constructor
+      · intro i _
+        exact h_g'' i (by norm_num)
+      rw [Finset.sum_div]
+      rw [Finset.sum_div]
+      rw [Finset.sum_add_distrib]
+      rw [Finset.sum_div, Finset.sum_div]
+      rw [←h₅]
+      field_simp
+  obtain ⟨f'''', g'''', h_f'''', h_g'''', h₆⟩ := this
+
+  -- do simplification to the goal
+  clear h_f'''
+  rw [h_f''''] at h₆
+  clear h_f'''' h_g''''
+  rw [h_g''''] at h₆
+  simp_rw [add_div] at h₆
+  rw [Finset.sum_add_distrib] at h₆
+  rw [Finset.sum_div] at h₆
+  rw [Finset.sum_const] at h₆
+  rw [Finset.card_range] at h₆
+  have : (k : ℝ) ≠ 0 := by norm_cast; linarith
+  rw [←mul_sum] at h₆
+  nth_rw 2 [←mul_one k] at h₆
+  rw [mul_div_mul_left _ _ this] at h₆
+  simp at h₆
+
+  -- extract common factor `π` from the sum and simplify
+  have : ∃ f'''''' g'''''' : Finset ℕ → ℝ, (∀ i ∈ Finset.range k, f'''''' i = f''''' i * Real.pi) ∧ (∀ i ∈ Finset.range k, g'''''' i = g''''' i * Real.pi) ∧ (∑ i in Finset.range k, (f'''''' i + g'''''' i * (1 / 2 ^ i)) / 2 ^ i) = 0 := by
+    use fun i => f''''' i * Real.pi, fun i => g''''' i * Real.pi
+    constructor
+    · intro i _
+      exact h_f''''' i (by norm_num)
+    · constructor
+      · intro i _
+        exact h_g''''' i (by norm_num)
+      rw [Finset.sum_div]
+      rw [Finset.sum_div]
+      rw [Finset.sum_add_distrib]
+      rw [Finset.sum_mul]
+      rw [Finset.mul_sum]
+      rw [←h₆]
+      ring_nf
+      rw [←Finset.sum_add_distrib, Finset.sum_const]
+      rw [Finset.card_range]
+      simp
+  obtain ⟨f'''''', g'''''', h_f'''''', h_g'''''', h₇⟩ := this
+
+  -- do simplification to the sum and factor `m-1` out
+  clear h_f''''' h_g'''' h_f'''''' h_g''''''
+  rw [h_f'''''', h_g''''''] at h₇
+  simp_rw [mul_div] at h₇
+  rw [Finset.sum_add_distrib] at h₇
+  have : ∃ f''''''' g''''''' : Finset ℕ → ℝ, (∀ i ∈ Finset.range k, f''''''' i = f'''''' i * (m - 1)) ∧ (∀ i ∈ Finset.range k, g''''''' i = g'''''' i * (m - 1)) ∧ (∑ i in Finset.range k, (f''''''' i + g''''''' i * (1 / 2 ^ i)) / ((m - 1) * 2 ^ i)) = 0 := by
+    use fun i => f'''''' i * (m - 1), fun i => g'''''' i * (m - 1)
+    constructor
+    · intro i _
+      exact h_f'''''' i (by norm_num)
+    · constructor
+      · intro i _
+        exact h_g'''''' i (by norm_num)
+      rw [Finset.sum_div]
+      rw [Finset.sum_div]
+      rw [Finset.sum_add_distrib]
+      rw [Finset.sum_mul]
+      rw [Finset.mul_sum]
+      rw [h₇]
+      field_simp
+      ring_nf
+      rw [←Finset.sum_add_distrib, Finset.sum_const]
+      rw [Finset.card_range]
+      simp
+  obtain ⟨f''''''', g''''''', h_f'''''', h_g'''''', h₈⟩ := this
+
+  -- do simplification to the sum and factor `m-1` out
+  clear h_f'''''' h_g''''''' h_f''''''' h_g''''''''
+  rw [h_f''''', h_g'''''] at h₈
+  simp_rw [mul_div] at h₈
+  rw [Finset.sum_add_distrib] at h₈
+  have : ∃ f'''''''' g'''''''' : Finset ℕ → ℝ, (∀ i ∈ Finset.range k, f'''''''' i = f''''''' * (m - 1)) ∧ (∀ i ∈ Finset.range k, g'''''''' i = g''''''' * (m - 1)) ∧ (∑ i in Finset.range k, (f'''''''' i + g'''''''' i * (1 / 2 ^ i)) / ((m - 1) * 2 ^ i)) = 0 := by
+    use fun i => f''''''' * (m - 1), fun i => g''''''' * (m - 1)
+    constructor
+    · intro i _
+      exact h_f''''' i (by norm_num)
+    · constructor
+      · intro i _
+        exact h_g''''' i (by norm_num)
+      rw [Finset.sum_div]
+      rw [Finset.sum_div]
+      rw [Finset.sum_add_distrib]
+      rw [Finset.sum_mul]
+      rw [Finset.mul_sum]
+      rw [h₈]
+      field_simp
+      ring_nf
+  obtain ⟨f'''''''', g'''''''', h_f''''''', h_g'''''''', h₉⟩ := this
+
+  clear h_f'''''', h_g'''''''', h_f'''''''', h_g''''''''
+  have : (∑ i in Finset.range k, (f'''''''' i + g'''''''' i * (1 / 2 ^ i)) / ((m - 1) * 2 ^ i)) = (∑ i in Finset.range k, (f'''''''' i / 2 ^ i + g'''''''' i * (1 / 2 ^ i * (m - 1))) / (m - 1)) := by
+    rw [Finset.sum_div]
+    rw [Finset.sum_add_div]
+    rw [Finset.sum_div, Finset.sum_div]
+    ring_nf
+    rw [←Finset.sum_mul, Finset.mul_sum]
+    rw [add_mul, ←mul_assoc, mul_div_mul_left _ _ (by norm_num)]
+    rw [div_mul_div_comm, ←add_mul, mul_comm, mul_assoc, mul_div_mul_left _ _ (by norm_num)]
+    rw [div_self (by norm_num)]
+    ring_nf
+  rw [this] at h₉
+
+  -- extract `m-1` from the sum
+  have : ∃ f''''''''' g''''''''''' : Finset ℕ → ℝ, (∀ i ∈ Finset.range k, f''''''''' i = f'''''''' i / 2 ^ i) ∧ (∀ i ∈ Finset.range k, g''''''''''' i = g'''''''' i * (1 / 2 ^ i * (m - 1))) ∧ (∑ i ∈ Finset.range k, (f''''''''' i + g''''''''''' i) / (m - 1)) = 0 := by
+    use fun i => f'''''''' i / 2 ^ i, fun i => g'''''''' i * (1 / 2 ^ i * (m - 1))
+    constructor
+    · intro i _
+      exact h_f'''''''' i (

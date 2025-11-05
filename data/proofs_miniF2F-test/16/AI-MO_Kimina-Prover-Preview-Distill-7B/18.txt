@@ -1,0 +1,75 @@
+-- prove that f is injective
+  have h₂ : ∀ x y : ℕ, 0 < x → 0 < y → f x = f y → x = y := by
+    intro x y hx hy hxy
+    by_cases h : x < y
+   . have : f x < f y := by
+        specialize h₁ x hx
+        simp at h₁
+        exact h₁
+      rw [hxy] at this
+      exact absurd this hy
+   . have : y < x := by exact Nat.lt_of_le_of_ne h (id (Ne.symm hxy))
+      have : f y < f x := by
+        specialize h₁ y hy
+        simp at h₁
+        exact h₁
+      rw [hxy] at this
+      exact absurd this hx
+  -- prove that f(n) ≥ n for all n > 0
+  have h₃ : ∀ n : ℕ, 0 < n → f n ≥ n := by
+    intro n hn
+    induction n with
+    | zero => simp at hn
+    | succ n ih =>
+      by_cases h : n = 0
+     . simp [h, h₀]
+     . have : n > 0 := by exact Nat.pos_of_ne_zero h
+        have : f (n + 1) > f (f n) := by specialize h₁ n this; simp at h₁; exact h₁
+        have : f n ≥ n := ih this
+        have : f (n + 1) > f n := by linarith
+        have : f (n + 1) ≥ n + 1 := by linarith
+        exact Nat.le_of_pred_le this
+  -- prove that f(1) = 1
+  have h₄ : f 1 = 1 := by
+    have : f 1 > 0 := by exact h₀ 1
+    have : f 1 ≠ 1 := by
+      intro h
+      specialize h₁ 1 (by simp)
+      simp [h] at h₁
+    have : f 1 = 1 := by
+      by_contra! h
+      cases' Nat.lt_or_gt_of_ne h with h h
+     . specialize h₃ 1 (by simp)
+        omega
+     . specialize h₃ (f 1) (by simp)
+        omega
+    exact this
+  -- prove that f(n) = n for all n > 0
+  intro n hn
+  have hn' : 0 < n := by exact Nat.pos_of_ne_zero hn
+
+  have h₅ : ∀ k : ℕ, 0 < k → f k = k → f (k + 1) = k + 1 := by
+    intro k hk hk'
+    have : f (k + 1) > f (f k) := by specialize h₁ k hk; simp at h₁; exact h₁
+    rw [hk'] at this
+    have : f (k + 1) > f k := by linarith
+    have : f (k + 1) ≥ k + 1 := by linarith
+    by_cases h : f (k + 1) > k + 1
+   . specialize h₃ (k + 1) (by simp)
+      omega
+   . have : f (k + 1) = k + 1 := by linarith
+      exact this
+
+  -- We prove that f(n) = n by induction
+  have : ∀ t : ℕ, 0 < t → f t = t := by
+    intro t ht
+    induction t with
+    | zero => simp at ht
+    | succ t ih =>
+      by_cases h : t = 0
+     . simp [h, h₄]
+     . have : t > 0 := by exact Nat.pos_of_ne_zero h
+        have inductive := ih this
+        exact h₅ t this inductive
+  exact this n hn'
+```

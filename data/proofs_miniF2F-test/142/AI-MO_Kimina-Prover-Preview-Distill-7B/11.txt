@@ -1,0 +1,170 @@
+-- Auxiliary lemma: if and only if condition for square divisors.
+  have lm (k : ℕ) : k ∈ S ↔ ∃ d : ℕ, 0 < d ∧ d * d = k := by
+    constructor
+    · intro h
+      rw [h₀] at h
+      rwa [Set.mem_setOf] at h
+    · intro h
+      rw [h₀]
+      simp only [Set.mem_setOf]
+      exact h
+
+  -- Auxiliary lemma: the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is a square.
+  have hi : ∏ i in Finset.Icc 1 9, i! = (7560 * 27720 * 8 * 28 * 18)^2 := by
+    calc
+      ∏ i in Finset.Icc 1 9, i!
+        = 1! * 2! * 3! * 4! * 5! * 6! * 7! * 8! * 9! := rfl
+      _ = 1! * 2! * 3! * 4! * 5! * 6! * 7! * 8! * (3 * 6!) := rfl
+      _ = 1! * 2! * 3! * 4! * 5! * 6! * 7! * (2 * 3 * 6!) := rfl
+      _ = 1! * 2! * 3! * 4! * 5! * 6! * (7! * 2 * 3 * 6) := rfl
+      _ = 1! * 2! * 3! * 4! * 5! * (6! * 7! * 2 * 3 * 6) := rfl
+      _ = 1! * 2! * 3! * 4! * (5! * 6! * 7! * 2 * 3 * 6) := rfl
+      _ = 1! * 2! * 3! * (4! * 5! * 6! * 7! * 2 * 3 * 6) := rfl
+      _ = 1! * 2! * (3! * 4! * 5! * 6! * 7! * 2 * 3 * 6) := rfl
+      _ = 1! * (2! * 3! * 4! * 5! * 6! * 7! * 2 * 3 * 6) := rfl
+      _ = (1 * (2! * 3! * 4! * 5! * 6! * 7! * 2 * 3 * 6)) ^ 2 := rfl
+      _ = (7560 * 27720 * 8 * 28 * 18)^2 := by norm_num
+
+  -- -! How many perfect squares are divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$?
+
+  -- The answer is $\boxed{\textbf{(B)}\ 672}$
+  have h : S = (Finset.Icc 1 9).image (fun x => x * x).filter (fun k => (k ∈ S)) := by
+    simp [Finset.coe_image, Finset.coe_filter, Finset.coe_Icc]
+    ext x
+    simp [h₀]
+    constructor
+    · intro ⟨⟨h₁, h₂⟩, h₃⟩
+      exists x
+      constructor
+      · use x
+        constructor
+        · exact h₁
+        · refine Nat.mul_self_dvd h₂
+      · exact h₃
+    · intro ⟨y, h₀, h₁, h₂⟩
+      exists x
+      constructor
+      · exact h₀
+      · refine Nat.mul_self_dvd h₁
+      · rw [h₂]
+        exact h₁
+
+  -- Square numbers have a unique representation as a square of a square.
+  have! h₀ (x : ℕ) : x ∈ S ↔ ∃! k : ℕ, k * k = x ∧ 0 < k := by
+    simp [h₀]
+    constructor
+    · intro h
+      exists (x.sqrt).sqrt
+      constructor
+      · refine Nat.eq_sqrt_of_sq_eq h
+      · apply Nat.sqrt_pos.mpr
+        apply Nat.sqrt_pos.mpr
+        exact h
+    · intro h
+      obtain ⟨k, h₁, h₂⟩ := h
+      obtain ⟨l, h₃, h₄⟩ := h₀ l
+      have : k = l := by
+        rw [h₃] at h₁
+        rw [h₁] at h₃
+        apply Nat.eq_sqrt_of_sq_eq h₃
+      rw [this] at h₄
+      exact h₄
+
+  -- Now, we need to find the square root of each element in S.
+  -- The square root of $k$ is the product $1 \cdot 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \cdot 7 \cdot 8 \cdot 9$
+  -- where each number is raised to the power of the number of times it appears in the prime factorization of $k$.
+  have h₁ : ∀ k ∈ S, ∃ b, (∀ i, i ∈ k.primeFactors → i ^ k.factorization i = b.factorization i) ∧ b.sqrt = k := by
+    intro k hmem
+    rw [h₀] at hmem
+    obtain ⟨b, ⟨h₁, h₂⟩⟩ := hmem
+    use b.sqrt
+    constructor
+    · intro i h
+      have := h₁ i h
+      rw [← Nat.pow_factorization h₂] at this
+      rw [Nat.factorization_pow] at this
+      nth_rw 2 [Nat.factorization_eq_sum_factorization (by assumption)] at this
+      rw [← Nat.factorization_pow] at this
+      apply Nat.eq_of_factorization_eq at this
+      apply this
+      nth_rw 1 [show i = i by assumption]
+    · rw [← Nat.primeFactors_factorization (by assumption), Nat.primeFactors_factorization (by assumption)]
+      refine Nat.eq_prod_of_factorization_eq h₂?_
+      intro p pmem
+      simp only [mem_primeFactors, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
+       mem_primeFactors] at pmem
+      rw [← Nat.factorization_pow]
+      apply Nat.eq_of_factorization_eq
+      intro q (qne | qeq)
+      · exact pmem q qne
+      · rw [qeq]
+        apply Nat.prime_two_le?_
+        apply Nat.Prime.prime
+        exact pmem
+      apply Nat.prime_two_le?_
+      apply Nat.Prime.prime
+      exact pmem
+
+  -- Now, we can find the number of elements in S.
+  -- We know that the square root of $k$ is the product $1 \cdot 2 \cdot 3 \cdot 4 \cdot 5 \cdot 6 \cdot 7 \cdot 8 \cdot 9$
+  -- where each number is raised to the power of the number of times it appears in the prime factorization of $k$.
+  -- This already gives us a bijection between $S$ and a set of tuples of natural numbers.
+  -- Now, we need to find the cardinaility of this set of tuples of natural numbers.
+  have h₂ : S.card = (Finset.Icc 1 9).image (fun x => x * x).filter (fun k => (k ∈ S)).card := by
+    rw [← h, Set.ncard_coe_Finset]
+    simp
+
+  -- We will now show that this set of tuples of natural numbers is in bijection with the set of natural numbers.
+  have h₃ : (Finset.Icc 1 9).image (fun x => x * x).filter (fun k => (k ∈ S)) = Finset.image (fun p => p.sqrt) S := by
+    ext x
+    simp
+    constructor
+    · intro ⟨y, h⟩
+      exists y
+      exists x
+      constructor
+      · exact h
+      · refine Nat.sqrt_sqrt?_
+        exact h
+    · intro ⟨y, h⟩
+      exists y
+      exists x
+      constructor
+      · exact h
+      · refine Nat.sqrt_sqrt?_
+        exact h
+
+  -- The fact that this set of tuples of natural numbers is in bijection with $\{1, 2, \dotsc, 672\}$ follows
+  -- from the fact that the prime factorization of a natural number is unique.
+  have h₄ : (Finset.Icc 1 9).image (fun x => x * x).filter (fun k => (k ∈ S)) = Finset.Icc 1 672 := by
+    rw [h₃, h₀]
+    ext x
+    simp
+    constructor
+    · intro ⟨⟨y, ⟨z, ⟨ℕ, ⟨↑z, h⟩⟩⟩⟩, hz⟩
+      exists y
+      exists x
+      exists z
+      constructor
+      · exact hz
+      · exact Nat.factorization_le_iff_dvd h z
+      · exact h
+    · intro ⟨⟨z, hz⟩, ⟨x, h⟩⟩
+      exists x
+      exists z
+      exists y
+      constructor
+      · exact h
+      · exact Nat.factorization_le_iff_dvd h z
+      · exists z
+        exists y
+        exists x
+        constructor
+        · exact hz
+        · rw [h]
+          exact Nat.factorization_eq_zero_iff_not_dvd hz h
+
+  -- Finally, we can finish the proof.
+  rw [h₂, h₄]
+  simp
+```

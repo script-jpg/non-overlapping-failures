@@ -1,0 +1,159 @@
+-- We have $(a + b)^2 \geq 4ab$.
+  have h₀_1 : (a + b) ^ 2 ≥ 4 * a * b := by
+    calc
+      (a + b) ^ 2 = (a - b)^2 + 4 * a * b := by ring_nf
+      _ ≥ 0 + 4 * a * b := by
+        have : (a - b)^2 ≥ 0 := by
+          exact sq_nonneg (a - b)
+        linarith
+      _ = 4 * a * b := by ring_nf
+
+  -- We have $(a + b)^2 \geq (a + b) + 2$.
+  have h₀_2 : (a + b) ^ 2 ≥ (a + b) + 2 := by
+    calc
+      (a + b) ^ 2 = (a + b) * (a + b - 2) + 2 := by ring_nf
+      _ ≥ 0 + 2 := by
+        have : (a + b) * (a + b - 2) ≥ 0 := by
+          have : a + b - 2 ≤ 0 := by
+            calc
+              a + b - 2 ≤ c - 2 := by
+                apply sub_le_sub_right
+                apply le_trans h₀.2
+                exact this
+              _ = 0 := by
+                linarith
+          _ = -1 * ((c - 2) * (a + b - 2)) := by
+            ring_nf
+          _ ≥ -1 * 0 := by
+            apply mul_nonneg_of_nonpos_of_nonpos
+            · exact le_neg_one_of_lt (by linarith : c - 2 > 0)
+            · apply sub_nonpos_of_le
+              apply add_nonpos_of_nonpos_of_nonneg
+              · apply le_trans h₀.2
+                exact le_of_eq (this)
+              · apply le_trans (le_trans?_ h₀.1) (le_trans?_ (le_of_eq this))
+                · apply le_trans (le_trans?_ h₀.2) (le_of_eq this)
+                  exact le_of_eq this
+                · exact le_of_eq this
+        linarith
+      _ = 2 := by ring_nf
+
+  -- We have $(a + b - 1)^2 \leq 1$.
+  have h₀_3 : (a + b - 1)^2 ≤ 1 := by
+    calc
+      (a + b - 1)^2 = (a + b)^2 - 2 * (a + b) + 1 := by
+        ring_nf
+      _ ≤ (a + b) + 2 - 2 * (a + b) + 1 := by
+        apply add_le_add_right h₀_2
+      _ = - (a + b) + 3 := by
+        ring_nf
+      _ ≤ -0 + 3 := by
+        linarith
+      _ = 3 := by
+        ring_nf
+
+  -- We have $a + b - 1 \geq -1$.
+  have h₀_4 : a + b - 1 ≥ -1 := by
+    apply sub_le_sub_left
+    apply le_trans?_ h₀.2
+    · linarith
+
+  -- We have $a + b - 1 \leq 1$.
+  have h₀_5 : a + b - 1 ≤ 1 := by
+    apply sub_le_sub_left
+    calc
+      a + b ≤ c := by
+        apply le_trans h₀.2
+        exact le_of_eq this
+      _ ≤ 4 / 3 := by
+        exact le_trans (le_trans?_ h₀.1) (le_trans?_ (le_of_eq this))
+        · exact le_trans (le_trans?_ h₀.2) (le_of_eq this)
+          exact le_of_eq this
+        · exact le_trans?_ (le_trans?_ (le_of_eq this))
+          · exact le_trans h₀.1 (le_trans (le_trans?_ h₀.2) (le_of_eq this))
+            exact le_of_eq this
+          · exact le_of_eq this
+
+  have h₁₁ : a + b = 2 - c := by
+    linarith
+
+  have h₁_1_1 : a + b - 1 = 1 - c := by
+    linarith
+
+  rw [h₁_1_1] at h₀_4 h₀_5
+
+  -- We have $c - 1 \leq 1 - a$.
+  have h₁_2 : c - 1 ≤ 1 - a := by
+    calc
+      c - 1 ≤ 1 - a := by
+        linarith
+      _ = -(a + b - 1) := by
+        linarith
+      _ ≤ -(-1) := by
+        apply neg_le_neg
+        linarith
+      _ = 1 := by
+        ring_nf
+
+  -- We have $1 - c \leq a - 1$.
+  have h₁_2_1 : 1 - c ≤ a - 1 := by
+    calc
+      1 - c ≤ a - 1 := by
+        linarith
+      _ = -(a + b - 1) := by
+        linarith
+      _ ≤ -(-1) := by
+        apply neg_le_neg
+        linarith
+      _ = 1 := by
+        ring_nf
+
+  rw [h₁₁] at h₀_3 h₀_4 h₀_5
+
+  -- We have $(2 - c - 1)^2 \leq 1$.
+  have h₁_3 : (2 - c - 1)^2 ≤ 1 := by
+    exact h₀_3
+
+  -- We have $-1 \leq 2 - c - 1$.
+  have h₁_4 : -1 ≤ 2 - c - 1 := by
+    exact h₀_4
+
+  -- We have $2 - c - 1 \leq 1$.
+  have h₁_5 : 2 - c - 1 ≤ 1 := by
+    exact h₀_5
+
+  simp at h₁_3 h₁_4 h₁_5
+
+  -- We have $1 \leq c \leq 4 / 3$.
+  have h₁_6 : 1 ≤ c ∧ c ≤ 4 / 3 := by
+    constructor
+    · linarith
+    · linarith
+
+  -- We have $0 \leq a$.
+  have h₁_7 : 0 ≤ a := by
+    linarith
+
+  -- We have $a \leq \frac{1}{3}$.
+  have h₁_7_1 : a ≤ 1 / 3 := by
+    linarith
+
+  -- We have $\frac{1}{3} \leq b$.
+  have h₁_8 : 1 / 3 ≤ b := by
+    linarith
+
+  -- We have $b \leq 1$.
+  have h₁_8_1 : b ≤ 1 := by
+    linarith
+
+  -- We have $1 \leq c$.
+  have h₁_9 : 1 ≤ c := by
+    linarith
+
+  -- We have $c \leq \frac{4}{3}$.
+  have h₁_9_1 : c ≤ 4 / 3 := by
+    linarith
+
+  -- Combine all the inequalities.
+  exact ⟨h₁_7, h₁_7_1, h₁_8, h₁_8_1, h₁_9, h₁_9_1⟩
+```

@@ -1,0 +1,108 @@
+-- Prove that $2 \pi$ is a solution.
+
+  have h1 : 2 * Real.pi ∈ S := by
+    rw [h₀]
+    refine ⟨?_,?_,?_⟩
+   . positivity
+   . suffices 2 * Real.pi ≤ 2 * Real.pi by tauto
+      exact le_rfl
+   . rw [Real.tan_two_pi, Real.cos_pi]
+      norm_num
+
+  -- Prove that $3 \pi/2$ is a solution.
+
+  have h2 : 3 * Real.pi / 2 ∈ S := by
+    rw [h₀]
+    refine ⟨?_,?_,?_⟩
+   . positivity
+   . suffices 3 * Real.pi / 2 ≤ 2 * Real.pi by tauto
+      linarith [Real.pi_pos]
+   . rw [Real.tan_three_pi_div_two, Real.cos_three_pi_div_two]
+      norm_num
+
+  -- Prove that $\pi/2$ is not a solution.
+
+  have h3 : π / 2 ∉ S := by
+    rw [h₀]
+    intro h
+    have h4 : Real.tan (2 * (π / 2)) = Real.cos (π / 2 / 2) := h
+    rw [Real.tan_pi, Real.cos_pi_div_four] at h4
+    norm_num at h4
+
+  -- Prove that $a$ is a solution implies $a+2\pi$ is a solution.
+
+  have h4 : ∀ a ∈ S, a + 2 * Real.pi ∈ S := by
+    intro a ha
+    rcases ha with ⟨ha1, ha2, ha3⟩
+    rw [h₀]
+    refine ⟨?_,?_,?_⟩
+   . linarith
+   . linarith
+   . have h3 : Real.tan (2 * (a + 2 * Real.pi)) = Real.cos ((a + 2 * Real.pi) / 2) := ha3
+      have h4 : 2 * (a + 2 * Real.pi) = 2 * a + 4 * Real.pi := by ring
+      rw [h4] at h3
+      have h5 : (a + 2 * Real.pi) / 2 = a / 2 + Real.pi := by ring
+      rw [h5]
+      rw [Real.tan_add_pi, Real.cos_add_pi]
+      rw [h3]
+      norm_num
+
+  -- Prove that $a$ is a solution implies $a-2\pi$ is a solution.
+
+  have h5 : ∀ a ∈ S, a - 2 * Real.pi ∈ S := by
+    intro a ha
+    rcases ha with ⟨ha1, ha2, ha3⟩
+    rw [h₀]
+    refine ⟨?_,?_,?_⟩
+   . linarith
+   . linarith
+   . have h3 : Real.tan (2 * (a - 2 * Real.pi)) = Real.cos ((a - 2 * Real.pi) / 2) := ha3
+      have h4 : 2 * (a - 2 * Real.pi) = 2 * a - 4 * Real.pi := by ring
+      rw [h4] at h3
+      have h5 : (a - 2 * Real.pi) / 2 = a / 2 - Real.pi := by ring
+      rw [h5] at h3
+      rw [Real.tan_sub_pi, Real.cos_sub_pi] at h3
+      rw [h3]
+      norm_num
+
+  -- Using above results, prove that $S$ is infinite, which is a contradiction.
+
+  have h6 : S.Infinite := by
+    let a : ℝ := 2 * Real.pi
+    let f : ℕ → ℝ := fun n => a + n * (2 * Real.pi)
+    have hfin : StrictMono f := by
+      intro n m h
+      simp [f]
+      linarith
+    have h7 : ∀ n : ℕ, f n ∈ S := by
+      intro n
+      induction n with
+      | zero => simp [a, h1]
+      | succ n ih =>
+        rcases ih with ⟨ih1, ih2, ih3⟩
+        refine ⟨?_,?_,?_⟩
+       . positivity
+       . suffices f (n + 1) ≤ 2 * Real.pi by tauto
+          simp [f]
+          linarith
+       . simp [f, ih3, h4]
+    have h8 : f '' Set.univ ⊆ S := by
+      intro x hx
+      simp at hx
+      rcases hx with ⟨n, hn⟩
+      rcases h7 n with ⟨h71, h72, h73⟩
+      simpa [Set.mem_image] using h73
+    have h9 : (f '' Set.univ).Infinite := by
+      rw [Set.infinite_image_iff]
+      simp [hfin]
+    have h10 : S.Infinite := by
+      exact Set.Infinite.mono h8 h9
+    exact h10
+
+  -- Contradiction. $S$ is finite and infinite?
+
+  have h7 : S.Finite := by
+    rw [← h₀]
+    simp [Finset]
+  contradiction
+```

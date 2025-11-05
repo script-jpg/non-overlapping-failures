@@ -1,0 +1,197 @@
+-- Auxiliary lemma: if $\sqrt{69}$ is rational, then so is $69^{(p-1)/2}$ for any odd prime $p$.
+  have aux₁ (p : ℕ) (hp : Nat.Prime p) (h₃ : p ≠ 2) (h₄ : ∃ r : ℕ, √69 = r / p) :
+      ∃ s : ℕ, 69 ^ ((p - 1) / 2) = s := by
+    obtain ⟨r, hr⟩ := h₄
+    have : 69 ^ ((p - 1) / 2) = (r / p) ^ ((p - 1) / 2) := by rw [hr]
+    have : p ^ (p - 1) = (p ^ ((p - 1) / 2)) ^ 2 := by
+      rw [<-Nat.pow_mul]
+      simp
+      exact (Nat.Prime.even_iff hp).mp (byid (Nat.Prime.even_iff hp).mpr (by omega))
+    have : r ^ (p - 1) = (r ^ ((p - 1) / 2)) ^ 2 := by rw [<-Nat.pow_mul]; simp
+    field_simp at this
+    rw [this] at *
+    have : p ^ (p - 1) * (r ^ ((p - 1) / 2)) ^ 2 = (p ^ ((p - 1) / 2) * r ^ ((p - 1) / 2)) ^ 2 := by
+      rw [<-Nat.mul_pow]
+      nth_rw 2 [<-Nat.pow_mul]
+      simp
+      ring
+    rw [this] at *
+    have : p * r = 69 ^ ((p - 1) / 2) := by
+      field_simp
+      rw [Nat.div_eq_of_eq_mul_right (by omega)]
+      norm_num
+      rw [<-Nat.pow_mul]
+      simp
+      exact Nat.Prime.two_le hp
+    rw [this] at *
+    use (r ^ ((p - 1) / 2))
+    norm_num
+    exact Nat.pow_le_pow_of_le_left (by omega) (by omega)
+
+  -- Auxiliary lemma: if $\sqrt{69}$ is rational, then so is $69^{(n-1)/2}$ for any natural number $n$.
+  have aux₂ (n : ℕ) (h₃ : ∃ r : ℕ, √69 = r / n) :
+      ∃ s : ℕ, 69 ^ ((n - 1) / 2) = s := by
+    obtain ⟨r, hr⟩ := h₃
+    rw [<-hr]
+    have : n ^ (n - 1) = (n ^ ((n - 1) / 2)) ^ 2 := by
+      rw [<-Nat.pow_mul]
+      simp
+      exact (Nat.Prime.even_iff (Nat.prime_two)).mp (byid (Nat.Prime.even_iff (Nat.prime_two)).mpr (by omega))
+    have : r ^ (n - 1) = (r ^ ((n - 1) / 2)) ^ 2 := by rw [<-Nat.pow_mul]; simp
+    field_simp at this
+    rw [this] at *
+    have : n ^ (n - 1) * (r ^ ((n - 1) / 2)) ^ 2 = (n ^ ((n - 1) / 2) * r ^ ((n - 1) / 2)) ^ 2 := by
+      rw [<-Nat.mul_pow]
+      nth_rw 2 [<-Nat.pow_mul]
+      simp
+      ring
+    rw [this] at *
+    use (r ^ ((n - 1) / 2))
+    norm_num
+    exact Nat.pow_le_pow_of_le_left (by omega) (by omega)
+
+  -- Auxiliary lemma: if $\sqrt{69}$ is rational, then so is $69^{2k}$ for any natural number $k$.
+  have aux₃ (k : ℕ) (h₃ : ∃ r : ℕ, √69 = r / k) :
+      ∃ s : ℕ, 69 ^ (2 * k) = s := by
+    obtain ⟨r, hr⟩ := h₃
+    use k ^ 2
+    rw [hr]
+    field_simp
+    rw [<-Nat.div_mul_eq_div]
+    simp
+    norm_num
+    exact Nat.Prime.two_le (Nat.prime_two)
+
+  have nfac_val : ∏ i in Finset.Icc 1 9, i! = (4 * 69 ^ 4 * 2 ^ 10 * 3 ^ 6 * 5 ^ 2 * 7 ^ 2)^2 := by
+    calc
+      ∏ i in Finset.Icc 1 9, i! = 1! * 2! * 3! * 4! * 5! * 6! * 7! * 8! * 9! := by
+        exact Finset.prod_Icc_succ_top (by norm_num)
+      _ = 1 * 2 * 6 * 24 * 120 * 720 * 5040 * 40320 * 362880 := by
+        norm_num [Nat.factorial]
+      _ = (4 * 69 ^ 4 * 2 ^ 10 * 3 ^ 6 * 5 ^ 2 * 7 ^ 2)^2 := by
+        norm_num
+
+  -- Let $s$ be the set of perfect squares divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  set s := {k ^ 2 | k ∈ S}
+
+  -- The set $s$ is a subset of the set of divisors of $(4 * 69^4 * 2^{10} * 3^6 * 5^2 * 7^2)^2$.
+  have : s ⊆ (Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!)).filter (fun x => x ∈ ((Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!)).filter (fun x => ∃ k : ℕ, x = k ^ 2) ∪ Finset.Icc ((∏ i in Finset.Icc 1 9, i!) + 1) (∏ i in Finset.Icc 1 9, i!) ∪ Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!))).filter (fun x => x ∣ (∏ i in Finset.Icc 1 9, i!))) := by
+    simp [s]
+    intro x k hk hx
+    rw [hx]
+    simp at hk
+    obtain ⟨a, ha⟩ := (Nat.mem_Icc.mp hk).1
+    obtain ⟨b, hb⟩ := (Nat.mem_Icc.mp hk).2
+    have hxprod : x ∣ ∏ i in Finset.Icc 1 9, i! := by
+      rw [<-ha]
+      exact Nat.dvd_trans (Nat.pow_dvd_pow _ _ (by omega)) hx
+    obtain ⟨c, hc⟩ := Finset.prod_dvd_prod_iff.mpr ⟨⟨a, ha⟩, ⟨b, hb⟩⟩
+    have hprodrw : ∏ i in Finset.Icc 1 9, i! = (4 * 69 ^ 4 * 2 ^ 10 * 3 ^ 6 * 5 ^ 2 * 7 ^ 2)^2 := by
+      exact nfac_val
+    rw [hprodrw] at hxprod
+    have : c ≤ 4 * 69 ^ 4 * 2 ^ 10 * 3 ^ 6 * 5 ^ 2 * 7 ^ 2 := by
+      apply Nat.le_of_dvd
+      · norm_num
+      · exact hxprod
+    calc
+      x = k ^ 2 := by rw [hx]
+      _ ≤ c ^ 2 := by
+        apply Nat.pow_le_pow_of_le_left
+        · exact ha
+        · exact this
+
+  -- The cardinality of the set of divisors of $(4 * 69^4 * 2^{10} * 3^6 * 5^2 * 7^2)^2$ is $696$.
+  have : (Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!)).filter (fun x => x ∈ ((Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!)).filter (fun x => ∃ k : ℕ, x = k ^ 2) ∪ Finset.Icc ((∏ i in Finset.Icc 1 9, i!) + 1) (∏ i in Finset.Icc 1 9, i!) ∪ Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!))).filter (fun x => x ∣ (∏ i in Finset.Icc 1 9, i!))).card = 696 := by
+    simp
+    native_decide
+
+  -- Then the cardinality of $s$ is at most $696$.
+  have : s.card ≤ 696 := by
+    apply Finset.card_le_card
+    exact this
+
+  -- We prove that the set $s$ equals the set of divisors of $(4 * 69^4 * 2^{10} * 3^6 * 5^2 * 7^2)^2$.
+  have : s = (Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!)).filter (fun x => x ∈ ((Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!)).filter (fun x => ∃ k : ℕ, x = k ^ 2) ∪ Finset.Icc ((∏ i in Finset.Icc 1 9, i!) + 1) (∏ i in Finset.Icc 1 9, i!) ∪ Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!))).filter (fun x => x ∣ (∏ i in Finset.Icc 1 9, i!))) := by
+    apply Finset.ext
+    intro x
+    apply Iff.intro
+    · intro hx
+      simp [s] at hx
+      obtain ⟨k, hk⟩ := hx
+      rw [hk]
+      simp
+      exact (Nat.mem_Icc.mpr ⟨((Nat.Prime.one_le (Nat.prime_two)).mp (by omega)), (Nat.factorial_pos 9).mp (by omega)⟩).1
+    · intro hx
+      simp [s]
+      obtain ⟨k, hk⟩ := hx
+      rw [hk]
+      simp
+      exact ⟨by omega, by omega⟩
+
+  -- Then the cardinality of $s$ is $696$.
+  have : s.card = 696 := by
+    rw [this]
+    exact this
+
+  -- The set $s$ is the set of perfect squares divisors of the number $(4 * 69^4 * 2^{10} * 3^6 * 5^2 * 7^2)^2$.
+  have : s = ((Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!)).filter (fun x => ∃ k : ℕ, x = k ^ 2)).filter (fun x => x ∣ (∏ i in Finset.Icc 1 9, i!))) := by
+    apply Finset.ext
+    intro x
+    apply Iff.intro
+    · intro hx
+      simp [s] at hx
+      obtain ⟨k, hk⟩ := hx
+      rw [hk]
+      simp
+      exact (Nat.mem_Icc.mpr ⟨((Nat.Prime.one_le (Nat.prime_two)).mp (by omega)), (Nat.factorial_pos 9).mp (by omega)⟩).1
+    · intro hx
+      simp [s]
+      obtain ⟨k, hk⟩ := hx
+      rw [hk]
+      simp
+      exact ⟨by omega, by omega⟩
+
+  -- The cardinality of the set of perfect squares divisors of the number $(4 * 69^4 * 2^{10} * 3^6 * 5^2 * 7^2)^2$ is 672.
+  have : ((Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!)).filter (fun x => ∃ k : ℕ, x = k ^ 2)).filter (fun x => x ∣ (∏ i in Finset.Icc 1 9, i!))).card = 672 := by
+    simp
+    have nfac_val : ∏ i in Finset.Icc 1 9, i! = (4 * 69 ^ 4 * 2 ^ 10 * 3 ^ 6 * 5 ^ 2 * 7 ^ 2)^2 := by
+      calc
+        ∏ i in Finset.Icc 1 9, i! = 1! * 2! * 3! * 4! * 5! * 6! * 7! * 8! * 9! := by
+          exact Finset.prod_Icc_succ_top (by norm_num)
+        _ = 1 * 2 * 6 * 24 * 120 * 720 * 5040 * 40320 * 362880 := by
+          norm_num [Nat.factorial]
+        _ = (4 * 69 ^ 4 * 2 ^ 10 * 3 ^ 6 * 5 ^ 2 * 7 ^ 2)^2 := by
+          norm_num
+    rw [nfac_val]
+    rw [Finset.filter_filter]
+    simp
+    native_decide
+
+  -- The set $s$ equals the set of perfect squares divisors of the number $(4 * 69^4 * 2^{10} * 3^6 * 5^2 * 7^2)^2$.
+  have : s = ((Finset.Icc 1 (∏ i in Finset.Icc 1 9, i!)).filter (fun x => ∃ k : ℕ, x = k ^ 2)).filter (fun x => x ∣ (∏ i in Finset.Icc 1 9, i!))) := by
+    apply Finset.ext
+    intro x
+    apply Iff.intro
+    · intro hx
+      simp [s] at hx
+      obtain ⟨k, hk⟩ := hx
+      rw [hk]
+      simp
+      exact (Nat.mem_Icc.mpr ⟨((Nat.Prime.one_le (Nat.prime_two)).mp (by omega)), (Nat.factorial_pos 9).mp (by omega)⟩).1
+    · intro hx
+      simp [s]
+      obtain ⟨k, hk⟩ := hx
+      rw [hk]
+      simp
+      exact ⟨by omega, by omega⟩
+
+  -- The cardinality of the set $s$ is $672$.
+  have : s.card = 672 := by
+    rw [this]
+    exact this
+
+  -- We conclude that the number of perfect squares divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is $672$.
+  rw [<-this]
+  exact this
+
+```

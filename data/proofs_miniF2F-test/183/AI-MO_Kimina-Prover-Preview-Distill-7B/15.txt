@@ -1,0 +1,85 @@
+have h₂ : ∀ x : ℝ, f x = (x ^ 2 + (18 * x + 45)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) - 15 := by
+    intro x
+    calc
+      f x = x ^ 2 + (18 * x + 30) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := h₀ x
+      _ = (x ^ 2 + (18 * x + 45)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) - 15 := by ring
+
+  -- The roots satisfy the equation $x^2 + 18x + 45 = 2 \sqrt{x^2 + 18x + 30}$. We can square both sides to get rid of the square root.
+  have h₃ : ∀ x, f x = 0 → x ^ 2 + (18 * x + 45) = 2 * Real.sqrt (x ^ 2 + (18 * x + 30)) := by
+    intro x hx
+    rw [h₂ x, sub_eq_zero] at hx
+    exact hx
+
+  -- Squaring both sides: $(x^2 + 18x + 45)^2 = 4(x^2 + 18x + 30)$.
+  have h₄ : ∀ x, f x = 0 → x ^ 4 + (18 * x + 45) ^ 2 = 4 * (x ^ 2 + (18 * x + 30)) := by
+    intro x hx
+    specialize h₃ x hx
+    calc
+      x ^ 2 + (18 * x + 45) = 2 * Real.sqrt (x ^ 2 + (18 * x + 30)) := h₃
+      _ = (2 * Real.sqrt (x ^ 2 + (18 * x + 30))) ^ 2 := by rw [sq_eq_sq_iff_eq_or_eq_neg]; positivity
+      _ = 4 * (Real.sqrt (x ^ 2 + (18 * x + 30)) ^ 2) := by ring
+      _ = 4 * (x ^ 2 + (18 * x + 30)) := by rw [Real.sq_sqrt]; positivity
+
+  -- We get a quadratic equation by expanding the left-hand side.
+  have h₅ : ∀ x, f x = 0 → x ^ 2 + 18 * x + 45 = 0 := by
+    intro x hx
+    specialize h₄ x hx
+    ring_nf at h₄
+    linarith only [h₄]
+
+  -- The roots of the quadratic equation are distinct.
+  have h₆ : Fintype (f ⁻¹' {0}) := h₁
+
+  -- The roots satisfy $x^2 + 18x + 45 = 0$, which means that $x_1 \cdot x_2 = 45$.
+  have h₇ : 45 = 20 + 25 := by norm_num
+  have h₈ : 25 = 5 * 5 := by norm_num
+  have h₉ : 20 = 4 * 5 := by norm_num
+  have h₁₀ : ∀ x, f x = 0 → x ^ 2 + 18 * x + 45 = 0 := h₅
+
+  -- It follows that the product of the roots is 20.
+  suffices (∏ x in (f ⁻¹' {0}).toFinset, x) = 20 by exact this
+  apply Finset.prod_eq_zero_iff.mpr
+  simp only [Set.toFinset_coe, Finset.mem_toFinset, Set.mem_setOf_eq, false_and, not_true_eq_false, Finset.not_mem_empty, not_false_eq_true, Finset.prod_empty, Finset.sum_empty, zero_add, mul_one, empty_ne_true, Finset.mem_singleton, IsEmpty.forall_iff, IsEmpty.add_iff, IsEmpty.singleton_iff, and_imp, forall_exists_index, Prod.exists]
+  use (f ⁻¹' {0}).card
+  pick_goal 2
+ . dsimp
+    intro x hx
+    specialize h₁₀ x hx
+    have h₁₁ : x ^ 2 + 18 * x + 45 = (x - (-3 * Real.sqrt 5)) * (x - 3 * Real.sqrt 5) := by
+      ring_nf
+      rw [Real.sq_sqrt (by norm_num)]
+      linarith only [h₁₁]
+    rw [h₁₁] at h₁₀
+    rcases mul_eq_zero.mp h₁₀ with h₁₀ | h₁₀
+   . left
+      linarith only [h₁₀]
+   . right
+      linarith only [h₁₀]
+ . use -3 * Real.sqrt 5
+    constructor
+   . dsimp
+      constructor
+     . ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith only [h₇]
+     . have h₁₁ : (f ⁻¹' {0}).ncard = 2 := by
+          suffices (f ⁻¹' {0}) = {-3 * Real.sqrt 5, 3 * Real.sqrt 5} from by rw [this, Set.ncard_pair (by linarith only [Real.sqrt_pos.mpr (show (0 : ℝ) < 5 by norm_num)]), Set.mem_setOf_eq]
+          ext x
+          simp only [Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff]
+          simp only [h₁₀, or_imp_iff_imp_right, not_false_eq_true, iff_true]
+          intro h₁₀
+          specialize h₁₀ x h₁₀
+          rw [h₁₁, sub_eq_zero] at h₁₀
+          rcases mul_eq_zero.mp h₁₀ with h₁₀ | h₁₀
+         . left
+            linarith only [h₁₀]
+         . right
+            linarith only [h₁₀]
+        rw [h₁₁]
+        rw [Set.ncard_pair]
+        have := Real.sqrt_pos.mpr (by norm_num : (5 : ℝ) > 0)
+        linarith only [this]
+   . rw [neg_mul_neg_eq_pos, pow_two, Real.sq_sqrt (by norm_num)]
+      norm_num
+
+```

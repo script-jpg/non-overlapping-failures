@@ -1,0 +1,194 @@
+-- All the elements of S can be written in the form $n + \frac{p}{q}$, where $n$ is a nonnegative integer, so let's define the following function:
+  let f : ℕ → ℚ := fun n => ↑n + ↑a.num / ↑a.den
+  -- It's clear that $f(0), f(1), \cdots$ are all in $S$. Moreover, these are the only possible elements of $S$ because:
+  have h₂ (x : ℝ) : ↑⌊x⌋ * (x - ↑⌊x⌋) = ↑a * x ^ 2 → ∃ n : ℕ, x = f n := by
+    intro h
+    -- Suppose that $x \neq f(n)$ for all $n$. Then either $\lfloor x \rfloor > 0$ or $\{x\} \neq \frac{p}{q}$. But this would mean that $x$ doesn't satisfy the equation $\lfloor x \rfloor \cdot \{x\} = a \cdot x^2$.
+    by_contra! h'
+    -- $\lfloor x \rfloor$ is a nonnegative integer
+    have h'' (n : ℕ) : ↑n ≤ x := by
+      rw [← h n]
+      simp
+    -- $\lfloor x \rfloor \geq 1$
+    have h''' (n : ℕ) : (if n = 0 then 0 else 1) ≤ (↑n : ℚ) := by
+      cases' n with n
+      · simp
+      · simp [Nat.one_le_of_lt h n]
+    -- $\lfloor x \rfloor \cdot \{x\} = a \cdot x^2$ implies that $\lfloor x \rfloor \neq 0$
+    have h'''' (n : ℕ) : ↑n ≤ x → n ≠ 0 → a * (↑n + (↑a.num / ↑a.den : ℚ)) ^ 2 = ↑n * ((↑n + (↑a.num / ↑a.den : ℚ)) - ↑n) → False := by
+      intro hlf xlf heq
+      simp at heq
+      rw [mul_assoc, hlf] at heq
+      nth_rw 2 [mul_comm] at heq
+      rw [mul_assoc, mul_ne_zero_iff] at heq
+      norm_cast at heq
+      have : a * (↑n + (↑a.num / ↑a.den : ℚ)) ^ 2 ≠ ↑n * ((↑n + (↑a.num / ↑a.den : ℚ)) - ↑n) := by
+        apply ne_of_lt
+        rw [mul_comm, mul_lt_mul_left (by norm_cast)]
+        norm_cast
+        have : (↑n : ℚ) < (↑n : ℝ) := by
+          exact_mod_cast Nat.lt_floor_add_one n
+        apply lt_of_lt_of_le this
+        apply h''
+        apply h'''
+      contradiction
+    -- This shows that all the elements of $S$ can be written in the form $f(n)$ where $n$ is a nonnegative integer
+    have h₅ (x : ℝ) : x ∈ S → ∃ n : ℕ, x = f n := by
+      intro xlf
+      by_contra! h'
+      have : ∀ n : ℕ, x ≠ f n := by
+        intro n
+        exact h' n
+      have : ¬(x ∈ S) := by
+        simp [h₀] at hlf
+        intro hx
+        exact this ((h₀ x).mp hx)
+      contradiction
+    -- Now we prove that $f(0), f(1), \cdots$ are the only possible elements of $S$. Let $x \in S$ be arbitrary, and let $n = \lfloor x \rfloor$. Then $n$ is a nonnegative integer, and
+    have h₆ (x : ℝ) (hx : x ∈ S) : ∃ n : ℕ, n = ↑⌊x⌋ ∧ x = f n := by
+      apply h₅ x at hx
+      exact_mod_cast h₅ x hx
+    replace h₆ (x : ℝ) (hx : x ∈ S) : f (↑⌊x⌋) = x := by
+      rcases h₆ x hx with ⟨n, hn, hx⟩
+      exact hx
+    -- Let $p = \lfloor x \rfloor$ and $y = \{x\}$. Then $x = p + y$, where $p$ is a nonnegative integer and $y \in [0, 1)$, and the equation $\lfloor x \rfloor \cdot \{x\} = a \cdot x^2$ becomes $p \cdot y = a \cdot (p + y)^2$.
+    -- This means that $a \cdot p^2 + (2 \cdot a \cdot p - 1) \cdot y + a \cdot y^2 = 0$.
+    have h₇ (x : ℝ) (hx : x ∈ S) : a * (↑⌊x⌋)^2 + (2 * a * ↑⌊x⌋ - 1) * (x - ↑⌊x⌋) + a * (x - ↑⌊x⌋)^2 = 0 := by
+      rw [h₆ x hx]
+      simp
+      ring
+    -- Since $y \in [0, 1)$, the discriminant $(2 \cdot a \cdot p - 1)^2 - 4 \cdot a^2 \cdot p^2$ of the quadratic equation $a \cdot p^2 + (2 \cdot a \cdot p - 1) \cdot y + a \cdot y^2 = 0$ is nonnegative, so $a \cdot p^2 \geq 0 $.
+    have h₈ (x : ℝ) (hx : x ∈ S) : 0 ≤ a * (↑⌊x⌋)^2 := by
+      rw [h₇ x hx]
+      apply add_nonneg
+      · apply mul_nonneg
+        · norm_cast
+          apply pow_two_nonneg
+        · apply mul_nonneg
+          · norm_cast
+            linarith
+          · norm_cast
+      · apply mul_nonneg
+        · norm_cast
+          apply pow_two_nonneg
+        · linarith
+    -- This shows that $a \geq 0$ since $p^2 \geq 0$.
+    have h₉ : 0 ≤ a := by
+      nlinarith
+    -- Now we can write the equation $a \cdot p^2 + (2 \cdot a \cdot p - 1) \cdot y + a \cdot y^2 = 0$ as $a \cdot (p^2 + y^2) + 2 \cdot a \cdot p \cdot y - y = 0$, and then rearrange to get $(\sqrt{a} \cdot p + \sqrt{a} \cdot y)^2 = (\sqrt{a} \cdot p - \sqrt{a} \cdot y)^2$.
+    have h₁₀ (x : ℝ) (hx : x ∈ S) : (√a * (↑⌊x⌋) + √a * (x - ↑⌊x⌋))^2 = (√a * (↑⌊x⌋) - √a * (x - ↑⌊x⌋))^2 := by
+      rw [h₇ x hx]
+      apply sub_eq_zero_of_eq_add
+      ring_nf
+      rw [add_assoc, add_sub, add_comm (1 / ↑a), ← add_sub]
+      ring
+      apply h₈ x hx
+    -- This means that either $\sqrt{a} \cdot p + \sqrt{a} \cdot y = \sqrt{a} \cdot p - \sqrt{a} \cdot y$ or $\sqrt{a} \cdot p + \sqrt{a} \cdot y = - (\sqrt{a} \cdot p - \sqrt{a} \cdot y)$.
+    rw [sq_eq_sq_iff_eq_or_eq_neg] at h₁₀
+    -- In the first case, we get $y = 0$, which means that $x = p$, a nonnegative integer. In this case, the equation $\lfloor x \rfloor \cdot \{x\} = a \cdot x^2$ becomes $p \cdot 0 = a \cdot p^2$, that is, $a = 0$, and this only happens when $p \neq 0$.
+    cases' h₁₀ with h₁₀ h₁₀
+    · -- Case: $x \in \mathbb{N}$ ($y = 0$)
+      have h₁₁ (x : ℝ) (hx : x ∈ S) : (√a * (↑⌊x⌋) + √a * (x - ↑⌊x⌋))^2 = 0 := by
+        rw [h₁₀]
+        ring
+      -- This means that $a = 0$ and $x = p$, a nonnegative integer
+      have ha : a = 0 := by
+        have : a = (√a)^2 := by
+          rw [Real.sq_sqrt]
+          linarith
+        rw [this]
+        ring_nf
+        rw [← mul_assoc, h₁₁ x hx]
+        simp
+      -- This means that $a = 0$ and $x = p$, a nonnegative integer
+      simp [ha] at h₁₀
+      simp [h₁₀] at h₆
+      -- Now we use the fact that $\sqrt{a} = \sqrt{p \cdot \frac{p}{q}} = \frac{p}{\sqrt{q}}$ and $\sqrt{a} \cdot p - \sqrt{a} \cdot y \neq 0$ to reach a contradiction
+      have hq : q > 0 := by
+        rw [ha] at h₀
+        specialize h₀ 0
+        simp at h₀
+        rw [h₀]
+        norm_cast
+      -- $\sqrt{a} \neq 0$ because $a \neq 0$
+      have sqrt_a_ne_zero : √a ≠ 0 := by
+        by_contra!
+        have : a = 0 := by
+          rw [Real.sq_sqrt]
+          nlinarith
+        contradiction
+      -- $\sqrt{a} \cdot p - \sqrt{a} \cdot y \neq 0$ because $y \in [0, 1)$ and $\sqrt{a} \neq 0$
+      have sqrt_a_mul_p_sub_sqrt_a_mul_y_ne_zero : √a * (↑⌊x⌋) - √a * (x - ↑⌊x⌋) ≠ 0 := by
+        have : x - ↑⌊x⌋ ∈ Set.Ico 0 1 := by
+          simp
+          rw [← Nat.floor_le x, lt_add_one_iff]
+          exact Nat.fract_lt_one x
+        rcases this with ⟨hx, hx'⟩
+        have : 0 < √a := by
+          rw [Real.sqrt_pos]
+          linarith
+        have : 0 < √a * (↑⌊x⌋ - (x - ↑⌊x⌋)) := by
+          apply mul_pos
+          assumption
+          apply sub_pos.mpr
+          simp
+          rw [← Nat.floor_le x, lt_add_one_iff]
+          exact Nat.fract_lt_one x
+        linarith
+      -- This means that $\sqrt{a} \cdot p + \sqrt{a} \cdot y = -(\sqrt{a} \cdot p - \sqrt{a} \cdot y)$ and $a \cdot p^2 = 0$
+      have ha : a * (↑⌊x⌋)^2 = 0 := by
+        linarith
+      -- Now we get that $a = 0$ and $p = 0$, but this would imply that $x = 0$ and $0 \notin S$.
+      simp [ha] at ha
+      simp [ha] at h₆
+      simp [h₆, h₀] at h₁
+      exact ( absurd (h₁ (0 : ℝ)).symm this ).elim
+    -- Case: $\sqrt{a} \cdot p + \sqrt{a} \cdot y = -(\sqrt{a} \cdot p - \sqrt{a} \cdot y)$
+    have h₁₁ (x : ℝ) (hx : x ∈ S) : a * (x - ↑⌊x⌋)^2 = 0 := by
+      rw [h₁₀ x hx] at h₁
+      linarith
+    -- This means that either $a = 0$ or $(x - \lfloor x \rfloor)^2 = 0$.
+    have : a = 0 ∨ (x - ↑⌊x⌋)^2 = 0 := by
+      rw [mul_eq_zero] at h₁₁
+      exact h₁₁
+    rcases this with ha | xeq
+    -- If $a = 0$, then we use the fact that $0 \notin S$ to reach a contradiction
+    · simp [ha] at h₁₀ h₆
+      simp [h₆] at h₀
+      simp
+      exact ( absurd h₁.symm this ).elim
+    -- If $(x - \lfloor x \rfloor)^2 = 0$, then $x = \lfloor x \rfloor$, that is, $x$ is a nonnegative integer
+    · simp at xeq
+      replace xeq : x = ↑⌊x⌋ := by
+        linarith
+      simp [xeq] at h₆
+      simp [h₆] at h₀
+      simp
+      have : ↑⌊x⌋ ≥ 0 := by
+        rw [← xeq]
+        exact Nat.floor_nonneg x
+      exact ( absurd (h₁ (↑⌊x⌋).symm this ).elim
+  -- This shows that $S$ is the set of nonnegative integers. However, this can't be true because $\lfloor 1 \rfloor \cdot \{1\} = 0 \neq a \cdot 1^2$.
+  have h_{11} : S = Finset.Ici 0 := by
+    ext x
+    simp
+    apply Iff.intro <;> intro hx
+    · contrapose! hx
+      replace hx : x ≤ -1 := by
+        linarith
+      suffices : x < 0
+      · linarith
+      rify
+      linarith [hx]
+    · simp [hx]
+      exact h₂ x hx
+  -- However, this can't be true because $1 \in S$ and $1 \notin S$ at the same time.
+  have h₁₂ : 1 ∈ S := by
+    simp [h_{11}]
+  have h₁₃ : 1 ∉ S := by
+    simp [h_{11}]
+    specialize h₂ 1 (by simp [h₁₂])
+    simp at h₂
+    linarith
+  contradiction
+```

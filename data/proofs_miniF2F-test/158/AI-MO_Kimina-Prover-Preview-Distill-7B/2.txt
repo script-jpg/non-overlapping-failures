@@ -1,0 +1,42 @@
+-- 证明中使用到的引理
+  -- 简化表达式
+  have h1 (a b : ℝ) (ha : 0 < a) (hb : 0 < b) : a ^ 2 / b + b ^ 2 / a - (a + b) = (a - b) ^ 2 / (a * b) := by
+    calc
+      _ = (a ^ 3 + b ^ 3 - (a + b) * a * b) / (a * b) := by
+        field_simp
+        ring_nf
+      _ = _ := by
+        field_simp
+        ring_nf
+        rw [show a ^ 3 + b ^ 3 = (a + b) * (a ^ 2 - a * b + b ^ 2) by ring_nf]
+        rw [show (a + b) * (a ^ 2 - a * b + b ^ 2) - (a + b) * a * b = (a + b) * (a ^ 2 - a * b + b ^ 2 - a * b) by ring_nf]
+        rw [show (a + b) * (a ^ 2 - a * b + b ^ 2 - a * b) = (a + b) * (a - b) ^ 2 by ring_nf]
+        tauto
+
+  -- 证明平方非负
+  have h2 (a b : ℝ) (ha : 0 < a) (hb : 0 < b) : (a - b) ^ 2 ≥ 0 := by
+    exact sq_nonneg (a - b)
+
+  -- 证明分母正
+  have h3 (a b : ℝ) (ha : 0 < a) (hb : 0 < b) : a * b > 0 := by
+    exact mul_pos ha hb
+
+  -- 完成引理1的证明
+  have h1' (a b : ℝ) (ha : 0 < a) (hb : 0 < b) : a ^ 2 / b + b ^ 2 / a ≥ a + b := by
+    have t1 := h1 a b ha hb
+    have t2 : (a - b) ^ 2 ≥ 0 := h2 a b ha hb
+    have t3 : a * b > 0 := h3 a b ha hb
+    have t4 : (a - b) ^ 2 / (a * b) ≥ 0 := by
+      exact div_nonneg t2 (le_of_lt t3)
+    linarith
+
+  -- 应用引理1到每个相邻两项
+  have h4 := h1' a b h₀.1 h₀.2.1
+  have h5 := h1' b c h₀.2.1 h₀.2.2.1
+  have h6 := h1' c d h₀.2.2.1 h₀.2.2.2
+  have h7 := h1' d a h₀.2.2.2 h₀.1
+
+  -- 相加完成证明
+  linarith
+
+```

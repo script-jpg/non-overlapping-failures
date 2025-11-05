@@ -1,0 +1,200 @@
+-- auxiliary lemma.
+  have l_ineq_aux : ∀ a b c : ℝ, 0 < a → 0 < b → 0 < c → 3 * (a * b + b * c + c * a) ≤ (a + b + c) * (a + b + c) := by
+    intro a b c ha hb hc
+    nlinarith [sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+
+  -- auxilary inequality : 2 * (a^2 + b^2 + c^2) ≥ (a + b + c)^2
+  have l_ineq_aux2 : ∀ a b c : ℝ, 2 * (a^2 + b^2 + c^2) ≥ (a + b + c) * (a + b + c) := by
+    intro a b c
+    nlinarith [sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+
+  -- For positive real numbers a, b, c, show that $a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a} \geq 3/\sqrt{2}$
+  have (a b c : ℝ) (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) :
+      a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) ≥ 3 / Real.sqrt 2 := by
+    -- we use Cauchy-Schwarz inequality:
+    -- $(a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a})^2 \leq (a^2 + b^2 + c^2) * (1/(a+b) + 1/(b+c) + 1/(c+a))$
+    have h_1 : (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a))^2 ≤ (a^2 + b^2 + c^2) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) := by
+      -- $(a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a})^2 = |-|a|/\sqrt{a+b} + -|b|/\sqrt{b+c} + -|c|/\sqrt{c+a}|^2 \leq (|-|a||^2 + |-|b||^2 + |-|c||^2) * (1/(a+b) + 1/(b+c) + 1/(c+a)) = (a^2 + b^2 + c^2) * (1/(a+b) + 1/(b+c) + 1/(c+a))$
+      have h₁ : (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a))^2 = (a^2 + b^2 + c^2) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) - ∑ x ∈ ({a, b, c} : Finset ℝ),∑ y ∈ ({a, b, c} : Finset ℝ), (if x = y then |a| / Real.sqrt (a + b) * (1 / Real.sqrt (a + b)) + |b| / Real.sqrt (b + c) * (1 / Real.sqrt (b + c)) + |c| / Real.sqrt (c + a) * (1 / Real.sqrt (c + a))) else (-(|a| / Real.sqrt (a + b)) * (1 / Real.sqrt (b + c)) + |a| / Real.sqrt (a + b) * (-|b| / Real.sqrt (b + c)) + (-(|b| / Real.sqrt (b + c)) * (1 / Real.sqrt (c + a)) + |b| / Real.sqrt (b + c) * (-|c| / Real.sqrt (c + a)) + (-(|c| / Real.sqrt (c + a)) * (1 / Real.sqrt (a + b)) + |c| / Real.sqrt (c + a) * (-|a| / Real.sqrt (a + b))) ) : x = y) := by
+        simp
+        have h_1 : (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) = ∑ x ∈ ({a, b, c} : Finset ℝ), (if x = a then a / Real.sqrt (a + b) else if x = b then b / Real.sqrt (b + c) else c / Real.sqrt (c + a)) := by
+          simp
+        have h_2 : (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) = ∑ x ∈ ({a, b, c} : Finset ℝ), (if x = a then 1 / (a + b) else if x = b then 1 / (b + c) else 1 / (c + a)) := by
+          simp
+        rw [h_1, h_2]
+        rw [sq_sum]
+        simp
+        intro x hx
+        rw [Finset.sum_congr]
+        rw [Finset.sum_congr]
+        pick_goal 2
+        intro x hx
+        rw [Finset.sum_congr]
+        pick_goal 2
+        intro y hy
+        have h_1 : (if x = y then a / Real.sqrt (a + b) * (1 / Real.sqrt (a + b)) + b / Real.sqrt (b + c) * (1 / Real.sqrt (b + c)) + c / Real.sqrt (c + a) * (1 / Real.sqrt (c + a))) else (-(a / Real.sqrt (a + b)) * (1 / Real.sqrt (b + c)) + a / Real.sqrt (a + b) * (-b / Real.sqrt (b + c)) + (-(b / Real.sqrt (b + c)) * (1 / Real.sqrt (c + a)) + b / Real.sqrt (b + c) * (-c / Real.sqrt (c + a)) + (-(c / Real.sqrt (c + a)) * (1 / Real.sqrt (a + b)) + c / Real.sqrt (c + a) * (-a / Real.sqrt (a + b))) )) = (if x = y then |a| / Real.sqrt (a + b) * (1 / Real.sqrt (a + b)) + |b| / Real.sqrt (b + c) * (1 / Real.sqrt (b + c)) + |c| / Real.sqrt (c + a) * (1 / Real.sqrt (c + a))) else (-(|a| / Real.sqrt (a + b)) * (1 / Real.sqrt (b + c)) + |a| / Real.sqrt (a + b) * (-|b| / Real.sqrt (b + c)) + (-(|b| / Real.sqrt (b + c)) * (1 / Real.sqrt (c + a)) + |b| / Real.sqrt (b + c) * (-|c| / Real.sqrt (c + a)) + (-(|c| / Real.sqrt (c + a)) * (1 / Real.sqrt (a + b)) + |c| / Real.sqrt (c + a) * (-|a| / Real.sqrt (a + b))) )) := by
+          have horemq : a = |a| ∧ b = |b| ∧ c = |c| := by
+            constructor
+            · apply abs_eq_self.mpr
+              linarith [ha]
+            constructor
+            · apply abs_eq_self.mpr
+              linarith [hb]
+            apply abs_eq_self.mpr
+            linarith [hc]
+          have h_1 : |a| / Real.sqrt (a + b) = a / Real.sqrt (a + b) := by
+            rw [horemq.1]
+            rfl
+          have h_2 : |b| / Real.sqrt (b + c) = b / Real.sqrt (b + c) := by
+            rw [horemq.2.1]
+            rfl
+          have h_3 : |c| / Real.sqrt (c + a) = c / Real.sqrt (c + a) := by
+            rw [horemq.2.2]
+            rfl
+          rw [h_1, h_2, h_3]
+        rw [h_1]
+        by_cases h : x = a
+        pick_goal 2
+        · simp [h]
+          have hx : y = b ∨ y = c := by
+            simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+            exact hx
+          cases hx with
+          | inl hx =>
+            rw [hx]
+            simp
+            right
+            right
+            simp
+            right
+            right
+            simp
+          | inr hx =>
+            rw [hx]
+            simp
+            right
+            right
+            simp
+            left
+            simp
+        pick_goal 2
+        · simp [h]
+          have hy : y = a ∨ y = b := by
+            simp only [Finset.mem_insert, Finset.mem_singleton] at hy
+            exact hy
+          cases hy with
+          | inl hy =>
+            rw [hy]
+            simp
+            left
+            simp
+          | inr hy =>
+            rw [hy]
+            simp
+            right
+            left
+            simp
+    simp
+    have haaddb : 0 < a + b := by
+      linarith [ha, hb]
+    have hbaddc : 0 < b + c := by
+      linarith [hb, hc]
+    have hcAdda : 0 < c + a := by
+      linarith [hc, ha]
+    have h_2 : a / Real.sqrt (a + b) * (1 / Real.sqrt (b + c)) = |a| / Real.sqrt (a + b) * (1 / Real.sqrt (b + c)) := by
+      replace hbaddc : 0 < b + c := by
+        linarith [hb, hc]
+      have : 0 < Real.sqrt (b + c) := by
+        apply Real.sqrt_pos_of_pos
+        linarith
+      rw [abs_mul_left]
+      have : 0 < Real.sqrt (a + b) := by
+        apply Real.sqrt_pos_of_pos
+        linarith
+      rw [div_eq_mul_inv]
+      rw [div_eq_mul_inv]
+      simp
+      left
+      rw [← abs_mul, abs_of_pos ha, mul_one a, mul_comm a, ← mul_assoc, inv_mul_cancel₀ this, mul_inv_cancel₀ this, mul_comm]
+    have h_3 : b / Real.sqrt (b + c) * (1 / Real.sqrt (c + a)) = |b| / Real.sqrt (b + c) * (1 / Real.sqrt (c + a)) := by
+      replace hcAdda : 0 < c + a := by
+        linarith [hc, ha]
+      have : 0 < Real.sqrt (c + a) := by
+        apply Real.sqrt_pos_of_pos
+        linarith
+      rw [abs_mul_left]
+      have : 0 < Real.sqrt (b + c) := by
+        apply Real.sqrt_pos_of_pos
+        linarith
+      rw [div_eq_mul_inv]
+      rw [div_eq_mul_inv]
+      simp
+      left
+      rw [← abs_mul, abs_of_pos hb, mul_one b, mul_comm b, ← mul_assoc, inv_mul_cancel₀ this, mul_inv_cancel₀ this, mul_comm]
+    have h_4 : c / Real.sqrt (c + a) * (1 / Real.sqrt (a + b)) = |c| / Real.sqrt (c + a) * (1 / Real.sqrt (a + b)) := by
+      have hac : 0 < a + c := by
+        linarith [ha, hc]
+      have : 0 < Real.sqrt (a + c) := by
+        apply Real.sqrt_pos_of_pos
+        linarith
+      rw [abs_mul_left]
+      have : 0 < Real.sqrt (c + a) := by
+        apply Real.sqrt_pos_of_pos
+        linarith
+      rw [div_eq_mul_inv]
+      rw [div_eq_mul_inv]
+      simp
+      left
+      rw [← abs_mul, abs_of_pos hc, mul_one c, mul_comm c, ← mul_assoc, inv_mul_cancel₀ this, mul_inv_cancel₀ this, mul_comm]
+    simp
+    have h_5 : -(a / Real.sqrt (a + b)) * (1 / Real.sqrt (b + c)) + a / Real.sqrt (a + b) * (-b / Real.sqrt (b + c)) = -(a / Real.sqrt (a + b)) * (1 / Real.sqrt (b + c) + b / Real.sqrt (b + c)) := by
+      ring
+    have h_6 : -(b / Real.sqrt (b + c)) * (1 / Real.sqrt (c + a)) + b / Real.sqrt (b + c) * (-c / Real.sqrt (c + a)) = -(b / Real.sqrt (b + c)) * (1 / Real.sqrt (c + a) + c / Real.sqrt (c + a)) := by
+      ring
+    have h_7 : -(c / Real.sqrt (c + a)) * (1 / Real.sqrt (a + b)) + c / Real.sqrt (c + a) * (-a / Real.sqrt (a + b)) = -(c / Real.sqrt (c + a)) * (1 / Real.sqrt (a + b) + a / Real.sqrt (a + b)) := by
+      ring
+    rw [h_2, h_3, h_4, h_5, h_6, h_7]
+    have h_8 : 1 / Real.sqrt (b + c) + b / Real.sqrt (b + c) = (1 + b) / Real.sqrt (b + c) := by
+      ring
+    have h_9 : 1 / Real.sqrt (c + a) + c / Real.sqrt (c + a) = (1 + c) / Real.sqrt (c + a) := by
+      ring
+    have h_10 : 1 / Real.sqrt (a + b) + a / Real.sqrt (a + b) = (1 + a) / Real.sqrt (a + b) := by
+      ring
+    rw [h_8, h_9, h_10]
+    simp
+    have h_11 : 3 * (1 + a + b + c) ≤ 2 * (3 + a + b + c) := by
+      linarith
+    have h_12 : 3 + a + b + c ≤ 2 * (3 + a + b + c) / 2 := by
+      linarith
+    have h_13 : 2 * (3 + a + b + c) / 2 = 3 + a + b + c := by
+      ring
+    rw [h_13] at h_12
+    have h_14 : 3 * (a * b + b * c + c * a) ≤ 2 * (3 + a + b + c) / 2 * (a + b + c) := by
+      rw [l_ineq_aux a b c ha hb hc]
+    have h_15 : 2 * (3 + a + b + c) / 2 * (a + b + c) = 2 * (3 + a + b + c) * ((a + b + c) / 2) := by
+      ring
+    have h_16 : (3 + a + b + c) / 2 = 1 / 2 * (3 + a + b + c) := by
+      ring
+    have h_17 : ((3 + a + b + c) / 2) * ((a + b + c) / 2) * 2 * 2 ≤ 9 * (a^2 + b^2 + c^2) / 2 := by
+      rw [← mul_assoc, mul_comm, ← mul_assoc, mul_assoc]
+      have h_17 : ((3 + a + b + c) / 2) * ((a + b + c) / 2) * 2 * 2 = (3 + a + b + c) * (a + b + c) := by
+        ring
+      rw [h_17]
+      have h_18 : 9 * (a^2 + b^2 + c^2) / 2 = (3 * (a * b + b * c + c * a)) * (3 / (a + b + c)) := by
+        field_simp
+        ring
+      rw [h_18]
+      have h_19 : 0 < (3 + a + b + c) * (a + b + c) := by
+        apply mul_pos
+        linarith
+        linarith
+      have h_20 : 3 * (a * b + b * c + c * a) ≤ 9 * (a^2 + b^2 + c^2) / 2 := by
+        have h_20 : (a + b + c) * (a + b + c) ≤ (3 * (a^2 + b^2 + c^2)) := by
+          linarith [l_ineq_aux2 a b c]
+        have h_21 : (3 * (a * b + b * c + c * a)) * (3 / (a + b + c)) ≥ (3 * (a * b + b * c + c * a)) * (3 / (a + b + c) * ((a + b + c) / 3)) := by
+          apply (mul_le_mul_iff_of_pos_left _).mpr
+          rw [div_mul_eq_mul_div, mul_comm]
+          apply (mul_le_mul_iff_of_pos_left _).mpr
+          norm_num
+          linarith
+        have h_22 : (3 * (a * b + b * c + c * a)) * (3 / (a + b + c) * ((a + b + c) / 3)) = (

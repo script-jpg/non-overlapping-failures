@@ -1,0 +1,57 @@
+have h : ∀ k : ℕ, k ≠ 0 → 0 < (a ^ k + b ^ k) / 2 := by
+    intro k hk
+    constructor
+    · exact Nat.zero_ne_of_ne_zero hk
+    · have : 0 < a ^ k := by exact pow_pos h₀.1 k
+      have : 0 < b ^ k := by exact pow_pos h₀.2 k
+      exact div_pos (add_pos this) (by positivity)
+
+  -- The arithmetic mean of $a$ and $b$ is less than or equal to the $n$-th root of the arithmetic mean of $a^n$ and $b^n$.
+  have h meanle : ((a + b) / 2) ≤ ((a ^ n + b ^ n) / 2) ^ (1 / n : ℝ) := by
+    calc
+      ((a + b) / 2) ^ n := by positivity
+      _ ≤ ((a ^ n + b ^ n) / 2) := by
+        apply geom_mean_le_arith_mean2_weighted (by norm_num) (by norm_num) (by positivity) (by positivity) (by norm_num) (by positivity) (h₁.ne', h₁.ne')
+        · rw [← Real.rpow_le_iff_le_log (by positivity) (by positivity)]
+          ring_nf
+          rw [Real.log_rpow (by positivity) (by positivity)]
+          rw [Real.log_div (by positivity) (by positivity)]
+          rw [Real.log_add (by positivity) (by positivity)]
+          have : 0 < (2 : ℝ) := by norm_num
+          rw [div_lt_div_iff (by positivity) (by positivity), ← mul_lt_mul_iff_of_pos_left this]
+          exact Real.log_add (by positivity) (by positivity)
+        · rw [← Real.rpow_le_iff_le_log (by positivity) (by positivity)]
+          ring_nf
+          rw [Real.log_rpow (by positivity) (by positivity)]
+          rw [Real.log_div (by positivity) (by positivity)]
+          rw [Real.log_add (by positivity) (by positivity)]
+          have : 0 < (2 : ℝ) := by norm_num
+          rw [div_lt_div_iff (by positivity) (by positivity), ← mul_lt_mul_iff_of_pos_left this]
+          exact Real.log_add (by positivity) (by positivity)
+        · norm_num
+        · apply add_le_add
+          · exact Real.rpow_le_rpow_left_le_one (by norm_num) (by norm_num) (by positivity)
+          · exact Real.rpow_le_rpow_left_le_one (by norm_num) (by norm_num) (by positivity)
+        · norm_num
+        · apply div_nonneg
+          · apply add_nonneg
+            · exact pow_nonneg (le_of_lt h₀.1) n
+            · exact pow_nonneg (le_of_lt h₀.2) n
+          · exact zero_le_two
+        · norm_num
+        · exact h₁.ne'
+        · exact h₁.ne'
+        · positivity
+        · positivity
+        · exact h₀.1
+        · exact h₀.2
+
+  -- Applying the power means inequality to the numbers $a^n$ and $b^n$ with weights $1/2$ and $1/2$.
+  apply le_trans h meanle
+  apply le_of_eq
+  rw [← Real.rpow_mul (by positivity), div_eq_mul_inv, ← Real.rpow_neg_one, ← Real.rpow_add (by positivity)]
+  ring_nf
+  norm_num
+  exact h₁.ne'
+
+```

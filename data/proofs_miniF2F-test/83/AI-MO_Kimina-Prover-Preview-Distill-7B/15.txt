@@ -1,0 +1,42 @@
+-- the problem is essentially asking us to prove that `1 + 1 / 2 ^ n < 5 / 2`
+  -- we can use `native_decide` to prove that, as it is now a simple inequality of concrete values
+  if h1 : n = 1 then
+    rw [h1]
+    norm_num
+
+  else if h2 : 1 < n then
+    let m := n - 1
+    have hm : n = m + 1 := by omega
+    rw [hm]
+
+    -- rewrite `1 + 1 / 2 ^ (m + 1)` to `1 + 1 / 2 ^ m * 1 / 2`, so that we can use `mul_lt_mul_of_pos_right` in the next step
+    have h1 : 1 + (1 : ℝ) / 2 ^ (m + 1) = 1 + ((1 : ℝ) / 2 ^ m) * (1 / 2) := by
+      ring_nf
+
+    rw [h1]
+
+    -- we need to prove `1 + 1 / 2 ^ m * 1 / 2 < 1 + 1 / 2 ^ m * 1 / 2 + 1 / 2 ^ m * (1 / 2) * 3 / 4`
+    -- in other words, `1 / 2 ^ m * 1 / 2 < 1 / 2 ^ m * 3 / 4`
+    -- so we need to prove `1 / 2 ^ m * (1 / 2 - 3 / 4) < 0`, or `1 / 2 ^ m * (-1 / 4) < 0`
+    -- of course, we can prove that by `mul_neg_of_pos_of_neg`, but we need to prove `1 / 2 ^ m > 0` and `-1 / 4 < 0`
+    have h2 : 1 + ((1 : ℝ) / 2 ^ m) * (1 / 2) < 1 + ((1 : ℝ) / 2 ^ m) * (1 / 2) + ((1 : ℝ) / 2 ^ m) * (1 / 2) * (3 / 4) := by
+      apply add_lt_add_of_lt_of_le
+     . apply mul_lt_mul_of_pos_right
+       . norm_num
+       . linarith only [show 0 < m by omega]
+     . apply mul_le_mul_of_nonneg_left
+       . norm_num
+       . apply pow_nonneg
+          norm_num
+
+    -- now we have `1 + 1 / 2 ^ (m + 1) < 1 + 1 / 2 ^ m * 3 / 4 + 1 / 2 ^ m * 1 / 2`
+    -- so `1 + 1 / 2 ^ (m + 1) < 1 + 1 / 2 ^ m * 3 / 4 + 1 / 2 ^ m * 1 / 2 * (1 + 1 / 2)`
+    rw [Finset.prod_Icc_succ_top (show 1 ≤ m + 1 by omega)]
+    apply lt_of_mul_lt_mul_left
+   . exact h2
+   . apply pow_pos
+      norm_num
+
+  else
+    contradiction
+```

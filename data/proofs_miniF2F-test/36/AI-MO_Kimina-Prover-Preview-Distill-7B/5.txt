@@ -1,0 +1,59 @@
+-- check the base case
+
+  induction n with
+
+  | zero => linarith
+
+  | succ n ih =>
+      match n with
+      | 0 => linarith
+      | 1 => linarith
+      | 2 => linarith
+      | 3 => simp
+      | 4 => simp [Nat.factorial_succ]
+      | n + 5 =>
+        rw [Nat.factorial_succ]
+        simp [Nat.pow_succ]
+        -- we have $n! < n^{n-1}$ by induction hypothesis.
+        -- multiply $n-2$ at both sides of the inequality, we have
+        -- $n! \cdot (n-2) < n^{n-1} \cdot (n-2)$.
+        have ineq₁ : n! * (n - 2) < n ^ (n - 1) * (n - 2) := by
+          apply Nat.mul_lt_mul_of_pos_right ih
+          -- we have $n-2 > 0$, since $n \geq 5$.
+          linarith [show 2 < n by linarith]
+          -- we have $n-1 > 0$, since $n \geq 5$.
+          linarith [show 1 < n - 1 by linarith]
+        -- we have $n^{n-1} \cdot (n-2) + n^{n-1} < n^{n-1} \cdot (n-2) + n^{n}$
+        -- which is equivalent to $n^{n-1} \cdot (n-1) < n^{n}$
+        -- thus we have $n^{n-1} < n^{n} / (n-1)$.
+        have ineq₂ : n ^ (n - 1) * (n - 2) + n ^ (n - 1) < n ^ (n - 1) * (n - 2) + n ^ (n - 1) * n := by
+          rw [Nat.pow_succ]
+          rw [<-Nat.add_mul]
+          rw [Nat.pow_succ]
+          -- we have $n^{n-1} \cdot (n-2) + n^{n-1} < n^{n-1} \cdot (n-2) + n^{n-1} \cdot n$,
+          -- since $n^{n-1} \cdot (n-2) + n^{n-1} < n^{n-1} \cdot (n-2) + n^{n-1} \cdot n$ is equivalent to
+          -- $0 < n^{n-1} \cdot (n-3)$, and we have the latter since $n \geq 5$.
+          have : 0 < n ^ (n - 1) * (n - 3) := by
+            apply Nat.mul_pos
+            -- we have $0 < n^{n-1}$ for any $n \geq 3$.
+            simp [Nat.pow_pos]
+            -- we have $0 < n-3$, since $n \geq 5$.
+            linarith [show 3 < n by linarith]
+          linarith
+        rw [<-Nat.mul_add] at ineq₂
+        -- Now we have $n^{n-1} < n^{n}$.
+        have ineq₃ : n ^ (n - 1) < n ^ n := by
+          -- we have $n^{n-1} \cdot (n-2) + n^{n-1} < n^{n-1} \cdot (n-2) + n^{n-1} \cdot n$,
+          -- that is $n^{n-1} \cdot (n-2) + n^{n-1} < n^{n-1} \cdot (n-2 + n)$,
+          -- which is equivalent to $n^{n-1} \cdot (n-2) + n^{n-1} < n^{n-1} \cdot (2n-2)$.
+          -- Cancel $n^{n-1}$ at both sides, we have $n-2 + 1 < 2n-2$.
+          apply Nat.div_lt_of_lt_mul?_ ineq₂
+          -- we have $0 < n-2$, since $n \geq 5$.
+          linarith [show 2 < n by linarith]
+        -- Now we have $n! < n^{n-1}$.
+        have ineq₄ : n! < n ^ (n - 1) := by
+          -- we have $n! < n^{n-1} \cdot (n-2) + n^{n-1}$, since $n! < n^{n-1} \cdot (n-2) + n^{n-1} \cdot n$ and $n^{n-1} \cdot (n-2) + n^{n-1} < n^{n-1} \cdot (n-2) + n^{n-1} \cdot n$.
+          linarith [ineq₁, ineq₂]
+        exact ineq₄
+
+```

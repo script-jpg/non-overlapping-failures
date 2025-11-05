@@ -1,0 +1,65 @@
+-- Take logarithm of both sides of $2^a = 32$.
+
+  have hlog1 : a * (Real.logb 2 2) = Real.logb 2 32 := by
+
+    calc
+
+      _ = Real.logb 2 ((2 : ℝ) ^ a) := by  rw [Real.logb_rpow (by linarith) (by linarith)]
+
+      _ = Real.logb 2 32 := by rw [h₀]
+
+  -- Since $\log_2 2 = 1$, we have $a = \log_2 32$.
+
+  have ha : a = Real.logb 2 32 := by
+
+    calc
+
+      _ = a * (Real.logb 2 2) := by rw [mul_one]
+
+      _ = Real.logb 2 32 := by rw [hlog1]
+
+  -- Take logarithm of both sides of $a^b = 125$.
+
+  have hlog2 : b * (Real.logb a 10) = Real.logb a 125 := by
+
+    calc
+
+      _ = Real.logb a ((10 : ℝ) ^ b) := by  rw [Real.logb_rpow (by linarith) (by linarith)]
+
+      _ = Real.logb a 125 := by rw [←h₁]
+
+  -- Substitute $a = \log_2 32$ into $b \cdot \log_a 10 = \log_a 125$.
+
+  rw [ha] at hlog2
+
+  -- Simplify the equation.
+
+  have hc : b * (Real.logb (Real.logb 2 32) 10) = Real.logb (Real.logb 2 32) 125 := by
+
+    exact hlog2
+
+  norm_num at hc
+
+  -- Solve for $b$ in terms of $\log_2 32$.
+
+  have hb : b = Real.logb (Real.logb 2 32) 125 / Real.logb (Real.logb 2 32) 10 := by
+
+    calc
+
+      _ = (b * (Real.logb (Real.logb 2 32) 10)) / (Real.logb (Real.logb 2 32) 10) := by
+        rw [mul_div_cancel_right₀]
+        exact ne_of_gt (Real.logb (Real.logb 2 32) 10)
+      _ = Real.logb (Real.logb 2 32) 125 / Real.logb (Real.logb 2 32) 10 := by rw [hc]
+
+  -- We have $b^a = (\log_2 125)^{\log_2 32} = (\log_2 125)^{\log_2 2^{5}} = (\log_2 125)^5 = (5 \log_2 2)^5 = 2^5 \cdot 5^5 = 3125$.
+
+  calc
+
+    _ = (Real.logb 2 125) ^ (Real.logb 2 32) := by rw [hb]; ring_nf; exact ha
+    _ = (Real.logb 2 (5 ^ 3)) ^ (Real.logb 2 (2 ^ 5)) := by norm_num
+    _ = (5 * Real.logb 2 5) ^ (5 * Real.logb 2 2) := by congr 1; rw [Real.logb_pow]; rw [Real.logb_pow]; all_goals norm_num
+    _ = (5 * Real.logb 2 5) ^ (5 * 1) := by rw [Real.logb_self_eq_one]; all_goals norm_num
+    _ = 5 ^ 5 * (Real.logb 2 5) ^ 5 := by rw [mul_pow]; rw [mul_pow]; congr 2; rw [←pow_mul]; rw [←pow_mul]; ring
+    _ = 2 ^ 5 * 5 ^ 5 := by rw [Real.logb_pow]; rw [Real.logb_pow]; all_goals norm_num
+    _ = 243 := by norm_num
+```

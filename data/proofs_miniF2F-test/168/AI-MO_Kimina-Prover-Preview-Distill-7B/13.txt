@@ -1,0 +1,167 @@
+-- We have $A$ is the set of solutions to $z^3 - 8 = 0$ and $B$ is the set of solutions to $z^3 - 8z^2 - 8z + 64 = 0$.
+  -- We want to find the greatest distance between a point of $A$ and a point of $B$.
+
+  -- First, let's factor the polynomials to find the roots.
+  -- For $z^3 - 8 = 0$, we can factor as $(z-2)(z^2 + 2z + 4) = 0$.
+  have ha : (a - 2) * (a ^ 2 + 2 * a + 4) = 0 := by
+    rw [←h₀]
+    ring
+
+  -- For $z^3 - 8z^2 - 8z + 64 = 0$, we can factor as $(z-8)(z^2 - 8) = 0$.
+  have hb : (b - 8) * (b ^ 2 - 8) = 0 := by
+    rw [←h₁]
+    ring
+
+  -- Now, we need to find the roots of each factor.
+  -- For $(z-2)(z^2 + 2z + 4) = 0$, the roots are $z = 2$ and $z = -1 \pm \sqrt{3}i$.
+  have ha1 : a = 2 ∨ a = -1 + √3 * I ∨ a = -1 - √3 * I := by
+    cases (mul_eq_zero.mp ha) with
+    | inl h => 
+      left
+      exact eq_of_sub_eq_zero h
+    | inr h => 
+      right
+      have : (a - (-1))^2 = (√3 * I)^2 := by
+        calc
+          (a - (-1))^2 = a^2 + 2 * a + 1 := by ring
+          _ = (a^2 + 2 * a + 4) - 3 := by ring
+          _ = 0 - 3 := by rw [h]
+          _ = (√3 * I)^2 := by
+            calc
+              (√3 * I)^2 = (√3)^2 * (I)^2 := by ring
+              _ = 3 * (-1) := by norm_num
+              _ = -3 := by ring
+      have : (a - (-1)) = (√3 * I) ∨ (a - (-1)) = - (√3 * I) := by
+        apply sq_eq_sq_iff_eq_or_eq_neg.mp
+        exact this
+      cases this with
+      | inl h =>
+        right
+        left
+        linarith
+      | inr h =>
+        right
+        right
+        linarith
+
+  -- For $(z-8)(z^2 - 8) = 0$, the roots are $z = 8$ and $z = \pm 2\sqrt{2}$.
+  have hb1 : b = 8 ∨ b = 2 * √2 ∨ b = -2 * √2 := by
+    cases (mul_eq_zero.mp hb) with
+    | inl h => 
+      left
+      exact eq_of_sub_eq_zero h
+    | inr h => 
+      right
+      have : (b - 2 * √2) * (b + 2 * √2) = 0 := by
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        ring
+      cases (mul_eq_zero.mp this) with
+      | inl h1 => 
+        right
+        left
+        linarith
+      | inr h2 => 
+        right
+        right
+        linarith
+
+  -- Now, we need to compute the maximum distance between any point in $A$ and any point in $B$.
+  -- The points in $A$ are $2$, $-1 + \sqrt{3}i$, and $-1 - \sqrt{3}i$.
+  -- The points in $B$ are $8$, $2\sqrt{2}$, and $-2\sqrt{2}$.
+  -- We need to compute the distances between each pair of points and find the maximum.
+
+  cases ha1 with
+  | inl ha2 => -- When $a = 2$
+    cases hb1 with
+    | inl hb8 => -- When $b = 8$
+      have : Complex.abs (a - b) = 6 := by
+        rw [ha2, hb8]
+        norm_num
+      rw [this]
+      linarith
+    | inr hb2 => -- When $b = 2\sqrt{2}$
+      cases hb2 with
+      | inl hb2 => -- $b = 2\sqrt{2}$
+        have : Complex.abs (a - b) = 2 * √21 := by
+          rw [ha2, hb2]
+          simp [Complex.abs, Complex.normSq]
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          ring
+        rw [this]
+        linarith
+      | inr hb2 => -- $b = -2\sqrt{2}$
+        have : Complex.abs (a - b) = 2 * √21 := by
+          rw [ha2, hb2]
+          simp [Complex.abs, Complex.normSq]
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          ring
+        rw [this]
+        linarith
+  | inr ha2 => -- When $a = -1 \pm \sqrt{3}i$
+    cases ha2 with
+    | inl ha2 => -- $a = -1 + \sqrt{3}i$
+      cases hb1 with
+      | inl hb8 => -- When $b = 8$
+        have : Complex.abs (a - b) = √21 := by
+          rw [ha2, hb8]
+          simp [Complex.abs, Complex.normSq]
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          ring
+        rw [this]
+        linarith
+      | inr hb2 => -- When $b = 2\sqrt{2}$
+        cases hb2 with
+        | inl hb2 => -- $b = 2\sqrt{2}$
+          have : Complex.abs (a - b) = 2 * √21 := by
+            rw [ha2, hb2]
+            simp [Complex.abs, Complex.normSq]
+            ring_nf
+            rw [Real.sq_sqrt (by norm_num)]
+            ring
+          rw [this]
+          linarith
+        | inr hb2 => -- $b = -2\sqrt{2}$
+          have : Complex.abs (a - b) = 2 * √21 := by
+            rw [ha2, hb2]
+            simp [Complex.abs, Complex.normSq]
+            ring_nf
+            rw [Real.sq_sqrt (by norm_num)]
+            ring
+          rw [this]
+          linarith
+    | inr ha2 => -- $a = -1 - \sqrt{3}i$
+      cases hb1 with
+      | inl hb8 => -- When $b = 8$
+        have : Complex.abs (a - b) = √21 := by
+          rw [ha2, hb8]
+          simp [Complex.abs, Complex.normSq]
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          ring
+        rw [this]
+        linarith
+      | inr hb2 => -- When $b = 2\sqrt{2}$
+        cases hb2 with
+        | inl hb2 => -- $b = 2\sqrt{2}$
+          have : Complex.abs (a - b) = 2 * √21 := by
+            rw [ha2, hb2]
+            simp [Complex.abs, Complex.normSq]
+            ring_nf
+            rw [Real.sq_sqrt (by norm_num)]
+            ring
+          rw [this]
+          linarith
+        | inr hb2 => -- $b = -2\sqrt{2}$
+          have : Complex.abs (a - b) = 2 * √21 := by
+            rw [ha2, hb2]
+            simp [Complex.abs, Complex.normSq]
+            ring_nf
+            rw [Real.sq_sqrt (by norm_num)]
+            ring
+          rw [this]
+          linarith
+```

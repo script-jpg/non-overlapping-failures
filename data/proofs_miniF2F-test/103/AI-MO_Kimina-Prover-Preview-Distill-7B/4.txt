@@ -1,0 +1,62 @@
+-- `x * 9 % 100 = 1` implies that there exists some integer $t$ such that $9x - 100t = 1$
+  have h₂ (x : ℕ) (h : x * 9 % 100 = 1) : ∃ t : ℤ, 9 * x - 100 * t = 1 := by
+    have h₂ : x * 9 ≡ 1 [MOD 100] := by
+      exact h
+    have h₃ : x * 9 + 100 * (-1) * t ≡ 1 + 100 * (-1) * t [MOD 100] := by
+      apply Nat.ModEq.add_right
+      apply Int.ModEq.mul
+      norm_num
+      simp [h₂]
+    let t := -1
+    use t
+    have h₄ : x * 9 - 100 * t ≡ 1 - 100 * t [MOD 100] := by
+      apply Nat.ModEq.sub_right
+      exact Int.ModEq.symm (Int.ModEq.trans (id (Nat.ModEq.symm h₃)) rfl)
+    simp [h₄, t]
+    omega
+  -- Since 9 and 100 are relatively prime, the solution is unique, then
+  have h₃ (x₁ x₂ : ℕ) (h₀ : x₁ < 100) (h₁ : x₁ * 9 % 100 = 1) (h₂ : x₂ < 100) (h₃ : x₂ * 9 % 100 = 1) : x₁ = x₂ := by
+    have h₄ : ∃ t₁ : ℤ, 9 * x₁ - 100 * t₁ = 1 := by
+      apply h₂ x₁
+      exact h₁
+    have h₅ : ∃ t₂ : ℤ, 9 * x₂ - 100 * t₂ = 1 := by
+      apply h₂ x₂
+      exact h₃
+    obtain ⟨t₁, h₄⟩ := h₄
+    obtain ⟨t₂, h₅⟩ := h₅
+    have h₆ : 9 * x₁ - 9 * x₂ = 100 * (t₁ - t₂) := by
+      rw [←h₄, ←h₅]
+      omega
+    have h₇ : 9 * (x₁ - x₂) = 100 * (t₁ - t₂) := by
+      omega
+    have h₈ : 100 ∣ 9 * (x₁ - x₂) := by
+      omega
+    have h₉ : 100 ∣ x₁ - x₂ := by
+      apply Nat.dvd_of_dvd_mul_right_of_gcd_one
+      norm_num
+      exact h₈
+    have h₁₀ : x₁ - x₂ = 0 := by
+      apply Nat.sub_eq_zero_of_le
+      apply Nat.le_of_dvd
+      exact h₉
+      norm_num
+    omega
+  -- It suffices to show that 89 is the solution
+  suffices h : x = 89 by
+    exact h
+  -- Since 89 * 9 % 100 = 1, we just apply the previous proposition
+  have h₄ : 89 * 9 % 100 = 1 := by
+    norm_num
+  have h₅ : ∃ t : ℤ, 9 * 89 - 100 * t = 1 := by
+    apply h₂ 89
+    exact h₄
+  obtain ⟨t, h₅⟩ := h₅
+  have h : t = 8 := by
+    omega
+  rw [h] at h₅
+  apply h₃ x 89
+  · exact h₀
+  · exact h₁
+  · norm_num
+  · exact h₄
+```

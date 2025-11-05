@@ -1,0 +1,36 @@
+-- Without loss of generality, we can assume that $a \geq b \geq c$.
+  wlog h : a ≥ b ∧ b ≥ c generalizing a b c with H
+  {
+    clear h
+    -- By assumption, $a$, $b$ and $c$ are positive.
+    have ha : 0 < a := h₀.1
+    have hb : 0 < b := h₀.2.1
+    have hc : 0 < c := h₀.2.2
+    -- We can relabel the vertices such that $a \geq b \geq c$.
+    let x := a
+    let y := b
+    let z := c
+    have h₁ : z < x + y := h₁
+    have h₂ : y < x + z := h₂
+    have h₃ : x < y + z := h₃
+    -- Use [A6] to show that the result holds for $x$, $y$ and $z$.
+    specialize H x y z (by simp [x, y, z]) (by simp [x, y, z]; linarith only [h₁, h₂, h₃]) (by linarith only [h₁, h₂, h₃])
+    -- The original inequality is symmetric, so we are done.
+    ring_nf at H ⊢
+    exact H
+  }
+
+  -- We can assume that $a \geq b \geq c$.
+  -- We have $a^2 b(a-b) + b^2 c(b-c) + c^2 a(c-a) = b c (a-b) (a-c) (a+b+c)$.
+  have H : a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) = b * c * (a - b) * (a - c) * (a + b + c) := by ring
+  rw [H]
+  -- We have $b \geq c$ and $a-b \geq a-c$.
+  -- We also have $a+b+c > 0$.
+  have ha : 0 < a := h₀.1
+  have hb : 0 < b := h₀.2.1
+  have hc : 0 < c := h₀.2.2
+  have h : b ≥ c := h.2
+  have h' : a - b ≥ a - c := by linarith only [h]
+  -- Multiplying these inequalities, we get the desired result.
+  nlinarith only [mul_nonneg_of_nonneg_of_nonpos (mul_nonneg_of_nonpos_of_nonneg (sub_nonpos.mpr h) (sub_nonneg.mpr h')) hc h]
+```

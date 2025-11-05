@@ -1,0 +1,72 @@
+set w : ℕ → ℝ := fun i => by
+    match i with
+    | 0 => 1 / 2
+    | 1 => 1 / 2
+    | _ => 0
+
+  set z : ℕ → ℝ := fun _ => 0
+
+  have hw : ∀ i : ℕ, 0 ≤ w i := by
+    intro i
+    simp [w]
+
+  have hw' : 0 < ∑ i ∈ Finset.range 2, w i := by
+    simp [w]
+
+  have hw'' : ∑ i ∈ Finset.range 2, w i = 1 := by
+    simp [w]
+
+  have hz : ∀ i : ℕ, 0 ≤ z i := by
+    intro i
+    simp [z]
+
+  have h : ((a + b) / 2) ^ n = (Finset.univ.Finset.sum (fun i => w i * a ^ i * b ^ (n - 1 - i)) ) ^ n := by
+    simp [w]
+    rw [Finset.sum_range_succ]
+    simp
+    ring_nf
+
+  have h' : (a ^ n + b ^ n) / 2 = (Finset.univ.Finset.sum (fun i => z i * a ^ i * b ^ (n - 1 - i)) ) ^ n := by
+    simp [z]
+    rw [Finset.sum_range_succ]
+    simp
+    ring_nf
+
+  rw [h, h']
+
+  have h'' : ∀ i ∈ Finset.range 2, 0 ≤ w i ∧ 0 ≤ z i ∧ w i + z i = 1 := by
+    intro i hi
+    simp [w, z]
+    fin_cases hi <;> simp
+
+  -- By the condition, it suffices to show that the function f(x) = x^n is convex down.
+  suffices h''': ∀ i ∈ Finset.range 2, (w i * a ^ i * b ^ (n - 1 - i)) ≤ (z i * a ^ i * b ^ (n - 1 - i)) from by
+    apply Finset.sum_le_sum
+    exact h'''
+    simp [w, z]
+
+  -- This can be shown directly from the condition n ≥ 1.
+  intro i hi
+  rw [Finset.mem_range] at hi
+  fin_cases hi <;> simp
+  · simp [w, z]
+  · simp [w, z]
+    calc
+      a ^ n ≤ a ^ n * b ^ n / b ^ n := by
+        apply div_le_mul_of_nonneg_right
+        apply pow_le_pow_left₀
+        repeat linarith only [h₀.left, h₀.right]
+        linarith only [h₀.left, h₀.right]
+      _ = b ^ n := by
+        rw [mul_div_cancel_right₀]
+        exact (pow_ne_zero_iff_ne_zero_of_pos h₀.right).mpr (by linarith only [h₀.left, h₀.right])
+      _ ≤ b ^ n * a ^ n / a ^ n := by
+        apply div_le_mul_of_nonneg_right
+        apply pow_le_pow_left₀
+        repeat linarith only [h₀.left, h₀.right]
+        linarith only [h₀.left, h₀.right]
+      _ = a ^ n := by
+        rw [mul_div_cancel_right₀]
+        exact (pow_ne_zero_iff_ne_zero_of_pos h₀.left).mpr (by linarith only [h₀.left, h₀.right])
+
+```

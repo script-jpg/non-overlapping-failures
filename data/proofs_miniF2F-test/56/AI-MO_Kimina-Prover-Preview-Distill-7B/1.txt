@@ -1,0 +1,338 @@
+-- A trivial lemma that might be useful for simplification.
+  have pow3eq2powmodm1 (m : ℕ) : 3 ^ m = 2 ^ m + (2 ^ m + 1) ^ m := by
+    cases m
+    · simp
+    · rw [pow_succ, pow_succ, Nat.add_sub_cancel, Nat.add_comm]
+      congr 1
+      · rw [Nat.pow_left_comm, Nat.pow_left_comm]
+        congr 1
+        rw [Nat.mul_comm]
+      · simp
+
+  -- Let $v_p(x)$ be the largest integer $k$ such that $p^k$ divides $x$.
+  let v (p x : ℕ) := Nat.factorization p x
+
+  -- Show that $f(2^n)$ is positive.
+  have f2pos (n : ℕ) : 0 < f (2 ^ n) := by
+    simp [h₀]
+    positivity
+
+  -- Define a function $\lambda_n = f(2^n) / f(2^m)$.
+  let λ (n m : ℕ) := f (2 ^ n) / f (2 ^ m)
+
+  -- Show that $\lambda_n$ is positive.
+  have qpos (n m : ℕ) (h : 0 < m ∧ 0 ≤ n) : 0 < λ n m := by
+    simp [λ]
+    rw [div_pos_iff]
+    exact f2pos _
+    simp
+    tauto
+
+  -- Show that $\lambda_n$ is positive.
+  have qpos' (n m : ℕ) (h : 0 < m ∧ 0 < n) : 0 < λ n m := by
+    simp [λ]
+    rw [div_pos_iff]
+    exact f2pos _
+    simp
+    tauto
+
+  -- Define a function $\mu_n = v_2(f(2^n))$.
+  let μ (n : ℕ) := v 2 (f (2 ^ n))
+
+  -- Show that $\mu_{n+1} = \mu_n + 1$.
+  have μsucc (n : ℕ) : μ (n + 1) = μ n + 1 := by
+    simp [μ, v, h₀]
+    rw [Nat.factorization_add Nat.prime_two.prime]
+    simp
+    have aux₁ : 4 ^ (2 ^ n) + 9 ^ (2 ^ n) < 6 ^ (2 ^ n) + 9 ^ (2 ^ n) := by
+      apply Nat.add_lt_add_right
+      rw [Nat.pow_lt_pow_iff_right]
+      exact Nat.lt_two_pow_self
+      apply Nat.le_of_lt_succ
+      exact Nat.lt_two_pow_self
+    have aux₂ : 6 ^ (2 ^ n) + 9 ^ (2 ^ n) ≤ 2 * 9 ^ (2 ^ n) := by
+      rw [Nat.add_le_add_iff_right]
+      nth_rw 1 [Nat.pow_le_pow_iff_right]
+      exact Nat.le_self_pow (by norm_num) (by norm_num)
+      apply Nat.le_of_lt_succ
+      exact Nat.lt_two_pow_self
+    have aux₃ : 2 * 9 ^ (2 ^ n) < 2 * 6 ^ (2 ^ n) := by
+      apply Nat.mul_lt_mul_left
+      rw [Nat.pow_lt_pow_iff_right]
+      exact Nat.lt_two_pow_self
+      apply Nat.le_of_lt_succ
+      exact Nat.lt_two_pow_self
+    rw [Nat.factorization_mul Nat.prime_two.prime, Nat.factorization_mul Nat.prime_two.prime]
+    apply Nat.factorization_eq_zero_of_not_dvd
+    · intro h
+      apply Nat.Prime.dvd_of_dvd_pow Nat.prime_two at h
+      have := Bzout.emultiplicity_two_add_mul_of_dvd h
+      have := Bzout.emultiplicity_two_add_mul_of_dvd h₁
+      omega
+    · rw [Nat.mul_sub_right_distrib]
+      rw [Nat.mul_sub_right_distrib]
+      rw [Nat.mul_sub_right_distrib]
+      rw [Nat.mul_sub_right_distrib]
+      norm_num
+      rw [Nat.sub_dvd_sub_iff_right (Nat.pow_le_pow_iff_right rfl (by norm_num))]
+      exact Nat.le_self_pow (by norm_num) (by norm_num)
+      rw [Nat.pow_le_pow_iff_right rfl (by norm_num)]
+      exact Nat.le_of_lt_succ (Nat.lt_two_pow_self _)
+    · exact Nat.dvd_trans (Bzout.dvd_mul_left _ _) (Bzout.dvd_mul_left _ _)
+    · apply Nat.dvd_trans (Bzout.dvd_mul_left _ _) (Bzout.dvd_mul_left _ _)
+
+  -- Show that $2^{\mu_n}$ divides $f(2^n)$.
+  have aux₁ (n : ℕ) : 2 ^ μ n ∣ f (2 ^ n) := by
+    simp [μ, v, h₀]
+    rw [Nat.pow_dvd_iff_le_factorization]
+    simp
+    linarith
+
+  -- Show that $\mu_{n+1} = \mu_n + 1$.
+  have aux₂ (n : ℕ) : μ (n + 1) = μ n + 1 := by
+    have := Nat.factorization_add Nat.prime_two.prime
+    have h₁ := Nat.factorization_mul Nat.prime_two.prime
+    have h₂ := Nat.factorization_mul Nat.prime_two.prime
+    simp [μ, h₁, h₂, Nat.factorization_pow,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factorization_self Nat.prime_two,
+      Nat.Prime.factor

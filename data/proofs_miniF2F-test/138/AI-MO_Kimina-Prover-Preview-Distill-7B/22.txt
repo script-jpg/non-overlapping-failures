@@ -1,0 +1,81 @@
+-- basic assumptions, that is, $(n,40) = 10$ and $[n,40] = 280$. What's more, we have $n = 70.$
+  have := Nat.gcd_mul_lcm n 40
+  rw [h₁, h₂] at this
+
+  -- We decompose 280 / 10 = 28 into those two parts, and denote them as $a$ and $b$.
+  let a := 280 / 10
+  let b := 280 / 10
+
+  -- This part, we try our best to prove the two numbers $a$ and $b$ are coprime.
+  have coprime_a_b : Nat.Coprime a b := by
+    unfold a b;
+    norm_num;
+    decide
+
+  have h₀ : a * b = 28 := by norm_num
+
+  have h₁ : a * b * 10 ^ 2 = 280 ^ 2 := by norm_num
+
+  have h₂ : 280 ^ 2 = n ^ 2 := by rw [← h₁]; ac_rfl
+
+  -- Since we now $a * b = 28$, we could narrow down the possibilities.
+  have abeq : a + b + (a * b) = 28 + (a * b) := by rw [← h₀]
+  rw [show 28 + (a * b) = 28 + 28 by rw [h₀]; unfold a b; norm_num] at abeq
+
+  have apos : 0 < a := by unfold a; norm_num
+  have bpos : 0 < b := by unfold b; norm_num
+
+  have nle : n ^ 2 ≤ 280 ^ 2 := by rw [h₁]; ac_rfl
+  have nle : n ≤ 280 := by unfold n at nle; simp at nle; exact nle
+
+  -- We want to prove $n = 70$, and we almost have $n^2 = 70^2$, so we just prove $n = 70$.
+  suffices n = 70 by rw [this]
+
+  -- We prove $n = 70$ by contradiction, that is, we want to find a contradiction if $n \neq 70$.
+  by_contra nneq
+
+  -- This segment, we try our best to prove $a + b = 28$, and we indeed found a contradiction.
+  have eq : a + b = 28 := by
+    clear * - coprime_a_b h₀ apos bpos h₁ h₂ nle nneq a b
+    suffices (a + b) * 28 = 28 * 28 by rw [← this]; ring
+    rw [show (a + b) * 28 = a * b * 28 + a * 28 + b * 28 by ring]
+    rw [h₁, h₀]
+    norm_num
+
+  clear * - coprime_a_b h₀ apos bpos h₁ h₂ nle nneq a b
+  have eqk : (a + b) ^ 2 = 784 := by rw [← eq]; norm_num
+  have eqk : (a + b) ^ 2 = (a - b) ^ 2 + 4 * (a * b) := by ring
+  rw [eqk] at eq
+  have eq : (a - b) ^ 2 = 0 := by
+    ring_nf at eq;
+    rw [add_comm] at eq;
+    rw [← eq]
+    norm_num
+  have eq : a - b = 0 := by
+    rw [pow_eq_zero_iff] at eq
+    exact eq
+  have eq : a = b := by
+    linarith
+  rw [eq] at h₂
+  have eq : b * b = 7 := by
+    linarith
+  have eq : b = 1 ∨ b = 7 := by
+    have eq : b ^ 2 = 7 := by linarith
+    have eq : b ^ 2 = 7 := by linarith
+    have := Nat.eq_one_or_prime_of_sq_eq_self_eq_mul_one_eq_zero (n := b) (m := 7) eq
+    rcases this with (hr | hp)
+   . left; exact hr
+   . right; exact hp
+  have eq : b = 7 := by
+    rcases eq with (hr | hp)
+   . rw [hr] at eq
+      linarith
+   . exact hp
+  have eq : a = 7 := by
+    rw [eq] at h₂
+    linarith
+  have eq : a + b = 14 := by
+    rw [eq, eq]; norm_num
+  rw [eq] at eqk
+  linarith
+```

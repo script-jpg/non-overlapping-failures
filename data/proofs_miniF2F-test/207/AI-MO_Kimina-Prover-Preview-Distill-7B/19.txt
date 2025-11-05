@@ -1,0 +1,116 @@
+-- The "x-y" and "x^2-y^2" expressions below are included to handle the case where x = y.
+  have h₄ : (x - y) * (x + y) * (a * x ^ 2 + b * y ^ 2) = a * x ^ 3 + b * y ^ 3 - (a * x + b * y) * (x ^ 2 + y ^ 2) := by ring
+  have h₅ : (x - y) * (x ^ 2 + y ^ 2) * (a * x ^ 2 + b * y ^ 2) = a * x ^ 4 + b * y ^ 4 - (a * x + b * y) * (x ^ 3 + y ^ 3) := by ring
+
+  -- Substitute the given equations into the expressions above.
+  have h₆ : (x - y) * (x + y) * 7 = 16 - 3 * (x ^ 2 + y ^ 2) := by rw [h₄, h₀, h₁]
+  have h₇ : (x - y) * (x ^ 2 + y ^ 2) * 7 = 42 - (x ^ 3 + y ^ 3) := by rw [h₅, h₀]
+
+  -- If the polynomial expressions (x-y), (x+y), and (x^2+y^2) are all non-zero, then we can divide them out.
+  have h₈ : (x - y) * (x + y) * 7 ≠ 0 := by
+    by_contra! h₈
+    have : (x - y) * (x + y) = 0 := by linarith
+    have : x = y ∨ x = -y := by
+      by_cases h₈ : x - y = 0
+      · tauto
+      · have : x + y = 0 := by linarith
+        tauto
+    rcases this with h₈ | h₈
+    · simp [h₈] at h₆
+      linarith
+    · simp [h₈] at h₇
+      linarith
+
+  have h₉ : (x - y) * (x ^ 2 + y ^ 2) ≠ 0 := by
+    by_contra! h₉
+    have : (x - y) * (x ^ 2 + y ^ 2) = 0 := by linarith
+    have : x = y ∨ x ^ 2 + y ^ 2 = 0 := by
+      by_cases h₉ : x - y = 0
+      · tauto
+      · have : x ^ 2 + y ^ 2 = 0 := by linarith
+        tauto
+    rcases this with h₉ | h₉
+    · simp [h₉] at h₆
+      linarith
+    · have : y = 0 := by nlinarith
+      simp [this] at h₁
+      linarith
+
+  -- We can divide by (x-y)(x+y) and (x-y)(x^2+y^2) since they are non-zero.
+  have h₁₀ : 7 = (16 - 3 * (x ^ 2 + y ^ 2)) / ((x - y) * (x + y)) := by
+    field_simp at h₆
+    linarith
+  have h₁₁ : (x ^ 3 + y ^ 3) = 42 - (x ^ 4 + y ^ 4) / 7 := by
+    field_simp at h₇
+    linarith
+
+  -- Let s = x+y and p = xy.
+  set s := x + y
+  set p := x * y
+
+  -- Rewrite the expressions so that s and p are used instead of x+y and xy.
+  have h₁₂ : s = (x + y) := by rfl
+  have h₁₃ : (x ^ 2 + y ^ 2) = s ^ 2 - 2 * p := by
+    rw [h₁₂]
+    linarith [sq_nonneg (x - y)]
+  have h₁₄ : (x ^ 3 + y ^ 3) = s ^ 3 - 3 * p * s := by
+    rw [h₁₂]
+    linarith [sq_nonneg (x - y), sq_nonneg (x + y)]
+  have h₁₅ : (x ^ 4 + y ^ 4) = s ^ 4 - 4 * p * s ^ 2 + 2 * p ^ 2 := by
+    rw [h₁₂]
+    linarith [sq_nonneg (x - y), sq_nonneg (x + y), sq_nonneg (x ^ 2 - y ^ 2)]
+
+  -- Substitute s and p into the equations.
+  have h₁₆ : (x ^ 2 + y ^ 2) = s ^ 2 - 2 * p := by exact h₁₃
+  have h₁₇ : (x ^ 3 + y ^ 3) = s ^ 3 - 3 * p * s := by exact h₁₄
+  have h₁₈ : (x ^ 4 + y ^ 4) = s ^ 4 - 4 * p * s ^ 2 + 2 * p ^ 2 := by exact h₁₅
+  have h₁₉ : 7 = (16 - 3 * (s ^ 2 - 2 * p)) / ((x - y) * (x + y)) := by
+    rw [h₁₆] at h₁₀
+    exact h₁₀
+  have h₂₀ : s ^ 3 - 3 * p * s = 42 - (s ^ 4 - 4 * p * s ^ 2 + 2 * p ^ 2) / 7 := by
+    rw [h₁₇, h₁₈] at h₁₁
+    exact h₁₁
+
+  -- If p is non-zero, we can divide the expressions by p.
+  have h₂₁ : p ≠ 0 := by
+    by_contra! h₂₁
+    have h₂₂ : x = 0 ∨ y = 0 := by
+      by_cases h₂₂ : x = 0
+      · tauto
+      · have : y = 0 := by nlinarith
+        tauto
+    rcases h₂₂ with h₂₂ | h₂₂
+    · simp [h₂₂] at h₁
+      linarith
+    · simp [h₂₂] at h₁
+      linarith
+
+  have h₂₂ : s ^ 3 - 3 * p * s = 42 - (s ^ 4 - 4 * p * s ^ 2 + 2 * p ^ 2) / 7 := by exact h₂₀
+
+  -- We can divide by p.
+  have h₂₃ : 7 = (16 - 3 * (s ^ 2 - 2 * p)) / ((x - y) * (x + y)) := by exact h₁₉
+  have h₂₄ : s ^ 3 - 3 * p * s - (s ^ 4 - 4 * p * s ^ 2 + 2 * p ^ 2) / 7 = 0 := by linarith
+
+  -- Factor out s from the equation.
+  have h₂₅ : s * (s ^ 2 - 4 * p - 1) = 0 := by
+    field_simp at h₂₄
+    nlinarith
+
+  -- If s is zero, then x = -y.
+  have h₂₆ : (x + y) * ((x + y) ^ 2 - 4 * p - 1) = 0 := by
+    rw [←h₂₅]
+    ring
+
+  by_cases h₂₇ : x + y = 0
+  · have h₂₈ : x = -y := by linarith
+    simp [h₂₈] at h₁
+    linarith
+  · have h₂₉ : (x + y) ^ 2 - 4 * p - 1 = 0 := by
+      field_simp at h₂₇
+      exact h₂₇
+    have h₃₀ : x ^ 2 + y ^ 2 = 1 := by
+      nlinarith
+    nlinarith
+
+
+```

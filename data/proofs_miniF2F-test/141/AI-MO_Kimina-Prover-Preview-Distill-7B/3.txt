@@ -1,0 +1,179 @@
+have h₁ : n ≥ 1 := by linarith
+
+  use (n + 1)
+
+  constructor
+
+  · linarith
+
+  · use n
+
+    have h₂ : (n + 1) * n = n + n * n := by linarith
+
+    have h₃ : n * n ≥ 2 * n := by
+
+      have : 0 < 2 * n := by linarith
+
+      have : n * n ≥ 2 * n := by linarith
+
+      exact this
+
+    linarith
+```
+
+# Solving the AMC12A 2002 Problem 6
+
+We need to prove that for any positive integer $n$, there exists a positive integer $m$ greater than $n$ such that $m \cdot n \leq m + n$.
+
+Let's start by understanding the inequality $m \cdot n \leq m + n$. We can rearrange it as:
+
+$$m \cdot n - m \leq n$$
+
+$$m(n - 1) \leq n$$
+
+If $n = 1$, the inequality becomes $m \cdot 1 \leq m + 1$, which simplifies to $m \leq m + 1$, which is always true for any positive integer $m$. 
+
+For $n > 1$, we have:
+
+$$m \leq \frac{n}{n - 1}$$
+
+Since $m$ must be a positive integer, we need $m \leq \lfloor \frac{n}{n - 1} \rfloor$. However, for $n > 1$, $\frac{n}{n - 1} = 1 + \frac{1}{n - 1} > 1$. So $\lfloor \frac{n}{n - 1} \rfloor = 1$.
+
+This suggests that for $n > 1$, the only positive integer $m$ satisfying the inequality is $m = 1$. But we need $m > n$, which would mean $1 > n$. This is only true for $n = 1$.
+
+Wait, this analysis seems contradictory. Let's try another approach.
+
+Suppose we choose $m = n + 1$. Then the inequality becomes:
+
+$$(n + 1) \cdot n \leq (n + 1) + n$$
+
+Expanding the left side: $n^2 + n \leq 2n + 1$
+
+Rearranging: $n^2 - n - 1 \leq 0$
+
+This is a quadratic inequality. For $n \geq 2$, $n^2 - n - 1 \geq 2^2 - 2 - 1 = 1 > 0$. So the inequality is false for $n \geq 2$.
+
+Wait, this also doesn't seem right. Let's analyze again.
+
+For $m = n + 1$, the inequality $m \cdot n \leq m + n$ becomes:
+
+$$(n + 1) \cdot n \leq (n + 1) + n$$
+
+Expanding: $n^2 + n \leq 2n + 1$
+
+Rearranging: $n^2 - n - 1 \leq 0$
+
+This inequality is indeed true for $n = 1$: $1^2 - 1 - 1 = -1 \leq 0$.
+
+For $n = 2$: $2^2 - 2 - 1 = 4 - 2 - 1 = 1 \not\leq 0$.
+
+Wait, we made a mistake. For $n = 2$, $m = n + 1 = 3$, we have $3 \cdot 2 = 6 > 3 + 2 = 5$, so the inequality is false.
+
+Wait, let's try $m = n + 1$ again. For $m = n + 1$, we have:
+
+$$m \cdot n = (n + 1) \cdot n = n^2 + n$$
+
+$$m + n = (n + 1) + n = 2n + 1$$
+
+We need $n^2 + n \leq 2n + 1$, which simplifies to $n^2 - n - 1 \leq 0$.
+
+This inequality holds for $n = 1$ (as we saw), but for $n \geq 2$, $n^2 - n - 1 > 0$. So $m = n + 1$ only works when $n = 1$.
+
+However, the problem asks for how many positive integers $m$ exist such that there is at least one positive integer $n$ with $m \cdot n \leq m + n$. 
+
+For $m = n + 1$, we need to find a positive integer $n$ where $m \cdot n \leq m + n$:
+- For $n = 1$, $m = 2$: $2 \cdot 1 = 2 \leq 2 + 1 = 3$ is true
+- For $n = 2$, $m = 3$: $3 \cdot 2 = 6 \not\leq 3 + 2 = 5$ is false 
+- For $n = 3$, $m = 4$: $4 \cdot 3 = 12 \not\leq 4 + 3 = 7$ is false 
+- etc.
+
+So $m = n + 1$ only works for $n = 1$. Therefore, for any $m \geq 2$, we can find an $n$ where $m \cdot n \leq m + n$ is false.
+
+Wait, this suggests that for $m \geq 2$, there exists an $n$ where $m \cdot n > m + n$ for all $n$. 
+
+Let's prove this formally in Lean:
+
+```tactics
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+```
+
+We need to show that for any positive integer $n$, there exists a positive integer $m$ greater than $n$ such that $m \cdot n \leq m + n$.
+
+```tactics
+theorem amc12a_2002_p6 (n : ℕ) (h₀ : 0 < n) : ∃ m, m > n ∧ ∃ p, m * p ≤ m + p := by
+```
+
+Let's prove this by constructing a specific value of $m$ for any given $n > 0$.
+
+```tactics
+have h₁ : n ≥ 1 := by linarith
+```
+
+We need to find a positive integer $m$ such that $m > n$ and there exists a positive integer $p$ with $m \cdot p \leq m + p$.
+
+Let's try $m = n + 1$:
+
+- For $m = n + 1$ to be greater than $n$: $n + 1 > n$ is true for any $n \geq 0$
+- We need to find $p$ such that $(n + 1) \cdot p \leq (n + 1) + p$
+- Simplifying: $n \cdot p + p \leq n + 1 + p$
+- $n \cdot p \leq n + 1$
+- For $n \geq 1$, if $p = 1$: $n \cdot 1 \leq n + 1$ is true
+
+So $m = n + 1$ and $p = 1$ should work.
+
+```tactics
+use (n + 1)
+constructor
+· linarith
+```
+
+So far, we've shown that $m = n + 1 > n$. 
+
+Now we need to find a positive integer $p$ such that $(n + 1) \cdot p \leq (n + 1) + p$.
+
+For $p = 1$:
+$(n + 1) \cdot 1 \leq (n + 1) + 1$ 
+$n + 1 \leq n + 2$ 
+$1 \leq 2$ 
+This is true.
+
+Let's complete the proof:
+
+```tactics
+· use 1
+  have h₂ : (n + 1) * 1 = n + 1 := by ring
+  linarith
+```
+
+The proof is complete! We've shown that for any positive integer $n$, $m = n + 1$ is a positive integer greater than $n$ such that $m \cdot 1 \leq m + 1$.
+
+This means there are infinitely many positive integers $m$ (specifically, all integers $m = n + 1$ where $n > 0$) that satisfy the condition. Therefore, the answer is \textbf{(E) } \text{infinitely many}.
+</think>
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+
+
+/-- For how many positive integers $m$ does there exist at least one positive integer n such that $m \cdot n \le m + n$?
+
+$ \textbf{(A) } 4\qquad \textbf{(B) } 6\qquad \textbf{(C) } 9\qquad \textbf{(D) } 12\qquad \textbf{(E) } \text{infinitely many} $ Show that it is \textbf{(E) } \text{infinitely many}.-/
+
+theorem amc12a_2002_p6 (n : ℕ) (h₀ : 0 < n) : ∃ m, m > n ∧ ∃ p, m * p ≤ m + p := by
+  have h₁ : n ≥ 1 := by linarith
+  use (n + 1)
+  constructor
+  · linarith
+  · use 1
+    have h₂ : (n + 1) * 1 = n + 1 := by ring
+    linarith
+```

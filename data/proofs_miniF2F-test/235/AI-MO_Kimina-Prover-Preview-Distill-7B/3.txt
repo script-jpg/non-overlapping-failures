@@ -1,0 +1,68 @@
+obtain ⟨x, hx⟩ := h₁
+  obtain ⟨t, ht⟩ := h₂
+
+  -- The condition `2 ≤ n` is equivalent to `1 < n` and also `· · 0 ≠ n`.
+  have : 0 ≠ n := by
+    rw [←Nat.one_lt_nsmul (by norm_num), ←pow_one t, ←pow_add]
+    refine Nat.ne_of_lt?_
+    apply Nat.lt_mul_of_pos_right
+    rw [←ht]
+    norm_num
+
+  -- We have `t ^ 2 = x` because `x ^ 3 = n` and `t ^ 4 = n`.
+  have eq_aux : t ^ 2 = x := by
+    rw [←ht, ←hx]
+    rw [←Nat.pow_mul, Nat.pow_left_inj (by norm_num)]
+
+  -- We have `x ^ 3 = t ^ 6` because `x = t ^ 2`.
+  have eq_aux' : x ^ 3 = t ^ 6 := by
+    rw [←eq_aux]
+    rw [←Nat.pow_mul, Nat.pow_left_inj (by norm_num)]
+
+  -- We have `t ^ 6 = n ^ 2` because `x ^ 3 = n ^ 2` and `x = t ^ 2`.
+  have eq_aux'' : t ^ 6 = n ^ 2 := by
+    rw [hx] at eq_aux'
+    rw [←eq_aux', ←ht]
+    rw [←Nat.pow_mul, Nat.pow_left_inj (by norm_num)]
+
+  -- Since `n ^ 2 = t ^ 6`, we have `n = t ^ 3` because both `n` and `t ^ 3` are positive.
+  have eq_aux''' : n = t ^ 3 := by
+    rw [←Nat.pow_left_inj (by norm_num), eq_aux'']
+    rw [Nat.pow_pos, Nat.pow_pos]
+
+  -- Since `2 ≤ n`, we have `8 ≤ t ^ 3` because `t ^ 3 = n`.
+  have t_cubed-bounds : 8 ≤ t ^ 3 := by
+    rw [←eq_aux''', h₀]
+
+  -- Since `8 ≤ t ^ 3`, we have `2 ≤ t` because both `t` and `2` are positive.
+  have t-bounds : 2 ≤ t := by
+    contrapose! t_cubed-bounds
+    interval_cases t
+    · norm_num at h₀
+    · norm_num at h₀
+
+  -- We have `4096 = 2 ^ 12` and `n = t ^ 3`.
+  have : 4096 = t ^ 12 := by
+    calc
+      4096 = 2 ^ 12 := by norm_num
+      _ = t ^ 12 := by rw [eq_aux''']
+
+  -- Since `4096 = t ^ 12` and `2 ≤ t`, we have `4096 ≤ n` because `n = t ^ 3`.
+  calc
+    4096 = t ^ 12 := by rw [this]
+    _ = (t ^ 3) * (t ^ 9) := by ring
+    _ ≤ (t ^ 3) * (t ^ 3) ^ 3 := by
+      rw [Nat.pow_le_pow_iff_right (by norm_num)]
+      apply Nat.pow_le_pow_left
+      exact t-bounds
+    _ = (t ^ 3) ^ 4 := by ring
+    _ ≤ n ^ 4 := by
+      rw [eq_aux''']
+      apply Nat.pow_le_pow_left
+      exact h₀
+    _ = n ^ 3 * n := by ring
+    _ ≤ n * n := by
+      rw [mul_le_mul_iff_of_pos_right]
+      exact h₀
+    _ = n := by ring
+```

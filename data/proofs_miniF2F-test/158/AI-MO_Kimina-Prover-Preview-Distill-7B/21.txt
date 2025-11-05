@@ -1,0 +1,118 @@
+-- 证明四个正实数的平方和除以它们的后继分别为 themselves 时，不等式成立
+  -- 这是 Cauchy-Schwarz 不等式的一个特例，可以使用代数方法证明
+  have h1 : ∀ x y : ℝ, 0 < x → 0 < y → x ^ 2 / y + y ^ 2 / x ≥ x + y := by
+    intro x y hx hy
+    have : x ^ 3 + y ^ 3 ≥ x ^ 2 * y + x * y ^ 2 := by
+      -- 利用立方和公式和非负性
+      nlinarith [sq_nonneg (x - y), sq_nonneg (x + y)]
+    -- 两边除以 xy
+    have hxy : 0 < x * y := mul_pos hx hy
+    apply (le_div_iff₀ hxy).mpr
+    linarith
+
+  -- 将上述思想推广到 4 个正实数
+  have h2 : ∀ a b c d : ℝ, 0 < a → 0 < b → 0 < c → 0 < d → a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a ≥ a + b + c + d := by
+    intro a b c d ha hb hc hd
+
+    -- 与 h1 类似，需要证明一个中间不等式
+    have h : a ^ 3 + b ^ 3 + c ^ 3 + d ^ 3 ≥ a ^ 2 * b + a ^ 2 * c + a ^ 2 * d + b ^ 2 * a + b ^ 2 * c + b ^ 2 * d + c ^ 2 * a + c ^ 2 * b + c ^ 2 * d + d ^ 2 * a + d ^ 2 * b + d ^ 2 * c := by
+      -- 利用立方和公式和非负性
+      nlinarith [sq_nonneg (a - b), sq_nonneg (a - c), sq_nonneg (a - d), sq_nonneg (b - c), sq_nonneg (b - d), sq_nonneg (c - d), sq_nonneg (a + b + c + d)]
+
+    -- 将上述不等式拆分为 4 个部分
+    have h3 : a ^ 3 / a + b ^ 3 / b + c ^ 3 / c + d ^ 3 / d ≥ a ^ 2 * b + a ^ 2 * c + a ^ 2 * d + b ^ 2 * a + b ^ 2 * c + b ^ 2 * d + c ^ 2 * a + c ^ 2 * b + c ^ 2 * d + d ^ 2 * a + d ^ 2 * b + d ^ 2 * c := by
+      -- 由于每个项都是非负的，可以分别不等
+      have h3_1 : a ^ 3 / a ≥ a ^ 2 * b := by
+        -- 分子分母同乘 a
+        have : a ^ 3 / a = a ^ 2 := by field_simp [ha.ne.symm]
+        rw [this]
+        nlinarith [sq_nonneg (a - b), sq_nonneg (a + b)]
+      have h3_2 : b ^ 3 / b ≥ b ^ 2 * c := by
+        -- 分子分母同乘 b
+        have : b ^ 3 / b = b ^ 2 := by field_simp [hb.ne.symm]
+        rw [this]
+        nlinarith [sq_nonneg (b - c), sq_nonneg (b + c)]
+      have h3_3 : c ^ 3 / c ≥ c ^ 2 * d := by
+        -- 分子分母同乘 c
+        have : c ^ 3 / c = c ^ 2 := by field_simp [hc.ne.symm]
+        rw [this]
+        nlinarith [sq_nonneg (c - d), sq_nonneg (c + d)]
+      have h3_4 : d ^ 3 / d ≥ d ^ 2 * a := by
+        -- 分子分母同乘 d
+        have : d ^ 3 / d = d ^ 2 := by field_simp [hd.ne.symm]
+        rw [this]
+        nlinarith [sq_nonneg (d - a), sq_nonneg (d + a)]
+      -- 将四个不等式相加
+      linarith
+
+    -- 进一步分解 h3
+    have h4 : a ^ 2 * b + a ^ 2 * c + a ^ 2 * d + b ^ 2 * a + b ^ 2 * c + b ^ 2 * d + c ^ 2 * a + c ^ 2 * b + c ^ 2 * d + d ^ 2 * a + d ^ 2 * b + d ^ 2 * c = (a ^ 2 * b + a ^ 2 * c + a ^ 2 * d) + (b ^ 2 * a + b ^ 2 * c + b ^ 2 * d) + (c ^ 2 * a + c ^ 2 * b + c ^ 2 * d) + (d ^ 2 * a + d ^ 2 * b + d ^ 2 * c) := by ring
+    rw [h4] at h3
+
+    -- 应用之前证明的两个变量不等式
+    have h5 : a ^ 2 * b + a ^ 2 * c ≥ a ^ 2 * a + a ^ 2 * a := by
+      apply h1 (a ^ 2) (a ^ 2) (by nlinarith) (by nlinarith)
+    have h6 : b ^ 2 * a + b ^ 2 * c ≥ b ^ 2 * b + b ^ 2 * b := by
+      apply h1 (b ^ 2) (b ^ 2) (by nlinarith) (by nlinarith)
+    have h7 : c ^ 2 * a + c ^ 2 * b ≥ c ^ 2 * c + c ^ 2 * c := by
+      apply h1 (c ^ 2) (c ^ 2) (by nlinarith) (by nlinarith)
+    have h8 : d ^ 2 * a + d ^ 2 * b ≥ d ^ 2 * d + d ^ 2 * d := by
+      apply h1 (d ^ 2) (d ^ 2) (by nlinarith) (by nlinarith)
+
+    -- 组合这些不等式
+    have h9 : a ^ 2 * b + a ^ 2 * c + b ^ 2 * a + b ^ 2 * c + c ^ 2 * a + c ^ 2 * b + d ^ 2 * a + d ^ 2 * b ≥ a ^ 2 * a + a ^ 2 * a + b ^ 2 * b + b ^ 2 * b + c ^ 2 * c + c ^ 2 * c + d ^ 2 * d + d ^ 2 * d := by linarith
+    have h10 : a ^ 2 * a + a ^ 2 * a + b ^ 2 * b + b ^ 2 * b + c ^ 2 * c + c ^ 2 * c + d ^ 2 * d + d ^ 2 * d = a ^ 3 + a ^ 3 + b ^ 3 + b ^ 3 + c ^ 3 + c ^ 3 + d ^ 3 + d ^ 3 := by ring
+    rw [h10] at h9
+
+    -- 利用之前证明的 3 变量不等式
+    have h11 : a ^ 3 / a + b ^ 3 / b + c ^ 3 / c + d ^ 3 / d ≥ a ^ 3 + a ^ 3 + b ^ 3 + b ^ 3 + c ^ 3 + c ^ 3 + d ^ 3 + d ^ 3 := by
+      have h11_1 : a ^ 3 / a ≥ a ^ 3 := by
+        -- 处理 a 项
+        have : a ^ 3 / a = a ^ 2 := by field_simp [ha.ne.symm]
+        nlinarith [sq_nonneg (a - a), sq_nonneg (a + a)]
+      have h11_2 : b ^ 3 / b ≥ b ^ 3 := by
+        -- 处理 b 项
+        have : b ^ 3 / b = b ^ 2 := by field_simp [hb.ne.symm]
+        nlinarith [sq_nonneg (b - b), sq_nonneg (b + b)]
+      have h11_3 : c ^ 3 / c ≥ c ^ 3 := by
+        -- 处理 c 项
+        have : c ^ 3 / c = c ^ 2 := by field_simp [hc.ne.symm]
+        nlinarith [sq_nonneg (c - c), sq_nonneg (c + c)]
+      have h11_4 : d ^ 3 / d ≥ d ^ 3 := by
+        -- 处理 d 项
+        have : d ^ 3 / d = d ^ 2 := by field_simp [hd.ne.symm]
+        nlinarith [sq_nonneg (d - d), sq_nonneg (d + d)]
+      linarith
+
+    -- 最后将所有部分组合起来
+    have h12 : a ^ 3 + a ^ 3 + b ^ 3 + b ^ 3 + c ^ 3 + c ^ 3 + d ^ 3 + d ^ 3 ≥ a ^ 2 * a + a ^ 2 * a + b ^ 2 * b + b ^ 2 * b + c ^ 2 * c + c ^ 2 * c + d ^ 2 * d + d ^ 2 * d := by linarith
+    have h13 : a ^ 2 * a + a ^ 2 * a + b ^ 2 * b + b ^ 2 * b + c ^ 2 * c + c ^ 2 * c + d ^ 2 * d + d ^ 2 * d = a ^ 3 + a ^ 3 + b ^ 3 + b ^ 3 + c ^ 3 + c ^ 3 + d ^ 3 + d ^ 3 := by ring
+    rw [h13] at h12
+
+    -- 应用不等式
+    have h14 : a ^ 3 / a + b ^ 3 / b + c ^ 3 / c + d ^ 3 / d ≥ a ^ 2 * a + a ^ 2 * a + b ^ 2 * b + b ^ 2 * b + c ^ 2 * c + c ^ 2 * c + d ^ 2 * d + d ^ 2 * d := by linarith
+    have h15 : a ^ 2 * a + a ^ 2 * a + b ^ 2 * b + b ^ 2 * b + c ^ 2 * c + c ^ 2 * c + d ^ 2 * d + d ^ 2 * d ≥ a ^ 2 * b + a ^ 2 * c + a ^ 2 * d + b ^ 2 * a + b ^ 2 * c + b ^ 2 * d + c ^ 2 * a + c ^ 2 * b + c ^ 2 * d + d ^ 2 * a + d ^ 2 * b + d ^ 2 * c := by linarith
+    linarith
+
+  -- 应用 h2 到 Specifically a, b, c, d
+  have h3:= h2 a b c d h₀.left h₀.right.left h₀.right.right.left h₀.right.right.right
+  -- 整理成 Jordan Form
+  have h4 : a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a ≥ a + b + c + d := by
+    have h4 : a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a ≥ a ^ 2 * b + a ^ 2 * b * c / a + a ^ 2 * b * c * d / (a * c) + a ^ 2 * b * c * d * (d / (a * b * c)) := by
+      -- 使用代数变形
+      calc
+        _ = a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a + a ^ 2 * b + a ^ 2 * b * c / a + a ^ 2 * b * c * d / (a * c) + a ^ 2 * b * c * d * (d / (a * b * c)) - (a ^ 2 * b + a ^ 2 * b * c / a + a ^ 2 * b * c * d / (a * c) + a ^ 2 * b * c * d * (d / (a * b * c))) := by ring
+        _ = a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a + a ^ 2 * b + a ^ 2 * b * c / a + a ^ 2 * b * c * d / (a * c) + a ^ 2 * b * c * d * (d / (a * b * c)) - ((a ^ 2 * b * c * d * (a * b * c * d / (a * b * c * d))) / (a * b * c * d)) * (a ^ 2 * b + a ^ 2 * b * c / a + a ^ 2 * b * c * d / (a * c) + a ^ 2 * b * c * d * (d / (a * b * c))) := by
+          field_simp
+          ring
+        _ = a ^ 2 / b + b ^ 2 / c + c ^ 2 / d + d ^ 2 / a + a ^ 2 * b + a ^ 2 * b * c / a + a ^ 2 * b * c * d / (a * c) + a ^ 2 * b * c * d * (d / (a * b * c)) - (a ^ 2 * b + a ^ 2 * b * c / a + a ^ 2 * b * c * d / (a * c) + a ^ 2 * b * c * d * (d / (a * b * c))) := by
+          field_simp
+          ring
+        _ = a ^ 3 * b * c * d / (a * b * c * d) + a ^ 2 * b * c * d * (d / (a * b * c)) + a ^ 2 * b * c * d * (a * b * c / (a * b * c * d)) + a ^ 2 * b * c * d * (a * b * c * d / (a * b * c * d)) - (a ^ 2 * b + a ^ 2 * b * c / a + a ^ 2 * b * c * d / (a * c) + a ^ 2 * b * c * d * (d / (a * b * c))) := by
+          field_simp
+          ring
+        _ = a ^ 3 * b * c * d / (a * b * c * d) + a ^ 2 * b * c * d * (d / (a * b * c)) + a ^ 2 * b * c * d * (a * b * c / (a * b * c * d)) + a ^ 2 * b * c * d * (a * b * c * d / (a * b * c * d)) - a ^ 2 * b - a ^ 2 * b * c / a - a ^ 2 * b * c * d / (a * c) - a ^ 2 * b * c * d * (d / (a * b * c)) := by ring
+        _ = a ^ 3 * b * c * d / (a * b * c * d) - a ^ 2 * b + a ^ 2 * b * c * d * (d / (a * b * c) + a * b * c / (a * b * c * d) + a * b * c * d / (a * b * c * d) - 1 / a - 1 / (a * c) - d / (a * b * c)) := by ring
+        _ = a ^ 3 * b * c * d / (a * b * c * d) - a ^ 2 * b - a ^ 2 * b * c / a - a ^ 2 * b * c * d / (a * c) - a ^ 2 * b * c * d * (d / (a * b * c) - 1 / (a * c) - d / (a * b * c)) := by ring
+        _ = a ^ 3 * b * c * d / (a * b * c * d) - a ^ 2 * b - a ^ 2 * b * c / a - a ^ 2 * b * c * d / (a * c) - a ^ 2 * b * c * d * (d / (a * b * c) - (a * b * c * d / (a * b * c * d)) - d / (a * b * c)) := by ring
+        _ = a ^ 3 * b * c * d / (a * b * c * d) - a ^ 2 * b - a ^ 2 * b * c / a - a ^ 2 * b * c * d / (a * c) - a ^ 2 * b * c * d * (d / (a * b * c) - a * b * c * d / (a * b * c * d) - d / (a * b * c

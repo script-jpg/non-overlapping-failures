@@ -1,0 +1,41 @@
+-- calculate f(14,52) using the properties given
+  -- i made a mistake in my previous informal solution, i'll correct it here.
+  have h1_52 : 0 < 14 → 0 < 52 → f 14 52 = f 52 14 := by
+    exact fun a b => h₁ a b (by linarith) (by linarith)
+  have h14_66 : 0 < 14 → 0 < 52 → f 14 52 = f 14 (14 + 52) := by
+    exact fun a b => h₂ a b (by linarith) (by linarith) |>.symm
+  have h66_52 : 0 < 14 → 0 < 52 → f 14 (14 + 52) = f 52 14 := by
+    exact fun a b => h₁ a b (by linarith) (by linarith)
+  have h14_24 : 0 < 14 → 0 < 52 → f 14 (14 + (14 + 52)) = f 14 (14 + 52) + f 14 (14 + 52) := by
+    exact fun a b => add_eq_of_eq_sub (h₂ a b (by linarith) (by linarith) |>.symm)
+  have h52_14 : 0 < 14 → 0 < 52 → f (14 + 52) 14 = f 14 (14 + 52) / 52 * 14 := by
+    exact fun a b => eq_div_of_mul_eq (h₂ a b (by linarith) (by linarith) |>.symm)
+  -- well, enough recurrence relations, let's compute the result
+  have a1 : f 14 52 = f 52 14 := h1_52 (by linarith) (by linarith)
+  have a2 : f 14 52 = f 14 (14 + 52) := by
+    rw [h1_52 (by linarith) (by linarith)]
+    rw [h₂ 14 52 (by linarith) (by linarith) |>.symm]
+    ring_nf
+  have a3 : f 14 (14 + 52) = f 52 14 := by
+    rw [h₁ 14 52 (by linarith) (by linarith)]
+  rw [a2, a3]
+  have a4 : f 14 (14 + (14 + 52)) = f 14 (14 + 52) + f 14 (14 + 52) := by
+    have : 14 + (14 + 52) = 14 + 52 + 14 := by ring
+    rw [this]
+    exact h14_24 (by linarith) (by linarith)
+  have a5 : f (14 + 52) 14 = f 14 (14 + 52) / 52 * 14 := by
+    have : 14 + 52 = 14 + (52 : ℕ) := by simp
+    rw [this]
+    exact h52_14 (by linarith) (by linarith)
+  have a6 : f 14 (14 + 52) = 364 := by
+    have : f 14 (14 + 52) = f (14 + 52) 14 * 52 / 14 := by
+      field_simp
+      rw [h52_14 (by linarith) (by linarith)]
+      ring
+    rw [this, a5]
+    field_simp
+    ring_nf
+    rw [h₁ 14 14 (by linarith) (by linarith), h₀ 14 (by linarith)]
+    norm_num
+  exact a6
+```

@@ -1,0 +1,65 @@
+-- lemma about sequence
+  have l_exp (x y : ℝ) (h : x > 0) (hxy : x < y) : ∃ z : NNReal, f 1 z = x ∧ f 2 z = y := by
+    use ⟨x, by simp⟩
+    simp [h₀, h₁]
+    linarith
+
+  -- lemma about sequence
+  have l_exp' (x y : ℝ) (h : x > 0) (hxy : x < y) : ∃ z : NNReal, f 1 z = x ∧ f 2 z = y ∧ f 3 z = x * (x + 1) := by
+    use ⟨x, by simp⟩
+    simp [h₀, h₁]
+    linarith
+
+  -- define the set of all points that satisfy the condition
+  set S := {a : NNReal | ∀ n : ℕ, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1}
+
+  -- show that `S` is a subset of the set of all points that are between 0 and 1
+  have hS : S ⊆ {a : NNReal | 0 < a ∧ a < 1} := by
+    intro a ha
+    simp [S] at ha
+    specialize ha 1 (by simp)
+    simp [h₀] at ha
+    exact ⟨ha.1, ha.2.2⟩
+
+  -- show that the set of all points that are between 0 and 1 is a subset of `S`
+  have hS' : {a : NNReal | 0 < a ∧ a < 1} ⊆ S := by
+    intro a ha
+    simp [S]
+    intro n hn
+    induction n with
+    | zero => linarith
+    | succ n ih =>
+      rcases ih with ⟨ih1, ih2⟩
+      specialize ha (n + 1) (by simp)
+      rcases ha with ⟨ha1, ha2⟩
+      rw [h₁]
+      refine ⟨?_,?_,?_⟩
+     .   exact ih1
+     .   rw [mul_lt_mul_iff_of_pos_left ih1]
+          linarith
+     .   rw [lt_sub_iff_add_lt]
+          linarith
+
+  -- show that we can make a sequence `f 1 a, f 2 a,...` that is strictly decreasing and each term is between 0 and 1
+  have h_dec : ∀ a ∈ {a : NNReal | 0 < a ∧ a < 1}, ∀ n : ℕ, 0 < f (n + 1) a ∧ f (n + 1) a < f n a ∧ f n a < 1 := by
+    intro a ha n
+    rcases ha with ⟨ha1, ha2⟩
+    induction n with
+    | zero => simp; split_ands <;> linarith
+    | succ n ih =>
+      rcases ih with ⟨ih1, ih2, ih3⟩
+      specialize ha (n + 1) (by simp)
+      rcases ha with ⟨ha1, ha2⟩
+      specialize h₁ a (n + 1) (by simp)
+      rw [h₁]
+      refine ⟨?_,?_,?_⟩
+     .   exact ih1
+     .   rw [mul_lt_mul_iff_of_pos_left ih1]
+          linarith
+     .   rw [lt_sub_iff_add_lt]
+          linarith
+
+  -- prove that `S` is a singleton set
+  refine ⟨∅.unique, by simp⟩
+
+```

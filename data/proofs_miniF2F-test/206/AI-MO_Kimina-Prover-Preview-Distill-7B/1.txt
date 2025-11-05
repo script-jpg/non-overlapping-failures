@@ -1,0 +1,54 @@
+-- Boring properties of the functional equation
+  have h₂ : ∀ x, f x ≥ 1 / 2 := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    positivity
+
+  have h₃ : ∀ x, f x < 1 := by
+    intro x
+    specialize h₁ (x - a)
+    rw [show x - a + a = x by ring] at h₁
+    rw [h₁]
+    have : Real.sqrt (f x - f x ^ 2) < 1 / 2 := by
+      apply (Real.sqrt_lt' (by linarith)).2
+      linarith
+    linarith
+
+  -- We prove that $f(x + 3a) = f(x)$ for all $x \in \mathbb{R}$, which implies the theorem with $b = 3a$.
+  have h₄ : ∀ x, f (x + 3 * a) = f x := by
+    intro x
+    calc
+      f (x + 3 * a) = 1 / 2 + Real.sqrt (f (x + 2 * a) - f (x + 2 * a) ^ 2) := by
+        specialize h₁ (x + 2 * a)
+        rw [show x + 2 * a + a = x + 3 * a by ring] at h₁
+        exact h₁
+      _ = 1 / 2 + Real.sqrt (1 / 2 + Real.sqrt (f (x + a) - f (x + a) ^ 2) - (1 / 2 + Real.sqrt (f (x + a) - f (x + a) ^ 2)) ^ 2) := by
+        specialize h₁ (x + a)
+        rw [show x + a + a = x + 2 * a by ring, show x + a + 2 * a = x + 3 * a by ring] at h₁
+        exact h₁
+      _ = 1 / 2 + Real.sqrt (1 / 2 + Real.sqrt (f x - f x ^ 2) - (1 / 2 + Real.sqrt (f x - f x ^ 2)) ^ 2) := by
+        specialize h₁ x
+        rw [show x + a = x + a by rfl, show x + 2 * a = x + a + a by ring] at h₁
+        rw [h₁]
+      _ = f x := by
+        have : Real.sqrt (1 / 2 + Real.sqrt (f x - f x ^ 2) - (1 / 2 + Real.sqrt (f x - f x ^ 2)) ^ 2) = 0 := by
+          suffices ∀ y < 1 / 2, 1 / 2 + Real.sqrt (y ^ 2 - y) = 0 by
+            specialize this (Real.sqrt (f x - f x ^ 2))
+            exact this rfl
+          intro y hy
+          have : y ^ 2 - y ≤ 0 := by
+            linarith [show y * (1 - y) ≥ 0 by positivity]
+          rw [Real.sqrt_eq_zero' (by linarith)]
+        rw [this]
+        ring
+
+  -- Finishing the theorem with the appropriate value of $b$
+  use 3 * a
+  refine ⟨by positivity,?_⟩
+  intro x
+  specialize h₄ x
+  exact h₄
+
+```

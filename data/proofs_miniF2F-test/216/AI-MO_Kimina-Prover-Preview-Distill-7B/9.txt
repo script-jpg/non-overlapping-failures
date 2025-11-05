@@ -1,0 +1,236 @@
+-- Let $A$ be the matrix of coefficients. By (a), the diagonal entries $A_{11}$, $A_{22}$,
+  -- $A_{33}$ are positive, and (b) the off-diagonal entries are negative.
+  let A : ℕ → ℕ → ℝ := fun i j => if i = j then a (3 * i) else a (3 * i + j - i - 1)
+  have hA0 {i} (hi : i < 3) : 0 < A i i := by
+    simp [A]
+    rcases hi with hi | hi | hi <;> { first | exact h₀.1; exact h₀.2.1; exact h₀.2.2 }
+  have hA_neg {i j} (hij : i ≠ j) : A i j < 0 := by
+    simp [A]
+    rcases hij with hij | hij | hij | hij | hij | hij <;> { first | exact h₁.1; exact h₁.2.1; exact h₁.2.2; exact h₂.1; exact h₂.2.1; exact h₂.2.2 }
+  have hA_pos {i j} (hi : i < 3) (hj : j < 3) (h : i ≠ j) : 0 < -A i j := by
+    simp [A]
+    rcases hi with hi | hi | hi <;> rcases hj with hj | hj | hj <;> { first | exact h₁.1; exact h₁.2.1; exact h₁.2.2; exact h₂.1; exact h₂.2.1; exact h₂.2.2 }
+  have hA {i j} (hij : i ≠ j) : -A i j = A j i := by simp [A]; ring
+
+  -- Let $a_i$ denote the sum of the coefficients in the $i$-th equation. By (c), we have $a_1 > 0$,
+  -- $a_2 > 0$, $a_3 > 0$.
+  let a : ℕ → ℝ := fun i => a (3 * i) + a (3 * i + 1) + a (3 * i + 2)
+  have h0 {i} (hi : i < 3) : 0 < a i := by
+    rcases hi with hi | hi | hi <;> { first | exact h₄; exact h₅; exact h₆ }
+
+  -- Let $x$ be the maximum of $x_1$, $x_2$, $x_3$.
+  let x := max x y z
+  have hx {i} (hi : i < 3) : x i ≤ x := by
+    rcases hi with hi | hi | hi <;> { first | exact max_le_max_left x y; exact max_le_max_right (max_le_max_left x y) z; exact max_le_max_right (max_le_max_left x y) z }
+
+  -- Let $j$ be the index of the equation with the largest coefficient sum.
+  let j := NatArgmax_argmax a 1 2 3
+  have hj0 : a j > 0 := by
+    have : 0 < a 1 := h0 1 (by decide)
+    have : 0 < a 2 := h0 2 (by decide)
+    have : 0 < a 3 := h0 3 (by decide)
+    generalize (a 1) 1 (by decide) = a1
+    generalize (a 2) 2 (by decide) = a2
+    generalize (a 3) 3 (by decide) = a3
+    simp only [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_ofNat, Nat.cast_add]
+    linarith
+  have hj1 : a j ≥ a i := by
+    have h1 : a 1 ≥ a i := by
+      rcases hi with hi | hi | hi <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_ofNat] gcongr
+      linarith
+    have h2 : a 2 ≥ a i := by
+      rcases hi with hi | hi | hi <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_ofNat] gcongr
+      linarith
+    have h3 : a 3 ≥ a i := by
+      rcases hi with hi | hi | hi <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_ofNat] gcongr
+      linarith
+    generalize (a 1) 1 (by decide) = a1
+    generalize (a 2) 2 (by decide) = a2
+    generalize (a 3) 3 (by decide) = a3
+    by_cases hi3 : i = 3
+    · rw [hi3]
+      linarith
+    · have : i < 3 := by omega
+      rcases this with this | this | this <;> { first | exact h1; exact h2; exact h3 }
+  have hj2 : j < 3 := by
+    simp [j]
+    have h1 : a 1 > 0 := h0 1 (by decide)
+    have h2 : a 2 > 0 := h0 2 (by decide)
+    have h3 : a 3 > 0 := h0 3 (by decide)
+    generalize (a 1) 1 (by decide) = a1
+    generalize (a 2) 2 (by decide) = a2
+    generalize (a 3) 3 (by decide) = a3
+    simp only [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_ofNat, Nat.cast_add]
+    linarith
+
+  -- Let $i$ be the index of the equation that has $x$ as the leading variable.
+  let i := NatArgmax_argmax (fun x => -A x j) 1 2 3
+  have hi0 : -A i j ≥ -A x j := by
+    have h1 : -A 1 j ≥ -A x j := by
+      rcases hx with hx | hx | hx <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h2 : -A 2 j ≥ -A x j := by
+      rcases hx with hx | hx | hx <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h3 : -A 3 j ≥ -A x j := by
+      rcases hx with hx | hx | hx <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    generalize (-A 1 j) 1 (by decide) = a1
+    generalize (-A 2 j) 2 (by decide) = a2
+    generalize (-A 3 j) 3 (by decide) = a3
+    by_cases hi3 : i = 3
+    · rw [hi3]
+      linarith
+    · have : i < 3 := by omega
+      rcases this with this | this | this <;> { first | exact h1; exact h2; exact h3 }
+  have hi1 : -A i j > -A x j := by
+    have h1 : -A 1 j > -A x j := by
+      rcases hx with hx | hx | hx <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h2 : -A 2 j > -A x j := by
+      rcases hx with hx | hx | hx <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h3 : -A 3 j > -A x j := by
+      rcases hx with hx | hx | hx <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    generalize (-A 1 j) 1 (by decide) = a1
+    generalize (-A 2 j) 2 (by decide) = a2
+    generalize (-A 3 j) 3 (by decide) = a3
+    by_cases hi3 : i = 3
+    · rw [hi3]
+      linarith
+    · have : i < 3 := by omega
+      rcases this with this | this | this <;> { first | exact h1; exact h2; exact h3 }
+  have hi2 : i < 3 := by
+    simp [i]
+    have h1 : -A 1 j > -A x j := by
+      rcases hx with hx | hx | hx <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h2 : -A 2 j > -A x j := by
+      rcases hx with hx | hx | hx <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h3 : -A 3 j > -A x j := by
+      rcases hx with hx | hx | hx <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    generalize (-A 1 j) 1 (by decide) = a1
+    generalize (-A 2 j) 2 (by decide) = a2
+    generalize (-A 3 j) 3 (by decide) = a3
+    by_cases hi3 : i = 3
+    · rw [hi3]
+      linarith
+    · have : i < 3 := by omega
+      rcases this with this | this | this <;> { first | exact h1; exact h2; exact h3 }
+
+  -- Let $k$ be the row index that has leading variable $x$.
+  let k := NatArgmax_argmax (fun x => -A i x) 1 2 3
+  have hk0 : -A k i ≥ -A k j := by
+    have h1 : -A k 1 ≥ -A k j := by
+      rcases hi2 with hi2 | hi2 | hi2 <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h2 : -A k 2 ≥ -A k j := by
+      rcases hi2 with hi2 | hi2 | hi2 <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h3 : -A k 3 ≥ -A k j := by
+      rcases hi2 with hi2 | hi2 | hi2 <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    generalize (-A k 1) 1 (by decide) = a1
+    generalize (-A k 2) 2 (by decide) = a2
+    generalize (-A k 3) 3 (by decide) = a3
+    by_cases hi3 : i = 3
+    · rw [hi3]
+      linarith
+    · have : i < 3 := by omega
+      rcases this with this | this | this <;> { first | exact h1; exact h2; exact h3 }
+  have hk1 : -A k i > -A k j := by
+    have h1 : -A k 1 > -A k j := by
+      rcases hi2 with hi2 | hi2 | hi2 <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h2 : -A k 2 > -A k j := by
+      rcases hi2 with hi2 | hi2 | hi2 <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h3 : -A k 3 > -A k j := by
+      rcases hi2 with hi2 | hi2 | hi2 <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    generalize (-A k 1) 1 (by decide) = a1
+    generalize (-A k 2) 2 (by decide) = a2
+    generalize (-A k 3) 3 (by decide) = a3
+    by_cases hi3 : i = 3
+    · rw [hi3]
+      linarith
+    · have : i < 3 := by omega
+      rcases this with this | this | this <;> { first | exact h1; exact h2; exact h3 }
+  have hk2 : k < 3 := by
+    simp [k]
+    have h1 : -A 1 i > -A k i := by
+      rcases hi2 with hi2 | hi2 | hi2 <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h2 : -A 2 i > -A k i := by
+      rcases hi2 with hi2 | hi2 | hi2 <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    have h3 : -A 3 i > -A k i := by
+      rcases hi2 with hi2 | hi2 | hi2 <;> simp [NatArgmax_argmax, Nat.reduceLeDiff, Nat.cast_neg, Nat.cast_add]
+      linarith
+    generalize (-A 1 i) 1 (by decide) = a1
+    generalize (-A 2 i) 2 (by decide) = a2
+    generalize (-A 3 i) 3 (by decide) = a3
+    by_cases hi3 : i = 3
+    · rw [hi3]
+      linarith
+    · have : i < 3 := by omega
+      rcases this with this | this | this <;> { first | exact h1; exact h2; exact h3 }
+
+  have hin1 : x i = x := by
+    have h1 : x 1 = x := max_eq_left_of_lt (by simp [x]; linarith)
+    have h2 : x 2 = x := max_eq_left_of_lt (by simp [x]; linarith)
+    have h3 : x 3 = x := max_eq_left_of_lt (by simp [x]; linarith)
+    generalize x 1 = x (by decide)
+    generalize x 2 = x (by decide)
+    generalize x 3 = x (by decide)
+    by_cases hi3 : i = 3
+    · rw [hi3]
+      linarith
+    · have : i < 3 := by omega
+      rcases this with this | this | this <;> { first | exact h1; exact h2; exact h3 }
+
+  have hin2 : x j = x := by
+    have h1 : x 1 = x := max_eq_right_of_lt (by simp [x]; linarith)
+    have h2 : x 2 = x := max_eq_right_of_lt (by simp [x]; linarith)
+    have h3 : x 3 = x := max_eq_right_of_lt (by simp [x]; linarith)
+    generalize x 1 = x (by decide)
+    generalize x 2 = x (by decide)
+    generalize x 3 = x (by decide)
+    by_cases hi3 : i = 3
+    · rw [hi3]
+      linarith
+    · have : i < 3 := by omega
+      rcases this with this | this | this <;> { first | exact h1; exact h2; exact h3 }
+
+  -- We have $x = -A_0 / a_0 = -A_1 / a_1 = -A_2 / a_2$.
+  have hx_eq : x = -a 0 / a 0 ∧ x = -a 1 / a 1 ∧ x = -a 2 / a 2 := by
+    have hx_eq_0 : x = -a 0 / a 0 := by
+      have : a 0 > 0 := h0 0 (by decide)
+      field_simp
+      linarith
+    have hx_eq_1 : x = -a 1 / a 1 := by
+      have : a 1 > 0 := h0 1 (by decide)
+      field_simp
+      linarith
+    have hx_eq_2 : x = -a 2 / a 2 := by
+      have : a 2 > 0 := h0 2 (by decide)
+      field_simp
+      linarith
+    exact ⟨hx_eq_0, hx_eq_1, hx_eq_2⟩
+
+  -- The first equation can be rewritten as $[A_{11} + x(A_{12} + A_{13})] x_1 = 0$.
+  have h₀0 : -a 0 / a 0 = -A 0 0 / A 0 0 := by simp [A]; ring
+  have h₀1 : A 0 0 + x * (A 0 1 + A 0 2) = 0 := by
+    have : A 0 0 = a 0 := by simp [A]
+    have : A 0 1 = -a 1 := by simp [A]; ring
+    have : A 0 2 = -a 2 := by simp [A]; ring
+    simp [hx_eq]
+    rw [A]
+    field_simp
+    linarith
+  -- The second equation can be rewritten as $[A_{21} + x(A_{22} + A_{23})] x_2 = 0$.
+  have h₁0 : -a 1 / a 1 = -A 1 0 / A 1 0 := by simp [A]; ring
+  have h₁1 : A 1

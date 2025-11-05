@@ -1,0 +1,108 @@
+-- -- auxiliary lemma : if $a \mid b$, then $a \mid b + k$ if and only if $a \mid k$.
+  have aux (a b k : ℕ) (hab : a ∣ b) : a ∣ b + k ↔ a ∣ k := by
+    apply Iff.intro (fun h => (Nat.dvd_add.mp h).mp hab)
+    · intro h
+      exact (Nat.dvd_add.mp h).mpr hab
+
+  -- For $k < 5$, $6n + 5$ is not relatively prime to $6n + 3$.
+  have contra (h : k < 5) : False := by
+    -- Because for any prime number $p$, $p \mid 6n + 5$ if and only if $p \mid 6n + 3$.
+    have h' (n : ℕ) (hp : Nat.Prime p) : p ∣ 6 * n + 5 ↔ p ∣ 6 * n + 3 := by
+      rw [← Nat.dvd_add, ← Nat.dvd_add]
+      · apply Iff.intro (fun h => (Nat.dvd_add.mp h).mp (by norm_num))
+        · intro h
+          apply (aux p (6 * n) 2).mpr (by norm_num)
+      · apply Iff.intro (fun h => (Nat.dvd_add.mp h).mp (by norm_num))
+        · intro h
+          apply (aux p (6 * n) 2).mp (by norm_num)
+      · apply Iff.intro (fun h => (Nat.dvd_add.mp h).mp (by norm_num))
+        · intro h
+          apply (aux p (6 * n) 1).mpr (by norm_num)
+      · apply Iff.intro (fun h => (Nat.dvd_add.mp h).mp (by norm_num))
+        · intro h
+          apply (aux p (6 * n) 1).mp (by norm_num)
+
+    -- Let $p$ be a prime number such that $p \mid 6n + 5$ for some $n$.
+    have ex (n : ℕ) : ∃ p, Nat.Prime p ∧ p ∣ 6 * n + 5 := by
+      by_contra h
+      simp at h
+      -- For every prime number $p$, if $p \mid 6n + 5$, then $p \mid 6n + 3$.
+      have h' (p : ℕ) (hp : Nat.Prime p) (h' : p ∣ 6 * n + 5) : p ∣ 6 * n + 3 := by
+        apply h' (p : ℕ) (by norm_num) |>.mpr
+        exact h' p hp h'
+      -- It means that $p \mid 6n + 3$ for some $p \mid 6n + 5$.
+      have dvd (p : ℕ) (hp : Nat.Prime p) : p ∣ 6 * n + 5 → p ∣ 6 * n + 3 := by
+        intro h
+        exact h' p hp h
+      -- Therefore, the set of prime numbers that divide $6n + 5$ is equal to the set of prime numbers that divide $6n + 3$.
+      have eq : (6 * n + 5).primeFactors = (6 * n + 3).primeFactors := by
+        apply Nat.primeFactors_congr (by norm_num) (fun p hp => (dvd p hp))
+      -- However, $6n + 5$ and $6n + 3$ are coprime, which means that the set of prime numbers that divide $6n + 5$ and the set of prime numbers that divide $6n + 3$ are disjoint.
+      have disjoint : Disjoint (6 * n + 5).primeFactors (6 * n + 3).primeFactors := by
+        rw [Nat.disjoint_primeFactors_iff_coprime]
+        exact h₁ n
+      -- It is impossible, as the set of prime numbers that divide $6n + 5$ is equal to the set of prime numbers that divide $6n + 3$, but these two sets are disjoint.
+      rw [eq] at disjoint
+      exact Nat.not_disjoint_of_mem (b := (6 * n + 5).primeFactors) (h := disjoint) (mem_self _)
+
+    -- Let $p$ be a prime number such that $p \mid 6n + 5$ for some $n$.
+    obtain ⟨p, hp, h'⟩ := ex 0
+    -- Write $p$ as a member of the prime factorization of $6n + 5$ for some $n$.
+    have mem (n : ℕ) : p ∈ (6 * n + 5).primeFactors := by
+      rw [Nat.mem_primeFactors_iff_dvd]
+      exact ⟨hp, h' n⟩
+    -- However, $p \mid 6n + 3$ for all $n$.
+    have dvd (n : ℕ) : p ∣ 6 * n + 3 := by
+      rw [← Nat.dvd_add, ← Nat.dvd_add]
+      apply (aux p (6 * n) 2).mpr (by norm_num)
+      apply dvd n
+    -- It means that $p \mid 3$.
+    have dvd3 : p ∣ 3 := by
+      rw [show 3 = 6 * 0 + 3 by norm_num]
+      apply dvd 0
+    -- However, $p \mid 5$ because $p \mid 6n + 5$ for some $n$.
+    have dvd5 : p ∣ 5 := by
+      rw [show 5 = 6 * 0 + 5 by norm_num]
+      apply dvd 0
+    -- Contradiction: $p \mid 3$ and $p \mid 5$ implies $p \mid |5 - 3| = 2$.
+    have : p ∣ 2 := by
+      apply Nat.dvd_gcd dvd3 dvd5
+    have : p = 2 := by
+      have : p ≤ 2 := by
+        apply Nat.le_of_dvd (by norm_num) this
+      exact (Nat.le_antisymm this (Nat.Prime.two_le hp))
+    rw [this] at h'
+    -- Take $n = 1$ to get a contradiction.
+    specialize h' 1
+    norm_num at h'
+
+  -- For $k < 5$, $6n + k$ is not relatively prime to $6n + 3$ or $6n + 2$.
+  have contra (h : k < 5) : False := by
+    -- For $k < 5$, we can find an integer $n$ such that $6n + k$ and $6n + 3$ are not relatively prime.
+    have h' (k : ℕ) (h : k < 5) : ∃ n, ¬(Nat.gcd (6 * n + k) (6 * n + 3) = 1) := by
+      by_contra h'
+      simp at h'
+      -- For every $n$, $6n + k$ and $6n + 3$ are relatively prime.
+      have h'' n := h₁ n
+      -- Take $n = 1$ to get a contradiction.
+      specialize h'' 1
+      norm_num at h''
+
+    -- We use the above lemma to find an integer $n$ such that $6n + k$ and $6n + 3$ are not relatively prime.
+    obtain ⟨n, h⟩ := h' k h
+    -- By the hypothesis, $6n + k$ and $6n + 3$ are relatively prime.
+    have h' := h₁ n
+    -- We get a contradiction.
+    exact h h'
+
+  -- By contradiction, $5 \leq k$.
+  by_contra h
+  push_neg at h
+  interval_cases k
+  · exact contra (by norm_num)
+  · exact contra (by norm_num)
+  · exact contra (by norm_num)
+  · exact contra (by norm_num)
+  · norm_num
+
+```

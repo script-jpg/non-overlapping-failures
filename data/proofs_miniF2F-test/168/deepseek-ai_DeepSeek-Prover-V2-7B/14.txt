@@ -1,0 +1,55 @@
+have h₂ : a ^ 3 = 8 := by linear_combination h₀
+    have h₃ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := h₁
+    have h₄ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := by linear_combination h₃
+    have h₅ : a = 2 := by
+      have h₅₀ : a ^ 3 = 8 := h₂
+      have h₅₁ : a = 2 := by
+        have h₅₂ : a ^ 3 - 8 = 0 := by linear_combination h₀
+        have h₅₃ : (a - 2) * (a ^ 2 + 2 * a + 4) = 0 := by
+          ring_nf at h₅₂ ⊢
+          <;> linear_combination h₅₂
+        have h₅₄ : a - 2 = 0 ∨ a ^ 2 + 2 * a + 4 = 0 := by apply eq_zero_or_eq_zero_of_mul_eq_zero h₅₃
+        cases h₅₄ with
+        | inl h₅₄ =>
+          apply eq_of_sub_eq_zero h₅₄
+        | inr h₅₄ =>
+          have h₅₅ : (a + 1) ^ 2 + 3 = 0 := by
+            ring_nf at h₅₄ ⊢
+            <;> linear_combination h₅₄
+          have h₅₆ : (a + 1) ^ 2 + 3 = 0 := h₅₅
+          have h₅₇ : (a + 1) ^ 2 = -3 := by linear_combination h₅₆
+          have h₅₈ : (a + 1) ^ 2 ≥ 0 := by nlinarith
+          have h₅₉ : -3 ≥ 0 := by nlinarith
+          nlinarith
+      exact h₅₁
+    have h₆ : b = 4 := by
+      have h₆₀ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := h₄
+      have h₆₁ : b = 4 := by
+        have h₆₂ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := h₃
+        have h₆₃ : (b - 4) * (b ^ 2 - 4 * b - 16) = 0 := by
+          ring_nf at h₆₂ ⊢
+          <;> linear_combination h₆₂
+        have h₆₄ : b - 4 = 0 ∨ b ^ 2 - 4 * b - 16 = 0 := by apply eq_zero_or_eq_zero_of_mul_eq_zero h₆₃
+        cases h₆₄ with
+        | inl h₆₄ =>
+          apply eq_of_sub_eq_zero h₆₄
+        | inr h₆₄ =>
+          have h₆₅ : b ^ 2 - 4 * b - 16 = 0 := h₆₄
+          have h₆₆ : b = 4 ∨ b = -2 := by
+            apply or_iff_not_imp_left.mpr
+            intro h₆₇
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₆₇)
+            nlinarith
+          cases h₆₆ with
+          | inl h₆₆ =>
+            exact h₆₆
+          | inr h₆₆ =>
+            have h₆₇ : b = -2 := h₆₆
+            rw [h₆₇] at h₆₀
+            ring_nf at h₆₀ ⊢
+            <;> nlinarith [sq_nonneg (b + 2), sq_nonneg (b - 4)]
+      exact h₆₁
+    simp_all [Complex.abs, Complex.normSq]
+    <;> norm_num
+    <;>
+    apply le_of_pow_le

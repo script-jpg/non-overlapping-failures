@@ -1,0 +1,51 @@
+-- proof by contradiction
+  by_contra h
+  -- we derive a contradiction mod 7
+  have h1 : 4 * x ^ 3 - 7 * y ^ 3 ≡ 2003 [ZMOD 7] := by exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm h)) (Int.modEq_refl (7 * y ^ 3)))
+  -- we have $4x^3 - 7y^3 \equiv 2003 \equiv 5 \pmod{7}$
+  have h2 : 4 * x ^ 3 - 7 * y ^ 3 ≡ 5 [ZMOD 7] := by
+    rw [h1]
+    unfold Int.ModEq
+    norm_cast
+    rw [Int.modEq_iff_dvd]
+    -- we have $2003 = 7 \times 286 + 1$
+    norm_num
+    simp
+  -- we have $7 \mid 4x^3$
+  have h3 : 7 ∣ 4 * x ^ 3 := by
+    apply Int.dvd_sub
+    simp
+    exact dvd_sub_of_emod_eq h2
+    simp
+  -- Since 7 is a prime number, we have $7 \mid x$
+  have h4 : 7 ∣ x := by
+    apply Prime.dvd_of_dvd_pow at h3
+    exact h3
+    norm_num
+    apply Int.prime_iff_natAbs_prime.mpr
+    norm_num
+  clear h2
+  -- there exists an integer $m$ such that $x = 7m$
+  have h5 : ∃ m : ℤ, x = 7 * m := by exact h4
+  obtain ⟨m, hm⟩ := h5
+  -- we derive a contradiction
+  rw [hm, pow_three, ← mul_assoc, mul_comm] at h
+  have h1 : 4 * 7 ^ 3 * m ^ 3 - 7 * y ^ 3 = 7 * (4 * 7 ^ 2 * m ^ 3 - y ^ 3) := by ring
+  rw [h1] at h
+  have h2 : 4 * 7 ^ 2 * m ^ 3 - y ^ 3 = 286 := by omega
+  have h3 : 286 ≡ 0 [ZMOD 7] := by
+    unfold Int.ModEq
+    norm_cast
+    rw [Int.modEq_iff_dvd]
+    norm_num
+    simp
+  have h4 : 4 * 7 ^ 2 * m ^ 3 - y ^ 3 ≡ 0 [ZMOD 7] := by exact Int.ModEq.symm (Int.ModEq.trans (id (Int.ModEq.symm h2)) (Int.modEq_refl (4 * 7 ^ 2 * m ^ 3)))
+  have h5 : 4 * 7 ^ 2 * m ^ 3 - y ^ 3 ≡ 286 [ZMOD 7] := by exact Int.ModEq.symm (Int.ModEq.trans h3 (id (Int.ModEq.symm h2)))
+  have h6 : ¬ (4 * 7 ^ 2 * m ^ 3 - y ^ 3 ≡ 286 [ZMOD 7]) := by
+    have : y ^ 3 % 7 = 0 ∨ y ^ 3 % 7 = 1 ∨ y ^ 3 % 7 = 6 := by
+      have : y % 7 = 0 ∨ y % 7 = 1 ∨ y % 7 = 2 ∨ y % 7 = 3 ∨ y % 7 = 4 ∨ y % 7 = 5 ∨ y % 7 = 6 := by omega
+      rcases this with (h | h | h | h | h | h | h) <;> simp [h, pow_three, Int.add_emod, Int.mul_emod]
+    rcases this with (h | h | h) <;> simp [h, Int.sub_emod, Int.add_emod, Int.mul_emod]
+  contradiction
+
+```

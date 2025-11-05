@@ -1,0 +1,37 @@
+-- We show that $2^k \equiv 2^{k \bmod 3} \pmod{7}$.
+  have hmod : ∀ k, 2 ^ k % 7 = 2 ^ (k % 3) % 7 := by
+    intro k
+    have : 7 ∣ 2 ^ 3 - 1 := by norm_num
+    have := Int.ModEq.pow k this
+    have : 2 ^ (3 : ℕ) ≡ 1 [MOD 7] := by tauto
+    nth_rw 1 [← this]
+    have : k = 3 * (k / 3) + k % 3 := by exact Eq.symm (div_add_mod k 3)
+    rw [this, pow_add, pow_mul]
+    simp
+
+  -- Then, we show that $\sum_{k=0}^{100} 2^k \equiv \sum_{k=0}^{2} 2^k \pmod{7}$.
+  have hsum : (∑ k in Finset.range 101, 2 ^ k) % 7 = (∑ k in Finset.range 3, 2 ^ k) % 7 := by
+    have : 101 = 3 * 33 + 2 := by norm_num
+    rw [this]
+    rw [Finset.sum_range_succ']
+    set n := 33
+    generalize 2 ^ 2 % 7 = x
+    congr
+    rw [Finset.sum_range_succ', Finset.sum_range_succ']
+    rw [show 2 ^ 3 * (n : ℤ) = 2 ^ 3 * n by norm_cast]
+    rw [Int.ModEq.add_right (2 ^ (3 * n) % 7)]
+    have : 2 ^ 3 * n ≡ 0 [MOD 7] := by
+      suffices 7 ∣ 2 ^ 3 * n by exact Int.modEq_zero_iff_dvd.mpr this
+      suffices 7 ∣ 2 ^ 3 * (n : ℤ) by norm_cast at this
+      apply dvd_mul_of_dvd_left
+      rw [show (7 : ℤ) = (7 : ℕ) by norm_cast, show (2 ^ 3 : ℤ) = (2 ^ 3 : ℕ) by norm_cast]
+      exact Int.dvd_cast.natCast_dvd (2 ^ 3) n
+    exact Int.ModEq.add_right this
+    -- We Finally compute $\sum_{k=0}^{2} 2^k = 1 + 2 + 4 = 7$.
+    rw [Finset.sum_range_succ', Finset.sum_range_succ']
+    norm_num
+
+  -- So, the remainder when $1 + 2 + 2^2 + 2^3 + \dots + 2^{100}$ is divided by 7 is 0.
+  norm_num [hsum]
+
+```

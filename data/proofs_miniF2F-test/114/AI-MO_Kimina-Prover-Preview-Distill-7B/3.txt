@@ -1,0 +1,148 @@
+-- We give a necessary and sufficient condition for $n = 41$ to be the smallest positive integer $n$ for which $p(n)$ and $p(n+1)$ share a common factor greater than $1$.
+  have h₂ : n = 41 ↔ 1 < Nat.gcd (p n) (p (n + 1)) := by
+    -- We show that $n = 41$ is the smallest such positive integer.
+    constructor
+    · -- We show that if $n = 41$, then $p(n)$ and $p(n+1)$ share a common factor greater than $1$.
+      intro h
+      simp [h, h₀]
+      norm_num
+    · -- We show that if $p(n)$ and $p(n+1)$ share a common factor greater than $1$, then $n = 41$.
+      intro h
+      by_contra! h₃
+      -- Suffices to show that if $n \neq 41$, then the common factor of $p(n)$ and $p(n+1)$ is $1$.
+      replace h : n = 41 := by
+        by_contra!
+        replace h : n < 41 ∨ 41 < n := by
+          rw [ne_iff_lt_or_gt] at this
+          exact this
+        rcases h with h | h
+        · -- If $n < 41$, then the common factor is $1$.
+          apply by_contra! at h₂
+          rcases h₂ with ⟨m, hm, h₄⟩
+          have h₅ : 0 < m := by
+            have h₅ : m ∣ 41 ^ 2 - 41 + 41 := by
+              calc
+                m ∣ p n := by exact (Nat.gcd_dvd (p n) (p (n + 1))).left
+                _ = n ^ 2 - n + 41 := by exact h₀ n
+                _ < 41 ^ 2 - 41 + 41 := by nlinarith
+            refine Nat.pos_of_dvd_of_pos h₅?_
+            by_contra! h₆
+            simp at h₆
+            rw [h₆] at h₄
+            omega
+          have h₆ : m ∣ n ^ 2 - n + 41 := by
+            calc
+              m ∣ p n := by exact (Nat.gcd_dvd (p n) (p (n + 1))).left
+              _ = n ^ 2 - n + 41 := by exact h₀ n
+          have h₇ : m ∣ (n + 1) ^ 2 - (n + 1) + 41 := by
+            calc
+              m ∣ p (n + 1) := by exact (Nat.gcd_dvd (p n) (p (n + 1))).right
+              _ = (n + 1) ^ 2 - (n + 1) + 41 := by exact h₀ (n + 1)
+          rw [show (n + 1) ^ 2 - (n + 1) + 41 = n ^ 2 + n + 41 by ring_nf at *; omega] at h₇
+          rw [show n ^ 2 - n + 41 = n * (n - 1) + 41 by ring_nf at *; omega] at h₆
+          -- By the above equalities, we have $m \mid n(n-1)$ and $m \mid n^2+n+41$.
+          have h₈ : m ∣ n * (n - 1) := by
+            calc
+              m ∣ n * (n - 1) + 41 := h₆
+              _ ∣ n * (n - 1) := by apply Nat.dvd_add_right
+          have h₉ : m ∣ n + (n - 1) + 1 := by
+            calc
+              m ∣ n ^ 2 + n + 41 := h₇
+              _ = n + (n - 1) + 1 := by
+                apply Eq.symm
+                refine Nat.add_left_cancel_iff.mpr?_
+                rw [Nat.Simproc.add_sub_le _ (n := n)]
+                at h₈
+                calc
+                  n ≤ n * (n - 1) := by rw [Nat.le_mul_one_iff]; omega
+                  _ ≤ m ∣ n * (n - 1) := by
+                    apply Nat.le_of_dvd h₈
+                  _ = n ^ 2 - n + 41 := by exact h₀ n
+                  _ ≤ n ^ 2 + n + 41 := by omega
+              _ = n + (n - 1) + 1 := by ring
+          rw [show n + (n - 1) + 1 = 2 * n - 1 + 1 by omega] at h₉
+          -- Hence $m \mid 2n$ and $m \mid 2n-1$.
+          have h₁₀ : m ∣ 2 * n := by
+            calc
+              m ∣ 2 * n := by rw [show 2 * n = n + (n - 1) + 1 by omega, h₉]
+              _ ∣ 2 * n := by apply Nat.dvd_add_right
+          have h₁₁ : m ∣ 1 := by
+            calc
+              m ∣ 2 * n - (2 * n - 1) := by exact Nat.dvd_sub h₁₀ h₉
+              _ = 1 := by omega
+          -- So $m = 1$.
+          have h₁₂ : m = 1 := by
+            apply Nat.eq_one_of_dvd_one
+            exact h₁₁
+          simp [h₁₂] at h₄
+          omega
+        · -- If $n > 41$, then the common factor is $1$.
+          replace h : n > 41 := by omega
+          apply by_contra! at h₂
+          rcases h₂ with ⟨m, hm, h₄⟩
+          have h₅ : 0 < m := by
+            have h₅ : m ∣ p n := by
+              calc
+                m ∣ Nat.gcd (p n) (p (n + 1)) := by exact Nat.dvd_gcd_iff.mpr ⟨h₄, hm⟩
+                _ = n ^ 2 - n + 41 := by exact h₀ n
+            refine Nat.pos_of_dvd_of_pos h₅?_
+            by_contra! h₆
+            simp at h₆
+            rw [h₆] at h₀
+            omega
+          have h₆ : m ∣ p n := h₄
+          have h₇ : m ∣ p (n + 1) := by
+            calc
+              m ∣ Nat.gcd (p n) (p (n + 1)) := by exact Nat.dvd_gcd_iff.mpr ⟨h₄, hm⟩
+              _ = p (n + 1) := by exact hm
+          rw [h₀, h₀] at h₆ h₇
+          -- By the above equalities, we have $m \mid n(n-1)$ and $m \mid n^2+n+41$.
+          have h₈ : m ∣ n * (n - 1) := by
+            calc
+              m ∣ n * (n - 1) + 41 := h₆
+              _ ∣ n * (n - 1) := by apply Nat.dvd_add_right
+          have h₉ : m ∣ n + (n - 1) + 1 := by
+            calc
+              m ∣ n ^ 2 + n + 41 := h₇
+              _ = n + (n - 1) + 1 := by
+                apply Eq.symm
+                refine Nat.add_left_cancel_iff.mpr?_
+                rw [Nat.Simproc.add_sub_le _ (n := n)]
+                at h₈
+                calc
+                  n ≤ n * (n - 1) := by rw [Nat.le_mul_one_iff]; omega
+                  _ ≤ m ∣ n * (n - 1) := by
+                    apply Nat.le_of_dvd h₈
+                  _ = n ^ 2 - n + 41 := by exact h₀ n
+                  _ ≤ n ^ 2 + n + 41 := by omega
+              _ = n + (n - 1) + 1 := by ring
+          rw [show n + (n - 1) + 1 = 2 * n - 1 + 1 by omega] at h₉
+          -- Hence $m \mid 2n$ and $m \mid 2n-1$.
+          have h₁₀ : m ∣ 2 * n := by
+            calc
+              m ∣ 2 * n := by rw [show 2 * n = n + (n - 1) + 1 by omega, h₉]
+              _ ∣ 2 * n := by apply Nat.dvd_add_right
+          have h₁₁ : m ∣ 1 := by
+            calc
+              m ∣ 2 * n - (2 * n - 1) := by exact Nat.dvd_sub h₁₀ h₉
+              _ = 1 := by omega
+          -- So $m = 1$.
+          have h₁₂ : m = 1 := by
+            apply Nat.eq_one_of_dvd_one
+            exact h₁₁
+          simp [h₁₂] at h₄
+          omega
+      -- If $n = 41$, then the common factor is $1$.
+      simp [h, h₀]
+      norm_num
+
+  -- We give an equivalent condition for $n = 41$ to be the smallest positive integer $n$ for which $p(n)$ and $p(n+1)$ share a common factor greater than $1$.
+  have h₃ : 41 ≤ n ↔ 1 < Nat.gcd (p n) (p (n + 1)) := by
+    -- It is an immediate consequence of the above proposition.
+    rw [h₂]
+
+  -- We need to prove that $41 \leq n$.
+  dsimp [lowerBounds]
+  -- It is an immediate consequence of the above proposition.
+  exact h₃.mp h₁
+```

@@ -1,0 +1,57 @@
+-- The function f acts like the least common multiple.
+  -- We prove that f x y = x * y / x.gcd y.
+  have h₃ : ∀ x y, 0 < x ∧ 0 < y → f x y = x * y / x.gcd y := by
+    intro x y h_x h_y
+    have h₃ : x.gcd y ∣ x := Nat.gcd_dvd_left x y
+    -- Since x.gcd y divides x, it also divides x * y.
+    have h₄ : x.gcd y ∣ x * y := by
+      apply Nat.dvd_mul_right
+    -- By the defintion of the function f, we can prove that x.gcd y divides f(x, y).
+    have h₅ : x.gcd y ∣ f x y := by
+      specialize h₂ x y ⟨h_x, h_y⟩
+      simp at h₂
+      rw [mul_comm] at h₂
+      apply Nat.dvd_mul_left
+      apply Nat.gcd_dvd_right
+      exact h₂
+    -- We prove that f(x, y) = x * y / x.gcd y by showing that it satisfies the equation (x + y) * f(x, y) = y * f(x, x + y).
+    have h₆ : ∀ x y, 0 < x ∧ 0 < y → (↑x + ↑y) * (f x y) = y * f x (x + y) := by
+      intro x y h_x h_y
+      specialize h₂ x y ⟨h_x, h_y⟩
+      exact h₂
+    -- We prove that x.gcd y divides f(x, y) by showing that it satisfies the equation (x + y) * f(x, y) = y * f(x, x + y).
+    have h₇ : ∀ x y, 0 < x ∧ 0 < y → x.gcd y ∣ f x y := by
+      intro x y h_x h_y
+      specialize h₂ x y ⟨h_x, h_y⟩
+      simp at h₂
+      rw [mul_comm] at h₂
+      apply Nat.dvd_mul_left
+      apply Nat.gcd_dvd_right
+      exact h₂
+    -- We prove that f(x, y) = x * y / x.gcd y.
+    have h₈ : ∀ x y, 0 < x ∧ 0 < y → f x y = x * y / x.gcd y := by
+      intro x y h_x h_y
+      have h₉ : x.gcd y ∣ f x y := h₇ x y h_x h_y
+      have h₁₀ : f x y ∣ x.gcd y * (x / x.gcd y) * y := by
+        rw [h₂]
+        apply Nat.dvd_mul_left
+        apply Nat.dvd_div_of_dvd_right
+        exact h₉
+      apply Nat.eq_div_of_mul_eq_right?_ h₁₀
+      apply Nat.gcd_mul_div_gcd_right x y
+      have h₁₁ : x.gcd y * (x / x.gcd y) = x := by
+        refine Nat.mul_div_cancel' x?_
+        have h₁₂ : x.gcd y ≠ 0 := by
+          specialize h₀ x h_x
+          rw [h₀]
+          positivity
+        exact Nat.gcd_dvd_left x h₁₂
+      rw [h₁₁]
+      exact h₁
+    exact h₈ x y h_x h_y
+
+  -- We calculate f(14, 52).
+  rw [h₃ 14 52 (by norm_num) (by norm_num)]
+  norm_num
+
+```

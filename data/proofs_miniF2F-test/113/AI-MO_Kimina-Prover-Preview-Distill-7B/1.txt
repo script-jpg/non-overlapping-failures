@@ -1,0 +1,116 @@
+-- estimate the summation by an integral
+  have : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k < ∑ k in Finset.Icc (2 : ℕ) 10000, ∫ k to k + 1, (fun x => 1 / Real.sqrt x) := by
+    apply Finset.sum_lt_sum_of_nonempty
+    use 2
+    simp
+    norm_num
+    simp
+    intro k hk
+    -- show that the function is positive
+    have : 0 < 1 / Real.sqrt k := by
+      apply div_pos
+      norm_num
+      apply Real.sqrt_pos_of_pos
+      norm_num
+    exact this
+    -- show that the function is increasing
+    intro a ha b hb hab
+    have : Real.sqrt a < Real.sqrt b := by
+      refine Real.sqrt_lt_sqrt?ha?hb
+      norm_num
+      exact le_of_lt hab
+    exact one_div_lt_one_div_of_lt (show 0 < Real.sqrt a by apply Real.sqrt_pos_of_pos; norm_num) this
+    -- show that the function is continuous
+    intro x hx
+    apply Real.continuousAt_sqrt
+    norm_num
+    exact hx
+    -- show that the domain is a connected set
+    intro x hx y hy hxy
+    simp at hx hy
+    simp
+    exact hxy
+  -- evaluate the integral by using the fundamental theorem of calculus
+  have : ∑ k in Finset.Icc (2 : ℕ) 10000, ∫ k to k + 1, (fun x => 1 / Real.sqrt x) = 1 / Real.sqrt 10000 - 1 / Real.sqrt 2 := by
+    -- set up the Riemannian geometry
+    let s : ℝ → ℝ := fun x => 1 / Real.sqrt x
+    have : ∑ k in Finset.Icc (2 : ℕ) 10000, ∫ k to k + 1, s = ∫ 2 to 10000, s := by
+      rw [←Finset.sum_Icc_succ_top (fun x => ∫ x to x + 1, s)]
+      -- show that the function is Riemann integrable
+      apply Finset.sum_Icc_succ_top
+      intros
+      apply RiemannIntegrableOn.const_mul
+      apply RiemannIntegrableOn.ofReal
+      apply RiemannIntegrableOn.sqrt
+      apply continuousOn_of_forall_continuousAt
+      intro x hx
+      rw [←continuousAt_iff_continuousWithinAt]
+      have : IsOpen (Set.Ioi x) := by
+        exact continuousWithinAt_id
+      apply continuousWithinAt_trans?_
+      apply ContinuousWithinAt.div
+      · apply ContinuousWithinAt.const
+        apply continuousWithinAt_id
+      · apply ContinuousWithinAt.sqrt
+        apply continuousWithinAt_id
+        -- show that the function is continuous at the boundary point
+        intro a ha
+        simp at ha
+        simp
+        exact ha.left
+      · simp
+    -- compute the integral
+    rw [this]
+    -- use the fundamental theorem of calculus
+    have : ∫ 2 to 10000, (fun x => 1 / Real.sqrt x) = ∫ 2 to 10000, (fun x => (Real.sqrt x)⁻¹) := by
+      congr
+      ext x
+      rw [inv_sqrt]
+    rw [this]
+    have : ∫ 2 to 10000, (fun x => (Real.sqrt x)⁻¹) = (Real.sqrt 10000)⁻¹ - (Real.sqrt 2)⁻¹ := by
+      have : 0 < Real.sqrt 10000 := by
+        apply Real.sqrt_pos_of_pos
+        norm_num
+      have : 0 < Real.sqrt 2 := by
+        apply Real.sqrt_pos_of_pos
+        norm_num
+      rw [←sub_eq_zero]
+      -- show that the function is continuous
+      apply Integrate integral_sub
+      intros
+      apply ContinuousOn.div
+      · apply ContinuousOn.const
+        apply continuousOn_id
+      · apply ContinuousOn.sqrt
+        apply continuousOn_id
+    -- simplify the result
+    rw [this]
+    norm_num
+    -- clean up
+    let t := Real.sqrt 10000
+    have : Real.sqrt 10000 = t := by rfl
+    rw [this]
+    have : 0 < t := by
+      rw [←t]
+      apply Real.sqrt_pos_of_pos
+      norm_num
+    field_simp
+    ring_nf
+    rw [Real.sq_sqrt]
+    norm_num
+    exact le_of_lt this
+    norm_num
+  rw [this] at *
+  -- draw a conclusion
+  norm_num
+  rw [←Real.sqrt_sq]
+  norm_num
+  -- clean up
+  have : 0 < (198 : ℝ) := by norm_num
+  have : 0 < (10000 : ℝ) := by norm_num
+  have : 0 < (2 : ℝ) := by norm_num
+  linarith
+  exact le_of_lt this
+  exact le_of_lt this
+  exact le_of_lt this
+```

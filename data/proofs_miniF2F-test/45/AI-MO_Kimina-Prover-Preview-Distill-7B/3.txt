@@ -1,0 +1,294 @@
+have h₁ : ∀ n ∈ S, 2010 ≤ n ∧ n ≤ 2019 ∧ ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+    intro n hn
+    exact h₀ n hn
+
+  have h₂ : ∀ n ∈ S, n ≥ 2010 ∧ n ≤ 2019 ∧ ∃ m, (Nat.divisors m).card = 4 ∧ n = (∑ p in Nat.divisors m, p) := by
+    intro n hn
+    have ⟨h₂, h₃, h₄⟩ := h₁ n hn
+    rw [Nat.mem_Icc] at h₂ h₃
+    refine ⟨h₂, h₃,?_⟩
+    obtain ⟨m, h₄⟩ := h₄
+    use m
+    tauto
+
+  -- The nice numbers are the numbers of the form $p + (p-1) + 1 + (p-2)$, where $p$ is a prime number.
+
+  -- For each nice number $n$, get a witness $m$ such that the sum of the divisors of $m$ is $n$.
+  have h₃ : ∀ n ∈ S, n = (Nat.divisors (n - 2)).sum ∧ (Nat.divisors (n - 2)).card = 4 := by
+    intro n hn
+    obtain ⟨h₃, h₄, m, h₅, h₆⟩ := h₂ n hn
+    have h₇ : n - 2 ≥ 1 := by
+      zify
+      rw [Nat.sub_le_sub_iff_right]
+      apply Nat.le_of_lt_succ
+      rw [h₆]
+      exact h₃.2
+    have h₈ : m = n - 2 := by
+      rw [h₆]
+      linarith
+    rw [h₈]
+    refine ⟨?_,?_⟩
+    · simpa using h₅
+    · rw [h₈] at h₄
+      have h₉ : n - 2 ≤ 2019 := by
+        zify
+        rw [Nat.sub_le_sub_iff_right]
+        apply Nat.le_of_lt_succ
+        exact h₄.2
+      -- Since the number of divisors of $m$ is $4$, we have $m = t \cdot t'$ for two integers $t$ and $t'$.
+
+      have h₁₀ : Nat.divisors m = {1, m, t, t'} := by
+        rw [h₅]
+        simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+          and_true, Set.mem_divisors]
+        simp only [Nat.reduceSub, tsub_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
+          Nat.reduceMul]
+        refine ⟨m,?_,?_⟩
+        · refine ⟨?_,?_⟩
+          · apply Nat.one_divides
+          · apply Nat.dvd_of_mem_divisors
+            simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+              and_true, Set.mem_divisors, true_and]
+            exact h₃.1
+          · apply Nat.mem_divisors.mpr
+            simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+              and_true, Set.mem_divisors, true_and]
+            exact h₃.1
+        · simp only [Nat.reduceMul]
+          apply (Nat.coprime_iff_gcd_eq_one.mp)
+          apply (Nat.coprime_iff_gcd_eq_one.mpr)
+          rw [Nat.Prime.coprime_iff_not_dvd]
+          have h₁₀ : m ≠ t := by
+            by_contra h₁₀
+            rw [h₁₀] at h₅
+            simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+              and_self, Set.mem_divisors] at h₅
+            rcases h₅ with h₅ | h₅
+            · have h₁₁ : t = 1 := by
+                calc
+                  t = t / 1 := by simp only [Nat.div_self]
+                  _ = (m / 1) / 1 := by rw [h₅]
+                  _ = m / 1 := by simp only [Nat.div_div_self]
+                  _ = t := by rw [h₅]
+              rw [h₁₁] at h₅
+              simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+                and_self, Set.mem_divisors] at h₅
+              rcases h₅ with h₅ | h₅
+              · have h₁₂ : t ≠ 1 := by
+                  calc
+                    t = t + 1 - 1 := by simp only [Nat.add_sub_cancel]
+                    _ = 1 - 1 := by rw [h₅]
+                    _ = 0 := by simp only [Nat.zero_sub]
+                    _ ≠ 1 := by simp only [ne_eq, OfNat.ofNat_ne_zero]
+              · have h₁₂ : m = 1 := by
+                  calc
+                    m = t * 1 := by rw [h₅]
+                    _ = 1 * 1 := by rw [h₁₁]
+                    _ = 1 := by simp only [Nat.one_mul]
+              · rw [h₁₂] at h₃
+                simp only [Nat.reduceLeDiff, le_refl, and_self] at h₃
+                rw [h₁₂] at h₄
+                simp only [Nat.reduceLeDiff, le_refl, and_self] at h₄
+                linarith
+              · rw [h₁₂] at h₃
+                simp only [Nat.reduceLeDiff, le_refl, and_self] at h₃
+                rw [h₁₂] at h₄
+                simp only [Nat.reduceLeDiff, le_refl, and_self] at h₄
+                linarith
+            · have h₁₁ : t = m := by
+                calc
+                  t = t * 1 := by simp only [Nat.mul_one]
+                  _ = (m / 1) * 1 := by rw [h₅]
+                  _ = m / 1 := by simp only [Nat.mul_div_cancel]
+                  _ = m := by simp only [Nat.div_self]
+            · rw [h₁₁] at h₅
+              simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+                and_self, Set.mem_divisors] at h₅
+              rcases h₅ with h₅ | h₅
+              · have h₁₂ : m ≠ 1 := by
+                  calc
+                    m = m + 1 - 1 := by simp only [Nat.add_sub_cancel]
+                    _ = 2 - 1 := by rw [h₅]
+                    _ = 1 := by simp only [Nat.one_mul]
+                    _ ≠ 1 := by simp only [ne_eq, OfNat.one_ne_ofNat]
+              · have h₁₂ : m = 1 := by
+                  calc
+                    m = m / m := by simp only [Nat.div_self]
+                    _ = (m / 1) / m := by rw [h₅]
+                    _ = m / 1 := by simp only [Nat.div_div_self]
+                    _ = m := by rw [h₅]
+              · rw [h₁₂] at h₃
+                simp only [Nat.reduceLeDiff, le_refl, and_self] at h₃
+                rw [h₁₂] at h₄
+                simp only [Nat.reduceLeDiff, le_refl, and_self] at h₄
+                linarith
+              · rw [h₁₂] at h₃
+                simp only [Nat.reduceLeDiff, le_refl, and_self] at h₃
+                rw [h₁₂] at h₄
+                simp only [Nat.reduceLeDiff, le_refl, and_self] at h₄
+                linarith
+      -- Since $t$ and $t'$ are both less than $m$, we have $t + t' < m + m = 2m.$
+
+      have h₁₁ : t + t' < m + m := by
+        by_contra h₁₁
+        have h₁₂ : t + t' = m + m := by
+          linarith
+        have h₁₃ : t = m := by
+          calc
+            t = t + t' - t' := by simp only [Nat.add_sub_cancel]
+            _ = m + m - t' := by rw [h₁₂]
+            _ = m - t' := by simp only [Nat.add_sub_cancel]
+            _ ≤ m := by simp only [Nat.sub_le_self]
+        · have h₁₄ : t' = m := by
+            calc
+              t' = (t + t') - t := by simp only [Nat.add_sub_cancel]
+              _ = m + m - t := by rw [h₁₂]
+              _ = m - t := by simp only [Nat.add_sub_cancel]
+              _ ≤ m := by simp only [Nat.sub_le_self]
+        · rw [h₁₃] at h₅
+          simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+            and_self, Set.mem_divisors] at h₅
+          rcases h₅ with h₅ | h₅
+          · have h₁₅ : t ≠ 1 := by
+              calc
+                t = t + 1 - 1 := by simp only [Nat.add_sub_cancel]
+                _ = m - 1 - 1 := by rw [h₅]
+                _ = m - 2 := by rw [Nat.sub_sub_self]; linarith
+                _ ≠ 1 := by
+                  by_contra h₁₅
+                  rw [h₁₅] at h₃
+                  simp only [Nat.reduceLeDiff, le_refl, and_self] at h₃
+                  rw [h₁₅] at h₄
+                  simp only [Nat.reduceLeDiff, le_refl, and_self] at h₄
+                  linarith
+          · have h₁₅ : m = 1 := by
+              calc
+                m = t * 1 := by rw [h₅]
+                _ = m * 1 := by simp only [Nat.mul_one]
+                _ = m := by simp only [Nat.mul_self_div_cancel]
+          · rw [h₁₅] at h₃
+            simp only [Nat.reduceLeDiff, le_refl, and_self] at h₃
+            linarith
+          · have h₁₅ : m = 1 := by
+              calc
+                m = t * 1 := by rw [h₅]
+                _ = m * 1 := by simp only [Nat.mul_one]
+                _ = m := by simp only [Nat.mul_self_div_cancel]
+          · rw [h₁₅] at h₄
+            simp only [Nat.reduceLeDiff, le_refl, and_self] at h₄
+            linarith
+      -- Since $t$ and $t'$ are both greater than $1$, we have $t + t' > 2$.
+
+      have h₁₂ : 2 < t + t' := by
+        have h₁₃ : 1 < t := by
+          calc
+            1 = t / t' * 1 := by simp only [Nat.div_mul_cancel]; linarith
+            _ < t / t' * t := by rw [Nat.mul_lt_mul_right]; exact h₇; linarith
+            _ = t := by simp only [Nat.div_mul_cancel]; linarith
+        · have h₁₄ : 1 < t' := by
+            calc
+              1 = t / t' / t * t' := by simp only [Nat.div_mul_cancel]; rw [Nat.mul_div_cancel]; linarith
+              _ < t / t' / t * t := by rw [Nat.mul_lt_mul_right]; exact h₇; rw [Nat.div_lt_iff_lt_mul]; linarith; linarith
+              _ = t' := by simp only [Nat.div_mul_cancel]; rw [Nat.mul_div_cancel]; linarith
+        · linarith
+      -- Therefore, we have $2 < t + t' < 2m.$
+
+      have h₁₃ : 2 * m < t + t' + m := by
+        calc
+          2 * m = m + m := by ring
+          _ < t + t' + m := by linarith
+      have h₁₄ : t + t' + m < 2 * m + m := by
+        calc
+          t + t' + m < 2 * m + m := by linarith
+          _ = 2 * m + m := by ring
+      have h₁₅ : t + t' < 2 * m := by
+        linarith
+      have h₁₆ : 2 * m < t + t' + m := by
+        linarith
+      have h₁₇ : t + t' + m < 2 * m + m := by
+        linarith
+      have h₁₈ : t + t' < 2 * m := by
+        linarith
+      rw [<-Nat.le_sub_one_iff] at h₁₁
+      rw [Nat.lt_iff_add_one_le] at h₁₅
+      rw [<-Nat.le_sub_one_iff] at h₁₅
+      rw [Nat.lt_iff_add_one_le] at h₁₁
+      have h₁₉ : m - t' < m := by
+        calc
+          m - t' < m - 1 := by
+            apply Nat.sub_lt_sub_right
+            · apply Nat.le_of_lt_succ
+              exact h₇
+            · exact h₉
+          _ ≤ m := by simp only [Nat.sub_le_self]
+      have h₁₂₁ : 1 ≤ m - t' := by
+        calc
+          1 = m / m := by simp only [Nat.div_self]
+          _ ≤ m / t' := by rw [Nat.div_le_div_right]; exact h₉; linarith
+          _ = m - t' := by
+            rw [Nat.div_eq_sub_of_le_of_dvd]
+            · exact h₉
+            · exact h₁₃
+            · apply Nat.dvd_of_mem_divisors
+              simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+                and_true, Set.mem_divisors, true_and]
+              exact h₃.1
+      have h₁₂₂ : 2 ≤ m - t' := by
+        linarith
+      have h₁₂₃ : m - t' ≠ 0 := by
+        by_contra h₁₂₃
+        have h₁₂₄ : m = t' := by
+          calc
+            m = m - t' + t' := by simp only [Nat.sub_add_cancel]
+            _ = t' := by rw [h₁₂₃]
+        · rw [h₁₂₄] at h₅
+          simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+            and_self, Set.mem_divisors] at h₅
+          rcases h₅ with h₅ | h₅
+          · have h₁₂₅ : t' ≠ 1 := by
+              calc
+                t' = t' + t - t := by simp only [Nat.add_sub_cancel]
+                _ = m + t - t := by rw [h₅]
+                _ = m - 2 + t - t := by rw [Nat.sub_sub_self]; linarith
+                _ = m - 2 := by rw [Nat.sub_add_cancel]
+                _ ≠ 1 := by
+                  by_contra h₁₂₅
+                  rw [h₁₂₅] at h₃
+                  simp only [Nat.reduceLeDiff, le_refl, and_self] at h₃
+                  rw [h₁₂₅] at h₄
+                  simp only [Nat.reduceLeDiff, le_refl, and_self] at h₄
+                  linarith
+          · have h₁₂₅ : m = 1 := by
+              calc
+                m = m * 1 := by simp only [Nat.mul_one]
+                _ = t' * 1 := by rw [h₅]
+                _ = t' := by simp only [Nat.mul_self_div_cancel]
+        · have h₁₂₅ : m = t' := by
+            calc
+              m = m - t' + t' := by simp only [Nat.sub_add_cancel]
+              _ = t' := by rw [h₁₂₃]
+          · rw [h₁₂₅] at h₃
+            simp only [Nat.reduceLeDiff, le_refl, and_self] at h₃
+            linarith
+          · have h₁₂₅ : m = t' := by
+              calc
+                m = m - t' + t' := by simp only [Nat.sub_add_cancel]
+                _ = t' := by rw [h₁₂₃]
+          · rw [h₁₂₅] at h₄
+            simp only [Nat.reduceLeDiff, le_refl, and_self] at h₄
+            linarith
+      have h₁₄₁ : m - t' ∣ m := by
+        apply Nat.dvd_of_mem_divisors
+        simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff, Set.mem_singleton_iff,
+          and_true, Set.mem_divisors]
+        exact h₃.2
+      rw [Nat.mem_divisors] at h₁₄₁
+      have h₁₄₂ : ¬ m - t' ∣ m ∧ m ≠ 0 := by
+        by_contra h₁₄₂
+        have h₁₄₃ : m - t' = m := by
+          calc
+            m - t' = m - t' ∣ m := by exact h₁₄₁
+            _ = m := by simp only [Nat.div_self]
+        · have h₁₄₄ : m - t' < m := by
+            calc
+              m - t' < m - 1 := by

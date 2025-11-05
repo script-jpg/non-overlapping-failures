@@ -1,0 +1,125 @@
+-- Let $a$ and $b$ be real numbers.
+
+  -- We need to show that $\frac{|a+b|}{1+|a+b|} \leq \frac{|a|}{1+|a|} + \frac{|b|}{1+|b|}$.
+
+  -- notice that $\frac{|a|}{1+|a|}+\frac{|b|}{1+|b|} $ is a sum of two increasing function
+  -- with $a$ and $b$, it's not easy to do that.
+  -- but with a simple trick, we can do that.
+
+  -- let's consider $f(x) = \frac{x}{1+x}$, it's monotonous with $x > 0$.
+  have fmono : StrictMonoOn (fun x => x / (1 + x)) (Set.Ioi 0) := by
+    intro x hx y hy hxy
+    simp at hx hy
+    simp
+    have : 1 + x > 0 := by linarith
+    have : 1 + y > 0 := by linarith
+    suffices x / (1 + x) - y / (1 + y) < 0 by linarith
+    have : x / (1 + x) - y / (1 + y) = (x - y) / ((1 + x) * (1 + y)) := by
+      field_simp
+      ring
+    rw [this]
+    apply div_neg_of_neg_of_pos (sub_neg.mpr hxy) (by positivity)
+
+  -- since $|a| \geq 0$, $|b| \geq 0$, $|a+b| \geq 0$.
+  -- we can ensure the monotone of $f(|a|), f(|b|), f(|a+b|)$
+  have h1 : 0 ≤ abs a := abs_nonneg a
+  have h2 : 0 ≤ abs b := abs_nonneg b
+  have h3 : 0 ≤ abs (a + b) := abs_nonneg (a + b)
+
+  -- we only need to consider the case $|a| + |b| \neq 0$
+  by_cases h : |a| + |b| = 0
+  · -- when $|a| = |b| = 0$, it's trivial.
+    have ha : |a| = 0 := by
+      linear_combination h * h2
+    have hb : |b| = 0 := by
+      linear_combination h * h1
+    simp [ha, hb]
+  · -- consider $max(|a|, |b|) > 0$
+    have pos : 0 < max |a| |b| := max_pos h1 h2
+
+    -- we can show $|a+b| \leq |a| + |b|$
+    have h4 : abs (a + b) ≤ abs a + abs b := abs_add a b
+
+    -- thus $|a+b| \leq |a| + |b| < max(|a|, |b|) * 2$
+    have ineq : abs (a + b) ≤ max |a| |b| * 2 := by
+      have h : max |a| |b| * 2 = max |a| |b| + max |a| |b| := by ring
+      rw [h]
+      nth_rw 1 [← max_lt_iff (max_ne_zero pos)]
+      apply lt_of_le_of_lt h4
+      linarith [abs_nonneg a, abs_nonneg b]
+
+    -- which is equivalent to $|a+b| / (1 + |a+b|) \leq max(|a|, |b|) / (1 + max(|a|, |b|)) $
+    have ineq2 : abs (a + b) / (1 + abs (a + b)) ≤ max |a| |b| / (1 + max |a| |b|) := by
+      -- we divide into two cases
+      by_cases h' : 1 + abs (a + b) > 1 + max |a| |b|
+      · have : 1 + max |a| |b| > 0 := by linarith [pos]
+        -- when $1 + |a+b| > 1 + max(|a|, |b|)$, we have $|a+b| / (1 + |a+b|) < 1$ and $max(|a|, |b|) / (1 + max(|a|, |b|)) < 1$.
+        -- but $|a+b| \leq max(|a|, |b|) * 2$, so $|a+b| / (1 + |a+b|) < 1$ implies $|a+b| / (1 + |a+b|) \leq max(|a|, |b|) / (1 + max(|a|, |b|)) $
+        apply (div_le_div_iff₀ this (by linarith)).mpr
+        linarith [ineq]
+      · -- when $1 + |a+b| \leq 1 + max(|a|, |b|)$, we have $|a+b| \leq max(|a|, |b|)$, thus $|a+b| / (1 + |a+b|) \leq max(|a|, |b|) / (1 + |a+b|)$
+        have : 1 + |a + b| ≤ 1 + max |a| |b| := by linarith
+        have h1 : |a + b| ≤ max |a| |b| := by
+          linear_combination this
+        have : |a| / (1 + |a|) + |b| / (1 + |b|) ≥ max |a| |b| / (1 + |a|) + max |a| |b| / (1 + |b|) := by
+          nth_rw 1 [← le_max_left (|a|, |b|)]
+          nth_rw 2 [← le_max_right (|a|, |b|)]
+          apply add_le_add
+          all_goals (apply div_le_div_of_le (by linarith) (by linarith) (by linarith [h]) )
+        apply le_trans h1
+        apply (div_le_div_iff₀ (by linarith) (by linarith)).mpr
+        linarith [h1]
+
+    -- now, we can show $max(|a|, |b|) / (1 + max(|a|, |b|)) \leq |a| / (1 + |a|) + |b| / (1 + |b|)$
+    have ineq3 : max |a| |b| / (1 + max |a| |b|) ≤ |a| / (1 + |a|) + |b| / (1 + |b|) := by
+      -- consider $|a| \leq max(|a|, |b|)$ and $|b| \leq max(|a|, |b|)$
+      have h1 : |a| ≤ max |a| |b| := le_max_left
+      have h2 : |b| ≤ max |a| |b| := le_max_right
+      -- we have $|a| / (1 + |a|) \leq max(|a|, |b|) / (1 + max(|a|, |b|)) $
+      -- just consider the case $|a| \neq 0$
+      by_cases h' : |a| = 0
+      · -- when $|a| = 0$, we have $|b| > 0$ and $1 + |b| > 1 + |a|$. The inequality is obivious.
+        have posb : 0 < |b| := by
+          linarith [abs_nonneg a, abs_nonneg b, h']
+        have : 1 + |a| = 1 + 0 := by rw [h']
+        rw [this]
+        simp
+        rw [add_pos (by linarith [abs_nonneg a]) (by linarith [abs_nonneg b])]
+        -- when $|a| = 0$, we have $1 + |b| > 1 + max(|a|, |b|)$.
+        have : 1 + max |a| |b| < 1 + |b| := by
+          nth_rw 1 [← max_eq_right (by linarith [h'])]
+          apply add_lt_add_left
+          linarith [abs_nonneg a]
+        -- thus $|a| / (1 + |a|) \leq max(|a|, |b|) / (1 + max(|a|, |b|)) $ is true.
+        apply (div_le_div_iff₀ (by linarith) (by linarith)).mpr
+        linarith [h1]
+      · -- when $|a| > 0$
+        have : 0 < |a| := by
+          apply abs_pos.mpr h'
+        -- we have $|a| / (1 + |a|) \leq max(|a|, |b|) / (1 + max(|a|, |b|)) $.
+        -- it's basically a comparison of two numbers.
+        apply (div_le_div_iff₀ (by linarith) (by linarith)).mpr
+        -- we can cancel $|a|$ from both sides.
+        nth_rw 1 [← mul_div_mul_left (|a| / (1 + |a|)) (1 + max |a| |b|) (by linarith)]
+        -- we need to show $|a| * (1 + max(|a|, |b|)) \leq (1 + |a|) * max(|a|, |b|)$
+        suffices |a| * (1 + max |a| |b|) ≤ (1 + |a|) * max |a| |b| by exact this
+        -- it's basically a comparison of two numbers.
+        -- we consider $max(|a|, |b|) \neq 0$
+        by_cases h'' : max |a| |b| = 0
+        · -- when $max(|a|, |b|) = 0$, we have $|a| = |b| = 0$, which is impossible.
+          have : |a| = 0 := by
+            linear_combination h'' * h1
+          have : |b| = 0 := by
+            linear_combination h'' * h2
+          simp [this, ‹|a| ≠ 0›]
+        · -- when $max(|a|, |b|) > 0$, we have $|a| > 0$
+          have pos2 : 0 < max |a| |b| := by linarith
+          -- we can cancel $max(|a|, |b|)$ from both sides.
+          rw [mul_comm (max |a| |b|), mul_div_assoc]
+          apply le_of_mul_le_mul_right
+          linarith [h1]
+          linarith [pos2]
+
+    -- transitivity the inequality
+    apply le_trans ineq2.trans ineq3
+```

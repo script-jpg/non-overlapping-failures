@@ -1,0 +1,49 @@
+have h₁ : S = {Real.pi / 2, Real.pi / 2 + Real.pi / 2} := by
+    ext x
+    simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+    constructor
+    · intro h
+      have h₂ : 0 ≤ x := h.1
+      have h₃ : x ≤ Real.pi := h.2.1
+      have h₄ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h.2.2
+      have h₅ : Real.cos x = 0 ∨ Real.cos x = -1 ∨ Real.cos x = 1 := by
+        have h₆ : Real.cos x ≤ 1 := Real.cos_le_one x
+        have h₇ : Real.cos x ≥ -1 := Real.neg_one_le_cos x
+        have h₈ : Real.cos x = 0 ∨ Real.cos x = -1 ∨ Real.cos x = 1 := by
+          by_cases h₉ : Real.cos x = 0
+          · exact Or.inl h₉
+          by_cases h₁₀ : Real.cos x = 1
+          · exact Or.inr (Or.inr h₁₀)
+          have h₁₁ : Real.cos x = -1 := by
+            apply eq_of_sub_eq_zero
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₉)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₀)
+            nlinarith [Real.sin_sq_add_cos_sq x, sq_nonneg (Real.cos x - 1), sq_nonneg (Real.cos x + 1)]
+          exact Or.inr (Or.inl h₁₁)
+        exact h₈
+      rcases h₅ with (h₅ | h₅ | h₅)
+      · -- Case: cos x = 0
+        have h₆ : x = Real.pi / 2 := by
+          rw [← sub_eq_zero] at h₄
+          have h₇ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by linarith
+          simp_all [Real.cos_pi_div_two, Real.sin_pi_div_two, mul_zero, zero_mul]
+          <;>
+          nlinarith [Real.pi_pos, Real.pi_le_four, Real.two_pi_pos, Real.sin_le_one x, Real.cos_le_one x,
+            Real.sin_sq_add_cos_sq x]
+        simp_all
+      · -- Case: cos x = -1
+        have h₆ : x = Real.pi := by
+          rw [← sub_eq_zero] at h₄
+          have h₇ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by linarith
+          simp_all [Real.cos_pi, Real.sin_pi, mul_neg, mul_one, neg_neg]
+          <;>
+          nlinarith [Real.pi_pos, Real.pi_le_four, Real.two_pi_pos, Real.sin_le_one x, Real.cos_le_one x,
+            Real.sin_sq_add_cos_sq x]
+        simp_all
+      · -- Case: cos x = 1
+        have h₆ : x = 0 := by
+          rw [← sub_eq_zero] at h₄
+          have h₇ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by linarith
+          simp_all [Real.cos_pi_div_two, Real.sin_pi_div_two, mul_one]
+          <;>
+          nlinarith [Real.pi_pos,

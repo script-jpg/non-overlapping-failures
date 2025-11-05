@@ -1,0 +1,178 @@
+-- First, we need to show that $m^2 + mn + n^2 > 0$. This is true because $m > 0$ and $n > 0$.
+  have h : 0 < m ^ 2 + m * n + n ^ 2 := by
+    rcases h₀ with ⟨hm, hn⟩
+    positivity
+
+  -- Next, we will prove that the determinant of the coefficient matrix is non-zero.
+  -- The determinant is $(m^2 + mn + n^2)^3$. Since $m^2 + mn + n^2 > 0$, the determinant is non-zero.
+  have h_determinant_nonzero : (m ^ 2 + m * n + n ^ 2) ^ 3 ≠ 0 := by
+    rcases h₀ with ⟨hm, hn⟩
+    positivity
+
+  -- Now, we will prove that $a = b = c = 0$.
+  -- From $a + bm + cn = 0$, we can express $a = -bm - cn$.
+  -- Substituting this into the equation $a^3 + 3a^2(bm + cn) + 3a(b^2m^2 + 2bcmn + c^2n^2) + (bm + cn)^3 = 0$.
+  have haneq0 : a = 0 := by
+    by_contra! ha
+    rcases h₀ with ⟨hm, hn⟩
+    -- Substituting $a = -bm - cn$ into the equation $a^3 + 3a^2(bm + cn) + 3a(b^2m^2 + 2bcmn + c^2n^2) + (bm + cn)^3 = 0$.
+    -- After simplification, we get $(bm + cn)^3 = -a^3$.
+    have h_eq : (b * m + c * n) ^ 3 = -a ^ 3 := by
+      rw [←h₃]
+      ring_nf
+
+    -- Since $m^3 = 2$ and $n^3 = 4$, we have $(bm + cn)^3 = b^3m^3 + 3b^2cm^2n + 3bc^2mn^2 + c^3n^3 = 2b^3 + 3b^2c \cdot \sqrt[3]{2} \cdot \sqrt[3]{4} + 3bc^2 \cdot \sqrt[3]{4} \cdot \sqrt[3]{2} + 4c^3$.
+    -- Similarly, $-a^3 = - (a^3)$.
+    have h_invariants : (b * m + c * n) ^ 3 = 2 * b ^ 3 + 4 * c ^ 3 := by
+      rw [show (b * m + c * n) ^ 3 = b ^ 3 * m ^ 3 + 3 * b ^ 2 * c * m ^ 2 * n + 3 * b * c ^ 2 * m * n ^ 2 + c ^ 3 * n ^ 3 by ring_nf]
+      rw [h₁, h₂]
+      ring_nf
+
+    -- We get $2b^3 + 4c^3 = -a^3$.
+    rw [h_invariants] at h_eq
+
+    -- This means $a^3 + 2b^3 + 4c^3 = 0$.
+    have h_eq' : a ^ 3 + 2 * b ^ 3 + 4 * c ^ 3 = 0 := by linarith
+
+    -- Multiplying this equation by $m^3$ gives $a^3m^3 + 2b^3m^3 + 4c^3m^3 = 0$.
+    have h_eq'' : a ^ 3 * m ^ 3 + 2 * b ^ 3 * m ^ 3 + 4 * c ^ 3 * m ^ 3 = 0 := by
+      rw [h₁]
+      linarith
+
+    -- Similarly, multiplying by $n^3$ gives $a^3n^3 + 2b^3n^3 + 4c^3n^3 = 0$.
+    have h_eq''' : a ^ 3 * n ^ 3 + 2 * b ^ 3 * n ^ 3 + 4 * c ^ 3 * n ^ 3 = 0 := by
+      rw [h₂]
+      linarith
+
+    -- Using the fact that $m^3 = 2$ and $n^3 = 4$, we get $2a^3 + 4 \cdot 2b^3 + 8 \cdot 4c^3 = 0$.
+    -- That is, $2a^3 + 8b^3 + 32c^3 = 0$.
+    have h_eq'''' : 2 * a ^ 3 + 8 * b ^ 3 + 32 * c ^ 3 = 0 := by
+      have h_eq'''' : a ^ 3 * m ^ 3 + 2 * b ^ 3 * m ^ 3 + 4 * c ^ 3 * m ^ 3 = 0 := by assumption
+      rw [show a ^ 3 * m ^ 3 = a ^ 3 * 2 by linarith [h₁]] at h_eq''''
+      have h_eq''''' : a ^ 3 * 2 + 2 * b ^ 3 * m ^ 3 + 4 * c ^ 3 * m ^ 3 = 0 := by assumption
+      have h_eq'''''' : 2 * a ^ 3 + 2 * b ^ 3 * (m ^ 3) + 4 * c ^ 3 * (m ^ 3) = 0 := by assumption
+      rw [h₁] at h_eq''''''
+      linarith
+
+    -- Now, we have two equations:
+    -- 1. $a^3 + 2b^3 + 4c^3 = 0$ (h_eq')
+    -- 2. $2a^3 + 8b^3 + 32c^3 = 0$ (h_eq'''')
+    -- Subtracting the first equation from the second gives $a^3 + 6b^3 + 28c^3 = 0$.
+    have h_eq'''''' : a ^ 3 + 6 * b ^ 3 + 28 * c ^ 3 = 0 := by
+      linarith
+
+    -- This means $6b^3 + 28c^3 = -a^3$.
+    have h_eq''''''' : 6 * b ^ 3 + 28 * c ^ 3 = -a ^ 3 := by linarith
+
+    -- However, this leads to a contradiction because $6b^3 + 28c^3 > 0$ and $-a^3 < 0$.
+    have h_pos : 0 < 6 * b ^ 3 + 28 * c ^ 3 := by positivity
+    have h_neg : a ^ 3 < 0 := by
+      by_contra! h_nonneg
+      have : 0 ≤ a ^ 3 := by positivity
+      linarith
+
+    linarith
+
+  have hbneq0 : b = 0 := by
+    by_contra! hb
+    -- If $b \neq 0$, then from $a + bm + cn = 0$ and $m^3 = 2$, $n^3 = 4$, we have $a^3 + 2b^3 + 4c^3 = 0$.
+    rcases h₀ with ⟨hm, hn⟩
+    have h_eq : a ^ 3 + 2 * b ^ 3 + 4 * c ^ 3 = 0 := by
+      rw [hb] at h₃
+      simp at h₃
+      linarith
+
+    -- Multiplying this equation by $m^3$ gives $a^3m^3 + 2b^3m^3 + 4c^3m^3 = 0$.
+    have h_eq' : a ^ 3 * m ^ 3 + 2 * b ^ 3 * m ^ 3 + 4 * c ^ 3 * m ^ 3 = 0 := by
+      rw [h₁]
+      linarith
+
+    -- Using the fact that $m^3 = 2$, we get $2a^3 + 4b^3 + 8c^3 = 0$.
+    have h_eq'' : 2 * a ^ 3 + 4 * b ^ 3 + 8 * c ^ 3 = 0 := by
+      have h_eq'' : a ^ 3 * m ^ 3 + 2 * b ^ 3 * m ^ 3 + 4 * c ^ 3 * m ^ 3 = 0 := by assumption
+      rw [show a ^ 3 * m ^ 3 = a ^ 3 * 2 by linarith [h₁]] at h_eq''
+      linarith
+
+    -- Multiplying this equation by $n^3$ gives $a^3n^3 + 2b^3n^3 + 4c^3n^3 = 0$.
+    have h_eq''' : a ^ 3 * n ^ 3 + 2 * b ^ 3 * n ^ 3 + 4 * c ^ 3 * n ^ 3 = 0 := by
+      rw [h₁, h₂]
+      linarith
+
+    -- Using the fact that $n^3 = 4$, we get $4a^3 + 8b^3 + 16c^3 = 0$.
+    have h_eq'''' : 4 * a ^ 3 + 8 * b ^ 3 + 16 * c ^ 3 = 0 := by
+      have h_eq'''' : a ^ 3 * n ^ 3 + 2 * b ^ 3 * n ^ 3 + 4 * c ^ 3 * n ^ 3 = 0 := by assumption
+      rw [show a ^ 3 * n ^ 3 = a ^ 3 * 4 by linarith [h₂]] at h_eq''''
+      linarith
+
+    -- Now, we have two equations:
+    -- 1. $2a^3 + 4b^3 + 8c^3 = 0$ (h_eq'')
+    -- 2. $4a^3 + 8b^3 + 16c^3 = 0$ (h_eq'''')
+    -- Subtracting the first equation from the second gives $2a^3 + 4b^3 + 8c^3 = 0$.
+    have h_eq'''''' : 2 * a ^ 3 + 4 * b ^ 3 + 8 * c ^ 3 = 0 := by
+      linarith
+
+    -- This means $4b^3 + 8c^3 = -2a^3$.
+    have h_eq''''''' : 4 * b ^ 3 + 8 * c ^ 3 = -2 * a ^ 3 := by linarith
+
+    -- However, this leads to a contradiction because $4b^3 + 8c^3 > 0$ and $-2a^3 < 0$.
+    have h_pos : 0 < 4 * b ^ 3 + 8 * c ^ 3 := by positivity
+    have h_neg : 2 * a ^ 3 < 0 := by
+      by_contra! h_nonneg
+      have : 0 ≤ 2 * a ^ 3 := by positivity
+      linarith
+
+    linarith
+
+  have hcneq0 : c = 0 := by
+    by_contra! hc
+    -- If $c \neq 0$, then from $a + bm + cn = 0$ and $m^3 = 2$, $n^3 = 4$, we have $a^3 + 2b^3 + 4c^3 = 0$.
+    rcases h₀ with ⟨hm, hn⟩
+    have h_eq : a ^ 3 + 2 * b ^ 3 + 4 * c ^ 3 = 0 := by
+      rw [hc] at h₃
+      simp at h₃
+      linarith
+
+    -- Multiplying this equation by $m^3$ gives $a^3m^3 + 2b^3m^3 + 4c^3m^3 = 0$.
+    have h_eq' : a ^ 3 * m ^ 3 + 2 * b ^ 3 * m ^ 3 + 4 * c ^ 3 * m ^ 3 = 0 := by
+      rw [h₁]
+      linarith
+
+    -- Using the fact that $m^3 = 2$, we get $2a^3 + 4b^3 + 8c^3 = 0$.
+    have h_eq'' : 2 * a ^ 3 + 4 * b ^ 3 + 8 * c ^ 3 = 0 := by
+      have h_eq'' : a ^ 3 * m ^ 3 + 2 * b ^ 3 * m ^ 3 + 4 * c ^ 3 * m ^ 3 = 0 := by assumption
+      rw [show a ^ 3 * m ^ 3 = a ^ 3 * 2 by linarith [h₁]] at h_eq''
+      linarith
+
+    -- Multiplying this equation by $n^3$ gives $a^3n^3 + 2b^3n^3 + 4c^3n^3 = 0$.
+    have h_eq''' : a ^ 3 * n ^ 3 + 2 * b ^ 3 * n ^ 3 + 4 * c ^ 3 * n ^ 3 = 0 := by
+      rw [h₁, h₂]
+      linarith
+
+    -- Using the fact that $n^3 = 4$, we get $4a^3 + 8b^3 + 16c^3 = 0$.
+    have h_eq'''' : 4 * a ^ 3 + 8 * b ^ 3 + 16 * c ^ 3 = 0 := by
+      have h_eq'''' : a ^ 3 * n ^ 3 + 2 * b ^ 3 * n ^ 3 + 4 * c ^ 3 * n ^ 3 = 0 := by assumption
+      rw [show a ^ 3 * n ^ 3 = a ^ 3 * 4 by linarith [h₂]] at h_eq''''
+      linarith
+
+    -- Now, we have two equations:
+    -- 1. $2a^3 + 4b^3 + 8c^3 = 0$ (h_eq'')
+    -- 2. $4a^3 + 8b^3 + 16c^3 = 0$ (h_eq'''')
+    -- Subtracting the first equation from the second gives $2a^3 + 4b^3 + 8c^3 = 0$.
+    have h_eq'''''' : 2 * a ^ 3 + 4 * b ^ 3 + 8 * c ^ 3 = 0 := by
+      linarith
+
+    -- This means $4b^3 + 8c^3 = -2a^3$.
+    have h_eq''''''' : 4 * b ^ 3 + 8 * c ^ 3 = -2 * a ^ 3 := by linarith
+
+    -- However, this leads to a contradiction because $4b^3 + 8c^3 > 0$ and $-2a^3 < 0$.
+    have h_pos : 0 < 4 * b ^ 3 + 8 * c ^ 3 := by positivity
+    have h_neg : 2 * a ^ 3 < 0 := by
+      by_contra! h_nonneg
+      have : 0 ≤ 2 * a ^ 3 := by positivity
+      linarith
+
+    linarith
+
+  -- Therefore, we conclude that $a = b = c = 0$.
+  exact ⟨haneq0, hbneq0, hcneq0⟩
+```

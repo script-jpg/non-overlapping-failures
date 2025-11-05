@@ -1,0 +1,98 @@
+have ha := h₀.1
+  have hb := h₀.2.1
+  have hc := h₀.2.2.1
+  have hd := h₀.2.2.2
+
+  have h₆ : d < 2 ^ k := by
+    calc
+      d < a + d := by exact Nat.lt_add_right a d
+      _ = 2 ^ k := by exact h₄.symm
+  have h₇ : b < 2 ^ m := by
+    calc
+      b < b + c := by exact Nat.lt_add_right b c
+      _ = 2 ^ m := by exact h₅.symm
+
+  have h₈ : ∀ n : ℕ, n < 2 ^ k → Odd n → n ≤ 2 ^ k - 1 := by
+    intro n hn
+    exact Nat.le_sub_one_of_lt hn
+
+  have h₉ : a + d ≤ 2 ^ k := by exact Nat.le_of_lt_succ h₆
+
+  have h₁₀ : b + c ≤ 2 ^ m := by exact Nat.le_of_lt_succ h₇
+
+  have h₁₁ : a * d ≤ 2 ^ k * (2 ^ m - 1) := by
+    calc
+      a * d ≤ a + d := by exact Nat.mul_le_add a d
+      _ ≤ 2 ^ k := by exact h₄
+      _ ≤ 2 ^ k * (2 ^ m - 1) := by exact Nat.mul_le_mul_right (2 ^ k) h₉
+  have h₁₂ : b * c ≤ 2 ^ m * (2 ^ k - 1) := by
+    calc
+      b * c ≤ b + c := by exact Nat.mul_le_add b c
+      _ ≤ 2 ^ m := by exact h₅
+      _ ≤ 2 ^ m * (2 ^ k - 1) := by exact Nat.mul_le_mul_right (2 ^ m) h₁₀
+
+  have h₁₃ : 2 ^ k * (2 ^ m - 1) < 2 ^ m * (2 ^ k - 1) := by
+    apply Nat.mul_lt_mul_of_pos_right
+    · exact Nat.sub_one_pos.mpr h₄
+    · exact Nat.sub_one_pos.mpr h₅
+  have h₁₄ : a * d < b * c := by
+    linarith
+  have h₁₅ : b * c - a * d > 0 := by
+    linarith
+
+  have h₁₆ : b * c - a * d ≤ 2 ^ m * (2 ^ k - 1) - 2 ^ k * (2 ^ m - 1) := by
+    apply Nat.sub_le_sub
+    · exact h₁₂
+    · exact h₁₁
+  have h₁₇ : 2 ^ m * (2 ^ k - 1) - 2 ^ k * (2 ^ m - 1) > 0 := by
+    apply Nat.sub_pos_of_lt
+    exact Nat.sub_mul_lt_mul_sub_of_pos_left h₁₃ (by exact Nat.pow_pos k 2)
+
+  have h₁₈ : b * c - a * d = 2 ^ m * (2 ^ k - 1) - 2 ^ k * (2 ^ m - 1) := by
+    linarith
+  rw [h₁₈] at h₁₆
+
+  have h₁₉ : a * (d - 2 ^ k) + d * (2 ^ k - a) = 2 ^ k * (2 ^ m - 1) - 2 ^ m * (2 ^ k - 1) + 2 ^ k * d := by
+    ring
+  have h₁₂₀ : a * (d - 2 ^ k) + d * (2 ^ k - a) > 0 := by
+    linarith
+  have h₁₂₁ : a * (d - 2 ^ k) ≥ 0 := by
+    apply Nat.mul_pos_iff.mpr
+    left
+    constructor
+    · exact Nat.Prime.two_le Nat.prime_two
+    · linarith
+  have h₁₂₂ : d * (2 ^ k - a) ≥ 0 := by
+    apply Nat.mul_pos_iff.mpr
+    left
+    constructor
+    · exact hd
+    · linarith
+
+  have h₁₂₃ : a * (d - 2 ^ k) = 0 ∨ d * (2 ^ k - a) = 0 := by
+    by_contra h
+    apply Nat.ne_zero_iff_exists_eq_succ.mpr at h
+    obtain ⟨h₁, h₂⟩ := h
+    have : a * (d - 2 ^ k) + d * (2 ^ k - a) = 0 := by
+      rw [h₁, h₂]
+      ring
+    linarith
+
+  rcases h₁₂₃ with ⟨h₁₂₃, h₁₂₄⟩ | ⟨h₁₂₃, h₁₂₄⟩
+  · have : d = 2 ^ k := by
+      calc
+        d = d - 2 ^ k + 2 ^ k := by rw [Nat.sub_add_cancel]; exact Nat.le_of_lt_succ h₆
+        _ = 2 ^ k := by rw [h₁₂₃]; simp
+    rw [this, add_comm] at h₄
+    apply Nat.eq_add_of_sub_eq at h₄
+    have : a = 2 ^ k := by
+      calc
+        a = a + 2 ^ k - 2 ^ k := by rw [Nat.add_sub_cancel']; exact Nat.le_of_lt_succ h₄
+        _ = 2 ^ k := by rw [h₄]; simp
+    linarith
+  · have : a = 2 ^ k := by
+      calc
+        a = a + 2 ^ k - 2 ^ k := by rw [Nat.add_sub_cancel']; exact Nat.le_of_lt_succ h₄
+        _ = 2 ^ k := by rw [h₁₂₄]; simp
+    linarith
+```

@@ -1,0 +1,97 @@
+-- Let $A$ be the $3 \times 3$ matrix formed by the coefficients $a_{ij}$.
+  -- By the first condition, the diagonal elements $a_{11}$, $a_{22}$, $a_{33}$ are positive.
+  have h₀' : ∀ i : ℕ, 0 < a i.natAbs := by
+    intro i
+    by_cases hi : i ≤ 2
+    · simp at hi
+      interval_cases i
+      · exact h₀.1
+      · exact h₀.2.1
+      · exact h₀.2.2
+    · push_neg at hi
+      simp at hi
+      have : i.natAbs = 3 ∨ i.natAbs = 4 ∨ i.natAbs = 5 := by
+        have : i = 6 ∨ i = 7 ∨ i = 8 := by omega
+        simp [this]
+      rcases this with (hi | hi | hi)
+      · rw [hi, h₃.1]
+      · rw [hi, h₃.2.1]
+      · rw [hi, h₃.2.2]
+
+  -- By the second condition, the remaining elements are negative.
+  have h₁' : ∀ i : ℕ, i ≠ 0 → i ≠ 4 → i ≠ 8 → a i < 0 := by
+    intro i hi hi' hi''
+    have : i.natAbs = 1 ∨ i.natAbs = 2 ∨ i.natAbs = 3 := by
+      have : i = 1 ∨ i = 2 ∨ i = 3 := by omega
+      simp [this]
+    rcases this with (hi | hi | hi)
+    · rw [hi, h₁.1]
+    · rw [hi, h₁.2.1]
+    · rw [hi, h₁.2.2]
+
+  -- By the third condition, the sum of coefficients in each equation is positive.
+  have h₂' : ∀ i : ℕ, 0 < (∑ j : ℕ, a i * if j = 1 then 1 else if j = 2 then 1 else if j = 3 then 1 else 0) := by
+    intro i
+    rcases (show i = 0 ∨ i = 1 ∨ i = 2 by omega) with (hi | hi | hi)
+    · rw [hi, h₄]
+    · rw [hi, h₅]
+    · rw [hi, h₆]
+
+  -- Form the matrix $A$ and prove it is strictly diagonally dominant.
+  let A : Matrix (Fin 3) (Fin 3) ℝ :=!![
+    [a 0, a 1, a 2],
+    [a 3, a 4, a 5],
+    [a 6, a 7, a 8]
+  ]
+  have hA : Strictly diagonally dominant (EuclideanSpace.dist matrixtoeigen _ _)
+    A := by
+    intro i
+    simp [A]
+    by_cases hi : i ≤ 2
+    · simp at hi
+      interval_cases i
+      · rw [h₀'.0, h₁' 1 (by norm_num) (by norm_num)]
+        norm_num
+        linarith
+      · rw [h₀'.1, h₁' 2 (by norm_num) (by norm_num)]
+        norm_num
+        linarith
+      · rw [h₀'.2.1, h₁' 3 (by norm_num) (by norm_num)]
+        norm_num
+        linarith
+    · push_neg at hi
+      have : i.natAbs = 3 ∨ i.natAbs = 4 ∨ i.natAbs = 5 := by
+        have : i = 6 ∨ i = 7 ∨ i = 8 := by omega
+        simp [this]
+      rcases this with (hi | hi | hi)
+      · rw [h₀'.2.2, h₁' 6 (by norm_num) (by norm_num)]
+        norm_num
+        linarith
+      · rw [h₀'.2.1, h₁' 7 (by norm_num) (by norm_num)]
+        norm_num
+        linarith
+      · rw [h₀'.1, h₁' 8 (by norm_num) (by norm_num)]
+        norm_num
+        linarith
+
+  -- By strictly diagonally dominant matrix property, we have $x = y = z = 0$.
+  have hx : x = 0 := by
+    -- From last equation, we get $x = 0$.
+    have : x = 0 := by
+      linarith [h₉, h₁.2.2, h₂.2.2, hA]
+    assumption
+
+  have hy : y = 0 := by
+    -- From second last equation, we get $y = 0$.
+    have : y = 0 := by
+      linarith [h₈, h₁.2.1, h₂.2.1, hA]
+    assumption
+
+  have hz : z = 0 := by
+    -- From last equation, we get $z = 0$.
+    have : z = 0 := by
+      linarith [h₇, h₁.1, h₂.1, hA]
+    assumption
+
+  exact ⟨hx, hy, hz⟩
+```

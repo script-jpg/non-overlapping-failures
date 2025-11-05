@@ -1,0 +1,228 @@
+-- multiply h₁ by y, h₂ by z, and h₃ by x
+  -- we get:
+
+  -- $xy + 1 = 4y,\qquad yz + 1 = z,\qquad \text{and} \qquad zx + 1 = \frac{7}{3}x$.
+
+  have h₁' : x * y + 1 = 4 * y := by
+    have : y ≠ 0 := by positivity
+    field_simp at h₁
+    linarith
+
+  have h₂' : y * z + 1 = z := by
+    have : z ≠ 0 := by positivity
+    field_simp at h₂
+    linarith
+
+  have h₃' : z * x + 1 = 7 / 3 * x := by
+    have : x ≠ 0 := by positivity
+    field_simp at h₃
+    linarith
+
+  -- multiply h₁', h₂', and h₃' and get:
+
+  -- $(xy + 1)(yz + 1)(zx + 1) = 4y \cdot z \cdot \frac{7}{3}x$
+
+  have h₄ : (x * y + 1) * (y * z + 1) * (z * x + 1) = 4 * y * z * (7 / 3 * x) := by
+    rw [h₁', h₂', h₃']
+    ring
+
+  -- simplify the both sides and we get:
+
+  -- $(xyz)^2 + (xy + yz + zx) + (x + y + z) + 1 = \frac{28}{3}xyz$
+
+  have h₅ : (x * y * z)^2 + (x * y + y * z + z * x) + (x + y + z) + 1 = 28 / 3 * (x * y * z) := by
+    have h : x * y > 0 := by nlinarith
+    have h : y * z > 0 := by nlinarith
+    have h : z * x > 0 := by nlinarith
+    ring_nf at h₄ ⊢
+    nlinarith
+
+  -- by Cauchy-Schwarz's inequality we have
+
+  -- $(xy + yz + zx)(x + y + z) \geq (xyz)^{2/3} (xyz)^{1/3} = xyz.$
+
+  have h₆ : (x * y + y * z + z * x) * (x + y + z) ≥ x * y * z := by
+    have : (x * y + y * z + z * x) * (x + y + z) - x * y * z = (x - z)^2 * (y - x)^2 * (z - y)^2 / ((x - y)^2 * (y - z)^2 * (z - x)^2) := by ring_nf; simp only [add_mul, mul_add, mul_pow, sub_mul, mul_sub, sq, div_mul, div_eq_mul_inv, mul_inv_cancel₀, one_mul, mul_assoc]
+    have : x * y > 0 := by nlinarith
+    have : y * z > 0 := by nlinarith
+    have : z * x > 0 := by nlinarith
+    have : (x - z) ^ 2 * (y - x) ^ 2 * (z - y) ^ 2 ≥ 0 := by positivity
+    have : (x - y) ^ 2 * (y - z) ^ 2 * (z - x) ^ 2 > 0 := by
+      apply mul_pos
+      apply mul_pos
+      · apply sq_pos_of_ne_zero
+        by_contra! h
+        have : x = y := by linarith only [h]
+        rw [this] at h₁
+        norm_num at h₁
+      · apply sq_pos_of_ne_zero
+        by_contra! h
+        have : y = z := by linarith only [h]
+        rw [this] at h₂
+        norm_num at h₂
+      · apply sq_pos_of_ne_zero
+        by_contra! h
+        have : z = x := by linarith only [h]
+        rw [this] at h₃
+        norm_num at h₃
+    nlinarith
+
+  -- so we have
+
+  -- $(xyz)^{2/3} (xyz)^{1/3} \leq (xy + yz + zx)(x + y + z) \geq xyz.$
+
+  have h₇ : (x * y * z)^2 ≤ ((x * y + y * z + z * x) * (x + y + z)) * (x * y * z) := by
+    nlinarith
+
+  -- which implies that $(xyz)^3 \leq (xy + yz + zx)(x + y + z) \cdot xyz$
+  have h₈ : (x * y * z)^3 ≤ ((x * y + y * z + z * x) * (x + y + z)) * (x * y * z)^2 := by
+    nlinarith
+
+  -- multiply h₅ by xyz and then substitute h₈ and simplify
+
+  -- we have $(xyz)^5 \leq \frac{28}{3} (xyz)^4$, which implies that $xyz \leq \frac{28}{3}$. -/
+  have h₉ : (x * y * z)^5 ≤ (28 / 3) * (x * y * z)^4 := by
+    nlinarith
+
+  have h₁₀ : x * y * z ≤ 28 / 3 := by
+    have : 0 < x * y * z := by positivity
+    exact (pow_le_pow_iff_le_one₀ this (by norm_num) (by nlinarith)).mpr h₉
+
+  -- to show that $xyz \geq 1$, we first prove that
+
+  -- $xyz \cdot(xy + yz + zx) \geq (xyz)^{4/3} (xyz)^{2/3} = (xyz)^{2}$.
+
+  have h₁₁ : x * y * z * (x * y + y * z + z * x) ≥ (x * y * z)^2 := by
+    have : (x * y * z)^{2/3} * (x * y * z)^{1/3} = (x * y * z) := by
+      rw [← pow_add]
+      congr
+      norm_num
+    calc
+      _ = (x * y * z)^{2/3} * (x * y * z)^{1/3} := by rw [this]
+      _ ≤ (x * y + y * z + z * x) * (x + y + z) := by exact h₆
+      _ ≥ (x * y * z)^{2} := by
+        have : (x * y * z)^{2/3} * (x * y * z)^{1/3} = (x * y * z)^{2/3 + 1/3} := by rw [pow_add]
+        rw [this]
+        norm_num
+        rw [← Real.rpow_mul_natCast]
+        congr
+        refine Real.rpow_le_rpow_of_exponent_le?h₁?h₂
+        refine Real.rpow_pos_of_pos?_
+        positivity
+        norm_num
+        exact h₁₀
+        norm_num
+
+  -- substitute h₅ and do some simplification, we have
+
+  -- $\frac{(xyz)^3}{(xyz)^{4/3}(xyz)^{2/3}} \leq \frac{28}{3}$
+
+  -- which implies that $xyz \leq \frac{28}{3}$. -/
+  have h₁₂ : (x * y * z)^3 ≤ (28 / 3) * (x * y * z) ^ (4 / 3) * (x * y * z) ^ (2 / 3) := by
+    have : (x * y * z) ^ (4 / 3) * (x * y * z) ^ (2 / 3) = (x * y * z) := by
+      rw [← Real.rpow_add_natCast]
+      congr
+      norm_num
+      rw [mul_assoc]
+      apply Eq.symm
+      exact (pow_le_pow_iff_le_one₀ this (by norm_num) (by nlinarith)).mpr h₉
+    rw [← this]
+    linarith only [h₁₁]
+
+  have h₁₃ : (x * y * z) ^ (1 / 3) * (x * y * z) ^ (1 / 3) * (x * y * z) ^ (1 / 3) ≤ 28 / 3 := by
+    have : (x * y * z) ^ (1 / 3) * (x * y * z) ^ (1 / 3) * (x * y * z) ^ (1 / 3) = (x * y * z) ^ (1 / 3 + 1 / 3 + 1 / 3) := by
+      rw [← Real.rpow_add_natCast, ← Real.rpow_add_natCast]
+      congr
+      norm_num
+      rw [← Real.rpow_mul_natCast]
+      congr
+      norm_num
+      rw [mul_assoc]
+      apply Eq.symm
+      exact (pow_le_pow_iff_le_one₀ this (by norm_num) (by nlinarith)).mpr h₁₂
+    rw [this]
+    norm_num
+    rw [← Real.rpow_mul_natCast]
+    congr
+    exact h₁₀
+    norm_num
+
+  have h₁₄ : (x * y * z) ^ (1 / 3) * (x * y * z) ^ (1 / 3) * (x * y * z) ^ (1 / 3) = x * y * z := by
+    rw [← Real.rpow_add_natCast, ← Real.rpow_add_natCast]
+    congr
+    norm_num
+    rw [← Real.rpow_mul_natCast]
+    congr
+    norm_num
+    rw [mul_assoc]
+    apply Eq.symm
+    rw [← Real.rpow_natCast]
+    rw [← Real.rpow_mul_natCast]
+    congr
+    norm_num
+    rw [← Real.rpow_natCast]
+    rw [← Real.rpow_mul_natCast]
+    congr
+    norm_num
+    positivity
+
+  -- so we have $xyz \leq \frac{28}{3}$.
+  rw [h₁₄] at h₁₃
+  have h₁₅ : x * y * z ≤ 28 / 3 := by
+    exact (pow_le_pow_iff_le_one₀ this (by norm_num) (by nlinarith)).mpr h₁₃
+
+  -- to show that $xyz \geq 1$, we first show that $xyz$ is bounded.
+
+  -- multiply h₁' and h₂' and h₃'
+
+  -- we have $(xy + 1)(yz + 1)(zx + 1) = 4y \cdot z \cdot \frac{7}{3}x$
+
+  have h₁₆ : (x * y + 1) * (y * z + 1) * (z * x + 1) = 4 * y * z * (7 / 3 * x) := by
+    rw [h₁', h₂', h₃']
+    ring
+
+  -- expand the left side and simplify
+
+  -- we have $(xyz-1)(xyz + (xy+yz+zx) + (x+y+z) + 1) = 0$.
+
+  have h₁₇ : (x * y * z - 1) * (x * y * z + (x * y + y * z + z * x) + (x + y + z) + 1) = 0 := by
+    rw [← h₁₆]
+    ring_nf
+
+  -- since $x,y,z > 0$, we have $xyz + (xy+yz+zx) + (x+y+z) + 1 > 0$.
+
+  -- so we have $xyz - 1 = 0$.
+
+  have h₁₈ : x * y * z - 1 = 0 := by
+    have : x * y * z + (x * y + y * z + z * x) + (x + y + z) + 1 > 0 := by
+      apply add_pos
+      apply add_pos
+      apply add_pos
+      apply mul_pos
+      apply mul_pos
+      positivity
+      positivity
+      positivity
+      positivity
+      positivity
+      positivity
+      positivity
+    have : x * y * z - 1 = 0 ∨ x * y * z + (x * y + y * z + z * x) + (x + y + z) + 1 = 0 := by
+      rw [← h₁₇]
+      rw [mul_eq_zero]
+      exact (Or.inl (sub_eq_zero.mp this)) |>.inr (add_eq_zero_iff_of_pos this).mp?_
+      exact (add_eq_zero_iff_of_pos this).mp?_
+      exact this
+    cases' this with h h'
+    · exact h
+    · linarith only [h']
+
+  -- so we have $xyz = 1$.
+
+  have h₁₉ : x * y * z = 1 := by
+    linarith only [h₁₈]
+
+  -- so the answer is (B) 1.
+
+  exact h₁₉
+```

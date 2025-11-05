@@ -1,0 +1,37 @@
+-- We shall show that the answer is 93.
+  -- Let d be the common difference, which is 1.
+  set d := 1 with d_eq
+  -- Let a be the first term.
+  set a := u 0 with a_eq
+  -- Then the nth term is a + d*n.
+  have h₂ (n : ℕ) : u n = a + d*n := by
+    induction' n with n ih
+    · rfl
+    · rw [h₀, ih]
+      ring
+  have h₂' (n : ℕ) : u (n.succ) = a + d*n + d := by
+    rw [h₂, add_assoc, Nat.add_sub_cancel, add_comm]
+    ring
+
+  -- Then the sum of the terms is (98 choose 2)*d + 98*a.
+  have h₃ : ∑ i ∈ Finset.range 98, u i.succ = (98 * 97 / 2) * d + 98*a := by
+    rw [Finset.sum_range_succ, Finset.sum_range_succ']
+    simp
+    rw [h₂']
+    ring
+  have h₃' : (98 * 97 / 2) * d + 98*a = 137 := by
+    rw [← h₃, h₁]
+  simp [d_eq] at h₃'
+  -- Then we can solve for a = 289/49.
+  have h₄ : a = 289/49 := by linarith
+
+  -- The sum we want is ∑_{k=1}^{49} u_{2k} = ∑_{k=1}^{49} (a + d*(2k)) = 49*a + d*∑_{k=1}^{49} 2k.
+  have h₅ : ∑ k in Finset.range 49, u (2 * k.succ) = 49*a + 2*d*(49*50/2) := by
+    rw [Finset.sum_range_succ, Finset.sum_range_succ']
+    simp
+    rw [h₂']
+    ring
+  rw [h₅, h₄, d_eq]
+  -- Which is 93.
+  norm_num
+```

@@ -1,0 +1,53 @@
+-- simplify the problem according to the definition
+  have simp : (abs y = 6) ∧ (√((x - 8) ^ 2 + (y - 3) ^ 2) = 15) ∧ √(x ^ 2 + y ^ 2) = √n :=
+    ⟨h₁, h₂, h₃⟩
+
+  -- simplify the roots off
+  have simp' : (y = 6 ∨ y = -6) ∧ ((x - 8) ^ 2 + (y - 3) ^ 2 = 15 ^ 2) ∧ (x ^ 2 + y ^ 2 = n) := by
+    constructor
+    · exact abs_eq (simp.left) |>.mp
+    · constructor
+      · rw [Real.sqrt_eq_iff_eq_sq (by positivity) (by norm_num)] at simp.right
+        exact simp.right
+      · rw [Real.sqrt_eq_iff_eq_sq (by positivity) (by norm_num)] at simp
+        exact simp
+
+  -- since y < 0, so y = -6
+  have yeq : y = -6 := by
+    obtain ⟨_, ygt⟩ := h₀
+    cases simp'.left with
+    | inl yeq =>
+      linarith
+    | inr yeq =>
+      exact yeq
+
+  -- since x < 0, we have x^2 > 0 and y^2 > 0
+  have xneq : x ^ 2 > 0 ∧ y ^ 2 > 0 := by
+    constructor
+    · exact sq_pos_of_neg (h₀.left)
+    · exact sq_pos_of_neg (h₀.right)
+
+  -- so n = x^2 + y^2 > 0
+  have ngt : n > 0 := by
+    rw [←simp'.right]
+    positivity
+
+  -- from h₂, we have (x - 8) ^ 2 + (y - 3) ^ 2 = 15 ^ 2
+  -- so x^2 + y^2 - 16 x - 6 y + 8^2 + 3^2 = 15^2
+  have eq : - 16 * x - 6 * y + 8 ^ 2 + 3 ^ 2 = 15 ^ 2 := by
+    obtain ⟨h, k⟩ := simp'
+    rw [h, k]
+    linarith
+
+  -- from h₁, we have y = -6, so we can use linarith to solve the equation
+  have xeq : x = - 11 / 4 := by
+    linarith
+
+  -- so n = x^2 + y^2 = 12.5^2 + 6^2 = 52
+  have neq : n = x ^ 2 + y ^ 2 := by
+    exact simp'.right
+  rw [xeq, yeq] at neq
+  norm_num at neq
+  exact neq
+
+```

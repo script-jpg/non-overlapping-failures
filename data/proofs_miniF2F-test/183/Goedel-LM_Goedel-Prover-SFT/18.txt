@@ -1,0 +1,33 @@
+simp only [Set.mem_toFinset, Set.mem_preimage, Set.mem_singleton_iff]
+  have h₁ : ∀ x, f x = 0 ↔ x ^ 2 + 18 * x + 30 = 2 * Real.sqrt (x ^ 2 + 18 * x + 45) := by
+    intro x
+    rw [h₀, sub_eq_zero]
+  have h₂ : ∀ x, 0 ≤ x ^ 2 + 18 * x + 45 := by
+    intro x
+    apply le_of_lt
+    apply Real.sqrt_pos.1
+    rw [h₁ x]
+    norm_num
+  have h₃ : ∀ x, x ^ 2 + 18 * x + 30 = 2 * Real.sqrt (x ^ 2 + 18 * x + 45) → x ^ 2 + 18 * x + 45 = 20 := by
+    intro x hx
+    have hx' := hx
+    rw [Real.sqrt_eq_iff_sq_eq] at hx' <;> nlinarith
+  have h₄ : (∃ x, f x = 0) ∧ (∀ x, f x = 0 → x ^ 2 + 18 * x + 45 = 20) := by
+    refine' ⟨⟨-10, _⟩, h₃⟩
+    rw [h₁]
+    norm_num
+  have h₅ : (∃ x, f x = 0) ∧ (∀ x, f x = 0 → x ^ 2 + 18 * x + 45 = 20) →
+      (∀ x, (x ∈ (f ⁻¹' {0}).toFinset ↔ x = -10) ∧ (-10 ∈ (f ⁻¹' {0}).toFinset) ∧ (-10 ∈ ({x | x ^ 2 + 18 * x + 45 = 20} : Set ℝ)) := by
+    intro h
+    have h₆ : ∀ x, x ∈ (f ⁻¹' {0}).toFinset ↔ x = -10 := by
+      intro x
+      have hx : x ∈ (f ⁻¹' {0}).toFinset ↔ x ^ 2 + 18 * x + 30 = 2 * Real.sqrt (x ^ 2 + 18 * x + 45) := by
+        simp [h₁, Finset.mem_coe, Finset.mem_singleton]
+      simp [h] at hx
+      refine' ⟨fun h => _, fun h => _⟩
+      · nlinarith [Real.mul_self_sqrt (h₂ x)]
+      · nlinarith [Real.mul_self_sqrt (h₂ x)]
+    simp_all only [Finset.coe_singleton, Finset.mem_singleton, Finset.mem_coe]
+    aesop
+  aesop
+```

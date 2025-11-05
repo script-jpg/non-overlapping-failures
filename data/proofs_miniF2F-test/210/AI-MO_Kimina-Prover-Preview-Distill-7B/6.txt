@@ -1,0 +1,275 @@
+have h₁ : S.card = 6 := by
+    -- We will show that the six points $0.426$, $2.718$, $4.247$, $5.934$, $7.634$ and $10.447$ are the
+    -- solutions to the equation $1 - 3 \sin \theta + 5 \cos 3 \theta = 0$ in the interval
+    -- $(0, 2\pi]$
+    have h₁ : S = {
+        0.42627855288157564,
+        2.7187500239692575,
+        4.247290620564686,
+        5.934848640912551,
+        7.634557433550977,
+        10.447264644209525
+    } := by
+      -- We will prove that the set $S$ equals the set of six numbers given above. We start by
+      -- proving the implication from $S$ to the set of six numbers
+      ext x
+      constructor
+      · -- We first prove that if $x \in S$, then $x$ is one of the six numbers
+        intro hx
+        rcases hx with ⟨hx, h₀, h₁⟩
+        have h₂ : x = 0.42627855288157564 ∨ x = 2.7187500239692575 ∨ x = 4.247290620564686 ∨
+          x = 5.934848640912551 ∨ x = 7.634557433550977 ∨ x = 10.447264644209525 := by
+          clear * - h₀ h₁ h₂
+          -- We rewrite the equation $1 - 3 \sin x + 5 \cos 3 x = 0$ as $2 \cos^3 x - 3 \cos x +
+          -- 1 = 0$ using the trigonometric identity $\cos 3x = 4\cos^3x - 3\cos x$
+          rw [Real.cos_three_mul] at h₁
+          have h₃ : 2 * Real.cos x ^ 3 - 3 * Real.cos x + 1 = 0 := by linarith
+          -- We factorize $2 \cos^3 x - 3 \cos x + 1 = 0$ as $(\cos x - 1)(2\cos^2 x + 2\cos x
+          -- - 1) = 0$
+          have h₄ : (Real.cos x - 1) * (2 * Real.cos x ^ 2 + 2 * Real.cos x - 1) = 0 := by
+            linarith
+          rw [mul_eq_zero] at h₄
+          -- If the first factor is zero, then $\cos x = 1$. This implies $x = 0$ which is not in
+          -- our interval, so this case is impossible
+          cases h₄ with
+          | inl h₅ =>
+            have h₆ : Real.cos x = 1 := by linarith
+            have h₇ : x = 0 := by
+              rw [Real.cos_eq_one_iff] at h₆
+              exact h₆
+            linarith
+          | inr h₅ =>
+            -- If the second factor is zero, then $\cos x$ is a root of $2x^2 + 2x - 1 = 0$. We
+            -- use the quadratic formula to find the roots of this equation
+            have h₆ : 2 * Real.cos x ^ 2 + 2 * Real.cos x - 1 = 0 := by assumption
+            have h₇ : Real.cos x = (-2 + Real.sqrt 8) / (2 * 2) ∨ Real.cos x = (-2 - Real.sqrt 8) / (2 * 2) := by
+              have h₈ : 2 * Real.cos x ^ 2 + 2 * Real.cos x - 1 = 2 * (Real.cos x - (-2 + Real.sqrt 8) / (2 * 2)) * (Real.cos x - (-2 - Real.sqrt 8) / (2 * 2)) := by
+                ring_nf
+                rw [Real.sq_sqrt (by norm_num)]
+                ring
+              rw [h₈] at h₅
+              rw [mul_eq_zero] at h₅
+              cases h₅ with
+              | inl h₆ =>
+                left
+                linarith
+              | inr h₆ =>
+                right
+                linarith
+            -- We have $\cos x = \frac{-2 + \sqrt{8}}{4}$ or $\cos x = \frac{-2 - \sqrt{8}}{4}$
+            -- We use the fact that $\sqrt{8} = 2 \sqrt{2}$ to simplify these expression
+            cases h₇ with
+            | inl h₇ =>
+              have h₈ : Real.cos x = -1 / 2 + Real.sqrt 2 / 2 := by
+                rw [h₇]
+                have h₉ : Real.sqrt 8 = 2 * Real.sqrt 2 := by
+                  rw [Real.sqrt_eq_iff_mul_self_eq] <;> norm_num
+                  <;> ring_nf <;> norm_num
+                rw [h₉]
+                ring
+              have h₁₀ : 2 * Real.pi = 1.228415470492118 * Real.pi := by
+                norm_num
+                rw [Real.pi_pos]
+                linarith
+              have h₁₁ : 0.42627855288157564 = 0.26726124353135564 * Real.pi := by
+                norm_num
+                rw [Real.pi_pos]
+                linarith
+              have h₁₂ : 0.26726124353135564 = (-1 / 2 + Real.sqrt 2 / 2) / Real.pi := by
+                field_simp
+                ring_nf
+                rw [Real.sq_sqrt (by norm_num)]
+                ring
+              rw [h₁₁, h₈, h₁₂]
+              -- We have $\cos x = \frac{-1}{2} + \frac{\sqrt{2}}{2}$, so $x = \frac{2\pi}{3} - \frac{\pi}{6}$
+              -- (which is $0.42627855288157564$)
+              have h₁₃ : x = (2 * Real.pi / 3) - (Real.pi / 6) := by
+                rw [← Real.cos_pi_div_three, h₈]
+                have h₁₄ : (-1 / 2 + Real.sqrt 2 / 2) / Real.pi = -Real.pi / 6 := by
+                  field_simp
+                  ring_nf
+                  rw [Real.sq_sqrt (by norm_num)]
+                  ring
+                rw [h₁₄]
+                linarith
+              rw [h₁₃]
+              clear h₈ h₉ h₁₀ h₁₁ h₁₂
+              -- We check that this value of $x$ is in our set
+              constructor
+              · linarith
+              constructor
+              · linarith [Real.pi_pos]
+              · ring_nf
+                rw [Real.sq_sqrt (by norm_num)]
+                ring
+            | inr h₇ =>
+              have h₈ : Real.cos x = -1 / 2 - Real.sqrt 2 / 2 := by
+                rw [h₇]
+                have h₉ : Real.sqrt 8 = 2 * Real.sqrt 2 := by
+                  rw [Real.sqrt_eq_iff_mul_self_eq] <;> norm_num
+                  <;> ring_nf <;> norm_num
+                rw [h₉]
+                ring
+              have h₁₀ : 2 * Real.pi = 1.228415470492118 * Real.pi := by
+                norm_num
+                rw [Real.pi_pos]
+                linarith
+              have h₁₁ : 2.7187500239692575 = 0.26726124353135564 * Real.pi := by
+                norm_num
+                rw [Real.pi_pos]
+                linarith
+              have h₁₂ : 0.26726124353135564 = (-1 / 2 - Real.sqrt 2 / 2) / Real.pi := by
+                field_simp
+                ring_nf
+                rw [Real.sq_sqrt (by norm_num)]
+                ring
+              rw [h₁₁, h₈, h₁₂]
+              -- We have $\cos x = -\frac{1}{2} - \frac{\sqrt{2}}{2}$, so $x = \frac{2\pi}{3} + \frac{\pi}{6}$
+              -- (which is $2.7187500239692575$)
+              have h₁₃ : x = (2 * Real.pi / 3) + (Real.pi / 6) := by
+                rw [← Real.cos_pi_div_three, h₈]
+                have h₁₄ : (-1 / 2 - Real.sqrt 2 / 2) / Real.pi = Real.pi / 6 := by
+                  field_simp
+                  ring_nf
+                  rw [Real.sq_sqrt (by norm_num)]
+                  ring
+                rw [h₁₄]
+                linarith
+              rw [h₁₃]
+              clear h₈ h₉ h₁₀ h₁₁ h₁₂
+              -- We check that this value of $x$ is in our set
+              constructor
+              · linarith
+              constructor
+              · linarith [Real.pi_pos]
+              · ring_nf
+                rw [Real.sq_sqrt (by norm_num)]
+                ring
+        -- Conversely, we prove that if $x$ is one of the six numbers, then $x \in S$
+        cases h₂ with
+        | inl h₂ =>
+          -- If $x = 0.42627855288157564$, we check that $x$ is in the interval $(0, 2\pi]$ and
+          -- satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+          constructor
+          · linarith
+          constructor
+          · linarith [Real.pi_pos]
+          · -- We check that $x$ satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+            rw [h₂]
+            have h₃ : 2 * Real.pi = 1.228415470492118 * Real.pi := by
+              norm_num
+              rw [Real.pi_pos]
+              linarith
+            have h₄ : 0.42627855288157564 = 0.26726124353135564 * Real.pi := by
+              norm_num
+              rw [Real.pi_pos]
+              linarith
+            have h₅ : 0.26726124353135564 = (-1 / 2 + Real.sqrt 2 / 2) / Real.pi := by
+              field_simp
+              ring_nf
+              rw [Real.sq_sqrt (by norm_num)]
+              ring
+            rw [h₃, h₄, h₅]
+            ring_nf
+            rw [Real.sq_sqrt (by norm_num)]
+            ring
+        | inr h₂ =>
+          cases h₂ with
+          | inl h₂ =>
+            -- If $x = 2.7187500239692575$, we check that $x$ is in the interval $(0, 2\pi]$ and
+            -- satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+            constructor
+            · linarith
+            constructor
+            · linarith [Real.pi_pos]
+            · -- We check that $x$ satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+              rw [h₂]
+              have h₃ : 2 * Real.pi = 1.228415470492118 * Real.pi := by
+                norm_num
+                rw [Real.pi_pos]
+                linarith
+              have h₄ : 2.7187500239692575 = 0.26726124353135564 * Real.pi := by
+                norm_num
+                rw [Real.pi_pos]
+                linarith
+              have h₅ : 0.26726124353135564 = (-1 / 2 - Real.sqrt 2 / 2) / Real.pi := by
+                field_simp
+                ring_nf
+                rw [Real.sq_sqrt (by norm_num)]
+                ring
+              rw [h₃, h₄, h₅]
+              ring_nf
+              rw [Real.sq_sqrt (by norm_num)]
+              ring
+          | inr h₂ =>
+            cases h₂ with
+            | inl h₂ =>
+              -- If $x = 4.247290620564686$, we check that $x$ is in the interval $(0, 2\pi]$ and
+              -- satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+              constructor
+              · linarith
+              constructor
+              · linarith [Real.pi_pos]
+              · -- We check that $x$ satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+                rw [h₂]
+                have h₃ : 2 * Real.pi = 1.228415470492118 * Real.pi := by
+                  norm_num
+                  rw [Real.pi_pos]
+                  linarith
+                have h₄ : 4.247290620564686 = 0.26726124353135564 * Real.pi := by
+                  norm_num
+                  rw [Real.pi_pos]
+                  linarith
+                have h₅ : 0.26726124353135564 = (-1 / 2 + Real.sqrt 2 / 2) / Real.pi := by
+                  field_simp
+                  ring_nf
+                  rw [Real.sq_sqrt (by norm_num)]
+                  ring
+                rw [h₃, h₄, h₅]
+                ring_nf
+                rw [Real.sq_sqrt (by norm_num)]
+                ring
+            | inr h₂ =>
+              cases h₂ with
+              | inl h₂ =>
+                -- If $x = 5.934848640912551$, we check that $x$ is in the interval $(0, 2\pi]$ and
+                -- satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+                constructor
+                · linarith
+                constructor
+                · linarith [Real.pi_pos]
+                · -- We check that $x$ satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+                  rw [h₂]
+                  have h₃ : 2 * Real.pi = 1.228415470492118 * Real.pi := by
+                    norm_num
+                    rw [Real.pi_pos]
+                    linarith
+                  have h₄ : 5.934848640912551 = 0.26726124353135564 * Real.pi := by
+                    norm_num
+                    rw [Real.pi_pos]
+                    linarith
+                  have h₅ : 0.26726124353135564 = (-1 / 2 - Real.sqrt 2 / 2) / Real.pi := by
+                    field_simp
+                    ring_nf
+                    rw [Real.sq_sqrt (by norm_num)]
+                    ring
+                  rw [h₃, h₄, h₅]
+                  ring_nf
+                  rw [Real.sq_sqrt (by norm_num)]
+                  ring
+              | inr h₂ =>
+                cases h₂ with
+                | inl h₂ =>
+                  -- If $x = 7.634557433550977$, we check that $x$ is in the interval $(0, 2\pi]$ and
+                  -- satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+                  constructor
+                  · linarith
+                  constructor
+                  · linarith [Real.pi_pos]
+                  · -- We check that $x$ satisfies the equation $1 - 3 \sin x + 5 \cos 3 x = 0$
+                    rw [h₂]
+                    have h₃ : 2 * Real.pi = 1.228415470492118 * Real.pi := by
+                      norm_num
+                      rw [Real.pi_pos]
+                      linarith
+                    have h₄ : 7.634557433550977 = 0.2672612435

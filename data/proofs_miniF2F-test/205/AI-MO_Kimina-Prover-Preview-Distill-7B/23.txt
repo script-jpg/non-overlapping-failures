@@ -1,0 +1,70 @@
+have h : ∀ a b : ℝ, 0 < a → 0 < b → (a + b) / 2 ≤ a * b := by
+    intro a b ha hb
+    -- rewrite the inequality as $(a-b)^2 \geq 0$
+    have h : (a - b) ^ 2 ≥ 0 := by positivity
+    ring_nf at h ⊢
+    linarith
+
+  -- Apply the inequality to $(a^{n/2}, b^{n/2})$
+  have h' : (a ^ (n / 2 : ℝ) + b ^ (n / 2 : ℝ)) ^ 2 ≥ 4 * a ^ (n / 2 : ℝ) * b ^ (n / 2 : ℝ) := by
+    specialize h (a ^ (n / 2 : ℝ)) (b ^ (n / 2 : ℝ)) (by positivity) (by positivity)
+    ring_nf at h ⊢
+    exact h
+
+  -- Apply the inequality to $(a^{1-n/2}, b^{1-n/2})$
+  have h'' : (a ^ (1 - n / 2 : ℝ) + b ^ (1 - n / 2 : ℝ)) ^ 2 ≥ 4 * a ^ (1 - n / 2 : ℝ) * b ^ (1 - n / 2 : ℝ) := by
+    specialize h (a ^ (1 - n / 2 : ℝ)) (b ^ (1 - n / 2 : ℝ)) (by positivity) (by positivity)
+    ring_nf at h ⊢
+    exact h
+
+  -- Use these inequalities to prove the desired result
+  calc
+    ((a + b) / 2) ^ n = ((a + b) / 2) ^ (2 : ℝ) * ((a + b) / 2) ^ (n - 2 : ℝ) := by
+      rw [show (2 : ℝ) + (n - 2 : ℝ) = n by ring, pow_add]
+      positivity
+    _ ≤ (a * b) ^ 2 * ((a + b) / 2) ^ (n - 2 : ℝ) := by
+      rw [mul_pow]
+      apply pow_le_pow_left₀ (by positivity) (by positivity) |>.mpr
+      exact h a b h₀.1 h₀.2
+    _ = (a ^ 2 * b ^ 2) * ((a + b) / 2) ^ (n - 2 : ℝ) := by
+      rw [mul_pow, mul_comm]
+      congr 1
+      ac_rfl
+    _ ≤ (a ^ 2 * b ^ 2) * (a ^ (n - 2 : ℝ) * b ^ (n - 2 : ℝ)) := by
+      rw [mul_le_mul_left (by positivity)]
+      apply pow_le_pow_left₀ (by positivity) (by positivity) |>.mpr
+      apply mul_le_mul_of_nonneg_right
+      exact h' ⁻¹
+      apply mul_le_mul_of_nonneg_right
+      apply pow_le_pow_left₀ (by positivity) (by positivity) |>.mpr
+      exact h''
+      all_goals positivity
+    _ = (a ^ (2 + (n - 2 : ℝ)) * b ^ (2 + (n - 2 : ℝ))) := by
+      rw [mul_pow, mul_pow, <-mul_assoc, <-mul_assoc, <-pow_add, <-pow_add]
+      congr 1
+      ring
+      congr 1
+      ring
+    _ = (a ^ n * b ^ n) := by
+      congr 1
+      rw [<-Nat.cast_add, <-Nat.cast_add]
+      congr 1
+      norm_cast
+      norm_cast
+    _ = (a ^ n + b ^ n) / 2 * (a ^ n + b ^ n) / 2 := by
+      rw [<-mul_pow, mul_div_cancel_right₀]
+      norm_num
+      positivity
+    _ ≤ (a ^ n + b ^ n) / 2 := by
+      apply (div_le_iff₀ (by positivity)).mpr
+      rw [mul_pow]
+      apply pow_le_pow_left₀ (by positivity) (by positivity) |>.mpr
+      apply div_le_div_of_nonneg_right (by positivity)
+      rw [<-mul_pow, <-pow_add]
+      apply mul_le_mul_of_nonneg_right
+      apply pow_le_pow_left₀ (by positivity) (by positivity) |>.mpr
+      norm_num
+      positivity
+      norm_num
+      positivity
+```

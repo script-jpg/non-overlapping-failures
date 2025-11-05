@@ -1,0 +1,79 @@
+-- Check that 40 = 2 ^ 3 * 5.
+  have hfactor40 : Nat.factorization 40 = {2 := 3, 5 := 1} := by native_decide
+
+  -- Check that 10 = 2 * 5.
+  have hfactor10 : Nat.factorization 10 = {2 := 1, 5 := 1} := by native_decide
+
+  -- Check that 280 = 2 ^ 3 * 5 * 7.
+  have hfactor280 : Nat.factorization 280 = {2 := 3, 5 := 1, 7 := 1} := by native_decide
+
+  -- From the above we know that n must have the factors 2, 5, and 7.
+  have h₃ : Nat.Prime 2 ∨ 2 ∣ n := by
+    apply Nat.dvd_or_prime_of_factorization_pos
+    rw [hfactor40]
+    simp
+    apply Nat.Prime.eq_succ_of_factorization_one
+    rw [hfactor10]
+    simp
+    linarith
+
+  have h₄ : Nat.Prime 5 ∨ 5 ∣ n := by
+    apply Nat.dvd_or_prime_of_factorization_pos
+    rw [hfactor40]
+    simp
+    apply Nat.Prime.eq_succ_of_factorization_one
+    rw [hfactor10]
+    simp
+    linarith
+
+  have h₅ : Nat.Prime 7 ∨ 7 ∣ n := by
+    apply Nat.dvd_or_prime_of_factorization_pos
+    rw [hfactor280]
+    simp
+    apply Nat.Prime.eq_succ_of_factorization_one
+    rw [hfactor10]
+    simp
+    linarith
+
+  -- Moreover, n must be squarefree with respect to 5 and 7 since otherwise the lcm would be bigger.
+  have h₆ : ¬Nat.Prime 5 ∧ ¬Nat.Prime 7 := by
+    constructor
+    · intro h
+      rw [h] at hfactor280
+      simp at hfactor280
+      linarith
+    · intro h
+      rw [h] at hfactor280
+      simp at hfactor280
+      linarith
+
+  -- Now we know that n has exactly the prime factors 2, 5, and 7.
+  have h₇ : Nat.factorization n = {2 := 1, 5 := 1, 7 := 1} := by
+    apply Nat.factorization_eq_of_dvd_of_not_dvd
+    · rw [hfactor40]
+      simp
+      rw [hfactor10]
+      simp
+      linarith
+    · constructor
+      · rw [hfactor40]
+        simp
+        rw [hfactor280]
+        simp
+        linarith
+      · constructor
+        · rw [hfactor40]
+          simp
+          rw [hfactor280]
+          simp
+          linarith
+        · assumption
+
+  -- Hence n = 2 * 5 * 7 = 70.
+  apply Nat.eq_of_factorization_eq
+  · norm_num
+  · rw [hfactor40]
+    simp
+    rw [h₇]
+    simp
+```

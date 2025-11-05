@@ -1,0 +1,96 @@
+-- We shall prove that $\left( D_{2021}, D_{2022}, D_{2023} \right)$ is $\left( \text{E}, \text{O}, \text{E} \right)$, where $\text{E}$ denotes a even number and $\text{O}$ denotes a odd number.
+
+  -- We first compute $D_3$, $D_4$ and $D_5$ to identify the pattern.
+  have h₃' : d 3 = 1 := by
+    simp [h₃, h₁, h₀, h₂]
+  have h₄' : d 4 = 1 := by
+    simp [h₄, h₃', h₁, h₂]
+  have h₅' : d 5 = 2 := by
+    simp [h₅, h₄', h₂, h₃']
+
+  -- We see that $D_3 = 1$, $D_4 = 1$ and $D_5 = 2$. The pattern appears to be that $(D_n)$ is increasing and consists of Fibonacci numbers.
+  -- Let's conjecture that $D_n$ is equal to the $n$-th Fibonacci number for all $n$.
+  have conjecture : ∀ n, d n = Nat.fib n := by
+    intro n
+    induction' n using Nat.strong_induction_on with n ih
+    cases n
+    · simp [h₀]
+    · cases n
+      · simp [h₁]
+      · cases n
+        · simp [h₂]
+        · simp [h₃, h₃', h₄', h₅']
+
+  -- Now, let's check the parity of the triple $(D_{2021}, D_{2022}, D_{2023})$. We need to dig deeper to solve the problem, as simply computing the values would exceed the computational limits of Lean. Instead, we need to identify a pattern in the parities of the Fibonacci numbers.
+  -- We need the fact that $2021 = 3 \cdot 673 + 2$, $2022 = 3 \cdot 674 + 0$, and $2023 = 3 \cdot 674 + 1$.
+  have h₆ : d 2021 = Nat.fib 2021 := conjecture 2021
+  have h₇ : d 2022 = Nat.fib 2022 := conjecture 2022
+  have h₈ : d 2023 = Nat.fib 2023 := conjecture 2023
+
+  -- We need to find the parity of the Fibonacci numbers at these indices. Let's identify the pattern in the parity of the Fibonacci numbers. We have the following facts, which can be proved by induction:
+  -- - $F_0 = 0$ is even
+  -- - $F_1 = 1$ is odd
+  -- - $F_2 = 1$ is odd
+  -- - $F_3 = 2$ is even
+  -- - $F_4 = 3$ is odd
+  -- - $F_5 = 5$ is odd
+  -- - $F_6 = 8$ is even
+  -- - $F_7 = 13$ is odd
+  -- - $F_8 = 21$ is odd
+  -- - $F_9 = 34$ is even
+  -- - $F_{10} = 55$ is odd
+  -- - $F_{11} = 89$ is odd
+  -- - $F_{12} = 144$ is even
+  --...
+  have fact₁ : Nat.fib (3 * 673 + 2) % 2 = 0 := by
+    -- $F_{3n+2}$ is even for all $n$ if $F_2 = 1$ is odd, $F_5 = 5$ is odd, and $F_8 = 21$ is odd.
+    have fact : ∀ k, Nat.fib (3 * k + 2) % 2 = 0 := by
+      intro k
+      induction k with
+      | zero =>
+        simp [Nat.fib]
+      | succ k ih =>
+        rw [show 3 * (k + 1) + 2 = 3 * k + 2 + 3 by ring]
+        rw [Nat.fib_add]
+        simp [Nat.fib]
+        rw [Nat.add_mod, ih, Nat.zero_add, Nat.even_add_odd]
+        simp
+    exact fact 673
+
+  have fact₂ : Nat.fib (3 * 674 + 0) % 2 = 1 := by
+    -- $F_{3n}$ is odd for all $n$ if $F_0 = 0$ is even, $F_3 = 2$ is even, and $F_6 = 8$ is even.
+    have fact : ∀ k, Nat.fib (3 * k + 0) % 2 = 1 := by
+      intro k
+      induction k with
+      | zero =>
+        simp [Nat.fib]
+      | succ k ih =>
+        rw [show 3 * (k + 1) + 0 = 3 * k + 0 + 3 by ring]
+        rw [Nat.fib_add]
+        simp [Nat.fib]
+        rw [Nat.add_mod, ih, Nat.even_add_even, Nat.odd_add_even]
+        simp
+    exact fact 674
+
+  have fact₃ : Nat.fib (3 * 674 + 1) % 2 = 1 := by
+    -- $F_{3n+1}$ is odd for all $n$ if $F_1 = 1$ is odd, $F_4 = 3$ is odd, and $F_7 = 13$ is odd.
+    have fact : ∀ k, Nat.fib (3 * k + 1) % 2 = 1 := by
+      intro k
+      induction k with
+      | zero =>
+        simp [Nat.fib]
+      | succ k ih =>
+        rw [show 3 * (k + 1) + 1 = 3 * k + 1 + 3 by ring]
+        rw [Nat.fib_add]
+        simp [Nat.fib]
+        rw [Nat.add_mod, ih, Nat.even_add_odd, Nat.odd_add_odd]
+        simp
+    exact fact 674
+
+  -- Using these facts, we can solve the problem.
+  rw [h₆, h₇, h₈]
+  constructor
+  · exact ⟨Nat.fib 2021 / 2, by omega⟩
+  · exact Nat.odd_iff.mpr fun a => (Nat.even_add_odd (fact₁.symm) (fact₂.symm)).symm
+  · exact Nat.even_iff.mpr fun a => (Nat.even_add_odd (fact₂.symm) (fact₃.symm)).symm
+```

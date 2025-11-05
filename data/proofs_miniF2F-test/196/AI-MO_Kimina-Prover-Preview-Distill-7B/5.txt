@@ -1,0 +1,66 @@
+-- some auxiliary lemma that may be useful later
+  have l_1 {a b : ℕ} (h : a - b = 2) : a = b + 2 := by omega
+  have l_2 {a b : ℕ} (h : a - b = 2) : b < a := by omega
+
+  -- replace m by m/2 and n by n/2, the condition "Even m" ensures that m/2 is an integer,
+  -- and the condition "Even n" ensures that n/2 is an integer.
+  have h₄ : (m / 2) * (n / 2) = 72 := by
+    have : (m / 2) * (n / 2) = (m * n) / 4 := by
+      nth_rw 1 [← Nat.mul_div_assoc m n 2]
+      rw [Nat.mul_div_cancel_self even_iff_two_dvd] at h₁
+      ring
+    rw [this, h₃]
+    norm_num
+
+  have h₅ : m / 2 + n / 2 = 18 := by
+    have : m / 2 + n / 2 = (m + n) / 2 := by
+      nth_rw 1 [← Nat.add_div_assoc m n 2]
+      rw [Nat.add_div_cancel_left]
+    rw [this]
+    omega
+
+  -- this is the key observation: based on the two equations:
+  --   - m/2 + n/2 = 18
+  --   - m/2 * n/2 = 72
+  -- we can solve m/2 and n/2.
+  -- treat m/2 and n/2 as the roots of a quadratic equation.
+  have h₆ : (m / 2) ^ 2 - 18 * (m / 2) + 72 = 0 := by
+    have : (m / 2) ^ 2 - 18 * (m / 2) + 72 = (m / 2) * (m / 2)  - (m / 2 + n / 2) * (m / 2) + (m / 2) * (n / 2) := by ring
+    rw [this]
+    rw [h₄, h₅]
+    ring
+
+  have h₇ : (n / 2) ^ 2 - 18 * (n / 2) + 72 = 0 := by
+    have : (n / 2) ^ 2 - 18 * (n / 2) + 72 = (n / 2) * (n / 2)  - (m / 2 + n / 2) * (n / 2) + (m / 2) * (n / 2) := by ring
+    rw [this]
+    rw [h₄, h₅]
+    ring
+
+  -- factorize the quadratic equation
+  have h₈ : (m / 2 - 6) * (m / 2 - 12) = 0 := by
+    ring_nf
+    rw [h₆]
+    ring
+  -- thus m/2 is either 6 or 12
+  replace h₈ : m / 2 - 6 = 0 ∨ m / 2 - 12 = 0 := mul_eq_zero.mp h₈
+
+  -- m/2 = 6 or 12, then m = 12 or 24
+  replace h₈ : m / 2 = 6 ∨ m / 2 = 12 := by omega
+  cases h₈ with
+  | inl h₈ =>
+    -- m/2 = 6 is impossible, because m/2 * n/2 = 72 and m/2 < n/2
+    have h₉ : m / 2 < n / 2 := by omega
+    rw [h₈] at h₉
+    omega
+  | inr h₈ =>
+    -- m/2 = 12, solve n/2 = 6
+    have h₉ : n / 2 = 6 := by
+      rw [h₈] at h₄
+      linarith
+    -- thus m = 24 and n = 12, contradicts to our assumption that m - n = 2
+    have h₁₀ : m = 24 ∧ n = 12 := by
+      omega
+    rw [h₁₀.1, h₁₀.2] at h₂
+    omega
+
+```

@@ -1,0 +1,186 @@
+have : ∀ n x, 0 < n → 0 < f n x := by
+    intro n x hn
+    induction' n with d hd
+    · simp [h₀]
+    · simp [h₁]
+      rw [← hd]
+      positivity
+
+  have min : ∀ n x, 0 < n → f n x < f (n + 1) x := by
+    intro n x hn
+    induction' n with d hd
+    · simp [h₀, h₁]
+    · simp [h₁]
+      rw [← hd]
+      intro _
+      linarith
+
+  have max : ∀ n x, 0 < n → f (n + 1) x < 1 := by
+    intro n x hn
+    induction' n with d hd
+    · simp [h₀, h₁]
+      norm_num
+    · simp [h₁]
+      rw [← hd]
+      intro _
+      linarith
+
+  -- We will construct the sequence $x_1,x_2,\ldots$ by setting $x_{n+1}=x_n \left(x_n + \frac{1}{n}\right)$ for each $n \geq 1$.
+  -- Prove that there exists exactly one value of $x_1$ for which $0<x_n<x_{n+1}<1$ for every $n$.
+
+  -- Choose $x_1 \in (0,1)$, and by induction, $x_{n+1}=x_n \left(x_n + \frac{1}{n}\right) \in (0,1)$.
+  let a = (1 / 2) * (1 + Real.sqrt 3)
+  have ha : 0 < a ∧ a < 1 := by
+    constructor
+    · positivity
+    · calc
+        a = (1 / 2) * (1 + Real.sqrt 3) := rfl
+        _ < (1 / 2) * (1 + 2) := by
+          have : Real.sqrt 3 < 2 := by
+            apply (Real.sqrt_lt' (by norm_num)).mpr (by norm_num)
+          linarith
+        _ = 1 := by norm_num
+
+  -- We claim that $x_n = \frac{9-3a^n}{3(1-a^n)}$ for each $n \geq 1$.
+  let b : ℕ → ℝ := fun n => (9 - 3 * a ^ n) / (3 * (1 - a ^ n))
+  have hb : ∀ n, 0 < n → b n = (9 - 3 * a ^ n) / (3 * (1 - a ^ n)) := by simp
+
+  -- Prove by induction that $x_n = \frac{9-3a^n}{3(1-a^n)}$ for each $n \geq 1$.
+  have : ∀ n, 0 < n → ∀ x, x = b n → f n x = (9 - 3 * a ^ n) / (3 * (1 - a ^ n)) := by
+    intro n hn x hx
+    induction' n with d hd
+    · simp [h₀, hb]
+      intro _
+      linarith
+    · intro x hx
+      rw [h₁, hd, hx]
+      field_simp
+      ring_nf
+      rw [mul_inv_cancel₀ (by linarith)]
+      ring_nf
+      simp
+      intro _
+      linarith
+
+  -- If $0<x_n<x_{n+1}<1$, then $0<x_{n+1}-x_n<x_{n+1}$.
+  have : ∀ n x, 0 < n → 0 < x → x = b n → 0 < f (n + 1) x - f n x ∧ f (n + 1) x - f n x < f (n + 1) x := by
+    intro n x hn hx
+    have : f (n + 1) x - f n x = 3 * a ^ n * (1 - a ^ n) / (3 * (1 - a ^ n) * (1 - a ^ n) + 3 * a ^ n * (1 - a ^ n)) := by
+      rw [hb, this, hx]
+      field_simp
+      ring_nf
+      rw [mul_assoc, mul_assoc, mul_inv_cancel₀ (by linarith)]
+      ring
+    rw [this]
+    constructor
+    · positivity
+    · calc
+        _ < 3 * a ^ n * (1 - a ^ n) / (3 * (1 - a ^ n) * (1 - a ^ n)) := by
+          have : 0 < 3 * a ^ n * (1 - a ^ n) := by
+            apply mul_pos
+            positivity
+            linarith
+          rw [div_eq_mul_div]
+          apply (mul_lt_mul_left (by positivity)).mpr
+          rw [div_lt_one (by positivity)]
+          linarith
+          linarith
+        _ = f (n + 1) x := by
+          rw [hb, hx]
+          field_simp
+          ring
+
+  -- If $0<x_n<x_{n+1}<1$, then $x_{n+2} = x_{n+1}(x_{n+1}+\frac{1}{n+1}) > x_{n+1}$.
+  have : ∀ n x, 0 < n → 0 < x → x = b n → x < f (n + 2) x := by
+    intro n x hn hx
+    suffices n + 1 + 1 = n + 2 by rw [this]; simp [this]
+    rw [this, hb, this, hx]
+    field_simp
+    ring_nf
+    have : (1 - a ^ n) ^ 2 * (1 - a ^ n + a ^ (n + 1)) > 0 := by
+      apply mul_pos
+      apply pow_two_pos_of_ne_zero
+      linarith
+      linarith
+    linarith
+
+  -- If $0<x_n<x_{n+1}<1$, then $x_{n+2} = x_{n+1}(x_{n+1}+\frac{1}{n+1}) < 1$.
+  have : ∀ n x, 0 < n → 0 < x → x = b n → f (n + 2) x < 1 := by
+    intro n x hn hx
+    suffices n + 1 + 1 = n + 2 by rw [this]; simp [this]
+    rw [this, hb, this, hx]
+    field_simp
+    ring_nf
+    have : 0 < (1 - a ^ n) * (1 - a ^ n + a ^ (n + 1)) := by
+      apply mul_pos
+      linarith
+      linarith
+    have : (a ^ n * 3 + 3 - a ^ (n + 1) * 2) < (1 - a ^ n) * (1 - a ^ n + a ^ (n + 1)) := by
+      have : a ^ n * 3 + 3 - a ^ (n + 1) * 2 = (1 + a ^ n) * 3 := by
+        rw [pow_add, pow_one, mul_assoc]
+        ring
+      rw [this]
+      have : 0 < a ^ n := by
+        apply pow_pos ha
+        linarith
+      linarith
+    linarith
+
+  -- We will prove that $a_1 = 1$.
+  use a
+  constructor
+  · -- Prove that $a_1 \in (0,1)$.
+    exact ⟨ha, by linarith⟩
+  · -- Prove that if $x \in (0,1)$, then $x = a_1$.
+    intro x hx
+    rcases hx with ⟨hx, hmin, hmax⟩
+
+    -- Prove by induction that $x_n \in (0,1)$ for each $n \geq 1$.
+    have hx' : ∀ n, 0 < n → 0 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1 := by
+      intro n hn
+      induction' n with d hd
+      · simp [h₀, h₁, hx]
+        constructor
+        · positivity
+        · constructor
+          · linarith
+          · linarith
+      · intro x hx
+        constructor
+        · apply this
+          linarith
+          assumption
+        · constructor
+          · apply this
+            linarith
+            assumption
+          · apply this
+            linarith
+            assumption
+
+    -- Prove that $x = a$.
+    have : ∀ n, 0 < n → f n x = b n := by
+      intro n hn
+      induction' n with d hd
+      · simp [h₀, hb]
+        intro _
+        linarith
+      · simp [h₁]
+        rw [hd, hb]
+        ring_nf
+        rw [mul_assoc, mul_assoc, mul_inv_cancel₀ (by linarith)]
+        ring
+        linarith
+
+    have : x = a := by
+      have : x = (9 - 3 * a) / (3 * (1 - a)) := by
+        symm
+        rw [this 1 (by norm_num), hb 1]
+        simp
+      symm
+      rw [this]
+      ring_nf
+      rw [mul_assoc, mul_assoc, mul_inv_cancel₀ (by linarith)]
+      ring
+    assumption
+```

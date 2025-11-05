@@ -1,0 +1,64 @@
+-- We can write $a = 6m$ and $b = 6n$ for some positive integers $m$ and $n$.
+  rcases h₃ with ⟨h₃, _⟩
+  rcases Nat.gcd_dvd h₃ with ⟨h₃, h₃⟩
+  let m := a / 6
+  let n := b / 6
+
+  -- Then, we have $6m \equiv 2 \pmod{10}$ and $6n \equiv 4 \pmod{10}$.
+  have h₄ : m % 10 = 2 := by
+    have : a % 10 = 6 * (m % 10) % 10 := by
+      calc
+        _ = a % 10 := by rfl
+        _ = 6 * m % 10 := by simp [m, Nat.mul_mod]
+        _ = 6 * (m % 10) % 10 := by rw [Nat.mul_mod]
+    rw [h₁] at this
+    omega
+  have h₅ : n % 10 = 4 := by
+    have : b % 10 = 6 * (n % 10) % 10 := by
+      calc
+        _ = b % 10 := by rfl
+        _ = 6 * n % 10 := by simp [n, Nat.mul_mod]
+        _ = 6 * (n % 10) % 10 := by rw [Nat.mul_mod]
+    rw [h₂] at this
+    omega
+
+  -- This implies that $m \equiv 2 \pmod{10}$ and $n \equiv 4 \pmod{10}$.
+  have h₆ : m % 10 = 2 := by omega
+  have h₇ : n % 10 = 4 := by omega
+
+  -- We also have $\gcd(m, n) = 1$.
+  have h₈ : m.gcd n = 1 := by
+    have : 6 * m.gcd n = 6 := by rw [←h₃, Nat.mul_gcd]
+    omega
+
+  -- Now, we want to find the smallest possible value of $\text{lcm}(a, b) = 6mn$.
+  -- This is equivalent to finding the smallest possible value of $mn$.
+  -- Since $m$ and $n$ are coprime, this is further equivalent to finding the smallest possible values of $m$ and $n$.
+  suffices 18 ≤ m * n from by omega
+  have hm : 2 ≤ m := by omega
+  have hn : 4 ≤ n := by omega
+  have hmn : m ≠ n := by omega
+  -- Now, we use the fact that $m$ and $n$ are coprime to show that $18 \leq m \cdot n$.
+  by_cases hm : Odd m
+  · have : 2 * m.gcd n = 2 := by rw [Nat.two_mul_gcd_iff]
+    have : m.gcd n = 1 := by omega
+    have : n ≠ m := by omega
+    have hn : 9 ≤ n := by by_contra!; interval_cases n <;> simp at *
+    calc
+      _ = m.gcd n * m * n := by rw [mul_assoc, mul_comm, ←mul_assoc, Nat.mul_gcd]
+      _ = 1 * m * n := by rw [this]
+      _ = m * n := by ring
+      _ ≥ 2 * 9 := by rw [mul_assoc, mul_comm]; exact Nat.mul_le_mul hm hn
+      _ = 18 := by norm_num
+  · have : 2 * m.gcd n = 4 := by rw [Nat.two_mul_gcd_iff]
+    have : m.gcd n = 2 := by omega
+    have : n = m := by omega
+    have hn : 6 ≤ n := by omega
+    calc
+      _ = m.gcd n * m * n := by rw [mul_assoc, mul_comm, ←mul_assoc, Nat.mul_gcd]
+      _ = 2 * m * m := by rw [this]; ring
+      _ = 2 * (m * m) := by ring
+      _ ≥ 2 * 6 := by rw [mul_assoc]; exact Nat.mul_le_mul_left 2 hn
+      _ = 12 := by norm_num
+
+```

@@ -1,0 +1,86 @@
+-- the product is decreasing
+  have h1 : ∀ n, 1 + (1 : ℝ) / 2 ^ n ≥ 1 + (1 : ℝ) / 2 ^ (n + 1) := by
+    intro n
+    have : 2 ^ (n + 1) = 2 * 2 ^ n := by
+      exact Eq.symm (Nat.mul_pow_one_right 2 n)
+    rw [this]
+    rw [add_div, add_div, mul_one, one_div, ← div_mul]
+    have : (2 : ℝ) > 0 := by
+      exact Nat.cast_pos'.mpr (show (0 : ℕ) < 2 by decide)
+    refine div_lt_div₀?_?_?_ <;> simp
+
+  -- in fact, it is decreasing in a stronger sense
+  have h1' : ∀ n, 1 + (1 : ℝ) / 2 ^ n > 1 + (1 : ℝ) / 2 ^ (n + 1) := by
+    intro n
+    have : 2 ^ (n + 1) = 2 * 2 ^ n := by
+      exact Eq.symm (Nat.mul_pow_one_right 2 n)
+    rw [this]
+    rw [add_div, add_div, mul_one, one_div, ← div_mul]
+    have : (2 : ℝ) > 0 := by
+      exact Nat.cast_pos'.mpr (show (0 : ℕ) < 2 by decide)
+    refine div_lt_div₀?_?_?_ <;> simp
+    apply lt_of_le_of_ne
+    refine inv_le_inv?_?_ <;> simp
+    exact one_le_two_pow
+    exact Nat.cast_ne_zero 2
+
+  -- split the product to two parts: $1 + 1/2^1$ to $1 + 1/2^n$
+  have h2 : ∀ n, ∏ k ∈ Finset.Icc 1 n, (1 + (1 : ℝ) / 2 ^ k) = (1 + (1 : ℝ) / 2 ^ 1) * ∏ k ∈ Finset.Icc 2 n, (1 + (1 : ℝ) / 2 ^ k) := by
+    intro n
+    rw [Finset.prod_Icc_succ_top (by norm_num)]
+    have : Finset.Icc 1 n = {1} ∪ Finset.Icc 2 n := by
+      ext i
+      simp
+      omega
+    rw [this, Finset.prod_union (by
+      intro x hx1 hx2
+      rw [Finset.mem_Icc] at hx2
+      replace hx2 : x - 1 ≥ 2 := by
+        omega
+      have : x - 1 ∈ Finset.Icc 2 n := by
+        simp
+        omega
+      exact Finset.prod_singleton x?_]
+    simp
+    exact Finset.prod_singleton one (by simp)
+
+  -- give the induction hypothesis
+  induction n, h₀ using Nat.le_induction with
+  | base =>
+    intro
+    rw [h2, Finset.prod_Icc_succ_top (by norm_num)]
+    simp
+    norm_num
+  | succ n h₀ ih =>
+    intro
+    rw [h2, Finset.prod_Icc_succ_top (by norm_num)]
+    have : Finset.Icc 1 (n + 1) = Finset.Icc 1 n ∪ {n + 1} := by
+      ext i
+      simp
+      omega
+    rw [this, Finset.prod_union (by
+      intro x hx1 hx2
+      rw [Finset.mem_Icc] at hx2
+      omega),
+        ih (by linarith)]
+    simp
+    have : 1 + (1 : ℝ) / 2 ^ (n + 1) > 0 := by
+      refine add_pos (by norm_num)?_
+      refine div_pos (by norm_num) (pow_pos (by norm_num) (by linarith))
+    have : 1 + (1 : ℝ) / 2 ^ 1 > 0 := by
+      refine add_pos (by norm_num)?_
+      refine div_pos (by norm_num) (pow_pos (by norm_num) (by decide))
+    convert_to (1 + (1 : ℝ) / 2 ^ 1) * (∏ k ∈ Finset.Icc 2 n, (1 + (1 : ℝ) / 2 ^ k)) * (1 + (1 : ℝ) / 2 ^ (n + 1)) <;> rw [mul_assoc]
+    · refine mul_lt_mul_of_pos_right?_ (by norm_num)
+      rw [h1' (n + 1)]
+      apply one_lt_add_of_pos
+      refine div_pos (by norm_num) (pow_pos (by norm_num) (by linarith))
+    · rw [h1 (n + 1)]
+      apply mul_lt_mul_of_pos_right
+      assumption
+      exact this
+    · apply mul_pos
+      · exact h1 (n + 1)
+      · exact ih (by linarith)
+
+```

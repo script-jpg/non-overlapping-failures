@@ -1,0 +1,60 @@
+have ha := h₀.1
+  have hb := h₀.2.1
+  have hc := h₀.2.2.1
+  have hd := h₀.2.2.2
+
+  have hab := h₁.1
+  have hbc := h₁.2.1
+  have hcd := h₁.2.2.1
+  have hda := h₁.2.2.2
+
+  have h₆ : d < 2 ^ k := by
+    calc
+      d < a + d := by exact Nat.lt_add_left a hd
+      _ = 2 ^ k := by exact h₄.symm
+
+  have h₇ : c < 2 ^ m := by
+    calc
+      c < b + c := by exact Nat.lt_add_left b hc
+      _ = 2 ^ m := by exact h₅.symm
+
+  have h₈ : b * c < (2 ^ m) * (2 ^ m) := by
+    apply Nat.mul_lt_mul_of_lt_of_lt
+    exact h₇
+    exact h₇
+  have h₉ : (2 ^ m) * (2 ^ m) = 2 ^ (m + m) := by
+    rw [pow_add, pow_mul]
+    ring
+  rw [h₉] at h₈
+
+  have H := h₃
+  rw [← Nat.mul_assoc] at H
+  apply Nat.mul_le_mul_left (by exact Nat.zero_lt_of_odd odd_c) at H
+  have h₁₀ : a * b < a * d := by
+    apply Nat.mul_lt_mul_of_pos_left
+    exact Nat.lt_of_le_of_ne (Nat.le_of_lt_succ h₆) (by exact Nat.not_eq_zero_of_odd odd_a)
+  rw [← H] at h₁₀
+  have h₁₁ : a * b < b * c := by exact Nat.lt_of_lt_of_le h₁₀ h₈
+  have h₁₂ : a < c := by
+    apply Nat.lt_of_mul_lt_mul_left (by exact Nat.pos_of_odd_left odd_b) at h₁₁
+    exact h₁₁
+
+  by_cases ha' : a = 1
+  · exact ha'
+  · have ha'' : 1 < a := by exact Nat.one_lt_of_ne_zero (Nat.not_eq_zero_of_odd odd_a)
+
+    have hb' : b < d := by
+      calc
+        b < a + b := by exact Nat.lt_add_left a hb
+        _ < a + d := by exact Nat.lt_of_lt_of_le hb h₆
+    have hd' : d > b := by exact Nat.lt_of_lt_of_le hb h₆
+
+    have : d - b < 2 ^ k - b := by exact Nat.sub_lt_sub_right h₆ hb'
+    rw [Nat.sub_eq_iff_eq_add (by exact Nat.le_sub_one_add hb)] at this
+    have : k < m := by
+      apply lt_of_lt_of_le
+      · exact Nat.lt_of_le_of_ne (Nat.le_of_lt_succ this) (by exact Nat.not_eq_zero_of_odd odd_d)
+      · exact Nat.le_of_lt_succ h₈
+    have : m ≤ k := by exact Nat.le_of_lt_succ h₇
+    contradiction
+```

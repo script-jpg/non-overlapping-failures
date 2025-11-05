@@ -1,0 +1,197 @@
+-- We have r = (id 2010 4018).sum in Mathlib4
+  have : s = (Finset.Icc 2010 4018).sum id := h₀
+  rw [this]
+
+  -- Let r1 = (Finset.Icc 2010 4018).sum id
+  -- and r2 = (Finset.Icc 0 2008).sum id
+  -- and r3 = (Finset.Icc 2009 2009).sum id
+  -- Then r1 = r2 + r3
+  have : (Finset.Icc 2010 4018).sum id = (Finset.Icc 0 2008).sum id + (Finset.Icc 2009 2009).sum id := by
+    have : (Finset.Icc 2010 4018) = (Finset.Icc 0 2008) ∪ (Finset.Icc 2009 2009) := by
+      ext k
+      simp
+      omega
+    rw [this]
+    have : Disjoint (Finset.Icc 0 2008) (Finset.Icc 2009 2009) := by
+      intro k hk₁ hk₂
+      simp at hk₁ hk₂
+      omega
+    rw [Finset.sum_union this]
+  rw [this]
+
+  -- Let r4 = (Finset.Icc 0 2008).sum (fun k => (2009 + k) % 2009)
+  -- and r5 = (Finset.Icc 0 2008).sum (fun k => k % 2009)
+  -- Then r2 = r4 + r5
+  have : (Finset.Icc 0 2008).sum id = (Finset.Icc 0 2008).sum (fun k => (2009 + k) % 2009) + (Finset.Icc 0 2008).sum (fun k => k % 2009) := by
+    have : (fun k => (2009 + k) % 2009) + (fun k => k % 2009) = id := by
+      ext k
+      simp
+      omega
+    rw [Finset.sum_congr rfl this, Finset.sum_congr rfl (fun k _ => rfl)]
+  rw [this]
+
+  -- Let r6 = (Finset.Icc 0 2008).sum (fun k => 2009 % 2009)
+  -- and r7 = (Finset.Icc 0 2008).sum (fun k => k % 2009)
+  -- Then r4 = r6 + r7
+  have : (Finset.Icc 0 2008).sum (fun k => (2009 + k) % 2009) = (Finset.Icc 0 2008).sum (fun k => 2009 % 2009) + (Finset.Icc 0 2008).sum (fun k => k % 2009) := by
+    have : (fun k => (2009 + k) % 2009) = (fun k => 2009 % 2009) + (fun k => k % 2009) := by
+      ext k
+      simp
+      omega
+    rw [Finset.sum_congr rfl this, Finset.sum_congr rfl (fun k _ => rfl)]
+  rw [this]
+
+  -- Compute r6 and r8
+  have : (Finset.Icc 0 2008).sum (fun k => 2009 % 2009) = 2009 * 2009 := by
+    simp
+    calc
+      _ = ∑ x ∈ Finset.range 2009, 2009 := by
+        simp
+      _ = _ := by
+        rw [Finset.sum_const, Finset.card_range]
+        simp
+  rw [this]
+
+  -- Compute r7
+  have : (Finset.Icc 0 2008).sum (fun k => k % 2009) = (Finset.Icc 0 2008).sum (fun k => k) := by
+    let f (k : ℕ) := k % 2009
+    have hf : ∀ k, f k = k := by
+      intro k
+      simp [f]
+      omega
+    have : Set.InjOn f (Finset.Icc 0 2008) := by
+      intro k₁ hk₁ k₂ hk₂ h
+      simp [hf] at h
+      exact h
+    rw [Finset.sum_image this, Finset.sum_range_id]
+  rw [this]
+
+
+  -- Let r9 = 2009 * 2009 + (Finset.Icc 0 2008).sum (fun k => (2009 + k) % 2009)
+  -- Let r10 = 2009 * 2009 + (Finset.Icc 0 2008).sum (fun k => k % 2009)
+  -- Then r9 = r10
+  have : 2009 * 2009 + (Finset.Icc 0 2008).sum (fun k => (2009 + k) % 2009) = 2009 * 2009 + (Finset.Icc 0 2008).sum (fun k => k % 2009) := by
+    let f (k : ℕ) := (2009 + k) % 2009
+    -- For r9, we use the function (2009 + k) % 2009
+    -- For r10, we use the function k % 2009
+    -- These functions are almost the same, but for k = 2009, f(2009) = 0, while g(2009) = 2009
+    have hf₁ : ∀ k ∈ Finset.Icc 0 2008, f k = (2009 + k) % 2009 := by
+      intro k hk
+      simp [f]
+    have hf₂ : ∀ k ∈ Finset.Icc 0 2008, f k = g k := by
+      intro k hk
+      simp [f, hf₁, hk, Nat.add_mod]
+    -- The function (2009 + k) % 2009 is injective on the domain {0,..., 2008}
+    -- The function k % 2009 is injective on the domain {0,..., 2008}
+    have h injOn :=
+      Finset.sum_image_congr (injOn f (Finset.Icc 0 2008)) (by intro x hx; simp [hx] at hf)
+    -- The function (2009 + k) % 2009 is injective on the domain {0,..., 2008}
+    -- The function k % 2009 is injective on the domain {0,..., 2008}
+    have h' injOn' :=
+      Finset.sum_image_congr (injOn g (Finset.Icc 0 2008)) (by intro x hx; simp [hx] at hf)
+    -- The two functions are equal on the domain {0,..., 2008}
+    have h'' :
+      ∀ x ∈ Finset.Icc 0 2008, (f x : ℕ) = (g x : ℕ) := by
+      intro x hx
+      simp [f, g]
+      have : (2009 + x) % 2009 = x % 2009 + 2009 := by exact Eq.symm (Nat.add_mod (x % 2009) 2009)
+      rw [this]
+      omega
+    -- The two functions have the same sum
+    have h''' : (Finset.Icc 0 2008).sum (fun k => (f k : ℕ)) = (Finset.Icc 0 2008).sum (fun k => (g k : ℕ)) := by
+      rw [Finset.sum_congr rfl h'']
+    -- The sum of the function (2009 + k) % 2009 is equal to the sum of the function k % 2009
+    rw [← h''']
+    -- The sum of the function 2009 % 2009 is equal to 2009 * 2009
+    -- The sum of the function k % 2009 is equal to the sum of the function k
+    -- We get r9 = r10 = 2009 * 2009 + s
+  rw [this]
+
+  -- Let r11 = 2009 * 2009 + (Finset.Icc 0 2008).sum (fun k => (2009 + k) % 2009)
+  -- Let r12 = 2009 * 2009 + (Finset.Icc 0 2008).sum (fun k => (k + 2009) % 2009)
+  -- Then r11 = r12
+  have : 2009 * 2009 + (Finset.Icc 0 2008).sum (fun k => (2009 + k) % 2009) = 2009 * 2009 + (Finset.Icc 0 2008).sum (fun k => (k + 2009) % 2009) := by
+    let f (k : ℕ) := (2009 + k) % 2009
+    let g (k : ℕ) := (k + 2009) % 2009
+    -- For r11, we use the function (2009 + k) % 2009
+    -- For r12, we use the function (k + 2009) % 2009
+    -- These functions are almost the same, but for k = 2009, f(2009) = 0, while g(2009) = 2009
+    have hf : ∀ k ∈ Finset.Icc 0 2008, f k = g k := by
+      intro k hk
+      simp [f, g]
+      have : (2009 + k) % 2009 = (k + 2009) % 2009 := by exact Eq.symm (Nat.add_mod (k % 2009) 2009)
+      rw [this]
+    -- The function (2009 + k) % 2009 is injective on the domain {0,..., 2008}
+    -- The function (k + 2009) % 2009 is injective on the domain {0,..., 2008}
+    have h injOn :=
+      Finset.sum_image_congr (injOn f (Finset.Icc 0 2008)) (by intro x hx; simp [hx] at hf)
+    -- The two functions are equal on the domain {0,..., 2008}
+    have h'' :
+      ∀ x ∈ Finset.Icc 0 2008, (f x : ℕ) = (g x : ℕ) := by
+      intro x hx
+      simp [f, g]
+      have : (2009 + x) % 2009 = (x + 2009) % 2009 := by exact Eq.symm (Nat.add_mod (x % 2009) 2009)
+      rw [this]
+    -- The two functions have the same sum
+    have h''' : (Finset.Icc 0 2008).sum (fun k => (f k : ℕ)) = (Finset.Icc 0 2008).sum (fun k => (g k : ℕ)) := by
+      rw [Finset.sum_congr rfl h'']
+    -- The sum of the function (2009 + k) % 2009 is equal to the sum of the function (k + 2009) % 2009
+    rw [← h''']
+  rw [this]
+
+  -- We have r12 = (Finset.Icc 0 2008).sum (fun k => (k + 2009) % 2009) = s
+  -- The sum of the function (k + 2009) % 2009 is equal to
+  -- the sum of the function (k + 2009) % 2009
+  -- So r12 = s
+  have : (Finset.Icc 0 2008).sum (fun k => (k + 2009) % 2009) = s := by
+    let f (k : ℕ) := (k + 2009) % 2009
+    let g (k : ℕ) := k
+    -- For r12, we use the function (k + 2009) % 2009
+    -- For s, we use the function k
+    -- These functions are almost the same, but for k ≥ 2009, f(k) = k - 2009
+    have hf : ∀ k ∈ Finset.Icc 0 2008, f k = g k := by
+      intro k hk
+      simp [f, g]
+      omega
+    -- The function (k + 2009) % 2009 is injective on the domain {0,..., 2008}
+    -- The function k is injective on the domain {0,..., 2008}
+    have h injOn :=
+      Finset.sum_image_congr (injOn f (Finset.Icc 0 2008)) (by intro x hx; simp [hx] at hf)
+    -- The two functions are equal on the domain {0,..., 2008}
+    have h'' :
+      ∀ x ∈ Finset.Icc 0 2008, (f x : ℕ) = (g x : ℕ) := by
+      intro x hx
+      simp [f, g]
+      have : (x + 2009) % 2009 = x + 2009 := by exact Nat.add_mod_eq_of_lt (by omega)
+      rw [this]
+    -- The two functions have the same sum
+    have h''' : (Finset.Icc 0 2008).sum (fun k => (f k : ℕ)) = (Finset.Icc 0 2008).sum (fun k => (g k : ℕ)) := by
+      rw [Finset.sum_congr rfl h'']
+    -- The sum of the function (k + 2009) % 2009 is equal to the sum of the function k
+    -- So r12 = s
+    rw [← h''']
+    simp [h, g]
+  rw [this]
+
+  -- Let r13 = (Finset.Icc 0 2008).sum (fun k => (k + 2009) % 2009)
+  -- Let r14 = (Finset.Icc 0 2008).sum (fun k => (k + 2009) % 2009)
+  -- Then r13 = r14
+  have : (Finset.Icc 0 2008).sum (fun k => (k + 2009) % 2009) = (Finset.Icc 0 2008).sum (fun k => (k + 2009) % 2009) := by
+    let f (k : ℕ) := (k + 2009) % 2009
+    let g (k : ℕ) := (k + 2009) % 2009
+    -- For r13, we use the function (k + 2009) % 2009
+    -- For r14, we use the function (k + 2009) % 2009
+    -- These are the same function
+    have h : f = g := by
+      intro k
+      simp [f, g]
+    -- The two functions have the same sum
+    have h' : (Finset.Icc 0 2008).sum (fun k => (f k : ℕ)) = (Finset.Icc 0 2008).sum (fun k => (g k : ℕ)) := by
+      rw [h]
+    -- The sum of the function (k + 2009) % 2009 is equal to the sum of the function (k + 2009) % 2009
+    -- So r13 = r14
+    rw [← h']
+  rw [this]
+
+  -- Let r15 = (Finset.Icc 0 2008).sum (fun k => (k + 2009) % 2009)
+  -- Let r16 = (Finset.Icc 0 2008).sum (fun

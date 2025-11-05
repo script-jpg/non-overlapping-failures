@@ -1,0 +1,155 @@
+-- some auxiliary statements
+
+  -- it is clear that `y` is periodic with period `2 * π`
+  have period_y (x : ℝ) : y (x + 2 * π) = y x := by
+    simp [h₁]
+    apply Finset.sum_congr rfl
+    intro i _
+    rw [Real.cos_add_two_pi]
+    ring_nf
+
+  -- if `cos (a + x) = 0`, then `x = m * π - a` for some integer `m`
+  have zero_cos (a x : ℝ) (h : Real.cos (a + x) = 0) : ∃ m : ℤ, x = m * Real.pi - a := by
+    have h' : a + x = (2 * Real.pi) * (Real.floor ((a + x) / (2 * Real.pi)) + 1 / 2) - Real.pi / 2 := by
+      ring_nf
+      rw [Real.floor_add_one]
+      refine Eq.symm (Int.eq_floor_add_int (a + x) (2 * Real.pi))
+      simp
+      linarith
+    use (Real.floor ((a + x) / (2 * Real.pi)) + 1 / 2)
+    rw [h']
+    ring_nf
+    rw [Int.cast_add, Int.cast_add, Int.cast_one, Int.cast_ofNat, Int.cast_invOf]
+    ring_nf
+    field_simp
+    ring_nf
+
+  -- if `y x = 0`, then `x = m * π - a_i` for some integer `m` and `i ∈ [0, k)`
+  have zero_y (x : ℝ) (h : y x = 0) : ∃ i : ℕ, i ∈ Finset.range k ∧ ∃ m : ℤ, x = m * Real.pi - a i := by
+    simp [h₁] at h
+    apply Finset.sum_eq_zero_iff at h
+    -- for convenience, `h` is copied as `h'`
+    let h' := h
+    apply Finset.sum_eq_zero_iff at h'
+    obtain ⟨i, hi, h''⟩ := h'
+    use i, hi
+    -- `y` is periodic with period `2 * π`, so `cos (a_i + x) = cos (a_i + x + 2 * π)`
+    -- and `cos (a_i + x + 2 * π) = 0` implies that `cos (a_i + x) = 0`
+    have perodic_y (x : ℝ) : y (x + 2 * π) = y x := by
+      simp [h₁]
+      apply Finset.sum_congr rfl
+      intro i _
+      rw [Real.cos_add_two_pi]
+      ring_nf
+    have h'' :  y (x + 2 * π) = 0 := by rw [← h, perodic_y]
+    have h''' : Real.cos (a i + x) = 0 := by
+      rw [h₁] at h''
+      simp at h''
+      exact h''
+    have h'''' := zero_cos (a i) x h'''
+    exact h'''', h''
+
+  -- main proof
+  have h₄ : ∃ x : ℝ, m = x - n ∧ n = x - (x - n) := by
+    use m + n
+    simp
+    ring_nf
+  obtain ⟨x, h₄⟩ := h₄
+  rw [h₄.1] at h₂
+  simp [h₁] at h₂ h₃
+  have h₅ := h₂
+  apply Finset.sum_eq_zero_iff at h₅
+  have h₆ := h₃
+  apply Finset.sum_eq_zero_iff at h₆
+  -- extract `i` and `m` from `h₅`
+  obtain ⟨i, hi, h₅⟩ := h₅
+  -- extract `j` and `n` from `h₆`
+  obtain ⟨j, hj, h₆⟩ := h₆
+  have (i j : ℕ) (hi : i ∈ Finset.range k) (hj : j ∈ Finset.range k) (h : Real.cos (a i + ↑m * Real.pi - a j) = 0) : ∃ t : ℤ, m - n = t * Real.pi := by
+    -- `y` is periodic with period `2 * π`, so `cos (a_i + m * π - a_j) = cos (a_i + m * π - a_j + 2 * π)`
+    -- and `cos (a_i + m * π - a_j + 2 * π) = 0` implies that `cos (a_i + m * π - a_j) = 0`
+    have perodic_y (x : ℝ) : y (x + 2 * π) = y x := by
+      simp [h₁]
+      apply Finset.sum_congr rfl
+      intro i _
+      rw [Real.cos_add_two_pi]
+      ring_nf
+    have h'' :  y (m * Real.pi + x - n) = 0 := by
+      rw [h₄.2, ← h₃]
+      calc
+        y (m * Real.pi + x - n + 2 * π) = y (m * Real.pi + x - n) := perodic_y
+        _ = 0 := h₃
+    have h''' : Real.cos (a i + ↑m * Real.pi - a j) = 0 := by
+      rw [h₁] at h''
+      simp at h''
+      rw [← h, h]
+      exact h''
+    -- use the lemma `zero_cos`
+    have h'''' := zero_cos (a i) (↑m * Real.pi - a j) h'''
+    obtain ⟨t, h''''⟩ := h''''
+    -- for convenience, rewrite `m` as `tactics`
+    have hnah : m - n = t * Real.pi := by
+      rw [hl.1, hnah]
+      ring_nf
+    exact ⟨t, hnah⟩
+  -- prove that `i = j` by `h₅` and `h₆`
+  have i_eq_j : i = j := by
+    apply_fun (fun x => x + ↑n) at h₅
+    simp at h₅
+    apply_fun (fun x => x - ↑m * Real.pi) at h₅
+    simp at h₅
+    apply_fun (fun x => x + a i) at h₅
+    simp at h₅
+    rw [h₅] at h₆
+    apply_fun (fun x => x - a j) at h₆
+    simp at h₆
+    have perodic_y (x : ℝ) : y (x + 2 * π) = y x := by
+      simp [h₁]
+      apply Finset.sum_congr rfl
+      intro i _
+      rw [Real.cos_add_two_pi]
+      ring_nf
+    have h'' :  y (n - ↑j * Real.pi - x + 2 * π) = y (n - ↑j * Real.pi - x) := perodic_y
+    rw [h₆] at h''
+    rw [h'', ← h₄.2, h₄.1] at h₅
+    have h''' : Real.cos (a j + ↑(m - n) * Real.pi - a i) = 0 := by
+      rw [h₁] at h''
+      simp at h''
+      rw [← h', h']
+      exact h''
+    have h'''' := zero_cos (a j) (↑(m - n) * Real.pi - a i) h'''
+    obtain ⟨t, h''''⟩ := h''''
+    have hna: (m - n) = t * Real.pi + (i - j) * Real.pi := by
+      rw [h'''', h₅]
+      ring_nf
+    have hnb: m - n = (t + (i - j)) * Real.pi := by
+      rw [hna]
+      ring_nf
+    have hnc: (t + (i - j)) = 0 := by
+      rw [hnb] at h₄
+      rw [← sub_eq_zero] at h₄
+      rw [h₄]
+      simp
+    have hnd: t + (i - j) = 0 := by
+      norm_cast at hnc
+    have hneq : i = j := by
+      omega
+    exact hneq
+  -- rewrite `h₅` and `h₆` by `i = j`
+  rw [zero_y] at h₅ h₆
+  obtain ⟨t, h₅⟩ := h₅
+  obtain ⟨s, h₆⟩ := h₆
+  rw [h₄.1, h₄.2, i_eq_j] at h₅ h₆
+  rw [h₅] at h₆
+  have h₇ : ↑(m - n) * Real.pi = (t - s) * Real.pi := by
+    rw [h₆]
+    ring_nf
+  have h₈ : Real.pi ≠ 0 := by
+    linarith [Real.pi_pos]
+  have h₉ : m - n = t - s := by
+    rw [h₇]
+    simp [h₈]
+  rw [h₉]
+  exact ⟨t - s, by simp⟩
+
+```

@@ -1,0 +1,85 @@
+-- Solution 2
+  -- We can2 see that if we multiply the expression by $3-2$, we get
+  have (n : ℕ) : (3 - 2) * (∏ k in Finset.range n, 2 ^ 2 ^ k + 3 ^ 2 ^ k) = 3 ^ 2 ^ n - 2 ^ 2 ^ n := by
+    -- base case
+    induction n with
+    | zero => norm_num
+    | succ n ih =>
+      rw [Finset.prod_range_succ]
+      rw [mul_assoc, ih]
+      ring
+
+  convert this 7
+  norm_num
+
+  -- We can see that if we multiply the expression by $3-2$, we get
+  have (n : ℕ) : (3 - 2) * (∏ k in Finset.range n, 2 ^ 2 ^ k + 3 ^ 2 ^ k) = 3 ^ 2 ^ n - 2 ^ 2 ^ n := by
+    -- base case
+    induction n with
+    | zero => norm_num
+    | succ n ih =>
+      rw [Finset.prod_range_succ]
+      rw [mul_assoc, ih]
+      ring
+
+  -- Solution 1
+  -- Let $a_n = 2^n$. Then our product becomes
+  -- $\prod_{k=1}^{7} (a_k + 3^k) = \prod_{k=1}^{7} (a_k + 3^k) \cdot \frac{3-2}{3-2} = \frac{1}{3-2} \prod_{k=1}^{7} ((3-a_k)(a_k + 3^k)) = \frac{1}{3-2} \prod_{k=1}^{7} (3^{k+1} - a_{k+1})$
+  let a (n : ℕ) := 2 ^ n
+  let b (n : ℕ) := 3 ^ n
+  have (n : ℕ) : ∏ k in Finset.range n, (a k + b k) = (3 ^ 2 ^ n - a n) / (3 - 2) := by
+    -- induction
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [Finset.prod_range_succ, ih]
+      -- some calculations
+      have : 2 * 2 ^ n = 2 ^ (n + 1) := by nth_rw 2 [← pow_one 2]; rw [← pow_add]; congr 1
+      have : 3 * 3 ^ n = 3 ^ (n + 1) := by nth_rw 2 [← pow_one 3]; rw [← pow_add]; congr 1
+      have : 2 ^ (n + 1) < 3 ^ (n + 1) := by refine pow_lt_pow_right₀ (by norm_num) (by omega)
+      have : 3 ^ (n + 1) - 2 ^ (n + 1) = 3 ^ (n + 1) - 2 * 2 ^ n := by congr 2; rw [← pow_succ']; congr 1
+      have : 3 ^ (n + 1) - 2 ^ (n + 1) = 3 ^ (n + 1) - 3 * 3 ^ n := by congr 2; rw [← pow_succ']; congr 1
+      rw [← mul_add, mul_comm, ← mul_assoc, mul_comm (b n), ← sub_mul, Nat.mul_sub, this]
+      rw [add_comm, Nat.sub_add_comm this]
+      congr 1
+      -- end of some calculations
+      have : (3 - 2) * (3 ^ 2 ^ n - a n) = (3 - 2) * 3 ^ 2 ^ n - (3 - 2) * a n := by exact Nat.sub_mul _ _ _
+      rw [this]
+      have : (3 - 2) * 3 ^ 2 ^ n = 3 ^ (2 ^ n + 1) - 3 ^ 2 ^ n := by nth_rw 2 [← pow_one 3]; rw [← pow_add]; congr 1
+      rw [this]
+      have : 3 ^ 2 ^ n - 2 ^ 2 ^ n = 3 ^ 2 ^ n - a (2 ^ n) := by simp [a]
+      rw [this]
+      congr 2
+      have : 3 ^ (2 ^ n + 1) = 3 * 3 ^ 2 ^ n := by exact Nat.mul_pow 3 (2 ^ n) 3
+      rw [this]
+      have : 3 * 3 ^ 2 ^ n - 3 ^ 2 ^ n = 3 ^ 2 ^ n * (3 - 1) := by exact Nat.mul_sub_left_distrib 3 ^ 2 ^ n 3 1
+      rw [this]
+      have : 3 ^ 2 ^ n * (3 - 1) = 2 * 3 ^ 2 ^ n := by rw [Nat.mul_sub_left_distrib 3 ^ 2 ^ n 3 1]
+      rw [this]
+      have : 2 * 3 ^ 2 ^ n - 2 ^ 2 ^ n = 2 * (3 ^ 2 ^ n - 2 ^ 2 ^ n) := by exact Nat.mul_sub_left_distrib 2 (3 ^ 2 ^ n) (2 ^ 2 ^ n)
+      rw [this]
+      congr 1
+      have : 3 ^ 2 ^ n = 3 ^ 2 ^ n - 2 ^ 2 ^ n + 2 ^ 2 ^ n := by exact Nat.sub_add_cancel (3 ^ 2 ^ n) (2 ^ 2 ^ n)
+      rw [this]
+      have : 2 * (3 ^ 2 ^ n - 2 ^ 2 ^ n + 2 ^ 2 ^ n) = 2 * (3 ^ 2 ^ n - 2 ^ 2 ^ n) + 2 * 2 ^ 2 ^ n := by exact Nat.mul_add _ _ _
+      rw [this]
+      congr 2
+      -- end of some calculations
+      have : 2 * 2 ^ n = 2 ^ (n + 1) := by nth_rw 2 [← pow_one 2]; rw [← pow_add]; congr 1
+      rw [this]
+      have : 3 * 3 ^ n = 3 ^ (n + 1) := by nth_rw 2 [← pow_one 3]; rw [← pow_add]; congr 1
+      rw [this]
+      have : 3 ^ (n + 1) - 2 ^ (n + 1) = 3 ^ 2 ^ (n + 1) - a (2 ^ (n + 1)) := by simp [a]; rw [← pow_two, ← pow_mul]
+      rw [this]
+      -- end of some calculations
+      all_goals {
+        -- remaining goals
+        -- 3 ^ (2 ^ n) - a (2 ^ n) = 3 ^ 2 ^ n - 2 ^ 2 ^ n
+        -- 2 ^ (2 ^ n) = 2 ^ 2 ^ n
+        simp [a]
+      }
+  -- our goal is this proposition when $n = 7$
+  convert this 7
+  norm_num
+
+```

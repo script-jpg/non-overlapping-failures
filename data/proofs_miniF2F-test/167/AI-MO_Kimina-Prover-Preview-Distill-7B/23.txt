@@ -1,0 +1,194 @@
+-- make aux function $f(n+1) / f(n) - 1$
+  have aux (x n : ℝ) : f (n + 1) x / f n x - 1 = f n x + 1 / n := by
+    rw [h₁]
+    field_simp
+    ring
+
+  -- compute $f(n+1) / f(n) - 1 > 0$ when $0 < f(n) < 1$ and $0 < x_n$
+  have f_pos_iff (x n : ℝ) (hx : 0 < x) (hx' : x < 1) : 0 < f (n + 1) x / f n x - 1 := by
+    have h1 : 0 < f n x := by
+      induction' n using Nat.strong_induction_on with d hd
+      cases d with
+      | zero => linarith [h₀ x]
+      | succ d =>
+        by_cases h' : d = 0
+        · simp [h', h₀ x]
+        · have : d + 1 + 1 > 0 := by
+            refine Nat.add_pos_of_le_of_pos?_?_
+            · exact Nat.le_add_left 1 (d + 1)
+            · exact Nat.zero_lt_one
+          rw [show d + 1 + 1 = d + 2 by ring]
+          have h1 : 0 < f (d + 1) x := by
+            apply hd (by exact Nat.le_add_left 1 (d + 1)) (by exact h₀ x)
+          apply hd (by exact Nat.le_add_left 1 (d + 2))?_
+          rw [aux x (d + 1)]
+          linarith [h1, hx, hx']
+      exact h1
+    have h2 : f (n + 1) x / f n x - 1 > 0 := by
+      apply Nat.sub_pos_of_lt?_
+      rw [aux x n]
+      linarith [hx, hx']
+    apply Nat.lt_of_sub_pos h2
+
+  -- compute $f(n+1) / f(n) - 1 > 0$ when $0 < f(n) < 1$
+  have f_pos_iff' (x n : ℝ) (hx : 0 < x) (hx' : x < 1) : 0 < f (n + 1) x / f n x - 1 := by
+    have h1 : 0 < f n x := by
+      induction' n using Nat.strong_induction_on with d hd
+      cases d with
+      | zero => linarith [h₀ x]
+      | succ d =>
+        by_cases h' : d = 0
+        · simp [h', h₀ x]
+        · have : d + 1 + 1 > 0 := by
+            refine Nat.add_pos_of_le_of_pos?_?_
+            · exact Nat.le_add_left 1 (d + 1)
+            · exact Nat.zero_lt_one
+          rw [show d + 1 + 1 = d + 2 by ring]
+          have h1 : 0 < f (d + 1) x := by
+            apply hd (by exact Nat.le_add_left 1 (d + 1)) (by exact h₀ x)
+          apply hd (by exact Nat.le_add_left 1 (d + 2))?_
+          rw [aux x (d + 1)]
+          linarith [h1, hx, hx']
+      exact h1
+    have h2 : f (n + 1) x / f n x - 1 > 0 := by
+      apply Nat.sub_pos_of_lt?_
+      rw [aux x n]
+      linarith [hx, hx']
+    apply Nat.lt_of_sub_pos h2
+
+  -- prove if $f(n+1) / f(n) - 1 < 1$ when $0 < f(n) < 1$ and $0 < x_n$
+  have f_lt_iff (x n : ℝ) (hx : 0 < x) (hx' : x < 1) (hfn : 0 < f n x ∧ f n x < 1) : f (n + 1) x / f n x - 1 < 1 := by
+    have : 1 / n > 0 := by
+      apply Nat.inv_pos
+      linarith [hx]
+    have hfn' : 0 < f n x + 1 / n := by linarith [hfn.left]
+    have hfn'' : f n x + 1 / n < 2 := by linarith [hfn.right, hx]
+    have : (f (n + 1) x / f n x - 1) < 1 := by
+      rw [aux x n]
+      linarith [hfn', hfn'']
+    apply Nat.lt_of_sub_lt this
+
+  -- prove if $0 < f(n) < 1$ and $0 < x_n$, then $0 < f(n+1) < 1$
+  have f_pos (x n : ℝ) (hx : 0 < x) (hx' : x < 1) (hfn : 0 < f n x ∧ f n x < 1) : 0 < f (n + 1) x ∧ f (n + 1) x < 1 := by
+    have hfn'' : 0 < f (n + 1) x := by
+      apply Nat.mul_pos
+      linarith [hfn.left]
+      linarith [f_pos_iff x n hx hx']
+    have h1 : f (n + 1) x / f n x - 1 > 0 := by
+      apply f_pos_iff x n hx hx'
+    have h2 : f (n + 1) x / f n x - 1 < 1 := by
+      apply f_lt_iff x n hx hx' hfn
+    have : f (n + 1) x < f n x * (f n x + 1 / n) := by
+      linarith [h2, aux x n]
+    constructor
+    · linarith [hfn.left, hfn.right, this]
+    · linarith [hfn.left, hfn.right, this]
+
+  -- prove the existence of $x_1$ by defining a sequence $x_n$ and $f(n+1) = x_{n+1}$
+  have exist_x (x : ℝ) (hx : 0 < x) (hx' : x < 1) (hfn : 0 < f n x ∧ f n x < 1) : 0 < f (n + 1) x ∧ f (n + 1) x < f (n + 2) x ∧ f (n + 2) x < 1 := by
+    have h1 : 0 < f (n + 1) x := by
+      apply Nat.mul_pos
+      linarith [hfn.left]
+      linarith [f_pos_iff x n hx hx']
+    have h2 : f (n + 1) x < f n x * (f n x + 1 / n) := by
+      linarith [f_lt_iff x n hx hx' hfn]
+    have h3 : f (n + 1) x < f (n + 2) x := by
+      linarith [h2, aux x n]
+    have h4 : f (n + 2) x < 1 := by
+      linarith [h3, f_pos_iff' x (n + 1) hx (hx')]
+    exact ⟨h1, h3, h4⟩
+
+  -- define the sequence $x_n$ by $x_1 = x$ and $x_{n+1} = x_{n} \left(x_n + \frac{1}{n}\right)$ for each $n \geq 1$
+  let x (x : ℝ) (n : ℕ) : ℝ := match n with
+    | 0 => x
+    | n + 1 => f (n + 1) x
+
+  -- Prove that $x$ is strictly increasing
+  have x_mono : StrictMono x := by
+    intro a b hab
+    cases a with
+    | zero => simp
+    | a + 1 =>
+      cases b with
+      | zero => simp at hab; linarith [f_pos_iff' x a (by linarith : 0 < x) (by linarith : x < 1)]
+      | b + 1 => simp
+      linarith [show 0 < f (a + 1) x by apply f_pos_iff x a (by linarith : 0 < x) (by linarith : x < 1)]
+
+  -- Prove that $x_n > 0$ for all $n$
+  have x_pos : ∀ n, 0 < n → 0 < x n a := by
+    intro n hn
+    induction' n with d hd
+    · linarith [h₀ a]
+    · cases d with
+      | zero => simp
+      | d + 1 =>
+        intro hmn
+        apply f_pos_iff x d (by linarith : 0 < a) (by linarith : a < 1) at hd
+        simp at hd
+        apply hd
+        linarith [show 0 < f (d + 1) a by apply f_pos_iff' a d (by linarith : 0 < a) (by linarith : a < 1)]
+
+  -- Prove that $x_n < x_{n+1}$ for all $n$
+  have x_lt_xp1 : ∀ n, 0 < n → x n a < x (n + 1) a := by
+    intro n hn
+    induction' n with d hd
+    · simp
+      apply f_pos_iff' x 0 (by linarith : 0 < a) (by linarith : a < 1)
+      rw [h₀ a]
+      linarith [show 0 < f 1 a by apply f_pos_iff a 1 (by linarith : 0 < a) (by linarith : a < 1)]
+    · cases d with
+      | zero => simp
+      | d + 1 =>
+        intro hmn
+        apply f_pos_iff' x (d + 1) (by linarith : 0 < a) (by linarith : a < 1) at hd
+        simp at hd
+        apply hd
+        linarith [show 0 < f (d + 1 + 1) a by apply f_pos_iff' a (d + 1 + 1) (by linarith : 0 < a) (by linarith : a < 1)]
+
+  -- Prove that $x_n < 1$ for all $n$
+  have x_lt_one : ∀ n, 0 < n → x n a < 1 := by
+    intro n hn
+    induction' n with d hd
+    · simp
+      apply f_pos_iff' x 0 (by linarith : 0 < a) (by linarith : a < 1)
+      rw [h₀ a]
+      linarith [show 0 < f 1 a by apply f_pos_iff a 1 (by linarith : 0 < a) (by linarith : a < 1)]
+    · cases d with
+      | zero => simp
+      | d + 1 =>
+        intro hmn
+        apply f_pos_iff' x (d + 1) (by linarith : 0 < a) (by linarith : a < 1) at hd
+        simp at hd
+        apply hd
+        linarith [show 0 < f (d + 1 + 1) a by apply f_pos_iff' a (d + 1 + 1) (by linarith : 0 < a) (by linarith : a < 1)]
+
+  -- use $x_n$ to prove the existence of $x_1$
+  use x 1 a
+  simp [x]
+  constructor
+  · exact x_pos 1 (by linarith)
+  · constructor
+    · exact x_lt_xp1 1 (by linarith)
+    · exact x_lt_one 1 (by linarith)
+
+  -- prove the uniqueness of $x_1$
+  intro b b_pos x_eq
+  cases x_eq with
+  | intro h1 h2 =>
+    have hb : b = x 1 a := by
+      have hb : b = x b a := by
+        apply StrictMono.injective x_mono
+        linarith [h1]
+      rw [hb]
+      induction' b with d hd
+      · simp
+      · cases d with
+        | zero => simp
+        | d + 1 =>
+          simp
+          apply f_eq_iff.mp h2 (d + 1) (by linarith : 0 < a) (by linarith : a < 1)
+          simp [x]
+          linarith [show 0 < f (d + 1) a by apply f_pos_iff' a (d + 1) (by linarith : 0 < a) (by linarith : a < 1)]
+    rw [hb]
+    simp
+```

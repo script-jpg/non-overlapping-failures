@@ -1,0 +1,108 @@
+-- A = (a m b) ^ t
+  set A : ℝ := 3 / (x + y + z) with hA
+  -- B = (a n b) ^ t
+  set B : ℝ := 1 / (x + y) + 1 / (y + z) + 1 / (z + x) with hB
+  -- P = (m n m) ^ t
+  set P : ℝ := 1 / x + 1 / y + 1 / z with hP
+
+  have hApos : A > 0 := by positivity
+  have hBpos : B > 0 := by positivity
+  have hPpos : P > 0 := by positivity
+
+  -- We show that $A \leq \sqrt{3} B$.
+  have hAleB : A ≤ √3 * B := by
+    -- It is enough to show that $A^2 \leq 3 B^2$.
+    suffices h : A ^ 2 ≤ 3 * B ^ 2 by
+      rw [Real.le_sqrt] at h
+      · exact h
+      all_goals positivity
+
+    -- We have $A^2 = 9 / ((x+y+z)^2)$.
+    have hA2eq : A ^ 2 = 9 / (x + y + z) ^ 2 := by
+      rw [hA]
+      field_simp
+
+    -- We have $B^2 = 1 / ((x+y)(y+z)(z+x))$
+    have hB2eq : B ^ 2 = 1 / ((x + y) * (y + z) * (z + x)) := by
+      calc
+        _ = (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) ^ 2 := by rw [hB]
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 * (1 / ((x + y) * (y + z)) + 1 / ((y + z) * (z + x)) + 1 / ((z + x) * (x + y))) := by ring
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 / (x + y) * (1 / (y + z) + 1 / (z + x)) + 2 / (y + z) * (1 / (z + x) + 1 / (x + y)) + 2 / (z + x) * (1 / (x + y) + 1 / (y + z)) := by ring
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 / (x + y) * (y + z + (z + x) / ((y + z) * (z + x))) + 2 / (y + z) * (z + x + (x + y) / ((z + x) * (x + y))) + 2 / (z + x) * (x + y + (y + z) / ((z + x) * (x + y))) := by field_simp; ring
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 / (x + y) * ((y + z) + (z + x) / ((y + z) * (z + x))) + 2 / (y + z) * ((z + x) + (x + y) / ((z + x) * (x + y))) + 2 / (z + x) * ((x + y) + (y + z) / ((z + x) * (x + y))) := by ring
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 / (x + y) * ((y + z) * ((y + z) * (z + x)) + (z + x)) / ((y + z) * (z + x)) + 2 / (y + z) * ((z + x) * ((z + x) * (x + y)) + (x + y)) / ((z + x) * (x + y)) + 2 / (z + x) * ((x + y) * ((x + y) * (y + z)) + (y + z)) / ((x + y) * (y + z)) := by field_simp; ring
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 / (x + y) * ((y + z) ^ 2 + (y + z) * (z + x)) / ((y + z) * (z + x)) + 2 / (y + z) * ((z + x) ^ 2 + (z + x) * (x + y)) / ((z + x) * (x + y)) + 2 / (z + x) * ((x + y) ^ 2 + (x + y) * (y + z)) / ((x + y) * (y + z)) := by ring
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 * ((y + z) + (z + x) / ((y + z) * (z + x))) / (x + y) + 2 * ((z + x) + (x + y) / ((z + x) * (x + y))) / (y + z) + 2 * ((x + y) + (y + z) / ((z + x) * (x + y))) / (z + x) := by field_simp; ring
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 * ((y + z) * ((z + x) * (x + y)) + (z + x)) / ((y + z) * (z + x) * (x + y)) + 2 * ((z + x) * ((x + y) * (y + z)) + (x + y)) / ((z + x) * (x + y) * (y + z)) + 2 * ((x + y) * ((y + z) * (z + x)) + (y + z)) / ((x + y) * (y + z) * (z + x)) := by field_simp; ring
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 * ((y + z) ^ 2 + (y + z) * (z + x) + (z + x) ^ 2 + (z + x) * (x + y) + (x + y) ^ 2 + (x + y) * (y + z)) / ((x + y) * (y + z) * (z + x)) := by ring
+        _ = 1 / (x + y) ^ 2 + 1 / (y + z) ^ 2 + 1 / (z + x) ^ 2 + 2 * ((x + y) ^ 2 + (y + z) ^ 2 + (z + x) ^ 2) / ((x + y) * (y + z) * (z + x)) := by ring
+        _ = _ := by ring
+
+    -- We have $3 B^2 - A^2 = (x-y)^2/(x+y)^2 + (y-z)^2/(y+z)^2 + (z-x)^2/(z+x)^2$.
+    have h : 3 * B ^ 2 - A ^ 2 = (x - y) ^ 2 / (x + y) ^ 2 + (y - z) ^ 2 / (y + z) ^ 2 + (z - x) ^ 2 / (z + x) ^ 2 := by
+      calc
+        _ = 3 * (1 / ((x + y) * (y + z) * (z + x))) ^ 2 - 9 / (x + y + z) ^ 2 := by rw [hA2eq, hB2eq]; ring
+        _ = 3 / ((x + y) * (y + z) * (z + x)) ^ 2 - 9 * (1 / (x + y + z) ^ 2) / (x + y + z) ^ 2 := by field_simp; ring
+        _ = 3 / ((x + y) * (y + z) * (z + x)) ^ 2 - (x + y + z) ^ 2 * (3 / ((x + y) * (y + z) * (z + x)) ^ 2) / (x + y + z) ^ 2 := by field_simp; ring
+        _ = 3 / ((x + y) * (y + z) * (z + x)) ^ 2 - (3 / ((x + y) * (y + z) * (z + x)) - (x - y) ^ 2 / ((x + y) * (y + z) * (z + x))) ^ 2 / (x + y + z) ^ 2 := by field_simp; ring
+        _ = 3 / ((x + y) * (y + z) * (z + x)) ^ 2 - (3 / ((x + y) * (y + z) * (z + x)) ^ 2 - 2 * (x - y) ^ 2 / ((x + y) * (y + z) * (z + x)) + (x - y) ^ 4 / ((x + y) * (y + z) * (z + x)) ^ 2) / (x + y + z) ^ 2 := by field_simp; ring
+        _ = 2 * (x - y) ^ 2 / ((x + y) * (y + z) * (z + x)) ^ 2 + (x + y + z) ^ 2 * (3 / ((x + y) * (y + z) * (z + x)) ^ 2 - 2 * (x - y) ^ 2 / ((x + y) * (y + z) * (z + x)) + (x - y) ^ 4 / ((x + y) * (y + z) * (z + x)) ^ 2) / (x + y + z) ^ 2 := by field_simp; ring
+        _ = 2 * (x - y) ^ 2 / ((x + y) * (y + z) * (z + x)) ^ 2 + (3 / ((x + y) * (y + z) * (z + x)) - (x - y) ^ 2 / ((x + y) * (y + z) * (z + x))) ^ 2 / (x + y + z) ^ 2 := by field_simp; ring
+        _ = 2 * (x - y) ^ 2 / ((x + y) * (y + z) * (z + x)) ^ 2 + ((y - z) ^ 2 / ((y + z) * (z + x) * (x + y)) + (z - x) ^ 2 / ((z + x) * (x + y) * (y + z))) ^ 2 / (x + y + z) ^ 2 := by field_simp; ring
+        _ = 2 * (x - y) ^ 2 / ((x + y) * (y + z) * (z + x)) ^ 2 + (y - z) ^ 2 / ((y + z) * (z + x) * (x + y)) + (z - x) ^ 2 / ((z + x) * (x + y) * (y + z)) := by field_simp; ring
+        _ = 2 * (x - y) ^ 2 / ((x + y) * (y + z) * (z + x)) ^ 2 + (y - z) ^ 2 / ((y + z) * (z + x) * (x + y)) + (z - x) ^ 2 / ((z + x) * (x + y) * (y + z)) := by ring
+
+    -- It is enough to show that $(x-y)^2/(x+y)^2 + (y-z)^2/(y+z)^2 + (z-x)^2/(z+x)^2 \geq 0$.
+    suffices h : (x - y) ^ 2 / (x + y) ^ 2 + (y - z) ^ 2 / (y + z) ^ 2 + (z - x) ^ 2 / (z + x) ^ 2 ≥ 0 by linarith
+
+    -- It is enough to show that $(x-y)^2/(x+y)^2 \geq 0$.
+    suffices h : (x - y) ^ 2 / (x + y) ^ 2 ≥ 0 by linarith
+    positivity
+
+  -- We have $B \geq 1$.
+  have hBge1 : B ≥ 1 := by
+    calc
+      _ = 1 / (x + y) + 1 / (y + z) + 1 / (z + x) := by rw [hB]
+      _ ≥ 1 := by
+        -- It is enough to show that $(x+y)/2 \geq 1/(x+y)$.
+        suffices h : ∀ a > 0, a / 2 ≥ 1 / a - 1 / (y + z) by
+          have h₁ := h (x + y) (by positivity)
+          have h₂ := h (y + z) (by positivity)
+          have h₃ := h (z + x) (by positivity)
+          linarith
+        intro a ha
+        -- It is enough to show that $a^2/2 - a + 1 \geq 0$.
+        suffices h : a ^ 2 / 2 - a + 1 ≥ 0 by linarith
+        have h : 0 ≤ (a - 1) ^ 2 := by positivity
+        linarith
+
+  -- We have $A^2 \leq 3 B^2$.
+  have hA2leB2 : 3 * B ^ 2 - A ^ 2 ≥ 0 := by
+    calc
+      _ = (x - y) ^ 2 / (x + y) ^ 2 + (y - z) ^ 2 / (y + z) ^ 2 + (z - x) ^ 2 / (z + x) ^ 2 := by rw [h]; ring
+      _ ≥ 0 := by positivity
+
+  -- We have $A \leq \sqrt{3} B$.
+  have hAleBsqrt3 : A ≤ √3 * B := by
+    rw [Real.le_sqrt] at hA2leB2
+    · exact hA2leB2
+    all_goals positivity
+
+  -- We have $9/(x+y+z) \leq 2/(x+y) + 2/(y+z) + 2/(z+x)$.
+  rw [←hA, ←hB]
+  suffices h : √3 * 3 / (x + y + z) ≤ 3 / (x + y) + 3 / (y + z) + 3 / (z + x) by linarith
+  calc
+    _ = 3 * (√3 / (x + y + z)) := by ring
+    _ ≤ 3 * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by
+      -- It is enough to show that $(x+y)/(2(x+y+z)) \geq 1/(x+y)$.
+      suffices h : ∀ a b c : ℝ, 0 < a → 0 < b → 0 < c → √3 / (a + b + c) ≤ 1 / (a + b) + 1 / (b + c) + 1 / (c + a) := by
+        have h₁ := h (x + y) (y + z) (z + x) (by positivity) (by positivity) (by positivity)
+        linarith
+      intro a b c ha hb hc
+      -- It is enough to show that $(a+b)/2 - 1/(a+b) - 1/(a+b+c) \geq 0$.
+      suffices h : a / 2 + b / 2 - 1 / (a + b) - 1 / (a + b + c) ≥ 0 by linarith
+      -- It is enough to show that $(a+b+c)(a+b)/4 - (a+b+c)/2 + 1 - a/(2(a+b)) - b/(2(a+b)) \geq 0$.
+      suffices h : c * (a + b) / 4 - 1 / 2 + 1 / (a + b) - a / (2 * (a + b)) - b / (2 * (a + b)) ≥ 0 by
+        linarith
+      -- It is enough to show that $(a+b+c)(a+b)/4 - (a+b+c)/2 + 1 - a/(2(a+b)) - b/(2(a+b)) = (a+b)/2 - 1/(a+b) - 1/(a+b+c) \geq 0$.
+      have h : c * (a + b) / 4 -

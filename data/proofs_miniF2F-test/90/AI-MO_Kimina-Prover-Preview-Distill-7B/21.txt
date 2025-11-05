@@ -1,0 +1,44 @@
+-- The maximum of $(1 + 1/k^3)$ on the interval $[1, n]$ is at most $3 - 1/n$.
+  have maximum_prod_le : (1 + (1 : ℝ) / n ^ 3) ≤ (3 : ℝ) - 1 / ↑n := by
+    nth_rw 1 [← (@one_div₁ n) 1]
+    rw [add_div, one_add_one_div, add_sub, add_one_div, one_add_one_div]
+    rw [div_le_div_iff₀, one_div, one_div_one_div, le_div_iff₀, one_mul]
+    rw [div_le_iff₀, one_mul, div_sub_one, mul_one, one_pow, add_le_add_left]
+    rw [← sub_one, div_eq_mul_one_div, one_mul, one_add_one_div, one_add_one_div]
+    rw [le_div_iff₀, one_mul, one_add_one_div, add_lt_add_iff_left, one_lt_mul_iff]
+    rw [one_pow, Nat.cast_sub, one_pow, Nat.cast_one, sub_one, mul_inv_cancel₀]
+    rw [Nat.cast_inv, Nat.cast_one, mul_inv_cancel₀, one_pow, Nat.cast_sub]
+    rw [Nat.cast_one, Nat.cast_add, Nat.cast_one, Nat.cast_mul, Nat.cast_one]
+    rw [Nat.cast_ofNat, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_one]
+    rw [Nat.cast_one, Nat.cast_mul, Nat.cast_add, Nat.cast_mul, Nat.cast_one]
+    norm_num
+    · rw [Nat.cast_sub, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_one]
+      rw [Nat.cast_ofNat, Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_one]
+      rw [Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_one, Nat.cast_one]
+      norm_num
+    · rw [Nat.cast_one, Nat.cast_add, Nat.cast_mul, Nat.cast_one, Nat.cast_one]
+      norm_num
+    · rw [Nat.cast_one, Nat.cast_mul, Nat.cast_add, Nat.cast_mul, Nat.cast_one]
+      norm_num
+    · norm_num
+    · norm_num
+
+  -- We use induction on $n$ to prove the result.
+  induction n with
+  | zero =>
+    linarith
+  | succ n ih =>
+    -- If the statement is true for $n$, then it is also true for $n + 1$.
+    absurd h₀
+    simp
+    norm_cast
+
+    rw [Finset.prod_Icc_succ_top (Nat.le_add_left 1 n)]
+    specialize maximum_prod_le (n + 1)
+    rw [show (3 : ℝ) - 1 / ↑(n + 1) = (3 : ℝ) - 1 / ↑n - (1 / ↑n - 1 / (↑n + 1)) by field_simp; ring]
+    have le : (1 : ℝ) / ↑n - 1 / (↑n + 1) > 0 := by
+      field_simp
+      apply Nat one_lt_cast.mpr
+      exact Nat.add_one_gt_of_lt h₀
+    linarith
+```

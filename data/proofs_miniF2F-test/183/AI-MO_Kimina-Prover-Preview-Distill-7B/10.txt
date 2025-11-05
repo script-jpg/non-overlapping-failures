@@ -1,0 +1,231 @@
+-- We need to show two roots exist and that their product is 20. We do this by:
+  -- 1. Finding a clever factorization of the equation
+  -- 2. Proving that both roots satisfy the equation
+  -- 3. Showing that there are exactly two roots
+  -- 4. Proving that both roots are in the preimage set
+  -- 5. Computing the product of the two roots
+
+  -- The first step is to analyze the equation. We can rewrite the equation as:
+  -- $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$
+  -- By subtracting $2 \sqrt{x^2 + 18x + 45}$ from both sides, we get:
+  -- $x^2 + 18x + 30 - 2 \sqrt{x^2 + 18x + 45} = 0$
+  -- We can rewrite this as:
+  -- $(x^2 + 18x + 45) - 2 \sqrt{x^2 + 18x + 45} + 30 - 45 = 0$
+  -- Which simplifies to:
+  -- $(\sqrt{x^2 + 18x + 45} - 15)(\sqrt{x^2 + 18x + 45} - 3) = 0$
+
+  have h₂ : ∀ x, f x = (Real.sqrt (x ^ 2 + (18 * x + 45)) - 15) * (Real.sqrt (x ^ 2 + (18 * x + 45)) - 3) := by
+    intro x
+    calc
+      f x = x ^ 2 + (18 * x + 30) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by rw [h₀]
+      _ = (x ^ 2 + (18 * x + 45)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) + 30 - 45 := by ring
+      _ = (Real.sqrt (x ^ 2 + (18 * x + 45)) ^ 2 - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) + 30 - 45) := by rw [Real.sq_sqrt]; nlinarith
+      _ = (Real.sqrt (x ^ 2 + (18 * x + 45)) - 15) * (Real.sqrt (x ^ 2 + (18 * x + 45)) - 3) := by ring
+
+  -- Now we have a factorized form of the equation. Next, we need to show that both roots satisfy the equation.
+  -- From the factorized form, the roots are:
+  -- 1. $\sqrt{x^2 + 18x + 45} = 15 \implies x^2 + 18x + 45 = 225 \implies x^2 + 18x - 180 = 0 \implies (x + 30)(x - 6) = 0 \implies x = -30, 6$
+  -- 2. $\sqrt{x^2 + 18x + 45} = 3 \implies x^2 + 18x + 45 = 9 \implies x^2 + 18x + 36 = 0 \implies (x + 6)^2 = 0 \implies x = -6$
+
+  have h₃ : (6 : ℝ) ∈ f ⁻¹' {0} := by
+    rw [h₁]
+    simp
+    rw [h₂]
+    norm_num
+
+  have h₄ : (-30 : ℝ) ∈ f ⁻¹' {0} := by
+    rw [h₁]
+    simp
+    rw [h₂]
+    norm_num
+
+  have h₅ : (-6 : ℝ) ∈ f ⁻¹' {0} := by
+    rw [h₁]
+    simp
+    rw [h₂]
+    norm_num
+
+  -- Now we need to show that there are exactly two roots. We can do this by showing that the function is a quadratic function
+  -- and therefore can have at most two roots.
+
+  have h₆ : ∀ x y : ℝ, f x = f y → x = y := by
+    intro x y h
+    rw [h₁] at h
+    simp at h
+    rcases h with ⟨⟨hx, _⟩, ⟨_, hy⟩⟩
+    rw [h₂] at h
+    -- We now have (sqrt(x^2 + 18x + 45) - 15)(sqrt(x^2 + 18x + 45) - 3) = (sqrt(y^2 + 18y + 45) - 15)(sqrt(y^2 + 18y + 45) - 3)
+    -- We can analyze the cases of which two roots satisfy the equation
+    cases mul_eq_mul_iff.mp h with
+    | inl h =>
+      -- We have sqrt(x^2 + 18x + 45) = sqrt(y^2 + 18y + 45) = 15
+      -- This implies x^2 + 18x + 45 = 225, y^2 + 18y + 45 = 225
+      -- Which simplifies to x^2 + 18x - 180 = 0, y^2 + 18y - 180 = 0
+      -- This implies (x + 30)(x - 6) = 0, (y + 30)(y - 6) = 0
+      -- So x = -30, 6, y = -30, 6
+      have h₇ : Real.sqrt (x ^ 2 + (18 * x + 45)) = 15 := by linarith
+      have h₈ : Real.sqrt (y ^ 2 + (18 * y + 45)) = 15 := by linarith
+      have h₉ : x ^ 2 + (18 * x + 45) = 225 := by rw [Real.sqrt_eq_iff_eq_sq (by nlinarith) (by nlinarith)] at h₇; linarith
+      have h₁₀ : y ^ 2 + (18 * y + 45) = 225 := by rw [Real.sqrt_eq_iff_eq_sq (by nlinarith) (by nlinarith)] at h₈; linarith
+      have h₁₁ : x ^ 2 + (18 * x + 45) - 225 = 0 := by linarith
+      have h₁₂ : y ^ 2 + (18 * y + 45) - 225 = 0 := by linarith
+      have h₁₃ : (x + 30) * (x - 6) = 0 := by linarith [h₁₁]
+      have h₁₄ : (y + 30) * (y - 6) = 0 := by linarith [h₁₂]
+      have h₁₅ : x + 30 = 0 ∨ x - 6 = 0 := by exact mul_eq_zero.mp h₁₃
+      have h₁₆ : y + 30 = 0 ∨ y - 6 = 0 := by exact mul_eq_zero.mp h₁₄
+      rcases h₁₅ with h₁₇ | h₁₈
+      · rcases h₁₆ with h₁₉ | h₁₂₀
+        · -- x + 30 = 0, y + 30 = 0
+          exfalso
+          linarith
+        · -- x + 30 = 0, y - 6 = 0
+          exfalso
+          linarith
+      · rcases h₁₆ with h₁₉ | h₁₂₀
+        · -- x - 6 = 0, y + 30 = 0
+          exfalso
+          linarith
+        · -- x - 6 = 0, y - 6 = 0
+          linarith
+    | inr h =>
+      -- We have sqrt(x^2 + 18x + 45) = 15, sqrt(y^2 + 18y + 45) = 3
+      -- This implies x^2 + 18x + 45 = 225, y^2 + 18y + 45 = 9
+      -- Which simplifies to x^2 + 18x - 180 = 0, y^2 + 18y + 36 = 0
+      -- This implies (x + 30)(x - 6) = 0, (y + 6)^2 = 0
+      -- So x = -30, 6, y = -6
+      have h₇ : Real.sqrt (x ^ 2 + (18 * x + 45)) = 15 := by linarith
+      have h₈ : Real.sqrt (y ^ 2 + (18 * y + 45)) = 3 := by linarith
+      have h₉ : x ^ 2 + (18 * x + 45) = 225 := by rw [Real.sqrt_eq_iff_eq_sq (by nlinarith) (by nlinarith)] at h₇; linarith
+      have h₁₀ : y ^ 2 + (18 * y + 45) = 9 := by rw [Real.sqrt_eq_iff_eq_sq (by nlinarith) (by nlinarith)] at h₈; linarith
+      have h₁₁ : x ^ 2 + (18 * x + 45) - 225 = 0 := by linarith
+      have h₁₂ : y ^ 2 + (18 * y + 45) - 9 = 0 := by linarith
+      have h₁₃ : (x + 30) * (x - 6) = 0 := by linarith [h₁₁]
+      have h₁₄ : (y + 6) ^ 2 = 0 := by linarith [h₁₂]
+      have h₁₅ : x + 30 = 0 ∨ x - 6 = 0 := by exact mul_eq_zero.mp h₁₃
+      have h₁₆ : y + 6 = 0 := by exact pow_eq_zero h₁₄
+      rcases h₁₅ with h₁₇ | h₁₈
+      · exfalso
+        linarith
+      · exfalso
+        linarith
+
+  -- We have shown that the function is injective. Now we can show that there are exactly two roots.
+  -- We can show that the roots are 6 and -6 by:
+  -- 1. Showing that 6 is a root
+  -- 2. Showing that -6 is a root
+  -- 3. Showing that any root must be one of these two
+
+  have h₇ : ∀ x : ℝ, f x = 0 → x = 6 ∨ x = -6 := by
+    intro x hx
+    have hx' : f x = 0 := hx
+    rw [h₁] at hx'
+    simp at hx'
+    rcases hx' with ⟨hx₁, hx₂⟩
+    have hx₃ : f x = (Real.sqrt (x ^ 2 + (18 * x + 45)) - 15) * (Real.sqrt (x ^ 2 + (18 * x + 45)) - 3) := h₂ x
+    rw [hx₃] at hx₁
+    -- We have (sqrt(x^2 + 18x + 45) - 15)(sqrt(x^2 + 18x + 45) - 3) = 0
+    -- So sqrt(x^2 + 18x + 45) = 15 or sqrt(x^2 + 18x + 45) = 3
+    cases mul_eq_zero.mp hx₁ with
+    | inl h =>
+      -- sqrt(x^2 + 18x + 45) = 15
+      -- x^2 + 18x + 45 = 225
+      -- x^2 + 18x - 180 = 0
+      -- (x + 30)(x - 6) = 0
+      -- x = -30, 6
+      have h₄ : Real.sqrt (x ^ 2 + (18 * x + 45)) = 15 := by linarith
+      have h₅ : x ^ 2 + (18 * x + 45) = 225 := by rw [Real.sqrt_eq_iff_eq_sq (by nlinarith) (by nlinarith)] at h₄; linarith
+      have h₆ : x ^ 2 + (18 * x + 45) - 225 = 0 := by linarith
+      have h₇ : (x + 30) * (x - 6) = 0 := by linarith
+      have h₈ : x + 30 = 0 ∨ x - 6 = 0 := by exact mul_eq_zero.mp h₇
+      rcases h₈ with h₉ | h₁₀
+      · -- x + 30 = 0
+        exfalso
+        linarith
+      · -- x - 6 = 0
+        left
+        linarith
+    | inr h =>
+      -- sqrt(x^2 + 18x + 45) = 3
+      -- x^2 + 18x + 45 = 9
+      -- x^2 + 18x + 36 = 0
+      -- (x + 6)^2 = 0
+      -- x = -6
+      have h₄ : Real.sqrt (x ^ 2 + (18 * x + 45)) = 3 := by linarith
+      have h₅ : x ^ 2 + (18 * x + 45) = 9 := by rw [Real.sqrt_eq_iff_eq_sq (by nlinarith) (by nlinarith)] at h₄; linarith
+      have h₆ : x ^ 2 + (18 * x + 45) - 9 = 0 := by linarith
+      have h₇ : (x + 6) ^ 2 = 0 := by linarith
+      have h₈ : x + 6 = 0 := by exact pow_eq_zero h₇
+      right
+      linarith
+
+  have h₈ : ∀ x y : ℝ, f x = 0 → f y = 0 → x = y := by
+    intro x y hx hy
+    rw [h₁] at hx
+    rw [h₁] at hy
+    simp at hx
+    simp at hy
+    have h₉ := hx
+    have h₁₀ := hy
+    cases hx with
+    | inl h₉ =>
+      cases hy with
+      | inl h₁₀ =>
+        -- x = 6, y = 6
+        linarith
+      | inr h₁₀ =>
+        -- x = 6, y = -6
+        exfalso
+        linarith [h₇ (6 : ℝ) (-6 : ℝ) h₉ h₁₀]
+    | inr h₉ =>
+      cases hy with
+      | inl h₁₀ =>
+        -- x = -6, y = 6
+        exfalso
+        linarith [h₇ (-6 : ℝ) 6 h₉ h₁₀]
+      | inr h₁₀ =>
+        -- x = -6, y = -6
+        linarith
+
+  -- Now we can show that the set of roots has cardinality 2
+  have h₉ : (f ⁻¹' {0}).ncard = 2 := by
+    have h₁₀ : (f ⁻¹' {0}) = {6, -6} := by
+      ext x
+      simp
+      constructor
+      · intro hx
+        have h₁₁ := h₇ x hx
+        simp at h₁₁
+        exact h₁₁
+      · intro hx
+        rcases hx with hx | hx
+        · rw [hx]
+          rw [h₁]
+          simp
+          rw [h₂]
+          norm_num
+        · rw [hx]
+          rw [h₁]
+          simp
+          rw [h₂]
+          norm_num
+    rw [h₁₀]
+    rw [Set.ncard_pair]
+    linarith
+
+  -- Now we can show that the product of the roots is 20
+  have h₁₀ : ∏ x in (f ⁻¹' {0}).toFinset, x = 20 := by
+    have h₁₁ : (f ⁻¹' {0}).toFinset = {6, -6} := by
+      rw [h₅]
+      simp
+      rw [h₁]
+      simp
+      rw [h₂]
+      norm_num
+    rw [h₁₁]
+    rw [Finset.prod_pair]
+    norm_num
+    linarith
+
+  exact h₁₀
+
+```

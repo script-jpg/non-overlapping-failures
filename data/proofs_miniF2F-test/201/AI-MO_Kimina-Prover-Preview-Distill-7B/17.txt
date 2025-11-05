@@ -1,0 +1,78 @@
+-- Define $z_n = a_n + i b_n$ for $n = 1, 2, \ldots$
+  let z : ℕ → ℂ := fun n => Complex.ext_iff.2 (⟨a n, b n⟩)
+
+  -- Using the given recurrence relations, show that $z_{n+1} = M z_n$ where $M = \left(\begin{array}{cc} \sqrt{3} & -1 \\ 1 & \sqrt{3} \end{array}\right)$
+  let M : ℂ :=!![Real.sqrt 3, -1; 1, Real.sqrt 3]
+  have hM : ∀ n, z (n + 1) = M * z n := by
+    intro n
+    simp only [z, M, Nat.cast_add, Complex.ext_iff]
+    all_goals
+      rw [h₀, h₁]
+      simp
+      ring
+
+  -- Find the eigenvalues of $M$ by solving $\det(M - \lambda I) = 0$
+  have h eigenvalues : (M - (2 * Complex.I) * Complex.I) * (M - (-2 * Complex.I) * Complex.I) = 0 := by
+    simp [M, Complex.ext_iff, sub_mul, mul_sub, mul_comm]
+    norm_num
+    <;> ring_nf <;> simp [Complex.I_mul_I] <;> ring
+
+  -- Diagonalize the matrix $M$
+  let P := z 1
+  let D :=!![2, 0; 0, -2]
+  have hP : * • P =!![1, -2 * Complex.I; 2 * Complex.I, 1] := by
+    simp [P, z]
+    have htrans : (M - (2 * Complex.I) * Complex.I) * P = D * P := by
+      simp [M, D, Complex.ext_iff, sub_mul, mul_sub, mul_comm]
+      norm_num
+      <;> ring_nf <;> simp [Complex.I_mul_I] <;> ring
+    have hdiag := Matrix.diag_iff_card_eigenvalues (by norm_num) htrans
+    simp [D, P] at hdiag
+    exact hdiag
+
+  have hP' : P • * =!![1, 2 * Complex.I; -2 * Complex.I, 1] := by
+    simp [P, z]
+    have htrans : P * (M - (2 * Complex.I) * Complex.I) = P * D := by
+      simp [M, D, Complex.ext_iff, sub_mul, mul_sub, mul_comm]
+      norm_num
+      <;> ring_nf <;> simp [Complex.I_mul_I] <;> ring
+    have hdiag := Matrix.diag_iff_card_eigenvalues (by norm_num) htrans
+    simp [D, P] at hdiag
+    exact hdiag
+
+  -- Use the diagonalization to compute $z_{100}$
+  have h₄ : z 100 = 2 * (P • D ^ 99 • P •) z 1 := by
+    simp [z]
+    induction
+    | zero => simp
+    | succ n ih =>
+      rw [hM, pow_succ, mul_assoc, ih, pow_succ, mul_assoc, hP', hP]
+      simp
+      ring
+
+  -- Substitute the given value of $z_{100}$
+  have h₅ : 2 * (P • D ^ 99 • P •) z 1 = 2 + 4 * Complex.I := by
+    rw [←h₄, h₂, h₃]
+
+  -- carried out the computation of $z_1$
+  have h₆ : z 1 = 1 / 2 ^ 98 * (1 - 3 * Complex.I) := by
+    have heq := congr_arg (fun x => x.im) h₅
+    simp [P, D] at heq
+    have heq2 := congr_arg (fun x => -x.re + x.im * 3) h₅
+    simp [P, D] at heq2
+    have heq3 := congr_arg (fun x => x.re / 2) heq
+    have heq4 := congr_arg (fun x => x.im / 3) heq2
+    simp at heq3 heq4
+    rw [←heq3, ←heq4]
+    ring
+
+  -- Carried out the computation of $a_1 + b_1$
+  have h₇ : a 1 + b 1 = 1 / 2 ^ 98 := by
+    simp [z] at h₆
+    have hre := congr_arg Complex.re h₆
+    have him := congr_arg Complex.im h₆
+    simp at hre him
+    linarith
+
+  exact h₇
+```

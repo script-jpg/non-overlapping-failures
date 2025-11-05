@@ -1,0 +1,153 @@
+-- We will prove that the least common multiple of $a$ and $b$ is at least $108$.
+  -- First, recall that the product of the greatest common divisor and the least common multiple of two numbers equals the product of the numbers themselves,
+  --   i.e. $a*b = \gcd(a,b) * \mathrm{lcm}(a,b)$, so $\mathrm{lcm}(a,b) = \frac{a*b}{\gcd(a,b)}$.
+  have key := Nat.gcd_mul_lcm a b
+  rw [h₃] at key
+
+  -- Next, note that $a$ must be of the form $a = 6k$ where $k$ is a positive integer not divisible by $3$ or $2$.
+  --   This is because $a$ must be divisible by $6 = 2*3$, but if $k$ were divisible by $2$ or $3$, then $a$ would be divisible by $12$ or $18$ respectively,
+  --   which would make $\gcd(a,b)$ larger than necessary.
+  have ha : 6 ∣ a := by
+    rw [← h₃, Nat.gcd_dvd_right]
+  have ha' : a % 6 = 0 := by
+    rw [Nat.mod_eq_zero_iff_dvd]
+    exact ha
+  have ha'' : a % 2 = 0 := by
+    have : a % 6 = 2 := by
+      rw [Nat.mod_eq_iff_lt]
+      constructor
+      · exact Nat.mod_lt a (by norm_num)
+      · norm_num
+      · exact h₁
+    rw [Nat.mod_eq_iff_lt]
+    constructor
+    · exact Nat.mod_lt a (by norm_num)
+    · norm_num
+    · exact this
+  have ha''' : 2 ∣ a := by
+    exact Nat.dvd_of_mod_eq_zero ha''
+  have ha'''' : a ≠ 0 := by
+    exact Nat.pos_iff_ne_zero.mp h₀.left
+  have ha''''' : 2 ∣ a := by
+    exact ha''' 
+  have ha'''''' : a = 2 * (3 * k) := by
+    rcases ha''' with ⟨l, hl⟩
+    have : a = 6 * l := by
+      rw [hl, mul_assoc]
+    have : 6 ∣ a := by
+      exact Dvd.intro l (id (Eq.symm this))
+    have : 2 * 3 ∣ a := by
+      exact Nat.Coprime.mul_dvd_of_dvd_of_dvd (by norm_num) this
+    have := dvd_iff_exists_eq_mul_left.1 this
+    exact this
+  have ha'''''' : a = 6 * k := by
+    rw [ha''''']
+    ring
+  have hka : a / 6 = k := by
+    rw [ha'''']
+    simp
+  -- Now, note that $b$ must be of the form $b = 6m$ where $m$ is a positive integer not divisible by $3$ or $2$.
+  --   This is because $b$ must be divisible by $6 = 2*3$, but if $m$ were divisible by $2$ or $3$, then $b$ would be divisible by $12$ or $18$ respectively,
+  --   which would make $\gcd(a,b)$ larger than necessary.
+  have hb : 6 ∣ b := by
+    rw [← h₃, Nat.gcd_dvd_left]
+  have hb' : b % 6 = 0 := by
+    rw [Nat.mod_eq_zero_iff_dvd]
+    exact hb
+  have hb'' : b % 2 = 0 := by
+    have : b % 6 = 4 := by
+      rw [Nat.mod_eq_iff_lt]
+      constructor
+      · exact Nat.mod_lt b (by norm_num)
+      · norm_num
+      · exact h₂
+    rw [Nat.mod_eq_iff_lt]
+    constructor
+    · exact Nat.mod_lt b (by norm_num)
+    · norm_num
+    · exact this
+  have hb''' : 2 ∣ b := by
+    exact Nat.dvd_of_mod_eq_zero hb''
+  have hb'''' : b ≠ 0 := by
+    exact Nat.pos_iff_ne_zero.mp h₀.right
+  have hb''''' : 2 ∣ b := by
+    exact hb'''
+  have hb'''''' : b = 2 * (3 * m) := by
+    rcases hb''' with ⟨l, hl⟩
+    have : b = 6 * l := by
+      rw [hl, mul_assoc]
+    have : 6 ∣ b := by
+      exact Dvd.intro l (id (Eq.symm this))
+    have : 2 * 3 ∣ b := by
+      exact Nat.Coprime.mul_dvd_of_dvd_of_dvd (by norm_num) this
+    have := dvd_iff_exists_eq_mul_left.1 this
+    exact this
+  have hb'''''' : b = 6 * m := by
+    rw [hb''''']
+    ring
+  have hkb : b / 6 = m := by
+    rw [hb'''']
+    simp
+  -- Finally, note that $k$ and $m$ can't be both even or both odd, because that would make $a$ and $b$ both divisible by $12$ or both divisible by $18$,
+  --   which would make $\gcd(a,b)$ larger than necessary.
+  have hkm : (k % 2 = 0 ∧ m % 2 = 0) ∨ (k % 2 = 1 ∧ m % 2 = 1) := by
+    by_contra h
+    push_neg at h
+    rcases h with ⟨hka, hkb⟩ | ⟨hka, hkb⟩
+    · have hle : 2 ∣ a := by
+        rw [ha'''']
+        exact Dvd.intro (3 * k) (id (Eq.symm hle))
+      have hld : 2 ∣ b := by
+        rw [hb'''']
+        exact Dvd.intro (3 * m) (id (Eq.symm hld))
+      have hha : 2 ∣ Nat.gcd a b := by
+        exact Nat.dvd_gcd hle hld
+      rw [h₃] at hha
+      have : 2 * 2 ∣ 6 := by
+        exact Nat.mul_dvd_mul_left 2 hha
+      norm_num at this
+    · have hle : 2 ∣ a := by
+        rw [ha'''']
+        exact Dvd.intro (3 * k) (id (Eq.symm hle))
+      have hld : 2 ∣ b := by
+        rw [hb'''']
+        exact Dvd.intro (3 * m) (id (Eq.symm hld))
+      have hha : 2 ∣ Nat.gcd a b := by
+        exact Nat.dvd_gcd hle hld
+      rw [h₃] at hha
+      have : 2 * 2 ∣ 6 := by
+        exact Nat.mul_dvd_mul_left 2 hha
+      norm_num at this
+  -- Now, we can substitute $a = 6k$ and $b = 6m$ into the equation $a*b = 6nm$,
+  --   and we get either $k*m = 3$ or $k*m = 9$, the latter of which would make $n = m = 3$ and therefore $\gcd(a,b) = 18$.
+  --   Either way, $n*m \geq 3$.
+  have hnm : 3 ≤ m * k := by
+    rcases hkm with hkm | hkm
+    · rw [hkm] at hb
+      rw [hb, ha''''] at key
+      nlinarith
+    · have hkm' : 4 ≤ m * k := by
+        have : 2 * 2 ≤ m * k := by
+          apply Nat.mul_le_mul
+          · exact Nat.zero_lt_of_ne_zero (by linarith)
+          · exact Nat.zero_lt_of_ne_zero (by linarith)
+        exact this
+      rw [hkm, h₃] at key
+      nlinarith
+  -- Finally, we can substitute $a = 6k$, $b = 6m$, and $n*m \geq 3$ into the equation $\mathrm{lcm}(a,b) = \frac{a*b}{6} = 6nm$
+  --   to get $\mathrm{lcm}(a,b) = 6nm \geq 6*3 = 18$.
+  have key' : a * b = 6 * (m * k * 36) := by
+    rw [ha'''', hb'''']
+    nlinarith
+  have key'' : 6 * (m * k * 36) = 6 * (36 * (m * k)) := by
+    ring
+  rw [key', key''] at key
+  have key''' : 6 * 36 * (m * k) ≥ 6 * 36 * 3 := by
+    apply Nat.mul_le_mul_left
+    exact hnm
+  rw [← key] at key'''
+  have key'''' : 6 * 36 * 3 = 648 := by
+    norm_num
+  rw [key''''] at key'''
+  linarith
+```

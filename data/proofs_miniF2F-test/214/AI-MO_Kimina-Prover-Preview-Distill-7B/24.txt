@@ -1,0 +1,154 @@
+-- aux lemma, given $n > 0$, $\sum_{k=1}^n \sin{k\theta}$ equals to $\frac{\sin{\frac{n+1}2 \theta}\cos{\frac{n}2 \theta}}{\sin{\frac{\theta}{2}}}$.
+  have h (n : ℕ) (h₀ : 0 < θ) : ∑ i ∈ Finset.Icc 1 n, Real.sin (i * θ) = Real.sin ((n + 1) * θ / 2) * Real.cos (n * θ / 2) / Real.sin (θ / 2) := by
+    have : θ ≠ 0 := by
+      rw [ne_eq, inv_eq_zero]
+      apply inv_ne_zero_of_ne_zero
+      linarith
+    induction n with
+    | zero =>
+      simp
+      rw [div_self]
+      simp [Real.sin_pi_div_two]
+    | succ n ih =>
+      rw [Finset.sum_Icc_succ_top (by omega), ih]
+      rw [add_comm (n + 1), Real.sin_eq_sin_sub_pi]
+      field_simp
+      ring_nf
+      rw [← Real.cos_sub_cos, ← Real.cos_sub_cos, ← Real.cos_sub_cos, Real.cos_eq_sin_pi_div_two]
+      ring_nf
+      rw [add_mul]
+      conv =>
+        left
+        left
+        right
+        rw [mul_assoc, mul_assoc, ← Real.sin_two_mul (↑n * θ / 2), ← Real.sin_two_mul]
+      convert
+        ring_nf
+        rw [← Real.sin_sub_sin, ← Real.cos_sub_cos]
+        ring_nf
+        any_goals
+        linarith
+
+  have h' (n : ℕ) (h₀ : 0 < θ) : ∑ i ∈ Finset.Icc 1 n, Real.sin (i * θ) = Real.sin ((n + 1) * θ / 2) * Real.cos (n * θ / 2) / Real.sin (θ / 2) := by
+    have : θ ≠ 0 := by
+      rw [ne_eq, inv_eq_zero]
+      apply inv_ne_zero_of_ne_zero
+      linarith
+    induction n with
+    | zero =>
+      simp
+      rw [div_self]
+      simp [Real.sin_pi_div_two]
+    | succ n ih =>
+      rw [Finset.sum_Icc_succ_top (by omega), ih]
+      rw [add_comm (n + 1), Real.sin_eq_sin_sub_pi]
+      field_simp
+      ring_nf
+      rw [← Real.cos_sub_cos, ← Real.cos_sub_cos, ← Real.cos_sub_cos, Real.cos_eq_sin_pi_div_two]
+      ring_nf
+      rw [add_mul]
+      conv =>
+        left
+        left
+        right
+        rw [mul_assoc, mul_assoc, ← Real.sin_two_mul (↑n * θ / 2), ← Real.sin_two_mul]
+      convert
+        ring_nf
+        rw [← Real.sin_sub_sin, ← Real.cos_sub_cos]
+        ring_nf
+        any_goals
+        linarith
+
+  -- Using the lemma, we get $\sum_{k=1}^{35}\sin 5k=\frac{\sin{\frac{36x}{2}}\cos{\frac{35x}{2}}}{\sin{\frac{x}{2}}}$
+  have h'' : ∑ k in Finset.Icc (1 : ℕ) 35, Real.sin (5 * k * Real.pi / 180) = Real.sin (36 * Real.pi / 180) * Real.cos (35 * Real.pi / 2) / Real.sin (Real.pi / 36) := by
+    rw [h]
+    · linarith [Real.pi_pos]
+    · linarith [Real.pi_pos]
+
+  -- Simplify, we get $\frac{\sin{\frac{36x}{2}}\cos{\frac{35x}{2}}}{\sin{\frac{x}{2}}} = \frac{\cos{\frac{35x}{2}}\sin{\frac{36x}{2}}}{\sin{\frac{x}{36}}}$
+  have h''' : Real.sin (36 * Real.pi / 180) * Real.cos (35 * Real.pi / 2) / Real.sin (Real.pi / 36) = Real.tan (Real.pi * (31 / 36)) := by
+    rw [show Real.sin (36 * Real.pi / 180) = Real.sin (Real.pi - (31 * Real.pi / 36)) by ring_nf; linarith, Real.sin_pi_sub]
+    rw [show Real.sin (Real.pi / 36) = Real.sin (Real.pi / 36) by rfl]
+    rw [Real.tan_eq_sin_div_cos, mul_div_assoc, Real.sin_div_two, Real.cos_div_two, Real.cos_sq, Real.sin_sq]
+    have : (Real.cos (35 * Real.pi / 2) * Real.cos (35 * Real.pi / 2)) / (Real.cos (Real.pi / 72) * Real.cos (Real.pi / 72)) = (Real.cos (35 * Real.pi / 2) / Real.cos (Real.pi / 72)) ^ 2 := by
+      rw [mul_div_mul_right _ _ (by linarith)]
+    rw [this, Real.cos_sq, Real.cos_sq, Real.sin_sq, Real.sin_sq]
+    rw [Real.tan_eq_sin_div_cos, div_div_div_cancel_right₀ _ _ (by linarith), mul_div_assoc, div_div_div_cancel_right₀ _ _ (by linarith), ← Real.tan_eq_sin_div_cos]
+    ring_nf
+    · linarith
+    · rw [mul_assoc, Real.pi_pos]
+      linarith
+
+  rw [h',']', h''' ] at h
+
+  have h₃ : Real.sin (Real.pi * (31 / 36)) ≠ 0 := by
+    have : 0 < Real.pi * (31 / 36) := by positivity
+    have : Real.pi * (31 / 36) < Real.pi := by
+      apply (Real.pi_pos).trans
+      linarith
+    rw [Real.sin_pos_of_pos_of_lt_pi]
+    any_goals
+    linarith
+
+  have h₄ : Real.cos (Real.pi * (31 / 36)) < 0 := by
+    have : Real.pi * (31 / 36) < Real.pi / 2 := by linarith [Real.pi_pos]
+    rw [Real.cos_lt_zero_of_pi_div_two_lt_of_lt]
+    any_goals
+    linarith
+
+  have h₅ : 0 < Real.cos (Real.pi * (31 / 36)) ^ 2 := by
+    rw [pow_two, Real.cos_sq]
+    have : 0 < Real.sin (Real.pi * (31 / 36)) ^ 2 := by
+      apply mul_pos
+      exact Real.sin_pos_of_pos_of_lt_pi
+      any_goals
+      linarith
+      rw [Real.sin_sq]
+      linarith [Real.pi_pos]
+    linarith
+
+  -- Squaring both sides, we get $\frac{\sin^{2}{\frac{36x}{2}}\cos^{2}{\frac{35x}{2}}}{\sin^{2}{\frac{x}{36}}} = \frac{\sin^{2}{x - \frac{x}{36}}\cos^{2}{\frac{35x}{2}}}{\sin^{2}{\frac{x}{36}}} = \frac{\sin^{2}{x}\cos^{2}{\frac{35x}{2}} - \sin^{2}{\frac{x}{36}}\cos^{2}{\frac{35x}{2}}}{\sin^{2}{\frac{x}{36}}}$
+  have h'''' : Real.tan (m * Real.pi / 180) ^ 2 = (Real.sin (Real.pi * (31 / 36)) ^ 2 * Real.cos (35 * Real.pi / 2) ^ 2) / Real.sin (Real.pi / 36) ^ 2 := by
+    have : Real.cos (Real.pi * (31 / 36)) ^ 2 ≠ 0 := by
+      linarith [h₅]
+    rw [h, div_pow, Real.tan_sq]
+    field_simp
+    rw [Real.sin_sq, mul_pow, Real.sin_sq, div_pow, mul_pow, Real.sin_sq, Real.sin_sq]
+    have : Real.sin (Real.pi * (31 / 36)) ^ 2 * Real.cos (35 * Real.pi / 2) ^ 2 = (Real.sin (Real.pi * (31 / 36)) * Real.cos (35 * Real.pi / 2)) ^ 2 := by ring
+    rw [this, h''']
+
+  -- We get $m * 180 / 36 = 31 * 180 / 36$, so $36m = 31 * 180$ and $m = 31 * 5 = 155$
+  have h''''' : m * 180 / 36 = 31 * 180 / 36 := by
+    have : Real.tan (m * Real.pi / 180) ^ 2 = Real.tan (Real.pi * (31 / 36)) ^ 2 := by
+      rw [h'''']
+      rw [h''', mul_comm (36 * _), mul_assoc, ← mul_div, h'', div_self h₃]
+      rw [mul_div, div_self h₃]
+      ring
+    have : m * 180 / 36 = 31 * 180 / 36 ∨ m * 180 / 36 + 31 * 180 / 36 = Real.pi / 2 := by
+      apply Real.tan_eq_tan_iff.1
+      exact this
+      · apply Real.pi_ne_zero
+      · apply ne_of_lt
+        linarith [Real.pi_pos]
+    rcases this with h | h
+    · exact h
+    · have : m * 180 / 36 + 31 * 180 / 36 < Real.pi / 2 + Real.pi := by
+        apply add_lt_add_of_le_of_lt
+        exact h
+        linarith [Real.pi_pos]
+      have : 31 * 180 / 36 + (m + 31) * 180 / 36 < Real.pi / 2 + Real.pi / 2 := by
+        apply add_lt_add_of_le_of_lt
+        exact this
+        linarith [Real.pi_pos]
+      have : 62 * 180 / 36 < Real.pi := by linarith
+      have : 62 * 180 / 36 < 0 := by linarith [Real.pi_pos]
+      have : 62 * 180 / 36 > 0 := by linarith [Real.pi_pos]
+      linarith
+
+  have h₆ : m = 155 := by
+    linarith
+
+  rw [h₆]
+  norm_num
+
+```

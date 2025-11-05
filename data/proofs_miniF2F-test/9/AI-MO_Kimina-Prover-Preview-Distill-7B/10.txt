@@ -1,0 +1,106 @@
+-- without loss of generality, we can assume $a \geq b$
+  wlog hab : a ≥ b
+  · -- if otherwise, we can swap $a$ and $b$ and rewrite the inequality
+    -- the inequality is symmetric, so the new inequality is also valid
+    -- we can continue doing this until $a \geq b$
+    -- this is easy to formalize by using `wlog`
+    -- the generated goal is when $a \geq b$
+    -- we can write `simp_all` to simplify the goal
+    -- and `aesop` to solve the goal
+    -- the generated side condition is exactly when $b \geq a$
+    apply this b a c?_?_?_?_?_
+    · exact le_of_lt (lt_of_le_of_ne hab (Ne.symm (NeZero.ne' (a - b))))
+    · exact h₀.right.left
+    · exact h₀.right.right
+    · exact h₂
+    · exact h₁
+    · exact h₃
+    · exact hab
+
+  -- without loss of generality, we can assume $b \geq c$
+  wlog hbc : b ≥ c
+  · -- if otherwise, we can swap $b$ and $c$ and rewrite the inequality
+    -- the inequality is symmetric, so the new inequality is also valid
+    -- we can continue doing this until $b \geq c$
+    -- this is easy to formalize by using `wlog`
+    -- the generated goal is when $b \geq c$
+    -- we can write `simp_all` to simplify the goal
+    -- and `aesop` to solve the goal
+    -- the generated side condition is exactly when $c \geq b$
+    -- this is the same as the original inequality
+    -- the generated side condition is when $a \geq b \geq c$
+    apply this a c b?_?_?_?_?_
+    · rw [mul_comm]
+      nth_rw 2 [mul_comm]
+    · exact h₀.right.right
+    · exact h₀.right.left
+    · exact h₁
+    · exact h₂
+    · exact le_of_lt (lt_of_le_of_ne hbc (Ne.symm (NeZero.ne' (b - c))))
+    · exact h₃
+    · exact le_of_lt (lt_of_le_of_ne hbc (Ne.symm (NeZero.ne' (b - c))))
+
+  -- without loss of generality, we can assume $c \geq a$
+  wlog hca : c ≥ a
+  · -- if otherwise, we can swap $c$ and $a$ and rewrite the inequality
+    -- the inequality is symmetric, so the new inequality is also valid
+    -- we can continue doing this until $c \geq a$
+    -- this is easy to formalize by using `wlog`
+    -- the generated goal is when $c \geq a$
+    -- we can write `simp_all` to simplify the goal
+    -- and `aesop` to solve the goal
+    -- the generated side condition is exactly when $a \geq c$
+    -- this is the same as the original inequality
+    -- the generated side conditions are when $a \geq b \geq c$
+    apply this c b a?_?_?_?_?_
+    · rw [mul_comm]
+      nth_rw 2 [mul_comm]
+    · exact h₀.right.right
+    · exact h₀.right.left
+    · exact h₂
+    · exact h₁
+    · exact le_of_lt (lt_of_le_of_ne hca (Ne.symm (NeZero.ne' (c - a))))
+    · exact h₃
+    · exact le_of_lt (lt_of_le_of_ne hca (Ne.symm (NeZero.ne' (c - a))))
+
+  -- the case when $a \geq b \geq c \geq a$ is solved, we can assume $a \geq b \geq c$
+  -- we have $a \geq b \geq c$
+  have h1 : a ≥ b := hab
+  have h2 : b ≥ c := hbc
+  have h3 : a ≥ c := hca
+
+  -- we have $a \geq b \geq c$, and they are all positive
+  -- the original inequality is equivalent to $a^2 b(a-b) + b^2 c(a-b) + c^2 a(a-b) \geq 0$
+  -- we can rewrite the inequality as $(a-b)(a^2 b + b^2 c - c^2 a) \geq 0$
+  have h : a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) = (a - b) * (a ^ 2 * b + b ^ 2 * c - c ^ 2 * a) := by
+    ring
+
+  -- we need to prove $(a - b)(a^2 b + b^2 c - c^2 a) \geq 0$
+  rw [h]
+  apply mul_nonneg
+  · exact sub_nonneg.mpr h1
+  · -- we have $a^2 b + b^2 c - c^2 a \geq 0$
+    -- prove $a^2 b \geq c^2 a$
+    have h4 : a ^ 2 * b ≥ c ^ 2 * a := by
+      -- it is equivalent to $a b^2 \geq c^2 a$
+      -- it is equivalent to $a (b-c)(b+c) \geq 0$
+      have h5 : a * (b - c) * (b + c) ≥ 0 := by
+        apply mul_nonneg
+        · exact h3
+        · apply mul_nonneg
+          · exact h2
+          · exact h2
+      nlinarith
+    -- prove $b^2 c \geq c^2 a$
+    have h6 : b ^ 2 * c ≥ c ^ 2 * a := by
+      -- it is equivalent to $b c^2 \geq c^2 a$
+      -- it is equivalent to $c^2 (b-a) \geq 0$
+      have h7 : c ^ 2 * (b - a) ≥ 0 := by
+        apply mul_nonneg
+        · exact h₀.right.right
+        · exact le_of_lt h1
+      nlinarith
+    -- the inequality is proved
+    linarith
+
+```

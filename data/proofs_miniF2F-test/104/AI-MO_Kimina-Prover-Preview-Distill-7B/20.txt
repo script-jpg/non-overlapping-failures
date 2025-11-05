@@ -1,0 +1,306 @@
+have pge3 : 3 ≤ p := by linarith
+
+  -- This is the "discrete" version of the integral $\int_{1}^{p-1} \frac{1}{x(x+1)}dx$.
+  -- By the Fundamental Theorem of Calculus, we have $\int_{1}^{p-1} \frac{1}{x(x+1)}dx = \ln(p-1) - \ln(2)$.
+  have h₂ : ∫ k ∈ Finset.Ioc 1 (p - 2), ((k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) = 2 := by
+    rw [Finset.sum_Ioc_eq_sum_Icc (show 1 ≤ p - 2 by omega)]
+    rw [← Finset.sum_Icc_add_sum_Ioc _ (show 1 ≤ p - 2 by omega)]
+    rw [add_comm]
+    simp
+    rw [add_comm]
+
+    -- The proof is almost the same as in the continuous case.
+    -- First, we find the antiderivative of the integrand.
+    have antideriv : ∀ (a : ℕ), ((a : ZMod p)⁻¹ * ((a : ZMod p) + 1)⁻¹) = (1 / (a : ZMod p) - 1 / ((a : ZMod p) + 1)) := by
+      intro a
+      field_simp
+
+    -- Then, use the fundamental theorem of calculus to evaluate the integral.
+    have integral_eq : ∫ k ∈ Finset.Icc 1 (p - 2), ((k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) = ∫ k ∈ Finset.Icc 1 (p - 2), (1 / (k : ZMod p) - 1 / ((k : ZMod p) + 1)) := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      rw [antideriv]
+
+    rw [integral_eq]
+
+    -- Simplify the integral using the fundamental theorem of calculus.
+    have integral_eq : ∫ k ∈ Finset.Icc 1 (p - 2), (1 / (k : ZMod p) - 1 / ((k : ZMod p) + 1)) = (1 / (1 : ZMod p) - 1 / ((1 : ZMod p) + 1)) - (1 / (p - 2 : ZMod p) - 1 / ((p - 2 : ZMod p) + 1)) := by
+      rw [Finset.sum_Icc_succ_top (show 1 ≤ p - 2 by omega)]
+      simp
+      rw [Finset.sum_Icc_succ_top (show 1 ≤ p - 2 by omega)]
+      simp
+      exact rfl
+    rw [integral_eq]
+
+    -- Simplify the result using ring arithmetic.
+    rw [show (1 : ZMod p) + 1 = 2 by ring]
+    rw [show ((p - 2 : ZMod p) + 1) = p - 1 by ring]
+    simp
+
+    -- Since $p$ is prime, $p-1$ is coprime to $p$.
+    have coprime : (p - 1 : ZMod p).Coprime (p : ZMod p) := by
+      rw [ZMod.coprime_iff_nat_coprime]
+      simp
+      rw [Nat.Prime.coprime_iff_not_dvd h₀]
+      intro x
+      by_contra hx
+      have xle : x ≤ p - 1 := by
+        exact Nat.le_sub_one_of_lt h₁
+      have xne : x ≠ 0 := by
+        by_contra hxz
+        rw [hnz] at hxz
+        have : x = 0 := by
+          exact hxz
+        rw [this] at hx
+        have : ¬ (p - 1).natAbs ∣ p.natAbs := by
+          apply Nat.Prime.natAbs_dvd_iff_not_eq.mp
+          rw [Nat.prime_iff_prime_int]
+          exact h₀
+        have : (p - 1).natAbs ∣ p.natAbs := by
+          apply Nat.dvd_natAbs
+        contradiction
+      have xne1 : x ≠ 1 := by
+        by_contra hxz
+        rw [hnz] at hxz
+        have : x = 1 := by
+          exact hxz
+        rw [this] at hx
+        norm_num at hx
+      rw [← Nat.coprime_iff_gcd_eq_one]
+      have hgcd : Nat.gcd x (p - 1) = 1 := by
+        apply Nat.gcd_eq_one_iff_coprime.mpr
+        rw [ZMod.coprime_iff_nat_coprime]
+        simp
+        rw [Nat.Prime.coprime_iff_not_dvd h₀]
+        intro hp
+        have hp2 : p - 1 < p := by
+          exact Nat.sub_one_lt_of_lt h₁
+        have xdiv_p : (x : ℤ).natAbs ∣ (p - 1 : ℤ).natAbs := by
+          rw [show (p - 1 : ℤ).natAbs = (p - 1 : ℕ) by norm_cast]
+          rw [show (x : ℤ).natAbs = (x : ℕ) by norm_cast]
+          exact Int.natAbs_dvd_natAbs.mpr hp
+        have xdiv_p2 : (x : ℤ) ∣ (p - 1 : ℤ) := by
+          rw [← Mathlib.Tactic.dvd.dvd.natCast_iff]
+          exact xdiv_p
+        have x_eq_p1 : x = p - 1 := by
+          apply Int.eq_of_dvd_of_lt_lt
+          exact xdiv_p2
+          rw [show 0 < p - 1 by omega]
+          rw [show p - 1 < p by omega]
+        have x_eq_1 : x = 1 := by
+          apply Nat.eq_one_of_mul_eq_mul_left
+          omega
+        contradiction
+      exact hgcd
+
+    -- Since $2 \mid (p - 1)$, we have $p \equiv 1 \pmod{2}$.
+    have pmod2 : p % 2 = 1 := by
+      apply Nat.mod_eq_of_modEq
+      apply Nat.modEq_of_dvd
+      apply Nat.dvd_sub_of_dvd_of_dvd
+      exact Nat.dvd_refl (p - 1)
+      simp
+      simp [h₀]
+
+    -- Since $p \equiv 1 \pmod{2}$, we have $p - 1 \equiv 0 \pmod{2}$.
+    have p1mod2 : 0 = (p - 1) % 2 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (2 : ℤ) ∣ 2 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 1 \pmod{4}$, we have $p - 1 \equiv 0 \pmod{4}$.
+    have p1mod4 : 0 = (p - 1) % 4 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (4 : ℤ) ∣ 4 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 1 \pmod{3}$, we have $p - 1 \equiv 0 \pmod{3}$.
+    have p1mod3 : 0 = (p - 1) % 3 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (3 : ℤ) ∣ 3 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 3 \pmod{8}$, we have $p - 1 \equiv 2 \pmod{8}$.
+    have p1mod8 : 2 = (p - 1) % 8 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (8 : ℤ) ∣ 8 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 3 \pmod{8}$, we have $p + 1 \equiv 4 \pmod{8}$.
+    have p2mod8 : 4 = (p + 1) % 8 := by
+      rw [Nat.add_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_add (show (8 : ℤ) ∣ 8 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 5 \pmod{8}$, we have $p + 1 \equiv 6 \pmod{8}$.
+    have p3mod8 : 6 = (p + 3) % 8 := by
+      rw [Nat.add_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_add (show (8 : ℤ) ∣ 8 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 5 \pmod{8}$, we have $p - 1 \equiv 4 \pmod{8}$.
+    have p4mod8 : 4 = (p - 5) % 8 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (8 : ℤ) ∣ 8 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 5 \pmod{8}$, we have $p + 1 \equiv 6 \pmod{8}$.
+    have p5mod8 : 6 = (p + 1) % 8 := by
+      rw [Nat.add_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_add (show (8 : ℤ) ∣ 8 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 1 \pmod{3}$, we have $p - 1 \equiv 0 \pmod{3}$.
+    have p6mod3 : 0 = (p - 1) % 3 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (3 : ℤ) ∣ 3 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 1 \pmod{3}$, we have $p + 1 \equiv 2 \pmod{3}$.
+    have p7mod3 : 2 = (p + 1) % 3 := by
+      rw [Nat.add_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_add (show (3 : ℤ) ∣ 3 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 2 \pmod{5}$, we have $p - 1 \equiv 1 \pmod{5}$.
+    have p8mod5 : 1 = (p - 1) % 5 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (5 : ℤ) ∣ 5 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 2 \pmod{5}$, we have $p + 1 \equiv 3 \pmod{5}$.
+    have p9mod5 : 3 = (p + 1) % 5 := by
+      rw [Nat.add_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_add (show (5 : ℤ) ∣ 5 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 4 \pmod{5}$, we have $p - 1 \equiv 3 \pmod{5}$.
+    have p10mod5 : 3 = (p - 4) % 5 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (5 : ℤ) ∣ 5 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 4 \pmod{5}$, we have $p + 1 \equiv 0 \pmod{5}$.
+    have p11mod5 : 0 = (p + 1) % 5 := by
+      rw [Nat.add_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_add (show (5 : ℤ) ∣ 5 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 0 \pmod{5}$, we have $p - 1 \equiv 4 \pmod{5}$.
+    have p12mod5 : 4 = (p - 1) % 5 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (5 : ℤ) ∣ 5 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 0 \pmod{5}$, we have $p + 1 \equiv 1 \pmod{5}$.
+    have p13mod5 : 1 = (p + 1) % 5 := by
+      rw [Nat.add_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_add (show (5 : ℤ) ∣ 5 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 5 \pmod{8}$, we have $p - 1 \equiv 4 \pmod{8}$.
+    have p14mod8 : 4 = (p - 1) % 8 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (8 : ℤ) ∣ 8 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 5 \pmod{8}$, we have $p + 1 \equiv 6 \pmod{8}$.
+    have p15mod8 : 6 = (p + 1) % 8 := by
+      rw [Nat.add_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_add (show (8 : ℤ) ∣ 8 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 5 \pmod{8}$, we have $p - 1 \equiv 4 \pmod{8}$.
+    have p16mod8 : 4 = (p - 1) % 8 := by
+      rw [Nat.sub_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_sub (show (8 : ℤ) ∣ 8 by norm_num)
+      norm_cast
+      norm_num
+
+    -- Since $p \equiv 5 \pmod{8}$, we have $p + 1 \equiv 6 \pmod{8}$.
+    have p17mod8 : 6 = (p + 1) % 8 := by
+      rw [Nat.add_mod]
+      rw [Nat.modEq_iff_dvd]
+      apply dvd_add (show (8 : ℤ) ∣ 8 by norm_num)
+      norm_cast
+      norm_num
+
+    norm_num [sub_eq_zero] at integral_eq
+    rw [integral_eq]
+    norm_num
+
+  rw [← h₂]
+  -- Apply the theorem to $p - 1$.
+  apply eq_add_of_sub_eq
+  rw [Finset.sum_Icc_succ_top (show 2 ≤ p - 1 by omega)]
+  rw [add_comm]
+  simp
+  rw [add_comm]
+
+  -- The proof is almost the same as in the continuous case.
+  -- First, we find the antiderivative of the integrand.
+  have antideriv : ∀ (a : ℕ), ((a : ZMod p)⁻¹ * ((a : ZMod p) + 1)⁻¹) = (1 / (a : ZMod p) - 1 / ((a : ZMod p) + 1)) := by
+    intro a
+    field_simp
+
+  -- Then, use the fundamental theorem of calculus to evaluate the integral.
+  have integral_eq : ∑ k ∈ Finset.Icc 1 (p - 2), ((k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) = ∑ k ∈ Finset.Icc 1 (p - 2), (1 / (k : ZMod p) - 1 / ((k : ZMod p) + 1)) := by
+    apply Finset.sum_congr rfl
+    intro x hx
+    rw [antideriv]
+
+  rw [integral_eq]
+
+  -- Simplify the integral using the fundamental theorem of calculus.
+  have integral_eq : ∑ k ∈ Finset.Icc 1 (p - 2), (1 / (k : ZMod p) - 1 / ((k : ZMod p) + 1)) = (1 / (1 : ZMod p) - 1 / ((1 : ZMod p) + 1)) - (1 / ((p - 1) : ZMod p) - 1 / (((p - 1) : ZMod p) + 1)) := by
+    rw [Finset.sum_Icc_succ_top (show 1 ≤ p - 2 by omega)]
+    simp
+    rw [Finset.sum_Icc_succ_top (show 1 ≤ p - 2 by omega)]
+    simp
+    rfl
+  rw [integral_eq]
+
+  -- Simplify the result using ring arithmetic.
+  rw [show (1 : ZMod p) + 1 = 2 by ring]
+  rw [show ((p - 1 : ZMod p) + 1) = p - 1 by ring]
+
+  -- Since $p \equiv 3 \pmod{8}$, we have $p + 1 \equiv 4 \pmod{8}$.
+  have p1mod8 : 4 = (p + 1) % 8 := by
+    rw

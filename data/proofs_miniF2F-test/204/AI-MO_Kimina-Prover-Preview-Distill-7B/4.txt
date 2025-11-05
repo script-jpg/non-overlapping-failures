@@ -1,0 +1,125 @@
+-- $|x| < 3 \pi \Rightarrow |x| < 9$
+  have h₁ : ∀ x : ℤ, x ∈ S → |x| < 9 := by
+    intro x hx
+    have : ↑(|x| : ℝ) < 9 := by
+      calc
+        ↑(|x| : ℝ) < 3 * Real.pi := by exact_mod_cast h₀ x
+        _ < 9 := by
+          have h₁ : Real.pi < 3.15 := Real.pi_lt_315
+          norm_num at h₁
+          linarith
+    exact Int.lt_natAbs_iff.mp this
+
+  -- $|x| < 9 \Rightarrow x \in S \Rightarrow |x| < 3 \pi$
+  have h₂ : ∀ x : ℤ, |x| < 9 → x ∈ S := by
+    intro x hx
+    have : ↑(|x| : ℝ) < 3 * Real.pi := by
+      calc
+        ↑(|x| : ℝ) < 9 := Int.ofNat_lt_natAbs.mp hx
+        _ < 3 * Real.pi := by
+          have h₁ : Real.pi > 3.14 := Real.pi_gt_314
+          norm_num at h₁
+          linarith
+    exact h₀.mp this
+
+  -- $|x| < 9 \Leftrightarrow x \in S$
+  have h₃ : ∀ x : ℤ, |x| < 9 ↔ x ∈ S := by
+    intro x
+    exact h₁ x h₂ x
+
+  -- $0 \leq |x| < 9 \Rightarrow 0 \leq x < 9$
+  have h₄ : ∀ x : ℤ, 0 ≤ x ∧ x < 9 ↔ |x| < 9 := by
+    intro x
+    constructor
+    · intro ⟨h₁, h₂⟩
+      rw [abs_of_nonneg h₁]
+      exact h₂
+    · intro h
+      exact ⟨Int.abs_nonneg x, by exact h.elim h₀⟩
+
+  -- $|x| < 9 \Rightarrow -9 < x < 9$
+  have h₅ : ∀ x : ℤ, |x| < 9 → -9 < x ∧ x < 9 := by
+    intro x hx
+    rw [← Int.lt_natAbs] at hx
+    exact hx
+
+  -- $|x| < 9 \Leftrightarrow -9 < x < 9$
+  have h₆ : ∀ x : ℤ, |x| < 9 ↔ -9 < x ∧ x < 9 := by
+    intro x
+    constructor
+    · intro h
+      exact ⟨by exact h.elim h₀, by exact h.elim h₀⟩
+    · intro h
+      exact h.elim (abs_lt.mp h)
+
+  -- $-9 < x < 9 \Rightarrow |x| < 9$
+  have h₇ : ∀ x : ℤ, -9 < x ∧ x < 9 → |x| < 9 := by
+    intro x ⟨h₁, h₂⟩
+    exact (abs_lt.mpr ⟨by linarith, by linarith⟩)
+
+  -- $-9 < x < 9 \Leftrightarrow |x| < 9$
+  have h₈ : ∀ x : ℤ, -9 < x ∧ x < 9 ↔ |x| < 9 := by
+    intro x
+    constructor
+    · intro h
+      exact h₇ x h
+    · intro h
+      exact h.elim (abs_lt.mp h)
+
+  -- $-9 < x \Leftrightarrow 0 \leq x + 9$
+  have h₉ : ∀ x : ℤ, -9 < x ↔ 0 ≤ x + 9 := by
+    intro x
+    constructor
+    · intro h
+      exact Nat.zero_le (x + 9)
+    · intro h
+      exact le_sub_one_iff.mp h
+
+  -- $x < 9 \Leftrightarrow x - 9 < 0$
+  have h₁₀ : ∀ x : ℤ, x < 9 ↔ x - 9 < 0 := by
+    intro x
+    exact Int.sub_neg
+
+  -- $-9 < x < 9 \Leftrightarrow 0 \leq x + 9 \wedge x - 9 < 0$
+  have h₁₁ : ∀ x : ℤ, -9 < x ∧ x < 9 ↔ 0 ≤ x + 9 ∧ x - 9 < 0 := by
+    intro x
+    constructor
+    · intro ⟨h₁, h₂⟩
+      exact ⟨h₉ x h₁, h₁₀ x h₂⟩
+    · intro ⟨h₁, h₂⟩
+      exact ⟨h₉.mp h₁, h₁₀.mp h₂⟩
+
+  -- $|x + 9| < 9 \Leftrightarrow 0 \leq x + 9 \wedge x - 9 < 0$
+  have h₁₂ : ∀ x : ℤ, |x + 9| < 9 ↔ 0 ≤ x + 9 ∧ x - 9 < 0 := by
+    intro x
+    rw [h₆]
+    calc
+      |x + 9| < 9 ↔ -9 < x + 9 ∧ x + 9 < 9 := by exact abs_lt
+      _ ↔ 0 ≤ x + 9 ∧ x - 9 < 0 := by exact h₁₁
+
+  -- $|x + 9| < 9 \Leftrightarrow |x| < 9$ by $|x + 9| < 9 \Leftrightarrow 0 \leq x + 9 \wedge x - 9 < 0 \Leftrightarrow |x| < 9$
+  have h₁₃ : ∀ x : ℤ, |x + 9| < 9 ↔ |x| < 9 := by
+    intro x
+    rw [h₁₂]
+    exact h₈ x
+
+  -- $x \in S \Leftrightarrow |x| < 9 \Leftrightarrow |x + 9| < 9 \Leftrightarrow x \in \{x \mid -18 \leq x < 9\}$
+  have h₁₄ : ∀ x : ℤ, x ∈ S ↔ -18 ≤ x ∧ x < 9 := by
+    intro x
+    constructor
+    · intro hx
+      exact ⟨by linarith [h₁₃ x], h₁ x hx⟩
+    · intro hx
+      specialize h₁₃ x
+      exact h₀.mp (h₁₂ x).mp hx
+
+  -- $S = \{x \mid -18 \leq x < 9\}$
+  have h₁₅ : S = Finset.Ico (-18) 9 := by
+    ext x
+    simp [h₁₄]
+
+  rw [h₁₅]
+
+  -- The set $\{x \mid -18 \leq x < 9\}$ contains $19$ integers.
+  exact rfl
+```

@@ -1,0 +1,33 @@
+have h : ∀ n : ℕ, (n : ℝ) ≥ 2 → (∑ k in Finset.Icc (2 : ℕ) n, 1 / Real.sqrt k) < 198 := by
+    intro n hn
+    have h₁ : ∀ k : ℕ, k ∈ Finset.Icc (2 : ℕ) n → (1 : ℝ) / Real.sqrt k ≤ 1 := by
+      intro k hk
+      have h₂ : (k : ℝ) ≥ 2 := by
+        simp_all [Finset.mem_Icc]
+        <;> nlinarith
+      have h₃ : Real.sqrt k ≥ 1 := by
+        apply Real.le_sqrt_of_sq_le
+        nlinarith
+      have h₄ : (1 : ℝ) / Real.sqrt k ≤ 1 := by
+        apply div_le_one_of_le
+        nlinarith
+        nlinarith
+      nlinarith
+    calc
+      (∑ k in Finset.Icc (2 : ℕ) n, 1 / Real.sqrt k) ≤ ∑ k in Finset.Icc (2 : ℕ) n, (1 : ℝ) := by
+        apply Finset.sum_le_sum
+        intro x hx
+        exact h₁ x hx
+      _ = ∑ k in Finset.Icc (2 : ℕ) n, (1 : ℝ) := rfl
+      _ = (n - 1 : ℕ) := by
+        simp [Finset.sum_Icc_succ_top]
+        <;> norm_num
+        <;> omega
+      _ < 198 := by
+        norm_num
+        norm_num at hn
+        norm_num
+        interval_cases n <;> norm_num [Nat.div_eq_of_lt] <;> norm_num
+        <;> linarith
+  have h₂ : (10000 : ℝ) ≥ 2 := by norm_num
+  exact h _ h₂

@@ -1,0 +1,88 @@
+have h₂ : Real.logb 4 (Real.logb 4 n) = Real.logb 2 (Real.logb 16 n) := by
+    rw [h₁]
+
+  -- change of base formula to rewrite the equation as
+  -- log 2 (log 16 n) = log 4 (log 4 n)
+  have h₃ : Real.logb 2 (Real.logb 16 n) = Real.logb 4 (Real.logb 4 n) := by
+    rw [h₂]
+  rw [Real.logb] at h₃
+  rw [Real.logb] at h₃
+  rw [Real.logb] at h₃
+  rw [Real.logb] at h₃
+
+  -- rewrite the equation as
+  -- log 2 (log 2 n / 4) = log 4 (log 4 n)
+  have h₄ : Real.log (Real.log 2 n / 4) = Real.log (Real.log 4 n / 4) := by
+    calc
+      Real.log (Real.log 2 n / 4) = Real.log 2 (Real.log 2 n / 4) * Real.log 4 := by rw [Real.logb]
+      _ = Real.log 4 (Real.log 4 n / 4) := by rw [h₃]
+      _ = Real.log (Real.log 4 n / 4) := by rw [Real.logb]
+
+  -- cancel out the log and get
+  -- (log 2 n / 4) = (log 4 n / 4)
+  have h₅ : Real.log 2 n / 4 = Real.log 4 n / 4 := by
+    calc
+      Real.log 2 n / 4 = Real.log (Real.log 2 n / 4) := by rw [Real.log_div (by linarith) (by linarith)]; norm_num
+      _ = Real.log (Real.log 4 n / 4) := by rw [h₄]
+      _ = Real.log 4 n / 4 := by rw [Real.log_div (by positivity) (by linarith)]; norm_num
+
+  -- change of base formula again to get
+  -- log 2 (log 2 n) - 2 = log 4 (log 2 n) - 2
+  have h₆ : Real.log 2 (Real.log 2 n) - 2 = Real.log 4 (Real.log 2 n) - 2 := by
+    calc
+      Real.log 2 (Real.log 2 n) - 2 = Real.log (Real.log 2 n / 4) + 2 - 2 := by rw [Real.log_div (by positivity) (by linarith)]; norm_num
+      _ = Real.log (Real.log 4 n / 4) + 2 - 2 := by rw [h₅]
+      _ = Real.log 4 (Real.log 2 n) - 2 := by rw [Real.log_div (by positivity) (by linarith)]; norm_num
+
+  -- cancel out the 2 and get
+  -- log 2 (log 2 n) = log 4 (log 2 n)
+  have h₇ : Real.log 2 (Real.log 2 n) = Real.log 4 (Real.log 2 n) := by
+    calc
+      Real.log 2 (Real.log 2 n) = Real.log 2 (Real.log 2 n) - 2 + 2 := by ring_nf
+      _ = Real.log 4 (Real.log 2 n) - 2 + 2 := by rw [h₆]
+      _ = Real.log 4 (Real.log 2 n) := by ring_nf
+
+  -- log 2 (log 2 n) = log 2^2 (log 2 n) = log 4 (log 2 n)
+  have h₈ : Real.log 4 (Real.log 2 n) = Real.log 2 (Real.log 2 n) := by
+    rw [show (4 : ℝ) = 2 ^ 2 by norm_num]
+    rw [Real.logb]
+    rw [Real.logb]
+    rw [Real.log_div (by positivity) (by linarith)]
+    simp
+    norm_num
+    all_goals positivity
+
+  -- multiply both sides by 2
+  have h₉ : Real.log 2 (Real.log 2 n) = 2 * Real.log 2 (Real.log 2 n) := by
+    calc
+      Real.log 2 (Real.log 2 n) = Real.log 4 (Real.log 2 n) := by rw [h₇]
+      _ = Real.log 2 (Real.log 2 n) := by rw [h₈]
+
+  -- subtract log 2 (log 2 n) from both sides and get
+  -- 0 = real 0
+  have h₁₀ : (Real.log 2 (Real.log 2 n)) * (1 - 2) = 0 := by
+    calc
+      (Real.log 2 (Real.log 2 n)) * (1 - 2) = Real.log 2 (Real.log 2 n) - 2 * Real.log 2 (Real.log 2 n) := by ring_nf
+      _ = Real.log 2 (Real.log 2 n) - Real.log 2 (Real.log 2 n) := by rw [h₉]
+      _ = 0 := by ring_nf
+
+  -- thus, we have log 2 (log 2 n) = 0 and get n = 2^ (2^ (2^...^2))
+  have h₁₁ : Real.log 2 (Real.log 2 n) = 0 := by
+    linarith only [h₁₀]
+
+  have h₁₂ : Real.log 2 n = 1 := by
+    calc
+      Real.log 2 n = Real.log 2 (Real.log 2 n) + Real.log 2 2 := by rw [Real.log_mul (by linarith) (by linarith)]; norm_num
+      _ = 0 + Real.log 2 2 := by rw [h₁₁]
+      _ = Real.log 2 2 := by ring_nf
+      _ = 1 := by norm_num
+
+  have h₁₃ : n = 2 := by
+    calc
+      n = Real.log 2 n + 1 := by rw [Real.log_add_one (by linarith)]; norm_num
+      _ = 1 + 1 := by rw [h₁₂]
+      _ = 2 := by ring_nf
+
+  rw [h₁₃]
+  norm_num
+```

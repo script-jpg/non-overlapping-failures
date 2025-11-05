@@ -1,0 +1,110 @@
+-- Show that $a + c - b - d$ is positive.
+  have h₅ : 0 < a + c - b - d := by
+    -- It follows from $a > b > c > d$ that $a + c - b - d$ is positive.
+    calc
+      a + c - b - d < a + a - b - d := by rel [h₂]
+      _ = b - b := by rw [show a = b by linarith]
+      _ = 0 := by rfl
+
+  -- Show that $b + d + a - c$ is positive.
+  have h₆ : 0 < b + d + a - c := by
+    -- It follows from $a > b > c > d$ that $a + c - b - d$ is positive.
+    calc
+      b + d + a - c < a + a - c - c := by rel [h₂]
+      _ = a - c := by ac_rfl
+      _ < a - d := by rel [show d < c by linarith]
+      _ = a + c - b - d + b + d - c - c := by
+        rw [show a + c - b - d = a + a - b - d by linarith]
+        nth_rw 3 [←show a = b by linarith]
+        ring
+      _ < a + c - b - d + b + d := by rel [h₅]
+
+  -- Show that $a * c + b * d = (b + d + a - c) * (b + d + c - a)$.
+  have h₇ : a * c + b * d = (b + d + a - c) * (b + d + c - a) := by
+    -- It is the same as `h₄`.
+    exact h₄
+
+  -- We have $(a * b + c * d) * (a * d + b * c) = (a * c + b * d) ^ 2$.
+  have h₈ : (a * b + c * d) * (a * d + b * c) = (a * c + b * d) ^ 2 := by
+    -- It is the same as `h₇`.
+    ring_nf
+    linarith only [h₇]
+
+  -- We have $a * b + c * d < a * d + b * c$.
+  have h₉ : a * b + c * d < a * d + b * c := by
+    -- It is equivalent to $(a - c) * (b - d) < 0$.
+    suffices (a - c) * (b - d) < 0 from by linarith
+    -- It follows from $a > b > c > d$ that $a - c > 0$ and $b - d > 0$.
+    apply mul_neg_of_neg_of_pos
+    · calc
+        a - c > a - d := by rel [h₅]
+        _ > b - d := by rel [show a > b by linarith]
+    · calc
+        b - d > b - c := by rel [h₁]
+        _ > a - c := by rel [show b > a by linarith]
+
+  -- We have $a * d + b * c > 0$.
+  have h₁₀ : 0 < a * d + b * c := by
+    -- It follows from $a > b > c > d > 0$ that $a * d + b * c > 0$.
+    apply add_pos
+    · apply mul_pos
+      · exact h₀.left
+      · exact h₀.right.right.left
+    · apply mul_pos
+      · exact h₀.right.right.right
+      · exact h₀.right.left
+
+  -- We have $a * b + c * d > 1$.
+  have h₁₁ : a * b + c * d > 1 := by
+    -- It follows from $a > b > c > d > 0$ that $a * b + c * d > 1$.
+    apply add_pos
+    · apply mul_pos
+      · exact h₀.left
+      · exact h₀.right.left
+    · apply mul_pos
+      · exact h₀.right.right.left
+      · exact h₀.right.right.right
+
+  -- We have $a * d + b * c > 1$.
+  have h₁₂ : a * d + b * c > 1 := by
+    -- It follows from $a > b > c > d > 0$ that $a * d + b * c > 1$.
+    apply add_pos
+    · apply mul_pos
+      · exact h₀.left
+      · exact h₀.right.right.right
+    · apply mul_pos
+      · exact h₀.right.right.left
+      · exact h₀.right.left
+
+  -- We have $(a * b + c * d) * (a * d + b * c) > (a * c + b * d) ^ 2$.
+  have h₁₃ : (a * b + c * d) * (a * d + b * c) > (a * c + b * d) ^ 2 := by
+    -- It follows from `h₈`, `h₉`, `h₁₀`, and `h₁₁` that $(a * b + c * d) * (a * d + b * c) > (a * c + b * d) ^ 2$.
+    nlinarith only [h₈, h₉, h₁₀, h₁₁]
+
+  -- We have $a * c + b * d > 1$.
+  have h₁₄ : a * c + b * d > 1 := by
+    -- It follows from $a > b > c > d > 0$ that $a * c + b * d > 1$.
+    apply add_pos
+    · apply mul_pos
+      · exact h₀.left
+      · exact h₀.right.right.left
+    · apply mul_pos
+      · exact h₀.right.left
+      · exact h₀.right.right.right
+
+  -- Show that $a * c + b * d < (a * b + c * d) * (a * d + b * c)$.
+  have h₁₅ : a * c + b * d < (a * b + c * d) * (a * d + b * c) := by
+    -- It is the same as `h₁₃`.
+    exact h₁₃
+
+  -- Show that $a * c + b * d \neq (a * b + c * d) * (a * d + b * c)$.
+  have h₁₆ : a * c + b * d ≠ (a * b + c * d) * (a * d + b * c) := by
+    -- It follows from `h₁₅` and `h₁₄` that $a * c + b * d \neq (a * b + c * d) * (a * d + b * c)$.
+    exact Nat.ne_of_lt h₁₅
+
+  -- Show that $a * b + c * d$ is not prime.
+  rw [←h₇]
+  -- It follows from `h₁₆` that $a * b + c * d$ is not prime.
+  exact Nat.not_prime_mul_of_ne h₁₁ h₁₀ h₁₆
+
+```

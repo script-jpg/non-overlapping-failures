@@ -1,0 +1,71 @@
+-- We have $a^2b^3=\frac{32}{27}$ and $\frac{a}{b^3}=\frac{27}{4}$. Let's find $a+b$.
+
+  -- First, let's understand what we're given:
+  -- $a^2b^3 = \frac{32}{27}$ means $a^2b^3 - \frac{32}{27} = 0$
+  -- $\frac{a}{b^3} = \frac{27}{4}$ means $4a = 27b^3$ when $b \neq 0$
+
+  have : b ≠ 0 := by
+    by_contra h
+    have : a / b ^ 3 = 0 := by
+      simp [h]
+    linarith
+
+  -- From $\frac{a}{b^3}=\frac{27}{4}$, we get $4a=27b^3$.
+  have h₂ : 4 * a = 27 * b ^ 3 := by
+    have : b ^ 3 ≠ 0 := by
+      intro h
+      have : b = 0 := by
+        have : b ^ 3 = 0 := by linarith
+        rw [pow_eq_zero_iff] at this
+        exact this
+      contradiction
+    field_simp at h₁
+    linarith
+
+  -- Now, let's solve for $a$ and $b$ using these equations.
+  -- $a^2b^3 = \frac{32}{27}$ 
+  -- $4a = 27b^3$  or  $a = \frac{27b^3}{4}$
+
+  have h₃ : a = 27 * b ^ 3 / 4 := by linarith
+
+  rw [h₃] at h₀
+  -- $\left(\frac{27b^3}{4}\right)^2b^3 = \frac{32}{27}$
+  -- $\frac{729b^6}{16} \cdot b^3 = \frac{32}{27}$
+  -- $\frac{729b^9}{16} = \frac{32}{27}$
+  -- $729b^9 = \frac{32}{27} \cdot 16$
+  -- $729b^9 = \frac{512}{27}$
+  -- $b^9 = \frac{512}{27 \cdot 729}$
+  -- $b^9 = \frac{512}{19683}$
+  -- $b^9 = \left(\frac{2}{3}\right)^9$
+  -- So $b = \frac{2}{3}$
+
+  have h₄ : b ^ 9 = (2 / 3) ^ 9 := by nlinarith [h₀, h₂]
+
+  have : b = 2 / 3 := by
+    have h₅ : b ^ 9 - (2 / 3) ^ 9 = 0 := by linarith
+    have h₆ : (b - 2 / 3) * (b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8) = 0 := by ring_nf at h₅ ⊢; linarith
+    rw [mul_eq_zero] at h₆
+    rcases h₆ with h₇ | h₈
+   . -- Case $b - 2/3 = 0$
+      linarith
+   . -- Case $b^8 + b^7(2/3) + \cdots + (2/3)^8 = 0$
+      have : b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8 > 0 := by
+        have h₉ : b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8 ≥ 0 := by positivity
+        have h₁₀ : b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8 ≠ 0 := by
+          by_contra h
+          nlinarith [h, sq_nonneg (b ^ 4), sq_nonneg (b ^ 2 - (2 / 3) ^ 2), sq_nonneg (b - (2 / 3) ^ 3)]
+        apply lt_of_le_of_ne h₉ h₁₀
+      linarith
+
+  -- Now that we have $b = \frac{2}{3}$, we can find $a$ using $a = \frac{27b^3}{4}$.
+  -- $a = \frac{27 \cdot \left(\frac{2}{3}\right)^3}{4} = \frac{27 \cdot \frac{8}{27}}{4} = \frac{8}{4} = 2$
+
+  have h₅ : a = 2 := by
+    rw [this] at h₃
+    linarith
+
+  -- So $a + b = 2 + \frac{2}{3} = \frac{6}{3} + \frac{2}{3} = \frac{8}{3}$
+
+  linarith
+
+```

@@ -1,0 +1,223 @@
+-- some auxilary trigonometic identities
+
+  -- cos x + cos y = 2 cos((x + y) / 2) cos((x - y) / 2)
+  have hcos_add (x y : ℝ) : Real.cos x + Real.cos y = 2 * Real.cos ((x + y) / 2) * Real.cos ((x - y) / 2) := by
+    rw [Real.cos_add_cos]
+    ring_nf
+
+  -- sin x + sin y = 2 sin((x + y) / 2) cos((x - y) / 2)
+  have hsin_add (x y : ℝ) : Real.sin x + Real.sin y = 2 * Real.sin ((x + y) / 2) * Real.cos ((x - y) / 2) := by
+    rw [Real.sin_add_sin]
+    ring_nf
+
+  -- cos x - cos y = -2 sin((x + y) / 2) sin((x - y) / 2)
+  have hcos_sub (x y : ℝ) : Real.cos x - Real.cos y = -2 * Real.sin ((x + y) / 2) * Real.sin ((x - y) / 2) := by
+    rw [Real.cos_sub_cos]
+    ring_nf
+
+  -- sin x - sin y = -2 cos((x + y) / 2) sin((x - y) / 2)
+  have hsin_sub (x y : ℝ) : Real.sin x - Real.sin y = -2 * Real.cos ((x + y) / 2) * Real.sin ((x - y) / 2) := by
+    rw [Real.sin_sub_sin]
+    ring_nf
+
+  -- some auxilary lemmas about summations
+
+  -- It's well known that `Finset.range (n + 1) = {0, 1,..., n}, `Finset.range (n + 1) = {0, 1,..., n}, where n is a natural number.
+  have hFinset_range_add_one (n : ℕ) : Finset.range (n + 1) = Finset.range n ∪ {n} := by
+    rw [Finset.range_add]
+    simp
+
+  -- A subset of natural numbers has cardinality equal to its maximum element if all numbers in the subset are less than or equal to this maximum element.
+  have hFinset_card_max (s : Finset ℕ) (m : ℕ) (h₀ : ∀ x ∈ s, x ≤ m) (h₁ : m ∈ s) : s.card = m + 1 := by
+    induction m with
+    | zero => simp [Finset.card_singleton]
+    | succ m ih =>
+      rw [Finset.card_union_of_disjoint]
+     . rw [ih]
+     . simp
+     . intro x hx
+        rcases hx with hx | hx
+       . simpa using h₀ x hx
+       . simp at hx
+          simpa using h₀ x hx
+
+  -- Let `k` be a natural number and `s` a finite set with cardinality `k` such that the elements in `s` are less than or equal to `k - 1`.
+  -- Then `s` is the powerset of `{0, 1,..., k - 1}`.
+  have hFinset_eq_powerset (s : Finset ℕ) (k : ℕ) (h₀ : s.card = k) (h₁ : ∀ x ∈ s, x ≤ k - 1) : s = Finset.powerset (Finset.range k) := by
+    -- We prove this by induction on `k`.
+    induction k with
+    | zero => simp [Finset.card_eq_zero] at h₀
+    | succ k ih =>
+      -- The `ih` is `s = Finset.powerset (Finset.range k)`.
+      -- So we only need to prove that `s \ {k} = Finset.powerset (Finset.range (k + 1)) \ Finset.powerset (Finset.range k)`.
+      suffices s = Finset.powerset (Finset.range (k + 1)) by simpa using this
+
+      -- We can rewrite `Finset.range (k + 1)` as `Finset.range k ∪ {k}`.
+      rw [hFinset_range_add_one k]
+
+      -- `Finset.powerset (Finset.range k ∪ {k})` = `Finset.powerset (Finset.range k) ∪ Finset.map (insert k) (Finset.powerset (Finset.range k))` by `Finset.powerset_insert`.
+      rw [Finset.powerset_union]
+     . rw [Finset.disjoint_iff_inter_eq_empty]
+        -- `Finset.range k ∩ {k}` = ∅
+        rw [Finset.disjoint_iff_inter_eq_empty]
+        simp
+     . rw [Finset.map_insert]
+        simp
+
+        -- `Finset.powerset {k}` = `{∅, {k}}`
+        rw [Finset.powerset_singleton]
+
+        -- We need to prove that `s \ {k} = Finset.powerset {k}`.
+        -- It is enough to prove that `s \ {k}` has two elements: ∅ and {k}.
+        suffices s \ {k} = Finset.powerset {k} by simpa using this
+
+        -- `Finset.powerset {k}` = `{∅, {k}}` has two elements: ∅ and {k}.
+        ext x
+        simp
+        -- So we only need to prove that `s \ {k} = {∅, {k}}`
+        suffices s \ {k} = {∅, {k}} by simpa using this
+        -- It is enough to prove that `s = {∅, {k}} ∪ {k}`.
+        suffices s = {∅, {k}} ∪ {k} by simpa using this
+
+        -- We can rewrite `{∅, {k}} ∪ {k}` as `{∅, {k}} ∪ {∅, {k}}` by `Finset.union_add_distrib`.
+        rw [Finset.union_add_distrib]
+
+        -- `Finset.powerset {k} ∪ {k}` = `Finset.powerset {k} ∪ Finset.powerset {k} \ {∅}` by `Finset.disjoint_iff_inter_eq_empty`.
+        rw [Finset.eq_disjoint_iff_inter_eq_empty]
+       . rw [Finset.disjoint_iff_inter_eq_empty]
+          -- `Finset.powerset {k} ∩ {k}` = ∅
+          simp
+        -- We need to prove that `s \ {k} = Finset.powerset {k} \ {∅}`.
+        -- It is enough to prove that `s \ {k}` has one element: ∅.
+        suffices s \ {k} = {∅} by simpa using this
+        -- We only need to prove that ∅ ∈ `s \ {k}` and, if ∅ ∈ `s \ {k}`, then `s \ {k} = {∅}`.
+        suffices ∅ ∈ s \ {k} ∧ (∅ ∈ s \ {k} → s \ {k} = {∅}) by simpa using this
+
+        -- ∅ ∈ `s \ {k}` because `s` has cardinality `k` and `s ≠ ∅`.
+        constructor
+       . rw [Finset.mem_sdiff]
+          exact h₀.ne'
+        -- If ∅ ∈ `s \ {k}`, then `s \ {k}` = {∅} because `s \ {k}` ⊆ {∅} and {∅} ⊆ `s \ {k}`.
+       . intro h
+          -- It is enough to prove that `s \ {k}` ⊆ {∅}.
+          suffices s \ {k} ⊆ {∅} by simpa using this
+          rintro x hx
+          -- If x ∈ `s \ {k}`, then x ∈ `s` and x ∉ {k}.
+          rcases hx with ⟨hx, hx'⟩
+          -- x ∈ `s` and x ≤ k - 1 (by `h₁ x hx`)
+          rw [Finset.mem_sdiff] at hx
+          rcases hx with ⟨hx, hx'⟩
+          -- x ∈ `Finset.range k` (by `h₁ x hx`)
+          replace hx : x ∈ Finset.range k := by simpa using hx
+          -- So x < k (by `Finset.mem_range`)
+          replace hx : x < k := by simpa using hx
+          -- x ≠ k (by `hx'`).
+          replace hx' : x ≠ k := by simpa using hx'
+          -- So x ≤ k - 1 and x ≠ k implies x ∈ ∅ (by `Nat.le_antisymm`)
+          replace hx' : x ≤ k - 1 := by exact Nat.le_antisymm hx' hx
+          trivial
+
+  -- Let `k` be a natural number, `F` a finite set with cardinality `k`, and `f` a injective function.
+  -- If `f (s ∪ {k}) = f s ∪ {f k}`, then `s = ∅` or `s = {k - 1}`.
+  have hFinset_or {k s f : ℕ → ℝ} (h₀ : s.card = k) (h₁ : f.surj) (h₂ : ∀ x y, f x = f y → x = y) (h₃ : ∀ x ∈ s, f x ≠ f k) (h₄ : f (s ∪ {k}) = f s ∪ {f k}) : s = ∅ ∨ s = {k - 1} := by
+    -- It is enough to prove that `f s ⊆ f s ∪ {f k}` and `f s ∪ {f k} ⊆ f s`.
+    suffices f s ⊆ f s ∪ {f k} ∧ (f s ∪ {f k} ⊆ f s → s = ∅ ∨ s = {k - 1}) by simpa using this
+
+   . -- f s ⊆ f s ∪ {f k} because f s ⊆ f s and f k ∉ f s (by `h₃ x hx`).
+      constructor
+     . exact Set.sep_subset (f '' s) {f k}
+     . rintro h
+        -- It is enough to prove that f s ∪ {f k} ⊆ f s.
+        suffices f s ∪ {f k} ⊆ f s by simpa using this
+        -- We only need to prove that {f k} ⊆ f s.
+        rw [Set.subset_union_iff_left]
+        -- It is enough to prove that f k ∈ f s, i.e., k ∈ s.
+        suffices f k ∈ f s by simpa using this
+        -- f k ∈ f (s ∪ {k}) (by `h₄`).
+        have hk : f k ∈ f (s ∪ {k}) := by simp
+        -- f k ∈ f s ∪ {f k} (by `h₄`)
+        rw [h₄] at hk
+        -- f k ∈ f s or f k ∈ {f k} (by `Set.mem_union`)
+        rcases hk with hk | hk
+       . -- f k ∈ f s, we are done.
+          simpa using hk
+       . -- f k ∈ {f k}, so f k = f k (by `Set.mem_singleton_iff`)
+          simpa using hk
+
+   . -- We need to prove that f s ∪ {f k} ⊆ f s.
+      intro h
+      -- It is enough to prove that {f k} ⊆ f s.
+      suffices {f k} ⊆ f s by simpa using this
+      -- x ∈ {f k} implies x ∈ f s ∪ {f k} (by `Set.singleton_subset_iff`)
+      rw [Set.subset_union_iff_right]
+      -- It is enough to prove that f k ∈ f s ∪ {f k}
+      suffices f k ∈ f s ∪ {f k} by simpa using this
+     . -- It is trivial.
+        simp
+     . -- It is impossible: f k ∉ f s (by `h₃`).
+        -- So we get a contradiction.
+        simpa using h₃ k
+
+  -- main theorem
+  have h : ∃ t : ℤ, m - n = t * Real.pi := by
+
+    -- Let's define `f` and prove some of its properties.
+    -- `f` is an injective function from `Finset.range k` to ℝ.
+    let f : Finset.range k → ℝ := fun i => y i - y m + Real.cos (a i + m - n) * (m - n) / (2 ^ k)
+
+    -- Let `s` be the image of `Finset.range k` under `f`.
+    let s := f '' Finset.range k
+
+    -- Let `a` be the function `f`.
+    let a : ℕ → ℝ := fun i => y i - y m + Real.cos (a i + m - n) * (m - n) / (2 ^ k)
+
+    -- Let `f'` be the function `f` with the variable shifted by `n`.
+    let f' : Finset.range k → ℝ := fun i => Real.cos (a i + n)
+
+    -- Let `s'` be the image of `Finset.range k` under `f'`.
+    let s' := f' '' Finset.range k
+
+    -- Let `t` be the minimum element of `s` if it is nonempty, otherwise 0.
+    let t := sInf s.induction s zero
+
+    -- `s` is nonempty, because `y m ≠ 0` (it is a sum of cosines) and `f(m) = 0`.
+    have h₀ : s.Nonempty := by
+      rw [Finset.Nonempty]
+      use m
+      simp [s, a, h₂]
+
+    -- It is enough to prove that `t = 0` (trivial) or `t = m.pi` (so `m - n = π`).
+    suffices t = 0 ∨ t = m.pi by simpa using this
+
+    -- It is enough to prove that `s' ⊆ s` (trivial) or `s' ⊆ s \ {0}`.
+    suffices s' ⊆ s' ∪ {0} ∧ (s' ⊆ s' ∪ {0} → t = 0 ∨ t = m.pi) by simpa using this
+
+   . -- s' ⊆ s' ∪ {0} because s' ⊆ s' and 0 ∈ s (if s = ∅, then t = 0).
+      constructor
+     . exact Set.sep_subset (f '' Finset.range k) {0}
+     . rintro h
+        -- It is enough to prove that s' = {0} (by `h₀ s'`).
+        suffices s' = {0} by simpa using this
+        -- If s' = {0}, then y i = y m for all i ∈ Finset.range k.
+        rw [Set.eq_singleton_iff] at h
+        intro i hi
+        -- It is enough to prove that y i = y m - Real.cos (a i + m - n) * (m - n) / (2 ^ k) + Real.cos (a i + m - n) * (m - n) / (2 ^ k).
+        suffices y i = y m - Real.cos (a i + m - n) * (m - n) / (2 ^ k) + Real.cos (a i + m - n) * (m - n) / (2 ^ k) by simpa using this
+
+        -- Write the cosines' sum in `y i` and `y m` (the cosine theorem).
+        rw [Finset.sum_cos, Finset.sum_cos]
+        pick_goal 2
+       . rw [Finset.sum_add_distrib]
+
+        -- It is enough to prove that:
+        -- ∑ x ∈ Finset.range k, Real.cos (a x + m - n) / 2 ^ x =  ∑ x ∈ Finset.range k, Real.cos (a x + m - n) / 2 ^ x - Real.cos (a i + m - n) * (m - n) / (2 ^ k) + Real.cos (a i + m - n) * (m - n) / (2 ^ k).
+        -- It is trivial because they are the same sum.
+        suffices ∑ x ∈ Finset.range k, Real.cos (a x + m - n) / 2 ^ x = ∑ x ∈ Finset.range k, (Real.cos (a x + m - n) / 2 ^ x - Real.cos (a i + m - n) * (m - n) / (2 ^ k) + Real.cos (a i + m - n) * (m - n) / (2 ^ k)) by simpa using this
+
+        -- It is enough to prove that:
+        -- ∑ x ∈ Finset.range k, Real.cos (a x + m - n) / 2 ^ x = ∑ x ∈ Finset.range k, (Real.cos (a x + m - n) / 2 ^ x - Real.cos (a i + m - n) * (m - n) / (2 ^ k) + Real.cos (a i + m - n) * (m - n) / (2 ^ k))
+        -- because the sum on the left-hand side does not contain the term for `i`.
+        -- So it is enough to prove that
+        -- ∑ x ∈ Finset.range k \ {i}, Real.cos (a x + m - n) / 2 ^ x = ∑ x ∈ Finset.range k \ {i}, (Real.cos (a x + m - n) / 2 ^ x - Real.cos (a i + m - n) * (m - n) / (2 ^ k) + Real.cos (a i + m - n) * (m - n) / (2 ^ k))
+        -- The last equality follows from `Finset.sum_sdiff_eq_sub` and `Finset.sum_add_distrib`.
+        suffices ∑ x ∈ Finset.range k \ {i}, Real.cos (a x + m - n) / 2 ^ x = ∑ x ∈ Finset.range k \ {i}, (Real.cos (a x + m - n) / 2 ^ x -

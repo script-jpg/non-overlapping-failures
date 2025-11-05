@@ -1,0 +1,586 @@
+-- Prove that for any number $x$, $x$ satisfies the equation if and only if $x$ is not an integer and $((x - \lfloor x \rfloor) * \lfloor x \rfloor) = a * x ^ 2$.
+  have h₂ : ∀ x : ℝ, x ∈ S ↔ x - ↑⌊x⌋ > 0 ∧ x - ↑⌊x⌋ < 1 ∧ ((x - ↑⌊x⌋) * ↑⌊x⌋) = ↑a * x ^ 2 := by
+    intro x
+    constructor
+    · intro hx
+      -- Prove that $x$ is not an integer.
+      have hne : x - ↑⌊x⌋ > 0 ∧ x - ↑⌊x⌋ < 1 := by
+        constructor
+        · apply sub_pos.mpr
+          apply Int.lt_floor.mpr
+          by_contra hx
+          simp at hx
+          norm_cast at hx
+          simp [hx] at h₀
+          specialize h₀ 0
+          simp at h₀
+          replace h₀ : x = 0 := by
+            linarith only [h₀]
+          specialize h₁ h₀
+          linarith only [h₁, h₀]
+        · apply sub_lt_one.mpr
+          apply Int.floor_le.mpr
+          simp
+      -- Prove the equation.
+      have heq : ((x - ↑⌊x⌋) * ↑⌊x⌋) = ↑a * x ^ 2 := by
+        specialize h₀ x
+        exact h₀ hx
+      exact ⟨hne.1, hne.2, heq⟩
+    · intro ⟨hne, heq⟩
+      -- Prove that $x$ satisfies the equation.
+      specialize h₀ x
+      constructor
+      · exact h₀ hne
+      · exact heq
+
+  -- Prove that the set of all $x$ satisfying the equation is the set of all $x$ such that $x - \lfloor x \rfloor$ is positive and less than $1$ and $((x - \lfloor x \rfloor) * \lfloor x \rfloor) = a * x ^ 2$.
+  have h₃ : S = ( ↓(Finset.Ioo 0 1) *ˢ (Multiset.map (fun x => (x / a)) (Multiset.Icc 0 1)).filter (fun x => ((x - ⌊x⌋) * ⌊x⌋) = a * x ^ 2)) := by
+
+    -- $S$ is the set of all positive real numbers less than $1$ that satisfy the equation.
+    ext x
+    simp [h₂]
+    constructor
+    · intro hx
+      simp [Finset.mem_Ioo] at hx
+      refine ⟨hx.1, hx.2,?_⟩
+    · intro ⟨hx, heq⟩
+      simp [Finset.mem_Ioo] at hx
+      refine ⟨⟨hx.1, hx.2⟩,?_⟩
+
+      -- Prove that $a > 0$.
+      have ha : 0 < a := by
+        specialize h₁ hx
+        rw [h₁] at heq
+        by_contra h
+        simp at h
+        norm_cast at h
+        simp [h] at heq
+        linarith only [heq]
+
+      -- Prove that $a < 1$.
+      have ha' : a < 1 := by
+        specialize h₁ hx
+        rw [h₁] at heq
+        by_contra h
+        simp at h
+        norm_cast at h
+        simp [h] at heq
+        linarith only [heq]
+
+      -- Prove that $a * x ^ 2 < a$.
+      have : a * x ^ 2 < a := by
+        rw [mul_comm]
+        apply mul_lt_mul_of_pos_left
+        simp
+        exact ha
+        simp [ha, hx]
+
+      -- Prove that $x < 1$.
+      replace hx : x < 1 := by
+        by_contra h
+        simp at h
+        linarith only [h, hx]
+
+      -- Prove that $x > 0$.
+      replace hx : 0 < x := by
+        by_contra h
+        simp at h
+        linarith only [h, hx]
+
+      -- Prove that $x / a > 0$.
+      have hx' : 0 < x / a := by
+        apply div_pos
+        assumption
+        assumption
+
+      -- Prove that $x / a < 1$.
+      have hx'' : x / a < 1 := by
+        calc
+          _ = a * x ^ 2 / a := by
+            rw [div_eq_iff]
+            apply mul_ne_zero
+            assumption
+            assumption
+          _ = _ := by
+            rw [mul_div_cancel_left₀]
+            exact ha.ne'
+
+      -- Prove that $x / a$ satisfies the equation.
+      have hx''' : ((x / a - ⌊x / a⌋) * ⌊x / a⌋) = a * (x / a) ^ 2 := by
+        have h⌊x / a⌋ : ⌊x / a⌋ = 0 := by
+          rw [Int.floor_eq_iff]
+          simp [hx', hx'']
+        rw [h⌊x / a⌋]
+        simp
+        rw [Int.floor_eq_iff]
+        simp [hx', hx'']
+        norm_cast
+        ring_nf
+        field_simp
+        rw [mul_div_cancel_left₀]
+        rw [←mul_assoc, mul_comm, mul_assoc, mul_div_cancel_left₀]
+        ring
+        exact ha.ne'
+
+      exact ⟨hx', hx'', hx'''⟩
+
+  -- Simplify the set.
+  rw [h₃] at h₁
+  rw [Finset.sum_image] at h₁
+  simp [Finset.sum_filter, Multiset.mem_map] at h₁
+  norm_cast at h₁
+
+  -- Discuss all possible cases about $a$.
+  -- Since $a$ is a positive rational number, there exists a pair of positive integers $p$ and $q$ such that $a = p / q$.
+  doitype
+  set p := a.num
+  set q := a.den
+
+  -- $p$ is positive.
+  have hp : 0 < p := by
+    norm_cast
+    rw [←Rat.num_pos]
+    exact Rat.num_ne_zero a
+  -- $q$ is positive.
+  have hq : 0 < q := by
+    norm_cast
+    rw [←Rat.den_pos]
+    exact Rat.den_ne_zero a
+
+  -- $p$ and $q$ are relatively prime.
+  have hpq : p.Coprime q := by
+    norm_cast
+    rw [←Rat.num_coprime_den]
+    exact Rat.num_coprime_den a
+
+  -- $p * q = 3 * 357 = 1071$.
+  have heq : p * q = 1071 := by
+    norm_cast at heq
+    rw [Rat.num_mul_den_eq_self (by simpa using Rat.num_pos_add_den_pos a)] at heq
+    simp [a] at heq
+    linarith only [heq]
+
+  -- The answer is $p + q$.
+  suffices h : p + q = 929 by
+    norm_cast at h
+    norm_cast
+    assumption
+
+  -- Since $p * q = 1071$, the possible values of $p$ are $1$, $3$, $7$, $19$, $21$, $57$, $133$, $399$, $1071$.
+  have hpp : p = 1 ∨ p = 3 ∨ p = 7 ∨ p = 19 ∨ p = 21 ∨ p = 57 ∨ p = 133 ∨ p = 399 ∨ p = 1071 := by
+    clear * - heq hp hq hpq
+    have : p ≤ 1071 := by
+      rw [←heq]
+      exact Nat.mul_le_mul hp hq
+    interval_cases p
+    all_goals
+      try tauto
+
+  -- The answer is $p + q = 929$.
+  rcases hpp with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals contradiction
+  any_goals norm_num
+  any_goals

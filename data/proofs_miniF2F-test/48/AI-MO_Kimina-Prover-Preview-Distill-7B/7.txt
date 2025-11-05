@@ -1,0 +1,132 @@
+-- First, establish that $m^2 + mn + n^2 > 0$ and $m + n > 0$, which are true because $m$ and $n$ are positive.
+  have h₄ : m ^ 2 + m * n + n ^ 2 > 0 := by
+    rcases h₀ with ⟨hm, hn⟩
+    nlinarith [mul_pos hm hn]
+  have h₅ : m + n > 0 := by
+    rcases h₀ with ⟨hm, hn⟩
+    linarith
+
+  -- Convert the equation $a + bm + cn = 0$ to an equivalent form that will be useful for manipulation.
+  have h₆ : (√(((a : ℝ) + b * m + c * n) ^ 2) : ℝ) = 0 := by
+    rw [h₃]
+    simp
+  have h₇ : ((a : ℝ) + b * m + c * n) ^ 2 = 0 := by
+    rw [<-sq_abs]
+    simp [abs]
+    rw [h₃]
+    simp
+  have h₈ : (a : ℝ) + b * m + c * n = 0 := by
+    refine pow_eq_zero?_
+    exact h₇
+
+  -- The core identity manipulation begins here.
+  have h₉ : b * m ^ 2 + a * m + c * n * m + b * m * n + c * n ^ 2 = 0 := by
+    calc
+      _ = m * ((a : ℝ) + b * m + c * n) := by ring
+      _ = m * 0 := by rw [h₃]
+      _ = 0 := by simp
+
+  have h₁₀ : b * n ^ 2 + a * n + c * m * n + b * m * n + c * m ^ 2 = 0 := by
+    calc
+      _ = n * ((a : ℝ) + b * m + c * n) := by ring
+      _ = n * 0 := by rw [h₃]
+      _ = 0 := by simp
+
+  have h₁₁ : b * (m ^ 2 + m * n + n ^ 2) + a * (m + n) + c * (m ^ 2 + m * n + n ^ 2) = 0 := by
+    calc
+      _ = (b * m ^ 2 + a * m + c * n * m + b * m * n + c * n ^ 2) + (b * n ^ 2 + a * n + c * m * n + b * m * n + c * m ^ 2) := by ring
+      _ = _ := by rw [h₉, h₁₀]
+
+  have h₁₂ : (m + n) * (b + c) + (m ^ 2 + m * n + n ^ 2) * (a + b + c) = 0 := by
+    calc
+      _ = m * (m + n) * (b + c) + n * (m + n) * (b + c) + (m ^ 2 + m * n + n ^ 2) * (a + b + c) := by ring
+      _ = (b * (m ^ 2 + m * n + n ^ 2) + a * (m + n) + c * (m ^ 2 + m * n + n ^ 2)) + (m * n * (b + c) + n * (m + n) * (b + c) + (m ^ 2 + m * n + n ^ 2) * b + (m ^ 2 + m * n + n ^ 2) * c) := by ring
+      _ = _ := by rw [h₁₁]; simp
+
+  have h₁₃ : (m + n) * (b + c) = - (m ^ 2 + m * n + n ^ 2) * (a + b + c) := by
+    linarith
+
+  have h₁₄ : ((m + n) * (b + c)) ^ 2 = (m ^ 2 + m * n + n ^ 2) ^ 2 * (a + b + c) ^ 2 := by
+    rw [mul_pow, mul_pow]
+  have h₁₅ : ((m ^ 2 + m * n + n ^ 2) * (a + b + c)) ^ 2 = (m ^ 2 + m * n + n ^ 2) ^ 2 * (a + b + c) ^ 2 := by
+    rw [mul_pow, mul_pow]
+  have h₁₆ : ((m + n) * (b + c)) ^ 2 = ((m ^ 2 + m * n + n ^ 2) * (a + b + c)) ^ 2 := by
+    rw [h₁₃]
+  rw [h₁₄, h₁₅] at h₁₆
+
+  have h₁₇ : (m + n) * (b + c) = 0 := by
+    calc
+      _ = ((m + n) * (b + c)) ^ 2 / ((m ^ 2 + m * n + n ^ 2) ^ 2) * (m ^ 2 + m * n + n ^ 2) ^ 2 := by field_simp
+      _ = ((m ^ 2 + m * n + n ^ 2) ^ 2 * (a + b + c) ^ 2) / ((m ^ 2 + m * n + n ^ 2) ^ 2) * (m ^ 2 + m * n + n ^ 2) ^ 2 := by rw [h₁₆]
+      _ = (m ^ 2 + m * n + n ^ 2) ^ 2 * (a + b + c) ^ 2 / (m ^ 2 + m * n + n ^ 2) ^ 2 * (m ^ 2 + m * n + n ^ 2) ^ 2 := by ring
+      _ = (a + b + c) ^ 2 * (m ^ 2 + m * n + n ^ 2) ^ 2 / (m ^ 2 + m * n + n ^ 2) ^ 2 * (m ^ 2 + m * n + n ^ 2) ^ 2 := by ring
+      _ = _ := by field_simp
+  have h₁₈ : m + n ≠ 0 := by
+    exact h₅.ne'
+  have h₁₉ : b + c = 0 := by
+    exact eq_zero_of_ne_zero_of_mul_left_eq_zero h₁₈ h₁₇
+
+  have h₂₀ : (m ^ 2 + m * n + n ^ 2) * (a + b + c) = 0 := by
+    linarith
+  have h₂₁ : m ^ 2 + m * n + n ^ 2 ≠ 0 := by
+    exact h₄.ne'
+  have h₂₂ : a + b + c = 0 := by
+    exact eq_zero_of_ne_zero_of_mul_left_eq_zero h₂₁ h₂₀
+
+  -- Given that $b + c = 0$ and $a + b + c = 0$, we can deduce that $a = 0$.
+  have h₂₃ : a = 0 := by
+    calc
+      _ = (b + c) - (a + b + c) := by ring
+      _ = 0 - 0 := by rw [h₁₉, h₂₂]
+      _ = 0 := by simp
+
+  -- Given that $a = 0$ and $a + b + c = 0$, we can deduce that $b = -c$.
+  have h₂₄ : b = -c := by
+    calc
+      _ = -c + (a + b + c) - a := by ring
+      _ = -c + 0 - 0 := by rw [h₂₂, h₂₃]
+      _ = -c := by simp
+
+  -- Substitute $b = -c$ into $b + c = 0$ to get $-c + c = 0$, which is indeed true.
+  have h₂₅ : -c + c = 0 := by
+    rw [<-h₂₄, h₁₉]
+
+  -- Since $b = -c$, we have $b^3 = (-c)^3 = -c^3$.
+  have h₂₆ : b ^ 3 = -c ^ 3 := by
+    rw [<-h₂₄]
+    ring
+
+  -- We know $m^3 = 2$ and $n^3 = 4$, so $2 = m^3 = (-b)^3 = -b^3$ and $4 = n^3 = (-c)^3 = -c^3$.
+  have h₂₇ : -b ^ 3 = 2 := by
+    calc
+      _ = - (b ^ 3) := by ring
+      _ = -2 := by rw [h₁]
+  have h₂₈ : -c ^ 3 = 4 := by
+    calc
+      _ = - (c ^ 3) := by ring
+      _ = -4 := by rw [h₂]
+  have h₂₉ : -b ^ 3 = -c ^ 3 := by
+    rw [h₂₇, h₂₈]
+  have h₃₀ : b ^ 3 = c ^ 3 := by
+    linarith
+
+  -- Since $b^3 = c^3$ and $b = -c$, we have $-c^3 = c^3$, which implies $2c^3 = 0$, so $c^3 = 0$, and thus $c = 0$.
+  have h₃₁ : c ^ 3 = 0 := by
+    calc
+      _ = -c ^ 3 := by ring
+      _ = b ^ 3 := by rw [h₃₀]
+      _ = -c ^ 3 := by ring
+  have h₃₂ : c = 0 := by
+    have h₃₃ : c ^ 3 = 0 := by
+      exact h₃₁
+    simp at h₃₃
+    exact h₃₃
+
+  -- Since $c = 0$ and $b = -c$, we have $b = 0$.
+  have h₃₄ : b = 0 := by
+    rw [h₃₂] at h₂₄
+    linarith
+
+  -- Since $b = 0$ and $c = 0$, and $a = 0$, we have $a = b = c = 0$.
+  exact ⟨h₂₃, h₃₄, h₃₂⟩
+```

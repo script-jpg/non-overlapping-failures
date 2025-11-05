@@ -1,0 +1,55 @@
+-- A lemma that the sum of three numbers of the form $k^x$ divides the sum of three numbers of the form $k^y$ where $x$ divides $y$.
+  have numbertheory_sumofpowdvdsumofpow_ofxydvdxy {k x y : ℕ} (h₀ : k > 0) (h₁ : x > 0) (h₂ : y > 0) (h₃ : x ∣ y) :
+      (k ^ x + k ^ x * k ^ y) ∣ k ^ y + k ^ x * k ^ y := by
+    rw [Nat.pow_add, Nat.mul_comm, <-Nat.pow_add, Nat.add_mul, <-Nat.add_mul]
+    have aux : 0 < k ^ x := by
+      apply Nat.pow_pos
+      linarith
+    have : 0 < k ^ y := by
+      apply Nat.pow_pos
+      linarith
+    rcases h₃ with ⟨z, h₃⟩
+    rw [h₃, <-Nat.add_mul, Nat.pow_mul, Nat.pow_mul, Nat.mul_assoc]
+    simp only [Nat.reducePow, add_left_inj]
+    apply Nat.dvd_mul_left
+
+  -- A key lemma that $f(2^m)$ divides $f(2^m \cdot k)$.
+  have numbertheory_f2powmdvdf2powmk (m n : ℕ) (f : ℕ → ℕ)
+      (h₀ : ∀ x, f x = 4 ^ x + 6 ^ x + 9 ^ x) (h₁ : 0 < m) (h₂ : 0 < n) (h₃ : m ≤ n) :
+      f (2 ^ m) ∣ f (2 ^ m * n) := by
+    rw [h₀, h₀]
+    -- Rewrite $4$, $6$ and $9$ as $2^2$, $2 \cdot 3$ and $3^2$.
+    rw [show 4 = 2 ^ 2 by norm_num, show 6 = 2 * 3 by norm_num, show 9 = 3 ^ 2 by norm_num]
+    -- Simplify the expression.
+    rw [<-Nat.pow_mul, <-Nat.pow_add, <-Nat.pow_mul, <-Nat.pow_add, <-Nat.mul_comm, <-Nat.add_mul,
+        <-Nat.pow_mul, <-Nat.pow_add, <-Nat.add_mul]
+    ring_nf
+    rw [<-Nat.add_assoc, <-Nat.add_assoc, <-Nat.mul_comm, <-Nat.mul_assoc, <-Nat.add_mul]
+    -- Apply the lemma.
+    apply numbertheory_sumofpowdvdsumofpow_ofxydvdxy <;> try linarith
+
+  -- A lemma that $f(2^m)$ divides $f(2^n)$ where $m \leq n$.
+  have numbertheory_f2powmdvdf2pown (m n : ℕ) (f : ℕ → ℕ)
+      (h₀ : ∀ x, f x = 4 ^ x + 6 ^ x + 9 ^ x) (h₁ : 0 < m) (h₂ : 0 < n) (h₃ : m ≤ n) :
+      f (2 ^ m) ∣ f (2 ^ n) := by
+    induction h : m → f (2 ^ m) ∣ f (2 ^ n)
+    -- Base case: $m = 0$.
+    | zero => simp_all
+    -- Inductive step: $m = n + 1$.
+    | succ n h =>
+      -- We have $f(2^n) \mid f(2^{n + 1})$ by the previous lemma.
+      have h' := numbertheory_f2powmdvdf2powmk (n) (n + 1) f h₀ (by linarith) (by linarith) (by linarith)
+      rw [h₀, h₀]
+      -- Rewrite $4$, $6$ and $9$ as $2^2$, $2 \cdot 3$ and $3^2$.
+      rw [show 4 = 2 ^ 2 by norm_num, show 6 = 2 * 3 by norm_num, show 9 = 3 ^ 2 by norm_num]
+      -- Simplify the expression.
+      rw [<-Nat.pow_mul, <-Nat.pow_add, <-Nat.pow_mul, <-Nat.pow_add, <-Nat.mul_comm, <-Nat.add_mul,
+          <-Nat.pow_mul, <-Nat.pow_add, <-Nat.add_mul]
+      ring_nf
+      rw [<-Nat.add_assoc, <-Nat.add_assoc, <-Nat.mul_comm, <-Nat.mul_assoc, <-Nat.add_mul]
+      apply Nat.dvd_trans h h'
+
+  -- We have $f(2^m)$ divides $f(2^n)$ where $m \leq n$.
+  exact numbertheory_f2pown m n f h₀ h₁ h₂
+
+```

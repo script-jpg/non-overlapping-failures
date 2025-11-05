@@ -1,0 +1,43 @@
+-- ① 假设 $2 ^ n - 1$ 是素数
+
+  -- ② 若 $n$ 是合数，则设 $n = n _1 \cdot n _2$ (其中 $n _1, n _2 &gt; 1$)
+  by_contra! h
+  obtain ⟨n₁, n₂, h₂, h₃, h₄⟩ := Nat.exists_dvd_of_not_prime h
+
+  -- ③ 此时 $2 ^ n - 1$ 能被 $2 ^ {n _1} - 1$ 整除
+  -- 证明方法：用几何级数求和公式，当公比为 $2$ 时，前 $n$ 项和为 $2 ^ n - 1$。
+  have h₅ : 2 ^ n - 1 ≠ 1 := by
+    by_contra!
+    have : n = 0 := by
+      symm
+      apply Nat.eq_of_sub_eq_zero
+      rw [pow_eq_one_iff₀] at this
+      tauto
+    tauto
+  have h₆ : 2 ^ n - 1 ∣ (2 ^ {n₁} - 1) ^ {n₂} := by
+    rw [pow_mul]
+    rw [Nat.geom_sum_eq (by norm_num) (2 ^ n₁ - 1) (n₂)]
+    have : ∑ x ∈ Finset.range (n₂), 2 ^ {n₁} * (2 ^ n₁ - 1) ^ x = (2 ^ n₁ - 1) * (2 ^ {n₁} - 1) ^ (n₂ - 1) := by
+      rw [Finset.sum_mul, Finset.sum_range_succ, mul_comm, Finset.sum_mul, Finset.sum_range_succ]
+      simp
+      rw [ ←Nat.geom_sum_eq (by norm_num) (2 ^ n₁ - 1) (n₂ - 1)]
+      congr
+      rw [pow_succ]
+      rw [mul_assoc, mul_comm, mul_assoc]
+    rw [this]
+    ring
+  have h₇ : 2 ^ {n₁} - 1 > 1 := by
+    refine Nat.one_lt_pow?_ n₁
+    norm_num
+  have h₈ : 2 ^ {n₁} - 1 ≠ 1 := by
+    intro h
+    have : n₁ = 0 := by
+      symm
+      apply Nat.eq_of_sub_eq_zero
+      rw [pow_eq_one_iff₀] at h
+      tauto
+    tauto
+  apply Nat.not_prime_of_dvd_of_lt h₅ h₆ h₇ at h₁
+  tauto
+
+```

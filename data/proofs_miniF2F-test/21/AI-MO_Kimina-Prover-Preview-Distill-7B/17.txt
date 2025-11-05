@@ -1,0 +1,176 @@
+-- We prove that for any two integers $x$ and $y$, $x^5 \ne y^2 + 4$.
+  -- First, consider the case when $x$ is even.
+  by_cases hx : Even x
+  · -- If $x$ is even, then $5x^4$ is divisible by $16$.
+    have h1 : 16 ∣ 5 * x ^ 4 := by
+      rw [Nat.dvd_iff_mod_eq_zero]
+      have : 5 * x ^ 4 ≡ 0 [ZMOD 16] := by
+        have : x ^ 4 ≡ 0 [ZMOD 16] := by
+          -- Since $x$ is even, $x = 2k$ for some integer $k$.
+          rw [Int.even_iff] at hx
+          rcases hx with ⟨k, hk⟩
+          -- Thus $x^4 = (2k)^4 = 16k^4$ which is divisible by $16$.
+          rw [hk]
+          ring_nf
+          simp [Int.ModEq, Int.emod_self]
+        -- Then $5x^4 ≡ 5*0 \equiv 0 \pmod{16}$.
+        exact Int.ModEq.mul this (by simp)
+      -- reduction
+      exact this
+    -- Then $x^5 = x * x^4 ≡ 0 \pmod{16}$.
+    have h2 : 16 ∣ x ^ 5 := by
+      have : x ^ 5 ≡ 0 [ZMOD 16] := by
+        have : x ^ 4 ≡ 0 [ZMOD 16] := by
+          have : x ^ 4 = 16 * (x ^ 3 / 2) ^ 2 := by
+            ring_nf
+            rw [← two_mul (x ^ 3 / 2)]
+            congr
+            ring
+          -- Then $x^4 = 16k^2$ for some integer $k$.
+          -- So $x^4 ≡ 0 \pmod{16}$.
+          rw [this]
+          simp [Int.ModEq, Int.emod_self]
+        -- If $x^4 ≡ 0 \pmod{16}$, then $x^5 = x * x^4 ≡ 0 \pmod{16}$.
+        exact Int.ModEq.mul_left (x : ℤ) this
+      -- reduction
+      exact this
+    -- Next, consider the case when $y$ is even.
+    by_cases hy : Even y
+    · -- If $y$ is even, then $y^2 + 4 ≡ 0 + 4 \equiv 4 \pmod{8}$.
+      have h3 : 8 ∣ y ^ 2 + 4 := by
+        have : y ^ 2 + 4 ≡ 4 [ZMOD 8] := by
+          have : y ^ 2 ≡ 0 [ZMOD 8] := by
+            -- Since $y$ is even, $y = 2k$ for some integer $k$.
+            rw [Int.even_iff] at hy
+            rcases hy with ⟨k, hk⟩
+            -- Thus $y^2 = (2k)^2 = 4k^2$.
+            rw [hk]
+            ring_nf
+            simp [Int.ModEq, Int.emod_self]
+          -- Then $y^2 + 4 ≡ 0 + 4 \equiv 4 \pmod{8}$.
+          exact Int.ModEq.add this (by simp)
+        -- reduction
+        exact this
+      have h4 : x ^ 5 ≠ y ^ 2 + 4 := by
+        -- If $x^5 = y^2 + 4$, then $x^5 ≡ y^2 + 4 \equiv 4 \pmod{8}$.
+        intro h
+        have : x ^ 5 ≡ 4 [ZMOD 8] := by
+          rw [h, Int.ModEq.comm]
+          exact Int.ModEq.trans (id (Int.ModEq.symm h3)) (id (Int.ModEq.comm))
+        -- But $x^5 ≡ 0 \pmod{16}$, so $x^5 ≡ 0 \pmod{8}$, which is a contradiction.
+        have : x ^ 5 ≡ 0 [ZMOD 8] := by
+          have : 8 ∣ 16 := by norm_num
+          have : 8 ∣ x ^ 5 := by
+            exact Int.dvd_trans this h2
+          exact Int.modEq_zero_iff_dvd.mpr this
+        -- reduction
+        exact Int.ModEq.not_eq_of_ne_mod8 this (id (Int.ModEq.symm this))
+      exact h4
+    · -- If $y$ is odd, then $y^2 + 4 ≡ 1 + 4 \equiv 5 \pmod{8}$.
+      have h3 : 8 ∣ y ^ 2 + 4 := by
+        have : y ^ 2 + 4 ≡ 5 [ZMOD 8] := by
+          have : y ^ 2 ≡ 1 [ZMOD 8] := by
+            -- If $y$ is odd, then $y = 2k + 1$ for some integer $k$.
+            rw [Int.odd_iff] at hy
+            rcases hy with ⟨k, hk⟩
+            -- Thus $y^2 = (2k + 1)^2 = 4k^2 + 4k + 1 = 4k(k + 1) + 1$.
+            rw [hk, add_sq]
+            ring_nf
+            -- Notice that $k(k + 1)$ is always even, so $4k(k + 1) ≡ 0 \pmod{8}$.
+            have : 8 ∣ 4 * (k * (k + 1)) := by
+              rw [Int.dvd_iff_emod_eq_zero]
+              simp [Int.emod_self]
+            -- Then $y^2 ≡ 1 \pmod{8}$.
+            exact Int.ModEq.add this (by simp)
+          -- Then $y^2 + 4 ≡ 1 + 4 \equiv 5 \pmod{8}$.
+          exact Int.ModEq.add this (by simp)
+        -- reduction
+        exact this
+      have h4 : x ^ 5 ≠ y ^ 2 + 4 := by
+        -- If $x^5 = y^2 + 4$, then $x^5 ≡ y^2 + 4 \equiv 5 \pmod{8}$.
+        intro h
+        have : x ^ 5 ≡ 5 [ZMOD 8] := by
+          rw [h, Int.ModEq.comm]
+          exact Int.ModEq.trans (id (Int.ModEq.symm h3)) (id (Int.ModEq.comm))
+        -- But $x^5 ≡ 0 \pmod{16}$, so $x^5 ≡ 0 \pmod{8}$, which is a contradiction.
+        have : x ^ 5 ≡ 0 [ZMOD 8] := by
+          have : 8 ∣ 16 := by norm_num
+          have : 8 ∣ x ^ 5 := by
+            exact Int.dvd_trans this h2
+          exact Int.modEq_zero_iff_dvd.mpr this
+        -- reduction
+        exact Int.ModEq.not_eq_of_ne_mod8 this (id (Int.ModEq.symm this))
+      exact h4
+  · -- If $x$ is odd, then $x^5 ≡ 1 \pmod{8}$.
+    have h1 : 8 ∣ x ^ 5 - 1 := by
+      rw [Nat.dvd_iff_mod_eq_zero]
+      have : x ^ 5 ≡ 1 [ZMOD 8] := by
+        have : x ^ 5 ≡ 1 [ZMOD 8] := by
+          -- If $x$ is odd, then $x = 2k + 1$ for some integer $k$.
+          rw [Int.odd_iff] at hx
+          rcases hx with ⟨k, hk⟩
+          -- Thus $x^5 = (2k + 1)^5 = 32k^5 + 80k^4 + 80k^3 + 40k^2 + 10k + 1$.
+          -- So $x^5 ≡ 1 \pmod{8}$.
+          rw [hk]
+          ring_nf
+          simp [Int.ModEq, Int.emod_self]
+        exact Int.ModEq.sub_right 1 this
+      exact this
+    -- Next, consider the case when $y$ is even.
+    by_cases hy : Even y
+    · -- If $y$ is even, then $y^2 + 4 ≡ 0 + 4 \equiv 4 \pmod{8}$.
+      have h2 : 8 ∣ y ^ 2 + 4 := by
+        have : y ^ 2 + 4 ≡ 4 [ZMOD 8] := by
+          have : y ^ 2 ≡ 0 [ZMOD 8] := by
+            -- Since $y$ is even, $y = 2k$ for some integer $k$.
+            rw [Int.even_iff] at hy
+            rcases hy with ⟨k, hk⟩
+            -- Thus $y^2 = (2k)^2 = 4k^2$.
+            rw [hk]
+            ring_nf
+            simp [Int.ModEq, Int.emod_self]
+          -- Then $y^2 + 4 ≡ 0 + 4 \equiv 4 \pmod{8}$.
+          exact Int.ModEq.add this (by simp)
+        exact this
+      have h3 : x ^ 5 ≠ y ^ 2 + 4 := by
+        -- If $x^5 = y^2 + 4$, then $x^5 ≡ y^2 + 4 \equiv 4 \pmod{8}$.
+        intro h
+        have : x ^ 5 ≡ 4 [ZMOD 8] := by
+          rw [h, Int.ModEq.comm]
+          exact Int.ModEq.trans (id (Int.ModEq.symm h2)) (id (Int.ModEq.comm))
+        -- But $x^5 ≡ 1 \pmod{8}$, which is a contradiction.
+        have : x ^ 5 ≡ 1 [ZMOD 8] := by
+          exact h1
+        exact Int.ModEq.not_eq_of_ne_mod8 this (id (Int.ModEq.symm this))
+      exact h3
+    · -- If $y$ is odd, then $y^2 + 4 ≡ 1 + 4 \equiv 5 \pmod{8}$.
+      have h2 : 8 ∣ y ^ 2 + 4 := by
+        have : y ^ 2 + 4 ≡ 5 [ZMOD 8] := by
+          have : y ^ 2 ≡ 1 [ZMOD 8] := by
+            -- If $y$ is odd, then $y = 2k + 1$ for some integer $k$.
+            rw [Int.odd_iff] at hy
+            rcases hy with ⟨k, hk⟩
+            -- Thus $y^2 = (2k + 1)^2 = 4k^2 + 4k + 1 = 4k(k + 1) + 1$.
+            rw [hk, add_sq]
+            ring_nf
+            -- Notice that $k(k + 1)$ is always even, so $4k(k + 1) ≡ 0 \pmod{8}$.
+            have : 8 ∣ 4 * (k * (k + 1)) := by
+              rw [Int.dvd_iff_emod_eq_zero]
+              simp [Int.emod_self]
+            -- Then $y^2 ≡ 1 \pmod{8}$.
+            exact Int.ModEq.add this (by simp)
+          -- Then $y^2 + 4 ≡ 1 + 4 \equiv 5 \pmod{8}$.
+          exact Int.ModEq.add this (by simp)
+        exact this
+      have h3 : x ^ 5 ≠ y ^ 2 + 4 := by
+        -- If $x^5 = y^2 + 4$, then $x^5 ≡ y^2 + 4 \equiv 5 \pmod{8}$.
+        intro h
+        have : x ^ 5 ≡ 5 [ZMOD 8] := by
+          rw [h, Int.ModEq.comm]
+          exact Int.ModEq.trans (id (Int.ModEq.symm h2)) (id (Int.ModEq.comm))
+        -- But $x^5 ≡ 1 \pmod{8}$, which is a contradiction.
+        have : x ^ 5 ≡ 1 [ZMOD 8] := by
+          exact h1
+        exact Int.ModEq.not_eq_of_ne_mod8 this (id (Int.ModEq.symm this))
+      exact h3
+```

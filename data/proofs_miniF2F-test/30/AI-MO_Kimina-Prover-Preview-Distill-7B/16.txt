@@ -1,0 +1,119 @@
+have h₂ : x < 1000 := by
+    -- via trial and error, we can show that x cannot be 1000 or greater
+    by_contra! h₂
+    have h₃ (x y : ℕ) (h₃ : 1000 ≤ x) : x ^ y ^ 2 > y ^ x := by
+      have h₄ : 1000 ≤ x := h₃
+      have h₅ : 2 ≤ y ^ 2 := by
+        by_contra! h₅
+        have : y = 0 ∨ y = 1 := by omega
+        rcases this with (h₆ | h₇)
+        · rw [h₆, pow_zero] at h₁
+          tauto
+        · rw [h₇, pow_one, pow_one] at h₁
+          tauto
+      calc
+        _ ≥ 1000 ^ 2 := by apply Nat.pow_le_pow_of_le_left; omega
+        _ > 1000 := by norm_num
+        _ ≤ 1000 ^ x := by refine Nat.pow_le_pow_right₀ (by omega) h₄
+        _ ≤ x ^ x := by apply Nat.pow_le_pow_of_le_left; omega
+        _ ≤ x ^ y ^ 2 := by apply Nat.pow_le_pow_right₀; omega
+    have h₆ : 1000 ≤ x ^ y ^ 2 := by
+      rw [h₁]
+      apply h₃
+      exact h₂
+    linarith only [h₅, h₆]
+
+  have h₃ : y < 1000 := by
+    -- via trial and error, we can show that y cannot be 1000 or greater
+    by_contra! h₃
+    have h₄ (x y : ℕ) (h₄ : 1000 ≤ y) : x ^ y ^ 2 > y ^ x := by
+      have h₅ : 2 ≤ x ^ 2 := by
+        by_contra! h₅
+        have : x = 0 ∨ x = 1 := by omega
+        rcases this with (h₆ | h₇)
+        · rw [h₆, pow_zero] at h₁
+          tauto
+        · rw [h₇, pow_one, pow_one] at h₁
+          tauto
+      calc
+        _ ≥ 1000 ^ 2 := by apply Nat.pow_le_pow_of_le_left; omega
+        _ > 1000 := by norm_num
+        _ ≤ 1000 ^ y := by refine Nat.pow_le_pow_right₀ (by omega) h₅
+        _ ≤ y ^ x := by apply Nat.pow_le_pow_right₀; omega
+    have h₆ : 1000 ≤ y ^ x := by
+      rw [h₁]
+      apply h₄
+      exact h₃
+    linarith only [h₅, h₆]
+
+  -- Given $x^{y^2} = y^x$,Taking log of both sides, we have $y^2 \log x = x \log y$.
+  have h₄ : y ^ 2 * log x = x * log y := by
+    rw [h₁]
+    iterate 2 rw [← log_pow]
+    rw [log_pow]
+    congr
+    · apply Nat.log_injOn_pos (a := x) (b := y ^ 2) (by assumption) (by omega) (by omega)
+    · rw [log_mul]
+      have h₅ : x > 0 := by omega
+      have h₆ : y ^ 2 > 0 := by
+        exact Nat.pos_pow_of_pos 2 h₀.2
+      exact ⟨h₅, h₆⟩
+    · apply Nat.log_injOn_pos (a := y) (b := x) (by assumption) (by omega) (by omega)
+    · rw [log_mul]
+      have h₇ : y > 0 := by omega
+      have h₈ : x > 0 := by
+        exact Nat.pos_of_mul_pos_right h₀.2
+      exact ⟨h₇, h₈⟩
+
+
+  -- Assume $x = y$, then $x^x = x^{x^2}$, so $x = 1$ or $x = 0$, both impossible.
+  have h₅ : ¬ x = y := by
+    by_contra! h₅
+    rw [h₅] at h₁
+    have h₆ : x ^ x = x ^ x ^ 2 := by exact h₁
+    have h₇ : x = 1 ∨ x = 0 := by
+      by_contra! h₇
+      have h₈ : x ^ x < x ^ x ^ 2 := by
+        have : 2 < x := by omega
+        calc
+          _ = x ^ 1 := by rw [pow_one]
+          _ < x ^ x := by refine Nat.pow_lt_pow_right h₇ (by omega)
+          _ < x ^ x ^ 2 := by apply Nat.pow_lt_pow_right; omega; linarith only [h₇]
+      linarith only [h₈]
+    rcases h₇ with (h₇ | h₇)
+    · rw [h₇] at h₁
+      tauto
+    · norm_num [h₇] at h₀
+
+  -- Assume $x < y$, then $x^y < y^y < y^x$, a contradiction.
+  have h₆ : ¬ x < y := by
+    by_contra! h₆
+    have h₇ : x ^ y < y ^ y := by
+      apply Nat.pow_lt_pow_right
+      · exact h₆
+      · exact Nat.lt_of_le_of_ne (le_of_lt h₀.2) h₅
+    have h₈ : y ^ y < y ^ x := by
+      apply Nat.pow_lt_pow_right
+      · exact h₀.2
+      · rw [← h₁]
+        calc
+          y ^ y < x ^ y := by exact h₇
+          _ < x ^ x := by apply Nat.pow_lt_pow_right; omega; exact h₀.2
+          _ = y ^ x := by rw [h₁]
+    linarith only [h₇, h₈]
+
+  -- Assume $y < x$, then $y^2 < x^2$, so $y^x < x^y$, a contradiction.
+  have h₇ : ¬ y < x := by
+    by_contra! h₇
+    have h₈ : y ^ 2 < x ^ 2 := by
+      exact Nat.pow_lt_pow_left h₇ (by norm_num)
+    have h₉ : y ^ x < x ^ y := by
+      apply Nat.pow_lt_pow_right
+      · exact h₀.2
+      · exact h₈
+    linarith only [h₈, h₉]
+
+  -- We must have $x = y$, which is a contradiction.
+  linarith only [h₅, h₆, h₇]
+
+```

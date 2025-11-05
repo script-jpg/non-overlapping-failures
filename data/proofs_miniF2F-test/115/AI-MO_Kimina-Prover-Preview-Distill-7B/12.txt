@@ -1,0 +1,198 @@
+-- We will show that the set of $4$-digit positive integers having only even digits and divisible by $5$ is precisely
+  -- \[ \{1000, 1010, 1020, 1030, 1040, 1050, 1060, 1070, 1080, 1090, 1100, 1110, 1120, 1130, 1140, 1150, 1160, 1170, 1180, 1190, 1200, \]
+  -- \[ 1210, 1220, 1230, 1240, 1250, 1260, 1270, 1280, 1290, 1300, 1310, 1320, 1330, 1340, 1350, 1360, 1370, 1380, 1390, 1400, \]
+  -- \[ 1410, 1420, 1430, 1440, 1450, 1460, 1470, 1480, 1490, 1500, 1510, 1520, 1530, 1540, 1550, 1560, 1570, 1580, 1590, 1600, \]
+  -- \[ 1610, 1620, 1630, 1640, 1650, 1660, 1670, 1680, 1690, 1700, 1710, 1720, 1730, 1740, 1750, 1760, 1770, 1780, 1790, 1800, \]
+  -- \[ 1810, 1820, 1830, 1840, 1850, 1860, 1870, 1880, 1890, 1900, 1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990\} \]
+  have h₁ : S = this := by
+    ext n
+    simp [h₀, this]
+    -- Show that a number is in the set if and only if it is in the range and has only even digits and is divisible by $5$.
+    constructor
+    · intro h
+      rcases h with ⟨h₀, h₁, h₂, h₃⟩
+      refine ⟨h₀, h₁,?_, h₃⟩
+      -- Show that the number is in the list if it is a $4$-digit number with only even digits.
+      rw [← Nat.digits_len 10 n (by norm_num) (by norm_num)]
+      rw [Nat.digits_len 10 10 (by norm_num) (by norm_num)] at h₂
+      rcases h₂ with ⟨d₀, h₂, d₁, h₁, d₂, h₀, d₃, h₃⟩
+      -- We can do this because the number is in the range.
+      replace h₀ : n ≥ 1000 := by
+        rw [show 1000 = (1000 : ℕ) by norm_num]
+        exact h₀
+      replace h₁ : n ≤ 9999 := by
+        rw [show 9999 = (9999 : ℕ) by norm_num]
+        exact h₁
+      -- Replace the digits of the number with variables.
+      replace h₂ : d₀ ∈ Nat.digits 10 n := by
+        refine (Nat.digits_mem_of_pos?_).mpr?_
+        · norm_num
+        · exact h₂
+      replace h₃ : d₃ ∈ Nat.digits 10 n := by
+        refine (Nat.digits_mem_of_pos?_).mpr?_
+        · norm_num
+        · exact h₃
+      -- We have the constraints on the digits.
+      have h₄ : Even d₀ := by
+        exact h₂
+      have h₅ : Even d₁ := by
+        exact h₁
+      have h₆ : Even d₂ := by
+        exact h₀
+      have h₇ : Even d₃ := by
+        exact h₃
+      -- Show that the thousands digit is non-zero.
+      have h₈ : d₃ ≠ 0 := by
+        -- Assume the contrary.
+        by_contra! h₈
+        -- We have $n ≤ 1000$.
+        have h₉ : n ≤ 1000 := by
+          calc
+            n = d₃ * 10 ^ 3 := by rw [h₈]; simp [Nat.digits, Nat.digitsAux]
+            _ ≤ 0 * 10 ^ 3 := by apply Nat.mul_le_mul_right; exact h₈
+            _ = 0 := by simp
+        -- This contradicts the fact that $n ≥ 1000$.
+        linarith only [h₀, h₉]
+      -- Show that the hundreds digit is non-zero.
+      have h₉ : d₂ ≠ 0 := by
+        -- Assume the contrary.
+        by_contra! h₉
+        -- We have $n ≤ 200$.
+        have h₁₀ : n ≤ 200 := by
+          calc
+            n = d₂ * 10 ^ 2 + (d₃ * 10 ^ 3) := by simp [Nat.digits, Nat.digitsAux]; rw [h₈]; ring
+            _ ≤ 0 * 10 ^ 2 + (d₃ * 10 ^ 3) := by apply Nat.add_le_add_right; apply Nat.mul_le_mul_right; exact h₉
+            _ = d₃ * 10 ^ 3 := by simp
+            _ ≤ 9 * 10 ^ 3 := by apply Nat.mul_le_mul_right; rw [show 9 = (9 : ℕ) by norm_num]; exact Nat.zero_le 9
+            _ = 9000 := by norm_num
+        -- This contradicts the fact that $n ≥ 1000$.
+        linarith only [h₀, h₁₀]
+      -- Show that the tens digit is non-zero.
+      have h₁₀ : d₁ ≠ 0 := by
+        -- Assume the contrary.
+        by_contra! h₁₀
+        -- We have $n ≤ 20$.
+        have h₁₁ : n ≤ 20 := by
+          calc
+            n = d₁ * 10 + (d₂ * 10 ^ 2 + (d₃ * 10 ^ 3)) := by simp [Nat.digits, Nat.digitsAux]; rw [h₈, h₉]; ring
+            _ ≤ 0 * 10 + (d₂ * 10 ^ 2 + (d₃ * 10 ^ 3)) := by apply Nat.add_le_add_right; apply Nat.mul_le_mul_right; exact h₁₀
+            _ = d₂ * 10 ^ 2 + (d₃ * 10 ^ 3) := by simp
+            _ ≤ 9 * 10 ^ 2 + (d₃ * 10 ^ 3) := by apply Nat.add_le_add_right; rw [show 9 = (9 : ℕ) by norm_num]; apply Nat.mul_le_mul_right; exact h₉
+            _ ≤ 9 * 10 ^ 2 + 9 * 10 ^ 3 := by rw [show 9 = (9 : ℕ) by norm_num]; apply Nat.mul_le_mul_right; rw [show 9 = (9 : ℕ) by norm_num]; exact Nat.zero_le 9
+            _ = 990 := by norm_num
+        -- This contradicts the fact that $n ≥ 1000$.
+        linarith only [h₀, h₁₁]
+      -- Show that the units digit is non-zero.
+      have h₁₁ : d₀ ≠ 0 := by
+        -- Assume the contrary.
+        by_contra! h₁₁
+        -- We have $n ≤ 100$.
+        have h₁₂ : n ≤ 100 := by
+          calc
+            n = d₀ * 10 + (d₁ * 10 ^ 1 + (d₂ * 10 ^ 2 + (d₃ * 10 ^ 3))) := by simp [Nat.digits, Nat.digitsAux]; rw [h₈, h₉, h₁₀]; ring
+            _ ≤ 0 * 10 + (d₁ * 10 ^ 1 + (d₂ * 10 ^ 2 + (d₃ * 10 ^ 3))) := by apply Nat.add_le_add_right; apply Nat.mul_le_mul_right; exact h₁₁
+            _ = d₁ * 10 ^ 1 + (d₂ * 10 ^ 2 + (d₃ * 10 ^ 3)) := by simp
+            _ ≤ 9 * 10 ^ 1 + (d₂ * 10 ^ 2 + (d₃ * 10 ^ 3)) := by apply Nat.add_le_add_right; rw [show 9 = (9 : ℕ) by norm_num]; apply Nat.mul_le_mul_right; exact h₁₀
+            _ ≤ 9 * 10 ^ 1 + 9 * 10 ^ 2 + (d₃ * 10 ^ 3) := by rw [show 9 = (9 : ℕ) by norm_num]; apply Nat.add_le_add_right; rw [show 9 = (9 : ℕ) by norm_num]; apply Nat.mul_le_mul_right; exact h₉
+            _ ≤ 9 * 10 ^ 1 + 9 * 10 ^ 2 + 9 * 10 ^ 3 := by rw [show 9 = (9 : ℕ) by norm_num]; apply Nat.add_le_add_right; rw [show 9 = (9 : ℕ) by norm_num]; apply Nat.mul_le_mul_right; rw [show 9 = (9 : ℕ) by norm_num]; exact Nat.zero_le 9
+            _ = 999 := by norm_num
+        -- This contradicts the fact that $n ≥ 1000$.
+        linarith only [h₀, h₁₂]
+      -- Show that the thousands digit is even.
+      have h₁₂ : d₃ ∈ ({0, 2, 4, 6, 8} : Finset ℕ) := by
+        -- First, show that the thousands digit is even.
+        have h₁₂ : Even d₃ := by
+          exact h₇
+        -- Then, show that the thousands digit is one of $0, 2, 4, 6, 8$.
+        suffices d₃ ∈ ({0, 2, 4, 6, 8} : Finset ℕ) by
+          assumption
+        -- Since the thousands digit is even, it is one of $0, 2, 4, 6, 8$.
+        have h₁₃ : d₃ ≤ 9 := by
+          exact Nat.digits_lt_base (b := 10) (m := n) (d := d₃) (by rw [h₈]; simp) (by rw [h₈]; simp) (by rw [h₈]; exact Nat.zero_lt_succ 9)
+        -- Enumerate all even numbers in the range.
+        interval_cases d₃ <;> norm_num at h₁₂ <;> tauto
+      -- Show that the hundreds digit is even.
+      have h₁₃ : d₂ ∈ ({0, 2, 4, 6, 8} : Finset ℕ) := by
+        -- First, show that the hundreds digit is even.
+        have h₁₃ : Even d₂ := by
+          exact h₆
+        -- Then, show that the hundreds digit is one of $0, 2, 4, 6, 8$.
+        suffices d₂ ∈ ({0, 2, 4, 6, 8} : Finset ℕ) by
+          assumption
+        -- Since the hundreds digit is even, it is one of $0, 2, 4, 6, 8$.
+        have h₁₄ : d₂ ≤ 9 := by
+          exact Nat.digits_lt_base (b := 10) (m := n) (d := d₂) (by rw [h₉]; simp) (by rw [h₉]; simp) (by rw [h₉]; exact Nat.zero_lt_succ 9)
+        -- Enumerate all even numbers in the range.
+        interval_cases d₂ <;> norm_num at h₁₃ <;> tauto
+      -- Show that the tens digit is even.
+      have h₁₄ : d₁ ∈ ({0, 2, 4, 6, 8} : Finset ℕ) := by
+        -- First, show that the tens digit is even.
+        have h₁₄ : Even d₁ := by
+          exact h₅
+        -- Then, show that the tens digit is one of $0, 2, 4, 6, 8$.
+        suffices d₁ ∈ ({0, 2, 4, 6, 8} : Finset ℕ) by
+          assumption
+        -- Since the tens digit is even, it is one of $0, 2, 4, 6, 8$.
+        have h₁₅ : d₁ ≤ 9 := by
+          exact Nat.digits_lt_base (b := 10) (m := n) (d := d₁) (by rw [h₁₀]; simp) (by rw [h₁₀]; simp) (by rw [h₁₀]; exact Nat.zero_lt_succ 9)
+        -- Enumerate all even numbers in the range.
+        interval_cases d₁ <;> norm_num at h₁₄ <;> tauto
+      -- Show that the units digit is even.
+      have h₁₅ : d₀ ∈ ({0, 2, 4, 6, 8} : Finset ℕ) := by
+        -- First, show that the units digit is even.
+        have h₁₅ : Even d₀ := by
+          exact h₄
+        -- Then, show that the units digit is one of $0, 2, 4, 6, 8$.
+        suffices d₀ ∈ ({0, 2, 4, 6, 8} : Finset ℕ) by
+          assumption
+        -- Since the units digit is even, it is one of $0, 2, 4, 6, 8$.
+        have h₁₆ : d₀ ≤ 9 := by
+          exact Nat.digits_lt_base (b := 10) (m := n) (d := d₀) (by rw [h₁₁]; simp) (by rw [h₁₁]; simp) (by rw [h₁₁]; exact Nat.zero_lt_succ 9)
+        -- Enumerate all even numbers in the range.
+        interval_cases d₀ <;> norm_num at h₁₅ <;> tauto
+      -- Show that the number is in the list.
+      refine ⟨h₈, h₁₂, h₁₃, h₁₄, h₁₅⟩
+    · -- Show that a number in the list is in the set.
+      intro h
+      rcases h with ⟨h₈, h₁₂, h₁₃, h₁₄, h₁₅⟩
+      -- Show that the number is in the range.
+      refine ⟨by linarith only [h₈, h₁₂], by linarith only [h₈, h₁₃, h₁₄, h₁₅],?_, by linarith only [h₈, h₁₂]⟩
+      -- Show that the number has only even digits.
+      have h₁₆ : ∀ d : ℕ, d ∈ Nat.digits 10 n → Even d := by
+        intro d h₁₆
+        -- We know that the number has $4$ digits.
+        have h₁₇ : Nat.digits 10 n = [d₀, d₁, d₂, d₃] := by
+          rw [Nat.digits_eq_cons_digits_div]
+          rw [Nat.digits_eq_cons_digits_div]
+          rw [Nat.digits_eq_cons_digits_div]
+          rw [Nat.digits_eq_cons_digits_div]
+          rw [h₁₅, h₁₄, h₁₃, h₁₂]
+          simp
+          rw [List.cons_mem]
+          simp
+          trans d₃
+          rw [h₁₂]
+          simp
+          trans d₂
+          rw [h₁₃]
+          simp
+          rw [List.cons_mem]
+          simp
+          trans d₁
+          rw [h₁₄]
+          simp
+          rw [List.cons_mem]
+          simp
+          trans d₀
+          rw [h₁₅]
+          simp
+          rw [List.head_cons]
+          simp
+        rw [h₁₇] at h₁₆
+        simp at h₁₆
+        obtain h₁ | h₁ | h₁ | h₁ := h₁₆
+        · -- The last digit is even.
+          rw [h₁]
+          exact h₄
+        · -- The second last digit is even.
+          rw [h₁]

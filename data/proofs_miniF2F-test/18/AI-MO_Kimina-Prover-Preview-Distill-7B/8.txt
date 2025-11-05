@@ -1,0 +1,88 @@
+have h₂ : Real.logb 4 (Real.logb 4 n) = Real.logb 2 (Real.logb 16 n) := by
+    rw [h₁]
+  -- \log_2{(\log_{16}{n})} = \log_4{(\log_4{n})}
+  have h₃ : Real.logb 2 (Real.logb 16 n) = Real.logb 2 (Real.logb 2 n * (1 / 2) * (1 / 2) ) := by
+    have h_{1_1} : Real.logb 16 n = Real.logb 2 n * (1 / 4) := by
+      -- log_2(n) / log_16(n) = log_2(16) / log_2(n) = 4 / log_2(n)
+      field_simp [Real.logb]
+      have : Real.logb 2 n  = (Real.logb 2 n) * (1 / 4) * (4 : ℝ) := by
+        ring
+      rw [this]
+      --        = 4 * (log_2(n) / log_2(16)) = 4 * log_16(n)
+      rw [show (16 : ℝ) = 2 ^ (4 : ℝ) by ring]
+      rw [Real.logb_rpow_eq_mul_logb_of_pos]
+      ring
+      all_goals linarith
+    have h_{1_2} : Real.logb 2 (Real.logb 16 n) = Real.logb 2 (Real.logb 2 n * (1 / 4)) := by
+      rw [h_{1_1}]
+    have h_{1_3} : Real.logb 2 (Real.logb 2 n * (1 / 4)) = Real.logb 2 (Real.logb 2 n * (1 / 2) * (1 / 2)) := by
+      have : (1 / 4 : ℝ) = (1 / 2) * (1 / 2) := by ring
+      rw [this]
+    rw [h_{1_2}, h_{1_3}]
+  -- log_2(\log_2(n)/4) = log_2(\log_2(n)) - log_2(4) = log_2(\log_2(n)) - 2
+  have h₄ : Real.logb 2 (Real.logb 2 n * (1 / 2) * (1 / 2)) = Real.logb 2 (Real.logb 2 n) - 2 := by
+    calc
+      Real.logb 2 (Real.logb 2 n * (1 / 2) * (1 / 2))
+        = Real.logb 2 (Real.logb 2 n) + Real.logb 2 ((1 / 2) * (1 / 2)) := by
+          rw [Real.logb_mul (by linarith) (by linarith)]
+      _ = Real.logb 2 (Real.logb 2 n) + (Real.logb 2 (1 / 2) + Real.logb 2 (1 / 2)) := by
+          rw [Real.logb_mul (by linarith) (by linarith)]
+      _ = Real.logb 2 (Real.logb 2 n) + (Real.logb 2 (1 / 2) + Real.logb 2 (1 / 2)) := by
+          rfl
+      _ = Real.logb 2 (Real.logb 2 n) + (-1 + -1) := by
+          have : Real.logb 2 (1 / 2) = -1 := by
+            field_simp [Real.logb_eq_iff_rpow_eq]
+            --    = log_2(2^-1) = -1
+          rw [this]
+          have : Real.logb 2 (1 / 2) = -1 := by
+            field_simp [Real.logb_eq_iff_rpow_eq]
+            --    = log_2(2^-1) = -1
+          rw [this]
+      _ = Real.logb 2 (Real.logb 2 n) - 2 := by ring
+  -- log_2(\log_2(n)) - 2 = log_2(\log_2(n))/4
+  have h₅ : Real.logb 2 (Real.logb 2 n) - 2 = Real.logb 2 (Real.logb 2 n * (1 / 2) * (1 / 2)) := by
+    rw [h₄]
+    rfl
+  -- log_2(\log_2(n)) = log_2(\log_2(n))/4 + 2
+  have h₆ : Real.logb 2 (Real.logb 2 n) = Real.logb 2 (Real.logb 2 n * (1 / 2) * (1 / 2)) + 2 := by
+    linarith
+  -- log_2(\log_2(n)) = log_2(\log_2(n)/4) + 2
+  have h₇ : Real.logb 2 (Real.logb 2 n) = Real.logb 2 (Real.logb 2 n / 4) + 2 := by
+    calc
+      Real.logb 2 (Real.logb 2 n) = Real.logb 2 (Real.logb 2 n * (1 / 2) * (1 / 2)) + 2 := by
+        rw [h₆]
+      _ = Real.logb 2 (Real.logb 2 n / 4) + 2 := by
+        have : Real.logb 2 n * (1 / 2) * (1 / 2) = Real.logb 2 n / 4 := by ring
+        rw [this]
+  -- log_2(\log_2(n)/4) = 2
+  have h₈ : Real.logb 2 (Real.logb 2 n / 4) = 2 := by
+    rw [← h₇]
+    linarith
+  have h₉ : Real.logb 2 n / 4 = 2 ^ (2 : ℝ) := by
+    have : Real.logb 2 n / 4 = 2 := by
+       rw [← h₈]
+      field_simp [Real.logb]
+    rw [this]
+    norm_num
+  have h₁₀ : Real.logb 2 n = 2 ^ (2 : ℝ) * 4 := by
+    rw [h₉]
+    norm_num
+  have h₁₁ : Real.logb 2 n = 16 := by
+    have : 2 ^ (2 : ℝ) * 4 = 16 := by norm_num
+    rw [this] at h₁₀
+    exact h₁₀
+  have h₁₂ : n = 2 ^ (16 : ℕ) := by
+    have h_{1_1} : n = (2 : ℝ) ^ Real.logb 2 n := by
+      field_simp [Real.rpow_logb]
+      all_goals linarith
+    have h_{1_2} : (2 : ℝ) ^ Real.logb 2 n = 2 ^ (16 : ℕ) := by
+      rw [h₁₁]
+      norm_cast
+    rw [h_{1_1}, h_{1_2}]
+  -- n = 2^16 = 65536
+  have h₁₃ : n = 65536 := by
+    simp [h₁₂]
+  rw [h₁₃]
+  -- the sum of the digits of 65536 is 13
+  norm_num
+```

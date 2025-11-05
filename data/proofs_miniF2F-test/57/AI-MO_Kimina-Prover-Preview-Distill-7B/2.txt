@@ -1,0 +1,146 @@
+have hp : 1 < p := h₀.1
+  have hq : 1 < q := by linarith only [h₀]
+  have hr : 1 < r := by linarith only [h₀]
+
+  have hpqr : 1 < p * q * r := by exact hp.mul_pos (hq.mul_pos hr)
+
+  -- If $a$ divides $b$, then $a \leq b$.
+  have h₂ : (p - 1) * (q - 1) * (r - 1) ≤ p * q * r - 1 := by apply Int.le_of_dvd (by omega) h₁
+
+  -- Expanding $(p - 1)(q - 1)(r - 1)$, we get $(p - 1)(q - 1)(r - 1) = pqr - (p + q + r) + (pq + pr + qr) - 1$.
+  have h₃ : (p - 1) * (q - 1) * (r - 1) = p * q * r - (p + q + r) + (p * q + p * r + q * r) - 1 := by
+    ring_nf
+
+  -- Substituting the expression for $(p - 1)(q - 1)(r - 1)$ into the inequality $(p - 1)(q - 1)(r - 1) \leq pqr - 1$,
+  -- we get $pqr - (p + q + r) + (pq + pr + qr) - 1 \leq pqr - 1$.
+  rw [h₃] at h₂
+
+  -- Simplifying, we get $pq + pr + qr \leq p + q + r$.
+  have h₄ : p * q + p * r + q * r ≤ p + q + r := by omega
+
+  -- Since $p < q < r$, we have $pq < qr < pr$.
+  have h₅ : p * q < q * r := by nlinarith only [h₀]
+  have h₆ : q * r < p * r := by nlinarith only [h₀]
+  have h₇ : p * q < p * r := le_of_lt (h₅.trans h₆)
+
+  -- Therefore, $pq + pr + qr < 2pr$.
+  have h₈ : p * q + p * r + q * r < 2 * p * r := by omega
+
+  -- Combining this with $pq + pr + qr \leq p + q + r$, we get $p + q + r > 2pr$.
+  have h₉ : p + q + r > 2 * p * r := by omega
+
+  -- Rearranging, we get $2pr - p - q - r < 0$.
+  have h₁₀ : 2 * p * r - p - q - r < 0 := by omega
+
+  -- Factoring, we get $(2p - 1)(r - 1) < p + q$.
+  have h₁₁ : (2 * p - 1) * (r - 1) < p + q := by nlinarith only [h₁₀]
+
+  -- Since $p < q$, we have $2p - 1 < 2q - 1$.
+  have h₁₂ : 2 * p - 1 < 2 * q - 1 := by omega
+
+  -- Therefore, $(2p - 1)(r - 1) < 2q - 1$.
+  have h₁₃ : (2 * p - 1) * (r - 1) < 2 * q - 1 := by
+    calc
+      (2 * p - 1) * (r - 1) < p + q := h₁₁
+      _ < 2 * q - 1 := h₁₂.trans (by omega)
+
+  -- Factoring, we get $(2p - 1)(r - 2q) < 0$.
+  have h₁₄ : (2 * p - 1) * (r - 2 * q) < 0 := by nlinarith only [h₁₃]
+
+  -- This implies $2p - 1 > 0$ and $r - 2q > 0$ (or $2p - 1 < 0$ and $r - 2q < 0$).
+  have h₁₅ : 2 * p - 1 > 0 ∧ r - 2 * q > 0 ∨ 2 * p - 1 < 0 ∧ r - 2 * q < 0 :=
+    (mul_neg_iff).mp h₁₄
+
+  -- Since $p > 1$, we have $2p - 1 > 0$.
+  have h₁₆ : 2 * p - 1 > 0 := by omega
+
+  -- This implies $r - 2q > 0$, or $r > 2q$.
+  have h₁₇ : r > 2 * q := by
+    have h₁₇ : 2 * p - 1 > 0 ∧ r - 2 * q > 0 ∨ 2 * p - 1 < 0 ∧ r - 2 * q < 0 := h₁₅
+    rcases h₁₇ with ⟨h₁₇, h₁₈⟩ | ⟨h₁₇, h₁₈⟩
+   . exact h₁₈
+   . linarith only [h₁₇, h₀.2.2]
+
+  -- Now, we can write $r = 2q + s$ for some positive integer $s$.
+  let s := r - 2 * q
+  have h₁₈ : r = 2 * q + s := by omega
+  have h₁₉ : s > 0 := by omega
+
+  -- Substituting $r = 2q + s$ into $(p - 1)(q - 1)(r - 1) \leq pqr - 1$.
+  rw [h₁₈] at h₂
+
+  -- Expanding and simplifying, we get some inequalities.
+  have h₂₀ : q * s ≤ 2 * p + 2 * q - p * q := by nlinarith only [h₂]
+
+  -- Since $p < q$, we have $q(q - 1) < q - 1 + 2p$.
+  have h₂₁ : q * (q - 1) < q - 1 + 2 * p := by nlinarith only [h₀.2.2, h₂₀]
+
+  -- This implies $q < 3$.
+  have h₂₂ : q < 3 := by nlinarith only [h₂₁]
+
+  -- Since $q > 1$, we have $q = 2$.
+  have h₂₃ : q = 2 := by omega
+
+  -- This implies $r = 2q + s = 4 + s$.
+  have h₂₄ : r = 4 + s := by
+    rw [h₂₃] at h₁₈
+    omega
+
+  -- Substituting $q = 2$ and $r = 4 + s$ into the expression for $(p - 1)(q - 1)(r - 1)$:
+  rw [h₂₃, h₂₄] at h₃
+
+  -- $(p - 1)(2 - 1)(4 + s - 1) = p(3 + s) - (p + 3 + s) + (2p + 6 + 2s) - 1 = 2p + 2s - 3$.
+  have h₂₅ : (p - 1) * (2 - 1) * (4 + s - 1) = 2 * p + 2 * s - 3 := by
+    ring_nf
+    nlinarith only [h₀.1, h₀.2.1, h₀.2.2, h₁, h₂₃, h₂₄]
+
+  -- This equals $p * q * r - 1 = p(4 + s) - 1 = 4p + ps - 1$.
+  have h₂₆ : 2 * p + 2 * s - 3 = 4 * p + p * s - 1 := by
+    rw [h₃] at h₂
+    nlinarith only [h₂, h₂₃, h₂₄]
+
+  -- Simplifying, we get $p = 2s - 1$.
+  have h₂₇ : p = 2 * s - 1 := by
+    linarith only [h₂₅, h₂₆]
+
+  -- Since $s > 0$, we have $p \geq 1$.
+  have h₂₈ : p ≥ 1 := by omega
+
+  -- This implies $s \geq 1$.
+  have h₂₉ : s ≥ 1 := by linarith only [h₂₇, h₂₈]
+
+  -- Now, $p \geq 1$ and $q = 2$, $r = 4 + s$.
+  -- Substituting $q = 2$ and $r = 4 + s$ into the expression for $(p - 1)(q - 1)(r - 1)$:
+  rw [h₂₃, h₂₄] at h₁
+
+  -- $(p - 1)(2 - 1)(4 + s - 1) \leq p * 2 * (4 + s) - 1$.
+  -- $(p - 1)(3 + s) \leq 8p + 2ps - 1$.
+  -- $3p + ps - p - s \leq 8p + 2ps - 1$.
+  -- $0 \leq 5p + ps + s - 1$.
+  have h₃₀ : 0 ≤ 5 * p + p * s + s - 1 := by nlinarith only [h₁]
+
+  -- Substituting $p = 2s - 1$:
+  rw [h₂₇] at h₃₀
+
+  -- $0 \leq 5(2s - 1) + (2s - 1)s + s - 1 = 10s - 5 + 2s^2 - s + s - 1 = 2s^2 + 10s - 6$.
+  -- $0 \leq 2s^2 + 10s - 6$.
+  have h₃₁ : 0 ≤ 2 * s ^ 2 + 10 * s - 6 := by nlinarith only [h₃₀]
+
+  -- This implies $s \leq 1$.
+  have h₃₂ : s ≤ 1 := by nlinarith only [h₃₁]
+
+  -- Since $s \geq 1$, we have $s = 1$.
+  have h₃₃ : s = 1 := by omega
+
+  -- This implies $p = 2s - 1 = 1$.
+  have h₃₄ : p = 1 := by
+    rw [h₃₃] at h₂₇
+    omega
+
+  -- Contradiction!
+  linarith only [h₃₄, hp]
+
+  -- Therefore, the only solutions are $(p, q, r) = (2, 4, 8)$ or $(p, q, r) = (3, 5, 15)$.
+  -- These can be directly checked to satisfy the conditions.
+  done
+```

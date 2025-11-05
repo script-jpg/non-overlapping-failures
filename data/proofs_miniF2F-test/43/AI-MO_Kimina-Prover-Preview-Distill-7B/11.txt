@@ -1,0 +1,90 @@
+-- what is the sum of the units digits of all the multiples of $3$ between $0$ and $50$?
+  -- show that it is 78.
+
+  -- we only take the number between 1 and 49
+  -- otherwise, 0 and 50 are all 0 mod 3, and the problem is incorrect.
+  let f := fun x => x % 10
+
+  -- we need to find the sum of the units digit of all the multiples of 3 between 1 and 49
+  -- it is equivalent to find the sum of f(x) for all the x s.t. 3 x, and 1 ≤ x ≤ 49
+
+  -- the fact that we use integer > 0 to take digit mean that we suppose x is a one-digit integer
+  -- from which we know that x % 10 = x
+  have hf (x: ℕ) (hx: 0 < x) : x % 10 = x := by
+    rw [Nat.mod_eq_of_lt]
+    simp
+    linarith
+
+  -- for the other direction, we mean that % 10 = x, then x ≥ 1 and x ≤ 49
+  have hf' (x: ℕ) (hx: x % 10 = x) : 0 < x ∧ x ≤ 49 := by
+    have h1: x < 50 := by
+      have: x % 10 < 10 := by apply Nat.mod_lt; norm_num
+      linarith
+    have h2: x > 0 := by
+      by_contra! hcon
+      have: x % 10 = 0 := by
+        rw [Nat.zero_mod]
+        simp [hcon]
+      rw [this] at hx
+      linarith
+    simp
+    exact ⟨h2, h1⟩
+
+  -- therefore, we can change the condition "0 < x" to "x ≤ 49"
+  -- and the function f is equivalent to the identity
+  have hf_eq: f = (fun x => x) := by
+    ext x
+    rw [hf]
+
+  -- so we can use identity to simplify the sum
+  simp [f, hf_eq]
+
+  -- it is equivalent to find the sum of all the units digit of the number which can be divided by 3
+  -- between 1 and 49
+
+  -- the standard way to solve this kind of problem: try to find a pattern
+  -- the solution is divided into 4 parts, and we find the pattern in each part
+  -- 1. 3 x, the units digit is 0
+  -- 2. 6 x, the units digit is 2
+  -- 3. 9 x, the units digit is 4
+  -- 5. 12 x, the units digit is 6
+
+  -- the pattern is: 0, 2, 4, 6, 8, 1, 3, 5, 7, 9, 1,...
+  -- the pattern has a period of 10
+
+  -- the numbers in the interval [1, 49] can be divided into 4 parts:
+  -- 1. 3 x, between 1 and 9
+  -- 2. 6 x, between 10 and 18
+  -- 3. 9 x, between 19 and 27
+  -- 4. 12 x, between 28 and 49
+
+  -- the sum of the units digit of the numbers which can be divided by 3 between 1 and 9 is 0
+  have p1: (∑ k in Finset.filter (fun x => 3 ∣ x) (Finset.Icc 1 9), k % 10) = 0 := by
+    simp
+
+  -- the sum of the units digit of the numbers which can be divided by 3 between 10 and 18 is 2
+  -- the multiple for 3 is 4
+  have p2: (∑ k in Finset.filter (fun x => 3 ∣ x) (Finset.Icc 10 18), k % 10) = 2 := by
+    simp
+
+  -- the sum of the units digit of the numbers which can be divided by 3 between 19 and 27 is 4
+  -- the multiple for 3 is 6
+  have p3: (∑ k in Finset.filter (fun x => 3 ∣ x) (Finset.Icc 19 27), k % 10) = 4 := by
+    simp
+
+  -- the sum of the units digit of the numbers which can be divided by 3 between 28 and 49 is 6
+  -- the multiple for 3 is 10
+  have p4: (∑ k in Finset.filter (fun x => 3 ∣ x) (Finset.Icc 28 49), k % 10) = 6 := by
+    simp
+
+  -- the sum of the units digit of all the multiples of 3 between 0 and 50 is 78
+  have l1: (∑ k in Finset.filter (fun x => 3 ∣ k) (Finset.Icc 1 49), k % 10) =
+      (∑ k in Finset.filter (fun x => 3 ∣ k) (Finset.Icc 1 9), k % 10) +
+      (∑ k in Finset.filter (fun x => 3 ∣ k) (Finset.Icc 10 18), k % 10) +
+      (∑ k in Finset.filter (fun x => 3 ∣ k) (Finset.Icc 19 27), k % 10) +
+      (∑ k in Finset.filter (fun x => 3 ∣ k) (Finset.Icc 28 49), k % 10) := by
+    simp
+
+  rw [p1, p2, p3, p4] at l1
+  linarith
+```

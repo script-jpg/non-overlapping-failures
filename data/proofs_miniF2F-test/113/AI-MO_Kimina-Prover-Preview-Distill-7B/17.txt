@@ -1,0 +1,63 @@
+-- estimate the sum by integral
+  have h1 (n : ℕ) : ∑ k in Finset.Icc 2 n, 1 / Real.sqrt k ≤
+      1 + ∫ x ∈ Set.Icc (2 : ℝ) (n : ℝ), 1 / Real.sqrt x := by
+    apply Finset.sum_le_sum
+    intro i hi
+    simp at hi
+    have : 1 / Real.sqrt i ≤ 1 / Real.sqrt (i : ℝ) := by norm_cast
+    -- estimate the difference between the sum and the integral
+    have : 1 / Real.sqrt (i : ℝ) ≤
+        ∫ x ∈ Set.Icc (i : ℝ) (i + 1 : ℝ), 1 / Real.sqrt x := by
+      apply le_of_eq
+      let f := fun (x : ℝ) => 1 / Real.sqrt x
+      have : ∫ x ∈ Set.Icc (i : ℝ) (i + 1 : ℝ), f x = f i := by
+        rw [←←f]
+        simp [f]
+        norm_cast
+      rw [this]
+      simp [f]
+    linarith
+
+  -- integral is easy to evaluate
+  have h2 : ∫ x ∈ Set.Icc (2 : ℝ) (10000 : ℝ), 1 / Real.sqrt x = 196 := by
+    -- use fundamental theorem of calculus
+    have h2 : ∫ x ∈ Set.Icc (2 : ℝ) (10000 : ℝ), 1 / Real.sqrt x =
+        @Real.map Icc 1 / Real.sqrt 10000 - 1 / Real.sqrt 2 := by
+      rw [←Real integral_Icc_add_Icc (1 / Real.sqrt)]
+      norm_cast
+    have h3 : Real.sqrt 10000 = 100 := by
+      have : (100 : ℝ) ^ 2 = 10000 := by norm_num
+      rw [←this]
+      exact Real.sqrt_sq (by norm_num)
+    rw [h3] at h2
+    have h4 : 1 / (100 : ℝ) = 1 / 100 := by norm_cast
+    simp [h4] at h2
+    have : 1 / Real.sqrt 2 = Real.sqrt 2 / 2 := by
+      field_simp [Real.sqrt_ne_zero]
+      ring
+    rw [this] at h2
+    have h5 : Real.sqrt 2 / 2 + 98 = 196 := by
+      have : Real.sqrt 2 ^ 2 = 2 := by exact Real.sq_sqrt (by norm_num)
+      have : Real.sqrt 2 = Real.sqrt 2 / 2 * 2 := by ring
+      rw [this] at h3
+      linarith
+    linarith
+
+  -- the sum is less than 198
+  have h3 : ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k < 198 := by
+    rw [h1]
+    linarith
+
+  -- the sum equals to 198
+  have h4 : ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k = 198 := by
+    have h4 : ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k ≤ 198 := by
+      exact h3
+    have h5 : 198 ≤ ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k := by
+      have h5 : 196 ≤ ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k :=
+        by linarith [h2, h1]
+      linarith
+    linarith
+
+  -- we get the desired inequality
+  linarith
+```

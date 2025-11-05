@@ -1,0 +1,45 @@
+/-
+  To determine the number of solutions to the equation \(\sin \left( \frac{\pi}{2} \cos x \right) = \cos \left( \frac{\pi}{2} \sin x \right)\) in the closed interval \([0, \pi]\), we need to find the points where the equation holds. This involves solving for \(x\) in the interval \([0, \pi]\) such that \(\sin \left( \frac{\pi}{2} \cos x \right) = \cos \left( \frac{\pi}{2} \sin x \right)\).
+  -/
+  -- We need to show that the set S of solutions has exactly 2 elements.
+  have h₁ : S = {0, Real.pi} := by
+    ext x
+    simp only [h₀, Finset.mem_insert, Finset.mem_singleton, and_true, true_and, eq_self_iff_true,
+      and_true_iff, and_comm]
+    constructor
+    · intro h
+      -- Given x satisfies the equation, we need to check if x is 0 or π.
+      have h' := h.2.2
+      -- Since sin(π/2 * cos x) = cos(π/2 * sin x), we can use this identity to solve for x.
+      have h₁ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h.2.2
+      -- Using the identity sin(π/2 * cos x) = cos(π/2 * sin x), we can deduce that x must be 0 or π.
+      have h₂ : Real.cos x = Real.cos 0 ∨ Real.cos x = Real.cos Real.pi := by
+        apply or_iff_not_imp_left.2
+        intro h
+        apply mul_left_cancel₀ (sub_ne_zero.2 h)
+        nlinarith [Real.sin_sq_add_cos_sq x, Real.sin_le_one x, Real.cos_le_one x]
+      cases h₂ with
+      | inl h₂ =>
+        have h₃ : x = 0 := by
+          apply eq_of_sub_eq_zero
+          nlinarith [Real.cos_le_one x, Real.sin_le_one x]
+        simp [h₃]
+      | inr h₂ =>
+        have h₃ : x = Real.pi := by
+          apply eq_of_sub_eq_zero
+          nlinarith [Real.cos_le_one x, Real.sin_le_one x]
+        simp [h₃]
+    · intro h
+      -- Given x is 0 or π, we need to check if it satisfies the equation.
+      cases h with
+      | inl h =>
+        -- If x = 0, then sin(π/2 * cos 0) = cos(π/2 * sin 0), which simplifies to 0 = 1, a contradiction.
+        rw [h]
+        norm_num
+      | inr h =>
+        -- If x = π, then sin(π/2 * cos π) = cos(π/2 * sin π), which simplifies to 0 = 0, a solution.
+        rw [h]
+        norm_num
+  -- Since S is exactly {0, π}, its cardinality is 2.
+  simp [h₁]
+```

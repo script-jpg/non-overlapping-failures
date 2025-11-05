@@ -1,0 +1,200 @@
+-- We turn the identity into algebraic equations by trigonometric identities.
+  have h₂ : Real.cos x ≠ 0 := by
+    by_contra h₂
+    have : 1 / Real.cos x ≠ 0 := by
+      exact one_div_ne_zero h₂
+    have : Real.tan x ≠ 0 := by
+      by_contra! h₃
+      have : Real.tan x = 0 := by
+        exact h₃
+      have : Real.cos x = 0 := by
+        nlinarith [Real.tan_eq_sin_div_cos x]
+      contradiction
+    have : 1 / Real.cos x + Real.tan x ≠ 0 := by
+      exact add_ne_zero_of_ne_of_ne (by assumption) (by assumption)
+    have : 22 / 7 ≠ 0 := by
+      norm_num
+    contradiction
+
+  have h₃ : Real.sin x ≠ 0 := by
+    by_contra h₃
+    have : 1 / Real.sin x ≠ 0 := by
+      exact one_div_ne_zero h₃
+    have : 1 / Real.tan x ≠ 0 := by
+      by_contra! h₄
+      have : Real.tan x = 0 := by
+        exact h₄
+      have : Real.sin x = 0 := by
+        nlinarith [Real.tan_eq_sin_div_cos x]
+      contradiction
+    have : 1 / Real.sin x + 1 / Real.tan x ≠ 0 := by
+      exact add_ne_zero_of_ne_of_ne (by assumption) (by assumption)
+    have : m ≠ 0 := by
+      exact h₁.symm ▸ (by assumption)
+    contradiction
+
+  have h₄ : 1 / Real.cos x + Real.tan x = 22 / 7 := by
+    exact h₀
+
+  have h₅ : 1 / Real.sin x + 1 / Real.tan x = m := by
+    exact h₁
+
+  -- We rewrite the equations by trigonometric identities.
+  rw [Real.tan_eq_sin_div_cos x] at h₄ h₅
+  field_simp [h₂, h₃] at h₄ h₅
+
+  -- We expand the fractions and multiply by nonzero expressions on both sides.
+  have h₆ : (Real.cos x ^ 2 + Real.sin x ^ 2) ^ 2 = (7 * 22) ^ 2 := by
+    have : 7 * (Real.cos x ^ 2 + Real.sin x ^ 2) = 7 * 22 := by
+      calc
+        _ = 7 * (Real.cos x ^ 2 + Real.sin x ^ 2 / Real.cos x ^ 2) := by
+          field_simp [h₂]
+        _ = 7 * (Real.cos x ^ 2 + (Real.sin x * Real.cos x) ^ 2 / Real.cos x ^ 2) := by
+          congr
+          rw [mul_div_cancel_right₀ _ h₂]
+        _ = 7 * (Real.cos x ^ 2 + (Real.sin x * Real.cos x) ^ 2) := by
+          field_simp [h₂]
+        _ = 7 * (Real.cos x ^ 2 + Real.sin x ^ 2 * Real.cos x ^ 2) := by
+          ring
+        _ = 7 * 22 := by
+          nlinarith [Real.cos_sq_add_sin_sq x]
+
+    have : (7 * 22) ^ 2 = (7 * (Real.cos x ^ 2 + Real.sin x ^ 2)) ^ 2 := by
+      rw [this]
+    rw [this]
+    nlinarith
+
+  -- This means that $(\cos^2x+\sin^2x)^2=(7\cdot22)^2.$
+  have h₇ : (Real.cos x ^ 2 + Real.sin x ^ 2) ^ 2 = (7 * 22) ^ 2 := by
+    exact h₆
+
+  have h₈ : Real.cos x ^ 2 + Real.sin x ^ 2 = 7 * 22 := by
+    have : Real.cos x ^ 2 + Real.sin x ^ 2 > 0 := by
+      nlinarith [sq_pos_of_ne_zero h₂, sq_pos_of_ne_zero h₃]
+    nlinarith
+
+  -- We simplify to get $2\cos x\sin x=22.$
+  have h₉ : 2 * Real.cos x * Real.sin x = 22 := by
+    nlinarith [Real.cos_sq_add_sin_sq x, h₈]
+
+  -- We cancel the 2 to get $\sin x\cos x=11.$
+  have h₁₀ : Real.cos x * Real.sin x = 11 := by
+    linarith
+
+  -- We multiply by 2 and recognize the left hand side as $(\sin x+\cos x)^2$ to get $(\sin x+\cos x)^2=22^2.$
+  have h₁₁ : (Real.sin x + Real.cos x) ^ 2 = 22 ^ 2 := by
+    ring_nf
+    linarith
+
+  -- We take square roots on both sides,  to get $\sin x+\cos x=22$ or $\sin x+\cos x=-22.$
+  have h₁₂ : Real.sin x + Real.cos x = 22 ∨ Real.sin x + Real.cos x = -22 := by
+    have : (Real.sin x + Real.cos x) ^ 2 = 22 ^ 2 := by
+      exact h₁₁
+    have : (Real.sin x + Real.cos x) ^ 2 - 22 ^ 2 = 0 := by
+      linarith
+    have : (Real.sin x + Real.cos x - 22) * (Real.sin x + Real.cos x + 22) = 0 := by
+      ring_nf at this ⊢
+      linarith
+    cases (mul_eq_zero.mp this) with
+    | inl h =>
+      left
+      linarith
+    | inr h =>
+      right
+      linarith
+
+  -- From the two cases, we know that $\sin x+\cos x$ is either $22$ or $-22.$
+  cases h₁₂ with
+  | inl h₁₂ =>
+    -- We subtract the equations $\sec x+\tan x=22/7$ and $\sin x+\cos x=22$ to get $\sin x-\cos x=-21/7=-(3/7).$
+    have h₁₃ : Real.sin x - Real.cos x = -3 / 7 := by
+      have : 22 / 7 - (Real.sin x + Real.cos x) = -3 / 7 := by
+        linarith
+      have : 22 / 7 - (Real.sin x + Real.cos x) = 22 / 7 - 22 := by
+        rw [h₁₂]
+      linarith
+    have h₁₄ : Real.sin x = 5 / 7 := by
+      calc
+        Real.sin x = (Real.sin x + Real.cos x) + 3 / 7 - Real.cos x := by
+          ring
+        _ = 22 + 3 / 7 - Real.cos x := by
+          rw [h₁₂]
+        _ = 15 / 7 - Real.cos x := by
+          norm_num
+        _ = (Real.sin x ^ 2 + Real.cos x ^ 2) - Real.cos x := by
+          have : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := by
+            exact Real.sin_sq_add_cos_sq x
+          rw [this]
+        _ = 15 / 7 - (Real.sin x + Real.cos x) := by
+          linarith
+        _ = 15 / 7 - 22 := by
+          rw [h₁₂]
+        _ = -127 / 7 := by
+          norm_num
+        _ = -127 / 7 + Real.sin x := by
+          linarith
+        _ = Real.sin x := by
+          linarith
+    -- We substitute $\sin x$ to get $\cos x=14/7=2.$
+    have h₁₅ : Real.cos x = 14 / 7 := by
+      calc
+        Real.cos x = (Real.sin x + Real.cos x) - Real.sin x := by
+          ring
+        _ = 22 - Real.sin x := by
+          rw [h₁₂]
+        _ = 22 - 5 / 7 := by
+          rw [h₁₄]
+        _ = 14 / 7 := by
+          norm_num
+    -- But $\cos x=2$ is impossible, as it contradicts the fact that $\cos x^2\leq 1.$
+    have : Real.cos x ^ 2 ≤ 1 := by
+      exact Real.cos_sq_le_one x
+    rw [h₁₅] at this
+    norm_num at this
+  | inr h₁₂ =>
+    -- We subtract the equations $\sec x+\tan x=22/7$ and $\sin x+\cos x=-22$ to get $\sin x-\cos x=-21/7=-(3/7).$
+    have h₁₃ : Real.sin x - Real.cos x = -3 / 7 := by
+      have : 22 / 7 - (Real.sin x + Real.cos x) = 3 / 7 := by
+        linarith
+      have : 22 / 7 - (Real.sin x + Real.cos x) = 22 / 7 - (-22) := by
+        rw [h₁₂]
+      linarith
+    have h₁₄ : Real.sin x = -5 / 7 := by
+      calc
+        Real.sin x = (Real.sin x + Real.cos x) + 3 / 7 - Real.cos x := by
+          ring
+        _ = -22 + 3 / 7 - Real.cos x := by
+          rw [h₁₂]
+        _ = -15 / 7 - Real.cos x := by
+          norm_num
+        _ = (Real.sin x ^ 2 + Real.cos x ^ 2) - Real.cos x := by
+          have : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := by
+            exact Real.sin_sq_add_cos_sq x
+          rw [this]
+        _ = -15 / 7 - (Real.sin x + Real.cos x) := by
+          linarith
+        _ = -15 / 7 - (-22) := by
+          rw [h₁₂]
+        _ = 149 / 7 := by
+          norm_num
+        _ = 149 / 7 + Real.sin x := by
+          linarith
+        _ = Real.sin x := by
+          linarith
+    -- We substitute $\sin x$ to get $\cos x=-14/7=-2.$
+    have h₁₅ : Real.cos x = -14 / 7 := by
+      calc
+        Real.cos x = (Real.sin x + Real.cos x) - Real.sin x := by
+          ring
+        _ = -22 - Real.sin x := by
+          rw [h₁₂]
+        _ = -22 - (-5 / 7) := by
+          rw [h₁₄]
+        _ = -14 / 7 := by
+          norm_num
+    -- But $\cos x=-2$ is impossible, as it contradicts the fact that $-1\leq\cos x.$
+    have : -1 ≤ Real.cos x := by
+      exact Real.neg_one_le_cos x
+    rw [h₁₅] at this
+    norm_num at this
+```

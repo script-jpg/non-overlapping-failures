@@ -1,0 +1,221 @@
+have p_not_2 : p ≠ 2 := by
+    linarith
+
+  have p_not_3 : p ≠ 3 := by
+    linarith
+
+  have p_not_5 : p ≠ 5 := by
+    linarith
+
+  have p_not_7 : p ≠ 7 := by
+    linarith
+
+  have p_ge_11 : 11 ≤ p := by
+    by_contra!
+    interval_cases p
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+    · contradiction
+
+  have p_prime : Nat.Prime p := h₀
+
+  have h (n : ℕ) (hn : 1 ≤ n) : (n : ZMod p) ≠ 0 := by
+    by_contra!
+    have : (n : ZMod p) = 0 := by
+      exact this
+    have : (n : ZMod p) ≠ 0 := ZMod.ne_of_coe h
+    contradiction
+
+  -- The inverse operation is well-defined on $\{1, 2, \ldots, p-1\}$.
+  have inv maple : ∀ x ∈ Finset.Icc 1 (p - 1), (maple x : ZMod p)⁻¹ = (x : ZMod p)⁻¹ := by
+    intro x hx
+    simp only [Finset.mem_Icc] at hx
+    have : 0 < x := by
+      by_contra!
+      replace this : x = 0 := by
+        omega
+      contradiction
+    have : x < p := by
+      rw [Nat.sub_one_lt_iff_lt_succ] at hx
+      exact hx.2
+      linarith
+    exact inv_apply (show x ≠ 0 by omega) (ZMod.ne_of_lt_of_lt (by linarith : 0 < x) (by linarith : x < p))
+
+  -- Apply the division property of ZMod.
+  have div_eq_mul_inv : ∀ (a b : ZMod p), a ≠ 0 → (b / a : ZMod p) = b * a⁻¹ := by
+    intro a b ha
+    exact mul_inv_cancel₀ ha (id (Eq.symm b))
+
+  -- The addition of the term $1^{-1} \cdot 2^{-1} + 2^{-1} \cdot 3^{-1} + \cdots + (p-2)^{-1} \cdot (p-1)^{-1}$ is equal to $-p^{-1}$.
+  have sum_eq_neg_inv : ∑ k in Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = -((p : ZMod p)⁻¹) := by
+    have id (x : ZMod p) : x + 1 = (x + 1 : ZMod p) := by
+      exact rfl
+    -- Let $J = \{1, 2, \ldots, p-2\}$.
+    let J : Finset (ZMod p) := Finset.Icc 1 (p - 2)
+    have id (x : ZMod p) : x ∈ J ↔ 1 ≤ x ∧ x ≤ (p : ZMod p) - 2 := by
+      simp only [Finset.mem_Icc, Finset.mem_sdiff, Finset.mem_Icc, Set.mem_setOf_eq, sub_eq_add_neg]
+      constructor
+      · intro hx
+        rw [Finset.mem_Icc] at hx
+        rw [show (p : ZMod p) - 2 = (p - 2 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]] at hx
+        exact ⟨hx.1, hx.2.1⟩
+      · intro ⟨hx₁, hx₂⟩
+        rw [Finset.mem_Icc]
+        simp only [sub_eq_add_neg]
+        refine ⟨hx₁,?_⟩
+        rw [show (p : ZMod p) - 2 = (p - 2 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]] at hx₂
+        norm_cast at hx₂
+        omega
+    have h_aux : ((p : ZMod p) - 1) = p⁻¹ := by
+      apply ZMod.inv_eq_sub_of_eq_add
+      rw [show 1 = (1 : ZMod p) by rfl]
+      apply ZMod.add_eq_of_eq_sub
+      norm_cast
+      rfl
+    -- Let $I = \{2, 3, \ldots, p-1\}$.
+    let I : Finset (ZMod p) := Finset.Icc 2 (p - 1)
+    have id (x : ZMod p) : x ∈ I ↔ 2 ≤ x ∧ x ≤ (p : ZMod p) - 1 := by
+      simp only [Finset.mem_Icc, Finset.mem_sdiff, Finset.mem_Icc, Set.mem_setOf_eq, sub_eq_add_neg]
+      constructor
+      · intro hx
+        rw [Finset.mem_Icc] at hx
+        rw [show (p : ZMod p) - 1 = (p - 1 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]] at hx
+        exact ⟨hx.1, hx.2.1⟩
+      · intro ⟨hx₁, hx₂⟩
+        rw [Finset.mem_Icc]
+        simp only [sub_eq_add_neg]
+        refine ⟨hx₁,?_⟩
+        rw [show (p : ZMod p) - 1 = (p - 1 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]] at hx₂
+        norm_cast at hx₂
+        omega
+    have h J' : ∑ k ∈ J', (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = ∑ k ∈ I, (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ := by
+      rw [←Finset.sum_attach]
+      simp only [J', I, Finset.attach_eq_of_mem, id, Prod.exists]
+      intro x hx
+      simp only [Finset.mem_Icc, sub_eq_add_neg] at hx
+      rw [show (p : ZMod p) - 1 = (p - 1 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]]
+      rw [show (p : ZMod p) - 2 = (p - 2 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]]
+      norm_cast at hx
+      omega
+    rw [show J = J' \ {1} by rw [Finset.coe_sdiff, Finset.coe_Icc, Finset.coe_Icc]; ext; simp]
+    rw [Finset.sum_sdiff (by simp only [mem_singleton]; intro x hx; rw [←h_aux] at hx; simp only [mem_Icc] at hx; norm_cast at hx; omega), Finset.sum_insert (by simp only [mem_singleton]; intro x hx; rw [←h_aux] at hx; simp only [mem_Icc] at hx; norm_cast at hx; omega)]
+    rw [show I = I' \ {p - 1} by rw [Finset.coe_sdiff, Finset.coe_Icc, Finset.coe_Icc]; ext; simp]
+    rw [Finset.sum_sdiff (by simp only [mem_singleton]; intro x hx; rw [show 1 = (1 : ZMod p) by rfl] at hx; rw [ZMod.one_ne_of_ne_zero (by rw [←h_aux] at hx; simp only [mem_Icc] at hx; norm_cast at hx; omega)] at hx; linarith), Finset.sum_insert (by simp only [mem_singleton]; intro x hx; rw [show 1 = (1 : ZMod p) by rfl] at hx; rw [ZMod.one_ne_of_ne_zero (by rw [←h_aux] at hx; simp only [mem_Icc] at hx; norm_cast at hx; omega)] at hx; linarith)]
+    rw [show I' = Finset.Icc 2 (p - 2) by rw [Finset.coe_Icc, Finset.coe_Icc]; ext; simp]
+    rw [Finset.sum_Icc_succ_top (show 2 ≤ 2 by rfl), Finset.sum_Icc_succ_top (show 2 ≤ p - 2 by omega)]
+    simp only [add_comm]
+    rw [Finset.sum_Icc_succ_top (show 2 ≤ 2 by rfl)]
+    clear id J' x hx h_aux h J I
+    rw [Finset.sum_range_id]
+    have h_aux : p - 2 + 1 = p - 1 := by
+      rw [show 1 = (1 : ZMod p) by rfl]
+      apply ZMod.inv_eq_sub_of_eq_add
+      rw [show (p : ZMod p) - 1 = (p - 1 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]] at h_aux
+      norm_cast at h_aux
+      rw [add_comm] at h_aux
+      exact h_aux
+      apply ZMod.inv_eq_sub_of_eq_add
+      norm_cast
+      rfl
+    rw [h_aux]
+    clear h_aux
+    have : ∑ k ∈ Finset.Icc 2 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = ∑ k ∈ Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ := by
+      clear h J' x hx
+      rw [show Finset.Icc 2 (p - 2) = Finset.Icc 1 (p - 2) \ {1} by rw [Finset.coe_sdiff, Finset.coe_Icc]; ext; simp]
+      rw [Finset.sum_sdiff (by simp only [mem_singleton]; intro x hx; rw [h] at hx; simp only [mem_Icc] at hx; norm_cast at hx; omega)]
+      simp only [Finset.Icc, Finset.mem_Icc]
+      refine Eq.symm (Finset.sum_congr rfl?_)
+      intro x hx
+      simp only [Finset.mem_Icc] at hx
+      rw [←h]
+      omega
+    rw [this]
+    clear this
+    have : ∑ k ∈ Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ + (p - 2: ZMod p)⁻¹ * (p - 1: ZMod p)⁻¹ = ∑ k ∈ Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ + (p - 2: ZMod p)⁻¹ * ((p - 2 : ZMod p) + 1)⁻¹ := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      simp only [Finset.mem_Icc] at hx
+      rw [show (p : ZMod p) - 1 = (p - 1 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]]
+      rw [show (p : ZMod p) - 2 = (p - 2 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]]
+      nth_rw 1 [show 1 = (1 : ZMod p) by rfl]
+      rw [ZMod.one_ne_of_ne_zero (by linarith)]
+      simp only [h, add_comm]
+      omega
+    rw [this]
+    clear this
+    have sum_eq : ∑ k ∈ Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ + (p - 2: ZMod p)⁻¹ * ((p - 2 : ZMod p) + 1)⁻¹ = -((p : ZMod p)⁻¹) := by
+      rw [show (p : ZMod p) - 2 + 1 = (p - 1 : ZMod p) by rw [ZMod.natCast_sub_of_le (by linarith) (by linarith)]] at h_aux
+      rw [add_comm]
+      rw [←h_aux]
+      apply add_neg_eq_iff_eq_add.mp
+      rw [show (p : ZMod p) - 1 + 1 = p by rw [ZMod.sub_add_cancel (by linarith)], add_comm]
+      rw [inv_mul_cancel₀ (by linarith), add_comm]
+      apply add_neg_eq_iff_eq_add.mpr
+      simp only [neg_add_cancel]
+      rw [add_comm]
+      simp only [neg_add_cancel]
+      rw [show (p : ZMod p) - 1 + 1 = p by rw [ZMod.sub_add_cancel (by linarith)], add_comm]
+      rw [inv_mul_cancel₀ (by linarith)]
+      exact h_aux
+      apply ZMod.inv_ne_zero
+      linarith
+    rw [sum_eq]
+    linarith
+
+  -- Since $J = \{1, 2, \ldots, p-2\}$, the number of terms in the sum is $p-2$.
+  have card_eq : J.card = p - 2 := by
+    rw [show J = Finset.Icc 1 (p - 2) by rfl]
+    simp only [Finset.card_Icc, Nat.sub_le_succ]
+    linarith
+
+  -- The sum of the geometric series $(p-2)^{-1} + (p-2)^{-2} + \cdots + (p-2)^{-p+2}$ is $(1 - (p - 2)^{-1})^{-1} - 1$.
+  have geom_sum_eq : ∑ k ∈ Finset.Icc 1 (p - 2), (p - 2 : ZMod p)⁻¹ ^ k = ((1 - (p - 2 : ZMod p)⁻¹)⁻¹ - 1)⁻¹ := by
+    have h_aux : ((p - 2 : ZMod p)⁻¹) ^ (p - 1) = 1 := by
+      apply pow_card_sub_one_eq_one
+      apply ZMod.card_units_eq
+      linarith
+    calc
+      ∑ k ∈ Finset.Icc 1 (p - 2), (p - 2 : ZMod p)⁻¹ ^ k
+        = ∑ k ∈ Finset.range (p - 1), (p - 2 : ZMod p)⁻¹ ^ k - 1 := by
+          rw [Finset.sum_Ico_eq_sum_range, Nat.sub_add_cancel (by linarith), Nat.add_one_sub_one]
+          apply Finset.sum_congr rfl
+          intro k hk
+          rw [Finset.mem_Icc] at hk
+          omega
+      _ = ((1 - (p - 2 : ZMod p)⁻¹)⁻¹ - 1)⁻¹ := by
+        rw [Finset.sum_range_eq_sub, geom_sum h_aux]
+        simp only [neg_add_cancel, tsub_eq_zero]
+        apply one_ne_zero
+
+  -- Since $p \ge 11$, the sum of the remaining terms is 0.
+  have remaining_sum_eq_zero : ∑ k ∈ Finset.Icc 1 (p - 2), ((p - 2 : ZMod p)⁻¹ * ((p - 2 : ZMod p)⁻¹) ^ k) = 0 := by
+    rw [Finset.sum_mul_left, geom_sum_eq]
+    simp only [neg_add_cancel, tsub_eq_zero]
+    apply one_ne_zero
+
+  -- The sum of the remaining terms is 0, so the sum of the original sum and the geometric series is 2.
+  have sum_eq : ∑ k ∈ Finset.Icc 1 (p - 2), ((p - 2 : ZMod p)⁻¹ * ((p - 2 : ZMod p)⁻¹) ^ k) = 2 := by
+    calc
+      ∑ k ∈ Finset.Icc 1 (p - 2), ((p - 2 : ZMod p)⁻¹ * ((p - 2 : ZMod p)⁻¹) ^ k)
+        = ∑ k ∈ Finset.Icc 1 (p - 2), ((p - 2 : ZMod p)⁻¹ * ((p - 2 : ZMod p)⁻¹) ^ k) + 0 := by
+          simp only [neg_add_cancel, tsub_eq_zero]
+          apply one_ne_zero
+      _ = 2 := by
+        rw [Finset.mul_sum, remaining_sum_eq_zero, add_zero]
+
+  -- The sum of the geometric series $(p-2)^{-1} + (p-2)^{-2} + \cdots + (p-2)^{-p+2}$ is $(1 - (p - 2)^{-1})^{-1} - 1$.
+  have sum_geom : ∑ k ∈ Finset.Icc 1 (p - 2), (p - 2 : ZMod p)⁻¹ ^ k = ((1 - (p - 2 : ZMod p)⁻¹)⁻¹ - 1)⁻¹ := by
+    rw [Finset.mul_sum, mul_inv_cancel₀ (by linarith), one_mul, geom_sum_eq]
+
+  -- Since $p \ge 11$, the sum of the remaining terms is 0.
+  have sum_rem_eq_zero : ∑ k ∈ Finset.Icc 1 (p - 2), ((p - 2 : ZMod p)⁻¹ ^ (k + 1)) = 0 := by
+    rw [Finset.sum_eq_zero]
+    intro x hx
+    simp only [Finset.mem_Icc] at hx
+    apply one_ne_zero
+
+  -- The sum of the remaining terms is 0

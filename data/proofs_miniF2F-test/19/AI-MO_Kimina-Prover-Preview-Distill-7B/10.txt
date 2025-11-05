@@ -1,0 +1,83 @@
+-- Show that $x \geq -\frac{1}{2}$
+  have h₃ : x ≥ -1 / 2 := by
+    -- If $x < -\frac{1}{2}$, then $2x + 1 < 0$, which contradicts $0 ≤ 1 + 2x$
+    by_contra! h₃
+    have : 2 * x + 1 < 0 := by linarith
+    have : 1 + 2 * x < 0 := by linarith
+    have : √(1 + 2 * x) < 0 := by
+      apply Real.sqrt_lt'
+      linarith
+      linarith
+    have : 1 - √(1 + 2 * x) > 1 := by linarith
+    have : (1 - √(1 + 2 * x)) ^ 2 > 1 := by nlinarith
+    have : 4 * x ^ 2 / (1 - √(1 + 2 * x)) ^ 2 > 0 := by
+      apply div_pos
+      nlinarith
+      nlinarith
+    linarith
+
+  -- Show that $x < \frac{45}{8}$
+  have h₄ : x < 45 / 8 := by
+    -- Let $t = \sqrt{1 + 2x}$
+    let t := √(1 + 2 * x)
+    -- Show that $t > 0$
+    have ht : t > 0 := by
+      simp [t]
+      apply Real.sqrt_pos.mpr
+      linarith
+    have ht' : t ≥ 1 := by
+      simp [t]
+      have : 1 + 2 * x ≥ 1 := by linarith
+      exact Real.sqrt_le_sqrt this
+    -- Show that $2x + 1 = t^2$
+    have h₄ : 1 + 2 * x = t ^ 2 := by
+      simp [t]
+      rw [Real.sq_sqrt]
+      linarith
+    -- Show that $4x^2 = (2t^2 - 1)^2$
+    have h₅ : 4 * x ^ 2 = (2 * t ^ 2 - 1) ^ 2 := by
+      calc
+        _ = 4 * x * (1 + x) := by linarith
+        _ = 4 * x * t^2 := by rw [h₄]
+        _ = (2 * t^2 - 1)^2 := by
+          ring
+
+    -- Consider two cases: $t - 1 > 0$ and $t - 1 = 0$
+    by_cases h₅ : t - 1 > 0
+    · -- If $t - 1 > 0$, then $t > 1$
+      -- Show that $(2t^2 - 1)^2 < (t - 1)^2(2t + 3)$
+      have h₆ : (2 * t ^ 2 - 1) ^ 2 < (t - 1) ^ 2 * (2 * t + 3) := by
+        nlinarith
+      -- Since $4x^2 = (2t^2 - 1)^2$ and $2x + 9 = (t - 1)^2(2t + 3)$, this is a contradiction
+      have h₇ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 ≥ 2 * x + 9 := by
+        rw [h₅, ←h₄, mul_div_cancel_left₀ _ (by nlinarith), h₅]
+        have : t - 1 ≠ 0 := by
+          intro h
+          linarith
+        field_simp [this]
+        nlinarith
+      linarith
+
+    · -- If $t - 1 = 0$, then $t = 1$
+      -- Show that $1 - t > 0$
+      have h₆ : 1 - t > 0 := by
+        suffices 1 > t by linarith
+        rw [show 1 = 1 - (t - 1) by ring]
+        have : t - 1 < 1 := by linarith
+        linarith
+      -- Show that $(2t^2 - 1)^2 < (1 - t)^2(2t + 3)$
+      have h₇ : (2 * t ^ 2 - 1) ^ 2 < (1 - t) ^ 2 * (2 * t + 3) := by
+        nlinarith
+      -- Since $4x^2 = (2t^2 - 1)^2$ and $2x + 9 = (1 - t)^2(2t + 3)$, this is a contradiction
+      have h₈ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 ≥ 2 * x + 9 := by
+        rw [h₅, ←h₄, mul_div_cancel_left₀ _ (by nlinarith), h₅]
+        have : 1 - t ≠ 0 := by
+          intro h
+          linarith
+        field_simp [this]
+        nlinarith
+      linarith
+
+  -- Return the final result
+  exact ⟨h₃, h₄⟩
+```

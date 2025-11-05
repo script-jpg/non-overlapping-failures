@@ -1,0 +1,92 @@
+-- A small positive number.
+  let ε := (1e-5 : ℝ)
+
+  -- We will add a small enough positive number to each of $x$, $y$, and $z$ such that
+  -- the inequality still holds, but we can factorize the RHS.
+  let x' := x + ε
+  let y' := y + ε
+  let z' := z + ε
+
+  -- Show that $x'$, $y'$, $z'$ are positive.
+  have hx : 0 < x' := by simp [x', h₀.left]
+  have hy : 0 < y' := by simp [y', h₀.right.left]
+  have hz : 0 < z' := by simp [z', h₀.right.right]
+
+  -- We have $x \leq x'$, $y \leq y'$, and $z \leq z'$.
+  have hx' : x ≤ x' := by simp [x', ε]
+  have hy' : y ≤ y' := by simp [y', ε]
+  have hz' : z ≤ z' := by simp [z', ε]
+
+  -- The RHS is monotone increasing with respect to $x$, $y$, and $z$.
+  have hmono : 2 / (x + y) + 2 / (y + z) + 2 / (z + x) ≤
+      2 / (x' + y') + 2 / (y' + z') + 2 / (z' + x') := by
+    apply add_le_add
+    apply add_le_add
+    · apply div_le_div₀
+      · linarith only [hx'
+      · linarith only [hy'
+      · norm_num
+      · linarith only [hx'
+    · apply div_le_div₀
+      · linarith only [hy'
+      · linarith only [hz'
+      · norm_num
+      · linarith only [hy'
+    · apply div_le_div₀
+      · linarith only [hz'
+      · linarith only [hx'
+      · norm_num
+      · linarith only [hz'
+
+  -- RHS can be factorized as $1 / (x' + y' + z' + 2\epsilon) \cdot (99999 / (x' + y' + z' + 2\epsilon) + 2 / (x'+y') + 2 / (y'+z') + 2 / (z'+x'))$.
+  have heq : 2 / (x' + y') + 2 / (y' + z') + 2 / (z' + x') =
+      1 / (x' + y' + z' + 2*ε) * (99999 / (x' + y' + z' + 2*ε) + 2 / (x'+y') + 2 / (y'+z') + 2 / (z'+x')) := by
+    field_simp
+
+  -- Since $99999 / (x' + y' + z' + 2\epsilon) + 2 / (x'+y') + 2 / (y'+z') + 2 / (z'+x') > 0$, the RHS is positive.
+  have hpos : 0 < 1 / (x' + y' + z' + 2*ε) * (99999 / (x' + y' + z' + 2*ε) + 2 / (x'+y') + 2 / (y'+z') + 2 / (z'+x')) := by
+    apply mul_pos
+    · apply div_pos
+      · norm_num
+      · simp [ε]
+    · norm_num
+
+  -- Since the RHS is positive, we can apply the division operation to both sides of the inequality.
+  apply (div_le_div_iff₀?_?_).mpr
+  · exact hmono
+  · simp [hpos]
+  · simp [hpos]
+
+  -- Factorize the RHS.
+  rw [heq]
+
+  -- Now we need to show that $1 / (x' + y' + z' + 2\epsilon) \cdot (99999 / (x' + y' + z' + 2\epsilon) + 2 / (x'+y') + 2 / (y'+z') + 2 / (z'+x')) \leq 1 / (x + y + z) \cdot (9 / (x + y + z) + 2 / (x+y) + 2 / (y+z) + 2 / (z+x))$.
+  -- Equivalently, we need to show $99999 / (x' + y' + z' + 2\epsilon) + 2 / (x'+y') + 2 / (y'+z') + 2 / (z'+x') \leq 9 / (x + y + z) + 2 / (x+y) + 2 / (y+z) + 2 / (z+x)$.
+  -- That is, we need to show $99999 / (x' + y' + z' + 2\epsilon) \leq 9 / (x + y + z)$.
+  -- Note that $99999 = 9 \times 11111$ and $11111 > 10000 = 10^4$.
+  -- That is, we need to show $1 / (x' + y' + z' + 2\epsilon) \leq 1 / (x + y + z)$.
+  -- That is, we need to show $x + y + z \leq x' + y' + z' + 2\epsilon$.
+  suffices x + y + z ≤ x' + y' + z' + 2 * ε by
+    convert_to 1 / (x' + y' + z' + 2 * ε) ≤ 1 / (x + y + z) using 1
+    · field_simp
+    · exact this
+
+  -- It is clear that $x + y + z \leq x' + y' + z' + 2\epsilon$.
+  -- We can make the target as large as we want.
+  -- For example, $x + y + z \leq x' + y' + z' + 10000\epsilon$.
+  suffices x + y + z ≤ x' + y' + z' + 10000 * ε by
+    norm_num
+    linarith only [this]
+
+  -- We can cancel the restriction that $x$, $y$, and $z$ are positive.
+  -- It is enough to assume that $0 < x + y + z$.
+  suffices 0 < x + y + z → x + y + z ≤ x' + y' + z' + 10000 * ε by
+    intro h
+    exact this h
+
+  -- It is clear that $x + y + z \leq x' + y' + z' + 10000\epsilon$.
+  -- Because $x \leq x'$, $y \leq y'$, $z \leq z'$, and $10000\epsilon > 0$.
+  intro h
+  linarith only [hx', hy', hz', ε]
+
+```

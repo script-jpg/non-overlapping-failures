@@ -1,0 +1,230 @@
+-- We will prove that the solution set is exactly $\{\pi/2, 3\pi/2, 5\pi/2, 7\pi/2, 9\pi/2\}$.
+  suffices S = {Real.pi / 2, 3 * Real.pi / 2, 5 * Real.pi / 2, 7 * Real.pi / 2, 9 * Real.pi / 2} by
+    simp [this]
+
+  -- First, we show that the set of solutions is a subset of $\{\pi/2, 3\pi/2, 5\pi/2, 7\pi/2, 9\pi/2\}$.
+  have h₁ : S ⊆ {Real.pi / 2, 3 * Real.pi / 2, 5 * Real.pi / 2, 7 * Real.pi / 2, 9 * Real.pi / 2} := by
+    -- Take $x$ in $S$ and show that $x$ is in the set on the right.
+    intro x hx
+    rw [h₀] at hx
+    rcases hx with ⟨hx, hx₁, hx₂⟩
+
+    -- First, we show that $\cos(x/2) \neq 0$.
+    have hcos : Real.cos (x / 2) ≠ 0 := by
+      -- Assume for contradiction that $\cos(x/2) = 0$.
+      by_contra! hcos
+      rw [Real.tan_eq_sin_div_cos, div_zero] at hx₂
+      rw [← hx₂] at hcos
+      -- We have $\cos(x/2) = 0$ implies that $\sin(x/2)^2 = 1$.
+      have hsin : Real.sin (x / 2) ^ 2 = 1 := by
+        have h : Real.sin (x / 2) ^ 2 + Real.cos (x / 2) ^ 2 = 1 := Real.sin_sq_add_cos_sq (x / 2)
+        simp [hcos] at h
+        linarith only [h]
+      -- We have $\cos(x/2) = 0$ implies that $\sin(x/2)^2 = 1$ implies that $\sin(x/2) = \pm 1$.
+      have hsin : Real.sin (x / 2) = 1 ∨ Real.sin (x / 2) = -1 := by
+        have h : Real.sin (x / 2) ^ 2 = 1 := by assumption
+        have h' : Real.sin (x / 2) ^ 2 = 1 ^ 2 := by rw [h]; norm_num
+        have h'' : Real.sin (x / 2) = 1 ∨ Real.sin (x / 2) = -1 := sq_eq_sq_iff_eq_or_eq_neg.mp h'
+        exact h''
+      -- We have $\cos(x/2) = 0$ implies that $x/2 \in \{\pi/2 + n\pi | n \in \mathbb{Z}\}$.
+      have hsin : x / 2 = Real.pi / 2 + ↑Z := by
+        -- Assume for contradiction that $x/2 \notin \{\pi/2 + n\pi | n \in \mathbb{Z}\}$.
+      by_contra! hsin
+        -- Let $n \in \mathbb{Z}$ be such that $x/2 \in (-\pi/2 + n\pi, 3\pi/2 + n\pi)$.
+      let n := ⌊x / 2 / Real.pi - 1 / 2⌋
+      have hsin : x / 2 ∈ Set.Ioc (n + 1 / 2) ⟨n + 3 / 2⟩ := by
+        simp only [Set.mem_Ioc, not_and]
+        constructor
+       . rw [add_comm, ← Int.sub_add, Int.sub_one_lt_floor]
+          norm_num
+          calc
+            _ ≤ x / 2 / Real.pi := by apply div_le_div_right; repeat linarith only [hx]
+            _ < _ := by linarith only [hx₁]
+       . calc
+            _ < n + 1 := by apply add_lt_add_of_le_of_lt; simp [n]; apply Int.floor_le
+            _ ≤ x / 2 / Real.pi := by apply div_le_div_right; repeat linarith only [hx]
+            _ < _ := by linarith only [hx₁]
+      -- The interval $(-\pi/2 + n\pi, 3\pi/2 + n\pi)$ is contained in the set $\{\pi/2 + n\pi, 3\pi/2 + n\pi\}$.
+      have hsin : x / 2 ∈ ({π / 2 + ↑n * Real.pi, 3 * Real.pi / 2 + ↑n * Real.pi} : Finset ℝ) := by
+        simp only [Set.mem_insert_iff, Set.mem_singleton_iff, and_imp]
+        rify at hsin
+        -- Apply the lemma real_sin_eq_one_iff and real_sin_eq_neg_one_iff.
+        have hsin : (Real.sin (x / 2 + Real.pi * n) = 1) ∨ (Real.sin (x / 2 + Real.pi * n) = -1) := by
+          rw [← Real.sin_add_int_mul_pi (x / 2) n, ← Real.sin_sq_add_cos_sq (x / 2), hsin, add_comm]
+          simp only [sq_eq_one_iff, and_true]
+          by_contra! hsin
+          simp at hsin
+          linarith only [hsin]
+        rcases hsin with (hsin | hsin)
+       . -- If $\sin(x/2 + n\pi) = 1$, then $x/2 + n\pi = \pi/2 + 2\pi n$.
+          have hsin : x / 2 + ↑n * Real.pi = Real.pi / 2 + ↑(n - 1) * Real.pi := by
+            rw [← add_mul, mul_comm, Real.sin_add_int_mul_pi (x / 2 - Real.pi / 2) n]
+            rw [hsin, add_comm, ← Real.pi_div_two]
+            simp only [sub_add_cancel]
+          -- So $x/2 = \pi/2 + (n - 1)\pi$.
+          apply_fun (· - ↑n * Real.pi) at hsin
+          simp only [add_sub_cancel_right, zero_add] at hsin
+          -- So $x = \pi/2 + (n - 1)\pi$.
+          rify at hsin ⊢
+          rw [hsin]
+          by_cases h : n = 0
+         . simp [h]
+         . have h : (n : ℝ) - 1 ≠ 0 := by
+              norm_cast
+              rw [Int.sub_one_ne_zero]
+              simp [h]
+            field_simp
+            calc
+              _ = ((↑n - 1) : ℝ) * Real.pi + Real.pi / 2 + ↑(n - 1) * Real.pi := by ring
+              _ = ((↑n - 1) : ℝ) * Real.pi + Real.pi / 2 - Real.pi / 2 + (↑(n - 1) * Real.pi + Real.pi / 2) := by ring
+              _ = ((↑n - 1) : ℝ) * Real.pi + Real.pi / 2 - Real.pi / 2 + Real.pi / 2 := by rw [← add_assoc, hsin]
+              _ = ((↑n - 1) : ℝ) * Real.pi + Real.pi / 2 := by simp
+          simp [show n - 1 = n + -1 by norm_cast]
+       . -- If $\sin(x/2 + n\pi) = -1$, then $x/2 + n\pi = 3\pi/2 + 2\pi n$.
+          have hsin : x / 2 + ↑n * Real.pi = 3 * Real.pi / 2 + ↑(n - 1) * Real.pi := by
+            rw [← add_mul, mul_comm, Real.sin_add_int_mul_pi (x / 2 - 3 * Real.pi / 2) n]
+            rw [hsin, add_comm]
+            simp only [sq_eq_one_iff, and_true]
+            have hsin : Real.sin (↑n * Real.pi) = 0 := by
+              rw [show ↑n * Real.pi = ↑(n * Real.pi) by simp]
+              apply Real.sin_int_mul_pi
+            by_contra! hsin
+            simp only [Real.sin_eq_neg_one_iff] at hsin
+            linarith only [hsin]
+          -- So $x/2 = 3\pi/2 + (n - 1)\pi$.
+          apply_fun (· - ↑n * Real.pi) at hsin
+          simp only [add_sub_cancel_right, zero_add] at hsin
+          -- So $x = 3\pi/2 + (n - 1)\pi$.
+          rify at hsin ⊢
+          rw [hsin]
+          by_cases h : n = 0
+         . simp [h]
+         . have h : (n : ℝ) - 1 ≠ 0 := by
+              norm_cast
+              rw [Int.sub_one_ne_zero]
+              simp [h]
+            field_simp
+            calc
+              _ = ((↑n - 1) : ℝ) * Real.pi + 3 * Real.pi / 2 + ↑(n - 1) * Real.pi := by ring
+              _ = ((↑n - 1) : ℝ) * Real.pi + 3 * Real.pi / 2 - 3 * Real.pi / 2 + (↑(n - 1) * Real.pi + 3 * Real.pi / 2) := by ring
+              _ = ((↑n - 1) : ℝ) * Real.pi + 3 * Real.pi / 2 - 3 * Real.pi / 2 + Real.pi / 2 := by rw [← add_assoc, hsin]
+              _ = ((↑n - 1) : ℝ) * Real.pi + 3 * Real.pi / 2 := by simp
+          simp [show n - 1 = n + -1 by norm_cast]
+
+      -- The set $\{\pi/2 + n\pi, 3\pi/2 + n\pi\}$ is a subset of $\{\pi/2, 3\pi/2, 5\pi/2, 7\pi/2, 9\pi/2\}$.
+      have hsin : ({π / 2 + ↑n * Real.pi, 3 * Real.pi / 2 + ↑n * Real.pi} : Finset ℝ) ⊆ {Real.pi / 2, 3 * Real.pi / 2, 5 * Real.pi / 2, 7 * Real.pi / 2, 9 * Real.pi / 2} := by
+        simp only [Finset.singleton_subset_iff, Finset.mem_insert_iff, Finset.mem_singleton_iff]
+        refine ⟨?_,?_,?_,?_⟩
+        all_goals
+        by_cases h : n = 0
+       . simp [h]
+       . have h : n ≠ 0 := by by_contra! h; simp [h]
+          have h : (n : ℝ)⁻¹ * Real.pi ≠ 0 := by
+            norm_cast
+            apply inv_ne_zero_of_ne_zero
+            simp [h]
+          -- We have $n \in \mathbb{Z}$ implies that $n \in \{-2, -1, 1, 2\}$.
+          have h : n ∈ ({-2, -1, 1, 2} : Finset ℤ) := by
+            simp only [Finset.mem_insert, Finset.mem_singleton]
+            calc
+              _ ≤ 2 := by
+                refine Int.floor_le?_
+                rw [show (2 : ℝ) = Real.pi * (2 / Real.pi) by field_simp]
+                apply Real.floor_le_of_lt
+                rw [← mul_lt_mul_right Real.pi_pos]
+                norm_num
+              _ ≤ _ := by simp
+          simp only [Finset.mem_insert, Finset.mem_singleton] at h
+          rcases h with (h | h | h | h)
+         . -- If $n = -2$, then $x = \pi/2 - \pi = -\pi/2$ which is not in the interval $[0, 2\pi]$.
+            rw [h]
+            simp only [add_neg_cancel, zero_add, and_false]
+            linarith only [hx]
+         . -- If $n = -1$, then $x = \pi/2 - \pi = -\pi/2$ which is not in the interval $[0, 2\pi]$.
+            rw [h]
+            simp only [add_neg_cancel, zero_add, and_false]
+            linarith only [hx]
+         . -- If $n = 1$, then $x = \pi/2 + \pi = 3\pi/2$.
+            rw [h]
+            simp only [add_comm, ← mul_add, one_mul, add_right_inj]
+            rw [mul_div_cancel₀ _ (by norm_num)]
+            simp only [add_comm, mul_div_assoc, mul_self_div_self]
+            norm_num
+            norm_num
+         . -- If $n = 2$, then $x = \pi/2 + 2\pi = 5\pi/2$.
+            rw [h]
+            simp only [add_comm, ← mul_add, one_mul, add_right_inj]
+            rw [mul_div_cancel₀ _ (by norm_num)]
+            simp only [add_comm, mul_div_assoc, mul_self_div_self]
+            norm_num
+            norm_num
+      -- So $\cos(x/2) = 0$ implies that $x$ is in the set on the right.
+      have hcos : x / 2 ∈ ({π / 2 + ↑n * Real.pi, 3 * Real.pi / 2 + ↑n * Real.pi} : Finset ℝ) := by
+        exact hsin hsin
+      simp only [Finset.mem_insert_iff, Finset.mem_singleton_iff] at hcos
+      rcases hcos with (hcos | hcos)
+     . -- If $x/2 = \pi / 2 + n\pi$, then $x = \pi + 2n\pi$.
+        have hx : x = Real.pi + ↑n * Real.pi * 2 := by
+          rw [← mul_div_cancel_right₀ _ (by norm_num), mul_comm]
+          apply (mul_right_inj' hcos).mp
+          ring
+        -- We have $x \in [0, 2\pi]$ implies that $n \in \{0, 1\}$.
+        have hn : n ∈ ({0, 1} : Finset ℤ) := by
+          simp only [Finset.mem_insert, Finset.mem_singleton]
+          refine ⟨?_,?_⟩
+         . rw [hx] at hx₁
+            simp only [mul_le_mul_right, add_le_add_iff_left, zero_add, mul_nonneg_iff_of_pos_right] at hx₁
+            norm_cast at hx₁
+            calc
+              _ ≤ (1 : ℝ) := by norm_num
+              _ ≤ ↑(1 : ℤ) := by norm_cast
+            linarith only [hx₁]
+         . rw [hx] at hx₂
+            simp only [mul_le_mul_right, add_le_add_iff_left, zero_add, mul_nonneg_iff_of_pos_right] at hx₂
+            norm_cast at hx₂
+            calc
+              _ ≤ (2 : ℝ) := by norm_num
+              _ ≤ ↑(2 : ℤ) := by norm_cast
+            linarith only [hx₂]
+        simp only [Finset.mem_insert, Finset.mem_singleton] at hn
+        rcases hn with (hn | hn)
+       . simp [hn] at hx
+       . simp [hn] at hx
+          rw [show ↑(1 : ℤ) = (1 : ℝ) by norm_cast, mul_one] at hx
+          rw [hx]
+          norm_num
+     . -- If $x/2 = 3\pi / 2 + n\pi$, then $x = 3\pi + 2n\pi$.
+        have hx : x = 3 * Real.pi + ↑n * Real.pi * 2 := by
+          rw [← mul_div_cancel_right₀ _ (by norm_num), mul_comm]
+          apply (mul_right_inj' hcos).mp
+          ring
+        -- We have $x \in [0, 2\pi]$ implies that $n \in \{-1, 0\}$.
+        have hn : n ∈ ({-1, 0} : Finset ℤ) := by
+          simp only [Finset.mem_insert, Finset.mem_singleton]
+          refine ⟨?_,?_⟩
+         . rw [hx] at hx₁
+            simp only [mul_le_mul_right, add_le_add_iff_left, zero_add, mul_nonneg_iff_of_pos_right] at hx₁
+            norm_cast at hx₁
+            calc
+              _ ≤ (3 : ℝ) := by norm_num
+              _ ≤ ↑(3 : ℤ) := by norm_cast
+            linarith only [hx₁]
+         . rw [hx] at hx₂
+            simp only [mul_le_mul_right, add_le_add_iff_left, zero_add, mul_nonneg_iff_of_pos_right] at hx₂
+            norm_cast at hx₂
+            calc
+              _ ≤ (4 : ℝ) := by norm_num
+              _ ≤ ↑(4 : ℤ) := by norm_cast
+            linarith only [hx₂]
+        simp only [Finset.mem_insert, Finset.mem_singleton] at hn
+        rcases hn with (hn | hn)
+       . -- If $n = -1$, then $x = 3\pi - 2\pi = \pi$ which is not in the interval $[0, 2\pi]$.
+          rw [show ↑(-1 : ℤ) = (-1 : ℝ) by norm_cast, mul_neg, mul_one] at hx
+          rw [hx]
+          norm_num
+       . simp [hn] at hx
+          rw [show ↑(0 : ℤ) = (0 : ℝ) by norm_cast, mul_zero] at hx
+          rw [hx]
+          norm_num
+
+    -- Now, we show that the set of solutions is a superset of $\{\pi/2, 3\pi/2

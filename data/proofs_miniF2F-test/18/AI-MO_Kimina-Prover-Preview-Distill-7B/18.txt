@@ -1,0 +1,64 @@
+-- https://artofproblemsolving.com/wiki/index.php/2020_AMC_12A_Problems/Problem_10
+  have h₂ : Real.logb 4 (Real.logb 4 n) = Real.logb 2 (Real.logb 16 n) := by
+    rw [h₁]
+
+  -- Change the base of log base 4 to base 2:
+  -- log base 4 of x = (log of x)/(log of 4) = (log of x)/(2 * log of 2)
+  have h₃ : Real.logb 4 (Real.logb 4 n) = (Real.logb 2 (Real.logb 4 n)) / (2 * Real.logb 2 2) := by
+    rw [Real.logb]
+    have : Real.logb 2 2 = 1 := by
+      exact Real.logb_self_eq_one (by linarith)
+    field_simp
+    rw [this]
+
+  -- Change the base of log base 16 to base 2:
+  -- log base 16 of x = (log of x)/(log of 16) = (log of x)/(4 * log of 2)
+  have h₄ : Real.logb 16 n = (Real.logb 2 n) / (4 * Real.logb 2 2) := by
+    rw [Real.logb]
+    have : Real.logb 2 16 = 4 := by
+      rw [Real.logb_eq_iff_rpow_eq] <;> (norm_num)
+    field_simp
+    rw [this]
+
+  -- (log base 2 of log base 16 of n) = 2 * (log base 2 of log base 4 of n)
+  have h₅ : Real.logb 2 (Real.logb 16 n) = 2 * Real.logb 2 (Real.logb 4 n) := by
+    rw [h₃, h₄]
+    ring
+
+  -- Therefore, (log base 2 of log base 2 of n) = 4 * (log base 2 of log base 4 of n)
+  have h₆ : Real.logb 2 (Real.logb 2 n) = 4 * Real.logb 2 (Real.logb 4 n) := by
+    rw [h₅] at h₂
+    linarith only [h₂]
+
+  -- Let's analyze the domain of the original equation
+  have h₇ : Real.logb 2 (Real.logb 4 n) = 0 := by
+    linarith only [h₆]
+
+  have h₈ : Real.logb 4 n = 1 := by
+    rw [Real.logb_eq_iff_rpow_eq (by linarith) (by linarith) (by linarith)] at h₇
+    rw [h₇]
+    all_goals linarith
+
+  -- The only solution in the natural numbers is 256
+  have h₉ : n = 256 := by
+    rw [h₈] at h₁
+    have h₁₀ : Real.logb 2 (Real.logb 16 n) = 0 := by
+      linarith only [h₁]
+    have h₁₁ : Real.logb 16 n = 1 := by
+      rw [Real.logb_eq_iff_rpow_eq (by linarith) (by linarith) (by linarith)] at h₁₀
+      rw [h₁₀]
+      all_goals linarith
+    have h₁₂ : n = 16 := by
+      rw [h₁₁]
+      norm_num
+      all_goals linarith
+    have h₁₃ : n = 256 := by
+      rw [h₁₂]
+      norm_num
+      all_goals linarith
+    exact h₁₃
+
+  -- The sum of the digits of 256 is 13
+  rw [h₉]
+  norm_num
+```

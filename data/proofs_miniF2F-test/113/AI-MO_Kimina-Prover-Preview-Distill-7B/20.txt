@@ -1,0 +1,103 @@
+-- estimate the sum by integral
+  have : ∫ k in (2 : ℝ)..10000, 1 / Real.sqrt k ≤ 198 := by
+    calc
+      ∫ k in (2 : ℝ)..10000, 1 / Real.sqrt k ≤ ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt  (k : ℝ) := by
+        apply integral_le_sum
+        simp only [Finset.mem_Icc, Nat.ofNat_pos, Nat.cast_ofNat, true_and, gt_iff_lt,
+          Nat.cast_nonneg, sub_le_iff_le_add]
+        intro x hx
+        simp only [Finset.mem_Icc, Nat.cast_pos, Nat.cast_one, le_refl, and_self]
+        have : (x : ℝ) < (x + 1 : ℝ) := by
+          refine sub_lt_self?_
+          simp only [Nat.cast_add, Nat.cast_one]
+          exact lt_of_lt_of_le hx (by simp only [Nat.cast_le, Nat.cast_one, le_refl])
+        refine one_div_lt_one_div_of_lt?_ this
+        simp only [Nat.cast_add, Nat.cast_one]
+        linarith
+      _ ≤ 198 := by
+        -- calculate the integral
+        have : ∫ k in (2 : ℝ)..10000, 1 / Real.sqrt k = 2 * Real.sqrt 10000 - 2 * Real.sqrt 2 := by
+          rw [← integral_const]
+          simp only [Finset.mem_Icc, Nat.ofNat_pos, Nat.cast_ofNat, true_and, gt_iff_lt,
+            Nat.cast_nonneg, sub_le_iff_le_add]
+          norm_num
+          refine integral_div_const?_
+          simp only [Finset.mem_Icc, Nat.cast_pos, Nat.cast_one, le_refl, and_self]
+          intro x hx
+          simp only [Finset.mem_Icc, Nat.cast_le, Nat.cast_one, le_refl]
+          refine le_of_lt?_
+          refine div_lt_div_of_pos_right?_ (show 0 < (x : ℝ) by simp only [Nat.cast_pos, Nat.cast_one])
+          rw [div_self]
+          simp only [ne_eq, Nat.cast_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
+            IsEmpty.forall_iff, and_true]
+          exact lt_of_lt_of_le hx (by simp only [Nat.cast_le, Nat.cast_one, le_refl])
+        rw [this]
+        have : Real.sqrt 10000 = 100 := by
+          rw [Real.sqrt_eq_iff_mul_self_eq_of_pos]
+          norm_num
+          norm_num
+        rw [this]
+        norm_num
+
+  -- turn the integral to sum
+  have integral_to_sum : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt (k : ℝ) ≤ 198 := by
+    calc
+      ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt (k : ℝ) ≤ ∫ k in (2 : ℝ)..10000, 1 / Real.sqrt k := by
+        apply sum_le_integral
+        simp only [Finset.mem_Icc, Nat.ofNat_pos, Nat.cast_ofNat, true_and, gt_iff_lt,
+          Nat.cast_nonneg, sub_le_iff_le_add]
+        refine le_of_lt?_
+        refine integral_lt_integrable?_?_?_
+        exact le_of_lt (this integral)
+        simp only [Set.mem_Ioi, ne_eq, Nat.cast_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
+          IsEmpty.forall_iff, and_true]
+        exact fun _ ↦ thisle _
+        simp only [Finset.mem_Icc, Nat.cast_le, Nat.cast_one, le_refl]
+        linarith
+      _ ≤ 198 := by exact this
+
+  -- refine the result
+  calc
+    ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k ≤ 198 := by exact integral_to_sum
+    _ < 198 := by
+      -- turn the integral to sum
+      have integral_to_sum : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt (k : ℝ) < 198 := by
+        have : ∫ k in (2 : ℝ)..10000, 1 / Real.sqrt k < 198 := by
+          calc
+            ∫ k in (2 : ℝ)..10000, 1 / Real.sqrt k = 2 * Real.sqrt 10000 - 2 * Real.sqrt 2 := by
+              rw [← integral_const]
+              simp only [Finset.mem_Icc, Nat.ofNat_pos, Nat.cast_ofNat, true_and, gt_iff_lt,
+                Nat.cast_nonneg, sub_le_iff_le_add]
+              norm_num
+              refine integral_div_const?_
+              simp only [Finset.mem_Icc, Nat.cast_pos, Nat.cast_one, le_refl, and_self]
+              intro x hx
+              simp only [Finset.mem_Icc, Nat.cast_le, Nat.cast_one, le_refl]
+              refine le_of_lt?_
+              refine div_lt_div_of_pos_right?_ (show 0 < (x : ℝ) by simp only [Nat.cast_pos, Nat.cast_one])
+              rw [div_self]
+              simp only [ne_eq, Nat.cast_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
+                IsEmpty.forall_iff, and_true]
+              exact lt_of_lt_of_le hx (by simp only [Nat.cast_le, Nat.cast_one, le_refl])
+            _ < 198 := by
+              have : Real.sqrt 10000 = 100 := by
+                rw [Real.sqrt_eq_iff_mul_self_eq_of_pos]
+                norm_num
+                norm_num
+              rw [this]
+              norm_num
+        refine lt_of_le_of_lt integral_to_sum this
+      refine lt_of_le_of_lt integral_to_sum?_
+      apply sum_lt_sum
+      simp only [Finset.mem_Icc, Nat.ofNat_pos, Nat.cast_ofNat, true_and, gt_iff_lt,
+        Nat.cast_nonneg, sub_le_iff_le_add]
+      intro x hx
+      simp only [Finset.mem_Icc, Nat.cast_le, Nat.cast_one, le_refl]
+      refine lt_of_lt_of_le hx?_
+      refine one_div_lt_one_div_of_lt?_?_
+      simp only [Nat.cast_add, Nat.cast_one]
+      linarith
+      simp only [Nat.cast_add, Nat.cast_one]
+      linarith
+
+```

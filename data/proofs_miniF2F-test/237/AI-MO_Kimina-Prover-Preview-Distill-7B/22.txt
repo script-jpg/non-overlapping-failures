@@ -1,0 +1,334 @@
+obtain ⟨k, hk, h2⟩ := h₁
+
+  have h₃ : 2 ^ k = (a + b ^ 2) * (b + a ^ 2) := by
+    exact h2
+
+  have h₄ : 2 ^ k > 0 := by
+    exact Nat.pow_pos (by decide) k
+
+  -- show that a + b ^ 2 > 0 and b + a ^ 2 > 0
+  have h₅ : a + b ^ 2 > 0 := by
+    calc
+      a + b ^ 2 > 0 + b ^ 2 := by linarith
+      _ > 0 + 0 := by rw [Nat.add_pos_left (b ^ 2), zero_add]
+      _ = b ^ 2 := by rw [zero_add]
+      _ > 0 := by apply Nat.pow_pos; decide
+
+  have h₆ : b + a ^ 2 > 0 := by
+    calc
+      b + a ^ 2 > 0 + a ^ 2 := by linarith
+      _ > 0 + 0 := by rw [Nat.add_pos_left (a ^ 2), zero_add]
+      _ = a ^ 2 := by rw [zero_add]
+      _ > 0 := by apply Nat.pow_pos; decide
+
+  -- show that (a + b ^ 2) * (b + a ^ 2) > 0
+  have h₇ : (a + b ^ 2) * (b + a ^ 2) > 0 := by
+    exact Nat.mul_pos h₅ h₆
+
+  -- show that (a + b ^ 2) * (b + a ^ 2) is even
+  have h₈ : Even ((a + b ^ 2) * (b + a ^ 2)) := by
+    apply Nat.even_mul'.mpr
+    apply Or.inl
+    exact Nat.even_iff.mpr (Eq.even_iff.mp (Eq.trans (id (Eq.symm h₃)) (Nat.even_two_pow k)))
+
+  -- show that a + b ^ 2 and b + a ^ 2 have the same parity
+  have h₉ : (a + b ^ 2).Even ↔ (b + a ^ 2).Even := by
+    rw [Nat.even_mul]
+    rcases h₈ with (h₈ | h₈)
+   .   refine ⟨?_,?_⟩
+     .   exact h₈.1
+     .   rw [←h₃]
+         exact h₈.2
+   .   refine ⟨?_,?_⟩
+     .   rw [←h₃]
+         exact h₈.1
+     .   exact h₈.2
+
+  -- show that a + b ^ 2 or b + a ^ 2 is even
+  have h₁₀ : (a + b ^ 2).Even ∨ (b + a ^ 2).Even := by
+    rcases h₈ with (h₈ | h₈)
+   .   left
+     exact h₈.1
+   .   right
+     exact h₈.2
+
+  rcases h₁₀ with h₁₀ | h₁₀
+ .   rcases h₁₀ with ⟨n, hn⟩
+
+    have h₁₁: 2 ∣ (a + b ^ 2) * (b + a ^ 2) := by
+      rw [h₃]
+      exact dvd_pow (a + b ^ 2) k
+
+    have h₁₂: 2 ∣ 2 ^ k := by
+      exact dvd_pow 2 k
+
+    have h₁₃: 2 ∣ (a + b ^ 2) + (b + a ^ 2) := by
+      apply Nat.dvd_add
+     .   exact dvd_pow (a + b ^ 2) k
+     .   exact dvd_pow (b + a ^ 2) k
+
+    have h₁₄: 2 ∣ (b + a ^ 2) := by
+      exact Nat.dvd_iff_dvd_of_dvd_add h₁₃.1 h₁₀
+
+    have h₁₅: 2 ∣ (a + b ^ 2) := by
+      exact Nat.dvd_iff_dvd_of_dvd_add h₁₃.2 (by rw [add_comm]; exact h₁₀)
+
+    have h₁₆: 2 ^ k = (a + b ^ 2) * (b + a ^ 2) := by
+      exact h₃
+
+    have h₁₇: 2 ∣ 2 ^ k := by
+      exact dvd_pow 2 k
+
+    have h₁₈: 2 ∣ (a + b ^ 2) ∨ 2 ∣ (b + a ^ 2) := by
+      refine (Nat.Prime.dvd_mul (by decide)).mp h₁₇
+
+    rcases h₁₈ with h₁₈ | h₁₈
+   .   exact h₁₅
+   .   exact h₁₄
+ .   rcases h₁₀ with ⟨n, hn⟩
+
+    have h₁₁: 2 ∣ (a + b ^ 2) * (b + a ^ 2) := by
+      rw [h₃]
+      exact dvd_pow (b + a ^ 2) k
+
+    have h₁₂: 2 ∣ 2 ^ k := by
+      exact dvd_pow 2 k
+
+    have h₁₃: 2 ∣ (a + b ^ 2) + (b + a ^ 2) := by
+      apply Nat.dvd_add
+     .   exact dvd_pow (a + b ^ 2) k
+     .   exact dvd_pow (b + a ^ 2) k
+
+    have h₁₄: 2 ∣ (a + b ^ 2) := by
+      exact Nat.dvd_iff_dvd_of_dvd_add h₁₃.1 (by rw [add_comm]; exact hn)
+
+    have h₁₅: 2 ∣ (b + a ^ 2) := by
+      exact Nat.dvd_iff_dvd_of_dvd_add h₁₃.2 (by rw [add_comm]; exact hn)
+
+    have h₁₆: 2 ^ k = (a + b ^ 2) * (b + a ^ 2) := by
+      exact h₃
+
+    have h₁₇: 2 ∣ 2 ^ k := by
+      exact dvd_pow 2 k
+
+    have h₁₈: 2 ∣ (a + b ^ 2) ∨ 2 ∣ (b + a ^ 2) := by
+      refine (Nat.Prime.dvd_mul (by decide)).mp h₁₇
+
+    rcases h₁₈ with h₁₈ | h₁₈
+   .   exact h₁₄
+   .   exact h₁₅
+
+  -- show that a < b
+  have h₁₁ : a < b := by
+    by_contra h₁₁
+    push_neg at h₁₁
+
+    have h₁₂: b + a ^ 2 > a + b ^ 2 > 0 := by
+      refine ⟨?_,?_⟩
+     .   apply Nat.lt_add_of_sub_pos
+        rw [Nat.sub_pos_iff_lt]
+        exact h₁₁
+     .   apply Nat.lt_add_of_sub_pos
+        rw [Nat.sub_pos_iff_lt]
+        apply Nat.pow_lt_pow_of_lt
+        exact h₁₁
+        decide
+
+    have h₁₃: (a + b ^ 2) * (b + a ^ 2) > (a + b ^ 2) * (a + b ^ 2) := by
+      apply Nat.mul_lt_mul_of_pos_left
+     .   exact h₁₂.2
+     .   exact Nat.zero_lt_add h₁₂.1
+
+    have h₁₄: (a + b ^ 2) * (a + b ^ 2) > 0 := by
+      apply Nat.mul_pos
+     .   exact Nat.add_pos h₁₂.1.symm h₄
+     .   exact Nat.add_pos h₁₂.1.symm h₄
+
+    have h₁₅: (a + b ^ 2) * (b + a ^ 2) > 0 := by
+      exact Nat.mul_pos h₅ h₆
+
+    have h₁₆: (a + b ^ 2) * (b + a ^ 2) = (a + b ^ 2) * (a + b ^ 2) := by
+      linarith
+
+    have h₁₇: a + b ^ 2 = 0 ∨ b + a ^ 2 = 0 := by
+      by_contra h₁₇
+      push_neg at h₁₇
+
+      have h₁₈: a + b ^ 2 > 0 := by
+        exact Nat.add_pos h₄ h₄
+
+      have h₁₉: b + a ^ 2 > 0 := by
+        exact Nat.add_pos h₄ h₄
+
+      have h₁₂: (a + b ^ 2) * (b + a ^ 2) > (a + b ^ 2) * (a + b ^ 2) := by
+        apply Nat.mul_lt_mul_of_pos_left
+       .   exact h₁₈
+       .   exact h₁₉
+
+      have h₁₃: (a + b ^ 2) * (a + b ^ 2) > 0 := by
+        apply Nat.mul_pos
+       .   exact h₁₈
+       .   exact h₁₈
+
+      linarith
+
+    have h₁₈: a + b ^ 2 > 0 := by
+      exact Nat.add_pos h₄ h₄
+
+    have h₁₉: b + a ^ 2 > 0 := by
+      exact Nat.add_pos h₄ h₄
+
+    have h₁₂: (a + b ^ 2) * (b + a ^ 2) > (a + b ^ 2) * (a + b ^ 2) := by
+      apply Nat.mul_lt_mul_of_pos_left
+     .   exact h₁₈
+     .   exact h₁₉
+
+    have h₁₃: (a + b ^ 2) * (a + b ^ 2) > 0 := by
+      apply Nat.mul_pos
+     .   exact h₁₈
+     .   exact h₁₈
+
+    have h₁₄: (a + b ^ 2) * (b + a ^ 2) > 0 := by
+      apply Nat.mul_pos h₅ h₆
+
+    have h₁₅: (a + b ^ 2) * (b + a ^ 2) = (a + b ^ 2) * (a + b ^ 2) := by
+      linarith
+
+    have h₁₆: a + b ^ 2 = 0 ∨ b + a ^ 2 = 0 := by
+      exact Nat.mul_eq_mul_left_iff.mp h₁₅
+
+    have h₁₇: a + b ^ 2 > 0 := by
+      exact Nat.add_pos h₄ h₄
+
+    have h₁₈: b + a ^ 2 > 0 := by
+      exact Nat.add_pos h₄ h₄
+
+    have h₁₉: a + b ^ 2 = 0 ∨ b + a ^ 2 = 0 := by
+      exact Nat.mul_eq_mul_left_iff.mp h₁₅
+
+    have h₁₂: a + b ^ 2 = 0 ∨ b + a ^ 2 = 0 := by
+      exact Nat.mul_eq_mul_left_iff.mp h₁₅
+
+    have h₁₃: a = 0 := by
+      by_contra h₁₃
+      have h₁₄: a ^ 2 > 0 := by
+        exact Nat.pow_pos h₁₃
+      have h₁₅: b > 0 := by
+        exact h₀.2
+      linarith
+
+    linarith
+
+  -- show that b < a
+  have h₁₂ : b < a := by
+    by_contra h₁₂
+    push_neg at h₁₂
+
+    have h₁₃: a + b ^ 2 > b + a ^ 2 > 0 := by
+      refine ⟨?_,?_⟩
+     .   apply Nat.lt_add_of_sub_pos
+        rw [Nat.sub_pos_iff_lt]
+        exact h₁₂
+     .   apply Nat.lt_add_of_sub_pos
+        rw [Nat.sub_pos_iff_lt]
+        apply Nat.pow_lt_pow_of_lt
+        exact h₁₂
+        decide
+
+    have h₁₄: (a + b ^ 2) * (b + a ^ 2) > (b + a ^ 2) * (b + a ^ 2) := by
+      apply Nat.mul_lt_mul_of_pos_left
+     .   exact h₁₃.2
+     .   exact Nat.zero_lt_add h₁₃.1
+
+    have h₁₅: (b + a ^ 2) * (b + a ^ 2) > 0 := by
+      apply Nat.mul_pos
+     .   exact Nat.add_pos h₄ h₄
+     .   exact Nat.add_pos h₄ h₄
+
+    have h₁₆: (a + b ^ 2) * (b + a ^ 2) > 0 := by
+      apply Nat.mul_pos h₅ h₆
+
+    have h₁₇: (a + b ^ 2) * (b + a ^ 2) = (b + a ^ 2) * (b + a ^ 2) := by
+      linarith
+
+    have h₁₈: b + a ^ 2 = 0 ∨ a + b ^ 2 = 0 := by
+      by_contra h₁₈
+      push_neg at h₁₈
+
+      have h₁₉: b + a ^ 2 > 0 := by
+        exact Nat.add_pos h₄ h₄
+
+      have h₁₂: a + b ^ 2 > 0 := by
+        exact Nat.add_pos h₄ h₄
+
+      have h₁₃: (a + b ^ 2) * (b + a ^ 2) > (b + a ^ 2) * (b + a ^ 2) := by
+        apply Nat.mul_lt_mul_of_pos_left
+       .   exact h₁₉
+       .   exact h₁₈
+
+      have h₁₄: (b + a ^ 2) * (b + a ^ 2) > 0 := by
+        apply Nat.mul_pos
+       .   exact h₁₉
+       .   exact h₁₉
+
+      linarith
+
+    have h₁₉: b + a ^ 2 > 0 := by
+      exact Nat.add_pos h₄ h₄
+
+    have h₁₂: a + b ^ 2 > 0 := by
+      exact Nat.add_pos h₄ h₄
+
+    have h₁₃: (a + b ^ 2) * (b + a ^ 2) > (b + a ^ 2) * (b + a ^ 2) := by
+      apply Nat.mul_lt_mul_of_pos_left
+     .   exact h₁₉
+     .   exact h₁₂
+
+    have h₁₄: (b + a ^ 2) * (b + a ^ 2) > 0 := by
+      apply Nat.mul_pos
+     .   exact h₁₉
+     .   exact h₁₉
+
+    have h₁₅: (a + b ^ 2) * (b + a ^ 2) > 0 := by
+      apply Nat.mul_pos h₅ h₆
+
+    have h₁₆: (a + b ^ 2) * (b + a ^ 2) = (b + a ^ 2) * (b + a ^ 2) := by
+      linarith
+
+    have h₁₇: a + b ^ 2 = 0 ∨ b + a ^ 2 = 0 := by
+      exact Nat.mul_eq_mul_left_iff.mp h₁₆
+
+    have h₁₈: a + b ^ 2 > 0 := by
+      exact Nat.add_pos h₄ h₄
+
+    have h₁₉: b + a ^ 2 > 0 := by
+      exact Nat.add_pos h₄ h₄
+
+    have h₁₂: a + b ^ 2 = 0 ∨ b + a ^ 2 = 0 := by
+      exact Nat.mul_eq_mul_left_iff.mp h₁₆
+
+    have h₁₃: a = 0 := by
+      by_contra h₁₃
+      have h₁₄: a ^ 2 > 0 := by
+        exact Nat.pow_pos h₁₃
+      have h₁₅: b > 0 := by
+        exact h₀.2
+      linarith
+
+    linarith
+
+  -- show that a = 1
+  have h₁₃: a = 1 := by
+    by_contra h₁₃
+    have h₁₄: a > 1 := by
+      exact Nat.one_lt_iff_ne_zero_and_ne_one.mpr ⟨by decide, by linarith⟩
+
+    have h₁₅: a + b ^ 2 > 2 * b := by
+      calc
+        a + b ^ 2 > 1 + b ^ 2 := by linarith
+        _ > b + b ^ 2 := by nth_rewrite 2 [show b = 1 * b by decide]; rw [Nat.mul_lt_mul_right]; exact Nat.lt_of_le_of_ne (Nat.succ_le_succ h₁₄) h₁₁.ne'
+        _ > b := by nth_rewrite 2 [show b = 1 * b by decide]; rw [Nat.mul_lt_mul_right]; exact Nat.lt_of_le_of_ne (Nat.succ_le_succ h₁₄) rfl
+
+    have h₁₆: b + a ^ 2 > 2 * a := by
+      calc
+        b + a ^ 2 > b + 1 ^ 2 := by nth_rewrite 2 [show 1 = 1

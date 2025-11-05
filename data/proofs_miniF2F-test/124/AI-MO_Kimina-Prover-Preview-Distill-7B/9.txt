@@ -1,0 +1,108 @@
+-- Let $x$ be the maximum of $|a|$ and $|b|$.
+  let x := max (|a|) (|b|)
+
+  -- Let $y$ be the maximum of $|a+b|$ and $|a|+|b|$.
+  let y := max (|a + b|) (|a| + |b|)
+
+  -- We have $x \leq y$.
+  have hxy : x ≤ y := by
+    apply max_le_max
+    · apply le_max_left
+      apply abs_add_le
+    · apply le_max_right
+      apply abs_add_le
+
+  -- We have $y \leq x²$.
+  have hyx : y ≤ x ^ 2 := by
+    cases' le_cases (|a + b|) (|a| + |b|) with h₁ h₁ <;> cases' le_cases (|a|) (|b|) with h₂ h₂ <;>
+      simp_all only [abs_add, abs, max_assoc, max_comm, max_left_comm] <;>
+        nlinarith [abs_nonneg a, abs_nonneg b]
+
+  -- We have $x \leq y$.
+  have hxy' : x ≤ y := by
+    cases' le_cases (|a + b|) (|a| + |b|) with h₁ h₁ <;> cases' le_cases (|a|) (|b|) with h₂ h₂ <;>
+      simp_all only [abs_add, abs, max_assoc, max_comm, max_left_comm] <;>
+        nlinarith [abs_nonneg a, abs_nonneg b]
+
+  -- $y \leq x²$.
+  have hyx' : y ≤ x ^ 2 := by
+    cases' le_cases (|a + b|) (|a| + |b|) with h₁ h₁ <;> cases' le_cases (|a|) (|b|) with h₂ h₂ <;>
+      simp_all only [abs_add, abs, max_assoc, max_comm, max_left_comm] <;>
+        nlinarith [abs_nonneg a, abs_nonneg b]
+
+  -- Since $f(x)=\frac{x}{1+x}$ is monotonically increasing on $[0,+\infty)$, we have $f(x) \leq f(y)$.
+  have hxy'' : f x ≤ f y := by
+    rw [←hf]
+    apply MonotoneOn.mono
+    · apply ContinuousOn.mono
+      apply ContinuousOn.div
+      · exact continuousOn_id
+      · exact continuousOn_const
+      · exact continuousOn_id
+      · exact continuousOn_const
+    · intro x hx y hy hxy
+      rw [div_le_div_iff₀]
+      · nlinarith
+      · apply le_of_lt
+        apply lt_trans hyx
+        apply lt_of_le_of_lt hxy
+      · apply continuousOn_id
+      · apply continuousOn_const
+
+  -- Since $f(x)=\frac{x}{1+x}$ is monotonically increasing on $[0,+\infty)$, we have $f(y) \leq f(x²)$.
+  have hyx'' : f y ≤ f (x ^ 2) := by
+    rw [←hf]
+    apply MonotoneOn.mono
+    · apply ContinuousOn.mono
+      apply ContinuousOn.div
+      · exact continuousOn_id
+      · exact continuousOn_const
+      · exact continuousOn_id
+      · exact continuousOn_const
+    · intro x hx y hy hxy
+      rw [div_le_div_iff₀]
+      · nlinarith
+      · apply le_of_lt
+        apply lt_trans hx
+        apply lt_of_le_of_lt hxy
+      · apply continuousOn_id
+      · apply continuousOn_const
+
+  -- We have $f(x) = \frac{|a+b|}{1+|a+b|}$.
+  have hx : f x = |a + b| / (1 + |a + b|) := by
+    simp [f, x]
+    cases' le_cases (|a + b|) (|a| + |b|) with h₁ h₁ <;> cases' le_cases (|a|) (|b|) with h₂ h₂ <;>
+      simp_all only [abs_add, abs, max_assoc, max_comm, max_left_comm] <;>
+        nlinarith [abs_nonneg a, abs_nonneg b]
+
+  -- We have $f(y) = \frac{|a|+|b|}{1+|a|+|b|}$.
+  have hy : f y = (|a| + |b|) / (1 + |a| + |b|) := by
+    simp [f, y]
+    cases' le_cases (|a + b|) (|a| + |b|) with h₁ h₁ <;> cases' le_cases (|a|) (|b|) with h₂ h₂ <;>
+      simp_all only [abs_add, abs, max_assoc, max_comm, max_left_comm] <;>
+        nlinarith [abs_nonneg a, abs_nonneg b]
+
+  -- We have $f(x²) = \frac{(|a|+|b|)²}{1+(|a|+|b|)²}$.
+  have hx2 : f (x ^ 2) = (|a| + |b|) ^ 2 / (1 + (|a| + |b|) ^ 2) := by
+    simp [f, x]
+    cases' le_cases (|a + b|) (|a| + |b|) with h₁ h₁ <;> cases' le_cases (|a|) (|b|) with h₂ h₂ <;>
+      simp_all only [abs_add, abs, max_assoc, max_comm, max_left_comm] <;>
+        nlinarith [abs_nonneg a, abs_nonneg b]
+
+  -- Now the goal is to show that $\frac{|a+b|}{1+|a+b|}\leq \frac{|a|+|b|}{1+|a|+|b|}$.
+  suffices |a + b| / (1 + |a + b|) ≤ (|a| + |b|) / (1 + |a| + |b|) by
+    rw [hx, hy, hx2] at this
+    exact this
+
+  -- Now we only need to consider the case $0 < |a|+|b|$.
+  rcases (show 0 ≤ |a| + |b| by apply abs_add_nonneg).lt_or_eq.mp with h | h
+
+  -- If $|a|+|b| = 0$, then $|a| = |b| = 0$, and the goal is trivial.
+  · simp [h]
+
+  -- If $0 < |a|+|b|$, we simplify the inequality.
+  · rw [div_le_div_iff₀]
+    · nlinarith
+    · linarith
+
+```

@@ -1,0 +1,86 @@
+-- First, we have a variable change: for simplification let $b_i = a_{i+1}^2$. The we have $\sum_{i=0}^{99} b_i = 1$ and we need to show that
+  -- $b_1 b_2 + b_2 b_3 + \dots + b_{99} b_{100} + b_{100} b_1 < \frac{12}{25}$.
+  let b (i : ℕ) := a (i + 1) ^ 2
+  have h₀' : ∑ i in Finset.range 100, b i = 1 := by
+    simp [h₀, b]
+  have h₁ : ∑ i in Finset.range 99, b i * b (i + 1) + b 100 * b 1 < 12 / 25 := by
+    -- Here we need to make the change in indices explicit.
+    simp [Finset.sum_range_succ] at h₀'
+    -- Let's denote the sum $\sum_{i=1}^{100} b_i b_{i+1}$ as $S$.
+    set S := ∑ i in Finset.range 99, b i * b (i + 1)
+    -- Then $S + b_1 b_0 + b_{100} b_1 < \frac{12}{25}$.
+    change S + b 100 * b 1 < 12 / 25
+    -- Notice that $(b_0 + b_1 + \dots + b_{100})^2 = b_0^2 + b_1^2 + \dots + b_{100}^2 + 2(b_0 b_1 + b_1 b_2 + \dots + b_{99} b_{100})$.
+    have h₂ (n : ℕ) : (∑ i in Finset.range (n + 1), b i) ^ 2 = ∑ i in Finset.range (n + 1), b i ^ 2 + 2 * (∑ i in Finset.range n, b i * b (i + 1)) + 2 * (b n * b (n + 1)) := by
+      clear * -
+      induction' n with n ih
+      · simp only [Finset.sum_range_succ, add_zero, zero_add, mul_zero, add_zero, mul_one, zero_add]
+      · rw [Finset.sum_range_succ, Finset.sum_range_succ]
+        rw [Finset.sum_range_succ, Finset.sum_range_succ] at ih
+        rw [ih]
+        ring
+    -- Then (sum of squares) = 1, because (sum) = 1.
+    have h₃ : ∑ i in Finset.range 101, b i ^ 2 = 1 := by
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, h₀']
+      simp only [mul_one, mul_pow]
+    -- We have
+    -- $1 = \sum_{i=0}^{100} b_i ^2 = S + b_0^2 + b_{100}^2 + 2 b_0 b_{100} \leq S + 2(b_0^2 + b_{100}^2) + b_0 b_{100}$
+    have h₄ : 1 ≤ S + 2 * (b 0 ^ 2 + b 100 ^ 2) + b 0 * b 100 := by
+      calc
+        1 = ∑ i ∈ Finset.range 101, b i ^ 2 := h₃
+        _ = ∑ i ∈ Finset.range 99, b i ^ 2 + b 100 ^ 2 + b 0 ^ 2 := by
+          simp only [Finset.sum_range_succ, add_assoc]
+        _ = ∑ i ∈ Finset.range 99, b i * b (i + 1) + b 100 * b 0 + b 0 ^ 2 + b 100 ^ 2 := by
+          simp only [Finset.sum_range_succ, add_assoc]
+        _ ≤ ∑ i ∈ Finset.range 99, b i * b (i + 1) + 2 * (b 0 ^ 2 + b 100 ^ 2) + b 0 * b 100 := by
+          linarith [sq_nonneg (b 0 - b 100)]
+    -- Because $b_i \geq 0$, we have $b_i^2 \leq 1$, so indeed $b_0^2 + b_{100}^2 \leq 1$.
+    have h₅ : b 0 ^ 2 + b 100 ^ 2 ≤ 1 := by
+      have h₅ : b 0 ^ 2 ≤ (∑ i ∈ Finset.range 101, b i) ^ 2 := by
+        rw [Finset.sum_range_succ, Finset.sum_range_succ, h₀']
+        simp only [mul_one, mul_pow]
+        apply sq_nonneg
+      have h₆ : b 100 ^ 2 ≤ (∑ i ∈ Finset.range 101, b i) ^ 2 := by
+        rw [Finset.sum_range_succ, Finset.sum_range_succ, h₀']
+        simp only [mul_one, mul_pow]
+        apply sq_nonneg
+      linarith
+    -- We have
+    -- $1 = \sum_{i=0}^{100} b_i ^2 = S + b_0^2 + b_{100}^2 + 2 b_0 b_{100} \leq S + 2(b_0^2 + b_{100}^2) + \sqrt{b_0^2 \cdot b_{100}^2}$.
+    have h₆ : 1 ≤ S + 2 * (b 0 ^ 2 + b 100 ^ 2) + Real.sqrt ((b 0 * b 100) ^ 2) := by
+      calc
+        1 = ∑ i ∈ Finset.range 101, b i ^ 2 := h₃
+        _ = ∑ i ∈ Finset.range 99, b i ^ 2 + b 100 ^ 2 + b 0 ^ 2 := by
+          simp only [Finset.sum_range_succ, add_assoc]
+        _ = ∑ i ∈ Finset.range 99, b i * b (i + 1) + b 100 * b 0 + b 0 ^ 2 + b 100 ^ 2 := by
+          simp only [Finset.sum_range_succ, add_assoc]
+        _ ≤ ∑ i ∈ Finset.range 99, b i * b (i + 1) + 2 * (b 0 ^ 2 + b 100 ^ 2) + Real.sqrt ((b 0 * b 100) ^ 2) := by
+          apply (add_le_add_iff_left (S + 2 * (b 0 ^ 2 + b 100 ^ 2))).mpr
+          rw [Real.sqrt_sq (by simp only [mul_nonneg_iff, mul_nonneg_of_nonneg_of_nonneg, sq_nonneg, zero_le])]
+          linarith
+    rw [Real.sqrt_sq (mul_nonneg (pow_two_nonneg _) (pow_two_nonneg _))]; simp only [mul_nonneg_iff]
+    -- Then $1 \leq S + 2(b_0^2 + b_{100}^2) + (b_0 \cdot b_{100})$.
+    -- We can refine this bound by noticing that $b_0 \cdot b_{100} \leq \frac{1}{2}(b_0^2 + b_{100}^2)$.
+    have h₇ : 1 ≤ S + 2 * (b 0 ^ 2 + b 100 ^ 2) + (b 0 + b 100) ^ 2 / 2 - (b 0 - b 100) ^ 2 / 2 := by
+      linarith
+    -- So $1 \leq S + \frac{5}{2}(b_0^2 + b_{100}^2)$.
+    have h₈ : 1 ≤ S + 5 / 2 * (b 0 ^ 2 + b 100 ^ 2) := by
+      linarith
+    -- So $S \geq 1 - \frac{5}{2}(b_0^2 + b_{100}^2) \geq 1 - \frac{5}{2} \cdot 1 = -\frac{3}{2}$.
+    have h₉ : S ≥ 1 - 5 / 2 * (b 0 ^ 2 + b 100 ^ 2) := by linarith
+    -- We can also notice that $(b_0 - b_{100})^2 \geq 0$, which gives $b_0^2 + b_{100}^2 \geq 2b_0 b_{100}$.
+    -- Then $b_0^2 + b_{100}^2 \geq \frac{1}{2}(b_0 + b_{100})^2 \geq \frac{1}{2}(b_0^2 + b_{100}^2 + 2b_0 b_{100})$.
+    -- So $\frac{1}{2}(b_0^2 + b_{100}^2) \geq \frac{1}{2}(b_0^2 + b_{100}^2) + b_0 b_{100}$.
+    -- So $S \geq 1 - \frac{5}{2}(b_0^2 + b_{100}^2) \geq 1 - \frac{5}{2} \cdot \frac{5}{4} = -\frac{9}{8}$.
+    have h₁₀ : 1 - 5 / 2 * (b 0 ^ 2 + b 100 ^ 2) ≤ S := by linarith
+    have h₁₁ : b 0 ^ 2 + b 100 ^ 2 ≥ 2 * b 0 * b 100 := by
+      have : 0 ≤ (b 0 - b 100) ^ 2 := sq_nonneg _
+      linarith
+    have h₁₂ : 2 * b 0 * b 100 ≤ b 0 ^ 2 + b 100 ^ 2 := by linarith
+    have h₁₃ : 1 - 5 / 2 * (b 0 ^ 2 + b 100 ^ 2) ≤ -9 / 8 := by
+      linarith
+    linarith
+  -- Finally, we change back to $a_i$.
+  simp [b] at h₁
+  linarith
+```

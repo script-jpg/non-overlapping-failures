@@ -1,0 +1,117 @@
+-- Define $f: \mathbb{R}^2 \to \mathbb{R}^2$ such that $f(x,y) = (\sqrt{3}x - y, \sqrt{3}y + x)$.
+  let f : ℝ → ℝ → ℝ := fun x y ↦ (Real.sqrt 3 * x - y, Real.sqrt 3 * y + x)
+
+  -- Define $f^{(n)}: \mathbb{R}^2 \to \mathbb{R}^2$ such that $f^{(n)}(x,y) = f(f(\cdots f(x,y) \cdots ))$.
+  let f_n (n : ℕ) : ℝ → ℝ → ℝ := fun x y ↦
+    if n = 0 then (x, y) else f (f_n (n - 1) x y) (f_n (n - 1) y x)
+
+  -- From the problem, we have $\forall n, f^{(n)}(a_1,b_1) = (a_{n + 1}, b_{n + 1})$.
+  have h₄ (n : ℕ) : a (n + 1) = f_n n (a 1) (b 1).natAbs
+  have h₅ (n : ℕ) : b (n + 1) = f_n n (b 1) (a 1).natAbs
+
+  -- Notice that $f(x,y)$ can be written in matrix form as $\begin{pmatrix} \sqrt{3} & -1 \\ 1 & \sqrt{3} \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix}$.
+  have : ∀ x y, f x y = [Real.sqrt 3, -1, 1, Real.sqrt 3] := by intro x y; simp [f]; ring_nf
+
+  -- Therefore, $f^{(n)}(x,y)$ can be written in matrix form as $M^n \begin{pmatrix} x \\ y \end{pmatrix}$, where $M = \begin{pmatrix} \sqrt{3} & -1 \\ 1 & \sqrt{3} \end{pmatrix}$.
+  have : ∀ n, ∀ x y, f_n n x y = Matrix.mul n [Real.sqrt 3, -1, 1, Real.sqrt 3] := by
+    intro n x y
+    induction n with
+    | zero => simp [f_n]
+    | succ n ih =>
+      simp [f_n, this, Matrix.mul_assoc]
+
+  -- We can diagonalize $M$ as $M = U \begin{pmatrix} 2 & 0 \\ 0 & -2 \end{pmatrix} U^{-1}$, where $U = \begin{pmatrix} 1 & -1 \\ 1 & 1 \end{pmatrix}$.
+  have : ∀ x y, f_n n x y = [2, 0, 0, -2] := by
+    intro x y
+    rw [this, Matrix.mul_n_apply (n := n) 2]
+
+    let U : Matrix ℝ 2 2 :=!![1, -1, 1, 1]
+    let D : Matrix ℝ 2 2 :=!![2, 0, 0, -2]
+
+    have U_inv : Invertible U := by
+      norm_num [Matrix.invertible_iff]
+      success
+
+    have U_dig : U * D = U.map f_n n := by
+      simp [U, D]
+      intro x y
+      simp [this]
+      ring_nf
+
+    have U_dig' : IsUnitary U := by
+      apply isUnitary_of_norm U
+      simp [U]
+      norm_num [Matrix.invOf]
+
+    have hU : f_n n x y = U.map f_n n (U.inv.map (f_n n) (U.inv x y)) := by
+      simp [U]
+      have : (U⁻¹ x y).natAbs = (U⁻¹ x y) := by
+        simp [U]
+        intro h
+        suffices : (x - y)⁻¹ * (x + y) = (x + y)⁻¹ * (x - y)
+        · apply_fun (· * (x - y) * (x + y)) at this
+          simp at this
+          exact this
+          rfl
+      split_ifs with hxy
+      · simp [hxy]
+        rw [←Real.sqrt_sq (show 0 ≤ x - y by linarith)]
+        apply_fun (· * (x + y) * (x - y)) at hU
+        simp at hU
+        linear_combination hU
+      · simp [hxy]
+        rw [←Real.sqrt_sq (show 0 ≤ x + y by linarith)]
+        apply_fun (· * (x - y) * (x + y)) at hU
+        simp at hU
+        linear_combination hU
+
+    have : IsUnitary U := by
+      apply isUnitary_of_norm
+      simp [U]
+      norm_num [Matrix.invOf]
+
+    have : ∀ n, U * f_n n * U.inv = D ^ n := by
+      intro n
+      induction n with
+      | zero => simp [D]
+      | succ n ih =>
+        simp [D]
+        linear_combination ih
+
+    rw [hU]
+    simp [this]
+    apply Matrix.map_congr (U := U)
+    intro i j
+    simp [U]
+    split_ifs <;> try simp
+    · simp [ih, Matrix.mul_fin_two]
+      match j with
+      | 0 => simp; calc
+          _ = ((2:ℝ) ^ n * x + (2:ℝ) ^ n * y) * (x - y) * (x + y) := by ring
+          _ = _ := by ring
+      | 1 => simp; calc
+          _ = ((2:ℝ) ^ n * x + (2:ℝ) ^ n * y) * (x + y) * (x - y) := by ring
+          _ = _ := by ring
+
+    rw [Matrix.mul_n_apply, Matrix.mul_apply, Matrix.inv_apply]
+    · simp [U, D]
+      norm_num [Matrix.invOf]
+    · simp [U]
+      norm_num [Matrix.invOf]
+
+  -- Then, $M^{99} \begin{pmatrix} 2 \\ 4 \end{pmatrix} = \begin{pmatrix} a_{100} \\ b_{100} \end{pmatrix} = \begin{pmatrix} 2 \\ 4 \end{pmatrix}$.
+  have : (2:ℝ) ^ 99 * ↑(a 1) + (2:ℝ) ^ 99 * ↑(b 1) = 2 := by
+    rw [(this 99 2 4).left] at h₂
+    norm_num [h₂]
+  have : (2:ℝ) ^ 99 * ↑(b 1) - (2:ℝ) ^ 99 * ↑(a 1) = 4 := by
+    rw [(this 99 2 4).right] at h₃
+    norm_num [h₃]
+
+  -- Solving this system of equations, we get $a_1 = \frac{1}{2^{98}}$ and $b_1 = -\frac{1}{2^{98}}$.
+  -- Therefore, $a_1 + b_1 = \frac{1}{2^{98}}$.
+  have : a 1 = 1 / 2 ^ 98 := by linarith
+  have : b 1 = -1 / 2 ^ 98 := by linarith
+  rw [this, ‹a 1 = 1 / 2 ^ 98›]
+  ring
+
+```

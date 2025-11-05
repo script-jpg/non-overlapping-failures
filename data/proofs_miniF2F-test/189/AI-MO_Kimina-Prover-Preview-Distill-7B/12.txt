@@ -1,0 +1,57 @@
+have : ∑ k ∈ S, k = ∑ x : ℝ, x * (if x ∈ S then 1 else 0) := by
+    simp [Finset.sum_ite, Finset.sum_const, Finset.card_univ]
+  rw [this]
+
+  -- the sum of solutions of $|2-x|= 3$ is the sum of roots of the equation $1-2*x+x^2=9$.
+  have : {x : ℝ | x * (if x ∈ S then 1 else 0)} = {x : ℝ | 1 - 2 * x + x ^ 2 = 9} := by
+    ext x
+    constructor <;> intro hx
+    · by_cases h : x ∈ S
+      · rw [if_pos h] at hx
+        simp [h₀] at hx
+        -- if $x$ is a solution of $|2-x|=3$, then $x$ is a solution of $1-2*x+x^2=9$.
+        have : 1 - 2 * x + x ^ 2 = 9 := by
+          have : 1 - 2 * x + x ^ 2 = (2 - x) ^ 2 := by ring
+          rw [this]
+          norm_num
+          exact sq_eq_sq_iff_abs_eq_abs.mp hx
+        assumption
+      · rw [if_neg h] at hx
+        contradiction
+    · -- if $x$ is a solution of $1-2*x+x^2=9$, then $x$ is a solution of $|2-x|=3$.
+      have : (2 - x) ^ 2 = 9 := by
+        have : 1 - 2 * x + x ^ 2 = (2 - x) ^ 2 := by ring
+        rw [this] at hx
+        exact hx
+      have : abs (2 - x) = 3 := by
+        norm_num at this
+        cases (sq_eq_sq_iff_abs_eq_abs.mp this).1 with
+        | inl h => rw [h]
+        | inr h => rw [h]
+        rfl
+      assumption
+  rw [this]
+
+  -- solve the equation $1-2*x+x^2=9$, we get $x=4$ or $x=-2$.
+  have : {x : ℝ | 1 - 2 * x + x ^ 2 = 9} = {4, -2} := by
+    ext x
+    constructor <;> intro hx
+    · -- if $x$ is a solution of $1-2*x+x^2=9$, then $x$ is either $4$ or $-2$.
+      have : (x - 4) * (x + 2) = 0 := by
+        have : x ^ 2 = 2 * x + 9 := by linarith
+        rw [this]
+        ring
+      cases (mul_eq_zero.mp this) with
+      | inl h => left; linarith
+      | inr h => right; linarith
+    · -- if $x$ is either $4$ or $-2$, then $x$ is a solution of $1-2*x+x^2=9$.
+      cases hx with
+      | inl h => rw [h]; norm_num
+      | inr h => rw [h]; norm_num
+  rw [this]
+
+  -- the sum of roots of the equation $1-2*x+x^2=9$ is 4.
+  have : ∑ x : ℝ, x * (if x ∈ ({4, -2} : Finset ℝ) then 1 else 0) = 4 := by
+    norm_num
+  assumption
+```

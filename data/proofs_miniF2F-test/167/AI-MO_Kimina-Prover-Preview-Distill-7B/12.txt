@@ -1,0 +1,275 @@
+-- lemma, if $x<1$ and $0 < x + \frac 1 n$, then $x(x+\frac 1 n) < 1$.
+  have l_le (x : ℝ) (h₀ : 0 < x) (h₁ : x < 1) (n : NNReal) (h₂ : 0 < x + 1 / n) : x * (x + 1 / n) < 1 := by
+    have h : x * (x + 1 / n) < 1 * (x + 1 / n) := by
+      apply mul_lt_mul_of_pos_right h₁ h₀
+    linarith
+
+  -- lemma, if $0 < x < y < 1$, then $0 < x (x + 1 / n) < y (y + 1 / n) < 1$
+  have l_lt (x y : ℝ) (h₀ : 0 < x) (h₁ : x < y) (h₂ : y < 1) (n : NNReal) (h₃ : 0 < x + 1 / n) (h₄ : 0 < y + 1 / n) : x * (x + 1 / n) < y * (y + 1 / n) := by
+    have h : x * (x + 1 / n) < y * (x + 1 / n) := by
+      apply mul_lt_mul_of_pos_right h₁ h₃
+    apply mul_lt_mul_of_pos_left h h₄
+    linarith
+
+  -- prove by induction, if $0 < x < 1$, then $0 < f_n(x) <... < f_{2n}(x) < 1$
+  have hf_n_lt (x : ℝ) (h₀ : 0 < x) (h₁ : x < 1) (n : NNReal) (h₂ : 0 < f n x) (h₃ : f n x < 1) : ∀ i ≤ n, 0 < f (n - i) x ∧ f (n - i) x < f (n - i + 1) x ∧ f (n - i + 1) x < 1 := by
+    induction n with
+    | zero =>
+      intro i hi
+      have : n = 0 := by
+        exact Nat.zero_le.mp hi
+      rw [this]
+      simp
+      linarith
+    | succ n ih =>
+      intro i hi
+      have ih' := ih (Nat.le_sub_one_iff_lt.mp hi)
+      constructor
+     . rw [h₀]
+      constructor
+     . have h : 0 < f (n - i) x := by
+          exact ih'.left
+        apply l_lt _ _ h₀ ih'.left (show f (n - i) x < 1 by exact ih'.right)
+        apply l_lt _ _ (show 0 < f (n - i) x by exact h) (show f (n - i) x < 1 by exact ih'.right)
+        rw [show n - i + 1 = n - (i - 1) by omega]
+        exact ih'.left
+     . apply l_le _ h₀ ih'.left
+        have h : f (n - i) x + 1 / n > 0 := by
+          apply add_pos
+          exact ih'.left
+          apply div_pos
+          norm_num
+          exact Nat.cast_pos'.mpr n
+        exact ih'.right
+
+  -- prove by induction, if $0 < x < 1$, then $\lim_{n \to \infty} f_n(x) = 1$
+  have hf_n_and_tendsto (x : ℝ) (h₀ : 0 < x) (h₁ : x < 1) : ∀ n, 0 < f n x ∧ f n x < 1 ∧ ∃ m, ∀ k ≥ m, f k x > 1 - 1 / n := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+      exact h₀
+    | succ n ih =>
+      have h₂ : 0 < f n x := by
+        exact ih.left
+      have h₃ : f n x < 1 := by
+        exact ih.right.left
+      obtain ⟨m, hm⟩ := ih.right
+      use max m (n + 1)
+      intro k hk
+      have hk' : k ≥ m := by
+        exact Nat.le_max_left m hk
+      have h₄ : f k x > 1 - 1 / n := by
+        exact hm k hk'
+      have h₅ : f (n + 1) x > f k x := by
+        rw [h₁ n]
+        apply l_lt _ _ h₂ h₃
+        apply add_pos
+        exact h₂
+        apply div_pos
+        norm_num
+        exact Nat.cast_pos'.mpr n
+      have h₆ : f (n + 1) x > 1 - 1 / (n + 1) := by
+        apply l_lt _ _ h₄ h₅
+        linarith
+        linarith
+      constructor
+     . apply hf n
+        exact h₂
+      constructor
+     . exact h₃
+     . refine ⟨max m (n + 1),?_⟩
+        intro k hk
+        exact h₆
+
+  -- prove that if $0 < x < f_1(x) < 1$, then $0 < f_n(x) < f_{n+1}(x) < 1$ for all $n$
+  have hf_increasing (x : ℝ) (h₀ : 0 < x) (h₁ : f 1 x > x) (h₂ : x < 1) : ∀ n, 0 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1 := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+      constructor
+     . exact h₀
+      constructor
+     . exact h₁
+     . exact h₂
+    | succ n ih =>
+      have h₃ : f (n + 1) x > 0 := by
+        apply hf n
+        exact ih.left
+      have h₄ : f (n + 1) x < f (n + 1 + 1) x := by
+        apply hf_increasing n
+       . exact ih.left
+       . apply lt_trans h₁
+          exact hf n
+          exact ih.left
+       . exact ih.right.right
+      have h₅ : f (n + 1 + 1) x > 0 := by
+        apply hf (n + 1 + 1)
+        apply lt_trans?_ h₄
+        apply hf_increasing (n + 1)
+       . exact ih.left
+       . apply lt_trans h₁
+          exact hf (n + 1)
+          exact ih.left
+       . exact ih.right.right
+      constructor
+     . exact h₃
+      constructor
+     . exact h₄
+     . apply l_le _ h₃ (show _ by linarith) (n + 1)
+        exact h₅
+
+  -- prove that if $0 < x < 1$ and $0 < f_n(x) < f_{n+1}(x) < 1$, then $x < f_{2n+1}(x)$ for all $n$
+  have hf_n_lt_of_increasing (x : ℝ) (h₀ : 0 < x) (h₁ : f 1 x > x) (h₂ : x < 1) (n : NNReal) (h₃ : ∀ i ≤ n, 0 < f (n - i) x ∧ f (n - i) x < f (n - i + 1) x ∧ f (n - i + 1) x < 1) : x < f (2 * n + 1) x := by
+    have h₄ := h₃ 0 (by norm_num)
+    have h₅ := hf n
+    have h₆ := hf_increasing x h₀ h₁ h₂
+    have h₇ := h₃ n (by omega)
+    linarith
+
+  -- prove that if $0 < x < 1$, then $x < \limsup_{n \to \infty} f_n(x)$
+  have h limsup (x : ℝ) (h₀ : 0 < x) (h₁ : x < 1) : x < �, (fun n ↦ f n x) := by
+    -- by contradiction, assume that $x \geq \limsup_{n \to \infty} f_n(x)$
+    by_contra h₂
+    simp at h₂
+    apply le_of_lt at h₂
+    -- there exists $n$ such that $f_{2n+1}(x) > x$
+    have hf_n_gt (n : NNReal) : ∃ m, f (2 * m + 1) x > x := by
+      use m := Nat.cast_lt_mul_left x h₀ h₁ n
+      apply hf_n_lt_of_increasing x h₀ h₁ h₂ n
+     . apply lt_trans h₂
+        exact h₃ n (by omega)
+     . apply lt_of_lt_of_le h₄
+        apply le_trans?_ h₆
+        apply le_of_lt
+        exact h₅
+    -- therefore, $x \geq \limsup_{n \to \infty} f_n(x)$ is false
+    obtain ⟨m, hm⟩ := hf_n_gt n
+    have h₃ := h₃ m
+    have h₄ := le_trans hm h₃.right
+    have h₅ := h₃.right.left
+    linarith
+
+  -- prove that if $0 < x < 1$, then $\lim_{n \to \infty} f_n(x) = 1$
+  have h lim (x : ℝ) (h₀ : 0 < x) (h₁ : x < 1) : �, (fun n ↦ f n x) = 1 := by
+    have h₂ := hf_n_and_tendsto x h₀ h₁
+    have h₃ := hf x h₀ h₁
+    obtain ⟨h₄, h₅⟩ := h₂
+    have h₆ := hf_increasing x h₀ h₁ h₂
+    have h₇ := h x h₀ h₁
+    have h₈ := h₇ 1
+    have h₉ := h₆ 1
+    linarith
+
+  -- prove that if $0 < a < 1$ and $\lim_{n \to \infty} f_n(a) = 1$, then $a = \lim_{n \to \infty} f_{2n}(a)$
+  have h_a_eq lim a (h₀ : 0 < a) (h₁ : a < 1) (h₂ : �, (fun n ↦ f n a) = 1) : a = �, (fun n ↦ f (2 * n) a) := by
+    -- $a = \lim_{n \to \infty} f_{2n+1}(a)$
+    have h₂' := h_a := h a h₀ h₁ h₂
+    rw [← funext_iff.mpr h₂] at h₂'
+    -- prove that $\lim_{n \to \infty} f_{2n}(a) = \lim_{n \to \infty} f_{2n+1}(a)$
+    have h₃ : ∀ n, f (2 * n) a < f (2 * n + 1) a := by
+      intro n
+      rw [h₁ (2 * n)]
+      apply l_lt _ _ (h₀ (2 * n)) (h₀ (2 * n + 1)) (show (2 : NNReal) * ↑n + 1 = 2 * ↑n + 1 + 1 by norm_num; omega)
+      apply lt_of_lt_of_le h₂'
+      apply le_trans (h₄ (2 * n + 1 + 1)) (h₅ (2 * n + 1))
+     . apply le_of_lt
+        exact h₆ (2 * n + 1)
+     . rw [show 1 + (2 * n) = 2 * (n + 1) by omega]
+        apply h₄
+        omega
+    -- prove that $\lim_{n \to \infty} f_{2n}(a) = \lim_{n \to \infty} f_{2n+1}(a)$
+    have h₄ : �, (fun n ↦ f (2 * n) a) = �, (fun n ↦ f (2 * n + 1) a) := by
+      apply le_antisymm
+     . exact h₃
+     . obtain ⟨b, hb⟩ := lim
+        have h₄ := le_trans hb.left h₂'
+        have h₅ := le_trans h₂' hb.left
+        have h₆ := lt_of_le_of_ne hb.right
+        -- there exists $n$ such that $f_{2n}(a) > b$
+        have h₇ : ∃ n, f (2 * n) a > b := by
+          use b := b + 1
+          have h₇ : (b : ℝ) + 1 - 1 < b := by
+            simp
+            apply lt_of_le_of_ne h₆
+          have h₈ := h₃ (b - 1)
+          have h₉ := h₄ (b - 1)
+          linarith
+        obtain ⟨n, hn⟩ := h₇
+        -- for this $n$, we have $f_{2n+1}(a) > b$
+        have h₈ := h₃ n
+        linarith
+     . obtain ⟨b, hb⟩ := lim
+        have h₄ := h₃
+        have h₅ := le_trans hb.left h₂'
+        have h₆ := lt_of_le_of_ne hb.right
+        -- there exists $n$ such that $f_{2n+1}(a) > b$
+        have h₇ : ∃ n, f (2 * n + 1) a > b := by
+          use n := b + 1
+          have h₇ : (b : ℝ) + 1 - 1 < b := by
+            simp
+            apply lt_of_le_of_ne h₆
+          have h₈ := h₃ (b - 1)
+          have h₉ := h₄ (b - 1)
+          linarith
+        obtain ⟨n, hn⟩ := h₇
+        -- for this $n$, we have $f_{2n}(a) > b$
+        have h₈ := h₄ n
+        linarith
+    -- $\lim_{n \to \infty} f_{2n}(a) = 1$ since $\lim_{n \to \infty} f_n(a) = 1$
+    have h₅ := h limsup a h₀ h₁
+    have h₆ := h_a := h a h₀ h₁ h₂
+    -- $\lim_{n \to \infty} f_{2n+1}(a) = 1$ since $\lim_{n \to \infty} f_{n}(a) = 1$
+    have h₇ := h_a_eq a h₀ h₁ h₂
+    rw [← h₄, h₅] at h₆
+    rw [h₇] at h₆
+    exact h₆
+
+  -- prove that if $0 < a < 1$, then $\lim_{n \to \infty} f_n(a) = 1$ and $0 < f_n(a) < f_{n+1}(a) < 1$
+  have hf_n_and_a_eq (a : ℝ) (h₀ : 0 < a) (h₁ : a < 1) : ∀ n, 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 ∧ a = f (2 * n) a := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+      constructor
+     . exact h₀
+      constructor
+     . exact h₁
+      constructor
+     . apply lt_of_lt_of_le h₂'
+        apply le_trans h₃
+        exact h₄
+     . exact h_a_eq a h₀ h₁ h₂
+    | succ n ih =>
+      have h₃ := hf_increasing a h₀ h₁ h₂ n
+      have h₄ := hf n
+      have h₅ := hf_increasing a h₀ h₁ h₂ n
+      have h₆ := h_a_eq a h₀ h₁ h₂
+      have h₇ := h_a_eq a h₀ h₁ (show ∀ k ≤ n + 1, 0 < f (n - k) a ∧ f (n - k) a < f (n - k + 1) a ∧ f (n - k + 1) a < 1 by
+        intro k hk
+        apply hf_n_lt_of_increasing
+       . exact ih.left
+       . apply lt_trans?_ h₃
+          exact hf n
+          exact ih.left
+       . exact ih.right.right
+       . exact le_trans h₅
+          exact hf n
+          exact ih.left
+       . exact ih.right.left
+      ) (show ¬n = 0 by linarith)
+      have h₈ : a < f (2 * n + 1) a := by
+        exact lt_of_le_of_ne (h₇.left) (h₇.right.right)
+      constructor
+     . apply hf (n + 1)
+      constructor
+     . apply lt_trans h₈
+        exact h₅
+      constructor
+     . apply h₄
+     . rw [show 2 * (n + 1) = 2 * n + 1 + 1 by norm_num; omega]
+        exact h₈
+
+  -- prove that if $0 < a < 1$, then $0 < f_1(a) < a$
+  have hf_1_a (a : ℝ) (h₀ : 0 < a) (h₁ : a < 1) : f 1 a > 0 ∧ f 1 a

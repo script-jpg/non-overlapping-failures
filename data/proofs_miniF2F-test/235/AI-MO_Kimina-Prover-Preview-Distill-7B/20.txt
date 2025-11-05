@@ -1,0 +1,66 @@
+have h : ∃ z, z ^ 12 = n := by
+    -- Here, we are trying to find a z such that z^12 = n.
+    -- We need this in order to use the lemma Nat.pow_left_injective.
+    obtain ⟨x, hx⟩ := h₁
+    obtain ⟨t, ht⟩ := h₂
+    -- Rewrite $n$ as a perfect cube and a perfect fourth power.
+    rw [hx] at ht
+    rw [ht]
+    use t ^ 3
+    rw [<-pow_mul]
+    -- turn $t^4$ into a cube.
+    have : (t ^ 4) ^ 3 = t ^ 12 := by ring
+    rw [this]
+
+  obtain ⟨z, hz⟩ := h
+  -- Now, we try to show that z^12 >= 2^12.
+  -- We need this in order to use Nat.pow_left_injective.
+  have h₃ : 2 ^ 12 ≤ z ^ 12 := by
+    -- 2^12 is the smallest twelfth power.
+    obtain ⟨k, hk⟩ := Nat.exists_eq_add_of_le h₀
+    rw [hk] at hz
+    zify at hz
+    rw [<-pow_add] at hz
+    -- We have z^12 = 2^{12} k^{12}
+    have : z ^ 12 = 2 ^ 12 * k ^ 12 := by
+      zify
+      rw [<-mul_pow]
+      ring_nf
+      rw [hz]
+    rw [this]
+    apply Nat.mul_le_mul_left
+    apply Nat.pow_le_pow_of_le_left
+    -- We have 2^12 <= z^12.
+    exact Nat.pow_le_pow_of_le_left h₃ 12
+    -- We have 0 < k^12.
+    exact Nat.pow_pos (Nat.zero_lt_of_lt h₀) 12
+  -- Now, we need to show that z >= 2.
+  have h₄ : 2 ≤ z := by
+    -- We need this in order to use Nat.pow_left_injective.
+    -- We can show this by contradiction.
+    by_contra!
+    -- z = 0 or z = 1.
+    interval_cases z
+    -- There is no possibility that z = 0.
+    absurd hz
+    simp
+    -- Suppose z = 1, then n = 1.
+    absurd hz
+    simp [h₀]
+    -- There is no possibility that z = 1.
+    absurd hz
+    simp [h₁]
+    -- There is no possibility that z = 1.
+    absurd hz
+    simp [h₂]
+  -- We can show that 2^12 <= z^12 iff 2^3 <= z^3.
+  rw [Nat.pow_le_pow_iff_left (Nat.zero_lt_of_lt h₄) 3] at h₃
+  -- We can show that 2^3 <= z^3 iff 2 <= z.
+  rw [Nat.pow_le_pow_iff_left (Nat.zero_lt_of_lt h₄) 3] at h₃
+  -- Now, we can show that 2^12 <= n.
+  rw [<-hz]
+  calc
+    _ = 2 ^ 12 := by rfl
+    _ ≤ z ^ 12 := h₃
+    _ = n := by rw [<-hz]
+```

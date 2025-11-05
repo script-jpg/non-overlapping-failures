@@ -1,0 +1,194 @@
+rcases h₀ with ⟨hx, hy⟩
+
+  -- Show that $x$ and $y$ are not equal.
+  have h₂ : x ≠ y := by
+    intro h
+    simp [h] at h₁
+    have : 2 < x := by
+      suffices 2 < y by rw [Nat.pow_left_inj₀] at this; linarith
+      exact Nat.lt_of_le_of_ne (by linarith) h.symm
+    have : 2 < y := by
+      suffices 2 < x by rw [Nat.pow_left_inj₀] at this; linarith
+      exact Nat.lt_of_le_of_ne (by linarith) h.symm
+    have := Nat.pow_right_inj₀ (show 2 ≤ x by linarith) (show 2 ≤ y by linarith) h₁
+    simp at this
+    exact this
+
+  -- Show that $x < y$ or $y < x$.
+  have h₃ : x < y ∨ y < x := by
+    by_contra h
+    simp at h
+    obtain ⟨h₃, h₄⟩ := h
+    have : x = y := by linarith
+    contradiction
+
+  -- We will prove that if $x < y$, then $(x, y) = (16, 2)$, and if $y < x$, then $(x, y) = (27, 3)$.
+  rcases h₃ with h₃ | h₃
+  · -- Suppose that $x < y$.
+    -- Show that $x$ is a power of $y$.
+    have h₄ : x = y ^ r := by
+      rw [<-Nat.pow_left_inj₀ (show 2 ≤ y by linarith), <-h₁]
+      rw [Nat.pow_mul]
+      apply Nat.pow_right_inj₀
+      · exact Nat.le_of_lt_succ h₃
+      · exact Nat.ne_of_lt_succ h₃
+      · exact hy
+
+    -- Show that $r$ is a power of $y$.
+    obtain ⟨r, h₄⟩ := h₄
+    have h₅ : r = y ^ s := by
+      rw [<-Nat.pow_left_inj₀ (show 2 ≤ y by linarith), <-h₄]
+      rw [Nat.pow_mul]
+      apply Nat.pow_right_inj₀
+      · exact Nat.le_of_lt_succ h₃
+      · exact Nat.ne_of_lt_succ h₃
+      · exact hx
+
+    -- Now we have $x = y ^ {y ^ s}$ and $y = x ^ {x ^ r}$.
+    -- Substitute $x = y ^ {y ^ s}$ into $y = x ^ {x ^ r}$.
+    rw [h₄, h₅] at h₁
+    -- We get $y = (y ^ {y ^ s}) ^ {(y ^ {y ^ s}) ^ r}$.
+    -- Simplify the equation to $y = y ^ {x ^ r \cdot y ^ s}$.
+    rw [Nat.pow_right_comm, <-Nat.pow_mul, <-Nat.pow_mul] at h₁
+    -- Apply the injectivity of the power function.
+    have h₆ : y ^ 1 = y ^ (x ^ r * y ^ s) := by exact h₁
+    have := Nat.pow_right_inj₀ (show 2 ≤ y by linarith) at h₆
+    -- Simplify the equation to $1 = x ^ r \cdot y ^ s$.
+    simp at h₆
+
+    -- We have $x ^ r \cdot y ^ s = 1$.
+    -- We will show that $x = 1$, $r = 0$, $y = 1$, or $s = 0$.
+    have h₇ : x ^ r = 1 ∨ y ^ s = 1 := by
+      by_contra h
+      simp at h
+      obtain ⟨h₇, h₈⟩ := h
+      -- If both $x ^ r > 1$ and $y ^ s > 1$, then $x ^ r \cdot y ^ s > 1$, which is a contradiction.
+      have : x ^ r * y ^ s > 1 := by
+        calc
+          _ ≥ 2 ^ 1 := by apply Nat.mul_le_mul; exact Nat.pow_le_pow_right (by linarith) h₇; exact Nat.pow_le_pow_right (by linarith) h₈
+          _ > 1 := by simp
+      linarith
+
+    -- Now we consider two cases: $x ^ r = 1$ or $y ^ s = 1$.
+    rcases h₇ with h₇ | h₇
+    · -- Suppose that $x ^ r = 1$.
+      -- We have $x = 1$ or $r = 0$.
+      have h₈ : x = 1 ∨ r = 0 := by
+        rw [Nat.pow_eq_one] at h₇
+        exact h₇
+      -- Now we consider two cases: $x = 1$ or $r = 0$.
+      rcases h₈ with h₈ | h₈
+      · -- Suppose that $x = 1$.
+        have h₉ : y = 1 := by
+          rw [h₈] at h₄
+          simp at h₄
+          rw [h₄] at h₅
+          simp at h₅
+          rw [h₅] at h₁
+          exact Nat.eq_one_of_mul_eq_one_left h₁
+        simp [h₈, h₉]
+      · -- Suppose that $r = 0$.
+        simp [h₈] at h₅
+        simp [h₅] at h₄
+        have : y = 1 := by exact Nat.eq_one_of_mul_eq_one_right h₄
+        simp [h₈, this]
+
+    · -- Suppose that $y ^ s = 1$.
+      have h₉ : y = 1 ∨ s = 0 := by
+        rw [Nat.pow_eq_one] at h₇
+        exact h₇
+      rcases h₉ with h₉ | h₉
+      · -- Suppose that $y = 1$.
+        rw [h₉] at h₄
+        simp at h₄
+        rw [h₄] at h₁
+        exact Nat.eq_one_of_mul_eq_one_left h₁
+      · -- Suppose that $s = 0$.
+        simp [h₉] at h₅
+        simp [h₅] at h₄
+        have : x = 1 := by exact Nat.eq_one_of_mul_eq_one_right h₄
+        simp [h₈, this]
+
+  · -- Now we consider the case when $y < x$.
+    have h₄ : y = x ^ r := by
+      rw [<-Nat.pow_left_inj₀ (show 2 ≤ x by linarith), <-h₁]
+      rw [Nat.pow_mul]
+      apply Nat.pow_right_inj₀
+      · exact Nat.le_of_lt_succ h₃
+      · exact Nat.ne_of_lt_succ h₃
+      · exact hy
+
+    -- Show that $r$ is a power of $x$.
+    obtain ⟨r, h₄⟩ := h₄
+    have h₅ : r = x ^ s := by
+      rw [<-Nat.pow_left_inj₀ (show 2 ≤ x by linarith), <-h₄]
+      rw [Nat.pow_mul]
+      apply Nat.pow_right_inj₀
+      · exact Nat.le_of_lt_succ h₃
+      · exact Nat.ne_of_lt_succ h₃
+      · exact hx
+
+    -- Now we have $y = x ^ {x ^ s}$ and $x = y ^ {y ^ r}$.
+    -- Substitute $y = x ^ {x ^ s}$ into $x = y ^ {y ^ r}$.
+    rw [h₄, h₅] at h₁
+    -- We get $x = (x ^ {x ^ s}) ^ {(x ^ {x ^ s}) ^ r}$.
+    -- Simplify the equation to $x = x ^ {y ^ r \cdot x ^ s}$.
+    rw [Nat.pow_right_comm, <-Nat.pow_mul, <-Nat.pow_mul] at h₁
+    -- Apply the injectivity of the power function.
+    have h₆ : x ^ 1 = x ^ (y ^ r * x ^ s) := by exact h₁
+    have := Nat.pow_right_inj₀ (show 2 ≤ x by linarith) at h₆
+    -- Simplify the equation to $1 = y ^ r \cdot x ^ s$.
+
+    -- We have $y ^ r \cdot x ^ s = 1$.
+    -- We will show that $y = 1$, $r = 0$, $x = 1$, or $s = 0$.
+    have h₇ : y ^ r = 1 ∨ x ^ s = 1 := by
+      by_contra h
+      simp at h
+      obtain ⟨h₇, h₈⟩ := h
+      -- If both $y ^ r > 1$ and $x ^ s > 1$, then $y ^ r \cdot x ^ s > 1$, which is a contradiction.
+      have : y ^ r * x ^ s > 1 := by
+        calc
+          _ ≥ 2 ^ 1 := by apply Nat.mul_le_mul; exact Nat.pow_le_pow_right (by linarith) h₇; exact Nat.pow_le_pow_right (by linarith) h₈
+          _ > 1 := by simp
+      linarith
+
+    -- Now we consider two cases: $y ^ r = 1$ or $x ^ s = 1$.
+    rcases h₇ with h₇ | h₇
+    · -- Suppose that $y ^ r = 1$.
+      -- We have $y = 1$ or $r = 0$.
+      have h₈ : y = 1 ∨ r = 0 := by
+        rw [Nat.pow_eq_one] at h₇
+        exact h₇
+      -- Now we consider two cases: $y = 1$ or $r = 0$.
+      rcases h₈ with h₈ | h₈
+      · -- Suppose that $y = 1$.
+        have h₉ : x = 1 := by
+          rw [h₈] at h₄
+          simp at h₄
+          rw [h₄] at h₅
+          simp at h₅
+          rw [h₅] at h₁
+          exact Nat.eq_one_of_mul_eq_one_left h₁
+        simp [h₈, h₉]
+      · -- Suppose that $r = 0$.
+        simp [h₈] at h₅
+        simp [h₅] at h₄
+        have : x = 1 := by exact Nat.eq_one_of_mul_eq_one_right h₄
+        simp [h₈, this]
+
+    · -- Suppose that $x ^ s = 1$.
+      have h₉ : x = 1 ∨ s = 0 := by
+        rw [Nat.pow_eq_one] at h₇
+        exact h₇
+      rcases h₉ with h₉ | h₉
+      · -- Suppose that $x = 1$.
+        rw [h₉] at h₄
+        simp at h₄
+        rw [h₄] at h₁
+        exact Nat.eq_one_of_mul_eq_one_left h₁
+      · -- Suppose that $s = 0$.
+        simp [h₉] at h₅
+        simp [h₅] at h₄
+        have : y = 1 := by exact Nat.eq_one_of_mul_eq_one_right h₄
+        simp [h₈, this]
+```

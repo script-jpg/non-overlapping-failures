@@ -1,0 +1,129 @@
+-- We know that $m = 6 \cdot a$ and $n = 6 \cdot b$ for some integers $a$ and $b$.
+  have h₂ : ∃ a, ∃ b, m = 6 * a ∧ n = 6 * b ∧ Nat.gcd a b = 1 := by
+    have h₂ : m.gcd n ∣ m := Nat.gcd_dvd_left m n
+    have h₃ : m.gcd n ∣ n := Nat.gcd_dvd_right m n
+    obtain ⟨h₄, h₅, h₆⟩ := h₂
+    have h₇ : m.gcd n = 6 := by linarith
+    rw [h₇] at h₄ h₅
+    have h₈ : ∃ a, m = 6 * a := h₄
+    have h₉ : ∃ b, n = 6 * b := h₅
+    obtain ⟨⟨a, h₈⟩⟩ := h₈
+    obtain ⟨⟨b, h₉⟩⟩ := h₉
+    have h₁₀ : Nat.gcd a b = 1 := by
+      have h₁₁ : 6 * Nat.gcd a b = 6 := by rw [←h₈, ←h₉]; exact Nat.gcd_dvd h₄ h₅
+      have h₁₂ : (6 : ℕ) ≠ 0 := by norm_num
+      have h₁₃ : 6 * Nat.gcd a b = 6 := by assumption
+      have h₁₄ : Nat.gcd a b = 1 := by
+        apply (mul_left_inj' h₁₂).mp
+        rw [h₁₃]
+      exact h₁₄
+    exact ⟨a, b, h₈, h₉, h₁₄⟩
+
+  -- We know that $a$ and $b$ are coprime.
+  rcases h₂ with ⟨a, b, h₈, h₉, h₁₀⟩
+
+  -- We know that $a \cdot b = 21$.
+  have h₁₁ : a * b = 21 := by
+    have h₁₁ : m * n = 6 * (6 * a) * (6 * b) := by rw [h₈, h₉]
+    have h₁₂ : m * n = 6 * (m * n) / 6 := by exact Eq.symm (Nat.mul_div_cancel' (m * n) h₁)
+    have h₁₃ : 6 * (m * n) / 6 = 6 * (6 * a * (6 * b)) / 6 := by rw [h₈, h₉]
+    have h₁₄ : 6 * (6 * a * (6 * b)) / 6 = 6 * 6 * (a * b) := by ring_nf
+    have h₁₅ : m * n = 6 * 6 * (a * b) := by rw [←h₁₂, h₁₃, h₁₄]
+    have h₁₆ : m.lcm n = 6 * 6 * (a * b) := by
+      have h₁₇ : m.lcm n = m * n / Nat.gcd m n := Nat.lcm_eq_mul_div_gcd m n
+      have h₁₈ : m * n = 6 * (6 * a) * (6 * b) := by rw [h₈, h₉]
+      have h₁₉ : m * n / Nat.gcd m n = 6 * 6 * (a * b) := by
+        rw [h₁₇, h₁₈, h₇]
+        ring_nf
+      rw [h₁₈, h₁₉]
+    have h₁₂ : 126 = 6 * 6 * (a * b) := by rw [h₁₆] at h₁₁; assumption
+    have h₁₃ : 6 * 6 * (a * b) = 6 * (6 * (a * b)) := by ring
+    rw [h₁₃] at h₁₂
+    have h₁₄ : 126 / 6 = 6 * (a * b) := by
+      apply Nat.div_eq_of_eq_mul_right (by norm_num) h₁₂
+    have h₁₅ : 21 = 6 * (a * b) := by omega
+    have h₁₆ : a * b = 21 / 6 := by
+      apply Nat.eq_of_mul_eq_mul_left (by norm_num) at h₁₅
+      rw [h₁₅]
+    have h₁₇ : 21 / 6 = 21 := by norm_num
+    rw [h₁₇] at h₁₆
+    exact h₁₆
+
+  -- We know that $a$ and $b$ are positive.
+  have h₁₂ : 0 < a := by
+    have h₁₃ : 0 < m := by omega
+    have h₁₄ : 0 < 6 * a := by omega
+    have h₁₅ : 0 < a := by
+      apply Nat.pos_of_mul_pos_right h₁₄
+      norm_num
+    exact h₁₅
+  have h₁₃ : 0 < b := by
+    have h₁₄ : 0 < n := by omega
+    have h₁₅ : 0 < 6 * b := by omega
+    have h₁₆ : 0 < b := by
+      apply Nat.pos_of_mul_pos_right h₁₅
+      norm_num
+    exact h₁₆
+
+  -- We know that $a \leq 21$.
+  have h₁₄ : a ≤ 21 := by
+    apply Nat.le_of_dvd (by norm_num)
+    have h₁₅ : 21 % a = 0 := by
+      have h₁₆ : a ∣ 21 := by
+        have h₁₇ : a * b = 21 := by assumption
+        apply Nat.dvd_of_mul_right_dvd h₁₇
+      exact Nat.mod_eq_zero_of_dvd h₁₆
+    exact h₁₅
+
+  -- We know that $b \leq 21$.
+  have h₁₅ : b ≤ 21 := by
+    apply Nat.le_of_dvd (by norm_num)
+    have h₁₆ : 21 % b = 0 := by
+      have h₁₇ : b ∣ 21 := by
+        have h₁₈ : a * b = 21 := by assumption
+        apply Nat.dvd_of_mul_right_dvd h₁₈
+      exact Nat.mod_eq_zero_of_dvd h₁₇
+    exact h₁₆
+
+  -- We check all possible values of $a$.
+  interval_cases a
+  -- If $a = 1$, then $b = 21$ and $m + n = 6 \cdot 1 + 6 \cdot 21 = 132$.
+  · have h₁₆ : b = 21 := by omega
+    have h₁₇ : m + n = 6 * 1 + 6 * 21 := by rw [h₈, h₉, h₁₆]
+    omega
+  -- If $a = 3$, then $b = 7$ and $m + n = 6 \cdot 3 + 6 \cdot 7 = 60$.
+  · have h₁₆ : b = 7 := by omega
+    have h₁₇ : m + n = 6 * 3 + 6 * 7 := by rw [h₈, h₉, h₁₆]
+    omega
+  -- If $a = 7$, then $b = 3$ and $m + n = 6 \cdot 7 + 6 \cdot 3 = 60$.
+  · have h₁₆ : b = 3 := by omega
+    have h₁₇ : m + n = 6 * 7 + 6 * 3 := by rw [h₈, h₉, h₁₆]
+    omega
+  -- If $a = 21$, then $b = 1$ and $m + n = 6 \cdot 21 + 6 \cdot 1 = 132$.
+  · have h₁₆ : b = 1 := by omega
+    have h₁₇ : m + n = 6 * 21 + 6 * 1 := by rw [h₈, h₉, h₁₆]
+    omega
+
+  -- We check all possible values of $b$.
+  interval_cases b
+  -- If $b = 1$, then $a = 21$ and $m + n = 6 \cdot 21 + 6 \cdot 1 = 132$.
+  · have h₁₆ : a = 21 := by omega
+    have h₁₇ : m + n = 6 * 21 + 6 * 1 := by rw [h₈, h₉, h₁₆]
+    omega
+  -- If $b = 3$, then $a = 7$ and $m + n = 6 \cdot 7 + 6 \cdot 3 = 60$.
+  · have h₁₆ : a = 7 := by omega
+    have h₁₇ : m + n = 6 * 7 + 6 * 3 := by rw [h₈, h₉, h₁₆]
+    omega
+  -- If $b = 7$, then $a = 3$ and $m + n = 6 \cdot 3 + 6 \cdot 7 = 60$.
+  · have h₁₆ : a = 3 := by omega
+    have h₁₇ : m + n = 6 * 3 + 6 * 7 := by rw [h₈, h₉, h₁₆]
+    omega
+  -- If $b = 21$, then $a = 1$ and $m + n = 6 \cdot 1 + 6 \cdot 21 = 132$.
+  · have h₁₆ : a = 1 := by omega
+    have h₁₇ : m + n = 6 * 1 + 6 * 21 := by rw [h₈, h₉, h₁₆]
+    omega
+
+  -- The least possible value of $m + n$ is 60.
+  exact Nat.le_of_pred_lt (show 59 < m + n by omega)
+
+```

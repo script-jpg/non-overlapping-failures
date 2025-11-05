@@ -1,0 +1,149 @@
+-- how many is it?  i.e., what is the cardinality of the set of perfect squares which is a divisor of $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  -- show that it is 672
+
+  -- firstly, show that  0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i!  can be simplified as   ∏ i in Finset.Icc 1 9, (i!).natAbs ∣ k ^ 2
+  have h₁ : ∀ k : ℕ, 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i! ↔ ∏ i in Finset.Icc 1 9, (i!).natAbs ∣ k ^ 2 := by
+    intro k
+    constructor
+    · intro h
+      -- first, show that  (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i!  can be simplified as   ∏ i in Finset.Icc 1 9, (i!).natAbs ∣ k ^ 2
+      have h₀ : (k * k : ℕ) = k ^ 2 := by norm_cast
+      rw [h₀] at h
+      have h₁ : ∏ i ∈ Finset.Icc 1 9, ↑(i! : ℕ) = ∏ i ∈ Finset.Icc 1 9, (i!).natAbs := by
+        apply Finset.prod_congr rfl
+        intro x hx
+        rw [Int.natAbs_eq_iff]
+        constructor
+        · intro h
+          have : (x! : ℕ) ≠ 0 := Nat.factorial_ne_zero x
+          exact_mod_cast this
+        · intro h
+          have : (x! : ℕ) ≠ 0 := Nat.factorial_ne_zero x
+          exact_mod_cast h
+      rw [h₁] at h
+      exact h
+    · intro h
+
+      -- next, show that  0 < k can be removed
+      have h₀ : 0 < k := by
+        have h₁ : ∏ i in Finset.Icc 1 9, (i!).natAbs > 0 := by
+          apply Finset.prod_pos
+          · norm_num
+          · intro x hx
+            simp at hx
+            have : x! > 0 := Nat.factorial_pos x
+            exact_mod_cast this
+        have h₂ : k ^ 2 > 0 := by exact Nat.pow_pos h₁
+        exact_mod_cast h₂
+      have h₁ : (k * k : ℕ) = k ^ 2 := by norm_cast
+      rw [h₁]
+      exact h
+
+  -- then, show that ∏ i in Finset.Icc 1 9, (i!).natAbs ∣ k ^ 2 ↔ ∏ p ∈ (Finset.Icc 1 9) ∪ {0}, minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0
+  have h₂ : ∀ k : ℕ, ∏ i in Finset.Icc 1 9, (i!).natAbs ∣ k ^ 2 ↔ ∀ p : ℕ, p.Prime → (∏ x ∈ (Finset.Icc 1 9) ∪ {0}, minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs))) ≤ 0 := by
+    intro k
+    constructor
+    · intro h
+      intro p hp
+      have h₀ : (padicValNat p (k ^ 2)) < ∞ := by exact Finset.card_pos.mp (padicValNat_lt_infinite_of_pos p hp)
+      have h₁ : (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) < ∞ := by
+        apply Finset.card_pos.mpr
+        intro x hx
+        simp at hx
+        obtain ⟨a, ha⟩ := (Nat.mem_Icc.mp hx).1
+        have h₁ : ∏ i ∈ Finset.Icc 1 9, (i!).natAbs > 0 := by
+          apply Finset.prod_pos
+          · norm_num
+          · intro x hx
+            simp at hx
+            have : x! > 0 := Nat.factorial_pos x
+            exact_mod_cast this
+        have h₂ : padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs) ≤ padicValNat p (k ^ 2) := by exact Nat.factorization_le_iff_dvd hp (↑(∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) (↑k ^ 2) h
+        have : minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ padicValNat p (k ^ 2) := by exact minimum_le_left (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs))
+        have : minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 := by linarith
+        exact Nat.le_of_lt_succ this
+      have : minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 := by
+        apply Nat.le_of_lt_succ
+        have h' : (padicValNat p (k ^ 2)) < ∞ := by exact Finset.card_pos.mp (padicValNat_lt_infinite_of_pos p hp)
+        have h'' : (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) < ∞ := by
+          apply Finset.card_pos.mpr
+          intro x hx
+          simp at hx
+          obtain ⟨a, ha⟩ := (Nat.mem_Icc.mp hx).1
+          have h'' : ∏ i ∈ Finset.Icc 1 9, (i!).natAbs > 0 := by
+            apply Finset.prod_pos
+            · norm_num
+            · intro x hx
+              simp at hx
+              have : x! > 0 := Nat.factorial_pos x
+              exact_mod_cast this
+          have h''' : padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs) ≤ padicValNat p (k ^ 2) := by exact Nat.factorization_le_iff_dvd hp (↑(∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) (↑k ^ 2) h
+          have : minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ padicValNat p (k ^ 2) := by exact minimum_le_left (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs))
+          linarith
+        linarith
+      exact this
+    · intro h
+      apply Nat.dvd_of_prime_pow_dvd at h
+      (have h' := dvd_iff_padicValNat_ne_zero (n := k ^ 2) (n' := ∏ i ∈ Finset.Icc 1 9, (i!).natAbs) (p := p) hp).mp
+      intro x hx
+      simp at hx
+      obtain ⟨a, ha⟩ := (Nat.mem_Icc.mp hx).1
+      have h'' : minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 := by
+        apply Nat.le_of_lt_succ
+        have h' : (padicValNat p (k ^ 2)) < ∞ := by exact Finset.card_pos.mp (padicValNat_lt_infinite_of_pos p hp)
+        have h'' : (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) < ∞ := by
+          apply Finset.card_pos.mpr
+          intro x hx
+          simp at hx
+          obtain ⟨a, ha⟩ := (Nat.mem_Icc.mp hx).1
+          have h'' : ∏ i ∈ Finset.Icc 1 9, (i!).natAbs > 0 := by
+            apply Finset.prod_pos
+            · norm_num
+            · intro x hx
+              simp at hx
+              have : x! > 0 := Nat.factorial_pos x
+              exact_mod_cast this
+          have h''' : padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs) ≤ padicValNat p (k ^ 2) := by exact Nat.factorization_le_iff_dvd hp (↑(∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) (↑k ^ 2) h
+          have : minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ padicValNat p (k ^ 2) := by exact minimum_le_left (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs))
+          linarith
+        linarith
+      have : (padicValNat p (k ^ 2)) = minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) := by apply Eq.symm; apply Nat.min_eq_left; linarith
+      rw [this]
+      exact h x hx
+
+  -- next, show that ∏ p ∈ (Finset.Icc 1 9) ∪ {0}, minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 ↔  ∏ p ∈ (Finset.Icc 1 9), minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 ∧ minimum (padicValNat 0 (k ^ 2)) (padicValNat 0 (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0
+  have h₃ : ∀ k : ℕ, (∏ x ∈ (Finset.Icc 1 9) ∪ {0}, minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs))) ≤ 0 ↔ (∏ x ∈ Finset.Icc 1 9, minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs))) ≤ 0 ∧ minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 := by
+    intro k
+    constructor
+    · intro h
+      have : (Finset.Icc 1 9) ∪ {0} = (Finset.Icc 1 9) ∪ Finset.Icc 0 0 := by rfl
+      rw [this] at h
+      have := Finset.prod_union_disjoint (by norm_num) (h₂ := h) (by norm_num)
+      exact ⟨this.1, h.2⟩
+    · intro h
+      have : (Finset.Icc 1 9) ∪ {0} = (Finset.Icc 1 9) ∪ Finset.Icc 0 0 := by rfl
+      rw [this]
+      have := Finset.prod_union_disjoint (by norm_num) (h₂ := h) (by norm_num)
+      exact this
+
+  -- obviously, minimum (padicValNat 0 (k ^ 2)) (padicValNat 0 (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0
+  have h₄ : ∀ k : ℕ, minimum (padicValNat 0 (k ^ 2)) (padicValNat 0 (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 := by
+    intro k
+    simp
+
+  -- then, show that ∏ p ∈ (Finset.Icc 1 9), minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 ↔  ∀ p ∈ (Finset.Icc 1 9), minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0
+  have h₅ : ∀ k : ℕ, (∏ x ∈ Finset.Icc 1 9, minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs))) ≤ 0 ↔ ∀ x ∈ Finset.Icc 1 9, minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 := by
+    intro k
+    apply Finset.prod_le_zero_iff
+
+  -- next, show that minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 ↔  minimum (padicValNat p (k ^ 2)) (padicValNat p (1!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (2!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (3!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (4!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (5!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (6!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (7!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (8!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (9!)) ≤ 0
+  have h₆ : ∀ k : ℕ, minimum (padicValNat p (k ^ 2)) (padicValNat p (∏ i ∈ Finset.Icc 1 9, (i!).natAbs)) ≤ 0 ↔ minimum (padicValNat p (k ^ 2)) (padicValNat p (1!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (2!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (3!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (4!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (5!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (6!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (7!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (8!)) ≤ 0 ∨ minimum (padicValNat p (k ^ 2)) (padicValNat p (9!)) ≤ 0 := by
+    intro k
+    have : ∏ i ∈ Finset.Icc 1 9, (i!).natAbs = 1! * 2! * 3! * 4! * 5! * 6! * 7! * 8! * 9! := by
+      have : Finset.Icc 1 9 = {1, 2, 3, 4, 5, 6, 7, 8, 9} := by rfl
+      rw [this]
+      simp only [Finset.mem_insert, Finset.mem_singleton, OfNat.one_ne_ofNat, or_false, OfNat.zero_ne_ofNat, and_false, not_false_eq_true, Finset.prod_insert, Finset.prod_singleton, Nat.reduceMul]
+    rw [this]
+    simp only [Finset.mem_insert, Finset.mem_singleton, OfNat.one_ne_ofNat, or_false, OfNat.zero_ne_ofNat, and_false, not_false_eq_true, Finset.prod_insert, Finset.prod_singleton]
+
+  -- then, show that minimum (padicValNat p (k ^ 2)) (padicValNat p (1!)) ≤ 0 ↔  0 < k

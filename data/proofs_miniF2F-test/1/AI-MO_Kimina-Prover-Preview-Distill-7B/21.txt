@@ -1,0 +1,66 @@
+-- Since $2003$ is a prime number, we can try using `ZMod` with a small order
+  -- Since $4x^3 mod 2003$ can take on at most $2003$ different values,
+  -- and $7y^3 mod 2003$ can take on at most $2003$ different values,
+  -- we can try a `decide` tactic to automatically check all the cases
+  have : Fact (Nat.Prime 2003) := ⟨by decide⟩
+  have : (2003 : ℤ) ≠ 0 := by norm_cast
+  -- We first establish a lemma that will be used repeatedly
+  -- If $4x^3$ and $7y^3$ are both $0$ or $1$ modulo $2003$, then $4x^3 - 7y^3$ cannot be $2003$:
+  have h {x y : ℤ} (hx : (4 * x ^ 3) % 2003 = 0 ∨ (4 * x ^ 3) % 2003 = 1)
+    (hy : (7 * y ^ 3) % 2003 = 0 ∨ (7 * y ^ 3) % 2003 = 1) :
+    (4 * x ^ 3 - 7 * y ^ 3) ≠ 2003 := by
+    -- We use proof by contradiction
+    by_contra h'
+    -- First, we make use of the fact that if $a % n = r$, then $a = kn + r$ for some $k$:
+    have h1 : ∃ k : ℤ, 4 * x ^ 3 = k * 2003 + (4 * x ^ 3 % 2003) := by
+      apply Int.exists_eq_add_emod
+    have h2 : ∃ l : ℤ, 7 * y ^ 3 = l * 2003 + (7 * y ^ 3 % 2003) := by
+      apply Int.exists_eq_add_emod
+    -- We substitute these into $4x^3 - 7y^3 = 2003$:
+    rw [h1, h2] at h'
+    -- Use the linear combination property of the remainder: $a % n - b % n = (a - b) % n$
+    have h3 : (4 * x ^ 3 % 2003 - 7 * y ^ 3 % 2003) % 2003 = 2003 % 2003 := by
+      rw [Int.sub_emod, h']
+    simp at h3
+    -- Simplify the equation
+    have h4 : (4 * x ^ 3 - 7 * y ^ 3) % 2003 = 0 := by
+      apply Int.emod_eq_zero_of_dvd
+      apply Int.dvd_sub
+      linarith
+      linarith
+    -- Now we evaluate the possible values of the remainder to arrive at a contradiction
+    have h5 : (4 * x ^ 3 - 7 * y ^ 3) % 2003 = 0 ∨
+      (4 * x ^ 3 - 7 * y ^ 3) % 2003 = 2003 ∨
+      (4 * x ^ 3 - 7 * y ^ 3) % 2003 = -2003 := by
+      omega
+    rcases h5 with (h5 | h5 | h5)
+    all_goals
+      omega
+  -- Now we use `ZMod` with a prime order to make use of Fermat's Little Theorem:
+  -- For any prime number $p$ and an integer $a$ not divisible by $p$,
+  -- we have $a^{p-1} ≡ 1$ modulo $p$:
+  have h1 (x : ℤ) : (4 * x ^ 3) % 2003 = 0 ∨ (4 * x ^ 3) % 2003 = 1 ∨
+    (4 * x ^ 3) % 2003 = 2003 ∨ (4 * x ^ 3) % 2003 = -1 := by
+    -- If $x$ is divisible by $2003$, then $4x^3$ is also divisible by $2003$:
+    have h1 : x % 2003 = 0 ∨ x % 2003 = 1 ∨ x % 2003 = 2003 ∨ x % 2003 = -1 := by
+      omega
+    rcases h1 with (h1 | h1 | h1 | h1)
+    all_goals
+      simp [h1, pow_succ, Int.mul_emod, Int.add_emod, Int.sub_emod]
+  have h2 (y : ℤ) : (7 * y ^ 3) % 2003 = 0 ∨ (7 * y ^ 3) % 2003 = 1 ∨
+    (7 * y ^ 3) % 2003 = 2003 ∨ (7 * y ^ 3) % 2003 = -1 := by
+    -- If $y$ is divisible by $2003$, then $7y^3$ is also divisible by $2003$:
+    have h1 : y % 2003 = 0 ∨ y % 2003 = 1 ∨ y % 2003 = 2003 ∨ y % 2003 = -1 := by
+      omega
+    rcases h1 with (h1 | h1 | h1 | h1)
+    all_goals
+      simp [h1, pow_succ, Int.mul_emod, Int.add_emod, Int.sub_emod]
+  -- Now we try all the possible cases for the remainders of $4x^3$ and $7y^3$:
+  rcases h1 x with (hx1 | hx1 | hx1 | hx1) <;>
+  rcases h2 y with (hy1 | hy1 | hy1 | hy1) <;>
+  -- For each case, we use our earlier lemma to show that $4x^3 - 7y^3 ≠ 2003$
+  ( apply h <;> norm_num
+    <;> norm_cast
+    <;> simp [hx1, hy1]
+    <;> decide )
+```

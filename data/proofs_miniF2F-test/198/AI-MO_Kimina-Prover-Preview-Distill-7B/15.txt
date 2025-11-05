@@ -1,0 +1,218 @@
+-- A, B, C are the angles opposite to the sides a, b, c respectively.
+  let A := arccos ((b ^ 2 + c ^ 2 - a ^ 2) / (2 * b * c))
+  let B := arccos ((a ^ 2 + c ^ 2 - b ^ 2) / (2 * a * c))
+  let C := arccos ((a ^ 2 + b ^ 2 - c ^ 2) / (2 * a * b))
+
+  -- By the Law of Cosines:
+  have hA : cos A = (b ^ 2 + c ^ 2 - a ^ 2) / (2 * b * c) := by
+    unfold A; rw [cos_arccos]; simp; rw [div_eq_iff, ← this]; ring
+    rw [cos_arccos]; simp; rw [div_eq_iff, ← this]; ring
+    have := sq_nonneg (a - b)
+    nlinarith
+  have hB : cos B = (a ^ 2 + c ^ 2 - b ^ 2) / (2 * a * c) := by
+    unfold B; rw [cos_arccos]; simp; rw [div_eq_iff, ← this]; ring
+    rw [cos_arccos]; simp; rw [div_eq_iff, ← this]; ring
+    have := sq_nonneg (b - c)
+    nlinarith
+  have hC : cos C = (a ^ 2 + b ^ 2 - c ^ 2) / (2 * a * b) := by
+    unfold C; rw [cos_arccos]; simp; rw [div_eq_iff, ← this]; ring
+    rw [cos_arccos]; simp; rw [div_eq_iff, ← this]; ring
+    have := sq_nonneg (c - a)
+    nlinarith
+
+  -- By the Law of Sines:
+  have h₁ := sin_pos_of_pos_of_lt_pi (by linarith [h₀.left, Real.pi_pos]) (by linarith [h₁, Real.pi_pos])
+  have h₂ := sin_pos_of_pos_of_lt_pi (by linarith [h₀.right.left, Real.pi_pos]) (by linarith [h₂, Real.pi_pos])
+  have h₃ := sin_pos_of_pos_of_lt_pi (by linarith [h₀.right.right, Real.pi_pos]) (by linarith [h₃, Real.pi_pos])
+
+  have a_eq_2R_sin_A : a = 2 * R * sin A := by
+    have := sin_eq_sin_arccos (2 * b * c * ((b ^ 2 + c ^ 2 - a ^ 2) / (2 * b * c))) (by linarith [hA])
+    rw [← this]
+    have : sin A = sin (arccos ((b ^ 2 + c ^ 2 - a ^ 2) / (2 * b * c))) := by
+      rw [hA]
+    rw [this, sin_arccos]
+    have : 0 ≤ (b ^ 2 + c ^ 2 - a ^ 2) / (2 * b * c) := by
+      rw [div_nonneg_iff]
+      left
+      rw [mul_nonneg_iff_of_pos_left (by nlinarith)]
+      nlinarith
+    have := sin_nonneg_of_nonneg_of_le_pi (by linarith [h₀.left, Real.pi_pos]) (by linarith)
+    have := sin_arccos_le_one (2 * b * c * ((b ^ 2 + c ^ 2 - a ^ 2) / (2 * b * c)))
+    nlinarith
+  have b_eq_2R_sin_B : b = 2 * R * sin B := by
+    have := sin_eq_sin_arccos (2 * a * c * ((a ^ 2 + c ^ 2 - b ^ 2) / (2 * a * c))) (by linarith [hB])
+    rw [← this]
+    have : sin B = sin (arccos ((a ^ 2 + c ^ 2 - b ^ 2) / (2 * a * c))) := by
+      rw [hB]
+    rw [this, sin_arccos]
+    have : 0 ≤ (a ^ 2 + c ^ 2 - b ^ 2) / (2 * a * c) := by
+      rw [div_nonneg_iff]
+      left
+      rw [mul_nonneg_iff_of_pos_left (by nlinarith)]
+      nlinarith
+    have := sin_nonneg_of_nonneg_of_le_pi (by linarith [h₀.right.left, Real.pi_pos]) (by linarith [h₂, Real.pi_pos])
+    have := sin_arccos_le_one (2 * a * c * ((a ^ 2 + c ^ 2 - b ^ 2) / (2 * a * c)))
+    nlinarith
+  have c_eq_2R_sin_C : c = 2 * R * sin C := by
+    have := sin_eq_sin_arccos (2 * a * b * ((a ^ 2 + b ^ 2 - c ^ 2) / (2 * a * b))) (by linarith [hC])
+    rw [← this]
+    have : sin C = sin (arccos ((a ^ 2 + b ^ 2 - c ^ 2) / (2 * a * b))) := by
+      rw [hC]
+    rw [this, sin_arccos]
+    have : 0 ≤ (a ^ 2 + b ^ 2 - c ^ 2) / (2 * a * b) := by
+      rw [div_nonneg_iff]
+      left
+      rw [mul_nonneg_iff_of_pos_left (by nlinarith)]
+      nlinarith
+    have := sin_nonneg_of_nonneg_of_le_pi (by linarith [h₀.right.right, Real.pi_pos]) (by linarith [h₃, Real.pi_pos])
+    have := sin_arccos_le_one (2 * a * b * ((a ^ 2 + b ^ 2 - c ^ 2) / (2 * a * b)))
+    nlinarith
+
+  -- Using the formula for the area of a triangle:
+  have R_eq_abc_div_4S : R ^ 2 * S = a * b * c / 4 := by
+    have : S = (a * b * c) / (4 * R) := by
+      rw [S] -- = area of triangle
+      have : sin A ≠ 0 := by
+        have := sin_pos_of_pos_of_lt_pi (by linarith [h₀.left, Real.pi_pos]) (by linarith [h₁, Real.pi_pos])
+        linarith
+      field_simp
+      have : sin B ≠ 0 := by
+        have := sin_pos_of_pos_of_lt_pi (by linarith [h₀.right.left, Real.pi_pos]) (by linarith [h₂, Real.pi_pos])
+        linarith
+      field_simp
+      have : sin C ≠ 0 := by
+        have := sin_pos_of_pos_of_lt_pi (by linarith [h₀.right.right, Real.pi_pos]) (by linarith [h₃, Real.pi_pos])
+        linarith
+      field_simp
+      have hA := sin_eq_sin_arccos (2 * b * c * ((b ^ 2 + c ^ 2 - a ^ 2) / (2 * b * c))) (by linarith [hA])
+      have hB := sin_eq_sin_arccos (2 * a * c * ((a ^ 2 + c ^ 2 - b ^ 2) / (2 * a * c))) (by linarith [hB])
+      have hC := sin_eq_sin_arccos (2 * a * b * ((a ^ 2 + b ^ 2 - c ^ 2) / (2 * a * b))) (by linarith [hC])
+      rw [hA, hB, hC]
+      ring
+    linarith
+
+  -- semiperimeter
+  let s := (a + b + c) / 2
+
+  -- Area of the triangle is $\sqrt{s(s-a)(s-b)(s-c)}$.
+  have S_eq_sqrt_s_sub_a_mul_s_sub_b_mul_s_sub_c : S = √(s * (s - a) * (s - b) * (s - c)) := by
+    have : S ^ 2 = s * (s - a) * (s - b) * (s - c) := by
+      have : S ^ 2 = (a * b * c) ^ 2 / (16 * R ^ 2) := by
+        rw [S]
+        have : sin A ≠ 0 := by
+          have := sin_pos_of_pos_of_lt_pi (by linarith [h₀.left, Real.pi_pos]) (by linarith [h₁, Real.pi_pos])
+          linarith
+        field_simp
+        have : sin B ≠ 0 := by
+          have := sin_pos_of_pos_of_lt_pi (by linarith [h₀.right.left, Real.pi_pos]) (by linarith [h₂, Real.pi_pos])
+          linarith
+        field_simp
+        have : sin C ≠ 0 := by
+          have := sin_pos_of_pos_of_lt_pi (by linarith [h₀.right.right, Real.pi_pos]) (by linarith [h₃, Real.pi_pos])
+          linarith
+        field_simp
+        have hA := sin_eq_sin_arccos (2 * b * c * ((b ^ 2 + c ^ 2 - a ^ 2) / (2 * b * c))) (by linarith [hA])
+        have hB := sin_eq_sin_arccos (2 * a * c * ((a ^ 2 + c ^ 2 - b ^ 2) / (2 * a * c))) (by linarith [hB])
+        have hC := sin_eq_sin_arccos (2 * a * b * ((a ^ 2 + b ^ 2 - c ^ 2) / (2 * a * b))) (by linarith [hC])
+        rw [hA, hB, hC]
+        ring
+      rw [this, R_eq_abc_div_4S] at this ⊢
+      field_simp at this ⊢
+      linarith
+    have h1 : s * (s - a) * (s - b) * (s - c) ≥ 0 := by
+      have : s - a ≥ 0 := by linarith [h₃]
+      have : s - b ≥ 0 := by linarith [h₁]
+      have : s - c ≥ 0 := by linarith [h₂]
+      nlinarith
+    have h2 : S ≥ 0 := by
+      have := sin_nonneg_of_nonneg_of_le_pi (by linarith [h₀.left, Real.pi_pos]) (by linarith [h₁, Real.pi_pos])
+      have := sin_nonneg_of_nonneg_of_le_pi (by linarith [h₀.right.left, Real.pi_pos]) (by linarith [h₂, Real.pi_pos])
+      have := sin_nonneg_of_nonneg_of_le_pi (by linarith [h₀.right.right, Real.pi_pos]) (by linarith [h₃, Real.pi_pos])
+      nlinarith
+    have : S = √(S ^ 2) := by
+      exact Real.sqrt_sq (by linarith)
+    rw [this, this]
+    symm
+    exact Real.sqrt_eq_iff_eq_sq (by linarith) (by linarith) |>.mpr h1
+
+  -- $s = R(\sin A + \sin B + \sin C)$.
+  have s_eq_R_sin_A_add_sin_B_add_sin_C : s = R * (sin A + sin B + sin C) := by
+    have : sin A + sin B + sin C = (a + b + c) / (2 * R) := by
+      rw [hA, hB, hC]
+      have : (a + b + c) * (2 * R) = a * (2 * R * sin A) + b * (2 * R * sin B) + c * (2 * R * sin C) := by
+        ring
+      rw [← this]
+      have : 2 * R * sin A = a := by
+        rw [mul_assoc, ← this, mul_comm (sin A), ← mul_assoc]
+        exact Eq.symm (mul_sin_two_mul (a / 2) (by linarith [h₀.left, Real.pi_pos]) (by linarith [h₁, Real.pi_pos]))
+      rw [this, mul_assoc, mul_assoc, this, this]
+      ring
+    linarith
+
+  -- $s - a = R(\sin B + \sin C - \sin A)$.
+  have s_sub_a_eq_R_sin_B_add_sin_C_sub_sin_A : s - a = R * (sin B + sin C - sin A) := by
+    have : s - a = (b + c - a) / 2 := by
+      linarith
+    rw [this]
+    have : sin B + sin C - sin A = ((b + c - a) / R) * sin B + ((b + c - a) / R) * sin C - ((b + c - a) / R) * sin A := by
+      ring
+    rw [this, mul_add, mul_add, mul_sub, this]
+    ring
+
+  -- $s - b = R(\sin C + \sin A - \sin B)$.
+  have s_sub_b_eq_R_sin_C_add_sin_A_sub_sin_B : s - b = R * (sin C + sin A - sin B) := by
+    have : s - b = (a + c - b) / 2 := by
+      linarith
+    rw [this]
+    have : sin C + sin A - sin B = ((a + c - b) / R) * sin C + ((a + c - b) / R) * sin A - ((a + c - b) / R) * sin B := by
+      ring
+    rw [this, mul_add, mul_add, mul_sub, this]
+    ring
+
+  -- $s - c = R(\sin A + \sin B - \sin C)$.
+  have s_sub_c_eq_R_sin_A_add_sin_B_sub_sin_C : s - c = R * (sin A + sin B - sin C) := by
+    have : s - c = (a + b - c) / 2 := by
+      linarith
+    rw [this]
+    have : sin A + sin B - sin C = ((a + b - c) / R) * sin A + ((a + b - c) / R) * sin B - ((a + b - c) / R) * sin C := by
+      ring
+    rw [this, mul_add, mul_add, mul_sub, this]
+    ring
+
+  -- Using the semiperimeter:
+  have : a + b + c = 2 * s := by linarith
+  have : a + b - c = 2 * (s - c) := by linarith
+  have : a + c - b = 2 * (s - b) := by linarith
+  have : b + c - a = 2 * (s - a) := by linarith
+
+  -- We have the following equalities:
+  -- $\sin B + \sin C - \sin A = \sqrt{(\sin A + \sin B + \sin C)(\sin B + \sin C - \sin A)}$.
+  have sin_B_add_sin_C_sub_sin_A_eq_sqrt : sin B + sin C - sin A = √((sin A + sin B + sin C) * (sin B + sin C - sin A)) := by
+    have : sin B + sin C - sin A = √((sin B + sin C - sin A) * (sin B + sin C - sin A)) := by
+      symm
+      exact Real.sqrt_mul_self (sin_B_add_sin_C_sub_sin_A)
+    rw [this]
+    have : (sin B + sin C - sin A) * (sin B + sin C - sin A) = (sin A + sin B + sin C) * (sin B + sin C - sin A) := by
+      have : sin A + sin B + sin C = (a + b + c) / (2 * R) := by
+        rw [hA, hB, hC]
+        have : (a + b + c) * (2 * R) = a * (2 * R * sin A) + b * (2 * R * sin B) + c * (2 * R * sin C) := by
+          ring
+        rw [← this]
+        have : 2 * R * sin A = a := by
+          rw [mul_assoc, ← this, mul_comm (sin A), ← mul_assoc]
+          exact Eq.symm (mul_sin_two_mul (a / 2) (by linarith [h₀.left, Real.pi_pos]) (by linarith [h₁, Real.pi_pos]))
+        rw [this, mul_assoc, mul_assoc, this, this]
+      rw [this, mul_comm (sin B + sin C - sin A)]
+      linarith
+    rw [this]
+
+  -- $\sin C + \sin A - \sin B = \sqrt{(\sin A + \sin B + \sin C)(\sin C + \sin A - \sin B)}$.
+  have sin_C_add_sin_A_sub_sin_B_eq_sqrt : sin C + sin A - sin B = √((sin A + sin B + sin C) * (sin C + sin A - sin B)) := by
+    have : sin C + sin A - sin B = √((sin C + sin A - sin B) * (sin C + sin A - sin B)) := by
+      symm
+      exact Real.sqrt_mul_self (sin_C_add_sin_A_sub_sin_B)
+    rw [this]
+    have : (sin C + sin A - sin B) * (sin C + sin A - sin B) = (sin A + sin B + sin C) * (sin C + sin A - sin B) := by
+      have : sin A + sin B + sin C = (a + b + c) / (2 * R) := by
+        rw [hA, hB, hC]
+        have : (a + b + c) * (2 * R) = a * (2 * R * sin A)

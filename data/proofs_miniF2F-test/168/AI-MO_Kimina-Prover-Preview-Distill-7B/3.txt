@@ -1,0 +1,300 @@
+-- Let $A$ be the set of solutions to $z^{3}-8=0$ and let $B$ be the set of solutions to $z^{3}-8z^{2}-8z+64=0.$
+  -- We factorize the polynomials corresponding to sets $A$ and $B$.
+  have hA : (a - 2) * (a - (-1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (a - (-1 - Complex.I * 3 * Real.sqrt 1 / 2)) = 0 := by
+    ring_nf
+    norm_num
+    rw [Complex.I_sq]
+    ring_nf
+    norm_num
+    linarith
+  have hB : (b - 2) * (b - (1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (b - (1 - Complex.I * 3 * Real.sqrt 1 / 2)) = 0 := by
+    ring_nf
+    norm_num
+    rw [Complex.I_sq]
+    ring_nf
+    norm_num
+    linarith
+
+  -- Hence, we look at the roots of the polynomials corresponding to sets $A$ and $B$.
+  -- We know that $a-2$, $a-(-1+i 3 \sqrt{1}/2)$, and $a-(-1-i 3 \sqrt{1}/2)$ are pairwise coprime.
+  have : ((a - 2) * (a - (-1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (a - (-1 - Complex.I * 3 * Real.sqrt 1 / 2))).gcd
+    ((b - 2) * (b - (1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (b - (1 - Complex.I * 3 * Real.sqrt 1 / 2))) = 1 := by
+      repeat rw [IsCoprime.gcd_eq_iff]
+      simp only [Complex.isUnit_iff, IsUnit.isUnit, ne_eq, Complex.abs_nonneg, not_false_eq_true,
+        IsUnit.add_re, IsUnit.add_im, IsUnit.mul_re, IsUnit.mul_im, Complex.ofReal_re, Complex.ofReal_im,
+        Complex.I_re, Complex.I_im, mul_zero, sub_zero, Complex.ofReal_re, Complex.ofReal_im, mul_one,
+        Complex.I_re, Complex.I_im, zero_add, Complex.add_re, Complex.add_im]
+      ring_nf
+      norm_num
+      rw [Complex.I_sq]
+      ring_nf
+      norm_num
+      positivity
+  have : (a - 2) * (a - (-1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (a - (-1 - Complex.I * 3 * Real.sqrt 1 / 2)) =
+    ((a - 2) * (a - (-1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (a - (-1 - Complex.I * 3 * Real.sqrt 1 / 2))):= by exact rfl
+  have : (b - 2) * (b - (1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (b - (1 - Complex.I * 3 * Real.sqrt 1 / 2)) =
+    ((b - 2) * (b - (1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (b - (1 - Complex.I * 3 * Real.sqrt 1 / 2))):= by exact rfl
+  have : ((a - 2) * (a - (-1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (a - (-1 - Complex.I * 3 * Real.sqrt 1 / 2)) -
+    ((b - 2) * (b - (1 + Complex.I * 3 * Real.sqrt 1 / 2)) * (b - (1 - Complex.I * 3 * Real.sqrt 1 / 2)))) = 0 := by
+    rw [this, this, sub_self]
+  rw [←this, ←this] at this
+
+  -- We now consider all the possible cases of the `gcd_eq_zero_iff` lemma, and show that each case gives a bound.
+  rw [Complex.gcd_eq_zero_iff] at this
+  cases this with
+  | inl h =>
+    cases h with
+    | inl h =>
+      -- The first case corresponds to $a - 2 = 0$ and $b - 2 = 0$. This is a contradiction.
+        rw [h] at hA
+        norm_num at hA
+    | inr h =>
+      -- The second case corresponds to $a - 2 = 0$ and $b - (1 - i 3 \sqrt{1}/2) = 0$. This is a contradiction.
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        linarith
+  | inr h =>
+    cases h with
+    | inl h =>
+      -- The third case corresponds to $a - 2 = 0$ and $b - (1 + i 3 \sqrt{1}/2) = 0$. This is a contradiction.
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        linarith
+    | inr h =>
+      -- The fourth case corresponds to $a - 2 = 0$ and $b - 2 = 0$. This is a contradiction.
+        rw [h] at hA
+        norm_num at hA
+
+  -- The other cases correspond to $a - (-1 - i 3 \sqrt{1}/2) = 0$ and various $b -... = 0$, for $a - (-1 + i 3 \sqrt{1}/2) = 0$ and $b -... = 0$.
+  -- They are all similar, so let's do the first one and then generalize.
+  cases h with
+  | inl h =>
+    cases h with
+    | inl h =>
+      -- This case corresponds to $a - (-1 - i 3 \sqrt{1}/2) = 0$ and $b - 2 = 0$.
+      -- So $a = -1 - i 3 \sqrt{1}/2$ and $b = 2$.
+      rw [h] at hA
+      norm_num at hA
+      rw [h] at hB
+      norm_num [Complex.ext_iff] at hB
+      ring_nf at hB
+      linarith
+    | inr h =>
+      -- This case corresponds to $a - (-1 - i 3 \sqrt{1}/2) = 0$ and $b - (1 - i 3 \sqrt{1}/2) = 0$.
+      -- So $a = -1 - i 3 \sqrt{1}/2$ and $b = 1 - i 3 \sqrt{1}/2$.
+      rw [h] at hA
+      norm_num at hA
+      rw [h] at hB
+      norm_num [Complex.ext_iff] at hB
+      ring_nf at hB
+      rw [Complex.abs_eq_sqrt_sq_add_sq]
+      ring_nf
+      norm_num
+      rw [Real.sqrt_eq_iff_eq_sq]
+      constructor
+      ring_nf
+      norm_num
+      ring_nf
+      norm_num
+      positivity
+    | inr h =>
+      cases h with
+      | inl h =>
+        -- This case corresponds to $a - (-1 - i 3 \sqrt{1}/2) = 0$ and $b - (1 + i 3 \sqrt{1}/2) = 0$.
+        -- So $a = -1 - i 3 \sqrt{1}/2$ and $b = 1 + i 3 \sqrt{1}/2$.
+        rw [h] at hA
+        norm_num at hA
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        rw [Complex.abs_eq_sqrt_sq_add_sq]
+        ring_nf
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        constructor
+        ring_nf
+        norm_num
+        ring_nf
+        norm_num
+        positivity
+      | inr h =>
+        -- This case corresponds to $a - (-1 + i 3 \sqrt{1}/2) = 0$ and $b - 2 = 0$.
+        -- So $a = -1 + i 3 \sqrt{1}/2$ and $b = 2$.
+        rw [h] at hA
+        norm_num at hA
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        linarith
+
+  -- The remaining cases correspond to $a - (-1 + i 3 \sqrt{1}/2) = 0$ and various $b -... = 0$.
+  -- They are all similar, so let's do the first one and then generalize.
+  cases h with
+  | inl h =>
+    cases h with
+    | inl h =>
+      -- This case corresponds to $a - (-1 + i 3 \sqrt{1}/2) = 0$ and $b - 2 = 0$.
+      -- So $a = -1 + i 3 \sqrt{1}/2$ and $b = 2$.
+      rw [h] at hA
+      norm_num at hA
+      rw [h] at hB
+      norm_num [Complex.ext_iff] at hB
+      ring_nf at hB
+      linarith
+    | inr h =>
+      -- This case corresponds to $a - (-1 + i 3 \sqrt{1}/2) = 0$ and $b - (1 - i 3 \sqrt{1}/2) = 0$.
+      -- So $a = -1 + i 3 \sqrt{1}/2$ and $b = 1 - i 3 \sqrt{1}/2$.
+      rw [h] at hA
+      norm_num at hA
+      rw [h] at hB
+      norm_num [Complex.ext_iff] at hB
+      ring_nf at hB
+      rw [Complex.abs_eq_sqrt_sq_add_sq]
+      ring_nf
+      norm_num
+      rw [Real.sqrt_eq_iff_eq_sq]
+      constructor
+      ring_nf
+      norm_num
+      ring_nf
+      norm_num
+      positivity
+    | inr h =>
+      cases h with
+      | inl h =>
+        -- This case corresponds to $a - (-1 + i 3 \sqrt{1}/2) = 0$ and $b - (1 + i 3 \sqrt{1}/2) = 0$.
+        -- So $a = -1 + i 3 \sqrt{1}/2$ and $b = 1 + i 3 \sqrt{1}/2$.
+        rw [h] at hA
+        norm_num at hA
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        rw [Complex.abs_eq_sqrt_sq_add_sq]
+        ring_nf
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        constructor
+        ring_nf
+        norm_num
+        ring_nf
+        norm_num
+        positivity
+      | inr h =>
+        -- This case corresponds to $a - (-1 + i 3 \sqrt{1}/2) = 0$ and $b - 2 = 0$.
+        -- So $a = -1 + i 3 \sqrt{1}/2$ and $b = 2$.
+        rw [h] at hA
+        norm_num at hA
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        linarith
+
+  -- So the possible values of $|a - b|^2$ are $9$, $84 - 12\sqrt{21}$, $84 + 12\sqrt{21}$, and $9$.
+  -- The largest among them is $84 + 12\sqrt{21}$.
+  -- So we have $|a - b|^2 \leq 84 + 12\sqrt{21}$.
+  -- This is equivalent to $|a - b| \leq \sqrt{84 + 12\sqrt{21}}$.
+  -- We can see that $\sqrt{84 + 12\sqrt{21}} = 2\sqrt{21}$.
+  suffices Complex.abs (a - b) ^ 2 ≤ 84 + 12 * Real.sqrt 21 by
+    have : 84 + 12 * Real.sqrt 21 = (2 * Real.sqrt 21) ^ 2 := by
+      ring_nf
+      rw [Real.sq_sqrt]
+      ring_nf
+      positivity
+    rw [this] at this
+    nlinarith [Complex.abs_nonneg (a - b)]
+
+  -- This is equivalent to showing $|a - b|^2 - 84 - 12\sqrt{21} \leq 0$.
+  suffices Complex.abs (a - b) ^ 2 - 84 - 12 * Real.sqrt 21 ≤ 0 by linarith
+  -- We will show that this is true for all the cases of the `h` hypothesis.
+  -- So let's start a `cases'` block on `h`.
+  cases h with
+  | inl h =>
+    cases h with
+    | inl h =>
+      -- The first case corresponds to $a - 2 = 0$ and $b - 2 = 0$. This is a contradiction.
+        rw [h] at hA
+        norm_num at hA
+    | inr h =>
+      -- The second case corresponds to $a - 2 = 0$ and $b - (1 - i 3 \sqrt{1}/2) = 0$. This is a contradiction.
+      rw [h] at hB
+      norm_num [Complex.ext_iff] at hB
+      ring_nf at hB
+      linarith
+    | inr h =>
+      cases h with
+      | inl h =>
+        -- The third case corresponds to $a - 2 = 0$ and $b - (1 + i 3 \sqrt{1}/2) = 0$. This is a contradiction.
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        linarith
+      | inr h =>
+        -- The fourth case corresponds to $a - 2 = 0$ and $b - 2 = 0$. This is a contradiction.
+        rw [h] at hA
+        norm_num at hA
+  | inr h =>
+    cases h with
+    | inl h =>
+      cases h with
+      | inl h =>
+        -- This case corresponds to $a - (-1 - i 3 \sqrt{1}/2) = 0$ and $b - 2 = 0$.
+          -- So $a = -1 - i 3 \sqrt{1}/2$ and $b = 2$.
+        rw [h] at hA
+        norm_num at hA
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        rw [Complex.abs_eq_sqrt_sq_add_sq]
+        ring_nf
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        constructor
+        ring_nf
+        norm_num
+        ring_nf
+        norm_num
+        positivity
+      | inr h =>
+        -- This case corresponds to $a - (-1 - i 3 \sqrt{1}/2) = 0$ and $b - (1 - i 3 \sqrt{1}/2) = 0$.
+        -- So $a = -1 - i 3 \sqrt{1}/2$ and $b = 1 - i 3 \sqrt{1}/2$.
+        rw [h] at hA
+        norm_num at hA
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        linarith
+    | inr h =>
+      cases h with
+      | inl h =>
+        -- This case corresponds to $a - (-1 + i 3 \sqrt{1}/2) = 0$ and $b - 2 = 0$.
+          -- So $a = -1 + i 3 \sqrt{1}/2$ and $b = 2$.
+        rw [h] at hA
+        norm_num at hA
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        linarith
+      | inr h =>
+        -- This case corresponds to $a - (-1 + i 3 \sqrt{1}/2) = 0$ and $b - (1 + i 3 \sqrt{1}/2) = 0$.
+        -- So $a = -1 + i 3 \sqrt{1}/2$ and $b = 1 + i 3 \sqrt{1}/2$.
+        rw [h] at hA
+        norm_num at hA
+        rw [h] at hB
+        norm_num [Complex.ext_iff] at hB
+        ring_nf at hB
+        rw [Complex.abs_eq_sqrt_sq_add_sq]
+        ring_nf
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        constructor
+        ring_nf
+        norm_num
+        ring_nf
+        norm_num
+        positivity
+
+  suffices √84 + √12 * √21 ≥ 0 by linarith
+  positivity
+```

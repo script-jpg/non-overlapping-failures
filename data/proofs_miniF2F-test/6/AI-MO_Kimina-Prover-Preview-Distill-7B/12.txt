@@ -1,0 +1,263 @@
+-- some auxilary facts
+  have tr_0 (x : ℝ) : Real.cos (Real.pi + x) = -Real.cos x := by
+    rw [Real.cos_add]
+    norm_num
+
+  have tr_1 (x : ℝ) : Real.cos (Real.pi / 2 + x) = -Real.sin x := by
+    rw [Real.cos_add]
+    norm_num
+
+  have tr_2 (x : ℝ) : Real.cos (Real.pi - x) = -Real.cos x := by
+    rw [Real.cos_sub]
+    rw [Real.cos_pi, Real.sin_pi]
+    simp
+
+  have tr_3 (x : ℝ) : Real.cos (x + 2 * Real.pi) = Real.cos x := by
+    rw [← Real.cos_add_two_pi]
+    ring_nf
+
+  -- prove that `y` is periodic
+  have y_per : ∀ x, y x = y (x + 2 * Real.pi) := by
+    intro x
+    rw [h₁, h₁]
+    apply Finset.sum_congr rfl
+    intro i hi
+    rw [← tr_3]
+    congr
+    simp at hi
+    omega
+
+  -- prove that `y` can be simplified to a sum of cos (a_i + x) form
+  have hy_simp : ∀ x, y x = ∑ i in Finset.range k, Real.cos (a i + x) / 2 ^ i := by
+    intro x
+    exact h₁ x
+
+  -- define the function `f` and prove its differentiability
+  let f : ℝ → ℝ := fun x => y x - y (x + Real.pi / 2)
+  have f_diff : Differentiable ℝ f := by
+    simp only [f]
+    have y_diff : Differentiable ℝ y := by
+      apply Differentiable.sum
+      intro i _
+      apply Differentiable.div
+      apply Differentiable.cos
+      apply Differentiable.add
+      exact fun ⦃U⦄ a => a
+      exact differentiable_id'
+      apply pow differentiable_const
+    apply Differentiable.sub y_diff
+    apply Differentiable.map
+    apply Differentiable.add
+    exact differentiable_id'
+    exact differentiable_const a 0
+    apply Differentiable.map
+    apply Differentiable.cos
+    apply Differentiable.add
+    exact differentiable_id'
+    exact differentiable_const a 1
+    apply pow differentiable_const
+
+  -- prove that `f` is periodic
+  have f_per : ∀ x, f x = f (x + 2 * Real.pi) := by
+    intro x
+    simp only [f]
+    rw [y_per, y_per, h₁, h₁]
+    apply Finset.sum_congr rfl
+    intro i hi
+    congr
+    simp at hi
+    ring_nf
+    simp
+    omega
+
+  -- prove that `f` is continuous
+  have f_cont : Continuous f := by
+    exact f_diff.continuous
+
+  -- rewrite the condition that f(x_1)=f(x_2)=0
+  rw [hy_simp, hy_simp] at h₂ h₃
+
+  -- prove that `f` can be simplified to a sum of cos (a_i + x) form
+  have f_simp : ∀ x, f x = ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i - Real.cos (a i + x + Real.pi / 2) / 2 ^ i := by
+    intro x
+    have h₁ : y x = ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i := by
+      exact h₁ x
+    have h₂ : y (x + Real.pi / 2) = ∑ i ∈ Finset.range k, Real.cos (a i + x + Real.pi / 2) / 2 ^ i := by
+      exact h₁ (x + Real.pi / 2)
+    rw [h₁, h₂]
+    ring
+
+  -- define the function `g` and prove its differentiability
+  let g : ℝ → ℝ := fun x => f x + f (x + Real.pi / 2) - f (x + Real.pi)
+  have g_diff : Differentiable ℝ g := by
+    simp only [g]
+    have f_diff : Differentiable ℝ f := by
+      simp only [f]
+      have y_diff : Differentiable ℝ y := by
+        apply Differentiable.sum
+        intro i _
+        apply Differentiable.div
+        apply Differentiable.cos
+        apply Differentiable.add
+        exact fun ⦃U⦄ a => a
+        exact differentiable_id'
+        apply pow differentiable_const
+      apply Differentiable.sub y_diff
+      apply Differentiable.map
+      apply Differentiable.add
+      exact differentiable_id'
+      exact differentiable_const a 0
+      apply Differentiable.map
+      apply Differentiable.cos
+      apply Differentiable.add
+      exact differentiable_id'
+      exact differentiable_const a 1
+      apply pow differentiable_const
+    apply Differentiable.add
+    apply Differentiable.add
+    exact f_diff
+    apply Differentiable.map
+    apply Differentiable.add
+    exact Differentiable.deriv_const (Real.pi / 2) Real.differentiable_id
+    exact Differentiable.const_mul (Real.differentiable_id' (1 / 2))
+    apply Differentiable.map
+    apply Differentiable.cos
+    apply Differentiable.add
+    exact Differentiable.deriv_const Real.pi
+    exact differentiable_id'
+    apply Differentiable.map
+    apply Differentiable.cos
+    apply Differentiable.add
+    exact differentiable_id'
+    exact differentiable_const a 2
+    apply pow differentiable_const
+
+  -- prove that `g` is periodic
+  have g_per : ∀ x, g x = g (x + 2 * Real.pi) := by
+    intro x
+    simp only [g]
+    rw [f_per, f_per, f_per, h₁, h₁, h₁]
+    apply Finset.sum_congr rfl
+    intro i hi
+    ring_nf
+    simp
+    omega
+
+  -- prove that `g` is continuous
+  have g_cont : Continuous g := by
+    exact g_diff.continuous
+
+  -- simplify `g` to a sum of cos (a_i + x) form
+  have g_simp : ∀ x, g x = ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i - Real.cos (a i + x + Real.pi / 2) / 2 ^ i - (Real.cos (a i + x + Real.pi) / 2 ^ i - Real.cos (a i + x + Real.pi / 2 + Real.pi) / 2 ^ i) := by
+    intro x
+    have h₁ : f x = ∑ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i - Real.cos (a i + x + Real.pi / 2) / 2 ^ i := by
+      exact f_simp x
+    have h₂ : f (x + Real.pi / 2) = ∑ i ∈ Finset.range k, Real.cos (a i + x + Real.pi / 2) / 2 ^ i - Real.cos (a i + x + Real.pi / 2 + Real.pi / 2) / 2 ^ i := by
+      exact f_simp (x + Real.pi / 2)
+    have h₃ : f (x + Real.pi) = ∑ i ∈ Finset.range k, Real.cos (a i + x + Real.pi) / 2 ^ i - Real.cos (a i + x + Real.pi + Real.pi / 2) / 2 ^ i := by
+      exact f_simp (x + Real.pi)
+    rw [h₁, h₂, h₃]
+    ring
+
+  -- simplify the condition that f(x_1)=f(x_2)=0
+  have h₄ : g m = 0 := by
+    rw [g_simp m, f_simp m, f_simp (m + Real.pi / 2), f_simp (m + Real.pi)]
+    have tr_1 (x : ℝ) : Real.cos (x + Real.pi / 2 + Real.pi / 2) = Real.cos (x + Real.pi) := by
+      rw [show x + Real.pi / 2 + Real.pi / 2 = x + Real.pi by ring]
+    have tr_2 (x : ℝ) : Real.cos (x + Real.pi / 2 + Real.pi) = -Real.cos (x + Real.pi / 2) := by
+      rw [show x + Real.pi / 2 + Real.pi = x + Real.pi / 2 + Real.pi by ring]
+      rw [Real.cos_add_pi]
+    rw [tr_1, tr_2]
+    ring
+
+  have h₅ : g n = 0 := by
+    rw [g_simp n, f_simp n, f_simp (n + Real.pi / 2), f_simp (n + Real.pi)]
+    have tr_1 (x : ℝ) : Real.cos (x + Real.pi / 2 + Real.pi / 2) = Real.cos (x + Real.pi) := by
+      rw [show x + Real.pi / 2 + Real.pi / 2 = x + Real.pi by ring]
+    have tr_2 (x : ℝ) : Real.cos (x + Real.pi / 2 + Real.pi) = -Real.cos (x + Real.pi / 2) := by
+      rw [show x + Real.pi / 2 + Real.pi = x + Real.pi / 2 + Real.pi by ring]
+      rw [Real.cos_add_pi]
+    rw [tr_1, tr_2]
+    ring
+
+  -- simplify the condition that f(x_1)=f(x_2)=0 to sin (a_i + x_1 + π / 2) = sin (a_i + x_2 + π / 2)
+  simp only [g] at h₄ h₅
+  have h₆ : ∀ i ∈ Finset.range k, Real.sin (a i + m + Real.pi / 2) = Real.sin (a i + n + Real.pi / 2) := by
+    intro i _
+    have h₇ : Real.cos (a i + m) = Real.cos (a i + n) := by
+      have g₅ : (Real.cos (a i + m) - Real.cos (a i + m + Real.pi / 2)) / (2 ^ i) = (Real.cos (a i + n) - Real.cos (a i + n + Real.pi / 2)) / (2 ^ i) := by
+        have g₄ : Real.cos (a i + m) - Real.cos (a i + m + Real.pi / 2) = Real.cos (a i + n) - Real.cos (a i + n + Real.pi / 2) := by
+          have h₄ : Real.cos (a i + m) / 2 ^ i - Real.cos (a i + m + Real.pi / 2) / 2 ^ i = (Real.cos (a i + n) / 2 ^ i - Real.cos (a i + n + Real.pi / 2) / 2 ^ i) := by
+            rw [←h₄]
+            simp
+            omega
+          have h₅ : Real.cos (a i + m) / 2 ^ i = Real.cos (a i + n) / 2 ^ i := by
+            linarith only [h₄]
+          linarith only [h₅]
+        linarith only [g₄]
+      have g₆ : Real.cos (a i + m) - Real.cos (a i + m + Real.pi / 2) = Real.cos (a i + n) - Real.cos (a i + n + Real.pi / 2) := by
+        have g₇ : (Real.cos (a i + m) - Real.cos (a i + m + Real.pi / 2)) / (2 ^ i) = (Real.cos (a i + n) - Real.cos (a i + n + Real.pi / 2)) / (2 ^ i) := by
+          exact g₅
+        have g₈ : 0 < (2 : ℝ) ^ i := by
+          apply pow_pos
+          norm_num
+        have g₉ : Real.cos (a i + m) - Real.cos (a i + m + Real.pi / 2) = (Real.cos (a i + n) - Real.cos (a i + n + Real.pi / 2)) := by
+          apply (div_eq_div_iff g₈ g₈).mp g₇
+        linarith only [g₉]
+      linarith only [g₆]
+    have h₈ : Real.cos (a i + m) = Real.cos (a i + n) := by
+      linarith only [h₇]
+    have h₉ : Real.cos (a i + m + Real.pi / 2) = -Real.sin (a i + m) := by
+      rw [show a i + m + Real.pi / 2 = a i + m + Real.pi / 2 by rfl]
+      exact tr_1 (a i + m)
+    have h₁₀ : Real.cos (a i + n + Real.pi / 2) = -Real.sin (a i + n) := by
+      rw [show a i + n + Real.pi / 2 = a i + n + Real.pi / 2 by rfl]
+      exact tr_1 (a i + n)
+    rw [h₉, h₁₀]
+    linarith only [h₈]
+
+  -- prove that sin (a_i + x_1 + π / 2) = sin (a_i + x_2 + π / 2) implies sin (a_i + x_1 + π / 2) = sin (a_i + x_2 + π / 2 + 2 * π)
+  have h₇ : ∀ i ∈ Finset.range k, Real.sin (a i + m + Real.pi / 2) = Real.sin (a i + n + Real.pi / 2 + 2 * Real.pi) := by
+    intro i _
+    have h₈ : Real.sin (a i + n + Real.pi / 2 + 2 * Real.pi) = Real.sin (a i + n + Real.pi / 2) := by
+      rw [Real.sin_add_two_pi]
+    have h₉ : Real.sin (a i + m + Real.pi / 2) = Real.sin (a i + n + Real.pi / 2) := by
+      exact h₆ i _
+    rw [h₈]
+    linarith only [h₉]
+
+  -- prove that sin (a_i + x_1 + π / 2) = sin (a_i + x_2 + π / 2 + 2 * π) implies sin (a_i + x_1 + π / 2 + t * 2 * π) = sin (a_i + x_2 + π / 2 + t * 2 * π) for any t
+  have h₈ : ∀ i ∈ Finset.range k, ∀ t : ℤ, Real.sin (a i + m + Real.pi / 2 + t * 2 * Real.pi) = Real.sin (a i + n + Real.pi / 2 + t * 2 * Real.pi) := by
+    intro i _ t
+    induction t with
+    | ofNat n =>
+      induction n with
+      | zero =>
+        simp
+      | succ n ih =>
+        have h₉ : Real.sin (a i + m + Real.pi / 2 + (n + 1) * 2 * Real.pi) = Real.sin (a i + m + Real.pi / 2 + n * 2 * Real.pi + 2 * Real.pi) := by
+          ring_nf
+        have h₁₀ : Real.sin (a i + n + Real.pi / 2 + (n + 1) * 2 * Real.pi) = Real.sin (a i + n + Real.pi / 2 + n * 2 * Real.pi + 2 * Real.pi) := by
+          ring_nf
+        rw [h₉, h₁₀]
+        have h₁₁ : Real.sin (a i + m + Real.pi / 2 + n * 2 * Real.pi + 2 * Real.pi) = Real.sin (a i + m + Real.pi / 2 + n * 2 * Real.pi) := by
+          rw [Real.sin_add_two_pi]
+        have h₁₂ : Real.sin (a i + n + Real.pi / 2 + n * 2 * Real.pi + 2 * Real.pi) = Real.sin (a i + n + Real.pi / 2 + n * 2 * Real.pi) := by
+          rw [Real.sin_add_two_pi]
+        rw [h₁₁, h₁₂]
+        linarith only [ih]
+    | negSucc n =>
+      induction n with
+      | zero =>
+        simp
+      | succ n ih =>
+        have h₉ : Real.sin (a i + m + Real.pi / 2 + (-n - 1) * 2 * Real.pi) = Real.sin (a i + m + Real.pi / 2 + (-n) * 2 * Real.pi + -2 * Real.pi) := by
+          ring_nf
+        have h₁₀ : Real.sin (a i + n + Real.pi / 2 + (-n - 1) * 2 * Real.pi) = Real.sin (a i + n + Real.pi / 2 + (-n) * 2 * Real.pi + -2 * Real.pi) := by
+          ring_nf
+        rw [h₉, h₁₀]
+        have h₁₁ : Real.sin (a i + m + Real.pi / 2 + (-n) * 2 * Real.pi + -2 * Real.pi) = Real.sin (a i + m + Real.pi / 2 + (-n) * 2 * Real.pi) := by
+          rw [show -2 * Real.pi = (-1 - 1) * Real.pi by ring]
+          rw [Real.sin_neg (n + 1) _]
+          have h₁₂ : Real.sin (a i + m + Real.pi / 2 + (-n) * 2 * Real.pi) = Real.sin (a i + m + Real.pi / 2 + (n + 1) * 2 * Real.pi) := by
+            rw [show (-n) * 2

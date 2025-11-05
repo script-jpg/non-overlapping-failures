@@ -1,0 +1,33 @@
+-- Step 1: Handle the base case where a = 1
+  induction a with
+  | zero => linarith
+  | succ a ih =>
+    cases a with
+    | zero =>
+      simp
+    | succ a =>
+      -- Step 2: Use the binomial theorem to expand (a+1)^p
+      have h1 : (a + 1) ^ p = ∑ k in Finset.range p, Nat.choose p k * a ^ k := by
+        rw [Nat.pow_succ]
+        apply Nat.add_distrib
+        simp
+      -- Step 3: Show that (a+1)^p - (a+1) is divisible by p
+      have h2 : p ∣ (a + 1) ^ p - (a + 1) := by
+        rw [h1]
+        refine Nat.dvd_sum (fun x hx => _) <;> simp at *
+        rcases x with x | x
+        · simp
+        · rw [Nat.choose_eq_factorial_div_factorial]
+          -- Step 4: Show that choose p x is divisible by p when 0 < x < p
+          have h3 : Nat.choose p x % p = 0 := by
+            simp
+            have h3 : x! ∣ p! := Nat.factorial_dvd_factorial
+            have h4 : x! ≠ 0 := factorial_ne_zero x
+            exact Nat.dvd_of_mod_eq_zero h3
+          exact dvd_div_of_mul_dvd h3 (by simp)
+      -- Step 5: Apply the induction hypothesis to a
+      have h3 : p ∣ a ^ p - a := ih
+      -- Step 6: Conclude that p divides (a+1)^p - (a+1) + (a^p - a)
+      exact (Nat.dvd_add_iff_right h3).mpr h2
+
+```

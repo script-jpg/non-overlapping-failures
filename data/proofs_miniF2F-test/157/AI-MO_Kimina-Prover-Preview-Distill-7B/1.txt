@@ -1,0 +1,147 @@
+-- Prove that the solution set is exactly $\{ \frac{\pi}{4}, \frac{3\pi}{4} \}$.
+  have h₁ : S = {Real.pi / 4, Real.pi - Real.pi / 4} := by
+    ext x
+    constructor
+    · -- If $x \in S$, then $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$.
+      intro hx
+      rcases hx with ⟨hx, h₀, h₁⟩
+      replace h₁ : Real.sin (Real.pi / 2 * Real.cos x) = Real.sin (Real.pi / 2 - Real.pi / 2 * Real.sin x) := by
+        rw [h₁]
+        ring
+      -- If $\sin a = \sin b$, then $a = b$ or $a = \pi - b$.
+      rw [Real.sin_eq_sin_iff] at h₁
+      rcases h₁ with h₁ | h₁
+      · -- If $\sin a = \sin b$ and $a = b$, then $x = \frac{\pi}{4}$.
+        replace h₁ : Real.pi / 2 * Real.cos x = Real.pi / 2 - Real.pi / 2 * Real.sin x := by
+          linarith only [h₁]
+        rw [mul_add, mul_sub, Real.cos_sq, Real.sin_sq] at h₁
+        ring_nf at h₁
+        replace h₁ : Real.cos x + Real.sin x = 1 := by
+          linarith only [h₁]
+        replace h₁ : Real.cos x + Real.sin x - 1 = 0 := by
+          linarith only [h₁]
+        have h₂ : Real.cos x + Real.sin x - 1 = 2 * Real.cos (x - Real.pi / 4) := by
+          rw [Real.cos_sub, Real.cos_pi_div_four, Real.sin_pi_div_four]
+          ring
+        rw [h₂] at h₁
+        replace h₁ : Real.cos (x - Real.pi / 4) = 0 := by
+          linarith only [h₁]
+        replace h₁ : ∃ k : ℤ, x - Real.pi / 4 = (2 * k + 1) * Real.pi / 2 := by
+          exact Real.cos_eq_zero_iff.mp h₁
+        rcases h₁ with ⟨k, h₁⟩
+        have h₂ : x = (2 * k + 1) * Real.pi / 2 + Real.pi / 4 := by
+          linarith only [h₁]
+        rw [h₂] at h₀ ⊢
+        -- We get $k = 0$ or $k = 1$.
+        by_cases h₃ : k = 0
+        · -- If $k = 0$, then $x = \frac{\pi}{4}$.
+          simp [h₃] at h₂
+          left
+          exact h₂
+        · -- If $k \neq 0$, then $\frac{\pi}{2} \sin x \leq -\frac{\pi}{2}$, which is impossible.
+          have h₄ : k ≥ 1 := by
+            omega
+          have h₅ : Real.pi / 2 * Real.sin x ≤ - Real.pi / 2 := by
+            calc
+              Real.pi / 2 * Real.sin x ≤ Real.pi / 2 * (-1) := by
+                apply mul_le_mul_of_nonneg_left
+                · -- $\sin x \leq 0$ since $x \in [0, \pi]$.
+                  apply Real.sin_nonpos_of_nonnpos_of_neg_pi_le
+                  · exact le_of_lt (Real.pi_pos)
+                  · linarith only [h₀]
+                · apply Real.pi_div_two_nonneg
+              _ = - Real.pi / 2 := by
+                ring
+          have h₆ : Real.pi / 2 * Real.sin x + Real.pi / 2 ≤ 0 := by
+            linarith only [h₅]
+          have h₇ : Real.pi / 2 * Real.sin x + Real.pi / 2 ≥ 0 := by
+            apply le_of_lt
+            apply Real.lt_pi_pos
+          linarith only [h₆, h₇]
+      · -- If $\sin a = \sin b$ and $a = \pi - b$, then $x = \frac{3\pi}{4}$.
+        replace h₁ : Real.pi / 2 * Real.cos x = Real.pi - (Real.pi / 2 - Real.pi / 2 * Real.sin x) := by
+          linarith only [h₁]
+        rw [mul_add, mul_sub, Real.cos_sq, Real.sin_sq] at h₁
+        ring_nf at h₁
+        replace h₁ : Real.cos x - Real.sin x = 1 := by
+          linarith only [h₁]
+        replace h₁ : Real.cos x - Real.sin x - 1 = 0 := by
+          linarith only [h₁]
+        have h₂ : Real.cos x - Real.sin x - 1 = 2 * Real.cos (x + Real.pi / 4) := by
+          rw [Real.cos_add, Real.cos_pi_div_four, Real.sin_pi_div_four]
+          ring
+        rw [h₂] at h₁
+        replace h₁ : Real.cos (x + Real.pi / 4) = 0 := by
+          linarith only [h₁]
+        replace h₁ : ∃ k : ℤ, x + Real.pi / 4 = (2 * k + 1) * Real.pi / 2 := by
+          exact Real.cos_eq_zero_iff.mp h₁
+        rcases h₁ with ⟨k, h₁⟩
+        have h₂ : x = (2 * k + 1) * Real.pi / 2 - Real.pi / 4 := by
+          linarith only [h₁]
+        rw [h₂] at h₀ ⊢
+        -- We get $k = 0$ or $k = 1$.
+        by_cases h₃ : k = 0
+        · -- If $k = 0$, then $x = \frac{3\pi}{4}$.
+          simp [h₃] at h₂
+          right
+          linarith only [Real.pi_nonneg, h₀]
+        · -- If $k \neq 0$, then $\frac{\pi}{2} \sin x \leq -\frac{\pi}{2}$, which is impossible.
+          have h₄ : k ≥ 1 := by
+            omega
+          have h₅ : Real.pi / 2 * Real.sin x ≤ - Real.pi / 2 := by
+            calc
+              Real.pi / 2 * Real.sin x ≤ Real.pi / 2 * (-1) := by
+                apply mul_le_mul_of_nonneg_left
+                · -- $\sin x \leq 0$ since $x \in [0, \pi]$.
+                  apply Real.sin_nonpos_of_nonnpos_of_neg_pi_le
+                  · exact le_of_lt (Real.pi_pos)
+                  · linarith only [h₀]
+                · apply Real.pi_div_two_nonneg
+              _ = - Real.pi / 2 := by
+                ring
+          have h₆ : Real.pi / 2 * Real.sin x + Real.pi / 2 ≤ 0 := by
+            linarith only [h₅]
+          have h₇ : Real.pi / 2 * Real.sin x + Real.pi / 2 ≥ 0 := by
+            apply le_of_lt
+            apply Real.lt_pi_pos
+          linarith only [h₆, h₇]
+    · -- If $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$, then $x \in S$.
+      intro hx
+      rcases hx with hx | hx
+      · -- If $x = \frac{\pi}{4}$, then $x \in S$.
+        rw [hx]
+        constructor
+        · -- $\frac{\pi}{4} \in [0, \pi]$.
+          exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+        · -- $\sin \left( \frac{\pi}2 \cos \frac{\pi}{4}\right)=\cos \left( \frac{\pi}2 \sin \frac{\pi}{4}\right)$.
+          rw [show Real.pi / 2 * Real.cos (Real.pi / 4) = Real.pi / 2 * (Real.sqrt 2 / 2) by simp [Real.cos_pi_div_four], show Real.pi / 2 * Real.sin (Real.pi / 4) = Real.pi / 2 * (Real.sqrt 2 / 2) by simp [Real.sin_pi_div_four]]
+          rw [show Real.pi / 2 * (Real.sqrt 2 / 2) = Real.pi / 2 - Real.pi / 2 * (Real.sqrt 2 / 2) by ring]
+          rw [Real.sin_eq_sin_iff]
+          right
+          rw [mul_div_cancel₀ _ (by norm_num)]
+          rw [div_div_cancel₀ _ (by norm_num)]
+          have h : 3 * Real.pi * (1 / 4) = Real.pi - Real.pi / 4 := by
+            ring
+          rw [h]
+          refine ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+      · -- If $x = \frac{3\pi}{4}$, then $x \in S$.
+        rw [hx]
+        constructor
+        · -- $\frac{3\pi}{4} \in [0, \pi]$.
+          exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+        · -- $\sin \left( \frac{\pi}2 \cos \frac{3\pi}{4}\right)=\cos \left( \frac{\pi}2 \sin \frac{3\pi}{4}\right)$.
+          rw [show Real.pi / 2 * Real.cos (3 * Real.pi / 4) = Real.pi / 2 * (-Real.sqrt 2 / 2) by simp [Real.cos_three_mul, Real.cos_pi_div_four], show Real.pi / 2 * Real.sin (3 * Real.pi / 4) = Real.pi / 2 * (Real.sqrt 2 / 2) by simp [Real.sin_three_mul, Real.sin_pi_div_four]]
+          rw [show Real.pi / 2 * (-Real.sqrt 2 / 2) = Real.pi - Real.pi / 2 * (Real.sqrt 2 / 2) by ring]
+          rw [Real.sin_eq_sin_iff]
+          right
+          rw [mul_div_cancel₀ _ (by norm_num)]
+          rw [div_div_cancel₀ _ (by norm_num)]
+          have h : 5 * Real.pi * (1 / 4) = Real.pi - Real.pi * (1 / 4) := by
+            ring
+          rw [h]
+          refine ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+
+  -- Now we can conclude that the solution set has two elements.
+  rw [h₁, Finset.card_pair]
+  linarith only [Real.pi_pos]
+```

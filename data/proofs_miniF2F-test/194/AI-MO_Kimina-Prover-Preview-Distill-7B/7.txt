@@ -1,0 +1,188 @@
+-- All the roots are positive integers, possibly repeated. So they are in $\mathbb{Z}_+$.
+  let Z := Finset.Ioi (0:ℂ)
+  have hZ_def: Z = Finset.Ioi (0:ℂ) := rfl
+
+  -- We want to show that the polynomial has $8$ roots (with multiplicity) in $\mathbb{Z}_+$.
+  let N := 8
+  have hN_def: N = 8 := rfl
+
+  -- $0$ is not a root, so all the roots are in $\mathbb{Z}_+^*$.
+  let Z' := Z \ {0}
+  have hZ'_def: Z' = Z \ {0} := rfl
+
+  -- We prove that actually the polynomial has $8$ distinct roots in $\mathbb{Z}_+^*$.
+  have roots_in_Z' : (∀ z, f z = 0 → z ∈ Z') ∧ N = Nat.card {z | f z = 0} := by
+    -- We prove that the roots are exactly $1,2,2,2,4,4,4,8$.
+    ring_nf
+    constructor
+    · intro z hz
+      simp [hN_def] at hz
+      have hz' : z ≠ 0 := by
+        intro h
+        rw [h] at hz
+        simp at hz
+      simp [hz', hz, h₁]
+      rcases hz with ((h₀ | h₀) | h₀) | h₀
+      -- $0$ is not a root
+      · exfalso
+        simp [h₀] at hz
+      -- $1$ is a root
+      · left
+        simp [h₀]
+      -- $2$ is a root
+      · right
+        left
+        simp [h₀]
+      -- $4$ is a root
+      · right
+        right
+        simp [h₀]
+      -- $8$ is a root
+      · right
+        right
+        right
+        simp [h₀]
+    · simp [hN_def]
+      rw [Finset.card_eq_toFinset_card']
+      let u := ({1, 2, 4, 8} : Finset ℂ)
+      let n := (8 : ℕ)
+      have u_def: u = {1, 2, 4, 8} := rfl
+      have n_def: n = 8 := rfl
+      have hn: u.card = n := by simp [u_def, n_def]
+      constructor
+      · simp [u_def]
+      · rw [← hn]
+        simp
+
+  -- Let $A$ be the set of roots.
+  let A := {z | f z = 0}
+  have hA_def: A = {z | f z = 0} := rfl
+
+  -- We prove that $A$ is finite by showing that it is contained in $\mathbb{Z}_+^*$.
+  have A_finite : A.Finite := by
+    apply Set.Finite.subset (Finset.finite_toSet (hZ'.1))
+    simp [hA_def]
+
+  -- We prove that $A$ has $8$ elements.
+  have A_card : Nat.card A = 8 := by
+    rw [← hN_def]
+    apply Nat.card_eq_of_toFinset_card_eq
+    simp [hA_def, hN_def]
+    exact roots_in_Z'.2
+
+  -- We prove that $A$ has $8$ elements, and they are all in $\mathbb{Z}_+^*$, so $A = \{1,2,2,2,4,4,4,8\}$.
+  have A_eq : A = {1, 2, 2, 2, 4, 4, 4, 8} := by
+    apply Set.ext_iff.mpr
+    intro x
+    constructor
+    · intro hx
+      have hx' : x ∈ Z' := (roots_in_Z'.1) x hx
+      simp [hZ'_def] at hx'
+      rcases hx' with ⟨hx', hx''⟩
+      simp [h₁] at hx''
+      rcases hx'' with ((hx'' | hx'') | hx'') | hx''
+      -- $0$ is not a root
+      · exfalso
+        simp [hx''] at hx
+      -- $1$ is a root
+      · left
+        simp [hx'']
+      -- $2$ is a root
+      · right
+        left
+        simp [hx'']
+      -- $4$ is a root
+      · right
+        right
+        simp [hx'']
+      -- $8$ is a root
+      · right
+        right
+        right
+        simp [hx'']
+    · intro hx
+      simp [hA_def] at hx
+      rcases hx with ((hx'' | hx'') | hx'') | hx''
+      -- $1$ is a root
+      · rw [hx'']
+        simp
+      -- $2$ is a root
+      · rw [hx'']
+        norm_num
+      -- $4$ is a root
+      · rw [hx'']
+        norm_num
+      -- $8$ is a root
+      · rw [hx'']
+        norm_num
+
+  -- We calculate the coefficients by Vieta's formula
+  let e0 := 1
+  let e1 := -10
+  let e2 := A
+  let e3 := b
+  let e4 := c
+  let e5 := d
+  let e6 := -16
+
+  have e0_prod : e0 = 1 := by rfl
+  have e1_prod : e1 = -10 := by rfl
+  have e2_prod : e2 = A := by rfl
+  have e3_prod : e3 = b := by rfl
+  have e4_prod : e4 = c := by rfl
+  have e5_prod : e5 = d := by rfl
+  have e6_prod : e6 = -16 := by rfl
+
+  have e0_sum : e0 = 1 := by rfl
+  have e1_sum : e1 = -10 := by rfl
+  have e2_sum : e2 = -8 := by
+    rw [e2_prod]
+    rw [← A_card]
+    rw [Finset.prod_singleton]
+    apply Finset.prod_eq_esymm_roots_of_card
+    · exact hN_def
+    · simp [hA_def, hN_def, A_eq]
+    · intro x hx
+      simp [h₁] at hx
+      rcases hx with (hx | hx | hx | hx | hx | hx | hx | hx)
+      all_goals { rw [hx]; simp }
+  have e3_sum : e3 = -88 := by
+    rw [e3_prod]
+    rw [← A_card]
+    rw [Finset.prod_singleton]
+    apply Finset.prod_eq_esymm_roots_of_card
+    · exact hN_def
+    · simp [hA_def, hN_def, A_eq]
+    · intro x hx
+      simp [h₁] at hx
+      rcases hx with (hx | hx | hx | hx | hx | hx | hx | hx)
+      all_goals { rw [hx]; simp }
+  have e4_sum : e4 = 224 := by
+    rw [e4_prod]
+    rw [← A_card]
+    rw [Finset.prod_singleton]
+    apply Finset.prod_eq_esymm_roots_of_card
+    · exact hN_def
+    · simp [hA_def, hN_def, A_eq]
+    · intro x hx
+      simp [h₁] at hx
+      rcases hx with (hx | hx | hx | hx | hx | hx | hx | hx)
+      all_goals { rw [hx]; simp }
+  have e5_sum : e5 = -168 := by
+    rw [e5_prod]
+    rw [← A_card]
+    rw [Finset.prod_singleton]
+    apply Finset.prod_eq_esymm_roots_of_card
+    · exact hN_def
+    · simp [hA_def, hN_def, A_eq]
+    · intro x hx
+      simp [h₁] at hx
+      rcases hx with (hx | hx | hx | hx | hx | hx | hx | hx)
+      all_goals { rw [hx]; simp }
+  have e6_sum : e6 = -16 := by rfl
+
+  -- We prove that $B = -88$.
+  rw [e3_prod] at e3_sum
+  exact e3_sum
+
+```

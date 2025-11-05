@@ -1,0 +1,140 @@
+-- We shall show that $a^4 = 3$.
+  suffices a ^ 4 = 3 by
+    rw [pow_two, ← mul_assoc, pow_two] at this
+    nth_rw 2 [← one_mul (a ^ 4)] at this
+    rw [← mul_assoc, mul_comm (144 * a), ← mul_assoc, ← this]
+    norm_num
+
+  -- First, we find an upper bound for $a$.
+  have ha : a < 2 := by
+    -- If $a \geq 2$, then $a^2 \geq 4$, contradicting $a^2 < 3$.
+    by_contra! ha
+    nlinarith only [h₂, ha]
+
+  -- Then, we find a lower bound for $a$.
+  have ha' : √(3 / 2) < a := by
+    -- If $a \leq \sqrt{3/2}$, then $a^2 \leq 3/2$, contradicting $a^2 > 2$.
+    by_contra! ha'
+    nlinarith only [h₃, Real.sq_sqrt (show 0 ≤ 3 / 2 from by norm_num), ha']
+
+  -- We have the following inequality $a < 2$. Square it, we get $a^2 < 4$. But $2 < a^2$, so we have $2 < a^2 < 4$.
+  have h_2_a_sq : 2 < a ^ 2 < 4 := ⟨(by nlinarith only [h₂, ha]), (by nlinarith only [h₃, ha])⟩
+
+  -- We have the following inequality $\sqrt{3/2} < a$. Square it, we get $3/2 < a^2$. But $a^2 < 2$, so we have $3/2 < a^2 < 2$.
+  have h_sqrt_3_div_2_a_sq : √(3 / 2) ^ 2 < a ^ 2 < 2 := ⟨(by
+    rw [Real.sq_sqrt (by norm_num)] <;> linarith only [h_sqrt_3_div_2a]), (by nlinarith only [h_2_a_sq.2])⟩
+
+  -- Since $a > 0$, we have $1/a > 0$.
+  have h_1_div_a : 1 / a > 0 := one_div_pos.mpr h₀
+
+  -- Since $a^2 < 2$, we have $1/a > \sqrt(1/2)$.
+  have h_gt : 1 / a > √(1 / 2) := by
+    -- If $1/a \leq \sqrt{1/2}$, then $1/a^2 \leq 1/2$, contradicting $a^2 > 2$.
+    by_contra! h_gt
+    rw [Real.le_sqrt] at h_gt
+    field_simp at h_gt
+    nlinarith only [h_2_a_sq.1, h_gt]
+
+  -- Since $1/a > \sqrt(1/2)$, squaring it, we have $1/a^2 > 1/2$.
+  have h_1_div_a_sq : 1 / a ^ 2 > 1 / 2 := by
+    -- If $1/a^2 \leq 1/2$, then $(1/a)^2 \leq 1/2$, or $1/a \leq \sqrt{1/2}$.
+    by_contra! h_1_div_a_sq
+    rw [Real.le_sqrt] at h_1_div_a_sq
+    field_simp at h_1_div_a_sq
+    nlinarith only [h_gt, h_1_div_a_sq]
+
+  -- Since $1/a > \sqrt(1/2)$, we have $1/a > $\lfloor 1/a \rfloor$.
+  have h_1_div_a_gt_floor : 1 / a > Int.floor (1 / a) := by
+    apply Int.lt_floor_add_one
+    -- If $1/a \leq \lfloor 1/a \rfloor$, then $1/a^2 \leq \lfloor 1/a \rfloor^2$.
+    have h_1_div_a_sq_le : 1 / a ^ 2 ≤ (Int.floor (1 / a)) ^ 2 := by
+      rw [Real.le_sqrt] <;> (try norm_cast)
+      nlinarith only [h_1_div_a_sq]
+    -- If $1/a^2 \leq \lfloor 1/a \rfloor^2$, then $|1/a| \leq |\lfloor 1/a \rfloor|$.
+    have h_abs_le : |1 / a| ≤ |Int.floor (1 / a)| := by
+      apply sq_le_sq.mp
+      simp [abs_eq_sqrt_sq]
+      exact h_1_div_a_sq_le
+    -- If $|1/a| \leq |\lfloor 1/a \rfloor|$, then $1/a \leq \lfloor 1/a \rfloor$.
+    rw [abs_of_nonneg (by positivity)] at h_abs_le
+    rw [abs_of_nonneg (Int.floor_nonneg)] at h_abs_le
+    exact h_abs_le
+
+  -- Since $1/a > \lfloor 1/a \rfloor$ and $\langle 1/a \rangle = 1/a - \lfloor 1/a \rfloor$, we have $0 < \langle 1/a \rangle$.
+  have h_pos : 0 < 1 / a - Int.floor (1 / a) := by
+    rw [sub_pos]
+    exact h_1_div_a_gt_floor
+
+  -- Since $\langle 1/a \rangle = \langle a^2 \rangle$, we have $1/a - \lfloor 1/a \rfloor = a^2 - \lfloor a^2 \rfloor$.
+  rw [h₁] at h_pos
+
+  -- Since $2 < a^2 < 4$, we have $\lfloor a^2 \rfloor = 2$.
+  have h_floor_a_sq : Int.floor (a ^ 2) = 2 := by
+    rw [Int.floor_eq_iff]
+    constructor <;> (try norm_num) <;> linarith only [h_2_a_sq]
+
+  -- Since $2 < a^2 < 4$ and $\lfloor a^2 \rfloor = 2$, we have $2 < 2 + \{a^2\}$, or $\{a^2\} > 0$.
+  rw [h_floor_a_sq] at h_pos
+
+  -- Since $0 < \{a^2\}$, we have $a^2 - 2 > 0$.
+  have h_a_sq_gt : a ^ 2 - 2 > 0 := by
+    simp [sub_pos, h_floor_a_sq] at h_pos
+    exact h_pos
+
+  -- Since $0 < \{a^2\}$, we have $0 < 1 - \lfloor 1/a \rfloor$.
+  have h_lt_one : 0 < 1 - Int.floor (1 / a) := by
+    simp [h_floor_a_sq] at h_pos
+    linarith only [h_pos]
+
+  -- Since $a > 0$ and $1/a > 0$, we have $0 < a \cdot (1/a) = 1$.
+  have h_mul_pos : 0 < a * (1 / a) := by
+    apply mul_pos
+    exact h₀
+    exact h_1_div_a
+
+  -- Since $0 < a$ and $0 < 1/a$, we have $0 < \lfloor a \rfloor$ and $0 < \lfloor 1/a \rfloor$.
+  have h_floor_pos : 0 < Int.floor a ∧ 0 < Int.floor (1 / a) := by
+    constructor
+    · apply Int.floor_pos.mpr
+      positivity
+    · apply Int.floor_pos.mpr
+      positivity
+
+  -- Since $0 < \lfloor a \rfloor$ and $0 < \lfloor 1/a \rfloor$, we have $0 < \lfloor a \rfloor + \lfloor 1/a \rfloor$.
+  have h_floor_add_pos : 0 < Int.floor a + Int.floor (1 / a) := by
+    exact Int.add_pos h_floor_pos.1 h_floor_pos.2
+
+  -- Since $a < 2$ and $1/a > \sqrt{1/2}$, we have $a + 1/a > 2$.
+  have h_a_plus_1_div_a_gt : a + 1 / a > 2 := by
+    nlinarith only [h_sqrt_3_div_2a, ha]
+
+  -- Since $a > 0$ and $1/a > 0$, we have $0 < a \cdot (1/a) = 1$.
+  have h_mul_eq_one : a * (1 / a) = 1 := by
+    field_simp
+
+  -- Since $a + 1/a > 2$ and $a \cdot (1/a) = 1$, we have $(a + 1/a)^2 > 4$.
+  have h_sq_gt : (a + 1 / a) ^ 2 > 4 := by
+    nlinarith only [h_a_plus_1_div_a_gt, h_mul_eq_one]
+
+  -- Since $a > 0$ and $1/a > 0$, we have $0 < a \cdot (1/a) = 1$.
+  have h_mul_eq_one : a * (1 / a) = 1 := by
+    field_simp
+
+  -- Squaring $a^2 + 1/a > 2$, we have $a^4 + 2(a^2) + 1/a^2 > 4$.
+  have h_sq_gt' : a ^ 4 + 2 * a ^ 2 + 1 / a ^ 2 > 4 := by
+    calc
+     a ^ 4 + 2 * a ^ 2 + 1 / a ^ 2 = (a + 1 / a) ^ 2 * a ^ 2 := by
+          rw [add_sq, mul_assoc, pow_two, mul_assoc, ← mul_assoc, mul_comm (1 / a), ← mul_assoc,
+              mul_assoc (a * (1 / a)), h_mul_eq_one]
+          ring
+      _ > 4 * a ^ 2 := by
+          apply mul_lt_mul_of_pos_right
+          exact h_sq_gt
+          positivity
+      _ ≥ 4 := by
+          nlinarith only [h_2_a_sq.1, h_2_a_sq.2]
+
+  -- Since $a^4 + 2(a^2) + 1/a^2 > 4$ and $2 < a^2 < 4$, we have $a^4 = 3$.
+  nlinarith only [h_2_a_sq.1, h_2_a_sq.2, h_sq_gt', sq_nonneg (a ^ 2 - √3 ^ 2),
+    Real.sq_sqrt (show 0 ≤ 3 from by norm_num)]
+```

@@ -1,0 +1,67 @@
+-- proof by contradiction
+  by_contra h4
+  -- Rewrite equation to $4x^3 = 7y^3 + 2003$
+  rw [sub_eq_iff_eq_add, ← eq_add_iff_sub_eq] at h4
+  -- factor out $4$ on the left hand side
+  have h : 4 * x ^ 3 = 7 * y ^ 3 + 2003 := h4
+
+  -- We consider the equation modulo 7 on both sides and get $4 x^3 \equiv 2003 \pmod 7$, however, this is impossible since $2003 \equiv 5 \pmod 7$ and $4 x^3 \equiv 0, 4, 6 \pmod 7$.
+  have h5 : 4 * x ^ 3 ≡ 2003 [ZMOD 7] := congrFun (congrArg HMod.hMod h) 7
+  rw [Int.modEq_iff_dvd] at h5
+
+  -- Define $f$ to be the function $x \mapsto 4x^3 - 2003$.
+  set f := fun (x : ℤ) => 4 * x ^ 3 - 2003 with hf
+  -- Define $S$ to be the set of $x \in \mathbb{Z}$ such that $7 \mid 4x^3 - 2003$.
+  set S := {x : ℤ | 7 ∣ 4 * x ^ 3 - 2003} with hS
+  -- It suffices to show that $S$ is empty.
+  suffices S = ∅ by simp [this]
+
+  -- It suffices to show that for all $x \in \mathbb{Z}$, $x \notin S$.
+  suffices ∀ x : ℤ, x ∉ S by
+    ext x
+    simp [this]
+  -- Show that the assumption $7 \mid 4x^3 - 2003$ for all $x \in \mathbb{Z}$ leads to a contradiction.
+  intro x
+  by_contra hx
+  simp [hS] at hx
+  -- We have $4x^3 \equiv 2003 \pmod 7$.
+  have h6 : 4 * x ^ 3 ≡ 2003 [ZMOD 7] := by
+    exact hx
+  -- We have $x \equiv r \pmod 7$ for some $r \in \{0, 1, 2, 3, 4, 5, 6\}$.
+  have h7 : x ≡ (x % 7) [ZMOD 7] := by
+    exact Int.mod_modEq x 7
+  rw [Int.ModEq] at h7
+  -- Substitute $x$ by $r$ in the congruence relation.
+  replace h6 : 4 * (x % 7) ^ 3 ≡ 2003 [ZMOD 7] := by
+    apply Int.ModEq.trans (id (Int.ModEq.symm h7)) h6
+  simp at h6
+  -- Evaluate $2003 \bmod 7$.
+  have h8 : 2003 ≡ 5 [ZMOD 7] := by
+    rw [Int.modEq_iff_dvd]
+    norm_num
+    rfl
+  rw [h8] at h6
+
+  -- Now we have $4x^3 \equiv 5 \pmod 7$, however, this is impossible.
+  -- We have $x^3 \equiv 0, 1, 6 \pmod 7$.
+  have h9 : (x % 7) ^ 3 ≡ 0 ∨ (x % 7) ^ 3 ≡ 1 ∨ (x % 7) ^ 3 ≡ 6 [ZMOD 7] := by
+    have h9 : x % 7 ≡ 0 ∨ x % 7 ≡ 1 ∨ x % 7 ≡ 2 ∨ x % 7 ≡ 3 ∨ x % 7 ≡ 4 ∨ x % 7 ≡ 5 ∨ x % 7 ≡ 6 [ZMOD 7] := by
+      refine (Int.modEq_iff_dvd'.mp?_).mp rfl
+      apply Int.emod_eq_of_lt
+      norm_num
+    rcases h9 with (h9 | h9 | h9 | h9 | h9 | h9 | h9) <;> simp [h9] <;>
+    try apply Int.ModEq.mul_left 4 <;> try simp
+  have h10 : 4 * (x % 7) ^ 3 ≡ 0 ∨ 4 * (x % 7) ^ 3 ≡ 4 ∨ 4 * (x % 7) ^ 3 ≡ 6 [ZMOD 7] := by
+    rcases h9 with (h9 | h9 | h9) <;> simp [h9] <;>
+    try apply Int.ModEq.mul_left 4 <;> try simp
+  rw [Int.ModEq] at h10
+  -- We get a contradiction.
+  have h11 : (4 * (x % 7) ^ 3 % 7 : ℤ) = 5 := by
+    rw [Int.modEq_iff_dvd] at h6
+    exact h6
+    rfl
+  have h12 : (4 * (x % 7) ^ 3 % 7 : ℤ) = 0 ∨ (4 * (x % 7) ^ 3 % 7 : ℤ) = 4 ∨ (4 * (x % 7) ^ 3 % 7 : ℤ) = 6 := by
+    rw [Int.ModEq] at h10
+    exact h10
+  rcases h12 with (h12 | h12 | h12) <;> simp [h12] at h11
+```

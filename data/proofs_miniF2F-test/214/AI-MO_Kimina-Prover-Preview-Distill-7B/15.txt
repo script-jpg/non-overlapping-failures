@@ -1,0 +1,199 @@
+-- auxiliary lemma of trig
+  have l_1 (k : ℕ) : Real.sin (5 * k * Real.pi / 180) = Real.sin (Real.pi - (5 * k * Real.pi / 180)) := by
+    rw [Real.sin_pi_sub]
+  -- auxiliary lemma of sin
+  have l_2 : ∀ k : ℕ, 0 ≤ 5 * k * Real.pi / 180 ∧ 5 * k * Real.pi / 180 ≤ Real.pi →
+      Real.sin (5 * k * Real.pi / 180) = Real.sin (5 * k * Real.pi / 180) := by
+    intro k ⟨h₁, h₂⟩
+    exact rfl
+  -- auxiliary lemma of sum
+  have l_3 : ∀ k : ℕ, 1 ≤ k ∧ k ≤ 35 → Real.sin (5 * k * Real.pi / 180) =  Real.sin (5 * k * Real.pi / 180) := by
+    intro k hk
+    exact l_2 k (by linarith [hk.1, hk.2]]
+  -- auxiliary lemma of sin sum
+  have l_4 : (∑ k ∈ Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180)) = 36255 * Real.pi / 9129256 := by
+    have h₁ : ∑ k ∈ Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180) = 36255 * Real.pi / 9129256 := by
+      calc
+        ∑ k ∈ Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180) = 36255 * Real.pi / 9129256 := by
+          rw [show Finset.Icc 1 35 = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35} by decide, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_insert, Finset.sum_singleton]
+          simp [l_1, l_3, l_2]
+          ring
+        _ = 36255 * Real.pi / 9129256 := by
+          norm_num; ring
+    exact h₁
+  have h₃ : m / m.den = (m * 180 / 9129256) * Real.pi / (180 / 9129256) := by
+    rw [div_eq_iff (by norm_num)]
+    ring
+  have h₄ : (Real.tan (m * Real.pi / 180)) = (Real.tan (m / m.den * Real.pi / (180 / 9129256))) * Real.tan (36255 * Real.pi / 9129256) / (1 + Real.tan (m / m.den * Real.pi / (180 / 9129256)) * Real.tan (36255 * Real.pi / 9129256)) := by
+    rw [<-@Real.tan_add _ _ _ (m / m.den * Real.pi / (180 / 9129256)) (36255 * Real.pi / 9129256)]
+    rw [h₃]
+    congr
+    rw [div_eq_iff (by norm_num)]
+    ring
+    rw [div_eq_iff (by norm_num)]
+    ring
+  rw [h₄, l_4] at h₁
+  have h₅ : 36255 * Real.pi / 9129256 = (170 + 17 / 2170) * Real.pi / (180 / 9129256) := by
+    ring_nf
+    rw [Real.pi_pos]
+    linarith
+  rw [h₅] at h₁
+  clear h₅
+  clear l_4
+  clear h₃
+  have h₆ : 0 < Real.pi := by
+    exact Real.pi_pos
+  have h₇ : 180 / 9129256 > 0 := by
+    norm_num
+  -- Show that $\tan(x)$ is strictly monotone on $(0, \pi / 2)$
+  have h₈ : StrictMonoOn Real.tan (Set.Ioo 0 (Real.pi / 2)) := by
+    apply Real.strictMonoOn_tan
+    · simpa using h₆
+    · simpa
+  -- Show that $0 < \frac m {m.den} < \frac {170 + 17 / 2170} {180 / 9129256}$
+  have h₉ : 0 < m / m.den ∧ m / m.den < (170 + 17 / 2170) / (180 / 9129256) := by
+    rw [<-h₁]
+    constructor
+    · rw [div_pos_iff]
+      · rw [div_pos_iff]
+        · norm_num
+        · linarith
+      · linarith
+    · rw [div_lt_div_iff (by rw [div_eq_iff (by norm_num)]; linarith) (by norm_num)]
+      rw [<-div_add_div_same denominator]
+
+      have h₁₀ : 0 < (170 + 17 / 2170 : ℚ) := by
+        norm_num
+      have h₁₁ : 0 < (180 / 9129256 : ℚ) := by
+        norm_num
+      have h₁₂ : 0 < (170 + 17 / 2170 : ℚ) / (180 / 9129256) := by
+        exact div_pos h₁₀ h₁₁
+      have h₁₃ : 0 < Real.tan ((170 + 17 / 2170 : ℚ) * Real.pi / (180 / 9129256)) := by
+        apply Real.tan_pos_of_pos_of_lt_pi_div_two
+        · rw [mul_div_assoc]
+          apply lt_trans h₁₂
+          rw [<-div_lt_iff₀ (by norm_num)]
+          norm_num
+        · rw [div_lt_div_iff (by positivity) (by positivity)]
+          linarith [Real.pi_pos]
+      have h₁₄ : 0 < Real.tan (36255 * Real.pi / 9129256) := by
+        apply Real.tan_pos_of_pos_of_lt_pi_div_two
+        · rw [div_lt_div_iff (by positivity) (by positivity)]
+          linarith [Real.pi_pos]
+        · rw [div_lt_div_iff (by positivity) (by positivity)]
+          linarith [Real.pi_pos]
+      have h₁₅ : 0 < (Real.tan (36255 * Real.pi / 9129256) / (1 + Real.tan (m / m.den * Real.pi / (180 / 9129256)) * Real.tan (36255 * Real.pi / 9129256))) := by
+        apply div_pos
+        · exact h₁₄
+        · apply add_pos
+          apply one_add_pos
+          apply mul_pos h₁₃ h₁₅
+      have h₁₆ : 0 < (Real.tan (m / m.den * Real.pi / (180 / 9129256)) * Real.tan (36255 * Real.pi / 9129256)) := by
+        exact mul_pos h₁₃ h₁₄
+      have h₁₇ : 0 < Real.tan (m / m.den * Real.pi / (180 / 9129256)) + Real.tan (36255 * Real.pi / 9129256) := by
+        exact add_pos h₁₃ h₁₄
+      calc
+        0 = Real.tan (0) := by rw [Real.tan_zero]
+        _ < Real.tan (m / m.den * Real.pi / (180 / 9129256)) + Real.tan (36255 * Real.pi / 9129256) := by
+          apply Real.strictMonoOn_tan
+          · simpa
+          · simpa using h₁₇
+          · rw [div_lt_div_iff₀ (by positivity) (by positivity), <-add_div]
+            linarith
+        _ =  (Real.tan (m / m.den * Real.pi / (180 / 9129256)) / (1 + Real.tan (m / m.den * Real.pi / (180 / 9129256)) * Real.tan (36255 * Real.pi / 9129256))) * (1 + Real.tan (m / m.den * Real.pi / (180 / 9129256)) * Real.tan (36255 * Real.pi / 9129256)) := by
+          exact Eq.symm (div_mul_cancel₀ _ h₁₅)
+        _ < (Real.tan (170 + 17 / 2170) * Real.pi / (180 / 9129256)) * (1 + Real.tan (m / m.den * Real.pi / (180 / 9129256)) * Real.tan (36255 * Real.pi / 9129256)) := by
+          apply mul_lt_mul_of_nonneg_right
+          · rw [div_lt_div_iff₀ (by positivity) (by positivity)]
+            apply Real.strictMonoOn_tan
+            · simpa
+            · simpa using h₁₇
+            · rw [div_lt_div_iff₀ (by positivity) (by positivity), <-add_div]
+              rw [show (170 + 17 / 2170 : ℝ) = (170 + 17 / 2170 : ℚ) by norm_cast, show (180 / 9129256 : ℝ) = (180 / 9129256 : ℚ) by norm_cast]
+              rw [div_eq_iff (by norm_num)]
+              norm_num
+              rw [div_lt_div_iff (by positivity) (by positivity), <-add_div]
+              norm_num
+              rw [div_div_div_cancel_right₀ _ (by norm_num)]
+              norm_num
+          · positivity
+        _ = Real.tan (170 + 17 / 2170) * Real.pi / (180 / 9129256) := by
+          rw [div_mul_cancel₀ _ (by norm_num)]
+  rw [div_lt_div_iff₀ (by rw [div_eq_iff (by norm_num)]; linarith) (by norm_num)] at h₉
+  norm_num at h₉
+  -- Show that $\frac m {m.den} = \frac {170 + 17 / 2170} {180 / 9129256}$
+  have h₁₀ : m / m.den = (170 + 17 / 2170) / (180 / 9129256) := by
+    have h₁₁ := h₈.injOn (by simpa) (by simpa)
+    have h₁₂ : (170 + 17 / 2170 : ℚ) / (180 / 9129256) ∈ Set.Ioo 0 (Real.pi / 2) := by
+      constructor
+      · rw [div_pos_iff]
+        · rw [div_pos_iff]
+          · norm_num
+          · linarith
+        · linarith
+    have h₁₃ : m / m.den ∈ Set.Ioo 0 (Real.pi / 2) := by
+      constructor
+      · exact h₉.1
+      · exact h₉.2
+    replace h₁₁ := h₁₁ h₁₂ h₁₃
+    exact h₁₁ h₉.2
+  replace h₁₀ : m * 9129256 = (170 + 17 / 2170) * m.den := by
+    field_simp at h₁₀
+    ring_nf at h₁₀
+    field_simp at h₁₀
+    ring_nf
+    exact h₁₀
+  clear h₈
+  clear h₉
+  -- Show that $180 / 9129256 * m * 9129256 = 170 * m.den + 17 / 2170 * m.den$
+  have h₁₁ : 180 / 9129256 * m * 9129256 = 170 * m.den + 17 / 2170 * m.den := by
+    rw [h₁₀]
+    ring
+  clear h₁₀
+  -- Show that $m = 170 * m.den + 17 / 2170 * m.den$
+  have h₁₂ : m = 170 * m.den + 17 / 2170 * m.den := by
+    rw [<-mul_assoc, <-mul_assoc] at h₁₁
+    simp at h₁₁
+    exact h₁₁
+  clear h₁₁
+  -- Show that $0 < m.den$
+  have h₁₃ : 0 < m.den := by
+    apply Rat.den_pos.mpr
+    by_contra!
+    have h₁₄ : Rat.ofNat m.num = Rat.ofNat 0 := by
+      rw [this]
+    simp at h₁₄
+    have h₁₅ := div_left_inj' h₁₄
+    simp at h₁₅
+    have h₁₆ : m = 0 := by
+      norm_num at h₁₅
+      exact h₁₅
+    linarith
+  norm_cast at h₁₂
+  norm_cast at h₁₃
+  clear h₃
+  clear h₁
+  -- Show that $m.num = 170 * m.den$
+  have h₁₄ : m.num = 170 * m.den := by
+    rw [h₁₂]
+    ring_nf
+    omega
+  clear h₁₂
+  -- Show that $m.den = 2170$
+  have h₁₅ : m.den = 2170 := by
+    omega
+  -- Show that $m.num = 357540$
+  have h₁₆ : m.num = 357540 := by
+    omega
+  clear h₁₄
+  -- Show that $m = 357540 / 2170$
+  have h₁₇ : m = 357540 / 2170 := by
+    exact Eq.symm (div_of_eq_mul_right h₁₅ h₁₆)
+  clear h₁₆
+  -- Show that $m = 177$
+  have h₁₈ : m = 177 := by
+    norm_num at h₁₇
+    exact h₁₇
+  rw [h₁₈]
+
+```

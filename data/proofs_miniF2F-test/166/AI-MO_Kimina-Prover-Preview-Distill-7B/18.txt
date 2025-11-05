@@ -1,0 +1,30 @@
+-- define a sequence of sets $s_1, s_2, \ldots$ such that $s_n = \{1, 2, \ldots, n\}$
+  let s : ℕ → Finset ℕ := fun n ↦ Finset.range n
+
+  -- show that for all $n$, $\sum_{i=1}^n a_i = \sum_{i \in s_n} a_i$
+  have hsum : ∀ n, (∑ i ∈ s n, a i) = (∑ i in Finset.range n, a i) := by intro n; rfl
+
+  -- show that for all $n$, $\prod_{i=1}^n a_i = \prod_{i \in s_n} a_i$
+  have hprod : ∀ n, (∏ i ∈ s n, a i) = (∏ i in Finset.range n, a i) := by intro n; rfl
+
+  -- $a_i \geq 0$ for all $i$
+  have h₀ : ∀ i, a i ≥ 0 := by
+    intro i
+    suffices ∀ x ∈ Finset.range i, a x ≥ 0 by exact this i (Finset.mem_range_self i)
+    intro j hj
+    exact (h₀ j hj)
+
+  -- conditionally prove $\sum_{i=1}^n a_i \geq \prod_{i=1}^n a_i$
+  have hineq : ∀ n, ∑ i ∈ s n, a i ≥ ∏ i ∈ s n, a i := by
+    intro n
+    induction' n with n ih
+    · simp [s]
+    · rw [Finset.sum_range_succ, Finset.prod_range_succ]
+      simp_rw [hsum, hprod]
+      rw [add_comm]
+      linarith [mul_nonneg (h₀ n) (ih)]
+
+  -- the goal is $\prod_{i=1}^n a_i \leq 1$
+  rw [← hprod n, ← hsum n, h₀]
+  linarith [hineq n]
+```

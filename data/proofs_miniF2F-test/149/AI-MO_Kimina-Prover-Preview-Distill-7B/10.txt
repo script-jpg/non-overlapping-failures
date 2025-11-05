@@ -1,0 +1,32 @@
+-- Take the n-th power of both sides
+  nth_rw 1 [← Real.rpow_le_rpow_iff (by positivity) (by positivity) (by norm_num : 0 < n)]
+  -- By simple calculation, we have $n^{1/n} \leq 2 - 1/n$ if and only if $1 \leq (2 - 1/n)^n$.
+  rw [Real.rpow_le_rpow_iff (by positivity) (by positivity) (by norm_num : 0 < n)]
+  norm_num
+
+  -- Prove the final statement by induction on n
+  induction' n with n ih
+ . simp
+ . rw [show (n + 1 : ℝ) = (n : ℝ) + 1 by simp]
+    rw [← Real.rpow_mul (by positivity)]
+    rw [mul_comm, pow_succ, mul_one, Real.rpow_one, sub_add, ← Real.rpow_add (by positivity)]
+    -- The goal is to prove that $1 \leq (2 - 1/n)^{n+1}$.
+    -- We have $(2 - 1/n)^{n+1} = (2 - 1/n)^n (2 - 1/n)$.
+    -- By the induction hypothesis, we have $(2 - 1/n)^n \geq 1 + n/(n+1)$.
+    -- Thus it suffices to prove that $1 + n/(n+1) \cdot (2 - 1/n) \geq 1$.
+    -- This is true because $1 + n/(n+1) \cdot (2 - 1/n) = 1 + (2n^2 + n)/(n+1)^2 = 1 + (2n^2 + n)/(n^2 + 2n + 1) > 1$.
+    rw [add_assoc, add_comm, add_assoc, add_comm]
+    norm_num
+    rw [div_eq_mul_inv, mul_comm, ← mul_assoc]
+    suffices : (1 : ℝ) + n * (n + 1)⁻¹ * (2 - 1 / n) ≥ 1
+   . linarith
+    rw [← mul_div_assoc]
+    rw [← div_eq_mul_inv]
+    rw [add_mul, add_comm, one_mul, add_assoc, add_comm]
+    norm_num
+    rw [mul_inv_cancel₀ (by positivity)]
+    field_simp
+    suffices : (2 * (n + 1) ^ 2 + n) / (n + 1) ^ 2 ≥ 0
+   . linarith
+    positivity
+```

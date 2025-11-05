@@ -1,0 +1,137 @@
+-- Simplify the expression
+  have hf (x : ℝ) : f x = (x + 9) ^ 2 - 2 * Real.sqrt ((x + 3) * (x + 15)) - 2 * Real.sqrt ((x + 9) ^ 2 - 24) := by
+    rw [h₀]
+    ring_nf
+    have : 36 + x * 18 + x ^ 2 = (x + 9) ^ 2 := by ring
+    rw [this]
+    have : 30 + x * 18 + x ^ 2 = (x + 3) * (x + 15) := by ring
+    rw [this]
+    have : 45 + x * 18 + x ^ 2 = (x + 9) ^ 2 - 24 := by ring
+    rw [this]
+
+  -- Solve the equation
+  have h₂ : ∀ x : ℝ, f x = 0 → (x + 9) ^ 2 = 2 * Real.sqrt ((x + 3) * (x + 15)) + 2 * Real.sqrt ((x + 9) ^ 2 - 24) := by
+    intro x hx
+    rw [hf] at hx
+    linear_combination hx
+
+  -- Squaring both sides
+  have h₃ : ∀ x : ℝ, f x = 0 → ((x + 9) ^ 2) ^ 2 = (2 * Real.sqrt ((x + 3) * (x + 15)) + 2 * Real.sqrt ((x + 9) ^ 2 - 24)) ^ 2 := by
+    intro x hx
+    rw [h₂ x hx]
+    ring_nf
+
+  -- Expand the right-hand side
+  have h₄ : ∀ x : ℝ, f x = 0 → ((x + 9) ^ 2) ^ 2 = 4 * ((x + 3) * (x + 15)) + 4 * ((x + 9) ^ 2 - 24) + 4 * Real.sqrt ((x + 3) * (x + 15)) * Real.sqrt ((x + 9) ^ 2 - 24) := by
+    intro x hx
+    rw [h₃ x hx]
+    have : (2 * a + 2 * b) ^ 2 = 4 * a ^ 2 + 4 * b ^ 2 + 4 * a * b := by ring
+    rw [this]
+    have : a ^ 2 = b ^ 2 → a = b ∨ a = -b := by
+      intro hsq
+      have : a ^ 2 - b ^ 2 = 0 := by linear_combination -hsq
+      have : (a + b) * (a - b) = 0 := by linear_combination this
+      linear_combination this
+    repeat rw [this]
+    · apply_fun (· ^ 2) <;> rw [Real.sq_sqrt]
+      · ring_nf
+        positivity
+      · positivity
+    · assumption
+    · positivity
+    · simp
+      exact ⟨by positivity, by positivity⟩
+
+  -- Simplify the equation further
+  have h₅ : ∀ x : ℝ, f x = 0 → x ^ 4 + 18 * x ^ 3 + 90 * x ^ 2 + 324 * x + 540 = 8 * (x ^ 2 + 18 * x + 35) * Real.sqrt ((x + 3) * (x + 15)) + 8 * (x + 9) ^ 2 * Real.sqrt ((x + 9) ^ 2 - 24) := by
+    intro x hx
+    have : (x + 9) ^ 2 = x ^ 2 + 18 * x + 81 := by ring
+    rw [this] at h₄
+    have : (x + 9) ^ 4 = (x ^ 2 + 18 * x + 81) ^ 2 := by ring
+    rw [this] at h₄
+    have : (x + 3) * (x + 15) = x ^ 2 + 18 * x + 45 := by ring
+    have : (x + 9) ^ 2 - 24 = x ^ 2 + 18 * x + 21 := by ring
+    rw [this] at h₄
+    have : (2 * (x ^ 2 + 18 * x + 45) + 2 * (x ^ 2 + 18 * x + 21)) * (x ^ 2 + 18 * x + 81) = 8 * (x ^ 2 + 18 * x + 35) * (x ^ 2 + 18 * x + 45) + 8 * (x ^ 2 + 18 * x + 21) * (x ^ 2 + 18 * x + 81) - 4 * (x ^ 2 + 18 * x + 45) * (x ^ 2 + 18 * x + 21) := by ring
+    rw [this] at h₄
+    linear_combination h₄
+
+  -- roots of the quartic equation is {1,2,3,4}
+  have h₆ : ∀ x : ℝ, f x = 0 → x ^ 4 + 18 * x ^ 3 + 90 * x ^ 2 + 324 * x + 540 = (x - 1) * (x - 2) * (x - 3) * (x - 4) := by
+    intro x hx
+    have : f x = x ^ 4 + 18 * x ^ 3 + 90 * x ^ 2 + 324 * x + 540 := by
+      rw [h₀]
+      ring_nf
+      have : (x ^ 2 + 18 * x + 30) ^ 2 = (x ^ 2 + 18 * x + 21) ^ 2 + 2 * (x ^ 2 + 18 * x + 21) * (x ^ 2 + 18 * x + 81) - (x ^ 2 + 18 * x + 54) ^ 2 := by ring
+      rw [this]
+      have : (x ^ 2 + 18 * x + 30) ^ 2 - 2 * (x ^ 2 + 18 * x + 21) * Real.sqrt ((x + 9) ^ 2 - 24) = (x ^ 2 + 18 * x + 21) ^ 2 + (x ^ 2 + 18 * x + 81) ^ 2 - (x ^ 2 + 18 * x + 54) ^ 2 := by
+        linear_combination this
+        symm
+        apply_fun (· ^ 2) <;> rw [Real.sq_sqrt]
+        · positivity
+        · have : (x ^ 2 + 18 * x + 30) ^ 2 - 2 * (x ^ 2 + 18 * x + 21) * Real.sqrt ((x + 9) ^ 2 - 24) ≥ 0 := by linear_combination this
+          positivity
+      rw [this]
+      ring_nf
+      have : (x ^ 2 + 18 * x + 21) ^ 2 + (x ^ 2 + 18 * x + 81) ^ 2 - (x ^ 2 + 18 * x + 54) ^ 2 = (x ^ 2 + 18 * x + 21) ^ 2 + (x ^ 2 + 18 * x + 81) ^ 2 - (x ^ 2 + 18 * x + 54) ^ 2 := by ring
+      rw [this]
+      ring
+    rw [this] at hx
+    linear_combination hx
+
+  -- solve the quartic equation with newton's method
+  have h₇ (x : ℝ) : f x = 0 ↔ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 := by
+    constructor
+    · intro hx
+      have : x ^ 4 + 18 * x ^ 3 + 90 * x ^ 2 + 324 * x + 540 = (x - 1) * (x - 2) * (x - 3) * (x - 4) := h₆ x hx
+      simp only [mul_eq_zero] at this
+      rw [mul_eq_zero] at this
+      rw [mul_eq_zero] at this
+      rw [mul_eq_zero] at this
+      rcases this with (h | h) | h | h <;> right
+      · left; linear_combination h
+      · left; linear_combination h
+      · right; left; linear_combination h
+      · right; right; linear_combination h
+    · intro hx
+      rcases hx with (rfl | rfl | rfl | rfl) <;> simp [h₀]
+
+  have h₈ : Fintype (f ⁻¹' {0}) := by
+    have : f ⁻¹' {0} = {1, 2, 3, 4} := by
+      ext x
+      simp only [Set.mem_preimage, Set.mem_insert_iff, Set.mem_singleton_iff, Set.union_insert, Set.union_singleton]
+      constructor
+      · intro hx
+        apply_fun f at hx
+        simp [h₇] at hx
+        exact hx
+      · intro hx
+        apply_fun f at hx
+        simp [h₇] at hx
+        exact hx
+    rw [this]
+    exact Fintype.encard_eq_coe.mp (Fintype.card_insert_of_not_mem (by simp))
+
+  have h₉ : ∏ x ∈ (f ⁻¹' {0}).toFinset, x = 20 := by
+    have : (f ⁻¹' {0}).toFinset = {1, 2, 3, 4} := by
+      rw [Set.toFinset_eq_coe]
+      have : f ⁻¹' {0} = {1, 2, 3, 4} := by
+        ext x
+        simp only [Set.mem_preimage, Set.mem_insert_iff, Set.mem_singleton_iff, Set.union_insert, Set.union_singleton]
+        constructor
+        · intro hx
+          apply_fun f at hx
+          simp [h₇] at hx
+          exact hx
+        · intro hx
+          apply_fun f at hx
+          simp [h₇] at hx
+          exact hx
+      rw [this]
+      exact rfl
+    rw [this]
+    simp
+
+  exact h₉
+
+```

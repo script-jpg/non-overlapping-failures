@@ -1,0 +1,43 @@
+-- First, we note that $S$ is the set of integer values of $x$ such that $|x| < 3\pi$.
+  have h₁ : S = Finset.Icc (-⌊3 * Real.pi⌋ - 1) (⌊3 * Real.pi⌋ + 1) := by
+    ext x
+    simp [h₀]
+    rw [abs_lt, ←Ugly]
+
+    -- We use some properties of $Real.pi$ here. Maybe we should set those as lemmas?
+    have h₁ : 0 < Real.pi := Real.pi_pos
+    have h₂ : 0 < 3 * Real.pi := by linarith
+    have h₃ : ⌊-3 * Real.pi⌋ = -⌊3 * Real.pi⌋ := Int.floor_neg x
+
+    -- Also, we need to bound the error when approximating $3\pi$.
+    have h₄ : 3 * Real.pi - 13 < 1 / 2 := by
+      calc 3 * Real.pi - 13 < 3 * 3.1416 - 13 := by linarith
+                           _ = 9.4248 - 13 := by ring
+                           _ = -3.5752 := by ring
+                           _ < 1 / 2 := by norm_num
+
+    -- This means that $3\pi$ is between $13$ and $13.5$.
+    have h₅ : 13 < 3 * Real.pi := by linarith
+    have h₆ : 3 * Real.pi < 13.5 := by linarith
+
+    -- We need to show that the integer values of $x$ that satisfy $|x| < 3\pi$ are exactly
+    -- the integers from $-12$ to $13$.
+    constructor
+    · exact fun h =>?_
+      rw [Int.floor_lt]
+      calc -3 * Real.pi < -13.5 := by linarith
+                 _ ≤ x := by linarith
+                 _ < 13.5 := by linarith
+                 _ ≤ 3 * Real.pi := by linarith
+    · exact fun h =>?_
+      calc -13 ≤ x := by linarith
+               _ < 13.5 := by linarith
+               _ ≤ 3 * Real.pi := by linarith
+               _ < 3 * Real.pi + 1 := by linarith
+
+  -- Now that we have $S$ explicitly, we can calculate its cardinality.
+  rw [h₁]
+  simp only [Int.cast_add, Int.cast_neg, Int.cast_ofNat, Int.cast_one]
+  refine Finset.Icc_card (by linarith) (by linarith)
+
+```

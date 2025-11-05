@@ -1,0 +1,37 @@
+-- multiply h₁ by y, h₂ by z, and h₃ by x, we get three equivalent statements
+  have h₁' : x * y + 1 = 4 * y := by
+    have : y ≠ 0 := by simpa using h₀.right.left
+    field_simp at h₁
+    linarith only [h₁]
+  have h₂' : y * z + 1 = z := by
+    have : z ≠ 0 := by simpa using h₀.right.right
+    field_simp at h₂
+    linarith only [h₂]
+  have h₃' : z * x + 1 = 7 / 3 * x := by
+    have : x ≠ 0 := by simpa using h₀.left
+    field_simp at h₃
+    linarith only [h₃]
+
+  -- then multiply h₁', h₂', and h₃' together, we get $(xyz)^2 = (4y)(z)(\frac{7}{3}x) = \frac{28}{3}xyz$
+  have h : (x * y * z) ^ 2 = 28 / 3 * (x * y * z) := by
+    calc
+      _ = (x * y + 1) * (y * z + 1) * (z * x + 1) := by rw [h₁', h₂', h₃']
+      _ = 4 * y * z * (7 / 3 * x) := by linarith only
+      _ = 28 / 3 * (x * y * z) := by ring
+
+  -- rearranging gives $(xyz)^2 - \frac{28}{3}xyz = 0$
+  have h' : (x * y * z) * (x * y * z - 28 / 3) = 0 := by linarith only [h]
+
+  -- since $x,y,z > 0$, we must have $xyz = 0$ or $xyz = 28/3$. we prove $xyz = 1$ in the next step
+  have h'' : x * y * z ≠ 0 := by
+    have : x ≠ 0 := by simpa using h₀.left
+    have : y ≠ 0 := by simpa using h₀.right.left
+    have : z ≠ 0 := by simpa using h₀.right.right
+    exact mul_ne_zero_iff.mpr ⟨⟨_, h₀.right.left⟩, h₀.right.right⟩
+  have : x * y * z - 28 / 3 = 0 := by
+    apply_fun (fun t => t / (x * y * z)) at h'
+    calc
+      _ = (x * y * z) * (x * y * z - 28 / 3) / (x * y * z) := by rw [h']
+      _ = _ := by rw [mul_div_cancel_left₀]; exact h''
+  linarith only [this]
+```

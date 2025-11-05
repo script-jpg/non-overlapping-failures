@@ -1,0 +1,317 @@
+-- First, we prove that the given equation implies $n \in (10^2, 20^2]$
+  have h₁ : ∀ n : ℕ, (0 < n ∧ (↑n + (1000 : ℝ)) / 70 = Int.floor (Real.sqrt n)) →
+      10^2 < n ∧ n ≤ 20^2 := by
+    intro n ⟨h₁, h₂⟩
+    -- It suffices to show that $100 < n \leq 400$
+    suffices 100 < n ∧ n ≤ 400 by
+      -- Trivial from the fact that $10^2 = 100$ and $400 = 20^2$
+      obtain ⟨h₁, h₂⟩ := this
+      constructor
+     . exact Nat.lt_add_one_iff.mp h₁
+     . exact Nat.le_add_one_iff.mp h₂
+
+    -- Write down the integer $m := \lfloor \sqrt{n} \rfloor$ for easier reference
+    let m := Int.floor (Real.sqrt n)
+    -- It suffices to show that $10 < m \leq 20$
+    suffices 10 < m ∧ m ≤ 20 by
+      simp [m]
+      obtain ⟨h₁, h₂⟩ := this
+      constructor
+     . exact Nat.lt_add_one_iff.mp h₁
+     . exact Nat.le_add_one_iff.mp h₂
+
+    -- The left inequality follows from the assumption $n > 0$
+    have h₃ : 0 < n := h₁
+    have h₄ : 10 < m := by
+      -- It suffices to show that $n > 10^2$, or $n > 100$
+      suffices n > 10^2 by
+        simp [m]
+        rw [Int.floor_lt] at this
+        rw [Real.lt_sqrt] at this
+        simp at this
+        exact this
+        -- Eliminate the dependence on $n$
+        linarith only [h₃]
+
+      -- Plug in the assumption $h₂: \dfrac{n+1000}{70} = \lfloor \sqrt{n} \rfloor$
+      replace h₂ : (n : ℝ) = 70 * m - 1000 := by
+        calc
+          _ = 70 * (↑m : ℝ) - 70 * (70 : ℝ) / 70 := by
+            push_cast
+            rw [div_self]
+            simp
+            norm_num
+          _ = _ := by
+            linarith only [h₂]
+
+      -- Eliminate the dependence on $m$
+      suffices 100 < (70 * m - 1000 : ℝ) by
+        simp [h₃]
+        linarith only [this]
+      clear m
+      -- Rewriting the goal in terms of $m$
+      suffices 100 < 70 * m - 1000 by
+        calc
+          _ = (70 * m - 1000 : ℝ) := by
+            linarith
+          _ > _ := by
+            linarith only [this]
+      clear m
+
+      -- It suffices to show that $m > 10$
+      suffices 100 / 70 < m - 1000 / 70 by
+        linarith only [this]
+      -- Rewriting the goal in terms of $m$
+      suffices 100 / 70 < (m : ℝ) - 1000 / 70 by
+        linarith
+      clear m
+
+      -- It suffices to show that $100 < 70m - 1000$
+      suffices 100 < (70 * m - 1000 : ℝ) by
+        linarith
+      clear m
+
+      -- It suffices to show that $100 + 1000 < 70m$
+      suffices 100 + 1000 < (70 * m : ℝ) by
+        linarith
+      norm_cast
+
+    -- The right inequality follows from the assumption $n > 0$
+    suffices m ≤ 20 by
+      simp [m]
+      rw [Int.floor_le]
+      rw [Real.sqrt_le_left]
+     . norm_num
+     . exact Nat.sqrt_nonneg n
+     . exact this
+
+    -- It suffices to show that $1000 < 70m$
+    suffices 1000 < (70 * m : ℝ) by
+      linarith
+    clear m
+
+    -- It suffices to show that $1000/70 < m$
+    suffices 1000 / 70 < (m : ℝ) by
+      norm_cast at this
+    clear m
+
+    -- Trivial from the assumption $h₂$
+    suffices n < 4500 by
+      rify at this
+      linarith only [this]
+    clear h₂
+
+    -- Rewrite the assumption $h₂$ in terms of $m$
+    replace h₂ : n = 70 * m - 1000 := by
+      calc
+        _ = 70 * (↑m : ℝ) - 70 * (70 : ℝ) / 70 := by
+          push_cast
+          rw [div_self]
+          simp
+          norm_num
+        _ = _ := by
+          linarith only [h₂]
+
+    -- Plug in $n = 70m - 1000$ into $n > 0$
+    rify at h₁
+    rw [h₂] at h₁
+    -- Rewriting the goal in terms of $m$
+    suffices (70 * m - 1000 : ℝ) < 4500 by
+      linarith
+    clear h₂
+    norm_cast
+
+    -- It suffices to show that $m < 80$
+    suffices m < 80 by
+      rify at this
+      linarith only [this]
+    clear h₁
+
+    -- Rewrite the assumption $h₁$ in terms of $m$
+    replace h₁ : m > 10 := by
+      rify
+      rw [h₂]
+      rw [gt_iff_lt]
+      rw [Real.lt_sqrt]
+     . norm_num
+     . exact Nat.sqrt_nonneg n
+     . exact h₁
+
+    -- Prove by contradiction
+    by_contra! h₂
+    -- It suffices to show that $m = 80$
+    suffices m = 80 by
+      specialize h₁ this
+      linarith only [h₁]
+    -- It suffices to show that $m \leq 79$
+    suffices m ≤ 79 by
+      interval_cases m
+      all_goals
+        norm_cast at h₁
+        all_goals
+          linarith only [h₁]
+    -- It suffices to show that $n \leq 4480$
+    suffices n ≤ 4480 by
+      rify at this
+      suffices (4480 : ℝ) < 4500 by
+        linarith
+      norm_num
+    -- Rewrite the assumption $h₂$ in terms of $m$
+    replace h₂ : n = 70 * m - 1000 := by
+      calc
+        _ = 70 * (↑m : ℝ) - 70 * (70 : ℝ) / 70 := by
+          push_cast
+          rw [div_self]
+          simp
+          norm_num
+        _ = _ := by
+          linarith only [h₂]
+    -- Plug in $n = 70m - 1000$ into $n \leq 4480$
+    rw [h₂]
+    -- Rewriting the goal in terms of $m$
+    suffices 70 * (↑m : ℝ) ≤ 4500 by
+      linarith
+    norm_cast
+
+    -- Consider two cases: $m \leq 60$ and $m > 60$
+    by_cases h₃ : m ≤ 60
+    -- If $m \leq 60$, the goal is trivial
+   . linarith only [h₃]
+    -- If $m > 60$, we will reach a contradiction
+   . -- It suffices to show that $m > 70$
+      suffices m > 70 by
+        linarith only [this]
+      -- It suffices to show that $n > 4480$
+      suffices n > 4480 by
+        rify at this
+        linarith only [this]
+      -- Rewrite the assumption $h₂$ in terms of $m$
+      replace h₂ : n = 70 * m - 1000 := by
+        calc
+          _ = 70 * (↑m : ℝ) - 70 * (70 : ℝ) / 70 := by
+            push_cast
+            rw [div_self]
+            simp
+            norm_num
+          _ = _ := by
+            linarith only [h₂]
+      -- Plug in $n = 70m - 1000$ into $n > 4480$
+      rw [h₂]
+      -- Rewriting the goal in terms of $m$
+      suffices 70 * (↑m : ℝ) > 4500 by
+        linarith
+      norm_cast
+
+      -- It suffices to show that $m > 64$
+      suffices m > 64 by
+        rify at this
+        linarith only [this]
+      -- If $m = 65$, contradiction
+      by_cases h₄ : m = 65
+     . subst m
+        norm_num
+        -- Other values of $m$ are impossible
+        interval_cases m
+        all_goals
+          norm_num at h₃
+      -- If $m > 65$, it contradicts $m < 80$
+     . linarith only [h₃, h₂]
+
+  -- We now prove that the set $S$ is precisely the set of positive integers $n$ such that $10^2 < n \leq 20^2$
+  have h₂ : S = (Finset.Ioo (10^2) (20^2)).toFinset := by
+    apply Finset.ext
+    intro n
+    -- Rewrite the hypothesis in terms of $S$
+    simp [h₀]
+    -- Split the goal into two parts
+    constructor
+   . rintro ⟨h₁, h₂⟩
+      -- Prove that $n \in S$ implies $10^2 < n \leq 20^2$
+      apply h₁
+      exact ⟨h₁, h₂⟩
+   . rintro ⟨h₁, h₂⟩
+      -- Prove that $10^2 < n \leq 20^2$ implies $n \in S$
+      rw [and_assoc]
+      exact ⟨by linarith,?_⟩
+      -- It suffices to show that $\dfrac{n+1000}{70} = \lfloor \sqrt{n} \rfloor$ for any $n \in (10^2, 20^2]$
+      specialize h₁ (n : ℝ)
+      rify at h₂
+      -- Rewrite the goal in terms of $n$
+      suffices ((n : ℝ) + 1000) / 70 = Int.floor (Real.sqrt n) by
+        norm_cast at this
+        rify at this
+        rw [this]
+
+      -- Introduce the integer $m := \lfloor \sqrt{n} \rfloor$ and prove the necessary properties
+      let m := Int.floor (Real.sqrt n)
+      have h₃ : Real.sqrt n = m + fractional_part (Real.sqrt n) := by
+        symm
+        exact Eq.symm (Int.floor_add_fract (Real.sqrt n))
+      have h₄ : m = Int.floor (Real.sqrt n) := by
+        exact rfl
+      rw [←h₃] at h₁
+      -- Prove that $70m - 1000 = n$
+      have h₅ : (70 * m - 1000 : ℝ) = n := by
+        calc
+          (70 * m - 1000 : ℝ) = 70 * (↑m : ℝ) - 70 * (70 : ℝ) / 70 := by
+            push_cast
+            rw [div_self]
+            simp
+            norm_num
+          _ = 70 * Real.sqrt n - 70 * (Real.sqrt n + fractional_part (Real.sqrt n)) / 70 := by
+            rw [h₃]
+          _ = -70 * fractional_part (Real.sqrt n) / 70 := by
+            linarith
+          _ = _ := by
+            simp [h₁]
+
+      -- Prove that $10^2 < n$
+      have h₆ : 10^2 < n := by
+        rify
+        nth_rw 2 [←h₅]
+        linarith only [h₂]
+
+      -- Prove that $n \leq 20^2$
+      have h₇ : n ≤ 20^2 := by
+        rify
+        nth_rw 2 [←h₅]
+        linarith only [h₂]
+
+      clear h₂
+      clear m
+      clear fractional_part
+      -- It suffices to show that $1000 < 70m$
+      suffices 1000 < (70 * m : ℝ) by
+        linarith
+      -- If $1000 \geq 70m$, then $m \leq 14$
+      by_contra! h₈
+      have h₈ : m ≤ 14 := by
+        rify
+        -- Consider two cases: $m = 14$ and $m < 14$
+        by_cases h₈ : m = 14
+       . subst m
+          norm_num
+       . -- If $m < 14$, then $m \leq 13$
+          replace h₈ : m ≤ 13 := by
+            omega
+          linarith only [h₈]
+      absurd h₈
+      -- If $m \leq 13$, then $\lfloor \sqrt{n} \rfloor \leq 13$
+      -- So $n \leq 13^2 \leq 14^2$, contradiction
+      have h₉ : n ≤ 14^2 := by
+        rw [←h₅]
+        norm_cast
+        rw [show (14 : ℝ) = (14 : ℕ) by norm_num]
+        rw [Real.le_sqrt]
+        norm_num
+        norm_num
+        exact Nat.sqrt_nonneg n
+      linarith only [h₇, h₉]
+
+  -- Now the goal is trivial
+  rw [h₂]
+  -- Apply the lemma to compute the cardinality of the set $S$
+  rw [Finset.Ioo_succ_right, Finset.Ioo_succ_right, Finset.Ioo_succ_right, Finset.Ioo_succ_right,
+      Finset.Ioo_succ_right, Finset.Ioo_succ_right]
+  simp
+```

@@ -1,0 +1,44 @@
+-- $24b \equiv 1\pmod{11^2}$, that is, $24b = 1 + 11^2k$ for some integer $k$.
+  obtain ⟨k, hk⟩ := b.inv
+  norm_cast at hk
+  -- Express $b$ in terms of $k$.
+  have hb : b = (1 + 11^2 * k) * 24⁻¹ := by
+    rw [hk]
+    exact Eq.symm (ZMod.inv_inv b)
+
+  -- Since $0 \leq b \leq 120$, we have $0 \leq (1 + 11^2k) \cdot 24^{-1} \leq 120$.
+  have hk' : 0 ≤ (1 + 11^2 * k) * 24⁻¹ ∧ (1 + 11^2 * k) * 24⁻¹ ≤ 120 := by
+    rw [hb] at h₀
+    exact h₀
+  norm_cast at hk'
+
+  -- Hence, we have the bounds $0 \leq 1 + 11^2k \leq 24 \cdot 120$.
+  have hk'' : 0 ≤ 1 + 11^2 * k ∧ 1 + 11^2 * k ≤ 24 * 120 := by
+    apply And.intro
+    · exact hk'.left
+    · nth_rw 2 [← one_mul (24 : ZMod 121)] at hk'
+      apply Nat.le_of_mul_le_mul_left
+      · exact hk' right
+      · norm_num
+
+  -- From the bounds, we have $0 \leq k \leq 2$.
+  have hk''' : k ≥ 0 ∧ k ≤ 2 := by
+    apply And.intro
+    · exact hk''.left
+    · have : 121 * k ≤ 24 * 120 := by
+        calc
+          121 * k = 1 + 11^2 * k - 1 := by omega
+          _ ≤ 24 * 120 - 1 := by omega
+          _ = 24 * 120 - 1 * 121 * 0 := by omega
+          _ = 24 * 120 - 121 * 0 := by ring
+      apply Nat.le_of_mul_le_mul_right
+      · omega
+      · norm_num
+
+  -- We test the three possible values of $k$ and find that $k = 1$ gives the solution $b = 116$.
+  obtain rfl | rfl | rfl := hk''''
+  · omega
+  · exact rfl
+  · omega
+
+```

@@ -1,0 +1,299 @@
+-- Prove that $x_1 \in (0,1)$ implies that $x_2 \in (0,1)$
+  have hA {x} (hx : 0 < x ∧ x < 1) : 0 < f 2 x ∧ f 2 x < 1 := by
+    rw [h₁ x 1, h₀ x]
+    have : x * (x + 1) < 1 := by
+      rw [mul_add]
+      linarith only [hx.1, hx.2]
+      linarith only [hx.1, hx.2]
+    constructor
+    · nlinarith only [hx.1, hx.2]
+    · nlinarith only [hx.1, hx.2]
+
+  -- Prove that $x_2 \in (0,1)$ implies that $x_3 \in (0,1)$
+  have hB {x} (hx : 0 < x ∧ x < 1) : 0 < f 3 x ∧ f 3 x < 1 := by
+    rw [h₁ x 2, h₁ x 1, h₀ x]
+    obtain ⟨hx', hx''⟩ := hx
+    have : x * (x * (x + 1) + 2) < 1 := by
+      nlinarith only [hx', hx'', sq_nonneg (x - 1)]
+    constructor
+    · nlinarith only [hx']
+    · nlinarith only [hx']
+
+  -- Prove that $x_3 \in (0,1)$ implies that $x_4 \in (0,1)$
+  have hC {x} (hx : 0 < x ∧ x < 1) : 0 < f 4 x ∧ f 4 x < 1 := by
+    rw [h₁ x 3, h₁ x 2, h₁ x 1, h₀ x]
+    obtain ⟨hx', hx''⟩ := hx
+    have : x * (x * (x * (x + 1) + 2) + 3) < 1 := by
+      nlinarith only [hx', hx'', sq_nonneg (x - 1)]
+    constructor
+    · nlinarith only [hx']
+    · nlinarith only [hx']
+
+  -- Prove that if $x_n \in (0,1)$ then $x_{n+1} \in (0,1)$
+  have hD {x} (n : ℕ) {x} (hx : 0 < x ∧ x < 1) : 0 < f (n + 1) x ∧ f (n + 1) x < 1 := by
+    induction n with
+    | zero =>
+      rw [h₁ x 1, h₀ x]
+      have : x * (x + 1) < 1 := by
+        rw [mul_add]
+        linarith only [hx.1, hx.2]
+        linarith only [hx.1, hx.2]
+      constructor
+      · nlinarith only [hx.1, hx.2]
+      · nlinarith only [hx.1, hx.2]
+    | succ n hn =>
+      rw [h₁ x (n + 1), h₁ x n]
+      obtain ⟨hn', hn''⟩ := hn
+      have : x * (x * (x * (x * (x + 1) + 2) + 3) + (n + 1)) < 1 := by
+        nlinarith only [hx.1, hx.2, hn'.ne', hn''.ne', sq_nonneg (x - 1)]
+      constructor
+      · nth_rw 2 [mul_comm]; exact hn'.ne'
+      · nlinarith only [hx.1, hx.2, hn'.ne', hn''.ne', sq_nonneg (x - 1)]
+
+  -- Define the set of all valid $x_1$ values
+  let S := {x | 0 < x ∧ x < 1} → {x | 0 < x ∧ x < 1} := by
+    exact Set.univ
+
+  -- Prove that the function from valid $x_1$ to $x_2$ is continuous
+  let f₁ : S := fun x => (h₁ x 1, h₀ x)
+
+  -- Prove that the set of valid $x_1$ values is compact
+  let K := Set.Ioo 0 1
+  have hK : ContinuousOn f₁ K := by
+    intro x hx
+    obtain ⟨hx', hx''⟩ := hx
+    simp [f₁]
+    refine ContinuousOn.continuousWithinAt?_
+    simp [continuousWithinAt_iff_forall]
+    intro n
+    by_cases n' : n = 0
+    · simp [n']
+    · have : n = n' + 1 := by omega
+      nth_rw 1 [this]
+      simp [h₁, h₀]
+      rw [show (n' + 1 : ℕ) = (n' + 1 : ℝ) by norm_cast]
+      rw [show (n' : ℕ) = (n' : ℝ) by norm_cast]
+      field_simp
+      ring_nf
+      simp [hx', hx'']
+      have : (x + 1 / n') * (x + 1 / n') < 1 + 2 / n' := by
+        calc
+          (x + 1 / n') * (x + 1 / n') < 1 * (x + 1 / n') := by rw [mul_lt_mul_right]; linarith only [hx''.ne']; positivity
+          _ < 1 + x * 2 / n' := by rw [mul_div_assoc, mul_div_assoc, mul_lt_mul_right]; rw [mul_assoc]; linarith only [hx''.ne']; positivity
+          _ < 1 + 2 / n' := by rw [mul_lt_mul_right]; linarith only [hx'.ne']; positivity
+      calc
+        (x + 1 / n') * (x * (x + 1 / n') + n') / n'
+          = (x + 1 / n') * (x * (x + 1 / n') + n') / n' + 1 := by field_simp
+        _ < 1 + 2 / n' + 1 := by rel [this]
+        _ = n' + 2 + 2 / n' := by ring_nf
+        _ < n' + 3 + 2 / n' := by rel [show 2 ≤ n' + 3 by omega]
+        _ = (n' + 1) + 2 + 2 / n' := by ring_nf
+        _ = ((n' + 1) + 2 / n') + 2 := by ring_nf
+        _ ≤ ((n' + 1) + 2 / n') + (1 + 1) := by rel [show 1 ≤ n' + 1 by omega]
+        _ = (n' + 1) + (2 / n' + 2) := by ring_nf
+
+  -- Prove that the set of valid $x_1$ values is closed
+  let M := Set.Ioo 0 1
+  have hM : Closed M := by
+    refine IsClosed.trans?_?_
+    · exact isClosed_Ioo
+    · simp [M]
+
+  -- Prove that the set of all valid $x_1$ values is nonempty
+  have hE :.Nonempty M := by
+    simp [M]
+    use 1 / 2
+    norm_num
+
+  -- Pick one element from the set of all valid $x_1$ values
+  let a, ha := hE
+  let b, hb := hM
+
+  -- Prove that the sequence of sequences $f^n(a)$ is increasing and bounded above by 1
+  let c : ℕ → M := fun n => h₁ x n
+  have hc : StrictMono c ∧ Monotone c ∧ (∀ n, c n ≤ 1) := by
+    refine ⟨?_,?_,?_⟩
+    · induction n with
+      | zero => simp [c, ha.1, ha.2]
+      | succ n hn =>
+        simp_rw [show (n + 1 + 1 : ℕ) = (n + 1 + 1 : ℝ) by norm_cast, c]
+        simp [h₁]
+        have : 0 < f n a + 1 / n := by
+          calc
+            0 < f n a := ha.1
+            _ < f n a + 1 / n := by rel [ha.2]
+        exact (lt_div_iff (by positivity)).mpr this
+    · induction n with
+      | zero => simp [c, ha.1, ha.2]
+      | succ n hn =>
+        simp_rw [show (n + 1 + 1 : ℕ) = (n + 1 + 1 : ℝ) by norm_cast, c]
+        simp [h₁]
+        have : f n a + 1 / n ≥ 1 := by
+          calc
+            f n a + 1 / n ≥ 1 + 1 / n := by rel [ha.2]
+            _ ≥ 1 := by rel [show 1 ≤ n + 1 by omega]
+        exact (div_le_one (by positivity)).mpr this
+    · simp [c]
+      intro n
+      calc
+        f n a ≤ 1 := by exact ha.2
+        _ ≤ 1 := by simp
+
+  -- Define the set of limit points of the sequence $c$
+  let S := {x | ∃ n, ∀ k ≥ n, f k a ≤ x} ∩ {x | 0 < x ∧ x ≤ 1}
+  let a' := SInf S
+
+  -- Prove that the set of limit points of $c$ is nonempty
+  have hF :.Nonempty S := by
+    let d : ℕ → Prop := fun n => ∀ k ≥ n, f k a ≤ a'
+    have had : ∀ n, d n → (∀ k ≥ n + 1, f k a ≤ a') ∧ ¬d (n + 1) := by
+      intro n hd
+      simp [d]
+      constructor
+      · intro k hk
+        calc
+          f (k + 1) a ≤ f (k + 1) a := by simp
+          _ ≤ f k a := by exact hc.1 (show n + 1 ≤ k + 1 by omega)
+          _ ≤ a' := by exact hd k hk
+      · by_contra! h
+        simp [d] at h
+        obtain ⟨n', h'⟩ := h'
+        specialize h (n' + 1) (show n' + 1 ≥ n' + 1 by omega)
+        linarith only [h']
+    apply Transfinite.induction_on with
+    | htrans t => simp
+    | have hst : ((h : t) : S) : t ∈ S := by exact h.2
+    | succ t ht => simp [S] at ht ⊢
+      obtain ⟨n, hn1, hn2⟩ := ht
+      have hn3 : ∀ k ≥ n + 1, f k a ≤ a' := by
+        intro k hk
+        specialize hn1 k (show n ≤ n + 1 by omega)
+        exact hn1 hk
+      have := had n ⟨n, hn3⟩
+      simp [S] at this ⊢
+      exact this.1
+
+  -- Prove that the set of limit points of $c$ is closed
+  let M := Set.Icc (inf S) (sInf S)
+  have hM : Closed M := by
+    refine IsClosed.trans?_?_
+    · exact isClosed_Icc
+    · simp [M]
+
+  -- Prove that $a'$ is the infimum of the set of limit points of $c$
+  have hG : a' = inf S := by
+    suffices a' ∈ S ∧ ∀ b ∈ S, a' ≤ b from?_
+    · simp at this ⊢
+      exact this.1
+    · intro b hb
+      simp [S] at hb
+      obtain ⟨n, hn1, hn2⟩ := hb
+      have hn3 : ∀ k ≥ n, f k a ≤ b := by
+        intro k hk
+        exact hn1 k hk
+      have hle : a' ≤ b := by
+        calc
+          a' ≤ f n a := by exact hc.2.1
+          _ ≤ f n a + 1 / n := by rel [hc.2.2]
+          _ ≤ b + 1 / n := by rel [hn3 n (show n ≥ n by omega)]
+          _ ≤ b := by rel [show 0 ≤ 1 / (n : ℝ) by positivity]
+      exact hle
+
+  -- Prove that $f^n(a)$ is continuous in $a$ for each $n$
+  let fₙ (n : ℕ) : S → S := fun a => c n
+  have hFₙ : ContinuousOn fₙ a' := by
+    intro n
+    unfold fₙ
+    apply ContinuousOn.continuousWithinAt
+    simp [fₙ]
+    apply ContinuousWithinAt.continuousOn
+    apply ContinuousWithinAt.mk
+    · simp [fₙ]
+      apply ContinuousWithinAt.trans
+      · simp [f₁]
+      · intro x hx
+        unfold fₙ
+        continuity
+    · intro x hx
+      rw [show (x : S) = (x : S resultant := by simp
+      rw [show (fₙ x : S) = (fₙ x : S resultant := by simp
+      rw [show (n : ℕ) = (n : ℝ) by norm_cast]
+      rw [show (n + 1 : ℕ) = (n + 1 : ℝ) by norm_cast]
+      exact hD _ (show n ≠ 0 by omega)
+
+  -- Apply the fixed point theorem to get the desired value of $x_1$
+  let h := hD _ (show n ≠ 0 by omega)
+  simp [fₙ, h] at hFₙ
+  have := hFₙ.injOn
+  field_simp at this
+  apply Transfinite.induction_on with
+  | htrans t => simp
+  | have hst : ((h : t) : S) : t ∈ S := by exact h.2
+  | succ t ht => simp [S] at ht ⊢
+    obtain ⟨n, hn1, hn2⟩ := ht
+    have hn3 : ∀ k ≥ n + 1, f k a ≤ a' := by
+      intro k hk
+      specialize hn1 k (show n ≤ n + 1 by omega)
+      exact hn1 hk
+    have := had n ⟨n, hn3⟩
+    simp [S] at this ⊢
+    exact this.2
+
+  -- Prove that the sequence $f^n(a')$ is increasing and bounded above by 1
+  have hc' : StrictMono (fₙ a') ∧ Monotone (fₙ a') ∧ (∀ n, fₙ a' n ≤ 1) := by
+    refine ⟨?_,?_,?_⟩
+    · intro n m hm
+      calc
+        fₙ a' n = c n := by simp [fₙ]
+        _ = f (n + 1) a := by simp [c]
+        _ ≤ f (m + 1) a := by exact hc.1 (show n + 1 ≤ m + 1 by omega)
+        _ = c m := by simp [c]
+        _ = fₙ a' m := by simp [fₙ]
+    · intro n m hm
+      calc
+        fₙ a' n = c n := by simp [fₙ]
+        _ = f (n + 1) a := by simp [c]
+        _ ≤ f (n + 1) a' := by simp [fₙ]; exact hc.2.1
+        _ ≤ 1 := by exact hc.2.2
+    · intro n
+      simp [fₙ, hc.2.2]
+
+  -- Define the set of limit points of the sequence $f^n(a')$
+  let S := {x | ∃ n, ∀ k ≥ n, f k (a') ≤ x} ∩ {x | 0 < x ∧ x ≤ 1}
+  let a'' := SInf S
+
+  -- Prove that the set of limit points of $f^n(a')$ is nonempty
+  have hH :.Nonempty S := by
+    let d : ℕ → Prop := fun n => ∀ k ≥ n, f k (a') ≤ a''
+    have had : ∀ n, d n → (∀ k ≥ n + 1, f k (a') ≤ a'') ∧ ¬d (n + 1) := by
+      intro n hd
+      simp [d]
+      constructor
+      · intro k hk
+        calc
+          f (k + 1) (a') ≤ f (k + 1) (a') := by simp
+          _ ≤ f k (a') := by exact hc'.1 (show n + 1 ≤ k + 1 by omega)
+          _ ≤ a'' := by exact hd k hk
+      · by_contra! h
+        simp [d] at h
+        obtain ⟨n', h'⟩ := h'
+        specialize h (n' + 1) (show n' + 1 ≥ n' + 1 by omega)
+        linarith only [h']
+    apply Transfinite.induction_on with
+    | htrans t => simp
+    | have hst : ((h : t) : S) : t ∈ S := by exact h.2
+    | succ t ht => simp [S] at ht ⊢
+      obtaining ⟨n, hn1, hn2⟩ := ht
+      have hn3 : ∀ k ≥ n + 1, f k (a') ≤ a'' := by
+        intro k hk
+        specialize hn1 k (show n ≤ n + 1 by omega)
+        exact hn1 hk
+      have := had n ⟨n, hn3⟩
+      simp [S] at this ⊢
+      exact this.1
+
+  -- Prove that the set of limit points of $f^n(a')$ is closed
+  let M := Set.Icc (inf S) (sInf S)
+  have hM : Closed M := by
+    refine IsClosed.trans?_?_
+    · exact isClosed

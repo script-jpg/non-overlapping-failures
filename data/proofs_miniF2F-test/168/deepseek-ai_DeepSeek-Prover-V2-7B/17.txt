@@ -1,0 +1,43 @@
+have h₂ : a ^ 3 = 8 := by linear_combination h₀
+  have h₃ : b ^ 3 - 8 * b ^ 2 - 8 * b + 64 = 0 := h₁
+  have h₄ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := by linear_combination h₃
+  have h₅ : Complex.abs (a - b) ≤ 2 * Real.sqrt 21 := by
+    -- Use the fact that the absolute value of a complex number is non-negative and the triangle inequality
+    have h₆ : Complex.abs (a - b) ≤ Complex.abs a + Complex.abs b := Complex.abs.add_le (a - b) 0 |>.trans (by simp)
+    have h₇ : Complex.abs a ≤ 8 := by
+      -- Since a^3 = 8, the absolute value of a is at most 8
+      have h₈ : a ^ 3 = 8 := h₂
+      have h₉ : Complex.abs (a ^ 3) = Complex.abs (8 : ℂ) := by rw [h₈]
+      simp at h₉
+      have h₁₀ : Complex.abs a ^ 3 = 8 := by
+        simp_all [Complex.abs.map_pow]
+        <;> norm_cast
+        <;> simp_all
+        <;> nlinarith
+      have h₁₁ : Complex.abs a ≥ 0 := Complex.abs.nonneg a
+      nlinarith [pow_two (Complex.abs a), pow_two (Complex.abs a - 2)]
+    have h₈ : Complex.abs b ≤ 8 := by
+      -- Similarly, since b^3 = 8b^2 + 8b - 64, the absolute value of b is at most 8
+      have h₉ : b ^ 3 = 8 * b ^ 2 + 8 * b - 64 := h₄
+      have h₁₀ : Complex.abs (b ^ 3) = Complex.abs (8 * b ^ 2 + 8 * b - 64) := by rw [h₉]
+      have h₁₁ : Complex.abs (b ^ 3) = Complex.abs (8 * b ^ 2 + 8 * b - 64) := by rw [h₉]
+      simp [Complex.abs.map_pow] at h₁₁
+      have h₁₂ : Complex.abs b ^ 3 ≤ 8 ^ 3 := by
+        calc
+          Complex.abs b ^ 3 = Complex.abs (b ^ 3) := by simp [Complex.abs.map_pow]
+          _ = Complex.abs (8 * b ^ 2 + 8 * b - 64) := by rw [h₉]
+          _ ≤ Complex.abs (8 * b ^ 2) + Complex.abs (8 * b) + Complex.abs (-64) := by
+            simpa using Complex.abs.add_le (8 * b ^ 2 + 8 * b) (-64)
+          _ = 8 * Complex.abs b ^ 2 + 8 * Complex.abs b + 64 := by
+            simp [Complex.abs.map_mul, Complex.abs.map_pow, Complex.abs.map_one, Complex.abs.map_neg]
+            <;> ring_nf
+            <;> norm_cast
+            <;> simp_all [Complex.abs, Complex.normSq]
+            <;> nlinarith
+          _ ≤ 8 * 8 ^ 2 + 8 * 8 + 64 := by
+            gcongr <;>
+            nlinarith [sq_nonneg (Complex.abs b - 8), sq_nonneg (Complex.abs b - 2)]
+          _ = 8 ^ 3 := by ring_nf
+      have h₁₃ : Complex.abs b ≥ 0 := Complex.abs.nonneg b
+      nlinarith [sq_nonneg (Complex.abs b - 8), sq_nonneg (Complex.abs b - 2)]
+    nlinarith [sq_nonneg (Complex.abs a - Complex.abs b), Real.sqrt_nonneg 21,

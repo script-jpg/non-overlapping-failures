@@ -1,0 +1,86 @@
+-- Prove that the solution set is exactly $\{\pi/2, 3\pi/2\}$.
+  have h₁ : S = {Real.pi / 2, 3 * Real.pi / 2} := by
+    -- Use set extensionality.
+    ext x
+    constructor
+    -- Show that it suffices to consider the case when $x$ is in $S$.
+    · intro hx
+      -- Use the hypothesis for the case when $x$ is in $S$.
+      specialize h₀ x
+      -- Simplify the goal using the hypothesis.
+      simp [h₀] at hx
+      -- Prove that $x$ is in the closed interval $[0,\pi]$.
+      rcases hx with ⟨hx₁, hx₂, hx₃⟩
+      -- Change the goal to proving that $x$ is either $\pi/2$ or $3\pi/2$.
+      suffices x = Real.pi / 2 ∨ x = 3 * Real.pi / 2 by tauto
+      -- Replace the interval $[0, \pi]$ with an equivalent form.
+      have h₀ : x ∈ Set.Icc 0 (Real.pi / 2) ∨ x ∈ Set.Icc (Real.pi / 2) Real.pi := by
+        rw [show Set.Icc 0 Real.pi = Set.Icc 0 (Real.pi / 2) ∪ Set.Icc (Real.pi / 2) Real.pi by rw [Set.Icc_union_Icc_eq_Icc]; all_goals linarith only [Real.pi_pos]]
+        tauto
+      -- Consider the two cases.
+      rcases h₀ with h₀ | h₀
+      -- Case 1: $x \in [0,\pi/2]$.
+      · -- Use the lemma from the reference answer to simplify the equation.
+        have h₁ := Real.sin_pi_div_two_mul_cos_le (Real.pi / 2) (show 0 ≤ Real.pi / 2 by linarith only [Real.pi_pos])
+        -- Rewrite the equation using the reference answer lemma.
+        rw [show Real.pi / 2 * Real.cos x = Real.pi - (Real.pi / 2 * Real.sin x) by linarith only [Real.pi_pos]] at hx₃
+        -- Use the fact that $\cos(\pi - y) = -\cos(y)$.
+        rw [Real.cos_pi_sub] at hx₃
+        -- Combine the equation with the inequality to get an equality.
+        replace hx₃ : Real.cos (Real.pi / 2 * Real.sin x) = 0 := by
+          linarith only [hx₃, h₁]
+        -- Use the equation to get the value of $\sin x$.
+        have h₂ : Real.sin x = 1 := by
+          linarith only [hx₃, Real.cos_sq_add_sin_sq x]
+        -- Use the value of $\sin x$ to get the value of $x$.
+        have h₃ : x = Real.pi / 2 := by
+          linarith only [h₂, Real.sin_pi_div_two]
+        -- Simplify the goal.
+        simp [h₃]
+      -- Case 2: $x \in [\pi/2, \pi]$.
+      · -- Use the lemma from the reference answer to simplify the equation.
+        have h₁ := Real.sin_pi_div_two_mul_cos_le (show Real.pi / 2 ≤ Real.pi by linarith only [Real.pi_pos]) (by linarith only [Real.pi_pos])
+        -- Rewrite the equation using the reference answer lemma.
+        rw [show Real.pi / 2 * Real.cos x = Real.pi - (Real.pi / 2 * Real.sin x) by linarith only [Real.pi_pos]] at hx₃
+        -- Use the fact that $\cos(\pi - y) = -\cos(y)$.
+        rw [Real.cos_pi_sub] at hx₃
+        -- Combine the equation with the inequality to get an equality.
+        replace hx₃ : Real.cos (Real.pi / 2 * Real.sin x) = 0 := by
+          linarith only [hx₃, h₁]
+        -- Use the equation to get the value of $\sin x$.
+        have h₂ : Real.sin x = -1 := by
+          linarith only [hx₃, Real.cos_sq_add_sin_sq x]
+        -- Use the value of $\sin x$ to get the value of $x$.
+        have h₃ : x = Real.pi / 2 + Real.pi := by
+          linarith only [h₂, Real.sin_neg, Real.sin_pi_div_two]
+        -- Simplify the goal.
+        simp [h₃]
+        -- Remove the dependence on $\pi$.
+        simp [Real.pi_pos]
+    -- Show that the reverse direction holds.
+    · intro hx
+      -- Use the hypothesis.
+      specialize h₀ x
+      -- Simplify the goal using the hypothesis.
+      simp [h₀]
+      -- Consider the two cases.
+      simp at hx
+      rcases hx with hx | hx
+      -- Case 1: $x = \pi/2$.
+      · -- Plug in the value of $x$.
+        rw [hx]
+        -- Remove the dependence on $\pi$.
+        simp [Real.pi_pos]
+        -- Case 2: $x = 3\pi/2$.
+      · -- Plug in the value of $x$.
+        rw [hx]
+        -- Simplify the goal.
+        ring_nf
+        -- Remove the dependence on $\pi$.
+        simp [Real.pi_pos]
+  -- Use the hypothesis that $S = \{\pi/2, 3\pi/2\}$ to get the cardinality of $S$.
+  rw [h₁]
+  -- Apply the lemma that says the cardinality of a two-element set is 2.
+  apply Finset.card_pair (show Real.pi / 2 ≠ 3 * Real.pi / 2 by linarith only [Real.pi_pos])
+
+```

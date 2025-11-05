@@ -1,0 +1,163 @@
+have h₀ (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = (6 ^ n - 2 ^ n) * 5 ^ n / 2 ^ n := by
+    induction n with
+    | zero =>
+      simp
+      have h₁ : Nat.choose 1 1 = 1 := by
+        norm_num
+      have h₂ : 2 ^ (3 * 0) = 1 := by
+        simp
+      rw [h₁, h₂]
+      norm_num
+    | succ n hn =>
+      rw [Finset.sum_range_succ, hn]
+      rw [show 2 * (n + 1) + 1 = 2 * n + 1 + 1 + 1 by omega]
+      rw [Nat.choose_succ_right, Nat.choose_succ_left, Nat.choose_succ_left]
+      nth_rw 2 [show 2 * 3 * n + 3 = 3 * (2 * n + 1) by omega]
+      rw [show 3 * (2 * n + 1) = (2 * n + 1) + (2 * n + 1) + (2 * n + 1) by omega, pow_add, pow_add]
+      iterate 3 rw [Nat.choose]
+      rw [Nat.add_sub_cancel, Nat.add_sub_cancel]
+      field_simp
+      have h₃ : 6 ^ n * 5 ^ n = 30 ^ n := by
+        rw [show 30 = 6 * 5 by omega, mul_pow]
+      have h₄ : 2 ^ n * 5 ^ n = 10 ^ n := by
+        rw [show 10 = 2 * 5 by omega, mul_pow]
+      rw [h₃, h₄]
+      nth_rw 2 [show 30 ^ n = 30 ^ (n + 1) / 30 by exact rfl]
+      rw [show 10 ^ n = 10 ^ (n + 1) / 10 by exact rfl]
+      have h₅ : 30 ^ (n + 1) = 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) / 2 / 5 := by
+        rw [show 30 = 5 * 6 by omega, show 30 = 10 * 3 by omega, mul_assoc, mul_div_assoc, ←Nat.mul_sub 5 6 (10 ^ (n + 1))]
+        nth_rw 3 [mul_comm]
+        rw [mul_assoc, mul_div_assoc, Nat.mul_sub_comm 5 (10 ^ (n + 1)) 2, ←Nat.mul_sub (6 * 10) 5 (10 ^ n)]
+        norm_num
+        exact rfl
+      rw [h₅, Nat.mul_div_assoc, Nat.mul_div_assoc, Nat.mul_div_assoc]
+      have h₆ : 5 ∣ (5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) / 2 / 5) := by
+        apply Nat.dvd_mul_right
+      have h₇ : 5 ∣ 5 := by
+        exact rfl
+      have h₈ : 5 ∣ 10 ^ (n + 1) := by
+        rw [show 10 = 2 * 5 by omega, mul_pow]
+        exact Nat.dvd_mul_right 5 (2 ^ (n + 1))
+      have h₉ : 2 ∣ 30 := by
+        omega
+      have h₁₀ : 2 ∣ 10 := by
+        omega
+      have h₁₁ : 2 ∣ 10 ^ (n + 1) := by
+        exact Nat.dvd_pow 2 h₁₀ (n + 1)
+      have h₁₂ : 5 ∣ 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) / 2 := by
+        apply Nat.dvd_div_of_mul_dvd
+        rw [show 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) = 5 * (10 ^ (n + 1) * (6 ^ (n + 1) - 2 ^ (n + 1))) by ring]
+        apply Nat.dvd_mul_left
+      have h₁₃ : 10 ∣ 10 ^ (n + 1) := by
+        exact dvd_pow_self 10 h₁₀
+      have h₁₄ : 10 ∣ 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) := by
+        apply Nat.dvd_mul_left
+      have h₁₅ : 2 * 5 ∣ 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) := by
+        apply Nat.Coprime.mul_dvd_of_dvd_of_dvd rfl h₁₂ h₁₄
+      have h₁₆ : 2 * 5 ∣ 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) / 2 := by
+        apply Nat.dvd_div_of_mul_dvd
+        rw [show 2 * 5 * ((5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1)) / 2) = 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) by omega]
+        apply Nat.dvd_mul_left
+      have h₁₇ : 2 * 5 ∣ 5 * 5 * 10 ^ (n + 1) / 2 := by
+        rw [show 5 * 5 * 10 ^ (n + 1) / 2 = 5 * (5 * 10 ^ (n + 1) / 2) by omega]
+        apply Nat.dvd_mul_left
+      have h₁₈ : 2 * 5 ∣ 5 * (10 ^ (n + 1) * (6 ^ (n + 1) - 2 ^ (n + 1)) / 2) := by
+        rw [show 5 * (10 ^ (n + 1) * (6 ^ (n + 1) - 2 ^ (n + 1)) / 2) = 5 * 10 ^ (n + 1) * ((6 ^ (n + 1) - 2 ^ (n + 1)) / 2) by omega]
+        apply Nat.dvd_mul_left
+      have h₁₉ : 2 * 5 ∣ 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) / 2 / 5 := by
+        apply Nat.dvd_div_of_mul_dvd
+        rw [show 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) / 2 / 5 = 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * (10 ^ (n + 1) / 2 / 5) by omega]
+        apply Nat.dvd_mul_left
+        omega
+      have h₂₀ : 2 * 5 * 5 ∣ 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) / 2 / 5 := by
+        apply Nat.Coprime.mul_dvd_of_dvd_of_dvd rfl h₁₉
+        omega
+      have h₂₁ : 2 * 5 * 5 ∣ 30 ^ (n + 1) := by
+        rw [show 30 ^ (n + 1) = 5 * (6 ^ (n + 1) - 2 ^ (n + 1)) * 10 ^ (n + 1) / 2 / 5 by exact h₅]
+        exact h₂₀
+      have h₂₂ : 2 * 5 ∣ 2 * 5 * 5 := by
+        omega
+      have h₂₃ : 2 ∣ 2 * 5 := by
+        omega
+      have h₂₄ : 5 ∣ 2 * 5 := by
+        exact rfl
+      have h₂₅ : Nat.Coprime 2 5 := by
+        exact rfl
+      rw [←Nat.Coprime.dvd_mul h₂₅, Nat.Prime.dvd_pow_iff_dvd (Nat.prime_iff.mp rfl) (show 2 ≠ 0 by omega)] at h₂₃
+      rw [←Nat.Coprime.dvd_mul h₂₅, Nat.Prime.dvd_pow_iff_dvd (Nat.prime_iff.mp rfl) (show 5 ≠ 0 by omega)] at h₂₄
+      rw [←Nat.dvd_add_iff_right h₂₂, ←Nat.dvd_add_iff_right h₂₃, ←Nat.dvd_add_iff_right h₂₄]
+      omega
+      rw [Nat.add_sub_cancel, Nat.add_sub_cancel]
+      omega
+      rw [show 30 = 5 * 6 by omega, show 30 = 10 * 3 by omega, mul_assoc, mul_div_assoc, ←Nat.mul_sub 5 6 (10 ^ (n + 1))]
+      nth_rw 3 [mul_comm]
+      rw [mul_assoc, mul_div_assoc, Nat.mul_sub_comm 5 (10 ^ (n + 1)) 2, ←Nat.mul_sub (6 * 10) 5 (10 ^ n)]
+      norm_num
+      exact rfl
+  rw [h₀]
+  clear n hn
+  have h₁ : (5 : ℕ) ∣ 2 ^ n := by
+    rw [show 2 ^ n = 5 ^ n / 2 ^ n * 2 ^ n by omega, mul_assoc, mul_div_assoc]
+    have h₁ : 5 ^ n = (5 ^ n / 2 ^ n) * 2 ^ n := by
+      symm
+      apply Nat.div_mul_cancel (5 ^ n) h₀
+    have h₂ : 2 ^ n ∣ 5 ^ n := by
+      rw [h₁, Nat.mul_dvd_mul_iff_right (by omega), Nat.dvd_iff_mod_eq_zero, Nat.add_mod, Nat.pow_mod]
+      norm_num
+      have h₃ : (5 ^ n).mod 2 ^ n = 0 := by
+        rw [Nat.pow_mod, Nat.pow_mod, Nat.mod_self (by omega)]
+        norm_num
+      rw [h₃]
+      exact dvd_refl _
+    apply Nat.Prime.dvd_pow_iff_dvd (Nat.prime_iff.mp rfl) h₂
+  have h₂ : 2 ∣ 5 ^ n / 2 ^ n := by
+    rw [Nat.div_eq_iff_eq_mul_left (by omega), Nat.mul_comm 2 (5 ^ n), mul_assoc]
+    apply Nat.dvd_mul_right
+  rw [show 2 ^ n * (5 ^ n / 2 ^ n) = 5 ^ n by omega]
+  clear h₀
+  have h₁ : (6 : ℤ) ^ n - 2 ^ n ≠ 0 := by
+    apply ne_of_gt
+    rw [show (6 : ℤ) ^ n - 2 ^ n = (6 ^ n - 2 ^ n : ℕ) by norm_cast]
+    have h₁ : (6 : ℤ) ^ n ≥ 1 := by
+      apply one_le_pow₀
+      norm_num
+    have h₂ : (2 : ℤ) ^ n ≥ 1 := by
+      apply one_le_pow₀
+      norm_num
+    omega
+  by_contra! h₂
+  rw [show (5 : ℕ) ∣ (5 : ℤ) by norm_num, Nat.cast_dvd] at h₂
+  rcases h₂ with ⟨k, hk⟩
+  rw [show (5 : ℤ) ^ n / 2 ^ n * (2 ^ n : ℕ) = (5 : ℤ) ^ n / 2 ^ n * 2 ^ n by norm_cast] at hk
+  rw [show (5 : ℤ) ^ n / 2 ^ n * 2 ^ n = 5 ^ n by omega] at hk
+  norm_cast at hk
+  have h₃ : 5 ∣ 5 ^ n := by
+    norm_num
+    exact dvd_refl _
+  have h₄ : 5 ∣ (6 ^ n - 2 ^ n) * 5 ^ n := by
+    apply Nat.dvd_mul_left
+  rw [hk] at h₄
+  apply Nat.Prime.dvd_pow_iff_dvd (Nat.prime_iff.mp rfl) at h₄
+  simp at h₄
+  have h₅ : ¬ 5 ∣ 2 ^ n := by
+    by_contra! h₅
+    have h₆ : 5 ∣ (6 ^ n - 2 ^ n) := by
+      have h₆ : 5 ∣ (6 ^ n - 2 ^ n) * 5 ^ n / 2 ^ n := by
+        apply Nat.dvd_div_of_mul_dvd
+        rw [show (6 ^ n - 2 ^ n) * 5 ^ n / 2 ^ n = (5 ^ n / 2 ^ n * (2 ^ n : ℕ) : ℕ) by omega]
+        rw [show (5 ^ n / 2 ^ n * (2 ^ n : ℕ) : ℕ) = (5 ^ n / 2 ^ n * 2 ^ n : ℕ) by norm_cast]
+        rw [show (5 ^ n / 2 ^ n * 2 ^ n : ℕ) = 5 ^ n by omega]
+        exact h₄
+      have h₇ : 5 ∣ 5 ^ n := by
+        norm_num
+        exact dvd_refl _
+      have h₈ : 5 ∣ (6 ^ n - 2 ^ n) * 5 ^ n / 2 ^ n := h₆
+      apply Nat.Coprime.dvd_of_dvd_mul_right (by omega) at h₈
+      exact h₈
+    have h₇ : 5 ∣ 2 ^ n := by
+      omega
+    absurd h₅
+    exact h₇
+  absurd h₅
+  exact h₄
+```

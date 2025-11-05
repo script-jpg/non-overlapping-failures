@@ -1,0 +1,197 @@
+-- It suffices to show that the polynomial is
+
+  -- (z - 1)^2 * (z - 2)^2 * (z - 4)^2 = z^6 - 10z^5 + 41z^4 - 88z^3 + 112z^2 - 64z + 16
+  suffices h : ∀ z, f z = 0 → z ^ 6 - 10 * z ^ 5 + a * z ^ 4 + b * z ^ 3 + c * z ^ 2 + d * z + 16 = (z - 1) ^ 2 * (z - 2) ^ 2 * (z - 4) ^ 2 by
+    specialize this 1 (by norm_num [h₀])
+    norm_num at this
+    specialize this 2 (by norm_num [h₀])
+    norm_num at this
+    specialize this 4 (by norm_num [h₀])
+    norm_num at this
+    linarith
+
+  -- Let's first show that 1, 2, and 4 are roots of the polynomial
+  intro z hz
+  have hzim : z.im = 0 := (h₁ z hz).1
+  have hzre : 0 < z.re ∧ ↑(Int.floor z.re) = z.re := (h₁ z hz).2
+  let z' : ℤ := z.re
+  have : z = ↑(z') := by simp [z']
+  rw [this] at hz h₀
+  have hz' : (z' : ℂ) ^ 6 - 10 * (z' : ℂ) ^ 5 + a * (z' : ℂ) ^ 4 + b * (z' : ℂ) ^ 3 + c * (z' : ℂ) ^ 2 + d * (z' : ℂ) + 16 = 0 := by
+    rw [h₀] at hz
+    exact hz
+  have : z' ^ 6 - 10 * z' ^ 5 + a * z' ^ 4 + b * z' ^ 3 + c * z' ^ 2 + d * z' + 16 = 0 := by
+    have h' : (z' : ℂ) ^ 6 - 10 * (z' : ℂ) ^ 5 + a * (z' : ℂ) ^ 4 + b * (z' : ℂ) ^ 3 + c * (z' : ℂ) ^ 2 + d * (z' : ℂ) + 16 = (z' ^ 6 - 10 * z' ^ 5 + a * z' ^ 4 + b * z' ^ 3 + c * z' ^ 2 + d * z' + 16 : ℝ) := by
+      simp [Complex.ext_iff]
+    rw [h'] at hz'
+    exact hz'
+  have hz : z' ^ 6 - 10 * z' ^ 5 + a * z' ^ 4 + b * z' ^ 3 + c * z' ^ 2 + d * z' + 16 = 0 := by
+    exact this
+  have : z' ^ 6 - 10 * z' ^ 5 + 41 * z' ^ 4 - 88 * z' ^ 3 + 112 * z' ^ 2 - 64 * z' + 16 = 0 := by
+    calc
+      _ = z' ^ 6 - 10 * z' ^ 5 + a * z' ^ 4 + b * z' ^ 3 + c * z' ^ 2 + d * z' + 16 := by
+        rw [hz]
+      _ = 0 := by
+        linarith
+  have hz' : (z' - 1) ^ 2 * (z' - 2) ^ 2 * (z' - 4) ^ 2 = 0 := by
+    ring_nf
+    rw [this]
+    ring
+  simp at hz'
+  have : z' = 1 ∨ z' = 2 ∨ z' = 4 := by
+    rcases hz' with (hz' | hz' | hz')
+    all_goals
+      exact hz'
+  rcases this with hz' | hz' | hz'
+  all_goals
+    subst z'
+    norm_num [h₀] at hz
+  -- By the above, the only possible values for the roots are 1, 2, and 4
+  have hroots : z' ∈ ({1, 2, 4} : Finset ℤ) := by
+    simp
+    exact this
+  simp at hroots
+
+  -- Now, let's show that each root appears at most twice
+  have hmul : (z - 1) ^ 2 * (z - 2) ^ 2 * (z - 4) ^ 2 = m * z ^ 6 + n * z ^ 5 + p * z ^ 4 + q * z ^ 3 + r * z ^ 2 + s * z + t := by
+    ring
+  have : m = 1 := by
+    linarith [h₀ 0 (by norm_num [h₀])]
+  have : n = -10 := by
+    linarith [h₀ 1 (by norm_num [h₀])]
+  have : p = a := by
+    linarith [h₀ 2 (by norm_num [h₀])]
+  have : q = b := by
+    linarith [h₀ 3 (by norm_num [h₀])]
+  have : r = c := by
+    linarith [h₀ 4 (by norm_num [h₀])]
+  have : s = d := by
+    linarith [h₀ 5 (by norm_num [h₀])]
+  have : t = 16 := by
+    linarith [h₀ 6 (by norm_num [h₀])]
+  have hmul' : m = 1 ∧ n = -10 ∧ p = a ∧ q = b ∧ r = c ∧ s = d ∧ t = 16 := by
+    exact ⟨‹m = 1›, ‹n = -10›, ‹p = a›, ‹q = b›, ‹r = c›, ‹s = d›, ‹t = 16›⟩
+  have hzroots : z' ∈ ({1, 2, 4} : Finset ℤ) := by
+    simp
+    exact hroots
+  simp at hzroots
+  have : z' = 1 ∨ z' = 2 ∨ z' = 4 := by
+    exact hzroots
+  rcases this with (hzroots | hzroots | hzroots)
+  -- If 1 is a root, then its multiplicity is at most 2
+ . have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).count 0 ≤ 2 := by
+      simp
+      calc
+        _ ≤ (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).count 0 := by
+          apply Multiset.count_le_of_le
+          simp
+        _ ≤ 2 := by
+          apply le_trans (Multiset.count_of_mem (Multiset.mem_of_eq hzroots))
+          simp
+      -- Because 1 is a root, its multiplicity is positive, so it is exactly 2
+    have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).count 0 = 2 := by
+      simp
+      calc
+        _ = (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).count 1 := by
+          rw [hzroots]
+          simp
+        _ = (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')).count 1 := by
+          rw [←Multiset.count_map]
+          simp
+        _ = (Multiset.map (fun z => z - 4) z').count 1 := by
+          rw [←Multiset.count_map]
+          simp
+        _ = 1 := by
+          rw [←Multiset.count_map]
+          simp
+        _ = 2 := by
+          linarith
+    have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')).count 0 = (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).card := by
+      apply Eq.symm
+      apply Multiset.count_eq_card
+      simp
+    simp at this
+    have : Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')) = 3 := by
+      linarith
+    have : Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) z)))) = 4 := by
+      simp
+      linarith
+    have : Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) z)))) = 5 := by
+      simp
+      linarith
+    have : Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) z))))) = 6 := by
+      simp
+      linarith
+    have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) z))))).card = Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) z)))))) := by
+      simp
+    simp at this
+    linarith
+  -- If 2 is a root, then its multiplicity is at most 2
+ . have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).count 0 ≤ 2 := by
+      simp
+      calc
+        _ ≤ (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).count 0 := by
+          apply Multiset.count_le_of_le
+          simp
+        _ ≤ 2 := by
+          apply le_trans (Multiset.count_of_mem (Multiset.mem_of_eq hzroots))
+          simp
+      -- Because 2 is a root, its multiplicity is positive, so it is exactly 2
+    have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).count 0 = 2 := by
+      simp
+      calc
+        _ = (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')).count 1 := by
+          rw [hzroots]
+          simp
+        _ = (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')).count 1 := by
+          rw [←Multiset.count_map]
+          simp
+        _ = (Multiset.map (fun z => z - 4) z').count 1 := by
+          rw [←Multiset.count_map]
+          simp
+        _ = 1 := by
+          rw [←Multiset.count_map]
+          simp
+        _ = 2 := by
+          linarith
+    have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')).count 0 = (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).card := by
+      apply Eq.symm
+      apply Multiset.count_eq_card
+      simp
+    simp at this
+    have : Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')) = 3 := by
+      linarith
+    have : Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) z)))) = 4 := by
+      simp
+      linarith
+    have : Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) z)))) = 5 := by
+      simp
+      linarith
+    have : Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) z))))) = 6 := by
+      simp
+      linarith
+    have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) z))))).card = Multiset.card (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) z)))))) := by
+      simp
+    simp at this
+    linarith
+  -- If 4 is a root, then its multiplicity is at most 2
+ . have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).count 0 ≤ 2 := by
+      simp
+      calc
+        _ ≤ (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')).count 0 := by
+          apply Multiset.count_le_of_le
+          simp
+        _ ≤ 2 := by
+          apply le_trans (Multiset.count_of_mem (Multiset.mem_of_eq hzroots))
+          simp
+      -- Because 4 is a root, its multiplicity is positive, so it is exactly 2
+    have : (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z'))).count 0 = 2 := by
+      simp
+      calc
+        _ = (Multiset.map (fun z => z - 1) (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')).count 1 := by
+          rw [hzroots]
+          simp
+        _ = (Multiset.map (fun z => z - 2) (Multiset.map (fun z => z - 4) z')).count 1 := by
+          rw [←Multiset.count_map]
+          simp
+        _ = (Multiset.map

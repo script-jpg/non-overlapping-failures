@@ -1,0 +1,55 @@
+-- check the base case
+  | zero => simp
+
+  -- use induction hypothesis to simplify
+  | succ n ih =>
+    rw [pow_succ, pow_succ]
+
+    -- wlog, assume that $n$ is even
+    by_cases evenn : Even n
+
+    -- if $n$ is even, then $(-1)^n = 1$
+    · simp [evenn, neg_one_pow]
+      -- we can simplify `10 ^ (n + 1) - (-1) ^ (n + 1)` to `10 ^ n + 1`
+      rw [sub_neg_eq_add]
+
+      -- in order to use induction hypothesis, we split `10 ^ n + 1` to `10 ^ n - 1 + 2`
+      have : 10 ^ n + 1 = 10 ^ n - 1 + 2 := by
+        push_cast
+        ring
+
+      -- substitute the induction hypothesis
+      rw [this, add_assoc, add_comm 10, ← add_assoc]
+      apply Int.dvd_add ih
+      -- it is easy to show that $11 \mid 2$
+      norm_num
+
+    -- if $n$ is odd, then $(-1)^n = -1$
+    · simp [evenn, one_ne_zero, not_even_iff_odd, neg_one_pow]
+      -- we can simplify `10 ^ (n + 1) - (-1) ^ (n + 1)` to `10 ^ n - 1 - 2`
+      rw [sub_neg_eq_add]
+
+      -- in order to use induction hypothesis, we split `10 ^ n - 1 - 2` to `10 ^ n - 3 - 2`
+      have : 10 ^ n - 1 - 2 = 10 ^ n - 3 + 2 := by
+        push_cast
+        ring
+
+      -- in order to use induction hypothesis, we need to show that $11 \mid 2$
+      -- we can use `Int.dvd_add` to show that $11 \mid 3 + 8$
+      -- Int.dvd_add requires $11 \mid 8$ and $11 \mid 3$, both of them can be shown by `norm_num`
+      have dvd8 : 11 ∣ 8 := by
+        norm_num [Dvd.dvd]
+      have dvd3 : 11 ∣ 3 := by
+        norm_num [Dvd.dvd]
+      nth_rw 1 [← one_mul 11]
+      -- we can use `Int.dvd_add` to show that $11 \mid 3 + 8$
+      apply Int.dvd_add ih
+      -- in order to use `Int.dvd_add`, we need to show $11 \mid - (10 ^ n - 3)$ and $11 \mid 2$
+      -- we can use `Int.dvd_neg` to convert $11 \mid - (10 ^ n - 3)$ to $11 \mid 10 ^ n - 3$
+      apply Int.dvd_neg.mp
+      -- both of them can be shown by `norm_num` respectively
+      rw [Int.dvd_neg]
+      apply Int.dvd_add dvd3 dvd8
+      norm_num
+
+```

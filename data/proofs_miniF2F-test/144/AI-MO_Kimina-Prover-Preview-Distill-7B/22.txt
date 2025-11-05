@@ -1,0 +1,68 @@
+-- A trivial fact for $z \ne 0.$
+  have hz₀ : z ≠ 0 := by
+    by_contra h
+    simp [h] at h₀
+
+  -- Let $z = a + bi.$
+  let a := z.re
+  let b := z.im
+  have hz : z = a + b * I := by
+    rw [←re_add_im z, hz]
+    simp
+
+  -- Simplify the equation in the hypothesis.
+  simp [Complex.normSq, hz] at h₀
+  ring_nf at h₀
+
+  -- We have $z + \frac 6 z = a + bi + \frac{6(a - bi)}{a^2 + b^2}.$
+  have hz₁ : z + 6 / z = 2 * a +  -b + (6 * (a - b * I) / (a ^ 2 + b ^ 2)) := by
+    rw [hz, add_div, div_self hz₀, mul_div_cancel_right₀ _ hz₀]
+    ring_nf
+
+  -- The real part is $2a + \frac{6a}{a^2 + b^2}.$
+  have hz₂ : (z + 6 / z).re = 2 * a + 6 * a / (a ^ 2 + b ^ 2) := by
+    rw [hz₁, add_re, re_add_im, re_div]
+    simp
+    rw [mul_re, mul_im, div_re, div_im]
+    simp
+    ring_nf
+
+  -- The imaginary part is $-b - \frac{6b}{a^2 + b^2}.$
+  have hz₃ : (z + 6 / z).im = -b - 6 * b / (a ^ 2 + b ^ 2) := by
+    rw [hz₁, add_im, im_add_re, im_div]
+    simp
+    rw [mul_re, mul_im, div_re, div_im]
+    simp
+    ring_nf
+
+  -- The real part equals $2a + \frac{6a}{a^2 + b^2}.$
+  have hz₄ : (z + 6 / z).re = -2 := by
+    by_cases h : a = 0
+    · simp [h] at hz₀
+      simp [h, hz₀] at h₀
+      have : b ^ 2 = 1 := by
+        nlinarith
+      have : b = 1 ∨ b = -1 := by
+        simp at this
+        exact sq_eq_one_iff.mp this
+      rcases this with (h | h)
+      all_goals
+        simp [h, hz]
+        ring_nf
+        nlinarith
+
+    apply eq_of_sub_eq_zero
+    ring_nf
+    rw [←Complex.re_add_im z, hz₀, hz]
+    simp
+    ring_nf
+    nlinarith
+
+  -- Hence, $z + \frac 6 z = -2.$
+  rw [hz₁, add_div, div_self hz₀, mul_div_cancel_right₀ _ hz₀]
+  simp
+  rw [mul_re, mul_im, div_re, div_im]
+  simp
+  ring_nf
+  exact hz₄
+```

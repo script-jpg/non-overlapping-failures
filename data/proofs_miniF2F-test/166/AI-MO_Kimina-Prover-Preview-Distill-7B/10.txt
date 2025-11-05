@@ -1,0 +1,48 @@
+-- show that $\sum_{i=1}^n a_i = n$
+  have hsum : ∑ i ∈ Finset.range n, a i = n := by simpa using h₀
+
+  -- show that $a_i \leq 1$ for all $i \in \{1, 2, \ldots, n\}$
+  have h1 : ∀ i ∈ Finset.range n, a i ≤ 1 := by
+    intro i hi
+    by_cases hi' : i = 0
+    · rw [hi']
+      simp [hsum]
+    · have : i ∈ Finset.Icc 0 n := by
+        simp at hi ⊢
+        exact hi
+      have := Finset.exists_mem_range_iff.mp this
+      obtain ⟨m, hm⟩ := this
+      rw [hm.2]
+      have : ∑ x ∈ Finset.range m, a x ≤ ∑ x ∈ Finset.range n, a x := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg
+        · simp
+        · simp
+          exact fun x hx => h1 x hx
+      rw [hsum] at this
+      have : m < n := by exact hm.1
+      have : 0 < ∑ x ∈ Finset.range m, a x := by
+        apply Finset.sum_pos
+        · simp
+        · simp
+          exact fun x hx => (h1 x hx).trans_le (by norm_num)
+      by_contra!
+      have : 1 < ∑ x ∈ Finset.range m, a x := by linarith
+      linarith
+
+  -- apply the lemma \ref{lemma_prod1tonleq1} to $\{a_1, a_2, \ldots, a_n\}$
+  have := lemma_prod1tonleq1 (Finset.range n) a h1
+  simp at this
+  exact this
+
+  -- prove the lemma \ref{lemma_prod1tonleq1} which states that
+  -- for a finset $s$ of nonnegative real numbers with $\sum_{i \in s} a_i \leq 1$,
+  -- it holds that $\prod_{i \in s} a_i \leq 1$
+  where
+    | f => f = λ x => 1 := by aesop
+    | x => x = 0 := by aesop
+  simp_rw [←Finset.sum_eq_sum_filter_add_sum_filter_not]
+  rw [Finset.filter_eq_empty]
+  simp
+  exact fun x _ => h1 x (by simp)
+  -- End of proof of lemma \ref{lemma_prod1tonleq1}
+```

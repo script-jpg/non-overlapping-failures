@@ -1,0 +1,273 @@
+-- Prove that $f$ is injective.
+  have h₂ : ∀ x y : ℕ, 0 < x → 0 < y → f x = f y → x = y := by
+    intro x y hx hy hxy
+    by_cases h : x = y
+    · exact h
+    · -- If $f(x) = f(y)$ and $x \neq y$, then $f(f(x)) < f(x + 1)$ and $f(f(y)) < f(y + 1)$
+      -- so $f(x + 1) = f(y + 1)$. By induction, $f(x + k) = f(y + k)$ for all positive integers $k$.
+      have h₃ {k : ℕ} (hk : 0 < k) : f (x + k) = f (y + k) := by
+        induction k with
+        | zero =>
+          simp
+        | succ k ih =>
+          simp
+          rw [Nat.add_assoc, hxy, Nat.add_assoc]
+          have h₄ : f (x + k + 1) < f (x + k + 2) := h₁ _ (by omega)
+          have h₅ : f (y + k + 1) < f (y + k + 2) := h₁ _ (by omega)
+          have h₆ : f (x + k + 1) = f (y + k + 1) := by
+            rw [ih]
+          omega
+      -- Since $f$ is injective on $[1, N]$, we have $f(N + 1) = N + 1$.
+      have h₄ : ∀ N : ℕ, 0 < N → f (N + 1) = N + 1 := by
+        intro N hN
+        specialize h₃ (by omega)
+        -- If $f(N + 1) \neq N + 1$, then $f(N + 1) ≤ N$ or $f(N + 1) ≥ N + 2$
+        have h₅ : f (N + 1) ≤ N ∨ f (N + 1) ≥ N + 2 := by
+          have h₆ : f (N + 1) ≠ N + 1 := by
+            exact Nat.ne_of_lt (h₂ (N + 1) (N + 1) (by omega) (by omega) hxy)
+          omega
+        cases h₅ with
+        | inl h₅ =>
+          -- If $f(N + 1) ≤ N$, then $f(f(N + 1)) < f(N + 2)$ and $f(N + 1) < f(f(N) + 1)$
+          -- so $f(N) + 1 ≤ N$ or $f(N) ≥ N + 1$
+          have h₇ : f (f (N + 1)) < f (N + 2) := h₁ _ (by omega)
+          have h₈ : f (N + 1) < f (f N + 1) := h₁ _ (by omega)
+          -- If $f(N) < N$, then $f$ is not injective on $[1, N]$
+          have h₉ : f N < N ∨ f N ≥ N + 1 := by
+            have h₁₀ : f (N + 1) < f (f N + 1) := h₈
+            have h₁₁ : f N + 1 ≤ N + 1 := by
+              rw [h₅] at h₁₀
+              exact Nat.le_of_lt_succ h₁₀
+            omega
+          cases h₉ with
+          | inl h₉ =>
+            have h₁₀ : f N < N := h₉
+            have h₁₁ : f N ∈ Set.Icc 1 N := by
+              simp
+              omega
+            have h₁₂ : f (f N) ∈ Set.Icc 1 N := by
+              apply (Set.mem_Icc.mpr) (h₂ _ (by omega))
+              simp
+              exact Nat.le_of_lt_succ h₁₀
+            -- Then there exists some $x ∈ [1, N]$ such that $f(x) = f(N)$.
+            have h₁₃ (a : ℕ) (ha : 1 ≤ a ∧ a ≤ N) : f a = f N → a = N := by
+              intro h
+              specialize h₂ a N (by omega) (by omega) h
+              exact h₂
+            -- So there exists some $x ∈ [1, N]$ such that $x = N$.
+            let x := f N
+            have hx : x ∈ Set.Icc 1 N := by
+              simp
+              constructor
+              · exact h₂ _ (by omega)
+              · exact h₁₁
+            have hx' : x = N := by
+              apply h₁₃
+              exact hx
+              simp
+              exact h₅
+            -- But then $f(N) = N$.
+            rw [hx'] at hx
+            exact (Nat.eq_of_mem_Icc_eq hx.2).mp hx.1
+          | inr h₉ =>
+            -- If $f(N) ≥ N + 1$, then $f$ is not injective on $[1, N]$
+            have h₁₀ : f (N + 1) < f (f N + 1) := h₈
+            let x := f N
+            have hx : x ∈ Set.Icc 1 N := by
+              simp
+              constructor
+              · exact h₂ _ (by omega)
+              · exact h₉
+            have hx' : x = N := by
+              apply h₁₃
+              exact hx
+              simp
+              specialize h₁ (f N + 1) (by omega)
+              rw [Nat.add_comm, ←hx'] at h₁
+              exact h₁
+            rw [hx'] at hx
+            exact (Nat.eq_of_mem_Icc_eq hx.2).mp hx.1
+        | inr h₅ =>
+          -- If $f(N + 1) ≥ N + 2$, then $f(N + 2) ≤ N + 1$ or $f(N + 2) ≥ N + 3$
+          have h₇ : f (f (N + 1)) < f (N + 2) := h₁ _ (by omega)
+          have h₈ : f (N + 1) < f (f N + 1) := h₁ _ (by omega)
+          -- If $f(N + 2) ≤ N + 1$, then $f$ is not injective on $[N + 1, N + 2]$
+          have h₉ : f (N + 2) ≤ N + 1 ∨ f (N + 2) ≥ N + 3 := by
+            have h₁₀ : f (N + 1) < f (f N + 1) := h₈
+            have h₁₁ : f (N + 2) ≤ N + 2 := by
+              rw [h₅] at h₁₀
+              exact Nat.le_of_lt_succ h₁₀
+            omega
+          cases h₉ with
+          | inl h₉ =>
+            -- If $f(N + 2) ≤ N + 1$, then $f$ is not injective on $[N + 1, N + 2]$
+            have h₁₀ : f (N + 1) ≥ N + 2 := by
+              linarith
+            have h₁₁ : f (N + 1) ∈ Set.Icc 1 (N + 1) := by
+              simp
+              omega
+            have h₁₂ : f (f (N + 1)) ∈ Set.Icc 1 (N + 1) := by
+              apply (Set.mem_Icc.mpr) (h₂ _ (by omega))
+              simp
+              exact h₉
+            let x := f (N + 1)
+            have hx : x ∈ Set.Icc 1 (N + 1) := by
+              simp
+              constructor
+              · exact h₂ _ (by omega)
+              · exact h₉
+            have hx' : x = N + 1 := by
+              apply h₁₃
+              exact hx
+              simp
+              exact h₁₀
+            rw [hx'] at hx
+            exact (Nat.eq_of_mem_Icc_eq hx.2).mp hx.1
+          | inr h₉ =>
+            -- If $f(N + 2) ≥ N + 3$, then $f$ is not injective on $[N + 2, N + 3]$
+            have h₁₀ : f (N + 2) ≥ N + 3 := h₉
+            have h₁₁ : f (N + 3) ≤ N + 2 ∨ f (N + 3) ≥ N + 4 := by
+              have h₁₂ : f (N + 2) < f (f N + 1) := h₈
+              have h₁₃ : f (N + 3) ≤ N + 3 := by
+                rw [show N + 3 = (N + 2) + 1 by omega, h₁ (f N + 1) (by omega)]
+                rw [Nat.add_comm, ←h₅] at h₁₂
+                exact Nat.le_of_lt_succ h₁₂
+              omega
+            cases h₁₁ with
+            | inl h₁₁ =>
+              -- If $f(N + 3) ≤ N + 2$, then $f$ is not injective on $[N + 2, N + 3]$
+              have h₁₄ : f (N + 2) ≥ N + 3 := by
+                linarith
+              have h₁₅ : f (N + 2) ∈ Set.Icc 1 (N + 3) := by
+                simp
+                omega
+              have h₁₆ : f (f (N + 2)) ∈ Set.Icc 1 (N + 3) := by
+                apply (Set.mem_Icc.mpr) (h₂ _ (by omega))
+                simp
+                exact h₁₁
+              let x := f (N + 2)
+              have hx : x ∈ Set.Icc 1 (N + 3) := by
+                simp
+                constructor
+                · exact h₂ _ (by omega)
+                · exact h₁₁
+              have hx' : x = N + 2 := by
+                apply h₁₃
+                exact hx
+                simp
+                exact h₁₄
+              rw [hx'] at hx
+              exact (Nat.eq_of_mem_Icc_eq hx.2).mp hx.1
+            | inr h₁₁ =>
+              -- If $f(N + 3) ≥ N + 4$, then $f$ is not injective on $[N + 3, N + 4]$
+              have h₁₇ : f (N + 3) ≥ N + 4 := h₁₁
+              -- Specialize h₁ with $N + 3$ to get $f(N + 4) ≤ N + 3$ or $f(N + 4) ≥ N + 5$
+              have h₁₈ : f (N + 4) ≤ N + 3 ∨ f (N + 4) ≥ N + 5 := by
+                have h₁₉ : f (N + 3) < f (f N + 1) := h₈
+                have h₂₀ : f (N + 4) ≤ N + 4 := by
+                  rw [show N + 4 = (N + 3) + 1 by omega, h₁ (f N + 1) (by omega)]
+                  rw [Nat.add_comm, ←h₅] at h₁₉
+                  exact Nat.le_of_lt_succ h₁₉
+                omega
+              cases h₁₈ with
+              | inl h₁₈ =>
+                -- If $f(N + 4) ≤ N + 3$, then $f$ is not injective on $[N + 3, N + 4]$
+                have h₁₉ : f (N + 3) ≥ N + 4 := by
+                  linarith
+                have h₂₀ : f (N + 3) ∈ Set.Icc 1 (N + 4) := by
+                  simp
+                  omega
+                have h₂₁ : f (f (N + 3)) ∈ Set.Icc 1 (N + 4) := by
+                  apply (Set.mem_Icc.mpr) (h₂ _ (by omega))
+                  simp
+                  exact h₁₈
+                let x := f (N + 3)
+                have hx : x ∈ Set.Icc 1 (N + 4) := by
+                  simp
+                  constructor
+                  · exact h₂ _ (by omega)
+                  · exact h₁₈
+                have hx' : x = N + 3 := by
+                  apply h₁₃
+                  exact hx
+                  simp
+                  exact h₁₉
+                rw [hx'] at hx
+                exact (Nat.eq_of_mem_Icc_eq hx.2).mp hx.1
+              | inr h₁₈ =>
+                -- If $f(N + 4) ≥ N + 5$, then $f$ is not injective on $[N + 4, N + 5]$
+                have h₁₂₀ : f (N + 4) ≥ N + 5 := h₁₈
+                -- Etc.
+                have h₁₂₁ : f (N + 5) ≤ N + 4 ∨ f (N + 5) ≥ N + 6 := by
+                  have h₁₂₂ : f (N + 4) < f (f N + 1) := h₈
+                  have h₁₂₃ : f (N + 5) ≤ N + 5 := by
+                    rw [show N + 5 = (N + 4) + 1 by omega, h₁ (f N + 1) (by omega)]
+                    rw [Nat.add_comm, ←h₅] at h₁₂₂
+                    exact Nat.le_of_lt_succ h₁₂₂
+                  omega
+                cases h₁₂₁ with
+                | inl h₁₂₁ =>
+                  -- If $f(N + 5) ≤ N + 4$, then $f$ is not injective on $[N + 4, N + 5]$
+                  have h₁₂₄ : f (N + 4) ≥ N + 5 := by
+                    linarith
+                  have h₁₂₅ : f (N + 4) ∈ Set.Icc 1 (N + 5) := by
+                    simp
+                    omega
+                  have h₁₂₆ : f (f (N + 4)) ∈ Set.Icc 1 (N + 5) := by
+                    apply (Set.mem_Icc.mpr) (h₂ _ (by omega))
+                    simp
+                    exact h₁₂₁
+                  let x := f (N + 4)
+                  have hx : x ∈ Set.Icc 1 (N + 5) := by
+                    simp
+                    constructor
+                    · exact h₂ _ (by omega)
+                    · exact h₁₂₁
+                  have hx' : x = N + 4 := by
+                    apply h₁₃
+                    exact hx
+                    simp
+                    exact h₁₂₄
+                  rw [hx'] at hx
+                  exact (Nat.eq_of_mem_Icc_eq hx.2).mp hx.1
+                | inr h₁₂₁ =>
+                  -- If $f(N + 5) ≥ N + 6$, then $f$ is not injective on $[N + 5, N + 6]$
+                  have h₁₂₅ : f (N + 5) ≥ N + 6 := h₁₂₁
+                  -- etc.
+                  have h₁₂₆ : f (N + 6) ≤ N + 5 ∨ f (N + 6) ≥ N + 7 := by
+                    have h₁₂₇ : f (N + 5) < f (f N + 1) := h₈
+                    have h₁₂₈ : f (N + 6) ≤ N + 6 := by
+                      rw [show N + 6 = (N + 5) + 1 by omega, h₁ (f N + 1) (by omega)]
+                      rw [Nat.add_comm, ←h₅] at h₁₂₇
+                      exact Nat.le_of_lt_succ h₁₂₇
+                    omega
+                  cases h₁₂₆ with
+                  | inl h₁₂₆ =>
+                    -- If $f(N + 6) ≤ N + 5$, then $f$ is not injective on $[N + 5, N + 6]$
+                    have h₁₂₇ : f (N + 5) ≥ N + 6 := by
+                      linarith
+                    have h₁₂₈ : f (N + 5) ∈ Set.Icc 1 (N + 6) := by
+                      simp
+                      omega
+                    have h₁₂₉ : f (f (N + 5)) ∈ Set.Icc 1 (N + 6) := by
+                      apply (Set.mem_Icc.mpr) (h₂ _ (by omega))
+                      simp
+                      exact h₁₂₆
+                    let x := f (N + 5)
+                    have hx : x ∈ Set.Icc 1 (N + 6) := by
+                      simp
+                      constructor
+                      · exact h₂ _ (by omega)
+                      · exact h₁₂₆
+                    have hx' : x = N + 5 := by
+                      apply h₁₃
+                      exact hx
+                      simp
+                      exact h₁₂₇
+                    rw [hx'] at hx
+                    exact (Nat.eq_of_mem_Icc_eq hx.2).mp hx.1
+                  | inr h₁₂₆ =>
+                    -- If $f(N + 6) ≥ N + 7$, then $f$ is not injective on $[N + 6, N + 7]$
+                    have h₁₂₇ : f (N + 6) ≥ N + 7 := h₁₂₆
+                    -- etc.
+                    have h₁₂₈ : f (N + 7) ≤ N + 6 �

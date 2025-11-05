@@ -1,0 +1,174 @@
+-- We have a number $y^2$ such that $y^2 (1 + 3x^2) = 30x^2 + 517$.
+  have h₁ : y ^ 2 * (1 + 3 * x ^ 2) = 30 * x ^ 2 + 517 := by linarith only [h₀]
+
+  -- We would like to factor this as an integer factorization problem.
+  -- So we set up a bounded search for solutions by introducing a bound $100$.
+  let bound : ℤ := 100
+
+  have h₂ : y ^ 2 * (1 + 3 * x ^ 2) = 30 * x ^ 2 + 517 := by linarith only [h₁]
+
+  have bound₁ : 0 ≤ bound := by norm_num
+
+  have bound₂ : 1 ≤ bound := by norm_num
+
+  -- We denote the set of pairs $(x,y)$ of integers such that $x^2 \ge 0$, $y^2 \ge 0$ and $y^2 (1 + 3x^2)
+  -- = 30x^2 + 517$ by $s$.
+  let s := {(x, y) : ℤ × ℤ | x ^ 2 ≥ 0 ∧ y ^ 2 ≥ 0 ∧ y ^ 2 * (1 + 3 * x ^ 2) = 30 * x ^ 2 + 517}
+
+  -- We will show that $s$ is finite by finding a finite set $t$ such that $s \subseteq t$.
+  let t := (Finset.Icc (-bound) bound) ×ˢ (Finset.Icc (-bound) bound)
+
+  have h₃ : s ⊆ t := by
+    intro v
+    simp [s, t]
+    intro _ _ h₁
+    exact ⟨by linarith only [h₁], by linarith only [h₁]⟩
+
+  have finite_t : Finite t := by exact Finset.finite ×ˢ (Finset.finite_of_bdd (-bound) bound)
+
+  have h₄ : s.Finite := Finite.subset finite_t h₃
+
+  -- Since $s$ is a finite set, we can take the maximum of the first and second coordinates of elements in
+  -- $s$.
+  let x_max := s.map Prod.fst.max' (-bound) bound
+  let y_max := s.map Prod.snd.max' (-bound) bound
+
+  have h₅ : ∀ p ∈ s, -bound ≤ p.1 ∧ p.1 ≤ bound := by
+    intro p hp
+    simp [s] at hp
+    exact hp.1.2.1
+
+  have h₆ : ∀ p ∈ s, -bound ≤ p.2 ∧ p.2 ≤ bound := by
+    intro p hp
+    simp [s] at hp
+    exact hp.2.2.1
+
+  have x_max_mem : x_max ∈ s := by
+    simp [x_max]
+    refine ⟨⟨by linarith only [h₅], by linarith only [h₅]⟩, by simp [s]; linarith only [h₅]⟩
+
+  have y_max_mem : y_max ∈ s := by
+    simp [y_max]
+    refine ⟨⟨by linarith only [h₆], by linarith only [h₆]⟩, by simp [s]; linarith only [h₆]⟩
+
+  have bound_x_max : x_max ≤ bound := by
+    exact Int.le_max' (-bound) bound (h₅ _ x_max_mem)
+
+  have bound_y_max : y_max ≤ bound := by
+    exact Int.le_max' (-bound) bound (h₆ _ y_max_mem)
+
+  have bound_x_max' : -bound ≤ x_max := by
+    exact Int.neg_le_max' (-bound) bound (h₅ _ x_max_mem)
+
+  have bound_y_max' : -bound ≤ y_max := by
+    exact Int.neg_le_max' (-bound) bound (h₆ _ y_max_mem)
+
+  -- We will show that $x_max$ and $y_max$ are actually equal to the maximum of $s$.
+  have h₇ : ∀ p ∈ s, p.1 ≤ x_max := by
+    intro p hp
+    simp [x_max]
+    apply Int.le_max'
+    exact hp.1.2.1
+    exact Int.le_max' (-bound) bound (h₅ _ p)
+
+  have h₈ : x_max = s.max' (-bound) bound.1 := by
+    apply Int.le_antisymm
+    exact h₇
+    have := Int.le_max' (-bound) bound (h₅ _ x_max_mem)
+    exact ⟨← this, h₅ _ x_max_mem⟩
+
+  have h₉ : ∀ p ∈ s, p.2 ≤ y_max := by
+    intro p hp
+    simp [y_max]
+    apply Int.le_max'
+    exact hp.2.2.1
+    exact Int.le_max' (-bound) bound (h₆ _ p)
+
+  have h₁₀ : y_max = s.max' (-bound) bound.2 := by
+    apply Int.le_antisymm
+    exact h₉
+    have := Int.le_max' (-bound) bound (h₆ _ y_max_mem)
+    exact ⟨← this, h₆ _ y_max_mem⟩
+
+  -- At this point, we have shown that $x_max$ and $y_max$ are the maximum of $s$.
+  -- So we can replace $s$ with the singleton set ${ (x_max, y_max) }$.
+  let s' := { (x_max, y_max) }
+
+  have h₁₁ : s = { (x_max, y_max) } := by
+    ext p
+    simp [s, s', h₃, h₇, h₉]
+    exact ⟨h₈, h₁₀⟩
+
+  -- We clear all our variables and computations, and try again.
+
+  subst x y
+  clear x_max y_max h₃ h₅ h₆ h₈ h₉ h₁₁ s
+
+  -- We will reduce the problem to an integer factorization problem.
+  have h₁₂ : y ^ 2 ∣ 30 * x ^ 2 + 517 := by use (1 + 3 * x ^ 2); linarith only [h₁]
+
+  have h₁₃ : y ^ 2 ∣ 517 := by
+    have h₁₄ : y ^ 2 ∣ 30 * x ^ 2 + 517 := by exact h₁₂
+    have h₁₅ : y ^ 2 ∣ 30 * x ^ 2 := by
+      have h₁₆ : y ^ 2 ∣ 30 * x ^ 2 + 517 := by exact h₁₂
+      have h₁₇ : y ^ 2 ∣ 517 := by exact h₁₄
+      have h₁₈ : y ^ 2 ∣ (30 * x ^ 2 + 517) - 517 := by exact Int.dvd_sub h₁₆ h₁₇
+      have h₁₉ : (30 * x ^ 2 + 517) - 517 = 30 * x ^ 2 := by omega
+      rw [h₁₉] at h₁₈
+      exact h₁₈
+    exact (Int.dvd_add_right h₁₅).mpr h₁₄
+
+  have h₁₄ : y ^ 2 ∣ 7 * 73 := by norm_num at h₁₃; exact h₁₃
+
+  have h₁₅ : y ^ 2 ∣ 7 ^ 2 := by
+    have h₁₆ : y ^ 2 ∣ 7 * 73 := by exact h₁₄
+    have h₁₇ : y ^ 2 ∣ 7 * 73.gcd (7 ^ 2) := by exact Int.dvd_gcd h₁₆ (Int.dvd_mul_left (7 ^ 2) _)
+    have h₁₈ : 73.gcd (7 ^ 2) = 1 := by norm_num
+    rw [h₁₈] at h₁₇
+    exact h₁₇
+
+  have h₁₆ : y ^ 2 = 1 ∨ y ^ 2 = 7 ^ 2 := by
+    have h₁₇ : y ^ 2 ∣ 7 ^ 2 := by exact h₁₅
+    have h₁₈ : y ^ 2 ∣ 7 ^ 2 ∧ y ^ 2 ≠ 0 := by exact ⟨h₁₇, by omega⟩
+    have h₁₉ : y ^ 2.natAbs ∣ 7 ^ 2.natAbs := by
+      zify
+      exact Int.natAbs_dvd_natAbs h₁₈.1
+    have h₁₁₀ : y ^ 2.natAbs = 1 ∨ y ^ 2.natAbs = 7 ^ 2.natAbs := by
+      have h₁₁₁ : y ^ 2.natAbs ∣ 7 ^ 2.natAbs := by exact h₁₉
+      have h₁₁₂ : 7 ^ 2.natAbs = 2 * 2 * 2 * 7 * 7 := by norm_num
+      rw [h₁₁₂] at h₁₁₁
+      apply (Nat.dvd_mul_left (2 * 2 * 2)).mp at h₁₁₁
+      apply Nat.Prime.dvd_of_dvd_pow at h₁₁₁
+      pick_goal 2
+     . apply Nat.Prime.dvd_of_dvd_pow at h₁₁₁
+        pick_goal 2
+       . apply Nat.dvd_trans (by norm_num) at h₁₁₁
+          norm_num at h₁₁₁
+        all_goals
+          try { omega }
+      all_goals
+        try { rw [← Nat.lt_add_one_iff]; omega }
+    cases h₁₁₀ with
+    | inl h₁₁₁ =>
+      left
+      omega
+    | inr h₁₁₁ =>
+      right
+      rw [show (1 : ℤ) = 1 ^ 2 by norm_num, sq_eq_sq₀ (by omega) (by omega)] at h₁₁₁
+      exact h₁₁₁
+
+  have h₁₇ : y ^ 2 = 1 ∨ y ^ 2 = 7 ^ 2 := by exact h₁₆
+
+  rcases h₁₇ with
+  | inl h₁₇ =>
+    -- If $y^2 = 1$, then the original equation becomes $3x^2 = 517$, which is impossible.
+    have h₁₈ : 3 * x ^ 2 = 3 * x ^ 2 := by rfl
+    rw [show 3 * x ^ 2 = 517 by linarith only [h₁, h₁₇]] at h₁₈
+    omega
+  | inr h₁₇ =>
+    -- If $y^2 = 7^2$, then the original equation becomes $3x^2 = 30$, which implies that $3x^2 y^2 = 588$.
+    have h₁₈ : 3 * x ^ 2 = 3 * x ^ 2 := by rfl
+    rw [show 3 * x ^ 2 = 30 by linarith only [h₁, h₁₇]] at h₁₈
+    omega
+
+```

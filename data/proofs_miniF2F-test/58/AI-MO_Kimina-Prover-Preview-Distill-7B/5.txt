@@ -1,0 +1,198 @@
+-- Show that if n + 2 ^ k = 2 ^ (k + 1), then f(n + 2 ^ k) = f(n) + k + 1.
+  have h₄ (n k : ℕ) (h : n + 2 ^ k = 2 ^ (k + 1)) : f (n + 2 ^ k) = f n + k + 1 := by
+    induction k with
+    | zero => simp [h₁]
+    | succ k ih =>
+      by_cases hn : k = 0
+      · simp [hn, h₁, h₂]
+      · have one_le_k : 1 ≤ k := by
+          refine Nat.one_le_iff_ne_zero.mpr?_
+          exact hn
+        have hk : f (2 ^ (k + 1)) = f (2 ^ k) + 1 := by
+          have hk := h₄ (2 ^ k) k
+          have hkn := Nat.add_comm (2 ^ k) 2
+          rw [← hkn] at hk
+          rw [hk]
+          have hn0 : 2 ^ (k + 1) = 2 * 2 ^ k := by
+            calc
+              2 ^ (k + 1) = 2 ^ k * 2 := by rw [Nat.pow_succ]
+                        _ = 2 * 2 ^ k := by rw [Nat.mul_comm]
+          rw [hn0]
+          exact Eq.symm (Nat.add_comm _ _)
+        have hkn := Nat.add_comm (2 ^ (k + 1)) n
+        rw [← hkn] at h
+        rw [h]
+        rw [hk]
+        have hn1 : n + 2 ^ (k + 1) = n + 2 ^ k + 2 ^ k := by
+          calc
+            n + 2 ^ (k + 1) = n + 2 * 2 ^ k := by rw [Nat.pow_succ]
+                               _ = n + 2 ^ k + 2 ^ k := by rw [Nat.mul_comm]; simp
+        rw [hn1]
+        clear hk
+        clear hn
+        induction f n with
+        | zero => simp
+        | succ n => simp [ih]
+
+  -- Show that if n + 2 ^ k = 2 ^ (k + 1), then f(n) = 2 ^ (k - 1) - 1.
+  have h₅ (n k : ℕ) (h : n + 2 ^ k = 2 ^ (k + 1)) : f n = 2 ^ (k - 1) - 1 := by
+    have hk := h₄ n (k - 1)
+    rw [(by linarith : k = k - 1 + 1)] at hk
+    have hkn := Nat.add_comm (2 ^ (k - 1 + 1)) n
+    rw [← hkn] at h
+    rw [h] at hk
+    have hk := (h₄ n (k - 1)).symm
+    have hkn := Nat.add_comm (2 ^ (k - 1)) n
+    rw [← hkn] at h
+    simp at hk h ⊢
+    rw [hk]
+    have hn : n = 2 ^ (k - 1) - 1 := by
+      have hneq : n + 2 ^ (k - 1) = 2 ^ (k - 1 + 1) := by
+        apply Nat.eq_sub_of_add_eq at h
+        rw [← h]
+        calc
+          2 ^ (k - 1 + 1) = 2 ^ (k - 1) * 2 := by rw [Nat.pow_succ]
+          _ = 2 ^ (k - 1) + 2 ^ (k - 1) := by rw [Nat.mul_comm]; simp
+      nth_rw 2 [← Nat.add_comm (2 ^ (k - 1)) n] at hneq
+      apply Nat.eq_sub_of_add_eq at hneq
+      rw [hneq]
+      have hneq : 1 ≤ k := by
+        by_contra! hlt
+        simp at hlt
+        rw [Nat.sub_eq_zero_of_le hlt]
+        simp [h₂]
+      simp [hneq, Nat.add_sub_assoc]
+    rw [hn]
+    rw [hn] at h
+    rw [h]
+    have hk : k + 1 = k - 1 + 2 := by
+      rw [show k - 1 = k - 1 - 1 + 1 by simp]
+      simp
+      linarith
+    rw [hk]
+    have hkn : 2 ^ (k - 1) = 2 ^ (k - 1 + 1) - 2 ^ (k - 1 - 1 + 1) := by
+      rw [Nat.pow_succ, Nat.pow_succ]
+      simp
+      rw [show k - 1 - 1 + 1 = k - 1 by simp]
+      linarith
+    rw [hkn]
+    have hle : 2 ^ (k - 1) ≤ 2 ^ (k - 1 + 1) := by
+      rw [Nat.pow_succ]
+      simp
+    have hlt : 2 ^ (k - 1 - 1 + 1) < 2 ^ (k - 1 + 1) := by
+      rw [Nat.pow_succ, Nat.pow_succ]
+      simp
+      have hk : k - 1 - 1 + 1 < k - 1 + 1 := by
+        linarith
+      exact Nat.pow_lt_pow_of_lt hk (by simp)
+    omega
+
+  -- If n + 2 ^ k = 2 ^ (k + 1), then let k' = k - 1 and apply h₅ to get f(n) = 2 ^ (k' - 1).
+  have h₆ (n k : ℕ) (h : n + 2 ^ k = 2 ^ (k + 1)) : f n = 2 ^ (k - 1) - 1 := by
+    have hk := h₅ n k
+    by_cases hk' : k = 0
+    · simp [hk', h₁] at hk
+    · have hk' : k - 1 = k - 1 - 1 + 1 := by
+        refine Nat.sub_add_cancel?_
+        omega
+      have hkn := Nat.add_comm (2 ^ (k - 1)) n
+      rw [← hkn] at h
+      rw [h] at hk
+      rw [hk']
+      have hn : n = 2 ^ (k - 1) - 1 := by
+        have hneq : n + 2 ^ (k - 1) = 2 ^ (k - 1 + 1) := by
+          apply Nat.eq_sub_of_add_eq at h
+          rw [← h]
+          calc
+            2 ^ (k - 1 + 1) = 2 ^ (k - 1) * 2 := by rw [Nat.pow_succ]
+            _ = 2 ^ (k - 1) + 2 ^ (k - 1) := by rw [Nat.mul_comm]; simp
+        nth_rw 2 [← Nat.add_comm (2 ^ (k - 1)) n] at hneq
+        apply Nat.eq_sub_of_add_eq at hneq
+        rw [hneq]
+        have hneq : 1 ≤ k := by
+          by_contra! hlt
+          simp at hlt
+          rw [Nat.sub_eq_zero_of_le hlt]
+          simp [h₂]
+        simp [hneq, Nat.add_sub_assoc]
+      rw [hn]
+      rw [hn] at h
+      rw [h]
+      have hk : k + 1 = k - 1 + 2 := by
+        rw [show k - 1 = k - 1 - 1 + 1 by simp]
+        simp
+        linarith
+      rw [hk]
+      have hkn : 2 ^ (k - 1) = 2 ^ (k - 1 + 1) - 2 ^ (k - 1 - 1 + 1) := by
+        rw [Nat.pow_succ, Nat.pow_succ]
+        simp
+        rw [show k - 1 - 1 + 1 = k - 1 by simp]
+        linarith
+      rw [hkn]
+      have hle : 2 ^ (k - 1) ≤ 2 ^ (k - 1 + 1) := by
+        rw [Nat.pow_succ]
+        simp
+      have hlt : 2 ^ (k - 1 - 1 + 1) < 2 ^ (k - 1 + 1) := by
+        rw [Nat.pow_succ, Nat.pow_succ]
+        simp
+        have hk : k - 1 - 1 + 1 < k - 1 + 1 := by
+          linarith
+        exact Nat.pow_lt_pow_of_lt hk (by simp)
+      omega
+
+  -- Write 1982 as a sum of powers of two.
+  have h₇ : 1982 = 1024 + 512 + 256 + 128 + 64 + 32 + 4 + 2 := by norm_num
+
+  -- Use h₆ to show that f(1982) = 965.
+  have h₈ : f 1982 = 965 := by
+    calc
+      f 1982 = f (1024 + 512 + 256 + 128 + 64 + 32 + 4 + 2) := by rw [h₇]
+            _ = f (1024 + 512 + 256 + 128 + 64 + 32 + 4) + 1 := by
+              rw [h₆]
+              norm_num
+              rw [h₇]
+              simp
+            _ = f (1024 + 512 + 256 + 128 + 64 + 32) + 1 + 1 := by
+              rw [h₆]
+              norm_num
+              rw [h₇]
+              simp
+            _ = f (1024 + 512 + 256 + 128 + 64) + 1 + 1 + 1 := by
+              rw [h₆]
+              norm_num
+              rw [h₇]
+              simp
+            _ = f (1024 + 512 + 256 + 128) + 1 + 1 + 1 + 1 := by
+              rw [h₆]
+              norm_num
+              rw [h₇]
+              simp
+            _ = f (1024 + 512 + 256) + 1 + 1 + 1 + 1 + 1 := by
+              rw [h₆]
+              norm_num
+              rw [h₇]
+              simp
+            _ = f (1024 + 512) + 1 + 1 + 1 + 1 + 1 + 1 := by
+              rw [h₆]
+              norm_num
+              rw [h₇]
+              simp
+            _ = f (1024) + 1 + 1 + 1 + 1 + 1 + 1 + 1 := by
+              rw [h₆]
+              norm_num
+              rw [h₇]
+              simp
+            _ = 2 ^ 10 - 1 + 1 + 1 + 1 + 1 + 1 + 1 := by
+              rw [h₆]
+              norm_num
+              rw [h₇]
+              simp
+            _ = 965 := by norm_num
+
+  -- Use h₈ to show that f(1982) = 660.
+  rw [h₈]
+  calc
+    965 = 1024 - 59 := by norm_num
+    _ = 1982 - 59 := by rw [h₇]
+    _ = 660 := by norm_num
+```

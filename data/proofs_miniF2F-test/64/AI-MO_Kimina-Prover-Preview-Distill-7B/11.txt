@@ -1,0 +1,82 @@
+have side condition₁ : ∀ x, f x = 5 * (2 * x + 1) + 2 := by intro x; ring_nf; rw [h₀]; ring
+  have side condition₂ : ∀ x, g x = 5 * x + 2 := by intro x; exact h₁ x
+  have h₄ : ∀ x, h x = Nat.gcd (5 * (2 * x + 1) + 2) (5 * x + 2) := by intro x; rw [h₂ x, condition₁ x, condition₂ x]
+  have h₅ : ∀ x, Nat.gcd (5 * (2 * x + 1) + 2) (5 * x + 2) = Nat.gcd (5 * (2 * x + 1) + 2) (5 * x + 2) := by intro x; rfl
+  have h₆ : Set.range h = {x | ∃ k, k = h x} := by ext x; simp
+  rw [h₆] at h₃
+
+  have : ∀ x, 2 * x + 1 = 2 * x + 1 := by intro x; rfl
+  -- Let $x$ be a positive integer.
+  have : ∀ x, h x = h x := by intro x; rfl
+  -- Let $a = 2x+1$.
+  let a := 2 * x + 1
+  -- Let $b = x$.
+  let b := x
+  -- Let $gcd = gcd(5a+2, 5b+2)$.
+  let gcd := Nat.gcd (5 * a + 2) (5 * b + 2)
+  -- We can find a linear combination which is divisible by $gcd$.
+  have y₁ : 10 * (2 * a) + 3 * (5 * a + 2) = 25 * a + 6 * a + 6 := by ring_nf
+  have y₂ : 10 * (2 * b) + 3 * (5 * b + 2) = 25 * b + 6 * b + 6 := by ring_nf
+  have y₃ : 25 * a + 6 * a + 6 ≡ 0 [MOD gcd] := by
+    rw [← y₁]
+    apply Nat.ModEq.add_right
+    apply Nat.modEq_zero_iff_dvd.mpr
+    apply Nat.gcd_dvd_left
+  have y₄ : 25 * b + 6 * b + 6 ≡ 0 [MOD gcd] := by
+    rw [← y₂]
+    apply Nat.ModEq.add_right
+    apply Nat.modEq_zero_iff_dvd.mpr
+    apply Nat.gcd_dvd_right
+  have y₅ : 19 * a + 11 * b + 6 ≡ 0 [MOD gcd] := by
+    apply Nat.ModEq.add_right
+    apply Nat.ModEq.trans y₃
+    apply Nat.ModEq.trans y₄
+    ring_nf
+  have y₆ : 19 * a + 11 * b + 6 = 19 * (2 * x + 1) + 11 * x + 6 := by rfl
+  rw [y₆] at y₅
+  -- The combination is $19(2x+1) + 11x + 6$.
+  -- We can deduce that $gcd | 45x + 35$.
+  have y₇ : 45 * x + 35 ≡ 0 [MOD gcd] := by
+    have : 45 * x + 35 = 9 * (19 * (2 * x + 1) + 11 * x + 6) + 11 * gcd := by ring_nf; nth_rw 2 [← y₅]; ring
+    rw [this]
+    apply Nat.ModEq.add_right
+    apply Nat.modEq_zero_iff_dvd.mpr
+    apply Nat.dvd_mul_right
+  -- We can also deduce that $gcd | 90x + 70$.
+  have y₈ : 90 * x + 70 ≡ 0 [MOD gcd] := by
+    have : 90 * x + 70 = 2 * (45 * x + 35) := by ring_nf
+    rw [this]
+    apply Nat.ModEq.mul_right
+    apply Nat.ModEq.symm
+    apply Nat.ModEq.trans y₇
+    apply Nat.modEq_zero_iff_dvd.mpr
+    apply Nat.dvd_mul_right
+  -- Thus $gcd | 90x + 70 - 3(45x + 35) = 5$.
+  have y₉ : 90 * x + 70 - 3 * (45 * x + 35) = 5 := by ring_nf
+  have y₁₀ : 5 ≡ 0 [MOD gcd] := by
+    rw [← y₉]
+    apply Nat.ModEq.sub
+    apply Nat.ModEq.symm
+    apply Nat.ModEq.trans y₈
+    apply Nat.modEq_zero_iff_dvd.mpr
+    apply Nat.dvd_mul_right
+  -- Hence $gcd | 5$.
+  rw [Nat.modEq_zero_iff_dvd] at y₁₀
+  have y₁₁ : gcd ≡ 0 [MOD 5] := by
+    apply Nat.ModEq.symm
+    exact y₁₀
+  rw [Nat.modEq_zero_iff_dvd] at y₁₁
+  -- This means that $gcd$ is either $1$ or $5$.
+  have : gcd = 1 ∨ gcd = 5 := by
+    apply (Nat.dvd_prime Nat.prime_five).mp
+    apply h₅ x
+    exact y₁₁
+  -- Therefore, the sum of all possible values of $h(x)$ is $1 + 5 = 6$.
+  simp_rw [h₄, y₁₁, -Nat.reduceIte]
+  rcases this with h | h
+  · simp [h]
+  · rw [h]
+    simp
+    omega
+
+```

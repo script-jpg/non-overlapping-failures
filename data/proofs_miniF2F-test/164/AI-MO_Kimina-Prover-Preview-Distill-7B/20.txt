@@ -1,0 +1,55 @@
+-- To get started, let's write down what we need to prove in terms of $\log_2{x}$ and $\log_2{y}$.
+
+  have : (Real.log (x / y) / Real.log 2) ^ 2 = (Real.log x - Real.log y) ^ 2 / (Real.log 2) ^ 2 := by
+    rw [←sub_div, div_pow]
+
+  rw [this]
+
+  -- And now we need to find the value of $(\log_2{x} - \log_2{y})^2$.
+
+  have : (Real.log x - Real.log y) ^ 2 = (Real.log x / Real.log 2 - Real.log y / Real.log 2) ^ 2 * (Real.log 2) ^ 2 := by
+    rw [mul_pow, div_pow]
+    ring_nf
+
+  rw [this]
+
+  -- $\log_2{16} = 4$.
+
+  have : Real.log 16 = 4 * Real.log 2 := by
+    calc
+      Real.log 16 = Real.log (2 ^ 4) := by norm_num
+      _ = 4 * Real.log 2 := by exact Real.log_pow_eq_mul_log (by norm_num) 4
+
+  rw [this] at h₁
+
+  -- Next, we'll derive an equation involving $\log_2{x}$ and $\log_2{y}$ from the equation `h₁`.
+
+  have h₃ : Real.log x * Real.log y = 16 * (Real.log 2) ^ 2 := by
+    field_simp at h₁
+    calc
+      Real.log x * Real.log y = (Real.log x / Real.log 2) * (Real.log y / Real.log 2) * (Real.log 2) ^ 2 := by ring_nf; rw [mul_pow]; simp
+      _ = 16 * (Real.log 2) ^ 2 := by rw [h₁, mul_comm, ←mul_assoc, one_mul]
+
+  -- Now, we need to find another equation involving $\log_2{x}$ and $\log_2{y}$ from the equation `h₂`.
+
+  have h₄ : (Real.log x + Real.log y) ^ 2 = 16 * (Real.log 2) ^ 2 := by
+    calc
+      (Real.log x + Real.log y) ^ 2 = (Real.log (x * y)) ^ 2 := by rw [Real.log_mul (by norm_num) (by norm_num)]
+      _ = (Real.log (64)) ^ 2 := by rw [h₂]
+      _ = (Real.log (2 ^ 6)) ^ 2 := by norm_num
+      _ = 16 * (Real.log 2) ^ 2 := by exact congrArg (HMul.hMul (Real.log 2)) (Antidiagonal.mulAnti (by norm_num) (r := 2) (by norm_num))
+
+  -- Finally, we can compute the value of $(\log_2{\tfrac{x}{y}})^2$.
+
+  calc
+    (Real.log x / Real.log 2 - Real.log y / Real.log 2) ^ 2 * (Real.log 2) ^ 2 = (Real.log x - Real.log y) ^ 2 := by
+      rw [←sub_div, div_pow]
+    _ = ((Real.log x + Real.log y) ^ 2 - 16 * (Real.log 2) ^ 2) / (Real.log 2) ^ 2 := by
+      ring_nf
+      rw [mul_pow]
+      rw [←sq_sub_sq, this]
+      ring_nf
+    _ = -3 * (Real.log 2) ^ 2 / (Real.log 2) ^ 2 := by rw [h₃, h₄]
+    _ = -3 := by field_simp
+    _ = 20 := by norm_num
+```

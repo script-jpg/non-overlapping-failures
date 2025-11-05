@@ -1,0 +1,22 @@
+-- check the base case : when $n = 1$, $(\prod_{k=1}^{1} (1 + 1/2^k)) = 1 + 1/2 = 3/2 < 5/2$.
+  have pbase : ∏ k in Finset.Icc 1 1, 1 + (1 : ℝ) / 2 ^ k = 3 / 2 := by
+    simp [Finset.prod_Icc_succ_top]
+    norm_num
+  have base : (∏ k in Finset.Icc 1 1, 1 + (1 : ℝ) / 2 ^ k) < 5 / 2 := by
+    rw [pbase]
+    norm_num
+
+  -- check the inductive step : if $(\prod_{k=1}^{n} (1 + 1/2^k)) < 5/2$, then it's true for $n+1$.
+  have pordductive : (∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k) < 5 / 2 →
+      (∏ k in Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / 2 ^ k) < 5 / 2 := by
+    intro h
+    rw [Finset.prod_Icc_succ_top (by linarith), h]
+    apply mul_lt_mul_of_pos_right
+    norm_num
+    apply one_lt_add
+    apply one_div_pow_pos
+    norm_num
+
+  -- Since we have proven the base case and inductive step, the statement holds for all positive integers $n$ by induction.
+  exact Nat.le_induction base pordductive n h₀
+```

@@ -1,0 +1,107 @@
+-- Note that if $x_n \leq 0$ or $x_n \geq 1$, then $x_{n+1} \geq x_n$.
+  have h₂ (x n : ℝ) : x ≤ 0 ∨ x ≥ 1 → x ≤ f n x := by
+    intro h
+    cases h with
+    | inl h =>
+      have h' : 1 / (n : ℝ) > 0 := by positivity
+      specialize h₁ x n
+      rw [h] at h₁
+      simp only [isUnit_iff_ne_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
+        IsUnit.div_one] at h₁
+      rw [h₁]
+      apply (mul_le_mul_iff_of_pos_right h').mpr
+      linarith
+    | inr h =>
+      specialize h₁ x n
+      rw [h₁]
+      apply (mul_le_mul_iff_of_pos_right (by positivity)).mpr
+      linarith
+
+  -- More precisely, if $x_n \leq 0$ or $x_n \geq 1$, then $x_{n+1} \geq x_n$.
+  have h₂' (x n : ℝ) : x ≤ 0 ∨ x ≥ 1 → f n x ≤ f (n + 1) x := by
+    intro h
+    specialize h₂ x n
+    cases h with
+    | inl h => linarith
+    | inr h =>
+      have : f n x > 0 := by
+        cases h₂ x n with
+        | inl h => linarith
+        | inr h => linarith
+      apply le_of_lt
+      exact (lt_of_le_of_ne h this).trans (h₂ x n)
+      simp [h]
+
+  -- If $0 < x_n < x_{n+1} < 1$, then $0 < x_{n+1} < x_{n+2} < 1$.
+  have h₃ (x n : ℝ) : 0 < n → 0 < x ∧ x < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1 → 0 < f (n + 1) x ∧ f (n + 1) x < f (n + 2) x ∧ f (n + 2) x < 1 := by
+    intro hn h
+    have h' : 0 < f n x := by
+      apply pos_of_lt
+      exact h.2.2.1
+    have h'' : f n x < f (n + 1) x := by
+      exact h.2.2.2
+    have h''' : f (n + 1) x < f (n + 2) x := by
+      specialize h₂' (f (n + 1) x) (n + 1)
+      simp at h₂'
+      specialize h₂' h'
+      exact h₂'
+    specialize h₂ (f (n + 1) x) (n + 1)
+    simp at h₂
+    have : ¬f (n + 1) x ≤ 0 := by
+      intro h
+      specialize h₂ (f (n + 1) x) (n + 1)
+      simp at h₂
+      rw [h] at h₂
+      linarith
+    have : ¬f (n + 1) x ≥ 1 := by
+      intro h
+      specialize h₂ (f (n + 1) x) (n + 1)
+      simp at h₂
+      rw [h] at h₂
+      linarith
+    simp [h, h', h'', h''', this, ‹¬f (n + 1) x ≥ 1›]
+
+  -- Let $s$ be the set of all positive real numbers $x_1$ for which $0 < x_n < x_{n+1} < 1$ for every $n$.
+  let s := {x : ℝ | 0 < x ∧ ∀ n, 0 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1}
+
+  -- Our goal is to show that $s$ has exactly one element.
+  suffices : ∃! a ∈ s, ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1
+  · intro ⟨a, ⟨ha, haeq⟩⟩
+    use a
+    simp [s, haeq]
+    exact ⟨ha, haeq⟩
+
+  -- $s$ is nonempty.
+  have h₄ : s.Nonempty := by
+    use 1
+    simp [f, h₀]
+    intro n
+    induction n with
+    | zero => simp [h₀]
+    | succ n ih =>
+      simp [f]
+      linarith only [ih, h₂' 1 n (by norm_num)]
+
+  -- $s$ has at most one element.
+  have h₅ : s.InjOn := by
+    intro x hx y hy hxy
+    simp [s] at hx hy
+    have h₆ : ∀ n, f n x < f n y := by
+      intro n
+      induction n with
+      | zero => simp [h₀]
+      | succ n ih =>
+        specialize h₂' x n (by norm_num)
+        specialize h₂' y n (by norm_num)
+        simp at ih
+        rw [h₂' x n (by norm_num), h₂' y n (by norm_num)] at hxy
+        apply lt_of_lt_of_le hxy
+        linarith only [ih]
+    specialize h₆ 1
+    simp [h₀] at h₆
+    exact h₆
+
+  exact ⟨h₄, h₅⟩
+
+
+```

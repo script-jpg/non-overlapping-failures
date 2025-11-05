@@ -1,0 +1,241 @@
+have pge1 : 1 ≤ p := by linarith
+
+  have pgt3 : 3 < p := by linarith
+
+  have pge7 : 7 ≤ p := h₁
+
+  have h2 : Fact (Nat.Prime p) := ⟨h₀⟩
+
+  have pmodcyc : ∀ k, (ZMod p)ˣk = (ZMod p)ˣnpos := by
+    intro k
+    have : (ZMod p)ˣk = (ZMod p)ˣnpos := by
+      rw [← ZMod.val_natCast]
+      simp only [ZMod.val_natCast_eq_val]
+      rw [← ZMod.val_natCast]
+      apply ZMod.val_eq_of_ne_zero
+      refine Nat.not_prime_zero_or_one_iff.mpr?_
+      constructor
+      exact Nat.Prime.ne_zero h₀
+      exact Nat.Prime.ne_one h₀
+    assumption
+
+  -- The function $f(x) = x^2$ is a bijection on $(\mathbb{Z}/p\mathbb{Z})^\times$ because $p$ is odd.
+  let f (x : ZMod p) := x ^ 2
+  let invf (y : ZMod p) : ZMod p := y.sqrt 1
+  have h3 : ∀ x, f x = f y → x = y ∨ x = -y := by
+    intro x y hxy
+    simp only [f] at hxy
+    have : x ^ 2 - y ^ 2 = 0 := by linarith
+    have : (x - y) * (x + y) = 0 := by
+      rw [← this]
+      ring
+    have : x - y = 0 ∨ x + y = 0 := by
+      apply mul_eq_zero.mp
+      assumption
+    cases this with
+    | inl h => left; linarith
+    | inr h => right; linarith
+  have h4 : ∀ x ≠ 0, f x ∈ (ZMod p)ˣ := by
+    intro x hx
+    have : x * x⁻¹ = 1 := by
+      exact ZMod.mul_inv_cancel x hx
+    apply_fun f at this
+    simp only [f] at this
+    rw [this]
+    apply ZMod.val_inv
+    exact Nat.Prime.ne_one h₀
+  have h5 : ∀ x ∈ (ZMod p)ˣ, f x ∈ (ZMod p)ˣ := by
+    intro x hx
+    exact h4 x hx
+  have h6 : Set.InjOn f (ZMod p)ˣ := by
+    intro x y hx hy hxy
+    have := h3 x y hxy
+    cases this with
+    | inl h => exact h
+    | inr h =>
+      have : x = 0 := by
+        calc
+          x = f x := by rw [<-h4 x hx]
+          _ = f y := by rw [hxy]
+          _ = y ^ 2 := by rw [<-f]
+      contradiction
+  have h7 : f '' = Set.univ := by
+    apply Set.eq_of_subset_of_ncard_le
+    apply Set.image_subset
+    simp only [f]
+    apply Set.univ_subset
+    symm
+    apply Set.ncard_le_card
+    simp only [f, Set.univ, Set.ncard_coe_Finset]
+    refine Finset.card_le_card?_
+    intro x hx
+    simp at hx
+    rcases hx with ⟨k, hk⟩
+    rw [<-hk]
+    use k
+    simp
+  have h8 : Set.InjOn f (ZMod p)ˣ.surj := by
+    exact Set.InjOn.surj h6
+  have h9 : ∀ x ∈ (ZMod p)ˣ, ∀ y ∈ (ZMod p)ˣ, f x = f y → x = y ∨ x = -y := by
+    intro x y hx hy hxy
+    have := h3 x y hxy
+    cases this with
+    | inl h => left; linarith
+    | inr h => right; linarith
+
+  -- Using the inverse function, we can rewrite the sum as a sum over the square roots of the numbers $2, 3, \dots, p-1$.
+  have h10 : (∑ k ∈ Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) = (∑ k ∈ Finset.Icc 2 (p - 1), f k)⁻¹ := by
+    apply Eq.symm
+    let g (x : (ZMod p)ˣ) := invf x
+    have h10 : ∀ y ∈ (ZMod p)ˣ, ∀ x ∈ (ZMod p)ˣ, f x = y ↔ x = g y ∨ x = -g y := by
+      intro y hy x hx hxy
+      constructor
+      · intro h
+        have : f x = f (g y) := by rw [hxy, hfg]
+        have : x = g y ∨ x = -g y := by exact h9 x hx y hy this
+        assumption
+      · intro h
+        rcases h with h | h
+        · rw [h, hfg, invf]
+          exact Eq.symm (ZMod.val_inj.mp rfl)
+        · rw [h, hfg, invf, neg_sq]
+          exact Eq.symm (ZMod.val_inj.mp rfl)
+    have h11 : Function.Bijective g := by
+      constructor
+      · apply Function.Injective.mpr
+        exact h8
+      · apply Function.Surjective.mpr
+        intro y
+        use g y
+        simp only [g]
+        exact ZMod.val_inj.mp rfl
+    have h12 : ∀ x ∈ (ZMod p)ˣ, f x = f (g (f x)) := by
+      intro x hx
+      apply h10
+      exact hx
+      apply h8
+      exact h5 x hx
+      exact Eq.symm (ZMod.val_inj.mp rfl)
+    calc
+      ∑ k ∈ Finset.Icc 2 (p - 1), f k = ∑ k ∈ Finset.image g (Finset.Icc 2 (p - 1)), f (g k) := by rw [Set.sum_image]; exact fun ⦃a b⦄ a => a
+      _ = ∑ k ∈ Finset.Icc 2 (p - 1), k := by
+        apply Set.sum_congr
+        · apply Finset.ext
+          intro k
+          simp
+          intro hk
+          rw [<-h12 k h5 k hk]
+          exact hfg
+        · intro k hk
+          apply h12 k h5 k hk
+      _ = ∑ k ∈ Finset.Ico 1 p, k - ∑ k ∈ Finset.Ico 1 2, k := by
+        rw [<-Set.sum_Ico_add_sum_Ico_eq_sum_Icc]
+        simp
+        exact Finset.Ico_subset_Icc 1 2
+      _ = ∑ k ∈ Finset.Icc 1 (p - 1), k - ∑ k ∈ Finset.Ico 1 2, k := by
+        rw [<-Finset.sum_Icc_add_sum_Ico_eq_sum_Icc]
+        simp
+        exact Ne.symm (NeZero.ne' (p - 1))
+      _ = ∑ k ∈ Finset.Icc 1 (p - 1), k - 1 := by
+        simp
+      _ = (∑ k ∈ Finset.Icc 1 (p - 1), (k : ZMod p))⁻¹ := by
+        apply Eq.symm
+        apply ZMod.val_inj.mp
+        simp
+        simp only [Finset.sum_Icc_succ_top, addLeftCancelMonoid.add_eq_zero, mul_eq_zero, OfNat.ofNat_ne_zero, ne_eq, false_and, or_false]
+        rw [<-Finset.mul_sum]
+        apply Finset.sum_congr
+        intro k hk
+        rw [<-hfg]
+        simp
+        exact hk
+      _ = (∑ k ∈ Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹)⁻¹ := by
+        congr
+        ext k
+        simp
+        intro hk
+        field_simp
+        rw [mul_assoc, inv_mul_cancel₀]
+        rw [add_comm, mul_comm, inv_mul_cancel₀]
+        have : ((k : ZMod p) + 1)⁻¹ = (k + 1)⁻¹ := by
+          apply ZMod.val_inj.mp
+          simp
+          rw [<-hfg]
+        rw [this]
+        trivial
+        exact Nat.Prime.ne_one h₀
+        exact Nat.Prime.ne_zero h₀
+
+  -- Now, we can evaluate the sum using the properties of the function $f$.
+  have h11 : ∀ k, 1 ≤ k ∧ k ≤ p - 2 → (f k)⁻¹ = (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ := by
+    intro k h
+    have : f k = (k : ZMod p) ^ 2 := by
+      simp only [f]
+      norm_cast
+    rw [this, <-hfg]
+    exact Eq.symm (ZMod.val_inj.mp rfl)
+
+  -- We show that the sum is equal to the inverse of the sum.
+  have h12 : (∑ k ∈ Finset.Icc 1 (p - 2), f k)⁻¹ = (∑ k ∈ Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹)⁻¹ := by
+    apply Eq.symm
+    apply Finset.inv_sum_bijective
+    · intro k hk
+      simp at hk
+      apply h11 k
+      constructor
+      · exact hk.1
+      · exact hk.2
+    · intro k hk
+      simp at hk
+      apply h11 k
+      constructor
+      · exact hk.1
+      · exact hk.2
+    · intro k hk
+      apply h10 k
+      constructor
+      · exact hk.1
+      · exact hk.2
+
+  rw [h10, h12]
+
+  -- The sum is equal to 2.
+  have h13 : p - 1 = 2 * (p - 2 - 1) + 1 := by
+    have : 1 = 2 * 0 + 1 := by norm_num
+    replace this : 1 + 2 * (p - 2 - 1) = 2 * (p - 2 - 1) + 1 := by nth_rewrite 2 [this]; ring
+    rw [← this]
+    omega
+
+  have h14 : ∑ k ∈ Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = 1 := by
+    rw [Finset.sum_congr]
+    intro k hk
+    simp at hk
+    cases hk with
+    | intro hk1 hk2 =>
+      induction' k with k ih
+      · simp
+      · rw [<-ih]
+        simp
+        rw [mul_assoc]
+        rw [inv_mul_cancel₀]
+        rw [mul_comm]
+        rw [inv_mul_cancel₀]
+        ring_nf
+        rw [add_assoc, add_comm]
+        rw [add_assoc, add_comm]
+        rw [add_assoc, add_comm]
+        norm_num
+        rw [mul_assoc]
+        rw [inv_mul_cancel₀]
+        rw [←mul_one (2 * (p - 2 - 1) + 1 : ZMod p)]
+        rw [h13]
+        rw [add_assoc, add_comm]
+        rw [add_assoc, add_comm]
+        rw [add_assoc, add_comm]
+        norm_num
+
+  simp only [h14, one_inv, h9]
+
+  -- The final answer is 2.
+  done
+```

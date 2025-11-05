@@ -1,0 +1,205 @@
+rcases h₁ with ⟨k, hk1, hk2⟩
+
+  have hk3 : 2 ^ k = (a * b) + (a ^ 3 + b ^ 3) + (a ^ 2 * b ^ 2) := by
+    calc
+      2 ^ k = (a + b ^ 2) * (b + a ^ 2) := by rw [hk2]
+      _ = a * b + a ^ 3 + b ^ 3 + a ^ 2 * b ^ 2 := by ring
+
+  have� hpos : 0 < a * b ∧ 0 < a ^ 3 + b ^ 3 ∧ 0 < a ^ 2 * b ^ 2 := by
+    rcases h₀ with ⟨ha, hb⟩
+    constructor
+    · exact Nat.zero_lt_of_ne_zero (by omega)
+    · constructor
+      · exact Odd.pow_pos (by omega) ha
+      · have : a ^ 2 * b ^ 2 = (a * b) ^ 2 := by ring
+        rw [this]
+        exact Nat.pow_pos (Nat.zero_lt_of_ne_zero (by omega)) (a * b)
+
+  rcases hpos with ⟨ha1, hb1, ha2b2⟩
+
+  have hk4 : a * b < 2 ^ k := by omega
+
+  have hk5 : a * b ∣ 2 ^ k := by
+    use (a ^ 2 + b ^ 2 + a * b)
+    rw [hk3]
+    ring
+
+  have hk6 : a * b < 2 ^ k := by omega
+
+  have n2powk6 : ∀ k > 0, ¬ 2 ^ k ∣ 2 ^ k - 1 := by
+    intro k hk1
+    intro hk2
+    have : 2 ^ k - (2 ^ k - 1) = 1 := by omega
+    rw [← this] at hk2
+    have : 2 ^ k - 1 ∣ 1 := by
+      apply Nat.dvd_sub (by omega) hk2
+      exact Nat.dvd_refl (2 ^ k)
+    rw [Nat.dvd_one] at this
+    have : 2 ^ k - 1 = 1 := by omega
+    omega
+
+  have n2powk7 : ∀ k > 0, 2 ∣ 2 ^ k - 1 → False := by
+    intro k hk1 hk2
+    have : 2 ∣ 2 ^ k := by
+      apply dvd_pow_self
+      omega
+    have : ¬ 2 ∣ 2 ^ k - 1 := by
+      intro h
+      have : 2 ∣ (2 ^ k - 1) + 1 := by
+        apply Nat.dvd_add h hk2
+      rw [Nat.sub_add_cancel hk1] at this
+      omega
+    contradiction
+
+  -- show that $a * b$ is a power of 2
+  have h2powkeqanezero : ∃ l > 0, a * b = 2 ^ l := by
+    -- By contradiction, there exists a prime $p$ such that $p$ divides both $a$ and $b$.
+    by_contra h
+    rcases h with ⟨p, ⟨hp, hmul⟩⟩
+
+    -- Since $p$ is a prime and $p$ divides $a * b$, it follows that $p$ divides $a$ or $p$ divides $b$.
+    have : p ∣ a ∨ p ∣ b := by
+      rw [← Nat.Prime.dvd_mul hp, hmul]
+
+    cases this with
+    | inl hadvd =>
+      -- If $p$ divides $a$, then $p$ divides $a ^ 3 + b ^ 3$ since $p$ divides $a * b$ and $a ^ 3 + b ^ 3 = (a * b) * ((a ^ 2 + b ^ 2 + a * b) - (a + b ^ 2)) + a ^ 3 + b ^ 3$.
+      have : p ∣ a ^ 3 + b ^ 3 := by
+        have ⟨k1, hk1⟩ : a ^ 3 + b ^ 3 = (a * b) * ((a ^ 2 + b ^ 2 + a * b) - (a + b ^ 2)) + a ^ 3 + b ^ 3 - (a * b) * (a + b ^ 2) + (a * b) * (a + b ^ 2) := by omega
+        rw [hk1]
+        apply Nat.dvd_add
+        · apply Nat.dvd_mul_of_dvd_right hadvd (a ^ 2 + b ^ 2 + a * b - (a + b ^ 2))
+        · rw [← Nat.sub_add_cancel (by omega)]
+          apply Nat.dvd_add
+          · apply Nat.dvd_mul_of_dvd_right hadvd (a ^ 2 + b ^ 2 + a * b - (a + b ^ 2))
+          · apply Nat.dvd_mul_of_dvd_right hadvd (a + b ^ 2)
+      have : p ∣ 2 ^ k := by
+        rw [hk3]
+        apply Nat.dvd_add
+        · assumption
+        · apply Nat.dvd_mul_of_dvd_right hadvd (a ^ 2 * b ^ 2)
+      have hk7 : 2 ∣ 2 ^ k - 1 := by
+        have : 2 ∣ 2 ^ k := by
+          apply dvd_pow_self
+          omega
+        apply Nat.dvd_sub (by omega) this
+        rw [Nat.sub_add_cancel hk1]
+        omega
+      have : ¬ 2 ∣ 2 ^ k - 1 := by
+        intro h
+        have : 2 ∣ (2 ^ k - 1) + 1 := by
+          apply Nat.dvd_add h hk2
+        rw [Nat.sub_add_cancel hk1] at this
+        omega
+      contradiction
+    | inr hbdvd =>
+      -- If $p$ divides $b$, then $p$ divides $a ^ 3 + b ^ 3$ since $p$ divides $a * b$ and $a ^ 3 + b ^ 3 = (a * b) * ((a ^ 2 + b ^ 2 + a * b) - (a + b ^ 2)) + a ^ 3 + b ^ 3 - (a * b) * (a + b ^ 2) + (a * b) * (a + b ^ 2)$.
+      have : p ∣ a ^ 3 + b ^ 3 := by
+        have ⟨k1, hk1⟩ : a ^ 3 + b ^ 3 = (a * b) * ((a ^ 2 + b ^ 2 + a * b) - (a + b ^ 2)) + a ^ 3 + b ^ 3 - (a * b) * (a + b ^ 2) + (a * b) * (a + b ^ 2) := by omega
+        rw [hk1]
+        apply Nat.dvd_add
+        · apply Nat.dvd_mul_of_dvd_right hbdvd (a ^ 2 + b ^ 2 + a * b - (a + b ^ 2))
+        · rw [← Nat.sub_add_cancel (by omega)]
+          apply Nat.dvd_add
+          · apply Nat.dvd_mul_of_dvd_right hbdvd (a ^ 2 + b ^ 2 + a * b - (a + b ^ 2))
+          · apply Nat.dvd_mul_of_dvd_right hbdvd (a + b ^ 2)
+      have : p ∣ 2 ^ k := by
+        rw [hk3]
+        apply Nat.dvd_add
+        · assumption
+        · apply Nat.dvd_mul_of_dvd_right hbdvd (a ^ 2 * b ^ 2)
+      have hk7 : 2 ∣ 2 ^ k - 1 := by
+        have : 2 ∣ 2 ^ k := by
+          apply dvd_pow_self
+          omega
+        apply Nat.dvd_sub (by omega) this
+        rw [Nat.sub_add_cancel hk1]
+        omega
+      have : ¬ 2 ∣ 2 ^ k - 1 := by
+        intro h
+        have : 2 ∣ (2 ^ k - 1) + 1 := by
+          apply Nat.dvd_add h hk2
+        rw [Nat.sub_add_cancel hk1] at this
+        omega
+      contradiction
+
+  rcases h2powkeqanezero with ⟨l, ⟨hl1, hlb⟩⟩
+
+  have hle : l ≤ k := by
+    rw [← hlb]
+    apply Nat.le_of_dvd
+    exact Nat.zero_lt_of_ne_zero (by omega)
+    exact hk5
+
+  -- show that $l = 1$
+  have hl : l = 1 := by
+    -- By contradiction, assume that $l \neq 1$.
+    by_contra h
+    rw [ne_iff_lt_or_gt] at h
+    cases h with
+    | inl hll =>
+      -- If $l < 1$, then $l = 0$ since $l > 0$.
+      have hl0 : l = 0 := by
+        omega
+      rw [hl0] at hlb
+      simp at hlb
+      rw [hlb] at ha2b2
+      simp at ha2b2
+      -- So $a ^ 2 * b ^ 2 = 0$, which is a contradiction.
+      have : a ^ 2 * b ^ 2 = 0 := by omega
+      simp at this
+      omega
+    | inr hrr =>
+      -- If $l > 1$, then $2 ^ l - 1 > 1$ and $2 ^ l - 1$ is odd, which contradicts the fact that $a * b$ is a power of 2.
+      have hl1 : 2 ∣ 2 ^ l - 1 := by
+        rw [← Nat.modEq_iff_dvd', Nat.one_mod 2]
+        rw [Nat.add_mod, Nat.pow_mod]
+        norm_num
+        suffices h : l % 2 = 1 by
+          rw [h]
+          norm_num
+        apply Nat.mod_eq_of_modEq
+        rw [← Nat.prime_two]
+        exact Nat.prime_iff.mp Nat.prime_two
+      have hl2 : 2 ^ l - 1 ≠ 1 := by
+        apply ne_of_gt
+        rw [Nat.one_lt_pow_iff]
+        omega
+        omega
+      -- It follows that $2 ^ l - 1$ has an odd prime factor $p$.
+      rcases (exists_odd_prime_factor (2 ^ l - 1) hl1 hl2) with ⟨p, hp, ⟨k, hk⟩⟩
+      -- We have $p \mid 2 ^ l - 1 \mid 2 ^ k - 1$.
+      have hp1 : p ∣ 2 ^ k - 1 := by
+        rw [hk]
+        apply Nat.dvd_mul_of_dvd_right
+        apply dvd_pow_self
+        omega
+      have hp2 : p ∣ 2 ^ k := by
+        rw [hk]
+        apply Nat.dvd_mul_of_dvd_right
+        apply dvd_pow_self
+        omega
+      have hp3 : ¬ 2 ∣ 2 ^ k - 1 := by
+        intro h
+        have : 2 ∣ 2 ^ k - 1 := by assumption
+        have : ¬ 2 ∣ 2 ^ k - 1 := by
+          intro h'
+          have : 2 ∣ (2 ^ k - 1) + 1 := by
+            apply Nat.dvd_add h h'
+          rw [Nat.sub_add_cancel hk1] at this
+          omega
+        contradiction
+      have := n2powk7 k hk1 hp1
+      have := n2powk7 k hk1 hp2
+      contradiction
+  rw [hl] at hlb
+  simp at hlb
+  rw [hlb] at ha2b2
+  simp at ha2b2
+
+  -- Now we have $(a + b ^ 2) (b + a ^ 2) = (a * b) + (a ^ 3 + b ^ 3) + (a ^ 2 * b ^ 2) = 2 ^ k = 2$, so $a = 1$.
+  have : (a + b ^ 2) * (b + a ^ 2) = 2 := by
+    rw [hk2, hlb]
+    omega
+  nlinarith
+```

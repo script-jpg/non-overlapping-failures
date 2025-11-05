@@ -1,0 +1,326 @@
+-- some auxilary inequality
+  have cos_x_ne_zero_iff {x : ℝ} (hx : x ≠ 0) : Real.cos x ≠ 0 := by
+    by_contra h
+    have := Real.cos_sq_add_sin_sq x
+    rw [sq, h] at this
+    have : 0 < Real.sin x ^ 2 := by
+      apply sq_pos_of_ne_zero
+      apply Real.sin_ne_zero_of_ne_zero
+      exact hx
+    linarith
+  have cos_add_ne_zero {x y : ℝ} (hx : Real.cos x + Real.cos y ≠ 0) : Real.cos (x + y) ≠ 0 := by
+    by_contra h
+    have : Real.cos x + Real.cos y = 0 := by linarith
+    contradiction
+
+  -- define an auxilary function
+  let g : ℝ → ℝ := fun x => ∑ i ∈ Finset.range k, Real.sin (a i + x) / 2 ^ i
+
+  -- suppose parameters of auxilary funtion g are non-negative
+  have h' (x : ℝ) (y : ℝ) (g : ℝ → ℝ) : y = g x → 0 ≤ x → 0 ≤ y → 0 ≤ Real.pi * (y - x) := by
+    intro hy
+    simp [g] at hy
+    apply mul_nonneg
+    exact Real.pi_nonneg
+    exact hy
+  -- prove a version of trigonometric identity theorem
+  have h' (x : ℝ) (y : ℝ) (g : ℝ → ℝ) : 0 ≤ x → 0 ≤ y → 0 ≤ Real.pi * (y - x) → y = g x → ∃ t : ℤ,
+  y - x = t * Real.pi := by
+    intro hx hy hxy hyg
+    have hx' : -x ∈ Set.Ici 0 := by simp; linarith
+    have hy' : y ∈ Set.Ici 0 := by simp; linarith
+    have hxy' : Real.pi * (y - x) ∈ Set.Ici 0 := by simp; apply mul_nonneg; exact Real.pi_nonneg; linarith
+
+    -- use the fact that if x is in half-open interval [0, 2π)
+    -- then there is a t such that x = t * pi
+    have h (x : ℝ) (hx : 0 ≤ x ∧ x < 2 * Real.pi) : ∃ t : ℤ, x = t * Real.pi := by
+      use x / Real.pi
+      simp at hx
+      have hx' := Real.div_lt_two_pi_of_lt hx.right
+      have hx'' := Real.zero_lt_div_of_pos hx.left
+      have hx''' := Real.lt_of_lt_of_le hx.right hx.left
+      rw [mul_comm]
+      apply eq_div_iff_mul_eq (by linarith)
+      exact hx'''
+    -- simplify the statement by applying above lemma
+    suffices ∃ t : ℤ, Real.pi * (y - x) = t * Real.pi by
+      obtain ⟨t, ht⟩ := this
+      use t
+      rw [ht]
+      exact hxy'
+    -- otherwise, we can prove pi is rational
+    by_contra h
+    have h'' (x : ℝ) (hx : 0 ≤ x ∧ x < 2 * Real.pi) : 1 / Real.pi ∈ Set.range (Set.Icc (0 : ℚ) 1) →
+    ¬ Irrational x := by
+      intro hx' hx''
+      have hx'''' := hx' hx
+      have hx''''' := hx hx''
+      have hx'''''' := h'' (x * 2) (by simp; constructor; exact hx.right; linarith) (by simp; rw [mul_div_cancel₀]; exact hx.left.ne')
+      have hx''''''' := hx (x * 4) (by simp; constructor; linarith; linarith)
+      rw [show (x * 4) / Real.pi = x * 2 / Real.pi + x * 2 / Real.pi by ring] at hx'''''''
+      rw [show x * 2 / Real.pi + x * 2 / Real.pi = x / Real.pi + x / Real.pi + x * 2 / Real.pi + x * 2 / Real.pi by ring] at hx'''''''
+      rw [show x / Real.pi + x / Real.pi + x * 2 / Real.pi + x * 2 / Real.pi = x / Real.pi + x / Real.pi + (x * 2 / Real.pi + x * 2 / Real.pi) by ring] at hx'''''''
+      rw [hx'''''] at hx'''''''
+      have : 1 / Real.pi ∈ Set.range (Set.Icc (0 : ℚ) 1) := by
+        simp
+        apply (div_le_one₀ Real.pi_pos).mpr
+        linarith [Real.pi_gt_three]
+      have := hx'' this
+      have := hx''''''' this
+      rw [show (1 : ℚ) = (1 : ℝ) by simp] at this
+      have := hx this
+      have := this.symm
+      have := (h (x * 2) (by simp; constructor; linarith; linarith)).symm
+      rw [this] at hx''
+      have hx''' : 1 < 4 := by linarith
+      have hx'''' : (1 : ℚ) < ((1 : ℝ) : ℚ) := by
+        apply Rat.one_lt_of_lt (by linarith)
+        simp
+        assumption
+      have hx''''' : ((1 : ℝ) : ℚ) < (1 : ℚ) := by
+        apply Rat.lt_of_lt_of_le hx'''' (by simp)
+        simp
+        assumption
+      have := (hx''' : (1 : ℚ) < (1 : ℚ)).trans hx''''''
+      simp at this
+    -- pi is irrational
+    have hpi := @Mathlib.Tactic.Ring.Irrational_pi ℝ _ _) _
+    -- a pi + b pi is irrational
+    have hpi'' (a b : ℚ) : a ≠ 0 → b ≠ 0 → Irrational (a + b) := by
+      intro ha hb _
+      rw [show a + b = a * Real.pi + b * Real.pi by ring]
+      exact Irrational.add_rat (Irrational.mul_rat hpi ha) (Irrational.mul_rat hpi hb)
+    -- if x is irrational, then pi * x is irrational
+    have hpi' (x : ℝ) : Irrational x → Irrational (Real.pi * x) := by
+      intro hx
+      by_contra h
+      have := hx
+      have := hpi' hx h
+      rw [show Real.pi * x = x * Real.pi by ring] at this
+      have := Irrational.of_mul_rat_left this (by linarith [Real.pi_pos])
+      exact Irrational.not_rat this
+    -- if x is irrational, then pi * x + y is irrational
+    have hpi'' (x y : ℝ) : Irrational x → Irrational (x * Real.pi + y) := by
+      intro hx
+      by_contra h
+      have := hx
+      have := hpi'' hx h
+      rw [show x * Real.pi + y = x * Real.pi + y by rfl] at this
+      have := Irrational.of_add_rat_left this (by linarith [Real.pi_pos])
+      exact Irrational.not_rat this
+    -- if x is irrational, then x / pi is irrational
+    have hpi''' (x : ℝ) : Irrational x → Irrational (x / Real.pi) := by
+      intro hx
+      by_contra h
+      have := hx
+      have := hpi' h
+      have := Irrational.of_mul_rat_right this (by linarith [Real.pi_pos])
+      exact Irrational.not_rat this
+    -- if x is irrational, then x / pi / 2 is irrational
+    have hpi'''' (x : ℝ) : Irrational x → Irrational (x / Real.pi / 2) := by
+      intro hx
+      by_contra h
+      have := hx
+      have := hpi''' h
+      have := hpi'' this h
+      rw [show x / Real.pi / 2 = x / Real.pi * (1 / 2) by ring] at this
+      have := Irrational.of_mul_rat_left this (by linarith [Real.pi_pos])
+      exact Irrational.not_rat this
+    -- if x is irrational, then x / pi / 2 ^ k is irrational
+    have hpi''''' (x : ℝ) (k : ℕ) : Irrational x → Irrational (x / Real.pi / 2 ^ k) := by
+      induction k with
+      | zero => simp [hpi''']
+      | succ k ih =>
+        conv =>
+          lhs
+          rw [show (2 : ℝ) ^ (k + 1) = 2 ^ k * 2 by ring]
+      rw [show x / Real.pi / 2 ^ k / 2 = x / Real.pi / 2 ^ (k + 1) by ring]
+      exact hpi'''' this ih
+
+    -- simplify the sum of cosine
+    have hg : y (m - n) = y m - y n := by simp [g]; ring
+    rw [h₂, h₃, hg] at hy
+    -- consider image of g
+    obtain ⟨s, ⟨hsm, hs⟩⟩ := this (Real.pi * (m - n)) ⟨by linarith, by linarith⟩
+    simp at hsm
+    have h (x : ℝ) (hx : x ∈ Set.Ici 0 → x ∈ Set.Ioi 0) : (Set.Ioi 0 : Set ℝ) = Set.Ioi 0 := by
+      exact Set.eq_of_subset_of_ncard_le hx (by simp)
+    rw [hsm] at hxy
+    have hx : m - n ∈ Set.Ioi 0 := by simp; linarith
+    have hx' : m - n ∈ Set.Ici 0 := by simp; linarith
+    have hx'' := hsm hx'
+    rw [hs] at hx''
+    -- convert image to a sum of cosine and sine
+    rw [Finset.sum_mul, Finset.mul_sum] at hs
+    have := congr_arg (fun x => Real.cos x + Real.sin x) hs
+    simp at this
+    rw [←Real.cos_add_sin] at this
+    have := hsm (by simp; linarith)
+    -- conclude by using the fact that image is injective on $[0, 2\pi)$
+    have hinj := h' (Real.pi * (m - n)) (Real.pi * (m - n)) g
+    exact hinj hxy this hx
+  -- prove that for any x, y, if x = y + t * pi, where t is integer, then g(x) = g(y)
+  have h (x : ℝ) (y : ℝ) (t : ℤ) : x = y + t * Real.pi → g x = g y := by
+    intro hxy
+    conv =>
+      lhs
+      rw [hxy]
+      rw [←Real.pi_mul_tsub t]
+      rw [add_sub_cancel_right]
+    simp [g]
+    apply Finset.sum_congr rfl
+    intro i _
+    rw [←Real.cos_add_sin]
+    have : Real.cos (a i + y) * Real.cos (t * Real.pi) - Real.sin (a i + y) * Real.sin (t * Real.pi) = Real.cos (a i + y + t * Real.pi) := by
+      rw [←Real.cos_add]
+      ring
+    rw [this]
+    have : a i + y + t * Real.pi = a i + (y + t * Real.pi) := by ring
+    rw [this]
+    exact h
+
+  -- prove that g(x) is periodic
+  have hgperiod : ∀ x, g (x + 2 * Real.pi) = g x := by
+    intro x
+    conv =>
+      lhs
+      rw [Finset.sum_apply]
+      simp
+      rw [add_assoc]
+      nth_rw 2 [add_comm]
+      rw [two_mul]
+    rw [Finset.sum_apply]
+    rw [Finset.sum_apply]
+    intro i _
+    have : a i + (x + 2 * Real.pi) = a i + x + 2 * Real.pi := by ring
+    rw [this]
+    nth_rw 2 [add_comm]
+    rw [←add_assoc]
+    symm
+    rw [add_comm]
+    rw [add_comm]
+    exact add_pi_periodic (a i + x) 2
+  -- prove that g(x) is injective on $[-\pi, \pi)$
+  have hgmono : StrictMonoOn g (Set.Icc (-Real.pi) Real.pi) := by
+    apply StrictMonoOn.mono (strictMonoOn_id (Set.Icc (-Real.pi) Real.pi))
+    intro x hx y hy hxy
+    simp at hx hy
+    simp [g]
+    apply Finset.sum_lt_sum
+    intro i _
+    apply Real.cos_lt_cos_of_nonneg_of_le_pi
+   . linarith
+   . linarith
+   . simp
+      constructor
+     . linarith
+     . linarith
+    intro i _
+    apply Real.cos_lt_cos_of_nonneg_of_le_pi
+   . linarith
+   . linarith
+    simp
+    constructor
+   . linarith
+   . linarith
+  -- prove that image of g on $[-\pi, \pi)$ is $[-2, 2)$
+  have hgimage : g '' (Set.Icc (-Real.pi) Real.pi) = Set.Icc (-2) 2 := by
+    apply (Set.range_eq_iff (Set.Icc (-Real.pi) Real.pi) (Set.Icc (-2) 2)).mpr
+    constructorm* _ ∧ _
+    -- prove that -2 can be achieved
+    · use (-Real.pi)
+      simp [g]
+      rw [Finset.sum_apply]
+      simp
+      rw [←Real.cos_add_sin]
+      have := Real.cos_pi
+      rw [←this]
+      simp
+      linarith
+    -- prove that 2 can be achieved
+    · use Real.pi
+      simp [g]
+      rw [Finset.sum_apply]
+      simp
+      rw [←Real.cos_add_sin]
+      have := Real.cos_pi
+      rw [←this]
+      simp
+      linarith
+    -- prove that g(x) can not be less than -2
+    · intro y hy
+      simp at hy
+      obtain ⟨x, hx⟩ := hy
+      simp [g] at hx
+      -- consider two cases : x ≤ 0 and x > 0
+      rcases hx with h | h
+      · have := h
+        apply Finset.sum_nonneg at h
+        conv =>
+          lhs
+          rw [h]
+          apply Finset.sum_congr rfl
+          intro i _
+          rw [←Real.cos_add_sin]
+          have : -Real.sin (a i + x) ≤ 0 := by
+            apply neg_nonpos.mpr
+            apply Real.sin_nonneg_of_nonneg_of_le_pi
+           . linarith
+           . linarith
+          linarith
+        linarith
+      -- consider two cases : x + 2 * Real.pi > 0 and x + 2 * Real.pi ≤ 0
+      rcases h with h | h
+      · have : x + 2 * Real.pi > 0 := by linarith
+        have : ¬ x + 2 * Real.pi ≤ 0 := by linarith
+        absurd this
+        simp
+        intro t ht
+        simp at ht
+        obtain ⟨s, ⟨hsm, hs⟩⟩ := this (x + 2 * Real.pi) (by simp; linarith)
+        rw [←Real.pi_mul_tsub t] at hs
+        rw [←hs] at hsm
+        have : s = x + 2 * Real.pi - t * Real.pi := by linarith
+        rw [this] at h
+        conv =>
+          lhs
+          rw [Finset.sum_apply]
+          simp
+          rw [←Real.cos_add_sin]
+          have : Real.cos (x + 2 * Real.pi + t * Real.pi) = Real.cos (x + 2 * Real.pi) := by
+            have : x + 2 * Real.pi + t * Real.pi = x + 2 * Real.pi + (t - 1 + 1) * Real.pi := by ring
+            rw [this]
+            have : (t - 1 + 1 : ℤ) = t := by simp
+            rw [this]
+            exact add_pi_periodic (x + 2 * Real.pi) t
+          rw [this]
+        linarith
+      · push_neg at h
+        conv =>
+          lhs
+          rw [h]
+          apply Finset.sum_congr rfl
+          intro i _
+          rw [←Real.cos_add_sin]
+          have : Real.cos (a i + x + 2 * Real.pi) = Real.cos (a i + x) := by
+            have : a i + x + 2 * Real.pi = a i + x + (1 + 1) * Real.pi := by ring
+            rw [this]
+            have : (1 + 1 : ℤ) = 2 := by simp
+            rw [this]
+            exact add_two_pi (a i + x)
+          rw [this]
+        linarith
+  -- prove that g(x) is injective on $[-\pi, \pi]$
+  have hgni : InjOn g (Set.Icc (-Real.pi) Real.pi) := by
+    exact StrictMonoOn.injOn hgmono
+  -- prove that g(x) is injective on $[-\pi, \pi)$
+  have hgni' : InjOn g (Set.Icc (-Real.pi) Real.pi) := by
+    exact StrictMonoOn.injOn hgmono
+  -- prove that g(x) is injective on $[-\pi, \pi]$
+  have hgni'' : InjOn g (Set.Icc (-Real.pi) Real.pi) := by
+    exact StrictMonoOn.injOn hgmono
+  -- combine with pi > 3, we have |pi - 1| = pi - 1
+  have hpi' : |Real.pi - 1| = Real.pi - 1 := by
+    have : 1 < Real.pi := Real.pi_gt_three
+    simp [abs_of_pos (by linarith)]
+  --

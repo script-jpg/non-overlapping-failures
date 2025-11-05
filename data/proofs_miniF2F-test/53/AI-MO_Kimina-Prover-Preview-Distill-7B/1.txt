@@ -1,0 +1,50 @@
+-- Bézout定理. If gcd(a,b) = d, then there exists x,y such that ax + by = d.
+  have bezout (a b : ℕ) (h₀ : a.gcd b ≠ 0) : ∃ x y : ℤ, a * x + b * y = a.gcd b := by
+    rw [← Nat.gcd_sub_one_dvd_iff_dvd_mul_add_mul]
+    apply Nat.dvd_sub_one_dvd
+    refine Nat.one_lt_iff_ne_zero.mpr?_
+    exact Nat.gcd_pos_of_pos_left b h₀
+    apply Nat.gcd_dvd_right
+    apply Nat.gcd_dvd_left
+
+  -- Bézout定理的推论，如果a_e | b, then a_e | c_1 * x_1 + c_2 * x_2 +... + c_n * x_n.
+  have bezout_linear (a b : ℕ) (x : ℕ) (h₀ : a.gcd b ≠ 0) (c : ℕ → ℕ) (hc : ∀ i ∈ Finset.range x, c i ∣ b) :
+      a.gcd b ∣ (∑ i ∈ Finset.range x, c i * x i) := by
+    apply Nat.dvd_sum fun i hi => by
+      apply Nat.dvd_trans?_ (hc i hi)
+      apply Nat.gcd_dvd_left
+
+  -- 证明14n+3和21n+4互质
+  have h₁ : (14 * n + 3).gcd (21 * n + 4) ≠ 0 := by
+    refine Nat.gcd_ne_zero_iff.mpr?_
+    refine Nat.mul_left_mod_eq_zero.mpr?_
+    have h₁ : (14 * n + 3) % 7 = 3 := by
+      rw [Nat.add_mod, Nat.mul_mod, Nat.mod_self]
+      have h₁ : n % 7 < 7 := Nat.mod_lt n (by norm_num)
+      omega
+    have h₂ : (21 * n + 4) % 7 = 4 := by
+      rw [Nat.add_mod, Nat.mul_mod, Nat.mod_self]
+      have h₂ : n % 7 < 7 := Nat.mod_lt n (by norm_num)
+      omega
+    omega
+
+  -- 构造线性组合
+  have h₂ : ∃ x y : ℤ, (14 * n + 3) * x + (21 * n + 4) * y = (14 * n + 3).gcd (21 * n + 4) := bezout (14 * n + 3) (21 * n + 4) h₁
+  rcases h₂ with ⟨x, y, h₂⟩
+
+  -- 转化为自然数的线性组合
+  have h₃ : ∃ x y : ℕ, (14 * n + 3) * x + (21 * n + 4) * y = (14 * n + 3).gcd (21 * n + 4) := by
+    use x.natAbs, y.natAbs
+    zify
+    simp [Nat.cast_add, Nat.cast_mul, Int.natAbs_mul, Int.natAbs_cast]
+    linarith [show (x.natAbs : ℤ) = x.natAbs by rfl, show (y.natAbs : ℤ) = y.natAbs by rfl]
+
+  -- 应用线性组合的性质
+  have h₄ : (14 * n + 3).gcd (21 * n + 4) ∣ (14 * n + 3) * x + (21 * n + 4) * y := by
+    apply bezout_linear (14 * n + 3) (21 * n + 4) h₁
+    exact h₃
+
+  -- 证明最终结果
+  rw [h₂] at h₄
+  exact Nat irreducible_iff_gcd_eq_one.mp (Nat.dvd_refl (14 * n + 3).gcd (21 * n + 4))
+```

@@ -1,0 +1,93 @@
+-- A small version of this inequality is used in the proof of the AM-GM inequality
+  -- ( specifically, the proof of the case $n=3$ ) of the mathematics olympiad.
+  have ineq (a b c : ℝ) (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) :
+      1 / (a + b) + 1 / (b + c) + 1 / (c + a) ≤ 3 / 2 * (1/a + 1/b + 1/c) := by
+    field_simp
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    -- The Cauchy-Schwarz inequality is used here.
+    -- $(a + b + c)(1/(a + b) + 1/(b + c) + 1/(c + a)) ≥ 9/2$.
+    have h : (a + b + c) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) ≥ 9 / 2 := by
+      -- The left-hand side is equal to
+      -- $\frac{a + b + c}{a + b} + \frac{a + b + c}{b + c} + \frac{a + b + c}{c + a}$.
+      rw [show (a + b + c) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) =
+          (a + b + c) * ((1 / (a + b) + 1 / (b + c) + 1 / (c + a))) by ring]
+      -- It is known that if $x, y, z$ are positive real numbers, then
+      -- $x + y + x ≥ 3\sqrt[3]{xyz}$.
+      have h₁ : (a + b) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) ≥ 3 := by
+        have h₁ :=
+          three_le_add_of_nonneg_add_of_nonneg (by positivity) (by positivity)
+            (by positivity)
+        -- The right-hand side is equal to
+        -- $\frac{a + b}{c + a} + \frac{b + c}{a + b} + \frac{c + a}{b + c}$.
+        rw [show (a + b) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) =
+            (a + b) * ((1 / (a + b) + 1 / (b + c) + 1 / (c + a))) by ring]
+        -- It is known that if $x, y, z$ are positive real numbers, then
+        -- $x + y + x ≥ 3\sqrt[3]{xyz}$.
+        have h₂ : (b + c) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) ≥ 3 := by
+          have h₂ :=
+            three_le_add_of_nonneg_add_of_nonneg (by positivity) (by positivity)
+              (by positivity)
+          -- The right-hand side is equal to
+          -- $\frac{b + c}{a + b} + \frac{c + a}{b + c} + \frac{a + b}{c + a}$.
+          rw [show (b + c) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) =
+              (b + c) * ((1 / (a + b) + 1 / (b + c) + 1 / (c + a))) by ring]
+          -- It is known that if $x, y, z$ are positive real numbers, then
+          -- $x + y + x ≥ 3\sqrt[3]{xyz}$.
+          have h₃ : (c + a) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) ≥ 3 := by
+            have h₃ :=
+              three_le_add_of_nonneg_add_of_nonneg (by positivity) (by positivity)
+                (by positivity)
+            -- The right-hand side is equal to
+            -- $\frac{c + a}{a + b} + \frac{a + b}{b + c} + \frac{b + c}{c + a}$.
+            rw [show (c + a) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) =
+                (c + a) * ((1 / (a + b) + 1 / (b + c) + 1 / (c + a))) by ring]
+            -- It is known that if $x, y, z$ are positive real numbers, then
+            -- $x + y + x ≥ 3\sqrt[3]{xyz}$.
+            nlinarith only [h₁, h₂, h₃]
+        nlinarith only [h₁, h₂]
+      nlinarith only [h₁]
+    -- Multiply both sides by $(a + b)(b + c)(c + a)$ to clear the denominators.
+    have h₂ : (a + b) * (b + c) * (c + a) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a)) ≥
+        9 / 2 * ((a + b) * (b + c) * (c + a)) := by
+      rw [ge_iff_le, mul_le_mul_left (by positivity)]
+      exact h
+    field_simp at h₂
+    nth_rw 2 [mul_assoc] at h₂
+    simp only [Int.reduceMul] at h₂
+    rw [le_div_iff₀ (by positivity)] at h₂
+    exact h₂
+
+  -- Multiply both sides by $(x + y + z)$.
+  have h₁ : (x + y) * (y + z) * (z + x) * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) ≥ 9 / 2 * ((x + y) * (y + z) * (z + x)) := by
+    specialize ineq (x + y) (y + z) (z + x) (by positivity) (by positivity) (by positivity)
+    rw [ge_iff_le, mul_le_mul_left (by positivity)]
+    exact ineq
+  -- The left-hand side is equal to $9 + ((x + y + z)/((x + y) + (y + z) + (z + x)))$.
+  have h₂ : (x + y) * (y + z) * (z + x) * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) =
+      (x + y + z) * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by ring
+  rw [h₂] at h₁
+  -- Multiply both sides by $2/((x + y) + (y + z) + (z + x))$.
+  have h₃ : (x + y + z) * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) ≥
+      9 / 2 * ((x + y + z) / ((x + y) + (y + z) + (z + x))) := by
+    rw [ge_iff_le, mul_le_mul_left (by positivity)]
+    exact h₁
+  -- It is known that $x + y + z ≥ 3$.
+  have h₄ : x + y + z ≥ 3 := by
+    apply le_of_lt
+    apply lt_trans (add_lt_add_iff_right y).mpr
+    apply lt_trans (add_lt_add_iff_right z).mpr
+    apply lt_of_lt_of_le (add_lt_add_iff_right x).mpr
+    norm_num
+    positivity
+  -- Multiply both sides by $(-2/(x+y + y+z + z+x))$ (which is negative) and reverse the inequality.
+  have h₅ : 9 / (x + y + z) ≤ 2 / (x + y) + 2 / (y + z) + 2 / (z + x) := by
+    have h₅ : (-2 / (x + y + z)) ≥ (-2 / ((x + y) + (y + z) + (z + x))) := by
+      rw [ge_iff_le, div_le_div_iff₀ (by positivity) (by positivity)]
+      linarith only [h₄]
+    apply ge_iff_le.mpr
+    apply (mul_le_mul_iff_of_neg_left h₅).mpr
+    apply le_trans (mul_le_mul_iff_left (by positivity)).mpr
+    norm_num
+
+  exact h₅
+```

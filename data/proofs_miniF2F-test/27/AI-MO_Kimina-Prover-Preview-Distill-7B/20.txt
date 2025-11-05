@@ -1,0 +1,38 @@
+-- set $p(n) = 12 \mid 4^{n+1} + 20$.
+  set p := fun n => 12 ∣ 4 ^ (n + 1) + 20
+
+  -- prove that $p(0)$ is true.
+  have hp0 : p 0 := by
+    norm_num [p]
+
+  -- prove that if $p(n)$ is true, then $p(n+1)$ is also true.
+  have hpn_to_pn1 (n : ℕ) : p n → p (n + 1) := by
+    intro hn
+    norm_num [p] at hn ⊢
+    -- we have $12 \mid 4^{n+1} + 20$.
+    -- note that $4^{(n+1)+1} + 20 = 4 * 4^{n+1} + 20 = 4^{n+1} + 20 + 3 * 4^{n+1} + 0$.
+    -- we can get $3 * 4^{n+1} + 0$ by using $12 \mid 4^{n+1} + 20$.
+    have h1 : 3 * 4 ^ (n + 1) + 0 ≡ 0 [MOD 12] := by
+      have : 4 ^ (n + 1) + 20 ≡ 0 [MOD 12] := by
+        exact (Nat.modEq_iff_dvd' (by omega)).mp hn
+      rw [show 3 * 4 ^ (n + 1) + 0 = 3 * (4 ^ (n + 1) + 20) - 60 by ring_nf]
+      nth_rw 1 [show 3 * (4 ^ (n + 1) + 20) = 3 * (4 ^ (n + 1) + 20) + 0 by omega]
+      apply Nat.ModEq.sub
+      · exact Nat.ModEq.mul (by rfl) (this)
+      · rfl
+
+    -- we have $12 \mid 3 * 4^{n+1} + 0$.
+    have h2 : 12 ∣ 3 * 4 ^ (n + 1) + 0 := by
+      exact (Nat.modEq_iff_dvd' (by omega)).mp h1
+
+    -- we have $4^{(n+1)+1} + 20 = 4 * 4^{n+1} + 20 = (4^{n+1} + 20) + 3 * 4^{n+1} + 0$.
+    have h3 : 4 ^ ((n + 1) + 1) + 20 = (4 ^ (n + 1) + 20) + (3 * 4 ^ (n + 1) + 0) := by
+      ring_nf
+
+    -- then $12 \mid 4^{(n+1)+1} + 20$.
+    exact Nat.dvd_add hn h2.trans h3
+
+  -- by induction, we have $p(n)$ is true for any natural number $n$.
+  exact Nat.induction_on n hp0 hpn_to_pn1
+
+```

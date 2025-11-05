@@ -1,0 +1,91 @@
+-- Unweighted AM-GM Inequality
+  have unweighted_am_gm_ineq (a : ℕ → NNReal) (n : ℕ) :
+      (∏ x ∈ Finset.range n, a x) ^ (1 / n : ℝ) ≤ (∑ x ∈ Finset.range n, a x) / n := by
+    have h₁ : (∏ x ∈ Finset.range n, a x) ^ (1 / n : ℝ) ≤
+        (∑ x ∈ Finset.range n, (a x) / n) := by
+      apply Real.geom_mean_le_arith_mean
+      intro i hi
+      simp only [Finset.mem_range] at hi
+      exact (NNReal.le_iff_zero_le?_).mpr (a i)
+      simp only [Finset.mem_range]
+      apply Nat.cast_div
+      exact ( zero_le n).trans (Nat.cast_lt_cast hi)
+      exact Nat.cast_one_le_of_lt (a i)
+    have h₂ : (∑ x ∈ Finset.range n, (a x) / n) = (∑ x ∈ Finset.range n, a x) / n := by
+      rw [Finset.sum_div]
+    rw [h₂] at h₁
+    have h₃ : (∑ x ∈ Finset.range n, a x) / n = 1 := by
+      rw [h₀]
+      simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_div]
+    rw [h₃] at h₁
+    exact h₁
+
+  -- Unweighted AM-GM Inequality for 2D
+  have unweighted_am_gm_ineq_2D (a : ℕ → NNReal) (n : ℕ) :
+      (∏ x ∈ Finset.range n, a x) ^ (1 / 2 : ℝ) ≤ (∑ x ∈ Finset.range n, a x) / 2 := by
+    have h₁ : (∏ x ∈ Finset.range n, a x) ^ (1 / 2 : ℝ) ≤
+        (∑ x ∈ Finset.range n, (a x) / 2) := by
+      apply Real.geom_mean_le_arith_mean
+      intro i hi
+      simp only [Finset.mem_range] at hi
+      exact (NNReal.le_iff_zero_le?_).mpr (a i)
+      simp only [Finset.mem_range]
+      apply Nat.cast_div
+      exact ( zero_le n).trans (Nat.cast_lt_cast hi)
+      exact Nat.cast_one_le_of_lt (a i)
+    have h₂ : (∑ x ∈ Finset.range n, (a x) / 2) = (∑ x ∈ Finset.range n, a x) / 2 := by
+      rw [Finset.sum_div]
+    rw [h₂] at h₁
+    have h₃ : (∑ x ∈ Finset.range n, a x) / 2 = 1 := by
+      rw [h₀]
+      simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_div]
+    rw [h₃] at h₁
+    exact h₁
+
+  -- By AM-GM Inequality, $\prod_{i=1}^n a_i \leq 1$
+  have h₁ : (∏ x ∈ Finset.range n, a x) ^ (1 / n : ℝ) ≤ 1 := by
+    have h₂ : (∏ x ∈ Finset.range n, a x) ^ (1 / n : ℝ) ≤
+        (∑ x ∈ Finset.range n, a x) / n := by
+      apply unweighted_am_gm_ineq a n
+    have h₃ : (∑ x ∈ Finset.range n, a x) / n = 1 := by
+      rw [h₀]
+      simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_div]
+    rw [h₃] at h₂
+    exact h₂
+
+  -- By property of the real number, $x^y \leq 1$ implies $x \leq 1$
+  have h₄ : (∏ x ∈ Finset.range n, a x) ≤ 1 := by
+    by_cases h₅ : ∏ x ∈ Finset.range n, a x = 0
+    · rw [h₅]
+      simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_le]
+    · have h₆ : 0 < ∏ x ∈ Finset.range n, a x := by
+        apply Finset.prod_pos
+        intro i hi
+        simp only [Finset.mem_range] at hi
+        exact (NNReal.zero_lt_iff?_).mpr (a i)
+        simp only [Finset.mem_range]
+        apply Nat.cast_zero_lt
+        exact (zero_lt_cast n).trans (Nat.cast_lt_cast hi)
+      have h₇ : (∏ x ∈ Finset.range n, a x) ^ (1 / n : ℝ) ≤ (∏ x ∈ Finset.range n, a x) := by
+        have h₈ : 0 ≤ (1 / n : ℝ) := by
+          apply div_nonneg
+          · apply Nat.cast_nonneg.mpr
+          · exact Nat.cast_nonneg.mpr (n)
+        have h₉ : (∏ x ∈ Finset.range n, a x) ^ (1 / n : ℝ) ≤
+            (∏ x ∈ Finset.range n, a x) ^ (0 : ℝ) := by
+          apply Real.rpow_le_rpow_of_exponent_le
+          · exact h₈
+          · exact (Eq.symm (Nat.cast_zero_lt n)).trans h₈
+          · exact le_of_lt h₆
+        have h₁₀ : (∏ x ∈ Finset.range n, a x) ^ (0 : ℝ) = 1 := by
+          rw [Real.rpow_zero]
+          exact Finset.prod_ne_zero a (Finset.range n)
+        rw [h₁₀] at h₉
+        exact h₉
+      have h₁₁ : (∏ x ∈ Finset.range n, a x) ^ (1 / n : ℝ) > 0 := by
+        apply Real.rpow_pos_of_pos
+        exact h₄
+      linarith
+  exact h₄
+
+```

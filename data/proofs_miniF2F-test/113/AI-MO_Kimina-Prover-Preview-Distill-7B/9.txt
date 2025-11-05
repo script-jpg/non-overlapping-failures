@@ -1,0 +1,114 @@
+-- The following well-known inequality can be found in https://math.stackexchange.com/questions/40714.
+  -- For any $a, b > 0$, we have $\frac{b - a}{\sqrt{ab}} \leq \sqrt{b} - \sqrt{a}$.
+  have h {a b : ℝ} (ha : 0 < a) (hb : 0 < b) : (b - a) / Real.sqrt (a * b) ≤ Real.sqrt b - Real.sqrt a := by
+    rw [div_le_iff₀ (by positivity), Real.sqrt_le_iff]
+    · nth_rw 1 [← Real.sqrt_mul (by linarith)] 
+      rw [← Real.sqrt_mul_self (by linarith), ← Real.sqrt_mul_self (by linarith)]
+      calc
+        (b - a) * (b + a) / (a * b) = (b - a) / a * (1 / (b / a) ) := by field_simp
+        _ ≤ (b - a) / a * (b / a) := by 
+          apply mul_le_mul_of_nonneg_left 
+          apply div_le_div_of_nonneg_right 
+          any_goals linarith
+          positivity
+        _ = (b - a) / a * (b / a) := by field_simp
+        _ = (Real.sqrt b - Real.sqrt a) ^ 2 := by 
+          rw [sub_sq, mul_div_assoc, mul_div_assoc, Real.sq_sqrt, Real.sq_sqrt]
+          · ring
+          · linarith
+          · linarith
+          · positivity
+          · positivity
+    · apply sub_nonneg.mpr
+      rw [← Real.sqrt_mul (by linarith)]
+      nth_rw 1 [← Real.sqrt_mul_self (by linarith)]
+      calc
+        (Real.sqrt b - Real.sqrt a) ^ 2 = (Real.sqrt b) ^ 2 - 2 * Real.sqrt b * Real.sqrt a + (Real.sqrt a) ^ 2 := by ring
+        _ = b - 2 * Real.sqrt b * Real.sqrt a + a := by rw [Real.sq_sqrt, Real.sq_sqrt]; linarith
+        _ ≤ b - 2 * Real.sqrt (a * b) + a := by 
+          have : 2 * Real.sqrt b * Real.sqrt a ≤ 2 * Real.sqrt (a * b) := by
+            calc
+              2 * Real.sqrt b * Real.sqrt a ≤ 2 * (Real.sqrt b * Real.sqrt a) := by linarith
+              _ = 2 * Real.sqrt (a * b) := by rw [Real.sqrt_mul (by linarith)]
+          linarith
+        _ = (b - a) * (b + a) / (a * b) := by 
+          field_simp
+          ring
+        _ ≥ (b - a) * (b + a) / (a * b) := by positivity
+
+  -- Apply the result to $10000 = 100 \cdot 100$.
+  have h₀ := h (by norm_num) (by norm_num)
+
+  -- Note that $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} = \sum_{k=2}^{100} \frac{1}{\sqrt{k}} + \sum_{k=101}^{10000} \frac{1}{\sqrt{k}}$.
+  rw [Finset.sum_Icc_eq_add_Ico (by norm_num)]
+
+  -- For the first part, we have $\sum_{k=2}^{100} \frac{1}{\sqrt{k}} < 19$.
+  have h₁ : (∑ k ∈ Finset.Icc 2 100, 1 / Real.sqrt k) < 19 := by
+    calc
+      (∑ k ∈ Finset.Icc 2 100, 1 / Real.sqrt k)
+        = (∑ k ∈ Finset.Icc 1 100, 1 / Real.sqrt (k + 1)) := by
+          rw [← Finset.sum_Icc_succ_top (by norm_num)]
+          norm_num
+      _ = (∑ k ∈ Finset.Icc 1 100, 1 / Real.sqrt (k + 1) / 1) := by simp
+      _ ≤ (∑ k ∈ Finset.Icc 1 100, 1 / Real.sqrt (k * 1) / 1) := by
+        apply Finset.sum_le_sum
+        · intro k hk
+          rw [Finset.mem_Icc] at hk
+          apply div_le_div_of_nonneg_right
+          · apply Real.sqrt_le_sqrt
+            linarith
+          · norm_num
+        · simp
+      _ = 19 := by norm_num
+
+  -- For the second part, we have $\sum_{k=101}^{10000} \frac{1}{\sqrt{k}} < 99$.
+  have h₂ : (∑ k ∈ Finset.Ico 101 10001, 1 / Real.sqrt k) < 99 := by
+    calc
+      (∑ k ∈ Finset.Ico 101 10001, 1 / Real.sqrt k)
+        = (∑ k ∈ Finset.Ico (100 * 1) (100 * 101), 1 / Real.sqrt ((100:ℝ) * (100:ℝ) + k)) := by
+          norm_num
+          rw [Finset.sum_Ico_eq_sum_range, Finset.sum_Ico_eq_sum_range]
+          norm_num
+          ext x
+          simp
+          constructor
+          · intro ⟨⟨h₁, h₂⟩, h₃⟩
+            refine ⟨?_, h₃⟩
+            apply lt_of_lt_of_le h₂
+            norm_num
+          · intro ⟨h₁, h₂⟩
+            refine ⟨⟨h₁,?_⟩, h₂⟩
+            linarith
+      _ = (∑ i ∈ Finset.Ico (100:ℝ) (100:ℝ) + 1, 1 / Real.sqrt ((100:ℝ) * (100:ℝ) + (i - 100:ℝ))) := by
+          norm_num
+          rw [Finset.sum_Ico_eq_sum_range, Finset.sum_Ico_eq_sum_range]
+          norm_num
+          ext x
+          simp
+          constructor
+          · intro ⟨⟨h₁, h₂⟩, h₃⟩
+            refine ⟨?_, h₃⟩
+            linarith
+          · intro ⟨h₁, h₂⟩
+            refine ⟨⟨h₁,?_⟩, h₂⟩
+            linarith
+      _ = (∑ i ∈ Finset.Ico (100:ℝ) (100:ℝ) + 1, 1 / Real.sqrt (100 * 100 + (i - 100:ℝ))) := by norm_num
+      _ = (∑ i ∈ Finset.Icc (100:ℝ) (100:ℝ), 1 / Real.sqrt (100 * 100 + (i - 100:ℝ))) := by
+        rw [Finset.sum_Ico_eq_sum_Icc]
+        simp
+      _ = (∑ i ∈ Finset.Icc (100:ℝ) (100:ℝ), 1 / Real.sqrt (100 * 100 + (i - 100:ℝ))) := by simp
+      _ = 1 / Real.sqrt ((100:ℝ) * (100:ℝ) + (100:ℝ) - (100:ℝ)) := by
+        rw [Finset.sum_singleton]
+      _ = 1 / Real.sqrt (100 * 100) := by norm_num
+      _ = 1 / (Real.sqrt 100 * Real.sqrt 100) := by rw [Real.sqrt_mul (by norm_num)]
+      _ = 1 / (10 * 10) := by rw [Real.sqrt_sq (by norm_num)]; norm_num
+      _ = 1 / 100 := by norm_num
+      _ < 99 := by norm_num
+
+  -- Hence, $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} < 19 + 99 = 118$.
+  refine (add_lt_add_iff_right h₁).mpr?_
+  norm_num
+  rw [add_comm]
+  exact h₀.trans h₂
+
+```

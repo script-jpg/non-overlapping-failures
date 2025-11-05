@@ -1,0 +1,74 @@
+-- First, we prove the condition that $r \neq 0$.
+  have h₁ : r ≠ 0 := by
+    -- Assume $r = 0$, then the left side of the hypothesis `h₀` is undefined (division by zero).
+    by_contra! h
+    -- `h` is `r = 0`. We substitute `r = 0` into the hypothesis `h₀`.
+    rw [h] at h₀
+    -- After substitution, the left side of `h₀` becomes `0 ^ ((1 : ℝ) / 3) + 1 / 0 ^ ((1 : ℝ) / 3)`.
+    -- Since `0 ^ ((1 : ℝ) / 3)` is `0` (as any nonzero power of zero is zero), and `1 / 0 ^ ((1 : ℝ) / 3)` is `1 / 0`, which is undefined, we have a contradiction.
+    norm_num at h₀
+
+  -- We need to prove that $r^3 + \frac{1}{r^3} = 5778$ given $r^{\frac{1}{3}} + \frac{1}{r^{\frac{1}{3}}} = 3$.
+  -- Let's start by thinking about how to approach this algebraically.
+  -- If we cube both sides of the given equation $r^{\frac{1}{3}} + \frac{1}{r^{\frac{1}{3}}} = 3$, we get:
+  -- $(r^{\frac{1}{3}} + \frac{1}{r^{\frac{1}{3}}})^3 = 3^3 = 27$
+  -- $r + 3 \cdot r^{\frac{2}{3}} \cdot \frac{1}{r^{\frac{1}{3}}} + 3 \cdot r^{\frac{1}{3}} \cdot \frac{1}{r^{\frac{2}{3}}} + \frac{1}{r} = 27$
+  -- $r + \frac{3 \cdot r^{\frac{2}{3}}}{r^{\frac{1}{3}}} + \frac{3 \cdot r^{\frac{1}{3}}}{r^{\frac{2}{3}}} + \frac{1}{r} = 27$
+  -- $r + 3 \cdot r^{\frac{1}{3}} + 3 \cdot r^{-\frac{1}{3}} + \frac{1}{r} = 27$
+  -- $r + \frac{1}{r} + 3 \cdot (r^{\frac{1}{3}} + \frac{1}{r^{\frac{1}{3}}}) = 27$
+  -- We know $r^{\frac{1}{3}} + \frac{1}{r^{\frac{1}{3}}} = 3$, so:
+  -- $r + \frac{1}{r} + 3 \cdot 3 = 27$
+  -- $r + \frac{1}{r} + 9 = 27$
+  -- $r + \frac{1}{r} = 18$
+  have h₂ : r + 1 / r = 18 := by
+    -- We use the algebraic identity: $(a + b)^3 = a^3 + 3 \cdot a^2 \cdot b + 3 \cdot a \cdot b^2 + b^3$
+    have h₂ : (r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3)) ^ 3 = 27 := by
+      rw [h₀]
+      norm_num
+    -- Now we need to expand the left side using the algebraic identity.
+    have h₃ : (r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3)) ^ 3 = r + 1 / r + 3 * (r ^ ((1 : ℝ) / 3) + 1 / r ^ ((1 : ℝ) / 3)) := by
+      rw [add_pow_three]
+      -- `add_pow_three` is a lemma that expands $(a + b)^3$ as $a^3 + 3 \cdot a^2 \cdot b + 3 \cdot a \cdot b^2 + b^3$
+      -- Now we need to simplify the expanded form.
+      rw [pow_two, pow_two]
+      -- `pow_two` is a lemma that expands $a^2$ as $a \cdot a$
+      -- Now we need to handle the fractions.
+      field_simp
+      -- `field_simp` is a tactic that simplifies expressions involving field operations, handling denominators correctly
+      ring
+      -- `ring` is a tactic that solves goals involving arithmetic expressions in commutative rings
+      -- After simplification, we get the desired expression: $r + 1/r + 3 \cdot (r^{1/3} + 1/r^{1/3})$
+    rw [h₃] at h₂
+    -- Now we have $r + 1/r + 3 \cdot (r^{1/3} + 1/r^{1/3}) = 27$
+    -- We know $r^{1/3} + 1/r^{1/3} = 3$ from the hypothesis `h₀`
+    rw [h₀] at h₂
+    -- So $r + 1/r + 3 \cdot 3 = 27$
+    -- $r + 1/r + 9 = 27$
+    -- $r + 1/r = 18$
+    linarith
+
+  -- Next, we need to compute $r^3 + 1/r^3$
+  -- We can use the identity: $r^3 + 1/r^3 = (r + 1/r)^3 - 3 \cdot (r + 1/r)$
+  have h₃ : r ^ 3 + 1 / r ^ 3 = (r + 1 / r) ^ 3 - 3 * (r + 1 / r) := by
+    -- We use the algebraic identity: $(a + b)^3 = a^3 + 3 \cdot a^2 \cdot b + 3 \cdot a \cdot b^2 + b^3$
+    have h₃ : (r + 1 / r) ^ 3 = r ^ 3 + 1 / r ^ 3 + 3 * (r + 1 / r) := by
+      rw [add_pow_three]
+      -- `add_pow_three` is a lemma that expands $(a + b)^3$ as $a^3 + 3 \cdot a^2 \cdot b + 3 \cdot a \cdot b^2 + b^3$
+      -- Now we need to simplify the expanded form.
+      rw [pow_two, pow_two]
+      -- `pow_two` is a lemma that expands $a^2$ as $a \cdot a$
+      -- Now we need to handle the fractions.
+      field_simp
+      -- `field_simp` is a tactic that simplifies expressions involving field operations, handling denominators correctly
+      ring
+      -- `ring` is a tactic that solves goals involving arithmetic expressions in commutative rings
+      -- After simplification, we get the desired expression: $r^3 + 1/r^3 + 3 \cdot (r + 1/r)$
+    linarith
+
+  -- Now we have the equation $r^3 + 1/r^3 = (r + 1/r)^3 - 3 \cdot (r + 1/r)$
+  -- We already know $r + 1/r = 18$ from the previous step
+  rw [h₃, h₂]
+  -- So $r^3 + 1/r^3 = 18^3 - 3 \cdot 18 = 5832 - 54 = 5778$
+  norm_num
+
+```

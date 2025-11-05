@@ -1,0 +1,49 @@
+-- A number theory problem. If $m$ and $n$ are positive integers such that $\gcd(m,n)=8$ and $\mathrm{lcm}(m,n)=112$, then what is the smallest possible value of $m+n$?
+
+  -- The problem is from the 2003 AMC 12B.
+
+  -- The relationship between gcd and lcm: $\gcd(m,n) \cdot \mathrm{lcm}(m,n) = m \cdot n$.
+  have h₃ : m * n = 8 * 112 := by rw [← h₁, ← h₂, Nat.gcd_mul_lcm]; norm_num
+
+  -- We can solve for $n$ in terms of $m$: $n = \frac{8 \cdot 112}{m}$.
+  have h₄ : n = 8 * 112 / m := by refine Nat.eq_div_of_mul_eq_right (Nat.pos_of_ne_zero (by linarith)) h₃
+
+  -- Since $n$ is positive, $8 \cdot 112 / m$ is positive, which means $m$ cannot be zero.
+  have h₅ : m ≠ 0 := by by_contra h; rw [h] at h₄; norm_num at h₄; linarith
+
+  -- From the identity $\gcd(m,n) = \gcd(m, \mathrm{lcm}(m,n))$, we have $8 = \gcd(m, 112)$.
+  have h₆ : 8 = Nat.gcd m 112 := by rw [h₁, h₂]
+
+  -- Solve for $m$ and $n$.
+  have h₇ : m = 8 ∨ m = 16 ∨ m = 56 ∨ m = 112 := by
+    -- A number theory fact: if $a$ and $b$ are positive integers, then $\gcd(a,b) \mid a$.
+    have : m = 8 ∨ m = 16 ∨ m = 56 ∨ m = 112 := by
+      rw [← h₆, Nat.gcd_dvd_left, h₂]
+      have h₈ : 8 ∣ 112 := by norm_num
+      have h₉ : Nat.divisors 112 = {1, 2, 4, 7, 8, 14, 16, 28, 56, 112} := by decide
+      have h₁₀ : m ∈ Nat.divisors 112 := by
+        rw [Nat.mem_divisors]
+        exact ⟨h₈, h₅⟩
+      rw [h₉] at h₁₀
+      exact h₁₀
+    assumption
+
+  have h₈ : n = 112 ∨ n = 56 ∨ n = 16 ∨ n = 8 := by
+    -- A number theory fact: if $a$ and $b$ are positive integers, then $\gcd(a,b) \mid a$.
+    have : n = 112 ∨ n = 56 ∨ n = 16 ∨ n = 8 := by
+      rw [← h₆, Nat.gcd_dvd_right, h₂]
+      have h₁₁ : 8 ∣ 112 := by norm_num
+      have h₁₂ : Nat.divisors 112 = {1, 2, 4, 7, 8, 14, 16, 28, 56, 112} := by decide
+      have h₁₃ : n ∈ Nat.divisors 112 := by
+        rw [Nat.mem_divisors]
+        exact ⟨h₁₁, h₅⟩
+      rw [h₁₂] at h₁₃
+      exact h₁₃
+    assumption
+
+  -- Check all the cases.
+  rcases h₇ with (h₇ | h₇ | h₇ | h₇) <;> rcases h₈ with (h₈ | h₈ | h₈ | h₈) <;> simp_all
+  all_goals
+    linarith
+
+```

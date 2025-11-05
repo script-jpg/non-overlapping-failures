@@ -1,0 +1,60 @@
+-- A lemma that may be of independent interest:
+  -- $a^b + a^c$ divides $a^{b + c} + a^{\max(b, c)}$.
+  have l_a_add_ab_dvd_a_pow_add_a_pow (a b c : ℕ) (h : a > 1) : a ^ b + a ^ c ∣ a ^ (b + c) + a ^ max b c := by
+    induction h2 : b with
+    | zero => simp_all
+    | succ b ih =>
+      rcases le_or_lt c b with hcb | hcb
+      · rw [max_eq_left hcb, add_assoc]
+        exact ih.trans (by rw [add_assoc, pow_add, <-add_assoc]; exact Nat.add_right_cancel (b := a ^ b) (by linarith)).trans (by rw [add_comm]; exact Nat.pow_le_pow_left (by linarith) (by linarith)).trans (by rw [add_assoc]; exact Nat.add_right_cancel (b := a ^ c) (by linarith))
+      · rw [max_eq_right (le_of_lt hcb), add_comm b c, add_assoc]
+        apply Nat.add_right_cancel (b := a ^ b) (by linarith)
+        rw [add_assoc, <-add_assoc, pow_add, add_comm]
+        exact ih.trans (by rw [add_assoc]; exact Nat.add_right_cancel (b := a ^ c) (by linarith)).trans (by rw [add_comm, <-add_assoc]; exact Nat.pow_le_pow_left (by linarith) (by linarith)).trans (by rw [add_assoc]; exact Nat.add_right_cancel (b := a ^ b) (by linarith))
+
+  -- Let $b = 2^m$ and $a = 2^{n - m}$. Since $m \leq n$, $b$ divides $a$.
+  let b := 2 ^ m
+  let a := 2 ^ (n - m)
+  have h₃ : b ∣ a := by
+    simp [a, b]
+    apply Nat.pow_dvd_pow_of_le
+    apply Nat.le_sub_of_add_le
+    linarith
+
+  -- We have $f(b) = 4^b + 6^b + 9^b$.
+  have h₄ : f b = 4 ^ b + 6 ^ b + 9 ^ b := by
+    simp [h₀]
+
+  -- We have $f(a) = 4^a + 6^a + 9^a$.
+  have h₅ : f a = 4 ^ a + 6 ^ a + 9 ^ a := by
+    simp [h₀]
+
+  -- We show that $f(b)$ divides $f(a)$.
+  have h₆ : f b ∣ f a := by
+    simp [h₄, h₅]
+    apply Nat.dvd_add
+    · rw [<-Nat.pow_add, <-Nat.pow_add, <-Nat.pow_add]
+      apply Nat.add_assoc
+      apply Nat.add_assoc
+      apply l_a_add_ab_dvd_a_pow_add_a_pow (a := 4) (by linarith) (by linarith)
+      apply l_a_add_ab_dvd_a_pow_add_a_pow (a := 6) (by linarith) (by linarith)
+      apply l_a_add_ab_dvd_a_pow_add_a_pow (a := 9) (by linarith) (by linarith)
+    · apply Nat.dvd_add
+      · apply Nat.pow_dvd_pow
+        linarith
+        linarith
+      · apply Nat.pow_dvd_pow
+        linarith
+        linarith
+
+  -- Since $a = a \cdot b / b$, we get $f(b) = f(a) / b$.
+  have h₇ : f b = f a / b := by
+    rw [<-Nat.mul_div_cancel _ h₃]
+
+  -- We have $f(2^n) = 4^{2^n} + 6^{2^n} + 9^{2^n} = (2^{2^n})^2 + (2^{2^n})^3 + (2^{2^n})^4 = (2^{2^n})^{2 + 3 + 4} = (2^{2^n})^9 = (2^9)^{2^n} = 512^{2^n}$. So $f(2^m)$ divides $f(2^n)$ as desired.
+  calc
+    f (2 ^ m) = f a / b := by rw [<-h₇]
+    _ = f a / 2 ^ m := by simp [a, b]
+    _ ∣ f a := by apply Nat.div_dvd
+    _ = f (2 ^ n) := by rw [h₅, h₄]; simp [a, b]; rw [<-Nat.pow_add]; ring_nf; apply Nat.pow_dvd_pow; apply Nat.add_le_add_left; exact h₂
+```

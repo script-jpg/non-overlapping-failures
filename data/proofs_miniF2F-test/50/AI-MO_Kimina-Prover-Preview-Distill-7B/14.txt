@@ -1,0 +1,213 @@
+-- Simplify the equation to make it easier to work with.
+  have h₁ : (↑x / (4 : ℝ) + y / 6) * n = (x + y) := by
+    rw [h₀]
+    field_simp
+
+  have h₂ : x * 3 + y * 2 = 2 * (x + y) * n / 3 := by
+    linarith
+
+  have h₃ : (x * 3 + y * 2) * 3 = 2 * (x + y) * n := by
+    calc
+      (x * 3 + y * 2) * 3 = 3 * (x * 3 + y * 2) := by ring
+                          _ = (x + y) * 3 * 2 / 3 * 3 := by rw [h₂]
+                          _ = (x + y) * 2 * 3 := by ring
+                          _ = 2 * (x + y) * n := by rw [h₁]; ring
+
+  -- We now solve the equation x * 3 + y * 2 = 2 * (x + y) * n / 3.
+  -- Since x and y are never zero, we have n > 2.
+  have hn_gt : n > 2 := by
+    -- Assume on the contrary that n ≤ 2.
+    by_contra! hn_le
+
+    -- If n = 0, the equation x * 3 + y * 2 = 2 * (x + y) * n / 3 doesn't make sense.
+    cases hn_le with
+    | refl =>
+      exfalso
+      norm_num at h₃
+
+    -- If n = 1, we can deduce that x * 3 + y * 2 = 2 * (x + y).
+    cases hn_le with
+    | step hn_eq =>
+      rw [hn_eq] at h₃
+      -- Assume further that x > y.
+      cases x y <;> norm_num at h₃ <;> linarith
+
+      -- Assume further that y > x.
+      cases x y <;> norm_num at h₃ <;> linarith
+
+    -- If n = 2, we can deduce that 3 * (x * 3 + y * 2) = 2 * (x + y) * 2.
+    cases hn_le with
+    | step (hn_eq) =>
+      rw [hn_eq] at h₃
+      -- Assume further that x > y.
+      cases x y <;> norm_num at h₃ <;> linarith
+
+      -- Assume further that y > x.
+      cases x y <;> norm_num at h₃ <;> linarith
+
+  -- We suppose that n > 3.
+  cases hn_gt with
+  | step hn_gt =>
+    -- We can now assume that n > 3.
+    -- We can deduce that x * 3 + y * 2 = 2 * (x + y) * n / 3.
+    -- The right-hand side is even.
+    have : Even (2 * (x + y) * n / 3) := by
+      rw [← h₃]
+      apply Nat.even_mul_left
+
+    -- The left-hand side is also even.
+    have : Even (x * 3 + y * 2) := by
+      -- If y is even, the left-hand side is even.
+      cases y.even with
+      | inl hy_even =>
+        rw [hy_even] at h₃
+        rw [h₃]
+        apply Nat.even_mul_left
+
+      -- If y is odd, we can deduce that x is odd.
+      | inr hy_odd =>
+        rw [hy_odd] at h₃
+        rw [h₃]
+        apply Even.add_odd?_ hy_odd
+        apply Odd.mul_left?_ hy_odd
+        apply Nat.odd_of_lt (by linarith) hn_gt
+
+    -- We can deduce that x is even.
+    have hx_even : Even x := by
+      by_contra! hx_odd
+
+      -- If x is odd, the left-hand side is odd.
+      rw [hx_odd] at h₃
+      rw [h₃]
+      apply Even.add_odd?_ hx_odd
+      apply Odd.mul_left?_ hx_odd
+      apply Nat.odd_of_lt (by linarith) hn_gt
+
+    -- If x = 0, the equation x * 3 + y * 2 = 2 * (x + y) * n / 3 doesn't make sense.
+    have hx_ne : x ≠ 0 := by
+      by_contra! hx_eq_zero
+
+      rw [hx_eq_zero] at h₃
+      norm_num at h₃
+
+      cases y.even with
+      | inl hy_even =>
+        rw [hy_even] at h₃
+        norm_num at h₃
+
+        rw [hx_eq_zero, hy_even] at h₁
+        norm_num at h₁
+
+        apply Nat.ne_of_lt (by linarith) at hn_gt
+        tauto
+
+      | inr hy_odd =>
+        rw [hy_odd] at h₃
+        norm_num at h₃
+
+        rw [hx_eq_zero, hy_odd] at h₁
+        norm_num at h₁
+
+        linarith
+
+    -- We can deduce that y is even.
+    have hy_even : Even y := by
+      -- If y is even, the left-hand side is even.
+      cases y.even with
+      | inl hy_even =>
+        rw [hy_even] at h₃
+        rw [h₃]
+        apply Even.mul_left?_ hy_even
+        apply Nat.even_of_lt (by linarith) hn_gt
+
+      -- If y is odd, the left-hand side is odd.
+      | inr hy_odd =>
+        rw [hy_odd] at h₃
+        rw [h₃]
+        apply Odd.add_odd?_ hy_odd
+        apply Odd.mul_left?_ hy_odd
+        apply Nat.odd_of_lt (by linarith) hn_gt
+
+    -- If y = 0, the equation x * 3 + y * 2 = 2 * (x + y) * n / 3 doesn't make sense.
+    have hy_ne : y ≠ 0 := by
+      by_contra! hy_eq_zero
+
+      rw [hy_eq_zero] at h₃
+      norm_num at h₃
+
+      cases x.even with
+      | inl hx_even =>
+        rw [hx_even] at h₃
+        norm_num at h₃
+
+        rw [hy_eq_zero, hx_even] at h₁
+        norm_num at h₁
+
+        apply Nat.ne_of_lt (by linarith) at hn_gt
+        tauto
+
+      | inr hx_odd =>
+        rw [hx_odd] at h₃
+        norm_num at h₃
+
+        rw [hy_eq_zero, hx_odd] at h₁
+        norm_num at h₁
+
+        linarith
+
+    -- We can write x = 2 * x' and y = 2 * y', where x' and y' are positive integers.
+    cases x inl hx_even <;> cases y inl hy_even <;> simp at h₃ hx_even hy_even <;> try tauto
+
+    -- We can deduce that x' * 3 + y' * 2 = 2 * (x' + y') * n / 3.
+    rw [<-Nat.mul_left_inj (by norm_num)] at h₃
+    rw [<-Nat.mul_div_assoc] at h₃
+    rw [Nat.mul_div_cancel_left] at h₃
+
+    -- We can deduce that 3 divides (x' + y') * (n - 3).
+    have h₄ : 3 ∣ (x' + y') * (n - 3) := by
+      rw [h₃]
+      apply dvd_mul_right
+
+    -- We can deduce that 3 divides n - 3.
+    have h₅ : 3 ∣ n - 3 := by
+      apply Nat.Coprime.dvd_of_dvd_mul_left at h₄
+      exact h₄
+      apply Nat.Coprime.symm
+      exact Nat.Prime.coprime_three
+
+    -- We can deduce that 3 ≤ n - 3.
+    have h₆ : n - 3 > 0 := by
+      by_contra! hn_le
+      -- If n - 3 = 0, the equation x' * 3 + y' * 2 = 2 * (x' + y') * n / 3 doesn't make sense.
+      cases hn_le with
+      | refl =>
+        norm_num at h₃
+
+      -- If n - 3 < 0, the equation x' * 3 + y' * 2 = 2 * (x' + y') * n / 3 doesn't make sense.
+      | step hn_lt =>
+        norm_cast at hn_lt
+        rw[hn_lt] at h₃
+        norm_num at h₃
+
+    -- We can deduce that 3 = n - 3.
+    have h₇ : n - 3 = 3 := by
+      apply Nat.le_of_dvd at h₆
+      cases h₆ with
+      | refl =>
+        norm_num
+
+      | step h₆ =>
+        cases h₆ with
+        | refl =>
+          norm_num
+
+        | step h₆ =>
+          norm_cast at h₆
+          rw [h₆] at h₅
+          tauto
+
+    -- We can deduce that n = 5.
+    linarith
+
+
+```

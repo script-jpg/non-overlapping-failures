@@ -1,0 +1,238 @@
+-- First, we should understand what we're given:
+  -- a sequence of pairs (a(n), b(n)) where:
+  -- a(n+1) = √3 * a(n) - b(n)
+  -- b(n+1) = √3 * b(n) + a(n)
+  -- and (a(100), b(100)) = (2, 4)
+  -- we need to find a(1) + b(1)
+
+  -- Let's start by setting up the theorem:
+
+  -- theorem amc12a_2008_p25 (a b : ℕ → ℝ) (h₀ : ∀ n, a (n + 1) = Real.sqrt 3 * a n - b n)
+    -- (h₁ : ∀ n, b (n + 1) = Real.sqrt 3 * b n + a n) (h₂ : a 100 = 2) (h₃ : b 100 = 4) :
+    -- a 1 + b 1 = 1 / 2 ^ 99 := by
+
+  -- We need to find a way to relate a(100), b(100) to a(1), b(1).
+  -- Let's work backwards.
+  -- Suppose we have a(n+1), b(n+1).  Let's express a(n), b(n) in terms of a(n+1), b(n+1).
+
+  -- From:
+  -- a(n+1) = √3 * a(n) - b(n)
+  -- b(n+1) = √3 * b(n) + a(n)
+
+  -- We can solve for a(n), b(n):
+  -- a(n) = (a(n+1) + b(n+1)) / (√3 + 1)
+  -- b(n) = (√3 * a(n+1) - b(n+1)) / (√3 + 1)
+
+  -- Let's verify:
+  -- a(n+1) = √3 * ((a(n+1) + b(n+1)) / (√3 + 1)) - ((√3 * a(n+1) - b(n+1)) / (√3 + 1))
+  --       = (√3 * (a(n+1) + b(n+1)) - (√3 * a(n+1) - b(n+1))) / (√3 + 1)
+  --       = (√3 * a(n+1) + √3 * b(n+1) - √3 * a(n+1) + b(n+1)) / (√3 + 1)
+  --       = (√3 * b(n+1) + b(n+1)) / (√3 + 1)
+  --       = b(n+1) * (√3 + 1) / (√3 + 1)
+  --       = b(n+1)
+
+  -- And for b(n):
+  -- b(n+1) = √3 * ((√3 * a(n+1) - b(n+1)) / (√3 + 1)) + ((a(n+1) + b(n+1)) / (√3 + 1))
+  --       = (√3 * (√3 * a(n+1) - b(n+1)) + (a(n+1) + b(n+1))) / (√3 + 1)
+  --       = (3 * a(n+1) - √3 * b(n+1) + a(n+1) + b(n+1)) / (√3 + 1)
+  --       = (4 * a(n+1) + (1 - √3) * b(n+1)) / (√3 + 1)
+
+  -- This is getting messy.  Let's try another approach.
+
+  -- Let's think about this geometrically.
+  -- The transformation is a rotation by 60 degrees, scaled by √3.
+  -- Each step is multiplying by the matrix:
+  -- [ √3, -1 ]
+  -- [  1, √3 ]
+  -- But divided by 2 (since the rotation matrix would have determinant 1).
+
+  -- So after 99 steps, we get to (a(1), b(1)) = (a(100), b(100)) * M, where M is the matrix raised to the 99th power.
+
+  -- Let's try to compute the matrix power.
+
+  -- First, let's normalize the transformation to a pure rotation.
+  -- The matrix:
+  -- [ √3, -1 ]
+  -- [  1, √3 ]
+  -- can be written as:
+  -- 2 * [ (√3/2, -1/2 ) ]
+  --    [ ( 1/2, √3/2 ) ]
+  -- which is 2 * rotation matrix
+
+  -- The rotation matrix for θ = 60 degrees:
+  -- [ cos θ, -sin θ ]
+  -- [ sin θ, cos θ ]
+  -- [  1/2, -√3/2 ]
+  -- [ √3/2,  1/2  ]
+
+  -- So our original transformation is 2 * rotation(60°)
+
+  -- After 99 steps, the matrix would be:
+  -- 2^99 * rotation(99 * 60°) = 2^99 * rotation(5940°)
+
+  -- 5940° = 16 * 360° + 180°
+  -- So rotation(5940°) = rotation(180°) = -1
+
+  -- So our total transformation is:
+  -- 2^99 * (-I) = -2^99 * I
+
+  -- That means:
+  -- (a(1), b(1)) = -2^99 * (a(100), b(100)) = -2^99 * (2, 4) = (-2^100, -2^101)
+
+  -- So a(1) + b(1) = -2^100 - 2^101 = -2^100 * (1 + 2) = -3 * 2^100
+
+  -- But wait, let me recompute that.
+
+  -- The transformation is:
+  -- [ √3, -1 ] / 2
+  -- [  1, √3 ] / 2
+
+  -- For 99 steps, we get:
+  -- [ √3, -1 ]^99 / 2^99
+  -- [  1, √3 ]
+
+  -- Applying to (2, 4):
+  -- ((√3 * 2 - 4) / 2^99, (2 + √3 * 4) / 2^99)
+  -- ((2√3 - 4) / 2^99, (2 + 4√3) / 2^99)
+  -- ((2(√3 - 2)) / 2^99, (2(1 + 2√3)) / 2^99)
+  -- ((√3 - 2) / 2^98, (1 + 2√3) / 2^98)
+
+  -- Hmm, that's not matching the expected answer.
+
+  -- Let me try a different approach.  Maybe we can express a(n), b(n) in terms of a(1), b(1) using complex numbers.
+
+  -- Let z(n) = a(n) + b(n) * i
+  -- Then z(n+1) = a(n+1) + b(n+1) * i
+  --           = (√3 * a(n) - b(n)) + (√3 * b(n) + a(n)) * i
+  --           = √3 * (a(n) + b(n) * i) + (a(n) - b(n) * i)
+  --           = √3 * z(n) + z(n)^* (where * denotes complex conjugate)
+
+  -- Let's try to solve this recurrence relation.
+
+  -- z(n+1) = √3 * z(n) + z(n)^*
+
+  -- If we write z(n) = x(n) + y(n) * i, then z(n)^* = x(n) - y(n) * i
+
+  -- So:
+  -- x(n+1) + y(n+1) * i = √3 * (x(n) + y(n) * i) + (x(n) - y(n) * i)
+  -- x(n+1) + y(n+1) * i = √3 * x(n) + √3 * y(n) * i + x(n) - y(n) * i
+  -- x(n+1) + y(n+1) * i = (√3 * x(n) + x(n)) + (√3 * y(n) - y(n)) * i
+  -- x(n+1) + y(n+1) * i = x(n) * (1 + √3) + y(n) * (√3 - 1) * i
+
+  -- Therefore:
+  -- x(n+1) = x(n) * (1 + √3)
+  -- y(n+1) = y(n) * (√3 - 1)
+
+  -- With initial conditions:
+  -- x(1) = a(1)
+  -- y(1) = b(1)
+
+  -- This is progress.  We can compute x(100) and y(100) in terms of x(1) and y(1).
+
+  -- x(100) = x(1) * (1 + √3)^99
+  -- y(100) = y(1) * (√3 - 1)^99
+
+  -- But we know that:
+  -- z(100) = a(100) + b(100) * i = 2 + 4 * i
+
+  -- So:
+  -- x(1) * (1 + √3)^99 = 2
+  -- y(1) * (√3 - 1)^99 = 4
+
+  -- Let's compute (1 + √3)^99 and (√3 - 1)^99.
+
+  -- Notice that (√3 - 1) = (1 + √3)⁻¹
+  -- So (√3 - 1)^99 = (1 + √3)⁻¹^99 = (1 + √3)^(-99)
+
+  -- So:
+  -- x(1) * (1 + √3)^99 = 2
+  -- y(1) * (1 + √3)^(-99) = 4
+
+  -- multiply by (1 + √3)^99:
+  -- y(1) = 4 * (1 + √3)^99
+
+  -- So:
+  -- x(1) + y(1) = 2 * (1 + √3)^99 + 4 * (1 + √3)^99 = 6 * (1 + √3)^99
+
+  -- But this doesn't seem to be leading to the answer.
+
+  -- Let's try a different approach.
+
+  -- Let's compute the first few terms to find a pattern.
+
+  -- Given:
+  -- a(n+1) = √3 * a(n) - b(n)
+  -- b(n+1) = √3 * b(n) + a(n)
+
+  -- Compute a(n+1)^2 + b(n+1)^2:
+  -- = (√3 * a(n) - b(n))^2 + (√3 * b(n) + a(n))^2
+  -- = 3 * a(n)^2 - 2 * √3 * a(n) * b(n) + b(n)^2 + 3 * b(n)^2 + 2 * √3 * a(n) * b(n) + a(n)^2
+  -- = 3 * a(n)^2 + b(n)^2 + 3 * b(n)^2 + a(n)^2
+  -- = 4 * a(n)^2 + 4 * b(n)^2
+  -- = 4 * (a(n)^2 + b(n)^2)
+
+  -- That means:
+  -- a(n+1)^2 + b(n+1)^2 = 4 * (a(n)^2 + b(n)^2)
+
+  -- So a(n)^2 + b(n)^2 = 4^(n-1) * (a(1)^2 + b(1)^2)
+
+  -- For n = 100:
+  -- a(100)^2 + b(100)^2 = 4^99 * (a(1)^2 + b(1)^2)
+
+  -- But we know a(100) = 2, b(100) = 4
+  -- So 2^2 + 4^2 = 4^99 * (a(1)^2 + b(1)^2)
+  -- 4 + 16 = 4^99 * (a(1)^2 + b(1)^2)
+  -- 20 = 4^99 * (a(1)^2 + b(1)^2)
+  -- a(1)^2 + b(1)^2 = 20 / 4^99 = 5 / 4^98 = 5 * 2^(-162)
+
+  -- That doesn't seem to help us find a(1) + b(1).
+
+  -- Let's try to find a relation for a(n) + b(n).
+
+  -- a(n+1) + b(n+1) = (√3 * a(n) - b(n)) + (√3 * b(n) + a(n))
+  --               = √3 * a(n) - b(n) + √3 * b(n) + a(n)
+  --               = (√3 * a(n) + a(n)) + (-b(n) + √3 * b(n))
+  --               = a(n) * (√3 + 1) + b(n) * (√3 - 1)
+
+  -- Let's see if we can find a pattern for a(n) + b(n).
+
+  -- Let's define s(n) = a(n) + b(n)
+  -- Then:
+  -- s(n+1) = a(n+1) + b(n+1) = (√3 * a(n) - b(n)) + (√3 * b(n) + a(n))
+  --         = √3 * a(n) - b(n) + √3 * b(n) + a(n)
+  --         = (√3 * a(n) + a(n)) + (-b(n) + √3 * b(n))
+  --         = a(n) * (√3 + 1) + b(n) * (√3 - 1)
+
+  -- That seems complicated.  Let's try another approach.
+
+  -- Let's compute a few terms:
+
+  -- a(100) = 2
+  -- b(100) = 4
+
+  -- a(99) = (√3 * a(100) - b(100)) / (√3 + 1) = (2√3 - 4) / (√3 + 1)
+  -- rationalize denominator: (2√3 - 4) * (√3 - 1) / ((√3 + 1)(√3 - 1)) = (2√3 - 4)(√3 - 1) / (3 - 1)
+  -- = (2√3 - 4)(√3 - 1) / 2 = (2√3 * √3 - 2√3 * 1 - 4 * √3 + 4) / 2
+  -- = (6 - 2√3 - 4√3 + 4) / 2 = (10 - 6√3) / 2 = 5 - 3√3
+
+  -- b(99) = (√3 * b(100) + a(100)) / (√3 + 1) = (4√3 + 2) / (√3 + 1)
+  -- rationalize: (4√3 + 2) * (√3 - 1) / ((√3 + 1)(√3 - 1)) = (4√3 + 2)(√3 - 1) / 2
+  -- = (4√3 * √3 - 4√3 * 1 + 2 * √3 - 2) / 2 = (12 - 4√3 + 2√3 - 2) / 2
+  -- = (10 - 2√3) / 2 = 5 - √3
+
+  -- So a(99) + b(99) = (5 - 3√3) + (5 - √3) = 10 - 4√3
+
+  -- Continuing backwards:
+  -- a(98) = (√3 * a(99) - b(99)) / (√3 + 1)
+  --       = (√3 * (5 - 3√3) - (5 - √3)) / (√3 + 1)
+  --       = (√3 * 5 - 3 * 3 - 5 + √3) / (√3 + 1)
+  --       = (5√3 - 9 - 5 + √3) / (√3 + 1)
+  --       = (6√3 - 14) / (√3 + 1)
+
+  -- rationalize:
+  -- (6√3 - 14) * (√3 - 1) / ((√3 + 1)(√3 - 1))
+  -- = (6√3 - 14)(√3 - 1) / 2
+  -- = (6 * 3 - 6√3 - 14√3 + 14) / 2
+  -- = (18 - 6√3 - 14√3 + 14) / 2
+  -- = (32 - 20√3) / 2
+  -- = 16 - 10√3

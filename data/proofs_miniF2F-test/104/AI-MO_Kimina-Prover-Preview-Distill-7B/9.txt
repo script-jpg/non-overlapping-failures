@@ -1,0 +1,126 @@
+-- We will use Wilson's theorem, so let's recall it first.
+  have h_wilsons_lemma : Fact p.Prime
+  lift p to ZMod p
+  have p_prime : (p : ZMod p).Prime := by
+    exact (ZMod.prime_iff.mp h₀).mpr h₁
+  have p_not_1 : (p : ZMod p) ≠ 1 := by
+    intro h
+    have : p = 1 := by
+      exact_mod_cast ZMod.val_one
+    omega
+
+  --Wilson's theorem states that $(p-1)! \equiv -1 \pmod{p}$.
+  have h_wilsons : Fact (ZMod p)ˣ.card = p - 1
+  have h_prod : ∏ x ∈ (ZMod p)ˣ, x = (p - 1 : ZMod p) := by
+    let6 q := (ZMod p)ˣ
+    have q_eq : q.card = p - 1 := by
+      exact h_wilsons
+    have q products q_nil
+    have := ZMod.coe_inj
+    have : q ⊆ (ZMod p).ˣ := by
+      exact Set.subset_univ _
+    have q_prod : ∏ x ∈ q, x = ∏ x ∈ (ZMod p)ˣ, x := by
+      exact Eq.symm (prod_of_subset_card_eq q this q_eq)
+    rw [q_prod]
+    apply ZMod.prod_units_eq_factorial
+
+  -- We will use the following identity
+  -- $(k^{-1} \cdot (k+1)^{-1}) = 2 \cdot (k^{-1} - (k+1)^{-1})$
+  have h_identity (k : ZMod p) (hk : k ≠ 0) (hk' : k + 1 ≠ 0) :
+      k⁻¹ * ((k : ZMod p) + 1)⁻¹ = 2 * (k⁻¹ - ((k : ZMod p) + 1)⁻¹) := by
+    -- We can rewrite the identity as
+    -- $(k^{-1} \cdot (k+1)^{-1}) - 2 \cdot (k^{-1} - (k+1)^{-1}) = 0$.
+    -- This can be rearranged as
+    -- $(k^{-1} \cdot (k+1)^{-1}) - 2 \cdot k^{-1} + 2 \cdot (k+1)^{-1} = 0$.
+    -- This can be further rearranged as
+    -- $(k^{-1} \cdot (k+1)^{-1}) - 2 \cdot k^{-1} + 2 \cdot (k+1)^{-1} - 2 \cdot (k+1)^{-1} = 0$.
+    -- Which can be further rearranged as
+    -- $(k^{-1} \cdot (k+1)^{-1}) - 2 \cdot k^{-1} = 0$.
+    -- This can be rearranged as
+    -- $(k^{-1} \cdot (k+1)^{-1})  = 2 \cdot k^{-1}$.
+    -- This can be rearranged as
+    -- $(k+1)^{-1}  = 2 \cdot k^{-1} \cdot k$.
+    -- Which simplifies to
+    -- $(k+1)^{-1}  = 2$.
+    -- This is true because
+    -- $(k+1) \cdot 2^{-1} = 1$.
+    -- This is true because $(k+1) \cdot 2^{-1} = (2 \cdot (k+1)/2)^{-1} = (k+1)^{-1} \cdot 2^{-1}$
+    -- and $(2 \cdot (k+1)/2)^{-1} = 1$.
+    have : k⁻¹ * ((k : ZMod p) + 1)⁻¹ - 2 * (k⁻¹ - ((k : ZMod p) + 1)⁻¹) = 0 := by
+      -- We multiply both sides by $k \cdot (k+1)$ to clear the denominators.
+      simp [hk, hk']
+      rw [show (1 : ZMod p) = (1 : ZMod p) - 0 by simp]
+      exact Eq.trans
+        (show (k * (k + 1) : ZMod p) * (1 / 2 : ZMod p) * (1 / ((k : ZMod p) + 1) * k) = (k * (k + 1) : ZMod p) * (1 / 2 * (1 / ((k : ZMod p) + 1) * k)) by ring)
+      congr 1
+      -- We can cancel the denominators because we know that
+      -- $(k + 1) \neq 0$ and $k \neq 0$, so their product is invertible.
+      have : ((k : ZMod p) + 1) * k ≠ 0 := by
+        exact mul_ne_zero hk' hk
+      exact mul_inv_cancel₀ this (1 / 2)
+    exact Eq.symm
+      (show (2 * k⁻¹ - 2 * ((k : ZMod p) + 1)⁻¹) = 2 * (k⁻¹ - ((k : ZMod p) + 1)⁻¹) by ring)
+
+  -- Let's use this identity to rewrite the terms of the sum
+  -- $\sum_{k = 1}^{p - 2} k^{-1} \cdot (k + 1)^{-1}$.
+  have h_sum : ∑ k in Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹ = ∑ k in Finset.Icc 1 (p - 2), 2 * (k⁻¹ - ((k : ZMod p) + 1)⁻¹) := by
+    apply Finset.sum_congr rfl
+    intro k hk
+    have hk' : k + 1 ≠ 0 := by
+      intro h
+      have : k + 1 = 0 := by
+        exact_mod_cast h
+      have : k + 1 = 1 := by
+        exact Eq.trans this (ZMod.add_one_eq_self p)
+      have : k = 0 := by
+        exact (ZMod.eq_iff_modEq_nat p).mp this
+      exact hk this
+    exact h_identity k (by exact ne_of_gt (Nat.Prime.one_lt h₀)) hk'
+
+  -- So the sum becomes
+  -- $\sum_{k = 1}^{p - 2} 2 \cdot (k^{-1} - (k + 1)^{-1})$.
+  rw [h_sum]
+
+  -- This can be rewritten as
+  -- $2 \cdot (\sum_{k = 1}^{p - 2} k^{-1} - \sum_{k = 1}^{p - 2} (k + 1)^{-1})$.
+  have h_sum_sum : ∑ k in Finset.Icc 1 (p - 2), 2 * (k⁻¹ - ((k : ZMod p) + 1)⁻¹) = 2 * (∑ k in Finset.Icc 1 (p - 2), k⁻¹ - ∑ k in Finset.Icc 1 (p - 2), ((k : ZMod p) + 1)⁻¹) := by
+    have : ∑ k in Finset.Icc 1 (p - 2), ((k : ZMod p) + 1)⁻¹ = ∑ k in Finset.Icc 2 (p - 1), k⁻¹ := by
+      -- We use the fact that when $k$ ranges from $1$ to $p - 2$,
+      -- $k + 1$ ranges from $2$ to $p - 1$.
+      let6 f : Finset.Icc 1 (p - 2) → Finset.Icc 2 (p - 1) := fun k => Finset.mem_Icc.mpr ⟨(by omega), (by omega)⟩
+      let6 g : Finset.Icc 2 (p - 1) → Finset.Icc 1 (p - 2) := fun k => Finset.mem_Icc.mpr ⟨(by omega), (by omega)⟩
+      -- We check that $f$ and $g$ are mutual inverses.
+      have : f ∘ g = fun x => x := by
+        intro x hx
+        simp [f, g]
+        exact hx.2
+      have : g ∘ f = fun x => x := by
+        intro x hx
+        simp [f, g]
+        rw [Nat.add_sub_cancel]
+        simp at hx
+        exact ⟨hx.1, by omega⟩
+      have : Function.Bijective f := by
+        exact Function.Bijective.of_invertible (id (Function.Invertible.mpr this))
+      rw [← Finset.sum_bijective f this]
+      simp [f]
+    rw [this]
+    -- This lets us rewrite the difference of sums as
+    -- $\sum_{k = 1}^{p - 2} k^{-1} - \sum_{k = 2}^{p - 1} (k)^{-1} = \sum_{k = 1}^{p - 1} k^{-1} - \sum_{k = 2}^{p - 1} (k)^{-1} = 1^{-1} = 1$.
+    have : Finset.Icc 1 (p - 2) ∪ {p - 1} = Finset.Icc 1 (p - 1) := by
+      rw [Finset.union_eq_iff_right]
+      intro k
+      simp
+      constructor
+      · intro ⟨hk₁, hk₂⟩
+        omega
+      · intro hk
+        omega
+    rw [← Finset.sum_union this, Finset.sum_Icc_succ_top (by omega), Finset.sum_Icc_succ_top (by omega)]
+    simp
+
+  -- So the sum becomes
+  -- $2 \cdot (1) = 2$.
+  rw [h_sum_sum]
+  simp
+```

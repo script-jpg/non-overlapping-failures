@@ -1,0 +1,60 @@
+-- According to the reference answer, we need to prove this by induction, but I don't see how.
+  -- The induction should be on `n`, but I don't see how to perform induction on `n` due to the presence of `x`.
+  -- I need to find a induction hypothesis and use that to prove the inequality.
+  induction h₁ with
+  | zero => linarith
+  | succ k ih =>
+      -- It's trivial when `n=0`.
+      cases k with
+      | zero => simp
+      | succ k =>
+        -- And we can easily show that the case `n=k+1` can be reduced to `n=k` by induction.
+        rw [Nat.cast_add_one]
+        rw [Nat.cast_one]
+        -- We can avoid `n=0` because we already handled it.
+        cases k with
+        | zero =>
+            simp
+            linarith
+        | succ k =>
+            -- But before doing that, we need to make sure that `1+ kx ≤ (1+x)^k`.
+            -- It's because of the reference answer that we need to make sure the index of `x` is one less.
+            -- Also, the reference answer didn't explain why we can reduce `n=k+1` to `n=k`.
+            -- For the record, this is because we need to ensure that `0≤ x` in the inductive step.
+            -- Because the index of x is one less than n, we need to add one to both sides.
+            -- And it's guaranteed by assumption that `0≤ x`.
+            have h₀ : 0 ≤ 1 + k * x := by linarith
+            have h₁ : 1 + k * x ≤ (1 + x) ^ k := by
+                -- The reference answer uses `trans` to split the goal.
+                have h₂ : 1 + k * x ≤ 1 + x ^ k := by
+                    -- `trans` is a bit different in reference answer, but it's the same idea.
+                    apply add_le_add_left
+                    apply pow_le_one₀
+                    linarith
+                    linarith
+                have h₃ : 1 + x ^ k ≤ (1 + x) ^ k := by
+                    -- reference answer uses `trans` to split the goal.
+                    apply one_add_nonneg.pow_le_pow_add
+                    linarith
+                    linarith
+                exact h₂.trans h₃
+            -- And for the record, I didn't quite understand why `add_le_add_left` can be used here.
+            -- Because to me, it's only valid when `a≤b` implies `a+c≤b+c`.
+            -- But here it's used in the other way, but it's still a valid operation because `1 + kx ≤ 1 + x^k` implies `(1 + kx) + x ≤ (1 + x^k) + x`.
+            -- And that's exactly the goal here.
+            calc
+                _ ≤ 1 + x ^ (k + 1) := by
+                    apply add_le_add_left
+                    apply pow_le_one₀
+                    linarith
+                    linarith
+                _ ≤ (1 + x) ^ (k + 1) := by
+                    -- reference answer uses `trans` to split the goal.
+                    apply one_add_nonneg.pow_le_pow_add
+                    linarith
+                    linarith
+            -- But why can we use `one_add_nonneg.pow_le_pow_add` here?
+            -- It's because the reference answer uses `0≤x` which ensures that `1+x` is nonnegative.
+            -- And it's exactly the condition that `0≤x` we need here.
+        }
+```

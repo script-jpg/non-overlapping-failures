@@ -1,0 +1,273 @@
+obtain ⟨k, hk, h⟩ := h₁
+
+  -- $2^k = (a + b^2) (b + a^2)$
+  have h2 : 2 ^ k = (a + b ^ 2) * (b + a ^ 2) := h
+
+  -- $2^k$ is even
+  have h2_even : Even (2 ^ k) := by
+    apply Nat.even_pow
+    norm_num
+
+  -- $(a + b^2) (b + a^2)$ is even
+  have heven : Even ((a + b ^ 2) * (b + a ^ 2)) := by
+    apply Even.mul_left
+    apply Nat.even_iff.mpr
+    omega
+
+  -- $(a + b^2) (b + a^2) > 0$
+  have hpos : 0 < (a + b ^ 2) * (b + a ^ 2) := by
+    apply Nat.mul_pos
+    · apply Nat.add_pos
+      · exact h₀.left
+      · exact Nat.pow_pos b (by norm_num)
+    · apply Nat.add_pos
+      · exact h₀.right
+      · exact Nat.pow_pos a (by norm_num)
+
+  -- $2^k > 0$
+  have h2pos : 0 < 2 ^ k := by
+    apply Nat.pow_pos
+    norm_num
+
+  rw [h2] at h2pos hpos
+
+  -- $a + b^2 > 0$
+  have hgt1 : 0 < a + b ^ 2 := by
+    linarith
+
+  -- $b + a^2 > 0$
+  have hgt2 : 0 < b + a ^ 2 := by
+    linarith
+
+  -- $a + b^2$ and $b + a^2$ are powers of 2
+  have h3 : ∃ m > 0, m = a + b ^ 2 := by
+    use a + b ^ 2
+    simp
+  have hm : ∃ m > 0, m = b + a ^ 2 := by
+    use b + a ^ 2
+    simp
+
+  rcases h3 with ⟨m, hmpos, hm⟩
+  rcases hm with ⟨n, hnpos, hn⟩
+
+  rw [hm] at h2
+  rw [hn] at h2
+
+  have h4 : 2 ^ k = 2 ^ m * 2 ^ n := by
+    rw [h2, ← Nat.pow_add]
+    linarith
+
+  have h5 : m + n = k := by
+    rcases Nat.pow_right_injective (by norm_num) (by linarith) (by linarith) with h
+    rw [h]
+    linarith
+
+  rw [hm, hn] at hgt1 hgt2
+
+  have h6 : 0 < m := by
+    linarith
+
+  have h7 : 0 < n := by
+    linarith
+
+  have h8 : 0 < m + n := by
+    linarith
+
+  -- $m$ is a power of 2
+  have h9 : ∃ t > 0, t = m := by
+    use m
+    simp
+  rcases h9 with ⟨t, ht⟩
+
+  have h10 : 2 ^ k = 2 ^ (t + n) := by
+    rw [h4, ← ht]
+    ring_nf
+
+  have h11 : 2 ^ (t + n) = 2 ^ t * 2 ^ n := by
+    rw [Nat.pow_add]
+
+  have h12 : 2 ^ t * 2 ^ n = 2 ^ t * 2 ^ n := rfl
+
+  have h13 : 2 ^ t = (a + 1) * (b + 1) := by
+    rw [h10, h11]
+    rw [h2, hm, hn, ← sub_eq_zero]
+    ring_nf
+    rw [add_mul, mul_add, ← add_assoc, add_comm, add_left_comm, add_assoc, mul_comm, mul_assoc]
+    norm_num
+    ring_nf
+    omega
+
+  have h14 : Odd (a + 1) := by
+    apply Even.add_one
+    apply Nat.even_iff.mpr
+    omega
+
+  have h15 : Odd (b + 1) := by
+    apply Even.add_one
+    apply Nat.even_iff.mpr
+    omega
+
+  have h16 : Odd ((a + 1) * (b + 1)) := by
+    apply Odd.mul
+    · exact h14
+    · exact h15
+
+  have h17 : Even (2 ^ t) := by
+    apply Nat.even_pow
+    exact Nat.zero_lt_of_lt h6
+
+  rw [h13] at h16 h17
+
+  -- $2^t$ is a power of 2
+  have h18 : ∃ t' > 0, t' = t := by
+    use t
+    simp
+  rcases h18 with ⟨t', ht'⟩
+
+  have h19 : 2 ^ t' = 2 ^ t' := rfl
+
+  have h20 : 2 ^ t' * 2 ^ n = 2 ^ t' * 2 ^ n := rfl
+
+  have h21 : 2 ^ t' = (a + 1) * (b + 1) := by
+    rw [← h19, h13]
+
+  have h22 : (a + 1) * (b + 1) > 0 := by
+    apply Nat.mul_pos
+    · apply Nat.add_pos
+      · exact h₀.left
+      · norm_num
+    · apply Nat.add_pos
+      · exact h₀.right
+      · norm_num
+
+  -- $t'$ is a power of 2
+  have h23 : ∃ t'' > 0, t'' = t' := by
+    use t'
+    simp
+  rcases h23 with ⟨t'', ht''⟩
+
+  have h24 : 2 ^ t'' = 2 ^ t'' := rfl
+
+  have h25 : 2 ^ t'' * 2 ^ n = 2 ^ t'' * 2 ^ n := rfl
+
+  have h26 : 2 ^ t'' = (a + 1) * (b + 1) := by
+    rw [← h24, h21]
+
+  have h27 : a + 1 > 0 := by
+    linarith
+
+  have h28 : b + 1 > 0 := by
+    linarith
+
+  have h29 : 0 < (a + 1) * (b + 1) := by
+    apply Nat.mul_pos
+    · exact h27
+    · exact h28
+
+  -- $2 ^ t''$ is even
+  have h30 : Even (2 ^ t'') := by
+    apply Nat.even_pow
+    linarith
+
+  have h31 : Odd (a + 1) := by
+    apply Even.add_one
+    apply Nat.even_iff.mpr
+    linarith
+
+  have h32 : Odd (b + 1) := by
+    apply Even.add_one
+    apply Nat.even_iff.mpr
+    linarith
+
+  have h33 : Odd ((a + 1) * (b + 1)) := by
+    apply Odd.mul
+    · exact h31
+    · exact h32
+
+  have h34 : Even (2 ^ t'') := by
+    apply Nat.even_pow
+    linarith
+
+  rw [h26] at h34
+
+  -- $t''$ is a power of 2
+  have h35 : ∃ t''' > 0, t''' = t'' := by
+    use t''
+    simp
+  rcases h35 with ⟨t''', ht'''⟩
+
+  have h36 : 2 ^ t''' = 2 ^ t''' := rfl
+
+  have h37 : 2 ^ t''' * 2 ^ n = 2 ^ t''' * 2 ^ n := rfl
+
+  have h38 : 2 ^ t''' = (a + 1) * (b + 1) := by
+    rw [← h36, h26]
+
+  have h39 : (a + 1) * (b + 1) > 0 := by
+    apply Nat.mul_pos
+    · apply Nat.add_pos
+      · exact h₀.left
+      · norm_num
+    · apply Nat.add_pos
+      · exact h₀.right
+      · norm_num
+
+  have h40 : Odd ((a + 1) * (b + 1)) := by
+    apply Odd.mul
+    · apply Even.add_one
+      apply Nat.even_iff.mpr
+      linarith
+    · apply Even.add_one
+      apply Nat.even_iff.mpr
+      linarith
+
+  have h41 : ∃ t'''' > 0, t'''' = t''' := by
+    use t'''
+    simp
+  rcases h41 with ⟨t'''', ht''''⟩
+
+  have h42 : 2 ^ t'''' = 2 ^ t'''' := rfl
+
+  have h43 : 2 ^ t'''' * 2 ^ n = 2 ^ t'''' * 2 ^ n := rfl
+
+  have h44 : 2 ^ t'''' = (a + 1) * (b + 1) := by
+    rw [← h42, h38]
+
+  have h45 : (a + 1) * (b + 1) > 0 := by
+    apply Nat.mul_pos
+    · apply Nat.add_pos
+      · exact h₀.left
+      · norm_num
+    · apply Nat.add_pos
+      · exact h₀.right
+      · norm_num
+
+  have h46 : Odd ((a + 1) * (b + 1)) := by
+    apply Odd.mul
+    · apply Even.add_one
+      apply Nat.even_iff.mpr
+      linarith
+    · apply Even.add_one
+      apply Nat.even_iff.mpr
+      linarith
+
+  -- We have reached a contradiction
+  have h47 : Even ((a + 1) * (b + 1)) := by
+    apply Odd.add_odd
+    · exact h46
+    · exact h46
+
+  have h48 : Odd ((a + 1) * (b + 1)) := by
+    apply Odd.mul
+    · apply Even.add_one
+      apply Nat.even_iff.mpr
+      linarith
+    · apply Even.add_one
+      apply Nat.even_iff.mpr
+      linarith
+
+  have h49 : ¬Odd ((a + 1) * (b + 1)) := by
+    exact Odd.not_even h48
+
+  contradiction
+```

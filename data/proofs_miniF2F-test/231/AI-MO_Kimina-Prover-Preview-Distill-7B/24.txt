@@ -1,0 +1,104 @@
+-- We start by showing that $f$ is strictly decreasing.
+  have h₂ : ∀ n, 0 < n → f n > f (n + 1) := by
+    intro n hn
+    calc
+      f n = (Nat.divisors n).card / n ^ ((1 : ℝ) / 3) := by rw [h₀]
+      _ > (Nat.divisors (n + 1)).card / (n + 1) ^ ((1 : ℝ) / 3) := by refine (div_lt_div_iff?_?_).mpr (by rw [Nat.divisors_succ]; simp); exact h₁ n hn; exact Nat.pos_add_one n
+      _ = f (n + 1) := by rw [h₀]
+  -- Show that $f$ is injective.
+  have h₃ : ∀ n m, 0 < n → 0 < m → f n = f m → n = m := by
+    intro n m hn hm heq
+    by_contra! hne
+    have hn' : 0 < n + 1 := by exact Nat.add_pos_left n 1
+    have hm' : 0 < m + 1 := by exact Nat.add_pos_left m 1
+    rw [show n = (n + 1) - 1 by exact Nat.sub_add_cancel (Nat.le_self_pow_succ' n 1)] at hne
+    rw [show m = (m + 1) - 1 by exact Nat.sub_add_cancel (Nat.le_self_pow_succ' m 1)] at hne
+    rw [h₀] at heq
+    rw [h₀] at heq
+    clear hne
+    apply_fun (fun x => (x / (n + 1) ^ ((1 : ℝ) / 3)) * (n + 1) ^ ((1 : ℝ) / 3)) at heq
+    apply_fun (fun x => (x / (m + 1) ^ ((1 : ℝ) / 3)) * (m + 1) ^ ((1 : ℝ) / 3)) at heq
+    simp at heq
+    rw [div_mul_cancel₀ _ (by positivity), ←Real.rpow_mul (by positivity)] at heq
+    rw [div_mul_cancel₀ _ (by positivity), ←Real.rpow_mul (by positivity)] at heq
+    norm_num at heq
+    have : (m + 1) / (n + 1) > 0 := by positivity
+    replace this : (m + 1) / (n + 1) = 1 := by
+      field_simp at heq
+      exact heq
+    replace this : m + 1 = n + 1 := by exact eq_of_div_eq_one this heq
+    linarith
+  -- We now show that $f$ is strictly decreasing on the integers.
+  have h₄ : ∀ n, 0 < n → ∀ m > n, f n > f m := by
+    intro n hn m hm
+    induction' m, hm using Nat.le_induction with m hm ih
+    · by_cases hn' : n = 0
+      · rw [hn']
+        simp
+      rw [show n = n + 1 - 1 by exact Nat.sub_add_cancel (Nat.le_self_pow_succ' n 1)]
+      by_cases hn'' : n = 0
+      · rw [hn'']
+        simp
+      rw [show n = n + 1 - 1 by exact Nat.sub_add_cancel (Nat.le_self_pow_succ' n 1)]
+      rw [h₀]
+      rw [h₀]
+      simp
+      exact lt_of_le_of_ne (Nat.le_self_pow_succ' n 1) hn''
+      clear hn'
+      positivity
+    have : m = n + 1 ∨ m > n + 1 := by omega
+    rcases this with (h | h)
+    · rw [h]
+      trans f (n + 1)
+      by_cases hn' : n = 0
+      · rw [hn']
+        simp
+        linarith
+      rw [show n = n + 1 - 1 by exact Nat.sub_add_cancel (Nat.le_self_pow_succ' n 1)]
+      rw [h₀]
+      rw [h₀]
+      simp
+      exact lt_of_le_of_ne (Nat.le_self_pow_succ' n 1) hn'
+      positivity
+    · apply ih
+      linarith
+      exact Nat.lt_add_one_iff.mpr h
+  -- We show that the maximum value of $f(n)$ occurs at $n = 288$.
+  have h₅ : f 288 > f 289 := by
+    apply h₂
+    positivity
+  have h₆ : ∀ n, 0 < n → f n ≤ f 288 := by
+    intro n hn
+    by_contra! h
+    let s := min (n + 1) 288
+    have h₇ : s > 0 := by
+      have : n + 1 > 0 := by exact Nat.add_pos_left n 1
+      apply Nat.min_pos
+      · exact this
+      · exact Nat.zero_lt_succ 287
+    have h₈ : f s > f 288 := by
+      apply h₂
+      apply Nat.lt_add_one_iff.mpr
+      exact Nat.le_min_left (n + 1) 288
+    have h₉ : s ≠ 288 := by
+      apply Nat.min_ne_left
+      · have : n + 1 > 0 := by exact Nat.add_pos_left n 1
+        positivity
+      · exact Nat.zero_lt_succ 287
+    apply h₃
+    all_goals positivity
+    exact h₈
+  have h₇ : N = 288 := by
+    by_contra! hneq
+    have h₈ : f N > f 288 := by
+      apply h₁
+      positivity
+      exact hneq
+    have h₉ : f 288 > f N := by
+      apply h₁
+      positivity
+      rw [hneq]
+    linarith
+  rw [h₇]
+  simp only [Nat.reduceLeDiff, List.sum_cons, List.sum_nil, add_zero, Nat.cast_ofNat, Nat.reduceEqDiff]
+```

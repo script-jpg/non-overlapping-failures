@@ -1,0 +1,53 @@
+-- most of the work is doing some rearranging to turn the equations into
+  -- a whole bunch of small primes
+  have h₄ : (a + 1) * (b + 1) = 525 := by linarith
+  have h₅ : (b + 1) * (c + 1) = 147 := by linarith
+  have h₆ : (c + 1) * (d + 1) = 105 := by linarith
+
+  -- from the 2nd equation, we can deduce that $b+1$ divides 147 and
+  -- $b+1 > 1$ (since $b$ is a positive integer), so $b+1$ equals one
+  -- of 3, 7, 21, 49, 147. so $b$ equals one of 2, 6, 20, 48, 146.
+  have h₇ : (b + 1) ∣ 147 := by
+    have : (b + 1) * (c + 1) = 147 := by assumption
+    apply Nat.dvd_of_mul_eq_right at this
+    exact this
+  have h₈ : b + 1 > 1 := by linarith
+  have h₉ : b + 1 < 147 := by linarith
+  have : b + 1 = 3 ∨ b + 1 = 7 ∨ b + 1 = 21 ∨ b + 1 = 49 ∨ b + 1 = 147 := by
+    let x : Finset ℕ := {b + 1 | b + 1 > 1 ∧ b + 1 < 147 ∧ (b + 1) ∣ 147}
+    have h₉ : (b + 1) ∈ x := by
+      simp [x]
+      split_ands
+      · linarith
+      · linarith
+      · exact h₇
+    have h₁₀ : x = {3, 7, 21, 49, 147} := by decide
+    rw [h₁₀] at h₉
+    exact h₉
+  rcases this with h | h | h | h | h
+  -- if $b+1 = 3$, then $c+1 = 49$, but this makes $a+1 = 175$, making
+  -- the 3rd equation infeasible
+  · linarith
+  -- if $b+1 = 7$, then $c+1 = 21$, making $a+1 = 75$, $d+1 = 15$, which
+  -- makes $a = 74$, $d = 14$, and $a-d = 60$ (this is the only valid option)
+  · linarith
+  -- if $b+1 = 21$, then $c+1 = 7$, making $d+1 = 15$, $a+1 = 35$, which
+  -- makes $a = 34$, $d = 14$, and $a-d = 20$
+  · linarith
+  -- if $b+1 = 49$, then $c+1 = 3$, making $d+1 = 35$, $a+1 = 5$, which
+  -- makes $a = 4$, $d = 34$, and $a-d = -30$
+  · linarith
+  -- if $b+1 = 147$, then $c+1 = 1$, making $d+1 = 105$, $a+1 = 15$, which
+  -- makes $a = 14$, $d = 104$, and $a-d = -90$
+  · linarith
+
+  -- thus we obtain the value of $a-d$ from the 5 possible options
+  have h₁₀ : a - d = 10 ∨ a - d = 20 ∨ a - d = 60 ∨ a - d = -30 ∨ a - d = -90 := by
+    let x : Finset ℤ := {10, 20, 60, -30, -90}
+    have h₁₀ : (↑a - ↑d) ∈ x := by
+      simp [x]
+      rw [←h₄, ←h₅, ←h₆, h₇, h₉, h₁, h₂, h₃]
+      simp
+    exact h₁₀
+  aesop
+```

@@ -1,0 +1,52 @@
+-- figure out a,b,c,d from the equations given.
+  have p : b = 1 - a := by linarith
+  have q : a ^ 2 + a - 1 = 0 := by rw [p] at h₀; linarith
+  have p' : d = 1 - c := by linarith
+  have q' : c ^ 2 + c - 1 = 0 := by rw [p'] at h₂; linarith
+
+  -- solve the equations
+  have a_val : a = (-1 + √5) / 2 ∨ a = (-1 - √5) / 2 := by
+    have : discrim (1:ℝ) (√5:ℝ) (-1:ℝ) = √5 * √5 := by
+      ring_nf; simp; ring
+    have := (quadratic_eq_zero_iff (by simp) this a).mp q
+    have : (1:ℝ) ≠ 0 := by simp
+    exact this
+  have c_val : c = (-1 + √5) / 2 ∨ c = (-1 - √5) / 2 := by
+    have : discrim (1:ℝ) (√5:ℝ) (-1:ℝ) = √5 * √5 := by
+      ring_nf; simp; ring
+    have := (quadratic_eq_zero_iff (by simp) this c).mp q'
+    have : (1:ℝ) ≠ 0 := by simp
+    exact this
+
+  -- determine b d from a,c
+  have b_val : b = 1 - (-1 + √5) / 2 ∨ b = 1 - (-1 - √5) / 2 := by
+    cases a_val with
+    | inl ha =>
+      left; rw [ha] at p; exact p
+    | inr ha =>
+      right; rw [ha] at p; exact p
+  have d_val : d = 1 - (-1 + √5) / 2 ∨ d = 1 - (-1 - √5) / 2 := by
+    cases c_val with
+    | inl hc =>
+      left; rw [hc] at p'; exact p'
+    | inr hc =>
+      right; rw [hc] at p'; exact p'
+
+  -- determine the distance between the two intersections
+  have dist : (a - c) ^ 2 + (b - d) ^ 2 = 10 := by
+    cases a_val with
+    | inl ha =>
+      cases c_val with
+      | inl hc =>
+        exfalso; exact h₄ (by linarith)
+      | inr hc =>
+        rw [ha, hc]; ring_nf; simp; ring
+    | inr ha =>
+      cases c_val with
+      | inl hc =>
+        rw [ha, hc]; ring_nf; simp; ring
+      | inr hc =>
+        exfalso; exact h₄ (by linarith)
+
+  rw [dist]
+```

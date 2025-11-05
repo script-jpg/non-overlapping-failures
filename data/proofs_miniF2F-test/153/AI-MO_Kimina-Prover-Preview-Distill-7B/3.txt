@@ -1,0 +1,81 @@
+-- The maximum value is attained at $t=2.$
+  have h : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 := by
+    have h1 : (2 ^ t - 3 * t) * t / 4 ^ t ≤ 0 := by
+      positivity
+    have h2 : (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 = 0 := by norm_num
+    linarith
+  -- We can reduce the problem to showing that the maximum value of $(2^t - 3t)t$ for real values of $t$ is 4.
+  suffices (2 ^ t - 3 * t) * t ≤ 4 by
+    have h1 : 4 / 4 ^ t ≤ 4 / 4 ^ (2 : ℝ) := by
+      apply div_le_div_of_nonneg_left
+      · rw [<-Real.rpow_natCast]
+        apply Real.rpow_le_rpow_of_exponent_le
+        · norm_num
+        · norm_num
+        · norm_num
+      · norm_num
+    have h2 : (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 = 4 / 4 ^ (2 : ℝ) := by norm_num
+    rw [h2] at h
+    apply le_trans h1 h
+
+  -- The function $f(t) = (2^t - 3t)t$ is increasing on the interval $[2, +\infty).$
+  let f (t : ℝ) := (2 ^ t - 3 * t) * t
+
+  have h1 : f (2 : ℝ) = 4 := by norm_num
+
+  have h2 : ∀ t > 2, f (t) > 4 := by
+    intro t ht
+    simp only [f]
+    -- The function $2^t$ increases faster than the function $3t$.
+    have h2 : (2 ^ t - 3 * t) * t > (2 ^ 2 - 3 * 2) * 2 := by
+      apply sub_neg.mp
+      have h1 : (2 ^ t - 3 * t) * t > (2 ^ 2 - 3 * 2) * 2 - 3 * (t - 2) := by
+        calc
+          (2 ^ t - 3 * t) * t > (2 ^ (2 + (t - 2)) - 3 * t) * 2 := by
+            apply mul_lt_mul_of_pos_right
+            · rw [<-Real.rpow_natCast]
+              apply Real.rpow_lt_rpow_of_exponent_lt
+              · norm_num
+              · norm_num
+              · linarith
+            · norm_num
+          _ = (2 ^ 2 * 2 ^ (t - 2) - 3 * t) * 2 := by
+            rw [Real.rpow_add (by norm_num)]
+            congr
+            ring
+          _ > (2 ^ 2 - 3 * 2) * 2 := by
+            apply sub_neg.mp
+            apply mul_lt_mul_of_pos_left
+            · rw [<-Real.rpow_natCast]
+              apply Real.rpow_lt_rpow_of_exponent_lt
+              · norm_num
+              · linarith
+              · norm_num
+            · norm_num
+      apply lt_trans h1
+      linarith
+    linarith
+
+  -- The function $f(t) = (2^t - 3t)t$ is decreasing on the interval $(-\infty, 2].$
+  have h3 : ∀ t < 2, f (t) ≤ 4 := by
+    intro t ht
+    simp only [f]
+    -- For all $t < 2,$ we have $2^t < 4$.
+    have h1 : (2 ^ t - 3 * t) * t ≤ 4 := by
+      have h1 : 2 ^ t ≤ 4 := by
+        rw [Real.rpow_def_of_pos (by norm_num)]
+        rw [<-Real.rpow_natCast]
+        nth_rw 2 [show (4 : ℝ) = 2 ^ (2 : ℝ) by norm_num]
+        apply Real.rpow_le_rpow_of_exponent_le
+        · norm_num
+        · linarith
+        · norm_num
+      nlinarith
+    assumption
+
+  -- For all real values of $t,$ we have $f(t) \leq 4.$
+  by_cases h : t ≤ 2
+  · exact h3 t h
+  · exact h2 t (lt_of_not_ge h)
+
+```

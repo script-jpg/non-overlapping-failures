@@ -1,0 +1,85 @@
+-- We need to show that there are 100 such numbers.
+  -- First, observe that a number has only even digits if and only if
+  -- it is of the form $2a$, $4a$, $6a$, or $8a$ for some digit $a$.
+  have h₀ (n : ℕ) : (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ↔ ∃ a : ℕ, 1 ≤ a ∧ a < 10 ∧ n = 2 * a ∨ n = 4 * a ∨ n = 6 * a ∨ n = 8 * a := by
+    -- We prove this using a constructive proof, showing that
+    -- the digits must be one of 0, 2, 4, 6, or 8 (the even digits in base 10).
+    constructor
+    · intro h
+      -- First, we consider the case where $n$ has no digits, which we can rule out.
+      rcases (Nat.digits_eq_nil_iff_eq_zero.mp h) with rfl
+      -- Now, we can use the fact that all digits must be even to restrict our search.
+      have h₁ : Nat.digits 10 n = Nat.digits 10 (n / 10) ++ [n % 10] := by
+        rw [Nat.digits_def' (b := 10) (by norm_num) (n := n) (by apply Nat.zero_lt_of_ne_zero; intro hn; rw [hn] at h; norm_num at h)]
+        omega
+      -- We can also make the inductive argument that if the last digit is even,
+      -- then the rest of the digits must form a number that is also divisible by 2.
+      have h₂ (l : List ℕ) (h : ∀ d : ℕ, d ∈ l → Even d) : Even (l ++ [d] : ℕ) ↔ Even l ∧ Even d := by
+        cases l with
+        | nil =>
+          simp [h]
+        | cons hd tl =>
+          simp [h]
+          constructor
+          · intro h
+            cases h with
+            | inl h₁ => cases h with
+              | inl h₂ => rw [h₂] at h₁; rw [h₁]; exact h₂
+              | inr h₂ => rw [h₂] at h₁; rw [h₁]; exact ⟨by exact h₂, by exact h₁⟩
+            | inr h₁ => rw [h₁] at h₂; rw [h₂]; exact ⟨by exact h₁, by exact h₂⟩
+          · intro h
+            cases h with
+            | inl h₁ => rw [h₁]; exact ⟨by exact h₂, by exact h₁⟩
+            | inr h₁ => rw [h₁]; exact by exact h₂
+      -- Continuing the inductive argument, we can show that any number with only even digits
+      -- must be of the form $2a$, $4a$, $6a$, or $8a$ for some integer $a$.
+      have h₃ : ∀ n : ℕ, (∀ d : ℕ, d ∈ Nat.digits 10 n → Even d) ↔ ∃ a, 1 ≤ a ∧ a < 10 ∧ n = 2 * a ∨ n = 4 * a ∨ n = 6 * a ∨ n = 8 * a := by
+        intro n
+        induction' n using Nat.strong_induction_on with n ih
+        cases n with
+        | zero => simp
+        | succ n =>
+          replace ih := ih (Nat.succ_le_of_lt (Nat.zero_lt_of_ne_zero (by intro hn; rw [hn] at h; norm_num at h)))
+          rcases (ih h) with ⟨a, ha₁, ha₂, ha₃⟩ | ha | ha | ha
+          · use a - 1; omega
+          · use a; omega
+          · use a; omega
+          · use a; omega
+      -- Now, we can use this characterization to count the number of elements in the set.
+      have h₁ := h₃ n
+      rw [h₁]
+      tauto
+    · intro h
+      rcases h with ⟨a, ha₁, ha₂, ha₃⟩ | ha | ha | ha
+      · rw [ha₃]
+        intro d hd
+        rw [Nat.digits_def' (b := 10) (by norm_num) (n := a) (by omega)]
+        simp at hd
+        rcases hd with (h | h | h | h) <;> rw [h] <;> norm_num
+      · rw [ha]
+        intro d hd
+        simp at hd
+        rcases hd with (h | h | h | h) <;> rw [h] <;> norm_num
+      · rw [ha]
+        intro d hd
+        simp at hd
+        rcases hd with (h | h | h | h) <;> rw [h] <;> norm_num
+      · rw [ha]
+        intro d hd
+        simp at hd
+        rcases hd with (h | h | h | h) <;> rw [h] <;> norm_num
+  rw [h₀]
+  clear h₀
+
+  -- Now, we can use the set characterization to count the numbers in our set.
+  have h₁ : S = (Finset.Icc 1000 9999).filter (fun n => (fun d : ℕ, d ∈ Nat.digits 10 n → Even d) ∧ 5 ∣ n) := by
+    ext n
+    simp
+  rw [h₁]
+  -- We can use `Finset.filter` to count the number of elements in our set.
+  -- First, we can eliminate all multiples of 5 that have a non-even digit.
+  -- Then, we can eliminate all multiples of 5 that have an odd digit.
+  -- The remaining numbers are the ones we want.
+  simp [Finset.filter]
+  native_decide
+```

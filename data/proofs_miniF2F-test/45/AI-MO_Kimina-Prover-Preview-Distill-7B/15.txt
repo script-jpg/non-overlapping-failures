@@ -1,0 +1,243 @@
+have h₁ : ∑ k in S, k = ∑ k in S, k := by rfl
+
+  -- turn the question into a decision procedure
+  have h₂ (n : ℕ) :
+      n ∈ S ↔
+        2010 ≤ n ∧ n ≤ 2019 ∧ (∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n) := by
+    rw [h₀]
+    exact Nat Excluding.sum_filter (fun n ↦ (Nat.divisors n).card = 4) S n
+
+  -- extract the witness m for the four divisors from the statement
+  have h₃ (n : ℕ) (h : n ∈ S) : ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+    have h' := h₂ n h
+    rw [h'}.2.2
+    exact id (Eq.symm h)
+
+  -- show that the four divisors of m can be written as 1, m, d, and m/d
+  have h₄ (m : ℕ) (h : (Nat.divisors m).card = 4) : ∃ d, d ∈ Nat.divisors m ∧ m = d + m / d ∧ d ∣ m ∧ d ≠ m / d := by
+    let Sₘ := (Nat.divisors m).filter (fun d ↦ d ≠ 1 ∧ d ≠ m)
+    have h₄ : Sₘ.card = 2 := by
+      refine Nat.card_eq_two_of_filter_of_card_eq?_?_
+      · rw [Nat.filter_filter]
+        simp [Sₘ, h]
+        exact Ne.symm (Nat.zero_ne_add_one ((Nat.divisors m).card - 1))
+      · exact Nat.card_eq_two_of_filter_of_card_eq?_ h
+        simp [Sₘ]
+    have ⟨d, d', h₅, h₆, h₇⟩ := Nat.exists_two_mem_card_eq_two Sₘ h₄
+    use d
+    refine ⟨?_,?_,?_,?_⟩
+    · refine mem_filter.mpr?_
+      exact And.intro h₅ (by linarith)
+    · rw [←h₆, Nat.add_comm, Nat_comm_add, Nat.mul_comm]
+      have g₀ := Nat.div_mul_cancel h₅.1
+      have g₁ := Nat.div_mul_cancel h₇
+      rw [g₀, g₁]
+      ring
+    · exact h₅.2
+    · by_contra h₈
+      rw [h₈] at h₇
+      simp at h₇
+      exact Nat.not_eq_zero_of_ne_zero h₇
+
+  -- the four divisors of m are 1, m, d, and m/d
+  have h₅ (n : ℕ) (h : n ∈ S) : ∃ d, d ∈ Nat.divisors n ∧ n = d + (n / d) ∧ d ∣ n ∧ d ≠ n / d ∧ (Nat.divisors n).card = 4 ∧ (∑ p in Nat.divisors n, p) = n := by
+    obtain ⟨m, h₄⟩ := h₃ n h
+    have h₅ := h₄ m h₄
+    rw [h₂ n h] at h₅
+    obtain ⟨d, h₅, h₆, h₇, h₈⟩ := h₅
+    refine ⟨d,?_,?_,?_,?_,?_,?_⟩
+    all_goals
+      exact h₅
+
+  -- the nice numbers can be written as p + p * q = p * (q + 1)
+  have h₆ (n : ℕ) (h : n ∈ S) : ∃ p, p ∈ Nat.primes ∧ n = p * (1 + (n / p)) ∧ (Nat.divisors n).card = 4 ∧ (∑ p in Nat.divisors n, p) = n := by
+    obtain ⟨p, h₅, h₆, h₇, h₈⟩ := h₅ n h
+    have h₉ : Nat.divisors n = {1, p, n / p, p * (n / p)} := by
+      have g₀ := h₅
+      have g₁ := h₆
+      have g₂ := h₇
+      have g₃ := h₈
+      clear * - g₀ g₁ g₂ g₃
+      ext x
+      simp
+      constructor
+      · intro h
+        by_cases h₁₀ : x = 1
+        · exact Or.inl h₁₀
+        · have h₁₁ : x ≠ 1 := by exact Nat.ne_of_lt_le h₁₀ (Nat.ne_of_gt (Nat.zero_lt_of_lt h))
+          apply g₀ at h
+          rw [h₁₀] at h
+          exact Or.inr (Or.inl (Eq.symm h))
+      · intro h
+        rcases h with h | h
+        · exact Or.inl h
+        · rcases h with h | h
+          · exact Or.inr (Or.inl (Eq.symm h))
+          · apply g₀
+            simp [h.2.2, h.1, h.2.1]
+    use p
+    refine ⟨?_,?_,?_,?_⟩
+    · exact h₅
+    · rw [h₉, Nat.card_insert_of_not_mem, Nat.card_insert_of_not_mem, Nat.card_singleton] ; simp
+      rw [← Nat.prime_mul, Nat.prime_mul_div_self h₅, h₉, Finset.sum_insert, Finset.sum_insert,
+      Finset.sum_singleton, Nat.add_comm, Nat_comm_add, Nat.mul_comm, Nat.div_mul_cancel]
+      have g₀ := Nat.prime_mul_div_self h₅
+      have g₁ := Nat.coprime_mul_div_cancel_right p (Nat.coprime_primes h₅ h₆)
+      rw [g₀, g₁]
+      refine Eq.symm (Nat.mul_div_assoc _ _ (Nat.gcd_mul_left p p.h₂.2.2).symm)
+    · rw [h₉, Nat.divisors_mul h₅, Nat.divisors_of_dvd (Nat.Prime.dvd_mul h₅) (dvd_trans (Nat.prime_dvd_prime h₅) h₇)]
+      simp
+      rw [h₉, Nat.divisors_mul h₅, Nat.divisors_of_dvd (Nat.Prime.dvd_mul h₅) h₇, Nat.Prime.divisors h₅, Nat.Prime.divisors h₆]
+      simp
+    · rw [h₉, Nat.divisors_mul h₅, Nat.divisors_of_dvd (Nat.Prime.dvd_mul h₅) (dvd_trans (Nat.prime_dvd_prime h₅) h₇)]
+      simp
+      rw [h₉, Nat.divisors_mul h₅, Nat.divisors_of_dvd (Nat.Prime.dvd_mul h₅) h₇, Nat.Prime.divisors h₅, Nat.Prime.divisors h₆]
+      simp
+      ring
+
+  -- if q + 1 is prime then the number is not nice
+  have h₇ (n p q : ℕ) (h₀ : Nat.Prime p) (h₁ : Nat.Prime q) (h₂ : q + 1 = p * (n / p)) (h₃ : n ∈ S) : ¬ (Nat.Prime (q + 1)) := by
+    obtain ⟨d, h₄, h₅, h₆, h₇, h₈, h₉⟩ := h₆ n h₃
+    have h₁₀ : Nat.Prime (p * (n / p)) := by
+      rw [h₉]
+      exact Nat.prime_mul_iff.mpr ⟨h₀, h₁⟩
+    have h₁₁ : p * (n / p) = p * p := by
+      rw [Nat.mul_comm, Nat_comm_mul]
+      have g₀ := Nat.Prime.ne_zero h₀
+      have g₁ := Nat.Prime.ne_zero h₁
+      rw [Nat.mul_div_cancel g₀]
+      rw [Nat.mul_div_cancel g₁]
+      exact h₅
+    have h₁₂ : n / p = p := by
+      have g₀ := Nat.Prime.ne_zero h₀
+      have g₁ := Nat.Prime.ne_zero h₁
+      rw [Nat.mul_div_cancel g₀] at h₁₁
+      rw [Nat.mul_div_cancel g₁] at h₁₁
+      linarith
+    have h₁₃ : n = p * p := by
+      rw [← Nat.mul_assoc, h₉, h₁₁]
+    have g₀ := h₁₀
+    have g₁ := Nat.prime_mul_iff.mp h₁₀
+    rcases g₁ with g₁ | g₁
+    · exact h₀
+    · have g₂ := Nat.Prime.ne_zero h₁
+      have g₃ := Nat.coprime_primes g₁ g₂
+      have g₄ := Nat.coprime_primes g₁ h₀
+      have g₅ := Nat.coprime_primes g₂ h₁
+      have g₆ := Nat.coprime_primes g₂ h₀
+      have g₇ := Nat.coprime_primes g₁ (Nat.coprime_primes g₂ h₁)
+      have g₈ := Nat.coprime_primes g₀ (Nat.coprime_primes g₇ h₀)
+      have g₉ := Nat.coprime_primes g₀ (Nat.coprime_primes g₈ h₁)
+      exact Nat.not_prime_mul g₀
+      exact h₃
+
+  -- reform the converse statement to a lemma
+  have h₈ (n p q : ℕ) (h₀ : Nat.Prime p) (h₁ : Nat.Prime q) (h₂ : ¬ (Nat.Prime (q + 1))) (h₃ : n ∈ S) : p * (q + 1) ∈ S := by
+    obtain ⟨d, h₄, h₅, h₆, h₇, h₈, h₉⟩ := h₆ n h₃
+    have h₁₀ : (Nat.divisors p).card = 2 := by
+      rw [Nat.divisors_prime h₀]
+      simp
+    have h₁₁ : (Nat.divisors q).card = 2 := by
+      rw [Nat.divisors_prime h₁]
+      simp
+    have h₁₂ : (Nat.divisors (p * q)).card = 4 := by
+      have g₀ := Nat.coprime_primes h₀ h₁
+      rw [Nat.divisors_mul g₀, Nat.card_product g₀, h₁₀, h₁₁]
+      simp
+      exact Ne.symm (Nat.zero_ne_of_lt (Nat.two_lt_card_divisors_iff h₀).mp (Nat.card_ne_zero_of_ne (Ne.symm g₀)))
+    have h₁₃ : p * q ∈ S := by
+      refine ⟨p,?_,?_,?_⟩
+      · exact h₀
+      · exact h₁
+      · use q
+        refine ⟨?_,?_⟩
+        · exact h₁₁
+        · simp [h₁₁, h₁₂]
+    have h₁₄ : (Nat.divisors (p * (q + 1))).card = 4 := by
+      have g₀ := Nat.coprime_primes h₀ h₁
+      have h₁₃ := Nat.coprime_add_one_of_mul h₀ h₁
+      rw [Nat.Coprime.mul_add_one_right_cancel h₀ h₁₃, Nat.divisors_mul g₀, Nat.card_product g₀, h₁₀, h₁₁]
+      simp
+      have g₁ := Nat.coprime_primes g₀ h₁
+      have g₂ := Nat.coprime_primes h₀ g₁
+      have g₃ := Nat.coprime_add_one_of_mul g₀ h₁
+      have g₄ := Nat.coprime_add_one_of_mul h₀ g₁
+      rw [show q + 1 + 1 = q + 2 by ring] at g₃ g₄
+      have g₅ := Nat.Prime.ne_zero h₁
+      rw [show q + 2 = q + 1 + 1 by ring]
+      exact Nat.not_coprime_of_not_coprime_of_dvd g₃ g₅ (Nat.dvd_refl (q + 1))
+    refine ⟨p * (q + 1),?_,?_,?_⟩
+    · simp [h₁₃]
+    · simp [h₁₄]
+    · use q + 1
+      refine ⟨?_,?_⟩
+      · simp [h₁₁, h₁₂, h₁₄]
+      · simp [h₁₁, h₁₂, h₁₄]
+
+  -- given two distinct primes p and q, p * (q + 1) is nice
+  have h₉ (n p q : ℕ) (h₀ : Nat.Prime p) (h₁ : Nat.Prime q) (h₂ : p ≠ q) (h₃ : ¬ (Nat.Prime (p + 1))) (h₄ : ¬ (Nat.Prime (q + 1))) (h₅ : n ∈ S) (h₆ : p < q) : p * (q + 1) ∈ S := by
+    obtain ⟨d, h₇, h₈, h₉, h₁₀, h₁₁, h₁₂⟩ := h₆ n h₅
+    have h₁₃ := Nat.coprime_primes h₀ h₁
+    have h₁₄ := Nat.coprime_add_one_of_mul h₀ h₁
+    have h₁₅ := Nat.Prime.ne_zero h₀
+    have h₁₆ := Nat.Prime.ne_zero h₁
+    have g₀ := Nat.coprime_primes h₀ h₁
+    have g₁ := Nat.coprime_add_one_of_mul h₀ h₁
+    have g₂ := Nat.coprime_add_one_of_mul h₁ h₀
+    have g₃ := Nat.Prime.ne_zero h₁
+    have g₄ := Nat.Prime.ne_zero h₀
+    have g₅ := Nat.coprime_primes h₁ h₀
+    refine ⟨p * (q + 1),?_,?_,?_⟩
+    · simp [h₀]
+    · simp [h₁]
+    · have g₆ := h₈
+      have g₇ := h₉
+      have g₈ := h₁₀
+      have g₉ := h₁₁
+      have g₁₀ := h₁₂
+      simp [g₀, g₁, g₂, g₃, g₄, g₅] at g₆ g₇ g₈ g₉ g₁₀ ⊢
+      refine ⟨d * (q + 1) / p,?_,?_⟩
+      · rw [← Nat.Coprime.mul_div_mul_right g₅.2.2 g₄, ← Nat.coprime_mul_iff.mp g₅.1, Nat.Prime.coprime_iff_not_dvd h₀] at g₆
+        exact g₆
+      · rw [Nat.Coprime.mul_div_mul_left g₅.2.2 g₄, ← Nat.coprime_mul_iff.mp g₅.1, Nat.Prime.coprime_iff_not_dvd h₁] at g₇
+        rw [Nat.coprime_comm.mp g₅.1, Nat.Prime.coprime_iff_not_dvd h₀] at g₈
+        exact g₈
+    · obtain h₇ := h₈
+      obtain h₉ := h₁₀
+      obtain h₁₁ := h₁₂
+      simp [h₁, h₇, h₉, h₁₁, Nat.add_comm] at h₅ ⊢
+      rw [show p * (q + 1) = p * q + p by ring]
+      exact h₅
+
+  -- the set S can be written as the union of {2010, 2014, 2016} and {2011, 2017}
+  have h₁₀ : S = ({2010, 2014, 2016} : Finset ℕ) ∪ {2011, 2017} := by
+    ext n
+    constructor
+    · intro h
+      simp [h₁] at h
+      revert h
+      revert n
+      simp only [Set.mem_setOf_eq, Finset.mem_union, Finset.mem_insert, Finset.mem_singleton,
+      true_and, or_true, and_true]
+      decide
+    · intro h
+      simp [h₁] at h
+      revert h
+      revert n
+      simp only [Set.mem_setOf_eq, Finset.mem_union, Finset.mem_insert, Finset.mem_singleton,
+      true_and, or_true, and_true]
+      intro hn
+      rcases hn with h | h | h
+      all_goals
+        refine ⟨?_,?_⟩
+        · rw [h, h₁₀, h₉ (2016) 2 316 (by decide) (by decide) (by norm_num) (by norm_num) (by norm_num) (by norm_num)]
+          norm_num
+        · rw [h, h₁₀, h₉ (2014) 2 317 (by decide) (by decide) (by norm_num) (by norm_num) (by norm_num) (by norm_num)]
+          norm_num
+
+  -- the sum of nicely numbers is 2016
+  rw [h₁₀, Finset.sum_union]
+  simp only [Finset.mem_insert, Finset.mem_singleton, Finset.sum_insert, Finset.sum_singleton]
+  rfl
+
+```

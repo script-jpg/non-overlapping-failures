@@ -1,0 +1,68 @@
+-- We begin by simplifying the terms in the sums.
+  have h1 : ∀ k ∈ Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = k * Real.logb 5 (3 ^ 2) := by
+    intro k hk
+    -- change the base of logarithm from $5^k$ to $5$
+    rw [Real.logb_pow, Real.logb_pow]
+    · field_simp
+      ring
+    · norm_num
+    · norm_num
+    · exact hk.1
+    · exact hk.2
+
+  have h2 : ∀ k ∈ Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = k * Real.logb 9 25 := by
+    intro k hk
+    rw [Real.logb_pow, Real.logb_pow]
+    · field_simp
+      ring
+    · norm_num
+    · norm_num
+    · exact hk.1
+    · exact hk.2
+
+  -- Using the simplification lemmas, rewrite the sums.
+  rw [Finset.sum_congr rfl h1, Finset.sum_congr rfl h2]
+
+  -- We can take out the multiplication by $100$ from the first sum since it doesn't depend on $k$.
+  rw [Finset.mul_sum]
+  rw [← Finset.mul_sum]
+
+  have h3 : (∑ x ∈ Finset.Icc 1 20, (x : ℝ)) = 210 := by
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    norm_num
+
+  have h4 : (∑ x ∈ Finset.Icc 1 100, (x : ℝ)) = 5050 := by
+    rw [Finset.sum_Icc_succ_top (by norm_num)]
+    norm_num
+
+  rw [h3, h4]
+
+  -- The first term is equal to $210 \cdot 100 \cdot \log_5 9$.
+  -- The second term is equal to $5050 \cdot \log_9 25$.
+  -- By the change of base formula, these two terms are equal to $210 \cdot 100 \cdot \log_5 9 \cdot \log_9 25$.
+  -- This simplifies to $210 \cdot 100 \cdot \log_5 25$ by the base cancellation property.
+  -- This is equal to $210 \cdot 100 \cdot 2 \cdot \log_5 5$ by the power rule.
+  -- This is equal to $210 \cdot 100 \cdot 2 \cdot 1$ by the definition of logarithm.
+  -- This is equal to $21000$.
+
+  have h5 : Real.logb 5 (3 ^ 2) * Real.logb 9 25 = 2 * Real.logb 5 5 := by
+    calc _
+    _ = Real.logb 5 25 := by
+      rw [Real.logb_pow]
+      · ring
+      · norm_num
+      · norm_num
+    _ = _ := by
+      rw [Real.logb_self_eq_one]
+      norm_num
+      norm_num
+
+  rw [h5]
+  have h6 : Real.logb 5 5 = 1 := by
+    rw [Real.logb_self_eq_one]
+    norm_num
+    norm_num
+
+  rw [h6]
+  norm_num
+```

@@ -1,0 +1,29 @@
+-- Without loss of generality, we can assume that $a \geq b \geq c$.
+  wlog h : a ≥ b ∧ b ≥ c generalizing a b c with H
+ . -- Permutation of variables preserves the inequality.
+    rcases h with ⟨h, h'⟩
+    rw [show a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a)]
+      _ = c ^ 2 * b * (c - b) + b ^ 2 * a * (b - a) + a ^ 2 * c * (a - c) by ring
+    -- Permutation of variables preserves the positivity of $a$, $b$ and $c$.
+    specialize H (show 0 < b ∧ 0 < c ∧ 0 < a by linarith) (by linarith) (by linarith)
+    -- Permutation of variables preserves the triangle inequality.
+    repeat rw [show a < b + c ∧ b < a + c ∧ c < a + b ↔ c < a + b ∧ b < a + c ∧ a < b + c by apply Iff.intro <;> intro h; try linarith]
+    simpa
+
+  -- We can assume that $a \geq b \geq c$.
+  rcases h with ⟨h, h'⟩
+
+  -- First, we show that $a^2b(a-b) \geq b^2c(b-c)$.
+  have h₀ : a ^ 2 * b * (a - b) ≥ b ^ 2 * c * (b - c) := by
+    -- It is enough to show that $a^2 \geq b^2$.
+    suffices h : a ^ 2 ≥ b ^ 2 by nlinarith only [h, h₀, h', h, sq_nonneg (a - b), sq_nonneg (b - c)]
+    nlinarith
+
+  -- It is enough to show that $b^2c(b-c) \geq c^2a(c-a)$.
+  suffices h : b ^ 2 * c * (b - c) ≥ c ^ 2 * a * (c - a) by nlinarith only [h, h₀, h, h', sq_nonneg (b - c), sq_nonneg (c - a)]
+
+  -- It is enough to show that $b^2 \geq c^2$.
+  suffices h : b ^ 2 ≥ c ^ 2 by nlinarith only [h, h, h', sq_nonneg (b - c), sq_nonneg (c - a)]
+  nlinarith
+
+```

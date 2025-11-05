@@ -1,0 +1,98 @@
+-- auxiliary lemma : for positive real numbers x,y, show that 1/x + 1/y ≥ 4/(x+y).
+  have aux {x y : ℝ} (hx : 0 < x) (hy : 0 < y) : 1 / x + 1 / y ≥ 4 / (x + y) := by
+    -- by Cauchy-Schwarz inequality, (x+y)(1/x+1/y) ≥ (1+1)² = 4.
+    have : (x + y) * (1 / x + 1 / y) ≥ 4 := by
+      have : (x + y) * (1 / x + 1 / y) = 2 + x / y + y / x := by field_simp; ring
+      rw [this]
+      have : x / y + y / x ≥ 2 := by
+        have : x / y + y / x - 2 = (x - y) ^ 2 / (x * y) := by field_simp; ring
+        have : (x - y) ^ 2 ≥ 0 := by exact sq_nonneg (x - y)
+        have : 0 ≤ (x - y) ^ 2 / (x * y) := by positivity
+        linarith
+      linarith
+    positivity
+    exact (le_div_iff₀ (by positivity)).mpr this
+
+  -- Apply the auxiliary lemma to $a/b + a/c \geq 4/(b+c)$, $b/a + b/c \geq 4/(a+c)$, $c/a + c/b \geq 4/(a+b)$.
+  have aux₁ : a / b + a / c ≥ 4 / (b + c) := by
+    have := aux (by positivity) (by positivity)
+    ring_nf at this ⊢
+    exact this
+  have aux₂ : b / a + b / c ≥ 4 / (a + c) := by
+    have := aux (by positivity) (by positivity)
+    ring_nf at this ⊢
+    exact this
+  have aux₃ : c / a + c / b ≥ 4 / (a + b) := by
+    have := aux (by positivity) (by positivity)
+    ring_nf at this ⊢
+    exact this
+
+  -- So $a/b + a/c + b/a + b/c + c/a + c/b \geq 4/(b+c) + 4/(a+c) + 4/(a+b) = 4(ab+bc+ca)/(a+b+c)$.
+  have aux₄ : a / b + a / c + b / a + b / c + c / a + c / b ≥ 4 * (a * b + b * c + c * a) / (a + b + c) := by
+    linarith
+
+  -- Notice that $a/b + b/a \geq 2\sqrt{a/b \cdot b/a} = 2$.
+  have aux₅ {x y : ℝ} (hx : 0 < x) (hy : 0 < y) : x / y + y / x ≥ 2 := by
+    have hxy : 0 < x / y := by positivity
+    have : x / y + y / x - 2 = (x - y) ^ 2 / (x * y) := by field_simp; ring
+    have : (x - y) ^ 2 ≥ 0 := by exact sq_nonneg (x - y)
+    have : 0 ≤ (x - y) ^ 2 / (x * y) := by positivity
+    linarith
+
+  -- Prove that $4(ab+bc+ca)/(a+b+c) \geq 2$ by using $3 \leq ab+bc+ca$ and $a+b+c \leq ab+bc+ca$.
+  have aux₆ : 4 * (a * b + b * c + c * a) / (a + b + c) ≥ 2 := by
+    have : a + b + c ≤ 3 := by
+      have : a + b + c ≤ a * b + b * c + c * a := by
+        linarith [show a * b + b * c + c * a - a - b - c = (a - 1) * (b - 1) + (b - 1) * (c - 1) + (c - 1) * (a - 1) by ring, by positivity]
+      linarith
+    have : 3 * (a * b + b * c + c * a) ≥ 4 * (a * b + b * c + c * a) := by linarith
+    rwa [div_le_iff₀ (by positivity)] using this
+
+  -- We have $a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a} \geq 3/\sqrt{2}$ by Cauchy-Schwarz inequality and the fact that $\sqrt{2} \leq \sqrt{a+b} + \sqrt{b+c} + \sqrt{c+a}$.
+  have : (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) * (1 / Real.sqrt 2) ≥ 3 / 2 := by
+    -- By Cauchy-Schwarz inequality,
+    -- $(a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a})(1/\sqrt{2} + 1/\sqrt{2} + 1/\sqrt{2}) \geq (a/\sqrt{a+b} \cdot 1/\sqrt{2} + b/\sqrt{b+c} \cdot 1/\sqrt{2} + c/\sqrt{c+a} \cdot 1/\sqrt{2})^2 + \dots + (a/\sqrt{a+b} \cdot 1/\sqrt{2} + b/\sqrt{b+c} \cdot 1/\sqrt{2} + c/\sqrt{c+a} \cdot 1/\sqrt{2})^2] $
+    -- = $(1/\sqrt{2} \cdot (a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}))^2 + \dots + (1/\sqrt{2} \cdot (a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}))^2] $
+    -- = $3^2 / 2 = 9/2$.
+    have h₀ : (√ ((a / Real.sqrt (a + b)) ^ 2) + √ ((b / Real.sqrt (b + c)) ^ 2) + √ ((c / Real.sqrt (c + a)) ^ 2)) ^ 2 = 3 ^ 2 := by
+      have : a / Real.sqrt (a + b) ^ 2 + b / Real.sqrt (b + c) ^ 2 + c / Real.sqrt (c + a) ^ 2 = 3 := by
+        have : Real.sqrt (a + b) ^ 2 = a + b := by exact Real.sq_sqrt (by positivity)
+        have : Real.sqrt (b + c) ^ 2 = b + c := by exact Real.sq_sqrt (by positivity)
+        have : Real.sqrt (c + a) ^ 2 = c + a := by exact Real.sq_sqrt (by positivity)
+        field_simp
+        linarith
+      rw [this]
+      ring
+    have h₁ : (√ ((a / Real.sqrt (a + b)) ^ 2) + √ ((b / Real.sqrt (b + c)) ^ 2) + √ ((c / Real.sqrt (c + a)) ^ 2)) * √ ((1 / Real.sqrt 2) ^ 2) ≥ 3 * (1 / Real.sqrt 2) := by
+      have : (√ ((a / Real.sqrt (a + b)) ^ 2) + √ ((b / Real.sqrt (b + c)) ^ 2) + √ ((c / Real.sqrt (c + a)) ^ 2)) * (√ ((1 / Real.sqrt 2) ^ 2) + √ ((1 / Real.sqrt 2) ^ 2) + √ ((1 / Real.sqrt 2) ^ 2)) ≥ (√ ((a / Real.sqrt (a + b)) ^ 2) + √ ((b / Real.sqrt (b + c)) ^ 2) + √ ((c / Real.sqrt (c + a)) ^ 2)) * (1 / Real.sqrt 2) + (√ ((a / Real.sqrt (a + b)) ^ 2) + √ ((b / Real.sqrt (b + c)) ^ 2) + √ ((c / Real.sqrt (c + a)) ^ 2)) * (1 / Real.sqrt 2) + (√ ((a / Real.sqrt (a + b)) ^ 2) + √ ((b / Real.sqrt (b + c)) ^ 2) + √ ((c / Real.sqrt (c + a)) ^ 2)) * (1 / Real.sqrt 2) := by
+        apply add_le_add
+        apply add_le_add
+        apply mul_le_mul₀ (by positivity) (by positivity) (by positivity)
+        exact Real.sqrt_sq (by positivity)
+        exact Real.sqrt_sq (by positivity)
+        apply mul_le_mul₀ (by positivity) (by positivity) (by positivity)
+        exact Real.sqrt_sq (by positivity)
+        exact Real.sqrt_sq (by positivity)
+        apply mul_le_mul₀ (by positivity) (by positivity) (by positivity)
+        exact Real.sqrt_sq (by positivity)
+        exact Real.sqrt_sq (by positivity)
+      rw [h₀, show √ ((1 / Real.sqrt 2) ^ 2) = 1 / Real.sqrt 2 by exact Real.sqrt_sq (by positivity)] at this
+      linarith
+    -- Simplify the inequality to get the desired result.
+    have : √ ((a / Real.sqrt (a + b)) ^ 2) = a / Real.sqrt (a + b) := by exact Real.sqrt_sq (by positivity)
+    have : √ ((b / Real.sqrt (b + c)) ^ 2) = b / Real.sqrt (b + c) := by exact Real.sqrt_sq (by positivity)
+    have : √ ((c / Real.sqrt (c + a)) ^ 2) = c / Real.sqrt (c + a) := by exact Real.sqrt_sq (by positivity)
+    rw [this, this, this] at h₁
+    linarith
+
+  -- Show that $1/\sqrt{2} \cdot (a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}) \geq 3/\sqrt{2}$.
+  have : 1 / Real.sqrt 2 * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) ≥ 3 / Real.sqrt 2 := by
+    have : (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) * (1 / Real.sqrt 2) ≥ 3 / 2 := by assumption
+    have h₁ : 1 / Real.sqrt 2 * (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) ≥ (3 / Real.sqrt 2) := by
+      linarith [this]
+    exact h₁
+
+  -- The final goal is proved.
+  exact le_of_mul_le_mul_left this (by positivity)
+
+```

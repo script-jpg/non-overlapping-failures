@@ -1,0 +1,125 @@
+constructor
+  · intro hf
+
+    -- By setting $a = b = 0$, we get $f(0) + 2f(0) = f(f(0))$.
+    have hf₀ := hf 0 0
+    simp at hf₀
+
+    -- By setting $a = 0$, we get $f(0) + 2f(b) = f(f(b))$.
+    have hf₁ (b : ℤ) := hf 0 b
+    simp at hf₁
+
+    -- By setting $b = 0$, we get $f(2a) + 2f(0) = f(f(a))$.
+    have hf₂ (a : ℤ) := hf a 0
+    simp at hf₂
+
+    -- By setting $b = a$, we get $f(2a) + 2f(a) = f(f(2a))$.
+    have hf₃ (a : ℤ) := hf a a
+    simp at hf₃
+
+    -- By setting $b = 2a$, we get $f(2a) + 2f(2a) = f(f(3a))$.
+    have hf₄ (a : ℤ) := hf a (2 * a)
+    simp at hf₄
+
+    -- We prove that $f(0) = 0$.
+    have hf₀' : f 0 = 0 := by
+
+      -- We prove that $f(0) \leq 0$.
+      have hf₀'' : f 0 ≤ 0 := by
+        specialize hf₄ 0
+        rw [hf₂ 0, hf₁ 0] at hf₄
+        norm_num at hf₄
+        nlinarith
+
+      -- We prove that $f(0) \geq 0$.
+      have hf₀''': f 0 ≥ 0 := by
+        specialize hf₃ 0
+        rw [hf₂ 0, hf₁ 0] at hf₃
+        specialize hf (f 0) (f 0)
+        iterate 3 rw [hf₁] at hf
+        norm_num at hf
+        nlinarith
+
+      -- We get $f(0) = 0$.
+      linarith only [hf₀'', hf₀''']
+
+    -- We prove that $f(z) = 0$ or there exists $c$ such that $f(z) = 2z + c$.
+    have hf₅ (z : ℤ) : f z = 0 ∨ ∃ c, ∀ z, f z = 2 * z + c := by
+
+      -- We set $c = f(1) - 2$.
+      by_cases hf₁' : f 1 = 2
+      · -- If $f(1) = 2$, then $f(z) = 0$.
+        left
+        have hf₅ (z : ℤ) : f z = 0 := by
+          induction z using Int.induction_on with
+          | hz =>
+            norm_num
+          | hp z hz =>
+            specialize hf₄ z
+            rw [hf₂, hz] at hf₄
+            norm_num at hf₄
+            rw [hf₄, hf₁']
+            simp
+          | hn z hz =>
+            specialize hf₃ z
+            rw [hf₂, hz] at hf₃
+            norm_num at hf₃
+            rw [hf₃, hf₁']
+            simp
+        exact hf₅
+
+      -- If $f(1) \neq 2$, then there exists $c$ such that $f(z) = 2z + c$.
+      right
+      use f 1 - 2
+      intro z
+      induction z using Int.induction_on with
+      | hz =>
+        simp
+      | hp z hz =>
+        specialize hf₄ z
+        rw [hf₂, hz] at hf₄
+        norm_num at hf₄
+        rw [hf₄]
+        simp
+        ring
+      | hn z hz =>
+        specialize hf₃ z
+        rw [hf₂, hz] at hf₃
+        norm_num at hf₃
+        rw [hf₃]
+        simp
+        ring
+
+    -- We prove that $f(z) = 0$.
+    have hf₆ (z : ℤ) : f z = 0 := by
+      specialize hf₅ z
+      cases hf₅ with
+      | inl hf₅ =>
+        exact hf₅
+      | inr hf₅ =>
+        rcases hf₅ with ⟨c, hf₅⟩
+        have hf₆ := hf₁ z
+        rw [hf₅] at hf₆
+        have hc := hf₆ z
+        have hz : z = f 0 := by
+          specialize hf₅ 0
+          rw [hf₀'] at hf₅
+          rw [hf₅.symm]
+          simp
+        rw [hz, hf₀'] at hf₆
+        simp at hf₆
+        rw [hf₆] at hf₅
+        simp at hf₅
+        linarith only [hf₅]
+
+    -- We get the solution $f(z) = 0$.
+    exact hf₆
+
+  · -- We verify that the functions $f(z) = 0$ and $f(z) = 2z + c$ satisfy the given equation.
+    intro hf z w
+    rcases hf with hf | ⟨c, hf⟩
+    · simp [hf]
+    · rw [hf, hf, hf]
+      ring
+
+```

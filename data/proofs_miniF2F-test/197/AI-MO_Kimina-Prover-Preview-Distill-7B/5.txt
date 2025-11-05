@@ -1,0 +1,76 @@
+-- We have $a>0$, $b>0$, and both $a$ and $b$ differ from their reciprocals by 1.
+  -- We want to show that $a+b=\sqrt{5}$.
+
+  -- First, let's consider the possible values of $a$ and $b$.
+  have h₄ : ∀ x : ℝ, abs (x - 1 / x) = 1 → 0 < x → x = (1 + Real.sqrt 5) / 2 ∨ x = (1 - Real.sqrt 5) / 2 := by
+    intro x h h_pos
+
+    -- We have $x>0$ and $|x-1/x|=1$. Let's derive the value of $x$.
+    -- Squaring both sides of $x-1/x=1$ gives $x^2-2+1/x^2=1$.
+    have : x ≠ 0 := by
+      by_contra h₀
+      rw [h₀] at h
+      norm_num at h
+    replace h : x - 1 / x = 1 ∨ x - 1 / x = -1 := by
+      cases (abs_eq (by positivity) h) with
+      | inl h₁ => left; linarith
+      | inr h₂ => right; linarith
+    rcases h with h | h
+
+    -- Let's look at the case $x-1/x=1$.
+    · -- Multiplying both sides by $x$ gives $x^2-x-1=0$.
+      have : x ^ 2 - x - 1 = 0 := by
+        field_simp at h
+        linarith
+      -- Using the quadratic formula, we have $x=(1+\sqrt{5})/2$ or $x=(1-\sqrt{5})/2$.
+      have : x = (1 + Real.sqrt 5) / 2 ∨ x = (1 - Real.sqrt 5) / 2 := by
+        have h : x^2 - x - 1 = (x - (1 + Real.sqrt 5) / 2) * (x - (1 - Real.sqrt 5) / 2) := by
+          ring_nf
+          rw [Real.sq_sqrt (by norm_num)]
+          linarith
+        rw [h] at this
+        cases (mul_eq_zero.mp this) with
+        | inl h₀ => left; linarith
+        | inr h₁ => right; linarith
+      tauto
+
+    -- Now, let's look at the case $x-1/x=-1$.
+    · -- Multiplying both sides by $x$ gives $x^2-1+1=0$.
+      have : x ^ 2 = 1 := by
+        field_simp at h
+        linarith
+      -- Since $x>0$, we have $x=1$.
+      have : x = 1 := by
+        have : x = 1 ∨ x = -1 := by
+          exact sq_eq_one_iff.mp this
+        cases this with
+        | inl h => exact h
+        | inr h => linarith
+      -- But then $1-1/1 ≠ 1$ so we have a contradiction.
+      rw [this] at h
+      norm_num at h
+
+  -- Now, let's apply this to $a$ and $b$.
+  have h₅ := h₄ a h₂ h₀.left
+  have h₆ := h₄ b h₃ h₀.right
+
+  -- We have $a$ and $b$ are two different positive numbers.
+  -- They must be $(1+\sqrt{5})/2$ and $(1-\sqrt{5})/2$.
+  cases h₅ with
+  | inl h₅ =>
+    cases h₆ with
+    | inl h₆ => linarith
+    | inr h₆ =>
+      -- So, $a+b=\sqrt{5}$.
+      have : a + b = Real.sqrt 5 := by
+        linarith
+      exact this
+  | inr h₅ =>
+    cases h₆ with
+    | inl h₆ =>
+      -- So, $a+b=\sqrt{5}$.
+      have : a + b = Real.sqrt 5 := by
+        linarith
+      exact this
+    | inr h₆ => linarith
+```

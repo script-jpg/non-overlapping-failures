@@ -1,0 +1,38 @@
+obtain ⟨ha, hb⟩ := h₀
+
+  -- The arithmetic mean of $a$ and $b$ is greater than or equal to their geometric mean.
+  have h2 : (a + b) / 2 - Real.sqrt (a * b) ≥ 0 := by
+    rw [ge_iff_le, sub_nonneg]
+    -- Transform the expression to use the square of $(\sqrt{a}-\sqrt{b})^2 \geq 0$
+    have h2 : (Real.sqrt a - Real.sqrt b) ^ 2 ≥ 0 := by
+      exact sq_nonneg (Real.sqrt a - Real.sqrt b)
+    -- Express $(\sqrt{a}-\sqrt{b})^2 \geq 0$ in terms of $a$, $b$, and $\sqrt{ab}$
+    ring_nf at h2
+    rw [sub_nonneg, Real.sqrt_mul (by linarith), mul_assoc, ← Real.sqrt_mul (by linarith)] at h2
+    -- Use the fact that $\sqrt{a^2} = a$ when $a \geq 0$
+    rw [Real.sqrt_sq (by linarith), Real.sqrt_sq (by linarith)] at h2
+    -- Use the fact that $\sqrt{ab} \geq 0$ to refine the inequality
+    positivity
+    -- completed the square
+    linarith
+  have h3 : (a + b) / 2 - Real.sqrt (a * b) ≤ (a - b) ^ 2 / (8 * b) := by
+    -- Use the fact that $(a-b)^2 \geq 0$
+    have h3 : (a - b) ^ 2 ≥ 0 := by
+      exact sq_nonneg (a - b)
+    -- Multiply both sides by $b \geq 0$
+    have h4 : b * ((a + b) / 2 - Real.sqrt (a * b)) ≤ b * ((a - b) ^ 2 / (8 * b)) := by
+      apply mul_le_mul_of_nonneg_left h3
+      -- Show that $b \geq 0$
+      positivity
+    -- Transform both sides to use the fact that $(\sqrt{a}-\sqrt{b})^2 \geq 0$
+    rw [mul_div_assoc] at h4
+    congr 1
+    -- Simplify the right side to use the non-negativity of $(\sqrt{a}-\sqrt{b})^2$
+   . ring_nf
+      rw [mul_assoc, Real.sq_sqrt (by linarith), mul_assoc, ← Real.sqrt_mul (by linarith)]
+      rw [Real.sq_sqrt (by linarith)]
+      linarith
+    -- Use the non-negativity of $(\sqrt{a}-\sqrt{b})^2$
+   . linarith [sq_nonneg (Real.sqrt a - Real.sqrt b)]
+  exact h3
+```

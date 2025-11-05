@@ -1,0 +1,73 @@
+--(|2 - x| = 3) ↔ (2 - x = 3) ∨ (2 - x = -3)
+  have r0 : ∀ x : ℝ, abs (2 - x) = 3 ↔ (2 - x = 3) ∨ (2 - x = -3) := by
+    intro x
+    constructor
+    · intro h
+      exact abs_eq.mp h
+    · intro h
+      exact abs_eq.mpr h
+
+  -- Solve (2 - x = 3) ∨ (2 - x = -3)
+  have r1 : ∀ x : ℝ, (∃ f : ℝ → Prop, f = fun y => abs (2 - y) = 3 → f x ↔  x = -1 ∨ x = 5) := by
+    intro x
+    let f : ℝ → Prop := fun y => abs (2 - y) = 3
+    have hf : f = fun y => abs (2 - y) = 3 := by rfl
+    have h1 : f x ↔ abs (2 - x) = 3 := by simp [f]
+    rw [h1]
+    constructor
+    · intro h
+      have h2 := r0 x
+      rw [h] at h2
+      simp at h2
+      obtain h2 | h2 := h2
+      · left
+        linarith
+      · right
+        linarith
+    · intro h
+      have h2 := r0 x
+      rcases h with h | h
+      · rw [h]
+        simp
+      · rw [h]
+        simp
+
+  -- All solutions of the equation $|2-x|= 3$ is exactly {-1, 5}.
+  have r2 : S = {-1, 5} := by
+    have h2 : S = {x | ∃ f : ℝ → Prop, f = fun y => abs (2 - y) = 3 ∧ y ∈ S} := by
+      apply Finset.ext
+      intro x
+      constructor
+      · intro hx
+        refine ⟨?_, hx⟩
+        rw [h₀] at hx
+        exact hx
+      · intro hx
+        obtain ⟨hx, hx2⟩ := hx
+        rw [h₀]
+        exact hx2
+    rw [h2]
+    apply Finset.ext
+    intro x
+    constructor
+    · intro hx
+      have h2 := r1 x
+      rcases h1 with h | h
+      · simp [hx] at h
+        left
+        linarith
+      · simp [hx] at h
+        right
+        linarith
+    · intro hx
+      rcases hx with hx | hx
+      all_goals
+        simp [hx]
+        rw [r0 x]
+        norm_num
+
+  -- The sum of all solutions of the equation $|2-x|= 3$ is 4.
+  rw [r2]
+  simp
+  norm_num
+```

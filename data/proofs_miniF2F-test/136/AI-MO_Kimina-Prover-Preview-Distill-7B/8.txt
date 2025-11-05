@@ -1,0 +1,101 @@
+-- We will use the three roots to set up a system of equations to solve for $a$, $b$ and $c$.
+  have h₂ : Real.cos (2 * Real.pi / 7) ∈ f ⁻¹' {0} := by simp [h₁]
+  have h₃ : Real.cos (4 * Real.pi / 7) ∈ f ⁻¹' {0} := by simp [h₁]
+  have h₄ : Real.cos (6 * Real.pi / 7) ∈ f ⁻¹' {0} := by simp [h₁]
+
+  -- Plugging the three roots into the polynomial equation, we get the following three equations:
+  have h₅ : f (Real.cos (2 * Real.pi / 7)) = 0 := h₂
+  have h₆ : f (Real.cos (4 * Real.pi / 7)) = 0 := h₃
+  have h₇ : f (Real.cos (6 * Real.pi / 7)) = 0 := h₄
+
+  -- Simplify the equations using the definition of $f$.
+  simp [h₀] at h₅ h₆ h₇
+
+  -- Now we need to simplify the three equations further. It is useful to know that $e^{i\theta} = \cos\theta + i\sin\theta$.
+  -- Square both sides to get $\cos^2\theta = \frac{e^{i2\theta} + 1} 2$.
+  have h₈ (θ : ℝ) : Real.cos θ ^ 2 = (Real.exp (2 * θ * Complex.I) + 1) / 2 := by
+    have h := Complex.exp_rexp_eq_cos_sin θ
+    simp [h, Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.I_re, Complex.zero_re, h]
+
+  -- Cube both sides to get $\cos^3\theta = \frac{e^{i3\theta} - 3e^{\theta}} 4$.
+  have h₉ (θ : ℝ) : Real.cos θ ^ 3 = (Real.exp (3 * θ * Complex.I) - 3 * Real.exp (θ * Complex.I)) / 4 := by
+    calc
+      _ = (Real.cos θ ^ 2) * Real.cos θ := by ring
+      _ = ((Real.exp (2 * θ * Complex.I) + 1) / 2) * Real.cos θ := by rw [h₈ θ]
+      _ = (Real.exp (2 * θ * Complex.I) * Real.cos θ + Real.cos θ) / 2 := by ring
+      _ = (Real.exp (θ * Complex.I * (2 - 1)) * Real.exp (θ * Complex.I) + Real.exp (θ * Complex.I * 0) * Real.exp (θ * Complex.I)) / 2 := by rw [← Complex.exp_add, ← Complex.exp_add]
+      _ = (Real.exp ((θ * Complex.I) * (2 - 1 + 1)) + Real.exp ((θ * Complex.I) * (0 + 1))) / 2 := by rw [← mul_add, ← add_assoc, ← Complex.add_exp]
+      _ = (Real.exp (θ * Complex.I * 1) + Real.exp (θ * Complex.I * 1)) / 2 := by ring
+      _ = (Real.exp (θ * Complex.I) + Real.exp (θ * Complex.I)) / 2 := by ring
+      _ = (Real.exp (θ * Complex.I) * (1 + 1)) / 2 := by rw [← Complex.mul_add, mul_one]
+      _ = Real.exp (θ * Complex.I) := by ring
+      _ = _ := by simp [Complex.exp_rexp_eq_cos_sin θ, h₈ θ]
+
+  -- Now we get equations only in exponential form.
+  replace h₅ : (Real.exp (3 * (2 * Real.pi / 7) * Complex.I) - 3 * Real.exp (2 * Real.pi / 7 * Complex.I)) / 4 + a * Real.exp (2 * Real.pi / 7 * Complex.I) ^ 2 + b * Real.exp (2 * Real.pi / 7 * Complex.I) + c = 0 := by
+    nth_rewrite 4 [← h₇]; rw [← sub_eq_zero, ← sub_eq_zero, ← h₅]; ring
+  replace h₆ : (Real.exp (3 * (4 * Real.pi / 7) * Complex.I) - 3 * Real.exp (4 * Real.pi / 7 * Complex.I)) / 4 + a * Real.exp (4 * Real.pi / 7 * Complex.I) ^ 2 + b * Real.exp (4 * Real.pi / 7 * Complex.I) + c = 0 := by
+    nth_rewrite 4 [← h₇]; rw [← sub_eq_zero, ← sub_eq_zero, ← h₆]; ring
+  replace h₇ : (Real.exp (3 * (6 * Real.pi / 7) * Complex.I) - 3 * Real.exp (6 * Real.pi / 7 * Complex.I)) / 4 + a * Real.exp (6 * Real.pi / 7 * Complex.I) ^ 2 + b * Real.exp (6 * Real.pi / 7 * Complex.I) + c = 0 := by
+    rw [← sub_eq_zero, ← sub_eq_zero, ← h₇]; ring
+
+  -- We can get the values of powers of these exponentials from properties of roots of unity.
+  -- Let $\omega = e^{2\pi i/7}$.
+  let ω := Real.exp (2 * Real.pi / 7 * Complex.I)
+  have h₁₀ : ω ^ 7 = 1 := by simp [ω, Complex.exp_nat_mul]
+  have h₁₁ : ω ^ 4 = ω⁻¹ := by
+    rw [← h₁₀]
+    exact Complex.exp_nat_mul (-1) (2 * Real.pi / 7 * Complex.I)
+  have h₁₂ : ω ^ 3 = ω⁻² := by
+    rw [← h₁₀]
+    exact Complex.exp_nat_mul (-2) (2 * Real.pi / 7 * Complex.I)
+  have h₁₃ : ω⁻¹ ^ 7 = 1 := by
+    rw [← h₁₀]
+    simp
+  have h₁₄ : ω⁻¹ ^ 4 = ω := by
+    rw [← h₁₃]
+    exact Complex.exp_nat_mul (1) (-2 * Real.pi / 7 * Complex.I)
+  have h₁₅ : ω⁻¹ ^ 3 = ω² := by
+    rw [← h₁₃]
+    exact Complex.exp_nat_mul (2) (-2 * Real.pi / 7 * Complex.I)
+
+  -- Now we can simplify the equations further.
+  replace h₅ : (ω ^ 3 - 3 * ω) / 4 + a * ω ^ 2 + b * ω + c = 0 := by
+    have h := h₅
+    simp [h₈, h₉] at h
+    calc
+      _ = (Real.exp (3 * (2 * Real.pi / 7) * Complex.I) - 3 * Real.exp (2 * Real.pi / 7 * Complex.I)) / 4 + a * Real.exp (2 * Real.pi / 7 * Complex.I) ^ 2 + b * Real.exp (2 * Real.pi / 7 * Complex.I) + c := by rw [h]
+      _ = _ := by rw [h₁₂, h₁₁]; ring
+  replace h₆ : (ω ^ 3 - 3 * ω) / 4 + a * ω ^ 2 + b * ω + c = 0 := by
+    have h := h₆
+    simp [h₈, h₉] at h
+    calc
+      _ = (Real.exp (3 * (4 * Real.pi / 7) * Complex.I) - 3 * Real.exp (4 * Real.pi / 7 * Complex.I)) / 4 + a * Real.exp (4 * Real.pi / 7 * Complex.I) ^ 2 + b * Real.exp (4 * Real.pi / 7 * Complex.I) + c := by rw [h]
+      _ = _ := by rw [h₁₂, h₁₄]; ring
+  replace h₇ : (ω ^ 3 - 3 * ω) / 4 + a * ω ^ 2 + b * ω + c = 0 := by
+    have h := h₇
+    simp [h₈, h₉] at h
+    calc
+      _ = (Real.exp (3 * (6 * Real.pi / 7) * Complex.I) - 3 * Real.exp (6 * Real.pi / 7 * Complex.I)) / 4 + a * Real.exp (6 * Real.pi / 7 * Complex.I) ^ 2 + b * Real.exp (6 * Real.pi / 7 * Complex.I) + c := by rw [h]
+      _ = _ := by rw [h₁₂, h₁₅]; ring
+
+  -- eliminate $c$
+  have h₁₆ : (a - 3 / 4) * ω ^ 2 + (b - 3 / 4) * ω + (c + ω ^ 3 / 4) = 0 := by linear_combination h₅
+  have h₁₇ : (a - 3 / 4) * ω ^ 2 + (b - 3 / 4) * ω + (c + ω ^ 3 / 4) = 0 := by linear_combination h₆
+  replace h₁₆ : (a - 3 / 4) * ω ^ 2 + (b - 3 / 4) * ω + (-ω ^ 3 / 4) = 0 := by linear_combination h₁₆ + h₇
+  replace h₁₇ : (a - 3 / 4) * ω ^ 2 + (b - 3 / 4) * ω + (-ω ^ 3 / 4) = 0 := by linear_combination h₁₇ + h₇
+
+  -- Now we get a system of two equations with two indeterminates $a$ and $b$.
+  -- We can solve this system to get $a = 1/7$ and $b = -3/7$.
+  have h₁₈ : a = 1 / 7 := by linear_combination (h₁₆ - h₁₇) / 7
+  have h₁₉ : b = -3 / 7 := by linear_combination h₁₈ * h₁₆ - h₁₇
+
+  -- Now we only need to find $c$.
+  -- We can plug $a$ and $b$ into one of the equations and solve for $c$.
+  have h₂₀ : c = -2 / 7 := by linear_combination h₁₇ - h₁₈ * h₁₉
+
+  -- The final answer is $abc = (1/7)(-3/7)(-2/7) = \boxed{\textbf{(D) }\frac{1}{32}}$.
+  rw [h₁₈, h₁₉, h₂₀]
+  norm_num
+
+```

@@ -1,0 +1,69 @@
+-- gcd x y * lcm x y = x * y
+  have lcm_gcd_mul (a b : ℕ) : a.gcd b * a.lcm b = a * b := by
+    rw [Nat.gcd_mul_lcm]
+  have h3 := lcm_gcd_mul m n
+  rw [h₁, h₂] at h3
+
+  -- m * n = 8 * 112 = 896
+  have h4 : m * n = 896 := by
+    norm_num at h3
+    linarith
+
+  -- The greatest common divisor of $m$ and $n$ is 8, so $m=8x$ and $n=8y$ for some
+  -- positive integers $x$ and $y$.
+  have dvd_m : 8 ∣ m := by
+    rw [← Nat.gcd_pos_iff]
+    apply Nat.gcd_dvd_left
+    apply Nat.gcd_pos_iff.mpr
+    rw [h₁]
+    norm_num
+  have dvd_n : 8 ∣ n := by
+    rw [← Nat.gcd_pos_iff]
+    apply Nat.gcd_dvd_right
+    apply Nat.gcd_pos_iff.mpr
+    rw [h₁]
+    norm_num
+
+  -- $x$ and $y$ must be relatively prime.
+  have h5 : Nat.gcd (m / 8) (n / 8) = 1 := by
+    rw [Nat.div_eq_iff_eq_mul_left]
+    rw [Nat.div_eq_iff_eq_mul_left] at h₁
+    rw [h₁] at h4
+    -- we get $8xy = 896$.
+    nth_rw 2 [← mul_assoc] at h4
+    rw [Nat.mul_assoc] at h4
+    rw [Nat.mul_eq_mul_left_iff] at h4
+    -- $xy = 112$.
+    norm_num at h4
+    rw [h4]
+    norm_num
+
+  -- We will consider the factorization of $112$.
+  have h6 : Nat.gcd (m / 8) (n / 8) = 1 := by
+    exact h5
+
+  -- $m$ and $n$ are of the form $8x$ and $8y$ where $x$ and $y$ are relatively
+  -- prime and $xy = 112$.
+  let x := m / 8
+  let y := n / 8
+
+  have h7 {x y : ℕ} (h1 : Nat.gcd x y = 1) (h2 : x * y = 112) :
+      72 ≤ 8 * x + 8 * y := by
+    -- The number of pairs of positive divisors of 112 is finite, so we can
+    -- try them all.
+    have : x ≤ 112 := by
+      rw [← h2]
+      exact Nat.le_mul_of_pos_right x Nat.zero_lt_succ y
+    have : y ≤ 112 := by
+      rw [← h2]
+      exact Nat.le_mul_of_pos_left y Nat.zero_lt_succ x
+    interval_cases x <;> interval_cases y
+    <;> norm_num at h1 h2 <;> norm_num
+    <;> omega
+
+  -- The least possible value of $m+n$ is 72.
+  have h8 : 72 ≤ m + n := by
+    rw [← h3]
+    convert h7 h6
+  exact h8
+```

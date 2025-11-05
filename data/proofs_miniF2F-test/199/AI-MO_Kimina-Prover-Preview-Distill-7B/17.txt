@@ -1,0 +1,356 @@
+have h₄ : (k - t) ∣ (m * (k - t)) := by
+    apply Nat.dvd_sub'
+    have hk : k ∣ k ^ 2 := by rw [Nat.dvd_prime]; exact ⟨Nat.prime_iff.mp h₀.1, k.ne'⟩
+    have ht : t ∣ t ^ 2 := by rw [Nat.dvd_prime]; exact ⟨Nat.prime_iff.mp h₀.2, t.ne'⟩
+    convert_to k ^ 2 - t ^ 2 = m * (k - t) using 1
+    · convert_to k ^ 2 = k ^ 2 - t ^ 2 + t ^ 2 using 0
+      rw [Nat.sub_add_cancel]
+      calc
+        _ = (k ^ 2 : ℤ) - m * k + n + (t ^ 2 : ℤ) - m * t + n := by ring
+        _ = _ := by simp [h₂, h₃]
+    ring
+
+  have h₅ : (k - t) ∣ n := by
+    have : (k - t) ∣ (k ^ 2 - t ^ 2) := by
+      apply Nat.dvd_sub
+      have h' (c d : ℕ) (hc : c ≠ d) : c - d ∣ c ^ 2 - d ^ 2 := by
+        have : c ^ 2 - d ^ 2 = (c - d) * (c + d) := by
+          zify
+          ring
+        apply Nat.dvd_mul_right
+        apply Nat.le_sub_of_add_le
+        linarith
+      have h₆ : k ^ 2 - t ^ 2 = (k - t) * (k + t) := by
+        zify
+        ring
+      have h₇ : (k - t) ∣ (k ^ 2 - t ^ 2) := by
+        rw [h₆]
+        apply Nat.dvd_mul_right
+      exact h₇
+    have h₈ : (k - t) ∣ m * k := by
+      apply Nat.dvd_mul_right
+      apply Nat.le_sub_of_add_le
+      linarith
+    rw [show n = (k ^ 2 - m * k + n) + m * k - (k ^ 2 - t ^ 2) by ring] at *
+    apply Nat.dvd_sub
+    have h₉ : (k - t) ∣ (k ^ 2 - m * k + n) := by
+      rw [h₂]
+      apply Nat.dvd_zero
+    have h₁₀ : (k - t) ∣ m * k := by
+      apply Nat.dvd_mul_right
+      apply Nat.le_sub_of_add_le
+      linarith
+    apply Nat.dvd_sub at h₉
+    apply Nat.dvd_sub
+    calc
+      _ ∣ k ^ 2 - m * k + n := by exact h₉
+      _ ∣ _ := by exact Dvd.dvd.mul_right h₁₀
+    exact this
+
+  have h₆ : k - t = 1 ∨ k - t = n := by
+    apply (Nat.dvd_prime h₀.2).mp
+    apply h₅
+
+  have h₇ : k - t = 1 ∨ k - t = m := by
+    apply (Nat.dvd_prime h₀.1).mp
+    apply h₄
+
+  have h₈ : k - t = 1 ∨ k - t = n ∨ k - t = m := by
+    rw [show k - t = 1 ∨ k - t = m ∨ k - t = n by
+      calc
+        _ = (k - t) ∨ k - t = m ∨ k - t = n := by simp
+        _ = _ := by tauto
+      ]]
+    exact h₆
+
+  rcases h₈ with h₈ | h₈ | h₈
+  · -- m = 1 ∧ n = 1
+    have h₉ : k - t = 1 := by
+      rw [h₈] at h₇
+      tauto
+    replace h₈ : k = t + 1 := by omega
+    rw [h₈] at h₂ h₃
+    have h₁₀ : t > 0 := by
+      by_contra h
+      simp at h
+      simp [h] at h₃
+    have h₁₁ : t = 1 := by
+      by_contra h
+      have h₁₂ : t > 1 := by omega
+      have : (t ^ 2 : ℤ) - m * t + n < 0 := by
+        rw [h₈, show n = 1 by rw [h₅]; apply Nat.eq_one_of_dvd_one; exact h₀.2]
+        push_cast
+        suffices t ^ 2 - (t + 1) < 0 by
+          suffices (t ^ 2 : ℤ) - 1 < t + 1 by
+            have : (t ^ 2 : ℤ) - 1 ≥ 0 := by
+              apply Int.sub_nonneg_of_le
+              apply sq_nonneg
+            linarith
+          apply Int.sub_neg_of_pos
+          calc
+            _ = (t ^ 2 : ℤ) - t - 1 := by ring
+            _ > _ := by
+              apply Int.sub_lt_self
+              simp
+              exact h₁₂
+              simp
+        calc
+          _ = t * (t - 1) - 1 := by ring
+          _ ≥ t * 0 - 1 := by
+            apply Int.sub_le_sub_right
+            apply Int.mul_nonneg
+            simp
+            exact h₁₂
+          _ > _ := by simp
+      simp [h₃] at this
+    have : t < m := by
+      rw [h₈, show n = 1 by rw [h₅]; apply Nat.eq_one_of_dvd_one; exact h₀.2]
+      apply Nat.lt_of_sub_ne_zero
+      rw [show 1 = 1 - n by simp]
+      apply Nat.sub_ne_zero_of_ne
+      linarith
+    rw [h₈, h₁₁] at this
+    have h₁₃ : k > 0 := by
+      simp [h₈, h₁₁]
+    have h₁₄ : m = 1 := by
+      by_contra h
+      simp at h
+      have : m > 1 := by omega
+      have : (t ^ 2 : ℤ) - m * t + n > 0 := by
+        rw [h₈, h₁₁, show n = 1 by rw [h₅]; apply Nat.eq_one_of_dvd_one; exact h₀.2]
+        push_cast
+        suffices t ^ 2 - 2 < t - 1 by
+          have : t ^ 2 - 2 ≥ 0 := by
+            apply Nat.zero_le
+            calc
+              _ ≤ t ^ 2 - 1 := by
+                apply Nat.sub_le_sub_right
+                simp
+                exact h₁₁
+              _ ≤ t ^ 2 := by
+                apply Nat.le_self_pow
+                exact Nat.zero_lt_of_ne_zero h₁₁
+            linarith
+          linarith
+        calc
+          _ = t * (t - 1) - 1 := by ring
+          _ ≥ t * 0 - 1 := by
+            apply Int.sub_le_sub_right
+            apply Int.mul_nonneg
+            simp
+            exact h₁₁
+          _ > _ := by simp
+      simp [h₃] at this
+    rw [h₁₄] at this
+    have : t > t := by
+      linarith
+    have : t < t := by
+      linarith
+    exact (Nat.lt_irrefl _ this)
+  · -- t = 1 ∧ n = m
+    have h₉ : k - t = 1 ∨ k - t = m := by
+      tauto
+    rcases h₉ with h₉ | h₉
+    · -- k = 2 ∧ n = m ∧ t = 1
+      have h₁₀ : k = 2 := by
+        omega
+      have h₁₁ : t = 1 := by
+        omega
+      have h₁₂ : n = m := by
+        omega
+      rw [h₁₀, h₁₁] at h₂
+      have h₁₃ : m = 2 := by
+        have : m ≤ 2 := by
+          have h : 2 * m + 1 = 4 := by
+            have : k ^ 2 = 4 := by
+              norm_cast
+              rw [h₁₀, h₁₁]
+              simp
+            have : 2 * m + 1 = 4 := by
+              rw [←h₂, Nat.mul_sub, show 2 * 1 = 2 by simp, Nat.sub_add_cancel]
+              rw [this]
+            linarith
+          have : m ≤ 2 := by omega
+          calc
+            _ = (m - 2) + 2 := by
+              rw [Nat.sub_add_cancel]
+              simp [this]
+            _ ≤ 0 + 2 := by
+              apply Nat.add_le_add_right
+              exact ‹m - 2 ≤ 0›
+            _ = _ := by simp
+        have : m ≥ 2 := by
+          have h : 2 * m + 1 ≥ 2 * 2 + 1 := by
+            apply Nat.add_le_add_right
+            apply Nat.mul_le_mul_left
+            exact Nat.succ_le_of_lt ‹m ≥ 1›
+          linarith
+        linarith
+      have : m = 2 := by
+        rw [show m = 2 ∧ n = m by tauto] at h₁₂
+        exact h₁₂
+      rw [this, show k = 2 by rw [h₈]; omega, show n = 2 by rw [h₁₂, h₅]] at *
+      norm_num at *
+      have : k ^ t = 4 := by
+        norm_num
+        rw [h₈, h₁₁, this]
+      rw [this]
+    · -- k = m + 1 ∧ n = m
+      have h₁₃ : k = m + 1 := by
+        omega
+      have h₁₄ : n = m := by
+        omega
+      have h₁₅ : k > 0 := by
+        calc
+          _ = m + 1 := by rw [h₁₃]
+          _ ≥ 1 + 1 := by
+            apply Nat.add_le_add_right
+            exact Nat.succ_le_of_lt h₀.1
+          _ > 0 := by simp
+      have h₁₆ : m = 1 := by
+        by_contra h
+        simp at h
+        have : m > 1 := by omega
+        have : (m - 1) * (m - 1) > 0 := by
+          apply Nat.mul_pos
+          repeat omega
+        have h₁₇ : m - 1 = t := by
+          rw [show m - 1 = m - t by tauto, h₈]
+        rw [h₁₇, Nat.sub_pos_iff_lt] at this
+        have h₁₈ : m > n := by
+          rw [h₁₄, h₁₃, show m = m + 1 - 1 by omega, Nat.sub_sub_self]
+          apply Nat.lt_add_one
+          apply Nat.succ_ne_self
+        have : m < n := by
+          linarith
+        linarith
+      have : m = 2 := by
+        rw [show m = 1 + 1 by omega, Nat.succ_eq_add_one]
+        have : n = 2 := by
+          rw [h₁₄, h₅, h₁₃, h₀.1, h₁₆]
+          rfl
+        rw [this]
+      rw [h₁₆, this, h₁₃] at *
+      norm_num at *
+      have : k ^ t = 4 := by
+        norm_num
+        rw [h₈, h₁₁, h₁₃]
+      rw [this]
+  · -- t = m ∧ n = 1
+    have h₁₉ : n = 1 := by
+      rw [h₈] at h₀
+      tauto
+    have h₂₀ : t = m := by
+      rw [h₈]
+    have h₂₁ : k = m + 1 := by
+      omega
+    have h₂₂ : m = 1 := by
+      by_contra h
+      simp at h
+      have : m > 1 := by omega
+      have : (m - 1) * (m - 1) > 0 := by
+        apply Nat.mul_pos
+        repeat omega
+      have h₂₃ : m - 1 = k := by
+        rw [show m - 1 = m - t by tauto, h₂₀, Nat.sub_sub_self]
+        apply Nat.succ_lt_succ
+        exact Nat.succ_le_of_lt h₂₁
+      rw [h₂₃, Nat.sub_pos_iff_lt] at this
+      have h₂₄ : m < n := by
+        rw [h₁₉, h₂₃, show m = m + 1 - 1 by omega, Nat.sub_sub_self]
+        apply Nat.lt_add_one
+        apply Nat.succ_ne_self
+      have : m > n := by
+        linarith
+      linarith
+    have : m = 2 := by
+      rw [show m = 1 + 1 by omega, Nat.succ_eq_add_one]
+      have : n = 2 := by
+        rw [h₁₉, h₂₃, h₂₁]
+        rfl
+      rw [this]
+    rw [h₂₁, h₂₃, h₂₀, this, show k = 2 by omega, h₁₉] at *
+    norm_num at *
+    have : k ^ t = 4 := by
+      norm_num
+      rw [h₂₀, h₂₁, h₂₃]
+    rw [this]
+  -- The value is 20.
+  have h₈ : k - t = 1 ∨ k - t = m ∨ k - t = n := by
+    rw [show k - t = 1 ∨ k - t = m ∨ k - t = n by
+      calc
+        _ = (k - t) ∨ k - t = m ∨ k - t = n := by simp
+        _ = _ := by tauto
+      ]]
+    exact h₆
+  have h₉ : k - t = 1 := by
+    rcases h₈ with h₈ | h₈ | h₈
+    · exact h₈
+    · rw [h₈] at h₇
+      have h₁₀ : (k - t) ∨ k - t = n := by
+        tauto
+      rcases h₁₀ with h₁₀ | h₁₀
+      · tauto
+      · rw [h₁₀] at h₅
+        have h₁₁ : n = 1 := by
+          rw [h₁₀] at h₅
+          tauto
+        have h₁₂ : k = m + 1 := by
+          omega
+        have h₁₃ : t = m := by
+          omega
+        have h₁₄ : m = 1 := by
+          by_contra h
+          simp at h
+          have : m > 1 := by omega
+          have : (m - 1) * (m - 1) > 0 := by
+            apply Nat.mul_pos
+            repeat omega
+          have h₁₅ : m - 1 = t := by
+            rw [show m - 1 = m - t by tauto, h₁₃]
+            omega
+          rw [h₁₅, Nat.sub_pos_iff_lt] at this
+          have h₁₆ : m < n := by
+            rw [h₁₁, h₁₅, show m = m + 1 - 1 by omega, Nat.sub_sub_self]
+            apply Nat.lt_add_one
+            apply Nat.succ_ne_self
+          have : m > n := by
+            linarith
+          linarith
+        have : m = 2 := by
+          rw [show m = 1 + 1 by omega, Nat.succ_eq_add_one]
+          have : n = 2 := by
+            rw [h₁₁, h₁₃, show m = m + 1 - 1 by omega, Nat.sub_sub_self]
+            apply Nat.lt_add_one
+            apply Nat.succ_ne_self
+          rw [this]
+        rw [h₁₄, this, h₁₃] at h₂ h₃
+        have : m = 1 := by
+          rw [show m = m - 1 + 1 by omega, Nat.sub_add_cancel]
+          apply Nat.le_sub_of_add_le
+          linarith
+        linarith
+      · rw [h₁₀]
+    · rw [h₈] at h₇
+      have : (k - t) ∨ k - t = m := by
+        tauto
+      rcases this with h₁₀ | h₁₀
+      · tauto
+      · rw [h₁₀] at h₄
+        have h₁₁ : m = 1 := by
+          rw [h₁₀] at h₄
+          tauto
+        have h₁₂ : k = m + 1 := by
+          omega
+        have h₁₃ : t = m := by
+          omega
+        have h₁₄ : m = 1 := by
+          exact h₁₁
+        rw [h₁₂, h₁₃, show k = 2 by omega, h₁₁] at h₂ h₃
+        have : m = 1 := by
+          rw [show m = m - 1 + 1 by omega, Nat.sub_add_cancel]
+          apply Nat.le_sub_of_add_le
+          linarith
+        linarith
+  have h₁₀ : (k - t) ∨ k - t = n := by
+    rw [show k - t = 1 ∨ k - t = m ∨

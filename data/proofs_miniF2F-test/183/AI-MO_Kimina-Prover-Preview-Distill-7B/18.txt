@@ -1,0 +1,131 @@
+have h₂ : ∀ x : ℝ, f x = (x ^ 2 + (18 * x + 45)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) + 15 := by
+    intro x
+    calc
+      f x = x ^ 2 + (18 * x + 30) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by rw [h₀]
+      _ = (x ^ 2 + (18 * x + 45)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) + 15 := by ring
+
+  have h₃ : ∀ x : ℝ, (f x = 0) ↔ (Real.sqrt (x ^ 2 + (18 * x + 45)) = (x ^ 2 + (18 * x + 45)) / 2) := by
+    intro x
+    rw [h₂]
+    constructor
+   . intro h
+      apply congrArg (fun x ↦ (x + 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) - 15) / 2) at h
+      have : (Real.sqrt (x ^ 2 + (18 * x + 45)) * 2) * (Real.sqrt (x ^ 2 + (18 * x + 45)) * 2) = (x ^ 2 + (18 * x + 45)) * 4 := by
+        repeat rw [Real.sq_sqrt]
+        repeat positivity
+      field_simp at h ⊢
+      linarith
+   . intro h
+      have : (Real.sqrt (x ^ 2 + (18 * x + 45)) * 2) * (Real.sqrt (x ^ 2 + (18 * x + 45)) * 2) = (x ^ 2 + (18 * x + 45)) * 4 := by
+        repeat rw [Real.sq_sqrt]
+        repeat positivity
+      have : (x ^ 2 + (18 * x + 45)) * 4 = (x ^ 2 + (18 * x + 45)) * 2 + (x ^ 2 + (18 * x + 45)) * 2 := by ring
+      rw [this, h]
+      ring
+
+  have h₄ : ∀ x : ℝ, (f x = 0) ↔ (x ^ 2 + (18 * x + 45) = (x ^ 2 + (18 * x + 30)) ^ 2) := by
+    intro x
+    rw [h₃]
+    constructor
+   . intro h
+      rw [← sub_eq_zero] at h
+      rw [← Real.sqrt_sq] at h
+      convert h using 1
+     . congr
+     . positivity
+   . intro h
+      rw [← sub_eq_zero]
+      rw [← Real.sqrt_sq]
+      convert h using 1
+     . congr
+     . positivity
+
+  have h₅ : ∀ x : ℝ, (f x = 0) ↔ (x ^ 2 + (18 * x + 45) = (x ^ 2 + (18 * x + 30)) ^ 2) ∧ (x ^ 2 + (18 * x + 30) + 15 ≥ 0) := by
+    intro x
+    constructor
+   . intro h
+      rw [h₄] at h
+      rw [show x ^ 2 + (18 * x + 30) + 15 = x ^ 2 + (18 * x + 45) / 2 + 15 / 2 by ring] at h
+      have : x ^ 2 + (18 * x + 45) ≥ 0 := by linarith
+      have : x ^ 2 + (18 * x + 30) + 15 ≥ 0 := by linarith
+      exact ⟨h, this⟩
+   . intro h
+      have : x ^ 2 + (18 * x + 45) ≥ 0 := by linarith
+      have : x ^ 2 + (18 * x + 30) + 15 ≥ 0 := by linarith
+      rw [h₄]
+      linarith
+
+  have h₆ : ∀ x : ℝ, (f x = 0) ↔ (x ^ 2 + (18 * x + 45) = (x ^ 2 + (18 * x + 30)) ^ 2) ∧ (x + 3 ≥ 0) ∧ (x + 5 ≥ 0) := by
+    intro x
+    rw [h₅]
+    constructor
+   . intro h
+      have : (x ^ 2 + (18 * x + 30)) ^ 2 - (x ^ 2 + (18 * x + 45)) = 0 := by linarith
+      have : (x + 3) * (x + 5) * (2 * x + 8) = 0 := by linarith
+      convert this using 1
+     . ring
+     . linarith
+   . intro h
+      rcases h with ⟨h, h₁, h₂⟩
+      rw [show (x ^ 2 + (18 * x + 30)) ^ 2 = (x ^ 2 + (18 * x + 30) + 15) ^ 2 - 15 ^ 2 + 30 * (x ^ 2 + (18 * x + 30)) by ring]
+      rw [show x ^ 2 + (18 * x + 30) + 15 = x ^ 2 + (18 * x + 45) / 2 + 15 / 2 by ring, show x + 3 = (x + 3) by ring]
+      have : (x + 5) ≥ 0 := by linarith
+      have : (2 * x + 8) ≥ 0 := by linarith
+      have : (x ^ 2 + (18 * x + 45)) ≥ 0 := by positivity
+      linarith
+
+  have h₇ : ∀ x : ℝ, (f x = 0) ↔ (x + 3 = 0) ∨ (x + 5 = 0) ∨ (2 * x + 8 = 0) := by
+    intro x
+    rw [h₆]
+    constructor
+   . intro h
+      rcases h with ⟨h, h₁, h₂⟩
+      have : (x + 3) * (x + 5) * (2 * x + 8) = 0 := by linarith
+      simp [mul_eq_zero] at this
+      rcases this with (h | h) | h
+     . left; linarith
+     . right; left; linarith
+     . right; right; linarith
+   . intro h
+      rcases h with (h | h | h)
+     . rw [h]; norm_num
+     . rw [h]; norm_num
+     . rw [h]; norm_num
+
+  have h₈ : ∀ x : ℝ, (f x = 0) ↔ (x = -3) ∨ (x = -5) ∨ (x = -4) := by
+    intro x
+    rw [h₇]
+    constructor
+   . intro h
+      rcases h with (h | h | h)
+     . left; linarith
+     . right; left; linarith
+     . right; right; linarith
+   . intro h
+      rcases h with (h | h | h)
+     . rw [h]; norm_num
+     . rw [h]; norm_num
+     . rw [h]; norm_num
+
+  have h₉ : (f ⁻¹' {0}) = {-3, -5, -4} := by
+    ext x
+    constructor
+   . intro h
+      simp [h₈] at h
+      simp [h]
+      rcases h with (h | h | h)
+     . rw [h]; norm_num
+     . rw [h]; norm_num
+     . rw [h]; norm_num
+   . intro h
+      simp [h₈]
+      rcases h with (h | h | h)
+     . rw [h]; norm_num
+     . rw [h]; norm_num
+     . rw [h]; norm_num
+
+  rw [h₉, Fintype.coe_inj, Fintype.prod_coe_finset]
+  simp only [Multiset.cons_zero, Multiset.prod_cons, Multiset.prod_singleton, Multiset.zero]
+  norm_num
+
+```

@@ -1,0 +1,40 @@
+-- Let's consider a variable $x$ and use the `have` command to establish an equation involving $x$.
+  let x : Real := 4 * Real.cos (Real.pi / 7) ^ 2 - 1
+
+  -- First, I need to prove that $x = 2\cos\frac{\pi}{7}$ using the double angle formula for cosine.
+  have hx_1 : x = 2 * Real.cos (Real.pi / 7) := by
+    rw [pow_two, Real.cos_sq]
+    ring_nf
+    field_simp
+
+  -- Next, I'll prove that $2\cos\frac{\pi}{7}(2\cos\frac{2\pi}{7}+1)=1$ using the triple angle formula for cosine.
+  have hx_2 : 2 * Real.cos (Real.pi / 7) * (2 * Real.cos (2 * Real.pi / 7) + 1) = 1 := by
+    have h : Real.cos (3 * Real.pi / 7) = 4 * Real.cos (Real.pi / 7) ^ 3 - 3 * Real.cos (Real.pi / 7) := by
+      have h : 3 * Real.pi / 7 = 3 * (Real.pi / 7) := by ring
+      rw [h]
+      exact Real.cos_three_mul (Real.pi / 7)
+
+    rw [show 2 * Real.cos (2 * Real.pi / 7) + 1 = (4 * Real.cos (Real.pi / 7) ^ 3 - 3 * Real.cos (Real.pi / 7) + 1) / (2 * Real.cos (Real.pi / 7)) by field_simp; ring_nf]
+    rw [h]
+    field_simp
+    ring_nf
+    rw [Real.cos_sq]
+    field_simp
+    ring_nf
+
+  -- I've established that $2\cos\frac{\pi}{7}(2\cos\frac{2\pi}{7}+1)=1$ and $x=2\cos\frac{\pi}{7}$. Now I need to prove that $2\cos\frac{2\pi}{7}+1=\frac{1}{x}$.
+  have hx_3 : 2 * Real.cos (2 * Real.pi / 7) + 1 = 1 / x := by
+    rw [hx_1]
+    field_simp
+    linarith
+
+  -- I'll substitute the value of $x$ and simplify.
+  rw [hx_3, hx_1]
+  field_simp
+  ring_nf
+  rw [show 1 / (4 * Real.cos (Real.pi / 7) ^ 2 - 1) = 1 / 2 * (1 / (2 * Real.cos (Real.pi / 7) - 1) - 1 / (2 * Real.cos (Real.pi / 7) + 1)) by field_simp; ring_nf]
+  field_simp
+  ring_nf
+  nlinarith [Real.cos_sq (Real.pi / 7), Real.pi_pos]
+
+```

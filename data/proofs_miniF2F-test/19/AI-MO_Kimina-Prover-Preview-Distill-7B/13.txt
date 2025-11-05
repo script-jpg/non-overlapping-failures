@@ -1,0 +1,50 @@
+-- Show that the inequality implies $0 \leq 1 + 2x$ and $1 - \sqrt{1 + 2x} \neq 0$.
+
+  have h₃ : 1 + 2 * x ≥ 0 := by
+    apply sqrt_nonneg
+
+  have h₄ : 1 - Real.sqrt (1 + 2 * x) ≠ 0 := by
+    intro h
+    simp [h] at h₁
+
+  -- We need to demonstrate that $x \geq -\frac{1}{2}$ and $x < \frac{45}{8}$.
+
+  have h₅ : -1 / 2 ≤ x := by
+    by_contra! h₅
+    -- If $x < -\frac{1}{2}$, then $1 + 2x < 0$, which contradicts the non-negativity of the square root.
+    have : 1 + 2 * x < 0 := by linarith
+    have : Real.sqrt (1 + 2 * x) < 0 := by
+      apply Real.sqrt_lt
+      · linarith
+      · linarith
+    linarith [show 0 ≤ Real.sqrt (1 + 2 * x) by apply Real.sqrt_nonneg]
+
+  have h₆ : x < 45 / 8 := by
+    by_contra! h₆
+    -- If $x \geq \frac{45}{8}$, then the inequality does not hold.
+    have h₇ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 ≥ 2 * x + 9 := by
+      -- If $x \geq \frac{45}{8}$, then $1 - \sqrt{1 + 2x} \leq 0$.
+      have h₈ : 1 - Real.sqrt (1 + 2 * x) ≤ 0 := by
+        have h₈ : Real.sqrt (1 + 2 * x) ≥ 1 := by
+          rw [show (1 : ℝ) = 1 / 2 + 1 / 2 by norm_num]
+          apply add_le_add
+          · simp
+          · rw [show (1 : ℝ) = 3 / 8 + 5 / 8 by norm_num]
+            apply Real.sqrt_le_sqrt
+            linarith
+        linarith
+      -- This means the numerator and denominator of the left-hand side have opposite signs.
+      apply le_of_lt
+      -- The numerator is negative, and the denominator is positive.
+      have h₉ : 4 * x ^ 2 < 0 := by nlinarith
+      have h₁₀ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 > 0 := by
+        apply sq_pos_of_ne_zero
+        exact h₄
+      -- Invert the inequality when dividing by a positive number.
+      apply (div_lt_iff₀ h₁₀).mpr
+      -- The inequality is false when $x \geq \frac{45}{8}$.
+      nlinarith [Real.sq_sqrt (show 0 ≤ 1 + 2 * x by linarith)]
+    linarith
+
+  exact ⟨h₅, h₆⟩
+```

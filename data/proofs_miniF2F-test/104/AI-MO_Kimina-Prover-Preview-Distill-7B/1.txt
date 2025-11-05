@@ -1,0 +1,263 @@
+-- suppose $p$ is a prime number and $p\ge 7$
+  -- we want to evaluate the sum of $(k^{-1}\cdot (k+1)^{-1})$ for $k$ from 1 to $p-2$
+  -- first, we notice that this problem is about the "sum of the product of two consecutive integer's inverse"
+  -- and the result is related to the number of prime divisors of $p$, for it is $2$
+  -- we try to use the fact that when $p$ is a prime number, the sum of the product of two consecutive elements' inverse have a "certain" value (which is 2)
+
+  -- first, we try to understand the problem with small examples
+  -- suppose $p=7$, we should calculate the sum of $(1^{-1}\cdot 2^{-1} + 2^{-1}\cdot 3^{-1} + 3^{-1}\cdot 4^{-1} + 4^{-1}\cdot 5^{-1} + 5^{-1}\cdot 6^{-1})$
+  -- and we are working in the field $ZMod 7$
+  -- it is easy to calculate that result is 2 (in $ZMod 7$)
+  -- we can even prove it by conjugating the matrix $\begin{pmatrix}0 & 1 \\ 1 & 0\end{pmatrix}$ by a diagonal matrix, but here we avoid doing so
+
+  -- for a prime number $p$, we denote the set of numbers from $1$ to $p-2$ as $S$
+  let S := Finset.Icc 1 (p - 2)
+  let f (x : ZMod p) := x⁻¹ * (x + 1)⁻¹
+  -- we define the set $S$ and the function $f$ as in the statement
+  -- we will calculate the sum of $f(x)$ for $x\in S$
+  -- it is known that $S$ has $p-2$ elements, and it is a field (since $p$ is prime)
+  -- we also know that $0, 1, p-1, p$ is not in $S$, because $p\ge 7$ and $p$ is prime
+
+  -- we want to use the fact that for a field $k$ with cardinality $q$, the sum of the product of two consecutive elements' inverse is $2$ if $q\ge 7$
+  -- we try to prove this in Lean
+  -- first, we can find an automorphism of $k$ that fix all the elements in $k$ except $0$ (the Frobenius automorphism)
+  have hFrobenius (k : ZMod p) : (p - 1) * k = k ^ p := by
+    -- we use the property of the Frobenius automorphism
+    -- it is a standard result in finite fields
+    rw [ZMod.mul_eq_mul]
+    have h := ZMod.pow_card_sub_one_eq_one (a := k) (by norm_num)
+    rw [mul_comm, h, ←pow_succ]
+    -- we use the fact that $k^{q-1} = 1$ for $k \neq 0$ in a finite field of cardinality $q$
+    -- and $p$ is prime so $p-1$ is a natural number
+    simp
+    -- we use the division with remainder of $p-1$ and $p$
+    -- it is a standard fact that for a prime $p$, $p-1$ equals $p$ modulo $p$
+    rw [Nat.mod_eq_of_lt (by linarith)]
+    -- we use the fact that $p-1$ equals $0$ modulo $p$
+    rw [Nat.div_eq_of_eq_mul_right (by linarith)]
+    -- we use the fact that $p-1$ equals $p-1$ modulo any $p$
+    rw [Nat.mod_eq_of_lt (by linarith)]
+    -- we use the fact that $p-1$ equals $-1$ modulo $p$
+    rw [Nat.sub_eq_iff_eq_add]
+    -- we use the fact that $p-1+1 = p$ and $p$ is divisible by $p$
+    rw [Nat.sub_add_cancel (by linarith)]
+  -- we use the above fact to proof the lemma that we say
+  -- in fact, it is a standard result in finite fields that the Frobenius automorphism is the identity map
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is the Frobenius automorphism that helps us to find the value of the sum
+  -- we need to use the fact that the sum of the product of two consecutive elements' inverse is equal to $2$
+  -- we need the `hFrobenius` lemma to prove it
+  have hFrobenius' (k : ZMod p) : k ≠ 0 → (k * k) ^ p = k * k := by
+    intro hk
+    rw [mul_pow, hFrobenius, hk]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    simp hk
+  -- we use the above fact to prove the lemma that we say
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^3 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k * k = k * k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    ring_nf
+    rw [mul_assoc, mul_comm, mul_assoc, mul_assoc, mul_comm (k * k), ←mul_assoc, ←mul_assoc, ←mul_assoc]
+    ring_nf
+    rw [mul_assoc, mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc, ←mul_assoc, ←mul_assoc]
+    -- we use the fact that $k^3 = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k * k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that if $k^n = k$ for $k \neq 0$ and $n > 1$, then $k^2 = k$
+  -- but we need to prove it in a roundabout way
+  -- we need this fact because it is used in the proof of the sum of the product of two consecutive elements' inverse
+  have hFrobenius'' (k : ZMod p) : k ≠ 0 → k * k = k := by
+    intro hk
+    have hk' : k * k ≠ 0 := by
+      apply mul_ne_zero
+      assumption
+      assumption
+    have := hFrobenius' (k * k) hk'
+    rw [mul_pow, mul_assoc] at this
+    rw [this]
+    -- we use the fact that $k^p = k$ for $k \neq 0$ in a finite field of cardinality $p$
+    -- the above fact is exactly what we want to prove
+    simp hk
+
+  -- we use the above fact to prove the main lemma
+  -- it is a standard result in finite fields that

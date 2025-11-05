@@ -1,0 +1,342 @@
+-- Define $f(x) = x(2 - 1/x) - 2x + 1$ for $x \geq 1$.
+  let f (x : ℝ) := x * (2 - 1 / x) - 2 * x + 1
+
+  -- Define $f'(x) = (x(2 - 1/x))' - (2x + 1)'$.
+  let f' (x : ℝ) := deriv (fun x ↦ x * (2 - 1 / x)) x - deriv (fun x ↦ 2 * x + 1) x
+
+  -- Define $g(x) = x - 1$ for $x \geq 1$.
+  let g (x : ℝ) := x - 1
+
+  -- Define $g'(x) = (x - 1)'$.
+  let g' (x : ℝ) := deriv (fun x ↦ x - 1) x
+
+  -- Define $h(x) = f'(x) - g'(x)$ for $x \geq 1$.
+  let h (x : ℝ) := f' x - g' x
+
+  -- Define $h'(x) = (f'(x) - g'(x))'$ for $x \geq 1$.
+  let h' (x : ℝ) := deriv (fun x ↦ f' x - g' x) x
+
+  have hderiv : ∀ x > 0, h' x = 1 / x + 1 / x ^ 2 - 1 / x ^ 3 := by
+    intro x hx
+    simp [h', h, g', f', g]
+    field_simp
+    ring_nf
+
+  -- Prove that $h'(x) > 0$ for all $x > 1$.
+  have hderiv_pos : ∀ x > 1, h' x > 0 := by
+    intro x hx
+    rw [hderiv]
+    have hx' : x > 0 := by linarith
+    have hx'' : x ^ 2 > 0 := by nlinarith
+    have hx''' : x ^ 3 > 0 := by nlinarith
+    have : 1 / x > 0 := by positivity
+    have : 1 / x ^ 2 > 0 := by positivity
+    have : 1 / x ^ 3 > 0 := by positivity
+    linarith
+
+  -- Prove that $h(x) < 0$ for all $1 < x < 2$.
+  have h_neg_1 : ∀ x > 1, x < 2 → h x < 0 := by
+    intro x hx1 hx2
+    have hx' : x > 0 := by linarith
+    have hx'' : x ^ 2 > 0 := by nlinarith
+    have hx''' : x ^ 3 > 0 := by nlinarith
+    have fx1 : (f x) = x * (2 - 1 / x) - 2 * x + 1 := by rfl
+    have fx2 : f (x - 1) = (x - 1) * (2 - 1 / (x - 1)) - 2 * (x - 1) + 1 := by
+      rw [f]
+    have fx3 : x - 1 > 0 := by linarith
+    have fx4 : x - 1 < 1 := by linarith
+    have fx5 : x < 2 := by linarith
+    simp [h, h', h'', fx1, fx2]
+    refine (div_sub_div?_?_).mpr?_
+    · linarith
+    · linarith
+    · refine (div_sub_div?_?_).mpr?_
+      · simp [hx', hx'', hx''']
+      · linarith
+      · linarith
+
+  -- Prove that $h(x) \geq 0$ for all $x \geq 1$.
+  have h_ge_0 : ∀ x ≥ 1, h x ≥ 0 := by
+    intro x hx
+    induction' x with x ih
+    · simp [h]
+    · rename_i hx'
+      by_cases hx'' : x = 1
+      · simp [hx'', h]
+      · have hx''' : x > 1 := by
+          rw [Nat.one_le_iff_ne_zero] at hx''
+          exact hx''.symm
+        have hx'''' : x - 1 > 0 := by linarith
+        have hx''''' : x - 1 < x := by linarith
+        have fx1 : f x = x * (2 - 1 / x) - 2 * x + 1 := by rfl
+        have fx2 : f (x - 1) = (x - 1) * (2 - 1 / (x - 1)) - 2 * (x - 1) + 1 := by
+          rw [f]
+        have fx3 : x - 1 > 0 := by linarith
+        have fx4 : x - 1 < x := by linarith
+        have fx5 : x < x + 1 := by linarith
+        have fx6 : x - 1 ≥ 1 := by linarith
+        simp [h]
+        refine (div_le_div_iff?_?_).mpr?_
+        · linarith
+        · linarith
+        · refine le_of_lt?_
+          exact Nat.lt_succ_of_lt (Nat.lt_of_le_of_ne hx' (by rw [hx'']; linarith))
+
+  have h_pos_1 : ∀ x ≥ 1, h x > 0 := by
+    intro x hx
+    by_cases hx' : x = 1
+    · simp [hx', h]
+    · have hx'' : x > 1 := by
+        rw [Nat.one_le_iff_ne_zero] at hx'
+        exact hx'.symm
+      have hne : x ≠ 1 := by
+        exact hx'.symm
+      have hx''' : x - 1 > 0 := by linarith
+      have h_neg : ¬x < 2 := by
+        intro hx
+        apply h_neg_1
+        · linarith
+        · linarith
+      have hx'''' : x ≥ 2 := by linarith
+      have h_pos_2 : h x > 0 := by
+        apply h_ge_0
+        linarith
+      exact h_pos_2
+
+  have h_pos_2 : ∀ x > 2, h x > 0 := by
+    intro x hx
+    have hx' : x > 1 := by linarith
+    have hx'' : x ≥ 2 := by linarith
+    apply h_ge_0
+    linarith
+
+  have h_pos : ∀ x > 1, h x > 0 := by
+    intro x hx
+    by_cases hx' : x < 2
+    · exact h_neg_1 x hx' hx
+    · push_neg at hx'
+      exact h_pos_2 x hx'
+
+  -- Define $k(x) = x(2 - 1/x) - 2x + 1$ for $x \geq 1$.
+  let k (x : ℝ) := x * (2 - 1 / x) - 2 * x + 1
+
+  -- Define $k'(x) = (x(2 - 1/x))' - (2x + 1)'$.
+  let k' (x : ℝ) := deriv (fun x ↦ x * (2 - 1 / x)) x - deriv (fun x ↦ 2 * x + 1) x
+
+  -- Define $k''(x) = (f'(x) - g'(x))'$ for $x \geq 1$.
+  let k'' (x : ℝ) := deriv (fun x ↦ k' x) x
+
+  have kderiv : ∀ x > 0, k'' x = 2 / x + 1 / x ^ 2 - 2 / x ^ 3 := by
+    intro x hx
+    simp [k'', k', f', g']
+    field_simp
+    ring_nf
+
+  -- Prove that $k''(x) > 0$ for all $1 < x < 2$.
+  have kderiv_pos : ∀ x > 1, x < 2 → k'' x > 0 := by
+    intro x hx1 hx2
+    have hx' : x > 0 := by linarith
+    have hx'' : x ^ 2 > 0 := by nlinarith
+    have hx''' : x ^ 3 > 0 := by nlinarith
+    have fx1 : (f x) = x * (2 - 1 / x) - 2 * x + 1 := by rfl
+    have fx2 : f (x - 1) = (x - 1) * (2 - 1 / (x - 1)) - 2 * (x - 1) + 1 := by
+      rw [f]
+    have fx3 : x - 1 > 0 := by linarith
+    have fx4 : x - 1 < 1 := by linarith
+    have fx5 : x < 2 := by linarith
+    simp [k, k', k'', fx1, fx2]
+    refine (div_sub_div?_?_).mpr?_
+    · linarith
+    · linarith
+    · refine (div_sub_div?_?_).mpr?_
+      · simp [hx', hx'', hx''']
+      · linarith
+      · linarith
+
+  -- Prove that $k(x) \geq 0$ for all $x \geq 1$.
+  have k_pos_1 : ∀ x ≥ 1, k x > 0 := by
+    intro x hx
+    by_cases hx' : x = 1
+    · simp [hx', k]
+    · have hx'' : x > 1 := by
+        rw [Nat.one_le_iff_ne_zero] at hx'
+        exact hx'.symm
+      have hx''' : x - 1 > 0 := by linarith
+      have hx'''' : x - 1 < x := by linarith
+      have fx1 : f x = x * (2 - 1 / x) - 2 * x + 1 := by rfl
+      have fx2 : f (x - 1) = (x - 1) * (2 - 1 / (x - 1)) - 2 * (x - 1) + 1 := by
+        rw [f]
+      have fx3 : x - 1 > 0 := by linarith
+      have fx4 : x - 1 < x := by linarith
+      have fx5 : x < x + 1 := by linarith
+      have fx6 : x - 1 ≥ 1 := by linarith
+      simp [k]
+      refine (div_lt_div_iff?_?_).mpr?_
+      · linarith
+      · linarith
+      · refine lt_of_le_of_lt (Nat.lt_succ_of_le (Nat.one_le_of_lt hx'')) (by linarith)
+
+  have k_pos_2 : ∀ x > 2, k x > 0 := by
+    intro x hx
+    have hx' : x > 1 := by linarith
+    have hx'' : x ≥ 2 := by linarith
+    apply k_pos_1
+    linarith
+
+  have k_pos : ∀ x > 1, k x > 0 := by
+    intro x hx
+    by_cases hx' : x < 2
+    · exact k_neg_1 x hx' hx
+    · push_neg at hx'
+      exact k_pos_2 x hx'
+
+  have h_f_1 : f 1 = 0 := by
+    simp [f]
+    norm_num
+
+  -- Prove that $f(x) \geq 0$ for all $x \geq 1$.
+  have f_pos : ∀ x ≥ 1, f x ≥ 0 := by
+    intro x hx
+    have hx' : x ≥ 1 := by linarith
+    have h_nng : ¬x = 0 := by
+      linarith
+    have h_nng : ¬x < 1 := by
+      linarith
+    have h_xge1 : x ≥ 1 := by linarith
+    have h_xgt1 : x > 1 ∨ x = 1 := by
+      by_cases hx : x > 1
+      · left; exact hx
+      · right; exact hx
+    cases h_xgt1 with
+    | inl hx =>
+      have hx' : x > 1 := by exact hx
+      have h_nng : ¬x = 1 := by
+        linarith
+      simp [f]
+      refine (div_le_div_iff?_?_).mpr?_
+      · linarith
+      · linarith
+      · apply h_pos
+        exact hx'
+    | inr hx =>
+      have hx' : x = 1 := by exact hx
+      simp [f, hx']
+
+  have f_ge_0 : ∀ x ≥ 1, f x ≥ 0 := by
+    intro x hx
+    simp [f]
+    have hx' : x ≥ 1 := by linarith
+    have h_nng : ¬x = 0 := by
+      linarith
+    have h_nng : ¬x < 1 := by
+      linarith
+    have h_xge1 : x ≥ 1 := by linarith
+    have h_xgt1 : x > 1 ∨ x = 1 := by
+      by_cases hx : x > 1
+      · left; exact hx
+      · right; exact hx
+    cases h_xgt1 with
+    | inl hx =>
+      have hx' : x > 1 := by exact hx
+      have h_nng : ¬x = 1 := by
+        linarith
+      have : x - 1 > 0 := by linarith
+      have : x - 1 < x := by linarith
+      have fx1 : x * (2 - 1 / x) ≥ 2 * x - 1 := by
+        have : x * (2 - 1 / x) - (2 * x - 1) ≥ 0 := by
+          simp [f]
+          refine (div_le_div_iff?_?_).mpr?_
+          · linarith
+          · linarith
+          · apply h_pos
+            exact hx'
+        linarith
+      linarith
+    | inr hx =>
+      have hx' : x = 1 := by exact hx
+      simp [f, hx']
+
+  -- Prove that $f'(x) > 0$ for all $1 < x < 2$.
+  have hderiv_pos_1 : ∀ x > 1, x < 2 → h' x > 0 := by
+    intro x hx1 hx2
+    have hx' : x > 1 := by linarith
+    have h_nng : ¬x = 1 := by
+      linarith
+    have h_xlt2 : x < 2 := by linarith
+    have h_neg : ¬x ≥ 2 := by
+      linarith
+    have h_pos_2 : h x > 0 := by
+      apply h_pos_1
+      linarith
+    have h_neg_2 : ¬h x ≤ 0 := by
+      linarith
+    have h_pos_3 : h x ≥ 0 := by
+      apply h_pos
+      linarith
+    have h_pos_4 : h' x > 0 := by
+      apply (deriv_pos_iff monotonically`).
+      · simp
+      · simp
+        exact h_pos_1 x hx'
+        exact h_pos_2
+        exact h_neg_2
+      · intro x hx'
+        apply (le_of_lt (hderiv_pos x hx').mpr hx')
+    exact h_pos_4
+
+  -- Prove that $f'(x) > 0$ for all $x > 2$.
+  have hderiv_pos_2 : ∀ x > 2, h' x > 0 := by
+    intro x hx
+    have hx' : x > 1 := by linarith
+    have h_pos_2 : h x > 0 := by
+      apply h_pos_2 x hx'
+    have h_neg_2 : ¬h x ≤ 0 := by
+      linarith
+    have h_pos_3 : h x ≥ 0 := by
+      apply h_pos
+      linarith
+    have h_pos_4 : h' x > 0 := by
+      apply (deriv_pos_iff monotonically`).
+      · simp
+      · simp
+        exact h_pos_1 x hx'
+        exact h_pos_2
+        exact h_neg_2
+      · intro x hx'
+        apply (le_of_lt (hderiv_pos x hx').mpr hx')
+    exact h_pos_4
+
+  -- Prove that $f'(x) > 0$ for all $x > 1$.
+  have hderiv_pos_3 : ∀ x > 1, h' x > 0 := by
+    intro x hx
+    by_cases hx' : x < 2
+    · exact hderiv_pos_1 x hx hx'
+    · push_neg at hx'
+      exact hderiv_pos_2 x hx'
+
+  have h_f_2 : f 2 > 0 := by
+    simp [f]
+    norm_num
+
+  -- Prove that $f(x) > 0$ for all $x > 1$.
+  have f_pos_2 : ∀ x > 1, f x > 0 := by
+    intro x hx
+    have hx' : x > 1 := by linarith
+    have h_xge1 : x ≥ 1 := by linarith
+    have h_xgt1 : x > 1 := by linarith
+    apply f_pos
+    linarith
+
+  have f_lt_k_1 : ∀ x ≥ 1, f x < k x := by
+    intro x hx
+    have hx' : x ≥ 1 := by linarith
+    have h_nng : ¬x = 0 := by
+      linarith
+    have h_xge1 : x ≥ 1 := by linarith
+    have h_xgt1 : x > 1 ∨ x = 1 := by
+      by_cases hx : x > 1
+      · left; exact hx
+      · right; exact hx
+    cases h_xgt1 with
+    | inl hx =>
+      have hx' : x > 1 :=

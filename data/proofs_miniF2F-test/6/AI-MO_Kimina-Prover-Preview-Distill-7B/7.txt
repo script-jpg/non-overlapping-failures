@@ -1,0 +1,125 @@
+-- some auxilary inequalities
+  have b_m_lt_0 : m < 0 := by
+    specialize @h₂ m
+    rw [h₁] at h₂
+    by_contra! o
+    have o₁ : ∀ i ∈ Finset.range k, 0 ≤ Real.cos (a i + m) / 2 ^ i := by
+      intro i _
+      apply div_nonneg
+      apply Real.cos_nonneg_of_neg_pi_div_two_le_of_le
+      linarith
+      linarith
+    have o₂ : 0 < ∑ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i := by
+      apply Finset.sum_pos
+      · intro i hi
+        specialize o₁ i hi
+        positivity
+      · exact Finset.nonempty_rangek
+    linarith
+
+  have b_n_gt_0 : n > 0 := by
+    specialize @h₃ n
+    rw [h₁] at h₃
+    by_contra! o
+    have o₁ : ∀ i ∈ Finset.range k, 0 ≤ Real.cos (a i + n) / 2 ^ i := by
+      intro i _
+      apply div_nonneg
+      apply Real.cos_nonneg_of_neg_pi_div_two_le_of_le
+      linarith
+      linarith
+    have o₂ : 0 < ∑ i ∈ Finset.range k, Real.cos (a i + n) / 2 ^ i := by
+      apply Finset.sum_pos
+      · intro i hi
+        specialize o₁ i hi
+        positivity
+      · exact Finset.nonempty_rangek
+    linarith
+
+  have b_m_lt_n : m < n := by linarith
+
+  -- some trigonometic identity
+  have h₄ : ∀ x, y x = Real.cos m * Real.sin x - Real.sin m * Real.cos x + ∑ i ∈ Finset.range k, Real.cos (a i + x) * Real.cos m / 2 ^ i - Real.sin m * Real.sin x * (1 / 2 ^ i) := by
+    intro x
+    rw [h₁]
+    have e : ∀ i ∈ Finset.range k, Real.cos (a i + x) / 2 ^ i = Real.cos (a i + x) * Real.cos m / 2 ^ i - Real.sin m * Real.sin x * (1 / 2 ^ i) := by
+      intro i _
+      rw [Real.cos_sub]
+      ring_nf
+    rw [Finset.sum_congr rfl e]
+    ring
+
+  -- simplify h₄
+  have h₅ : ∀ x, y x = Real.cos (x + m) + ∑ i ∈ Finset.range k, Real.cos (a i + x) * Real.cos m / 2 ^ i - Real.sin m * Real.sin x * (1 / 2 ^ i) := by
+    intro x
+    rw [h₄ x]
+    rw [Real.cos_add]
+    ring_nf
+
+  have h₆ : ∀ x, y x = Real.cos (x + m) + ∑ i ∈ Finset.range k, Real.cos (a i + x + m) / 2 ^ i := by
+    intro x
+    rw [h₅ x]
+    conv =>
+      lhs
+      enter [2]
+      intro i _
+      rw [←Real.cos_add]
+      ring_nf
+      rw [←Real.cos_add]
+      ring_nf
+
+  -- prove that y m = 0 and y n = 0
+  have h₇ : y m = 0 := by
+    specialize h₂ m
+    exact h₂
+  have h₈ : y n = 0 := by
+    specialize h₃ n
+    exact h₃
+
+  -- simplify h₇ and h₈
+  have h₉ : Real.cos (m + m) + ∑ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i = 0 := by
+    rw [h₆ m] at h₇
+    rw [←h₇]
+    simp only [zero_add]
+  have h₁₀ : Real.cos (n + m) + ∑ i ∈ Finset.range k, Real.cos (a i + n) / 2 ^ i = 0 := by
+    rw [h₆ n] at h₈
+    rw [←h₈]
+    simp only [zero_add]
+
+  -- cancel the same terms on the left-hand side of h₉ and h₁₀
+  have h₁₁ : Real.cos (n + m) - Real.cos (m + m) = 0 := by
+    have o : ∑ i ∈ Finset.range k, Real.cos (a i + n) / 2 ^ i - ∑ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i = 0 := by
+      have o₁ : ∀ i ∈ Finset.range k, Real.cos (a i + n) / 2 ^ i - Real.cos (a i + m) / 2 ^ i = 0 := by
+        intro i _
+        have e : Real.cos (a i + n) / 2 ^ i - Real.cos (a i + m) / 2 ^ i = (Real.cos (a i + n) - Real.cos (a i + m)) / 2 ^ i := by
+          ring_nf
+        rw [e]
+        specialize Real.cos_eq_cos_add_two_mul_sin_sub_sin_add_two_mul_sin (a := a i) (m := m) (n := n) (m' := -m)
+        rw [←add_assoc, add_neg_cancel, add_assoc, Real.sin_add_two_mul_pi]
+        ring_nf
+      rw [Finset.sum_congr rfl o₁]
+      simp only [Finset.sum_sub_distrib]
+      simp only [zero_add]
+    rw [←h₁₀, ←h₉, add_comm, ←sub_eq_zero]
+    exact o
+
+  -- prove that n + m = 2 * k * π for some integer k
+  have h₁₂ : ∃ t : ℤ, n + m = t * Real.pi := by
+    have o := Real.cos_eq_zero_iff.1 h₁₁
+    rcases o with ⟨o, o'⟩
+    use 2 * ↑k
+    rw [o']
+    ring_nf
+    rw [mul_assoc, ←mul_add]
+    simp only [Nat.cast_ofNat]
+    ring
+
+  -- finally prove the required result
+  rcases h₁₂ with ⟨t, h₁₂⟩
+  use t
+  rw [h₁₂]
+  ring_nf
+  rw [←add_mul, mul_comm _ t, mul_assoc, ←mul_sub]
+  simp only [Nat.cast_ofNat]
+  ring
+
+```

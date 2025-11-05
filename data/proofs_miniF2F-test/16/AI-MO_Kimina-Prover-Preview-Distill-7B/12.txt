@@ -1,0 +1,98 @@
+-- suppose the statement is false
+  by_contra h'
+  rcases h' with ⟨n₀, hn₀pos, hn₀⟩
+
+  -- prove that 0 < f(n) for all n
+  have h'' : ∀ n, 0 < n → 0 < f n := by
+    intro n hn
+    cases n with
+    | zero => contradiction
+    | succ n =>
+      cases n with
+      | zero => simp [h₀]
+      | succ n =>
+        simp [Nat.succ_pos]
+
+  -- prove that f(n) < f(n + 1) for all n
+  have h''' : ∀ n, 0 < n → f n < f (n + 1) : = by
+    intro n hn
+    have : 0 < f n := h'' n hn
+    have := h₁ n hn
+    linarith
+
+  -- prove that f is strictly increasing
+  have h'''' : StrictMonoOn f (Set.Ioi 0) := by
+    apply strictMonoOn_of_lt_succ
+    · intro n hn
+      apply h''' n hn
+    · intro n hn m hm hnm
+      have : f n < f m := h''' n hn
+      have : f m < f (m + 1) := h''' m hm
+      linarith
+
+  -- prove that f(n) ≤ n for all n ≥ n₀
+  have h''''' : ∀ n, 0 < n ∧ n ≥ n₀ → f n ≤ n := by
+    intro n hn
+    cases n with
+    | zero =>
+      have := h₀
+      simp at hn
+      linarith
+    | succ n =>
+      cases n with
+      | zero =>
+        simp [hn₀]
+      | succ n =>
+        have hn₁ : 0 < n := by apply hn₁pos
+        have hn₂ : n ≥ n₀ := by apply hn₂pos
+        have := h''''' n ⟨hn₁, hn₂⟩
+        have : f (n + 1) ≤ n + 1 := by linarith
+        linarith
+
+  -- prove that f(n) ≥ n for all n ≥ n₀
+  have h'''''' : ∀ n, 0 < n ∧ n ≥ n₀ → f n ≥ n := by
+    intro n hn
+    let m := n - 1
+    have hnₘ : n = m + 1 := by simp [m]
+    have hn_le : n ≥ n₀ := by apply hn_lepos
+    have hm_le : m ≥ n₀ := by
+      simp [m]
+      omega
+    have hmn : m + 1 = n := by simp [m]
+    have := h''''' m ⟨hm_le, hmpos⟩
+    have : f m ≤ m := by linarith
+    linarith
+
+  -- prove that f(n) = n for all n ≥ n₀
+  have h''''''' : ∀ n, 0 < n ∧ n ≥ n₀ → f n = n := by
+    intro n hn
+    have := h''''' n hn
+    have := h'''''' n hn
+    linarith
+
+  -- prove that f(n) = n for all n < n₀
+  have h'''''''' : ∀ n, 0 < n ∧ n < n₀ → f n = n := by
+    intro n hn
+    have hnn := h₁ n hn
+    have hn : n ≥ n₀ := by
+      linarith
+    linarith
+
+  -- prove that f(n) = n for all n > 0
+  have h''''''''' : ∀ n > 0, f n = n := by
+    intro n hn
+    cases n with
+    | zero => contradiction
+    | succ n =>
+      cases n with
+      | zero => simp [h₀]
+      | succ n =>
+        have hn₁ : 0 < n := by apply hn₁pos
+        have hn₂ : n ≥ n₀ := by
+          cases n with
+          | zero => simp [hn₀]
+          | succ n => linarith
+        have := h''''''' n ⟨hn₁, hn₂⟩
+        exact hn₂
+  contradiction
+```

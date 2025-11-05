@@ -1,0 +1,204 @@
+-- Auxiliary lemma: if $a$ and $n$ are positive integers, then $a^n$ is divisible by $a$.
+  have h₀ (a n : ℕ) (ha : 0 < a) (hn : 0 < n) : a ^ n ≥ 1 := by
+    calc
+      a ^ n ≥ a ^ 1 := by gcongr; linarith
+      _ ≥ 1 := by omega
+
+  -- Auxiliary lemma: if $a$ and $n$ are positive integers, then $a^n$ is divisible by $a$.
+  have h₁ (a n : ℕ) (ha : 0 < a) (hn : 0 < n) : a ^ n ∣ a ^ (n + 1) := by
+    calc
+      a ^ n ∣ a ^ n * a := by exact Dvd.intro_left (a.pow_succ)
+      _ = a ^ (n + 1) := by rw [Nat.pow_succ]
+
+  -- Auxiliary lemma: if $a$ and $b$ are positive integers, then $a$ is divisible by $b$ if and only if $a \cdot c$ is divisible by $b \cdot c$ for any positive integer $c$.
+  have h₂ (a b c : ℕ) (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) : (a * c) % (b * c) = 0 ↔ a % b = 0 := by
+    constructor
+    · intro h
+      have h : a * c % b = 0 := by
+        calc
+          a * c % b = (a * c % (b * c)) % b := by rw [Nat.mod_mod_of_dvd]; exact Nat.dvd_mul_left b c
+          _ = 0 := by rw [h]; simp
+      exact (Nat.dvd_iff_mod_eq_zero.mp h).symm
+    · intro h
+      calc
+        a * c % (b * c) = (a % b) * c % (b * c) := by rw [Nat.mod_mul_left_mod]
+        _ = 0 := by rw [h]; simp
+
+  -- Auxiliary lemma: if $a$ and $b$ are positive integers, then $a!$ is divisible by $b!$ if and only if $a \geq b$.
+  have h₃ {a b : ℕ} (ha : 0 < a) (hb : 0 < b) : Nat.factorial a % Nat.factorial b = 0 ↔ a ≥ b := by
+    calc
+      Nat.factorial a % Nat.factorial b = 0 ↔ Nat.factorial a ≥ Nat.factorial b := by rw [Nat.mod_eq_zero_iff_dvd, Nat.factorial_pos, Nat.factorial_pos]; omega
+      _ ↔ a ≥ b := by rw [Nat.factorial_le_iff]
+
+  -- Auxiliary lemma: the number of times a prime $p$ appears in the factorization of $n!$ is given by the sum $\sum_{i \geq 1} \left\lfloor \frac{n}{p^i} \right\rfloor$.
+  have h₄ (n p : ℕ) (hp : 0 < p) : (Nat.Prime p) → ∑ i ≥ 1, Nat.div (n / p ^ i) (n / p ^ (i + 1)) = ∑ i ≥ 1, Nat.div (n / p ^ i) (Nat.factorial (n / p ^ (i + 1))) := by
+    intro h
+    calc
+      ∑ i ≥ 1, Nat.div (n / p ^ i) (n / p ^ (i + 1))
+          = ∑ i ≥ 1, Nat.div (n / p ^ i) (Nat.factorial (n / p ^ (i + 1))) := by
+            congr
+            funext i
+            rw [Nat.factorial_eq_mul_factorial_pred]
+            rw [← Nat.mul_div_assoc]
+            have h : n / p ^ i ≥ n / p ^ (i + 1) := by
+              apply Nat.div_le_div
+              · apply Nat.mul_le_mul_left
+                exact (Nat.pow_le_pow_iff_right hp).mpr (by omega)
+              · exact (Nat.pow_pos_iff_right hp).mpr (by omega)
+            rw [Nat.factorial_pos]
+            simp only [Nat.factorial_eq_mul_factorial_pred, Nat.div_mul_eq_mul_div, mul_comm]
+            congr
+            refine Nat.div_eq_of_eq_mul_right (by omega)?_
+            calc
+              (n / p ^ (i + 1)) * (p ^ i * p) = (n / p ^ (i + 1)) * (p ^ i) * p := by ring
+              _ = (n / p ^ (i + 1) * p ^ i) * p := by ring
+              _ = n / p ^ i * p := by
+                rw [Nat.mul_div_mul_right, Nat.pow_add_one hp, Nat.div_mul_eq_mul_div, mul_comm (n / p ^ i), Nat.mul_div_assoc]
+                rw [Nat.mul_div_cancel_right]
+                exact (Nat.pow_le_pow_iff_right hp).mpr (by omega)
+              _ = n / p ^ i := by rw [mul_comm (n / p ^ i), Nat.mul_div_cancel_right]
+            linarith
+
+  -- Auxiliary lemma: the number of times a prime $p$ appears in the factorization of $n$ is given by the sum $\sum_{i \geq 1} \left\lfloor \frac{n}{p^i} \right\rfloor$.
+  have h₅ (n p : ℕ) (hp : 0 < p) : Nat.factorization n.eval p = ∑ i ≥ 1, Nat.div (n / p ^ i) (n / p ^ (i + 1)) := by
+    calc
+      Nat.factorization n.eval p = (Nat.Prime.factorization n).p p := by rw [Nat.Prime.factorization]; exact hp
+      _ = ∑ i ≥ 1, Nat.div (n / p ^ i) (n / p ^ (i + 1)) := by rw [h₄ n p hp]
+
+  -- Let $a$ be the greatest common divisor of $S$.
+  let a := S.gcd
+  -- Let $b$ be the least common multiple of $S$.
+  let b := S.lcm
+  -- Let $T$ be the set of all positive integers $k$ such that $k^2$ divides $a \cdot b$.
+  let T := {k | 0 < k ∧ a * b / k ^ 2 ≥ 1}
+  -- Let $R$ be the set of all positive integers $k$ such that $k^2$ divides $a$.
+  let R := {k | 0 < k ∧ a / k ^ 2 ≥ 1}
+  -- Let $U$ be the set of all positive integers $k$ such that $k^2$ divides $b$.
+  let U := {k | 0 < k ∧ b / k ^ 2 ≥ 1}
+
+  -- We claim that $T = R \cup U$.
+  have h₆ : T = R ∪ U := by
+    ext k
+    simp only [T, R, U, Finset.mem_union]
+    constructor
+    · intro h
+      simp only [mem_setOf_eq] at h
+      have h₆ : k ^ 2 ∣ a.gcd b := by
+        calc
+          k ^ 2 ∣ a * b := by exact Nat.sq_dvd_sq h.1
+          _ ∣ a.gcd b := by apply Nat.sq_dvd_sq; exact Nat.gcd_dvd_dvd a b; exact Nat.gcd_dvd_dvd b a
+      constructor
+      · by_contra h₇
+        simp only [not_and not_lt] at h₇
+        have h₈ : k ^ 2 ∣ a := by
+          calc
+            k ^ 2 ∣ k ^ 2 ∨ k ^ 2 := by exact Nat.pow_dvd_pow 1 h.1
+            _ ∣ a := by exact Nat.dvd_gcd h₇ h.2
+        rw [Nat.Prime.dvd_iff_dvd_of_dvd_mul_left (Nat.prime_iff.mp (by omega)) (by omega)] at h₈
+        exact h₇ h₈
+      · by_contra h₈
+        simp only [not_and not_lt] at h₈
+        have h₇ : k ^ 2 ∣ b := by
+          calc
+            k ^ 2 ∣ k ^ 2 ∨ k ^ 2 := by exact Nat.pow_dvd_pow 1 h.1
+            _ ∣ b := by exact Nat.dvd_gcd h₈ h.2
+        rw [Nat.Prime.dvd_iff_dvd_of_dvd_mul_left (Nat.prime_iff.mp (by omega)) (by omega)] at h₇
+        exact h₈ h₇
+    · intro h
+      simp only [mem_setOf_eq]
+      have h₇ : a.gcd b ∣ a := by exact Nat.gcd_dvd_left a b
+      have h₈ : a.gcd b ∣ b := by exact Nat.gcd_dvd_right a b
+      constructor
+      · exact Nat.dvd_trans h.2.1 h₇
+      · exact Nat.dvd_trans h.2.2 h₈
+
+  -- We claim that $R \cap U = \emptyset$.
+  have h₇ : Disjoint R U := by
+    intro k h
+    simp only [R, U, Set.disjoint_iff_inter_eq_empty, Set.mem_inter, Set.mem_setOf_eq] at h
+    exact Nat.eq_zero_of_dvd_of_not_pos h.1.2 h.2.2
+
+  -- We claim that $R$ is a finite set.
+  have h₈ : Finite R := by
+    rw [← Set.Finite.mem_finite]
+    intro k h
+    simp only [R, Set.mem_setOf_eq] at h
+    exact h.2
+
+  -- We claim that $U$ is a finite set.
+  have h₉ : Finite U := by
+    rw [← Set.Finite.mem_finite]
+    intro k h
+    simp only [U, Set.mem_setOf_eq] at h
+    exact h.2
+
+  -- We claim that $T$ is a finite set.
+  have h₁₀ : Finite T := by
+    rw [h₆, ← Set.Finite.union_finset]
+    simp only [T, Set.mem_setOf_eq]
+    exact h₈
+
+  -- We claim that $S$ is finite.
+  have h₁₁ : Finite S := by
+    apply Finite.subset (Finset.finite_toSet _)?_
+    rw [h₆, Set.Finite.union_iff_left]
+    exact h₈
+
+  -- We claim that $S = T$.
+  have h₁₂ : S = T := by
+    apply Set.eq_of_subset_of_ncard_le?_
+    rw [h₆, Set.Finite.union_iff_left]
+    exact h₈
+    calc
+      Set.ncard T ≤ Set.ncard (Finset.image (fun k ↦ a * b / k ^ 2) T) := by apply Set.ncard_image_le
+      _ = Set.ncard ((Finset.Ioi 0).image (fun k ↦ a * b / k ^ 2)) := by rw [Finset.image_congr]; rfl; simp only [mem_Ioi]; intro k h; convert h.1 using 1; ring
+      _ = Set.ncard ((Finset.range (a * b)).image (fun k ↦ a * b / k ^ 2)) := by rw [Finset.image_congr]; rfl; intro k _; apply Nat.lt_mul_pow_succ_self; simp only [mem_Ioi]; exact h.1
+      _ ≤ Set.ncard (Finset.range (a * b)) := by apply Set.ncard_image_le
+      _ = a * b := by rw [Set.ncard_range]
+
+  -- Now, it suffices to show that $T$ has 672 elements.
+  rw [h₁₂]
+  clear h₀ h₁ h₂ h₃ h₄ h₅ a b - - -
+  -- We claim that $a = \prod_{i=1}^9 i!^{\sum_{p \in \{2,..., 9\}} \sum_{k \geq 1} \left\lfloor \frac{i}{p^k} \right\rfloor}$.
+  have h₀ : a = ∏ i ∈ Finset.Icc 1 9, i! ^ ∑ p ∈ Finset.Icc 2 9, ∑ k ∈ Finset.Icc 1 9, Nat.div (i / p ^ k) (i / p ^ (k + 1)) := by
+    calc
+      a = ∏ i ∈ Finset.Icc 1 9, (i! ^ ∑ p ∈ Finset.Icc 2 9, ∑ k ∈ Finset.Icc 1 9, Nat.div (i / p ^ k) (i / p ^ (k + 1))) := by
+        -- For each $i$, the multiplicity of each prime $p$ in $i!$ is given by $\sum_{k \geq 1} \left\lfloor \frac{i}{p^k} \right\rfloor$.
+        conv => lhs; rhs; intro i; rw [Finset.prod_pow_eq_pow_prod, Finset.prod_nat_factorial]
+        intro x _; refine ⟨?_, by convert h₅ x (by omega) (by omega)⟩
+        rw [h₅, h₃, Nat.factorial_ne_zero, Nat.Prime.ne_zero, Nat.Prime.ne_one]
+        omega
+        exact Nat.prime_iff.mp (by omega)
+      _ = ∏ i ∈ Finset.Icc 1 9, (i! ^ ∑ p ∈ Finset.Icc 2 9, Nat.factorization (i!).eval p) := by
+        -- For each $i$, the multiplicity of each prime $p$ in $i!$ is given by $\sum_{k \geq 1} \left\lfloor \frac{i}{p^k} \right\rfloor$.
+        conv => lhs; rhs; intro i; rw [Finset.prod_pow_eq_pow_prod]
+        intro x _; refine ⟨?_, by convert h₅ x (by omega) (by omega)⟩
+        rw [h₅, h₃, Nat.factorial_ne_zero, Nat.Prime.ne_zero, Nat.Prime.ne_one]
+        omega
+        exact Nat.prime_iff.mp (by omega)
+      _ = a := by
+        -- For each $i$, the multiplicity of each prime $p$ in $i!$ is given by $\sum_{k \geq 1} \left\lfloor \frac{i}{p^k} \right\rfloor$.
+        rw [Nat.factorization_prod_pow_eq_prod_factorization, Nat.factorization_prod_pow_eq_prod_factorization, Nat.factorization_prod_pow_eq_prod_factorization]
+        congr
+        intro i _
+        rw [Nat.factorization_prod_pow_eq_prod_factorization, Nat.factorization_prod_pow_eq_prod_factorization]
+        intro h _ _ _
+        suffices h : (Finset.range (i + 1) \ {0}).filter (fun x ↦ i.factorization x = 0) = (Finset.range (i + 1) \ {0}).filter (fun x ↦ (i!).factorization x = 0)
+       . exact h
+        ext x
+        simp only [Finset.mem_filter, Finset.mem_Ico, Finset.mem_singleton]
+        constructor
+        · intro h
+          simp only [Nat.factorization_eq_zero_iff, ne_eq, Nat.reduceEqDiff, not_false_eq_true, Finset.mem_range, Finset.mem_singleton, mem_filter] at h
+          simp only [Nat.factorization_eq_zero_iff, ne_eq, Nat.reduceEqDiff, not_false_eq_true, Finset.mem_range, Finset.mem_singleton]
+          exact h.1
+        · intro h
+          simp only [Nat.factorization_eq_zero_iff, ne_eq, Nat.reduceEqDiff, not_false_eq_true, Finset.mem_range, Finset.mem_singleton] at h
+          simp only [Nat.factorization_eq_zero_iff, ne_eq, Nat.reduceEqDiff, not_false_eq_true, Finset.mem_range, Finset.mem_singleton, mem_filter]
+          exact h.1
+
+  -- We claim that $a \cdot b = \prod_{i=1}^9 i!^{\sum_{p \in \{2,..., 9\}} \sum_{k \geq 1} \left\lfloor \frac{i}{p^k} \right\rfloor \cdot (9 - k + 1)}$.
+  have h₁₃ : a * b = ∏ i ∈ Finset.Icc 1 9, i! ^ ∑ p ∈ Finset.Icc 2 9, ∑ k ∈ Finset.Icc 1 9, (Nat.div (i / p ^ k) (i / p ^ (k + 1)) : ℝ) * (9 - k + 1) := by
+    calc
+      a * b = ∏ i ∈ Finset.Icc 1 9, (i! ^ ∑ p ∈ Finset.Icc 2 9, ∑ k ∈ Finset.Icc 1 9, Nat.div (i / p ^ k) (i / p ^ (k + 1))) * (i! ^ ∑ p ∈ Finset.Icc 2 9, ∑ k ∈ Finset.Icc 1 9, Nat.div (i / p ^ k) (i / p ^ (k + 1))) := by rw [h₀, h₃]
+      _ = ∏ i ∈ Finset.Icc 1 9, (i! ^ (∑ p ∈ Finset.Icc 2 9, ∑ k ∈ Finset.Icc 1 9, Nat.div (i / p ^ k) (i / p ^ (k + 1)) : ℝ) * (i! ^ ∑ p ∈ Finset.Icc 2 9, ∑ k ∈ Finset.Icc 1 9, Nat.div (i / p ^ k) (i / p ^ (k + 1)) : ℝ)) :=

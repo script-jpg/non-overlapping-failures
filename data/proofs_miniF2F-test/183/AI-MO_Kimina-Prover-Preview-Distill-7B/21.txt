@@ -1,0 +1,300 @@
+have h₂ : ∀ x > 0, 0 ≤ f x := by
+    intro x hx
+    rw [h₀]
+    apply sub_nonneg_of_le
+    rw [← @Real.sqrt_sq x]
+    apply Real.sqrt_le_sqrt
+    rw [← @sq_le_sq₀ (0 : ℝ) (by linarith)]
+    linarith
+
+  have h₃ : ∀ x > 0, f x = (x ^ 2 + (18 * x + 30)) - 2 * Real.sqrt ((x ^ 2 + (18 * x + 30)) + 15) := by
+    intro x hx
+    rw [h₀]
+    congr 1
+    rw [show 45 = 30 + 15 by linarith]
+    rw [add_assoc, Real.sqrt_add]
+    ring_nf
+    all_goals linarith
+
+  have h₄ : ∀ x > 0, (f x) ^ 2 = (x ^ 2 + (18 * x + 30)) ^ 2 - 2 * (x ^ 2 + (18 * x + 30)) * Real.sqrt ((x ^ 2 + (18 * x + 30)) + 15) + 4 * (Real.sqrt ((x ^ 2 + (18 * x + 30)) + 15) ^ 2) := by
+    intro x hx
+    rw [h₃ x hx]
+    ring_nf
+
+  have h₅ : ∀ x > 0, (f x) ^ 2 = (x ^ 2 + (18 * x + 30)) ^ 2 - 2 * (x ^ 2 + (18 * x + 30)) * Real.sqrt ((x ^ 2 + (18 * x + 30)) + 15) + 4 * ((x ^ 2 + (18 * x + 30)) + 15) := by
+    intro x hx
+    rw [h₄ x hx, Real.sq_sqrt]
+    linarith
+
+  -- show that the root of f is the root of (f ^ 2)
+  have h₆ : ∀ x > 0, (f x = 0) = ((f ^ 2) x = 0) := by
+    intro x hx
+    constructor
+    · intro h
+      rw [h]
+      simp
+    · intro h
+      have h₇ : x > 0 := by by_contra!; exact hx
+      by_cases h₈ : (f x) ^ 2 = 0
+      · rw [h₈] at h
+        exact h
+      · have h₉ : (f x) ^ 2 > 0 := by exact pow_two_pos_of_ne_zero (by linarith)
+        linarith
+
+  -- show that f is 0 only when x ^ 2 + 18 * x + 30 = 15 (when 0 < x)
+  have h₇ : ∀ x > 0, (f x = 0) = (x ^ 2 + (18 * x + 30) = 15) := by
+    intro x hx
+    rw [h₆ x hx, h₅ x hx]
+    constructor
+    · intro h
+      by_contra!
+      have h₁₀ : (x ^ 2 + (18 * x + 30)) ^ 2 - 2 * (x ^ 2 + (18 * x + 30)) * Real.sqrt ((x ^ 2 + (18 * x + 30)) + 15) + 4 * ((x ^ 2 + (18 * x + 30)) + 15) > 0 := by
+        have h₁₁ : (x ^ 2 + (18 * x + 30)) ^ 2 > 0 := by exact sq_pos_of_pos (by linarith)
+        have h₁₂ : 2 * (x ^ 2 + (18 * x + 30)) * Real.sqrt ((x ^ 2 + (18 * x + 30)) + 15) > 0 := by
+          apply mul_pos
+          · linarith
+          · apply mul_pos
+            · linarith
+            · exact Real.sqrt_pos_of_pos (by linarith)
+        linarith
+      linarith
+    · intro h
+      have h₁₁ : x ^ 2 + (18 * x + 30) > 0 := by linarith
+      have h₁₂ : Real.sqrt (x ^ 2 + (18 * x + 30) + 15) > 0 := by exact Real.sqrt_pos_of_pos (by linarith)
+      have h₁₃ : (x ^ 2 + (18 * x + 30)) ^ 2 - 2 * (x ^ 2 + (18 * x + 30)) * Real.sqrt ((x ^ 2 + (18 * x + 30)) + 15) + 4 * ((x ^ 2 + (18 * x + 30)) + 15) > 0 := by
+        have h₁₄ : (x ^ 2 + (18 * x + 30)) ^ 2 > 0 := by exact sq_pos_of_pos (by linarith)
+        have h₁₅ : 2 * (x ^ 2 + (18 * x + 30)) * Real.sqrt ((x ^ 2 + (18 * x + 30)) + 15) > 0 := by
+          apply mul_pos
+          · linarith
+          · apply mul_pos
+            · linarith
+            · exact Real.sqrt_pos_of_pos (by linarith)
+        linarith
+      rw [h]
+      exact (sq_eq_zero_iff (x ^ 2 + (18 * x + 30))).mpr (by linarith)
+
+  -- show that the set of root of f is {-15, -10, -9, -6, -5, -3, -2, -1, 1, 2, 3, 5, 6, 9, 10, 15}
+  have h₈ : f ⁻¹' {0} = {-15, -10, -9, -6, -5, -3, -2, -1, 1, 2, 3, 5, 6, 9, 10, 15} := by
+    ext x
+    constructor
+    · intro h
+      by_cases h₉ : x > 0
+      · have h₁₀ : x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 5 ∨ x = 6 ∨ x = 9 ∨ x = 10 ∨ x = 15 := by
+          have h₁₁ : x ^ 2 + 18 * x + 30 = 15 := by
+            apply h₇ x h₉
+            exact h
+          have h₁₂ : x > 0 := by by_contra!; exact h₉
+          have h₁₃ : x < 16 := by nlinarith
+          interval_cases x <;> tauto
+        rcases h₁₀ with (h₁₀ | h₁₀ | h₁₀ | h₁₀ | h₁₀ | h₁₀ | h₁₀ | h₁₀)
+        · rw [h₁₀]
+          ring_nf
+          rw [Real.sqrt_eq_iff_eq_sq]
+          all_goals norm_num
+        · rw [h₁₀]
+          ring_nf
+          rw [Real.sqrt_eq_iff_eq_sq]
+          all_goals norm_num
+        · rw [h₁₀]
+          ring_nf
+          rw [Real.sqrt_eq_iff_eq_sq]
+          all_goals norm_num
+      · have h₁₁ : x < 0 := by by_contra!; exact lt_of_le_of_ne h₉ (by rfl)
+        have h₁₂ : x = -1 ∨ x = -2 ∨ x = -3 ∨ x = -5 ∨ x = -6 ∨ x = -9 ∨ x = -10 ∨ x = -15 := by
+          have h₁₃ : x ^ 2 + 18 * x + 30 = 15 := by
+            apply h₇ x (by linarith) at h
+            exact h
+          have h₁₄ : x < 0 := by by_contra!; exact lt_of_le_of_ne h₁₁ (by rfl)
+          have h₁₅ : x > -16 := by nlinarith
+          interval_cases x <;> tauto
+        rcases h₁₂ with (h₁₂ | h₁₂ | h₁₂ | h₁₂ | h₁₂ | h₁₂ | h₁₂ | h₁₂)
+        · rw [h₁₂]
+          ring_nf
+          rw [Real.sqrt_eq_iff_eq_sq]
+          all_goals norm_num
+        · rw [h₁₂]
+          ring_nf
+          rw [Real.sqrt_eq_iff_eq_sq]
+          all_goals norm_num
+        · rw [h₁₂]
+          ring_nf
+          rw [Real.sqrt_eq_iff_eq_sq]
+          all_goals norm_num
+      · have h₁₃ : x = 0 := by by_contra!; exact lt_of_le_of_ne h₁₁ h₉
+        rw [h₁₃] at h
+        rw [h]
+        norm_num
+      · linarith
+    · intro h
+      rcases h with (h | h | h | h | h | h | h | h | h | h | h | h | h | h | h)
+      · rw [h]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      · rw [h]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      · rw [h]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      · rw [h]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      · rw [h]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      · rw [h]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      · rw [h]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      · rw [h]
+        norm_num
+        rw [Real.sqrt_eq_iff_eq_sq]
+        all_goals norm_num
+      · rw [h]
+        norm_num
+      · rw [h]
+        norm_num
+      · rw [h]
+        norm_num
+      · rw [h]
+        norm_num
+      · rw [h]
+        norm_num
+      · rw [h]
+        norm_num
+      · rw [h]
+        norm_num
+      · rw [h]
+        norm_num
+
+  have h₉ : ∀ x > 0, x ∈ f ⁻¹' {0} → x ∉ {-15, -10, -9, -6, -5, -3, -2, -1} := by
+    intro x hx hx'
+    rcases hx' with (hx' | hx' | hx' | hx' | hx' | hx' | hx' | hx')
+    · by_cases h₁₀ : x = 1
+      · rw [h₁₀] at hx
+        norm_num at hx
+      · have h₁₁ : x > 1 := by
+          by_contra!
+          have h₁₂ : x < 1 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₂ : x < 2 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₀ : x = 2
+      · rw [h₁₀] at hx
+        norm_num at hx
+      · have h₁₁ : x > 2 := by
+          by_contra!
+          have h₁₂ : x < 2 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₂ : x < 3 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₀ : x = 3
+      · rw [h₁₀] at hx
+        norm_num at hx
+      · have h₁₁ : x > 3 := by
+          by_contra!
+          have h₁₂ : x < 3 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₂ : x < 5 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₀ : x = 5
+      · rw [h₁₀] at hx
+        norm_num at hx
+      · have h₁₁ : x > 5 := by
+          by_contra!
+          have h₁₂ : x < 5 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₂ : x < 6 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₀ : x = 6
+      · rw [h₁₀] at hx
+        norm_num at hx
+      · have h₁₁ : x > 6 := by
+          by_contra!
+          have h₁₂ : x < 6 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₂ : x < 9 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₀ : x = 9
+      · rw [h₁₀] at hx
+        norm_num at hx
+      · have h₁₁ : x > 9 := by
+          by_contra!
+          have h₁₂ : x < 9 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₂ : x < 10 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₀ : x = 10
+      · rw [h₁₀] at hx
+        norm_num at hx
+      · have h₁₁ : x > 10 := by
+          by_contra!
+          have h₁₂ : x < 10 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₂ : x < 15 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₀ : x = 15
+      · rw [h₁₀] at hx
+        norm_num at hx
+      · have h₁₁ : x > 15 := by
+          by_contra!
+          have h₁₂ : x < 15 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        linarith
+
+  have h₁₀ : ∀ x > 0, x ∈ f ⁻¹' {0} → x ∉ {-15, -10, -9, -6, -5, -3, -2, -1, 1, 2, 3, 5, 6, 9, 10, 15} := by
+    intro x hx hx'
+    rcases hx' with (hx' | hx' | hx' | hx' | hx' | hx' | hx' | hx' | hx' | hx' | hx' | hx' | hx' | hx' | hx')
+    · by_cases h₁₁ : x = -1
+      · rw [h₁₁] at hx
+        norm_num at hx
+      · have h₁₂ : x < -1 := by
+          by_contra!
+          have h₁₃ : x > -1 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₃ : x > -16 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₁ : x = -2
+      · rw [h₁₁] at hx
+        norm_num at hx
+      · have h₁₂ : x < -2 := by
+          by_contra!
+          have h₁₃ : x > -2 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₃ : x > -16 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₁ : x = -3
+      · rw [h₁₁] at hx
+        norm_num at hx
+      · have h₁₂ : x < -3 := by
+          by_contra!
+          have h₁₃ : x > -3 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₃ : x > -16 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₁ : x = -5
+      · rw [h₁₁] at hx
+        norm_num at hx
+      · have h₁₂ : x < -5 := by
+          by_contra!
+          have h₁₃ : x > -5 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₃ : x > -16 := by nlinarith
+        interval_cases x <;> tauto
+    · by_cases h₁₁ : x = -6
+      · rw [h₁₁] at hx
+        norm_num at hx
+      · have h₁₂ : x < -6 := by
+          by_contra!
+          have h₁₃ : x > -6 := by exact lt_of_le_of_ne this (by linarith)
+          interval_cases x <;> tauto
+        have h₁₃ : x > -16 := by nlin

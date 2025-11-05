@@ -1,0 +1,173 @@
+-- We prove that the least common multiple of $a$ and $b$ is at least $108$.
+  -- From the hypothesis, we know that $a = 6a_1$ and $b = 6b_1$ for some positive integers $a_1$ and $b_1$.
+  have ⟨a₁, ha₁⟩ : 6 ∣ a := by
+    rw [← h₃]
+    apply Nat.gcd_dvd_left
+  have ⟨b₁, hb₁⟩ : 6 ∣ b := by
+    rw [← h₃]
+    apply Nat.gcd_dvd_right
+
+  have ha₁pos : 0 < a₁ := by
+    by_contra h
+    simp at h
+    simp [h] at h₀
+  have hb₁pos : 0 < b₁ := by
+    by_contra h
+    simp at h
+    simp [h] at h₀
+
+  -- We also know that $a_1$ and $b_1$ are coprime.
+  have h₄ : a₁.Coprime b₁ := by
+    -- Notice that the units digit of $a$ is $2$, so the units digit of $a_1$ is $2$.
+    -- The units digit of $b$ is $4$, so the units digit of $b_1$ is $4$.
+    -- We claim that the units digit of $6a_1$ is $2$ if and only if $a_1$ has a units digit of $2$.
+    have h₄ (n : ℕ) : n % 10 = 2 ↔ 6 * n % 10 = 2 := by
+      apply Iff.intro <;> intro h
+      · rw [Nat.mul_mod]
+        simp [h]
+      · intro h
+        omega
+    -- We claim that the units digit of $6b_1$ is $4$ if and only if $b_1$ has a units digit of $4$.
+    have h₅ (n : ℕ) : n % 10 = 4 ↔ 6 * n % 10 = 4 := by
+      apply Iff.intro <;> intro h
+      · rw [Nat.mul_mod]
+        simp [h]
+      · intro h
+        omega
+    -- Applying the above observations to $a_1$ and $b_1$, we have
+    have h₆ := h₄ a₁
+    have h₇ := h₅ b₁
+    simp [ha₁, hb₁] at h₆ h₇
+    rw [<-h₆, <-h₇]
+    -- Therefore, we have $a_1 \equiv 2 \pmod{10}$ and $b_1 \equiv 4 \pmod{10}$.
+    -- We claim that the units digit of $a_1$ is $2$ if and only if $a_1$ is divisible by $4$.
+    have h₈ (n : ℕ) : n % 10 = 2 ↔ 4 ∣ n := by
+      apply Iff.intro <;> intro h
+      · rw [Nat.modEq_iff_dvd'] at h
+        replace h := h.2
+        apply Nat.dvd_trans (by norm_num) h
+      · intro h
+        omega
+    -- We claim that the units digit of $b_1$ is $4$ if and only if $b_1$ is divisible by $2$ but not by $4$.
+    have h₉ (n : ℕ) : n % 10 = 4 ↔ 2 ∣ n ∧ ¬ 4 ∣ n := by
+      apply Iff.intro <;> intro h
+      · rw [Nat.modEq_iff_dvd'] at h
+        replace h := h.2
+        apply Nat.dvd_trans (by norm_num) h
+      · intro h
+        omega
+    -- Applying the above observations to $a_1$ and $b_1$, we have
+    have h₁₀ := h₈ a₁
+    have h₁₁ := h₉ b₁
+    simp [ha₁, hb₁] at h₁₀ h₁₁
+    -- If $a_1$ is divisible by $4$ and $b_1$ is divisible by $2$, then $a_1 = 4a_2$ and $b_1 = 2b_2$.
+    replace h₁₀ : ∃ a₂ : ℕ, a₁ = 4 * a₂ := by
+      apply Nat.dvd_iff_exists_eq_mul_right.mp h₁₀
+    replace h₁₁ : ∃ b₂ : ℕ, b₁ = 2 * b₂ := by
+      apply Nat.dvd_iff_exists_eq_mul_right.mp h₁₁
+    -- Let $a_2$ and $b_2$ be the unique natural numbers satisfying the above equations.
+    obtain ⟨a₂, ha₂⟩ := h₁₀
+    obtain ⟨b₂, hb₂⟩ := h₁₁
+    -- Then $a_2$ and $b_2$ are coprime.
+    have h₁₂ : a₂.Coprime b₂ := by
+      -- By contradiction, assume that $a_2$ and $b_2$ have a common divisor $p$.
+      by_contra p hp
+      simp [Nat.coprime_iff_gcd_eq_one] at hp
+      -- This means that $p$ divides $a_2$ and $p$ divides $b_2$.
+      have hp₁ : p ∣ a₂ := by
+        apply hp.1
+      have hp₂ : p ∣ b₂ := by
+        apply hp.2
+      -- This means that $p$ divides $6 = a_1 * b_1$.
+      have hp₃ : p ∣ 6 := by
+        rw [ha₁, hb₁, ha₂, hb₂]
+        apply Nat.dvd_mul_left
+      -- But the only divisors of $6$ are $1$, $2$, $3$, and $6$, none of which is both $2$ and $3$.
+      have hp₄ : p = 1 := by
+        by_contra!
+        have : p = 2 ∨ p = 3 ∨ p = 6 := by
+          have : p ≤ 6 := by
+            apply Nat.le_of_dvd (by norm_num) hp₃
+          interval_cases p <;> tauto
+        rcases this with (rfl | rfl | rfl)
+        all_goals
+          simp [rfl] at hp
+      simp [hp₄] at hp
+      -- We have shown that $a_2$ and $b_2$ are coprime.
+      -- Now, using the property of coprime numbers, we have
+      -- $\text{lcm}[a_1, b_1] = \text{lcm}[4a_2, 2b_2] = 4 \cdot \text{lcm}[a_2, 2b_2] = 4 \cdot 2 \cdot \text{lcm}[a_2, b_2] = 8 \cdot \text{lcm}[a_2, b_2]$.
+      -- $\text{lcm}[a, b] = \text{lcm}[6a_1, 6b_1] = 6 \cdot \text{lcm}[a_1, b_1] = 6 \cdot 8 \cdot \text{lcm}[a_2, b_2] = 48 \cdot \text{lcm}[a_2, b_2]$.
+      -- $\text{lcm}[a_2, b_2]$ is at least $1$.
+      -- So $\text{lcm}[a, b]$ is at least $48$.
+      suffices 1 ≤ a₂.lcm b₂ from by
+        have := Nat.mul_le_mul_right 48 this
+        linarith
+      -- Using the lemma Nat.gcd_mul_lcm, we have
+      -- $\text{gcd}(a_2, b_2) \cdot \text{lcm}(a_2, b_2) = a_2 \cdot b_2$.
+      have h₁₃ : a₂.gcd b₂ * a₂.lcm b₂ = a₂ * b₂ := by
+        rw [<-Nat.gcd_mul_lcm]
+      -- Dividing both sides of the equation by $\text{gcd}(a_2, b_2)$, we have
+      -- $\text{lcm}(a_2, b_2) = \frac{a_2 \cdot b_2}{\text{gcd}(a_2, b_2)}$.
+      have h₁₄ : a₂.lcm b₂ = a₂ * b₂ / a₂.gcd b₂ := by
+        rw [<-h₁₃]
+        field_simp [Nat.gcd_pos_iff]
+      -- Since $\text{gcd}(a_2, b_2) \ge 1$, $\text{lcm}(a_2, b_2)$ is at least $1$.
+      have : 1 ≤ a₂.gcd b₂ := by
+        apply Nat.gcd_pos_iff.mpr
+        apply Nat.gcd_ne_zero_right (by linarith)
+      rw [h₁₄]
+      apply Nat.le_mul_of_pos_right
+      omega
+    -- Now, we have
+    -- $\text{lcm}(a, b) = 6 \cdot \text{lcm}(a_1, b_1) = 6 \cdot \text{lcm}(4a_2, 2b_2) = 6 \cdot (4 \cdot \text{lcm}(a_2, b_2)) = 24 \cdot \text{lcm}(a_2, b_2)$.
+    -- $\text{lcm}(a_2, b_2)$ is at least $1$.
+    -- So $\text{lcm}(a, b)$ is at least $24$.
+    have h₅ : 24 * (a₂.lcm b₂) = Nat.lcm a b := by
+      calc
+        _ = 6 * (6 * (a₁.lcm b₁)) := by
+          rw [<-ha₁, <-hb₁]
+          ring
+        _ = 6 * (6 * ((4 * a₂).lcm (2 * b₂))) := by
+          rw [<-ha₂, <-hb₂]
+        _ = 6 * (2 * (2 * a₂).lcm (2 * b₂)) := by
+          congr
+          ring
+        _ = 6 * (2 * ((2 * a₂).lcm (2 * b₂))) := by
+          ring_nf
+        _ = 6 * (2 * (a₂.lcm b₂)) := by
+          rw [Nat.mul_lcm_mul_left]
+          rw [<-Nat.mul_add, Nat.mul_add, Nat.mul_add, Nat.mul_add]
+          ring
+        _ = _ := by
+          ring
+    -- We also know that $a_2$ and $b_2$ are coprime.
+    have h₆ : 1 ≤ a₂.lcm b₂ := by
+      by_contra h
+      simp at h
+      have := Nat.le_mul_of_pos_right a₂.lcm b₂ 2
+      simp [h] at this
+      have : a₂.gcd b₂ = 0 := by
+        rw [<-Nat.mul_eq_mul_left_iff (show 2 ≠ 0 by norm_num)]
+        omega
+      rw [this] at h₁₂
+      -- We have shown that $a_2$ and $b_2$ are coprime.
+      simp at h₁₂
+      -- This is a contradiction.
+      all_goals
+        contradiction
+    -- We claim that the least common multiple of $a$ and $b$ is at least $108$.
+    suffices 108 ≤ 24 * (a₂.lcm b₂) from by
+      linarith
+    -- Using the above inequality, we have
+    -- $108 = 24 \cdot 4 + 12 \le 24 \cdot (a_2 \cdot b_2)$.
+    calc
+      _ = 24 * 4 + 12 := by
+        norm_num
+      _ ≤ 24 * (a₂ * b₂) := by
+        apply Nat.add_le_add_right
+        apply Nat.mul_le_mul_right
+        omega
+      _ = _ := by
+        rw [<-h₅]
+
+```

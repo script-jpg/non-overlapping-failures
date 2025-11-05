@@ -1,0 +1,150 @@
+-- According to the reference answer, we need to prove $(1+nx)^n \geq (1+x)^n$ and $(1+x)^n \geq 1+nx$.
+  -- The first inequality is straightforward due to Bernoulli's inequality.
+  have Bernoulliineq : (1 + ↑n * x) ^ (n : ℕ) ≤ (1 + x) ^ (n : ℕ) := by
+    apply Nat.pow_le_pow_of_le_left
+    -- We add $1$ to both sides of the inequality $nx \geq 0$ to get $1+nx \geq 1$.
+    have : 1 + ↑n * x ≥ 1 := by
+      linarith [h₀, show 0 < ↑n by norm_cast]
+    -- Now we show that $1+x \geq 1+nx$.
+    linarith [this, h₀]
+
+  -- To prove the second inequality, we first show that $(1+x)^n \geq \sum_{i=0}^n \binomial{n}{i} x^i$.
+  have sumineq : (1 + x) ^ (n : ℕ) ≥ ∑ i in Finset.range (n + 1), choose n i * x ^ i := by
+    induction n with
+    -- When $n=0$, the inequality is true because $(1+x)^0 = 1$ and $\sum_{i=0}^0 \binomial{0}{i} x^i = 1$.
+    | zero =>
+      simp
+    -- Assume that the inequality is true for $n$, we now prove it for $n+1$.
+    | succ n ih =>
+      -- We need to show that $(1+x)^{n+1} \geq \sum_{i=0}^{n+1} \binomial{n+1}{i} x^i$.
+      -- According to the reference answer, we have $(1+x)^{n+1} = (1+x)^n(1+x) \geq \sum_{i=0}^n \binomial{n}{i} x^i (1+x) = \sum_{i=0}^n \binomial{n}{i} x^i + \sum_{i=0}^n \binomial{n}{i} x^{i+1}$.
+      have : (1 + x) ^ (n + 1 : ℕ) = (1 + x) ^ (n : ℕ) * (1 + x) := by
+        rw [Nat.pow_succ]
+      rw [this]
+      -- The reference answer continues to say that $\sum_{i=0}^n \binomial{n}{i} x^i (1+x) = \sum_{i=0}^n \binomial{n}{i} x^i + \sum_{i=0}^n \binomial{n}{i} x^{i+1} \geq \sum_{i=0}^n \binomial{n}{i} x^i + \sum_{i=1}^{n+1} \binom{n}{i-1} x^{i}$.
+      have sumineq : ∑ i in Finset.range (n + 1), choose n i * x ^ i * (1 + x) ≥ ∑ i in Finset.range (n + 1), choose n i * x ^ i + ∑ i in Finset.range n, choose n (i + 1) * x ^ (i + 1) := by
+        -- We will show that $\sum_{i=0}^n \binomial{n}{i} x^i (1+x) - \sum_{i=0}^n \binomial{n}{i} x^i = \sum_{i=1}^{n+1} \binom{n}{i-1} x^{i} $.
+        apply Finset.sum_le_sum
+        intro i hi
+        -- We divide into two cases: $i = 0$ and $i \neq 0$.
+        by_cases h : i = 0
+        -- When $i = 0$, we get $\binomial{n}{0} x^0 (1+x) - \binomial{n}{0} x^0 = n(1+x) - 1 = n+x-1 \geq 0$ because $n \geq 1$ and $x \geq -1$.
+        · rw [h]
+          simp
+          have : (n : ℝ) + x - 1 ≥ 0 := by
+            have : 1 ≤ n := by norm_cast
+            linarith
+          linarith
+        -- When $i \neq 0$, we need to show that $\binomial{n}{i} x^i (1+x) - \binomial{n}{i} x^i = \binom{n}{i-1} x^{i} $.
+        · simp at h
+          rw [Finset.mem_range] at hi
+          simp [h]
+          -- Now the goal is to show that $\binom{n}{i} x^i (1+x) - \binom{n}{i} x^i = \binom{n}{i-1} x^{i} $.
+          suffices h : choose n i * x ^ i * (1 + x) - choose n i * x ^ i = choose n (i - 1) * x ^ i by
+            rw [h]
+          -- We add $1$ to both sides of the equation $x^i \geq 0$ to get $1+x^i \geq 1$.
+          have : 1 + x ^ i ≥ 1 := by
+            have : 0 ≤ x ^ i := by
+              apply pow_nonneg
+              linarith
+            linarith
+          -- Now we show that $\binom{n}{i} (1+x^i) \geq \binom{n}{i}$.
+          have : choose n i * (1 + x ^ i) ≥ choose n i := by
+            linarith [this, show 0 < choose n i by positivity]
+          -- Now we show that $\binom{n}{i}(1+x) \geq \binom{n}{i}$.
+          have : choose n i * (1 + x) ≥ choose n i := by
+            linarith [show 0 < x + 1 by linarith, show 0 < choose n i by positivity]
+          -- Now we show that $\binom{n}{i}(1+x) - \binom{n}{i} = \binom{n}{i}x \geq \binom{n}{i-1}x^i $.
+          have : (choose n i * (1 + x) - choose n i) * x ^ i ≥ choose n (i - 1) * x ^ i := by
+            apply mul_le_mul_of_nonneg_right
+            -- According to the reference answer, we need to show that $\binom{n}{i}(1+x) - \binom{n}{i} \geq \binom{n}{i-1}x^{i-1}(1+x)$.
+            have : choose n i * (1 + x) - choose n i ≥ choose n (i - 1) * x ^ (i - 1) * (1 + x) := by
+              calc
+                choose n i * (1 + x) - choose n i
+                  = (choose n i * 1 + choose n i * x) - choose n i := by ring
+                _ = choose n i * x := by ring
+                _ = choose n (i - 1) * x ^ (i - 1) * (1 + x) := by
+                  rw [Nat.choose_succ_right, Nat.choose_mul]
+                  · ring
+                  · apply Nat.mul_le_mul_right
+                    rw [Nat.sub_add_cancel]
+                    exact Nat.le_add_right_of_lt h
+                  · exact h
+            rw [mul_assoc]
+            apply mul_le_mul_of_nonneg_right
+            · rw [Nat.choose_mul]
+              apply Nat.mul_le_mul_left
+              rw [Nat.choose_one_right]
+              rfl
+            · exact this
+            · exact pow_nonneg (by linarith) i
+            · positivity
+          linarith
+
+      -- Now we need to show that $\sum_{i=0}^n \binomial{n}{i} x^i + \sum_{i=1}^{n+1} \binom{n}{i-1} x^{i} \geq \sum_{i=0}^{n+1} \binomial{n+1}{i} x^i$.
+      have : ∑ i in Finset.range (n + 1), choose n i * x ^ i + ∑ i in Finset.range n, choose n (i + 1) * x ^ (i + 1) ≥ ∑ i in Finset.range (n + 1 + 1), choose n + 1 i * x ^ i := by
+        -- We will show that $\sum_{i=0}^n \binomial{n}{i} x^i + \sum_{i=1}^{n+1} \binom{n}{i-1} x^{i} = \sum_{i=0}^{n+1} \binom{n+1}{i} x^{i}$.
+        apply Finset.sum_le_sum
+        intro i hi
+        -- We divide into two cases: $i = 0$ and $i \neq 0$.
+        by_cases h : i = 0
+        -- When $i = 0$, we have $\binom{n}{0} x^0 + 0 = 1 + 0 = 1 \geq \binom{n+1}{0} x^0 = 1$.
+        · rw [h]
+          simp
+        -- When $i \neq 0$, we need to show that $\binom{n}{i} x^i + \binom{n}{i-1} x^{i} = \binom{n+1}{i} x^{i}$.
+        · simp at h
+          rw [Finset.mem_range] at hi
+          simp
+          rw [Nat.choose_succ_right, Nat.choose_mul]
+          simp
+          have : choose n (i - 1) * (i + 1) * x ^ i = choose n i * (i + 1) * x ^ i := by
+            rw [Nat.choose_succ_right, Nat.choose_mul]
+            ring
+            exact h
+            exact Nat.le_add_right_of_lt h
+          rw [this]
+          ring
+      linarith
+
+  -- Now we need to show that $\sum_{i=0}^n \binomial{n}{i} x^i \geq 1+nx$.
+  have sumineq : ∑ i in Finset.range (n + 1), choose n i * x ^ i ≥ 1 + ↑n * x := by
+    -- We will prove this by induction on $n$.
+    induction n with
+    -- When $n=0$, the inequality is true because $(1+x)^0 = 1$ and $\sum_{i=0}^0 \binomial{0}{i} x^i = 1$.
+    | zero =>
+      simp
+    -- Assume that the inequality is true for $n$, we now prove it for $n+1$.
+    | succ n ih =>
+      -- What we need to show is $\sum_{i=0}^{n+1} \binom{n+1}{i} x^{i} \geq 1+(n+1)x$.
+      -- According to the reference answer, we have $\sum_{i=0}^{n+1} \binom{n+1}{i} x^{i} = \sum_{i=0}^n \binomial{n+1}{i} x^{i} + \binom{n+1}{n+1}x^{n+1} = \sum_{i=0}^n \binom{n+1}{i} x^{i} + x^{n+1}$.
+      have : ∑ i in Finset.range (n + 1 + 1), choose (n + 1) i * x ^ i = ∑ i in Finset.range (n + 1), choose (n + 1) i * x ^ i + x ^ (n + 1) := by
+        rw [Finset.sum_range_succ, Nat.choose_self, pow_succ]
+        rfl
+      rw [this]
+      -- The reference answer continues to say that $\sum_{i=0}^n \binom{n+1}{i} x^{i} = \sum_{i=0}^n \binomial{n}{i} x^{i} + \binom{n}{n}x^{n+1} = \sum_{i=0}^n \binomial{n}{i} x^{i} + x^{n+1}$.
+      have sumineq : ∑ i in Finset.range (n + 1), choose (n + 1) i * x ^ i = ∑ i in Finset.range (n + 1), choose n i * x ^ i + x ^ (n + 1) := by
+        apply Finset.sum_congr rfl
+        intro i hi
+        rw [Nat.choose_succ_right, Nat.choose_mul]
+        simp
+      rw [sumineq]
+      -- Now we need to show that $2x \leq x^{n+1} + 1$.
+      have : 2 * x ≤ x ^ (n + 1) + 1 := by
+        -- We add $1$ to both sides of the inequality $x \geq -1$ to get $x+1 \geq 0$.
+        have : x + 1 ≥ 0 := by linarith
+        -- Now we show that $x^{n+1} \geq x$ if $x \geq -1$ and $n+1$ is even.
+        have : x ^ (n + 1) ≥ x := by
+          apply one_le_pow₀
+          linarith
+          norm_cast
+          -- We need to argue that $x \neq -1$ because the reference answer has a condition $x \neq -1$.
+          by_contra!
+          absurd h₀
+          linarith
+        linarith
+      linarith
+
+  -- The inequality we need to prove is exactly the combination of the two inequalities above.
+  linarith
+
+```

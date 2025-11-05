@@ -1,0 +1,35 @@
+have h₂ : a ^ 2 % 8 = 1 := by
+    -- - Show that if $a$ is an odd integer, then $a \equiv 1, 3, 5, 7 \mod 8$.
+    have h₁ : a % 8 = 1 ∨ a % 8 = 3 ∨ a % 8 = 5 ∨ a % 8 = 7 := by
+      rw [show a % 8 < 8 by omega]
+      obtain ⟨k, hk⟩ := Int.odd_iff.mp h₀
+      have : a = 2 * k + 1 := by linarith
+      rw [this]
+      have : (2 * k + 1) % 8 < 8 := by omega
+      -- - Show that if $a \equiv 1, 3, 5, 7 \mod 8$, then $a^2 \equiv 1 \mod 8$.
+      interval_cases (2 * k + 1) % 8 <;> simp [Int.add_emod, Int.mul_emod]
+    -- - Show that if $a^2 \equiv 1 \mod 8$, then $a^2 \equiv 1 \mod 4$.
+    have h₃ : a ^ 2 % 8 = 1 := by
+      rcases h₁ with h₁ | h₁ | h₁ | h₁ <;> simp [pow_two, Int.mul_emod, h₁]
+    exact h₃
+
+  have h₃ : b ^ 2 % 8 = 0 := by
+    obtain ⟨k, hk⟩ := h₁
+    have : b = 2 * k := by linarith
+    rw [this, pow_two, ←mul_assoc, mul_comm, mul_assoc, mul_assoc]
+    -- - Show that $a^2 \equiv 1 \mod 8$ if $n \equiv 0 \mod 4$ and $a^2 \equiv 0 \mod 8$.
+    have h₄ : (2 * k) ^ 2 % 8 = 0 := by
+      rw [pow_two, mul_assoc, mul_assoc]
+      have h₄ : 2 * k = 2 * (k * 2) := by ring
+      rw [h₄, Int.mul_emod, Int.mul_emod]
+      have : 8 ∣ (2 * (k * 2)) ^ 2 := by
+        have : (2 * (k * 2)) ^ 2 = 4 * (4 * (k ^ 2 * 4)) := by ring
+        rw [this]
+        omega
+      exact Int.emod_eq_zero_of_dvd this
+    exact h₄
+
+  -- - Show that if $a^2 \equiv 1 \mod 8$ and $b^2 \equiv 0 \mod 8$, then $a^2 + b^2 \equiv 1 \mod 8$.
+  rw [Int.add_emod, h₂, h₃]
+  exact rfl
+```

@@ -1,0 +1,353 @@
+-- Prove that the sequence is strictly increasing.
+  have h₂ : ∀ x n, f (n + 1) x > f n x := by
+    intro x n
+    rw [h₁ x n]
+    have h : f n x + 1 / n > 1 := by
+      have h : 1 / n > 0 := by positivity
+      linarith
+    rw [mul_lt_mul_left h]
+    linarith
+
+  -- Prove that $f_n(x)$ is positive for all $n$.
+  have h₃ : ∀ x n, 0 < f n x := by
+    intro x n
+    induction n using Nat.twoStepInduction with
+    | zero => simp [*]
+    | one => simp [h₀]
+    | more n ih₁ ih₂ => rw [h₁ x n]; exact mul_pos ih₂ (add_pos ih₁ (by positivity))
+
+  -- Prove that $f_n(x)$ is strictly increasing $[0, 1]$.
+  have h₄ : ∀ x n, f n x < 1 → f (n + 1) x < 1 := by
+    intro x n h
+    rw [h₁ x n]
+    rw [lt_iff_le_and_ne]
+    constructor
+    · rw [mul_le_mul_left (by positivity)]
+      calc
+        f n x + 1 / n * f n x ≤ f n x + f n x := by
+          apply add_le_add_left
+          rw [mul_le_one₀ (by positivity)]
+        _ ≤ 1 + 1 := by linarith
+        _ ≤ 1 + (1 : ℝ) := by exact le_trans h
+        _ = 2 := by ring
+    · by_contra! h'
+      rw [h'] at h
+      apply (lt_of_le_of_ne h) at h₀
+      norm_num at h₀
+      apply (lt_of_le_of_ne h) at h₁
+      norm_num at h₁
+
+  -- For every $x_n$, show that $x_{n+1} = x_n (x_n + 1/n) \in (0, 1)$.
+  have h₅ : ∀ x n, 0 < n → 0 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1 := by
+    intro x n hn
+    constructor
+    · exact h₃ x n
+    constructor
+    · exact h₂ x n
+    · rw [h₁ x n]
+      rw [lt_iff_le_and_ne]
+      constructor
+      · rw [mul_le_mul_left (by positivity)]
+        calc
+          f n x + 1 / n * f n x ≤ f n x + f n x := by
+            apply add_le_add_left
+            rw [mul_le_one₀ (by positivity)]
+          _ ≤ 1 + 1 := by linarith
+          _ ≤ 1 + (1 : ℝ) := by exact le_trans (h₄ x n (by linarith))
+          _ = 2 := by ring
+      · by_contra! h'
+        rw [h'] at h₄
+        apply (lt_of_le_of_ne h₄) at h₃
+        norm_num at h₃
+        apply (lt_of_le_of_ne h₃) at h₁
+        norm_num at h₁
+
+  -- Define the function $f$ on $\mathbb{N} \times \mathbb{NNReal}$.
+  let g : ℕ × ℕ → NNReal → ℝ := fun n x => f n x
+
+  -- Show that $f$ is strictly increasing on $[0, 1]$.
+  have h₆ : ∀ n x, 0 < n → x ∈ Set.Icc 0 1 → g n x ∈ Set.Icc 0 1 ∧ g n x ∈ Set.Ioo 0 (g (n + 1) x) := by
+    intro n x hn hx
+    constructor
+    · exact h₃ x n
+    constructor
+    · exact h₂ x n
+    · calc
+        g n x ∈ Set.Icc 0 1 := by
+          rw [Set.mem_Icc] at hx ⊢
+          constructor
+          · exact h₃ x n
+          have h₄ := h₄ x n (by linarith)
+          exact h₄.trans $ hx.2
+        _ ∈ Set.Ioo 0 (g (n + 1) x) := by
+          rw [Set.mem_Ioo]
+          constructor
+          · exact h₃ x n
+          · calc
+              g n x < g n x + 1 / n * g n x := by
+                rw [add_lt_add_iff_right (g n x)]
+                exact Nat.zero_lt_of_ne_zero (by linarith)
+              _ = g (n + 1) x := by
+                rw [h₁ x n, add_comm]
+                ring
+
+  -- Define the set $C$ of all values in $[0, 1]$ for which the sequence remains within $(0, 1)$.
+  let C : Set ℝ := {a | 0 < a ∧ a < 1 ∧ ∀ n, 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 }
+
+  -- Show that $C$ is nonempty.
+  have h₇ : C.Nonempty := by
+    simp [C]
+    use 1 / 2
+    constructor
+    · norm_num
+    · intro n
+      induction n using Nat.twoStepInduction with
+      | zero => norm_num
+      | one => norm_num
+      | more n ih₁ ih₂ =>
+        have h₅ := h₅ (1 / 2) n (by linarith)
+        simp [h₅]
+        have h₆ := h₆ (1 / 2) n (by linarith) (by norm_num)
+        simp [h₆]
+
+  -- Show that $C$ is an interval: $0 < a \leq b < 1$ implies $a \in C$.
+  have h₈ : ∀ a b, 0 < a ∧ a < b ∧ b < 1 → a ∈ C := by
+    intro a b ⟨ha, hab, hb⟩
+    simp [C]
+    constructor
+    · exact ha
+    · constructor
+      · exact (lt_of_le_of_ne hab.symm).trans ha
+      · intro n
+        induction n using Nat.twoStepInduction with
+        | zero => exact h₅ a n (by linarith)
+        | one => exact h₅ b n (by linarith)
+        | more n ih₁ ih₂ =>
+          have h₆ := h₆ a n (by linarith) (ih₁ n)
+          have h₇ := h₆ b n (by linarith) (ih₂ n)
+          constructor
+          · exact h₆.1
+          · simp [h₆.2, h₇.1, h₇.2]
+
+  -- Show that $C$ is connected: $\forall a \in (0, b), a \in C$.
+  have h₉ : ∀ b, 0 < b < 1 → ∀ a, 0 < a < b → a ∈ C := by
+    intro b hb a ha
+    induction b using Nat.twoStepInduction with
+    | zero => linarith
+    | one => linarith
+    | more b hb₀ hb₁ =>
+      have h₁₀ : b < 1 := by linarith
+      specialize h₉ b hb₀
+      induction a using Nat.twoStepInduction with
+      | zero => linarith
+      | one => linarith
+      | more a ha₀ ha₁ =>
+        have h₁₁ : a < b := by linarith
+        specialize h₉ a ha₀ ha₁
+        specialize h₈ b hb₀ hb₁
+        simp [C] at h₉ h₈
+        have h₁₂ : 0 < a := by linarith
+        have h₁₃ : a < 1 := by linarith
+        have h₁₄ : 0 < f 1 a := by exact h₃ a 1
+        have h₁₅ : f 1 a < f 2 a := by exact h₂ a 1
+        have h₁₆ : f 2 a < 1 := by exact (h₄ a 1 h₁₃).trans (by linarith)
+        have h₁₇ : 0 < f 2 a := by exact h₃ a 2
+        have h₁₈ : f 1 a < f 2 a := by exact h₂ a 1
+        have h₁₉ : 0 < f 1 a := by exact h₃ a 1
+        have h₂₀ : f 1 a ∈ Set.Icc 0 1 := by
+          rw [Set.mem_Icc]
+          constructor
+          · exact h₃ a 1
+          · calc
+              f 1 a < f 2 a := by exact h₂ a 1
+              _ < 1 := by exact (h₄ a 1 h₃ a 1).trans (by linarith)
+        have h₂₁ : f 1 a ∈ Set.Ioo (f 1 a) (f 2 a) := by
+          rw [Set.mem_Ioo]
+          constructor
+          · exact h₂ a 1
+          · calc
+              f 1 a < f 2 a := by exact h₂ a 1
+              _ < f 2 a := by exact (h₄ a 1 h₃ a 1).trans (by linarith)
+          exact h₂ a 1
+        have h₂₂ : f 2 a ∈ Set.Icc 0 1 := by
+          rw [Set.mem_Icc]
+          constructor
+          · exact h₃ a 2
+          · exact (h₄ a 2 h₃ a 2).trans (by linarith)
+        have h₂₃ : f 2 a ∈ Set.Ioo (f 1 a) (f 2 a) := by
+          rw [Set.mem_Ioo]
+          constructor
+          · calc
+              f 1 a < f 2 a := by exact h₂ a 1
+              _ ≤ f 2 a := by exact h₃ a 2
+          · calc
+              f 1 a < f 2 a := by exact h₂ a 1
+              _ < f 2 a := by exact (h₄ a 1 h₃ a 1).trans (by linarith)
+          exact h₂ a 1
+        have h₂₄ : f 1 a ∈ Set.Icc 0 1 := by
+          rw [Set.mem_Icc]
+          constructor
+          · exact h₃ a 1
+          · exact (h₄ a 1 h₃ a 1).trans (by linarith)
+        have h₂₅ : f 1 a ∈ Set.Ioo (f 1 a) (f 2 a) := by
+          rw [Set.mem_Ioo]
+          constructor
+          · exact h₂ a 1
+          · calc
+              f 1 a < f 2 a := by exact h₂ a 1
+              _ < f 2 a := by exact (h₄ a 1 h₃ a 1).trans (by linarith)
+          exact h₂ a 1
+        exact h₈ b hb₀ hb₁ h₉ a ha₀ ha₁
+
+  -- Show that $C$ is a interval: $\forall a \in (0, b), a \in C$.
+  have h₁₀ : ∀ a b, 0 < a ∧ a < b ∧ b < 1 → a ∈ C := by
+    intro a b ⟨ha, hab, hb⟩
+    induction b using Nat.twoStepInduction with
+    | zero => linarith
+    | one => linarith
+    | more b hb₀ hb₁ =>
+      have h₁₁ : b < 1 := by linarith
+      specialize h₉ b hb₀ hb₁
+      induction a using Nat.twoStepInduction with
+      | zero => linarith
+      | one => linarith
+      | more a ha₀ ha₁ =>
+        have h₁₂ : a < b := by linarith
+        specialize h₉ a ha₀ ha₁
+        exact h₈ b hb₀ hb₁ h₉ a ha₀ ha₁
+
+  -- Show that $C$ is connected: for every $a \in (0, 1)$, there exists $b \in (a, 1)$ such that $a \in C$.
+  have h₁₁ : ∀ a, 0 < a ∧ a < 1 → (∃ b, 0 < b ∧ b < a ∧ a ∈ C) := by
+    intro a ha
+    simp at ha
+    by_cases h : a < 1
+    · use 1 / 2
+      constructor
+      · positivity
+      · constructor
+        · linarith
+        · exact h₈ a ha
+    · push_neg at h
+      use a
+      constructor
+      · exact ha.1
+      · constructor
+        · exact ha.2
+        · exact h₉ a ha ha.2
+
+  -- Show that $C$ is a interval: $\forall a \in (0, 1), \forall \epsilon > 0$, there exists $a' \in (a - \epsilon, a) \cap C$.
+  have h₁₂ : ∀ a, 0 < a ∧ a < 1 → ∀ ε > 0, ∃ a', 0 < a' ∧ a' < a ∧ a' ∈ C ∧ |a' - a| < ε := by
+    intro a ha ε hε
+    obtain ⟨ha, hb⟩ := ha
+    have hb' : a - ε / 2 * (a - 1) / (a - 1) < a := by
+      field_simp [(show a - 1 ≠ 0 by linarith)]
+      linarith
+    have ha' : 0 < a - ε / 2 * (a - 1) / (a - 1) := by
+      refine pos_of_ne?_?_
+      · field_simp [(show a - 1 ≠ 0 by linarith)]
+        linarith
+      · apply Ne.lt_of_le
+        · linarith
+        · positivity
+    have ha'' : a - ε / 2 * (a - 1) / (a - 1) ∈ C := by
+      apply h₁₀
+      · field_simp [(show a - 1 ≠ 0 by linarith)]
+        linarith
+      · constructor
+        · field_simp [(show a - 1 ≠ 0 by linarith)]
+          linarith
+        · field_simp [(show a - 1 ≠ 0 by linarith)]
+          ring_nf
+          have h : (-(a * 2) + (1 - a * 3)) / (-(a * 2) + a) < 1 := by
+            apply (div_lt_iff₀?_).mpr
+            · linarith
+            · linarith
+          linarith
+    use a - ε / 2 * (a - 1) / (a - 1)
+    constructor
+    · exact ha'
+    constructor
+    · linarith
+    constructor
+    · exact ha''
+    · rw [abs_lt]
+      constructor
+      · linarith
+      · calc
+          _ < a - 1 := by linarith
+          _ < _ := by
+            apply sub_neg.mpr
+            exact (lt_div_iff₀?_).mpr (by linarith)
+            linarith
+
+  -- Show that $C$ is connected: $C$ is interval.
+  have h₁₃ : Set.Icc (inf C) (sup C) = C := by
+    ext a
+    constructor
+    · simp
+      constructor
+      · simp [inf_le]
+      · simp [le_sup]
+    · simp
+      constructor
+      · simp [inf_le]
+      · simp [le_sup]
+      intro ha
+      exact h₁₂ a ha (sup_mem ha)
+
+  -- Show that $C$ is nonempty and bounded above by $1$.
+  have h₁₄ : C.Nonempty ∧ C.BddAbove := by
+    simp [C]
+    constructor
+    · use 1 / 2
+      refine ⟨?_,?_,?_⟩
+      · norm_num
+      · norm_num
+      · intro n
+        induction n using Nat.twoStepInduction with
+        | zero => norm_num
+        | one => norm_num
+        | more n ih₁ ih₂ =>
+          have h₅ := h₅ (1 / 2) n (by linarith)
+          simp [h₅]
+          have h₆ := h₆ (1 / 2) n (by linarith) (ih₁ n)
+          have h₇ := h₆ (1 / 2) (n + 1) (by linarith) (ih₂ n)
+          simp [h₆, h₇]
+          ring
+    · simp [bddAbove]
+      use 1
+      intro x hx
+      simp at hx
+      linarith
+
+  -- Show that $C$ is connected: $C = [c, 1]$ for some $c \in (0, 1)$.
+  have h₁₅ : C = Set.Icc (inf C) 1 := by
+    apply Subset.antisymm
+    · exact h₁₃
+    · simp [C]
+      intro a ha
+      simp at ha
+      constructor
+      · exact inf_le a ha.2
+      · exact ha.2
+
+  -- Define $c = \inf C$.
+  let c := inf C
+
+  -- Show that $c \in C$.
+  have h₁₆ : c ∈ C := by
+    simp [C]
+    constructor
+    · exact inf_pos_of_nonempty h₁₄.1
+    constructor
+    · have h : c < 1 := by
+        by_contra! h'
+        have h := h₁₄.1.trans h'
+        simp [h] at h'
+      exact c_lt_one h
+    · intro n
+      induction n using Nat.twoStepInduction with
+      | zero => exact h₅ c n (by linarith)
+      | one => exact h₂ c 1
+      | more n ih₁ ih₂ =>
+        have h₆ := h₆ c

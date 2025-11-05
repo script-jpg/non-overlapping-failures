@@ -1,0 +1,280 @@
+-- First, we define the function f(x) = tan(2x) - cos(x/2).
+  let f (x : ℝ) := Real.tan (2 * x) - Real.cos (x / 2)
+
+  -- We show that S is the set of solutions to f(x) = 0 on the interval [0, 2π].
+  have h₁ : S = (f ⁻¹' (0) ∩ Set.Icc 0 (2 * Real.pi)) := by
+    ext x
+    simp [h₀, h₁]
+    aesop
+
+  -- We split the proof of S.card = 5 into two parts.
+  rw [h₁, Set.ncard_coe_Finset]
+  suffices S.toFinset.card = 5 from by simp [this]
+
+  -- We use the Intermediate Value Theorem to show that f takes the value 0 exactly
+  -- on the interval [0, 2π] at the five points π/6, π/2, 2π/3, 3π/2, and 5π/6.
+  let f₁ (x : ℝ) := f x
+  have hf₁ : ContinuousOn f₁ (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}) := by
+    apply ContinuousOn.sub
+    · apply Real.continuousOn_tan
+      simp
+    · exact Real.continuousOn_cos
+
+  -- We prove that f₁(x) changes sign on the interval [0, 2π] exactly at the points
+  -- π/6, π/2, 2π/3, 3π/2, and 5π/6.
+  let f₂ (x : ℝ) := if x = Real.pi / 2 ∨ x = Real.pi * 3 / 2 then 1 else -1
+  hf₁ : f₁ ∈ (ContinuousOn f₁ (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2})) ∧
+         (∀ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), f₁ x ≠ 0) := by
+    constructor
+    · exact hf₁
+    · simp
+      intro x hx
+      obtain ⟨hx₁, hx₂⟩ := mem_interior.mp hx
+      simp
+      intro hf₁
+      simp [f₁] at hf₁
+      rcases hf₁ with hf₁ | hf₁
+      · have hf₁ : Real.cos (x / 2) < 0 := by
+          apply Real.cos_neg_iff.mpr
+          constructor
+          · linarith only [hx₁, hx₂]
+          · linarith only [hx₁, hx₂]
+        rw [Real.tan_eq_sin_div_cos, div_neg_iff] at hf₁
+        rw [hf₁] at hf₁
+        norm_num at hf₁
+        linarith only [hf₁]
+      · have hf₁ : Real.cos (x / 2) > 0 := by
+          apply Real.cos_pos_iff.mpr
+          constructor
+          · linarith only [hx₁, hx₂]
+          · linarith only [hx₁, hx₂]
+        rw [Real.tan_eq_sin_div_cos, div_neg_iff] at hf₁
+        rw [hf₁] at hf₁
+        norm_num at hf₁
+        linarith only [hf₁]
+
+  -- We define g(x) = f₁(x) - f₂(x) and show that g is continuous on the interval [0, 2π].
+  let g (x : ℝ) := f₁ x - f₂ x
+  have hg : ContinuousOn g (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}) := by
+    apply ContinuousOn.sub
+    · exact hf₁.left
+    · apply ContinuousOn if_pos
+      exact continuousOn_const
+
+  -- We prove that g(x) changes sign on the interval [0, 2π] exactly at the points
+  -- π/6, π/2, 2π/3, 3π/2, and 5π/6.
+  have hg' : ∀ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), g x ≠ 0 := by
+    intro x hx
+    simp at hx
+    simp [g]
+    by_contra!
+    rcases this with h | this
+    · simp [f₁, f₂] at this
+      rcases this with this | this
+      · have hf₁ : Real.cos (x / 2) < 0 := by
+          apply Real.cos_neg_iff.mpr
+          constructor
+          · linarith only [hx.left, hx.right]
+          · linarith only [hx.left, hx.right]
+        rw [Real.tan_eq_sin_div_cos, div_neg_iff] at this
+        rw [this] at hf₁
+        norm_num at hf₁
+        linarith only [hf₁]
+      · have hf₁ : Real.cos (x / 2) > 0 := by
+          apply Real.cos_pos_iff.mpr
+          constructor
+          · linarith only [hx.left, hx.right]
+          · linarith only [hx.left, hx.right]
+        rw [Real.tan_eq_sin_div_cos, div_neg_iff] at this
+        rw [this] at hf₁
+        norm_num at hf₁
+        linarith only [hf₁]
+    · simp [f₁, f₂] at this
+      rcases this with this | this
+      · rw [this] at hf₁
+        norm_num [hf₁] at hx
+      · rw [this] at hf₁
+        norm_num [hf₁] at hx
+
+  -- By the Intermediate Value Theorem, g has a root on each of the five intervals
+  -- [0, π/6], [π/6, π/2], [π/2, 2π/3], [2π/3, 3π/2], [3π/2, 5π/6], and [5π/6, 2π].
+  have ⟨x₀, hx₀⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), g x = 0 := by
+    apply intermediate_value_Ioo hg' (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}).open
+    simp
+    constructor
+    · simp
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+    · simp
+      rw [interior_sdiff, interior_Icc] at this
+      simp at this
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+
+  have ⟨x₁, hx₁⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), g x = 0 := by
+    apply intermediate_value_Ioo hg' (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}).open
+    simp
+    constructor
+    · simp
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+    · simp
+      rw [interior_sdiff, interior_Icc] at this
+      simp at this
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+
+  have ⟨x₂, hx₂⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), g x = 0 := by
+    apply intermediate_value_Ioo hg' (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}).open
+    simp
+    constructor
+    · simp
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+    · simp
+      rw [interior_sdiff, interior_Icc] at this
+      simp at this
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+
+  have ⟨x₃, hx₃⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), g x = 0 := by
+    apply intermediate_value_Ioo hg' (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}).open
+    simp
+    constructor
+    · simp
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+    · simp
+      rw [interior_sdiff, interior_Icc] at this
+      simp at this
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+
+  have ⟨x₄, hx₄⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), g x = 0 := by
+    apply intermediate_value_Ioo hg' (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}).open
+    simp
+    constructor
+    · simp
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+    · simp
+      rw [interior_sdiff, interior_Icc] at this
+      simp at this
+      exact ⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩
+
+  -- The five roots x₀, x₁, x₂, x₃, x₄ of g are also roots of f₁ and hence of f.
+  have ⟨y₀, hy₀⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), f x = 0 := by
+    rcases hx₀ with ⟨x₀, hx₀⟩
+    rcases hx₀ with ⟨hx₀, hx₀'⟩
+    simp at hx₀'    -- f x₀ = 0
+    simp [g] at hx₀   -- g x₀ = -1
+    set f₁x₀ := f x₀
+    absurd hx₀'
+    by_contra!
+    have : f₁x₀ - f₂x₀ ≠ 0 := by
+      apply (sub_ne_zero_iff_ne).mpr
+      · norm_num [f₂]
+        exact Ne.symm (NeZero.ne' (1 : ℝ))
+      · rw [← hx₀]
+        exact hf₁.right
+    contradiction
+
+  have ⟨y₁, hy₁⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), f x = 0 := by
+    rcases hx₁ with ⟨x₁, hx₁⟩
+    rcases hx₁ with ⟨hx₁, hx₁'⟩
+    simp at hx₁'    -- f x₁ = 0
+    simp [g] at hx₁   -- g x₁ = -1
+    set f₁x₁ := f x₁
+    absurd hx₁'
+    by_contra!
+    have : f₁x₁ - f₂x₁ ≠ 0 := by
+      apply (sub_ne_zero_iff_ne).mpr
+      · norm_num [f₂]
+        exact Ne.symm (NeZero.ne' (1 : ℝ))
+      · rw [← hx₁]
+        exact hf₁.right
+    contradiction
+
+  have ⟨y₂, hy₂⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), f x = 0 := by
+    rcases hx₂ with ⟨x₂, hx₂⟩
+    rcases hx₂ with ⟨hx₂, hx₂'⟩
+    simp at hx₂'    -- f x₂ = 0
+    simp [g] at hx₂   -- g x₂ = -1
+    set f₁x₂ := f x₂
+    absurd hx₂'
+    by_contra!
+    have : f₁x₂ - f₂x₂ ≠ 0 := by
+      apply (sub_ne_zero_iff_ne).mpr
+      · norm_num [f₂]
+        exact Ne.symm (NeZero.ne' (1 : ℝ))
+      · rw [← hx₂]
+        exact hf₁.right
+    contradiction
+
+  have ⟨y₃, hy₃⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), f x = 0 := by
+    rcases hx₃ with ⟨x₃, hx₃⟩
+    rcases hx₃ with ⟨hx₃, hx₃'⟩
+    simp at hx₃'    -- f x₃ = 0
+    simp [g] at hx₃   -- g x₃ = -1
+    set f₁x₃ := f x₃
+    absurd hx₃'
+    by_contra!
+    have : f₁x₃ - f₂x₃ ≠ 0 := by
+      apply (sub_ne_zero_iff_ne).mpr
+      · norm_num [f₂]
+        exact Ne.symm (NeZero.ne' (1 : ℝ))
+      · rw [← hx₃]
+        exact hf₁.right
+    contradiction
+
+  have ⟨y₄, hy₄⟩ : ∃ x ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}), f x = 0 := by
+    rcases hx₄ with ⟨x₄, hx₄⟩
+    rcases hx₄ with ⟨hx₄, hx₄'⟩
+    simp at hx₄'    -- f x₄ = 0
+    simp [g] at hx₄   -- g x₄ = -1
+    set f₁x₄ := f x₄
+    absurd hx₄'
+    by_contra!
+    have : f₁x₄ - f₂x₄ ≠ 0 := by
+      apply (sub_ne_zero_iff_ne).mpr
+      · norm_num [f₂]
+        exact Ne.symm (NeZero.ne' (1 : ℝ))
+      · rw [← hx₄]
+        exact hf₁.right
+    contradiction
+
+  -- The five roots y₀, y₁, y₂, y₃, y₄ of f on the interval [0, 2π] are distinct.
+  have h₂ : y₀ ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}) := by
+    exact hy₀.right
+  have h₃ : y₁ ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}) := by
+    exact hy₁.right
+  have h₄ : y₂ ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}) := by
+    exact hy₂.right
+  have h₅ : y₃ ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}) := by
+    exact hy₃.right
+  have h₆ : y₄ ∈ interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}) := by
+    exact hy₄.right
+
+  have h₇ : interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}) ⊆
+    Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2} := by
+    exact interior_subset (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2})
+
+  have h₈ : Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2} ⊆
+    interior (Set.Icc 0 (2 * Real.pi) \ {Real.pi / 2, Real.pi * 3 / 2}) ∪
+    {y₀, y₁, y₂, y₃, y₄} := by
+    ext x
+    simp
+    intro hx
+    rcases hx with ⟨hx, hx'⟩
+    by_cases h' : x = Real.pi / 2 ∨ x = Real.pi * 3 / 2
+    · simp [h']
+      exact ⟨⟨by linarith only [Real.pi_pos], by linarith only [Real.pi_pos]⟩, h'⟩
+    · simp at h'
+      rw [← hx']
+      exact ⟨⟨hx, h'⟩, by
+        by_contra! h
+        rcases h with h | h | h | h | h
+        · simp [h, f₁, f] at hx'
+          norm_num [hx'] at hx
+        · simp [h, f₁, f] at hx'
+          norm_num [hx'] at hx
+        · simp [h, f₁, f] at hx'
+          norm_num [hx'] at hx
+        · simp [h, f₁, f] at hx'
+          norm_num [hx'] at hx
+        · simp [h, f₁, f] at hx'
+          norm_num [hx'] at hx⟩
+
+  -- We show that {y₀, y₁, y₂, y₃, y₄} is a subset of the roots of f in [0, 2π].
+  have h₉ : {y₀, y₁, y₂, y�

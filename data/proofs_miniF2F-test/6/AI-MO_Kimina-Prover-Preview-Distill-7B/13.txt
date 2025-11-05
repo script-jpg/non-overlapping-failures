@@ -1,0 +1,121 @@
+-- some auxiliary statements
+  have h₄ : ∀ i ∈ Finset.range k, 0 < (1 / 2) ^ i := by
+    intro i _
+    apply pow_pos
+    norm_num
+  have h₅ : 0 < y m := by
+    rw [h₁]
+    apply Finset.sum_pos
+   . intro i _
+      apply mul_pos
+     . apply h₄ i
+     . norm_num
+   . exact Finset.mem_range.mpr h₀
+  have h₆ : ∀ i ∈ Finset.range k, 0 ≤ (1 / 2) ^ i := by
+    intro i _
+    apply pow_nonneg
+    norm_num
+  have h₇ : y m ≤ 0 := by
+    rw [h₁]
+    apply Finset.sum_nonpos
+   . intro i _
+      apply mul_nonpos_of_nonneg_of_nonpos
+     . apply h₅ i
+     . apply h₆ i
+   . exact Finset.mem_range.mpr h₀
+  have h₈ : y m = 0 := by
+    linarith only [h₅, h₇, h₂]
+
+  -- Since $y(m) = 0$, we have $\cos(a_i + m) = 0$ for all $i$.
+  have h₉ : ∀ i ∈ Finset.range k, Real.cos (a i + m) = 0 := by
+    intro i _
+    induction k using Nat.strong_induction_on with
+    | h i ih =>
+      cases h i with
+      | inl h =>
+        exfalso
+        apply h₈
+        rw [h₁]
+        simp [h]
+      | inr h =>
+        rw [Finset.sum_range_succ] at h₈
+        apply_fun (fun t => t - Real.cos (a i + m) / 2 ^ i) at h₈
+        simp at h₈
+        rw [h₈]
+        have : 0 < (1 / 2) ^ i := h₄ i
+        have : 0 ≤ (1 / 2) ^ i := h₆ i
+        have aux : 0 < (1 / 2) ^ i * 2 := by
+          apply mul_pos
+         . exact this
+         . norm_num
+        have : 0 ≤ (1 / 2) ^ i * 2 := by
+          apply mul_nonneg
+         . exact this
+         . norm_num
+        linarith only [this, h₈]
+
+  -- By assumption, $y(n) = 0$.
+  have h₁₀ : y n = 0 := by
+    exact h₈
+
+  -- Since $y(n) = 0$, we have $\cos(a_i + n) = 0$ for all $i$.
+  have h₁₁ : ∀ i ∈ Finset.range k, Real.cos (a i + n) = 0 := by
+    intro i _
+    induction k using Nat.strong_induction_on with
+    | h i ih =>
+      cases h i with
+      | inl h =>
+        exfalso
+        apply h₁₀
+        rw [h₁]
+        simp [h]
+      | inr h =>
+        rw [Finset.sum_range_succ] at h₁₀
+        apply_fun (fun t => t - Real.cos (a i + n) / 2 ^ i) at h₁₀
+        simp at h₁₀
+        rw [h₁₀]
+        have : 0 < (1 / 2) ^ i := h₄ i
+        have : 0 ≤ (1 / 2) ^ i := h₆ i
+        have aux : 0 < (1 / 2) ^ i * 2 := by
+          apply mul_pos
+         . exact this
+         . norm_num
+        have : 0 ≤ (1 / 2) ^ i * 2 := by
+          apply mul_nonneg
+         . exact this
+         . norm_num
+        linarith only [this, h₁₀]
+
+  -- Consider the function $f(x) = \cos(a_1 + x) + \frac{1}{2}\cos(a_2 + x) + \cdots + \frac{1}{2^{k-1}}\cos(a_k + x)$.
+  -- From $f(m) = f(n) = 0$, we get that $\cos(a_i + m) = \cos(a_i + n)$ for all $i$.
+  have h₁₂ : ∀ i ∈ Finset.range k, Real.cos (a i + m) = Real.cos (a i + n) := by
+    intro i _
+    specialize h₉ i
+    specialize h₁₁ i
+    linarith only [h₉, h₁₁]
+
+  -- Now we analyze the equation $\cos(a_i + m) = \cos(a_i + n)$.
+  have h₁₃ : ∀ i ∈ Finset.range k, (a i + m) = (a i + n) + ↑(2 * ℤ) * Real.pi ∨ (a i + m) = - (a i + n) + ↑(2 * ℤ) * Real.pi := by
+    intro i _
+    specialize h₁₂ i
+    specialize Real.cos_eq_cos_iff.1 h₁₂
+    split_ands
+   . rename_i h
+      apply h
+   . rename_i h
+      linarith only [h]
+
+  -- Since $m$ and $n$ are both integer combination of $\pi$ and every $a_i$ is a real number,
+  -- we have $m - n$ is an integer combination of $\pi$.
+  have h₁₄ : ∃ m_1 : ℤ, m - n = m_1 * Real.pi := by
+    use (↑(m - n) / Real.pi)
+    field_simp
+    apply (mul_right_inj' Real.pi_ne_zero).mp
+    linarith only [h₁₃]
+
+  -- Thus the theorem is true.
+  obtain ⟨m₁, h₁₄⟩ := h₁₄
+  use m₁
+  rw [sub_eq_iff_eq_add]
+  linarith only [h₁₄]
+```

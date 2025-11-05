@@ -1,0 +1,207 @@
+-- Define $M(a, b, c) = a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}$.
+  let M (a b c : ℝ) := a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)
+
+  -- Define $M^2$.
+  let M2 (a b c : ℝ) := M a b c ^ 2
+
+  -- Define $H(a, b, c) = 3/\sqrt{2}$.
+  let H (a b c : ℝ) := 3 / Real.sqrt 2
+
+  -- Define $H^2$.
+  let H2 (a b c : ℝ) := H a b c ^ 2
+
+  -- Show that $M(a, b, c) \geq 3/\sqrt{2}$ if and only if $M^2(a, b, c) \geq 9/2$.
+  have h₀_a : M a b c ≥ 3 / Real.sqrt 2 ↔ M2 a b c ≥ 9 / 2 := by
+    constructor
+    · intro m ge
+      rw [<-sq_le_sq₀, ge, <-Real.sq_sqrt]
+      · ring_nf
+        simp only [M]
+        calc
+          _ ≤ (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) ^ 2 := by
+            exact sq_le_sq₀ (by positivity) (by positivity)
+          _ = _ := by
+            ring_nf
+            simp only [M]
+            refine (Real.sq_sqrt?_).mpr?_
+            repeat positivity
+      · positivity
+      · positivity
+    · intro m ge
+      rw [<-sq_le_sq₀]
+      calc
+        _ = (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) ^ 2 := by
+          exact Eq.symm (sq_le_sq₀ (by positivity) (by positivity))
+        _ ≤ (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) ^ 2 := by
+          exact ge
+        _ = _ := by
+          ring_nf
+          simp only [M]
+          refine (Real.sq_sqrt?_).mpr?_
+          repeat positivity
+
+  -- Show that $M^2(a, b, c) \geq 9/2$ if and only if $M^2(a, b, c) - 9/2 \geq 0$.
+  have h₁_a : M2 a b c ≥ 9 / 2 ↔ M2 a b c - 9 / 2 ≥ 0 := by
+    constructor
+    · intro ge
+      exact sub_nonneg_of_le ge
+    · intro ge
+      exact sub_le_of_le_add ge (by positivity)
+
+  -- Show that $M^2(a, b, c) - 9/2 \geq 0$.
+  have h₂_a : M2 a b c - 9 / 2 ≥ 0 := by
+    -- Show that $M^2(a, b, c) - 9/2 = (a^2 + b^2 + c^2)(a + b + c - 3)/(2(a + b)(b + c)(c + a))$.
+    have h₂_b : M2 a b c - 9 / 2 = (a ^ 2 + b ^ 2 + c ^ 2) * (a + b + c - 3) / ((2 : ℝ) * (a + b) * (b + c) * (c + a)) := by
+      simp only [M2, H2, div_pow, H]
+      ring_nf
+      simp [sq_sqrt]
+      rw [sq_sqrt]
+      · ring_nf
+        calc
+          _ ≤ (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) ^ 2 := by
+            exact sq_le_sq₀ (by positivity) (by positivity)
+          _ = _ := by
+            ring_nf
+            simp only [M]
+            refine (Real.sq_sqrt?_).mpr?_
+            repeat positivity
+      · positivity
+      · simp [sq_sqrt]
+        refine (Real.sq_sqrt?_).mpr?_
+        repeat positivity
+    -- Show that $(a^2 + b^2 + c^2) \geq (a + b + c)^2 / 3$.
+    have h₂_c : a ^ 2 + b ^ 2 + c ^ 2 ≥ (a + b + c) ^ 2 / 3 := by
+      linarith only [show 0 ≤ (a - b) ^ 2 + (b - c) ^ 2 + (c - a) ^ 2 by positivity]
+    -- Show that $(a + b + c - 3) \geq 0$.
+    have h₂_d : a + b + c - 3 ≥ 0 := by
+      linarith only [h₁]
+    -- Show that $(a + b)(b + c)(c + a) \geq 8$.
+    have h₂_e : (a + b) * (b + c) * (c + a) ≥ 8 := by
+      calc
+        _ = (a + b) * ((b + c) * (c + a)) := by ring
+        _ ≥ 2 * Real.sqrt ((b + c) * (c + a)) ^ 2 := by
+          apply two_mul_le_add_pow_two
+          apply Real.sqrt_sq (by positivity)
+          apply Real.sqrt_sq (by positivity)
+        _ = _ := by
+          ring_nf
+          simp [sq_sqrt]
+          rw [sq_sqrt]
+          · apply (Real.sqrt_le_left?_).mpr?_
+            exact le_of_lt (show (8 : ℝ) > 0 by positivity)
+            rw [sq_sqrt]
+            · apply mul_le_mul
+              all_goals
+              positivity
+            rw [sq_sqrt]
+            · apply mul_le_mul
+              all_goals
+              positivity
+            positivity
+          · positivity
+          · positivity
+    -- Show that $(a^2 + b^2 + c^2)(a + b + c - 3) \geq 8 * 3 / 2 = 12$.
+    have h₂_f : (a ^ 2 + b ^ 2 + c ^ 2) * (a + b + c - 3) ≥ 12 := by
+      calc
+        _ ≥ ((a + b + c) ^ 2 / 3) * (a + b + c - 3) := by
+          apply mul_le_mul_of_nonneg_right
+          all_goals
+          positivity
+        _ ≥ ((a + b + c) ^ 2 / 3) * ((a + b + c) / 3 + ((a + b + c) / 3 - 3)) := by
+          apply mul_le_mul_of_nonneg_left
+          · linarith only [h₂_d]
+          · positivity
+        _ = ((a + b + c) ^ 2 / 3) * ((a + b + c) / 3 + ((a + b + c) / 3 - 3)) := by
+          ring
+        _ ≥ 12 := by
+          let x := (a + b + c) / 3
+          have hx : (a + b + c) = 3 * x := by
+            simp [x]
+            ring
+          rw [hx]
+          -- Consider $f(x) = x^2(x + x - 3) = x^2(2x - 3) = 2x^3 - 3x^2$ where $x \geq 1$.
+          -- We have $f'(x) = 6x^2 - 6x = 6x(x - 1) \geq 0$ for $x \geq 1$.
+          -- Thus $f(x) \geq f(1) = 2 - 3 = -1$.
+          -- That is, $x^2(2x - 3) \geq -1$ or $x^2(2x - 3) + 1 \geq 0$.
+          have h₂_f_x : ∀ x : ℝ, x ≥ 1 → (x ^ 2 * (2 * x - 3) + 1) ≥ 0 := by
+            intro x hx
+            have h₂_f_x : (x ^ 2 * (2 * x - 3) + 1) = (x - 1) ^ 2 * (2 * x + 1) := by
+              ring
+            rw [h₂_f_x]
+            positivity
+          have h₂_f_x_1 : (1 : ℝ) ≤ ((a + b + c) / 3) := by
+            linarith only [h₁]
+          specialize h₂_f_x ((a + b + c) / 3) h₂_f_x_1
+          rw [mul_comm ((a + b + c) / 3), <-h₂_f_x]
+          calc
+            _ = ((a + b + c) / 3) * ((a + b + c) ^ 2 - 9) := by
+              ring_nf
+            _ = ((a + b + c) / 3) * ((a + b + c) ^ 2 - 3 ^ 2) := by
+              norm_num
+            _ = ((a + b + c) / 3) * ((a + b + c) - 3) * ((a + b + c) + 3) := by
+              rw [sq_sub_sq]
+            _ ≥ ((a + b + c) / 3) * ((a + b + c) - 3) * (3 + 3) := by
+              apply mul_le_mul_of_nonneg_left
+              · linarith only [h₂_d]
+              · positivity
+            _ ≥ ((a + b + c) / 3) * ((a + b + c) - 3) * (3 + 3) / 3 := by
+              norm_num
+              positivity
+            _ = ((a + b + c) ^ 2 / 3) * ((a + b + c) - 3) := by
+              field_simp
+              ring_nf
+            _ ≥ 12 := by
+              linarith only [h₂_f]
+      clear h₂_f_x
+    -- Show that $M^2(a, b, c) - 9/2 \geq 0$.
+    calc
+      _ = ((a ^ 2 + b ^ 2 + c ^ 2) * (a + b + c - 3)) / ((2 : ℝ) * (a + b) * (b + c) * (c + a)) := by
+        rw [h₂_b]
+        congr
+        ring
+      _ ≥ 12 / ((2 : ℝ) * (a + b) * (b + c) * (c + a)) := by
+        apply div_le_div_of_nonneg_right
+        all_goals
+        positivity
+      _ ≥ 12 / ((2 : ℝ) * 8) := by
+        apply div_le_div_of_nonneg_left
+        rw [mul_comm (2 : ℝ), mul_comm (8 : ℝ)]
+        apply mul_le_mul_of_nonneg_left
+        all_goals
+        positivity
+      _ = _ := by
+        norm_num
+
+  -- Show that $H^2(a, b, c) = 9/2$.
+  have h₃_a : H2 a b c = 9 / 2 := by
+    simp only [H2, H]
+    ring_nf
+    rw [sq_sqrt]
+    · norm_num
+    · positivity
+
+  -- Show that $M^2(a, b, c) - 9/2 \geq 0$ implies $M^2(a, b, c) \geq 9/2$.
+  have h₄_a : M2 a b c ≥ 9 / 2 := by
+    linarith only [h₂_a, h₃_a]
+
+  -- Show that $M^2(a, b, c) \geq 9/2$ implies $M(a, b, c) \geq 3/\sqrt{2}$.
+  have h₅_a : M a b c ≥ 3 / Real.sqrt 2 := by
+    rw [<-sq_le_sq₀]
+    calc
+      _ = (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) ^ 2 := by
+        exact Eq.symm (sq_le_sq₀ (by positivity) (by positivity))
+      _ ≤ (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) ^ 2 := by
+        exact h₄_a
+      _ = _ := by
+        ring_nf
+        simp only [M]
+        refine (Real.sq_sqrt?_).mpr?_
+        repeat positivity
+
+  have h₆_a : 3 / Real.sqrt 2 ≥ 0 := by
+    positivity
+
+  -- Show that $M(a, b, c) \geq 3/\sqrt{2}$.
+  exact le_trans h₅_a (le_of_lt h₆_a)
+
+```

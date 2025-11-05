@@ -1,0 +1,112 @@
+constructor
+
+  -- sufficiency
+ . intro hf
+
+    -- By setting $a = b = 0$, we get $f(0) = 0$.
+    have f_zero : f 0 = 0 := by
+      have h := hf 0 0
+      simp at h
+      exact h
+
+    -- By setting $b = 0$, we get $f(2a) = f(f(a))$.
+    have f_even (a : ℤ) : f (2 * a) = f (f a) := by
+      have h := hf a 0
+      simp [f_zero] at h
+      exact h
+
+    -- By setting $a = 0$, we get $2f(b) = f(f(b))$.
+    have f)b : 2 * f b = f (f b) := by
+      have h := hf 0 b
+      simp at h
+      exact h
+
+    -- By setting $a = 1$, we get $f(2) = f(f(1 + b))$.
+    have f_a1 (b : ℤ) : f 2 = f (f (1 + b)) := by
+      have h := hf 1 b
+      simp at h
+      exact h
+
+    -- By setting $b = 1$, we get $f(f(a + 1)) = f(2a) + 2f(1)$.
+    have f_b1 (a : ℤ) : f (f (a + 1)) = f (2 * a) + 2 * f 1 := by
+      have h := hf a 1
+      simp at h
+      exact h
+
+    -- We prove that $f(1) = 0$ by contradiction.
+    have f_one : f 1 = 0 := by
+      -- From the above equations, we get $f(2) = f(f(1))$ and $f(f(1)) = f(2) + 2f(1)$, so $f(1) = 0$.
+      have h1 := f_even 1
+      have h2 := f_b1 0
+      rw [f_zero] at h2
+      rw [h1] at h2
+      have h3 : f 1 = 0 ∨ f 1 = 2 := by
+        have h4 : f 2 = f (f 1) := by
+          apply f_even
+        have h5 : f 2 = f 1 + 2 * f 1 := by
+          apply f_b1
+        rw [h4] at h5
+        zify at h5
+        have h6 : f 1 * 2 = 0 := by
+          linarith
+        have h7 : f 1 = 0 ∨ (2 : ℤ) = 0 := by
+          exact Int.mul_eq_zero.mp h6
+        simp at h7
+        exact h7
+      -- If $f(1) = 2$, then $f(2) = f(f(1)) = f(2) + 2f(1) = 2 + 2f(1) = 6$, and so $f(2) = 6$.
+      rcases h3 with h3 | h3
+     . exact h3
+     . have h4 := f_even 1
+        have h5 := f_b1 1
+        rw [h3] at h5
+        rw [h4, h3] at h5
+        omega
+
+    -- We prove that $f(z) = f(0) ∨ ∃ c, ∀ z, f(z) = 2z + c$, which is the desired result.
+    have : f z = f 0 ∨ ∃ c, ∀ z, f z = 2 * z + c := by
+      by_cases h : ∃ c, ∀ z, f z = 2 * z + c
+     . tauto
+     . -- If $f(z) \neq 2z + c$, then $f(z) = 0$.
+        right
+        use f 1
+        intro z
+        induction z using Int.induction_on with
+        | hz =>
+          omega
+        | hp i hi =>
+          have h1 := f_a1 i
+          have h2 := hi
+          rw [h2] at h1
+          have h3 : f (2 * i + 2) = 0 := by
+            rw [f_even]
+            rw [hi]
+          simp [h3] at h1
+          rw [f_b1]
+          simp at h1
+          rw [h1, hi]
+          ring
+        | hn i hi =>
+          have h1 := f_a1 i
+          have h2 := hi
+          rw [h2] at h1
+          have h3 : f (-2 * i - 2) = 0 := by
+            rw [f_even]
+            rw [hi]
+            ring_nf
+          simp [h3] at h1
+          rw [f_b1]
+          simp at h1
+          rw [h1, hi]
+          ring
+    tauto
+
+  -- necessity
+ . intro hf
+    rcases hf with hf | ⟨c, hf⟩
+   . -- If $f(z) = 0$, then the equation is satisfied.
+      simp [hf]
+   . -- If $f(z) = 2z + c$, then the equation is satisfied.
+      intro a b
+      linarith [hf (2 * a), hf b, hf (a + b)]
+
+```

@@ -1,0 +1,28 @@
+have h₁ : ∀ n : ℕ, n ≥ 2 → (∑ k in Finset.Icc (2 : ℕ) n, 1 / Real.sqrt k) < 198 := by
+    intro n hn
+    induction' hn with n hn IH
+    · -- Base case: n = 2
+      norm_num [Finset.sum_Icc_succ_top]
+      <;> apply lt_of_sub_pos
+      <;> field_simp [Real.sqrt_lt]
+      <;> norm_num
+      <;> nlinarith [Real.sqrt_nonneg 2, Real.sqrt_nonneg 3, Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num),
+        Real.sq_sqrt (show (0 : ℝ) ≤ 3 by norm_num)]
+    · -- Inductive step: assume the statement holds for n, prove for n + 1
+      cases n with
+      | zero => contradiction -- n cannot be zero since hn : n ≥ 2
+      | succ n =>
+        cases n with
+        | zero => contradiction -- n cannot be zero since hn : n ≥ 2
+        | succ n =>
+          simp_all [Finset.sum_Icc_succ_top, Nat.cast_add, Nat.cast_one, Nat.cast_zero]
+          <;> apply lt_of_sub_pos
+          <;> field_simp [Real.sqrt_lt] at *
+          <;> norm_num at *
+          <;> nlinarith [Real.sqrt_nonneg (n + 1 + 1), Real.sqrt_nonneg (n + 1), Real.sq_sqrt (show (0 : ℝ) ≤ (n + 1 + 1 : ℝ) by positivity),
+            Real.sq_sqrt (show (0 : ℝ) ≤ (n + 1 : ℝ) by positivity),
+            sq_nonneg (Real.sqrt (n + 1 + 1) - Real.sqrt (n + 1))]
+  apply h₁
+  <;> norm_num
+  <;> linarith
+```

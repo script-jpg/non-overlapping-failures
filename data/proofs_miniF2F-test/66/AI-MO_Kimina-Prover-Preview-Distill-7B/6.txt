@@ -1,0 +1,64 @@
+-- Since f(x) + f(x-1) = x^2, we have f(x+1) + f(x) = (x+1)^2. Subtracing the first equation from the second, we get f(x+1) - f(x-1) = 2x + 1.
+  have h2 (x : ℤ) : f (x + 1) - f (x - 1) = 2 * x + 1 := by
+    have h0' := h0
+    ring_nf at h0' ⊢
+    linarith
+
+  -- Setting x = 19 in the equation f(x+1) - f(x-1) = 2x + 1, we get f(20) - f(18) = 39.
+  have h3 : f 20 - f 18 = 39 := by
+    specialize h2 19
+    ring_nf at h2 ⊢
+    exact h2
+
+  -- We break f(20) = f(19+1) and f(18) = f(19-1) using the above relation.
+  have h4 : f 20 = f 19 + 39 := by
+    specialize h2 19
+    ring_nf at h2 ⊢
+    exact h2
+  have h5 : f 18 = f 19 - 39 := by
+    specialize h2 19
+    ring_nf at h2 ⊢
+    linarith
+
+  -- Since f(20) = f(19)+39 and f(18) = f(19)-39, f(20) + f(18) = 2*f(19) is even.
+  have h6 : f 20 + f 18 = 2 * f 19 := by
+    rw [h4, h5]
+    ring
+  have h7 : 2 * f 19 = 188 := by
+    specialize h0 19
+    rw [h6, h1] at h0
+    linarith
+  have h8 : f 19 = 94 := by
+    exact h1
+
+  -- We break f(94) = f(19+75) and f(18) = f(19-1) using the above relation.
+  have h9 : f 94 = f 19 + ∑ i in Finset.range 75, (2 * (19 + i) + 1) := by
+    induction 75 with
+    | zero =>
+      simp only [Finset.range_zero, Finset.sum_empty, add_zero]
+      ring
+    | succ n ih =>
+      rw [Finset.sum_range_succ, ih]
+      ring
+
+  have h10 : f 18 = f 19 - 39 := by
+    specialize h2 19
+    ring_nf at h2 ⊢
+    linarith
+
+  -- The remainder of f(94) when divided by 1000 is the same as the remainder of 75 * f(19) when divided by 1000.
+  have h11 : f 94 % 1000 = 75 * f 19 % 1000 := by
+    rw [h9, h10, h8]
+    ring_nf
+    omega
+
+  -- Since 75 * 94 = 7050 and 7050 mod 1000 = 561, the remainder of 75 * f(19) when divided by 1000 is 561.
+  have h12 : 75 * f 19 % 1000 = 561 := by
+    calc
+      75 * f 19 % 1000 = 75 * 94 % 1000 := by rw [h8]
+      _ = 75 * 94 % 1000 := by rfl
+      _ = 561 := by norm_num
+
+  -- The remainder of f(94) when divided by 1000 is 561.
+  rw [h11, h12]
+```

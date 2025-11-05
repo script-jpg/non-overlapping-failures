@@ -1,0 +1,299 @@
+-- Prove that for any number x, ⌊x⌋ ≥ 0.
+  have h_floor_nonneg (x : ℝ) : ↑⌊x⌋ ≥ 0 := by
+    have h : ⌊x⌋ ≤ ⌊x⌋ + (1 : ℝ) := by simp
+    apply Nat.floor_le_floor at h
+    apply h
+
+  -- Prove that for any number x, ⌊x⌋ < ⌊x⌋ + 1.
+  have h_floor_lt_succ (x : ℝ) : ↑⌊x⌋ < ↑⌊x⌋ + (1 : ℝ) := by
+    apply Nat.floor_lt_succ
+
+  -- Define the function f(x) = ⌊x⌋ * (x - ⌊x⌋) - a * x^2.
+  let f (x : ℝ) := ↑⌊x⌋ * (x - ↑⌊x⌋) - ↑a * x ^ 2
+
+  -- Show that f(x) is negative at integer values of x.
+  have h_f_neg_at_integers (n : ℤ) : f (n : ℝ) < 0 := by
+    simp [f]
+    rw [show (n : ℝ) = (n : ℤ) by simp]
+    rw [Int.floor_intCast]
+    simp [h₀]
+    tauto
+
+  -- Show that f(x) is non-negative at non-integer values of x.
+  have h_f_nonneg_at_nonintegers (x : ℝ) (h : ¬⌊x⌋ = ⌊x⌋) : f x ≥ 0 := by
+    simp [f]
+    rw [Int.floor_eq_iff]
+    push_neg
+    rw [show (x - ⌊x⌋) = (x - ↑⌊x⌋) by simp]
+    suffices h' : (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) > a * x ^ 2 by linarith
+    suffices h' : (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) > 0 by linarith
+    apply mul_pos
+    linarith
+    linarith
+
+  -- Show that the sum of the roots of f(x) = 0 equals 4/a.
+  have h_sum_roots (S : Finset ℝ) (h₀ : ∀ x : ℝ, x ∈ S ↔ f x = 0) (h₁ : ∑ x in S, x = 420) : ∑ x in S, x = (4 : ℚ) / a := by
+    have h₂ : f 0 > 0 := by
+      simp [f]
+      rw [h₀]
+      simp
+    have h₃ : f 420 < 0 := by
+      simp [f]
+      rw [h₀]
+      simp
+      linarith
+    have h₄ : ∃ x ∈ S, x > 0 := by
+      by_contra h₄
+      simp at h₄
+      simp [h₄] at h₁
+      linarith
+    have h₅ : ∀ x ∈ S, x ≤ 420 := by
+      intro x hx
+      by_contra h₅
+      simp at h₅
+      simp [h₅] at hx
+      interval_cases x <;> simp [h₀] at hx
+      all_goals linarith
+    have h₆ : ∃ x ∈ S, x < 420 := by
+      by_contra h₆
+      simp at h₆
+      simp [h₆] at h₁
+      linarith
+    have h₇ : ∀ x ∈ S, f x = 0 := by
+      intro x hx
+      rw [h₀] at hx
+      exact hx
+    have h₈ : ∀ x ∈ S, a * x ^ 2 = (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) := by
+      intro x hx
+      rw [h₇ x hx]
+      simp [f]
+      linarith
+    have h₉ : ∀ x ∈ S, x ≠ 0 := by
+      intro x hx
+      by_contra h₉
+      simp [h₉] at hx
+      simp [h₀] at hx
+    have h₁₀ : ∑ x in S, a * x ^ 2 = ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) := by
+      apply Finset.sum_congr
+      assumption
+    have h₁₁ : ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) < 420 * (420 : ℚ) := by
+      have h₁₁ : ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) < 420 * (420 : ℚ) := by
+        calc
+          ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) < 0 + 420 * (420 : ℚ) := by
+            simp [f]
+            rw [h₀]
+            simp
+            linarith
+          _ = 420 * (420 : ℚ) := by simp
+      exact h₁₁
+    have h₁₂ : ∑ x in S, a * x ^ 2 = 420 * (420 : ℚ) := by
+      calc
+        ∑ x in S, a * x ^ 2 = ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) := by rw [h₁₀]
+        _ = 420 * (420 : ℚ) := by
+          have : ∀ x ∈ S, ↑⌊x⌋ = (↑⌊x⌋ : ℝ) := by
+            intro x hx
+            simp [h₀]
+          simp_rw [this]
+          linarith
+    have h₁₃ : 420 * (420 : ℚ) < 420 * (4 : ℚ) := by
+      calc
+        420 * (420 : ℚ) < 0 + 420 * (4 : ℚ) := by linarith
+        _ = 420 * (4 : ℚ) := by simp
+    rw [← h₁₂] at h₁₃
+    have h₁₄ : (4 : ℚ) / a = 420 * (420 : ℚ) / (∑ x in S, a * x ^ 2) := by
+      field_simp
+      rw [h₁₂]
+      linarith
+    rw [h₁₄, Finset.card_eq_sum_const]
+    assumption
+    simp
+
+  -- Show that the sum of the roots of f(x) = 0 equals 4/a.
+  have h_sum_roots' (S : Finset ℝ) (h₀ : ∀ x : ℝ, x ∈ S ↔ f x = 0) (h₁ : ∑ x in S, x = 420) : ∑ x in S, x = (4 : ℚ) / a := by
+    have h₂ : f 0 > 0 := by
+      simp [f]
+      rw [h₀]
+      simp
+    have h₃ : f 420 < 0 := by
+      simp [f]
+      rw [h₀]
+      simp
+      linarith
+    have h₄ : ∃ x ∈ S, x > 0 := by
+      by_contra h₄
+      simp at h₄
+      simp [h₄] at h₁
+      linarith
+    have h₅ : ∀ x ∈ S, x ≤ 420 := by
+      intro x hx
+      by_contra h₅
+      simp at h₅
+      simp [h₅] at hx
+      interval_cases x <;> simp [h₀] at hx
+      all_goals linarith
+    have h₆ : ∃ x ∈ S, x < 420 := by
+      by_contra h₆
+      simp at h₆
+      simp [h₆] at h₁
+      linarith
+    have h₇ : ∀ x ∈ S, f x = 0 := by
+      intro x hx
+      rw [h₀] at hx
+      exact hx
+    have h₈ : ∀ x ∈ S, a * x ^ 2 = (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) := by
+      intro x hx
+      rw [h₇ x hx]
+      simp [f]
+      linarith
+    have h₉ : ∀ x ∈ S, x ≠ 0 := by
+      intro x hx
+      by_contra h₉
+      simp [h₉] at hx
+      simp [h₀] at hx
+    have h₁₀ : ∑ x in S, a * x ^ 2 = ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) := by
+      apply Finset.sum_congr
+      assumption
+    have h₁₁ : ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) < 420 * (420 : ℚ) := by
+      have h₁₁ : ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) < 420 * (420 : ℚ) := by
+        calc
+          ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) < 0 + 420 * (420 : ℚ) := by
+            simp [f]
+            rw [h₀]
+            simp
+            linarith
+          _ = 420 * (420 : ℚ) := by simp
+      exact h₁₁
+    have h₁₂ : ∑ x in S, a * x ^ 2 = 420 * (420 : ℚ) := by
+      calc
+        ∑ x in S, a * x ^ 2 = ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) := by rw [h₁₀]
+        _ = 420 * (420 : ℚ) := by
+          have : ∀ x ∈ S, ↑⌊x⌋ = (↑⌊x⌋ : ℝ) := by
+            intro x hx
+            simp [h₀]
+          simp_rw [this]
+          linarith
+    have h₁₃ : (420 : ℚ) * 420 < (∑ x in S, a * x ^ 2) * (4 / a) := by
+      calc
+        (420 : ℚ) * 420 < 0 + (∑ x in S, a * x ^ 2) * (4 / ↑a) := by linarith
+        _ = (∑ x in S, a * x ^ 2) * (4 / ↑a) := by simp
+    have h₁₄ : (420 : ℚ) * 420 = (∑ x in S, a * x ^ 2) * (4 / a) := by
+      field_simp
+      rw [h₁₂]
+      simp
+      linarith
+    linarith
+
+  -- Show that the sum of the roots of f(x) = 0 equals 4/a.
+  have h_sum_roots'' (S : Finset ℝ) (h₀ : ∀ x : ℝ, x ∈ S ↔ f x = 0) (h₁ : ∑ x in S, x = 420) : ∑ x in S, x = (4 : ℚ) / a := by
+    have h₂ : f 0 > 0 := by
+      simp [f]
+      rw [h₀]
+      simp
+    have h₃ : f 420 < 0 := by
+      simp [f]
+      rw [h₀]
+      simp
+      linarith
+    have h₄ : ∃ x ∈ S, x > 0 := by
+      by_contra h₄
+      simp at h₄
+      simp [h₄] at h₁
+      linarith
+    have h₅ : ∀ x ∈ S, x ≤ 420 := by
+      intro x hx
+      by_contra h₅
+      simp at h₅
+      simp [h₅] at hx
+      interval_cases x <;> simp [h₀] at hx
+      all_goals linarith
+    have h₆ : ∃ x ∈ S, x < 420 := by
+      by_contra h₆
+      simp at h₆
+      simp [h₆] at h₁
+      linarith
+    have h₇ : ∀ x ∈ S, f x = 0 := by
+      intro x hx
+      rw [h₀] at hx
+      exact hx
+    have h₈ : ∀ x ∈ S, a * x ^ 2 = (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) := by
+      intro x hx
+      rw [h₇ x hx]
+      simp [f]
+      linarith
+    have h₉ : ∀ x ∈ S, x ≠ 0 := by
+      intro x hx
+      by_contra h₉
+      simp [h₉] at hx
+      simp [h₀] at hx
+    have h₁₀ : ∑ x in S, a * x ^ 2 = ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) := by
+      apply Finset.sum_congr
+      assumption
+    have h₁₁ : ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) < 420 * (420 : ℚ) := by
+      have h₁₁ : ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) < 420 * (420 : ℚ) := by
+        calc
+          ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) < 0 + 420 * (420 : ℚ) := by
+            simp [f]
+            rw [h₀]
+            simp
+            linarith
+          _ = 420 * (420 : ℚ) := by simp
+      exact h₁₁
+    have h₁₂ : ∑ x in S, a * x ^ 2 = 420 * (420 : ℚ) := by
+      calc
+        ∑ x in S, a * x ^ 2 = ∑ x in S, (↑⌊x⌋ : ℝ) * (x - ↑⌊x⌋) := by rw [h₁₀]
+        _ = 420 * (420 : ℚ) := by
+          have : ∀ x ∈ S, ↑⌊x⌋ = (↑⌊x⌋ : ℝ) := by
+            intro x hx
+            simp [h₀]
+          simp_rw [this]
+          linarith
+    have h₁₃ : (420 : ℚ) * 420 < (∑ x in S, a * x ^ 2) * (4 / a) := by
+      calc
+        (420 : ℚ) * 420 < 0 + (∑ x in S, a * x ^ 2) * (4 / ↑a) := by linarith
+        _ = (∑ x in S, a * x ^ 2) * (4 / ↑a) := by simp
+    have h₁₄ : (420 : ℚ) * 420 = (∑ x in S, a * x ^ 2) * (4 / a) := by
+      field_simp
+      rw [h₁₂]
+      simp
+      linarith
+    linarith
+
+  -- Prove that any number $a=\frac{p}{q}$, where $p$ and $q$ are relatively prime positive integers, can be expressed in the desired form.
+  have h_a_rational (a : ℚ) : ∃ S : Finset ℝ, (∀ x : ℝ, x ∈ S ↔ ↑⌊x⌋ * (x - ↑⌊x⌋) = ↑a * x ^ 2) (∑ x in S, x = 420) := by
+
+    -- Handle the case when a = 0.
+    by_cases h_a_nonzero : a = 0
+    · use {0}
+      simp [h_a_nonzero]
+      linarith
+
+    -- Express a as a positive rational number.
+    obtain ⟨a', ha'⟩ : ∃ a' : ℚ, a' > 0 ∧ a = a' := by
+      use a.natAbs
+      simp [abs_of_nonneg]
+      constructor
+      · exact Rat.num_pos.mpr (by linarith)
+      · exact h_a_nonzero
+
+    -- Set b = 4/a' if a' ≠ 0.
+    use {0, 4/a'}
+    constructor
+    · simp [f]
+      intro x hx
+      simp [ha'] at hx
+      rcases hx with hx | hx
+      · rw [hx]
+        linarith
+      · rw [hx]
+        simp [ha']
+        linarith
+    · simp
+      rw [ha']
+      linarith
+
+  -- Use the fact that if a can be expressed in the desired form, then so can a+1.
+  have h_a_plus_one (a : ℚ) (h_a : ∃ S : Finset ℝ, (∀ x : ℝ, x ∈ S ↔ ↑⌊x⌋ * (x - ↑⌊x⌋) = ↑a * x ^ 2) (∑ x in S, x = 420)) :
+      ∃ S : Finset ℝ, (∀ x : ℝ, x ∈ S ↔ ↑⌊x⌋ * (x - ↑⌊x⌋) = ↑(a + 1) * x ^ 2) (∑ x in S, x = 420) := by
+
+    -- Extract the set S from the assumption.
+    rcases h_a with ⟨S, h_S₀, h_S₁⟩

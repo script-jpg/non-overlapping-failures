@@ -1,0 +1,177 @@
+-- First, let's understand what we're trying to prove.
+  -- We have three distinct positive integers i, m, o such that i * m * o = 2001, and we need to show their sum is at most 671.
+
+  -- Step 1: Analyze the factors of 2001
+  -- Let's start by factoring 2001. We can see that 2001 = 3 * 667, and 667 is prime (I'll verify this).
+  -- So the complete factorization of 2001 is 3 * 667.
+  -- The distinct positive integers i, m, o must be divisors of 2001.
+  -- The divisors of 2001 are: 1, 3, 667, 2001.
+
+  -- Step 2: Consider all possible triplets (i, m, o) with i * m * o = 2001
+  -- Since the divisors are 1, 3, 667, 2001, and they must be distinct, we have the following possibilities:
+  -- (1, 3, 667), (1, 667, 3), (3, 1, 667), (3, 667, 1), (667, 1, 3), (667, 3, 1)
+  -- (1, 2001, 1), (2001, 1, 1), (1, 1, 2001), (2001, 1, 1), (1, 1, 2001)
+  -- (3, 667, 1), (3, 1, 667), (667, 3, 1), (667, 1, 3), (1, 3, 667), (1, 667, 3)
+  -- Note that (1, 1, 2001) and similar are not valid since all three must be distinct.
+
+  -- Step 3: Calculate the sum for each valid triplet
+  -- The valid triplets give us sums:
+  -- 1 + 3 + 667 = 671
+  -- 1 + 667 + 3 = 671
+  -- 3 + 1 + 667 = 671
+  -- 3 + 667 + 1 = 671
+  -- 667 + 1 + 3 = 671
+  -- 667 + 3 + 1 = 671
+  -- So the maximum sum is 671, achieved by all valid permutations of (1, 3, 667).
+
+  -- Step 4: Formalize this in Lean 4
+  -- Let's start by importing the necessary libraries and setting up the theorem:
+
+  import Mathlib
+  import Aesop
+
+  set_option maxHeartbeats 0
+
+  open BigOperators Real Nat Topology Rat
+
+  -- Now I'll state the theorem. We have three distinct positive integers i, m, o such that their product is 2001, and we need to show their sum is at most 671.
+
+  theorem amc12_2000_p1 (i m o : ℕ) (h₀ : i ≠ m ∧ m ≠ o ∧ o ≠ i) (h₁ : i * m * o = 2001) :
+    i + m + o ≤ 671 := by
+  -- Let's begin the proof by establishing key facts.
+
+  have iqr : i ≤ 2001 := by nlinarith
+  have mqr : m ≤ 2001 := by nlinarith
+  have orqr : o ≤ 2001 := by nlinarith
+
+  have ipos : 0 < i := by
+    by_contra! h
+    have : i = 0 := by linarith
+    have : i * m * o = 0 := by simp [this]
+    simp at h₁
+  have mpos : 0 < m := by
+    by_contra! h
+    have : m = 0 := by linarith
+    have : i * m * o = 0 := by simp [this]
+    simp at h₁
+  have opst : 0 < o := by
+    by_contra! h
+    have : o = 0 := by linarith
+    have : i * m * o = 0 := by simp [this]
+    simp at h₁
+
+  have i3le : i ≤ 667 := by
+    by_cases h : i ≤ 28
+    · exact h
+    · have : i * m * o > 2001 := by nlinarith
+      simp at this
+  have m3le : m ≤ 667 := by
+    by_cases h : m ≤ 28
+    · exact h
+    · have : i * m * o > 2001 := by nlinarith
+      simp at this
+  have or3le : o ≤ 667 := by
+    by_cases h : o ≤ 28
+    · exact h
+    · have : i * m * o > 2001 := by nlinarith
+      simp at this
+
+  have i4le : i ≤ 400 := by linarith
+  have m4le : m ≤ 400 := by linarith
+  have or4le : o ≤ 400 := by linarith
+
+  -- Now I need to show that the only possible triplets are the permutations of (1, 3, 667).
+  -- To do this, I must show that any other combination would result in a contradiction with the constraints.
+  -- Let's think about how to approach this systematically.
+
+  have ieq1 : i = 1 ∨ i = 3 ∨ i = 667 ∨ i = 2001 := by
+    have iin : i ∈ ({1, 3, 667, 2001} : Finset ℕ) := by
+      simp
+      have : i * m * o = 2001 := h₁
+      rw [← this]
+      have mnz : m ≠ 0 := by nlinarith
+      have ornz : o ≠ 0 := by nlinarith
+      have : i = 1 ∨ i = 3 ∨ i = 667 ∨ i = 2001 := by
+        have h : i ≤ 2001 := by nlinarith
+        interval_cases i <;> rw [mul_assoc] at this <;> try tauto
+      tauto
+    simpa using iin
+  have meq1 : m = 1 ∨ m = 3 ∨ m = 667 ∨ m = 2001 := by
+    have min : m ∈ ({1, 3, 667, 2001} : Finset ℕ) := by
+      simp
+      have : i * m * o = 2001 := h₁
+      rw [← this]
+      have inz : i ≠ 0 := by nlinarith
+      have ornz : o ≠ 0 := by nlinarith
+      have : m = 1 ∨ m = 3 ∨ m = 667 ∨ m = 2001 := by
+        have h : m ≤ 2001 := by nlinarith
+        interval_cases m <;> rw [mul_assoc] at this <;> try tauto
+      tauto
+    simpa using min
+  have oreq1 : o = 1 ∨ o = 3 ∨ o = 667 ∨ o = 2001 := by
+    have oin : o ∈ ({1, 3, 667, 2001} : Finset ℕ) := by
+      simp
+      have : i * m * o = 2001 := h₁
+      rw [← this]
+      have inz : i ≠ 0 := by nlinarith
+      have mnz : m ≠ 0 := by nlinarith
+      have : o = 1 ∨ o = 3 ∨ o = 667 ∨ o = 2001 := by
+        have h : o ≤ 2001 := by nlinarith
+        interval_cases o <;> rw [mul_assoc] at this <;> try tauto
+      tauto
+    simpa using oin
+
+  have i3ineq : i ≠ 3 := by
+    by_contra! h
+    have : i * m * o > 2001 := by nlinarith
+    simp at this
+  have m3ineq : m ≠ 3 := by
+    by_contra! h
+    have : i * m * o > 2001 := by nlinarith
+    simp at this
+  have or3ineq : o ≠ 667 := by
+    by_contra! h
+    have : i * m * o > 2001 := by nlinarith
+    simp at this
+
+  -- Eliminating the impossible cases through logical deductions.
+
+  rcases ieq1 with (h1 | h3 | h667 | h2001)
+ . rcases meq1 with (h1' | h3' | h667' | h2001')
+   . rcases or_eq_ite mpos (by linarith) (by linarith) with (h | h)
+     . exfalso
+        exact h₀.1 (by linarith) (by linarith)
+     . linarith
+   . rcases or_eq_ite mpos (by linarith) (by linarith) with (h | h)
+     . exfalso
+        exact h₀.2.1 (by linarith) (by linarith)
+     . linarith
+ . rcases meq1 with (h1' | h3' | h667' | h2001')
+   . rcases or_eq_ite mpos (by linarith) (by linarith) with (h | h)
+     . exfalso
+        exact h₀.1 (by linarith) (by linarith)
+     . linarith
+   . rcases or_eq_ite mpos (by linarith) (by linarith) with (h | h)
+     . exfalso
+        exact h₀.2.1 (by linarith) (by linarith)
+     . linarith
+ . rcases meq1 with (h1' | h3' | h667' | h2001')
+   . rcases or_eq_ite mpos (by linarith) (by linarith) with (h | h)
+     . exfalso
+        exact h₀.2.2 (by linarith) (by linarith)
+     . linarith
+   . rcases or_eq_ite mpos (by linarith) (by linarith) with (h | h)
+     . exfalso
+        exact h₀.2.2 (by linarith) (by linarith)
+     . linarith
+ . rcases meq1 with (h1' | h3' | h667' | h2001')
+   . rcases or_eq_ite mpos (by linarith) (by linarith) with (h | h)
+     . exfalso
+        exact h₀.1 (by linarith) (by linarith)
+     . linarith
+   . rcases or_eq_ite mpos (by linarith) (by linarith) with (h | h)
+     . exfalso
+        exact h₀.2.1 (by linarith) (by linarith)
+     . linarith
+
+```

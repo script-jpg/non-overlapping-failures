@@ -1,0 +1,93 @@
+-- We need to simplify the expression and solve for n.
+  -- Convert to a common denominator, which is 42 * n.
+  have h₂ : (1 /. 2 + 1 /. 3 + 1 /. 7 + 1 /. ↑n) = (30 * n + 14 * n + 6 * n + 42) / (42 * n) := by
+    calc
+      (1 /. 2 + 1 /. 3 + 1 /. 7 + 1 /. ↑n)
+      _ = (7 * 3 * n + 14 * n + 6 * n + 2 * 3 * 7) / (42 * n) := by
+        rw [one_div, one_div, one_div, one_div]
+        field_simp
+        ring
+      _ = (30 * n + 14 * n + 6 * n + 42) / (42 * n) := by ring
+
+  -- The denominator of the fraction can not be 1, as the fraction is an integer.
+  have h₃ : 42 * n ≠ 0 := by
+    intro h
+    have : (42 * n).den = 1 := by
+      rw [h]
+      simp
+    have : (42 * n).den = 42 * n := by
+      exact Rat.den_eq_self.mpr (by positivity)
+    rw [this] at *
+    linarith
+
+  -- Simplify h₁ using h₂.
+  rw [h₂] at h₁
+  simp at h₁
+
+  -- We have 42 * n ∣ 30 * n + 14 * n + 6 * n + 42
+  have h₄ : (42 * n).natAbs ∣ (30 * n + 14 * n + 6 * n + 42) := by
+    rw [← h₁]
+    exact Rat.den_dvd_num (42 * n)
+
+  -- We have n > 0, so n is positive.
+  have h₅ : n > 0 := by omega
+
+  -- Simplify h₄ to get 42 ∣ 50 * n + 42.
+  have h₆ : 42 ∣ 50 * n + 42 := by
+    have : (42 * n).natAbs = 42 * n := by
+      rw [abs_of_pos]
+      omega
+    rw [this] at h₄
+    have : 42 * n ∣ 50 * n + 42 := by
+      apply Nat.dvd_of_mul_dvd_mul_left (by omega) at h₄
+      exact h₄
+    exact this
+
+  -- Simplify h₆ to get 42 ∣ 10 * n + 42.
+  have h₇ : 42 ∣ 10 * n + 42 := by
+    calc
+      42 ∣ 50 * n + 42 := h₆
+      _ = 10 * n + 42 + 40 * n := by ring
+      _ = 10 * n + 42 + (42 - 2) * n := by omega
+      _ = 10 * n + 42 + 42 * n - 2 * n := by omega
+      _ = 10 * n + 42 + (42 * n - 2 * n) := by
+        rw [← Nat.add_sub_assoc _ 2 * n]
+        rw [← Nat.add_assoc n (42 * n)]
+        ring
+      _ = 10 * n + 42 + 42 * (n - 2 / 42) := by
+        rw [Nat.mul_sub_left_distrib]
+        rw [← Nat.mul_div_right (n - 2 / 42) 42]
+        rw [Nat.sub_le_div_iff_mul_le]
+        omega
+        omega
+      _ = 10 * n + 42 + 42 * n - 2 := by
+        rw [Nat.mul_div_right]
+        · ring
+        · omega
+      _ = 10 * n + 42 + (42 * n) - 2 := by
+        congr
+        rw [← Nat.add_sub_assoc _ 2]
+        rw [← Nat.add_assoc n (42 * n)]
+        ring
+      _ = 10 * n + 42 + 42 * n + (-2) := by
+        simp
+
+  -- We have 42 ∣ 10 * n + 42, so 42 ∣ 10 * n.
+  replace h₇ : 42 ∣ 10 * n := by
+    apply Nat.dvd_sub_right h₇
+    omega
+
+  -- We know that 42 and 10 are [[coprime]].
+  have h₈ : Nat.Coprime 42 10 := by norm_num
+
+  -- Therefore, 42 ∣ n.
+  replace h₇ : 42 ∣ n := by
+    exact Nat.Coprime.dvd_of_dvd_mul_left h₈ h₇
+
+  -- Therefore, n = 42, as it is the only positive integer that is divisible by 42 and less than 42 * 42.
+  have h₉ : n = 42 := by
+    apply Nat.eq_of_div_eq_right (by omega) h₇
+
+  -- Therefore, the answer is (E).
+  exact h₉
+```

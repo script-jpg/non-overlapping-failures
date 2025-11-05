@@ -1,0 +1,277 @@
+-- Show that $m^2 + 2m + 4n + n^2 \neq 0$
+  have hneq0 : m ^ 2 + 2 * m + 4 * n + n ^ 2 ≠ 0 := by
+    -- Assume on the contrary that $m^2 + 2m + 4n + n^2 = 0$
+    by_contra h
+    -- Then $\sqrt{m^2 + 2m + 4n + n^2} = 0$
+    let x := Real.sqrt (m ^ 2 + 2 * m + 4 * n + n ^ 2)
+    have hx : x = 0 := by
+      simp only [x]
+      rw [Real.sqrt_eq_zero]
+      apply pow_eq_zero
+      linarith
+    -- Then $x^3 = 0$
+    have hx3 : x ^ 3 = 0 := by
+      simp only [hx]
+      norm_num
+    -- Then $(\sqrt{m^2 + 2m + 4n + n^2})^3 = 0$
+    have hxsqrt : x ^ 3 = m ^ 2 + 2 * m + 4 * n + n ^ 2 := by
+      rw [<-Real.rpow_natCast, <-Real.rpow_sqrt]
+      · ring
+      · apply add_nonneg
+        · apply add_nonneg
+          · apply sq_nonneg
+          · apply mul_nonneg
+            norm_num
+            apply sq_nonneg
+        · apply sq_nonneg
+    -- So $(\sqrt{m^2 + 2m + 4n + n^2})^3 - (m^2 + 2m + 4n + n^2) = 0$
+    have : x ^ 3 - (m ^ 2 + 2 * m + 4 * n + n ^ 2) = 0 := by
+      rw [hxsqrt]
+      ring
+    -- That is, $x(x^2 - (m^2 + 2m + 4n + n^2)) = 0$
+    have : x * (x ^ 2 - (m ^ 2 + 2 * m + 4 * n + n ^ 2)) = 0 := by
+      ring_nf
+      rw [add_assoc, add_sub, <-sub_eq_add_neg]
+      ring_nf
+      rw [mul_assoc, this]
+      ring
+    -- So either $x = 0$ or $x^2 - (m^2 + 2m + 4n + n^2) = 0$
+    simp only [mul_eq_zero] at this
+    cases this with
+    | inl h => contradiction
+    | inr h =>
+      -- Note that $m^2 + 2m + 4n + n^2 = (m + n)^2 + (m - n)^2 + 2(m + 2n) > 0$
+      have h₀ : m ^ 2 + 2 * m + 4 * n + n ^ 2 > 0 := by
+        have hm := pow_pos (h₀.left) 2
+        have hn := pow_pos (h₀.right) 2
+        linarith
+      -- So $(m + n)^2 + (m - n)^2 + 2(m + 2n) = 0$
+      have h₀ : (m + n) ^ 2 + (m - n) ^ 2 + 2 * (m + 2 * n) = 0 := by
+        linarith
+      -- However, $(m + n)^2 + (m - n)^2 + 2(m + 2n) > 0$
+      have h₁ : (m + n) ^ 2 + (m - n) ^ 2 + 2 * (m + 2 * n) > 0 := by
+        have h₁ : (m + n) ^ 2 + (m - n) ^ 2 > 0 := by
+          apply add_pos
+          apply sq_pos_of_pos
+          linarith
+          apply sq_pos_of_pos
+          linarith
+        linarith
+      -- We get a contradiction
+      linarith
+
+  -- Show that $m^2 + 2m + 4n + n^2 = 0$
+  have h : m ^ 2 + 2 * m + 4 * n + n ^ 2 = 0 := by
+    -- Assume on the contrary that $m^2 + 2m + 4n + n^2 \neq 0$
+    by_contra h
+    -- Then we can multiply both sides of $\sqrt{m^2 + 2m + 4n + n^2} = 0$ by $a + bm + cn$ to get $0 = 0$
+    have h₀ : a + b * m + c * n = 0 := by
+      exact h₃
+    -- So $0 = (a + bm + cn)(m^2 + 2m + 4n + n^2) = (m + n)^3 + (m - n)^3 + 2(m + 2n)^3$
+    have h₁ : (a + b * m + c * n) * (m ^ 2 + 2 * m + 4 * n + n ^ 2) = 0 := by
+      rw [h₀]
+      ring
+    -- Note that $0 = (m + n)^3 + (m - n)^3 + 2(m + 2n)^3 \neq 0$
+    have h₂ : (a + b * m + c * n) * (m ^ 2 + 2 * m + 4 * n + n ^ 2) ≠ 0 := by
+      rw [h₃]
+      apply mul_ne_zero
+      apply ne_of_gt
+      exact h₀.left
+      apply ne_of_gt
+      exact h₀.right
+    -- We get a contradiction
+    contradiction
+
+  -- So $\sqrt{m^2 + 2m + 4n + n^2} = 0$
+  let x := Real.sqrt (m ^ 2 + 2 * m + 4 * n + n ^ 2)
+  have hx : x = 0 := by
+    simp only [x]
+    rw [Real.sqrt_eq_zero]
+    apply pow_eq_zero
+    linarith
+
+  -- Show that $m + n = 0$
+  have hmn : m + n = 0 := by
+    -- Note that $m + n = \sqrt{m^2 + 2m + 4n + n^2} = 0$
+    let y := m + n
+    have hy : y = 0 := by
+      have h : m ^ 2 + 2 * m + 4 * n + n ^ 2 = 0 := by
+        exact h
+      rw [<-sq, <-sq, <-sq] at h
+      ring_nf at h
+      rw [<-Real.rpow_natCast, <-Real.rpow_sqrt] at h
+      · simp only [y]
+        rw [Real.sqrt_eq_zero]
+        apply pow_eq_zero
+        linarith
+      · apply add_nonneg
+        · apply add_nonneg
+          · apply sq_nonneg
+          · apply mul_nonneg
+            norm_num
+            apply sq_nonneg
+        · apply sq_nonneg
+    exact hy
+
+  -- Show that $m = n = 0$
+  have hm : m = 0 := by
+    -- Assume on the contrary that $m \neq 0$
+    by_contra hm
+    -- Then $m^3 \neq 0$
+    have hm3 : m ^ 3 \neq 0 := by
+      apply pow_ne_zero
+      exact hm
+    -- But $m^3 = 2$
+    rw [h₁] at hm3
+    -- We get a contradiction
+    contradiction
+
+  have hn : n = 0 := by
+    -- Assume on the contrary that $n \neq 0$
+    by_contra hn
+    -- Then $n^3 \neq 0$
+    have hn3 : n ^ 3 \neq 0 := by
+      apply pow_ne_zero
+      exact hn
+    -- But $n^3 = 4$
+    rw [h₂] at hn3
+    -- We get a contradiction
+    contradiction
+
+  -- Show that $a = b = c = 0$
+  refine ⟨?_,?_,?_⟩
+  · -- Note that $a = (a + bm + cn) - bm - cn = 0 - bm - cn = -bm - cn$
+    rw [show a = a + b * m + c * n - b * m - c * n by ring, h₃]
+    -- So $a = -bm - cn$
+    simp only [zero_sub]
+    -- Assume on the contrary that $a \neq 0$
+    by_contra ha
+    -- Then $a^3 \neq 0$
+    have ha3 : a ^ 3 \neq 0 := by
+      apply pow_ne_zero
+      exact ha
+    -- Note that $a^3 = -b^3m^3 - c^3n^3 - 3bc(mn)(b + c) = -2b^3 - 4c^3 - 6bc(m + n) = -2b^3 - 4c^3$
+    have h₄ : a ^ 3 = -2 * b ^ 3 - 4 * c ^ 3 := by
+      calc
+        a ^ 3 = a ^ 3 + b ^ 3 * m ^ 3 + c ^ 3 * n ^ 3 + 3 * b * c * (m * n) * (m + n) := by
+          ring_nf
+        _ = a ^ 3 + b ^ 3 * m ^ 3 + c ^ 3 * n ^ 3 + 3 * b * c * (m * n) * (m + n) := by
+          rw [h₁, h₂]
+        _ = a ^ 3 + (b ^ 3 + c ^ 3) * m ^ 3 + 3 * b * c * (m * n) * (m + n) := by
+          rw [h₁, h₂]
+        _ = a ^ 3 + (b + c) ^ 3 * m ^ 3 - 3 * b * c * m * n * (m + n) + 3 * b * c * (m * n) * (m + n) := by
+          ring_nf
+        _ = a ^ 3 + (b + c) ^ 3 * m ^ 3 := by
+          rw [mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc]
+          ring
+        _ = a ^ 3 + (b + c) ^ 3 * m ^ 3 := by
+          rw [h₁, h₂]
+        _ = a ^ 3 + (b + c) ^ 3 * m ^ 3 + 3 * b * c * (m * n) * (m + n) - 3 * b * c * (m * n) * (m + n) := by
+          rw [add_sub_cancel]
+        _ = a ^ 3 + (b + c) ^ 3 * m ^ 3 + 3 * b * c * (m * n) * (m + n) - 3 * b * c * (m * n) * (m + n) := by
+          rw [h₁, h₂]
+        _ = a ^ 3 + (b + c) ^ 3 * m ^ 3 := by
+          rw [add_sub_cancel]
+        _ = a ^ 3 + (b + c) ^ 3 * m ^ 3 - 3 * b * c * m * n * (m + n) + 3 * b * c * (m * n) * (m + n) := by
+          rw [mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc]
+          ring
+        _ = a ^ 3 + (b + c) ^ 3 * m ^ 3 := by
+          rw [h₁, h₂]
+        _ = a ^ 3 - 3 * b * c * m * n * (m + n) + 3 * b * c * (m * n) * (m + n) := by
+          rw [add_zero]
+        _ = a ^ 3 := by
+          rw [mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc, mul_assoc]
+          ring
+    -- Then $a^3 = 0$
+    have h₀ : a ^ 3 = 0 := by
+      -- Assume on the contrary that $a^3 \neq 0$
+      by_contra h₀
+      -- Then $a^3 \neq 0$
+      let a_3 := a ^ 3
+      have ha3 : a_3 \neq 0 := by
+        exact h₀
+      -- Note that $a^3 = -2b^3 - 4c^3$
+      by_cases hc : c = 0
+      · -- Assume on the contrary that $c = 0$
+        -- Then $a^3 = -2b^3$
+        rw [hc, <-zero_add (b ^ 3 * 2), h₄]
+        ring_nf
+        simp only [mul_eq_zero, OfNat.ofNat_ne_zero, or_false]
+        apply pow_eq_zero
+        linarith
+      · -- Assume on the contrary that $c \neq 0$
+        -- Then $c^3 \neq 0$
+        have hc3 : c ^ 3 \neq 0 := by
+          apply pow_ne_zero
+          exact hc
+        -- Then $a^3 = -2b^3 - 4c^3 \neq 0$
+        by_contra h₀
+        rw [h₀] at hc3
+        -- We get a contradiction
+        contradiction
+    -- We get a contradiction
+    contradiction
+  · -- Assume on the contrary that $b \neq 0$
+    by_contra hb
+    -- Then $b^3 \neq 0$
+    have hb3 : b ^ 3 \neq 0 := by
+      apply pow_ne_zero
+      exact hb
+    -- Note that $b^3m^3 = 2$
+    have h₄ : b ^ 3 * m ^ 3 = 2 := by
+      calc
+        b ^ 3 * m ^ 3 = b ^ 3 * m ^ 3 + b ^ 3 * m ^ 3 + b ^ 3 * m ^ 3 - b ^ 3 * m ^ 3 := by
+          rw [add_sub_cancel]
+        _ = b ^ 3 * (m ^ 3 + m ^ 3 + m ^ 3 - m ^ 3) := by
+          rw [mul_add, mul_add, mul_add, mul_sub, mul_comm b ^ 3, <-mul_assoc, <-mul_assoc, <-mul_assoc, <-mul_assoc, <-mul_assoc, <-mul_assoc, <-mul_assoc]
+        _ = b ^ 3 * (m ^ 3 + m ^ 3 + m ^ 3 - m ^ 3) := by
+          rw [h₁]
+        _ = b ^ 3 * (2 + m ^ 3) := by
+          ring_nf
+        _ = b ^ 3 * (2 + 2) := by
+          rw [h₁]
+        _ = b ^ 3 * 4 := by
+          ring_nf
+        _ = b ^ 3 * (2 * 2) := by
+          norm_num
+        _ = (b ^ 3 * 2) * 2 := by
+          rw [mul_assoc, mul_assoc, mul_assoc, mul_comm]
+        _ = (b * m) ^ 3 * 2 := by
+          rw [<-mul_pow, mul_comm b m, <-mul_pow]
+        _ = 2 := by
+          rw [h₃, zero_add, mul_zero, h₀, zero_mul]
+    -- Then $b^3 = 0$
+    have h₀ : b ^ 3 = 0 := by
+      -- Assume on the contrary that $b^3 \neq 0$
+      by_contra h₀
+      -- Then $b^3 \neq 0$
+      have hb3 : b ^ 3 \neq 0 := by
+        exact h₀
+      -- Then $2 = b^3m^3 \neq 0$
+      rw [h₄] at hb3
+      -- We get a contradiction
+      contradiction
+    -- We get a contradiction
+    contradiction
+  · -- Assume on the contrary that $c \neq 0$
+    by_contra hc
+    -- Then $c^3 \neq 0$
+    have hc3 : c ^ 3 \neq 0 := by
+      apply pow_ne_zero
+      exact hc
+    -- Note that $c^3n^3 = 4$
+    have h₄ : c ^ 3 * n ^ 3 = 4 := by
+      calc
+        c ^ 3 * n ^ 3 = c ^ 3 * n ^ 3 + c ^ 3 * n ^ 3 + c ^ 3 * n ^ 3 - c ^ 3 * n ^ 3 := by
+          rw [add_sub_cancel]
+        _ = c ^ 3 * (n ^ 3 + n ^ 3 + n ^ 3 - n ^ 3) := by
+          rw [mul_add, mul_add, mul_add, mul_sub, mul_comm c ^ 3, <-mul_assoc, <-mul_assoc, <-mul_assoc, <-mul_assoc, <-mul_assoc, <-mul_assoc, <-mul_assoc]
+        _ = c ^ 3 * (n ^ 3 + n ^ 3 + n ^ 3 - n ^ 3) := by
+          rw [h₂]
+        _ = c ^ 3 * (4 + n ^ 3) := by
+          ring_nf
+        _ = c ^ 3 * (4 + 4) := by
+          rw [h₂]
+        _ = c ^ 3 * 8 := by
+          ring_nf
+        _ = c ^ 3 * (2 *

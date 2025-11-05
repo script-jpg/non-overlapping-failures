@@ -1,0 +1,104 @@
+-- In order to use `Complex.normSq` as a norm, we need to argue that it is positive.
+  have h₁ : 0 < Complex.normSq z := by
+    simp
+    by_contra h
+    revert h
+    simp only [not_lt, nonneg_iff_normSq_nonneg, forall_exists_index, and_imp]
+    intro i
+    simp at *
+    exact absurd (Complex.normSq_nonneg z) (lt_of_le_of_ne (zero_le (Complex.normSq z)) (Ne.symm (ne_of_lt hi)))
+
+  -- Expand `Complex.normSq` and show that it is equal to 2.
+  have h₂ : z * 4 / (z + 2) + z * 4 / (z + 2) * 5 + 36 + (z * 4 / (z + 2) * 5 + 36) / (z + 2) + (z * 4 / (z + 2) * 5 + 36) / (z + 2) * 4 = 2 := by
+    -- Firstly, we need to make sure that `z + 2` is not zero.
+    have hz : z + 2 ≠ 0 := by
+      by_contra hz
+      simp at hz
+      simp [Complex.normSq, hz] at h₀
+      norm_num at h₀
+    -- Rewriting `normSq` to `conj_mul_self`.
+    simp [Complex.normSq, hz] at h₀
+    -- Take the difference of the two sides.
+    replace h₀ : (z + 2) * (12 * z - (z + 2) * (2 * z + 4) - (z ^ 2 + 1) * (2 * z + 4) - 31) = 0 := by
+      ring_nf
+      simp [pow_two]
+      ring
+    simp [hz, mul_eq_zero] at h₀
+    simp [Complex.ext_iff] at h₀
+    -- Rewrite the equation and prove that imaginary part is zero.
+    constructor
+    all_goals
+      linarith only [h₀]
+
+  -- Use `Complex.normSq` as a norm to make sure that `z + 2` is not zero.
+  have h₃ : Complex.normSq (z + 2) > 0 := by
+    simp
+    by_contra h
+    revert h
+    simp only [not_lt, nonneg_iff_normSq_nonneg, forall_exists_index, and_imp]
+    intro i
+    simp at *
+    exact absurd (Complex.normSq_nonneg (z + 2)) (lt_of_le_of_ne (zero_le (Complex.normSq (z + 2))) (Ne.symm (ne_of_lt hi)))
+
+  -- Prove that a complex number satisfying the equation also satisfies the equation
+  -- $G(x) = 4 / (x + 2) + (4 / (x + 2) * 5 + 36) / x + (4 / (x + 2) * 5 + 36) / x * 4$.
+  have h₄ : 4 / (z + 2) + (4 / (z + 2) * 5 + 36) / z + (4 / (z + 2) * 5 + 36) / z * 4 = 2 := by
+    -- Rewrite `normSq` to `conj_mul_self`.
+    simp [Complex.normSq] at h₁
+    simp [Complex.normSq] at h₃
+    -- Take the difference of the two sides.
+    have h₄ : (z + 2) * (12 * z - (z + 2) * (2 * z + 4) - (z ^ 2 + 1) * (2 * z + 4) - 31) = 0 := by
+      ring_nf
+      simp [pow_two]
+      ring
+    -- Rewrite the equation and make sure that `z` is not zero.
+    rw [mul_eq_zero] at h₄
+    cases h₄ with
+    | inl h₄ =>
+      simp [Complex.ext_iff] at h₄
+      -- Use `Complex.normSq` as a norm to make sure that `z` is not zero.
+      have h₅ : Complex.normSq z > 0 := by
+        simp
+        by_contra h
+        revert h
+        simp only [not_lt, nonneg_iff_normSq_nonneg, forall_exists_index, and_imp]
+        intro i
+        simp at *
+        exact absurd (Complex.normSq_nonneg z) (lt_of_le_of_ne (zero_le (Complex.normSq z)) (Ne.symm (ne_of_lt hi)))
+      simp [Complex.ext_iff] at h₄
+      linarith only [h₄]
+    | inr h₄ =>
+      apply_fun fun x => x / (z + 2) at h₄
+      simp [h₃] at h₄
+      exact h₄
+
+  -- Make sure that the following complex number is well-defined.
+  have h₅ : z ≠ 0 := by
+    by_contra h
+    simp [h] at h₁
+    simp [h] at h₀
+    norm_num at h₀
+  have h₆ : z + 2 ≠ 0 := by
+    by_contra h
+    simp [h] at h₁
+    simp [h] at h₀
+    norm_num at h₀
+
+  -- Use the second part of `h₄` to make sure that `z` is not zero.
+  simp [Complex.ext_iff] at h₄
+  -- Rewrite the equation and make sure that `z` is not zero.
+  rw [mul_comm, mul_assoc, mul_eq_mul_right_iff] at h₄
+  cases h₄ with
+  | inl h₄ =>
+    -- Show that it is impossible that `z + 2` is zero.
+    exfalso
+    exact hz (fun a => h₄ a.symm)
+  | inr h₄ =>
+    -- Prove that it is the first part of `h₄` that we need.
+    rw [h₄] at h₃
+    rw [h₄]
+    field_simp
+    ring_nf
+    rw [h₁]
+    ring
+```

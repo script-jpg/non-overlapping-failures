@@ -1,0 +1,108 @@
+-- Without loss of generality, we can assume that $a \geq b \geq c$.
+  wlog h : a ≥ b ∧ b ≥ c generalizing a b c with h₄
+  {
+    clear h
+    -- By assumption, $a$, $b$ and $c$ are positive.
+    have ha : 0 < a := h₀.1
+    have hb : 0 < b := h₀.2.1
+    have hc : 0 < c := h₀.2.2
+    -- We can swap $a$ and $b$ because inequality is symmetric.
+    push_neg at h
+    specialize this b a c ⟨hb, ha, hc, by linarith, by linarith, by linarith⟩ (by omega)
+    ring_nf at this ⊢
+    exact this
+  }
+
+  -- We can assume that $a \geq b$ and $b \geq c$.
+  specialize h₀.1 le_of_lt; specialize h₀.2.1 le_of_lt; specialize h₀.2.2 le_of_lt
+  clear * - h₁ h₂ h₃ h₄ -/
+
+  -- We have $a^2 b(a-b) + b^2 c(b-c) + c^2 a(c-a) = a^2 b^2 - a^3 b + b^2 c^2 - b^3 c + c^2 a^2 - c^3 a$.
+  have h₄ : a ^ 2 * b * (a - b) + b ^ 2 * c * (b - c) + c ^ 2 * a * (c - a) = a ^ 2 * b ^ 2 - a ^ 3 * b + b ^ 2 * c ^ 2 - b ^ 3 * c + c ^ 2 * a ^ 2 - c ^ 3 * a := by ring
+
+  -- $a^2 b^2 - a^3 b + b^2 c^2 - b^3 c + c^2 a^2 - c^3 a = ab(a-b)^2 + c^2(a^2 - b^2) + b^2 c^2 - c^3 a - a^3 b + a^2 b^2$
+  -- $= ab(a-b)^2 + c^2(a-b)(a+b) + b^2(b-c)(b+c) - c^3 a - a^3 b + a^2 b^2$
+  -- $= ab(a-b)^2 + c^2(a-b)(a+b) + b^2(b-c)(b+c) + c^2 a(b-c) + a^2 b^2 - c^3 a - a^3 b$
+  -- $= ab(a-b)^2 + c^2(a-b)(a+b) + b^2(b-c)(b+c) + c^2 a(b-c) + ab^2(a-c)$
+  -- $= ab[(a-b)^2 + (a-c)(b-c)] + c^2[(a+b)(a-b) + (b+c)(b-c)] + b^2(b-c)(b+c)$
+  -- $= ab[(a-b)^2 + (a-c)(b-c)] + c^2[(a+b)(a-b) + (b+c)(b-c)] + b^2(b-c)(b+c)$
+  -- $= ab(a^2 - b^2 + ab - ac - bc + c^2) + c^2(a^2 - b^2 + ab + ac - b^2 - bc) + b^2(b-c)(b+c)$
+  -- $= ab(a^2 + ab - ac - bc + c^2) + c^2(a^2 - b^2 + ab - b^2 - bc) + b^2(b-c)(b+c)$
+  -- $= a^3 b + a^2 b^2 - a^2 c - abc + a b c^2 + a^2 c^2 - 2 b^2 c^2 - a b^2 c + b^3 c + b^2 c^2$
+  -- $= a^3 b + a^2 b^2 - a^2 c - abc + a b c^2 + a^2 c^2 - 2 b^2 c^2 - a b^2 c + b^3 c + b^2 c^2$
+  -- $= a^3 b + a^2 b^2 - a^2 c - abc + a b c^2 + a^2 c^2 - b^2 c^2 - a b^2 c + b^3 c$
+  -- $= a^3 b + a^2 b^2 - a^2 c - abc + a b c^2 + a^2 c^2 - b^2 c^2 - a b^2 c + b^3 c$
+  -- $= a^2 b(a-b) + b^2 c(b-c) + c^2 a(c-a)$
+  rw [h₄]
+
+  -- We have $a^2 b(a-b) + b^2 c(b-c) + c^2 a(c-a) = ab(a-b)^2 + c^2(a^2 - b^2) + b^2 c^2 - c^3 a - a^3 b + a^2 b^2$
+  have h₅ : a ^ 2 * b ^ 2 - a ^ 3 * b + b ^ 2 * c ^ 2 - b ^ 3 * c + c ^ 2 * a ^ 2 - c ^ 3 * a = a * b * (a - b) ^ 2 + c ^ 2 * (a ^ 2 - b ^ 2) + b ^ 2 * c ^ 2 - c ^ 3 * a - a ^ 3 * b + a ^ 2 * b ^ 2 := by ring
+
+  -- $= ab(a-b)^2 + c^2(a-b)(a+b) + b^2(b-c)(b+c) - c^3 a - a^3 b + a^2 b^2$
+  have h₆ : a * b * (a - b) ^ 2 + c ^ 2 * (a ^ 2 - b ^ 2) + b ^ 2 * c ^ 2 - c ^ 3 * a - a ^ 3 * b + a ^ 2 * b ^ 2 = a * b * (a - b) ^ 2 + c ^ 2 * (a - b) * (a + b) + b ^ 2 * (b - c) * (b + c) - c ^ 3 * a - a ^ 3 * b + a ^ 2 * b ^ 2 := by ring
+
+  -- $= ab(a-b)^2 + c^2(a-b)(a+b) + b^2(b-c)(b+c) + c^2 a(b-c) + a^2 b^2 - c^3 a - a^3 b$
+  have h₇ : a * b * (a - b) ^ 2 + c ^ 2 * (a - b) * (a + b) + b ^ 2 * (b - c) * (b + c) - c ^ 3 * a - a ^ 3 * b + a ^ 2 * b ^ 2 = a * b * (a - b) ^ 2 + c ^ 2 * (a - b) * (a + b) + b ^ 2 * (b - c) * (b + c) + c ^ 2 * a * (b - c) + a ^ 2 * b ^ 2 - c ^ 3 * a - a ^ 3 * b := by ring
+
+  -- $= ab[(a-b)^2 + (a-c)(b-c)] + c^2[(a+b)(a-b) + (b+c)(b-c)] + b^2(b-c)(b+c)$
+  have h₈ : a * b * (a - b) ^ 2 + c ^ 2 * (a - b) * (a + b) + b ^ 2 * (b - c) * (b + c) + c ^ 2 * a * (b - c) + a ^ 2 * b ^ 2 - c ^ 3 * a - a ^ 3 * b = a * b * ((a - b) ^ 2 + (a - c) * (b - c)) + c ^ 2 * ((a + b) * (a - b) + (b + c) * (b - c)) + b ^ 2 * (b - c) * (b + c) := by ring
+
+  -- $= ab[(a-b)^2 + (a-c)(b-c)] + c^2[(a+b)(a-b) + (b+c)(b-c)] + b^2(b-c)(b+c)$
+  have h₉ : a * b * ((a - b) ^ 2 + (a - c) * (b - c)) + c ^ 2 * ((a + b) * (a - b) + (b + c) * (b - c)) + b ^ 2 * (b - c) * (b + c) = a * b * ((a - b) ^ 2 + (a - c) * (b - c)) + c ^ 2 * ((a + b) * (a - b) + (b + c) * (b - c)) + b ^ 2 * (b - c) * (b + c) := by rfl
+
+  -- Now, we need to show that $ab[(a-b)^2 + (a-c)(b-c)] + c^2[(a+b)(a-b) + (b+c)(b-c)] + b^2(b-c)(b+c) \geq 0$.
+  suffices a * b * ((a - b) ^ 2 + (a - c) * (b - c)) + c ^ 2 * ((a + b) * (a - b) + (b + c) * (b - c)) + b ^ 2 * (b - c) * (b + c) ≥ 0 by linarith only [h₄, h₅, h₆, h₇, h₈, h₉, this]
+
+  -- We can write this as $ab[(a-b)^2 + (a-c)(b-c)] + c^2[(a+b)(a-b) + (b+c)(b-c)] + b^2(b-c)(b+c) = ab[(a-b)^2 + (a-c)(b-c)] + c^2[(a+b)(a-b) + (b+c)(b-c)] + b^2(b-c)(b+c)$.
+  have h₁₀ : a * b * ((a - b) ^ 2 + (a - c) * (b - c)) + c ^ 2 * ((a + b) * (a - b) + (b + c) * (b - c)) + b ^ 2 * (b - c) * (b + c) = a * b * ((a - b) ^ 2 + (a - c) * (b - c)) + c ^ 2 * ((a + b) * (a - b) + (b + c) * (b - c)) + b ^ 2 * (b - c) * (b + c) := by rfl
+
+  -- $= ab[(a-b)^2 + (a-c)(b-c)] + c^2[(a+b)(a-b) + (b+c)(b-c)] + b^2(b-c)(b+c)$
+  have h₁₁ : a * b * ((a - b) ^ 2 + (a - c) * (b - c)) + c ^ 2 * ((a + b) * (a - b) + (b + c) * (b - c)) + b ^ 2 * (b - c) * (b + c) = a * b * ((a - b) ^ 2 + (a - c) * (b - c)) + c ^ 2 * ((a + b) * (a - b) + (b + c) * (b - c)) + b ^ 2 * (b - c) * (b + c) := by rfl
+
+  -- We have $a \geq b \geq c > 0$.
+  -- The term $ab[(a-b)^2 + (a-c)(b-c)]$ is nonnegative because $a \geq b$ and $a \geq c$.
+  have h₁₂ : 0 ≤ a * b * ((a - b) ^ 2 + (a - c) * (b - c)) := by
+    apply mul_nonneg
+    apply mul_nonneg
+    exact h₀.1
+    exact h₀.2.1
+    positivity
+    apply add_nonneg
+    apply mul_nonneg
+    apply pow_two_nonneg
+    rw [sub_nonneg]
+    linarith only [h₁]
+    rw [sub_nonneg]
+    apply mul_nonneg
+    exact h₀.1
+    linarith only [h₃]
+
+  -- The term $c^2[(a+b)(a-b) + (b+c)(b-c)]$ is nonnegative because $b \geq c$ and $a \geq c$.
+  have h₁₃ : 0 ≤ c ^ 2 * ((a + b) * (a - b) + (b + c) * (b - c)) := by
+    apply mul_nonneg
+    exact h₀.2.2
+    positivity
+    apply add_nonneg
+    apply mul_nonneg
+    apply mul_nonneg
+    exact h₀.2.1
+    linarith only [h₂]
+    exact h₀.2.1
+    apply pow_two_nonneg
+
+  -- $b^2(b-c)(b+c) \geq 0$ because $b \geq c$.
+  have h₁₄ : 0 ≤ b ^ 2 * (b - c) * (b + c) := by
+    apply mul_nonneg
+    apply mul_nonneg
+    exact sq_nonneg b
+    linarith only [h₃]
+    positivity
+
+  -- The sum of nonnegative terms is nonnegative.
+  apply add_nonneg
+  apply add_nonneg
+  exact h₁₂
+  exact h₁₃
+  exact h₁₄
+
+```

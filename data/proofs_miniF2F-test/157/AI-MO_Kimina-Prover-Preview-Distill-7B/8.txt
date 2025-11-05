@@ -1,0 +1,203 @@
+-- Prove that the solution set is exactly $\left\{\frac{\pi}{2}, \frac{3\pi}{2} \right\}$.
+  have h₁ : S = {Real.pi / 2, Real.pi - Real.pi / 2} := by
+    ext x
+    constructor
+    · -- If $x \in S$, then $x = \frac{\pi}{2}$ or $x = \frac{3\pi}{2}$.
+      intro hx
+      rcases hx with ⟨hx, h₀, h₁⟩
+
+      -- Show that $\cos x \in [-1,1]$ and $\sin x \in [-1,1]$.
+      have h₂ : Real.cos x ∈ Set.Icc (-1) 1 := by
+        apply Real.cos_mem_Icc.mp
+      have h₃ : Real.sin x ∈ Set.Icc (-1) 1 := by
+        apply Real.sin_mem_Icc.mp
+
+      -- Since $\cos x \in [-1,1]$, we have $\frac{\pi}{2} \cos x \in \left[-\frac{\pi}{2}, \frac{\pi}{2}\right]$.
+      have h₄ : (Real.pi / 2) * Real.cos x ∈ Set.Icc (-Real.pi / 2) (Real.pi / 2) := by
+        rcases h₂ with ⟨h₂, h₃⟩
+        constructor
+        · -- Show that $\frac{\pi}{2} \cos x \geq -\frac{\pi}{2}$.
+          nlinarith [Real.pi_pos]
+        · -- Show that $\frac{\pi}{2} \cos x \leq \frac{\pi}{2}$.
+          nlinarith [Real.pi_pos]
+
+      -- Since $\sin x \in [-1,1]$, we have $\frac{\pi}{2} \sin x \in \left[-\frac{\pi}{2}, \frac{\pi}{2}\right]$.
+      have h₅ : (Real.pi / 2) * Real.sin x ∈ Set.Icc (-Real.pi / 2) (Real.pi / 2) := by
+        rcases h₃ with ⟨h₃, h₄⟩
+        constructor
+        · -- Show that $\frac{\pi}{2} \sin x \geq -\frac{\pi}{2}$.
+          nlinarith [Real.pi_pos]
+        · -- Show that $\frac{\pi}{2} \sin x \leq \frac{\pi}{2}$.
+          nlinarith [Real.pi_pos]
+
+      -- Use the identity $\sin(\theta) = \cos(\frac{\pi}{2} - \theta)$ to rewrite the equation.
+      have h₆ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 - (Real.pi / 2 * Real.cos x)) := by
+        rw [← Real.cos_pi_div_two_sub]
+        ring
+
+      -- We have $\frac{\pi}{2} - \frac{\pi}{2} \cos x = \frac{\pi}{2} (1 - \cos x) = \frac{\pi}{2} \sin^2 x$.
+      have h₇ : Real.pi / 2 - (Real.pi / 2 * Real.cos x) = (Real.pi / 2) * (1 - Real.cos x ^ 2) := by
+        ring_nf
+        rw [Real.cos_sq']
+        ring
+
+      -- Show that $\cos x = \sin x$.
+      have h₈ : Real.cos x = Real.sin x := by
+        rw [h₆, h₇] at h₁
+        apply eq_of_infinite_congr_arg
+        intro y hy
+        rw [h₄, h₅] at hy
+        rcases hy with ⟨hy, hy'⟩
+        linarith [Real.cos_sq_add_sin_sq x]
+
+      -- Since $\cos x = \sin x$, we have $\tan x = 1$.
+      have h₉ : Real.sin x ≠ 0 := by
+        by_contra! h₉
+        rw [Real.sin_eq_zero_iff] at h₉
+        rcases h₉ with h₉ | h₉
+        · -- Case $x = 0$.
+          linarith
+        · -- Case $x = \pi$.
+          linarith [Real.pi_pos]
+
+      have h₁₀ : Real.tan x = 1 := by
+        rw [Real.tan_eq_sin_div_cos]
+        field_simp [h₉]
+        linarith [h₈]
+
+      -- We have $x = \frac{\pi}{2}$ or $x = \frac{3\pi}{2}$.
+      have h₁₁ : x = Real.pi / 2 ∨ x = Real.pi - Real.pi / 2 := by
+        have h : (Real.sin x - Real.cos x) ^ 2 = 0 := by
+          nlinarith [h₈]
+        rw [sq_eq_zero_iff] at h
+        have h₁₂ : (Real.sin x - Real.cos x) * (Real.sin x + Real.cos x) = 0 := by
+          linarith
+        cases' (mul_eq_zero.mp h₁₂) with h₁₂ h₁₂
+        · -- Case $\sin x - \cos x = 0$: $\sin x = \cos x = \frac{\sqrt{2}}{2}$.
+          have h₁₃ : Real.sin x = Real.cos x := by
+            linarith
+          have h₁₄ : Real.sin x = Real.sqrt 2 / 2 := by
+            nlinarith [h₁₃, Real.sin_sq_add_cos_sq x]
+          have h₁₅ : Real.cos x = Real.sqrt 2 / 2 := by
+            linarith [h₁₃, h₁₄]
+          constructor
+          · -- Show that $x = \frac{\pi}{2}$.
+            rw [Real.sin_eq_sqrt_div_two, Real.cos_eq_sqrt_div_two] at h₁₄ h₁₅
+            have h₁₆ : x = Real.pi / 2 + 2 * Real.pi * (⌊x / (2 * Real.pi)⌋ : ℤ) := by
+              apply Real.eq_pi_div_two_add_mul_two_pi
+              rcases Real.two_pi_pos.mp h₀ with h₀'
+              omega
+            rcases Real two_pi_pos.mp h₀ with h₀'
+            have h₁₇ : x / (2 * Real.pi) < 1 := by
+              calc
+                x / (2 * Real.pi) < Real.pi / (2 * Real.pi) := by
+                  linarith [h₁₄]
+                _ = 1 / 2 := by
+                  rw [div_eq_mul_inv, ← mul_assoc, Real.inv_mul_self_pi]
+                  linarith
+                _ < 1 := by
+                  norm_num
+            have h₁₈ : x / (2 * Real.pi) > 0 := by
+              calc
+                x / (2 * Real.pi) > Real.pi / (2 * Real.pi) := by
+                  linarith [h₁₅]
+                _ = 1 / 2 := by
+                  rw [div_eq_mul_inv, ← mul_assoc, Real.inv_mul_self_pi]
+                  linarith
+                _ > 0 := by
+                  norm_num
+            have h₁₉ : x / (2 * Real.pi) = 1 / 2 := by
+              apply Int.floor_eq_iff.mpr
+              constructor
+              · -- Show that $0 \leq x / (2\pi)$.
+                linarith [h₁₈]
+              · -- Show that $x / (2\pi) < 1$.
+                linarith [h₁₇]
+            rw [h₁₆, h₁₉]
+            norm_num
+          · -- Case $\sin x + \cos x = 0$: $\sin x = -\cos x = -\frac{\sqrt{2}}{2}$.
+            have h₁₆ : Real.sin x = - Real.cos x := by
+              linarith
+            have h₁₇ : Real.cos x = - Real.sqrt 2 / 2 := by
+              nlinarith [h₁₆, Real.sin_sq_add_cos_sq x]
+            have h₁₈ : Real.sin x = - Real.sqrt 2 / 2 := by
+              linarith [h₁₆, h₁₇]
+            rw [Real.sin_eq_neg_sqrt_div_two, Real.cos_eq_neg_sqrt_div_two] at h₁₇ h₁₈
+            have h₁₉ : x = Real.pi - Real.pi / 2 + 2 * Real.pi * (⌊x / (2 * Real.pi)⌋ : ℤ) := by
+              apply Real.eq_pi_sub_pi_div_two_add_mul_two_pi
+              rcases Real.two_pi_pos.mp h₀ with h₀'
+              omega
+            rcases Real two_pi_pos.mp h₀ with h₀'
+            have h₂₀ : x / (2 * Real.pi) < 1 := by
+              calc
+                x / (2 * Real.pi) < Real.pi / (2 * Real.pi) + 1 := by
+                  linarith [h₁₈]
+                _ = 1 / 2 + 1 := by
+                  rw [div_eq_mul_inv, ← mul_assoc, Real.inv_mul_self_pi]
+                  linarith
+                _ < 1 := by
+                  norm_num
+            have h₂₁ : x / (2 * Real.pi) > 0 := by
+              calc
+                x / (2 * Real.pi) > Real.pi / (2 * Real.pi) := by
+                  linarith [h₁₇]
+                _ = 1 / 2 := by
+                  rw [div_eq_mul_inv, ← mul_assoc, Real.inv_mul_self_pi]
+                  linarith
+                _ > 0 := by
+                  norm_num
+            have h₂₂ : x / (2 * Real.pi) = 1 / 2 := by
+              apply Int.floor_eq_iff.mpr
+              constructor
+              · -- Show that $0 \leq x / (2\pi)$.
+                linarith [h₂₁]
+              · -- Show that $x / (2\pi) < 1$.
+                linarith [h₂₀]
+            rw [h₁₉, h₂₂]
+            norm_num
+        · -- Case $\sin x + \cos x = 0$: $\sin x = -\cos x = -\frac{\sqrt{2}}{2}$.
+          have h₁₃ : Real.sin x = - Real.cos x := by
+            linarith
+          have h₁₄ : Real.cos x = - Real.sqrt 2 / 2 := by
+            nlinarith [h₁₃, Real.sin_sq_add_cos_sq x]
+          have h₁₅ : Real.sin x = - Real.sqrt 2 / 2 := by
+            linarith [h₁₃, h₁₄]
+          rw [Real.sin_eq_neg_sqrt_div_two, Real.cos_eq_neg_sqrt_div_two] at h₁₄ h₁₅
+          constructor
+          · -- Show that $x = \frac{\pi}{2}$.
+            linarith
+          · -- Show that $x = \frac{3\pi}{2}$.
+            linarith [Real.pi_pos]
+      tauto
+    · -- If $x = \frac{\pi}{2}$ or $x = \frac{3\pi}{2}$, then $x \in S$.
+      intro hx
+      rcases hx with hx | hx
+      · -- Case $x = \frac{\pi}{2}$.
+        rw [hx]
+        constructor
+        · -- Show that $0 \leq \frac{\pi}{2}$.
+          linarith [Real.pi_pos]
+        · -- Show that $\frac{\pi}{2} \in S$.
+          constructor
+          · -- Show that $\frac{\pi}{2} \leq \frac{3\pi}{2}$.
+            linarith [Real.pi_pos]
+          · -- Show that $\sin \left( \frac{\pi}2 \cos \frac{\pi}{2}\right)=\cos \left( \frac{\pi}2 \sin \frac{\pi}{2}\right)$.
+            simp [Real.cos_pi_div_two, Real.sin_pi_div_two]
+      · -- Case $x = \frac{3\pi}{2}$.
+        rw [hx]
+        constructor
+        · -- Show that $0 \leq \frac{3\pi}{2}$.
+          linarith [Real.pi_pos]
+        · -- Show that $\frac{3\pi}{2} \in S$.
+          constructor
+          · -- Show that $\frac{3\pi}{2} \leq \pi$.
+            linarith [Real.pi_pos]
+          · -- Show that $\sin \left( \frac{\pi}2 \cos \frac{3\pi}{2}\right)=\cos \left( \frac{\pi}2 \sin \frac{3\pi}{2}\right)$.
+            simp only [Real.cos_pi_div_two, Real.sin_pi_div_two]
+            ring
+
+  -- Show that $S = \left\{\frac{\pi}{2}, \frac{3\pi}{2} \right\}$.
+  rw [h₁]
+  rw [Finset.card_pair]
+  linarith [Real.pi_pos]
+```

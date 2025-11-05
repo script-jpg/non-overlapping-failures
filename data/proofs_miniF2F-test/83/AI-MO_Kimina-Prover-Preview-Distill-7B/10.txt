@@ -1,0 +1,144 @@
+-- lemma, $(1 + 1 / 2 ^ k) < (1 + 1 / 2 ^ {k + 1}) * 2$
+  have l1' (k : ℕ) : (1 + (1 : ℝ) / 2 ^ k) < (1 + (1 : ℝ) / 2 ^ (k + 1)) * 2 := by
+    rcases Nat.even_or_odd k with h1 | h1
+    ·
+      rcases h1 with ⟨l, hl⟩
+      simp [hl]
+      ring_nf
+      -- Sqaure $(1 + 1 / 2 ^ {2n + 1}) * 2$
+      rw [show (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) * 2 = ((1 + 1 / 2 ^ (2 * l + 1)) ^ 2) * 2 / (1 + 1 / 2 ^ (2 * l + 1)) by ring]
+      -- Sqaure $(1 + 1 / 2 ^ {2n}) * 2$
+      rw [show (1 + (1 : ℝ) / 2 ^ (2 * l)) * 2 = ((1 + 1 / 2 ^ (2 * l)) ^ 2) * 2 / (1 + 1 / 2 ^ (2 * l)) by ring]
+      -- turn into $(1 + 1 / 2 ^ (2n + 1)) ^ 2 * 2 / (1 + 1 / 2 ^ (2n + 1)) < (1 + 1 / 2 ^ (2n)) ^ 2 * 2 / (1 + 1 / 2 ^ (2n))$
+      apply div_lt_div₀
+      · apply mul_lt_mul_of_pos_right
+        · rw [show (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) ^ 2 = (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) * (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) by ring]
+          apply mul_lt_mul_of_pos_right
+          · linarith only
+          · exact add_pos (by norm_num) (by norm_num)
+        · linarith only
+      · apply div_lt_div_of_pos_right
+        · apply add_pos
+          · norm_num
+          · norm_num
+        · norm_num
+    ·
+      rcases h1 with ⟨l, hl⟩
+      simp [hl]
+      ring_nf
+      -- Show that $(1 + 1 / 2 ^ (2n + 1)) * 2 < (1 + 1 / 2 ^ (2n + 2)) * 2$
+      rw [show (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) * 2 = ((1 + 1 / 2 ^ (2 * l + 1)) ^ 2) * 2 / (1 + 1 / 2 ^ (2 * l + 1)) by ring]
+      rw [show (1 + (1 : ℝ) / 2 ^ (2 * l + 2)) * 2 = ((1 + 1 / 2 ^ (2 * l + 2)) ^ 2) * 2 / (1 + 1 / 2 ^ (2 * l + 2)) by ring]
+      -- turn into $(1 + 1 / 2 ^ (2n + 1)) ^ 2 * 2 / (1 + 1 / 2 ^ (2n + 1)) < (1 + 1 / 2 ^ (2n + 2)) ^ 2 * 2 / (1 + 1 / 2 ^ (2n + 2))$
+      apply div_lt_div₀
+      · apply mul_lt_mul_of_pos_right
+        · rw [show (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) ^ 2 = (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) * (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) by ring]
+          apply mul_lt_mul_of_pos_right
+          · linarith only
+          · exact add_pos (by norm_num) (by norm_num)
+        · linarith only
+      · apply div_lt_div_of_pos_right
+        · apply add_pos
+          · norm_num
+          · norm_num
+        · norm_num
+
+  -- Show that for all $n$, $\prod_{k=1}^{2n} (1 + 1 / 2 ^ k) < 2 + 1 / 2 ^ n$
+  have f1 (n : ℕ) : (∏ k in Finset.Icc 1 (2 * n), 1 + (1 : ℝ) / 2 ^ k) < 2 + 1 / 2 ^ n := by
+    induction n with
+    | zero =>
+      norm_num
+    | succ n ih =>
+      -- We have $\prod_{k=1}^{2n} (1 + 1 / 2 ^ k) < 2 + 1 / 2 ^ n$
+      -- Show that $\prod_{k=1}^{2n + 1} (1 + 1 / 2 ^ k) < (2 + 1 / 2 ^ n) * (1 + 1 / 2 ^ (2 * n + 1))$
+      have ih' : (∏ k in Finset.Icc 1 (2 * n), 1 + (1 : ℝ) / 2 ^ k) < 2 + 1 / 2 ^ n := ih
+      have h1 : (∏ k in Finset.Icc 1 (2 * n + 1), 1 + (1 : ℝ) / 2 ^ k) < (∏ k in Finset.Icc 1 (2 * n), 1 + (1 : ℝ) / 2 ^ k) * (1 + 1 / 2 ^ (2 * n + 1)) := by
+        rw [Finset.prod_Icc_succ_top (by omega)]
+        exact mul_lt_mul_of_pos_left ih' (by linarith only)
+      -- Show that $(2 + 1 / 2 ^ n) * (1 + 1 / 2 ^ (2 * n + 1)) < 2 + 1 / 2 ^ (n + 1)$
+      have h2 : (2 + (1 : ℝ) / 2 ^ n) * (1 + 1 / 2 ^ (2 * n + 1)) < 2 + 1 / 2 ^ (n + 1) := by
+        rw [show (2 + (1 : ℝ) / 2 ^ n) * (1 + 1 / 2 ^ (2 * n + 1)) = (2 + (1 : ℝ) / 2 ^ n) * (1 + (1 : ℝ) / 2 ^ (2 * n + 1)) by ring]
+        rw [add_mul, add_mul, mul_add, mul_add, pow_add, pow_add, ← add_assoc, add_comm]
+        norm_num
+        rw [add_assoc, ← mul_add, mul_comm, pow_succ, pow_succ]
+        -- turn into $(1 + 1 / 2 ^ (2n + 1)) * 2 / (1 + 1 / 2 ^ (2n + 1)) < (1 + 1 / 2 ^ (2n)) ^ 2 * 2 / (1 + 1 / 2 ^ (2n))$
+        apply div_lt_div₀
+        · apply mul_lt_mul_of_pos_right
+          · rw [show (1 + (1 : ℝ) / 2 ^ (2 * n + 1)) ^ 2 = (1 + (1 : ℝ) / 2 ^ (2 * n + 1)) * (1 + (1 : ℝ) / 2 ^ (2 * n + 1)) by ring]
+            apply mul_lt_mul_of_pos_right
+            · linarith only
+            · exact add_pos (by norm_num) (by norm_num)
+          · linarith only
+        · apply div_lt_div_of_pos_right
+          · apply add_pos
+            · norm_num
+            · norm_num
+          · norm_num
+      rw [Finset.prod_Icc_succ_top (by omega)]
+      apply lt_trans h1 h2
+
+  -- We need to show that for all $n$, $\prod_{k=1}^{n} (1 + 1 / 2 ^ k) < 5 / 2$
+  -- Use induction on $n$
+  induction n with
+  | zero =>
+    -- Base case : $n = 0$
+    -- $(1 + 1 / 2 ^ 1) < 5 / 2$
+    norm_num
+  | succ n ih =>
+    -- Inductive step : Assume $\prod_{k=1}^{n} (1 + 1 / 2 ^ k) < 5 / 2$, show that $\prod_{k=1}^{n + 1} (1 + 1 / 2 ^ k) < 5 / 2$
+    -- Use the inductive hypothesis to show that $\prod_{k=1}^{2n} (1 + 1 / 2 ^ k) < 2 + 1 / 2 ^ n$
+    have h1 : (∏ k in Finset.Icc 1 (2 * n), 1 + (1 : ℝ) / 2 ^ k) < 2 + 1 / 2 ^ n := f1 n
+    -- Show that $\prod_{k=1}^{n + 1} (1 + 1 / 2 ^ k) < \prod_{k=1}^{2n} (1 + 1 / 2 ^ k) * (1 + 1 / 2 ^ (2n + 1))$
+    have h2 : (∏ k in Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / 2 ^ k) < (∏ k in Finset.Icc 1 (2 * n), 1 + (1 : ℝ) / 2 ^ k) * (1 + 1 / 2 ^ (2 * n + 1)) := by
+      rw [Finset.prod_Icc_succ_top (by omega)]
+      exact mul_lt_mul_of_pos_left h1 (by linarith only)
+    -- Show that $\prod_{k=1}^{2n} (1 + 1 / 2 ^ k) * (1 + 1 / 2 ^ (2n + 1)) < 5 / 2$
+    have h3 : (∏ k in Finset.Icc 1 (2 * n), 1 + (1 : ℝ) / 2 ^ k) * (1 + 1 / 2 ^ (2 * n + 1)) < 5 / 2 := by
+      rcases Nat.even_or_odd n with h1 | h1
+      ·
+        rcases h1 with ⟨l, hl⟩
+        rw [show (2 * n) = 2 * (2 * l + 1) by omega]
+        specialize f1 (2 * l + 1)
+        rw [show (2 * (2 * l + 1)) = 2 * l + 1 + 1 by omega] at f1
+        change (∏ k ∈ Finset.Icc 1 (2 * (2 * l + 1)), (1 + (1 : ℝ) / 2 ^ k)) < 2 + 1 / 2 ^ (2 * l + 1) at f1
+        rw [Finset.prod_Icc_succ_top (by omega)] at f1
+        ring_nf at f1 ⊢
+        rw [show 5 / 2 = (2 + 1 / 2) * 2 / 2 by norm_num] at f1 ⊢
+        apply (div_lt_div_iff (by norm_num) (by norm_num)).mpr
+        ring_nf
+        apply add_lt_add_left
+        rw [mul_lt_mul_left (by norm_num)]
+        ring_nf
+        have h1' := l1' (2 * l + 1)
+        have h2' : (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) * 2 ≤ (1 + (1 : ℝ) / 2 ^ (2 * l + 1)) * (1 + 1 / 2 ^ (2 * l + 1)) * 2 := by
+          rw [mul_assoc]
+          apply mul_le_mul_of_nonneg_right
+          · linarith only
+          · positivity
+        linarith only [h1', h2']
+      ·
+        rcases h1 with ⟨l, hl⟩
+        rw [show (2 * n) = 2 * (2 * l + 2) by omega]
+        specialize f1 (2 * l + 2)
+        rw [show (2 * (2 * l + 2)) = 2 * (2 * l + 1) + 1 + 1 by omega] at f1
+        change (∏ k ∈ Finset.Icc 1 (2 * (2 * l + 2)), (1 + (1 : ℝ) / 2 ^ k)) < 2 + 1 / 2 ^ (2 * l + 2) at f1
+        rw [Finset.prod_Icc_succ_top (by omega)] at f1
+        ring_nf at f1 ⊢
+        rw [show 5 / 2 = (2 + 1 / 2) * 2 / 2 by norm_num] at f1 ⊢
+        apply (div_lt_div_iff (by norm_num) (by norm_num)).mpr
+        ring_nf
+        apply add_lt_add_left
+        rw [mul_lt_mul_left (by norm_num)]
+        ring_nf
+        have h1' := l1' (2 * l + 2)
+        have h2' : (1 + (1 : ℝ) / 2 ^ (2 * l + 2)) * 2 ≤ (1 + (1 : ℝ) / 2 ^ (2 * l + 2)) * (1 + 1 / 2 ^ (2 * l + 2)) * 2 := by
+          rw [mul_assoc]
+          apply mul_le_mul_of_nonneg_right
+          · linarith only
+          · positivity
+        linarith only [h1', h2']
+    rw [Finset.prod_Icc_succ_top (by omega)]
+    apply lt_trans h2 h3
+
+
+```

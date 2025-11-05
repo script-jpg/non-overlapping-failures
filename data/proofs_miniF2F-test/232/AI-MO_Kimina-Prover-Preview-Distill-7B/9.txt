@@ -1,0 +1,341 @@
+-- Prove that for any number $x$, the sum of the floor of $x$ and the floor of $-x$ equals 0 or -1.
+  have h_floor_add_floor_le_one (x : ℝ) : ⌊x⌋ + ⌊-x⌋ = 0 ∨ ⌊x⌋ + ⌊-x⌋ = -1 := by
+    have h : ⌊x⌋ + ⌊-x⌋ ≤ 0 := by
+      apply add_le_zero_iff.mpr
+      refine Int.floor_le_pow?_ (-1 : ℤ)?_
+      exact Int.floor_le_intCast (a := (-1 : ℤ)) (by norm_num)
+      exact Int.neg_le_floor (a := (x : ℤ)) (by simp)
+    have h' : ⌊x⌋ + ⌊-x⌋ ≥ -1 := by
+      apply add_le_zero_iff.mpr
+      refine Int.neg_one_le_floor_iff.mpr?_
+      exact And.intro (Int.floor_le_intCast (a := x) (by simp)) (Int.floor_le_intCast (a := (-x : ℤ)) (by simp))
+    omega
+
+  -- If $x$ is in $S$, then so is $-x$.
+  have h_S_neg (x : ℝ) : x ∈ S → -x ∈ S := by
+    intro hx
+    simp at hx
+    have h_floor_add_floor : ⌊x⌋ + ⌊-x⌋ = 0 ∨ ⌊x⌋ + ⌊-x⌋ = -1 := h_floor_add_floor_le_one x
+    rcases h_floor_add_floor with h | h
+    · simp
+      rw [h] at hx
+      simp at hx
+      rw [← hx]
+      simp
+    · simp at h
+      have h' : (-↑x : ℝ) ∈ S := by
+        simp
+        rw [h]
+        linarith
+      exact h'
+
+  -- If $x$ is in $S$, then so is $1-x$.
+  have h_S_1_sub (x : ℝ) : x ∈ S → 1 - x ∈ S := by
+    intro hx
+    simp at hx
+    rw [← hx]
+    simp
+    intro y hy
+    rw [h_S_neg y] at hy
+    simp at hy
+    have h : ⌊x⌋ + ⌊1 - x⌋ = 1 ∨ ⌊x⌋ + ⌊1 - x⌋ = 0 := by
+      have h' : ⌊1 - x⌋ = 1 - ⌈x⌉ := by
+        rw [Int.ceil_eq_iff]
+        constructor
+        · intro h
+          linarith
+        · intro h
+          constructor
+          · linarith
+          · have h' : x < ⌈x⌉ := by
+              exact Int.lt_ceil x
+            linarith
+      rw [h']
+      have h'' : ⌊x⌋ + ⌈x⌉ = 1 ∨ ⌊x⌋ + ⌈x⌉ = 0 := by
+        have h''' : ⌊x⌋ ≤ x := by
+          exact Int.floor_le x
+        have h'''' : ⌈x⌉ - 1 < ⌊x⌋ := by
+          have h'''' : ⌈x⌉ - 1 < x := by
+            exact Int.ceil_sub_one_lt x
+          linarith
+        have h''''' : ⌈x⌉ ≤ ⌊x⌋ + 1 := by
+          linarith
+        omega
+      omega
+    rcases h with h | h
+    · right
+      rw [h]
+      linarith
+    · left
+      rw [h]
+      linarith
+
+  -- If $x$ is in $S$, then so is $-1+x$.
+  have h_S_neg_add_one (x : ℝ) : x ∈ S → -1 + x ∈ S := by
+    intro hx
+    simp at hx
+    have h : ⌊x⌋ + ⌊-1 + x⌋ = 0 ∨ ⌊x⌋ + ⌊-1 + x⌋ = -1 := h_floor_add_floor_le_one x
+    rcases h with h | h
+    · simp
+      rw [h] at hx
+      simp at hx
+      rw [← hx]
+      simp
+    · simp at h
+      have h' : (-1 + x : ℝ) ∈ S := by
+        rw [h_S_neg x hx]
+        simp
+      exact h'
+
+  -- For any integer $m$, the number $m$ is in $S$.
+  have h_m_mem (m : ℤ) : m ∈ S := by
+    induction m using Int.induction_on with
+    | hz => simp
+    | hp i hi =>
+      have h : i + 1 ∈ S := by
+        have h' : i ∈ S := hi
+        have h'' := h_S_1_sub i
+        have h''' := h_S_neg i
+        have h'''' : i + 1 ∈ S := by
+          simp at hi
+          simp
+          have h'''' : i ∈ S := hi
+          have h''''' := h_S_1_sub i
+          have h'''''' := h_S_neg i
+          rcases h'''' with h'' | h''
+          · rcases h''''' with h''' | h'''
+            · exact h''''
+            · exact h''''
+          · rcases h'''' with h'' | h''
+            · apply h_S_1_sub i
+            · apply h_S_neg i
+        exact h''''
+      exact h
+    | hn i hi =>
+      induction i using Nat.strong_induction_on with
+      | hbnz => simp
+      | hs i' ih =>
+        have h : i' + 1 ∈ S := by
+          have h' : -i' ∈ S := by
+            have h'' : i' ∈ S := ih (by simp)
+            have h''' := h_S_neg (i' : ℝ)
+            exact h'''
+          exact h_S_neg_add_one (i' : ℝ)
+        induction i' using Nat.strong_induction_on with
+        | hbnz => simp at h' ; simp [h']
+        | hs i'' ih'' =>
+          have h'' := ih'' (by simp)
+          have h''' := h_S_1_sub (i' : ℝ)
+          have h'''' := h_S_1_sub (i'' : ℝ)
+          have h''''' := h_S_1_sub (i''' : ℝ)
+          rcases h'''' with h'' | h''
+          · rcases h''' with h'' | h''
+            · apply h_S_1_sub i'''
+            · apply h_S_1_sub (i''' : ℝ)
+          · rcases h'''' with h'' | h''
+            · apply h_S_1_sub (i'' : ℝ)
+            · apply h_S_1_sub (i''' : ℝ)
+
+  have hS_card_eq (n : ℕ) : (filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) S).card = (filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) (Set.Icc (-n : ℤ) n)).card := by
+    apply Finset.card_eq_of_bijective
+    · simp
+      intro a ha _
+      use a
+      simp at ha
+      rcases ha with ⟨ha, ha'⟩
+      constructor
+      · exact h_S_neg a ha
+      · simp
+        exact ha'
+    · intro x hx y hy h
+      simp at hx hy
+      have h_filter : filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) S = (filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) (Set.Icc (-n : ℤ) n)) := by
+        rw [Finset.filter_filter]
+        · simp
+          exact hx
+        · simp
+          exact hy
+      rw [h_filter] at h
+      exact h
+
+  -- For any integer $n&gt;0$, the number of elements in $S$ between $-n$ and $n$ is even.
+  have hS_card_even (n : ℕ) (hn : 0 < n) : (filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) S).card = 2 * (n - 1) + 2 := by
+    have h_filter : filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) S = (filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) (Set.Icc (-n : ℤ) n)) := by
+      apply Finset.card_eq_of_bijective
+      · simp
+        intro a ha _
+        use a
+        simp at ha
+        rcases ha with ⟨ha, ha'⟩
+        constructor
+        · exact h_S_neg a ha
+        · simp
+          exact ha'
+      · intro x hx y hy h
+        simp at hx hy
+        have h_filter : filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) S = (filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) (Set.Icc (-n : ℤ) n)) := by
+          rw [Finset.filter_filter]
+          · simp
+            exact hx
+          · simp
+            exact hy
+        rw [h_filter] at h
+        exact h
+    rw [h_filter]
+    have h_card : (filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) (Set.Icc (-n : ℤ) n)).card = 2 * (n - 1) + 2 := by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        cases n with
+        | zero => simp
+        | succ n =>
+          simp [ih]
+          apply Finset.card_filter_add_card_filter_neg
+          simp
+          intro a ha
+          use a
+          simp at ha
+          rcases ha with ⟨ha, ha'⟩
+          constructor
+          · simp at ha
+            exact ha
+          · simp
+            exact ha'
+          · simp
+            intro ha
+            constructor
+            · simp at ha
+              exact ha
+            · use a
+              simp at ha
+              constructor
+              · have h : ¬-n + 1 ≤ a := by
+                  linarith
+                exact h
+              · have h : a ≤ -n + 1 - 1 := by
+                  linarith
+                exact h
+    exact h_card
+
+  -- For any integer $n&gt;0$, the number of elements in $S$ between $-n$ and $n$ is at most $2n$.
+  have hS_card_le (n : ℕ) (hn : 0 < n) : (filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) S).card ≤ 2 * n := by
+    have h_card : (filter (fun x ↦ x ∈ Set.Icc (-n : ℤ) n) S).card = 2 * (n - 1) + 2 := by
+      apply hS_card_even
+      exact hn
+    norm_num at h_card
+    rw [h_card]
+    linarith
+
+  -- If $1$ is in $S$, then the sum of the elements in $S$ is at most $90$.
+  have h_sum_le (h : (1 : ℝ) ∈ S) : ∑ x ∈ S, x ≤ 90 := by
+    rcases h with h
+    have h_filter : filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S = (filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) (Set.Icc (-1 : ℤ) 1)) := by
+      apply Finset.card_eq_of_bijective
+      · simp
+        intro a ha _
+        use a
+        simp at ha
+        rcases ha with ⟨ha, ha'⟩
+        constructor
+        · exact h_S_neg a ha
+        · simp
+          exact ha'
+      · intro x hx y hy h
+        simp at hx hy
+        have h_filter : filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S = (filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) (Set.Icc (-1 : ℤ) 1)) := by
+          rw [Finset.filter_filter]
+          · simp
+            exact hx
+          · simp
+            exact hy
+        rw [h_filter] at h
+        exact h
+    have h_card : (filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) (Set.Icc (-1 : ℤ) 1)).card ≤ 2 := by
+      apply Finset.card_filter_le
+      simp
+      use 0
+      simp
+    rw [← h_filter] at h_card
+    have h_card_le : (filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S).card ≤ 2 := by
+      exact h_card
+    have h_sum : ∑ x ∈ S, x = ∑ x ∈ filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S, x + ∑ x ∈ filter (fun x ↦ ¬x ∈ Set.Icc (-1 : ℤ) 1) S, x := by
+      have h_filter : filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S ∪ filter (fun x ↦ ¬x ∈ Set.Icc (-1 : ℤ) 1) S = S := by
+        apply Finset.sdiff_union_self_eq_union
+        simp
+        intro a ha
+        simp at ha
+        rcases ha with ⟨ha, ha'⟩
+        constructor
+        · have h : a ∈ Set.Icc (-1 : ℤ) 1 := by
+            exact ha
+          exact Or.inl h
+        · have h : ¬a ∈ Set.Icc (-1 : ℤ) 1 := by
+            exact ha
+          exact Or.inr h
+      have h_filter2 : filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S ∩ filter (fun x ↦ ¬x ∈ Set.Icc (-1 : ℤ) 1) S = ∅ := by
+        apply Finset.sdiff_inter_self_eq_empty
+        simp
+        intro a ha
+        simp at ha
+        rcases ha with ⟨ha, ha'⟩
+        constructor
+        · have h : a ∈ Set.Icc (-1 : ℤ) 1 := by
+            exact ha
+          exact Or.inl h
+        · have h : ¬a ∈ Set.Icc (-1 : ℤ) 1 := by
+            exact ha
+          exact Or.inr h
+      rw [← h_filter, Finset.sum_union]
+      · rw [← Finset.sum_filter]
+        have h_card : (filter (fun x ↦ ¬x ∈ Set.Icc (-1 : ℤ) 1) S).card ≥ (filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S).card := by
+          apply Finset.card_filter_le
+          simp
+        obtain ⟨a, ha⟩ := Finset.exists_mem_of_ne_nil (filter (fun x ↦ ¬x ∈ Set.Icc (-1 : ℤ) 1) S) (by simp)
+        refine Finset.sum_le_sum_of_ne_nil?_?_ a ha
+        · intro x hx
+          simp at hx
+          obtain ⟨hx, hx'⟩ := hx
+          by_contra h
+          simp at h
+          have h_card : (filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S).card > 0 := by
+            simp
+            refine Finset.card_of_mem?_
+            exact ⟨a, by simp [h]⟩
+          linarith
+        · exact h_filter2
+      · exact Finset.sum_filter
+    have h_sum_filter : ∑ x ∈ filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S, x ≤ 2 := by
+      have h_card : (filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S).card ≤ 2 := by
+        apply hS_card_le
+        simp
+        exact hn
+      obtain ⟨a, ha⟩ := Finset.exists_mem_of_ne_nil (filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S) (by linarith)
+      refine Finset.sum_le_sum_of_ne_nil?_?_ a ha
+      · intro x hx
+        simp at hx
+        obtain ⟨hx, hx'⟩ := hx
+        by_contra h
+        simp at h
+        have h_card : (filter (fun x ↦ x ∈ Set.Icc (-1 : ℤ) 1) S).card > 0 := by
+          simp
+          refine Finset.card_of_mem?_
+          exact ⟨a, by simp [h]⟩
+        linarith
+      · exact h_filter2
+    have h_sum_filter2 : ∑ x ∈ filter (fun x ↦ ¬x ∈ Set.Icc (-1 : ℤ) 1) S, x ≤ 88 := by
+      have h_card : (filter (fun x ↦ ¬x ∈ Set.Icc (-1 : ℤ) 1) S).card ≤ 88 := by
+        linarith
+      obtain ⟨a, ha⟩ := Finset.exists_mem_of_ne_nil (filter (fun x ↦ ¬x ∈ Set.Icc (-1 : ℤ) 1) S) (by linarith)
+      refine Finset.sum_le_sum_of_ne_nil?_?_ a ha
+      · intro x hx
+        simp at hx
+        obtain ⟨hx, hx'⟩ := hx
+        by_contra h
+        simp at h
+        have h_card : (filter (fun x ↦ ¬x ∈ Set.Icc (-1 : ℤ) 1) S).card > 0 := by
+          simp
+          refine Finset.card_of_mem?_
+          exact ⟨a, by simp [h]⟩
+        linarith
+      · exact h_filter2
+    lin

@@ -1,0 +1,48 @@
+-- A trivial lemma that expands the norms
+  have h₁ (z w : ℂ) : Complex.normSq (z + w) = Complex.normSq z + Real.cos (2 * Complex.arg z) * 2 * Real.cos (Complex.arg w) * 2 + Complex.normSq w := by
+    simp [Complex.normSq]
+    ring_nf
+    rw [pow_two]
+    convert Complex.abs_mul Complex.abs (z * w) (by simp) using 1
+    · convert Complex.abs_mul Complex.abs (z* w) (by simp) using 1; ring_nf
+    · ring_nf
+
+  have h₂ (z w : ℂ) (hz : z ≠ 0) (hw : w ≠ 0) :
+      Complex.normSq (z ^ 2 + w) = Complex.normSq z * 4 + Real.cos (2 * Complex.arg z) * 2 * Real.cos (2 *  Real.arg w) * 2 + Complex.normSq w := by
+    simp [Complex.normSq]
+    ring_nf
+    rw [pow_two]
+    convert Complex.abs_mul Complex.abs (z^2 * w) (by simp) using 1
+    · convert Complex.abs_mul Complex.abs (z^2 * w) (by simp) using 1; ring_nf
+    · ring_nf
+
+  -- Rewrite the assumptions using h₁ and h₂
+  iterate 2 rw [h₁] at h₀
+  iterate 2 rw [h₂] at h₀
+  rw [show Complex.normSq (z + 2) = Complex.normSq z + Real.cos (2 * Complex.arg z) * 2 * Real.cos (2 *  Real.arg 2) * 2 + Complex.normSq (2:ℂ) by simp] at h₀
+  rw [show Complex.normSq (z ^ 2 + 1) = Complex.normSq z * 4 + Real.cos (2 * Complex.arg z) * 2 * Real.cos (2 *  Real.arg 1) * 2 + Complex.normSq (1:ℂ) by simp] at h₀
+
+  -- Simplify the norms of 1, 2 and z
+  simp at h₀
+  simp [Complex.normSq] at h₀
+
+  -- Normalize the trigonials
+  ring_nf at h₀
+  ring_nf
+
+  -- Solve the equation using nlinarith
+  -- The assumption is now a quadratic equation on the real and imaginary parts of z.
+  -- We can use nlinarith to solve it, as it can handle complex numbers.
+  suffices (z.re - 1)^2 + (z.im)^2 = 0 by
+    have : z.re - 1 = 0 := by nlinarith
+    have : z.im = 0 := by nlinarith
+    rw [Complex.ext_iff] at this
+    simp at this
+    rcases this with h | h
+    · rw [h.1, h.2]
+      norm_num
+    · exfalso
+      linarith
+  nlinarith
+
+```

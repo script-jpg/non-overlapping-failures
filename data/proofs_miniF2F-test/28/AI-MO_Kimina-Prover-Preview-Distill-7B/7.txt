@@ -1,0 +1,70 @@
+-- We have a lemma saying that if a natural number $n$ is nonnegative, then
+  -- $\sqrt{n^2} = n$. This is used to simplify the expression
+  -- $\sqrt{a^2} = a$ when $a \geq 0$.
+  have h4 {n : ℕ} (hn : 0 ≤ n) : √(n ^ 2) = n := by
+    symm
+    apply Real.sqrt_sq
+    linarith only [hn]
+
+  -- We begin by setting up the proof. We first extract the condition
+  -- that $x = \frac{a + \sqrt{b}}{c}$ from our assumption.
+  have eq : x = (a + √b) / c := h₂.symm
+
+  -- We then rewrite the assumption `h₁ : 2 * x ^ 2 = 4 * x + 9` by substituting
+  -- the expression of $x$ into it.
+  rw [eq] at h₁
+
+  -- Now, we clear the denominator on the LHS of `h₁`, resulting in
+  -- $2(a + \sqrt{b})^2 = 4c(a + \sqrt{b}) + 9c^2$.
+  field_simp at h₁
+
+  -- We then rewrite the assumption `h₃ : c = 2`.
+  rw [h₃] at h₁
+
+  -- Substituting $c = 2$ into the equation, we get $2(a + \sqrt{b})^2 = 8a + 8\sqrt{b} + 36$.
+  simp at h₁
+
+  -- From this equation, we can derive three separate equations:
+  -- 1. The term in $a^2$ gives: $2a^2 = 8a$, or $a^2 - 4a = 0$, or $a(a - 4) = 0$.
+  -- 2. The term in $\sqrt{b}$ gives: $2b = 8\sqrt{b}$, or $\sqrt{b}(\sqrt{b} - 4) = 0$.
+  -- 3. The constant term: $2b = 36$, or $b = 18$.
+  have h₄ : a * (a - 4) = 0 := by linarith only [h₁]
+  have h₅ : √b * (√b - 4) = 0 := by linarith only [h₁]
+  have h₆ : 2 * b = 36 := by linarith only [h₁]
+
+  -- From the first equation `h₄`, we get $a = 0$ or $a = 4$. 
+  have ha : a = 0 ∨ a = 4 := by
+    rw [show a * (a - 4) = a ^ 2 + (-4) * a by ring] at h₄
+    have h₇ : a ^ 2 + (-4) * a = 0 := h₄
+    have : a * (a + (-4)) = 0 := by linarith only [h₇]
+    cases mul_eq_zero.mp this with
+    | inl h => left; exact h
+    | inr h => right; linarith only [h]
+
+  -- From the second equation `h₅`, we get $\sqrt{b} = 0$ or $\sqrt{b} = 4$.
+  have hb : √b = 0 ∨ √b = 4 := by
+    cases mul_eq_zero.mp h₅ with
+    | inl h => left; exact h
+    | inr h => right; linarith only [h]
+
+  -- Since $b \geq 0$, from `h₆ : 2 * b = 36` we get $b = 18$.
+  have hb' : b = 18 := by
+    linarith only [h₆]
+
+  -- Since $b \geq 0$, and $\sqrt{b}$ is positive, from `hb : √b = 0` or `√b = 4` we get $\sqrt{b} = 4$.
+  have hsqrtb : √b = 4 := by
+    cases hb with
+    | inl h => 
+      have : ¬ 0 < b := by linarith only [h, hb']
+      linarith only [this, h₀.right.left]
+    | inr h => exact h
+
+  -- Squaring both sides of `hsqrtb : √b = 4`, we get $b = 16$.
+  have hbp : b = 16 := by
+    rw [← hsqrtb]
+    exact Real.sq_sqrt (by linarith only [hb']) 
+
+  -- From `hbp : b = 16` and `hb' : b = 18`, we get $16 = 18$, which is a contradiction.
+  linarith only [hbp, hb']
+
+```

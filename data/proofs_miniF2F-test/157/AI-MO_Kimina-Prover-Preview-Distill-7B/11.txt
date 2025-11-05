@@ -1,0 +1,69 @@
+-- We have two goals to prove:
+  -- 1. The solution set is exactly {π/2, 3π/2}
+  -- 2. Hence, the cardinality is 2
+  have h₁ : S = {Real.pi / 2, Real.pi * 3 / 2} := by
+    constructor
+    -- Goal 1. The solution set is a subset of {π/2, 3π/2}
+    · intro x hx
+      -- Substituting the values of the trigonometric functions, we get
+      simp [Real.sin_pi_div_two, Real.cos_pi_div_two] at hx
+      -- We get the equation cos(x) = 1 or sin(x) = 1
+      rw [add_comm, <-Real.cos_pi_div_two, <-Real.sin_pi_div_two] at hx
+      -- We consider two cases: x = π/2 + 2kπ or x = 2kπ + π/2
+      cases Real.cos_eq_one_or_neg_one_iff.mp hx.left with
+      | inl h =>
+        cases Real.sin_eq_one_iff.mp h.right |>.mp hx.right
+        -- In the first case, we get x = π/2 + 2kπ
+        · left
+          congr
+          nth_rw 1 [<-h]
+          rw [show 1 = 0 + 1 by simp]
+          rw [Real.pi_div_two]
+          -- Here, we use the fact that cos is periodic
+          exact (Real.cos_eq_one_iff_of_lt_of_lt (by linarith) (by linarith)).mpr (h.left)
+      | inr h =>
+        cases Real.sin_eq_neg_one_iff.mp h.right |>.mp hx.right
+        -- In the second case, we get x = 3π/2 + 2kπ
+        · right
+          congr
+          nth_rw 1 [<-h]
+          rw [show 1 = 1 + 1 by simp]
+          rw [show 1 + 1 = 2 by simp, Real.pi_mul]
+          -- Here, we use the fact that sin is periodic
+          exact (Real.sin_eq_neg_one_iff_of_lt_of_lt (by linarith) (by linarith)).mpr (h.left)
+
+    -- Goal 2. {π/2, 3π/2} is a subset of the solution set
+    · intro x hx
+      simp at hx
+      cases hx with
+      | inl hx =>
+        -- If x = π/2, we check it again
+        rw [hx]
+        constructor
+        -- Here, we use the fact that cos is periodic
+        · rw [Real.pi_div_two, Real.cos_pi_div_two]
+          simp
+        -- Here, we use the fact that sin is periodic
+        · rw [Real.pi_div_two, Real.sin_pi_div_two]
+          simp
+      | inr hx =>
+        -- If x = 3π/2, we check it again
+        rw [hx]
+        constructor
+        -- Here, we use the fact that cos is periodic
+        · rw [show 3 = 2 + 1 by simp, Real.pi_mul]
+          rw [show 2 * Real.pi = Real.pi + Real.pi by simp]
+          rw [Real.cos_add, Real.cos_pi, Real.sin_pi]
+          simp
+        -- Here, we use the fact that sin is periodic
+        · rw [show 3 = 1 + 2 by simp, Real.pi_mul]
+          rw [show 2 * Real.pi = Real.pi + Real.pi by simp]
+          rw [Real.sin_add, Real.cos_pi, Real.sin_pi]
+          simp
+
+  -- Now we have the solution set, so we can calculate the cardinality
+  rw [h₁, Finset.card_pair]
+  -- Here, we use the fact that π is positive
+  linarith [Real.pi_pos]
+
+```

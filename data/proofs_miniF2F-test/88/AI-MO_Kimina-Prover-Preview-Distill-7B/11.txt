@@ -1,0 +1,36 @@
+-- n is even, so n = 2k for some k.
+  obtain ⟨k, hk⟩ := h₀
+
+  -- Substitute n = 2k into the equation.
+  have eq : (2 * k - 2) ^ 2 + (2 * k) ^ 2 + (2 * k + 2) ^ 2 = 12296 := by
+    rw[← hk, h₁]
+  ring_nf at eq
+
+  -- We get a quadratic equation in terms of k.
+  have eq : (k - 18) * (k + 19) = 0 := by
+    calc
+      (k - 18) * (k + 19) = k ^ 2 * 8 + k * 120 - 36 * 19 := by ring_nf
+      _ = 0 := by rw[eq]; norm_num
+
+  -- Solve the quadratic equation.
+  have k_eq : k = 18 := by
+    cases' (mul_eq_zero.mp eq) with h h
+    · -- The first root is positive, so k = 18.
+      linarith [h]
+    · -- The second root is negative, so k = -19.
+      have : k = -19 := by linarith [h]
+      have : ¬ (0 : ℕ) ≤ k := by rw[this]; norm_num
+      have : 0 ≤ k := by exact Nat.zero_le k
+      contradiction
+
+  -- Solve the original equation.
+  have : 2 * k - 2 = 34 := by linarith only [k_eq]
+  have : 2 * k = 36 := by linarith only [k_eq]
+  have : 2 * k + 2 = 38 := by linarith only [k_eq]
+
+  -- Calculate the target.
+  calc
+    (2 * k - 2) * (2 * k) * (2 * k + 2) / 8
+      = 34 * 36 * 38 / 8 := by rw[← this]
+    _ = 32736 := by norm_num
+```

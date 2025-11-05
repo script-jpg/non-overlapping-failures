@@ -1,0 +1,47 @@
+-- 证明个正实数平方和大于等于其和的平方
+  have h1 : ∀ x y : ℝ, 0 < x → 0 < y → x ^ 2 + y ^ 2 ≥ x * y * 2 := by
+    intro x y hx hy
+    -- 使用平方差公式
+    have h1 : (x - y) ^ 2 ≥ 0 := by positivity
+    ring_nf at h1
+    linarith
+
+  -- 应用两个正实数平方和的不等式到每一对相邻变量
+  have h2 :=
+    (h1
+      (a ^ 2 / b) (b ^ 2 / c) (by positivity : 0 < a ^ 2 / b) (by positivity : 0 < b ^ 2 / c))
+    (h1
+      (b ^ 2 / c) (c ^ 2 / d) (by positivity : 0 < b ^ 2 / c) (by positivity : 0 < c ^ 2 / d))
+    (h1
+      (c ^ 2 / d) (d ^ 2 / a) (by positivity : 0 < c ^ 2 / d) (by positivity : 0 < d ^ 2 / a))
+    (h1
+      (d ^ 2 / a) (a ^ 2 / b) (by positivity : 0 < d ^ 2 / a) (by positivity : 0 < a ^ 2 / b))
+
+  -- 简化表达式
+  ring_nf at h2
+
+  -- 使用乘法的交换律对 some terms 进行重排
+  have h3 : a ^ 2 * c / b + b ^ 2 * d / c + c ^ 2 * a / d + d ^ 2 * b / a =
+    a ^ 2 * c / b + c ^ 2 * a / d + b ^ 2 * d / c + d ^ 2 * b / a := by ring
+
+  -- 使用 previous inequality
+  have h4 : a ^ 2 * c / b + b ^ 2 * d / c + c ^ 2 * a / d + d ^ 2 * b / a ≥
+    a * b * c * d * 2 / b * 2 / c * 2 / d * 2 / a := by
+    rw [h3]
+    exact h2
+
+  -- 简化 right-hand side
+  ring_nf at h4
+
+  -- Apply the AM-GM inequality to four positive real numbers
+  have h5 : a * b * c * d * 2 / b * 2 / c * 2 / d * 2 / a = 16 := by
+    rw [show a * b * c * d * 2 / b * 2 / c * 2 / d * 2 / a =
+        (a * b * c * d) * (2 / b * 2 / c * 2 / d * 2 / a) by ring]
+    rw [show 2 / b * 2 / c * 2 / d * 2 / a = 2 ^ 4 / (a * b * c * d) by field_simp; ring]
+    rw [show (a * b * c * d) * (2 ^ 4 / (a * b * c * d)) = 2 ^ 4 by field_simp]
+    norm_num
+
+  -- 是的，不等式成立
+  linarith
+
+```

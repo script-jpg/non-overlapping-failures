@@ -1,0 +1,49 @@
+-- According to the reference answer, we need to prove a lemma that $\sum_{k=0}^n \binom{n}{k} x^k$ is equal to $1+x)^n$
+  have lem : ∀ n : ℕ, ∑ k in Finset.range (n + 1), Nat.choose n k * x ^ k = (1 + x) ^ n := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      rw [Finset.range_succ, Finset.sum_insert]
+      rw [ih]
+      ring_nf
+      rw [Nat.add_sub_cancel, Finset.sum_range_succ]
+      rw [add_mul]
+      ring
+
+  -- Then we rewrite $(1+x)^n$ as $\sum_{k=0}^n \binom{n}{k} x^k$
+  rw [lem n]
+
+  -- For any $k \in \{0, \dots, n\}$, we have $\binom{n}{k} 1^{n-k} x^k \geq 0$
+  have : ∀ k ∈ Finset.range (n + 1), 0 ≤ Nat.choose n k * 1 ^ (n - k) * x ^ k := by
+    intro k hk
+    simp only [Finset.mem_range] at hk
+    have : 0 ≤ Nat.choose n k := by
+      apply Nat.choose_nonneg
+    have : 0 ≤ 1 ^ (n - k) := by
+      apply Nat.one_nonneg_pow
+    have : 0 ≤ x ^ k := by
+      apply pow_nonneg
+      linarith
+    apply mul_nonneg
+    apply mul_nonneg
+    any_goals assumption
+    apply pow_nonneg
+    linarith
+
+  -- We have $\binom{n}{0} 1^{n} \geq 1$
+  have : 1 ≤ Nat.choose n 0 * 1 ^ n := by
+    cases n with
+    | zero => simp
+    | succ n => simp only [Nat.choose_succ_zero, one_mul]
+
+  -- The sum of non-negative elements is non-negative
+  apply Finset.sum_nonneg this
+
+  -- For any $k \in \{1, \dots, n\}$, we have $\binom{n}{k} 1^{n-k} x^k \geq 0$, so the sum is non-negative
+  -- The sum of non-negative elements is non-negative
+  -- $\binom{n}{0} 1^{n}  x^0 = 1$, so we have $1 + \sum_{k=1}^n \binom{n}{k} 1^{n-k} x^k \geq 1$
+  -- We get $1 + n x \leq \sum_{k=0}^n \binom{n}{k} 1^{n-k} x^k = (1+x)^n$
+  -- Which is desired result
+```

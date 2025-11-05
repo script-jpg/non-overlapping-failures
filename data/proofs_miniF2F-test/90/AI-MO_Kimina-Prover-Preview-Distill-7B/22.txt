@@ -1,0 +1,93 @@
+-- Let `f n` be the product $\prod_{k=1}^n (1 + 1/k^3)$.
+  let f (n : ℕ) := ∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3
+
+  -- Then, the goal is to show that $f(n) \leq 3 - 1/n$.
+  have eq : f n = ∏ k in Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3 := by rfl
+
+  -- We will prove this by induction on `n`.
+  induction n with
+  | zero =>
+    -- The base case `n = 0` does not apply because we assume `0 < n`.
+    cases Nat.lt_or_ge n 1 with
+    | inl h => interval_cases n; simp at h
+    | inr h => cases h with
+      | inl h => simp [f, h]; norm_num
+  | succ n ih =>
+    -- The base case `n = 1` is proved directly.
+    cases Nat.lt_or_ge n 1 with
+    | inl h => simp at h; simp [f, h]; norm_num
+    -- For the inductive step, assume `n > 1` and `f(n) ≤ 3 - 1/n`.
+    | inr h => cases h with
+      | inl h =>
+        -- We want to show that $f(n+1) \leq 3 - 1/(n+1)$.
+        -- By the inductive hypothesis, we have $f(n) \leq 3 - 1/n$.
+        have ineq := ih (Nat.succ_le_of_lt h)
+        -- Also, we have $1 + 1/(n+1)^3 \leq 3 - 1/(n+1)$.
+        have eq : 1 + 1 / (n + 1) ^ 3 ≤ (3 : ℝ) - 1 / (n + 1) := by
+          set m := (n : ℝ) with hm
+          clear_value m
+          -- This is a one-variable calculus problem.
+          -- We want to show that $1 + 1/(m+1)^3 \leq 3 - 1/(m+1)$ for $m > 0$.
+          -- This can be done by showing that the function $f(m) = 1/(m+1)^3 + 1/(m+1) - 2$ is non-positive for $m > 0$.
+          -- We can prove this by showing that $f(m) \leq f(0)$ for all $m \geq 0$, which is true because $f(m)$ is decreasing on $m \geq 0$.
+          -- The value $f(0) = 0$ can be calculated directly.
+          -- The derivative of $f(m)$ is $f'(m) = -3/(m+1)^4 - 1/(m+1)^2$, which is negative for all $m > 0$.
+          have fpos : 0 < (1 : ℝ) / (m + 1) ^ 3 + 1 / (m + 1) - 2 := by
+            calc
+              0 < ((m + 1) ^ 2 - 1) / ((m + 1) ^ 3 + (m + 1)) := by
+                -- The numerator is positive for all $m > 0$.
+                apply div_pos
+                rw [pow_two]
+                exact Nat.le_add_of_sub_le h
+                simp
+                -- The denominator is positive for all $m > 0$.
+                positivity
+              _ = (m ^ 2 + 2 * m) / ((m + 1) ^ 3 + (m + 1)) := by rw [Nat.add_sub_cancel' h]
+              _ < (m + 1) ^ 2 / ((m + 1) ^ 3 + (m + 1)) := by
+                -- We want to show that $1 + 1/(m+1)^3 \leq 3 - 1/(m+1)$.
+                -- This is equivalent to $(m+1)^2 + 1 \leq 3(m+1)^3 + (m+1)$, or $0 \leq 3(m+1)^3 - (m+1)^2 + (m+1) - 1$.
+                apply div_lt_div_of_pos_right
+                ring
+                -- We have $(m+1)^3 > 0$ for all $m > 0$.
+                positivity
+              _ = (m + 1) ^ 2 / ((m + 1) * (m + 1) ^ 2 + (m + 1)) := by ring
+              _ = (m + 1) ^ 2 / ((m + 1) * ((m + 1) ^ 2 + 1)) := by ring
+              _ = (m + 1) / ((m + 1) ^ 2 + 1) := by
+                -- long collatz sequence in base 2
+                rw [mul_right_comm, mul_div_mul_right]
+                exact (Nat.not_eq_zero_of_lt h).trans_le (by exact Nat.le_add_of_sub_le h)
+                -- The denominator is positive for all $m > 0$.
+                positivity
+              _ < (m + 2) / ((m + 1) ^ 2 + 1) := by
+                -- We want to show that $(m+1)/(m^2+2m+2) \leq (m+2)/(m^2+2m+2)$, which is true because $m \leq m+1$.
+                apply div_lt_div_of_pos_right
+                ring
+                -- The denominator is positive for all $m > 0$.
+                positivity
+              _ = ((m + 1) ^ 3 + (m + 1)) / ((m + 1) ^ 2 + 1) := by
+                -- The numerator is positive for all $m > 0$.
+                rw [pow_three]
+                exact Nat.le_add_of_sub_le h
+                simp
+                -- The denominator is positive for all $m > 0$.
+                positivity
+              _ = _ := by
+                -- We want to show that $(m+2)/(m^2+2m+2) \leq 1$, which is true because $m \leq m+2$.
+                refine Eq.symm (div_le_iff₀?_).mpr?_
+                rw [add_assoc]
+                exact Nat.le_add_of_sub_le h
+                positivity
+        -- Also, we have $f(n+1) = f(n) \cdot (1 + 1/(n+1)^3)$.
+        have eq : f (n + 1) = f n * (1 + 1 / (n + 1) ^ 3) := by
+          rw [Finset.prod_Icc_succ_top, Finset.prod_Icc_succ_top]
+          case a =>
+            simp [f]
+            exact Nat.le_add_of_sub_le h
+          simp [f]
+        -- Then, we have $f(n+1) \leq (3 - 1/n) \cdot (1 + 1/(n+1)^3) \leq 3 - 1/(n+1)$.
+        calc
+          f (n + 1) = f n * (1 + 1 / (n + 1) ^ 3) := eq
+          _ ≤ (3 : ℝ) - 1 / ↑n * (1 + 1 / (n + 1) ^ 3) := by gcongr; exact ih (Nat.succ_le_of_lt h)
+          _ ≤ (3 : ℝ) - 1 / (n + 1) := by nlinarith [ineq]
+
+```

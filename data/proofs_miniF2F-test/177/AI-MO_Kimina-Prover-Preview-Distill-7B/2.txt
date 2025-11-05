@@ -1,0 +1,163 @@
+constructor
+
+  -- sufficiency
+ . intro hf
+    -- by setting $a = 0, b = 0$, we get $f(0) = 0$
+    have f_zero : f 0 = 0 := by
+      have h := hf 0 0
+      simp at h
+      exact h
+    -- by setting $a = 0$, we get $f(2b) = f(f(b))$
+    have f_2b (b : ℤ) : f (2 * b) = f (f b) := by
+      have h := hf 0 b
+      simp [f_zero] at h
+      exact h
+    -- by setting $b = 0$, we get $f(2a) + 2f(0) = f(f(a))$
+    have f_2a (a : ℤ) : f (2 * a) + 2 * f 0 = f (f a) := by
+      have h := hf a 0
+      simp [f_zero] at h
+      exact h
+    -- we get $f(f(a)) = f(2a)$ from above
+    have f_f_a : ∀ a : ℤ, f (f a) = f (2 * a) := by
+      intro a
+      have h := f_2a a
+      have h' := f_2b a
+      rw [h'] at h
+      linarith
+    -- $f$ is an even function
+    have f_even : ∀ a : ℤ, f a = f (-a) := by
+      intro a
+      have h := hf a 0
+      have h' := hf (-a) 0
+      simp [f_f_a] at h h'
+      rw [f_zero] at h h'
+      rw [h] at h'
+      linarith
+    -- the condition is now $f(2a) + 2f(b) = f(2(a + b))$
+    -- we get $f(2(a + b)) = f(2a) + 2f(b)$
+    have f_add : ∀ a b : ℤ, f (2 * (a + b)) = f (2 * a) + 2 * f b := by
+      intro a b
+      have h := hf a b
+      rw [← f_f_a (a + b), ← f_f_a a, ← f_f_a b] at h
+      linarith
+    -- we get $f(4a) = 2f(2a)$ from the above
+    have f_4a (a : ℤ) : f (4 * a) = 2 * f (2 * a) := by
+      have h := f_add (2 * a) (2 * a)
+      ring_nf at h ⊢
+      exact h
+    -- we get $f(4a) = 4f(a)$ from the above
+    have f_4a' (a : ℤ) : f (4 * a) = 4 * f a := by
+      have h := hf (2 * a) 0
+      ring_nf at h ⊢
+      rw [f_f_a] at h
+      rw [h, f_4a]
+      ring
+    -- we get $f(2a) = 2f(a)$ from the above
+    have f_2a' (a : ℤ) : f (2 * a) = 2 * f a := by
+      have h := f_4a' a
+      have h' := f_4a a
+      linarith
+    -- the condition is now $f(2a) + 2f(b) = f(2(a + b))$
+    -- we get $f(a) = f(a + 2b)$
+    have f_a_add_2b (a b : ℤ) : f a = f (a + 2 * b) := by
+      have h := hf (a + b) b
+      ring_nf at h ⊢
+      rw [f_2a'] at h
+      rw [h, f_add, f_f_a]
+      ring
+    -- we get $f(a) = f(a + b)$
+    have f_a_add_b (a b : ℤ) : f a = f (a + b) := by
+      have h1 := hf (a + b) (-b)
+      have h2 := hf (-b) (a + b)
+      simp [f_add, f_even] at h1 h2
+      rw [h1, f_even]
+      linarith
+    -- we get $f(a) = f(a + 2)$
+    have f_a_add_2 (a : ℤ) : f a = f (a + 2) := by
+      have h1 := f_a_add_b a 1
+      have h2 := f_a_add_b (a + 1) 1
+      ring_nf at h1 h2 ⊢
+      rw [h1, h2]
+      ring
+    -- we get $f(3) = 3f(1)$
+    have f_3 (c : ℤ) : f c = 3 * f 1 := by
+      have h1 := hf c 1
+      have h2 := hf 1 c
+      simp [f_a_add_2] at h1 h2
+      linarith
+    -- we get $f(4) = 4f(1)$
+    have f_4 (c : ℤ) : f c = 4 * f 1 := by
+      have h1 := hf c 2
+      have h2 := hf 2 c
+      simp [f_a_add_2, f_3] at h1 h2
+      linarith
+    -- the condition is now $f(2a) + 2f(b) = f(2(a + b))$
+    -- we get $f(2a) = 2f(a)$
+    have f_2a'' (a : ℤ) : f (2 * a) = 2 * f a := by
+      have h1 := hf a 0
+      have h2 := hf (2 * a) 0
+      simp [f_zero, h1] at h2
+      linarith
+    -- we get $f(a + 2) = f(a) + 2f(1)$
+    have f_a_add_2' (a : ℤ) : f (a + 2) = f a + 2 * f 1 := by
+      have h1 := f_a_add_2 a
+      have h2 := f_2a'' a
+      linarith
+    -- we get $f(a + n * 2) = f(a) + n * 2f(1)$
+    have f_a_add_n_2 (a n : ℤ) : f (a + n * 2) = f a + n * 2 * f 1 := by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        rw [pow_succ, add_assoc]
+        apply add_congr
+        rw [f_a_add_2', ih]
+        ring
+    -- the condition is now $f(2a) + 2f(b) = f(2(a + b))$
+    -- we get $f(2b) = 2f(b)$
+    have f_2b' (b : ℤ) : f (2 * b) = 2 * f b := by
+      have h1 := hf 0 b
+      have h2 := hf (2 * b) 0
+      simp [f_f_a] at h1 h2
+      linarith
+    -- we get $f(z) = 2z * f(1) - f(1) * z$
+    have hf_eq (z : ℤ) : f z = 2 * z * f 1 - f 1 * z := by
+      have h1 := hf (z * 2) 0
+      have h2 := hf z z
+      have h3 := hf (z * 2) z
+      have h4 := hf 0 (z * 2)
+      simp [f_f_a, f_2b', f_2a', f_a_add_n_2] at h1 h2 h3 h4
+      rw [mul_assoc, add_comm _ (f 0), ← sub_eq_add_neg] at h1
+      rw [h1, h2, h3, h4]
+      ring
+    -- the goal is now to show $f(z) = 0$ or $f(z) = 2z + c$
+    -- we get $f(z) = 2z * f(1) - f(1) * z = z * (2 * f(1) - f(1))$
+    -- so there is a constant $c = f(1) * 2 - f(1)$ such that $f(z) = 2z + c$
+    rcases hf_eq with fun z => Or.inr (⟨f 1 * 2 - f 1, fun z =>?_⟩)
+    intro z
+    rw [hf_eq]
+    ring
+
+  -- necessity
+ . intro hf
+    -- we need to do casework on whether $f(1) = 0$
+    by_cases h : f 1 = 0
+    -- if $f(1) = 0$, then $f(z) = 0$
+   . intro a b
+      -- the goal is now to show $f(2a) + 2f(b) = f(f(a + b))$
+      -- we get $f(z) = 0$ from the assumption
+      rcases hf a b with hf | ⟨c, hf⟩
+     . simp [hf]
+     . rw [hf, hf, hf]
+        use 0
+        simp
+    -- if $f(1) ≠ 0$, we get $f(z) = 2z + (-2 * f(1) + 2)$
+   . simp at h
+      intro a b
+      -- the goal is now to show $f(2a) + 2f(b) = f(f(a + b))$
+      rcases hf a b with ⟨c, hf⟩
+      -- we get $f(z) = 2z + c$ from the assumption
+      have hf' (z : ℤ) : f z = 2 * z + c := by rw [hf]
+      rw [hf', hf', hf', hf', hf', hf']
+      ring
+
+```

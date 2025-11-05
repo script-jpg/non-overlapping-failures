@@ -1,0 +1,269 @@
+-- We have $a>0$, $b>0$, $a\neq b$, and $|a-1/a|=1$, $|b-1/b|=1$. We need to prove that $a+b=\sqrt{5}$.
+
+  -- Two positive numbers are different if and only if one of them is greater than 1 and the other is less than 1.
+  have h₄ : (1 < a ∧ 0 < b ∧ b < 1) ∨ (1 < b ∧ 0 < a ∧ a < 1) := by
+    by_contra! h
+    -- If both $a$ and $b$ are greater than 1, then $a-1/a > 0$, and hence $a-1/a = 1$.
+    have h₄ : 1 < a → 1 < b → a = 1 := by
+      intro ha hb
+      rw [eq_iff_le_not_lt]
+      constructor
+      · rw [← abs_of_pos (by positivity), h₂]
+        calc
+          _ = a - 1 / a := by ring
+          _ > 1 - 1 / a := by linarith
+          _ > 0 := by positivity
+      · simp [abs_of_pos (by linarith)]
+    -- Similarly, if both $a$ and $b$ are less than 1, then $b-1/b > 0$, and hence $b-1/b = 1$.
+    have h₅ : a < 1 → b < 1 → b = 1 := by
+      intro ha hb
+      rw [← abs_of_neg (by linarith), h₃]
+      calc
+        _ = 1 / b - b := by ring
+        _ > 1 / b - 1 := by linarith
+        _ > 0 := by positivity
+    -- Since both $a$ and $b$ are greater than 0, we have $a = 1$ or $b = 1$, which is a contradiction.
+    replace h₄ : a = 1 ∨ b = 1 := by
+      by_contra! h
+      simp at h
+      rcases h with h | h
+      · exact h₄ (by linarith) (by linarith) h
+      · exact h₅ (by linarith) (by linarith) h
+    rw [or_assoc, or_comm] at h₄
+    simp at h₄
+    tauto
+
+  -- Without loss of generality, assume that $1 < a < 1$.
+  rcases h₄ with h₄ | h₄
+  wlog h₅ : 1 < a ∧ 0 < b ∧ b < 1 generalizing a b
+  · have h₆ : 1 < b ∧ 0 < a ∧ a < 1 := by
+      apply h₄
+      tauto
+    have h₇ : a + b = b + a := by ring
+    have h₈ : 1 / a = 1 / b := by
+      rw [h₆.1, h₆.2.1, h₆.2.2, h₄.1, h₄.2.1, h₄.2.2]
+      ring
+    have h₉ : a + b = 2 := by
+      rw [h₇]
+      linarith
+    rw [h₉]
+    rw [abs_of_pos (by positivity)]
+    rw [h₈, h₄.1, h₄.2.1, h₄.2.2, h₆.1, h₆.2.1, h₆.2.2]
+    ring_nf
+    simp
+    norm_num
+
+  -- $a-1/a=1$ or $1-a/a=1$.
+  have h₅ : a - 1 / a = 1 ∨ 1 - a / a = 1 := by
+    rw [← abs_eq (by positivity), h₂]
+    exact h₁
+
+  -- $a-1/a=1$ or $1-a/a=-1$.
+  replace h₅ : a - 1 / a = 1 ∨ a - 1 / a = -1 := by
+    rcases h₅ with h₅ | h₅
+    · exact Or.inl h₅
+    · rw [← sub_eq_neg_add, sub_eq_one, ← abs_eq (by positivity), neg_div, ← neg_sub] at h₅
+      exact Or.inr h₅
+
+  -- If $a-1/a=1$, then $a^2-1=1$.
+  have h₆ : a - 1 / a = 1 → a ^ 2 - 1 = a := by
+    intro h₆
+    field_simp at h₆
+    ring_nf
+    rw [← sub_eq_neg_add, sub_eq_one]
+    ring_nf
+    rw [← id_sub, ← div_eq_iff (by linarith), ← sub_eq_neg_add]
+
+  -- If $a-1/a=-1$, then $a^2-1=-a$.
+  have h₆ : a - 1 / a = -1 → a ^ 2 - 1 = -a := by
+    intro h₆
+    field_simp at h₆
+    ring_nf
+    rw [← sub_eq_neg_add]
+    ring_nf
+    rw [← sub_neg_eq_add, ← sub_eq_neg_add, neg_sq, ← id_sub, ← sub_eq_neg_add, sub_eq_one]
+    ring_nf
+    rw [← sub_neg_eq_add]
+
+  -- We have $a^2-1 = a$ or $a^2-1 = -a$.
+  replace h₅ : a ^ 2 - 1 = a ∨ a ^ 2 - 1 = -a := by
+    rcases h₅ with h₅ | h₅
+    · exact h₆ h₅
+    · exact h₆ h₅
+
+  -- $b-1/b=1$ or $1-b/b=1$.
+  have h₇ : b - 1 / b = 1 ∨ 1 - b / b = 1 := by
+    rw [← abs_eq (by positivity), h₃]
+    exact h₂
+
+  -- $b-1/b=1$ or $1-b/b=-1$.
+  replace h₇ : b - 1 / b = 1 ∨ b - 1 / b = -1 := by
+    rcases h₇ with h₇ | h₇
+    · exact Or.inl h₇
+    · rw [← sub_eq_neg_add, sub_eq_one, ← abs_eq (by positivity), neg_div, ← neg_sub] at h₇
+      exact Or.inr h₇
+
+  -- If $b-1/b=1$, then $b^2-1=b$.
+  have h₈ : b - 1 / b = 1 → b ^ 2 - 1 = b := by
+    intro h₈
+    field_simp at h₈
+    ring_nf
+    rw [← sub_eq_neg_add, sub_eq_one]
+    ring_nf
+    rw [← id_sub, ← sub_eq_neg_add, sub_eq_neg_one, ← neg_sub, neg_neg]
+
+  -- If $b-1/b=-1$, then $b^2-1=-b$.
+  have h₈ : b - 1 / b = -1 → b ^ 2 - 1 = -b := by
+    intro h₈
+    field_simp at h₈
+    ring_nf
+    rw [← sub_eq_neg_add]
+    ring_nf
+    rw [← sub_neg_eq_add, ← sub_eq_neg_add, neg_sq, ← id_sub, ← sub_eq_neg_add, sub_eq_one]
+    ring_nf
+    rw [← sub_neg_eq_add]
+
+  -- We have $b^2-1 = b$ or $b^2-1 = -b$.
+  replace h₇ : b ^ 2 - 1 = b ∨ b ^ 2 - 1 = -b := by
+    rcases h₇ with h₇ | h₇
+    · exact h₈ h₇
+    · exact h₈ h₇
+
+  -- Without loss of generality, assume that $1 < a < 1$.
+  wlog h₉ : 1 < a generalizing a b
+  · have h₁₀ : 0 < b := h₅.2.1
+    have h₁₁ : b < 1 := h₅.2.2
+    have h₁₂ : b ^ 2 - 1 = b ∨ b ^ 2 - 1 = -b := h₇
+    have h₁₃ : 1 < b ∨ b < 1 := by
+      by_contra! h
+      simp at h
+      have : b = 1 := by linarith
+      tauto
+    cases h₁₃ with
+    | inl h₁₃ =>
+      -- If $1 < b$, then $b^2-1 > 0$, and hence $b^2-1 = b$.
+      have h₁₄ : 0 < b ^ 2 - 1 := by
+        rw [← sub_pos, sq_sub_one_pos, h₁₃]
+        positivity
+      replace h₁₄ : b ^ 2 - 1 = b := by
+        rw [← sub_eq_neg_add, sub_neg_eq_add, neg_one_mul, h₁₂.1, h₁₄]
+        ring
+      -- We have $b^2-1 = b$ and $1 < a$, which implies that $a + b = √5$.
+      have h₁₅ : a ^ 2 - 1 = a := h₅.1
+      have h₁₆ : a ^ 2 - b ^ 2 = a - b := by
+        rw [← sub_eq_neg_add, h₁₅, ← sub_eq_neg_add, h₁₄]
+        ring
+      have h₁₇ : (a + b) * (a - b) = a - b := by
+        rw [← sq_sub_sq, h₁₅, h₁₄]
+        ring
+      have h₁₈ : a + b = 1 := by
+        linarith only [h₁₇, h₁₃]
+      rw [h₁₈, sub_eq_zero, ← sq_eq_sq, h₁₅, h₁₄]
+      -- Both $a$ and $b$ are positive, so $a + b > 0$, and hence $a + b = √5$.
+      have h₁₉ : 0 < a + b := by positivity
+      have h₂₀ : 0 ≤ a + b := le_of_lt h₁₉
+      have h₂₁ : (a + b) ^ 2 = 5 := by
+        rw [sq_eq_iff_eq_sq, h₁₅, h₁₄]
+        ring
+      have h₂₂ : a + b = Real.sqrt ((a + b) ^ 2) := by
+        rw [Real.sqrt_sq, h₂₀]
+      rw [h₂₁] at h₂₂
+      tauto
+      positivity
+    | inr h₁₃ =>
+      -- If $b < 1$, then $b^2-1 < 0$, and hence $b^2-1 = -b$.
+      have h₁₄ : b ^ 2 - 1 < 0 := by
+        rw [sq_sub_one_neg]
+        linarith only [h₁₃]
+      replace h₁₄ : b ^ 2 - 1 = -b := by
+        rw [← sub_eq_neg_add, sub_neg, h₁₂.2, h₁₄]
+        ring
+      -- We have $b^2-1 = -b$ and $1 < a$, which implies that $a + b = √5$.
+      have h₁₅ : a ^ 2 - 1 = a := h₅.1
+      have h₁₆ : a ^ 2 - b ^ 2 = a + b := by
+        rw [← sub_eq_neg_add, h₁₅, ← sub_eq_neg_add, h₁₄]
+        ring
+      have h₁₇ : (a + b) * (a - b) = a + b := by
+        rw [← sq_sub_sq, h₁₅, ← sub_eq_neg_add, h₁₄]
+        ring
+      have h₁₈ : a + b = 1 := by
+        linarith only [h₁₇, h₁₃]
+      rw [h₁₈, sub_eq_zero, ← sq_eq_sq, h₁₅, h₁₄]
+      -- Both $a$ and $b$ are positive, so $a + b > 0$, and hence $a + b = √5$.
+      have h₁₉ : 0 < a + b := by positivity
+      have h₂₀ : 0 ≤ a + b := le_of_lt h₁₉
+      have h₂₁ : (a + b) ^ 2 = 5 := by
+        rw [sq_eq_iff_eq_sq, h₁₅, h₁₄]
+        ring
+      have h₂₂ : a + b = Real.sqrt ((a + b) ^ 2) := by
+        rw [Real.sqrt_sq, h₂₀]
+      rw [h₂₁] at h₂₂
+      tauto
+      positivity
+
+  -- If $1 < a$, then $a^2-1 > 0$, and hence $a^2-1 = a$.
+  have h₁₀ : 0 < a ^ 2 - 1 := by
+    rw [sq_sub_one_pos]
+    linarith only [h₉]
+  replace h₁₀ : a ^ 2 - 1 = a := by
+    rw [← sub_eq_neg_add, sub_neg_eq_add, neg_one_mul, h₅.1, h₁₀]
+    ring
+
+  -- We have $a^2-1 = a$ and $1 < a$, which implies that $a + b = √5$.
+  have h₁₁ : b ^ 2 - 1 = b ∨ b ^ 2 - 1 = -b := h₇
+  have h₁₂ : 0 < b := h₅.2.1
+  have h₁₃ : b < 1 := h₅.2.2
+  have h₁₄ : 0 < b ^ 2 - 1 := by
+    rw [sq_sub_one_pos]
+    linarith only [h₁₃]
+  have h₁₅ : b ^ 2 - 1 = -b := by
+    linarith only [h₁₄, h₁₁]
+
+  -- Both $a$ and $b$ are positive.
+  have h₁₆ : 0 < a := h₅.1
+  have h₁₇ : 0 < b := h₅.2.1
+
+  -- Both $a$ and $b$ are less than 2.
+  have h₁₈ : a < 2 := by
+    nlinarith
+  have h₁₉ : b < 2 := by
+    nlinarith
+
+  -- $a$ is less than $\sqrt 5$.
+  have h₂₀ : a < Real.sqrt 5 := by
+    apply Real.lt_sqrt_of_sq_lt
+    positivity
+    nlinarith
+
+  -- $b$ is less than $\sqrt 5$.
+  have h₂₁ : b < Real.sqrt 5 := by
+    apply Real.lt_sqrt_of_sq_lt
+    positivity
+    nlinarith
+
+  -- $a + b$ is less than $2√5$.
+  have h₂₂ : a + b < 2 * Real.sqrt 5 := by
+    linarith only [h₂₀, h₂₁, Real.sqrt_pos.mpr (show (0:ℝ)<5 by norm_num)]
+
+  -- $a + b$ is greater than $\sqrt 5$.
+  have h₂₃ : Real.sqrt 5 < a + b := by
+    -- We have $a^2-1 = a$ and $b^2-1 = -b$.
+    have h₂₄ : a ^ 2 = a + 1 := by
+      linarith only [h₁₀]
+    have h₂₅ : b ^ 2 = b + 1 := by
+      linarith only [h₁₅]
+
+    -- $a+b$ is greater than $2$.
+    have h₂₆ : 2 < a + b := by
+      nlinarith
+
+    -- $a+b$ is greater than $\sqrt 5$.
+    have h₂₇ : Real.sqrt 5 < a + b := by
+      apply Real.lt_sqrt_of_sq_lt
+      positivity
+      nlinarith
+    exact h₂₇
+
+  -- $a + b = \sqrt 5$.
+  linarith only [h₂₂, h₂₃]
+```

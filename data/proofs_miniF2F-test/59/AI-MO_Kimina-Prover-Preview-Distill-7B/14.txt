@@ -1,0 +1,99 @@
+-- We prove that $x^2 y^2 = 196$.
+
+  -- We have $x^2 y^2 = 196$.
+  have h₁ : (x * y) ^ 2 = 196 := by
+
+    -- We have $(x * y)^2 = x^2 * y^2$.
+    have h₁ (x y : ℤ) : (x * y) ^ 2 = x ^ 2 * y ^ 2 := by ring
+
+    -- We have $x^2 \neq 0$.
+    have h₂ (x y : ℤ) : x ≠ 0 → y ≠ 0 → x ^ 2 * y ^ 2 \neq 0 := by
+      intro hx hy
+      rw [pow_two, pow_two]
+      exact mul_ne_zero hx hy
+
+    -- We have $y^2 \neq 0$.
+    have h₃ (x y : ℤ) : y ≠ 0 → x ^ 2 * y ^ 2 \neq 0 := by
+      intro hy
+      rw [pow_two, pow_two]
+      exact mul_ne_zero (pow_ne_zero 2 hx) hy
+
+    -- We have $x^2 * y^2 \neq 0$.
+    have h₄ (x y : ℤ) : x ≠ 0 ∧ y ≠ 0 → x ^ 2 * y ^ 2 \neq 0 := by
+      intro ⟨hx, hy⟩
+      exact h₂ hx hy
+    -- We have $x^2 \neq 0 \or y \neq 0$.
+    have h₅ (x y : ℤ) : x ≠ 0 \or y ≠ 0 := by
+      by_contra! h
+      have : x ^ 2 * y ^ 2 = 0 := by
+        simp [h.1, h.2]
+      have := h₃ h.2 this
+      exact False.elim (h₄ x y ⟨h.1, h.2⟩)
+
+    -- We have $x * y \neq 0$.
+    have h₆ (x y : ℤ) : x * y \neq 0 ↔ x ≠ 0 \or y \neq 0 := by
+      constructor
+      · intro h
+        exact h₅ x y h
+      · intro h
+        exact h₂ h.1 h.2
+
+    -- We have $x * y \neq 0$.
+    have h₇ : x * y \neq 0 := by
+      by_contra! h
+      have this : x ^ 2 * y ^ 2 = 0 := by
+        rw [h] at h₄
+        exact h₄ x y ⟨h.1, h.2⟩
+      rw [pow_two, pow_two] at h₄
+      have := h₃ h.2 this
+      exact False.elim (h₄ x y ⟨h.1, h.2⟩)
+
+    -- We have $(x * y)^2 = x^2 * y^2$.
+    rw [h₁]
+    have h₈ : x ^ 2 * y ^ 2 = 196 := by
+      -- We have $x^2 * y^2 = 196$.
+      have h₈ : x ^ 2 * y ^ 2 \neq 0 := h₇ h₆
+      have h₉ : x ^ 2 * y ^ 2 = 196 := by
+        -- We have $x^2 * y^2 = 196$.
+        have h₈ (x y : ℤ) : x ≠ 0 \or y ≠ 0 → x ^ 2 * y ^ 2 = 196 := by
+          intro h
+          have h₁₀ : x ^ 2 + y ^ 2 = 30 + (517 / (x ^ 2 * y ^ 2)) := by
+            rw [mul_comm, ←h₈]
+            exact (Int.ediv_add_emod' h₇ h₈).symm
+          have h₁₁ : x ^ 2 + y ^ 2 \geq 30 + 1 := by
+            apply Int.le_add_of_le_of_pos
+            · exact h₈
+            · have : 0 < 517 / (x ^ 2 * y ^ 2) := by
+                apply Int.ediv_pos_of_pos_of_dvd
+                · exact Nat.zero_lt_succ 516
+                · exact Dvd.intro y h₈
+              exact Int.lt_add_one_of_le this
+          have h₁₂ : x ^ 2 + y ^ 2 \leq 30 + 1 := by
+            apply Int.le_add_of_le_of_nonneg
+            · exact h₈
+            · exact Int.zero_le (517 / (x ^ 2 * y ^ 2))
+          have : x ^ 2 + y ^ 2 = 30 + 1 := by
+            linarith
+          exact this
+        exact h₈ ⟨h₇.1, h₇.2⟩
+      exact h₉
+    exact h₈
+
+  -- We have $x^2 y^2 = 196$.
+  have h₂ : x ^ 2 * y ^ 2 = 196 := by
+    -- We have $x^2 y^2 = (x y)^2$.
+    have h₂ (x y : ℤ) : x ^ 2 * y ^ 2 = (x * y) ^ 2 := by ring
+
+    -- We have $(x * y)^2 = x^2 * y^2$.
+    rw [h₂]
+    exact h₁
+
+  -- We have $3x^2 y^2 = 588$.
+  have h₃ : 3 * (x ^ 2 * y ^ 2) = 3 * 196 := by
+    exact congrFun (congrArg HAdd.hAdd h₂) 3
+
+  -- We have $3x^2 y^2 = 588$.
+  rw [mul_comm] at h₃
+  norm_num at h₃
+  exact h₃
+```

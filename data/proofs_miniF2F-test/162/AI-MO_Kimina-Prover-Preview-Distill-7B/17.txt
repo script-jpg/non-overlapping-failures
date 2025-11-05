@@ -1,0 +1,435 @@
+-- We need to show that $(1 + n \cdot x) \leq (1 + x)^n$ for any $x > -1$ and $n \geq 1$.
+
+  -- According to the reference, we need to prove it in 3 steps.
+
+  -- Step 1: Prove that for any $m \leq n$ and $t > -1$, $(1 + m \cdot t) \leq (1 + t)^m$.
+
+  have step1 (m : ℕ) (h₂ : m ≤ n) (t : ℝ) (h₃ : -1 < t) :
+      1 + ↑m * t ≤ (1 + t) ^ (m : ℕ) := by
+
+    -- The reference gives a very detailed proof to this step.
+
+    -- We first prove that for any k ≤ m and k ≥ 1, $\sum_{i=0}^{k-1} \binom{m}{i} t^i \geq 0$.
+
+    have hm1 : 0 < m := by positivity
+
+    have step1' (k : ℕ) (h₄ : k ≤ m) (h₅ : 0 < k) :
+        0 ≤ ∑ i ∈ Finset.range k, Nat.choose m i * t ^ i := by
+
+      -- reference gives a detailed proof by showing each summand is nonnegative and sum has at least one positive summand.
+
+      apply Finset.sum_nonneg
+      intro i hi
+
+      · exact Nat.choose_nonneg m i
+
+      · have : i < k := Finset.mem_range.mp hi
+
+        have : i ≤ m := by linarith
+
+        apply Nat.choose_pos_of_le_of_le this h₄
+
+        apply Nat.pow_nonneg (le_of_lt h₅) i
+
+    -- reference gives a detailed proof by setting $y = (1+t)^m - (1+t)^{m-1} - \sum_{i=0}^{k-1} \binom{m}{i} t^i$.
+
+    let y := (1 + t) ^ (m : ℕ) - (1 + t) ^ (m - 1 : ℕ) - ∑ i ∈ Finset.range m, Nat.choose m i * t ^ i
+
+    -- reference proves that $y \geq 0$.
+
+    have : 0 ≤ y := by
+
+      apply le_of_sub_nonneg
+
+      -- reference gives a detailed proof by showing $y = \sum_{i=0}^{m-1} \binom{m-1}{i} t^i$
+
+      rw [show y = (1 + t) ^ (m - 1 : ℕ) - ∑ i ∈ Finset.range m, Nat.choose m i * t ^ i by ring]
+
+      have : (1 + t) ^ (m - 1 : ℕ) = ∑ i ∈ Finset.range (m - 1), Nat.choose (m - 1) i * t ^ i + ∑ i ∈ Finset.range m, Nat.choose m i * t ^ i := by
+
+        -- reference uses a tactic that is not defined, so it is hard to understand.
+
+        have : 1 ≤ m := by linarith
+
+        rcases (Nat.lt_or_ge m 1) with this | this
+
+        · simp [this]
+
+        have hm1 : 0 < m := by linarith
+
+        -- reference gives a detailed proof by using bsum and sum_range_succ.
+
+        simp [← Nat.cast_sum, ← Finset.sum_range_succ, this]
+
+        apply Finset.sum_congr rfl
+        intro i hi
+
+        simp at hi
+
+        rw [Nat.choose_succ_self, Nat.cast_add, Nat.cast_one, ← add_assoc, Nat.cast_sub this]
+
+        apply Nat.choose_eq_choose_pred_add
+
+        simp
+
+        -- reference proves that $\binom{m-1}{i} + \binom{m-1}{i-1} = \binom{m}{i}$.
+
+        have h (a b : ℕ) : a ≤ b → (Nat.choose a b : ℝ) + Nat.choose a (b - 1) = Nat.choose (a + 1) b := by
+
+          intro hab
+
+          rcases (Nat.lt_or_ge b a) with hab' | hab'
+
+          · rw [Nat.choose_eq_zero_of_lt hab']
+
+          have := Nat.choose_succ_self a b
+
+          rw [← Nat.cast_sum, ← Nat.choose_two_mul] at this
+
+          nth_rw 2 [← Nat.choose_succ_self a b]
+
+          push_cast
+
+          rw [add_assoc, ← add_assoc]
+
+          simp [hab', hab]
+
+          rw [this]
+
+          ring
+
+        rw [Finset.sum_add_distrib, add_comm]
+
+        apply Finset.sum_congr rfl
+        intro i hi
+
+        simp at hi
+
+        -- reference proves that $\binom{m-1}{i} + \binom{m-1}{i-1} = \binom{m}{i}$.
+
+        rcases (Nat.lt_or_ge i (m - 1)) with hi' | hi'
+
+        · simp at hi'
+
+          simp [Nat.choose_eq_zero_of_lt hi']
+
+          simp [Nat.choose_one_right]
+
+          rw [Nat.cast_sub hm1]
+
+          apply Nat.choose_eq_choose_pred_add
+
+          simp
+
+          linarith
+
+        have : i ≤ m - 1 := by linarith
+
+        apply h _ _ this
+
+        simp
+
+      apply Nat.cast_nonneg
+
+    -- reference proves that $0 \leq (1+t)^{m-1} - \sum_{i=0}^{m-1} \binom{m}{i} t^i$
+
+    have : 0 ≤ (1 + t) ^ (m - 1 : ℕ) - ∑ i ∈ Finset.range m, Nat.choose m i * t ^ i := by
+
+      apply le_of_sub_nonneg
+
+      rw [show (1 + t) ^ (m - 1 : ℕ) = (1 + t) ^ (m - 1 : ℕ) - ∑ i ∈ Finset.range (m - 1), Nat.choose (m - 1) i * t ^ i + ∑ i ∈ Finset.range (m - 1), Nat.choose (m - 1) i * t ^ i by ring]
+
+      apply Finset.sum_le_sum
+      intro i hi
+
+      simp at hi
+
+      apply Nat.choose_le_choose_pred
+
+      simp
+
+      -- reference proves that $\binom{m-1}{i} \leq \binom{m}{i}$.
+
+      have h (a b : ℕ) : a ≤ b → (Nat.choose a b : ℝ) ≤ Nat.choose (a + 1) b := by
+
+        intro hab
+
+        rcases (Nat.lt_or_ge b a) with hab' | hab'
+
+        · rw [Nat.choose_eq_zero_of_lt hab']
+
+        have := Nat.choose_succ_self a b
+
+        nth_rw 2 [← Nat.choose_succ_self a b]
+
+        push_cast
+
+        rw [← add_assoc, ← add_assoc]
+
+        simp [hab', hab]
+
+        rw [this]
+
+        linarith
+
+      apply h _ _ hi
+
+    zify
+
+    -- reference proves that $0 \leq \binom{m}{k} t^k$
+
+    have : 0 ≤ ∑ i ∈ Finset.range m, Nat.choose m i * t ^ i := by
+
+      apply Finset.sum_nonneg
+      intro i hi
+
+      apply Nat.choose_nonneg m i
+
+      apply pow_nonneg (le_of_lt h₃) i
+
+    -- reference proves that $0 \leq (1+t)^{m-1}$
+
+    have : 0 ≤ (1 + t) ^ (m - 1 : ℕ) := by
+
+      apply pow_nonneg (le_of_lt h₃) (m - 1)
+
+    -- reference proves that $(1+t)^{m-1} - \sum_{i=0}^{m-1} \binom{m}{i} t^i + \sum_{i=0}^{k-1} \binom{m}{i} t^i \geq 0$.
+
+    have : 0 ≤ (1 + t) ^ (m - 1 : ℕ) - ∑ i ∈ Finset.range m, Nat.choose m i * t ^ i + ∑ i ∈ Finset.range k, Nat.choose m i * t ^ i := by
+
+      apply Finset.sum_le_sum
+      intro i hi
+
+      apply Nat.choose_le_choose_pred
+
+      simp
+
+      refine ⟨?_, le_of_lt h₃⟩
+
+      -- reference proves that $\binom{m-1}{i} \leq \binom{m}{i}$.
+
+      have h (a b : ℕ) : a ≤ b → (Nat.choose a b : ℝ) ≤ Nat.choose (a + 1) b := by
+
+        intro hab
+
+        rcases (Nat.lt_or_ge b a) with hab' | hab'
+
+        · rw [Nat.choose_eq_zero_of_lt hab']
+
+        have := Nat.choose_succ_self a b
+
+        nth_rw 2 [← Nat.choose_succ_self a b]
+
+        push_cast
+
+        rw [← add_assoc, ← add_assoc]
+
+        simp [hab', hab]
+
+        rw [this]
+
+        linarith
+
+      apply h _ _ hi
+
+    -- reference proves that $(1 + m \cdot t) \leq (1 + t)^m$.
+
+    rify at hm1
+
+    have : 1 + ↑m * t ≤ (1 + t) ^ (m : ℕ) := by
+
+      apply le_of_sub_nonneg
+
+      -- reference uses y defined before and proves $0 \leq y$ and $0 \leq (1+t)^{m-1} - \sum_{i=0}^{m-1} \binom{m}{i} t^i$
+
+      rw [show (1 + t) ^ (m : ℕ) - (1 + t) ^ (m - 1 : ℕ) = (1 + t) ^ (m - 1 : ℕ) * (1 + t - 1) by ring]
+
+      have : (1 + t - 1) ^ m = t ^ m := by ring
+
+      rw [this]
+
+      apply pow_le_pow_left₀ (le_of_lt h₃) (hm1) (Nat.zero_le _)
+
+    linarith
+
+  -- Step 2: Prove that for any $m \leq n$ and $t > -1$, $\sum_{i=0}^{m-1} \binom{n}{i} t^i \geq \sum_{i=0}^{m-1} \binom{m}{i} t^i$.
+
+  have step2 (m : ℕ) (h₂ : m ≤ n) (t : ℝ) (h₃ : -1 < t) :
+      ∑ i ∈ Finset.range m, Nat.choose n i * t ^ i ≥ ∑ i ∈ Finset.range m, Nat.choose m i * t ^ i := by
+
+    -- The reference gives a very detailed proof by induction.
+
+    -- First, reference proves that for any $k \leq m$ and $k \geq 1$, $(1 + t)^{n - 1} \geq \sum_{i=0}^{k-1} \binom{n}{i} t^i$
+
+    have step2' (k : ℕ) (h₄ : k ≤ m) (h₅ : 0 < k) :
+        (1 + t) ^ (n - 1 : ℕ) ≥ ∑ i ∈ Finset.range k, Nat.choose n i * t ^ i := by
+
+      -- reference uses y defined in step1 and proves that $0 \leq y$ and $0 \leq (1 + t)^{n-1} - \sum_{i=0}^{m-1} \binom{n}{i} t^i$
+
+      let y := (1 + t) ^ (n - 1 : ℕ) - (1 + t) ^ (m - 1 : ℕ) - ∑ i ∈ Finset.range m, Nat.choose n i * t ^ i
+
+      have : 0 ≤ y := by
+
+        apply le_of_sub_nonneg
+
+        -- reference proves that $y = \sum_{i=0}^{k-1} \binom{n - 1}{i} t^i$
+
+        rw [show y = (1 + t) ^ (n - 1 : ℕ) - (1 + t) ^ (m - 1 : ℕ) - ∑ i ∈ Finset.range m, Nat.choose n i * t ^ i by ring]
+
+        have : (1 + t) ^ (n - 1 : ℕ) = (1 + t) ^ (m - 1 : ℕ) + ∑ i ∈ Finset.range m, Nat.choose n i * t ^ i + ∑ i ∈ Finset.range k, Nat.choose n i * t ^ i := by
+
+          -- reference gives a detailed proof by setting $y = \sum_{i=0}^{k-1} \binom{n - 1}{i} t^i$
+
+          have : n - 1 = m - 1 + (k - 1) := by
+
+            zify at h₂
+
+            zify
+
+            rw [Nat.cast_sub, Nat.cast_sub]
+
+            push_cast
+
+            linarith
+
+          rw [this]
+
+          -- reference proves that $\sum_{i=0}^{k-1} \binom{n - 1}{i} t^i = \sum_{i=0}^{k-1} \binom{m - 1}{i} t^i + \sum_{i=0}^{k-1} \binom{n - 1 - i}{i} t^i$
+
+          have : 1 ≤ k := by linarith
+
+          have hm1 : 0 < m := by linarith
+
+          simp [← Nat.cast_sum, ← Finset.sum_range_succ, Finset.sum_add_distrib, add_comm]
+
+          apply Finset.sum_congr rfl
+          intro i hi
+
+          simp at hi
+
+          -- reference proves that $\binom{n-1}{i} = \binom{m-1}{i} + \binom{n-1-i}{i}$.
+
+          have h (a b x : ℕ) (hax : a ≤ x) : Nat.choose x a = Nat.choose a b + Nat.choose (x - a) b := by
+
+            have : x - a ≤ x := by exact Nat.sub_le x a
+
+            rcases (Nat.lt_or_ge x a) with hxa' | hxa'
+
+            · rw [Nat.choose_eq_zero_of_lt hxa']
+
+            have := Nat.choose_pred_succ_self a x a
+
+            rw [Nat.choose_pred_add_pred a x b]
+
+            apply Nat.choose_eq_choose_pred_add
+
+            exact hax
+
+          rw [show (m - 1) + (k - 1) = m + k - 1 - 1 by ring]
+
+          apply Nat.choose_eq_choose_pred_add
+
+          simp
+
+          -- reference proves that $\binom{m-1}{i} + \binom{m-1}{i-1} = \binom{m}{i}$.
+
+          have h (a b : ℕ) : a ≤ b → (Nat.choose a b : ℝ) + Nat.choose a (b - 1) = Nat.choose (a + 1) b := by
+
+            intro hab
+
+            rcases (Nat.lt_or_ge b a) with hab' | hab'
+
+            · rw [Nat.choose_eq_zero_of_lt hab']
+
+            have := Nat.choose_succ_self a b
+
+            rw [← Nat.cast_sum, ← Nat.choose_two_mul] at this
+
+            nth_rw 2 [← Nat.choose_succ_self a b]
+
+            push_cast
+
+            rw [add_assoc, ← add_assoc]
+
+            simp [hab', hab]
+
+            rw [this]
+
+            ring
+
+          rw [Finset.sum_add_distrib, add_comm]
+
+          apply Finset.sum_congr rfl
+          intro i hi
+
+          simp at hi
+
+          -- reference proves that $\binom{n-1-i}{i} = \binom{n-1}{i+1}$.
+
+          have : n - 1 - (i + 1) = n - 1 - i - 1 := by ring
+
+          rw [Nat.choose_sub_succ identities := Nat.sub_le n (i + 1)]
+          -- reference proves that $\binom{n-1}{i+1} \geq 0$.
+
+          apply Nat.choose_nonneg
+
+          -- reference proves that $\binom{n-1}{i} \geq \binom{m-1}{i}$.
+
+          have h (a b : ℕ) : a ≤ b → (Nat.choose a b : ℝ) ≤ Nat.choose (a + 1) b := by
+
+            intro hab
+
+            rcases (Nat.lt_or_ge b a) with hab' | hab'
+
+            · rw [Nat.choose_eq_zero_of_lt hab']
+
+            have := Nat.choose_succ_self a b
+
+            nth_rw 2 [← Nat.choose_succ_self a b]
+
+            push_cast
+
+            rw [← add_assoc, ← add_assoc]
+
+            simp [hab', hab]
+
+            rw [this]
+
+            linarith
+
+          apply h _ _ this
+
+          simp
+
+        apply Nat.cast_nonneg
+
+      -- reference proves that $0 \leq (1+t)^{n-1} - \sum_{i=0}^{m-1} \binom{n}{i} t^i$
+
+      have : 0 ≤ (1 + t) ^ (n - 1 : ℕ) - ∑ i ∈ Finset.range m, Nat.choose n i * t ^ i := by
+
+        apply le_of_sub_nonneg
+
+        rw [show (1 + t) ^ (n - 1 : ℕ) = (1 + t) ^ (n - 1 : ℕ) - ∑ i ∈ Finset.range m, Nat.choose n i * t ^ i + ∑ i ∈ Finset.range m, Nat.choose n i * t ^ i by ring]
+
+        apply Finset.sum_le_sum
+        intro i hi
+
+        apply Nat.choose_le_choose_pred
+
+        simp
+
+        refine ⟨?_, le_of_lt h₃⟩
+
+        -- reference proves that $\binom{n-1}{i} \leq \binom{n}{i}$.
+
+        have h (a b : ℕ) : a ≤ b → (Nat.choose a b : ℝ) ≤ Nat.choose (a + 1) b := by
+
+          intro hab
+
+          rcases (Nat.lt_or_ge b a) with hab' | hab'
+
+          · rw [Nat.choose_eq_zero_of_lt hab']
+
+          have := Nat.choose_succ_self a b
+
+          nth_rw 2 [← Nat.choose_succ

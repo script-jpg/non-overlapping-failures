@@ -1,0 +1,391 @@
+have ha : a.num = a.num / a.den ^ 2 := by
+    rw [div_pow]
+    field_simp
+
+  have ha' : a = a.num / a.den ^ 2 := by
+    rw [div_pow]
+    field_simp
+
+  -- Prove that 0 ≤ a < 1 and a ≠ 0
+  have ha_nonneg : 0 ≤ a := by
+    rcases a.equiv with ⟨p, q, hq, hpq⟩
+    rw [hpq]
+    positivity
+
+  have ha_lt_one : a < 1 := by
+    rcases a.equiv with ⟨p, q, hq, hpq⟩
+    rw [hpq]
+    have hq_pos : 0 < q := by omega
+    have h : q < p := by
+      rw [Nat.lt_iff_add_one_le] at hq
+      rwa [Nat.le_div_iff_mul_le hq_pos] at hq
+    positivity
+
+  have ha_ne_zero : a ≠ 0 := by
+    linarith
+
+  -- Let S be the set of all real numbers x satisfying ⌊x⌋⋅{x}=a⋅x², where {x} denotes the fractional part of x.
+  -- Prove that S is a finite set and x > 0 for all x ∈ S.
+  have hS : S.Finite := by
+    simp [h₀]
+    apply Set.Finite.exists_finset_of_forall_mem
+    intro x hx
+    rw [hx]
+    simp
+    -- x > 0
+    rcases a.equiv with ⟨p, q, hq, hpq⟩
+    rw [hpq] at h₁
+    rcases le_or_lt 1 ⌊x⌋ with h | h
+    · have hx : 0 < x := by
+        rcases Nat.one_le_floor_iff.mp h with h'
+        nlinarith
+      exact hx
+    · -- ⌊x⌋ < 1
+      have hx : ⌊x⌋ < 1 := by linarith
+      have h' : x < 1 := by
+        rcases Nat.floor_lt.mp hx with h'
+        linarith
+      linarith
+
+  have hx_pos : ∀ x ∈ S, 0 < x := by
+    intro x hx
+    simp [h₀] at hx
+    rcases a.equiv with ⟨p, q, hq, hpq⟩
+    rw [hpq] at h₁
+    rcases le_or_lt 1 ⌊x⌋ with h | h
+    · have hx : 0 < x := by
+        rcases Nat.one_le_floor_iff.mp h with h'
+        nlinarith
+      exact hx
+    · -- ⌊x⌋ < 1
+      have hx : ⌊x⌋ < 1 := by linarith
+      have h' : x < 1 := by
+        rcases Nat.floor_lt.mp hx with h'
+        linarith
+      linarith
+
+  -- Prove that 1 is the greatest element of S.
+  have one_max : ∀ x ∈ S, x ≤ 1 := by
+    intro x hx
+    simp [h₀] at hx
+    rcases a.equiv with ⟨p, q, hq, hpq⟩
+    rw [hpq] at h₁
+    rcases le_or_lt 1 ⌊x⌋ with h | h
+    · linarith
+    · -- ⌊x⌋ < 1
+      have h' : x < 1 := by
+        have : ⌊x⌋ < 1 := by linarith
+        rcases Nat.floor_lt.mp this with h'
+        linarith
+      linarith
+
+  -- Let T be the set of all real numbers x satisfying ⌊x⌋ < x ≤ 1 and x > 0.
+  let T := Ioc (⌊S.max'⌋) 1
+
+  -- Prove that T is a finite set.
+  have hT : T.Finite := by
+    simp [T]
+    apply Set.Finite.exists_finset_of_forall_mem
+    intro x hx
+    simp at hx ⊢
+    omega
+
+  -- Prove that S is a subset of T.
+  have hS_subset_T : S ⊆ T := by
+    simp [T]
+    intro x hx
+    simp [h₀] at hx
+    rcases a.equiv with ⟨p, q, hq, hpq⟩
+    rw [hpq] at h₁
+    rcases le_or_lt 1 ⌊x⌋ with h | h
+    · -- 1 ≤ ⌊x⌋
+      have hx' : 1 ≤ x := by
+        have : 1 ≤ ⌊x⌋ := by linarith
+        rw [Nat.le_floor_iff] at this
+        linarith
+      constructor
+      · nlinarith
+      · linarith
+    · -- ⌊x⌋ < 1
+      have hx' : ⌊x⌋ < 1 := by linarith
+      constructor
+      · have : x ≤ 1 := by linarith
+        rw [Nat.floor_le_iff] at hx'
+        omega
+      · linarith
+
+  -- Prove that the sum of all elements of T is 420.
+  have hsum : ∑ x ∈ T, x = 420 := by
+    have hS_fin : Finset.image (fun x => ↑x) S ⊆ Finset.image (fun x => ↑x) T := by
+      intro x
+      simp
+      intro hx
+      simp [hS_subset_T] at hx
+      exact hx
+    have hS_card : S.card = T.card := by
+      refine Finset.card_eq_of_injOn?_
+      apply Finset.injOn_of_injective
+      intro x y hxy
+      simp [h₀] at hxy
+      rcases a.equiv with ⟨p, q, hq, hpq⟩
+      rw [hpq] at h₁
+      rw [Finset.mem_image] at hxy
+      obtain ⟨a, ha⟩ := hxy
+      simp at ha ⊢
+      have ha' : ⌊a⌋ < a ∧ a ≤ 1 := by
+        constructor
+        · rcases Nat.floor_lt.mp ha with h'
+          linarith
+        · linarith
+      have ha'' : 0 < a := by
+        rcases Nat.floor_le_iff.mp ha' with h'
+        nlinarith
+      constructor
+      · constructor
+        · linarith
+        · linarith
+      · nlinarith
+    have hsum_S : ∑ x ∈ S, x = ∑ x ∈ T, x := by
+      rw [←hS_card]
+      rw [Finset.sum_image]
+      intro x hx
+      simp [hS_subset_T] at hx
+      exact hx
+    rw [hsum_S] at h₁
+    exact h₁
+
+  -- Let x₀ = 1/2, prove that x₀ ∈ T.
+  have hx₀ : (1 : ℝ) / 2 ∈ T := by
+    simp [T]
+    constructor
+    · constructor
+      · have := Nat.floor_one
+        linarith
+      · linarith
+    · linarith
+
+  -- Prove that T \ {x₀} is a finite set.
+  have hS_diff : T \ {1 / 2} ⊆ S := by
+    intro x hx
+    simp at hx ⊢
+    have hT_fin : (T \ {1 / 2}).card < T.card := by
+      have : T.Nonempty := by
+        simp [T]
+        use 1
+        constructor
+        · constructor
+          · have := Nat.floor_one
+            linarith
+          · linarith
+        · linarith
+      apply Finset.card_lt_card_of_nonempty
+      exact this
+    have hdiff : S.Nonempty := by
+      simp [S]
+      use 1
+      simp [h₀]
+      rcases a.equiv with ⟨p, q, hq, hpq⟩
+      rw [hpq] at h₁
+      have h : 1 ≤ p / q := by
+        rw [Nat.le_div_iff_mul_le]
+        omega
+      have hpq' : q ≤ p := by
+        omega
+      positivity
+    apply Finset.card_le_card at hdiff
+    apply Finset.card_le_card at hT_fin
+    have hdiff' : (T \ {1 / 2}).card ≤ S.card := by
+      linarith
+    simp [Finset.card_sdiff hx₀] at hdiff'
+    linarith
+
+  -- Prove that x > 1/2 for all x ∈ T \ {1/2}.
+  have hx_gt_x₀ : ∀ x ∈ T \ {1 / 2}, 1 / 2 < x := by
+    intro x hx
+    simp at hx
+    -- x ∈ T \ {1/2}
+    have ⟨hx1, hx2⟩ := hx
+    by_contra h
+    have : x ≤ 1 / 2 := by linarith
+    have h' : x = 1 / 2 := by linarith
+    simp [h'] at hx2
+    simp [hx2] at hx1
+    linarith
+
+  -- Prove that the sum of all elements of S \ {1/2} is 419.
+  have hsum_Sdiff : ∑ x ∈ S \ {1 / 2}, x = 419 := by
+    have hS_diff' : S \ {1 / 2} ⊆ T := by
+      apply Finset.subset_iff.2
+      simp [hS_diff]
+    have hS_fin : (S \ {1 / 2}).Finite := by
+      apply Finset.Finite.subset hT
+      exact hS_diff'
+    have hsum_S' : ∑ x ∈ S, x = ∑ x ∈ S \ {1 / 2}, x + 1 / 2 := by
+      have hS : 1 / 2 ∈ S := by
+        simp [S]
+        simp [h₀]
+        rcases a.equiv with ⟨p, q, hq, hpq⟩
+        rw [hpq] at h₁
+        have h : 1 ≤ p / q := by
+          rw [Nat.le_div_iff_mul_le]
+          omega
+        have hpq' : q ≤ p := by
+          omega
+        positivity
+      rw [Finset.sum_sdiff hS]
+      simp [Finset.sum_insert hS]
+    have hsum_T : ∑ x ∈ T, x = ∑ x ∈ T \ {1 / 2}, x + 1 / 2 := by
+      rw [Finset.sum_sdiff (by simp [hx₀])]
+      simp [Finset.sum_insert hx₀]
+    rw [hsum_T] at hsum
+    rw [hsum_S'] at h₁
+    linarith
+
+  -- Let x₁ be the element of T \ {1/2} with the greatest value.
+  let x₁ := (T \ {1 / 2}).max' hS_diff
+
+  -- Prove that x₁ ∈ S \ {1/2}.
+  have hx₁ : x₁ ∈ S \ {1 / 2} := by
+    simp [x₁]
+    exact (Finset.max'_mem _ _).2 (by linarith [hS_diff])
+
+  -- Prove that 1 < x₁ ≤ 1.
+  have hx₁_gt : 1 < x₁ := by
+    have hx₁_gt_x₀ : 1 / 2 < x₁ := by
+      have h : 1 / 2 ∈ T \ {1 / 2} := by
+        simp [T]
+        constructor
+        · constructor
+          · norm_num
+          · linarith
+        · linarith
+      simp [h] at hx₁
+      apply Finset.le_max' _ hx₁
+      exact hx₁
+    linarith
+
+  -- Prove that x₁ ≤ 1.
+  have hx₁_le : x₁ ≤ 1 := by
+    have h : x₁ ∈ T := by
+      simp [x₁]
+      exact (Finset.max'_mem _ _).2 (by linarith [hS_diff])
+    simp [T] at h
+    obtain ⟨h₁, h₂⟩ := h
+    linarith
+
+  -- Prove that x₁ = 1.
+  have hx₁_eq_one : x₁ = 1 := by
+    linarith
+
+  -- Let x₂ be the element of T \ {1/2} with the least value.
+  let x₂ := (T \ {1 / 2}).min' hS_diff
+
+  -- Prove that x₂ ∈ S \ {1/2}.
+  have hx₂ : x₂ ∈ S \ {1 / 2} := by
+    simp [x₂]
+    exact (Finset.min'_mem _ _).2 (by linarith [hS_diff])
+
+  -- Prove that 1/2 ≤ x₂ < 1.
+  have hx₂_ge : 1 / 2 ≤ x₂ := by
+    have hx₂_ge_x₀ : x₀ ≤ x₂ := by
+      simp [hx₀]
+      have hT_fin : (T \ {1 / 2}).Finite := by
+        apply Finset.Finite.subset hT
+        exact hS_diff
+      have hS_fin : (S \ {1 / 2}).Finite := by
+        apply Finset.Finite.subset hS
+        exact hS_diff'
+      have hS_card : (S \ {1 / 2}).card = (T \ {1 / 2}).card - 1 := by
+        exact Finset.card_diff_singleton' hx₁
+      have hT_card : (T \ {1 / 2}).card ≤ (S \ {1 / 2}).card := by
+        linarith [hS_diff']
+      linarith [hS_card, hT_card]
+    apply Finset.le_max' _ hx₂
+    exact hx₂
+
+  -- Prove that x₂ > 1/2.
+  have hx₂_lt : x₂ < 1 := by
+    by_contra h
+    have : x₂ = 1 := by linarith
+    simp [this] at hx₂
+    linarith
+
+  -- Prove that the sum of all elements of S \ {1/2} can be written as ∑ x ∈ [x₂, x₁), x.
+  have hsum_Sdiff' : ∑ x ∈ S \ {1 / 2}, x = ∑ x ∈ Finset.Ico x₂ x₁, x := by
+    refine Finset.sum_bij (fun x => x) (by simp) (by simp)?_
+    simp [hS_diff, hx₀, hx₁, hx₂, hx₁_eq_one]
+    simp [Finset.disjoint_iff_ne]
+    intro x hx
+    simp at hx ⊢
+    rcases hx with ⟨hx₁, hx₂⟩
+    constructor
+    · constructor
+      · linarith
+      · linarith
+    · constructor
+      · linarith
+      · linarith
+
+  -- Prove that x₁ * x₂ = 1 / 4.
+  have hx₁_mul_x₂ : x₁ * x₂ = 1 / 4 := by
+    simp [hx₁_eq_one]
+    have h₀ : x₂ > 1 / 2 := by linarith
+    have h₁ : x₂ < 1 := by linarith
+    have hx₂_gt : 1 / 2 ≤ x₂ := by linarith
+    rw [<-mul_lt_mul_iff_of_pos_left (by linarith)]
+    apply mul_lt_mul_of_pos_of_lt
+    any_goals
+    linarith
+
+  -- Prove that x₁ > 1.
+  have hx₁_gt : x₁ > 1 := by
+    linarith
+
+  -- Let x be the value of the sum ∑ x ∈ [x₂, x₁), x.
+  let x := ∑ x ∈ Finset.Ico x₂ x₁, x
+
+  -- Prove that x > 419.
+  have hx_gt : x > 419 := by
+    simp [x]
+    have hS_fin : (Finset.Ico x₂ x₁).Finite := by
+      apply Finset.finite_toSet
+    have hS_card : (Finset.Ico x₂ x₁).card ≤ (Finset.Ico x₂ x₁).card := by
+      exact Finset.card_le_card rfl
+    have hx₁_fin : x₁ ∈ Finset.Ico x₂ x₁ := by
+      simp [hx₁_eq_one]
+      constructor
+      · linarith
+      · linarith
+    have hx₂_fin : x₂ ∈ Finset.Ico x₂ x₁ := by
+      simp
+      linarith
+    have hx₁_mem : x₁ ∈ Finset.Ico x₂ x₁ := by
+      exact hx₁_fin
+    have hx₂_mem : x₂ ∈ Finset.Ico x₂ x₁ := by
+      exact hx₂_fin
+    have hx₁_mem' : x₁ ∈ Finset.Ico x₂ x₁ := by
+      exact hx₁_fin
+    have hx₂_mem' : x₂ ∈ Finset.Ico x₂ x₁ := by
+      exact hx₂_fin
+    rw [Finset.sum_Ico_eq_sum_range (by linarith)]
+    rw [Finset.sum_Ico_eq_sum_range (by linarith)]
+    simp [Finset.sum_range_succ] at hx₁_mem' hx₂_mem'
+    simp [hx₁_eq_one] at hx₁_mem'
+    simp [hx₀] at hx₂_mem'
+    simp [hx₁_eq_one, hx₂_eq_one] at x
+    linarith
+
+  -- Let x' be the value of the sum ∑ x ∈ [x₂, x₁), 1 / x.
+  let x' := ∑ x ∈ Finset.Ico x₂ x₁, 1 / x
+
+  -- Prove that x' > 1 / 421.
+  have hx'_gt : x' > 1 / 421 := by
+    simp [x']
+    have hS_fin : (Finset.Ico x₂ x₁).Finite := by
+      apply Finset.finite_toSet
+    have hS_card : (Finset.Ico x₂ x₁).card ≤ (Finset.Ico x₂ x₁).card := by
+      exact Finset.card_le_card rfl
+    have hx₁_fin : x₁ ∈ Finset.Ico x₂ x₁ := by
+      simp [hx₁_eq_one]
+      constructor
+      · linarith

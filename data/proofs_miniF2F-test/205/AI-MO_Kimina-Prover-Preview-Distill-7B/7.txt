@@ -1,0 +1,73 @@
+have h₂ : 0 < a + b := by linarith
+
+  -- We have $(a + b) / 2 \leq \sqrt{\frac{a^2 + b^2}{2}}$.
+  have h₃ : ((a + b) / 2) ^ 2 ≤ (a ^ 2 + b ^ 2) / 2 := by
+    rw [div_le_div_iff₀ (by positivity) (by positivity), ←mul_div_assoc, div_pow, div_le_div_iff₀ (by norm_num) (by positivity)]
+    ring_nf
+    linarith [two_mul_le_add_sq a b]
+
+  -- We have $\sqrt{\frac{a^2 + b^2}{2}} \leq \frac{a + b}{2}$.
+  have h₄ : (a ^ 2 + b ^ 2) / 2 ≤ ((a + b) / 2) ^ 2 := by
+    rw [le_div_iff₀ (by positivity), ←mul_div_assoc, div_pow, div_le_div_iff₀ (by norm_num) (by positivity)]
+    ring_nf
+    linarith [two_mul_le_add_sq a b]
+
+  -- We have $(a + b) / 2 \leq \sqrt{\frac{a^2 + b^2}{2}} \leq \frac{a + b}{2}$, so $\frac{a + b}{2} = \sqrt{\frac{a^2 + b^2}{2}}$.
+  have h₅ : ((a + b) / 2) ^ 2 = (a ^ 2 + b ^ 2) / 2 := by linarith
+
+  -- Now, we prove the general case by induction on $n$.
+  induction' n with n ih
+  · norm_num
+  · rw [pow_succ, pow_succ]
+
+    -- The base case is easy: $\frac{a + b}{2} \leq \frac{a + b}{2}$.
+    specialize h₃ ((a + b) / 2) ((a ^ 2 + b ^ 2) / 2) (by positivity) (by positivity)
+    rw [h₅] at h₃
+    clear h₅
+    exact h₃
+
+    -- For the induction step, we assume the result holds for $n$ and prove it for $n + 1$.
+    -- We have $\frac{a + b}{2} \leq \frac{a^2 + b^2}{2}$.
+    specialize h₄ ((a + b) / 2) ((a ^ 2 + b ^ 2) / 2) (by positivity) (by positivity)
+    rw [h₅] at h₄
+    clear h₅
+    replace h₄ : ((a + b) / 2) ^ (n + 1) ≤ (a ^ 2 + b ^ 2) / 2 := by
+      rw [←h₄, ←ih]
+      exact pow_le_pow_left₀ (by positivity) h₃ (by linarith)
+
+    -- We need to show that $(a^2 + b^2)/2 \leq (a^{n + 1} + b^{n + 1})/2$.
+    -- By the induction hypothesis, we have $(a + b)^{2n} / 2^{n + 1} \leq (a^{2n} + b^{2n}) / 2^{n + 1}$.
+    -- This follows from the fact that $(a + b)^{2n} \leq a^{2n} + b^{2n}$, which is true because $a, b > 0$.
+    have h₆ : ((a + b) / 2) ^ (n + 1) ≤ (a ^ 2 + b ^ 2) / 2 := by
+      calc
+        ((a + b) / 2) ^ (n + 1) ≤ ((a + b) ^ 2) ^ (n / 2 + 1 / 2) := by
+          rw [div_pow, div_le_div_iff₀ (by positivity) (by positivity), pow_add, pow_one]
+          apply le_of_eq
+          rw [←rpow_natCast, ←rpow_mul (by positivity), div_mul]
+          simp
+          norm_num
+          rw [mul_comm]
+        _ = ((a + b) ^ (2 / 2)) ^ (n / 2 + 1 / 2) := by
+          rw [←rpow_mul (by positivity), div_mul]
+          simp
+          norm_num
+          rw [mul_comm]
+        _ = ((a + b) ^ (n / 2 + 1 / 2)) ^ 2 := by
+          rw [←rpow_mul (by positivity), ←rpow_natCast]
+          norm_num
+        _ ≤ ((a ^ 2 + b ^ 2) / 2) ^ 2 := by
+          rw [←h₄]
+          apply pow_le_pow_left₀ (by positivity) h₃
+          linarith
+
+    -- Now, we finish the induction step by showing that $(a^2 + b^2)/2 \leq (a^{n + 1} + b^{n + 1})/2$.
+    have h₇ : (a ^ 2 + b ^ 2) / 2 ≤ (a ^ (n + 1) + b ^ (n + 1)) / 2 := by
+      rw [div_le_div_iff₀ (by positivity) (by positivity)]
+      nth_rw 1 [←rpow_natCast, ←rpow_mul (by positivity)]
+      nth_rw 2 [←rpow_natCast, ←rpow_mul (by positivity)]
+      rw [mul_comm, pow_le_pow_left₀ (by positivity) h₃ (by linarith)]
+      apply h₄
+
+    -- The general case follows from the fact that $(a + b)/2 \leq \frac{a^2 + b^2}{2} \leq \frac{a^{n + 1} + b^{n + 1}}{2}$.
+    linarith
+```

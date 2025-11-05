@@ -1,0 +1,85 @@
+-- gcd x y * lcm x y = x * y
+  have h' : m * n = 6 * 126 := by
+    calc
+      m * n = Nat.gcd m n * Nat.lcm m n := by rw [Nat.gcd_mul_lcm]
+      _ = 6 * 126 := by rw [h₀, h₁]
+  simp at h'
+
+  -- Nat.lcm x y = x * y / Nat.gcd x y
+  have h'' : m.natAbs = 6 * m.gcd n / 6 := by
+    rw [Int.natAbs_eq_natAbs_of_dvd, ←Nat.dvd_mul_right 6 (m.gcd n)]
+    have : 6 ∣ m.gcd n := by
+      rw [h₀]
+      apply Nat.dvd_gcd
+      repeat omega
+    rw [←Nat.div_mul_cancel this]
+  simp at h''
+  have : m.natAbs = m.gcd n := by
+    rw [h'']
+    have : m.gcd n ∣ m := by
+      exact Nat.gcd_dvd_left m n
+    exact Nat.eq_of_mul_eq_mul_left this (by omega)
+  rw [this] at h₀
+  simp at this
+
+  -- m = 6a, n = 6b, a * b = 21, a.gcd b = 1
+  have h''' : ∃ a b : ℕ, m = 6 * a ∧ n = 6 * b ∧ a * b = 21 ∧ a.gcd b = 1 := by
+    rw [←Nat.dvd_mul_right 6 (m.gcd n), h₀] at h''
+    rw [←h'', ←Int.natAbs_eq_natAbs_of_dvd, Int.natAbs_mul] at h'
+    have h₃ := Nat.dvd_of_mul_dvd_mul_left (by omega) h'
+    have h₄ := Nat.dvd_of_mul_dvd_mul_left (by omega) h''
+    rw [dvd_iff_exists_eq_mul_right] at h₃ h₄
+    obtain ⟨a, ha⟩ := h₃
+    obtain ⟨b, hb⟩ := h₄
+    use a, b
+    refine ⟨?_,?_,?_,?_⟩
+   . omega
+   . omega
+   . rw [ha, hb]
+      nth_rw 2 [←Int.natAbs_eq_natAbs_of_dvd (by omega)]
+      rw [Int.natAbs_mul]
+      have h₅ := Nat.dvd_of_mul_dvd_mul_right h₀
+      rw [dvd_iff_exists_eq_mul_left] at h₅
+      obtain ⟨c, h₅⟩ := h₅
+      have : c = 21 := by
+        omega
+      rw [this]
+   . rw [Int.natAbs_gcd]
+      rw [Int.natAbs_eq_natAbs_of_dvd (by omega)]
+      rw [Int.natAbs_mul, h₀]
+      have h₅ := Nat.dvd_of_mul_dvd_mul_right h₀
+      rw [dvd_iff_exists_eq_mul_left] at h₅
+      obtain ⟨c, h₅⟩ := h₅
+      have : c = m.gcd n := by
+        omega
+      rw [this]
+
+
+  -- (a, b) is (1, 21), (3, 7), (7, 3), (21, 1)
+  have h'''' : (a = 1 ∧ b = 21) ∨ (a = 3 ∧ b = 7) ∨ (a = 7 ∧ b = 3) ∨ (a = 21 ∧ b = 1) := by
+    have : a ≤ 21 := by
+      have : a * b = 21 := h''''.right.right
+      rw [mul_comm] at this
+      apply Nat.le_of_dvd (by omega) this
+    have : b ≤ 21 := by
+      have : a * b = 21 := h''''.right.right
+      rw [mul_comm] at this
+      apply Nat.le_of_dvd (by omega) this
+    have : a ≥ 1 := by
+      have : a * b = 21 := h''''.right.right
+      by_contra! no
+      have : a = 0 := by
+        omega
+      rw [this] at h''''.right.right
+      omega
+    have : b ≥ 1 := by
+      have : a * b = 21 := h''''.right.right
+      by_contra! no
+      have : b = 0 := by
+        omega
+      rw [this] at h''''.right.right
+      omega
+    interval_cases a <;> interval_cases b <;> omega
+  rcases h'''' with ⟨ha, hb⟩ | ⟨ha, hb⟩ | ⟨ha, hb⟩ | ⟨ha, hb⟩ <;> subst a b <;> omega
+
+```

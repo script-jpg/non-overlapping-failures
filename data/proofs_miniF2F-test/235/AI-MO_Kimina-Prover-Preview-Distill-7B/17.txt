@@ -1,0 +1,87 @@
+have ha : ∀ n, (∃ x, x ^ 3 = n) ∧ (∃ t, t ^ 4 = n) → 4096 ≤ n := by
+    intro n ⟨h₁, h₂⟩
+    
+    obtain ⟨x, hx⟩ := h₁
+    obtain ⟨t, ht⟩ := h₂
+    
+    -- We have $n = x ^ 3$ and $n = t ^ 4$. 
+    have h₃ : x ^ 3 = t ^ 4 := by rw [← hx, ← ht]
+    
+    -- In particular, $x ^ 3 = t ^ 4$ implies $x ^ 3$ is a perfect fourth power.
+    have h₄ : ∃ k, x ^ 3 = k ^ 4 := ⟨t, h₃⟩
+    
+    -- Since $x ^ 3$ is a perfect fourth power, we can write $x ^ 3 = k ^ 4$ for some $k$.
+    obtain ⟨k, hk⟩ := h₄
+    
+    -- Then, $x ^ 3 = k ^ 4$ implies $x = k ^ {4/3}$, which means $x$ must be a perfect cube.
+    have h₅ : x ^ 3 = k ^ 4 := hk
+    
+    -- In particular, $x ^ 3 = k ^ 4$ implies $x = k ^ {4/3}$, which means $x$ must be a perfect cube.
+    have h₆ : ∃ m, x = m ^ 3 := by
+      use k
+      by_cases hk' : k = 0
+      · rw [hk'] at h₅
+        simp at h₅
+        use 0
+        rw [hk']
+        simp
+      · by_cases h₃ : 3 ∣ (k ^ 4)
+        · have h₄ : 3 ∣ 4 := by
+            refine Nat.dvd_of_dvd_pow?_ h₃
+            exact Nat.Prime.dvd_of_dvd_pow (by norm_num) h₃
+          norm_num at h₄
+        · have hk' : 4 ∣ k := by
+            refine Nat.dvd_of_dvd_pow?_ h₃
+            exact Nat.Prime.dvd_of_dvd_pow (by norm_num) h₃
+          use k ^ 3
+          rw [h₅]
+          ring
+      
+    -- So, $x = m ^ 3$ for some $m$.
+    obtain ⟨m, hm⟩ := h₆
+    rw [hm] at h₅
+    -- Then, $m ^ 9 = k ^ 4$.
+    have h₇ : m ^ 9 = k ^ 4 := by
+      calc
+        m ^ 9 = (m ^ 3) ^ 3 := by ring
+        _ = k ^ 4 := h₅
+    -- Since 9 and 4 are coprime, this implies $m = t ^ 9$ and $k = t ^ 4$ for some $t$.
+    have h₈ : ∃ t, t ^ 9 = m ^ 9 ∧ t ^ 4 = k ^ 4 := ⟨m, by constructor <;> ring, by constructor <;> ring⟩
+    
+    -- By similar reasoning, $m ^ 9 = k ^ 4$ implies $m = t ^ 4$ and $k = t ^ 9$ for some $t$.
+    obtain ⟨t, h₉, hk⟩ := h₈
+    have h₁₀ : t ^ 4 = m ^ 9 := by rw [← h₉, ← hk]
+    
+    have h₁₁ : ∃ t, t ^ 4 = n := h₂
+    obtain ⟨t', ht'⟩ := h₁₁
+    have h₁₂ : t' ^ 4 = t ^ 4 := by rw [← ht', ← h₁₀]
+    have h₁₃ : t' = t := by
+      have h₁₄ : t' ^ 4 = t ^ 4 := h₁₂
+      exact Nat.pow_left_injective (by norm_num) h₁₄
+    rw [h₁₃] at h₁₁
+    clear h₁₂ h₁₄
+    
+    -- So, $t ^ 4 = n$
+    have h₁₅ : t ^ 4 = n := h₁₁
+    rw [h₁₅] at h₁₀
+    -- 4096 is the smallest positive integer that is both a perfect cube and a perfect fourth power
+    by_contra! h₁₆
+    have h₁₇ : n < 4096 := h₁₆
+    have h₁₈ : t < 9 := by
+      by_contra! h₁₈
+      have h₁₉ : t ^ 4 ≥ 9 ^ 4 := Nat.pow_le_pow_of_le_left h₁₈ 4
+      norm_num at h₁₉
+      linarith
+    have h₁₈ : t > 1 := by
+      by_contra! h₁₈
+      have h₁₉ : t ^ 4 ≤ 1 ^ 4 := Nat.pow_le_pow_of_le_left (by linarith) 4
+      norm_num at h₁₉
+      linarith
+    interval_cases t <;> norm_num at h₁₅
+    all_goals
+      have h₁₇ : n < 4096 := h₁₆
+      all_goals
+        linarith
+
+  exact ha n ⟨h₁, h₂⟩
+```

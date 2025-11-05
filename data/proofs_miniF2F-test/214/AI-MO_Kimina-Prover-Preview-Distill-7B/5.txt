@@ -1,0 +1,77 @@
+-- aux lemma, given $n > 0$, $\sum_{k=1}^n \sin{k\theta}$ equals to $\frac{\sin{\frac{n+1}{2}\theta}\cos{\frac{n}{2}\theta}}{\sin{\frac{\theta}{2}}}$.
+  have h_aux (n : ℕ) (h₀ : 0 < n) : ∑ i ∈ Finset.Icc 1 n, Real.sin (i * θ) = Real.sin ((n + 1) * θ / 2) * Real.cos (n * θ / 2) / Real.sin (θ / 2) := by
+    have : θ ≠ 0 := by
+      by_contra! h₀
+      rw [h₀] at h₁
+      simp only [Finset.sum_eq_zero_iff, zero_mul, zero_div] at h₁
+      simp only [mul_eq_zero, OfNat.ofNat_ne_zero, or_false] at h₀
+      exact h₀
+    have : Real.sin (θ / 2) ≠ 0 := by
+      apply Real.sin_ne_zero_of_ne_mul_of_ne
+      · intro h₃
+        apply_fun (· * 180 / Real.pi) at h₃
+        rw [←Real.cos_pi_div_three, ←h₃, Real.cos_pi_div_three] at this
+        norm_num at this
+      · exact this
+    have h (n : ℕ) : ∑ i ∈ Finset.Icc 1 n, Real.sin (i * θ) = Real.sin ((n + 1) * θ / 2) * Real.cos (n * θ / 2) / Real.sin (θ / 2) := by
+      induction n with
+      | zero =>
+        simp only [Nat.zero, Finset.sum_empty, mul_zero, div_zero, zero_div, add_zero, RCLike.zero_apply, dvd_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_ne_zero, not_false_eq_true, mul_eq_zero, OfNat.ofNat_ne_zero]
+      | succ n ih =>
+        rw [Finset.sum_Icc_succ_top (by omega), ih]
+        rw [add_comm (Real.sin (n + 1) * θ), ←add_assoc, Real.sin_sub, Real.cos_sq, Real.cos_sq]
+        rw [mul_assoc, ←Real.sin_eq_cos_pi_div_two_sub, add_comm, Real.cos_pi_div_two_sub (n + 1), mul_comm, ←mul_assoc, mul_assoc]
+        rw [mul_left_comm, Real.cos_sub, add_assoc, ←add_mul, mul_comm, mul_comm θ, Real.cos_pi_div_two_sub]
+        rw [←Real.cos_sq, mul_assoc, Real.cos_sq, mul_left_comm, mul_assoc, mul_comm (θ / 2), ←mul_assoc]
+        rw [Real.cos_add_cos, mul_assoc, Real.cos_sq, Real.cos_pi_div_two_sub, Real.cos_pi_div_two_sub]
+        rw [add_comm, mul_assoc, Real.cos_sq, Real.cos_pi_div_two_sub, Real.cos_pi_div_two_sub]
+        rw [Real.cos_pi_div_two_sub]
+        field_simp
+        ring
+    exact h n
+
+  -- apply the lemma and simplify
+  have h₁ := h_aux 35 (by omega)
+  rw [h₁] at h₁
+  have h₁ : m * Real.pi / 180 = (35 + 1) * (Real.pi / 180) / 2 := by ring
+  rw [h₁, mul_div_assoc, Real.tan_eq_sin_div_cos, ←Real.sin_div, div_eq_iff] at h₁
+  rw [Real.sin_pi_div_two_sub, div_eq_div_iff] at h₁
+  norm_num at h₁
+  have h₁ := congrArg (fun x ↦ x * Real.sin (Real.pi / 180) / Real.cos (Real.pi / 180)) h₁
+  rw [div_eq_div_iff] at h₁
+  rw [mul_comm, mul_div_assoc, mul_assoc, div_self] at h₁
+  nth_rw 2 [mul_comm] at h₁
+  rw [mul_assoc, div_self] at h₁
+  nth_rw 1 [mul_comm] at h₁
+  rw [mul_assoc, mul_comm, ←mul_assoc, div_eq_div_iff] at h₁
+  norm_num at h₁
+
+  -- so m = 19, n = 50, m + n = 177
+  have h₃ : m = 19 := by
+    field_simp at h₁
+    ring_nf at h₁
+    rw [mul_comm _ (m / 2), mul_assoc, mul_right_inj' (by norm_num)] at h₁
+    have : (59590038191871505452464844240658738126086650338933224978063210714585961564632033773680373683355362419356026525216320028038449061368960390223008138598298615553635661333636799630048000000000000000000000000000000000000000000000000000 : ℝ) ≠ 0 := by
+      norm_num
+    exact eq_div_of_mul_eq this h₁
+  rw [h₃] at h₂
+  clear h₃
+  norm_num at h₂
+  have : (595900381918715054524648442406587381260866503389332249780632107145859615646320337736803736833553624193560265252163200280384490613689603902230081385982986155536356613336367996300480000000000000000000000000000000000000000000000000 : ℚ) = (5959003819187150545246484424065873812608665033893322497806321071458596156463203377368037368335536241935602652521632002803844906136896039022300813859829861555363566133363679963004800000000000000000000000000000000 : ℝ) := by
+    norm_num
+  rw [this] at h₂
+  clear this
+  have h₃ : (59590038191871505452464844240658738126086650338933224978063210714585961564632033773680373683355362419356026525216320028038449061368960390223008138598298615553635661333636799630048000000000000000000000000000000000000000000000000 : ℚ) : ℚ) - (625 : ℚ) ≠ 0 := by
+    norm_num
+  rw [sub_eq_zero] at h₂
+  exact eq_div_of_mul_eq h₃ h₂
+  norm_num
+  norm_num
+  have h₃ : (5959003819187150545246484424065873812608665033893322497806321071458596156463203377368037368335536241935602652521632002803844906136896039022300813859829861555363566133363679963004800000000000000000000000000000000 : ℚ) ≠ 0 := by
+    norm_num
+  rw [sub_eq_zero] at h₁
+  exact eq_div_of_mul_eq h₃ h₁
+  norm_num
+  norm_num
+
+```

@@ -1,0 +1,90 @@
+-- Define a sequence of complex numbers from the given recurrence.
+  let z : ℕ → ℂ := fun n => a n + Complex.I * b n
+
+  -- Rewrite the recurrence in terms of the complex sequence.
+  have h₄ : ∀ n, z (n + 1) = (Real.sqrt 3 + Complex.I) * z n := by
+    intro n
+    simp only [z, Complex.ext_iff, h₀ n, h₁ n]
+    ring_nf
+    simp only [Real.sq_sqrt]
+    ring
+
+  -- The recurrence can be written in terms of a common ratio.
+  have h₅ : ∀ n, z n = (Real.sqrt 3 + Complex.I) ^ (n - 1) * z 1 := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [h₄ n, ih]
+      simp
+      ring
+
+  -- The modulus of the common ratio is 2.
+  have h₆ : |Real.sqrt 3 + Complex.I| = 2 := by
+    simp [Complex.abs, Complex.normSq]
+    ring_nf
+    simp only [Real.sqrt_sq]
+    ring
+
+  -- The complex sequence can be expressed in terms of polar form.
+  have h₇ : ∀ n, z n = 2 ^ n * (Real.sqrt 3 + Complex.I) ^ (n - 1) * (z 1 / |z 1|) := by
+    intro n
+    have : z n = (Real.sqrt 3 + Complex.I) ^ (n - 1) * z 1 := h₅ n
+    rw [this]
+    calc
+      _ = |Real.sqrt 3 + Complex.I| ^ (n - 1) * z 1 := by
+        rw [← pow complex_natCast (n - 1)]
+        rw [← This.isCongrArg (n - 1)]
+        simp
+      _ = _ := by
+        rw [h₆]
+        simp
+
+  -- The sequence is periodic.
+  have h₈ : ∀ n, z (n + 2) = (Real.sqrt 3 + Complex.I) ^ 2 * z n := by
+    intro n
+    calc
+      _ = z (n + 1 + 1) := by simp
+      _ = (Real.sqrt 3 + Complex.I) * z (n + 1) := by rw [h₄]
+      _ = (Real.sqrt 3 + Complex.I) * ((Real.sqrt 3 + Complex.I) * z n) := by rw [h₄]
+      _ = _ := by ring
+
+  -- Further simplification reveals that the sequence has period 12.
+  have h₉ : ∀ n, z (n + 12) = z n := by
+    intro n
+    have : (12 : ℕ) = 2 * 6 := by simp
+    rw [this]
+    calc
+      _ = z (n + 6 + 6) := by simp
+      _ = (Real.sqrt 3 + Complex.I) ^ 6 * z n := by rw [h₈]
+      _ = (Real.sqrt 3 + Complex.I) ^ 6 * z n := by simp
+      _ = _ := by
+        simp [Complex.ext_iff]
+        apply eq_of_sub_eq_zero
+        ring_nf
+        simp only [Real.sq_sqrt]
+        ring
+
+  -- Using the periodicity, we have that $z\_{100} = z\_{4 + 12 * 8} = z_4$.
+  have h₁₀ : z 100 = z 4 := by
+    rw [h₉ 4, ← add_assoc]
+    norm_num
+
+  -- We can now find $z_1$ using $z_4$.
+  have h₁₁ : z 1 = (1 / 2 ^ 98) * (Real.sqrt 3 + Complex.I) ^ 3 := by
+    have : z 4 = 2 ^ 4 * (Real.sqrt 3 + Complex.I) ^ 3 * (z 1 / |z 1|) := h₇ 4
+    rw [h₁₀, h₂, h₃] at this
+    simp_all
+    field_simp
+    ring
+
+  -- The answer is $(1 / 2 ^ 98) * (sqrt(3) + i)^3$.  We need to simplify this.
+  have h₁₂ : z 1 = 2 / 2 ^ 98 := by
+    simp [z, h₁₁]
+    field_simp
+    ring
+
+  simp [z] at h₁₂
+  exact h₁₂
+
+```

@@ -1,0 +1,30 @@
+have h₂ : a = a.num / ↑a.den := by simp [Rat.num_div_den]
+  rw [h₂, ← Rat.divInt_eq_div, ← Rat.coe_int_eq_divInt] at h₀
+  have : S = (Finset.filter (fun x ↦ ↑⌊x⌋ * (x - ↑⌊x⌋) = ↑a * x ^ 2) (Finset.range (67))).image
+    (fun x ↦ x + 20) := by
+    ext x
+    -- Porting note: was `change _ ↔ _ ∧ _`
+    simp only [Finset.mem_filter, Finset.mem_image, Finset.mem_range, Int.cast_ofNat,
+      Nat.cast_ofNat, Nat.cast_add, Nat.cast_mul, Nat.cast_pow]
+    refine' ⟨fun h ↦ ⟨_, _⟩, fun ⟨k, hk, h₁⟩ ↦ _⟩
+    · rwa [mul_comm, mul_assoc, mul_comm, ← mul_assoc, mul_comm _ (b := ⌊x⌋),
+        mul_comm (x - ⌊x⌋) _] at h
+    simpa only [mul_comm, mul_assoc, mul_comm _ (b := ⌊x⌋), mul_comm (x - ⌊x⌋) _] using h₁
+  rw [this] at h₁
+  norm_num at h₁
+  have h₁ : ∑ k in Finset.filter (fun x ↦ ↑⌊x⌋ * (x - ↑⌊x⌋) = ↑a * x ^ 2) (Finset.range (67)),
+    ((k + 20 : ℤ) + 20 : ℚ) = 420 := by
+    norm_cast at h₁
+    rwa [Finset.sum_image]
+  have h₃ : a.num + a.den = 929 := by
+    apply Finset.sum_congr rfl
+    rintro x hx
+    have hx' : (x + 20 : ℤ) ∈ Finset.range (67) := by
+      rw [mem_range, Nat.lt_succ_iff]
+      linarith
+    rw [Finset.mem_filter] at hx
+    have := hx.2
+    norm_cast at this
+    linarith
+  exact h₃
+```

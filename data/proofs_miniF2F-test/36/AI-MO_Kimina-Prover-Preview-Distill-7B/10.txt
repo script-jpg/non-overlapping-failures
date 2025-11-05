@@ -1,0 +1,58 @@
+-- check the base case
+
+  induction n with
+
+  | zero => linarith
+
+  | succ n ih =>
+      match n with
+
+      | 0 => linarith
+
+      | 1 => linarith
+
+      | 2 => linarith
+
+      | 3 => simp
+
+      | 4 => simp [Nat.factorial_succ, Nat.pow_succ] at *; linarith
+
+      | 5 => simp [Nat.factorial_succ, Nat.pow_succ] at *; linarith
+
+      | m + 5 => simp [Nat.factorial_succ, Nat.pow_succ] at *; linarith
+
+  -- Assume $n \geq 3$ and `ih` is the induction hypothesis $n! < n^{n-1}$.
+  rcases Nat.lt_or_ge n 4 with hlt | hge
+  · simp at hlt
+    -- If $n < 5$, we verify the inequality directly.
+    interval_cases n
+    all_goals simp [Nat.factorial_succ, Nat.pow_succ]
+  · -- If $n \geq 5$, we use the induction hypothesis and multiply both sides by $n$ to obtain $n! < n^{n-1} \cdot n$.
+    rw [Nat.factorial_succ]
+    rw [← Nat.pow_add]
+    rw [Nat.pow_succ]
+    -- We know that $n^4 \geq 5^4 > 5 \cdot 4$, so $n^4 > n \cdot 4$.
+    -- Since $n \geq 5$, we have $n - 1 \geq 4$, and thus $n^{n-1} \geq n^4 > n \cdot 4$.
+    -- Therefore $n! = n \cdot (n-1)! < n \cdot n^{n-1} = n^{n}$.
+    -- Since $n \geq 3 > 2$, we have $n^2 > 4$.
+    have h : n ^ (1 + (n - 1 - 1)) > 4 := by
+      calc
+        _ = n ^ (n - 1) := by congr 1; omega
+        _ > _ := by
+          have hn : 1 + (n - 1 - 1) = n - 1 := by omega
+          rw [hn]
+          refine Nat.lt_self_pow?_?_
+          · exact Nat.zero_lt_of_lt hge
+          · calc
+              4 = 2 ^ 2 := by rfl
+              _ < n ^ 2 := by exact Nat.pow_lt_pow_left hge (by rfl)
+              _ < _ := by exact Nat.pow_pos (by linarith)
+    -- Since $n \geq 3 > 0$, we have $n > 0$.
+    have hpos : 0 < n := Nat.lt_of_le_of_ne hge (by rfl)
+    -- Multiply both sides of the induction hypothesis by $n$.
+    apply Nat.mul_lt_mul_of_pos_left
+    · exact ih
+    · exact h
+    · exact hpos
+
+```

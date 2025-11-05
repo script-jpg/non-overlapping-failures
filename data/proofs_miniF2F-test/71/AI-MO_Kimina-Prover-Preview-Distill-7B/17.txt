@@ -1,0 +1,40 @@
+-- the first term is $a_0$.
+  let a' := fun n => a (n + 1)
+  let a'' := fun n => a (n + 2)
+
+  -- the length of the known part of the sequence is 9.
+  have h₃ : a' 8 = a 9 := by simp [a', a'']
+  rw [h₂] at h₃
+
+  -- the fifth term is $a_4$.
+  have h₄ : a' 4 = a 5 := by simp [a', a'']
+  rw [h₄]
+
+  -- it is sufficient to determine the first term $a_0$ and the common difference $d$ to decide the value of $a_4$.
+  let d := a 1 - a 0
+
+  have h₅ : ∀ n, a (n + 2) = a (n + 1) - a n + 2 * d := by
+    intro n
+    calc
+      a (n + 2) = a (n + 1) + (a (n + 1) - a n) := by linarith only [h₀ n]
+      _ = a (n + 1) + (a n + d - a n) := by linarith only [h₀ (n - 1)]
+      _ = a (n + 1) + d := by linarith
+      _ = a (n + 1) - a n + 2 * d := by linarith only [h₀ n]
+
+  -- the sequence is determined by the first term $a_0$ and the common difference $d$, so we can use `h₅` to rewrite `a' 8` in terms of `a' 0` and `d`.
+  have h₆ : a' 8 = a' 0 + 8 * d := by
+    rw [h₅ 7, h₅ 6, h₅ 5, h₅ 4, h₅ 3, h₅ 2, h₅ 1, h₅ 0]
+    ring
+
+  -- the sequence is determined by the first term $a_0$ and the common difference $d$, so we can use `h₅` to rewrite `a' 4` in terms of `a' 0` and `d`.
+  have h₇ : a' 4 = a' 0 + 4 * d := by
+    rw [h₅ 3, h₅ 2, h₅ 1, h₅ 0]
+    ring
+
+  -- the common difference $d$ cancels out when we subtract `h₇` from `h₆`, so we can easily solve for $a_0$.
+  have h₈ : a' 0 = 59 / 15 := by
+    linarith only [h₃, h₆, h₇]
+
+  -- now we can use `h₇` to compute the value of $a_4$.
+  linarith only [h₇, h₈]
+```

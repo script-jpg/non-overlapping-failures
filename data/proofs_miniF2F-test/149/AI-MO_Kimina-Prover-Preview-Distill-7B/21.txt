@@ -1,0 +1,58 @@
+-- Define $f(x) = x(2 - 1/x) = 2x - 1$ for $x > 0$.
+  let f (x : ℝ) := 2 * x - 1
+
+  -- Define $g(x) = f(x) - x \cdot x^{1/n} = 2x - 1 - x \cdot x^{1/n}$ for $x > 0$.
+  let g (x : ℝ) := f x - x * (x ^ ((1 : ℝ) / n))
+
+  -- We want to show that $g(x) > 0$ for $x > 1$.
+  suffices g x > 0 by linarith
+
+  -- We have $g(1) = 0$.
+  have h1 : g 1 = 0 := by
+    simp [g, f]
+    rw [one_rpow]
+    simp
+
+  -- We have $g(x) > 0$ for $x > 1$.
+  have h2 : g x > 0 := by
+    calc
+      g x = f x - x * (x ^ ((1 : ℝ) / n)) := by simp [g]
+      _ = 2 * x - 1 - x * (x ^ ((1 : ℝ) / n)) := by simp [f]
+      _ = 2 * x - (1 + x * (x ^ ((1 : ℝ) / n))) := by ring
+      _ > 2 * x - (1 + x * 1) := by rel [one_lt_rpow_of_one_lt (by omega) (by omega)]
+      _ = 2 * x - (1 + x) := by simp
+      _ = x - 1 := by ring
+      _ > 0 := by omega
+
+  -- The function $g$ is strictly monotone on $(1,\infty)$.
+  have h3 : StrictMonoOn g univ := by
+    apply StrictMonoOn.sub
+    · apply StrictMonoOn.mul
+      · exact fun x hx y hy hxy => by simp [f]; linarith
+      · exact fun x hx y hy hxy => by simp [f]; linarith
+    · exact fun x hx y hy hxy => by simp [f]; linarith
+
+  -- The function $g$ is continuous on $(1,\infty)$.
+  have h4 : ContinuousOn g univ := by
+    apply ContinuousOn.sub
+    · apply ContinuousOn.mul
+      · exact fun x hx => by simp [f]
+      · exact fun x hx => by simp [f]
+    · exact fun x hx => by simp [f]
+
+  -- The function $g$ is strictly increasing on $(1,\infty)$.
+  have h5 : StrictMonoOn g (Set.Ioi 1) := by
+    apply strictMonoOn_of_continuousOn_strictMonoOn
+    · exact h3
+    · exact h4
+    · intro x hx y hy hxy
+      simp
+      rw [gt_iff_lt]
+      apply lt_of_le_of_lt (by norm_num)
+      apply one_le_rpow (by omega) (by omega)
+
+  -- For all $x > 1$, we have $g(x) > g(1) = 0$.
+  suffices g x > g 1 by linarith
+  apply h5.lt_iff_lt.mpr
+  exact ⟨by omega, by simp, by simp [g]⟩
+```

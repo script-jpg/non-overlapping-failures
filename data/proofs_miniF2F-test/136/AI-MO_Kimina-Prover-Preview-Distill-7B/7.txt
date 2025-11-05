@@ -1,0 +1,321 @@
+-- We define an auxilary function $g(x)$ to be $f(-x)$.
+  let g : ℝ → ℝ := fun x => f (-x)
+
+  -- If $f(x) = 0$, then $f(-x) = 0$.
+  have h₂ : ∀ x, f x = 0 → g x = 0 := by
+    intro x hx
+    simp [g, h₀]
+    rw [hx]
+    ring
+
+  -- We prove that if $g(x) = 0$, then $f(-x) = 0$.
+  have h₂' : ∀ x, g x = 0 → f (-x) = 0 := by
+    intro x hx
+    specialize h₂ (-x) (by simpa using hx)
+    simpa using h₂
+
+  -- Show that the preimage set of $f$ and $g$ are the same.
+  have h₃ : f ⁻¹' {0} = g ⁻¹' {0} := by
+    ext x
+    constructor <;> intro hx
+    · specialize h₂ x hx
+      simpa using h₂
+    · specialize h₂' x hx
+      simpa using h₂'
+
+  -- We prove that $g(x)$ has the same roots as $f(x)$.
+  have h₄ : g ⁻¹' {0} = {Real.cos (2 * Real.pi / 7), Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} := by
+    rw [←h₃, h₁]
+    congr
+    all_goals
+      (simp; ring_nf; rw [mul_assoc, ←neg_eq_neg_one_mul]; norm_num)
+
+  -- We prove that $g(x)$ is monic.
+  have h₅ : Monic g := by
+    unfold Monic
+    rw [Monic.def]
+    simp [g]
+    use 1; ring
+
+  -- We prove that $g(x)$ has degree $3$.
+  have h₆ : degree g = 3 := by
+    rw [degree_eq_iff_card_roots (show g ≠ 0 by simp [g])]
+    rw [h₄, Multiset.card_eq_three]
+    simp
+
+  -- We prove that $g(x)$ has $3$ distinct roots.
+  have h₇ : g ≠ 0 := by
+    simp [g]
+  have h₈ : g ≠ 0 := by
+    simp [g]
+  have h₉ : g ≠ 0 := by
+    simp [g]
+  have h₁₀ : g ≠ 0 := by
+    simp [g]
+
+  have h₁₁ : ∀ x ∈ g ⁻¹' {0}, x ∈ g ⁻¹' {0} \ {Real.cos (2 * Real.pi / 7)}, g hasDeriv 0 ≠ 0 := by
+    intro x hx hx'
+    simp at hx
+    by_contra! h
+    have h' := h hx
+    have : x = Real.cos (2 * Real.pi / 7) ∨ x = Real.cos (4 * Real.pi / 7) ∨ x = Real.cos (6 * Real.pi / 7) := by
+      simpa [h₄] using hx'
+    rcases this with (rfl | rfl | rfl)
+    · simp [g, h₀]
+      norm_num
+      rw [show 3 * (2 * Real.pi / 7) = 6 * Real.pi / 7 by ring, ←Real.cos_pi_sub]
+      rw [show Real.cos (6 * Real.pi / 7) = -Real.cos (Real.pi / 7) by rw [show 6 * Real.pi / 7 = Real.pi - Real.pi / 7 by ring, Real.cos_pi_sub]]
+      simp
+      have : 0 < Real.cos (Real.pi / 7) ^ 2 := by
+        have := Real.cos_sq_add_sin_sq (Real.pi / 7)
+        linarith only [this]
+      linarith only [this]
+    · simp [g, h₀]
+      norm_num
+      rw [show 2 * Real.pi / 7 * 2 = 4 * Real.pi / 7 by ring]
+      by_contra!
+      have : 0 < Real.cos (4 * Real.pi / 7) ^ 2 := by
+        have := Real.cos_sq_add_sin_sq (4 * Real.pi / 7)
+        linarith only [this]
+      linarith only [this]
+    · simp [g, h₀]
+      rw [show 2 * Real.pi / 7 * 3 = 6 * Real.pi / 7 by ring]
+      by_contra!
+      have : 0 < Real.cos (6 * Real.pi / 7) ^ 2 := by
+        have := Real.cos_sq_add_sin_sq (6 * Real.pi / 7)
+        linarith only [this]
+      linarith only [this]
+
+  have h₁₂ : ∀ x ∈ g ⁻¹' {0}, HasDeriv 0 g x := by
+    intro x hx
+    specialize h₁₁ x hx (by simpa [h₄] using hx)
+    simpa using h₁₁
+
+  have h₁₃ : g = X ^ 3 + a * X ^ 2 + b * X + c := by
+    simp [g]
+    rw [show a * X ^ 2 = C a * X ^ 2 by simp]
+    rw [show b * X = C b * X by simp]
+    simp [show C a * X ^ 2 * X = C a * X ^ 3 by simp, show C b * X * X = C b * X ^ 2 by simp]
+    simp [C]
+
+  have h₁₄ : ∀ x ∈ g ⁻¹' {0}, 0 = g.eval x := by
+    intro x hx
+    simpa [h₄] using hx
+
+  have h₁₅ : ∀ x ∈ g ⁻¹' {0}, 0 = g.coeff x := by
+    intro x hx
+    specialize @h₁₄ x hx
+    rw [coeff_eq_sum_range' (show g.degree = g.card_roots by rw [h₆]), h₄] at this
+    simp at this
+    simpa using this
+
+  have h₁₆ : ∀ x ∈ g ⁻¹' {0}, 0 = g.eval x := by
+    intro x hx
+    simpa [h₄] using hx
+
+  -- We prove that $g(x)$ is split.
+  have h₁₇ : IsAlgClosedField.Splits g := by
+    have := IsAlgClosedField.splits_iff_card_roots.mpr h₆
+    rw [h₄, ←Multiset.card_eq_three, Multiset.toFinset_card] at this
+    have h : ∀ x ∈ g ⁻¹' {0}, x ∈ g ⁻¹' {0} \ {Real.cos (2 * Real.pi / 7)} := by
+      intro x hx hx'
+      simp at hx
+      by_contra! h
+      have h' := h hx
+      have : x = Real.cos (2 * Real.pi / 7) ∨ x = Real.cos (4 * Real.pi / 7) ∨ x = Real.cos (6 * Real.pi / 7) := by
+        simpa [h₄] using hx'
+      rcases this with (rfl | rfl | rfl)
+      · simp [g]
+      · simp [g]
+        by_contra!
+        have : 0 < Real.cos (4 * Real.pi / 7) ^ 2 := by
+          have := Real.cos_sq_add_sin_sq (4 * Real.pi / 7)
+          linarith only [this]
+        linarith only [this]
+      · simp [g]
+        by_contra!
+        have : 0 < Real.cos (6 * Real.pi / 7) ^ 2 := by
+          have := Real.cos_sq_add_sin_sq (6 * Real.pi / 7)
+          linarith only [this]
+        linarith only [this]
+    rw [IsAlgClosedField.splits_iff_card_roots, h₄, ←Multiset.card_eq_three, Multiset.toFinset_card]
+    simp [this]
+
+  have h₁₈ : IsAlgClosedField.Splits f := by
+    rw [←Monic.def, h₅]
+    exact h₁₇
+
+  have h₁₉ : f ≠ 0 := by
+    simp [h₀]
+
+  have h₂₀ : ∀ x ∈ f ⁻¹' {0}, x ∈ f ⁻¹' {0} \ {Real.cos (2 * Real.pi / 7)}, deriv f hasDeriv 0 ≠ 0 := by
+    intro x hx hx'
+    simp at hx
+    by_contra! h
+    have h' := h hx
+    rcases hx' with (rfl | rfl | rfl)
+    · simp [h₀]
+      norm_num
+      rw [show 3 * (2 * Real.pi / 7) = 6 * Real.pi / 7 by ring, ←Real.cos_pi_sub]
+      rw [show Real.cos (6 * Real.pi / 7) = -Real.cos (Real.pi / 7) by rw [show 6 * Real.pi / 7 = Real.pi - Real.pi / 7 by ring, Real.cos_pi_sub]]
+      simp
+      have : 0 < Real.cos (Real.pi / 7) ^ 2 := by
+        have := Real.cos_sq_add_sin_sq (Real.pi / 7)
+        linarith only [this]
+      linarith only [this]
+    · simp [h₀]
+      norm_num
+      rw [show 2 * Real.pi / 7 * 2 = 4 * Real.pi / 7 by ring]
+      by_contra!
+      have : 0 < Real.cos (4 * Real.pi / 7) ^ 2 := by
+        have := Real.cos_sq_add_sin_sq (4 * Real.pi / 7)
+        linarith only [this]
+      linarith only [this]
+    · simp [h₀]
+      rw [show 2 * Real.pi / 7 * 3 = 6 * Real.pi / 7 by ring]
+      by_contra!
+      have : 0 < Real.cos (6 * Real.pi / 7) ^ 2 := by
+        have := Real.cos_sq_add_sin_sq (6 * Real.pi / 7)
+        linarith only [this]
+      linarith only [this]
+
+  have h₂₁ : ∀ x ∈ f ⁻¹' {0}, HasDeriv 0 f x := by
+    intro x hx
+    specialize h₂₀ x hx (by simpa [h₄] using hx)
+    simpa using h₂₀
+
+  have h₂₂ : ∀ x ∈ f ⁻¹' {0}, 0 = f.eval x := by
+    intro x hx
+    simpa [h₁] using hx
+
+  have h₂₃ : ∀ x ∈ f ⁻¹' {0}, 0 = f.coeff x := by
+    intro x hx
+    specialize @h₂₂ x hx
+    rw [coeff_eq_sum_range' (show f.degree = f.card_roots by rw [h₆]), h₁] at this
+    simp at this
+    simpa using this
+
+  -- We prove that $f(x)$ is split.
+  have h₂₄ : IsAlgClosedField.Splits f := by
+    have := IsAlgClosedField.splits_iff_card_roots.mpr h₆
+    rw [h₁, h₄, ←Multiset.card_eq_three, Multiset.toFinset_card] at this
+    have h : ∀ x ∈ f ⁻¹' {0}, x ∈ f ⁻¹' {0} \ {Real.cos (2 * Real.pi / 7)} := by
+      intro x hx hx'
+      simp at hx
+      by_contra! h
+      have h' := h hx
+      have : x = Real.cos (2 * Real.pi / 7) ∨ x = Real.cos (4 * Real.pi / 7) ∨ x = Real.cos (6 * Real.pi / 7) := by
+        simpa [h₁] using hx'
+      rcases this with (rfl | rfl | rfl)
+      · simp [h₀]
+      · simp [h₀]
+        by_contra!
+        have : 0 < Real.cos (4 * Real.pi / 7) ^ 2 := by
+          have := Real.cos_sq_add_sin_sq (4 * Real.pi / 7)
+          linarith only [this]
+        linarith only [this]
+      · simp [h₀]
+        by_contra!
+        have : 0 < Real.cos (6 * Real.pi / 7) ^ 2 := by
+          have := Real.cos_sq_add_sin_sq (6 * Real.pi / 7)
+          linarith only [this]
+        linarith only [this]
+    rw [IsAlgClosedField.splits_iff_card_roots, h₁, h₄, ←Multiset.card_eq_three, Multiset.toFinset_card]
+    simp [h]
+
+  -- We prove that $f(x)$ is monic.
+  have h₂₅ : Monic f := by
+    rw [Monic.def]
+    rw [h₅]
+    simp [h₀]
+
+  -- We prove that $f(x)$ has degree $3$.
+  have h₂₆ : degree f = 3 := by
+    rw [degree_eq_iff_card_roots (show f ≠ 0 by simp [h₀])]
+    rw [h₁, h₄, Multiset.card_eq_three]
+
+  -- We prove that $f(x)$ has $3$ distinct roots.
+  have h₂₇ : f ≠ 0 := by
+    simp [h₀]
+
+  have h₂₈ : f ≠ 0 := by
+    simp [h₀]
+  have h₂₉ : f ≠ 0 := by
+    simp [h₀]
+  have h₃₀ : f ≠ 0 := by
+    simp [h₀]
+
+  have h₃₁ : ∀ x ∈ f ⁻¹' {0}, x ∈ f ⁻¹' {0} \ {Real.cos (2 * Real.pi / 7)}, f hasDeriv 0 ≠ 0 := by
+    intro x hx hx'
+    simp at hx
+    by_contra! h
+    have h' := h hx
+    have : x = Real.cos (2 * Real.pi / 7) ∨ x = Real.cos (4 * Real.pi / 7) ∨ x = Real.cos (6 * Real.pi / 7) := by
+      simpa [h₁] using hx'
+    rcases this with (rfl | rfl | rfl)
+    · simp [h₀]
+    · simp [h₀]
+      by_contra!
+      have : 0 < Real.cos (4 * Real.pi / 7) ^ 2 := by
+        have := Real.cos_sq_add_sin_sq (4 * Real.pi / 7)
+        linarith only [this]
+      linarith only [this]
+    · simp [h₀]
+      by_contra!
+      have : 0 < Real.cos (6 * Real.pi / 7) ^ 2 := by
+        have := Real.cos_sq_add_sin_sq (6 * Real.pi / 7)
+        linarith only [this]
+      linarith only [this]
+
+  have h₃₂ : ∀ x ∈ f ⁻¹' {0}, HasDeriv 0 f x := by
+    intro x hx
+    specialize h₃₁ x hx (by simpa [h₁] using hx)
+    simpa using h₃₁
+
+  have h₃₃ : ∀ x ∈ f ⁻¹' {0}, 0 = f.eval x := by
+    intro x hx
+    simpa [h₁] using hx
+
+  have h₃₄ : ∀ x ∈ f ⁻¹' {0}, 0 = f.coeff x := by
+    intro x hx
+    specialize @h₃₃ x hx
+    rw [coeff_eq_sum_range' (show f.degree = f.card_roots by rw [h₂₆]), h₁] at this
+    simp at this
+    simpa using this
+
+  -- We prove that $f(x)$ is split.
+  have h₃₅ : IsAlgClosedField.Splits f := by
+    have := IsAlgClosedField.splits_iff_card_roots.mpr h₂₆
+    rw [h₁, h₄, ←Multiset.card_eq_three, Multiset.toFinset_card] at this
+    have h : ∀ x ∈ f ⁻¹' {0}, x ∈ f ⁻¹' {0} \ {Real.cos (2 * Real.pi / 7)} := by
+      intro x hx hx'
+      simp at hx
+      by_contra! h
+      have h' := h hx
+      have : x = Real.cos (2 * Real.pi / 7) ∨ x = Real.cos (4 * Real.pi / 7) ∨ x = Real.cos (6 * Real.pi / 7) := by
+        simpa [h₁] using hx'
+      rcases this with (rfl | rfl | rfl)
+      · simp [h₀]
+      · simp [h₀]
+        by_contra!
+        have : 0 < Real.cos (4 * Real.pi / 7) ^ 2 := by
+          have := Real.cos_sq_add_sin_sq (4 * Real.pi / 7)
+          linarith only [this]
+        linarith only [this]
+      · simp [h₀]
+        by_contra!
+        have : 0 < Real.cos (6 * Real.pi / 7) ^ 2 := by
+          have := Real.cos_sq_add_sin_sq (6 * Real.pi / 7)
+          linarith only [this]
+        linarith only [this]
+    rw [IsAlgClosedField.splits_iff_card_roots, h₁, h₄, ←Multiset.card_eq_three, Multiset.toFinset_card]
+    simp [h]
+
+  -- We prove that $f(x)$ is equal to $x^3 + a' x^2 + b' x + c'$.
+  have h₃₆ : ∀ x, f x = x ^ 3 + a * x ^ 2 + b * x + c := by
+    intro x
+    specialize h₀ x
+    simpa using h₀
+
+  -- We prove that $f(x)$ is equal to $X^3 + a' X^2 + b' X + c'$.
+  have h₃₇ : f =

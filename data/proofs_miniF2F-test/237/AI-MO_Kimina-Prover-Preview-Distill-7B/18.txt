@@ -1,0 +1,161 @@
+rcases h₁ with ⟨k, hk0, hk1⟩
+
+  have h₂ : 2 ^ k = (a + b ^ 2) * (b + a ^ 2) := hk1
+
+  have h₃ : 2 ^ k > 0 := by exact Nat.two_pow_pos k
+
+  have h₄ : (a + b ^ 2) > 0 := by
+    calc
+      (a + b ^ 2) > 0 + 0 := by rel [Nat.add_pos_left (show 0 > 0 by exact Nat.zero_lt_of_lt h₀.left), h₀.right]
+      _ = 0 := by simp
+  have h₅ : (b + a ^ 2) > 0 := by
+    calc
+      (b + a ^ 2) > 0 + 0 := by rel [Nat.add_pos_left (show 0 > 0 by exact Nat.zero_lt_of_lt h₀.right), h₀.left]
+      _ = 0 := by simp
+
+  have h₆ : (a + b ^ 2) * (b + a ^ 2) > 0 := by exact Nat.mul_pos h₄ h₅
+
+  have h₇ : 2 ^ k > 1 := by
+    calc
+      2 ^ k > 2 ^ 0 := by exact Nat.pow_lt_pow_iff_right (by decide) hk0
+      _ = 1 := by simp
+
+  have h₈ : (a + b ^ 2) * (b + a ^ 2) > 1 := by linarith
+
+  have h₉ : a + b ^ 2 > 1 := by
+    by_contra h
+    simp at h
+    have : a + b ^ 2 ≤ 1 := by linarith
+    have : a ≤ 1 := by
+      calc
+        a ≤ a + b ^ 2 := by rel [Nat.add_pos_left h₀.left, show 0 ≤ b ^ 2 by exact Nat.zero_le (b ^ 2)]
+        _ ≤ 1 := this
+    have : a = 0 ∨ a = 1 := by exact (Nat.le_one_iff_eq_zero_or_eq_one.mp this).symm
+    rcases this with (h | h)
+   .   simp [h, Nat.pow_two] at hk1
+   .   simp [h] at hk1
+  have h₁₀ : b + a ^ 2 > 1 := by
+    by_contra h
+    simp at h
+    have : b + a ^ 2 ≤ 1 := by linarith
+    have : b ≤ 1 := by
+      calc
+        b ≤ b + a ^ 2 := by rel [Nat.add_pos_left h₀.right, show 0 ≤ a ^ 2 by exact Nat.zero_le (a ^ 2)]
+        _ ≤ 1 := this
+    have : b = 0 ∨ b = 1 := by exact (Nat.le_one_iff_eq_zero_or_eq_one.mp this).symm
+    rcases this with (h | h)
+   .   simp [h, Nat.pow_two] at hk1
+   .   simp [h] at hk1
+
+  have h₁₁ : (a + b ^ 2) * (b + a ^ 2) ≥ 4 := by
+    calc
+      (a + b ^ 2) * (b + a ^ 2) ≥ 2 * 2 := by rel [h₉, h₁₀]
+      _ = 4 := by simp
+
+  have h₁₂ : k > 1 := by
+    by_contra h
+    simp at h
+    interval_cases k
+   .   simp at hk1
+   .   have : 2 ^ 2 = 2 ^ k := by rw [hk1]
+     have : 4 = 2 ^ 2 := by simp
+     rw [this] at hk1
+     have : 4 > 4 := by linarith
+     contradiction
+
+  -- First, we prove that a is odd.
+  have h₁₃ : a % 2 = 1 := by
+    by_contra h
+    simp at h
+    have h' : a % 2 = 0 := by exact (Nat.zero_lt_one.mp h).symm
+    rw [Nat.dvd_iff_mod_eq_zero] at h'
+    have h₁₄ : 2 ∣ a := by exact h'
+    have h₁₅ : 2 ∣ (a + b ^ 2) * (b + a ^ 2) := by exact Dvd.dvd.mul_left h₁₄ (b + a ^ 2)
+    rw [←h₂] at h₁₅
+    have h₁₆ : 2 ∣ 2 ^ k := by exact Nat.dvd_pow_self 2 (by linarith)
+    have h₁₇ : 2 ∣ 2 := by exact Nat.dvd_refl 2
+    have h₁₈ : 2 ∣ (2 ^ k) / 2 := by exact Nat.dvd_div h₁₆ h₁₇
+    rw [Nat.div_eq_iff_eq_mul_right (by decide)] at h₁₈
+    have h₁₉ : 2 ^ k = 2 * ((2 ^ k) / 2) := by exact Eq.symm (Nat.mul_div_cancel' h₁₈)
+    rw [h₁₉] at hk1
+    have h₂₀ : 2 ∣ (a + b ^ 2) * (b + a ^ 2) := by exact Dvd.dvd.mul_left h₁₄ (b + a ^ 2)
+    have h₂₁ : 2 ∣ 2 ^ k := by exact Nat.dvd_pow_self 2 (by linarith)
+    have h₂₂ : 2 ∣ 2 := by exact Nat.dvd_refl 2
+    have h₂₃ : 2 ∣ (2 ^ k) / 2 := by exact Nat.dvd_div h₂₁ h₂₂
+    rw [Nat.div_eq_iff_eq_mul_right (by decide)] at h₂₃
+    have h₂₄ : 2 ^ k = 2 * ((2 ^ k) / 2) := by exact Eq.symm (Nat.mul_div_cancel' h₂₃)
+    rw [h₂₄] at hk1
+    have h₂₅ : ((2 ^ k) / 2) % 2 = 0 := by exact Nat.mod_eq_zero_of_dvd h₂₃
+    have h₂₆ : ((2 ^ k) / 2) % 2 = 1 := by exact Nat.mod_eq_of_lt (by linarith) h₂₅
+    rw [Nat.div_eq_iff_eq_mul_right (by decide)] at h₂₃
+    have h₂₇ : 2 * ((2 ^ k) / 2) ≥ 2 * 2 := by rel [h₂₃, h₂₅, h₂₆]
+    have h₂₈ : 2 * ((2 ^ k) / 2) = 2 ^ k := by exact Eq.symm (Nat.mul_div_cancel' h₁₈)
+    rw [h₂₈] at h₂₇
+    have : 2 ^ k ≥ 2 * 2 := by linarith
+    have : 2 ^ k > 2 ^ 1 := by linarith
+    have : k > 1 := by exact (Nat.pow_lt_pow_iff_right (by decide)).mp this
+    contradiction
+
+  have h₁₃' : a % 2 = 1 := by exact (Nat.one_le_iff_ne_zero (a % 2)).mp (Nat.mod_ne_zero_iff_ne (show a ≠ 0 by linarith).symm)
+
+  -- Show that a = 1.
+  have h₁₄ : a = 1 := by
+    -- Show that a is a power of 2.
+    have h₁₅ : ∃ k : ℕ, a = 2 ^ k := by
+      rw [Nat.dvd_iff_mod_eq_zero]
+      rw [h₁₃']
+      apply Nat.mod_odd_iff_exists_bit1.mp
+      exact id (Nat.odd_iff.mp h₁₃)
+    rcases h₁₅ with ⟨k, hk1⟩
+    -- Show that a is a power of 2 greater than 2.
+    have h₁₆ : a ≠ 2 := by
+      by_contra h
+      simp [h] at hk1
+      rw [hk1] at h₂
+      have h₁₇ : b + 2 ^ 2 ∣ 2 ^ k * (b + 2 ^ 2) := by exact Dvd.dvd.mul_right (b + 2 ^ 2) (2 ^ k)
+      have h₁₈ : b + 2 ^ 2 ∣ (b + 2 ^ 2) * (2 ^ k) := by exact Dvd.dvd.mul_left (b + 2 ^ 2) (2 ^ k)
+      have h₁₉ : b + 2 ^ 2 ∣ 2 ^ (k + 2) := by exact Nat.dvd_of_dvd_mul_right_of_gcd_one h₁₇ h₁₈
+      have h₂₀ : b + 2 ^ 2 ∣ 2 ^ k := by exact Nat.dvd_of_dvd_pow h₁₉
+      have h₂₁ : b + 2 ^ 2 > 2 ^ k := by
+        calc
+          b + 2 ^ 2 > 1 + 2 ^ 2 := by rel [h₀.left, h₂₀]
+          _ > 2 ^ 1 + 2 ^ 2 := by rel [Nat.pow_lt_pow_iff_right (by decide)]
+          _ > 2 ^ k + 2 ^ 2 := by rel [Nat.pow_lt_pow_iff_right (by decide)]; exact Nat.lt_add_right k 1
+          _ = 2 ^ k + 2 ^ (k + 1) := by rw [Nat.pow_add]
+          _ ≥ 2 ^ k := by exact Nat.add_le_add_right (2 ^ k) (2 ^ (k + 1))
+      contradiction
+    -- Show that k = 0 and a = 1.
+    have h₁₇ : k = 0 := by
+      by_contra h
+      have h₁₈ : 2 ^ 1 ∣ 2 ^ k := by exact Nat.pow_dvd_pow 2 h
+      have h₁₉ : 2 ∣ (b + 2 ^ 2) * (2 ^ k) := by exact Dvd.dvd.mul_right (b + 2 ^ 2) (2 ^ k)
+      have h₂₀ : 2 ∣ 2 ^ (k + 1) := by exact Nat.dvd_of_dvd_pow h₁₈
+      have h₂₁ : 2 ∣ 2 ^ k := by exact Nat.dvd_of_dvd_pow (Nat.dvd_trans h₂₀ h₁₉)
+      have h₂₂ : 2 ∣ 2 := by exact Nat.dvd_refl 2
+      have h₂₃ : 2 ∣ (2 ^ k) / 2 := by exact Nat.dvd_div h₂₁ h₂₂
+      rw [Nat.div_eq_iff_eq_mul_right (by decide)] at h₂₃
+      have h₂₄ : 2 ^ k = 2 * ((2 ^ k) / 2) := by exact Eq.symm (Nat.mul_div_cancel' h₂₃)
+      rw [h₂₄] at hk1
+      have h₂₅ : ((2 ^ k) / 2) % 2 = 0 := by exact Nat.mod_eq_zero_of_dvd h₂₃
+      have h₂₆ : ((2 ^ k) / 2) % 2 = 1 := by exact Nat.mod_eq_of_lt (by linarith) h₂₅
+      rw [Nat.div_eq_iff_eq_mul_right (by decide)] at h₂₃
+      have h₂₇ : 2 * ((2 ^ k) / 2) ≥ 2 * 2 := by rel [h₂₃, h₂₅, h₂₆]
+      have h₂₈ : 2 * ((2 ^ k) / 2) = 2 ^ k := by exact Eq.symm (Nat.mul_div_cancel' h₁₈)
+      rw [h₂₈] at h₂₇
+      have : 2 ^ k ≥ 2 * 2 := by linarith
+      have : 2 ^ k > 2 ^ 1 := by linarith
+      have : k > 1 := by exact (Nat.pow_lt_pow_iff_right (by decide)).mp this
+      have h₂₉ : k = 0 ∨ k = 1 ∨ k > 1 := by exact (Nat.eq_zero_or_pos_of_ne_zero h₁₇).mp (Nat.not_eq_zero_of_lt this)
+      rcases h₂₉ with (h | h | h)
+     .   simp [h] at hk1
+     .   simp [h] at hk1
+        have h₃₀ : b + 2 ^ 2 ∣ 2 ^ k := by rw [hk1]; exact Nat.dvd_of_mod_eq_zero h₂₁
+        have h₃₁ : b + 2 ^ 2 ∣ 2 ^ 1 := by rw [hk1] at h₂; exact Nat.dvd_of_mod_eq_zero h₂₂
+        have h₃₂ : b + 2 ^ 2 > 2 ^ 1 := by linarith
+        contradiction
+     .   linarith
+    rw [h₁₇] at hk1
+    simp [hk1] at h₁₃'
+  exact h₁₄
+
+```

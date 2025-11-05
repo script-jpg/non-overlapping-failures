@@ -1,0 +1,77 @@
+-- We will prove that for all integers $x$, $x$ is in $S$ if and only if $-9 \leq x \leq 9$.
+  have h₁ : ∀ x : ℤ, x ∈ S ↔ -9 ≤ x ∧ x ≤ 9 := by
+    intro x
+    -- We need to prove two implications.
+    apply Iff.intro
+   . -- If $x \in S$, then $|x| < 3\pi$.
+      intro hx
+      rw [h₀] at hx
+      -- Because $3.14 < \pi < 3.15$, $9.42 < 3\pi < 9.45$.
+      have hpi : 9.42 < 3 * Real.pi ∧ 3 * Real.pi < 9.45 := by
+        constructor
+       . -- $3\pi > 9.42$
+          calc
+            9.42 = 3 * (3.14 : ℝ) := by norm_num
+            _ < 3 * Real.pi := by
+              apply (mul_lt_mul_left (by norm_num : (0 : ℝ) < 3)).mpr
+              (Real.pi_gt_314)
+       . -- $3\pi < 9.45$
+          calc
+            3 * Real.pi < 3 * (3.15 : ℝ) := by
+            apply (mul_lt_mul_left (by norm_num : (0 : ℝ) < 3)).mpr
+            (by linarith only [Real.pi_lt_315])
+            _ = 9.45 := by norm_num
+      -- So $|x| < 9.45$.
+      have hx' : abs x < 9.45 := by
+        calc
+          abs x < 3 * Real.pi := by linarith only [hx]
+          _ < 9.45 := by linarith only [hpi.right]
+      -- So $-9.45 < x < 9.45$.
+      rw [abs_lt] at hx'
+      -- Because $x$ is an integer, $-9 \leq x \leq 9$.
+      constructor
+     . -- $-9 \leq x$
+        linarith only [hx']
+     . -- $x \leq 9$
+        linarith only [hx']
+   . -- If $-9 \leq x \leq 9$, then $x \in S$.
+      intro hx
+      rw [h₀]
+      -- Because $3.14 < \pi < 3.15$, $9.42 < 3\pi < 9.45$.
+      have hpi : 9.42 < 3 * Real.pi ∧ 3 * Real.pi < 9.45 := by
+        constructor
+       . -- $3\pi > 9.42$
+          calc
+            9.42 = 3 * (3.14 : ℝ) := by norm_num
+            _ < 3 * Real.pi := by
+              apply (mul_lt_mul_left (by norm_num : (0 : ℝ) < 3)).mpr
+              (Real.pi_gt_314)
+       . -- $3\pi < 9.45$
+          calc
+            3 * Real.pi < 3 * (3.15 : ℝ) := by
+            apply (mul_lt_mul_left (by norm_num : (0 : ℝ) < 3)).mpr
+            (by linarith only [Real.pi_lt_315])
+            _ = 9.45 := by norm_num
+      -- So $|x| < 9.45$.
+      suffices abs x < 9.45 by
+        apply lt_of_lt_of_le
+        exact this
+        norm_num
+      -- Because $-9 \leq x \leq 9$, $|x| \leq 9$.
+      apply abs_le.mpr
+      constructor
+     . -- $-9 \leq x$
+        exact hx.left
+     . -- $x \leq 9$
+        exact hx.right
+  -- Now we need to prove that there are 19 integers between $-9$ and $9$.
+  suffices -9 ≤ x ∧ x ≤ 9 → x ∈ S ↔ x ∈ Finset.Icc (-9) 9 then
+    rw [Finset.card_coe_Finset]
+    simp [this, h₁]
+  intro hx
+  -- It is trivial that $-9 \leq x \leq 9$ implies $-9 \leq x \leq 9$.
+  suffices x ∈ (Finset.Icc (-9) 9 : Set ℤ) ↔ x ∈ Finset.Icc (-9) 9 by
+    simp [this]
+  -- Lean think this is trivial.
+  simp [Finset.mem_Icc]
+```

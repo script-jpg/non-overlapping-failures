@@ -1,0 +1,337 @@
+-- First, prove that all three numbers are less than 400.
+  have h₂ : i < 400 ∧ m < 400 ∧ o < 400 := by
+    -- Let's show that $i < 400$.
+    have h₂ (a b : ℕ) (h : a * b = 2001) : a < 400 ∧ b < 400 := by
+      -- Assume that $a \geq 400$ and show that it implies $b < 1$.
+      by_cases h' : a ≥ 400
+      · have h'' : b < 1 := by
+          calc
+            b = b * a / a := by rw [Nat.div_mul_cancel]; exact h
+            _ ≤ a * b / a := by rw [Nat.div_le_div_right]; exact h'
+            _ = 2001 / a := by rw [h]
+            _ < 2001 / 400 := by rw [Nat.div_lt_div_left]; exact h'
+            _ = 5 := by norm_num
+            _ < 1 := by norm_num
+      -- This implies $b = 0$, which is a contradiction.
+      have h''' : b = 0 := by
+        calc
+          b = b * a / a := by rw [Nat.div_mul_cancel]; exact h
+          _ ≤ a * b / a := by rw [Nat.div_le_div_right]; exact h'
+          _ = 0 := by rw [h]; norm_num
+      -- Substitute $b = 0$ into the hypothesis and get a contradiction.
+      rw [h'''] at h
+      norm_num at h
+    -- If $a < 400$, then nothing to prove.
+    have h' : i < 400 := by
+      by_cases h'' : i < 400
+      · exact h''
+      · apply h₂ i m at h₁
+        exact h''.1
+    -- Similarly, show that $b < 400$.
+    have h'' : m < 400 := by
+      by_cases h''' : m < 400
+      · exact h'''
+      · apply h₂ m o at h₁
+        exact h'''.1
+    -- And $c < 400$.
+    have h''' : o < 400 := by
+      by_cases h'''' : o < 400
+      · exact h''''
+      · apply h₂ o i at h₁
+        exact h''''.1
+    -- Return the conjunction of all three inequalities.
+    exact ⟨h', h'', h'''⟩
+
+  -- Now, consider the cases when one of the numbers is zero.
+  -- The case when $i = 0$ is impossible.
+  have h₃ : i = 0 ∨ m = 0 ∨ o = 0 := by
+    -- Assume that $i = 0$.
+    by_cases h' : i = 0
+    · exact Or.inl h'
+    -- Otherwise, $i \neq 0$.
+    · left
+      -- Then, $m = 0$ or $o = 0$.
+      have h'' : m = 0 ∨ o = 0 := by
+        -- Assume that $m \neq 0$.
+        by_cases h''m : m ≠ 0
+        · have h''om : o = 0 := by
+            -- Then, $o = 2001 / (i \cdot m)$, which is a contradiction.
+            rw [h''m] at h₁
+            have h₂om := Nat.eq_of_mul_eq_mul_left (by omega) h₁
+            rw [h₂om] at h₀
+            norm_num at h₀
+          exact Or.inr h''om
+        -- Otherwise, $m = 0$.
+        · left
+          exact h''m
+      -- Consider the cases when $m = 0$ or $o = 0$.
+      cases h'' with
+      | inl h''m =>
+        -- If $m = 0$, then, $o = 2001 / (i \cdot 0)$ is undefined. Contradiction.
+        have h₃om : i * 0 = 2001 := by
+          rw [h''m] at h₁
+          exact h₁
+        omega
+      | inr h''o =>
+        -- If $o = 0$, then, $i = 2001 / (0 \cdot m)$ is undefined. Contradiction.
+        have h₃om : 0 * m = 2001 := by
+          rw [h''o] at h₁
+          exact h₁
+        omega
+
+  -- Consider the cases when $i = 0$, $m = 0$, or $o = 0$.
+  cases h₃ with
+  | inl h₃ =>
+    -- The case when $i = 0$ is impossible.
+    have h₄ : m = 0 ∨ o = 0 := by
+      -- Assume that $m \neq 0$.
+      by_cases h' : m ≠ 0
+      · have h'' : o = 0 := by
+          -- Then, $o = 2001 / (0 \cdot m)$ is undefined. Contradiction.
+          rw [h'] at h₁
+          have h₂om := Nat.eq_of_mul_eq_mul_left (by omega) h₁
+          rw [h₂om] at h₀
+          norm_num at h₀
+        exact Or.inr h''
+      -- Otherwise, $m = 0$.
+      · left
+        exact h'
+    cases h₄ with
+    | inl h₄ =>
+      -- The case when $i = 0$ and $m = 0$ is impossible.
+      have h₅ : o = 0 := by
+        -- Assume that $o \neq 0$.
+        by_cases h' : o ≠ 0
+        · have h₂om := Nat.eq_of_mul_eq_mul_left (by omega) h₁
+          rw [h' _ (by omega)] at h₂om
+          norm_num at h₂om
+        -- Otherwise, $o = 0$.
+        · exact h'
+      have h₆ : o ≠ 0 := by
+        -- Assume that $o = 0$.
+        by_cases h' : o = 0
+        · contradiction
+        -- Otherwise, $o \neq 0$.
+        · exact h'
+      contradiction
+    | inr h₄ =>
+      -- The case when $i = 0$ and $o = 0$ is impossible.
+      have h₅ : m = 0 := by
+        -- Assume that $m \neq 0$.
+        by_cases h' : m ≠ 0
+        · have h₂om := Nat.eq_of_mul_eq_mul_left (by omega) h₁
+          rw [h' _ (by omega)] at h₂om
+          norm_num at h₂om
+        -- Otherwise, $m = 0$.
+        · exact h'
+      have h₆ : m ≠ 0 := by
+        -- Assume that $m = 0$.
+        by_cases h' : m = 0
+        · contradiction
+        -- Otherwise, $m \neq 0$.
+        · exact h'
+      contradiction
+  | inr h₃ =>
+    cases h₃ with
+    | inl h₃ =>
+      -- Consider the case when $m = 0$.
+      have h₄ : i = 0 ∨ o = 0 := by
+        -- Assume that $i \neq 0$.
+        by_cases h' : i ≠ 0
+        · have h'' : o = 0 := by
+            -- Then, $o = 2001 / (i \cdot 0)$ is undefined. Contradiction.
+            rw [h'] at h₁
+            have h₂om := Nat.eq_of_mul_eq_mul_left (by omega) h₁
+            rw [h₂om] at h₀
+            norm_num at h₀
+          exact Or.inr h''
+        -- Otherwise, $i = 0$.
+        · left
+          exact h'
+      cases h₄ with
+      | inl h₄ =>
+        -- The case when $m = 0$ and $i = 0$ is impossible.
+        have h₅ : o = 0 := by
+          -- Assume that $o \neq 0$.
+          by_cases h' : o ≠ 0
+          · have h₂om := Nat.eq_of_mul_eq_mul_left (by omega) h₁
+            rw [h' _ (by omega)] at h₂om
+            norm_num at h₂om
+          -- Otherwise, $o = 0$.
+          · exact h'
+        have h₆ : o ≠ 0 := by
+          -- Assume that $o = 0$.
+          by_cases h' : o = 0
+          · contradiction
+          -- Otherwise, $o \neq 0$.
+          · exact h'
+        contradiction
+      | inr h₄ =>
+        -- The case when $m = 0$ and $o = 0$ is impossible.
+        have h₅ : i = 0 := by
+          -- Assume that $i \neq 0$.
+          by_cases h' : i ≠ 0
+          · exact h'
+          -- Otherwise, $i = 0$.
+          · left
+            exact h'
+        have h₆ : i ≠ 0 := by
+          -- Assume that $i = 0$.
+          by_cases h' : i = 0
+          · contradiction
+          -- Otherwise, $i \neq 0$.
+          · exact h'
+        contradiction
+    | inr h₃ =>
+      -- Consider the case when $o = 0$.
+      have h₄ : i = 0 ∨ m = 0 := by
+        -- Assume that $i \neq 0$.
+        by_cases h' : i ≠ 0
+        · have h'' : m = 0 := by
+            -- Then, $m = 2001 / (i \cdot 0)$ is undefined. Contradiction.
+            rw [h'] at h₁
+            have h₂om := Nat.eq_of_mul_eq_mul_left (by omega) h₁
+            rw [h₂om] at h₀
+            norm_num at h₀
+          exact Or.inr h''
+        -- Otherwise, $i = 0$.
+        · left
+          exact h'
+      cases h₄ with
+      | inl h₄ =>
+        -- The case when $o = 0$ and $i = 0$ is impossible.
+        have h₅ : m = 0 := by
+          -- Assume that $m \neq 0$.
+          by_cases h' : m ≠ 0
+          · have h₂om := Nat.eq_of_mul_eq_mul_left (by omega) h₁
+            rw [h' _ (by omega)] at h₂om
+            norm_num at h₂om
+          -- Otherwise, $m = 0$.
+          · exact h'
+        have h₆ : m ≠ 0 := by
+          -- Assume that $m = 0$.
+          by_cases h' : m = 0
+          · contradiction
+          -- Otherwise, $m \neq 0$.
+          · exact h'
+        contradiction
+      | inr h₄ =>
+        -- The case when $o = 0$ and $m = 0$ is impossible.
+        have h₅ : i = 0 := by
+          -- Assume that $i \neq 0$.
+          by_cases h' : i ≠ 0
+          · exact h'
+          -- Otherwise, $i = 0$.
+          · left
+            exact h'
+        have h₆ : i ≠ 0 := by
+          -- Assume that $i = 0$.
+          by_cases h' : i = 0
+          · contradiction
+          -- Otherwise, $i \neq 0$.
+          · exact h'
+        contradiction
+
+  -- From now on, we assume that $i,m$ and $o$ are positive integers.
+  simp at h₃
+  rw [h₃] at h₁
+  clear h₃
+
+  -- We have $i \leq 2001$, $m \leq 2001$, and $o \leq 2001$.
+  have h₄ : i ≤ 2001 ∧ m ≤ 2001 ∧ o ≤ 2001 := by
+    refine ⟨?_,?_,?_⟩
+    all_goals
+      calc
+        a ≤ a * m * o / a := by
+          rw [Nat.le_div_iff_mul_le (by omega)]
+          omega
+        _ = 2001 := by rw [h₁]
+  -- We also have $i \geq 1$, $m \geq 1$, and $o \geq 1$.
+  have h₅ : i ≥ 1 ∧ m ≥ 1 ∧ o ≥ 1 := by
+    refine ⟨?_,?_,?_⟩
+    all_goals
+      calc
+        a ≤ a * m * o / a := by
+          rw [Nat.le_div_iff_mul_le (by omega)]
+          omega
+        _ = 2001 := by rw [h₁]
+  have h₆ : 1 ≤ i := h₅.1
+  have h₇ : 1 ≤ m := h₅.1
+  have h₈ : 1 ≤ o := h₅.1
+
+  -- Notice that the largest prime factor of $2001$ is $23$.
+  have h₉ : ∀ a : ℕ, a ≤ 2001 → a ≠ 23 → 2 ∣ a ∨ 3 ∣ a ∨ a = 1 ∨ a = 23 := by
+    intro a h₁ h₂
+    -- We perform casework on whether $a$ is divisible by $3$ or not.
+    by_cases h₃ : 3 ∣ a
+    · have h₄ : 3 ∣ 2 ∨ 3 ∣ a^2 ∨ 3 ∣ 23 := by
+        refine Nat.prime_three.elim (by norm_num)?_ (by norm_num)
+        intro h₄
+        tauto
+      have h₅ : 3 ∣ 2 := by
+        tauto
+      omega
+    · -- Then, $a$ is not divisible by $3$.
+      -- We claim that $2 \mid a$.
+      have h₁₀ : 2 ∣ a := by
+        -- Assume that $a$ is not divisible by $2$.
+        by_contra! h₁₀
+        -- Then, $a$ is odd.
+        have h₁₁ : Odd a := by
+          exact Nat.not_even_iff_odd.mp h₁₀
+        -- And $a^2$ is odd.
+        have h₁₂ : Odd (a^2) := by
+          exact Odd.pow h₁₁
+        -- Which implies that $2 \nmid a^2$.
+        have h₁₃ : ¬ (2 ∣ a^2) := by
+          exact Odd.not_dvd_nat h₁₂
+        -- A contradiction.
+        tauto
+      tauto
+
+  -- Now, we will show that one of the following must be true: $2 \mid a$, $3 \mid a$, or $a = 1$.
+  have h₁₀ {a : ℕ} (h₁ : 1 ≤ a) (h₂ : a ≤ 2001) : 2 ∣ a ∨ 3 ∣ a ∨ a = 1 ∨ a = 23 := by
+    -- The proof is by contradiction.
+    by_contra! h
+    -- Assume that $2 \nmid a$, $3 \nmid a$, and $a \neq 1$, $a \neq 23$.
+    simp at h
+    -- Then, $a \geq 5$.
+    have h₁₁ : 5 ≤ a := by
+      by_contra!
+      have h₁₁ : a = 2 ∨ a = 3 ∨ a = 4 := by omega
+      rcases h₁₁ with (h₁₁ | h₁₁ | h₁₁)
+      · contradiction
+      · contradiction
+      · contradiction
+    -- And $a \leq 2000$.
+    have h₁₂ : a ≤ 2000 := by
+      omega
+    -- And $a$ is not divisible by $2$ or $3$.
+    have h₁₃ : a ≠ 2 ∨ a ≠ 3 := by
+      exact h.1
+    have h₁₄ : 2 ∤ a := by
+      by_contra!
+      tauto
+    have h₁₅ : 3 ∤ a := by
+      by_contra!
+      tauto
+    -- Now, we will show that $a$ is a prime number.
+    have h₁₆ : Nat.Prime a := by
+      -- We need to show that $a$ is not divisible by a prime less than or equal to $\sqrt{a}$.
+      apply Nat.prime_def_lt.mp
+      refine ⟨by linarith,?_⟩
+      intro b h₁ h₂ h₃
+      -- We do case analysis on whether $b$ is $2$ or 3.
+      by_cases h₄ : b = 2
+      · -- If $b = 2$, then, $a = 2 \cdot c$ for some $c$.
+        rw [h₄] at h₃
+        have h₅ : 2 ∣ a := by
+          exact Dvd.intro c h₃.symm
+        tauto
+      · -- If $b = 3$, then, $a = 3 \cdot c$ for some $c$.
+        by_cases h₅ : b = 3
+        · rw [h₅] at h₃
+          have h₆ : 3 ∣ a := by
+            exact Dvd.intro c h₃.symm
+          tauto
+        -- If $b \geq 5$, then, $a \geq 5

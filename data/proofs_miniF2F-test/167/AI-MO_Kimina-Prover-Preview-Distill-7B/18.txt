@@ -1,0 +1,247 @@
+-- Note 1: The problem statement is not correctly formalized in the theorem statement. The condition should probably be $0 < x_n < x_{n+1} < 1$ for every $n$.
+
+  -- We prove the theorem by showing that the sequence $x_n$ is strictly increasing and bounded by 1 if and only if $x_1 = 1 / y_1$, where $y_{n+1} = y_n (y_n + 1 / n)$ and $y_1 = 1 / x_1$. This is in fact the standard solution.
+
+  let y (n : ℕ) : NNReal := f n (1 / x) where x = 1 / (1 / y 1 + 1 / 1)
+  have y_zero_lt_one (n : ℕ) : 0 < y n ∧ y n < 1 := by
+    induction n with
+    | zero => simp [y]; exact ⟨h₀ (1 / (1 / y 1 + 1 / 1)), h₀ (1 / (1 / y 1 + 1 / 1))⟩
+    | succ n hn =>
+      have := h₁ (1 / y (n + 1)) n
+      simp [y] at this hn ⊢
+      rw [this]
+      suffices y n * (y n + 1 / n) < 1 by constructor <;> linarith
+      calc
+        _ < y n * (y n + 1 / n + 1 / n) := by gcongr
+        _ = y n * (y n + 1 / n + 1 / n) := by simp [h₁]
+        _ < _ := by nlinarith [hn.2, hn.1, show 0 < 1 / n by positivity]
+
+  -- Note 2: The sequence $x_n$ is strictly increasing and bounded by 1 if and only if $y_n$ is strictly increasing and bounded by $1 / x_1$.
+
+  have yMonotone : MonotoneOn y (Set.Ioi (1 / (1 / y 1 + 1 / 1))) := by
+    intro a ha b hb hab
+    simp [y] at ha hb
+    rcases ha with ⟨⟨ha, _⟩, ha'⟩
+    rcases hb with ⟨⟨hb, _⟩, hb'⟩
+    rw [show f (b + 1) (1 / a) = f b (1 / a) * (f b (1 / a) + 1 / b) by exact h₁ (1 / a) b]
+    nth_rw 2 [show f (b + 1) (1 / a) = f b (1 / a) * (f b (1 / a) + 1 / b) by exact h₁ (1 / a) b]
+    rw [show f b (1 / a) = f (b + 1) (1 / a) / (f b (1 / a) + 1 / b) by field_simp]
+    apply (div_le_div_iff (by positivity) (by positivity)).mpr
+    simp_rw [show f (b + 1) (1 / a) * (f b (1 / a) + 1 / b) = f (b + 1) (1 / a) * f b (1 / a) + 1 / b * f (b + 1) (1 / a) by ring]
+    nth_rw 2 [mul_comm]
+    apply add_le_add
+    exact mul_le_mul_of_nonneg_left ha' (show 0 ≤ f b (1 / a) by positivity)
+    exact mul_le_mul_of_nonneg_left hb' (show 0 ≤ f (b + 1) (1 / a) by positivity)
+
+  have yBounded : BoundedOn y (Set.Ioi (1 / (1 / y 1 + 1 / 1))) := by
+    intro a ha
+    simp [y] at ha
+    rcases ha with ⟨⟨ha, _⟩, ha'⟩
+    have := y_zero_lt_one (a + 1)
+    simp [y] at this
+    rcases this with ⟨ha''', _⟩
+    rw [show f (a + 1) (1 / y 1) = f a (1 / y 1) * (f a (1 / y 1) + 1 / a) by exact h₁ (1 / y 1) a]
+    nth_rw 2 [show f (a + 1) (1 / y 1) = f a (1 / y 1) * (f a (1 / y 1) + 1 / a) by exact h₁ (1 / y 1) a]
+    rw [show f a (1 / y 1) = f (a + 1) (1 / y 1) / (f a (1 / y 1) + 1 / a) by field_simp]
+    apply (div_le_div_iff (by positivity) (by positivity)).mpr
+    simp_rw [show f (a + 1) (1 / y 1) * (f a (1 / y 1) + 1 / a) = f (a + 1) (1 / y 1) * f a (1 / y 1) + 1 / a * f (a + 1) (1 / y 1) by ring]
+    nth_rw 2 [mul_comm]
+    apply add_le_add
+    exact mul_le_mul_of_nonneg_left ha'' (show 0 ≤ f a (1 / y 1) by positivity)
+    exact mul_le_mul_of_nonneg_left ha''' (show 0 ≤ f (a + 1) (1 / y 1) by positivity)
+
+  have ⟨b, ⟨hb, h*b⟩⟩ := MonotoneOn.exists_sInf yMonotone yBounded
+  use 1 / b
+  simp [y]
+  have := y_zero_lt_one b
+  refine ⟨?_,?_,?_⟩
+  · rcases this with ⟨_, h*b⟩
+    linarith
+  · rw [show f (b + 1) (1 / b) = f b (1 / b) * (f b (1 / b) + 1 / b) by exact h₁ (1 / b) b]
+    nth_rw 2 [show f (b + 1) (1 / b) = f b (1 / b) * (f b (1 / b) + 1 / b) by exact h₁ (1 / b) b]
+    rw [show f b (1 / b) = f (b + 1) (1 / b) / (f b (1 / b) + 1 / b) by field_simp]
+    apply (div_lt_div_iff (by positivity) (by positivity)).mpr
+    simp_rw [show f (b + 1) (1 / b) * (f b (1 / b) + 1 / b) = f (b + 1) (1 / b) * f b (1 / b) + 1 / b * f (b + 1) (1 / b) by ring]
+    nth_rw 2 [mul_comm]
+    apply add_lt_add
+    exact lt_of_le_of_lt h*b (this.1)
+    exact mul_lt_mul_of_pos_left this.2 (show 0 < b by positivity)
+  · simp_rw [show f (b + 1) (1 / b) * (f b (1 / b) + 1 / b) = f (b + 1) (1 / b) * f b (1 / b) + 1 / b * f (b + 1) (1 / b) by ring]
+    nth_rw 2 [show f (b + 1) (1 / b) = f b (1 / b) * (f b (1 / b) + 1 / b) by exact h₁ (1 / b) b]
+    rw [show f b (1 / b) = f (b + 1) (1 / b) / (f b (1 / b) + 1 / b) by field_simp]
+    apply (div_lt_div_iff (by positivity) (by positivity)).mpr
+    simp_rw [show f (b + 1) (1 / b) * (f b (1 / b) + 1 / b) = f (b + 1) (1 / b) * f b (1 / b) + 1 / b * f (b + 1) (1 / b) by ring]
+    nth_rw 2 [mul_comm]
+    apply add_lt_add
+    exact this.2
+    exact lt_of_le_of_lt h*b (this.1)
+
+  -- Note 3: The function $f(n, x)$ is continuous on $x$ for each fixed $n$.
+
+  have fContinuous (n : ℕ) : Continuous fun x ↦ f n x := by
+    induction n with
+    | zero => simp [h₀]
+    | succ n hn => continuity_iff.mpr ⟨hn, fun x hx ↦ h₁ x n⟩
+
+  -- Note 4: If $f(n, x)$ is continuous on $x$ for each fixed $n$, then the solution set of the equation $f(n, x) = c$ is closed for each $n$.
+
+  have fSolutionClosed (n : ℕ) (c : ℝ) : ContinuousOn (fun x ↦ f n x = c) (Icc 0 1) := by
+    apply ContinuousOn.eq_cases.2
+    simp [Set.h_rewrite, Set.Icc]
+    intro x hx
+    have := fContinuous n
+    exact fun a ha ↦ this (by rw [ha]; exact ⟨hx.1, hx.2⟩)
+
+  -- Note 5: If $f(n, x)$ is continuous on $x$ for each fixed $n$, then the frontier of the solution set of $f(n, x) < c$ is contained in the solution set of $f(n, x) = c$.
+
+  have fSolution.frontier_subset {n : ℕ} (c : ℝ) : ∂{x : Icc 0 1 | f n x < c} ⊆ {x : Icc 0 1 | f n x = c} := by
+    apply Set.Iccldiff_eq.1
+    rw [Set.subset_def]
+    intro x
+    simp
+    intro hx
+    intro ha
+    convert ha using 1
+    convert this (by rw [hx]; norm_num) (by rw [hx]; norm_num) (by rw [hx]; norm_num) using 1
+    simp [Set.Icc]
+    exact ⟨hx.1, hx.2⟩
+
+  -- Note 6: The solution set of $f(n, x) = 0$ is a subset of the solution set of $f(n + 1, x) = 0$.
+
+  have fSolution ↦ (s : Set (Icc 0 1)) (fSolution : s ⊆ {x : Icc 0 1 | f n x = 0}) :
+      s.subset {x : Icc 0 1 | f (n + 1) x = 0} := by
+    intro x hx
+    simp at hx
+    simp [Set.mem_Icc] at hx
+    have h := h₁ x n
+    rw [h]
+    rw [h]
+    simp
+    rw [mul_eq_zero]
+    exact Or.inl (by linarith)
+
+  -- Note 7: The solution set of $f(n, x) = 1$ is a subset of the solution set of $f(n + 1, x) = 1$.
+
+  have fSolution ↦ (s : Set (Icc 0 1)) (fSolution : s ⊆ {x : Icc 0 1 | f n x = 1}) :
+      s.subset {x : Icc 0 1 | f (n + 1) x = 1} := by
+    intro x hx
+    simp at hx
+    simp [Set.mem_Icc] at hx
+    have h := h₁ x n
+    rw [h]
+    rw [h]
+    simp
+    exact Or.inl (by linarith)
+
+  -- Note 8: The solution set of $f(1, x) = c$ is a subset of the solution set of $f(n, x) = c$.
+
+  have fSolution_mono (n : ℕ) (c : ℝ) (fSolution : {x : Icc 0 1 | f 1 x = c} ⊆ {x : Icc 0 1 | f n x = c}) : Set.Icc 0 1 ⊆ {x : Icc 0 1 | f n x = c} := by
+    intro x hx
+    simp at hx
+    simp [Set.mem_Icc] at hx
+    have h := h₁ x 1
+    rw [h]
+    simp
+    exact Or.inl (by linarith)
+
+  -- Note 9: The frontier of the solution set of $f(1, x) < c$ is contained in the solution set of $f(1, x) = c$.
+
+  have f1Solution.frontier_subset {c : ℝ} : ∂{x : Icc 0 1 | f 1 x < c} ⊆ {x : Icc 0 1 | f 1 x = c} := by
+    apply Set.Iccldiff_eq.1
+    rw [Set.subset_def]
+    intro x
+    simp
+    intro hx
+    intro ha
+    convert ha using 1
+    convert this (by rw [hx]; norm_num) (by rw [hx]; norm_num) (by rw [hx]; norm_num) using 1
+    simp [Set.Icc]
+    exact ⟨hx.1, hx.2⟩
+
+  -- Note 10: The solution set of $f(1, x) = c$ is compact.
+
+  have f1Solution.closure_compact : {x : Icc 0 1 | f 1 x = c}.closure.compact := by
+    have := isCompact_Icc
+    apply isCompact.closure.mono
+    exact this
+
+  -- Note 11: The solution set of $f(1, x) = c$ is closed and bounded.
+
+  have f1Solution.closure_bdd : {x : Icc 0 1 | f 1 x = c}.closure ⊆ Icc (inf {x : Icc 0 1 | f 1 x = c}.closure) (sup {x : Icc 0 1 | f 1 x = c}.closure) := by
+    apply Set.subset_Icc
+    apply isCompact.closure_subset
+    apply f1Solution.closure_compact
+
+  -- Note 12: The solution set of $f(1, x) = c$ is connected.
+
+  have f1Solution.closure connected := by
+    apply ContinuousOn.eq_cases.1
+    apply ContinuousOn.mono
+    apply isContinuousOn_id
+    apply f1Solution.continuousOn
+    intro x hx
+    simp at hx
+    simp [Set.mem_Icc] at hx
+    have h := h₁ x 1
+    rw [h]
+    simp
+    exact Or.inl (by linarith)
+
+  -- Note 13: The solution set of $f(1, x) = c$ has an empty frontiear.
+
+  have f1Solution.empty_frontier : ∂{x : Icc 0 1 | f 1 x = c} = ∅ := by
+    apply eq_empty_of_forall_not_mem
+    intro x
+    simp
+    simp at x
+    simp [Set.mem_Icc] at x
+    have h := h₁ x 1
+    rw [h]
+    simp
+    by_contra ha
+    exact linarith
+
+  -- Note 14: The solution set of $f(1, x) = c$ is either empty or connected.
+
+  have f1Solution.nonempty_iff connected: {x : Icc 0 1 | f 1 x = c} ≠ ∅ ↔ connected := by
+    constructor
+    · intro h
+      apply f1Solution.continuousOn
+      apply isContinuousOn_id
+      apply ContinuousOn.mono
+      apply ContinuousOn.eq_cases.1
+      exact h
+      intro x hx
+      simp at hx
+      simp [Set.mem_Icc] at hx
+      have h := h₁ x 1
+      rw [h]
+      simp
+      exact Or.inl (by linarith)
+    · intro h
+      exact h
+
+  -- Note 15: The solution set of $f(1, x) = c$ is either empty or the entire interval $(0, 1)$.
+
+  have f1Solution.eq_Icc : {x : Icc 0 1 | f 1 x = c} = Icc 0 1 ∨ {x : Icc 0 1 | f 1 x = c} = ∅ := by
+    by_cases h : {x : Icc 0 1 | f 1 x = c}.closure = Icc 0 1
+    · apply eq_of_subset_of_card_le
+      · apply subsetIcc_of_subset_Icc
+        apply h
+        intro x hx
+        simp at hx ⊢
+        exact ⟨hx.1, hx.2⟩
+      · rw [Set.card_eq_card_Icc]
+        exact le_of_eq h
+    · have ⟨p, q⟩ := Systemne.eq_or_eq_compl_of_not_eq h
+      have q_eq : {x : Icc 0 1 | f 1 x = c}.closure = Icc 0 1 \ {x : Icc 0 1 | f 1 x = c} := by
+        exact Systemne.compl_eq_compl p
+      have h2 : {x : Icc 0 1 | f 1 x = c} = Icc 0 1 \ {x : Icc 0 1 | f 1 x = c} := by
+        rw [← Systemne.compl_eq_compl p]
+        apply Eq.symm
+        apply Set.closure_eq_compl.mpr
+        apply Set.compl_subset
+        rw [Set.compl_subset_iff]
+        exact fun x => h x (by simp)
+      simp_rw [h2, Systemne.compl_eq_compl p]
+      exact Or.inr (by simp [Set.com

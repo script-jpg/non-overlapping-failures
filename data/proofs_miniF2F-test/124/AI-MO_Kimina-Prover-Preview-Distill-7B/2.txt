@@ -1,0 +1,196 @@
+-- Let $x$ be the maximum of $|a|$ and $|b|$.
+  let x := max (|a|) (|b|)
+
+  -- Let $y$ be the maximum of $|a+b|$ and $|a-b|$.
+  let y := max (|a + b|) (|a - b|)
+
+  have h1 : abs (a + b) ≤ y := by
+    simp [y]
+    exact max_le_max_left (|a + b|) (|a - b|)
+
+  have h2 : abs a ≤ x := by
+    simp [x]
+    exact le_max_left (|a|) (|b|)
+
+  have h3 : abs b ≤ x := by
+    simp [x]
+    exact le_max_right (|a|) (|b|)
+
+  -- It suffices to prove that $\frac{x}{1+x}\leq \frac{y}{1+y}$.
+  suffices h : x / (1 + x) ≤ y / (1 + y) by
+    have h4 : 1 + y ≠ 0 := by
+      suffices 1 + y > 0 by linarith
+      apply add_pos
+      norm_num
+      apply abs_nonneg
+    have h5 : 1 + x ≠ 0 := by
+      suffices 1 + x > 0 by linarith
+      apply add_pos
+      norm_num
+      apply abs_nonneg
+    field_simp at h4 h5
+    field_simp
+    convert h
+    · rw [max_eq_left_iff]
+      apply le_trans h1
+      apply le_trans (le_max_right (|a + b|) (|a - b|))
+      norm_num
+    · rw [max_eq_left_iff]
+      apply le_trans h1
+      apply le_trans (le_max_right (|a + b|) (|a - b|))
+      norm_num
+
+  -- We have $y^2-x^2=(a+b)^2-(a^2+b^2)=2ab$.
+  have h6 : y^2 - x^2 = 2 * a * b := by
+    simp [y, x]
+    ring_nf
+    rw [sq_abs a, sq_abs b, sq_abs (a + b), sq_abs (a - b)]
+    ring_nf
+
+  -- We have $2ab\leq 2x^2$.
+  have h7 : 2 * a * b ≤ 2 * x ^ 2 := by
+    apply le_of_sub_nonpos
+    calc
+      y ^ 2 - x ^ 2 = 2 * a * b := h6
+      _ ≤ 2 * x ^ 2 := by
+        rw [mul_comm]
+        apply two_mul_le_add_sq
+        rw [← pow_le_pow_iff_left₀ (by norm_num)]
+        exact le_max_left (|a + b|) (|a - b|)
+
+  -- We have $y\geq 0$.
+  have h8 : y ≥ 0 := by
+    apply abs_nonneg
+
+  -- We have $y^2 \geq 0$.
+  have h9 : y^2 ≥ 0 := by
+    apply sq_nonneg
+
+  -- We have $y^2 - x^2\leq y^2$.
+  have h10 : y^2 - x^2 ≤ y^2 := by
+    linarith
+
+  -- We have $x^2\geq 0$.
+  have h11 : x^2 ≥ 0 := by
+    apply sq_nonneg
+
+  -- We have $1+y^2\neq 0$.
+  have h12 : 1 + y^2 ≠ 0 := by
+    suffices 1 + y^2 > 0 by linarith
+    apply add_pos
+    norm_num
+    apply sq_pos_of_pos
+    apply abs_pos
+    by_contra!
+    rw [abs_eq_zero] at this
+    rw [this] at h8
+    linarith
+
+  -- We have $1+xy-x\leq 1+xy$.
+  have h13 : 1 + x * y - x ≤ 1 + x * y := by
+    linarith
+
+  -- We have $1+xy\neq 0$.
+  have h14 : 1 + x * y ≠ 0 := by
+    suffices 1 + x * y > 0 by linarith
+    apply add_pos
+    norm_num
+    apply mul_nonneg
+    apply le_trans h2
+    apply le_trans h3
+    apply abs_nonneg
+    apply le_trans h8
+    apply le_max_right
+    apply abs_nonneg
+
+  -- It suffices to prove that $\frac{y^2-x^2}{y^2}\leq \frac{1+x^2}{1+xy-x}$.
+  suffices h15 : (y ^ 2 - x ^ 2) / y^2 ≤ (1 + x ^ 2) / (1 + x * y - x)  by
+    have h16 : (1 + x ^ 2) / (1 + x * y - x) = (1 + x) * (1 + x * y - x) / (1 + x) / (1 + x * y - x) := by
+      rw [mul_div_cancel_left₀]
+      apply ne_of_gt
+      apply add_pos
+      norm_num
+      apply pow_pos
+      apply le_trans h2
+      apply le_trans h3
+      apply abs_nonneg
+      apply le_trans h8
+      apply le_max_right
+      apply abs_nonneg
+    have h17 : (1 + x) * (1 + x * y - x) / (1 + x) / (1 + x * y - x) = x / (1 + x) / (1 + x * y - x) := by
+      rw [div_eq_mul_inv, mul_div_assoc, ← mul_assoc, inv_mul_cancel₀]
+      · ring
+      · apply ne_of_gt
+        apply add_pos
+        norm_num
+        apply pow_pos
+        apply le_trans h2
+        apply le_trans h3
+        apply abs_nonneg
+        apply le_trans h8
+        apply le_max_right
+        apply abs_nonneg
+      · exact h14
+    have h18 : x / (1 + x) / (1 + x * y - x) ≤ x / (1 + x) := by
+      apply div_le_div_iff₀
+      · exact h13
+      · exact h14
+      · exact le_of_lt (h12)
+      · exact h14
+    have h19 : (y ^ 2 - x ^ 2) / y^2 = 2 * a * b / y^2 := by
+      simp [h6]
+    have h20 : (1 + x ^ 2) / (1 + x * y - x) = 2 * a * b / (1 + x * y - x) := by
+      rw [h16, h17, h19, h6]
+      ring
+    rw [h20]
+    apply h15
+    rw [h19]
+    exact h6
+    exact h12
+    exact h14
+    exact h12
+
+  -- It suffices to prove that $\frac{1+y^2}{y^2}\leq \frac{(1+x)^2}{1+2xy}$.
+  suffices h15 : (1 + y^2)/y^2 ≤ (1+x^2)/(1+2*x*y)  by
+    have h16 : (1 + y^2)/y^2 = (1 + y)^2 / y^2 := by
+      ring_nf
+      rw [sq_abs]
+      ring
+    have h17 : (1 + x ^ 2) / (1 + 2 * x * y) = (1 + x) ^ 2 / (1 + x * y - x) := by
+      have h17 : 1 + x * y - x = 1 + 2 * x * y - x^2 := by
+        linarith
+      rw [h17]
+      ring_nf
+      rw [sq_abs]
+      ring
+      have h18 : 1 + x * y - x > 0 := by
+        apply sub_pos_of_lt
+        exact h14
+      have h19 : 1 + 2 * x * y > 0 := by
+        apply sub_pos_of_lt
+        apply lt_of_lt_of_le h18
+        linarith [sq_nonneg (x - y)]
+      field_simp
+      linarith
+    rw [h16, h17]
+    exact h15
+
+  -- It suffices to prove that $\frac{1+x^2}{1+2xy}\leq \frac{1+x^2}{1+x^2}$.
+  suffices h17 : (1 + x ^ 2) / (1 + 2 * x * y) ≤ (1 + x ^ 2) / (1 + x^2)  by
+    apply div_le_div_iff₀
+    · exact h15
+    · exact h14
+    · exact h12
+    · exact h12
+  -- It suffices to prove that $1+x^2\leq 1+2xy$.
+  suffices h18 : 1 + x ^ 2 ≤ 1 + 2 * x * y by
+    exact h18
+  -- By the AM-GM inequality, $2xy\geq x^2+y^2-2$.
+  have h19 : 2 * x * y ≥ x^2 + y^2 - 2 := by
+    apply sub_le_of_le_add
+    apply two_mul_le_add_sq
+    apply le_trans h9
+    apply sq_nonneg
+  linarith
+
+```

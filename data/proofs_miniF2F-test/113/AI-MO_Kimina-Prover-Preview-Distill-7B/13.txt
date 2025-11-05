@@ -1,0 +1,67 @@
+-- The key fact we need is that $\int_{1}^{n} \frac{1}{\sqrt{x}} dx = 2\sqrt{n} - 2$.
+  have integral_eq (n : ℝ) : ∫ x in (1 : ℝ)..n, 1 / Real.sqrt x = 2 * Real.sqrt n - 2 := by
+    -- This is proved by `norm_num` and fundamental theorem of calculus.
+    have : 1 = (1 : ℝ) := rfl
+    rw [this]
+    have : 1 / Real.sqrt = (fun x => 1 / Real.sqrt x) := by ext x; rfl
+    rw [this]
+    have : ∫ x in (1 : ℝ)..n, 1 / Real.sqrt x = 2 * Real.sqrt n - 2 - (2 * Real.sqrt 1 - 2) := by
+      calc
+        ∫ x in (1 : ℝ)..n, 1 / Real.sqrt x = ∫ x in (1 : ℝ)..n, 1 / Real.sqrt x - (2 * Real.sqrt 1 - 2) + (2 * Real.sqrt 1 - 2) := by ring
+        _ = 2 * Real.sqrt n - 2 - (2 * Real.sqrt 1 - 2) := by
+          rw [←sub_sub]
+          apply integral_sub_const
+          simp
+    rw [this]
+    have : Real.sqrt 1 = (1 : ℝ) := Real.sqrt_one
+    rw [this]
+    ring
+
+  -- We also need an auxilary lemma that $a < \int_{a-1}^{a} f(x) dx + f(a) \cdot \frac{1}{2}$.
+  have integral_add_f_a {a : ℝ} (f : ℝ → ℝ) (hf : ∀ x, a - 1 ≤ x ∧ x ≤ a → 0 ≤ f x) : a < ∫ x in (a - 1 : ℝ)..a, f x + f a * (1 / 2) := by
+    -- This is proved by fundamental theorem of calculus and mean value theorem.
+    have : ∫ x in (a - 1 : ℝ)..a, f x + f a * (1 / 2) = ∫ x in (a - 1 : ℝ)..a, f x + ∫ x in (a - 1 : ℝ)..a, f a * (1 / 2) := by
+      rw [Finset.Icc_eq_cons_Ioc]
+      rw [Finset.Icc_eq_cons_Ioc]
+      congr
+      ext x
+      rcases lt_or_eq_of_le hx with hx | hx
+     . simp
+        apply hf
+        constructor
+       . exact hx
+       . linarith
+     . simp
+        rw [hx]
+        simp
+    rw [this]
+    nth_rw 1 [←integral_eq a]
+    nth_rw 2 [←integral_eq (a - 1)]
+    rw [sub_eq_iff_eq_add, ←sub_sub]
+    apply integral_sub_const
+    intro x hx
+    linarith [hf x ⟨by linarith, by linarith⟩]
+
+  -- Now we start the proof.
+  -- First, we rewrite the summation as a Riemann integral.
+  have integral_eq : ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k = ∫ x in (1 : ℝ)..10000, 1 / Real.sqrt x := by
+    -- This is proved by fundamental theorem of calculus.
+    rw [Finset.sum_Icc_eq_sum_range_sub]
+    rw [Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ]
+    simp
+    rw [←integral_eq]
+    congr
+    norm_num
+    norm_num
+
+  -- We prove that $198 < \int_{1}^{10000} \frac{1}{\sqrt{x}} dx + \frac{1}{2} \cdot \left(\frac{1}{\sqrt{10000}}\right)$.
+  have integral_lt : 198 < ∫ x in (1 : ℝ)..10000, 1 / Real.sqrt x + (1 / Real.sqrt 10000) * (1 / 2) := by
+    -- This is proved by `norm_num` and fundamental theorem of calculus.
+    rw [integral_eq]
+    rw [integral_eq]
+    norm_num
+
+  -- By the previous fact and our key lemma `integral_add_f_a`, we can close the proof.
+  linarith
+
+```

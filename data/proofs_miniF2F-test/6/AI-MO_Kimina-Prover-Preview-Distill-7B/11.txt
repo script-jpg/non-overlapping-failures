@@ -1,0 +1,82 @@
+-- some auxilary items
+  have h₄ : ∀ i ∈ Finset.range k, Real.cos (a i + m) / 2 ^ i = 0 := by
+    intro i hi
+    calc
+      Real.cos (a i + m) / 2 ^ i = y m |>.toFinset i / 2 ^ i := by rw [h₁]
+      _ = 0 / 2 ^ i := by rw [h₂]
+      _ = 0 := by ring
+  have h₅ : ∀ i ∈ Finset.range k, Real.cos (a i + n) / 2 ^ i = 0 := by
+    intro i hi
+    calc
+      Real.cos (a i + n) / 2 ^ i = y n |>.toFinset i / 2 ^ i := by rw [h₁]
+      _ = 0 / 2 ^ i := by rw [h₃]
+      _ = 0 := by ring
+
+  -- main part
+  have h₆ : ∀ i ∈ Finset.range k, Real.cos (a i + m) = Real.cos (a i + n + (m - n)) := by
+    intro i hi
+    calc
+      Real.cos (a i + m) = Real.cos (a i + m - (m - n) + (m - n)) := by ring_nf
+      _ = Real.cos (a i + m - (m - n) + (m - n)) := by exact Eq.symm (Real.cos_add_two_pi (a i + m - (m - n)))
+      _ = Real.cos (a i + n + (m - n)) := by ring_nf
+  have h₇ : ∀ i ∈ Finset.range k, Real.cos (a i + n + (m - n)) = Real.cos (a i + n) := by
+    intro i hi
+    calc
+      Real.cos (a i + n + (m - n)) = Real.cos (a i + n - (m - n) + (m - n)) := by ring_nf
+      _ = Real.cos (a i + n - (m - n) + (m - n)) := by exact Eq.symm (Real.cos_add_two_pi (a i + n - (m - n)))
+      _ = Real.cos (a i + n) := by ring_nf
+
+  -- simplify
+  have h₈ : ∀ i ∈ Finset.range k, Real.cos (a i + m) = Real.cos (a i + n) := by
+    intro i hi
+    rw [h₆ i hi, h₇ i hi]
+
+  have h₉ : ∃ x ∈ Finset.range k, Real.cos (a x + m) ≠ 0 ∨ Real.cos (a x + n) ≠ 0 := by
+    by_contra! h
+    -- assume that ∀ x ∈ Finset.range k, Real.cos (a x + m) = Real.cos (a x + n) = 0
+    -- then ∑ i ∈ Finset.range k, Real.cos (a i + m) = ∑ i ∈ Finset.range k, Real.cos (a i + n) = 0
+    have h₁₀ : y m = 0 := by
+      rw [h₁]
+      apply Finset.sum_eq_zero
+      intro i _
+      rw [h]
+      simp
+    have h₁₁ : y n = 0 := by
+      rw [h₁]
+      apply Finset.sum_eq_zero
+      intro i _
+      rw [h]
+      simp
+    -- but we have already known that y m = y n = 0, so this statement is really true
+    exact ⟨h₂, h₃⟩
+  obtain ⟨i, hi, h₁₀⟩ := h₉
+
+  -- so we have Real.cos (a i + m) = Real.cos (a i + n) ≠ 0
+  -- and from h₈ we know that for all i ∈ Finset.range k, Real.cos (a i + m) = Real.cos (a i + n)
+  -- therefore Real.cos (a i + m) = Real.cos (a i + n) ≠ 0
+  have h₁₁ : Real.cos (a i + m) = Real.cos (a i + n) := by
+    by_cases! h : Real.cos (a i + m) = 0
+    · rw [h] at h₁₀
+      tauto
+    · have h' := h₈ i hi
+      rw [h] at h'
+      tauto
+
+  -- since Real.cos (a i + m) = Real.cos (a i + n) ≠ 0, we have a i + m = a i + n + 2 * ↑k * π ∨ a i + m = - (a i + n) + 2 * ↑k * π
+  have h₁₂ : a i + m = a i + n + 2 * ↑k * Real.pi ∨ a i + m = - (a i + n) + 2 * ↑k * Real.pi := by
+    apply Real.cos_eq_cos_iff.1
+    · exact h₁₁
+    · exact h
+  cases' h₁₂ with h₁₂ h₁₂
+  · -- if a i + m = a i + n + 2 * ↑k * π, then m = n + 2 * ↑k * π
+    have h₁₃ : m = n + 2 * ↑k * Real.pi := by linarith
+    use 2 * ↑k
+    rw [h₁₃]
+    ring
+  · -- if a i + m = - (a i + n) + 2 * ↑k * π, then m = - a i + n + 2 * ↑k * π
+    have h₁₃ : m = - a i + n + 2 * ↑k * Real.pi := by linarith
+    use -2 * ↑k
+    rw [h₁₃]
+    ring
+
+```

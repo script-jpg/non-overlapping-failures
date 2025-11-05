@@ -1,0 +1,90 @@
+-- First, we need to establish that m and n are irrational since they are cube roots of non-perfect cubes
+  have h4 : Irrational m := by
+    -- Prove that m is irrational by contradiction. Assume m is rational and derive a contradiction.
+    have h4 : Irrational (m ^ (1 / 3 : ℝ)) := by
+      rw [←h₁]
+      apply irrational_sqrt_natCast_of_ne_sq
+      use 2
+      simp
+    -- Since m^(1/3) is irrational, m itself is irrational because it's the cube of an irrational number
+    rw [←irrational_pow_iff h4 (show 0 < (1 / 3 : ℝ) by norm_num)]
+    norm_cast
+  have h5 : Irrational n := by
+    -- Similar proof as above, but for n
+    have h5 : Irrational (n ^ (1 / 3 : ℝ)) := by
+      rw [←h₂]
+      apply irrational_sqrt_natCast_of_ne_sq
+      use 4
+      simp
+    -- Since n^(1/3) is irrational, n itself is irrational
+    rw [←irrational_pow_iff h5 (show 0 < (1 / 3 : ℝ) by norm_num)]
+    norm_cast
+
+  -- Now we need to show that a = b = c = 0
+  -- We have a + b*m + c*n = 0, with a, b, c rational and m, n irrational
+  -- If b ≠ 0 or c ≠ 0, then we can express m or n as a linear combination of a, b, c with rational coefficients, which would contradict their irrationality
+  have h6 : a = 0 := by
+    -- Assume for contradiction that a ≠ 0
+    by_contra ha
+    -- Then we can write m = - (a + c*n)/b, which would mean m is rational
+    have hb : b ≠ 0 := by
+      by_contra hb
+      simp [hb] at h₃
+      have hc : c ≠ 0 := by
+        by_contra hc
+        simp [hc] at h₃
+        contradiction
+      -- If b = 0, then a + c*n = 0, so n = -a/c, which would mean n is rational
+      have : n = (-a / c : ℝ) := by
+        field_simp [h₃]
+        simp [hc]
+      rw [this] at h5
+      exact h5 (by norm_num)
+    -- Similarly, if c ≠ 0, then n = - (a + b*m)/c, which would mean n is rational
+    have hc : c ≠ 0 := by
+      by_contra hc
+      simp [hc] at h₃
+      have hb : b ≠ 0 := by
+        by_contra hb
+        simp [hb] at h₃
+        contradiction
+      -- If c = 0, then a + b*m = 0, so m = -a/b, which would mean m is rational
+      have : m = (-a / b : ℝ) := by
+        field_simp [h₃]
+        simp [hb]
+      rw [this] at h4
+      exact h4 (by norm_num)
+    -- But we have a + b*m + c*n = 0, which means a = - b*m - c*n
+    -- If b ≠ 0 or c ≠ 0, then m or n would be rational, which contradicts our earlier results
+    have : (a : ℝ) = -b * m - c * n := by linarith
+    rw [this] at h4
+    exact h4 (by norm_num)
+
+  have hab : b = 0 := by
+    -- Now that we have a = 0, the equation simplifies to b*m + c*n = 0
+    simp [h6] at h₃
+    by_contra hb
+    -- If b ≠ 0, then m = - c*n/b, which would mean m is rational
+    have hc : c ≠ 0 := by
+      by_contra hc
+      simp [hc] at h₃
+      simp [hb] at h₃
+      contradiction
+    have : n = (-b / c : ℝ) := by
+      field_simp [h₃]
+      simp [hc]
+    rw [this] at h5
+    exact h5 (by norm_num)
+
+  -- Finally, with b = 0, the equation becomes c*n = 0, and since c ≠ 0, n would be rational
+  have hac : c = 0 := by
+    simp [hab] at h₃
+    by_contra hc
+    have : n = (0 : ℝ) := by linarith
+    rw [this] at h5
+    exact h5 (by norm_num)
+
+  -- Therefore, we conclude that a = b = c = 0
+  exact ⟨h6, hab, hac⟩
+
+```

@@ -1,0 +1,46 @@
+obtain ⟨h₀a, h₀b⟩ := h₀
+
+  -- The arithmetic mean of $a$ and $b$ is greater than or equal to the geometric mean of $a$ and $b$.
+  have h2 : (a + b) / 2 - Real.sqrt (a * b) ≤ (a - b) ^ 2 / (8 * a) := by
+    -- It is sufficient to prove that $(a + b) / 2 \leq (a - b) ^ 2 / (8 * a) + \sqrt{a * b}$.
+    suffices (a + b) / 2 ≤ (a - b) ^ 2 / (8 * a) + Real.sqrt (a * b) by linarith
+    -- It is equivalent to prove $(a + b) / 2 \leq \frac{(a-b)^2 + 4a\sqrt{ab}}{8a}$.
+    suffices (a + b) / 2 ≤ ((a - b) ^ 2 + 4 * a * Real.sqrt (a * b)) / (8 * a) by
+      have : (a - b) ^ 2 + 4 * a * Real.sqrt (a * b) = (a - b) ^ 2 + 2 * a * (2 * Real.sqrt (a * b)) := by ring
+      rw [this]
+      -- It is sufficient to prove $(a + b) / 2 \leq \frac{(a-b)^2 + 2a(2\sqrt{ab})}{8a}$, because $2\sqrt{ab} \geq \sqrt{ab}$.
+      suffices (a + b) / 2 ≤ ((a - b) ^ 2 + 2 * a * Real.sqrt (a * b)) / (8 * a) by linarith
+      apply (div_le_div_iff₀ (by positivity) (by positivity)).mpr
+      -- It is sufficient to prove $16a(a + b) \leq (a-b)^2 + 2a(2\sqrt{ab})$.
+      suffices 16 * a * ((a + b) / 2) ≤ (a - b) ^ 2 + 2 * a * Real.sqrt (a * b) by
+        convert this using 1
+        · ring
+        · ring
+      -- It is sufficient to prove $(2\sqrt{a} - \sqrt{b})^2 \geq 0$.
+      suffices (2 * Real.sqrt a - Real.sqrt b) ^ 2 ≥ 0 by
+        linarith
+      apply sq_nonneg
+    -- $\frac{(a-b)^2}{8a} + \sqrt{ab}$ is greater than or equal to $\frac{a + 3b}{4}$.
+    have h3 : ((a - b) ^ 2 + 4 * a * Real.sqrt (a * b)) / (8 * a) ≥ (a + 3 * b) / 4 := by
+      -- It is equivalent to prove $(a - b)^2 + 4a\sqrt{ab} \geq 2a(a + 3b)$.
+      suffices (a - b) ^ 2 + 4 * a * Real.sqrt (a * b) ≥ 2 * a * (a + 3 * b) by
+        apply (le_div_iff₀ (by positivity)).mpr
+        linarith
+      -- It is sufficient to prove $(\sqrt{a} - \sqrt{3b})^2 \geq 0$.
+      suffices (Real.sqrt a - Real.sqrt (3 * b)) ^ 2 ≥ 0 by
+        ring_nf at this ⊢
+        linarith
+      apply sq_nonneg
+    -- It is sufficient to prove $(a + b) / 2 \leq \frac{a + 3b}{4}$.
+    suffices (a + b) / 2 ≤ (a + 3 * b) / 4 by linarith
+    -- It is equivalent to prove $6b \leq a + 3b$, or $b \leq a$.
+    suffices 6 * b ≤ a + 3 * b by linarith
+    linarith
+  -- Using the fact that $b \leq a$, we can prove that $\frac{a + b}{2} - \sqrt{ab} \leq \frac{(a - b)^2}{8b}$.
+  calc
+    (a + b) / 2 - Real.sqrt (a * b) ≤ (a - b) ^ 2 / (8 * a) := h2
+    _ ≤ (a - b) ^ 2 / (8 * b) := by
+      -- It is sufficient to prove that $a \leq b$.
+      gcongr
+      linarith
+```

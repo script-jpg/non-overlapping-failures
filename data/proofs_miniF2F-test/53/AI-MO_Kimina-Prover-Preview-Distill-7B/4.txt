@@ -1,0 +1,97 @@
+-- Using the Euclidean algorithm to compute the GCD of the two expressions
+  -- First, we rewrite the GCD in terms of a congruence relation
+  have h1 : Nat.gcd (21 * n + 4) (14 * n + 3) = Nat.gcd (14 * n + 3) (7 * n + 1) := by
+    rw [Nat.gcd_sub_self_left, Nat.add_sub_cancel_left]
+    -- Show that 7 * n + 1 is the remainder of (21 * n + 4) divided by (14 * n + 3)
+    have h1 : 21 * n + 4 = (14 * n + 3) * 1 + (7 * n + 1) := by
+      linarith
+    rw [h1]
+    -- Ensure the remainder is smaller than the divisor
+    have h2 : 7 * n + 1 < 14 * n + 3 := by
+      linarith
+    rw [h2]
+  -- Apply the Euclidean algorithm again
+  have h2 : Nat.gcd (14 * n + 3) (7 * n + 1) = Nat.gcd (7 * n + 1) (0 * n + 2) := by
+    rw [Nat.gcd_sub_self_left, Nat.add_sub_cancel_left]
+    -- Show that 2 is the remainder of (14 * n + 3) divided by (7 * n + 1)
+    have h2 : 14 * n + 3 = (7 * n + 1) * 2 + (0 * n + 2) := by
+      linarith
+    rw [h2]
+    -- Ensure the remainder is smaller than the divisor
+    have h3 : 0 * n + 2 < 7 * n + 1 := by
+      linarith
+    rw [h3]
+  -- Finally, we reach a remainder of 2, which is a constant
+  have h3 : Nat.gcd (7 * n + 1) (0 * n + 2) = Nat.gcd (0 * n + 2) (7 * n + 1 % 2) := by
+    rw [Nat.gcd_sub_self_left, Nat.add_sub_cancel_left]
+    -- Show that 7 * n + 1 % 2 is the remainder of (7 * n + 1) divided by 2
+    have h3 : 7 * n + 1 = (0 * n + 2) * (3 * n) + (7 * n + 1 % 2) := by
+      have : 7 * n + 1 % 2 = 7 * n + 1 - 2 * (3 * n) := by
+        rw [Nat.div_add_mod]
+        have : 7 * n + 1 - 2 * (3 * n) < 2 := by
+          linarith
+        omega
+      rw [this]
+      linarith
+    rw [h3]
+    -- Ensure the remainder is smaller than the divisor
+    have h4 : 7 * n + 1 % 2 < 0 * n + 2 := by
+      have : 7 * n + 1 % 2 < 2 := by
+        linarith
+      have : 0 * n + 2 ≥ 2 := by
+        omega
+      linarith
+    rw [h4]
+  have h4 : Nat.gcd (0 * n + 2) (7 * n + 1 % 2) = Nat.gcd (7 * n + 1 % 2) (0 * n + 2 % (7 * n + 1 % 2)) := by
+    rw [Nat.gcd_sub_self_left, Nat.add_sub_cancel_left]
+    -- Show that 0 * n + 2 % (7 * n + 1 % 2) is the remainder of (0 * n + 2) divided by (7 * n + 1 % 2)
+    have h4 : 0 * n + 2 = (7 * n + 1 % 2) * 0 + (0 * n + 2 % (7 * n + 1 % 2)) := by
+      simp only [mul_zero, zero_add]
+    rw [h4]
+    -- Ensure the remainder is smaller than the divisor
+    have h5 : 0 * n + 2 < 7 * n + 1 % 2 := by
+      have : 0 * n + 2 < 7 * n + 1 := by
+        linarith
+      have : 7 * n + 1 % 2 ≤ 7 * n + 1 := by
+        apply Nat.mod_le
+      linarith
+    rw [h5]
+  have h5 : Nat.gcd (7 * n + 1 % 2) (0 * n + 2 % (7 * n + 1 % 2)) = 1 := by
+    -- Since the second parameter is the remainder of a constant (2) divided by an expression (7 * n + 1 % 2), and the first parameter is that expression, the GCD must be a divisor of 2.
+    -- Therefore, it can only be 1 or 2. We prove it must be 1 by showing that the expression is odd.
+    have h5 : 2 ∣ (7 * n + 1 % 2) := by
+      have : 2 ∣ 2 := by
+        exact Nat.dvd_of_mod_eq_zero rfl
+      rw [← this]
+      exact Nat.dvd_trans (Nat.dvd_add rfl) (Nat.dvd_mul_right _ _)
+    have h6 : Odd (7 * n + 1 % 2) := by
+      have h6 : 7 * n + 1 % 2 = 1 ∨ 7 * n + 1 % 2 = 2 := by
+        have : 7 * n + 1 % 2 < 2 := by
+          apply Nat.mod_lt
+          exact Nat.zero_lt_two
+        omega
+      rcases h6 with (h6 | h6)
+      · rw [h6]
+        use 0
+        ring
+      · rw [h6]
+        use 1
+        ring
+    have h7 : Nat.gcd (7 * n + 1 % 2) (0 * n + 2 % (7 * n + 1 % 2)) < 2 := by
+      have : 0 * n + 2 % (7 * n + 1 % 2) < 7 * n + 1 % 2 := by
+        have h7 : 0 * n + 2 < 7 * n + 1 % 2 := by
+          have : 0 * n + 2 < 7 * n + 1 := by
+            linarith
+          have : 7 * n + 1 % 2 ≤ 7 * n + 1 := by
+            apply Nat.mod_le
+          linarith
+        apply Nat.mod_lt
+        exact Nat.zero_lt_of_lt h7
+      apply Nat.lt_of_le_of_lt (Nat.gcd_le_right _)
+      rw [Nat.dvd_iff_mod_eq_zero] at h5
+      exact h5.symm.trans (by omega)
+    interval_cases (Nat.gcd (7 * n + 1 % 2) (0 * n + 2 % (7 * n + 1 % 2)))
+    · exact h6
+    · contradiction
+  rw [h1, h2, h3, h4, h5]
+```

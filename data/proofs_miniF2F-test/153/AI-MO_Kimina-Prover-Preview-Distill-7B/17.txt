@@ -1,0 +1,394 @@
+-- We have $\frac{(2^t-3t)t}{4^t} = \frac{t}{2^t} \cdot \left(1 - \frac{3t}{2^t}\right)$.
+  have : (2 ^ t - 3 * t) * t / 4 ^ t = (t / 2 ^ t) * (1 - (3 * t / 2 ^ t)) := by
+    field_simp
+    ring
+  rw [this]
+
+  -- Let $f(t) = \frac{t}{2^t}$. Then, $f'(t) = \frac{1 - \ln(2) \cdot t}{4^t}$.
+  let f (t : ℝ) := t / 2 ^ t
+  have hf' (t : ℝ) : deriv f t = (1 - Real.logbE 2 * t) / 4 ^ t := by
+    rw [deriv_div (differentiableAt_id) (by
+      intro x
+      apply DifferentiableAt.const_mul (by simp)
+      apply differentiableAt_id)]
+    simp only [deriv_id'', deriv_const, deriv_pow, deriv_mul, deriv_id'', mul_one,
+      mul_comm, ← mul_assoc, mul_div, and_imp]
+    rw [mul_comm, Real.deriv_logbE]
+    field_simp
+    ring
+
+  -- Let $g(t) = 1 - \frac{3t}{2^t}$. Then, $g'(t) = -\frac{3(1 - \ln(2) \cdot t)}{4^t}$.
+  let g (t : ℝ) := 1 - (3 * t / 2 ^ t)
+  have hg' (t : ℝ) : deriv g t = - (3 * (1 - Real.logbE 2 * t)) / 4 ^ t := by
+    rw [deriv_sub (differentiableAt_const 1) (by
+      intro x
+      apply DifferentiableAt.const_mul (by simp)
+      apply differentiableAt_id)]
+    simp only [deriv_id'', deriv_const, deriv_pow, deriv_mul, deriv_id'', mul_one,
+      mul_comm, ← mul_assoc, mul_div, and_imp]
+    rw [mul_comm, Real.deriv_logbE]
+    field_simp
+    ring
+
+  -- We have $f'(t) > 0$ when $t < \frac{1}{\ln(2)}$ and $f'(t) < 0$ when $t > \frac{1}{\ln(2)}$.
+  have hf_pos : ∀ t, 0 < t / 2 ^ t → 1 < Real.logbE 2 * t := by
+    intros t ht
+    have : 0 < t / 2 ^ t := ht
+    by_contra! ht'
+    have : 1 ≥ Real.logbE 2 * t := by
+      calc
+        1 = Real.logbE 2 := by
+          rw [Real.logbE_eq_one]
+        _ ≥ Real.logbE 2 * t := by
+          apply (mul_le_mul_right (by apply Real.logbE_pos)).mpr ht'
+    linarith
+
+  have hf_neg : ∀ t, t / 2 ^ t < 0 → 1 > Real.logbE 2 * t := by
+    intros t ht
+    have : t / 2 ^ t < 0 := ht
+    by_contra! ht'
+    have : 1 ≤ Real.logbE 2 * t := by
+      calc
+        1 = Real.logbE 2 := by
+          rw [Real.logbE_eq_one]
+        _ ≤ Real.logbE 2 * t := by
+          apply (mul_le_mul_right (by apply Real.logbE_pos)).mpr ht'
+    linarith
+
+  -- We have $g'(t) > 0$ when $t < \frac{1}{\ln(2)}$ and $g'(t) < 0$ when $t > \frac{1}{\ln(2)}$.
+  have hg_pos : ∀ t, 0 < 1 - (3 * t / 2 ^ t) → 1 < Real.logbE 2 * t := by
+    intros t ht
+    have : 0 < 1 - (3 * t / 2 ^ t) := ht
+    by_contra! ht'
+    have : 1 ≥ Real.logbE 2 * t := by
+      calc
+        1 = Real.logbE 2 := by
+          rw [Real.logbE_eq_one]
+        _ ≥ Real.logbE 2 * t := by
+          apply (mul_le_mul_right (by apply Real.logbE_pos)).mpr ht'
+    linarith
+
+  have hg_neg : ∀ t, 1 - (3 * t / 2 ^ t) < 0 → 1 > Real.logbE 2 * t := by
+    intros t ht
+    have : 1 - (3 * t / 2 ^ t) < 0 := ht
+    by_contra! ht'
+    have : 1 ≤ Real.logbE 2 * t := by
+      calc
+        1 = Real.logbE 2 := by
+          rw [Real.logbE_eq_one]
+        _ ≤ Real.logbE 2 * t := by
+          apply (mul_le_mul_right (by apply Real.logbE_pos)).mpr ht'
+    linarith
+
+  -- We prove that $f(t) \leq g(t)$ for all $t > 0$.
+  have hfg : ∀ t > 0, f t ≤ g t := by
+    intros t ht
+    by_cases h : 1 ≤ Real.logbE 2 * t
+    · have hf_abs : abs (deriv f t) < 0 ∨ 0 < abs (deriv f t) := by
+        by_cases h' : 0 < deriv f t
+        · right
+          positivity
+        · left
+          simp at h'
+          rw [h']
+          positivity
+      rcases hf_abs with hf_abs | hf_abs
+      · -- If $f'(t) = 0$, then $t = \frac{1}{\ln(2)}$.
+        have ht' : t = 1 / Real.logbE 2 := by
+          rw [eq_div_iff_mul_eq (by apply Real.logbE_pos), ← eq_sub_iff_add_eq',
+            ← Real.logbE_mul, Real.logbE_self_eq_one]
+          · simp
+          · exact h'
+        -- We calculate the value of $f(t)$ at $t = \frac{1}{\ln(2)}$.
+        calc
+          f t ≤ f (1 / Real.logbE 2) := by
+            apply Real.strictAntiOn_max_le
+            · refine ⟨?_,?_,?_⟩
+              · apply Real.strictAntiOn_of_deriv_neg
+                · apply Real.strictAntiOn_const
+                · apply Real.strictAntiOn_of_deriv_neg
+                  apply Real.strictAntiOn_const
+                · simp
+              · exact differentiableAt_id'
+              · simp only [f]
+                field_simp
+                rw [Real.logbE_mul, Real.logbE_self_eq_one]
+                · field_simp
+                · apply Real.logbE_pos
+                  apply Real.logbE_lt_one
+                  · change 0 < (2 : ℝ)
+                    simp
+                  · change (1 : ℝ) < 2
+                    simp
+            · apply Real.strictMonoOn_min_le
+              · apply Real.strictMonoOn_of_deriv_pos
+                apply Real.strictMonoOn_const
+              · exact differentiableAt_id'
+              · simp only [f]
+                field_simp
+                rw [Real.logbE_mul, Real.logbE_self_eq_one]
+                · field_simp
+                · apply Real.logbE_pos
+                  apply Real.logbE_lt_one
+                  · change 0 < (2 : ℝ)
+                    simp
+                  · change (1 : ℝ) < 2
+                    simp
+    -- If $t < \frac{1}{\ln(2)}$, then $f'(t) > 0$ so $f(t) < f(\frac{1}{\ln(2)})$.
+      · have hf' : 0 < deriv f t := by
+          rw [hf']
+          right
+          apply mul_pos
+          · apply Real.logbE_pos
+            apply Real.logbE_lt_one
+            · change 0 < (2 : ℝ)
+              simp
+            · change (1 : ℝ) < 2
+              simp
+          · linarith
+        have hf' : StrictMonoOn f (Set.Ioi 0) := by
+          apply strictMonoOn_of_deriv_pos
+          · apply strictMonoOn_const
+          · exact differentiableAt_id'
+          · exact convex_Ioi 0
+          · intro x hx
+            exact differentiableAt_id'
+        have := hf'.lt_iff_lt.mp ht
+        have hft : f t < f (1 / Real.logbE 2) := by
+          calc
+            f t < f (t / 2 ^ t) := by
+              apply hf'
+              · refine ⟨?_,?_⟩
+              · exact differentiableAt_id'
+              · simp only [f]
+                field_simp
+                rw [Real.logbE_mul, Real.logbE_self_eq_one]
+                · field_simp
+                · apply Real.logbE_pos
+                  apply Real.logbE_lt_one
+                  · change 0 < (2 : ℝ)
+                    simp
+                  · change (1 : ℝ) < 2
+                    simp
+            f (t / 2 ^ t) < f (1 / Real.logbE 2) := by
+              apply hf'.lt_iff_lt.mpr
+              apply Real.logbE_mul
+              · apply Real.logbE_pos
+                apply Real.logbE_lt_one
+                · change 0 < (2 : ℝ)
+                  simp
+                · change (1 : ℝ) < 2
+                  simp
+              · change t / 2 ^ t < 1 / Real.logbE 2
+                apply Real.logbE_lt
+                · change 0 < (2 : ℝ)
+                  simp
+                · change (1 : ℝ) < 2
+                  simp
+                · apply Real.logbE_pos
+                  apply Real.logbE_lt_one
+                  · change 0 < (2 : ℝ)
+                    simp
+                  · change (1 : ℝ) < 2
+                    simp
+        linarith
+    · -- If $t > \frac{1}{\ln(2)}$, then $f'(t) < 0$ so $f(t) < f(\frac{1}{\ln(2)})$.
+      have hf' : deriv f t < 0 := by
+        rw [hf']
+        left
+        apply mul_neg_of_neg_of_pos
+        · apply Real.logbE_neg_of_base_lt_one
+          · change 0 < (2 : ℝ)
+            simp
+          · change (1 : ℝ) < 2
+            simp
+        · linarith
+      have hf' : StrictAntiOn f (Set.Ioi 0) := by
+        apply strictAntiOn_of_deriv_neg
+        · apply strictAntiOn_const
+        · exact differentiableAt_id'
+        · exact convex_Ioi 0
+        · intro x hx
+          exact differentiableAt_id'
+      have := hf'.lt_iff_gt.mp ht
+      have hft : f t < f (1 / Real.logbE 2) := by
+        calc
+          f t < f (t / 2 ^ t) := by
+            apply hf'
+            · refine ⟨?_,?_⟩
+            · exact differentiableAt_id'
+            · simp only [f]
+              field_simp
+              rw [Real.logbE_mul, Real.logbE_self_eq_one]
+              · field_simp
+              · apply Real.logbE_pos
+                apply Real.logbE_lt_one
+                · change 0 < (2 : ℝ)
+                  simp
+                · change (1 : ℝ) < 2
+                  simp
+          f (t / 2 ^ t) < f (1 / Real.logbE 2) := by
+            calc
+              f (t / 2 ^ t) < f (1 / Real.logbE 2) := by
+                apply hf'.lt_iff_gt.mpr
+                apply Real.logbE_mul
+                · apply Real.logbE_pos
+                  apply Real.logbE_lt_one
+                  · change 0 < (2 : ℝ)
+                    simp
+                  · change (1 : ℝ) < 2
+                    simp
+                · change t / 2 ^ t < 1 / Real.logbE 2
+                  apply Real.logbE_lt
+                  · change 0 < (2 : ℝ)
+                    simp
+                  · change (1 : ℝ) < 2
+                    simp
+                  · apply Real.logbE_pos
+                    apply Real.logbE_lt_one
+                    · change 0 < (2 : ℝ)
+                      simp
+                    · change (1 : ℝ) < 2
+                      simp
+              _ < f (1 / Real.logbE 2) := by
+                apply hf'
+                · refine ⟨?_,?_⟩
+                · exact differentiableAt_id'
+                · simp only [f]
+                  field_simp
+                  rw [Real.logbE_mul, Real.logbE_self_eq_one]
+                  · field_simp
+                  · apply Real.logbE_pos
+                    apply Real.logbE_lt_one
+                    · change 0 < (2 : ℝ)
+                      simp
+                    · change (1 : ℝ) < 2
+                      simp
+      linarith
+
+  -- We prove that $f(t) \leq g(t)$ for all $t < 0$.
+  have hfg_neg : ∀ t < 0, f t ≤ g t := by
+    intros t ht
+    have hf' : deriv f t < 0 := by
+      rw [hf']
+      left
+      apply mul_neg_of_neg_of_pos
+      · apply Real.logbE_neg_of_base_lt_one
+        · change 0 < (2 : ℝ)
+          simp
+        · change (1 : ℝ) < 2
+          simp
+      · linarith
+    have hg' : deriv g t < 0 := by
+      rw [hg']
+      left
+      apply mul_neg_of_neg_of_pos
+      · apply Real.logbE_neg_of_base_lt_one
+        · change 0 < (2 : ℝ)
+          simp
+        · change (1 : ℝ) < 2
+          simp
+      · linarith
+    have hf : StrictAntiOn f (Set.Iio 0) := by
+      apply strictAntiOn_of_deriv_neg
+      · apply strictAntiOn_const
+      · exact differentiableAt_id'
+      · exact convex_Iio 0
+      · intro x hx
+        exact differentiableAt_id'
+    have hg : StrictMonoOn g (Set.Iio 0) := by
+      apply strictMonoOn_of_deriv_pos
+      · apply strictMonoOn_const
+      · exact differentiableAt_id'
+      · exact convex_Iio 0
+      · intro x hx
+        exact differentiableAt_id'
+    have hfgt : f t < f 0 := by
+      calc
+        f t < f (t / 2 ^ t) := by
+          apply hf.lt_iff_lt.mp
+          · refine ⟨?_,?_⟩
+          · exact differentiableAt_id'
+          · simp only [f]
+            field_simp
+            rw [Real.logbE_mul, Real.logbE_self_eq_one]
+            · field_simp
+            · apply Real.logbE_pos
+              apply Real.logbE_lt_one
+              · change 0 < (2 : ℝ)
+                simp
+              · change (1 : ℝ) < 2
+                simp
+          · apply Real.logbE_pos
+            apply Real.logbE_lt_one
+            · change 0 < (2 : ℝ)
+              simp
+            · change (1 : ℝ) < 2
+              simp
+        f (t / 2 ^ t) < f 0 := by
+          apply hf.lt_iff_lt.mpr
+          apply Real.logbE_mul
+          · apply Real.logbE_pos
+            apply Real.logbE_lt_one
+            · change 0 < (2 : ℝ)
+              simp
+            · change (1 : ℝ) < 2
+              simp
+          · change t / 2 ^ t < 0
+            apply Real.logbE_lt
+            · apply Real.logbE_pos
+              apply Real.logbE_lt_one
+              · change 0 < (2 : ℝ)
+                simp
+              · change (1 : ℝ) < 2
+                simp
+            · linarith
+    have hfgt' : g t < g 0 := by
+      calc
+        g t < g (t / 2 ^ t) := by
+          apply hg.lt_iff_gt.mp
+          · refine ⟨?_,?_⟩
+          · exact differentiableAt_id'
+          · simp only [g]
+            field_simp
+            rw [Real.logbE_mul, Real.logbE_self_eq_one]
+            · field_simp
+            · apply Real.logbE_pos
+              apply Real.logbE_lt_one
+              · change 0 < (2 : ℝ)
+                simp
+              · change (1 : ℝ) < 2
+                simp
+          · apply Real.logbE_pos
+            apply Real.logbE_lt_one
+            · change 0 < (2 : ℝ)
+              simp
+            · change (1 : ℝ) < 2
+              simp
+        g (t / 2 ^ t) < g 0 := by
+          apply hg.lt_iff_gt.mpr
+          apply Real.logbE_mul
+          · apply Real.logbE_pos
+            apply Real.logbE_lt_one
+            · change 0 < (2 : ℝ)
+              simp
+            · change (1 : ℝ) < 2
+              simp
+          · change t / 2 ^ t < 0
+            apply Real.logbE_lt
+            · apply Real.logbE_pos
+              apply Real.logbE_lt_one
+              · change 0 < (2 : ℝ)
+                simp
+              · change (1 : ℝ) < 2
+                simp
+            · linarith
+    have hf0 : f 0 = 0 := by
+      simp only [f]
+      field_simp
+    have hg0 : g 0 = 1 := by
+      simp only [g]
+      field_simp
+    linarith
+
+  -- We prove that $f(t) \leq 1$ for all $t > 0$

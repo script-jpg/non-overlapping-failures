@@ -1,0 +1,86 @@
+have h₂ : x ≠ 0 := by linarith
+  have h₃ : y ≠ 0 := by linarith
+  have h₄ : x ≤ y ^ x := by
+    have h₅ : x ^ y ^ 2 = y ^ x := h₁
+    have h₆ : x ≤ y ^ x := by
+      calc
+        x ≤ x ^ y ^ 2 := by
+          exact Nat.le_self_pow (by positivity) x
+        _ = y ^ x := by rw [h₅]
+    exact h₆
+  have h₅ : y ≤ x ^ y := by
+    have h₆ : x ^ y ^ 2 = y ^ x := h₁
+    have h₇ : y ≤ x ^ y := by
+      calc
+        y ≤ y ^ x := by
+          exact Nat.le_self_pow (by positivity) y
+        _ ≤ x ^ y := by
+          exact Nat.pow_le_pow_of_le_left (by nlinarith) y
+    exact h₇
+  have h₆ : x ≤ 36 := by
+    by_contra! h₇
+    have h₈ : x ≥ 37 := by linarith
+    have h₉ : y ^ x ≥ x ^ y := by
+      nlinarith [h₄, h₅]
+    have h₁₀ : y ≥ 2 := by
+      by_contra! h₁₁
+      have h₁₂ : y = 1 := by linarith
+      simp_all
+      <;> nlinarith
+    have h₁₁ : y ^ x ≥ 2 ^ x := by
+      exact Nat.pow_le_pow_of_le_left (by nlinarith) x
+    have h₁₂ : 2 ^ x ≥ x ^ 2 := by
+      have h₁₃ : x ≥ 4 := by linarith
+      have h₁₄ : 2 ^ x ≥ x ^ 2 := by
+        have h₁₅ : ∀ n : ℕ, n ≥ 4 → 2 ^ n ≥ n ^ 2 := by
+          intro n hn
+          induction' hn with n hn ih
+          · norm_num
+          · cases n with
+            | zero => contradiction
+            | succ n =>
+              cases n with
+              | zero => contradiction
+              | succ n =>
+                cases n with
+                | zero => contradiction
+                | succ n =>
+                  cases n with
+                  | zero => contradiction
+                  | succ n =>
+                    simp_all [Nat.pow_succ, Nat.mul_assoc]
+                    nlinarith [pow_pos (by norm_num : (0 : ℕ) < 2) n]
+        exact h₁₅ x h₁₃
+      exact h₁₄
+    nlinarith
+  have h₇ : y ≤ 16 := by
+    by_contra! h₈
+    have h₉ : y ≥ 17 := by linarith
+    have h₁₀ : x ^ y ^ 2 = y ^ x := h₁
+    have h₁₁ : x ≤ 36 := by linarith
+    interval_cases x <;> norm_num at h₁₀ <;>
+      (try omega) <;>
+      (try {
+        have h₁₂ : y ≤ 36 := by
+          nlinarith
+        interval_cases y <;> norm_num at h₁₀ <;> omega
+      }) <;>
+      (try {
+        have h₁₂ : y ≤ 36 := by
+          nlinarith
+        interval_cases y <;> norm_num at h₁₀ <;> omega
+      }) <;>
+      omega
+  interval_cases x <;> interval_cases y <;> norm_num at h₁ ⊢ <;>
+    (try omega) <;>
+    (try {
+      simp_all [Nat.pow_succ, Nat.mul_assoc]
+      <;> omega
+    }) <;>
+    (try {
+      omega
+    }) <;>
+    (try {
+      aesop
+    })
+```

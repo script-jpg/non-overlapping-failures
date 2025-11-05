@@ -1,0 +1,164 @@
+-- $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 < \frac{12}{25}$.
+  have h₁ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 12 / 25 := by
+    -- Cauchy-Schwarz inequality.
+    have h₁ (f g : ℕ → NNReal) : (∑ x in Finset.range n, f x * g x) ^ 2 ≤ (∑ x in Finset.range n, f x ^ 2) * (∑ x in Finset.range n, g x ^ 2) := by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+        by_cases h : n = 0
+        · simp [h]
+        · have : Finset.range (n + 1) = Finset.range n ∪ {n} := by
+            rw [Finset.range_succ]
+          rw [this]
+          apply Finset.sum_union
+          · apply ih
+          · simp
+            apply le_of_lt
+            have : (f n * g n) ^ 2 < (f n ^ 2 + g n ^ 2) * (f n ^ 2 + g n ^ 2) := by
+              have h₁ : 0 < (f n ^ 2 + g n ^ 2) := by
+                apply add_pos
+                · apply pow_pos
+                  exact Nat.pos_of_ne_zero h
+                · apply pow_pos
+                  exact Nat.pos_of_ne_zero h
+              apply lt_of_mul_lt_mul_left
+              · apply pow_two_pos_of_ne_zero
+                exact Nat.pos_of_ne_zero h
+              · exact Nat.zero_lt_of_ne_zero h
+            apply lt_of_le_of_lt
+            · apply Finset.sum_le_sum
+              intro i _
+              apply le_of_lt
+              exact Nat.mul_le_mul_right (f i) (pow_pos (g i) 2)
+            · apply pow_two_nonneg
+              exact Nat.cast_nonneg _ _
+            · apply Finset.sum_nonneg
+              intro i _
+              apply pow_two_nonneg
+            · exact Finset.single_le_sum (fun i => (f i ^ 2 + g i ^ 2)) (by simp)
+            · apply le_of_lt
+              exact Nat.mul_pos (pow_pos (f n) 2) (pow_pos (g n) 2)
+            · apply Finset.sum_le_sum
+              intro i _
+              apply le_of_lt
+              apply Nat.mul_lt_mul_of_pos_right
+              · exact Finset.mem_range_self n
+              · apply pow_pos
+                exact Nat.pos_of_ne_zero h
+            · apply pow_two_nonneg
+              exact Nat.cast_nonneg _ _
+            · apply Finset.sum_nonneg
+              intro i _
+              apply pow_two_nonneg
+          exact this
+    -- Set $f_1 = a_1^2, f_2 = a_2^2, \cdots, f_{100} = a_{100}^2$ and $g_1 = a_2, g_2 = a_3, \cdots, g_{100} = a_{101}$.
+    let f (i : ℕ) := a (i + 1) ^ 2
+    let g (i : ℕ) := a (i + 2)
+    have hf (i : ℕ) : f i = a (i + 1) ^ 2 := by rfl
+    have hg (i : ℕ) : g i = a (i + 2) := by rfl
+    -- Applying Cauchy-Schwarz inequality to $\sum_{n=0}^{99} a_{n+1}^2 a_{n+2}$.
+    have h₂ : (∑ x in Finset.range 100, f x * g x) ^ 2 ≤ (∑ x in Finset.range 100, f x ^ 2) * (∑ x in Finset.range 100, g x ^ 2) := by
+      apply h₁ f g
+    -- LHS of h₂ is $\sum_{n=0}^{99} a_{n+1}^2 a_{n+2}$.
+    have h₃ : (∑ x in Finset.range 100, f x * g x) = (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 := by
+      simp [f, g]
+      rw [Finset.sum_range_succ]
+      apply Finset.sum_congr rfl
+      intro i _
+      ring_nf
+    -- RHS of h₂ is $\sum_{n=0}^{99} a_{n+1}^4 + \sum_{n=0}^{99} a_{n+2}^4$.
+    have h₄ : (∑ x in Finset.range 100, f x ^ 2) = ∑ x in Finset.range 100, a (x + 1) ^ 4 := by
+      apply Finset.sum_congr rfl
+      intro i _
+      simp [f]
+      ring_nf
+    have h₅ : (∑ x in Finset.range 100, g x ^ 2) = ∑ x in Finset.range 100, a (x + 2) ^ 4 := by
+      apply Finset.sum_congr rfl
+      intro i _
+      simp [g]
+      ring_nf
+    rw [h₃, h₄, h₅] at h₂
+    -- $\sum_{n=0}^{99} a_{n+1}^4 = \sum_{n=0}^{99} (a_{n+1}^2)^2$.
+    have h₆ : ∑ x in Finset.range 100, a (x + 1) ^ 4 = ∑ x in Finset.range 100, (a (x + 1) ^ 2) ^ 2 := by
+      apply Finset.sum_congr rfl
+      intro i _
+      ring_nf
+    have h₇ : ∑ x in Finset.range 100, a (x + 2) ^ 4 = ∑ x in Finset.range 100, (a (x + 2) ^ 2) ^ 2 := by
+      apply Finset.sum_congr rfl
+      intro i _
+      ring_nf
+    rw [h₆, h₇] at h₂
+    -- By the fact that $(x + y)^2 \geq 4xy$ and the fact that $\sum_{n=0}^{99} a_{n+1}^2 = 1$, we see that $\sum_{n=0}^{99} (a_{n+1}^2)^2 \geq \frac{1}{100}$.
+    have h₈ : (∑ x in Finset.range 100, (a (x + 1) ^ 2) ^ 2) ≥ 1 / 100 := by
+      -- $(x + y)^2 \geq 4xy$.
+      have h₈ (x y : ℝ) : (x + y) ^ 2 ≥ 4 * x * y := by
+        linarith [show 0 ≤ (x - y) ^ 2 by positivity]
+      -- $\sum_{n=0}^{99} a_{n+1}^2 = 1$.
+      have h₉ : ∑ x in Finset.range 100, a (x + 1) ^ 2 = 1 := by
+        rw [Finset.sum_range_succ]
+        rw [Finset.sum_range_succ]
+        simp [h₀]
+        ring_nf
+      -- AM-GM inequality.
+      have h₁₀ : (∑ x in Finset.range 100, (a (x + 1) ^ 2) ^ 2) ≥ (∑ x in Finset.range 100, a (x + 1) ^ 2) ^ 2 / 100 := by
+        by_cases h : ∑ x in Finset.range 100, (a (x + 1) ^ 2) ^ 2 = 0
+        · -- If $\sum_{n=0}^{99} (a_{n+1}^2)^2 = 0$, then $a_{n+1}^2 = 0$ for all $n+1$.
+          have h₁₀ {n : ℕ} (hn : n ∈ Finset.range 100) : a (n + 1) ^ 2 = 0 := by
+            have : (a (n + 1) ^ 2) ^ 2 = 0 := by
+              rw [Finset.sum_eq_zero' (by norm_num)]
+              apply Finset.sum_eq_zero
+              intro i _
+              apply Finset.mem_range_self
+              exact hn
+            apply pow_eq_zero at this
+            exact this
+          -- Then $\sum_{n=0}^{99} a_{n+1}^2 = 0$, which is a contradiction.
+          rw [Finset.sum_congr rfl (fun n hn => h₁₀ hn)]
+          simp
+          linarith [h₉]
+        · -- If $\sum_{n=0}^{99} (a_{n+1}^2)^2 > 0$, then by AM-GM inequality, $\sum_{n=0}^{99} (a_{n+1}^2)^2 \geq \frac{(\sum_{n=0}^{99} a_{n+1}^2)^2}{100} = \frac{1}{100}$.
+          rw [Finset.sum_eq_iff_ae_eq_zero] at h
+          apply Finset.sum_le_sum
+          intro i hi
+          by_cases h : i = 99
+          · -- When $i = 99$, $(a_{100}^2)^2 = a_{100}^4$.
+            rw [h]
+            simp
+            rw [show (100 : ℝ) = (100 : ℕ) by norm_num, Finset.sum_range_succ]
+            apply h₁₀
+            simp
+          · -- When $i \neq 99$, by $(a_{i+1}^2 + a_{i+2}^2)^2 \geq 4a_{i+1}^2a_{i+2}^2$ and the fact that $\sum_{n=0}^{99} a_{n+1}^2 = 1$, we have $\sum_{n=0}^{99} (a_{n+1}^2)^2 \geq \frac{(\sum_{n=0}^{99} a_{n+1}^2)^2 - a_{100}^4}{99} = \frac{1 - a_{100}^4}{99} \geq \frac{1}{100}$(by $0 \leq a_{100}^4$).
+            have h' := h₁₀
+            apply h₁₀ at h'
+            simp at h'
+            rw [Finset.sum_range_succ] at h'
+            apply Finset.sum_le_sum at h'
+            simp at h'
+            rw [show (100 : ℝ) - 1 = (99 : ℝ) by norm_num, ←h'] at h'
+            apply (div_le_iff₀ (by norm_num)).mpr at h'
+            apply add_nonneg (by norm_num) (by positivity) at h'
+            apply (le_div_iff₀ (by norm_num)).mpr at h'
+            rw [add_comm] at h'
+            apply (div_le_div_iff_of_pos_right (by norm_num) (by positivity)).mp at h'
+            simp at h'
+            have : (a 100 ^ 2) ^ 2 ≤ (1 / 100) * (a 1 ^ 2 + a 2 ^ 2 + a 3 ^ 2 + a 4 ^ 2 + a 5 ^ 2 + a 6 ^ 2 + a 7 ^ 2 + a 8 ^ 2 + a 9 ^ 2 + a 10 ^ 2 + a 11 ^ 2 + a 12 ^ 2 + a 13 ^ 2 + a 14 ^ 2 + a 15 ^ 2 + a 16 ^ 2 + a 17 ^ 2 + a 18 ^ 2 + a 19 ^ 2 + a 20 ^ 2 + a 21 ^ 2 + a 22 ^ 2 + a 23 ^ 2 + a 24 ^ 2 + a 25 ^ 2 + a 26 ^ 2 + a 27 ^ 2 + a 28 ^ 2 + a 29 ^ 2 + a 30 ^ 2 + a 31 ^ 2 + a 32 ^ 2 + a 33 ^ 2 + a 34 ^ 2 + a 35 ^ 2 + a 36 ^ 2 + a 37 ^ 2 + a 38 ^ 2 + a 39 ^ 2 + a 40 ^ 2 + a 41 ^ 2 + a 42 ^ 2 + a 43 ^ 2 + a 44 ^ 2 + a 45 ^ 2 + a 46 ^ 2 + a 47 ^ 2 + a 48 ^ 2 + a 49 ^ 2 + a 50 ^ 2 + a 51 ^ 2 + a 52 ^ 2 + a 53 ^ 2 + a 54 ^ 2 + a 55 ^ 2 + a 56 ^ 2 + a 57 ^ 2 + a 58 ^ 2 + a 59 ^ 2 + a 60 ^ 2 + a 61 ^ 2 + a 62 ^ 2 + a 63 ^ 2 + a 64 ^ 2 + a 65 ^ 2 + a 66 ^ 2 + a 67 ^ 2 + a 68 ^ 2 + a 69 ^ 2 + a 70 ^ 2 + a 71 ^ 2 + a 72 ^ 2 + a 73 ^ 2 + a 74 ^ 2 + a 75 ^ 2 + a 76 ^ 2 + a 77 ^ 2 + a 78 ^ 2 + a 79 ^ 2 + a 80 ^ 2 + a 81 ^ 2 + a 82 ^ 2 + a 83 ^ 2 + a 84 ^ 2 + a 85 ^ 2 + a 86 ^ 2 + a 87 ^ 2 + a 88 ^ 2 + a 89 ^ 2 + a 90 ^ 2 + a 91 ^ 2 + a 92 ^ 2 + a 93 ^ 2 + a 94 ^ 2 + a 95 ^ 2 + a 96 ^ 2 + a 97 ^ 2 + a 98 ^ 2 + a 99 ^ 2)
+            repeat rw [Finset.sum_range_succ] at h'
+            rw [add_comm] at h'
+            apply (le_div_iff₀ (by norm_num)).mpr at h'
+            linarith [h']
+            apply Finset.sum_eq_zero_iff.mpr
+            simp
+            intro i _
+            apply Finset.mem_range_self
+            exact hi
+      linarith [h₈, h₂]
+    -- $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 \leq \frac{12}{25}$.
+    by_contra!
+    -- $\sum_{n=0}^{99} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 = \sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 + a_{100}^2 * a_1 \geq \frac{12}{25}$, which is a contradiction.
+    have h₉ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 ≥ 12 / 25 := by
+      rw [show (12 : ℝ) / 25 = (1 - (1 - 12 / 25)) by norm_num]
+      linarith
+    linarith [h₈, h₉, this]
+
+  exact h₁
+```

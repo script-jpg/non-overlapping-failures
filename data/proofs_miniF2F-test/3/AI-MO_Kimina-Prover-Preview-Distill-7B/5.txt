@@ -1,0 +1,114 @@
+-- The key idea is to pair each number with its complement.
+  have h {n : ℕ} (hn : n ≥ 1) : n * (2 * n - 1) = n * (2 * n - 1) := by rfl
+
+  let c : ℕ → ℕ := fun n => n * (2 * n - 1)
+
+  -- Let $p$ be the set of all positive integers less than $5000$.
+  let P := Finset.range 5000
+
+  -- Let $S$ be the set of all positive odd integers less than $10000$.
+  set S := Finset.filter (fun x => ¬Even x) (Finset.range 10000)
+
+  -- Let $T$ be the image of $P$ under $c$.
+  set T := Finset.image c P
+
+  -- $c$ is an injection on $P$.
+  have c_inj : Set.InjOn c P := by
+    intro n hn m hm hnm
+    simp [c] at hnm
+    exact hnm
+
+  -- $S = T$.
+  have h1 : S = T := by
+
+    -- We will show that $S$ is the disjoint union of $T$ and $S \backslash T$.
+    have h1 : S = T ∪ (S \ T) := by
+      ext x
+      simp
+    refine (h1.symm).trans?_
+
+    -- We will show that $T \cap (S \backslash T) = \emptyset$.
+    refine Finset.disjoint_iff_ne.mpr?_
+    intro x hx1 hx2
+    simp at hx1 hx2
+    refine ⟨hx1,?_⟩
+    obtain h1 | h1 : x ∈ S ∨ x ∉ S := by simp
+
+    -- If $x \in S \backslash T$, then $x \in S$ and $x \notin T$.
+    · exact ⟨h1, hx2⟩
+
+    -- So $x \in T$.
+    · simp [h1]
+
+    -- A contradiction is derived.
+    obtain ⟨n, hn, hn1⟩ := Finset.mem_image.mp hx1
+    obtain ⟨hn2, _⟩ := c_inj hn hn2 hnm
+    have : x ∈ T := by
+      simp [hn2]
+    contradiction
+
+  -- $T$ is the set of all positive odd integers less than $10000$.
+  have h2 : T = Finset.image c P := by
+    ext x
+    simp [T]
+
+  -- $|P| = 5000$.
+  have h3 : P.card = 5000 := by
+    simp [P]
+
+  -- $c$ is a surjection from $P$ to $T$.
+  have c_surj : Set.SurjOn c P T := by
+    intro n hn
+    simp [c, S] at hn ⊢
+    obtain ⟨hn1, hn2⟩ := hn
+    use n + 1
+    simp
+    constructor
+    · omega
+    · omega
+
+  -- $|T| = 5000$.
+  have h4 : T.card = 5000 := by
+    calc
+      _ = P.card := by rw [Finset.card_image_of_injOn (c_inj)]
+      _ = _ := by rw [h3]
+
+  -- $c$ is a bijection from $P$ to $T$.
+  have c_bij : Set.BijOn c P T := By
+    rw [Set.BijOn.def]
+    exact ⟨c_inj, c_surj, h4, h3, Nat.injOn_id (le_refl _)⟩
+
+  -- $T$ is the set of all positive odd integers less than $10000$.
+  have h5 : S = Finset.image c P := by
+    exact h1.symm
+
+  -- $|S| = 5000$.
+  have h6 : S.card = 5000 := by
+    calc
+      _ = T.card := by rw [h5]
+      _ = _ := by rw [h4]
+
+  -- The product of all positive odd integers less than $10000$ is equal to the product of all positive integers less than $5000$.
+  have h7 : Finset.prod S id = Finset.prod P id := by
+    rw [h5, Finset.prod_image]
+    exact c_bij
+
+  -- The product of all positive integers less than $5000$ is equal to $4999!$.
+  have h8 : Finset.prod P id = 4999! := by
+    rw [Finset.prod_range_id, Nat.factorial_succ]
+    rfl
+
+  rw [h7, h8]
+
+  -- The product of all positive odd integers less than $10000$ is equal to $4999!$.
+  rw [h5, Finset.prod_image]
+  exact c_bij
+
+  -- It is a contradiction.
+  intro a ha b hb hab
+  have : b < 2 * a := by
+    omega
+  obtain ⟨c, hc⟩ := Nat.exists_lt_succ_of_lt this
+  simp [c] at hc
+  linarith
+```

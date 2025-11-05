@@ -1,0 +1,78 @@
+-- Some of these may be zero, so we have to be careful.
+  -- First, we prove that w > 0.
+  have h_w_ne_zero : w ≠ 0 := by
+    -- If w = 0, then log w is not defined.
+    by_contra h
+    have : Real.log w = 0 := by simp [h]
+    rw [this] at h0
+    simp at h0
+
+  -- We prove that x, y, and z are nonzero.
+  have h_x_ne_zero : x ≠ 0 := by
+    -- If x = 0, then log x is not defined.
+    by_contra h
+    have : Real.log x = 0 := by simp [h]
+    rw [this] at h0
+    simp at h0
+    linarith
+  have h_y_ne_zero : y ≠ 0 := by
+    -- If y = 0, then log y is not defined.
+    by_contra h
+    have : Real.log y = 0 := by simp [h]
+    rw [this] at h1
+    simp at h1
+    linarith
+  have h_z_ne_zero : z ≠ 0 := by
+    -- If z = 0, then log z is not defined.
+    by_contra h
+    have : Real.log z = 0 := by simp [h]
+    rw [this] at h2
+    simp at h2
+    linarith
+
+  -- By the change of base formula, we have
+  -- $\log_y w = \frac{\log w}{\log y} = 40$,
+  -- $\log_x w = \frac{\log w}{\log x} = 24$,
+  -- $\log_{xyz} w = \frac{\log w}{\log (xyz)} = 12$.
+  have hw' : Real.log w = 40 * Real.log y := by
+    calc
+      Real.log w = Real.log w / Real.log y * Real.log y := by field_simp [h_w_ne_zero, h_y_ne_zero]
+      _ = 40 * Real.log y := by rw [h1]
+  have hw'' : Real.log w = 24 * Real.log x := by
+    calc
+      Real.log w = Real.log w / Real.log x * Real.log x := by field_simp [h_w_ne_zero, h_x_ne_zero]
+      _ = 24 * Real.log x := by rw [h0]
+  have hw''' : Real.log w = 12 * Real.log (x * y * z) := by
+    calc
+      Real.log w = Real.log w / Real.log (x * y * z) * Real.log (x * y * z) := by field_simp [h_w_ne_zero, h_z_ne_zero]
+      _ = 12 * Real.log (x * y * z) := by rw [h2]
+
+  -- So, we can rewrite the last equation as
+  -- $12 \log (xyz) = \log w = 40 \log y = 24 \log x$.
+  have h3 : 12 * Real.log (x * y * z) = 40 * Real.log y := by
+    rw [hw''', hw']
+  have h4 : 12 * Real.log (x * y * z) = 24 * Real.log x := by
+    rw [hw''', hw'']
+
+  -- By the logarithmic identity,
+  -- $\log (xyz) = \log x + \log y + \log z$.
+  have h5 : Real.log (x * y * z) = Real.log x + Real.log y + Real.log z := by
+    calc
+      Real.log (x * y * z) = Real.log (x * y) + Real.log z := by ac_rfl
+      _ = Real.log x + Real.log y + Real.log z := by ac_rfl
+
+  -- We can then equate the different expressions for $\log w$:
+  -- $12 \log (xyz) = 12 (\log x + \log y + \log z) = 40 \log y + 12 \log z = 24 \log x + 12 \log z$.
+  rw [h5] at h3 h4
+
+  -- We solve this system of equations to get $\log z = 60$.
+  have h6 : 12 * (Real.log x + Real.log y + Real.log z) = 40 * Real.log y + 12 * Real.log z := by
+    exact h3
+  have h7 : 12 * (Real.log x + Real.log y + Real.log z) = 24 * Real.log x + 12 * Real.log z := by
+    exact h4
+  have h8 : 40 * Real.log y + 12 * Real.log z = 24 * Real.log x + 12 * Real.log z := by
+    calc
+      40 * Real.log y + 12 * Real.log z = 12 * (Real.log x + Real.log y + Real.log z) := by exact h6
+      _ = 24 * Real.log x + 12 * Real.log z := by exact h7
+  linarith
+```

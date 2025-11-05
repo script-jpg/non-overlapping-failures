@@ -1,0 +1,39 @@
+-- According to the reference answer, we need to prove it by induction on `n`
+  induction n with
+  | zero =>
+    -- The case when `n=0` has no sense
+    linarith
+  | succ n hn =>
+    -- If `n=0`, we need to show that `1 ≤ 1 + x`
+    rw [Nat.succ]
+    cases n with
+    | zero =>
+      simp
+    | succ n =>
+      -- Use induction hypothesis.
+      specialize hn (by linarith)
+      rw [Nat.succ] at hn
+      -- According to the reference answer, we need change the shape of `1 + (n + 1) * x`
+      rw [add_assoc]
+      -- The reference answer says `1 + n * x + x ≤ 1 + n * x + x * x ^ n`
+      suffices 1 + n * x + x ≤ 1 + n * x + x * (1 + x) ^ n by linarith
+      -- We can get `1 + n * x + x ≤ 1 + n * x + x * x ^ n` from hypothesis `hn`
+      specialize h₁ (by linarith)
+      -- The reference answer says `1 + n * x + x * x ^ n ≤ 1 + n * x + x * (1 + x) ^ n`
+      suffices 1 + n * x + x * x ^ n ≤ 1 + n * x + x * (1 + x) ^ n by linarith
+      rw [add_assoc]
+      -- According to the reference answer, we need change the shape of `(1 + n * x) * x ^ n`
+      rw [← mul_assoc]
+      -- Then change it to `x * (1 + n * x) * x ^ n / x`
+      rw [pow_succ]
+      rw [mul_div_cancel₀]
+      -- reference answer says `(1 + n * x) * x ^ n ≤ (1 + x) * x ^ n`
+      suffices (1 + n * x) * x ^ n ≤ (1 + x) * x ^ n by exact (add_le_add_iff_right (1 + n * x) * x ^ n).mp this
+      -- reference answer says `1 + n * x ≤ 1 + x`
+      suffices 1 + n * x ≤ 1 + x by exact (mul_le_mul_iff_of_pos_right (by positivity)).mpr this
+      -- That is exactly the statement `hn`.
+      exact hn
+      -- reference answer says `0 < x ^ n`
+      positivity
+fend
+```

@@ -1,0 +1,71 @@
+-- We need the following lemma about the equation of the 7th cyclotomic polynomial.
+  have h : ∀ x : ℝ, x ^ 6 + x ^ 5 + x ^ 4 + x ^ 3 + x ^ 2 + x + 1 = (x - 1) * (x ^ 2 + x + 1) * (x ^ 2 + (1 / 2) * x + 1) * (2 * x ^ 2 + x + 2) := by
+    intro x
+    ring
+
+  -- Apply the above lemma to $x=e^{\frac{\pi i}{7}}$.
+  specialize h (Real.exp (Real.pi * I / 7))
+
+  -- By the lemma, we have $e^{\frac{\pi i}{7}}$ is a root of the 7th cyclotomic polynomial.
+  have h₁ : Real.exp (Real.pi * I / 7) ^ 6 + Real.exp (Real.pi * I / 7) ^ 5 + Real.exp (Real.pi * I / 7) ^ 4 + Real.exp (Real.pi * I / 7) ^ 3 + Real.exp (Real.pi * I / 7) ^ 2 + Real.exp (Real.pi * I / 7) + 1 = (Real.exp (Real.pi * I / 7) - 1) * (Real.exp (Real.pi * I / 7) ^ 2 + Real.exp (Real.pi * I / 7) + 1) * (Real.exp (Real.pi * I / 7) ^ 2 + (1 / 2) * Real.exp (Real.pi * I / 7) + 1) * (2 * Real.exp (Real.pi * I / 7) ^ 2 + Real.exp (Real.pi * I / 7) + 2) := by
+    simpa using h
+  simp at h₁
+
+  -- By the property of the roots of the cyclotomic polynomial, we have $e^{\frac{\pi i}{7}}+e^{\frac{2\pi i}{7}}+e^{\frac{3\pi i}{7}}+e^{\frac{4\pi i}{7}}+e^{\frac{5\pi i}{7}}+e^{\frac{6\pi i}{7}}=-1$.
+  have h₂ : Real.exp (Real.pi * I / 7) + Real.exp (2 * Real.pi * I / 7) + Real.exp (3 * Real.pi * I / 7) + Real.exp (4 * Real.pi * I / 7) + Real.exp (5 * Real.pi * I / 7) + Real.exp (6 * Real.pi * I / 7) = -1 := by
+    have g : ∀ n : ℕ, (n : ℤ) ≠ 0 → (Real.exp (Real.pi * I / 7) ^ n + Real.exp (2 * Real.pi * I / 7) ^ n + Real.exp (3 * Real.pi * I / 7) ^ n + Real.exp (4 * Real.pi * I / 7) ^ n + Real.exp (5 * Real.pi * I / 7) ^ n + Real.exp (6 * Real.pi * I / 7) ^ n) = -1 := by
+      intro n _ 
+      by_contra! g₀
+      have g₁ : (n : ℤ) = 0 := by
+        simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, pow_eq_zero_iff]
+        exact g₀
+      norm_cast at g₁
+      exact g₀ g₁
+    specialize g 1 (by norm_num)
+    simpa using g
+
+  -- We have the following relation about the real parts of the above roots.
+  replace h₂ : Real.cos (Real.pi / 7) + Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (5 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) = -1 := by
+    have g : ∀ n : ℕ, (n : ℤ) ≠ 0 → (Real.cos (Real.pi / 7 * n) + Real.cos (2 * Real.pi / 7 * n) + Real.cos (3 * Real.pi / 7 * n) + Real.cos (4 * Real.pi / 7 * n) + Real.cos (5 * Real.pi / 7 * n) + Real.cos (6 * Real.pi / 7 * n)) = -1 := by
+      intro n _ 
+      specialize h₂
+      have g₀ : (Real.exp (Real.pi * I / 7) ^ n + Real.exp (2 * Real.pi * I / 7) ^ n + Real.exp (3 * Real.pi * I / 7) ^ n + Real.exp (4 * Real.pi * I / 7) ^ n + Real.exp (5 * Real.pi * I / 7) ^ n + Real.exp (6 * Real.pi * I / 7) ^ n) = (Real.cos (Real.pi / 7 * n) + Real.cos (2 * Real.pi / 7 * n) + Real.cos (3 * Real.pi / 7 * n) + Real.cos (4 * Real.pi / 7 * n) + Real.cos (5 * Real.pi / 7 * n) + Real.cos (6 * Real.pi / 7 * n)) + I * (Real.sin (Real.pi / 7 * n) + Real.sin (2 * Real.pi / 7 * n) + Real.sin (3 * Real.pi / 7 * n) + Real.sin (4 * Real.pi / 7 * n) + Real.sin (5 * Real.pi / 7 * n) + Real.sin (6 * Real.pi / 7 * n)) := by
+        simp [← Complex.add_re, ← Complex.add_im]
+        simpa using (ring_nf (Complex.exp_mul_I (↑(π * I / 7) * n) : ℂ))
+      rw [g₀] at h₂
+      refine congrArg Complex.re h₂
+      simpa using (Complex.add_re (a := (Real.cos (Real.pi / 7 * n) + Real.cos (2 * Real.pi / 7 * n) + Real.cos (3 * Real.pi / 7 * n) + Real.cos (4 * Real.pi / 7 * n) + Real.cos (5 * Real.pi / 7 * n) + Real.cos (6 * Real.pi / 7 * n)) (b := I * (Real.sin (Real.pi / 7 * n) + Real.sin (2 * Real.pi / 7 * n) + Real.sin (3 * Real.pi / 7 * n) + Real.sin (4 * Real.pi / 7 * n) + Real.sin (5 * Real.pi / 7 * n) + Real.sin (6 * Real.pi / 7 * n))))).symm
+    specialize g 1 (by norm_num)
+    simpa using g
+
+  -- We have the following relation about the imaginary parts of the above roots.
+  have h₃ : Real.sin (Real.pi / 7) + Real.sin (2 * Real.pi / 7) + Real.sin (3 * Real.pi / 7) + Real.sin (4 * Real.pi / 7) + Real.sin (5 * Real.pi / 7) + Real.sin (6 * Real.pi / 7) = 0 := by
+    have g : ∀ n : ℕ, (n : ℤ) ≠ 0 → (Real.sin (Real.pi / 7 * n) + Real.sin (2 * Real.pi / 7 * n) + Real.sin (3 * Real.pi / 7 * n) + Real.sin (4 * Real.pi / 7 * n) + Real.sin (5 * Real.pi / 7 * n) + Real.sin (6 * Real.pi / 7 * n)) = 0 := by
+      intro n _ 
+      have g₀ : (Real.exp (Real.pi * I / 7) ^ n + Real.exp (2 * Real.pi * I / 7) ^ n + Real.exp (3 * Real.pi * I / 7) ^ n + Real.exp (4 * Real.pi * I / 7) ^ n + Real.exp (5 * Real.pi * I / 7) ^ n + Real.exp (6 * Real.pi * I / 7) ^ n) = (Real.cos (Real.pi / 7 * n) + Real.cos (2 * Real.pi / 7 * n) + Real.cos (3 * Real.pi / 7 * n) + Real.cos (4 * Real.pi / 7 * n) + Real.cos (5 * Real.pi / 7 * n) + Real.cos (6 * Real.pi / 7 * n)) + I * (Real.sin (Real.pi / 7 * n) + Real.sin (2 * Real.pi / 7 * n) + Real.sin (3 * Real.pi / 7 * n) + Real.sin (4 * Real.pi / 7 * n) + Real.sin (5 * Real.pi / 7 * n) + Real.sin (6 * Real.pi / 7 * n)) := by
+        simp [← Complex.add_re, ← Complex.add_im]
+        simpa using (ring_nf (Complex.exp_mul_I (↑(π * I / 7) * n) : ℂ))
+      rw [g₀] at h₁
+      refine congrArg Complex.im h₁
+      simpa using (Complex.add_re (a := (Real.cos (Real.pi / 7 * n) + Real.cos (2 * Real.pi / 7 * n) + Real.cos (3 * Real.pi / 7 * n) + Real.cos (4 * Real.pi / 7 * n) + Real.cos (5 * Real.pi / 7 * n) + Real.cos (6 * Real.pi / 7 * n)) (b := I * (Real.sin (Real.pi / 7 * n) + Real.sin (2 * Real.pi / 7 * n) + Real.sin (3 * Real.pi / 7 * n) + Real.sin (4 * Real.pi / 7 * n) + Real.sin (5 * Real.pi / 7 * n) + Real.sin (6 * Real.pi / 7 * n))))).symm
+    specialize g 1 (by norm_num)
+    simpa using g
+
+  -- We have the following relation by substituting $x=-1$ into the lemma.
+  specialize h (-1)
+  simp at h
+
+  -- By combining the above relations, we have $2\cos{\frac{\pi}{7}}+\cos{\frac{2\pi}{7}}+\cos{\frac{4\pi}{7}}=-\frac{1}{2}$.
+  replace h : 2 * Real.cos (Real.pi / 7) + Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) = -1 / 2 := by
+    linarith
+
+  -- We have the following relation by substituting $x=e^{-\frac{\pi i}{7}}$ into the lemma.
+  specialize h (Real.exp (-Real.pi * I / 7))
+  simp at h
+  rw [← h₁] at h
+
+  -- By combining the above relations, we have $\cos{\frac{\pi}{7}}-\cos{\frac{2\pi}{7}}+\cos{\frac{3\pi}{7}}=\frac{1}{2}$.
+  replace h : Real.cos (Real.pi / 7) - Real.cos (2 * Real.pi / 7) + Real.cos (3 * Real.pi / 7) = 1 / 2 := by
+    linear_combination (-1) * h
+  exact h
+```

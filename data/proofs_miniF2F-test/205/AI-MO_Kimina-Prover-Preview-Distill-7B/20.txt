@@ -1,0 +1,91 @@
+have h₂ : 0 < ((a + b) / 2) := by
+    apply div_pos
+    apply add_pos
+    exact h₀.1
+    exact h₀.2
+    exact h₀.1
+  -- The arithmetic mean is greater than zero.
+  have h₃ : 0 < (a ^ n + b ^ n) / 2 := by
+    apply div_pos
+    apply add_pos
+    exact pow_pos h₀.1 n
+    exact pow_pos h₀.2 n
+    exact Nat.cast_pos'.mpr h₁
+  -- The power mean is greater than zero.
+  have h₄ : 0 < ((a ^ n + b ^ n) / 2) ^ (1 / (n : ℝ)) := by
+    apply Real.rpow_pos_of_pos
+    exact h₃
+
+  -- We want to show that $(\frac{a+b}{2})^n \leq \frac{a^n+b^n}{2}$.
+  -- It is equivalent to show that $1 \leq \frac{a^n+b^n}{2} \cdot \frac{2}{a+b}$.
+  have h₅ : ((a + b) / 2) ^ n ≤ (a ^ n + b ^ n) / 2 ↔ 1 ≤ (a ^ n + b ^ n) / 2 * ((a + b) / 2) ^ (-1 : ℝ) := by
+    field_simp
+    constructor
+    · intro h
+      exact le_of_mul_le_mul_left h (show 0 < (a ^ n + b ^ n) / 2 by exact h₃)
+    · intro h
+      exact (le_of_mul_le_mul_left h (show 0 < ((a + b) / 2) ^ n by exact h₂)).symm
+  rw [h₅]
+
+  -- We will apply the AM-GM inequality to the terms $(a+b)/2$ and $\sqrt[n]{a \cdot b}$.
+  have h₆ : ((a + b) / 2) * ((a + b) / 2) ^ (-1 : ℝ) ≤ 1 := by
+    have : (((a + b) / 2) ^ (1 : ℝ), ((a + b) / 2) ^ (-1 : ℝ)) ∈ Finset.mem_IoiProd Ioi 0 := by
+      apply Finset.mem_IoiProd.mpr
+      apply And.intro
+      · apply pow_pos
+        apply div_pos
+        apply add_pos
+        exact h₀.1
+        exact h₀.2
+        exact h₀.1
+      · apply pow_pos
+        apply div_pos
+        apply add_pos
+        exact h₀.1
+        exact h₀.2
+        exact Nat.cast_pos'.mpr h₁
+    have : ((a + b) / 2) * ((a + b) / 2) ^ (-1 : ℝ) ≤ ((1 : ℝ) / 2) * ((a + b) / 2) + ((1 : ℝ) / 2) * ((a + b) / 2) ^ (-1 : ℝ) := by
+      apply geom_mean_le_arith_mean2_weighted
+      · apply And.intro
+        · exact this.1
+        · exact le_of_lt this.2
+      · apply And.intro
+        · exact Or.inl (by norm_num)
+        · norm_num
+      · apply And.intro
+        · exact le_of_lt this.1
+        · apply le_of_lt
+          exact this.2
+    rw [Finset.mem_IoiProd] at this
+    exact this
+
+  -- We will apply the AM-GM inequality to the terms $(a+b)/2$ and $\sqrt[n]{a \cdot b}$.
+  have h₇ : 1 ≤ (a ^ n + b ^ n) / 2 * ((a + b) / 2) ^ (-1 : ℝ) := by
+    have : (a ^ n + b ^ n) / 2 * ((a + b) / 2) ^ (-1 : ℝ) ≤ (1 : ℝ) / 2 * ((a ^ n + b ^ n) / 2) + (1 : ℝ) / 2 * ((a + b) / 2) ^ (-1 : ℝ) := by
+      apply geom_mean_le_arith_mean2_weighted
+      · apply And.intro
+        · apply le_of_lt
+          exact h₃
+        · exact Or.inl (by norm_num)
+      · apply And.intro
+        · exact Or.inr (by norm_num)
+        · norm_num
+      · apply And.intro
+        · exact le_of_lt h₃
+        · exact le_of_lt this.2
+    rw [Finset.mem_IoiProd] at this
+    have : (1 : ℝ) / 2 * ((a ^ n + b ^ n) / 2) + (1 : ℝ) / 2 * ((a + b) / 2) ^ (-1 : ℝ) ≤ 1 := by
+      apply (le_add_right_iff_le (by norm_num)).mpr
+      rw [← mul_div_assoc, ← mul_div_assoc]
+      have : (a ^ n + b ^ n) / 2 * ((a + b) / 2) ^ (-1 : ℝ) * 2 = (a ^ n + b ^ n) / 2 * (1 / ((a + b) / 2)) * 2 := by
+        simp
+      rw [this]
+      field_simp
+      rw [mul_comm, mul_div_assoc, mul_div_cancel_left₀]
+      linarith
+      exact h₃
+    linarith
+
+  exact h₇
+
+```

@@ -1,0 +1,168 @@
+-- 2^n - 1 has a prime factor `p`
+  obtain ⟨p, hp, hpn⟩ := Nat.exists_prime_and_dvd h₁
+
+  -- define `m` as the positive integer such that `p^m` divides `2^n - 1` exactly
+  set m := Nat.factorization p (2 ^ n - 1)
+
+  -- `p^m` divides `2^n - 1`
+  have hm₁ : p ^ m ∣ 2 ^ n - 1 := by
+    apply Nat.ord_proj_dvd
+
+  -- `p^(m+1)` does not divide `2^n - 1`
+  have hm₂ : ¬ p ^ (m + 1) ∣ 2 ^ n - 1 := by
+    intro hm
+    have hpm : m + 1 ≤ Nat.factorization p (2 ^ n - 1) := by
+      apply Nat.le_factorization_of_dvd hm hm₁
+    rw [Nat.factorization_def (by positivity) (by norm_num; omega)] at hpm
+    omega
+
+  -- `m` is positive
+  have hm_pos : 0 < m := by
+    rw [Nat.pos_iff_ne_zero]
+    intro hm
+    rw [hm, pow_zero, Nat.factorization_zero] at hpn
+    rw [Nat.prime_dvd_prime_iff_eq hp hpn] at hm
+    norm_num at hm
+    omega
+
+  -- `p` is greater than 1
+  have hp_gt_1 : 1 < p := by
+    apply Nat.Prime.one_lt hp
+
+  -- `m` is greater than 1
+  have hm_gt_1 : 1 < m := by
+    by_contra hm
+    rw [Nat.le_one_iff_eq_zero_or_eq_one] at hm
+    rcases hm with (hm | hm)
+    · rw [hm] at hm₁
+      norm_num at hm₁
+    · rw [hm] at hm_pos
+
+  -- `2^n - 1` is positive
+  have h₂ : 0 < 2 ^ n - 1 := by
+    have h₃ : 1 < 2 ^ n := by
+      apply Nat.one_lt_pow₀ h₀
+    omega
+
+  -- `m` is less than `n` and `p` is less than `2^n - 1`
+  have hm_lt_n : m < n := by
+    have h₃ : 2 ^ m ≤ 2 ^ n - 1 := by
+      apply Nat.pow_le_pow_of_le_of_le h₃ hm₁
+    rw [pow_succ, mul_le_mul_left (by norm_num)] at h₃
+    omega
+
+  have hp_lt_pn : p < 2 ^ n - 1 := by
+    apply Nat.lt_of_le_of_lt (Nat.Prime.one_le hp) (by omega)
+
+  -- `2^n - 1` is divisible by `p`
+  have h₃ : p ∣ 2 ^ n - 1 := by
+    apply Nat.dvd_trans (Nat.Prime.dvd_pow_sub_one hp h₁) hm₁
+
+  -- `2^n` is congruent to `1` modulo `p`
+  have h₄ : (2 ^ n) ≡ 1 [MOD p] := by
+    apply Nat.modEq_iff_dvd.mpr
+    rw [Nat.sub_add_cancel (by omega)]
+    exact h₃
+
+  -- use `ZMod.totient_eq_iff_prime` to show that `p` is a primitive divisor of `2^n - 1`
+  have h₅ : IsPrimitiveRoot p (2 : ZMod p) := by
+    rw [IsPrimitiveRoot.eq_iff_ord_eq (by rw [Nat.prime_iff_modEq_one_lt]; assumption)]
+    rw [Nat.cast_sub, Nat.cast_pow]
+    applyordProj.eq_iff.mpr
+    constructor
+    · rw [Nat.cast_pow, Nat.cast_mul]
+      rw [Nat.one_modEq_iff, Nat.modEq_iff_dvd] at h₄
+      exact h₃
+    · apply Nat.one_lt_pow₀
+      exact h₀
+      omega
+
+  -- `n` is equal to the order of `2` modulo `p`
+  have h₆ : n = Nat.ord (2 : ZMod p) := by
+    apply Nat.natCast_zmod_eq_iff_zmod_eq_natCast.mpr
+    rw [Nat.cast_pow, Nat.cast_mul, Nat.cast_one]
+    rw [Nat.modEq_iff_dvd] at h₄
+    rw [Nat.modEq_iff_dvd]
+    exact h₃
+    simp [h₄]
+
+  -- since `p` is a primitive divisor of `2^n - 1`, `n` is equal to `Nat.log 2 (p - 1)`, and `p - 1` is equal to `2 ^ (Nat.log 2 (p - 1)) - 1`
+  have h₇ : n = Nat.log 2 (p - 1) := by
+    rw [h₆]
+    apply ZMod.natCast_zmod_eq_iff.mpr
+    simp
+    apply Nat.log_eq_iff_eq_pow log_iff_card
+
+  -- show that `p` is a power of 2
+  have h₈ : ∃ k, p = 2 ^ k := by
+    by_contra hp
+    rw [Nat.one_lt_pow₀ h₀] at hp_gt_1
+    have h₉ : 2 ^ 1 ≤ 2 ^ k := by
+      apply Nat.pow_le_pow_of_le_of_le hp_gt_1
+    rw [Nat.pow_le_pow_iff_right (by norm_num)] at h₉
+    omega
+
+  -- let `k` be the exponent of `2` in `p`
+  obtain ⟨k, h₈⟩ := h₈
+
+  -- `p` is even
+  have hk₀ : 0 < k := by
+    by_contra hk₀
+    rw [Nat.le_zero] at hk₀
+    rw [hk₀, pow_zero, Nat.factorization_zero] at hp
+    rw [hp] at hpn
+    norm_num at hpn
+    omega
+
+  -- `k` is greater than 1
+  have hk₁ : 1 < k := by
+    by_contra hk₁
+    rw [Nat.le_one_iff_eq_zero_or_eq_one] at hk₁
+    rcases hk₁ with (hk₁ | hk₁)
+    · rw [hk₁] at h₈
+      norm_num at h₈
+    · rw [hk₁] at hk₀
+
+  -- show that `2 ^ k` divides `2 ^ n - 1`
+  have h₉ : 2 ^ k ∣ 2 ^ n - 1 := by
+    rw [h₈, h₆]
+    apply Nat.pow_dvd_pow
+    omega
+
+  -- `2 ^ (k * m)` divides `2 ^ n - 1`
+  have h₁₀ : 2 ^ (k * m) ∣ 2 ^ n - 1 := by
+    rw [← pow_mul, Nat.pow_dvd_pow_iff]
+    omega
+    omega
+
+  -- `2 ^ (k * (m + 1))` does not divide `2 ^ n - 1`
+  have h₁₁ : ¬ 2 ^ (k * (m + 1)) ∣ 2 ^ n - 1 := by
+    intro h
+    have hpm : k * (m + 1) ≤ Nat.factorization 2 (2 ^ n - 1) := by
+      apply Nat.le_factorization_of_dvd h h₁₀
+    rw [Nat.factorization_def (by positivity) (by norm_num; omega)] at hpm
+    omega
+
+  -- show that `k` is equal to `n`
+  have h₁₂ : k = n := by
+    by_contra h
+    have hneq : n - k > 0 := by
+      omega
+    rw [Nat.factorization_eq_zero_of_not_dvd (by positivity) (by omega)] at hpm
+    have hpowdvd : 2 ^ (n - k) ∣ 2 ^ n - 1 := by
+      apply Nat.pow_dvd_pow
+      omega
+    have hpowndvd : ¬ 2 ^ (n - k + 1) ∣ 2 ^ n - 1 := by
+      intro hp
+      have hpm : n - k + 1 ≤ Nat.factorization 2 (2 ^ n - 1) := by
+        apply Nat.le_factorization_of_dvd hp hpowdvd
+      rw [Nat.factorization_def (by positivity) (by norm_num; omega)] at hpm
+      omega
+    have h_contra := hpm hhpowdvd
+    exact hpowndvd h_contra
+  rw [h₁₂] at h₈ h₆
+  have h₉ := Nat.log_eq_iff_eq_pow h₈
+  rw [← h₆] at h₉
+  rw [h₈] at h₅
+  exact h₅
+```

@@ -1,0 +1,172 @@
+-- We need the following lemma to prove the inequality:
+  -- For positive reals $x, y$, we have $x^2 y^2 (x^2 + y^2) \le (x^2 + xy + y^2)^3$.
+  have aux {x y : ℝ} (hx : 0 < x) (hy : 0 < y) : x ^ 2 * y ^ 2 * (x ^ 2 + y ^ 2) ≤
+      (x ^ 2 + x * y + y ^ 2) ^ 3 := by
+    -- equivalent to $(xy^2 - x^2y)^2 \ge 0$
+    nlinarith [sq_nonneg (x * y ^ 2 - x ^ 2 * y)]
+
+  -- Let $a', b', c'$ be the lengths of the angle-bisectors of the triangle with sides $a, b, c$.
+  -- That is, $a' = \frac{2bc\cos \frac{A}{2}}{b+c}$, $b' = \frac{2ca\cos \frac{B}{2}}{c+a}$, $c' = \frac{2ab\cos \frac{C}{2}}{a+b}$.
+  let a' := 2 * b * c * (sqrt (mathlib.Tactic.Semantical.Xmax a b c) / (b + c))
+  let b' := 2 * c * a * (sqrt (mathlib.Tactic.Semantical.Xmax a b c) / (c + a))
+  let c' := 2 * a * b * (sqrt (mathlib.Tactic.Semantical.Xmax a b c) / (a + b))
+
+  -- The following three lemmas are needed to prove the desired inequality.
+  -- The first one is a direct consequence of the Triangle Inequality.
+  have g₁ : a' + b' > c' := by
+    simp [a', b', c']
+    rw [sqrt_lt_sqrt_iff (by positivity)] <;> simp
+    nlinarith [h₁, h₂, h₃, sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+
+  -- The second one is a direct consequence of the AM-GM Inequality.
+  have g₂ : a' + b' + c' ≥ a + b + c := by
+    simp [a', b', c']
+    rw [sqrt_le_iff, ← mul_add, ← mul_add]
+    simp
+    nlinarith [sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+
+  -- The third one is a direct consequence of the Cauchy-Schwarz Inequality.
+  have g₃ : a ^ 2 * (b + c - a) + b ^ 2 * (c + a - b) + c ^ 2 * (a + b - c) ≤ a' ^ 2 * (b + c) + b' ^ 2 * (c + a) + c' ^ 2 * (a + b) := by
+    -- equivalent to $\sum_{\text{cyc}} \frac{a^2(b+c-a)}{bc} \le \sum_{\text{cyc}} \frac{a'^2(b+c)}{bc}$
+    -- equivalent to $\sum_{\text{cyc}} \frac{a^2}{bc} \cdot (b+c-a) \le \sum_{\text{cyc}} \frac{a'}{b+c} \cdot (b+c)$
+    -- equivalent to $\sum_{\text{cyc}} \frac{a^2}{bc} \cdot (b+c-a) \le \sum_{\text{cyc}} \frac{a'^2}{bc} \cdot (b+c)$
+    -- it is enough to show that $\sum_{\text{cyc}} \frac{a^2}{bc} \cdot (b+c-a) \le \sum_{\text{cyc}} \frac{a'^2}{bc} \cdot (b+c)$
+    -- note that $\frac{a'^2}{bc} = \frac{4a^2\cos^2 \frac{A}{2}}{bc} = \frac{2a^2(1+\cos A)}{bc} = \frac{2a^2 + a^2\cos A}{bc}$
+    let f := fun x : ℝ => 4 * x ^ 2 * (1 + cos (mathlib.Tactic.Semantical.Xmax a b c)) / (bc x)
+    apply Finset.sum_le_sum
+    · -- where $x \in \{a, b, c\}$
+      intro x hx
+      simp at hx
+      rcases hx with (rfl | rfl | rfl)
+      -- if $x = a$
+      · simp [f]
+        rw [div_le_div_iff_of_pos_right]
+        -- it is enough to show that $4a^2bc \le (b+c)^3$
+        -- it is enough to show that $4a^2 \le (b+c)^2$
+        -- it is enough to show that $2a \le b+c$
+        -- it is exactly the assumption $h₁: c < a + b$
+        nlinarith [h₁, sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+        positivity
+      -- if $x = b$
+      · simp [f]
+        rw [div_le_div_iff_of_pos_right]
+        -- it is enough to show that $4b^2ca \le (c+a)^3$
+        -- it is enough to show that $4b^2 \le (c+a)^2$
+        -- it is enough to show that $2b \le c+a$
+        -- it is exactly the assumption $h₂: b < a + c$
+        nlinarith [h₂, sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+        positivity
+      -- if $x = c$
+      · simp [f]
+        rw [div_le_div_iff_of_pos_right]
+        -- it is enough to show that $4c^2ab \le (a+b)^3$
+        -- it is enough to show that $4c^2 \le (a+b)^2$
+        -- it is enough to show that $2c \le a+b$
+        -- it is exactly the assumption $h₃: a < b + c$
+        nlinarith [h₃, sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+        positivity
+    · -- where $x \in \{a', b', c'\}$
+      intro x hx
+      simp at hx
+      rcases hx with (rfl | rfl | rfl)
+      -- if $x = a'$
+      · simp [a', f]
+        rw [mul_le_mul_right]
+        -- it is enough to show that $4b^2c^2\cos^2 \frac{A}{2} \le b^2c^2(b+c)^2$
+        -- it is enough to show that $\cos^2 \frac{A}{2} \le \frac{(b+c)^2}{4}$
+        -- squaring, it is enough to show that $\frac{1+\cos A}{2} \le \frac{(b+c)^2}{4}$
+        -- it is enough to show that $2(1+\cos A) \le (b+c)^2$
+        -- it is enough to show that $1+\cos A \le \frac{(b+c)^2}{2}$
+        -- it is enough to show that $\cos A \le \frac{(b+c)^2}{2} - 1$
+        -- it is enough to show that $\cos A \le \frac{(b+c)^2 - 2}{2}$
+        -- it is enough to show that $2\cos A \le (b+c)^2 - 2$
+        -- it is enough to show that $2\cos A \le b^2 + c^2 + 2bc - 2$
+        -- it is enough to show that $2\cos A \le b^2 + c^2 + 2bc - (a^2 + 2bc)$
+        -- it is enough to show that $2\cos A \le b^2 + c^2 - a^2$
+        -- it is enough to show that $\cos A \le \frac{b^2 + c^2 - a^2}{2}$
+        rw [div_le_div_iff_of_pos_right]
+        have : 0 < b + c := by positivity
+        have : 0 < bc := by positivity
+        apply (div_le_div_iff_of_pos_right).mpr
+        have : 0 < 2 * b * c * cos (mathlib.Tactic.Semantical.Xmax a b c) := by positivity
+        apply le_of_mul_le_mul_left this
+        have : 0 < b * c * (b + c) := by positivity
+        apply le_of_mul_le_mul_left this
+        rw [sq_le_sq]
+        -- it is enough to show that $(b+c)^2 \le (b+c)^3$
+        -- it is enough to show that $1 \le (b+c)^2$
+        -- it is enough to show that $1 \le b+c$
+        -- it is exactly the assumption $h₁: c < a + b$
+        nlinarith [h₁, sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+        positivity
+      -- if $x = b'$
+      · simp [b', f]
+        rw [div_le_div_iff_of_pos_right]
+        -- it is enough to show that $4c^2a^2\cos^2 \frac{B}{2} \le c^2a^2(b+c)^2$
+        -- it is enough to show that $\cos^2 \frac{B}{2} \le \frac{(b+c)^2}{4}$
+        -- squaring, it is enough to show that $\frac{1+\cos B}{2} \le \frac{(b+c)^2}{4}$
+        -- it is enough to show that $2(1+\cos B) \le (b+c)^2$
+        -- it is enough to show that $1+\cos B \le \frac{(b+c)^2}{2}$
+        -- it is enough to show that $\cos B \le \frac{(b+c)^2}{2} - 1$
+        -- it is enough to show that $\cos B \le \frac{(b+c)^2 - 2}{2}$
+        -- it is enough to show that $2\cos B \le (b+c)^2 - 2$
+        -- it is enough to show that $2\cos B \le b^2 + c^2 + 2bc - 2$
+        -- it is enough to show that $2\cos B \le b^2 + c^2 + 2bc - (a^2 + 2bc)$
+        -- it is enough to show that $2\cos B \le b^2 + c^2 - a^2$
+        -- it is enough to show that $\cos B \le \frac{b^2 + c^2 - a^2}{2}$
+        rw [div_le_div_iff_of_pos_right]
+        have : 0 < b + c := by positivity
+        have : 0 < ca := by positivity
+        apply (div_le_div_iff_of_pos_right).mpr
+        have : 0 < 2 * c * a * cos (mathlib.Tactic.Semantical.Xmax a b c) := by positivity
+        apply le_of_mul_le_mul_left this
+        have : 0 < c * a * (c + a) := by positivity
+        apply le_of_mul_le_mul_left this
+        rw [sq_le_sq]
+        -- it is enough to show that $(c+a)^2 \le (c+a)^3$
+        -- it is enough to show that $1 \le (c+a)^2$
+        -- it is enough to show that $1 \le c+a$
+        -- it is exactly the assumption $h₂: b < a + c$
+        nlinarith [h₂, sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+        positivity
+      -- if $x = c'$
+      · simp [c', f]
+        rw [div_le_div_iff_of_pos_right]
+        -- it is enough to show that $4a^2b^2\cos^2 \frac{C}{2} \le a^2b^2(b+c)^2$
+        -- it is enough to show that $\cos^2 \frac{C}{2} \le \frac{(b+c)^2}{4}$
+        -- squaring, it is enough to show that $\frac{1+\cos C}{2} \le \frac{(b+c)^2}{4}$
+        -- it is enough to show that $2(1+\cos C) \le (b+c)^2$
+        -- it is enough to show that $1+\cos C \le \frac{(b+c)^2}{2}$
+        -- it is enough to show that $\cos C \le \frac{(b+c)^2}{2} - 1$
+        -- it is enough to show that $\cos C \le \frac{(b+c)^2 - 2}{2}$
+        -- it is enough to show that $2\cos C \le (b+c)^2 - 2$
+        -- it is enough to show that $2\cos C \le b^2 + c^2 + 2bc - 2$
+        -- it is enough to show that $2\cos C \le b^2 + c^2 + 2bc - (a^2 + 2bc)$
+        -- it is enough to show that $2\cos C \le b^2 + c^2 - a^2$
+        -- it is enough to show that $\cos C \le \frac{b^2 + c^2 - a^2}{2}$
+        rw [div_le_div_iff_of_pos_right]
+        have : 0 < c + a := by positivity
+        have : 0 < ab := by positivity
+        apply (div_le_div_iff_of_pos_right).mpr
+        have : 0 < 2 * a * b * cos (mathlib.Tactic.Semantical.Xmax a b c) := by positivity
+        apply le_of_mul_le_mul_left this
+        have : 0 < a * b * (c + a) := by positivity
+        apply le_of_mul_le_mul_left this
+        rw [sq_le_sq]
+        -- it is enough to show that $(a+b)^2 \le (a+b)^3$
+        -- it is enough to show that $1 \le (a+b)^2$
+        -- it is enough to show that $1 \le a+b$
+        -- it is exactly the assumption $h₃: a < b + c$
+        nlinarith [h₃, sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a)]
+        positivity
+  -- Since $a', b', c'$ are positive, we can apply the Triangle Inequality, AM-GM Inequality, and Cauchy-Schwarz Inequality to get the desired result.
+  -- The Cauchy-Schwarz Inequality is represented by the lemma `g₃`.
+  have g₄ : a' ^ 2 * (b + c) + b' ^ 2 * (c + a) + c' ^ 2 * (a + b) ≤ 3 * a * b * c := by
+    -- It is enough to show that $a'^2(b+c) + b'^2(c+a) + c'^2(a+b) \le 3\sqrt{2bc \cdot (b+c) \cdot 2ca \cdot (c+a) \cdot 2ab \cdot (a+b)}$
+    -- Since $a', b', c'$ are positive, it is enough to show that $a'^4(b+c)^2 + b'^4(c+a)^2 + c'^4(a+b)^2 \le 3\sqrt{2bc \cdot (b+c) \cdot 2ca \cdot (c+a) \cdot 2ab \cdot (a+b)}$.
+    -- It is enough to show that $\sum_{\text{cyc}} \frac{a'^8}{(b+c)^4} \le 3\sqrt{2bc \cdot (b+c) \cdot 2ca \cdot (c+a) \cdot 2ab \cdot (a+b)}$.
+    -- It is enough to show that $\sum_{\text{cyc}} \frac{a'^8}{(b+c)^4} \le 3 \cdot 2^{3/4} \cdot (bc(b+c) \cdot ca(c+a) \cdot ab(a+b))^{1/4}$.
+    -- By the AM-GM Inequality, it is enough to show that $\sum_{\text{cyc}} \frac{a'^8}{(b+c)^4} \le 3 \cdot 2^{3/4} \cdot \left(\frac{bc(b+c) + ca(c+a) + ab(a+b)}{3}\right)^{1/4}$.
+    -- It is enough to show that $\sum_{\text{cyc}} \frac{a'^8}{(b+c)^4} \le 3 \cdot 2^{3/4} \cdot \left(\frac{bc(b+c) + ca(c+a) + ab(a+b)}{3}\right)^{1/4}$.
+    -- It is enough to show that $3 \cdot 2^{3/4} \cdot \left(\frac{bc(b+c) + ca(c+a) + ab(a+b)}{3}\right)^{1/4} \ge 3\sqrt{2bc \cdot (b+c) \cdot 2ca \cdot (c+a) \cdot 2ab \cdot (a+b)}$.
+    -- It is enough to show that $\left(\frac{bc(b+c) + ca(c+a) + ab(a+b)}{3}\right)^{1/4} \ge \sqrt{2bc \cdot (b+c) \cdot 2ca \cdot (c+a) \cdot

@@ -1,0 +1,49 @@
+have step₁ : S.card = 2 := by
+    have h₁ : S = {Real.pi / 2, Real.pi / 2 + Real.pi / 2} := by
+      ext x
+      simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+      constructor
+      · intro h
+        have h₂ : 0 ≤ x := h.1
+        have h₃ : x ≤ Real.pi := h.2.1
+        have h₄ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h.2.2
+        have h₅ : x = Real.pi / 2 ∨ x = Real.pi / 2 + Real.pi / 2 := by
+          -- We need to show that x is either π/2 or π/2 + π/2
+          have h₆ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h₄
+          have h₇ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by linarith
+          -- Use the fact that sin(a) = cos(b) implies a = π/2 - b or a = b - π/2
+          have h₈ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by linarith
+          have h₉ : Real.cos x = 0 ∨ Real.cos x = -1 ∨ Real.cos x = 1 := by
+            apply or_iff_not_imp_left.mpr
+            intro h₁₀
+            apply or_iff_not_imp_left.mpr
+            intro h₁₁
+            apply Eq.symm
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₀)
+            apply Eq.symm
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₁)
+            have h₁₂ := Real.sin_sq_add_cos_sq x
+            have h₁₃ := Real.sin_sq_add_cos_sq (Real.pi / 2 * Real.cos x)
+            have h₁₄ := Real.sin_sq_add_cos_sq (Real.pi / 2 * Real.sin x)
+            ring_nf at *
+            nlinarith [Real.pi_pos, Real.pi_pos.le, sq_nonneg (Real.cos x + 1), sq_nonneg (Real.cos x - 1), sq_nonneg (Real.sin x + 1), sq_nonneg (Real.sin x - 1)]
+          rcases h₉ with (h₉ | h₉ | h₉)
+          · -- Case 1: cos x = 0
+            have h₁₀ : x = Real.pi / 2 := by
+              have h₁₁ : Real.cos x = 0 := by linarith
+              have h₁₂ : x = Real.pi / 2 := by
+                rw [← Real.cos_pi_div_two] at h₁₁
+                have h₁₃ := Real.cos_le_one x
+                have h₁₄ := Real.neg_one_le_cos x
+                have h₁₅ : x ≥ 0 := by linarith
+                have h₁₆ : x ≤ Real.pi := by linarith
+                apply le_antisymm
+                · apply le_of_not_gt
+                  intro h
+                  nlinarith [Real.cos_le_one x, Real.neg_one_le_cos x, Real.cos_le_one x]
+                · apply le_of_not_gt
+                  intro h
+                  nlinarith [Real.cos_le_one x, Real.neg_one_le_cos x, Real.cos_le_one x]
+              linarith
+            simp_all
+          · -- Case 2: cos x = -1

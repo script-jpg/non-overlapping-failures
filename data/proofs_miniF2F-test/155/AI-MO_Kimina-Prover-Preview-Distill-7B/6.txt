@@ -1,0 +1,166 @@
+-- We will show that the solutions are
+  -- $\tfrac{2}{3}\pi$, $\tfrac{4}{3}\pi$, $\tfrac{6}{5}\pi$, $\tfrac{8}{5}\pi$ and $\tfrac{3}{2}\pi$.
+  have h₁ : S = {2 / 3 * Real.pi, 4 / 3 * Real.pi, 6 / 5 * Real.pi, 8 / 5 * Real.pi,
+    3 / 2 * Real.pi} := by
+    ext x
+    constructor
+    · intro hx
+      -- First, let's show that all solutions are in that set.
+      have ⟨h₀, h₁, h₂⟩ := h₀ x
+      -- Since $\tan(2x)$ is periodic with period $\pi/2$, we have
+      -- $\tan(2x)=\tan(2x+\pi/2)$ if $x\in[0,2\pi]$.
+      have h₃ (x : ℝ) : x ∈ S → Real.tan (2 * x) = Real.tan (2 * x + Real.pi / 2) := by
+        intro hx
+        obtain ⟨h₄, h₅, h₆⟩ := h₀ hx
+        have h₇ : 2 * x ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
+          constructor
+          · linarith [Real.pi_pos]
+          · linarith [Real.pi_pos]
+        have := Real.tan_add_pi_div_two h₄ h₇
+        rw [h₆] at this
+        exact this
+      -- Moreover, $\tan(2x+\pi/2)=-\cot(2x)$ if $x\in[0,2\pi]\setminus\{\pi/4, 3\pi/4\}$.
+      have h₄ (x : ℝ) : x ∈ S → x ∉ {Real.pi / 4, 3 * Real.pi / 4} →
+          Real.tan (2 * x + Real.pi / 2) = -Real.cot (2 * x) := by
+        intro hx h₇
+        have h₈ : 2 * x ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
+          constructor
+          · linarith [Real.pi_pos]
+          · linarith [Real.pi_pos]
+        have h₉ : 2 * x ≠ Real.pi / 2 := by
+          rintro rfl
+          apply h₇
+          exact Or.inl rfl
+        have := Real.tan_add_pi_div_two h₈ h₉
+        rw [← Real.tan_pi_div_two] at this
+        rw [this]
+        rw [Real.cot_eq_cos_div_sin, Real.tan_eq_sin_div_cos]
+        simp
+        rw [show Real.cos (2 * x) ^ 2 + Real.sin (2 * x) ^ 2 = 1 by exact Real.cos_sq_add_sin_sq (2 * x)]
+        tauto
+      -- Moreover, $\cos(x/2)$ is periodic with period $4\pi$.
+      have h₅ (x : ℝ) : x ∈ S → Real.cos (x / 2) = Real.cos ((x - 2 * Real.pi) / 2) := by
+        intro hx
+        obtain ⟨h₆, h₇, h₈⟩ := h₀ hx
+        rw [h₈]
+        linarith
+      -- If $x$ is a solution, then $\tan(2x)=-\cot(2x)$ so $\tan^2(2x)=-1$.
+      have h₆ (x : ℝ) : x ∈ S → Real.tan (2 * x) ^ 2 = -1 := by
+        intro hx
+        specialize h₃ x hx
+        specialize h₄ x hx (by rw [h₁]; constructor <;> linarith [Real.pi_pos])
+        rw [h₃, Real.tan_eq_sin_div_cos, Real.cot_eq_cos_div_sin] at h₄
+        have h₅ : Real.cos (2 * x) ≠ 0 := by
+          rintro rfl
+          simp [h₄] at h₃
+          rw [h₈] at h₃
+          simp at h₃
+        have : Real.cos (2 * x) ^ 2 + Real.sin (2 * x) ^ 2 = 1 := Real.cos_sq_add_sin_sq (2 * x)
+        field_simp [h₅] at h₃
+        nlinarith
+      -- But $\tan^2(2x)\geq 0$, so $\tan^2(2x)=-1$ implies that $\tan^2(2x)$ is both
+      -- non-negative and negative, a contradiction.
+      have h₇ (x : ℝ) : x ∈ S → False := by
+        intro hx
+        specialize h₆ x hx
+        have : Real.tan (2 * x) ^ 2 ≥ 0 := by exact sq_nonneg (Real.tan (2 * x))
+        linarith
+      contradiction
+    · -- Now, let's show that the set in the problem is a subset of the set
+      -- we just found.
+      intro hx
+      have h₂ : x ≤ Real.pi / 2 ∨ x > Real.pi / 2 := by exact le_or_lt x (Real.pi / 2)
+      rcases h₂ with h₂ | h₂
+      · have h₃ : 2 * x ≤ Real.pi := by linarith [Real.pi_pos]
+        have h₄ : Real.tan (2 * x) = 0 := by
+          rw [Real.tan_eq_sin_div_cos]
+          simp
+          rw [Real.sin_eq_zero_iff_of_nonneg_of_le_pi h₃]
+          linarith
+        have h₅ : Real.cos (x / 2) = 0 := by
+          suffices Real.cos (x / 2) ^ 2 = 1 by nlinarith
+          have : Real.cos (x / 2) ^ 2 = Real.cos (x / 2 + 2 * Real.pi) ^ 2 := by
+            rw [Real.cos_add_two_pi]
+          rw [this]
+          have : x / 2 + 2 * Real.pi = x / 2 + (2 * Real.pi) := rfl
+          rw [this]
+          suffices (Real.cos (x / 2 + (2 * Real.pi))) ^ 2 = 1 by nlinarith
+          rw [Real.cos_eq_zero_iff]
+          simp
+          linarith [Real.pi_pos]
+        have : x / 2 ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
+          constructor
+          · linarith [Real.pi_pos]
+          · linarith [Real.pi_pos]
+        rw [← Real.cos_eq_zero_iff, Real.cos_eq_zero_iff] at h₅
+        obtain ⟨k, hk⟩ := h₅
+        have h₆ : 2 * x = (2 * Real.pi) * k := by linarith
+        have : k = 0 := by
+          by_contra! h
+          have : 2 * x ≠ 0 := by
+            rw [h₆]
+            nlinarith
+          rw [h₄] at this
+          contradiction
+        rw [this, mul_zero] at h₆
+        rw [h₆] at h₄
+        rw [h₄]
+        simp
+      · have h₃ : 2 * x ∈ Set.Ioo (Real.pi / 2) (5 * Real.pi / 2) := by
+          constructor
+          · linarith [Real.pi_pos]
+          · linarith [Real.pi_pos]
+        have h₄ : Real.tan (2 * x) = Real.tan (2 * x - Real.pi / 2) := by
+          rw [show 2 * x - Real.pi / 2 = 2 * x - Real.pi / 2 + Real.pi by ring]
+          rw [Real.tan_add_pi]
+        have h₅ (x : ℝ) : x ∈ S → Real.tan (2 * x - Real.pi / 2) = -Real.tan (2 * x) := by
+          intro hx
+          obtain ⟨h₆, h₇, h₈⟩ := h₀ hx
+          have h₉ : 2 * x - Real.pi / 2 ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
+            constructor
+            · linarith [Real.pi_pos]
+            · linarith [Real.pi_pos]
+          have := Real.tan_add_pi_div_two h₆ h₉
+          rw [show 2 * x - Real.pi / 2 + Real.pi / 2 = 2 * x by ring] at this
+          rw [this]
+          rw [Real.tan_pi_div_two]
+          by_cases h₁₀ : Real.tan (2 * x) = 0
+          · simp [h₁₀]
+          · have : Real.cos (2 * x) ≠ 0 := by
+              rintro rfl
+              simp [h₁₀] at h₈
+              trivial
+            rw [Real.tan_eq_sin_div_cos]
+            simp
+            have ⟨k, hk⟩ := (Real.cos_eq_zero_iff).mp h₈
+            have : 2 * x = (4 * k + 1) * Real.pi / 2 := by linarith
+            have : (4 * k + 1) * Real.pi / 2 - Real.pi / 2 = 2 * Real.pi * k := by
+              ring_nf
+              rw [mul_assoc]
+              simp
+            rw [this, ← Real.tan_add_pi, ← Real.tan_eq_sin_div_cos] at h₉
+            rw [show Real.cos (2 * x) ^ 2 + Real.sin (2 * x) ^ 2 = 1 by exact Real.cos_sq_add_sin_sq (2 * x)] at h₉
+            have : Real.tan (2 * x - Real.pi / 2) ^ 2 = 1 := by nlinarith
+            rw [sq_eq_one_iff] at this
+            tauto
+        -- Using these facts, we can show that all solutions are in the set.
+        have h₆ : Real.tan (2 * x - Real.pi / 2) ^ 2 = -1 := by
+          specialize h₅ x hx
+          rw [h₅]
+          rw [Real.tan_eq_sin_div_cos, Real.cot_eq_cos_div_sin] at h₃
+          have h₇ : Real.cos (2 * x) ≠ 0 := by
+            rintro rfl
+            simp [h₃] at h₈
+            trivial
+          have h₈ : Real.cos (2 * x) ^ 2 + Real.sin (2 * x) ^ 2 = 1 := Real.cos_sq_add_sin_sq (2 * x)
+          field_simp [h₇] at h₃
+          nlinarith
+        specialize h₇ (2 * x - Real.pi / 2) (by rw [h₃]; constructor <;> linarith [Real.pi_pos])
+        linarith
+  -- Now that we know that the set is equal to that set, we can show that
+  -- the set has $5$ elements.
+  rw [h₁]
+  rw [Set.encard]
+  simp
+
+```

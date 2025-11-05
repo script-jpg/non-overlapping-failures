@@ -1,0 +1,162 @@
+-- Boring lemma.
+  have square_root_le : ∀ x y, 0 ≤ x → x ≤ y → Real.sqrt x ≤ Real.sqrt y := by
+    intros x y hx hy
+    apply Real.sqrt_le_sqrt
+    exact hx.trans hy
+
+  -- Boring lemma.
+  have square_sqrt_le : ∀ x, 0 ≤ x → (Real.sqrt x) ^ 2 ≤ 1 / 4 + Real.sqrt x := by
+    intro x hx
+    have : (Real.sqrt x) ^ 2 = x := by rw [Real.sq_sqrt hx]
+    rw [this]
+    have : x + (-x + 1 / 4) = 1 / 4 := by ring
+    nth_rw 2 [this]
+    apply add_le_add_right
+    apply Real.sqrt_le
+    linarith only [hx]
+
+  -- Boring lemma.
+  have square_sqrt_eq_one_half_of_nonneg : ∀ x, 0 ≤ x → 0 ≤ Real.sqrt x → Real.sqrt x ≤ 1 / 2 → (Real.sqrt x) ^ 2 = 1 / 4 := by
+    intros x hx₀ hx₁ hx₂
+    have : (Real.sqrt x) ^ 2 = x := by rw [Real.sq_sqrt hx₀]
+    nth_rw 2 [this]
+    linarith only [hx₁, hx₂, Real.sqrt_nonneg x]
+
+  -- Boring lemma.
+  have square_sqrt_eq_one_half_of_nonneg' : ∀ x, 0 ≤ x → Real.sqrt x ≤ 1 / 2 → (Real.sqrt x) ^ 2 = 1 / 4 := by
+    intros x hx₀ hx₁
+    have : (Real.sqrt x) ^ 2 = x := by rw [Real.sq_sqrt hx₀]
+    nth_rw 2 [this]
+    linarith only [hx₀, hx₁, Real.sqrt_nonneg x]
+
+  -- Show that f(x) ≥ 0 for all x.
+  have f_nonneg : ∀ x, 0 ≤ f x := by
+    intro x
+    induction x using BigOperators.induction_on with
+    | hz =>
+      specialize h₁ (-a)
+      simp at h₁
+      rw [show f (-a) = 1 / 2 + Real.sqrt (f (-a) - f (-a) ^ 2) by exact h₁] at h₁
+      linarith only [h₁, Real.sqrt_nonneg (f (-a) - f (-a) ^ 2)]
+    | hp x hx =>
+      specialize h₁ x
+      linarith only [h₁, Real.sqrt_nonneg (f x - f x ^ 2)]
+    | hn x hx =>
+      specialize h₁ x
+      linarith only [h₁, Real.sqrt_nonneg (f x - f x ^ 2)]
+
+  -- Show that f is strictly increasing.
+  have f_strictly monotone : StrictMono f := by
+    apply strictMono_nat_of_lt_succ
+    -- Note that the following statement is more general than what we need.
+    suffices ∀ x y : ℕ → ℝ, x < y → f x < f y by
+      intro x y
+      induction x using Nat.strong_induction_on with
+      | hz n hn =>
+        specialize this n (show _ by simp) (show _ by simp [hn])
+        exact this
+      | hms k m hlt n hn =>
+        specialize this k (show _ by simp) (show _ by simp [hlt]; exact hn)
+        exact this
+
+    intro x y hlt
+    induction x using BigOperators.induction_on with
+    | hz =>
+      simp
+      specialize h₁ (-a)
+      simp at h₁
+      rw [show f (-a) = 1 / 2 + Real.sqrt (f (-a) - f (-a) ^ 2) by exact h₁] at h₁
+      rw [show f (-a + 1) = 1 / 2 + Real.sqrt (f (-a + 1) - f (-a + 1) ^ 2) by exact h₁] at h₁
+      suffices Real.sqrt (f (-a) - f (-a) ^ 2) < Real.sqrt (f (-a + 1) - f (-a + 1) ^ 2) by
+        linarith only [h₁, this]
+      apply Real.sqrt_lt_sqrt
+      linarith only [show f (-a) - f (-a) ^ 2 ≤ 1 / 4 by linarith only [f_nonneg (-a), square_sqrt_le (f (-a))] ]
+      linarith only [show f (-a + 1) - f (-a + 1) ^ 2 ≤ 1 / 4 by linarith only [f_nonneg (-a + 1), square_sqrt_le (f (-a + 1))] ]
+    | hp x hx =>
+      specialize h₁ x
+      simp at h₁
+      simp [h₁]
+      specialize this (x + 1) (show _ by linarith only [hx] ) (show _ by simp)
+      exact this
+    | hn x hx =>
+      specialize h₁ x
+      simp at h₁
+      simp [h₁]
+      specialize this (x + 1) (show _ by linarith only [hx] ) (show _ by simp)
+      exact this
+
+  -- Show that f is injective.
+  have f_injective : InjOn f Set.univ := by
+    intro x y hxy
+    specialize f_strictly (show _ by simp) (show _ by simp) hxy
+    rw [← hxy] at f_strictly
+    symm at f_strictly
+    exact f_strictly
+
+  -- Show that f(x + b) = f(x) for all x.
+  suffices ∃ b > 0, ∀ x, f (x + b) = f x by
+    obtain ⟨b, hb₀, hb⟩ as this := this
+    use b
+    simp
+    exact hb
+
+  -- Since f is injective, it is sufficient to show that f(x + (f(x) - f(x + a)) * a) = f(x).
+  suffices ∃ b > 0, ∀ x, f (x + (f x - f (x + a)) * a) = f x by
+    obtain ⟨b, hb₀, hb⟩ as this := this
+    use b
+    simp
+    intro x
+    specialize this x
+    rw [hb x, ← this]
+
+  -- Since f is strictly increasing, it is sufficient to show that x + (f(x) - f(x + a)) * a ≤ x for all x.
+  suffices ∃ b > 0, ∀ x, f (x + (f x - f (x + a)) * a) = f x ∧ x + (f x - f (x + a)) * a ≤ x by
+    obtain ⟨b, hb₀, hb⟩ as this := this
+    use b
+    simp
+    intro x
+    obtain ⟨_, hle⟩ := hb x
+    specialize this x
+    exact hle
+
+  -- Let x be a real number.
+  intro x
+
+  -- Show that 0 ≤ f(x) - f(x + a).
+  have f_x_le : 0 ≤ f x - f (x + a) := by
+    specialize h₁ x
+    have : 0 ≤ 1 / 2 := by norm_num
+    linarith only [h₁, this, Real.sqrt_nonneg (f x - f x ^ 2)]
+
+  -- Let b = (f(x) - f(x + a)) * a.
+  let b := (f x - f (x + a)) * a
+
+  -- Show that 0 ≤ b.
+  have b_nonneg : 0 ≤ b := by
+    simp [b]
+    exact f_x_le
+
+  -- Show that f(x + b) = f(x).
+  have h₂ : f (x + b) = f x := by
+    specialize h₁ x
+    simp [b] at h₁
+    rw [add_assoc] at h₁
+    simp [show f x - f (x + a) = b / a by simp [b]; ring] at h₁
+    rw [show (1 / 2 + Real.sqrt (f x - f x ^ 2)) ^ 2 = 1 / 4 + Real.sqrt (f x - f x ^ 2) by linarith only [square_sqrt_le (f x - f x ^ 2), Real.sqrt_nonneg (f x - f x ^ 2) ), show (b / a) ^ 2 = b / a by field_simp; ring] at h₁
+    specialize square_sqrt_eq_one_half_of_nonneg' (f x - f x ^ 2) f_nonneg (show _ by linarith only [h₁, Real.sqrt_nonneg (f x - f x ^ 2)])
+    simp [this] at h₁
+    exact h₁
+
+  -- Show that b ≤ x.
+  have h₃ : b ≤ x := by
+    by_contra! hgt
+    have : 0 < (f x - f (x + a)) * a := by
+      linarith only [hgt]
+    have : 0 < f x - f (x + a) := by
+      simp [b_pos_iff] at this
+      exact this
+    linarith only [this, f_strictly (show _ by linarith only [hgt] ) (show _ by simp) (show _ by linarith only [hgt])]
+
+  -- Show that f(x + b) = f(x).
+  exact ⟨b, ⟨b_nonneg, h₂⟩, h₃⟩
+```

@@ -1,0 +1,86 @@
+have ha := h₀.1
+  have hb := h₀.2.1
+  have hc := h₀.2.2.1
+  have hd := h₀.2.2.2
+
+  have hab := h₁.1
+  have hbc := h₁.2.1
+  have hcd := h₁.2.2.1
+  have had := h₁.2.2.2
+
+  have h₆ : d < 2 ^ k := by
+    calc
+      d < a + d := by exact Nat.lt_add_right a d
+      _ = 2 ^ k := by exact h₄.symm
+      _ < 2 ^ k + 1 := by exact Nat.lt_add_one (2 ^ k)
+
+  have h₇ : c < 2 ^ m := by
+    calc
+      c < b + c := by exact Nat.lt_add_right b c
+      _ = 2 ^ m := by exact h₅.symm
+      _ < 2 ^ m + 1 := by exact Nat.lt_add_one (2 ^ m)
+
+  /- Prove that $a$ is a factor of $2 ^ k$.
+     In fact, $a$ is a factor of $b * c$.
+     Since $a$ is odd, $a$ is a factor of $2 ^ k$.
+     -/
+  have h₈ : a ∣ 2 ^ k := by
+    rw [show 2 ^ k = a * d by rw [h₃]; ring]
+    apply Nat.dvd_mul_right
+
+  /- Prove that $d$ is a factor of $2 ^ k$.
+     In fact, $d$ is a factor of $b * c$.
+     Since $d$ is odd, $d$ is a factor of $2 ^ k$.
+     -/
+  have h₉ : d ∣ 2 ^ k := by
+    rw [show 2 ^ k = a * d by rw [h₃]; ring]
+    apply Nat.dvd_mul_left
+
+  /- Prove that $2 ^ k$ is a multiple of $2 ^ m$.
+     In fact, $2 ^ k$ is a multiple of $b * c$.
+     Since $b$ and $c$ are odd, $2 ^ k$ is a multiple of $2 ^ m$.
+     -/
+  have h₁₀ : 2 ^ m ∣ 2 ^ k := by
+    rw [show 2 ^ k = b * c by rw [h₃]; ring]
+    apply Nat.dvd_mul_left
+
+  -- randomly guess that $k = m$
+  have hkm : k = m := by
+    by_contra h
+    have hle : m < k := by
+      by_contra h
+      push_neg at h
+      have : k = m := by linarith
+      exact h this
+    have h₆' : 2 ^ m < 2 ^ k := by exact Nat.pow_lt_pow_of_lt hle (by norm_num)
+    have h₇' : 2 ^ k < 2 ^ m := by exact Nat.pow_lt_pow_of_lt h₆ (by norm_num)
+    linarith only [h₆', h₇']
+
+  rw [←hkm] at h₅ h₁₀
+  rw [h₅] at h₁₀
+  apply Nat.pow_dvd_pow at h₁₀
+  rw [Nat.dvd_prime_pow] at h₁₀
+  obtain ⟨p, hp, h₅, h₆⟩ := h₁₀
+  rw [hp] at h₃ h₄ hkm h₁₀
+  -- now $2 ^ m = p ^ m$
+  simp at h₅
+  rw [h₅] at h₄ h₃
+  -- we have $a * d = p ^ m$
+  rw [h₄] at h₃
+  -- we have $a + d = p ^ m$
+  rw [h₃] at h₄
+  have ha' : a * a = 1 := by
+    rw [←h₃, ←h₄]
+    ring_nf
+
+  rw [mul_eq_one_iff_eq_one_or_neg_one] at ha'
+  rcases ha' with ha' | ha'
+  · exact ha'
+  ·
+    -- $a = -1$ is impossible
+    by_contra ha''
+    rw [ha''] at h₃
+    have : d = 0 := by linarith only [h₃, h₄]
+    simp at this
+    linarith only [this, hd]
+```

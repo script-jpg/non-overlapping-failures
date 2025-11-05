@@ -1,0 +1,60 @@
+have h₃ : 1 / 4 < Real.sqrt (3 - x) - Real.sqrt (x + 1) :=
+    calc
+      1 / 4 = 1 / 2 * (1 / 2) := by norm_num
+      _ < 1 / 2 * (Real.sqrt (3 - x) - Real.sqrt (x + 1)) := by linarith
+      _ = Real.sqrt (3 - x) - Real.sqrt (x + 1) := by ring
+
+  -- prove that $1/2 < \sqrt{3-x} - \sqrt{x+1}$ implies $-1 < x$
+  have h₄ : -1 < x := by
+    have h₄ : 1 / 4 + Real.sqrt (x + 1) < Real.sqrt (3 - x) := by linarith
+    have h₅ : 0 ≤ 1 / 4 + Real.sqrt (x + 1) := by positivity
+    have h₆ : 0 ≤ Real.sqrt (3 - x) := Real.sqrt_nonneg (3 - x)
+    have h₇ : Real.sqrt (3 - x) > 0 := by
+      apply Real.sqrt_pos.mpr
+      linarith
+    have h₈ : 1 / 4 < Real.sqrt (3 - x) := by linarith
+    have h₉ : 0 ≤ 3 - x := by linarith
+    -- square
+    apply Real.lt_sqrt_of_sq_lt at h₈
+    rw [mul_pow, Real.sq_sqrt h₉, mul_one] at h₈
+    have h₁₀ : 1 / 16 + Real.sqrt (x + 1) * (1 / 2) + Real.sqrt (x + 1) ^ 2 < 3 - x := by linarith
+    -- simplify
+    rw [add_comm, ← add_assoc, ← Real.sqrt_mul h₁₀, Real.sqrt_sq h₁] at h₁₀
+    ring_nf at h₁₀
+    rw [show 1 / 4 + x + 1 = x + 5 / 4 by ring] at h₁₀
+    -- square
+    apply Real.lt_sqrt_of_sq_lt at h₁₀
+    rify at h₁₀
+    linarith
+
+  -- prove that $1/2 < \sqrt{3-x} - \sqrt{x+1}$ implies $x < 1 - \sqrt{31}/8$
+  have h₅ : x < 1 - Real.sqrt 31 / 8 := by
+    have h₅ : 1 / 2 + Real.sqrt (x + 1) < Real.sqrt (3 - x) := by linarith
+    have h₆ : 1 / 2 + Real.sqrt (x + 1) < 1 / 2 + Real.sqrt (1 - x) := by
+      have h₆ : Real.sqrt (3 - x) < Real.sqrt (1 - x) := by
+        apply Real.sqrt_lt_sqrt
+        linarith
+        linarith
+      linarith
+    have h₇ : 1 - Real.sqrt 31 / 8 < 1 / 2 + Real.sqrt (1 - x) := by
+      have h₇ : 1 / 2 - Real.sqrt 31 / 8 < Real.sqrt (1 - x) := by
+        have h₈ : 0 < Real.sqrt (1 - x) := by
+          apply Real.sqrt_pos.mpr
+          linarith
+        have h₉ : (1 / 2 - Real.sqrt 31 / 8) ^ 2 < (Real.sqrt (1 - x)) ^ 2 := by
+          rw [pow_two, pow_two]
+          ring_nf
+          rw [Real.sq_sqrt (by linarith)]
+          have h₁₀ : Real.sqrt 31 < 8 := by
+            apply (Real.sqrt_lt (by linarith)).mpr
+            norm_num
+          linarith
+        exact Real.lt_sqrt_of_sq_lt h₉
+      linarith
+    -- trans
+    apply lt_trans h₆ at h₇
+    apply lt_trans h₅ at h₇
+    linarith
+
+  exact ⟨h₄, h₅⟩
+```

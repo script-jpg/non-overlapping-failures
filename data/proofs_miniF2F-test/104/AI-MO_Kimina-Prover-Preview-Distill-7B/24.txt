@@ -1,0 +1,125 @@
+have pge3 : p ≥ 3 := by
+    exact Nat.Prime.two_le h₀
+
+  have pge4 : p ≥ 4 := by
+    exact Nat.le_pred_of_lt (Nat.Prime.one_lt h₀)
+
+  have two_le_p : 2 ≤ p := by
+    exact Nat.Prime.two_le h₀
+
+  have inv1 : (1 : ZMod p)⁻¹ = 1 := by
+    exact ZMod.inv_eq_of_ne_zero (by exact Ne.symm (NeZero.ne' 1)) --[1≠0]
+
+  have invp : (p : ZMod p)⁻¹ = 0 := by
+    exact ZMod.inv_eq_zero_iff.mpr (by exact Nat.Prime.ne_one h₀)
+
+  have invp1 : ((p + 1) : ZMod p)⁻¹ = 2 := by
+    have : (p + 1 : ZMod p) = 1 := by
+      exact Eq.symm (ZMod.add_eq_of_coe_nat (p - 1) 1)
+    rw [this]
+    exact inv1
+
+  have invp2 : ((p + 2) : ZMod p)⁻¹ = 3 := by
+    have : (p + 2 : ZMod p) = 2 := by
+      exact Eq.symm (ZMod.add_eq_of_coe_nat (p - 1) 2)
+    rw [this]
+    exact inv2
+
+  have inv_add_one (k : ZMod p) : k⁻¹ * (k + 1)⁻¹ = (2 * k + 2)⁻¹ := by
+    rw [←mul_inv_mul, inv1]
+    ring_nf
+
+  let e (n : ℕ) := ∑ i ∈ Finset.Icc 1 (n - 2), (i : ZMod p)⁻¹ * ((i : ZMod p) + 1)⁻¹
+
+  have e4 : e 4 = 3 * (2 * 4 + 2)⁻¹ := by
+    simp only [e, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top,
+      Finset.sum_Icc_succ_top, addinv, add_assoc, mul_inv_mul, inv1, mul_one, invp, mul_zero,
+      add_zero, zero_add, invp1, mul_one, one_mul, add_right_inj, mul_right_inj']
+    norm_num
+
+  have e5 : e 5 = 4 * (2 * 5 + 2)⁻¹ := by
+    simp only [e, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top,
+      Finset.sum_Icc_succ_top, addinv, add_assoc, mul_inv_mul, inv1, mul_one, invp, mul_zero,
+      add_zero, zero_add, invp1, mul_one, one_mul, add_right_inj, mul_right_inj', invp2,
+      mul_comm]
+    norm_num
+
+  have hyp_induction (n : ℕ) (h : n ≥ 3) (h' : ∀ n ≤ n + 2, e n = (n - 2) * (2 * n + 2)⁻¹) :
+      e (n + 3) = (n + 1) * (2 * (n + 3) + 2)⁻¹ := by
+    simp only [e]
+    rw [Finset.sum_Icc_succ_top (by linarith), add_assoc]
+    rw [h' (n + 2) (by linarith), h' (n + 1) (by linarith), add_assoc]
+    rw [inv_add_one]
+    field_simp
+    rw [mul_assoc, add_assoc, mul_inv_mul]
+    rw [inv_add_one, invp, mul_zero, add_zero, zero_add, mul_one, ←add_assoc, mul_comm]
+    field_simp
+    rw [←mul_assoc, add_assoc, mul_inv_mul]
+    rw [inv_add_one, invp, mul_zero, add_zero, zero_add, mul_one, ←add_assoc, mul_comm]
+    field_simp
+    linarith
+
+  have : ∀ n ≤ p - 2, e (n + 3) = (n + 1) * (2 * (n + 3) + 2)⁻¹ := by
+    induction p with
+    | zero => tauto
+    | succ n h => tauto
+    | succ n h => tauto
+    | succ n h =>
+      have : n + 3 ≤ p - 2 := by
+        linarith
+      have := hyp_induction n (by linarith) fun n => h n (by linarith)
+      tauto
+
+  have : e (p - 2) = (p - 3) * (2 * (p - 2) + 2)⁻¹ := by
+    have := this (p - 5) (by linarith) fun n => h n (by linarith)
+    rw [p_sub_le] at this
+    tauto
+
+  have : e (p - 1) = (p - 2) * (2 * (p - 1) + 2)⁻¹ := by
+    have := this (p - 4) (by linarith) fun n => h n (by linarith)
+    rw [p_sub_le] at this
+    tauto
+
+  have : e (p - 2) + e (p - 1) = (p - 3) * (2 * (p - 2) + 2)⁻¹ + (p - 2) * (2 * (p - 1) + 2)⁻¹ := by
+    exact add_right_cancel_iff.mpr this
+
+  have : e (p - 1) = 2 := by
+    rw [e5, p_sub_le]
+    have : 2 * (p - 1) + 2 = 2 * p := by
+      ring_nf
+      rw [add_comm, ←mul_assoc, Nat.cast_sub (Nat.one_le_of_lt h₀)]
+      simp only [Nat.cast_one, Nat.cast_add, Nat.cast_ofNat, Nat.cast_sub_self]
+    rw [this]
+    have : (2 * p)⁻¹ = 0 := by
+      rw [ZMod.inv_eq_zero_iff.mpr]
+      exact Nat.Prime.ne_one h₀
+    rw [this]
+    simp only [mul_zero, add_zero, mul_one, p_sub_add_one, and_self]
+
+  rw [add_comm, ←Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top,
+    Finset.sum_Icc_succ_top, add_comm]
+  rw [this]
+  simp only [e, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top,
+    Finset.sum_Icc_succ_top, addinv, add_assoc, mul_inv_mul, inv1, mul_one, invp, mul_zero,
+    add_zero, zero_add, invp1, mul_one, one_mul, add_right_inj, mul_right_inj', invp2,
+    mul_comm]
+  have : (2 : ZMod p) = 2 * (p - 1) + 2 - 2 * (p - 1) := by
+    rw [Nat.cast_sub (Nat.one_le_of_lt h₀)]
+    simp only [Nat.cast_one, Nat.cast_add, Nat.cast_ofNat, Nat.cast_sub_self, add_sub_cancel]
+  rw [this]
+  have : (p - 1 : ZMod p) = (2 * (p - 1) + 2)⁻¹ * (2 * (p - 1) + 2) := by
+    rw [ZMod.mul_inv_cancel]
+    rw [ZMod.inv_eq_iff_eq_one.mpr]
+    rw [ZMod.add_eq_of_coe_nat (by exact Nat.le_sub_one_of_lt h₀)]
+    simp only [Nat.cast_one, Nat.cast_add, Nat.cast_ofNat, Nat.cast_sub_self, add_zero, zero_add,
+      mul_one, sub_add_cancel]
+  rw [this]
+  ring_nf
+  rw [mul_comm, add_assoc, mul_inv_mul, inv1, mul_one, invp, mul_zero, add_zero, zero_add,
+    mul_one, add_right_inj, mul_right_inj', invp2, mul_comm]
+  rw [inv_add_one]
+  field_simp
+  rw [add_assoc, add_assoc, add_comm, add_left_inj]
+  rw [←add_assoc, mul_assoc, one_mul]
+  exact Nat.Prime.one_lt h₀
+```

@@ -1,0 +1,73 @@
+have h₁ : S = {2016} := by
+    simp [h₀]
+    ext n
+    constructor
+    · intro ⟨h₃, h₄, m, h₅, h₆⟩
+      -- The four divisors of a positive integer $m$ with exactly four divisors is $1$, $m$, $p$, and $p \times m$, where $p$ is a prime dividing $m$.  The sum of the divisors is $n = 1 + p + p \times m + m = (p + 1) \times (m + 1).$  So, we have $m = \frac{n - p - 1}{p + 1}$.  We will show that $p$ is a prime not dividing $n$, and so $m$ is indeed an integer.
+
+      have h₇ : m ≠ 1 := by
+        intro h
+        simp [h] at h₅
+        omega
+      subst h₇
+      have h₈ : 4 ∈ (Nat.divisors m).erase 1 := by
+        simp
+        constructor
+        · exact h₅.symm
+        · apply Nat.divisors_card_erase_of_not_dvd h₇
+      have h₉ : Nat.divisors m = {1, 4, 11, 44} := by
+        have : (Nat.divisors m).erase 1 = {4, 11, 44} := by
+          apply Nat.divisors_eq_of_card_eq at h₈
+          exact h₈.symm
+        rw [Nat.divisors_eq_iff_card_eq] at this
+        omega
+      -- The four divisors of $m$ are $1$, $4$, $11$, and $44$.  The sum of the divisors is $n = 1 + 4 + 11 + 44 = 60$.  Thus, $p \neq 11$.
+      have h₁₀ : n = 60 := by
+        rw [show n = ∑ p in {1, 4, 11, 44}, p by simp [h₉, Nat.divisors_eq_iff]]
+        omega
+      clear h₅ h₆ h₈ h₉
+      subst h₁₀
+      -- We have $n = 60 = (p + 1) \times (m + 1)$.
+      have h₁₁ : p ≤ 3 := by
+        by_contra!
+        have : 5 ≤ p := by omega
+        have : 5 ≤ m := by
+          calc
+            5 ≤ p := this
+            _ ≤ p + 1 := by omega
+            _ = n / (m + 1) := by simp [h₆]
+            _ = 60 / (m + 1) := by rw [h₁₀]
+            _ ≤ 60 / 5 := by omega
+            _ = 12 := by norm_num
+            _ ≤ m + 1 := by omega
+        have : 240 ≤ m * (m + 1) := by omega
+        have : 240 ≤ 12 * 12 := by omega
+        linarith
+      rw [show n = (p + 1) * (m + 1) by simp [h₆]]
+      interval_cases p
+      · -- Suppose that $p = 2$.
+        -- We have $m = \frac{60 - 2 - 1}{2 + 1} = 19$.
+        -- Note that $19$ is a prime.
+        -- Thus, $m = 19$ divides $60$.
+        -- However, $m$ does not divide $n$.
+        omega
+      · -- Suppose that $p = 3$.
+        -- We have $m = \frac{60 - 3 - 1}{3 + 1} = 14$.
+        -- Note that $14$ is not a prime.
+        -- Thus, $m = 14$ does not divide $60$.
+        omega
+      · -- Suppose that $p = 11$.
+        -- We have $m = \frac{60 - 11 - 1}{11 + 1} = 4$.
+        -- Note that $4$ is not a prime.
+        -- Thus, $m = 4$ does not divide $60$.
+        omega
+    · intro ⟨h₅, h₆, h₇⟩
+      simp [h₅, h₆, h₇]
+      subst h₇
+      simp [Nat.divisors, Nat.divisorsAntidiagonal]
+      norm_num
+
+  subst h₁
+  simp
+
+```

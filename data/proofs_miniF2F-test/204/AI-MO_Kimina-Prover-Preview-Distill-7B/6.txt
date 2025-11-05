@@ -1,0 +1,130 @@
+-- We first show that $|x|<3\pi$ where $x$ is an integer implies that $-19<x<19$.
+  have h₁ (x : ℤ) : ↑(abs x) < 3 * Real.pi → -19 < x ∧ x < 19 := by
+    intro hx
+    -- Since $3\pi\approx9.42$, it suffices to show that $|x|\leq9$ implies $-19<x<19$.
+    suffices abs x ≤ 9 → -19 < x ∧ x < 19 by
+      -- We first prove that $|x|<3\pi$ implies $|x|\leq9$.
+      have h₂ : abs x < 3 * Real.pi := by
+        convert hx
+        -- As $0<3\pi<10$, and $|x|$ is a nonnegative integer, it suffices to show that $3\pi<10$.
+        suffices 3 * Real.pi < 10 by
+          convert this
+          -- We approximate $\pi$ by $3.15$ to make it decidable.
+          suffices 3 * (3.15 : ℝ) < 10 by
+            convert this
+            norm_num
+            linarith [Real.pi_lt_315]
+          norm_num
+        -- It suffices to show that $\pi<3.15$.
+        suffices Real.pi < 3.15 by
+          convert this
+          norm_num
+        -- We use the already-proven fact that $\pi<3.1416$.
+        have h₃ := Real.pi_lt_31416
+        -- $\pi$ is less than $3.15$ because $3.15$ is greater than $3.1416$.
+        linarith only [h₃]
+      -- Convert between an integer inequality and an absolute value inequality.
+      have h₃ (h : abs x ≤ 9) : -9 ≤ x ∧ x ≤ 9 := by
+        constructor
+        · linarith only [abs_le.mp h]
+        · linarith only [abs_le.mp h]
+      -- We convert between $|x|<3\pi$ and $|x|\leq9$.
+      have h₄ : 3 * Real.pi < 10 := by
+        suffices Real.pi < 3.15 by
+          norm_num
+          linarith
+        -- We use the already-proven fact that $\pi<3.1416$.
+        have h₄ := Real.pi_lt_31416
+        linarith only [h₄]
+      -- The inequality $|x|<3\pi$ is equivalent to $|x|\leq9$.
+      have h₅ : abs x ≤ 9 := by
+        apply le_of_lt
+        apply lt_of_le_of_lt (abs_nonneg x)
+        rw [← hx]
+        linarith only [h₄]
+      -- Now we prove that $|x|\leq9$ implies $-19<x<19$.
+      rwa [← Int.abs_le_iff (show -19 < 19 by norm_num)]
+
+  -- We show that the set $S$ is finite.
+  have h₂ (x : ℤ) : ↑(abs x) < 3 * Real.pi → S x → x ∈ Finset.Icc (-19) 18 := by
+    intro hx hS
+    -- It suffices to show that $S\ x$ implies $-19<x\leq18$.
+    suffices h : x ≤ 18 ∧ -19 < x by
+      -- We convert between the set membership and the integer inequality.
+      have h' : x ∈ Finset.Icc (-19) 18 := by
+        simp [Finset.mem_Icc]
+        constructor
+        · linarith only [h.2]
+        · linarith only [h.1]
+      exact h'
+    -- We first prove that $S\ x$ implies $|x|<3\pi$.
+    have h₃ : S x → ↑(abs x) < 3 * Real.pi := by
+      intro hS'
+      apply h₀
+      exact hS'
+    -- Now we prove that $|x|<3\pi$ implies $-19<x\leq18$.
+    specialize h₁ x
+    apply h₁
+    assumption
+
+  -- We conclude that $S$ is a subset of finitely many integers.
+  have h₃ : S ⊆ Finset.Icc (-19) 18 := by
+    -- It suffices to show that an element $x$ is in $S$ implies it is in $Finset.Icc (-19) 18$.
+    apply Finset.subset_congr
+    intro x
+    simp
+    intro hS
+    apply h₂ x
+    exact hS
+  -- It suffices to show that the set $Finset.Icc (-19) 18$ has $39$ elements.
+  suffices Finset.card (Finset.Icc (-19) 18) = 39 by
+    -- We first prove that the cardinality of $S$ is less than or equal to $39$.
+    have h₄ : S.card ≤ Finset.card (Finset.Icc (-19) 18) := by
+      -- It is known that the cardinality of a subset is less than or equal to the cardinality of the superset.
+      apply Finset.card_le_card h₃
+    -- We then prove that the cardinality of $S$ is greater than or equal to $39$.
+    have h₅ : S.card ≥ Finset.card (Finset.Icc (-19) 18) := by
+      -- It is known that the superset cardinality is less than or equal to the cardinality of the subset if the superset is a subset.
+      apply Finset.card_le_card
+      -- It is easy to show that $Finset.Icc (-19) 18$ is a subset of $S$.
+      rw [← Finset.coe_Icc, Finset.coe_subset_coe]
+      -- We prove that an integer $x$ is in $Finset.Icc (-19) 18$ implies it is in $S$.
+      apply Finset.mem_of.mem_coe
+      rintro ⟨hx₁, hx₂⟩
+      -- Since $|x|$ is a nonnegative integer, it suffices to show that $x\in S$ implies $|x|<3\pi$.
+      suffices |x| < 3 * Real.pi by
+        -- We first show that $|x|\leq18$ implies $|x|<3\pi$.
+        have h₆ : abs x ≤ 18 := by
+          rw [abs_le]
+          omega
+        -- We know that $18<3\pi$ as $\pi>3$.
+        have h₇ : 18 < 3 * Real.pi := by
+          suffices 6 < Real.pi by
+            norm_num
+            linarith
+          exact Real.pi_gt_three
+        -- We convert between an integer inequality and an absolute value inequality.
+        suffices (abs x : ℝ) < (3 * Real.pi : ℝ) by
+          convert this
+          norm_cast
+        linarith only [h₆, h₇]
+      -- We now prove that $x\in S$ implies $|x|<3\pi$.
+      suffices S x ↔ ↑(abs x) < 3 * Real.pi by
+        rw [this, Finset.mem_filter, Finset.mem_Icc, abs_lt, ← and_assoc]
+        omega
+      rw [h₀]
+    -- We know that $Finset.Icc (-19) 18$ has $39$ elements, so we are done.
+    rwa [Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top,
+      Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top,
+      Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top,
+      Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top,
+      Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top, Finset.Icc_succ_top,
+      show -19 = (-19 : ℤ) by norm_num, show 18 = (18 : ℤ) by norm_num]
+
+  -- We conclude that $S$ has $19$ elements.
+  apply Finset.card_eq_of_le_of_ge
+  -- The cardinality of a subset is less than or equal to the cardinality of the superset.
+  · exact h₄
+  -- The cardinality of the superset is less than or equal to the cardinality of the subset.
+  · exact h₅
+```

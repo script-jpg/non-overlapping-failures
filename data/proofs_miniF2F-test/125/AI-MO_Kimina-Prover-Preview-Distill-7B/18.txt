@@ -1,0 +1,136 @@
+have ha := h₀.1
+  have hb := h₀.2.1
+  have hc := h₀.2.2.1
+  have hd := h₀.2.2.2
+
+  have hac := h₁.1
+  have hbd := h₁.2.1
+  have hcd := h₁.2.2.1
+  have had := h₁.2.2.2
+
+  obtain ⟨ha1, ha2⟩ := ha
+  obtain ⟨hb1, hb2⟩ := hb
+  obtain ⟨hc1, hc2⟩ := hc
+  obtain ⟨hd1, hd2⟩ := hd
+
+  -- Prove that $a * d - b * c = 0$
+
+  have h₆ : a * d - b * c = 0 := by
+    calc
+      a * d - b * c = a * d - a * c := by rw [h₃]
+      _ = a * (d - c) := by ring
+      _ = 0 := by rw [show d - c = 0 by linarith only [h₂.2.2.1]]
+  simp at h₆
+
+  -- Prove that $d > c$
+
+  have h₇ : d > c := by linarith only [h₂.2.2.1]
+
+  -- Prove that $b > a$
+
+  have h₈ : b > a := by linarith only [h₂.1.1]
+
+  -- Prove that $a + b + c + d = 2 ^ k + 2 ^ m$
+
+  have h₉ : a + b + c + d = 2 ^ k + 2 ^ m := by
+    calc
+      a + b + c + d = (a + d) + (b + c) := by ring
+      _ = 2 ^ k + 2 ^ m := by rw [h₄, h₅]
+
+  -- Prove that $2 ^ k > 2 ^ m$
+
+  have h₁₀ : 2 ^ k > 2 ^ m := by
+    calc
+      2 ^ k = a + d := by rw [h₄]
+      _ > b := by linarith only [h₈]
+      _ > a := by linarith only [ha1]
+      _ ≥ 1 := by norm_num
+      _ = 2 ^ 0 := by norm_num
+      _ < 2 ^ m := by apply Nat.pow_lt_pow_of_lt; linarith only [h₇]; norm_num
+
+  -- Prove that $m > 0$
+
+  have h₁₁ : m > 0 := by
+    by_contra! h
+    have : m = 0 := by exact Nat.lt_irrefl 0 h
+    rw [this, Nat.pow_zero] at h₅
+    linarith only [h₀.2.1, h₅]
+
+  -- Prove that $k > 0$
+
+  have h₁₂ : k > 0 := by
+    by_contra! h
+    have : k = 0 := by exact Nat.lt_irrefl 0 h
+    rw [this, Nat.pow_zero] at h₄
+    linarith only [h₀.2.2.2, h₄]
+
+  -- Prove that $a * b > a * a$
+
+  have h₁₃ : a * b > a * a := by
+    calc
+      a * b > a * a := by apply Nat.mul_lt_mul_of_pos_left; linarith only [h₈]; exact ha1
+      _ = a * a := by ring
+
+  -- Prove that $a < b$
+
+  have h₁₄ : a < b := by linarith only [h₁₃]
+
+  -- Prove that $c * d > c * c$
+
+  have h₁₅ : c * d > c * c := by
+    calc
+      c * d > c * c := by apply Nat.mul_lt_mul_of_pos_left; linarith only [h₇]; exact hc1
+      _ = c * c := by ring
+
+  -- Prove that $c < d$
+
+  have h₁₆ : c < d := by linarith only [h₁₅]
+
+  -- Prove that $a * d > c * c$
+
+  have h₁₇ : a * d > c * c := by
+    calc
+      a * d > c * d := by apply Nat.mul_lt_mul_of_pos_right; exact h₈; exact hd1
+      _ > c * c := by linarith only [h₁₅]
+
+  -- Prove that $a > c$
+
+  have h₁₈ : a > c := by
+    by_contra! h
+    have : a = c := by exact Nat.le_antisymm h h₁₆
+    rw [this] at h₁₇
+    linarith only [h₁₇, h₁₆]
+
+  -- Prove that $b < d$
+
+  have h₁₉ : b < d := by
+    by_contra! h
+    have : b = d := by exact Nat.le_antisymm h h₁₆
+    rw [this] at h₁₃
+    linarith only [h₁₃, h₈]
+
+  -- Prove that $a + d > c + d$
+
+  have h₂₀ : a + d > c + d := by
+    calc
+      a + d > c + d := by linarith only [h₁₈]
+      _ = c + d := by ring
+
+  -- Prove that $a > c$
+
+  have h₂₁ : a > c := by linarith only [h₂₀]
+
+  -- Prove that $a ≥ 3$
+
+  have h₂₂ : a ≥ 3 := by
+    by_contra! h
+    have : a = 1 ∨ a = 2 := by exact Nat.le_iff_lt_or_eq (show 1 ≤ a by linarith only [ha1]) h
+    cases' this with h h
+   . linarith only [h, had]
+   . have : a = 2 := by exact h
+      have : Even a := by exact ⟨1, by rw [this]; norm_num⟩
+      rw [h] at hac
+      contradiction
+  linarith only [h₂₂, ha1]
+
+```

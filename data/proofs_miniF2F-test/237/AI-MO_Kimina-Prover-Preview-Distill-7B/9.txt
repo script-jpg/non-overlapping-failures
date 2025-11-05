@@ -1,0 +1,135 @@
+obtain ⟨k, hk, h⟩ := h₁
+
+  have hk' : 2 ^ k = (a + b ^ 2) * (b + a ^ 2) := hk
+
+  have ha : 0 < a := h₀.1
+
+  have hb : 0 < b := h₀.2
+
+  have h₂ : 2 ^ k > 0 := by
+    calc
+      2 ^ k > 0 := by positivity
+      _ = (a + b ^ 2) * (b + a ^ 2) := by rw [hk']
+  have h₃ : (a + b ^ 2) > 0 := by
+    calc
+      a + b ^ 2 > 0 := by positivity
+      _ = (a + b ^ 2) * (b + a ^ 2) / (b + a ^ 2) := by field_simp
+      _ = 2 ^ k / (b + a ^ 2) := by rw [hk']
+      _ > 0 := by positivity
+  have h₄ : (b + a ^ 2) > 0 := by
+    calc
+      b + a ^ 2 > 0 := by positivity
+      _ = (a + b ^ 2) * (b + a ^ 2) / (a + b ^ 2) := by field_simp
+      _ = 2 ^ k / (a + b ^ 2) := by rw [hk']
+      _ > 0 := by positivity
+
+  have h₅ : a + b ^ 2 > 1 := by
+    calc
+      a + b ^ 2 > 0 := by positivity
+      _ ≥ 1 := by omega
+      _ > 1 := by
+        by_contra h
+        push_neg at h
+        have : a + b ^ 2 = 1 := by omega
+        have : a = 1 := by omega
+        rw [this] at hk'
+        have : b ^ 2 = 0 := by nlinarith
+        have : b = 0 := by nlinarith
+        linarith
+
+  have h₆ : b + a ^ 2 > 1 := by
+    calc
+      b + a ^ 2 > 0 := by positivity
+      _ ≥ 1 := by omega
+      _ > 1 := by
+        by_contra h
+        push_neg at h
+        have : b + a ^ 2 = 1 := by omega
+        have : b = 1 := by omega
+        rw [this] at hk'
+        have : a ^ 2 = 0 := by nlinarith
+        have : a = 0 := by nlinarith
+        linarith
+
+  have h₇ : ¬ Even (a + b ^ 2) ∨ ¬ Even (b + a ^ 2) := by
+    by_contra h
+    push_neg at h
+    have h₈ : ¬ Even (2 ^ k) := by
+      rw [hk']
+      apply Odd.mul_odd
+      · exact Odd.ofNat (Nat.odd_pow (by norm_num))
+      · exact Odd.ofNat (Nat.odd_pow (by norm_num))
+    have : Even (2 ^ k) := by exact even_pow.mpr (⟨1, by norm_num⟩ : 2 ∣ 2 ^ k)
+    contradiction
+
+  have h₉ : ¬ Odd (a + b ^ 2) ∨ ¬ Odd (b + a ^ 2) := by
+    by_contra h
+    push_neg at h
+    have h₁₀ : ¬ Odd (2 ^ k) := by
+      rw [hk']
+      apply Even.mul_odd
+      · exact even_iff_odd_add.mp (Odd.add_odd h.1 h.2)
+      · exact Odd.ofNat (Nat.odd_pow (by norm_num))
+    have : Odd (2 ^ k) := by exact odd_pow.mpr (⟨1, by norm_num⟩ : 2 ∣ 2 ^ k)
+    contradiction
+
+  have h₁₀ : (a + b ^ 2) % 2 = 1 := by
+    rcases (Nat.even_or_odd (a + b ^ 2)) with e | o
+    · have : ¬ Odd (a + b ^ 2) := by exact Nat.not_odd_iff_even.mpr e
+      have := h₉.2 this
+      contradiction
+    · exact odd_iff_even_succ.mpr o
+
+  have h₁₁ : (b + a ^ 2) % 2 = 1 := by
+    rcases (Nat.even_or_odd (b + a ^ 2)) with e | o
+    · have : ¬ Odd (b + a ^ 2) := by exact Nat.not_odd_iff_even.mpr e
+      have := h₉.1 this
+      contradiction
+    · exact odd_iff_even_succ.mpr o
+
+  have h₁₂ : (a + b ^ 2) + (b + a ^ 2) ≥ 2 + 2 := by
+    have : b + a ^ 2 ≥ 2 := by nlinarith
+    have : a + b ^ 2 ≥ 2 := by nlinarith
+    omega
+
+  have h₁₃ : a + b ^ 2 + (b + a ^ 2) = 2 ^ k + 2 ^ k := by
+    rw [hk']
+    ring
+
+  have h₁₄ : a + b ^ 2 + (b + a ^ 2) = 2 ^ (k + 1) := by
+    rw [h₁₃]
+    ring
+
+  have h₁₅ : a + b ^ 2 + (b + a ^ 2) ≥ 2 ^ (k + 1) := by
+    have : 2 ^ (k + 1) ≥ 2 ^ (k + 1) := by exact le_refl _
+    rw [←h₁₄]
+    exact this
+
+  have h₁₆ : 2 ^ (k + 1) ≤ 2 ^ (k + 1) := by exact le_refl _
+
+  have h₁₇ : a + b ^ 2 + (b + a ^ 2) = 2 ^ (k + 1) := by
+    rw [←h₁₄, h₁₅, h₁₆]
+
+  have h₁₈ : a + b ^ 2 = 2 ^ (k + 1) - (b + a ^ 2) := by omega
+
+  have h₁₉ : a + b ^ 2 < 2 ^ (k + 1) := by
+    rw [h₁₈]
+    omega
+
+  have h₂₀ : a + b ^ 2 ≤ 2 ^ (k + 1) - 1 := by omega
+
+  have h₂₁ : 2 ^ (k + 1) - (b + a ^ 2) ≤ 2 ^ (k + 1) - 1 := by omega
+
+  have h₂₂ : a + b ^ 2 ≤ 2 ^ (k + 1) - 1 := by omega
+
+  have h₂₃ : a + b ^ 2 ≥ 2 ^ (k + 1) - 2 ^ (k + 1) := by omega
+
+  have h₂₄ : a + b ^ 2 = 2 ^ (k + 1) - 1 := by omega
+
+  have h₂₅ : b + a ^ 2 = 1 := by omega
+
+  have h₂₆ : b = 1 := by nlinarith
+
+  nlinarith
+
+```

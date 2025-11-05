@@ -1,0 +1,49 @@
+-- prove the Cauchy-Schwarz inequality
+  have CS_ineq (a b c d : ℝ) : (a * d - b * c) ^ 2 ≤ (a ^ 2 + b ^ 2) * (c ^ 2 + d ^ 2) := by
+    nlinarith
+
+  -- specialize CS_ineq to $((x+y)^{1/2} - (y+z)^{1/2})^2 \leq 2((x+y) + (y+z))$
+  have CS_ineq' := CS_ineq ((x + y) ^ (1 / 2 : ℝ)) ((y + z) ^ (1 / 2 : ℝ)) (1 / √ 2 : ℝ) (1 / √ 2 : ℝ)
+  rw [div_pow, div_pow, Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)] at CS_ineq'
+  rw [← Real.sqrt_mul (by positivity), ← Real.sqrt_mul (by positivity)] at CS_ineq'
+
+  -- specialize CS_ineq to $((y+z)^{1/2} - (z+x)^{1/2})^2 \leq 2((y+z) + (z+x))$
+  have CS_ineq'' := CS_ineq ((y + z) ^ (1 / 2 : ℝ)) ((z + x) ^ (1 / 2 : ℝ)) (1 / √ 2 : ℝ) (1 / √ 2 : ℝ)
+  rw [div_pow, div_pow, Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)] at CS_ineq''
+  rw [← Real.sqrt_mul (by positivity), ← Real.sqrt_mul (by positivity)] at CS_ineq''
+
+  -- specialize CS_ineq to $((z+x)^{1/2} - (x+y)^{1/2})^2 \leq 2((z+x) + (x+y))$
+  have CS_ineq''' := CS_ineq ((z + x) ^ (1 / 2 : ℝ)) ((x + y) ^ (1 / 2 : ℝ)) (1 / √ 2 : ℝ) (1 / √ 2 : ℝ)
+  rw [div_pow, div_pow, Real.sq_sqrt (by positivity), Real.sq_sqrt (by positivity)] at CS_ineq'''
+  rw [← Real.sqrt_mul (by positivity), ← Real.sqrt_mul (by positivity)] at CS_ineq'''
+
+
+  have h₁ : 0 < x + y := by linarith
+  have h₂ : 0 < y + z := by linarith
+  have h₃ : 0 < z + x := by linarith
+
+  -- prove the desired inequality
+  have : 9 / (x + y + z) ≤ 2 / (x + y) + 2 / (y + z) + 2 / (z + x) := by
+    calc
+      9 / (x + y + z) = (9 / ((x + y) + (y + z) + (z + x))) := by ring_nf
+      _ ≤ (1 / 2) * (1 / ((x + y) + (y + z))) + (1 / 2) * (1 / ((y + z) + (z + x))) + (1 / 2) * (1 / ((z + x) + (x + y))) := by
+        -- use weighted AM-GM inequality
+        have h₄ : ((x + y) + (y + z) + (z + x)) = (x + y + z) * (1 / 3 + 1 / 3 + 1 / 3) := by ring_nf
+        rw [h₄]
+        have h₅ : (x + y + z) > 0 := by positivity
+        have h₆ : (1 / 3 + 1 / 3 + 1 / 3) > 0 := by norm_num
+        -- use the fact that $t \mapsto 1/t$ is convex on $(0, \infty)$
+        apply inv_le_inv_of_le convexOn_Ioi (by positivity) h₆
+        -- use the weighted AM-GM inequality, we have
+        -- $1/(x+y) + 1/(y+z) + 1/(z+x) \geq 9/(2(x+y+z))$
+        apply geom_mean_le_arith_mean3_weighted (by norm_num) (by positivity) (by positivity) (by positivity) (by positivity) (by positivity) (by positivity) (by positivity) (by positivity)
+        -- the left-hand side is $9/(x+y+z)$ and the right-hand side is $2/(x+y) + 2/(y+z) + 2/(z+x)$
+        ring_nf
+        simp
+        repeat rw [← Real.sqrt_sq (by positivity)]
+        ring_nf
+        apply sqrt_le_sqrt
+        linarith only [CS_ineq', CS_ineq'', CS_ineq''']
+      _ = 2 / (x + y) + 2 / (y + z) + 2 / (z + x) := by field_simp; ring_nf
+  exact this
+```

@@ -1,0 +1,82 @@
+-- We use proof by contradiction.
+  by_contra h₂
+  -- The negation of our goal is $n < 41$.
+  simp at h₂
+  -- So $n \leq 40$.
+  have h₃ : n ≤ 40 := by linarith
+  -- Now we show that for all $n < 41$, $p(n)$ is always prime.
+  have h₄ : ∀ n < 41, Nat.Prime (p n) := by
+    intro n h₄
+    rw [h₀]
+    -- This is a quadratic polynomial.
+    -- We can always factor it under the condition $n < 41$.
+    have : n ^ 2 - n + 41 = (n - a) * (n - b) := by
+      ring
+      rw [add_comm]
+      exact sub_eq_of_eq_add' h₄
+    -- Now we claim that either $n - a$ or $n - b$ is equal to one.
+    have h₅ : n - a = 1 ∨ n - b = 1 := by
+      -- This is because $n < 41$, and $a$ and $b$ are constants.
+      by_contra h₅
+      simp at h₅
+      -- So we use omega to solve this problem.
+      omega
+    rcases h₅ with h₅ | h₅
+    · rw [h₅] at this
+      symm at this
+      rw [this]
+      -- Now we claim that $n - b \geq 41$ which is trivial under the condition $n < 41$.
+      have h₆ : n - b ≥ 41 := by omega
+      -- So we have $n - b = 41$ which is impossible under the condition $n < 41$.
+      have h₇ : n - b = 41 := by omega
+      omega
+    · rw [h₅] at this
+      symm at this
+      rw [this]
+      -- Now we claim that $n - a \geq 41$ which is trivial under the condition $n < 41$.
+      have h₆ : n - a ≥ 41 := by omega
+      -- So we have $n - a = 41$ which is impossible under the condition $n < 41$.
+      have h₇ : n - a = 41 := by omega
+      omega
+  -- Now we use these results to derive a contradiction.
+  specialize h₄ n h₂
+  have h₅ : 1 < Nat.gcd (p n) 41 := by
+    rw [h₀]
+    norm_num
+    -- We claim that $n - 41$ and $n + 40$ have no common factors.
+    have h₅ : n - 41 = 0 ∨ n + 40 = 0 := by
+      -- This is because the two numbers are adjacent.
+      by_contra h₅
+      simp at h₅
+      -- So we use omega to solve this problem.
+      omega
+    rcases h₅ with h₅ | h₅
+    · rw [h₅] at this
+      symm at this
+      rw [this]
+      norm_num
+    · rw [h₅] at this
+      symm at this
+      rw [this]
+      norm_num
+  -- Now we derive a contradiction.
+  have h₆ : Nat.gcd (p n) 41 = 1 := by
+    apply Nat.eq_one_of_not_exists_prime_and_dvd
+    -- We prove that there is no prime number $p$ such that $p \mid 41$.
+    intro p h₆
+    have h₇ : p = 2 ∨ p = 3 ∨ p = 5 ∨ p = 7 ∨ p = 11 ∨ p = 13 ∨ p = 17 ∨ p = 19 ∨ p = 23 ∨ p = 29 ∨ p = 31 ∨ p = 37 ∨ p = 41 := by
+      -- This is because these are disjunction of all possible prime numbers less than $41$.
+      have h₇ : p ≤ 41 := by
+        apply Nat.le_of_dvd (by norm_num)
+        exact h₆
+      -- We use interval_cases to solve this problem.
+      interval_cases p <;> norm_num at h₆ <;> tauto
+    rcases h₇ with h₇ | h₇ | h₇ | h₇ | h₇ | h₇ | h₇ | h₇ | h₇ | h₇ | h₇ | h₇ | h₇
+    all_goals
+      exfalso
+      rw [h₇] at h₆
+      norm_num at h₆
+  -- Now we use linarith to derive a contradiction.
+  linarith
+
+```

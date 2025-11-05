@@ -1,0 +1,63 @@
+-- Prove that $d=2^k-a$ and $c=2^m-b$
+  have hd : d = 2 ^ k - a := by
+    omega
+  have hc : c = 2 ^ m - b := by
+    omega
+
+  -- Rewrite $ad=bc$ as $(2^k-a) ⬝ a = b ⬝ (2^m-b)$
+  rw [hd, hc] at h₃
+  -- Simplify the equation to $2^k ⬝ a - a^2 = b^2 - 2^m ⬝ b$
+  have h₆ : 2 ^ k * a - a ^ 2 = b ^ 2 - 2 ^ m * b := by
+    linarith
+
+  -- Prove that $2^m-b$ is even
+  have h₇ : Even (2 ^ m - b) := by
+    suffices (2 ^ m - b) % 2 = 0 by exact ⟨(2 ^ m - b) / 2, by omega⟩
+    rw [hc]
+    omega
+
+  -- Since $b$ is odd, $2^m-b$ is even implies that $2^m-b = 2t + 1$ for some integer $t$
+  rw [Nat.even_iff] at h₇
+  simp at h₇
+  obtain ⟨t, ht⟩ := h₇
+
+  rw [ht] at h₆
+  -- Simplify the equation to $a(2t+1) = b^2 + a^2 - 2^{m-1}b - 2^{k-1}a$
+  have h₈ : a * (2 * t + 1) = b ^ 2 + a ^ 2 - 2 ^ (m - 1) * b - 2 ^ (k - 1) * a := by
+    rw [pow_succ, pow_succ] at h₆
+    ring_nf at h₆ ⊢
+    omega
+
+  -- Prove that $2^{m-1}b + 2^{k-1}a ≥ 2^{m-1}b + 2^{k-1}a - b^2 - a^2 + a * (2t + 1)$
+  have h₉ : 2 ^ (m - 1) * b + 2 ^ (k - 1) * a ≥ b ^ 2 + a ^ 2 - 2 ^ (m - 1) * b - 2 ^ (k - 1) * a + a * (2 * t + 1) := by
+    linarith
+
+  -- Simplify the inequality to $2^{m-1}b + 2^{k-1}a ≥ a(2t+1)$
+  have h₁₀ : 2 ^ (m - 1) * b + 2 ^ (k - 1) * a ≥ a * (2 * t + 1) := by
+    omega
+
+  -- Since $a$ is odd, $2t+1$ is odd and $a = 1$ or $a > 1$
+  have h₁₁ : Odd a := by exact h₁.1
+  rw [Nat.odd_iff] at h₁₁
+  simp at h₁₁
+  cases h₁₁ with
+  | inl h₁₁ =>
+      -- If $a = 1$, then we are done
+      exact h₁₁
+  | inr h₁₁ =>
+      -- If $a > 1$, then $2t+1$ is a multiple of $a$ and $a ≤ 2t+1$
+      have h₁₂ : a ∣ 2 * t + 1 := by
+        rw [← h₁₁] at h₁₀
+        apply Nat.dvd_add_left at h₁₀
+        rw [pow_succ] at h₁₀
+        apply Nat.le_of_dvd at h₁₀
+        linarith
+        omega
+      have h₁₃ : a ≤ 2 * t + 1 := by exact Nat.le_of_dvd (by omega) h₁₂
+      have h₁₄ : a < 2 * t + 1 := by
+        intro h
+        omega
+      linarith
+
+
+```

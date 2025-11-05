@@ -1,0 +1,127 @@
+-- a has a factor of 3
+  have g3 : 3 ∣ a := by
+    rw [←h₃]
+    apply Nat.dvd_gcd
+    · norm_num
+    · norm_num
+
+  -- b has a factor of 3
+  have g4 : 3 ∣ b := by
+    rw [←h₃]
+    apply Nat.dvd_gcd
+    · norm_num
+    · norm_num
+
+  -- a has a factor of 2
+  have g5 : 2 ∣ a := by
+    rw [←Nat.dvd_iff_mod_eq_zero]
+    rw [h₁]
+    decide
+
+  -- b has a factor of 2
+  have g6 : 2 ∣ b := by
+    rw [←Nat.dvd_iff_mod_eq_zero]
+    rw [h₂]
+    decide
+
+  -- 6 divides a and b
+  have g7 : 6 ∣ a := by
+    rw [←Nat.dvd_iff_mod_eq_zero]
+    rw [h₁]
+    decide
+
+  have g8 : 6 ∣ b := by
+    rw [←Nat.dvd_iff_mod_eq_zero]
+    rw [h₂]
+    decide
+
+  -- a = 6x, b = 6y, x and y are coprime
+  have ⟨x, hx⟩ : ∃ x, x ∣ a ∧ Nat.gcd x b = 1 := by
+    rw [←Nat.dvd_iff_mod_eq_zero] at g3
+    rcases g3 with ⟨k, hk⟩
+    have : k ∣ a := by
+      rw [hk]
+      apply Nat.dvd_mul_right
+    rcases this with ⟨x, hx⟩
+    use x
+    constructor
+    · exact hx
+    · rw [hx] at g3
+      apply Nat.Coprime.dvd_gcd
+      · norm_num
+      · norm_num
+
+  rcases ⟨x, hx⟩ with ⟨x, hxa, hxgcd⟩
+
+  have ⟨y, hy⟩ : ∃ y, y ∣ b ∧ Nat.gcd x y = 1 := by
+    rw [←Nat.dvd_iff_mod_eq_zero] at g4
+    rcases g4 with ⟨k, hk⟩
+    have : k ∣ b := by
+      rw [hk]
+      apply Nat.dvd_mul_right
+    rcases this with ⟨y, hy⟩
+    use y
+    constructor
+    · exact hy
+    · rw [hy] at g4
+      apply Nat.Coprime.dvd_gcd
+      · norm_num
+      · norm_num
+
+  rcases ⟨y, hy⟩ with ⟨y, hyb, hygcd⟩
+
+  have hxgcdy : Nat.gcd x y = 1 := by
+    rw [hygcd]
+    exact hxgcd
+
+  -- x > 0 and y > 0
+  have g9 : 0 < x := by
+    apply Nat.pos_of_mul_pos_left
+    rcases h₀ with ⟨ha, hb⟩
+    rw [←hx] at ha
+    apply Nat.pos_of_dvd_pos ha
+    norm_num
+
+  have g10 : 0 < y := by
+    apply Nat.pos_of_mul_pos_left
+    rcases h₀ with ⟨ha, hb⟩
+    rw [←hy] at hb
+    apply Nat.pos_of_dvd_pos hb
+    norm_num
+
+  -- x * y = 18
+  have g11 : x * y = 18 := by
+    rw [hx, hy, ←Nat.gcd_mul_lcm] at hxgcd
+    rw [hxgcdy] at hxgcd
+    linarith
+
+  -- the minimum value of x + y is 9
+  have g12 : 9 ≤ x + y := by
+    by_cases h : x ≤ y
+    · have : x * x ≥ 18 := by
+        calc
+          x * x = x * y := by rw [g11]
+          _ ≥ 18 := by rel [h]
+      nlinarith
+    · push_neg at h
+      have : y * y ≥ 18 := by
+        calc
+          y * y = y * x := by rw [g11]
+          _ ≥ 18 := by rel [h]
+      nlinarith
+
+  -- the minimum value of lcm(a, b) is 108
+  have h13 : 108 ≤ Nat.lcm a b := by
+    rw [hx, hy, ←Nat.lcm]
+    have h14 : 0 < x + y := by
+      linarith
+    have h15 : 0 < x * y := by
+      nlinarith
+    calc
+      x * y * (x + y) / (x * y) = x + y := by field_simp
+      _ ≥ 9 := by linarith
+      _ = 108 := by norm_num
+
+  exact h13
+
+```

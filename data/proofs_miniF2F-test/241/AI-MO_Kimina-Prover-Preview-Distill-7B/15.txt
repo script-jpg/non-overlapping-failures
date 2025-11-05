@@ -1,0 +1,60 @@
+-- Simplify the expression step by step.
+
+  -- $\frac{12}{x\cdot x}\cdot\frac{x^4}{14x}\cdot\frac{35}{3x}=\frac{12x^4\cdot 35}{x\cdot x\cdot 14x\cdot 3x}$
+  rw [(by ring : 12 / (x * x) * (x ^ 4 / (14 * x)) * (35 / (3 * x)) = (12 * (x ^ 4) * 35) / (x * x * (14 * x) * (3 * x)))]
+  -- Simplify the multiplication in both numerator and denominator.
+  -- $=\frac{12x^4\cdot 35}{x^3\cdot 14\cdot 3x}$
+  rw [(by ring : (12 * (x ^ 4) * 35) / (x * x * (14 * x) * (3 * x)) = (12 * (x ^ 4) * 35) / (x ^ 3 * (14 * (3 * x))))]
+  -- $\frac{12x^4\cdot 35}{x^3\cdot 14\cdot 3x}=\frac{12x^4\cdot 35}{x^4\cdot 14\cdot 3}$
+  rw [(by ring : (12 * (x ^ 4) * 35) / (x ^ 3 * (14 * (3 * x))) = (12 * (x ^ 4) * 35) / ((x ^ 4) * (14 * 3 * x)))]
+  -- $\frac{12x^4\cdot 35}{x^4\cdot 14\cdot 3x}=\frac{12\cdot 35}{14\cdot 3x}$
+  rw [(by ring : (12 * (x ^ 4) * 35) / ((x ^ 4) * (14 * 3 * x)) = (12 * 35) / (14 * 3 * x))]
+  -- $\frac{12\cdot 35}{14\cdot 3x}=\frac{420}{42x}$
+  rw [(by ring : (12 * 35) / (14 * 3 * x) = 420 / (42 * x))]
+  -- $\frac{420}{42x}=10\cdot\frac{42}{42x}$
+  rw [(by ring : 420 / (42 * x) = 10 * (42 / (42 * x)))]
+  -- $\frac{42}{42x}=\frac{1}{x}$
+  rw [(by ring : 42 / (42 * x) = 1 / x)]
+  -- $10\cdot\frac{42}{42x}=10\cdot\frac{1}{x}$
+  rw [(by ring : 10 * (42 / (42 * x)) = 10 * (1 / x))]
+  -- $\frac{12}{x\cdot x}\cdot\frac{x^4}{14x}\cdot\frac{35}{3x}=10\cdot \frac{1}{x}\cdot \frac{1}{x}=10\cdot \frac{1}{x^2}$
+  rw [(by ring : (12 * (x ^ 4) * 35) / (x * x * (14 * x) * (3 * x)) = 10 * ((1 / x) * (1 / x)))]
+
+  -- Now the goal is $10\cdot \frac{1}{x}\cdot \frac{1}{x}=10$.
+  -- That is, $\frac{10}{x^2}=10$.
+  -- That is, $10\cdot (1/x^2)=10$.
+  -- That is, $1/x^2=1$.
+  -- That is, $1=x^2$.
+  -- Which is true if $x=1$ or $x=-1$.
+  -- But we cannot conclude that $x=1$ or $x=-1$ from the given information.
+  -- So the given algebraic expression is not really equal to 10 for all $x\ne 0$.
+  -- The problem is incorrect.
+  field_simp
+  ring_nf
+  -- The tactic `ring_nf` will eventually cause a contradiction.
+  -- Because $(x-1)(x+1)=0$ implies $x^2-1=0$ which implies $x^2=1$ which implies $x=1$ or $x=-1$.
+  -- But the tactic `ring_nf` will transform the goal into $1=10$ which is false.
+  -- So the goal is impossible.
+  intro hx
+  have hx' : (x - 1) * x = 0 ∨ (x + 1) * x = 0 := by
+    by_contra h
+    have : x = 1 ∨ x = -1 := by
+      by_contra h'
+      have : (x - 1) * x ≠ 0 := by
+        exact mul_ne_zero_iff.mpr ⟨by omega, by omega⟩
+      contradiction
+    rcases this with (hx | hx)
+    · left; rw [hx]; ring
+    · right; rw [hx]; ring
+  rcases hx' with (hx' | hx')
+  · have : x = 0 ∨ x = 1 := by
+      exact mul_eq_zero.mp hx'
+    rcases this with (hx'' | hx'')
+    · contradiction
+    · rw [hx''] at h₀; contradiction
+  · have : x = 0 ∨ x = -1 := by
+      exact mul_eq_zero.mp hx'
+    rcases this with (hx'' | hx'')
+    · contradiction
+    · rw [hx''] at h₀; contradiction
+```

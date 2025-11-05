@@ -1,0 +1,184 @@
+-- We first show that m = 2^((1/3) : ℝ) and n = 2^((2/3) : ℝ).
+  have hm : m = (2 : ℝ) ^ ((1 : ℝ) / 3) := by
+    rw [←h₁]
+    rw [←Real.rpow_natCast_mul]
+    field_simp
+    norm_num
+    all_goals linarith
+  have hn : n = (2 : ℝ) ^ ((2 : ℝ) / 3) := by
+    rw [←h₂]
+    rw [←Real.rpow_natCast_mul]
+    field_simp
+    norm_num
+    all_goals linarith
+
+  -- Assume on the contrary that a ≠ 0 or b ≠ 0 or c ≠ 0.
+  by_contra h
+  simp only [not_and_iff_or_not, not_not] at h
+
+  -- If a ≠ 0, then we can choose a sequence of rationals to approximate it.
+  cases h with
+  | inl ha =>
+    rw [hm, hn] at h₃
+    replace h₃ := congr_arg (fun x : ℝ => x * 3) h₃
+    simp only [mul_add, mul_assoc, ←mul_div_assoc] at h₃
+    rw [show (2 : ℝ) ^ ((1 : ℝ) / 3) * 3 = (2 : ℝ) ^ ((1 : ℝ) / 3) * (3 : ℝ) ^ ((1 : ℝ) / 3) * (3 : ℝ) ^ ((1 : ℝ) / 3) by ring_nf; norm_num] at h₃
+    rw [←Real.mul_rpow, ←Real.rpow_mul] at h₃
+    have h₄ : (2 : ℝ) ^ ((1 : ℝ) / 3) * (3 : ℝ) ^ ((1 : ℝ) / 3) = (6 : ℝ) ^ ((1 : ℝ) / 3) := by
+      rw [←Real.mul_rpow]
+      ring_nf
+    rw [h₄, ←Real.rpow_mul] at h₃
+    replace h₃ : ((6 : ℝ) ^ ((1 : ℝ) / 3)) ^ (3 : ℝ) - a * 9 = 3 * (2 * b * (6 : ℝ) ^ ((1 : ℝ) / 3) + 3 * c) := by
+      calc
+        ((6 : ℝ) ^ ((1 : ℝ) / 3)) ^ (3 : ℝ) - a * 9 = (6 : ℝ) ^ (((1 : ℝ) / 3) * (3 : ℝ)) - a * 9 := by rw [Real.rpow_mul]
+        _ = 6 - a * 9 := by norm_num
+        _ = 3 * (2 - a * 3) := by ring
+        _ = 3 * (2 * b * (6 : ℝ) ^ ((1 : ℝ) / 3) + 3 * c) := by rw [←h₃]; ring_nf
+    replace h₃ : ((6 : ℝ) ^ ((1 : ℝ) / 3)) ^ (3 : ℝ) - a * 9 = 3 * (2 * b * (6 : ℝ) ^ ((1 : ℝ) / 3) + 3 * c) := by
+      calc
+        ((6 : ℝ) ^ ((1 : ℝ) / 3)) ^ (3 : ℝ) - a * 9 = (6 : ℝ) ^ (((1 : ℝ) / 3) * (3 : ℝ)) - a * 9 := by rw [Real.rpow_mul]
+        _ = 6 - a * 9 := by norm_num
+        _ = 3 * (2 - a * 3) := by ring
+        _ = 3 * (2 * b * (6 : ℝ) ^ ((1 : ℝ) / 3) + 3 * c) := by rw [←h₃]; ring_nf
+    rw [←sub_eq_zero] at h₃
+    -- By the assumption that a ≠ 0, we can find a sequence of rationals approximation to it.
+    have h₅ : ∃ (r : ℚ), (r : ℝ) = 6 ^ ((1 : ℝ) / 3) ∧ (abs (r - (2 : ℝ) ^ ((1 : ℝ) / 3)) < 1 ∧ (6 : ℝ) ^ ((1 : ℝ) / 3) < r + 1) := by
+      apply Nat.exists_natSq_lt_sqrt_lt
+      simp only [Nat.cast_ofNat]
+      rw [sub_lt_iff_lt_add', ←Real.lt_rpow_natCast]
+      field_simp
+      norm_num
+      linarith
+      rw [sub_lt_iff_lt_add', ←Real.lt_rpow_natCast]
+      field_simp
+      norm_num
+      linarith
+    rcases h₅ with ⟨r, hr, hr1, hr2⟩
+    rw [hr] at h₃
+    have h₆ : -3 * (2 * b * r + 3 * c) < 3 * (2 * b * (6 : ℝ) ^ ((1 : ℝ) / 3) + 3 * c) := by
+      apply mul_lt_mul_of_nonneg_left
+      linarith
+      norm_num
+      simp only [mul_assoc]
+      apply mul_nonneg
+      simp only [Set.mem_setOf_eq]
+      rw [hr1]
+      apply Real.rpow_nonneg
+      norm_num
+      simp only [Set.mem_setOf_eq]
+      rw [hr]
+      apply Real.rpow_nonneg
+      norm_num
+    rw [←h₃] at h₆
+    absurd h₆
+    simp only [neg_add, neg_lt_iff_pos_add]
+    apply add_pos
+    norm_num
+    apply mul_pos
+    norm_num
+    apply Real.rpow_pos_of_pos
+    norm_num
+
+  -- If b ≠ 0, then we can choose a sequence of rationals to approximate it.
+  | inr h =>
+    exfalso
+    simp only [not_and_iff_or_not, not_not] at h
+    rw [←h] at h₃
+    by_cases hc : c = 0
+    -- If c = 0, then we have a contradiction.
+   . simp only [hc, zero_mul, add_zero] at h₃
+      replace h₃ : m ^ 3 + n ^ 3 > 0 := by
+        apply add_pos
+        rw [h₁]
+        apply Real.rpow_pos_of_pos
+        norm_num
+        rw [h₂]
+        apply Real.rpow_pos_of_pos
+        norm_num
+      absurd h₃
+      norm_num
+    -- If c ≠ 0, then we can choose a sequence of rationals to approximate it.
+   . rw [h₃, ←h₁, ←h₂]
+      replace h₃ : ((2 : ℝ) ^ ((1 : ℝ) / 3) + (4 : ℝ) ^ ((1 : ℝ) / 3)) * (3 : ℝ) - (2 ^ ((1 : ℝ) / 3) * 3 + 4 ^ ((1 : ℝ) / 3) * 3) = ((2 : ℝ) ^ ((1 : ℝ) / 3) * 3 - 2 * (4 ^ ((1 : ℝ) / 3) * 3)) / (3 - 4 ^ ((1 : ℝ) / 3) * 2 / (2 ^ ((1 : ℝ) / 3) * 3)) := by
+        ring_nf
+        simp only [←Real.rpow_natCast_mul, ←Real.rpow_mul]
+        ring_nf
+        norm_num
+        all_goals linarith
+      set r := (2 ^ ((1:ℝ) / 3) * 3 - 2 * (4 ^ ((1:ℝ) / 3) * 3)) / (3 - 4 ^ ((1:ℝ) / 3) * 2 / (2 ^ ((1:ℝ) / 3) * 3))
+      have hr : ((2 : ℝ) ^ ((1 : ℝ) / 3) + (4 : ℝ) ^ ((1 : ℝ) / 3)) * (3 : ℝ) - (2 ^ ((1 : ℝ) / 3) * 3 + 4 ^ ((1 : ℝ) / 3) * 3) = (r : ℝ) := by
+        rw [h₃]
+      replace hr : (r : ℝ) = (2 ^ ((1:ℝ) / 3) + (4 ^ ((1:ℝ) / 3))) * 3 - (2 * (4 ^ ((1:ℝ) / 3) * 3) + 2 ^ ((1:ℝ) / 3) * 3) := by
+        linarith
+      have hr1 : ∃ (r : ℚ), (r : ℝ) = ((2 : ℝ) ^ ((1 : ℝ) / 3) + (4 : ℝ) ^ ((1 : ℝ) / 3)) * (3 : ℝ) - (2 ^ ((1 : ℝ) / 3) * 3 + 4 ^ ((1 : ℝ) / 3) * 3) ∧ ((2 : ℝ) ^ ((1 : ℝ) / 3) + (4 : ℝ) ^ ((1 : ℝ) / 3)) * (3 : ℝ) - (2 ^ ((1 : ℝ) / 3) * 3 + 4 ^ ((1 : ℝ) / 3) * 3) < r + 1 ∧ r > -1 := by
+        apply Nat.exists_natSq_lt_sqrt_lt
+        simp only [Nat.cast_ofNat]
+        rw [sub_lt_iff_lt_add', ←Real.lt_rpow_natCast]
+        field_simp
+        norm_num
+        linarith
+        rw [sub_lt_iff_lt_add', ←Real.lt_rpow_natCast]
+        field_simp
+        norm_num
+        linarith
+      rcases hr1 with ⟨r', hr', hr2, hr3⟩
+      rw [hr] at hr'
+      set s := ((2 : ℝ) ^ ((1:ℝ) / 3) * 3 - 2 * (4 ^ ((1:ℝ) / 3) * 3)) / (3 - 4 ^ ((1:ℝ) / 3) * 2 / (2 ^ ((1:ℝ) / 3) * 3)) - (r' : ℝ)
+      have hs : s = ((2 : ℝ) ^ ((1:ℝ) / 3) * 3 - 2 * (4 ^ ((1:ℝ) / 3) * 3)) / (3 - 4 ^ ((1:ℝ) / 3) * 2 / (2 ^ ((1:ℝ) / 3) * 3)) - ((2 ^ ((1:ℝ) / 3) + (4 ^ ((1:ℝ) / 3))) * 3 - (2 * (4 ^ ((1:ℝ) / 3) * 3) + 2 ^ ((1:ℝ) / 3) * 3)) := by
+        rw [hr']
+      replace hs : ((2 : ℝ) ^ ((1:ℝ) / 3) + (4 ^ ((1:ℝ) / 3))) * 3 - (2 * (4 ^ ((1:ℝ) / 3) * 3) + 2 ^ ((1:ℝ) / 3) * 3) = s + ((2 : ℝ) ^ ((1:ℝ) / 3) * 3 - 2 * (4 ^ ((1:ℝ) / 3) * 3)) / (3 - 4 ^ ((1:ℝ) / 3) * 2 / (2 ^ ((1:ℝ) / 3) * 3)) := by
+        linarith
+      rw [hs] at hr2
+      absurd hr2
+      have deq : ((2 : ℝ) ^ ((1 : ℝ) / 3) * 3 - 2 * (4 ^ ((1 : ℝ) / 3) * 3)) / (3 - 4 ^ ((1 : ℝ) / 3) * 2 / (2 ^ ((1 : ℝ) / 3) * 3)) = ((2 : ℝ) ^ ((1 : ℝ) / 3) * 3 - 2 * (4 ^ ((1 : ℝ) / 3) * 3)) * (3 ^ ((1 : ℝ) / 3) * (2 ^ ((1 : ℝ) / 3) * 3) / (2 * (4 ^ ((1 : ℝ) / 3) * 3) * (3 : ℝ) - (2 : ℝ) ^ ((1 : ℝ) / 3) * 3)) := by
+        rw [←mul_div_mul_right (2 ^ ((1 : ℝ) / 3) * 3 - 2 * (4 ^ ((1 : ℝ) / 3) * 3)) (3 ^ ((1 : ℝ) / 3) * (2 ^ ((1 : ℝ) / 3) * 3)), mul_comm]
+        have h5 : 2 * (4 ^ ((1 : ℝ) / 3) * 3) * (3 : ℝ) - (2 : ℝ) ^ ((1 : ℝ) / 3) * 3 ≠ 0 := by
+          by_contra heq
+          replace heq : ((2 : ℝ) ^ ((1 : ℝ) / 3) + (4 : ℝ) ^ ((1 : ℝ) / 3)) * (3 : ℝ) - (2 ^ ((1 : ℝ) / 3) * 3 + 4 ^ ((1 : ℝ) / 3) * 3) = 0 := by
+            rw [heq, zero_mul]
+            linarith
+          absurd heq
+          apply ne_of_gt
+          rw [←h₁, ←Real.rpow_natCast_mul, ←Real.rpow_mul]
+          field_simp
+          norm_num
+          all_goals linarith
+        field_simp
+        ring_nf
+        rw [mul_assoc, mul_comm (3 ^ ((1 : ℝ) / 3)) (2 ^ ((1 : ℝ) / 3) * 3), mul_assoc]
+        rw [mul_comm (2 * (4 ^ ((1 : ℝ) / 3) * 3) * (3 : ℝ) - (2 : ℝ) ^ ((1 : ℝ) / 3) * 3), mul_assoc, mul_assoc]
+        rw [mul_comm (3 ^ ((1 : ℝ) / 3)), ←mul_assoc]
+        simp only [isUnit_iff_ne_zero, ne_eq, h5, not_false_eq_true, IsUnit.div_mul_cancel]
+        rw [mul_comm, ←mul_assoc]
+        simp only [mul_left_inj' iff_right]
+        linarith
+      rw [deq] at hr2
+      apply mul_lt_mul_of_pos_right at hr2
+      rw [mul_comm, ←mul_assoc, mul_lt_mul_left_iff_of_pos_left] at hr2
+      rw [div_lt_iff₀, mul_comm, div_lt_iff₀] at hr2
+      norm_num at hr2
+      replace hr2 : (3 ^ ((1 : ℝ) / 3) * (2 ^ ((1 : ℝ) / 3) * 3) / (2 * (4 ^ ((1 : ℝ) / 3) * 3) * (3 : ℝ) - (2 : ℝ) ^ ((1 : ℝ) / 3) * 3)) > 0 := by
+        apply div_pos
+        apply mul_pos
+        apply mul_pos
+        apply Real.rpow_pos_of_pos
+        norm_num
+        apply Real.rpow_pos_of_pos
+        norm_num
+        linarith
+        apply mul_pos
+        norm_num
+        apply mul_pos
+        apply Real.rpow_pos_of_pos
+        norm_num
+        linarith
+        linarith
+      absurd hr2
+      apply ne_of_gt
+      rw [←h₁, ←Real.rpow_natCast_mul, ←Real.rpow_mul]
+      field_simp
+      norm_num
+      all_goals linarith
+    norm_num
+
+```

@@ -1,0 +1,40 @@
+-- Simplify the left summand $\log_{5^k} 3^{k^2}$ to $\frac{\log 3^{k^2}}{\log 5^k} = \frac{k^2 \log 3}{k \log 5} = k \frac{\log 3}{\log 5}$
+  have h1 : ∀ k ∈ Finset.Icc 1 20, Real.logb (5 ^ k) (3 ^ k ^ 2) = k * (Real.logb 5 3) := by
+    intro k hk
+    simp [Finset.mem_Icc] at hk
+    rw [Real.logb]
+    have : 0 < (5 : ℝ) ^ k := by positivity
+    have : 0 < (3 : ℝ) ^ (k ^ 2) := by positivity
+    field_simp [this, ‹0 < (5 : ℝ) ^ k›]
+    ring_nf
+    field_simp
+
+  -- Simplify the right summand $\log_{9^k} 25^k$ to $\frac{\log 25^k}{\log 9^k} = \frac{k \log 25}{k \log 9} = \frac{\log 25}{\log 9}$
+  have h2 : ∀ k ∈ Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = Real.logb 9 25 := by
+    intro k hk
+    simp [Finset.mem_Icc] at hk
+    have : 0 < (9 : ℝ) ^ k := by positivity
+    have : 0 < (25 : ℝ) ^ k := by positivity
+    rw [Real.logb]
+    field_simp [this, ‹0 < (9 : ℝ) ^ k›, ‹0 < (25 : ℝ) ^ k›]
+    ring_nf
+
+  -- Simplify the right sum to $\frac{\log 25}{\log 9} \cdot 100 = \frac{\log 25^{100}}{\log 9} = \log_9 25^{100}$
+  have h3 : ∑ k in Finset.Icc 1 100, Real.logb (9 ^ k) (25 ^ k) = Real.logb 9 25 * 100 := by
+    rw [Finset.sum_congr rfl h2]
+    simp
+    ring
+
+  -- Put the pieces together
+  rw [Finset.sum_congr rfl h1, h3]
+  rw [Real.logb]
+  have : 0 < (5 : ℝ) := by norm_num
+  have : 0 < (3 : ℝ) := by norm_num
+  have : 0 < (9 : ℝ) := by norm_num
+  have : 0 < (25 : ℝ) := by norm_num
+  field_simp
+  ring_nf
+  field_simp
+  norm_num
+
+```

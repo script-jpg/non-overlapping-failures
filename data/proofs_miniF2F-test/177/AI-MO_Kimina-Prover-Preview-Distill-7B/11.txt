@@ -1,0 +1,238 @@
+constructor
+
+  -- sufficiency
+  · intro hf
+    -- by setting $a = 0, b = 0$, we get $f(0) = 0$ or $f(0) = 2c$ for some $c$
+    have h₀ : f 0 = 0 ∨ ∃ c, ∀ z, f z = 2 * z + c := by
+      -- set $a = 0, b = 0$ in `hf`
+      specialize hf 0 0
+      simp at hf
+      cases eq_or_ne (f 0) 0 with
+      | inl h₀ => tauto
+      | inr h₀ =>
+        have : ∀ z, f z = 2 * z + (-2 * f 0) := by
+          intro z
+          specialize hf 0 z
+          simp at hf
+          rw [h₀] at hf
+          linarith
+        use (-2 * f 0)
+
+    cases h₀ with
+    | inl h₀ =>
+      -- case $f(0) = 0$
+      -- by setting $b = 0$, we get $f(2a) = f(f(a))$
+      have h₁ : ∀ a, f (2 * a) = f (f a) := by
+        intro a
+        specialize hf a 0
+        simp [h₀] at hf
+        exact hf
+      -- by setting $a = 2b$, we get $f(4b) = f(f(2b)) = f(2f(b))$
+      have h₂ : ∀ b, f (4 * b) = f (f (2 * b)) := by
+        intro b
+        specialize hf (2 * b) b
+        simp at hf
+        linarith
+      -- by setting $b = 2c$, we get $f(8c) = f(4f(2c)) = 4f(f(2c)) = 4f(2f(c))$
+      have h₃ : ∀ c, f (8 * c) = 4 * f (f c) := by
+        intro c
+        specialize hf (2 * (2 * c)) c
+        simp at hf
+        specialize h₂ c
+        rw [h₂] at hf
+        rw [h₁ c] at hf
+        linarith
+      -- for any $c$, let $b = 2c$, we get $f(f(2c)) = f(4c)$
+      have h₄ : ∀ c, f (f (2 * c)) = f (4 * c) := by
+        intro c
+        specialize hf (2 * c) c
+        simp at hf
+        linarith
+      -- so $f(8c) = 4f(4c) = 4f(8c)$, so $f(8c) = 0$ or $f(8c) = 4c$
+      have h₅ : ∀ c, f (8 * c) = 0 ∨ f (8 * c) = 4 * c := by
+        intro c
+        specialize h₃ c
+        specialize h₄ c
+        rw [h₄] at h₃
+        linarith
+      -- if $f(8c) = 0$, then $f(4c) = 0$
+      have h₆ : ∀ c, f (8 * c) = 0 ∨ f (4 * c) = 0 := by
+        intro c
+        specialize h₃ c
+        specialize h₅ c
+        cases h₅ with
+        | inl h₅ => tauto
+        | inr h₅ =>
+          have : f (4 * c) = 0 := by linarith
+          tauto
+      -- thus $f(4c) = 0$ for all $c$
+      have h₇ : ∀ c, f (4 * c) = 0 := by
+        intro c
+        specialize h₆ c
+        cases h₆ with
+        | inl h₆ => tauto
+        | inr h₆ =>
+          have h₈ : f (8 * (-c)) = 0 := by tauto
+          rw [h₇ (-c)] at h₈
+          have : c = 0 ∨ c ≠ 0 := by by_cases h₈ : c = 0; tauto
+          cases this with
+          | inl this => tauto
+          | inr this =>
+            have : f (4 * c) = 0 := by
+              rw [← h₈]
+              ring_nf
+            tauto
+      -- for any $c$, let $d = 2c$, we get $f(2c) = f(f(d))$
+      have h₈ : ∀ c, f (2 * c) = f (f (2 * c)) := by
+        intro c
+        specialize hf (2 * c) (2 * c)
+        rw [show (2 * c + 2 * c : ℤ) = 2 * (2 * c) by ring] at hf
+        rw [show f (2 * c) * 2 + 2 * f (2 * c) = 2 * f (2 * c) + 2 * f (2 * c) by ring] at hf
+        linarith
+      -- so $f(f(2c)) = f(2c)$
+      have h₉ : ∀ c, f (f (2 * c)) = f (2 * c) := by
+        intro c
+        specialize h₈ c
+        tauto
+      -- if $f(2c) ≠ 0$, then $f(2c) = 2c$
+      have h₁₀ : ∀ c, f (2 * c) = 0 ∨ f (2 * c) = 2 * c := by
+        intro c
+        specialize h₇ c
+        specialize h₉ c
+        cases h₇ c with
+        | inl h₇ => tauto
+        | inr h₇ =>
+          have : f (2 * c) = 2 * c := by linarith
+          tauto
+      -- thus $f(2c) = 0$ or $f(2c) = 2c$ for all $c$
+      have h₁₁ : ∀ c, f (2 * c) = 0 ∨ f (2 * c) = 2 * c := by
+        intro c
+        exact h₁₀ c
+
+      -- setting $b = 2c$ in `hf`, we get $f(4c) = f(f(2c))$
+      have h₁₂ : ∀ c, f (4 * c) = f (f (2 * c)) := by
+        intro c
+        specialize hf (2 * c) (2 * c)
+        ring_nf at hf ⊢
+        linarith
+      -- and we have $f(4c) = 0$ before
+      have h₁₃ : ∀ c, f (4 * c) = 0 := by
+        intro c
+        specialize h₇ c
+        tauto
+      -- so $f(f(2c)) = 0$
+      have h₁₄ : ∀ c, f (f (2 * c)) = 0 := by
+        intro c
+        specialize h₁₂ c
+        rw [h₁₂]
+        specialize h₁₃ c
+        tauto
+      -- so $f(2c) = 0$
+      have h₁₅ : ∀ c, f (2 * c) = 0 := by
+        intro c
+        specialize h₁₀ c
+        cases h₁₀ c with
+        | inl h₁₀ => tauto
+        | inr h₁₀ =>
+          have : f (2 * c) = 0 := by linarith
+          tauto
+      -- so $f(z) = 0$ for all $z$
+      tauto
+
+    | inr h₀ =>
+      -- case $f(0) = 2c$ for some $c$
+      obtain ⟨c, h₀⟩ := h₀
+      -- we claim $f(z) = 2z + c$
+      have h₁ : ∀ a, f (2 * a) = 2 * f a + c := by
+        intro a
+        specialize hf a 0
+        simp [h₀] at hf
+        linarith
+      -- by setting $b = 0$, we get $f(2a) = f(f(a))$
+      have h₂ : ∀ a, f (2 * a) = f (f a) := by
+        intro a
+        specialize hf a 0
+        simp [h₀] at hf
+        linarith
+      -- so $f(f(a)) = 2f(a) + c$
+      have h₃ : ∀ a, f (f a) = 2 * f a + c := by
+        intro a
+        specialize h₁ a
+        rw [← h₂ a]
+        exact h₁
+      -- from this we get $f(2a) = 2f(a) + c$ and $f(f(a)) = 2f(a) + c$
+      have h₄ : ∀ a, f (2 * a) = 2 * f a + c ∧ f (f a) = 2 * f a + c := by
+        intro a
+        constructor <;> exact ⟨h₁ a, h₃ a⟩
+      -- setting $a = 2b$, we get $f(4b) = 4f(2b) + c^2$
+      have h₅ : ∀ b, f (4 * b) = 4 * f (2 * b) + c ^ 2 := by
+        intro b
+        specialize hf (2 * b) b
+        ring_nf at hf ⊢
+        rw [h₄ b] at hf
+        linarith
+      -- from $f(4b) = 2f(2b) + c$, we get $f(4b) = 2f(2b) + c$
+      have h₆ : ∀ b, f (4 * b) = 2 * f (2 * b) + c := by
+        intro b
+        specialize h₂ (2 * b)
+        rw [show 2 * (2 * b : ℤ) = 4 * b by ring] at h₂
+        linarith
+      -- so $f(2b) = c$ or $f(2b) = 2f(2b) + c - c$
+      have h₇ : ∀ b, f (2 * b) = c ∨ f (2 * b) = 2 * f (2 * b) + c - c := by
+        intro b
+        specialize h₅ b
+        specialize h₆ b
+        linarith
+      -- if $f(2b) = c$, then $f(4b) = 4c + c^2$
+      have h₈ : ∀ b, f (2 * b) = c ∨ f (4 * b) = 4 * c + c ^ 2 := by
+        intro b
+        specialize h₇ b
+        cases h₇ b with
+        | inl h₇ =>
+          have h₈ : f (4 * b) = 4 * c + c ^ 2 := by
+            rw [h₇] at h₅
+            exact h₅
+          tauto
+        | inr h₇ =>
+          tauto
+      -- so $4c + c^2 = 2c + c$, so $c = 0$ or $c = -2b$
+      have h₉ : c = 0 ∨ c = 2 ∨ c = -2 ∨ ∃ d, c = 2 * d := by
+        specialize hf (2 * 0) 0
+        simp [h₀] at hf
+        have h₁₀ : (c - 2) * (c + 2) = 0 := by linarith
+        simp at h₁₀
+        cases h₁₀ with
+        | inl h₁₀ => right; right; left; linarith
+        | inr h₁₀ => right; right; right; linarith
+      -- if $c = 0$, then we are in the first case
+      cases h₉ with
+      | inl h₉ => tauto
+      | inr h₉ =>
+        cases h₉ with
+        | inl h₉ => tauto
+        | inr h₉ =>
+          cases h₉ with
+          | inl h₉ => tauto
+          | inr h₉ =>
+            -- if $c = -2b$, set $b = -d$, we get $f(2d) = -2d + c$
+            use (-c)
+            intro z
+            specialize h₄ (z + c)
+            rw [h₉] at h₄
+            ring_nf at h₄ ⊢
+            rw [h₄]
+            ring_nf
+            tauto
+
+    -- necessity
+    · intro h
+      obtain h | ⟨c, h⟩ := h
+      · -- if $f(z) = 0$ for all $z$
+        intro a b
+        simp [h]
+      · -- if $f(z) = 2z + c$ for all $z$
+        intro a b
+        simp [h, add_mul, mul_add]
+        ring
+
+```

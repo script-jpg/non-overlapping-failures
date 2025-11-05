@@ -1,0 +1,180 @@
+-- some auxiliary statements
+  have h₄ : ∀ i ∈ Finset.range k, 0 < (1 / 2) ^ i := by
+    intro i _
+    apply pow_pos
+    norm_num
+  have h₅ : 0 < y m := by
+    simp [h₁]
+    apply Finset.sum_pos
+    intro i _
+    apply mul_pos
+    exact h₄ i rfl
+    exact Real.cos_pos_of_mem_Ioo rfl
+  have h₆ : ∀ i ∈ Finset.range k, 0 ≤ (1 / 2) ^ i := by
+    intro i _
+    apply pow_nonneg
+    norm_num
+  have h₇ : ∀ i ∈ Finset.range k, 0 < Real.cos (a i + m) / 2 ^ i := by
+    intro i _
+    apply div_pos
+    exact h₅
+    exact h₄ i rfl
+  have h₈ : 0 < y m + y n := by
+    simp [h₁]
+    apply Finset.sum_pos
+    intro i _
+    apply mul_pos
+    exact h₆ i rfl
+    exact Real.cos_pos_of_mem_Ioo rfl
+  -- given ym = 0 and yn = 0, we have ym + yn = 0
+  have h₉ := add_eq_zero_iff_eq_neg.mp (add_eq_zero_iff.2 (add_eq_zero_iff.2 h₂))
+  -- it is a contradiction if ym + yn > 0
+  by_contra! h₁₀
+  specialize @Real.cos_le_one (a 0 + m)
+  specialize @Real.cos_le_one (a 0 + n)
+  have : 0 <  y m + y n - 2 * Real.cos (a 0 + m) - 2 * Real.cos (a 0 + n) := by
+    simp [h₁]
+    apply Finset.sum_pos
+    intro i _
+    apply mul_pos
+    exact h₅
+    exact h₄ i rfl
+  -- therefore, we have cos(a0+m) = cos(a0+n) = 1 or -1
+  have hm : Real.cos (a 0 + m) = 1 ∨ Real.cos (a 0 + m) = -1 := by
+    by_contra! h₁₁
+    have : Real.cos (a 0 + m) < 1 := by
+      specialize @Real.cos_lt_one_of_ne h₁₁
+      exact lt_of_le_of_ne this h₁₁.symm
+    have : 1 < Real.cos (a 0 + m) + Real.cos (a 0 + n) := by linarith
+    have : Real.cos (a 0 + m) + Real.cos (a 0 + n) < 2 := by
+      specialize @Real.cos_lt_one_of_ne h₁₀
+      linarith
+    linarith
+  have hn : Real.cos (a 0 + n) = 1 ∨ Real.cos (a 0 + n) = -1 := by
+    by_contra! h₁₁
+    have : Real.cos (a 0 + n) < 1 := by
+      specialize @Real.cos_lt_one_of_ne h₁₁
+      exact lt_of_le_of_ne this h₁₁.symm
+    have : 1 < Real.cos (a 0 + m) + Real.cos (a 0 + n) := by linarith
+    have : Real.cos (a 0 + m) + Real.cos (a 0 + n) < 2 := by
+      specialize @Real.cos_lt_one_of_ne h₁₀
+      linarith
+    linarith
+  -- if cos(a0+m) = 1 or -1, then we have sin(a0+m) = 0
+  have hm' : Real.sin (a 0 + m) = 0 := by
+    cases hm with
+    | inl hm => simp [hm]
+    | inr hm =>
+      have := Real.cos_sq_add_sin_sq (a 0 + m)
+      rw [hm] at this
+      linarith
+  have hn' : Real.sin (a 0 + n) = 0 := by
+    cases hn with
+    | inl hn => simp [hn]
+    | inr hn =>
+      have := Real.cos_sq_add_sin_sq (a 0 + n)
+      rw [hn] at this
+      linarith
+  -- if cos(a0+n) = 1 or -1, then we have sin(a0+n) = 0
+  have h₀ : ∀ i ∈ Finset.range k, Real.sin (a i + m) = 0 := by
+    intro i _
+    specialize @Real.cos_le_one (a i + m)
+    specialize @Real.cos_le_one (a i + n)
+    have : 0 < y m + y n - 2 * Real.cos (a i + m) - 2 * Real.cos (a i + n) := by
+      simp [h₁]
+      apply Finset.sum_pos
+      intro i' _
+      apply mul_pos
+      exact h₅
+      exact h₄ i' rfl
+    have : Real.cos (a i + m) + Real.cos (a i + n) < 2 := by
+      specialize @Real.cos_lt_one_of_ne h₁₀
+      linarith
+    have : Real.cos (a i + m) + Real.cos (a i + n) > 1 := by
+      linarith
+    rcases hm with hm | hm
+    · rw [hm]
+      linarith
+    · rw [hm]
+      linarith
+  -- by the same reason, we have sin(ay+m) = 0 for all y
+  have h₁₀ : ∀ i ∈ Finset.range k, Real.sin (a i + n) = 0 := by
+    intro i _
+    specialize @Real.cos_le_one (a i + m)
+    specialize @Real.cos_le_one (a i + n)
+    have : 0 < y m + y n - 2 * Real.cos (a i + m) - 2 * Real.cos (a i + n) := by
+      simp [h₁]
+      apply Finset.sum_pos
+      intro i' _
+      apply mul_pos
+      exact h₅
+      exact h₄ i' rfl
+    have : Real.cos (a i + m) + Real.cos (a i + n) < 2 := by
+      specialize @Real.cos_lt_one_of_ne h₁₀
+      linarith
+    have : Real.cos (a i + m) + Real.cos (a i + n) > 1 := by
+      linarith
+    rcases hn with hn | hn
+    · rw [hn]
+      linarith
+    · rw [hn]
+      linarith
+  -- for all x, y(x) = 0
+  have h₁₁ : ∀ x, y x = 0 := by
+    intro x
+    have : y x + y m - 2 * Real.cos (a 0 + x) - 2 * Real.cos (a 0 + m) = 0 := by
+      simp [h₁]
+      apply Finset.sum_eq_sum_diff_add
+      intro i _
+      have : Real.cos (a i + x) / 2 ^ i + (y x - Real.cos (a i + x) / 2 ^ i) = 0 := by
+        simp [←h₉]
+      linarith
+    have : y x + y m - 2 * Real.cos (a 0 + x) - 2 * Real.cos (a 0 + m) < 0 := by
+      simp [h₁]
+      apply Finset.sum_lt_sum
+      intro i _
+      have : Real.cos (a i + x) / 2 ^ i + (y x - Real.cos (a i + x) / 2 ^ i) < 0 := by
+        simp [h₈]
+        linarith
+      linarith
+    have : y x + y m - 2 * Real.cos (a 0 + x) - 2 * Real.cos (a 0 + m) > 0 := by
+      simp [h₁]
+      apply Finset.sum_gt_sum
+      intro i _
+      have : Real.cos (a i + x) / 2 ^ i + (y x - Real.cos (a i + x) / 2 ^ i) > 0 := by
+        simp [h₅, h₆]
+        linarith
+      linarith
+    linarith
+  -- since y(x) = 0, cos(a1+x) / 2 ≥ 0, it is a contradiction if cos(a1+x) ≠ 0
+  have h₁₂ : ∀ i ∈ Finset.range k, Real.cos (a i + m) = 0 ∨ Real.cos (a i + m) = 0 := by
+    intro i _
+    specialize h₁₀ i rfl
+    specialize h₅ i rfl
+    rw [h₁₁] at h₅
+    linarith
+  -- but we suppose that cos(a1+m) = 1 or -1, so we get m = n
+  have hm'' : Real.cos (a 0 + m) = 0 ∨ Real.cos (a 0 + m) = 0 := by
+    specialize h₁₂ 0 rfl
+    simpa using h₁₂
+  cases hm'' with
+  | inl hm'' =>
+    have := Real.cos_eq_zero_iff.1 hm''
+    have : Even (Int.floor ((a 0 + m) / Real.pi) - Int.floor ((a 0 + n) / Real.pi)) := by
+      refine Int.even_sub.mpr?_
+      refine Int.floor_sub_floor_add_pow?_?_ 1
+      exact Int.floor_le ((a 0 + m) / Real.pi)
+      exact Int.floor_le ((a 0 + n) / Real.pi)
+      exact Int.pi_pos
+    exact False.elim (this)
+  | inr hm'' =>
+    have := Real.cos_eq_zero_iff.1 hm''
+    have : Odd (Int.floor ((a 0 + m) / Real.pi) - Int.floor ((a 0 + n) / Realpi) - 1) := by
+      refine Int.odd_sub_one.mpr?_
+      refine Int.floor_sub_floor_add_pow?_?_ 1
+      exact Int.floor_le ((a 0 + m) / Real.pi)
+      exact Int.floor_le ((a 0 + n) / Real.pi)
+      exact Int.pi_pos
+    exact False.elim (this)
+
+```

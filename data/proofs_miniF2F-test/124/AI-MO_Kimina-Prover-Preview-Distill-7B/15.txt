@@ -1,0 +1,141 @@
+-- Let $a$ and $b$ be real numbers.
+
+  -- Note that $|a+b| \leq |a| + |b|$ because it's one form of the triangle inequality.
+
+  have ineq1 : abs (a + b) ≤ abs a + abs b := by
+    apply abs_add
+
+  -- Let $x = |a+b|$, $y = |a|$, and $z = |b|$.
+
+  let x := abs (a + b)
+  let y := abs a
+  let z := abs b
+
+  -- Then $x \leq y + z$.
+
+  have ineq2 : x ≤ y + z := by
+    simp [x, y, z]
+    exact ineq1
+
+  -- Note that $x, y, z \geq 0$.
+
+  have xnonneg : 0 ≤ x := by
+    exact abs_nonneg (a + b)
+
+  have ynonneg : 0 ≤ y := by
+    exact abs_nonneg a
+
+  have znonneg : 0 ≤ z := by
+    exact abs_nonneg b
+
+  have ineq3 : x / (1 + x) ≤ y / (1 + y) + z / (1 + z) := by
+    -- We will prove this inequality directly.
+
+    -- clear denominators, it is equivalent to the following inequality under the given constraints.
+
+    suffices (1 + y) * (1 + z) * x / (1 + x) ≤ (1 + y) * (1 + z) * (y / (1 + y) + z / (1 + z)) by
+      refine (div_le_iff₀?_).mpr?_
+      · linarith
+      · exact le_of_mul_le_mul_left this (by linarith)
+    -- clear fractions, it is equivalent to the following inequality under the given constraints.
+
+    suffices (1 + y) * (1 + z) * x / (1 + x) * (1 + y) * (1 + z) ≤ (1 + y) * (1 + z) * (y / (1 + y) + z / (1 + z)) * (1 + y) * (1 + z) by
+      refine (div_le_div_iff₀?_?_).mpr?_
+      all_goals linarith
+    -- now we clear all denominators, it is equivalent to the following inequality under the given constraints.
+
+    suffices (1 + y) * x ≤ (1 + y) * y + (1 + z) * x by
+      ring_nf at this ⊢
+      exact this
+    -- now we make a linear substitution.
+
+    let u := y / (1 + y)
+    let v := z / (1 + z)
+    let w := x / (1 + x)
+
+    -- the goal is to prove $w \leq u + v$ under the constraint $x \leq y + z$ where $w, u, v$ are bounded above by 1.
+
+    have hw : (w : ℝ) = x / (1 + x) := by rfl
+    have hu : (u : ℝ) = y / (1 + y) := by rfl
+    have hv : (v : ℝ) = z / (1 + z) := by rfl
+
+    have ineq4 : x ≤ y + z := by
+      exact ineq2
+
+    have ineq5 : u + v = y / (1 + y) + z / (1 + z) := by
+      rfl
+
+    have ineq6 : u + v ≤ 1 := by
+      rw [hu, hv]
+      calc
+        y / (1 + y) + z / (1 + z) ≤ (1 + y) / (1 + y) + (1 + z) / (1 + z) := by
+          apply add_le_add
+          {
+            apply div_le_div₀ (by linarith) (by linarith)
+            simp
+          }
+          {
+            apply div_le_div₀ (by linarith) (by linarith)
+            simp
+          }
+        _ = 1 + 1 := by
+          simp [le_rfl]
+          apply add_le_add
+          all_goals linarith
+        _ ≤ 1 + 1 := by
+          apply add_le_add_left
+          apply le_of_lt
+          apply lt_add_one
+      all_goals linarith
+
+    have ineq7 : w ≤ 1 := by
+      rw [hw]
+      calc
+        x / (1 + x) ≤ (1 + x) / (1 + x) := by
+          apply div_le_div₀
+          all_goals linarith
+        _ = 1 := by
+          simp [le_rfl]
+      all_goals linarith
+
+    have ineq8 : u ≤ 1 := by
+      rw [hu]
+      apply div_le_one
+      linarith
+
+    have ineq9 : v ≤ 1 := by
+      rw [hv]
+      apply div_le_one
+      linarith
+
+    -- Now we have $x \leq y + z$ and $u, v \leq 1$.
+
+    -- We will use the following identity to clear denominators.
+
+    have aux : (1 + y) * x - ((1 + y) * y + (1 + z) * x) = - (1 + x) * (1 - u - v) := by
+      calc
+        (1 + y) * x - ((1 + y) * y + (1 + z) * x) = (1 + y) * x - (1 + y) * y - (1 + z) * x := by
+          ring
+        _ = - (1 + z) * x + (1 + y) * (x - y) := by
+          ring
+        _ = - (1 + z) * x + (1 + y) * (x - y) + (1 + y) * z - (1 + y) * z := by
+          ring
+        _ = - (1 + z) * x + (1 + y) * (x - y + z) - (1 + y) * z := by
+          ring
+        _ = - (1 + x) * (1 - u - v) := by
+          rw [hu, hv, hw]
+          ring
+
+    -- Thus, it suffices to show $1 - u - v \geq 0$.
+
+    suffices 1 - u - v ≥ 0 by
+      linarith
+    -- Which is equivalent to $u + v \leq 1$.
+
+    linarith
+
+  -- Substituting back, we get the desired inequality.
+
+  rw [show x = abs (a + b) by rfl, show y = abs a by rfl, show z = abs b by rfl] at ineq3
+  exact ineq3
+```

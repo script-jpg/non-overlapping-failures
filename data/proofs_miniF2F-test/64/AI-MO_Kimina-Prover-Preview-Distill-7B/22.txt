@@ -1,0 +1,94 @@
+-- We shall prove that the range of $h$ is {1, 3, 9}, and thus the sum of all possible values of $h(x)$ is 1 + 3 + 9 = 13.
+  have h₄ : (Set.range h).toFinset = {1, 3, 9} := by
+    rw [Set.range]
+    have : Set.range h = {1, 3, 9} := by
+      ext x
+      simp [h₂, h₀, h₁]
+      constructor
+      · intro ⟨a, ha⟩
+        -- Let $x$ be a positive integer. We have $f(x) = 12x + 7$ and $g(x) = 5x + 2$. 
+        have h₄ : 1 ≤ a := by
+          have : a = (12 * a + 7).gcd (5 * a + 2) := by
+            exact ha
+          apply Nat.gcd_pos_iff.mpr
+          left
+          apply And.intro
+          · linarith
+          · linarith
+        have h₅ : x = 1 ∨ x = 3 ∨ x = 9 := by
+          rw [← this]
+          -- Notice that $12x+7$ and $5x+2$ are coprime. 
+          have h₅ : (12 * a + 7).Coprime (5 * a + 2) := by
+            apply Nat.Coprime.gcd_eq_one
+            by_contra h
+            have h₆ : 2 ∣ 12 * a + 7 := by
+              apply Dvd.dvd.modEq_zero_nat
+              rw [ha]
+              exact Nat.dvd_gcd (Nat.dvd_add (Nat.dvd_mul_right (12 : ℕ) a) (7.gcd 2)) (Nat.dvd_add (Nat.dvd_mul_right (5 : ℕ) a) (2.gcd 7))
+              apply Nat.gcd_pos_iff.mpr
+              constructor
+              · apply And.intro
+                · linarith
+                · linarith
+              · apply And.intro
+                · linarith
+                · linarith
+            absurd h₆
+            norm_num
+          apply Prime.left_dvd_or_dvd_right_of_dvd_mul (by norm_num) at h₅
+          rcases h₅ with h₅ | h₅
+          · left
+            apply Nat.eq_one_of_dvd_one
+            exact h₅
+          · right
+            left
+            apply Nat.dvd_of_mod_eq_zero
+            norm_cast
+            rw [← ha]
+            have := Nat.gcd_mul_right_dvd (12 * a + 7) (5 * a + 2)
+            apply Nat.dvd_trans h₅ at this
+            norm_num at this
+            apply Nat.le_of_dvd
+            norm_num
+            exact this
+          · right
+            right
+            apply Nat.dvd_of_mod_eq_zero
+            norm_cast
+            rw [← ha]
+            have := Nat.gcd_mul_right_dvd (12 * a + 7) (5 * a + 2)
+            apply Nat.dvd_trans h₅ at this
+            norm_num at this
+            apply Nat.le_of_dvd
+            norm_num
+            exact this
+        rcases h₅ with h₅ | h₅ | h₅
+        · rw [h₅]
+          norm_num
+        · rw [h₅]
+          norm_num
+        · rw [h₅]
+          norm_num
+      · intro h
+        rcases h with h | h | h
+        · exists 1
+          rw [h]
+          norm_num
+        · exists 2
+          rw [h]
+          norm_num
+        · exists 3
+          rw [h]
+          norm_num
+    rw [this]
+    simp
+
+  -- Now we need to prove that the sum of elements of {1, 3, 9} is 12. 
+  rw [h₄]
+  simp
+  rw [Finset.sum_insert]
+  rw [Finset.sum_insert]
+  simp
+  rw [Finset.sum_singleton]
+  norm_num
+```

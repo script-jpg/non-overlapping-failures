@@ -1,0 +1,65 @@
+have h : ∀ k : ℕ, 0 < k → (a ^ k + b ^ k) / 2 ≥ (a + b) / 2 := by
+    intro k hₖ
+    -- The arithmetic mean of $a^k$ and $b^k$ is greater than or equal to
+    -- the arithmetic mean of $a$ and $b$.
+    cases k with
+    | zero => linarith
+    | succ k =>
+      by_cases hₖ₁ : k = 0
+      · simp [hₖ₁]
+      · have hₖ₁ : 0 < k := Nat.zero_lt_of_ne_zero hₖ₁
+        -- The function $f(x) = x^{\frac{1}{k}}$ is concave on $(0, \infty)$.
+        -- Therefore, the arithmetic mean of $a^{\frac{1}{k}}$ and
+        -- $b^{\frac{1}{k}}$ is greater than or equal to $1$.
+        have h2 : ((a ^ k + b ^ k) / 2) ^ (1 / k : ℝ) ≥ (a ^ (1 / k : ℝ) + b ^ (1 / k : ℝ)) / 2 := by
+          have hp : 0 < (1 / k : ℝ) := by
+            rw [one_div_pos]
+            exact hₖ₁
+          have : ((a ^ k + b ^ k) / 2) ^ (1 / k : ℝ) ≥ ((a ^ (1 / k : ℝ) + b ^ (1 / k : ℝ)) / 2) ^ (1 / k : ℝ) := by
+            apply Real.rpow_le_rpow
+            · apply (div_le_div_iff₀ (by positivity) (by positivity)).mpr
+              exact (add_le_add_iff_left (a ^ k)).mpr (le_of_lt (pow_pos_of_pos_left hₖ₁ k))
+            · apply div_le_div_iff₀
+              all_goals positivity
+            · norm_num
+          have h3 : ((a ^ (1 / k : ℝ) + b ^ (1 / k : ℝ)) / 2) ^ (1 / k : ℝ) ≥ (a ^ (1 / k : ℝ) + b ^ (1 / k : ℝ)) / 2 := by
+            have : 0 ≤ (a ^ (1 / k : ℝ) + b ^ (1 / k : ℝ)) / 2 := by
+              apply div_nonneg
+              all_goals positivity
+            apply Real.rpow_le_rpow
+            all_goals positivity
+            norm_num
+          linarith
+        -- raise both sides to the power of $k$
+        have h3 : ((a ^ k + b ^ k) / 2) ≥ ((a ^ (1 / k : ℝ) + b ^ (1 / k : ℝ)) / 2) ^ (k : ℝ) := by
+          apply Real.le_rpow
+          · apply (div_le_div_iff₀ (by positivity) (by positivity)).mpr
+            exact (add_le_add_iff_left (a ^ k)).mpr (le_of_lt (pow_pos_of_pos_left hₖ₁ k))
+          · apply div_le_div_iff₀
+            all_goals positivity
+          · norm_num
+        have h4 : ((a ^ (1 / k : ℝ) + b ^ (1 / k : ℝ)) / 2) ^ (k : ℝ) ≥ (a + b) / 2 := by
+          have : ((a ^ (1 / k : ℝ) + b ^ (1 / k : ℝ)) / 2) ^ (k : ℝ) = ((a ^ (1 / k : ℝ)) ^ (k : ℝ) + (b ^ (1 / k : ℝ)) ^ (k : ℝ)) / 2 := by
+            rw [div_pow]
+            apply Real.rpow_add
+            all_goals positivity
+          rw [this]
+          have h5 : (a ^ (1 / k : ℝ)) ^ (k : ℝ) = a ^ ((1 / k : ℝ) * k) := by
+            rw [Real.rpow_mul]
+            all_goals positivity
+          rw [h5]
+          have h6 : (b ^ (1 / k : ℝ)) ^ (k : ℝ) = b ^ ((1 / k : ℝ) * k) := by
+            rw [Real.rpow_mul]
+            all_goals positivity
+          rw [h6]
+          rw [show (1 / k : ℝ) * k = 1 by field_simp, show (1 / k : ℝ) * k = 1 by field_simp]
+          simp
+        linarith
+  have h' := h n h₁
+  -- The arithmetic mean of $a^n$ and $b^n$ is greater than or equal to
+  -- the arithmetic mean of $a$ and $b$.
+  have h'' : ((a + b) / 2) ^ n ≤ (a ^ n + b ^ n) / 2 := by
+    apply (div_le_div_iff₀ (by positivity) (by positivity)).mpr
+    exact (add_le_add_iff_left ((a + b) / 2 ^ n)).mpr h'
+  exact h'
+```

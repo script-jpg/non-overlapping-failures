@@ -1,0 +1,104 @@
+-- We suppose that $\sec x + \tan x = \frac{22}7$
+  -- Let's prove that $\sin x \ne 0$ and $\cos x \ne 0$
+  have h₂ : Real.sin x ≠ 0 := by
+    by_contra h
+    -- If $\sin x = 0$, then $\tan x = 0$, so $\sec x = 1/\tan x$ would be undefined
+    have h₃ : Real.tan x = 0 := by
+      rw [Real.tan_eq_sin_div_cos, h]
+      norm_num
+    have h₄ : 1 / Real.cos x = 0 := by
+      linarith only [h₀, h₃]
+    -- No value can make $1 / \cos x = 0$
+    have h₅ : 1 / Real.cos x ≠ 0 := by
+      by_contra!
+      apply h₅
+      field_simp at this
+      rw [this] at h₄
+      norm_num at h₄
+    contradiction
+  have h₃ : Real.cos x ≠ 0 := by
+    by_contra h
+    -- If $\cos x = 0$, then $\sec x = 0$, so $\tan x = 1/\sec x$ would be undefined
+    have h₄ : 1 / Real.cos x = 0 := by
+      rw [h]
+      norm_num
+    have h₅ : Real.tan x = 0 := by
+      rw [Real.tan_eq_sin_div_cos]
+      simp [h]
+    -- No value can make $\tan x = 0$
+    have h₆ : 1 / Real.tan x ≠ 0 := by
+      by_contra!
+      apply h₆
+      field_simp at this
+      rw [this] at h₅
+      norm_num at h₅
+    contradiction
+
+  -- We let $\sin x = a$ and $\cos x = b$
+  let a := Real.sin x
+  let b := Real.cos x
+  -- So, $\tan x = \frac{a}b$
+  have tana : Real.tan x = a / b := by
+    rw [Real.tan_eq_sin_div_cos]
+    unfold a b
+    ring
+  -- Hence, $\sec x = \frac{1}b$
+  have secx : 1 / Real.cos x = 1 / b := by
+    unfold b
+    simp
+  -- and  $\csc x = \frac{1}a$
+  have coseax : 1 / Real.sin x = 1 / a := by
+    unfold a
+    simp
+  -- $\cot x = \frac{b}a$
+  have cotx : 1 / Real.tan x = b / a := by
+    rw [tana]
+    field_simp
+
+  -- From the hypothesis, we get that $\cos x = \frac 7{22}$
+  have secxv := h₀
+  rw [secx] at secxv
+  have bval : b = 7 / 22 := by
+    field_simp at secxv
+    linarith only [secxv]
+  -- and $\sin x = \frac{22 - 7\sqrt{22^2 - 7^2}}{49}$
+  have adv : a = (22 - 7 * Real.sqrt 2227) / 49 := by
+    have : a ^ 2 + b ^ 2 = 1 := Real.sin_sq_add_cos_sq x
+    rw [tactics := [bval], tactics := [cscx, cotx, bval]] at this
+    have : a ^ 2 = (22 - 7 * Real.sqrt 2227) ^ 2 / 49 ^ 2 := by
+      ring_nf
+      have : 49 ^ 2 = 2227 + 7 ^ 2 := by norm_num
+      rw [this]
+      ring_nf
+      field_simp
+      ring
+    have : a = (22 - 7 * Real.sqrt 2227) / 49 ∨ a = - (22 - 7 * Real.sqrt 2227) / 49 := by
+      rw [sq_eq_sq_iff_eq_or_eq_neg]
+      assumption
+    cases this with
+    | inl h => exact h
+    | inr h =>
+      have : a < 0 := by
+        rw [h, show Real.sqrt 2227 > 0 by positivity]
+        linarith only
+      have : Real.sin x ≥ 0 := by
+        rw [tactics := [Real.sin_sq_add_cos_sq x], tactics := [bval, h₁], tactics := [show (22 : ℝ) > 0 by norm_num, show (7 : ℝ) > 0 by norm_num]]
+        positivity
+      linarith only
+
+  --$\csc x + \cot x = \frac{1}a + \frac{b}a = \frac{7 + \sqrt{22^2 - 7^2}}{7(22 - \sqrt{22^2 - 7^2})} = \frac{23}{35}$
+  have h4 : m = 23 / 35 := by
+    rw [tactics := [cscx, cotx, bval, adv]]
+    field_simp
+    ring_nf
+    have : 7 + Real.sqrt 2227 > 0 := by positivity
+    field_simp
+    ring_nf
+    have : 2227 = 47 ^ 2 := by norm_num
+    rw [this, Real.sqrt_sq (by norm_num)]
+    linarith only
+  rw [h4, Rat.num_div_eq_of_eq_mul_right (by norm_num)]
+  rw [Rat.den_div_eq_of_eq_mul_left (by norm_num)]
+  norm_num
+
+```

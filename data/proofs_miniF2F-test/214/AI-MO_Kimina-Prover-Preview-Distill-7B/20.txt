@@ -1,0 +1,242 @@
+have h₃ : (∑ k in Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180)) = (Real.sin (5 * 18 * Real.pi / 180) - Real.sin (5 * 35 * Real.pi / 180)) / (2 * Real.sin (5 * Real.pi / 180)) := by
+    -- Sum from 1 to 35 of sin(5k) is equal to (sin(5*18) - sin(5*35)) / (2sin(5))
+    have h₃ (n : ℕ) (hn : 0 < n) : (∑ k in Finset.Icc 1 n, Real.sin (5 * k * Real.pi / 180)) = (Real.sin (5 * (n + 1) * Real.pi / 180) - Real.sin (5 * (1 - 1) * Real.pi / 180)) / (2 * Real.sin (5 * Real.pi / 180)) := by
+      -- Generalize from 1 to n
+      induction n with
+      | zero => linarith
+      | succ n ih =>
+        cases n with
+        | zero => simp [Finset.Icc_eq_empty_of_lt]; norm_num
+        | succ n =>
+          simp [Finset.sum_Icc_succ_top, ih]
+          ring_nf
+          rw [mul_assoc, ← mul_sub, mul_assoc, mul_assoc, ← mul_add]
+          rw [mul_div_mul_left, ← tan_eq_sin_div_cos, mul_div_mul_left]
+          rw [div_eq_mul_inv, ← mul_sub, mul_assoc, mul_inv_cancel₀, mul_one, tauto]
+          apply mul_ne_zero
+          apply ne_of_gt
+          apply sin_pos_of_pos_of_lt_pi
+          linarith
+          have h₃ : 5 * (n + 1 + 1) * Real.pi / 180 = 5 * (n + 1) * Real.pi / 180 + 5 * Real.pi / 180 := by ring
+          rw [h₃]
+          have h₄ : 5 * (1 + 1) * Real.pi / 180 = 5 * Real.pi / 180 + 5 * Real.pi / 180 := by ring
+          rw [h₄]
+          apply Real.sin_add_sub_sin_add
+     . linarith
+     . exact Nat.add_pos_right n hn
+    specialize h₃ 35 (by norm_num)
+    exact h₃
+
+  have h₄ : Real.sin (5 * 18 * Real.pi / 180) = Real.sin (m * Real.pi / 180) := by
+    ring_nf
+    have h₄ : m * 5 * Real.pi / 180 = 5 * 18 * Real.pi / 180 := by
+      apply mul_assoc
+      ring_nf
+      rw [← h₀]
+      ring
+    rw [h₄]
+    ring_nf
+
+  have h₅ : Real.sin (5 * 35 * Real.pi / 180) = Real.sin (Real.pi - m * Real.pi / 180) := by
+    ring_nf
+    have h₅ : 5 * (35 - m) * Real.pi / 180 = 5 * 35 * Real.pi / 180 - 5 * m * Real.pi / 180 := by
+      ring_nf
+      rw [← h₀]
+      ring
+    rw [h₅]
+    ring_nf
+
+  have h₆ : Real.sin (Real.pi - m * Real.pi / 180) = Real.sin (m * Real.pi / 180) := by
+    rw [Real.sin_pi_sub]
+
+  rw [h₄, h₅, h₆] at h₃
+  rw [h₃] at h₁
+
+  have h₇ : (m : ℝ) = (m.num : ℝ) / m.den := by
+    rw [← Rat.num_div_den m]
+    simp
+
+  rw [h₇] at h₁
+  field_simp at h₁
+  have h₈ : Real.sin (5 * Real.pi / 180) ≠ 0 := by
+    have h₈ : 0 < 5 * Real.pi / 180 := by
+      apply div_pos
+      apply mul_pos
+      apply Real.pi_pos
+      norm_num
+      apply Real.pi_pos
+    have h₉ : 5 * Real.pi / 180 < Real.pi := by
+      apply div_lt_self
+      apply mul_lt_mul_of_pos_right
+      apply Real.pi_pos
+      norm_num
+      apply Real.pi_pos
+    rw [← Real.sin_pos_of_pos_of_lt_pi h₈ h₉]
+    exact Ne.symm (Real.sin_ne_zero_of_pos_of_lt_pi h₈ h₉)
+
+  have h₉ : (Real.sin (5 * Real.pi / 180))⁻¹ = (Real.sin (5 * Real.pi / 180) : ℝ)⁻¹ := by
+    exact Eq.symm (inv_eq_inv h₈)
+
+  have h₁₀ : Real.tan (m * Real.pi / 180) = Real.sin (5 * Real.pi / 180) * Real.sin (m * Real.pi / 180) * (Real.sin (5 * Real.pi / 180) : ℝ)⁻¹ := by
+    rw [h₁]
+    ring_nf
+    rw [h₉]
+    field_simp
+    ring_nf
+    rw [h₈]
+    ring
+
+  have h₁₁ : Real.tan (m * Real.pi / 180) = Real.tan (5 * Real.pi / 180 + (m - 5) * Real.pi / 180) := by
+    ring_nf
+    rw [Real.tan_add_int_mul_pi]
+    simp
+    exact h₈
+
+  have h₁₂ : Real.tan (5 * Real.pi / 180 + (m - 5) * Real.pi / 180) = Real.tan (Real.pi / 2 - (Real.pi / 2 - (m - 5) * Real.pi / 180)) := by
+    ring_nf
+    rw [← add_sub_assoc]
+    have h₁₂ : 5 * Real.pi / 180 + (m - 5) * Real.pi / 180 - (Real.pi / 2 - (Real.pi / 2 - (m - 5) * Real.pi / 180)) = (m - 5) * Real.pi / 180 + (m - 5) * Real.pi / 180 := by
+      ring
+    rw [h₁₂]
+    exact Eq.symm (add_tan_sub_pi_div_two (m - 5) (Real.pi / 180))
+
+  rw [h₁₁, h₁₂] at h₁₀
+
+  have h₁₃ : Real.sin (5 * Real.pi / 180) * Real.sin (m * Real.pi / 180) * (Real.sin (5 * Real.pi / 180) : ℝ)⁻¹ = Real.sin (5 * Real.pi / 180) * Real.tan (Real.pi / 2 - (Real.pi / 2 - (m - 5) * Real.pi / 180)) * (Real.sin (5 * Real.pi / 180) : ℝ)⁻¹ := by
+    rw [h₁₀]
+  rw [h₁₃]
+  ring_nf
+  rw [mul_inv_cancel₀ h₈]
+  rw [mul_one]
+  clear h₁₃
+  clear h₉
+  clear h₈
+
+  have h₁₄ : Real.tan (Real.pi / 2 - (Real.pi / 2 - (m - 5) * Real.pi / 180)) = (Real.cos (Real.pi / 2 - (m - 5) * Real.pi / 180) : ℝ) / Real.sin (Real.pi / 2 - (m - 5) * Real.pi / 180) := by
+    rw [← Real.cos_pi_div_two_sub, ← Real.sin_pi_div_two_sub]
+    rw [div_eq_mul_inv, mul_comm, ← mul_assoc, Real.cos_sq_add_sin_sq]
+    ring_nf
+    rw [mul_assoc, Real.cos_sq_add_sin_sq]
+    ring_nf
+    have h₁₄ : ((Real.cos (Real.pi / 2 - (m - 5) * Real.pi / 180) : ℝ) ^ 2 + (Real.sin (Real.pi / 2 - (m - 5) * Real.pi / 180) : ℝ) ^ 2)⁻¹ = 1 / ((Real.cos (Real.pi / 2 - (m - 5) * Real.pi / 180) : ℝ) ^ 2 + (Real.sin (Real.pi / 2 - (m - 5) * Real.pi / 180) : ℝ) ^ 2) := by
+      exact Eq.symm (inv_eq_inv (by linarith [sq_nonneg (Real.cos (Real.pi / 2 - (m - 5) * Real.pi / 180)), sq_nonneg (Real.sin (Real.pi / 2 - (m - 5) * Real.pi / 180))) (by linarith [sq_nonneg (Real.cos (Real.pi / 2 - (m - 5) * Real.pi / 180)), sq_nonneg (Real.sin (Real.pi / 2 - (m - 5) * Real.pi / 180))]))
+    rw [h₁₄]
+    field_simp
+
+  rw [h₁₄, Real.tan_eq_sin_div_cos]
+  field_simp
+  ring_nf
+  rw [mul_assoc, Real.sin_add_sub_sin_add]
+  rw [← h₀]
+  ring_nf
+  have h₁₅ : Real.sin (Real.pi - (m - 5) * Real.pi / 180) = Real.sin ((m - 5) * Real.pi / 180) := by
+    rw [Real.sin_pi_sub]
+  have h₁₆ : Real.cos (Real.pi - (m - 5) * Real.pi / 180) = - Real.cos ((m - 5) * Real.pi / 180) := by
+    rw [Real.cos_pi_sub]
+  rw [h₁₅, h₁₆]
+  ring_nf
+  rw [← mul_div_assoc]
+  have h₁₇ : Real.cos ((m - 5) * Real.pi / 180) ≠ 0 := by
+    have h₁₇ : 0 < (m - 5) * Real.pi / 180 := by
+      apply div_pos
+      apply mul_pos
+      apply Real.pi_pos
+      linarith
+      norm_num
+      apply Real.pi_pos
+    have h₁₈ : (m - 5) * Real.pi / 180 < Real.pi / 2 := by
+      by_contra h₁₈
+      push_neg at h₁₈
+      have h₁₈ : Real.pi / 2 ≤ (m - 5) * Real.pi / 180 := by linarith
+      have h₁₉ : Real.pi / 2 - (m - 5) * Real.pi / 180 ≤ 0 := by
+        linarith
+      have h₁₁₀ : Real.cos (Real.pi / 2 - (m - 5) * Real.pi / 180) = 0 := by
+        rw [Real.cos_eq_zero_iff]
+        exact ⟨h₁₈, h₁₉⟩
+      rw [h₁₁₀] at h₁₄
+      rw [h₁₁₀]
+      apply div_eq_zero_of_zero_of_ne_zero
+      linarith
+      exact h₁₇
+    have h₁₈ : Real.cos ((m - 5) * Real.pi / 180) > 0 := by
+      rw [Real.cos_pos_of_mem_Ioo]
+      constructor
+      linarith
+      linarith
+    linarith
+  have h₁₈ : Real.cos ((m - 5) * Real.pi / 180) * (Real.cos ((m - 5) * Real.pi / 180) : ℝ)⁻¹ = 1 := by
+    rw [mul_inv_cancel₀ h₁₇]
+    linarith
+  have h₁₉ : Real.cos ((m - 5) * Real.pi / 180) * (Real.sin ((m - 5) * Real.pi / 180) : ℝ)⁻¹ = Real.cos ((m - 5) * Real.pi / 180) * (Real.cos ((m - 5) * Real.pi / 180) : ℝ)⁻¹ * (Real.sin ((m - 5) * Real.pi / 180) : ℝ)⁻¹ * Real.sin ((m - 5) * Real.pi / 180) := by
+    ring_nf
+    rw [mul_assoc, mul_assoc, ← mul_add, mul_assoc, mul_inv_cancel₀ h₁₇, mul_one, mul_comm, mul_assoc, mul_inv_cancel₀ h₁₇, mul_one]
+  rw [h₁₉]
+  rw [h₁₈]
+  ring_nf
+  rw [h₁₈]
+  ring_nf
+  rw [mul_assoc, Real.cos_sq_add_sin_sq]
+  rw [mul_assoc, Real.cos_sq_add_sin_sq]
+  have h₁₈ : ((Real.cos ((m - 5) * Real.pi / 180) : ℝ) ^ 2 + (Real.sin ((m - 5) * Real.pi / 180) : ℝ) ^ 2) = 1 := by
+    exact Real.cos_sq_add_sin_sq ((m - 5) * Real.pi / 180)
+  rw [h₁₈]
+  rw [mul_one]
+  have h₁₉ : Real.sin ((m - 5) * Real.pi / 180) * (Real.sin ((m - 5) * Real.pi / 180) : ℝ)⁻¹ = 1 := by
+    apply mul_inv_cancel₀
+    apply ne_of_gt
+    apply Real.sin_pos_of_pos_of_lt_pi
+    linarith
+    have h₁₉ : (m - 5) * Real.pi / 180 < Real.pi := by
+      by_contra h₁₉
+      push_neg at h₁₉
+      have h₁₉ : Real.pi ≤ (m - 5) * Real.pi / 180 := by linarith
+      have h₁₂₀ : Real.pi / 2 ≤ (m - 5) * Real.pi / 180 := by
+        linarith
+      have h₁₁₁ : Real.cos ((m - 5) * Real.pi / 180) = 0 := by
+        rw [Real.cos_eq_zero_iff]
+        exact ⟨h₁₉, h₁₂₀⟩
+      rw [h₁₁₁] at h₁₄
+      rw [h₁₁₁]
+      apply div_eq_zero_of_zero_of_ne_zero
+      linarith
+      exact h₁₇
+    linarith
+  have h₂₀ : Real.cos ((m - 5) * Real.pi / 180) * Real.sin ((m - 5) * Real.pi / 180) * (Real.sin ((m - 5) * Real.pi / 180) : ℝ)⁻¹ = Real.cos ((m - 5) * Real.pi / 180) := by
+    rw [mul_assoc, mul_inv_cancel₀ h₁₉, mul_one]
+  rw [h₂₀]
+  ring_nf
+  have h₂₁ : Real.cos ((m - 5) * Real.pi / 180) * Real.cos ((m - 5) * Real.pi / 180) * (Real.cos ((m - 5) * Real.pi / 180) : ℝ)⁻¹ = Real.cos ((m - 5) * Real.pi / 180) := by
+    rw [mul_assoc, mul_inv_cancel₀ h₁₇, mul_one]
+  rw [h₂₁]
+  ring_nf
+  simp
+  have h₂₂ : 5 * Real.pi / 180 = Real.pi / 180 + 4 * Real.pi / 180 := by
+    ring_nf
+  rw [h₂₂]
+  rw [Real.tan_add_int_mul_pi]
+  simp
+  ring_nf
+  rw [Real.tan_pi_div_two_sub]
+  rw [show Real.pi / 2 - (Real.pi / 180 + 4 * Real.pi / 180) = Real.pi / 2 - 4 * Real.pi / 180 - Real.pi / 180 by ring]
+  rw [Real.tan_sub_pi_div_two]
+  rw [← Real.tan_pi_div_two]
+  have h₂₃ : Real.tan (4 * Real.pi / 180) = Real.tan (2 * Real.pi / 90) := by
+    ring_nf
+  rw [h₂₃]
+  have h₂₄ : Real.tan (2 * Real.pi / 90) < 0 := by
+    have h₂₄ : 2 * Real.pi / 90 < Real.pi / 2 := by
+      apply div_lt_div_of_pos_of_lt
+      apply mul_pos
+      apply Real.pi_pos
+      norm_num
+      norm_num
+    have h₂₅ : 2 * Real.pi / 90 > 0 := by
+      apply div_pos
+      apply mul_pos
+      apply Real.pi_pos
+      norm_num
+      norm_num
+    rw [Real.tan_neg_of_pos_of_lt_pi_div_two h₂₅ h₂₄]
+  rw [h₂₄]
+  have h₂₅ : Real.sin (2 * Real.pi / 90) > 0 := by
+    apply Real.sin_pos_of_pos

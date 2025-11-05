@@ -1,0 +1,40 @@
+-- We have: a^2 * b^3 = 32/27 and a/b^3 = 27/4.
+  -- We need to find a+b.
+
+  -- Let's first show that b ≠ 0.
+  have hb : b ≠ 0 := by
+    by_contra! hb
+    -- If b = 0, then a^2 * b^3 = 0, which is a contradiction.
+    rw [hb] at h₀
+    simp at h₀
+
+  -- Now we can show that a = 27/4 * b^3.
+  have ha : a = 27 / 4 * b ^ 3 := by
+    -- Multiply both sides of a/b^3 = 27/4 by b^3.
+    field_simp [hb] at h₁ ⊢
+    exact h₁
+
+  -- Substitute a = 27/4 * b^3 into a^2 * b^3 = 32/27.
+  rw [ha] at h₀
+  have (x : ℝ) : (27 / 4 * x ^ 3) ^ 2 * x ^ 3 = 32 / 27 ↔ x ^ 3 = 4 / 9 := by
+    constructor
+    · intro h
+      -- Simplify (27/4 * x^3)^2 * x^3 = 32/27 to x^3 = 4/9.
+      ring_nf at h ⊢
+      nlinarith [sq_nonneg (x ^ 3), sq_nonneg (x ^ 2), sq_nonneg (x), (show (27 : ℝ) ≠ 0 by norm_num)]
+    · intro h
+      -- Verify that x^3 = 4/9 implies (27/4 * x^3)^2 * x^3 = 32/27.
+      ring_nf
+      nlinarith [sq_nonneg (x ^ 3), sq_nonneg (x ^ 2), sq_nonneg (x), (show (27 : ℝ) ≠ 0 by norm_num)]
+  -- The biconditional is proved, so we can rewrite h₀ as b^3 = 4/9.
+  rw [this] at h₀
+
+  -- Substitute a = 27/4 * b^3 and b^3 = 4/9 into a + b.
+  rw [ha]
+  calc
+    27 / 4 * b ^ 3 + b = 27 / 4 * (4 / 9) + b := by rw [h₀]
+    _ = 3 + b := by ring_nf
+    _ = 3 + b ^ 3 := by linarith [h₀]
+    _ = 3 + 4 / 9 := by rw [h₀]
+    _ = 8 / 3 := by norm_num
+```

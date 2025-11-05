@@ -1,0 +1,50 @@
+have step₁ : S.card = 2 := by
+    have h₁ : S = {Real.pi / 2, Real.pi / 2 + Real.pi / 2} := by
+      ext x
+      simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+      constructor
+      · intro h
+        have h₂ : 0 ≤ x := h.1
+        have h₃ : x ≤ Real.pi := h.2.1
+        have h₄ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h.2.2
+        have h₅ : x = Real.pi / 2 ∨ x = Real.pi / 2 + Real.pi / 2 := by
+          have h₆ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h₄
+          have h₇ : Real.cos x = 0 ∨ Real.cos x = -1 ∨ Real.cos x = 1 := by
+            apply or_iff_not_imp_left.mpr
+            intro h₈
+            apply or_iff_not_imp_left.mpr
+            intro h₉
+            apply eq_of_sub_eq_zero
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₈)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₉)
+            nlinarith [Real.sin_sq_add_cos_sq x, Real.sin_le_one x, Real.cos_le_one x,
+              Real.pi_pos.le, sq_nonneg (Real.cos x + 1), sq_nonneg (Real.cos x - 1),
+              sq_nonneg (Real.sin x + 1), sq_nonneg (Real.sin x - 1)]
+          rcases h₇ with (h₇ | h₇ | h₇)
+          · -- Case cos x = 0
+            have h₈ : Real.cos x = 0 := h₇
+            have h₉ : x = Real.pi / 2 := by
+              rw [← mul_left_inj' (two_ne_zero' ℝ)] at h₈
+              have h₁₀ : 2 * x = Real.pi := by
+                apply Eq.symm
+                nlinarith [Real.pi_pos, Real.cos_sq_add_sin_sq x, Real.cos_two_mul x, Real.sin_two_mul x]
+              nlinarith [Real.pi_pos]
+            simp_all
+            <;> aesop
+          · -- Case cos x = -1
+            have h₈ : Real.cos x = -1 := h₇
+            have h₉ : x = Real.pi := by
+              rw [← mul_left_inj' (two_ne_zero' ℝ)] at h₈
+              have h₁₀ : 2 * x = Real.pi + 2 * Real.pi := by
+                apply Eq.symm
+                nlinarith [Real.pi_pos, Real.cos_sq_add_sin_sq x, Real.cos_two_mul x, Real.sin_two_mul x]
+              nlinarith [Real.pi_pos]
+            simp_all [Real.cos_pi, Real.sin_pi] <;> ring_nf at * <;> norm_num at * <;>
+              (try { nlinarith }) <;> (try { aesop }) <;> (try { nlinarith [Real.pi_pos] })
+          · -- Case cos x = 1
+            have h₈ : Real.cos x = 1 := h₇
+            have h₉ : x = 0 := by
+              rw [← mul_left_inj' (two_ne_zero' ℝ)] at h₈
+              have h₁₀ : 2 * x = 0 := by
+                apply Eq.symm
+                nlinarith [Real.pi_pos, Real.cos_sq_add_sin_sq x, Real.cos_

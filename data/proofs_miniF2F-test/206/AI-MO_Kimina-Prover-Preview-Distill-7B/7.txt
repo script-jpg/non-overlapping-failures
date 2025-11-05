@@ -1,0 +1,90 @@
+-- Lemma 1 : If $f(x+a) = \frac{1}{2}+\sqrt{f(x)-f(x)^2}$, then $f(x)$ is positive for all $x \in \mathbb{R}$.
+  have h_f_pos : ∀ x, 0 < f x := by
+    intro x
+    -- We show that $f(x) > 0$ by induction on the number of times we apply the functional equation.
+    have h {n : ℕ} (hn : 0 < n) : 0 < f (x + (n : ℝ) * a) := by
+      induction n with
+      | zero => simp_all
+      | succ n ih =>
+        by_cases hn' : n = 0
+        · simp_all
+        · rw [show 1 + (n : ℝ) * a = (n : ℝ) * a + a by ring]
+          rw [h₁, ih, Real.sqrt_pos]
+          by_cases hf : f (x + (n : ℝ) * a) = 1 / 2
+          · rw [hf] at h₁
+            linarith
+          · have h₁ : f (x + (n : ℝ) * a) - f (x + (n : ℝ) * a) ^ 2 = (1 - 2 * f (x + (n : ℝ) * a)) * f (x + (n : ℝ) * a) := by ring
+            rw [h₁] at hf
+            rw [mul_pos_iff_of_pos_right ih] at hf
+            linarith
+          linarith
+    -- Now we conclude the lemma by letting $n$ go to zero.
+    specialize h (n := 0)
+    simp at h
+    exact h
+
+  -- Lemma 2 : If $f(x+a) = \frac{1}{2}+\sqrt{f(x)-f(x)^2}$, then $f(x+2a) = 1 - f(x)$ for all $x \in \mathbb{R}$.
+  have h_f_2a : ∀ x, f (x + 2 * a) = 1 - f x := by
+    intro x
+    -- We deduce the equation for $f(x+2a)$ by simply plugging in $x+a$ in the functional equation.
+    calc
+      _ = 1 - (1 / 2 + Real.sqrt (f (x + a) - f (x + a) ^ 2)) := by
+        rw [add_assoc, h₁]
+        simp
+      _ = 1 - f (x + a) := by
+        rw [add_sub_cancel_right, h₁]
+      _ = 1 - f x := by
+        rw [add_sub_cancel_right, h₁]
+
+  -- Lemma 3 : If $f(x+a) = \frac{1}{2}+\sqrt{f(x)-f(x)^2}$, then $f(x+4a) = f(x)$ for all $x \in \mathbb{R}$.
+  have h_f_4a : ∀ x, f (x + 4 * a) = f x := by
+    intro x
+    -- We deduce the equation for $f(x+4a)$ by simply plugging in $x+2a$ in the functional equation.
+    calc
+      _ = f ((x + 2 * a) + 2 * a) := by ring
+      _ = 1 - f (x + 2 * a) := by rw [h_f_2a]
+      _ = 1 - (1 - f x) := by rw [h_f_2a]
+      _ = f x := by ring
+
+  -- We construct a function $g(x) = f(x) - \frac{1}{2}$ and show that it is equal to $\sin^2(x)$.
+  let g (x : ℝ) := f x - 1 / 2
+  have h_g : ∀ x, g x = Real.sin x ^ 2 := by
+    intro x
+    -- We show that $f(x) = \sin^2(x) + \frac{1}{2}$ by induction on the number of times we apply the functional equation.
+    have h {n : ℕ} (hn : 0 < n) : f (x + (n : ℝ) * a) = Real.sin (x + (n : ℝ) * a) ^ 2 + 1 / 2 := by
+      induction n with
+      | zero => simp_all
+      | succ n ih =>
+        by_cases hn' : n = 0
+        · simp_all
+        · rw [show 1 + (n : ℝ) * a = (n : ℝ) * a + a by ring]
+          rw [h₁, ih, Real.sin_add, pow_two, sub_add_cancel, ← Real.sin_sq, add_assoc]
+          simp
+          rw [mul_add, Real.cos_sq_add_sin_sq]
+          simp
+          have h_sin : Real.sin (x + (n : ℝ) * a) ^ 2 ≤ 1 := by
+            exact Real.sin_sq_le_one (x + (n : ℝ) * a)
+          have h_cos : -1 ≤ Real.cos (x + (n : ℝ) * a) := by
+            exact Real.neg_one_le_cos (x + (n : ℝ) * a)
+          linarith
+          simp
+          have h_sin : Real.sin (x + (n : ℝ) * a) ^ 2 ≥ 0 := by
+            exact Real.sin_sq_nonneg (x + (n : ℝ) * a)
+          linarith
+      specialize h (n := 0)
+      simp at h
+      exact h
+    -- Now we conclude the lemma by letting $n$ go to zero.
+    specialize h (n := 0)
+    simp at h
+    linarith
+
+  -- We show that $a$ is a possible value for $b$.
+  have hb : ∀ x, f (x + a) = f x := by
+    intro x
+    specialize h_f_4a x
+    specialize h_g x
+    linarith
+  use a
+  simp [hb]
+```

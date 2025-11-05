@@ -1,0 +1,185 @@
+have hp : 1 < p := h₀.1
+  have hq : 1 < q := by linarith
+  have hr : 1 < r := by linarith
+
+  have hpqr : 1 < p * q * r := by
+    apply lt_mul_of_pos_right
+    apply mul_lt_mul_of_pos
+    all_goals linarith
+
+  have hpqr' : 1 < p * q := by
+    apply lt_mul_of_pos_right
+    linarith
+
+  have h2 : r ∣ p * q * r - 1 + (p - 1) * (q - 1) * (r - 1) := by
+    apply dvd_add
+    · use p * q - 1
+      ring
+    · apply dvd_mul_of_dvd_right
+      apply dvd_sub
+      · ring
+      · exact Int.dvd_refl (p - 1) * (q - 1) * (r - 1)
+
+  have h3 : r ∣ p * q - 1 := by
+    rw [show p * q * r - 1 + (p - 1) * (q - 1) * (r - 1) = p * q * r - 1 + ((p - 1) * (q - 1) * (r - 1)) by ring]
+    apply dvd_trans h2
+    apply Int.dvd_sub
+    · ring
+    · apply dvd_mul_of_dvd_right
+      apply dvd_sub
+      · apply dvd_mul_of_dvd_left
+        apply dvd_refl (r - 1)
+      · exact Int.dvd_refl (p - 1) * (q - 1) * (r - 1)
+
+  have hpq : p * q ∣ p * q * r - 1 + (p - 1) * (q - 1) * (r - 1) := by
+    apply dvd_add
+    · use r - 1
+      ring
+    · apply dvd_mul_of_dvd_right
+      apply dvd_sub
+      · ring
+      · apply dvd_mul_of_dvd_left
+        apply dvd_refl (p - 1) * (q - 1)
+
+  have hpq' : p * q ∣ p * q - 1 := by
+    rw [show p * q * r - 1 + (p - 1) * (q - 1) * (r - 1) = p * q * r - 1 + ((p - 1) * (q - 1) * (r - 1)) by ring]
+    apply dvd_trans hpq
+    apply Int.dvd_sub
+    · ring
+    · apply dvd_mul_of_dvd_right
+      apply dvd_sub
+      · apply dvd_mul_of_dvd_left
+        apply dvd_refl (q - 1)
+      · exact Int.dvd_refl (p - 1) * (q - 1) * (r - 1)
+
+  have h4 : q ∣ p * q - 1 := by
+    apply dvd_trans hpq'
+    apply dvd_mul_of_dvd_left
+    apply dvd_refl (q - 1)
+
+  have h5 : p ∣ p * q - 1 + (p - 1) * (q - 1) * (r - 1) := by
+    apply dvd_add
+    · apply dvd_mul_of_dvd_left
+      apply dvd_refl (r - 1)
+    · use q - 1
+      ring
+
+  have h6 : p ∣ p * q - 1 := by
+    rw [show p * q * r - 1 + (p - 1) * (q - 1) * (r - 1) = p * q * r - 1 + ((p - 1) * (q - 1) * (r - 1)) by ring] at h5
+    apply dvd_trans h5
+    apply Int.dvd_sub
+    · ring
+    · apply dvd_mul_of_dvd_right
+      apply dvd_sub
+      · apply dvd_mul_of_dvd_left
+        apply dvd_refl (p - 1)
+      · exact Int.dvd_refl (p - 1) * (q - 1) * (r - 1)
+
+  -- Show that $q$ is a prime number and $q$ divides $p - 1$.
+  have hqpr : q.Prime ∧ q ∣ p - 1 := by
+    rw [show p - 1 = (p * q - 1) / q by rw [Int.ediv_eq_iff_eq_mul_right]; assumption]
+    constructor
+    · apply Prime.natAbs
+      apply Int.prime_iff_natAbs_prime.mpr
+      apply Int.prime_of_dvd_of_lt h4 (by linarith)
+    · apply Int.dvd_ediv_of_dvd
+      · apply Int.dvd_mul_of_dvd_right
+        apply Int.dvd_sub
+        · exact Int.dvd_refl (p - 1)
+        · apply dvd_mul_of_dvd_left
+          apply dvd_refl (q - 1)
+      · linarith
+
+  -- Show that $p - 1$ is a prime number and $p - 1$ divides $q - 1$.
+  have hp1qr : p - 1.Prime ∧ p - 1 ∣ q - 1 := by
+    rw [show q - 1 = (p * q - 1) / p by rw [Int.ediv_eq_iff_eq_mul_right]; assumption]
+    constructor
+    · apply Prime.natAbs
+      apply Int.prime_iff_natAbs_prime.mpr
+      apply Int.prime_of_dvd_of_lt h6 (by linarith)
+    · apply Int.dvd_ediv_of_dvd
+      · apply Int.dvd_mul_of_dvd_right
+        apply Int.dvd_sub
+        · apply dvd_mul_of_dvd_left
+          apply dvd_refl (p - 1)
+        · exact Int.dvd_refl (q - 1)
+      · linarith
+
+  -- Show that $p - 1 = 2$ and $q - 1 = 4$ and $r - 1 = 8$.
+  have hp1 : p - 1 = 2 := by
+    apply Nat.eq_prime_one_iff.mpr
+    constructor
+    · exact hp1qr.1
+    · apply Int.Prime.dvd_of_dvd_pow
+      · exact hp1qr.1
+      · have hp1' : 1 < p - 1 := by
+          calc
+            1 < p := hp
+            _ < q := h₀.2.1
+            _ < r := h₀.2.2
+            _ = p - 1 + 1 := by simp [Int.sub_add_cancel]
+            _ < p - 1 + (p - 1) := by rel [hp]
+            _ = 2 * (p - 1) := by ring
+        apply Nat.Prime.dvd_of_dvd_pow
+        · norm_num
+        · have := hp1qr.2
+          rw [Nat.prime_dvd_prime_iff_eq hp1 this]
+          omega
+      · norm_num
+
+  have hq1 : q - 1 = 4 := by
+    rw [hp1, show p - 1 = 2 by linarith] at hp1qr
+    apply Nat.eq_prime_one_iff.mpr at hp1qr
+    constructor
+    · exact hp1qr.2
+    · -- Apply the lemma `Nat.Prime.dvd_of_dvd_pow` to show that $q - 1 = 2^2$.
+      have hp1' : 1 < p - 1 := by
+        calc
+          1 < p := hp
+          _ < q := h₀.2.1
+          _ < r := h₀.2.2
+          _ = p - 1 + 1 := by simp [Int.sub_add_cancel]
+          _ < p - 1 + (p - 1) := by rel [hp]
+          _ = 2 * (p - 1) := by ring
+      have h2 : p - 1 ∣ (q - 1) := by
+        rw [hp1qr.2.1]
+        apply dvd_mul_of_dvd_left
+        apply dvd_refl (p - 1)
+      apply Nat.Prime.dvd_of_dvd_pow (Nat.prime_two) at h2
+      rw [Nat.dvd_prime_pow (Nat.prime_two)] at h2
+      omega
+      · norm_num
+      · norm_num
+
+  have hr1 : r - 1 = 8 := by
+    rw [hp1, show p - 1 = 2 by linarith] at h2
+    have h2 : r ∣ 2 ^ 3 := by
+      rw [<-h2]
+      apply dvd_mul_of_dvd_right
+      apply dvd_sub
+      · norm_num
+      · apply dvd_mul_of_dvd_left
+        apply dvd_refl (r - 1)
+    have h3 : r - 1 ∣ 2 ^ 3 := by
+      rw [show r = r - 1 + 1 by simp [Int.sub_add_cancel]]
+      apply Nat.dvd_add
+      · apply dvd_mul_of_dvd_right
+        apply dvd_sub
+        · apply dvd_mul_of_dvd_left
+          apply dvd_refl (r - 1)
+        · norm_num
+      · apply dvd_mul_of_dvd_left
+        apply dvd_refl (r - 1)
+    rw [Nat.prime_pow Nat.prime_two] at h3
+    omega
+    · norm_num
+    · norm_num
+
+  -- Show that $p = 2$, $q = 4$, and $r = 8$.
+  have hp : p = 2 := by omega
+  have hq : q = 4 := by omega
+  have hr : r = 8 := by omega
+
+  simp [hp, hq, hr]
+
+```

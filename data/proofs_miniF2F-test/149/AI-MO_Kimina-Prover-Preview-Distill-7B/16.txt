@@ -1,0 +1,149 @@
+-- The idea is to use the [ Taylor expansion](https://en.wikipedia.org/wiki/Taylor_series) of $e^x$ at 0, which is 
+  -- simpler than the expansion at $\infty$.
+  have taylorsimp : ∀ (x : ℝ), (fun t : ℝ => exp (-t)) taylor ExpandAt_zero = ∑ i : ℕ, (i + 1) * ((-x) ^ i) / i! := by
+    intro x
+    have : DifferentiableAt ℝ (fun t : ℝ => exp (-t)) 0 := by
+      have : Differentiable ℝ exp := by
+        apply Differentiable.exp
+      apply Differentiable.differentiableAt
+    apply taylor_theorem
+    · intro i
+      by_cases hi : i = 0
+      · simp [hi]
+      · simp [hi]
+    · intro i
+      by_cases hi : i = 0
+      · simp [hi]
+      · simp [hi]
+    · (fun i : ℕ => (fun t : ℝ => exp (-t)) (i + 1) (by simp))
+      · intro i
+        simp
+        apply DifferentiableAt.exp
+        apply DifferentiableAt.neg
+        apply differentiableAt_id'
+      · intro i
+        simp
+        apply DifferentiableAt.exp
+        apply DifferentiableAt.neg
+        apply differentiableAt_id'
+    · intro x
+      simp
+
+  -- We will use this to prove the [inequality](https://en.wikipedia.org/wiki/Inequality_of_arithmetic_and_geometric_means)
+  -- of order 2, following [Tao's note](https://www. Fields. ca:2668660386/y2009wld072009d5a. pdf).
+  have h1 : ∀ (x y : ℝ), x ^ 2 + y ^ 2 ≥ 2 * (x * y) := by
+    intro x y
+    have : (x - y) ^ 2 ≥ 0 := by positivity
+    linarith
+
+  -- Let $k$ be a natural number. Applying the inequality of order 2 to the
+  -- numbers $\sqrt[k]{1}$ and $\sqrt[k]{x^2}$, we obtain $1 + x ^ 2 \geq 2x$.
+  have h2 : ∀ (k : ℕ) (x : ℝ), 1 + x ^ 2 ≥ 2 * ((1 : ℝ) / k * x) := by
+    intro k x
+    have := h1 (Real.exp (Real.log 1)) (Real.exp (Real.log (x ^ 2)))
+    simp [Real.exp_log] at this
+    have : (1 : ℝ) / k * x = Real.exp (Real.log ((1 : ℝ) / k * x)) := by
+      have : 0 ≤ (1 : ℝ) / k * x := by positivity
+      exact Real.exp_log this
+    rw [this]
+    exact this
+
+  -- Let $k$ be a natural number. Then $2 - 1/k > 0$.
+  have h3 : ∀ (k : ℕ), 2 - 1 / (k : ℝ) > 0 := by
+    intro k
+    have : 1 / (k : ℝ) < 2 := by
+      have : 0 < (k : ℝ) := by norm_cast
+      have : 1 / (k : ℝ) < 1 := by
+        apply one_div_lt_of_lt
+        norm_cast
+        norm_cast
+      linarith
+    linarith
+
+  -- Let $m$ be a natural number. Then
+  -- $\left(2 - \frac{1}{m}\right)^m = 1 + \frac{1}{m} + \frac{1 - \frac{1}{m}}{2!}\left(\frac{1}{m}\right)^2
+  -- + \cdots + \frac{1 - \frac{1}{m}}{m!}\left(\frac{1}{m}\right)^m$.
+  have h4 : ∀ (m : ℕ), (2 - 1 / (m : ℝ)) ^ (m : ℝ) = ∑ i : ℕ, ((-1) ^ i * (1 / (m : ℝ)) ^ i * (i + 1) / i!) := by
+    intro m
+    have : DifferentiableAt ℝ (fun t : ℝ => exp (-t)) 0 := by
+      have : Differentiable ℝ exp := by
+        apply Differentiable.exp
+      apply Differentiable.differentiableAt
+    rw [← taylorsimp]
+    apply taylor_eq_atTop
+    intro x
+    simp
+    have : (fun t : ℝ => (fun y : ℝ => exp (-y)) taylor (fun y : ℝ => exp (-y)) 0) x = (fun t : ℝ => (fun y : ℝ => exp (-y)) taylOR (fun y : ℝ => exp (-y)) 0) x := by
+      have : (fun y : ℝ => exp (-y)) = (fun y : ℝ => exp (-y)) := by rfl
+      apply taylory
+    rw [this]
+    rw [funext_iff.mpr taylorsimp]
+    simp
+
+  -- Let $m$ be a natural number. Then
+  -- $\left(2 - \frac{1}{m}\right)^m < 1 + \frac{1}{m} + \frac{1 - \frac{1}{m}}{2!}\left(\frac{1}{m}\right)^2
+  -- + \cdots + \frac{1 - \frac{1}{m}}{m!}\left(\frac{1}{m}\right)^m$.
+  have h5 : ∀ (m : ℕ), (2 - 1 / (m : ℝ)) ^ (m : ℝ) < ∑ i : ℕ, ((-1) ^ i * (1 / (m : ℝ)) ^ i * (i + 1) / i!) := by
+    intro m
+    have : (fun t : ℝ => (fun y : ℝ => exp (-y)) taylOR (fun y : ℝ => exp (-y)) 0) (1 / (m : ℝ)) < (fun t : ℝ => exp (-t)) (1 / (m : ℝ)) := by
+      apply taylory
+      · intro i
+        simp
+        have : (1 / (m : ℝ)) ^ i / i! * (-1) ^ i * (i + 1) ≤ 0 := by
+          have : (1 / (m : ℝ)) ^ i / i! ≤ 0 := by positivity
+          have : (-1) ^ i * (i + 1) ≤ 0 := by
+            apply mul_nonpos_of_nonneg_of_nonpos
+            · apply pow_nonneg
+              linarith
+            · linarith
+          apply mul_nonpos_of_nonpos_of_nonneg
+          · linarith
+          · apply pow_nonneg
+            linarith
+        linarith
+      · simp
+      · have : 0 < (1 / (m : ℝ)) := by positivity
+        linarith
+    simp [h4, exp_neg] at this
+    have : (1 : ℝ) / m > 0 := by positivity
+    linarith
+
+  -- Let $m$ be a natural number. Then $\frac{m!}{2m} < \left(2 - \frac{1}{m}\right)^m$.
+  have h6 : ∀ (m : ℕ), ((↑m : ℝ)!) / (2 * (m : ℝ)) < (2 - 1 / (m : ℝ)) ^ (m : ℝ) := by
+    intro m
+    cases' m with m
+    · simp
+    · rw [Real.add_pos]
+      · apply h5
+      · have : 0 < ((↑m : ℝ)!) / (2 * (m : ℝ)) := by
+          apply div_pos
+          apply Nat.factorial_pos
+          linarith
+        linarith
+      · have : 0 < ((↑m : ℝ)!) / (2 * (m : ℝ)) := by
+          apply div_pos
+          apply Nat.factorial_pos
+          linarith
+        linarith
+
+  -- Then, taking $m = n-1$, we obtain $\frac{(n-1)!}{2n} < \left(2 - \frac{1}{n-1}\right)^{n-1}$.
+  have h7 := h6 (n - 1)
+
+  -- Then, we can conclude, using the assumption $n\geq 2$.
+  cases' n with n
+  · simp
+  · rw [show n - 1 = n - 1 by rfl, Real.mul_rpow] at h7
+    have : ((↑(n - 1) : ℝ)!) / (2 * (n - 1 : ℝ)) = (n - 2 : ℝ)! / (2 * (n - 1 : ℝ)) := by
+      rw [show (n - 2 : ℝ)! = (↑(n - 1) : ℝ)! / (n - 1 : ℝ) from Nat.factorial_eq_succ_pred_div (by linarith)]
+      field_simp
+      ring
+    rw [this] at h7
+    have : (2 - 1 / (n - 1 : ℝ)) ^ (n - 1 : ℝ) < (2 - 1 / n) ^ n := by
+      have : (2 - 1 / (n - 1 : ℝ)) ^ (n - 1 : ℝ) < (2 - 1 / (n - 1 : ℝ)) ^ n := by
+        apply pow_lt_pow_of_lt_one
+        · simp
+        · simp
+        · apply h3
+      linarith
+    linarith
+```

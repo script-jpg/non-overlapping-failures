@@ -1,0 +1,163 @@
+-- If $f(n) < n$, then $f(f(n)) < f(n+1)$
+  have hf_lt_n (n : ℕ) (hn : 0 < n) (hfn : f n < n) : f (f n) < f (n + 1) := by
+    specialize h₁ (f n) (by positivity)
+    have : f n + 1 = n + 1 := by
+      rw [add_comm]
+      apply Nat.add_right_cancel n
+      linarith
+    rw [this] at h₁
+    exact h₁ hfn
+
+  -- If $f(n) > n$, then $f(n+1) \leq f(f(n))$
+  have hf_gt_n (n : ℕ) (hn : 0 < n) (hfn : f n > n] : f (n + 1) ≤ f (f n) := by
+    by_contra! h
+    have h' : f (f n) < f (n + 1) := by
+      specialize h₁ (f n) (by positivity)
+      have : f n + 1 = n + 1 := by
+        rw [add_comm]
+        apply Nat.add_right_cancel n
+        linarith
+      rw [this] at h₁
+      exact h₁ hfn
+    linarith
+
+  -- Therefore, if $f(n) \neq n$, then $f(n+1) = f(f(n))$
+  have hf_eq_n_or_eqp1 (n : ℕ) (hn : 0 < n) : f (n + 1) = f (f n) := by
+    specialize h₁ (f n) (by positivity)
+    have : f n + 1 = n + 1 := by
+      rw [add_comm]
+      apply Nat.add_right_cancel n
+      linarith
+    rw [this] at h₁
+    exact h₁
+
+  -- Let $f(n) < n$, we will show that $f(1) < f(f(1)) < f(2) < f(f(2)) < \ldots < f(n) < f(f(n))$
+  have hfn_lt_n (n : ℕ) (hn : 0 < n) (hfn : f n < n) : (f n).val < (f (f n)).val := by
+    have hf1_lt_f2 : f 1 < f (f 1) := by
+      specialize h₁ 1 (by norm_num)
+      have : f 1 + 1 = 1 + 1 := by
+        rw [add_comm]
+        apply Nat.add_right_cancel 1
+        norm_num
+      rw [this] at h₁
+      exact h₁ (by norm_num)
+    have hf2_lt_f3 : f 2 < f (f 2) := by
+      specialize h₁ 2 (by norm_num)
+      have : f 2 + 1 = 2 + 1 := by
+        rw [add_comm]
+        apply Nat.add_right_cancel 2
+        norm_num
+      rw [this] at h₁
+      exact h₁ (by norm_num)
+    -- Generalize to $f(k) < f(f(k))$
+    have hf_lt_f_fk {k : ℕ} (hk : 0 < k) : f k < f (f k) := by
+      specialize h₁ k hk
+      have : f k + 1 = k + 1 := by
+        rw [add_comm]
+        apply Nat.add_right_cancel k
+        norm_num
+      rw [this] at h₁
+      exact h₁ hk
+    -- From $f(n) < n$, we have $f(k) < k$ for all $k \leq n$
+    have hf_lt_f_n {k : ℕ} (hk : 0 < k) (hfn : f k < k) : f k < f (f k) ∧ f (f k) < f n := by
+      specialize hf_lt_f_fk hk
+      have hffk_lt_n : f (f k) < n := by
+        apply Nat.lt_trans (hfn.trans?_)
+        apply hffk_lt_n
+        linarith
+      exact ⟨hf_lt_f_fk, hffk_lt_n⟩
+    -- The result is proved by induction
+    have hf_lt_f_n_ind (k : ℕ) (hk : 0 < k) (ind : k ≤ n) : f k < f (f k) ∧ f (f k) < f n := by
+      induction' ind with ind ih
+      · contradiction
+      · cases ind with
+        | zero => contradiction
+        | succ k ih =>
+          rcases ih with ⟨_, hffk_lt_n⟩
+          have : f (k + 1) < f n := by
+            specialize h₁ (k + 1) (by positivity)
+            have : f (k + 1) + 1 = (k + 1) + 1 := by
+              rw [add_comm]
+              apply Nat.add_right_cancel (k + 1)
+              norm_num
+            rw [this] at h₁
+            exact h₁ (by linarith)
+          exact ⟨hf_lt_f_fk hk, this⟩
+    have := hf_lt_f_n_ind 1 (by positivity) (by linarith)
+    rcases this with ⟨hf1_lt_f2, hf2_lt_f_n⟩
+    have := hf_lt_f_fk hn
+    rcases this with ⟨hf_lt_f_fn, _⟩
+    linarith
+
+  -- If $f(n) > n$, we will show that $f(1) > f(f(1)) > f(2) > f(f(2)) > \ldots > f(n) > f(f(n))$
+  have hfn_gt_n (n : ℕ) (hn : 0 < n) (hfn : f n > n] : (f n).val > (f (f n)).val := by
+    have hf1_gt_f2 : f 1 > f (f 1) := by
+      specialize h₁ 1 (by norm_num)
+      have : f 1 + 1 = 1 + 1 := by
+        rw [add_comm]
+        apply Nat.add_right_cancel 1
+        norm_num
+      rw [this] at h₁
+      exact h₁ (by norm_num)
+    have hf2_gt_f3 : f 2 > f (f 2) := by
+      specialize h₁ 2 (by norm_num)
+      have : f 2 + 1 = 2 + 1 := by
+        rw [add_comm]
+        apply Nat.add_right_cancel 2
+        norm_num
+      rw [this] at h₁
+      exact h₁ (by norm_num)
+    -- Generalize to $f(k) > f(f(k))$
+    have hf_gt_f_fk {k : ℕ} (hk : 0 < k) : f k > f (f k) := by
+      specialize h₁ k hk
+      have : f k + 1 = k + 1 := by
+        rw [add_comm]
+        apply Nat.add_right_cancel k
+        norm_num
+      rw [this] at h₁
+      exact h₁ hk
+    -- From $f(n) > n$, we have $f(k) > k$ for all $k \leq n$
+    have hf_gt_f_n {k : ℕ} (hk : 0 < k) (hfn : f k > k] : f k > f (f k) ∧ f (f k) > f n := by
+      specialize hf_gt_f_fk hk
+      have hffk_gt_n : f (f k) > n := by
+        apply Nat.lt_trans (hffk_gt_n)
+        apply hffk_gt_n
+        linarith
+      exact ⟨hf_gt_f_fk, hffk_gt_n⟩
+    -- The result is proved by induction
+    have hf_gt_f_n_ind (k : ℕ) (hk : 0 < k) (ind : k ≤ n) : f k > f (f k) ∧ f (f k) > f n := by
+      induction' ind with ind ih
+      · contradiction
+      · cases ind with
+        | zero => contradiction
+        | succ k ih =>
+          rcases ih with ⟨_, hffk_gt_n⟩
+          have : f (k + 1) > f n := by
+            specialize h₁ (k + 1) (by positivity)
+            have : f (k + 1) + 1 = (k + 1) + 1 := by
+              rw [add_comm]
+              apply Nat.add_right_cancel (k + 1)
+              norm_num
+            rw [this] at h₁
+            exact h₁ (by linarith)
+          exact ⟨hf_gt_f_fk hk, this⟩
+    have := hf_gt_f_n_ind 1 (by positivity) (by linarith)
+    rcases this with ⟨hf1_gt_f2, hf2_gt_f_n⟩
+    have := hf_gt_f_fk hn
+    rcases this with ⟨hf_gt_f_fn, _⟩
+    linarith
+
+  -- Therefore, $f(n) = n$ for all $n$
+  intro n hn
+  by_cases hfn : f n < n
+  · specialize hfn_lt_n n hn hfn
+    have := hf_lt_n 1 (by norm_num) hfn
+    linarith
+  · push_neg at hfn
+    by_cases hfn' : f n = n
+    · exact hfn'
+    · specialize hfn_gt_n n hn (by linarith)
+      have := hf_gt_n 1 (by norm_num) (by linarith)
+      linarith
+
+```

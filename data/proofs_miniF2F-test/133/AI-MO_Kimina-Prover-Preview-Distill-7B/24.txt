@@ -1,0 +1,65 @@
+-- Assume w. l. o. g. that $a$ is not divisible by $p$.
+  wlog h₂ : ¬ p ∣ a
+  · -- otherwise, $p$ divides $a$, it also divides $a^p$ and the result is trivial.
+    have h₃ : p ∣ a ^ p - a := by
+      apply Nat.dvd_sub (Nat.pow_dvd_pow h₁ (by omega)) (Nat.dvd_trans h₁ h₂)
+    exact h₃
+
+  -- let $k$ be the remainder of $a$ modulo $p$.
+  let k := a % p
+
+  -- Show that $0 ≤ k$.
+  have hk₀ : 0 ≤ k := by
+    exact Nat.zero_le k
+
+  -- Show that $k < p$.
+  have hk₁ : k < p := by
+    exact Nat.mod_lt a (by omega)
+
+  -- Show that $k$ is not $0$.
+  have hk₂ : k ≠ 0 := by
+    intro h
+    have : a % p = 0 := by
+      rw [h]
+    simp at this
+    contradiction
+
+  -- Show that $a = k$ modulo $p$.
+  have hk₃ : a ≡ k [MOD p] := by
+    exact Nat.modEq_iff_dvd.mpr rfl
+
+  -- Show that $k$ is coprime to $p$.
+  have hk₄ : k.Coprime p := by
+    have : Nat.gcd k p = 1 := by
+      rw [Nat.coprime_iff_gcd_eq_one]
+      rw [←Nat.Prime.coprime_iff_not_dvd h₁]
+      simp [h₂]
+    exact this
+
+  -- Use Fermat's little theorem to show that $k^{p - 1} = 1$ modulo $p$.
+  have hk₅ : k ^ (p - 1) ≡ 1 [MOD p] := by
+    apply Nat.ModEq.pow_totient
+    exact hk₄
+
+  -- Multiply both sides by $k$ to show that $k^p = k$ modulo $p$.
+  have hk₆ : k ^ p ≡ k [MOD p] := by
+    have : k ^ p ≡ k ^ (p - 1) * k [MOD p] := by
+      rw [Nat.modEq_iff_dvd]
+      apply Nat.dvd_mul_right
+    rw [this]
+    exact Nat.ModEq.mul hk₅ rfl
+
+  -- Show that $a^p = a$ modulo $p$.
+  have hk₇ : a ^ p ≡ a [MOD p] := by
+    have : a ^ p ≡ k ^ p [MOD p] := by
+      apply Nat.ModEq.trans hk₃
+      apply Nat.ModEq.pow p hk₃
+    rw [this]
+    exact Nat.ModEq.trans (hk₆.trans hk₃) rfl
+
+  -- The result follows from the above.
+  have : a ^ p - a ≡ 0 [MOD p] := by
+    apply Nat.ModEq.sub (hk₇.refl) (Nat.ModEq.refl _)
+  exact Nat.dvd_of_mod_eq_zero this
+
+```

@@ -1,0 +1,104 @@
+have h₂ : 0 < (2 : ℝ) := by norm_num
+
+  -- First, we prove that $2^n \cdot ((a+b)^n - 2 \cdot a \cdot b \cdot n) \leq (2a^n + 2b^n - 2 \cdot a \cdot b \cdot n)$.
+  have h₃ : 2 ^ n * ((a + b) ^ n - 2 * a * b * n) ≤ 2 * a ^ n + 2 * b ^ n - 2 * a * b * n := by
+    -- Prove by induction on n.
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      -- Consider the case $n = 1$.
+      by_cases hn : n = 0
+      · simp [hn]
+      -- Consider the case $n \geq 2$.
+      · replace hn : n ≥ 2 := by omega
+        -- Prove the base case: $2^2 \cdot ((a+b)^2 - 2 \cdot a \cdot b) \leq 2 \cdot a^2 + 2 \cdot b^2 - 2 \cdot a \cdot b$.
+        rcases (by omega : n = 2 ∨ n > 2) with hn | hn
+        · simp [hn]
+          -- Consider the case $n = 2$.
+          apply sub_nonpos_of_le
+          rw [div_le_iff₀ (by positivity), ←pow_two, ←pow_two, ←pow_two]
+          calc
+            2 * a * b * 2 - 2 * a * b * 2 ≤ 2 * a * b * 2 - a * b * (2 + 2) := by
+              simp only [Nat.cast_mul, Nat.cast_ofNat, Nat.cast_add, Nat.cast_one]
+              rw [mul_assoc, mul_assoc, ←mul_add, ←mul_add]
+              apply mul_le_mul
+              · exact le_of_lt (h₀.left)
+              · exact le_of_lt (h₀.right)
+              · apply mul_nonneg
+                · exact le_of_lt (h₀.left)
+                · exact le_of_lt (h₀.right)
+              · norm_num
+            _ = 0 := by ring
+            _ ≤ 2 * a * b * 2 := by simp
+        · -- Consider the case $n > 2$.
+          have hn' : n - 1 ≥ 1 := by omega
+          rw [Nat.pow_add_one, Nat.mul_comm, Nat.mul_sub, Nat.pow_add_one]
+          calc
+            2 ^ (n - 1) * 2 * ((a + b) ^ 2 - 2 * a * b) ≤ 2 ^ (n - 1) * 2 * (2 * a ^ 2 + 2 * b ^ 2 - 2 * a * b) := by
+              -- Use the inductive hypothesis.
+              replace ih := ih (by omega)
+              rw [mul_le_mul_left (by positivity)]
+              exact ih
+            _ = 2 ^ (n - 1) * (2 * a ^ 2 + 2 * b ^ 2 - 2 * a * b) * 2 := by ring
+            _ ≤ 2 ^ (n - 1) * (2 * a ^ 2 + 2 * b ^ 2 - 2 * a * b) * (2 ^ (n - 1 - 1) * 2) := by
+              -- Use the fact that $n-1 \geq 1$.
+              rw [mul_le_mul_left (by positivity)]
+              rw [pow_le_pow_iff_left₀ (by positivity) (by positivity) (by omega)]
+              norm_num
+            _ = 2 ^ (n - 1) * (2 * a ^ 2 + 2 * b ^ 2 - 2 * a * b) * 2 ^ (n - 1) * 2:= by ring
+            _ = 2 ^ n * (2 * a ^ 2 + 2 * b ^ 2 - 2 * a * b) * 2 := by
+              rw [←Nat.pow_add_one, ←Nat.sub_add_comm (by omega), Nat.sub_self, mul_comm, pow_zero, Nat.mul_one]
+            _ ≤ 2 ^ n * (2 * a ^ n + 2 * b ^ n - 2 * a * b * n) := by
+              -- Use the lemma `Nat.pow_le_pow_left₀`.
+              rw [mul_le_mul_left (by positivity)]
+              apply Nat.pow_le_pow_left₀
+              exact hn'
+              simp only [Nat.reduceSub, Nat.cast_ofNat, le_refl, add_tsub_cancel_right, tsub_le_iff_right, pow_one]
+              exact h₀
+            _ = 2 * a ^ n + 2 * b ^ n - 2 * a * b * n * 2 ^ n := by ring
+
+  -- Prove the original inequality.
+  calc
+    ((a + b) / 2) ^ n = ((2 * a + 2 * b - 2 * a * b * n) / 2 ^ n) := by
+      rw [div_pow, div_pow, div_mul_div_comm (2 ^ n) (2 ^ n) (by positivity), div_self (by positivity), zero_mul, add_zero, div_right_comm, div_self (by positivity), one_mul]
+    _ = (2 * a ^ n + 2 * b ^ n - 2 * a * b * n) / 2 ^ n / 2 := by
+      rw [add_div, sub_div, ←mul_div_assoc, mul_comm, mul_div_assoc, mul_assoc, ←mul_div_assoc]
+      nth_rw 2 [mul_comm]
+      rw [mul_assoc, mul_comm, mul_assoc, mul_assoc]
+      nth_rw 3 [mul_comm]
+      rw [mul_assoc]
+      congr
+      rw [div_eq_mul_inv, mul_comm, mul_assoc, mul_inv_cancel₀ (by positivity)]
+      ring
+    _ ≤ (2 * a ^ n + 2 * b ^ n - 2 * a * b * n) / 2 := by
+      -- Use the lemma `h₃`.
+      rw [div_le_div_iff₀ (by positivity) (by positivity), mul_le_mul_left (by positivity)]
+      exact h₃
+    _ = (2 * a ^ n + 2 * b ^ n) / 2 - 2 * a * b * n / 2 := by
+      rw [sub_div, div_sub]
+      congr 1
+      rw [mul_div_assoc, mul_comm, mul_div_assoc, mul_assoc, ←mul_div_assoc]
+      nth_rw 2 [mul_comm]
+      rw [mul_assoc, mul_comm, mul_assoc, mul_assoc]
+      nth_rw 3 [mul_comm]
+      rw [mul_assoc]
+      ring
+    _ = (a ^ n + b ^ n) / 2 - a * b * n / 2 + a ^ n / 2 + b ^ n / 2 := by
+      rw [add_div, add_sub, add_assoc, div_add, div_div, div_self (by positivity), zero_add]
+      nth_rw 2 [mul_comm]
+      rw [mul_div_assoc, mul_comm, mul_div_assoc, mul_assoc, ←mul_div_assoc]
+      nth_rw 3 [mul_comm]
+      rw [mul_assoc]
+      ring
+    _ ≤ (a ^ n + b ^ n) / 2 := by
+      -- Use the fact that $a * b * n / 2 \geq 0$.
+      have h₄ : 0 ≤ a * b * n / 2 := by
+        apply div_nonneg
+        apply mul_nonneg
+        apply mul_nonneg
+        exact h₀.left
+        exact h₀.right
+        exact h₁
+        norm_num
+      linarith
+```

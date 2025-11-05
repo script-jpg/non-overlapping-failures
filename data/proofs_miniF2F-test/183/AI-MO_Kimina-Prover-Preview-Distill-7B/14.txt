@@ -1,0 +1,56 @@
+have hf (x : ℝ) : f x = (x ^ 2 + (18 * x + 30)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by
+    exact funext h₀ ▸ rfl
+
+  -- Define a substitution to simplify the equation.
+  let y := Real.sqrt (x ^ 2 + (18 * x + 45))
+
+  -- Rewrite the equation using the substitution.
+  have h (x : ℝ) : f x = (y - 3) * (y - 5) := by
+    simp [hf, show x ^ 2 + (18 * x + 45) = y ^ 2 by ring_nf; simp [y]; rw [Real.sq_sqrt]; nlinarith]
+    ring
+
+  -- Show that the preimage of 0 under f is finite.
+  have h₀ : (f ⁻¹' {0}) = {3 - 2 * Real.sqrt 5, 5 - 2 * Real.sqrt 5} := by
+    simp [Set preimage]
+    ext x
+    constructor
+    · intro hx
+      simp [h] at hx
+      simp [show y ≥ 0 by positivity]
+      rcases hx with hx | hx <;> [skip; nlinarith]
+      · rw [sub_eq_zero] at hx
+        field_simp [show (x + 6) ^ 2 + 24 = (x ^ 2 + (12 * x + 36)) + 24 by ring_nf] at hx
+        have : (x + 6) ^ 2 + 24 > 0 := by positivity
+        have : (x + 6) ^ 2 = (x ^ 2 + (12 * x + 36)) := by ring
+        nlinarith
+    · intro hx
+      rcases hx with hx | hx
+      · rw [h, hx]
+        field_simp
+        ring_nf
+        nlinarith [Real.sq_sqrt (show 0 ≤ 5 by norm_num)]
+      · rw [h, hx]
+        field_simp
+        ring_nf
+        nlinarith [Real.sq_sqrt (show 0 ≤ 5 by norm_num)]
+
+  -- Calculate the product of the roots.
+  have h₁ : ∏ x in ({3 - 2 * Real.sqrt 5, 5 - 2 * Real.sqrt 5} : Finset ℝ), x = 20 := by
+    rw [Finset.prod_pair]
+    · ring_nf
+      calc
+        (3 - 2 * Real.sqrt 5) * (5 - 2 * Real.sqrt 5)
+          = 15 - 6 * Real.sqrt 5 - 10 * Real.sqrt 5 + 4 * (Real.sqrt 5 * Real.sqrt 5) := by ring
+        _ = 15 - 16 * Real.sqrt 5 + 4 * (Real.sqrt 5 * Real.sqrt 5) := by ring
+        _ = 15 - 16 * Real.sqrt 5 + 4 * 5 := by rw [Real.mul_self_sqrt]; norm_num
+        _ = 20 := by ring
+    · by_contra!
+      have : Real.sqrt 5 ^ 2 = 5 := by rw [Real.sq_sqrt]; norm_num
+      nlinarith
+
+  rw [h₀] at h₁
+  rw [h₁]
+  simp
+
+
+```

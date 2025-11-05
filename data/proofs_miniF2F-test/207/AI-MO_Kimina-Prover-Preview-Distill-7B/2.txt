@@ -1,0 +1,36 @@
+-- According to the reference answer, we first prove the following identity:
+  -- $x*y*(ax^2 + by^2) - (x^2 + y^2)*(ax^3 + by^3) + (x + y)*(ax^4 + by^4) = 0$.
+  have claim (x y a b : ℝ) (h₀ : a * x + b * y = 3) (h₁ : a * x ^ 2 + b * y ^ 2 = 7) (h₂ : a * x ^ 3 + b * y ^ 3 = 16) (h₃ : a * x ^ 4 + b * y ^ 4 = 42) :
+    x * y * (a * x ^ 2 + b * y ^ 2) - (x ^ 2 + y ^ 2) * (a * x ^ 3 + b * y ^ 3) + (x + y) * (a * x ^ 4 + b * y ^ 4) = 0 := by
+
+    -- We can transform the left-hand side into a sum of terms of the form $a * x^i * y^j$ and simplify using the given equations.
+    ring_nf
+    have : a * x ^ 2 + b * y ^ 2 = 7 := h₁
+    have : a * x ^ 3 + b * y ^ 3 = 16 := h₂
+    have : a * x ^ 4 + b * y ^ 4 = 42 := h₃
+    linarith
+
+  -- Now we have the following system of equations:
+  -- $V_1 = ax + by = 3$,
+  -- $V_2 = ax^2 + by^2 = 7$,
+  -- $V_3 = ax^3 + by^3 = 16$,
+  -- $V_4 = ax^4 + by^4 = 42$.
+  -- The next term in the sequence is $V_5 = ax^5 + by^5$.
+  -- Using the sequence identities, we can determine $V_5$.
+
+  -- First, we use `claim` to establish that $x*y*V_2 - (x^2 + y^2)*V_3 + (x + y)*V_4 = 0$.
+  have claim₁ := claim x y a b h₀ h₁ h₂ h₃
+
+  -- Next, we use `claim` again to establish that $y*x*V_2 - (y^2 + x^2)*V_3 + (y + x)*V_4 = 0$.
+  have claim₂ := claim y x b a (by linarith only [h₀]) (by linarith only [h₁]) (by linarith only [h₂]) (by linarith only [h₃])
+
+  -- We use `claim₁` and `claim₂` to determine the values of of $x*y$, $x^2 + y^2$ and $x + y$.
+  have x_mul_y : x * y = 7/3 - (x ^ 2 + y ^ 2)/3 := by linarith only [claim₁]
+  have x_pow_2_add_y_pow_2 : x ^ 2 + y ^ 2 = 3 * x + 3 * y - 7/3 * 3 := by linarith only [claim₁, x_mul_y]
+  have x_add_y : x + y = 7/3 * 3 - (x ^ 2 + y ^ 2) * 3 - (x * y) * 3 := by linarith only [claim₂]
+
+  -- We plug in the values of $x*y$, $x^2 + y^2$ and $x + y$ into the equation for $V_5 = ax^5 + by^5$.
+  have claim₃ := claim x y a b h₀ h₁ h₂ h₃
+  rw [x_mul_y, x_pow_2_add_y_pow_2, x_add_y] at claim₃
+  linarith only [claim₃]
+```

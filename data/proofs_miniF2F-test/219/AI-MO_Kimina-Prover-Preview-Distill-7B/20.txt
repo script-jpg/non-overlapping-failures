@@ -1,0 +1,53 @@
+-- set $x = 2$ in https://en.wikipedia.org/wiki/ generating_function
+  -- We get $\sum_{k=0}^{n+1} \binom {2n+1} {2k+1} 2^{3k} = \binom {2n+1} {n+1}$
+  have h1 : ∀ n : ℕ, ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = Nat.choose (2 * n + 1) (n + 1) := by
+    intro n
+    let x : ℕ := 2
+    have := Nat.sum choose_mul_pow' (by simp) (by simp) (2 * n + 1) (n + 1)
+    have this' : ∀ n : ℕ, (2 + 1) ^ n * (2 - 1) ^ n = 1 ^ n := by
+      intro n
+      rw [Nat.mul_pow, Nat.pow_sub]
+      simp
+      simp only [Nat.reduceSub, one_pow]
+      nth_rw 1 [← Nat.pow_one 2]
+      apply Nat.pow_right_inj
+     . norm_num
+     . exact Nat.one_le_two_pow
+    rw [this'] at this
+    simp at this
+    have this'' : ∀ n : ℕ, ∀ k : ℕ, (2 : ℕ) ^ (2 * n + 1 - (2 * k + 1)) = (4 : ℕ) ^ (n - k) := by
+      intro n k
+      rw [Nat.two_mul, Nat.sub_add_comm, Nat.add_sub_assoc, Nat.mul_sub]
+      ring
+     . exact Nat.one_le_two_pow
+     . exact Nat.one_le_two_pow
+    simp_rw [this''] at this
+    rw [← Nat.mul_sum] at this
+    rw [this]
+    simp
+
+  -- Byhttps://en.wikipedia.org/wiki/ Lucas%27s_theorem, we know that $\binom {2n+1} {n+1}$ is odd for any $n\ge0.$
+  have h2 : ∀ n : ℕ, Nat.choose (2 * n + 1) (n + 1) % 2 = 1 := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+    | succ n ih =>
+      rw [Nat.choose_succ_right, Nat.add_add, Nat.mul_add_mod, ih, Nat.mul_one, Nat.add_mod, Nat.add_mod, Nat.mul_mod, Nat.mod_self, Nat.zero_mul, Nat.add_zero, Nat.mod_self]
+      norm_num
+
+  -- The number $\sum^n_{k=0}\binom{2n+1}{2k+1}2^{3k}$ is not divisible by $5$ for any integer $n\ge0.$
+  intro n
+  rw [h1 n]
+  show ¬5 ∣ Nat.choose (2 * n + 1) (n + 1)
+  apply Nat.Prime.not_dvd_of_not_dvd (Nat.prime_five)
+  -- odd number is not divisible by $5$
+  by_contra!
+  rw [← Nat.dvd_iff_mod_eq_zero] at this
+  have : Nat.choose (2 * n + 1) (n + 1) % 2 = 1 := h2 n
+  have := Nat.dvd_trans this (id (Nat.dvd_iff_mod_eq_zero.mp this))
+  norm_num at this
+  absurd this
+  norm_num
+
+```

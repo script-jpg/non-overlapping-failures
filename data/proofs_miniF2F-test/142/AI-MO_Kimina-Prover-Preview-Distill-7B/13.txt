@@ -1,0 +1,184 @@
+-- lemma, if a^2 \ b then a \ b
+  have l_a_sq_dvd_b (a b : ℕ) (h : a ^ 2 ∣ b) : a ∣ b := by
+    apply Nat.pow_dvd_iff_dvd_of_dvd at h
+   . exact h
+   . rename_i m
+      have : m ≤ a := by apply Nat.le_of_dvd; trivial; exact h
+      omega
+
+  -- Factorials are almost always coprime
+  have l_coprime_fact (m n : ℕ) (h : m ≠ n) : Nat.Coprime (m!) (n!) := by
+    -- m! | n! iff m ≤ n
+    have l_le_of_dvd_fact (m n : ℕ) (h : m ≤ n) : m! ∣ n! := by
+      rw [← Nat.factorial_succ]
+      apply Nat.dvd_trans?_ Nat.dvd_factorial (by omega) h
+      trivial
+
+    -- coprime iff m! | n! → m! = 1
+    have l_coprime_iff_dvd_one (m n : ℕ) : Nat.Coprime (m!) (n!) ↔ ∀ m_dvd_n : m! ∣ n!, m! = 1 := by
+      constructor
+     . intro h
+        exact (Nat.coprime_iff_gcd_eq_one.mp h).mp
+     . intro h
+        exact (Nat.coprime_iff_gcd_eq_one.mpr (h m n))
+
+    rw [l_coprime_iff_dvd_one]
+    -- for all m, n > 1, m ≠ n → m! | n! → m! = 1
+    intro m n_eq_m_ne_n h_mn
+    have l_n_gt_one : n > 1 := by
+      by_contra! h
+      interval_cases n
+     . rw [Nat.zero_ne_one] at h
+        rw [h] at h_mn
+        trivial
+     . rw [Nat.one_ne_ofNat] at h
+        rw [h] at h_mn
+        trivial
+    have l_m_dvd_n : m! ∣ n! := by
+      have : m ≤ n := by
+        by_contra! h
+        have : m! ∣ n! := l_le_of_dvd_fact n m
+        exact h_le_of_dvd h this
+      exact l_le_of_dvd_fact m n this
+
+    by_cases h_m : m = 0
+   . rw [h_m] at h_mn
+      have : n! = 1 := by exact Nat.eq_one_of_dvd_one h_mn
+      rw [Nat.factorial_eq_one_iff] at this
+      omega
+   . by_cases h_m1 : m = 1
+     . rw [h_m1] at h_mn
+        have : n! = 1 := by exact Nat.eq_one_of_dvd_one h_mn
+        rw [Nat.factorial_eq_one_iff] at this
+        omega
+     . apply Nat.two_le_of_ne at h_mn
+        have : m! = 1 := by
+          calc
+            m! ∣ n! := l_m_dvd_n
+            _ = 1 := by exact Nat.eq_one_of_dvd_one h_mn
+        rw [Nat.factorial_eq_one_iff] at this
+        omega
+        -- if m > 1, then m! > 1
+
+  -- the number of squares in the prime factorization of n! is
+  -- exactly the sum of the number of squares in each of it's prime factors
+  have l_sqfactorial (n : ℕ) :
+      (n!).factorization 2 = n / 2 + (n / 2).factorization 2 ∧
+      ∀ p : ℕ, Nat.Prime p → (n!).factorization p = n / p + (n / p).factorization p := by
+    -- the number of squares in the prime factorization of n! is exactly
+    -- the sum of the number of squares in each of it's prime factors
+    have l_sqfactorial' (n : ℕ) :
+        (∀ p : ℕ, Nat.Prime p → (n!).factorization p = n / p + (n / p).factorization p) ∧
+        (n!).factorization 2 = n / 2 + (n / 2).factorization 2 := by
+      have l_n_lt : ∀ p n, 0 < n → n < p → (p!).factorization n = 0 := by
+        intro p n hn hp
+        rw [Nat.factorization_eq_zero_iff]
+        refine ⟨by linarith, by linarith⟩
+      constructor
+     . intro p hp
+        have : (n!).factorization p = ∑ m ∈ Finset.Icc 1 n, (m!).factorization p := by
+          nth_rw 1 [← Finset.prod_Ico_id_eq_factorial (by omega)]
+          apply Nat.factorization_prod
+         . intro x hx
+            simp at hx
+            obtain ⟨a, ha⟩ := hx
+            simp [ha.2]
+            by_cases h_dvd : x ∣ a
+           . apply l_a_sq_dvd_b x a h_dvd
+              have : x! ∣ a! := Nat.dvd_trans (Nat.dvd_factorial (by omega) h_dvd) (Nat.dvd_factorial (by omega) ha.1)
+              exact (Nat.coprime_iff_gcd_eq_one.mp?_).mp this
+              rw [Nat.coprime_comm, Nat.coprime_mul_iff_left]
+              constructor
+             . apply Nat.coprime_of_lt_prime
+               . have := Nat.le_div_of_mul_le (by omega) ha.1
+                  omega
+               . exact hp
+             . exact Nat.coprime_of_lt (by omega) h_dvd
+           . have : ¬x ∣ a := by omega
+              rw [Nat.factorization_eq_zero_iff]
+              refine ⟨by omega, by omega⟩
+         . intro x hx
+            simp at hx
+            obtain ⟨a, ha⟩ := hx
+            simp [ha.2]
+            by_cases h_dvd : x ∣ a
+           . apply l_a_sq_dvd_b x a h_dvd
+              have : x! ∣ a! := Nat.dvd_trans (Nat.dvd_factorial (by omega) h_dvd) (Nat.dvd_factorial (by omega) ha.1)
+              exact (Nat.coprime_iff_gcd_eq_one.mp?_).mp this
+              rw [Nat.coprime_comm, Nat.coprime_mul_iff_left]
+              constructor
+             . apply Nat.coprime_of_lt_prime
+               . have := Nat.le_div_of_mul_le (by omega) ha.1
+                  omega
+               . exact hp
+             . exact Nat.coprime_of_lt (by omega) h_dvd
+           . have : ¬x ∣ a := by omega
+              rw [Nat.factorization_eq_zero_iff]
+              refine ⟨by omega, by omega⟩
+        do_cases p_eq_two hp
+       . simp [p_eq_two]
+          have : (n!).factorization 2 = (n / 2).factorization 2 + n / 2 := by
+            rw [Nat.factorization_two.prime_iff]
+            simp
+            exact dvd_iff_two_dvd.mp rfl
+          exact this
+       . have : (Nat.Prime p) ∧ ¬p = 2 := by
+            exact ⟨hp, fun h => by norm_num [h] at hp⟩
+          rcases this with ⟨hp, hnp2⟩
+          have l_n_lt : ∀ m n, 0 < n → n < m → (m!).factorization n = 0 := by
+            intro m n hn hm
+            rw [Nat.factorization_eq_zero_iff]
+            refine ⟨by linarith, by linarith⟩
+          have : (n!).factorization p = ∑ m ∈ Finset.Icc 1 n, (m!).factorization p := by
+            have := @Nat.factorization_prod (n!) p 1 n
+            simp at this
+            exact this
+          conv => lhs; rw [this, Finset.sum_congr rfl (fun x hx => l_n_lt p x (by omega) (by omega))]
+          simp
+          refine fun x _ => (Nat.Prime.two_le hp)
+     . suffices l_le : n / p ≤ n / 2 by
+          have : (n / 2).factorization p = 0 := by
+            refine Nat.factorization_eq_zero_iff.mpr?_
+            exact ⟨by omega, by omega⟩
+          rw [this, add_zero, l_le]
+        refine Nat.div_le_div_right (by omega)?_
+        exact Nat.Prime.two_le hp
+    exact l_sqfactorial'
+
+  -- it is enough to show that for all prime p, the number of squares
+  -- in the prime factorization of p! is exactly the sum of the number
+  -- of squares in each of it's prime factors
+  suffices l_ite : ∀ p : ℕ, Nat.Prime p → (p!).factorization 2 = p / 2 + (p / 2).factorization 2 ∧
+      ∀ p' n, 2 ≤ p' → (Nat.Prime p') → n ≠ p' → (n!).factorization p' = n / p' + (n / p').factorization p' by
+    intro h
+    -- how many perfect squares are divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$?
+    -- 2^4 * (3^4 * 2^2) * (5^4 * 2^2) * (7^4 * 2^2)
+    have : (9!).factorization = {2 := 4 * 9 / 2 + (4 * 9 / 2).factorization 2, 3 := 4 * 9 / 3 + (4 * 9 / 3).factorization 3, 5 := 4 * 9 / 5 + (4 * 9 / 5).factorization 5, 7 := 4 * 9 / 7 + (4 * 9 / 7).factorization 7} := by
+      simp [Nat.factorization, l_sqfactorial]
+      have l_n_pfactors : Nat.PrimeFactors (9!) = {2, 3, 5, 7} := by
+        have : Nat.PrimeFactors (9!) ⊆ {x | 2 ≤ x ∧ x ≤ 9} := by
+          refine Nat.primeFactors_subset?_
+          exact fun x y hxy => by
+            nlinarith
+        have l.
+          refine (Set.subset_antisymm?_).mpr?_
+         . exact Nat.primeFactors_subset?_
+            exact fun p k hpk => by
+              refine Nat.le_trans?_ (Nat.Prime.two_le hpk)
+              exact (Nat.Prime.dvd_factorial hpk).mp hpk
+         . have : {x | 2 ≤ x ∧ x ≤ 9} = {2, 3, 5, 7} := by
+              ext x
+              simp only [Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff]
+              constructor
+             . intro ⟨a, ha⟩
+                have l_x_div_2 : x / 2 ≠ 0 := by
+                  nlinarith
+                have l_x_div_3 : x / 3 ≠ 0 := by
+                  nlinarith
+                have l_x_div_5 : x / 5 ≠ 0 := by
+                  nlinarith
+                have l_x_div_7 : x / 7 ≠ 0 := by
+                  nlinarith
+                have : x ≠ 0 := by
+                  nlinarith
+                rcases (Nat.prime_mul_iff.mp (Nat.prime_two.mp)) with ⟨ Prime, h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h

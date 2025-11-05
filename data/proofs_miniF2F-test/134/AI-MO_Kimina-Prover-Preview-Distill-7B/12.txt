@@ -1,0 +1,106 @@
+have l_1 (a b : ℝ) : (a - b) * (a + b) = a^2 - b^2 := by ring
+
+  have l_2 (a b c d : ℝ) : (a - b) * (c - d) * (a + b) * (c + d) = (a ^ 2 - b ^ 2) * (c ^ 2 - d ^ 2) := by ring
+
+  have l_3 (a b c d e f : ℝ) : (a - b) * (c - d) * (e - f) * (a + b) * (c + d) * (e + f) =
+      (a ^ 2 - b ^ 2) * (c ^ 2 - d ^ 2) * (e ^ 2 - f ^ 2) := by ring
+
+  have l_4 (a b c d e f g h : ℝ) : (a - b) * (c - d) * (e - f) * (g - h) * (a + b) * (c + d) * (e + f) * (g + h) =
+      (a ^ 2 - b ^ 2) * (c ^ 2 - d ^ 2) * (e ^ 2 - f ^ 2) * (g ^ 2 - h ^ 2) := by ring
+
+  have l_5 (a b c d e f g h i j : ℝ) : (a - b) * (c - d) * (e - f) * (g - h) * (i - j) * (a + b) * (c + d) * (e + f) * (g + h) * (i + j) =
+      (a ^ 2 - b ^ 2) * (c ^ 2 - d ^ 2) * (e ^ 2 - f ^ 2) * (g ^ 2 - h ^ 2) * (i ^ 2 - j ^ 2) := by ring
+
+  have l_6 (a b c d e f g h i j k l : ℝ) : (a - b) * (c - d) * (e - f) * (g - h) * (i - j) * (k - l) * (a + b) * (c + d) * (e + f) * (g + h) * (i + j) * (k + l) =
+      (a ^ 2 - b ^ 2) * (c ^ 2 - d ^ 2) * (e ^ 2 - f ^ 2) * (g ^ 2 - h ^ 2) * (i ^ 2 - j ^ 2) * (k ^ 2 - l ^ 2) := by ring
+
+  have l_7 (a b c d e f g h i j k l m n : ℝ) : (a - b) * (c - d) * (e - f) * (g - h) * (i - j) * (k - l) * (m - n) * (a + b) * (c + d) * (e + f) * (g + h) * (i + j) * (k + l) * (m + n) =
+      (a ^ 2 - b ^ 2) * (c ^ 2 - d ^ 2) * (e ^ 2 - f ^ 2) * (g ^ 2 - h ^ 2) * (i ^ 2 - j ^ 2) * (k ^ 2 - l ^ 2) * (m ^ 2 - n ^ 2) := by ring
+
+  have l_8 (a b : ℝ) : a ^ 2 * b ^ 2 = (a * b) ^ 2 := by ring
+
+  have l_9 (a b : ℝ) : a ^ 3 * b ^ 3 = (a * b) ^ 3 := by ring
+
+  have l_10 (a b : ℝ) : a ^ 7 * b ^ 7 = (a * b) ^ 7 := by ring
+
+  have l_11 (a b : ℝ) : a ^ 15 * b ^ 15 = (a * b) ^ 15 := by ring
+
+  have l_12 (a b : ℝ) : a ^ 31 * b ^ 31 = (a * b) ^ 31 := by ring
+
+  have l_13 (a b : ℝ) : a ^ 63 * b ^ 63 = (a * b) ^ 63 := by ring
+
+  have l_14 (a b : ℝ) : a ^ 127 * b ^ 127 = (a * b) ^ 127 := by ring
+
+    -- let the product be $p$
+  set p := (∏ k in Finset.range 7, 2 ^ 2 ^ k + 3 ^ 2 ^ k)
+
+  -- $p$ is $3^{128}-2^{128}$ or not?
+  suffices p = 3 ^ 128 - 2 ^ 128 by simp [p, this]
+
+  have hp : p = (3 ^ 128 - 2 ^ 128) / (3 ^ 64 - 2 ^ 64) := by
+
+    -- $p$ is $q / (3^{64} - 2^{64})$ or not?
+    suffices p = (3 ^ 128 - 2 ^ 128) / (3 ^ 64 - 2 ^ 64) by simp [p, this]
+
+    -- we can prove that $p \cdot (3^{64} - 2^{64}) = 3^{128} - 2^{128}$ using sq_sub_sq
+    apply Eq.symm
+    have : (∏ k ∈ Finset.range 7, (3 ^ 2 ^ k - 2 ^ 2 ^ k) * (3 ^ 2 ^ k + 2 ^ 2 ^ k)) = 3 ^ 128 - 2 ^ 128 := by
+
+      rw [Finset.prod_eq_fold]
+      -- we can use `Finset.sum` to deal with $1 + 2 + 3 + 4 +... + n$
+      have : (fun x => (3 ^ 2 ^ x - 2 ^ 2 ^ x) * (3 ^ 2 ^ x + 2 ^ 2 ^ x)) = (fun x => (3 ^ 2 ^ x) ^ 2 - (2 ^ 2 ^ x) ^ 2) := by
+        funext x
+        rw [mul_sub_mul_self_eq_sq_sub_sq, l_8, l_9, l_10, l_11, l_12, l_13, l_14]
+      rw [this]
+      -- $3 ^ 2 ^ 0 ^ 2 - 2 ^ 2 ^ 0 ^ 2 +... + (3 ^ 2 ^ 6 - 2 ^ 2 ^ 6) ^ 2 = 3 ^ 128 - 2 ^ 128$
+      -- we can prove it using `finset.sum_range_sub` and sq_sub_sq
+      rw [Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ,
+        Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_one,
+        add_assoc, add_assoc, add_assoc, add_assoc, add_assoc, add_assoc]
+      repeat rw [Finset.sum_range_succ]
+      rw [Finset.sum_range_one, Finset.sum_range_one, Finset.sum_range_one, Finset.sum_range_one,
+        Finset.sum_range_one, Finset.sum_range_one, Finset.sum_range_one]
+      simp
+      rw [add_assoc (3 ^ 2 ^ 6) (3 ^ 2 ^ 5) (3 ^ 2 ^ 4), add_assoc (3 ^ 2 ^ 3) (3 ^ 2 ^ 2) (3 ^ 2 ^ 1),
+        add_assoc (3 ^ 2 ^ 0) (3 ^ 2 ^ 6) (3 ^ 2 ^ 5), add_assoc (3 ^ 2 ^ 4) (3 ^ 2 ^ 3) (3 ^ 2 ^ 2),
+        add_assoc (3 ^ 2 ^ 1) (3 ^ 2 ^ 0) (3 ^ 2 ^ 6), add_assoc (3 ^ 2 ^ 5) (3 ^ 2 ^ 4) (3 ^ 2 ^ 3)]
+      -- we can use `sub_eq` to convert $a^2 - b^2 = c$ to $(a - b) * (a + b) = c$
+      repeat rw [←mul_sub_mul_self_eq_sq_sub_sq]
+      -- use `Nat.one_le_pow` to get $2^1 \leq 3^2 - 2^2$
+      have : 2 ^ 1 ≤ 3 ^ 2 - 2 ^ 2 := by norm_num
+      -- use `Nat.pow_le_pow_right` to get $2^6 \leq 3^2 ^ 2 - 2^2 ^ 2$
+      have : 2 ^ 6 ≤ (3 ^ 2 ^ 2 - 2 ^ 2 ^ 2) := by norm_num
+      -- use `Nat.pow_le_pow_right` to get $2^5 \leq 3^2 ^ 2 - 2^2 ^ 2$
+      have : 2 ^ 5 ≤ (3 ^ 2 ^ 3 - 2 ^ 2 ^ 3) := by norm_num
+      -- use `Nat.pow_le_pow_right` to get $2^3 \leq 3^2 ^ 3 - 2^2 ^ 3$
+      have : 2 ^ 3 ≤ (3 ^ 2 ^ 5 - 2 ^ 2 ^ 5) := by norm_num
+      -- use `Nat.pow_le_pow_right` to get $2^4 \leq 3^2 ^ 5 - 2^2 ^ 5$
+      have : 2 ^ 4 ≤ (3 ^ 2 ^ 4 - 2 ^ 2 ^ 4) := by norm_num
+      -- use `Nat.pow_le_pow_right` to get $2^2 \leq 3^2 ^ 6 - 2^2 ^ 6$
+      have : 2 ^ 2 ≤ (3 ^ 2 ^ 6 - 2 ^ 2 ^ 6) := by norm_num
+      -- use `Nat.pow_le_pow_right` to get $2^1 \leq 3^2 ^ 6 - 2^2 ^ 6$
+      have : 2 ^ 1 ≤ (3 ^ 2 ^ 0 - 2 ^ 2 ^ 0) := by norm_num
+      -- use `Nat.one_le_pow` to get $2^64 \leq 3 ^ 128 - 2 ^ 128$
+      have : 2 ^ 64 ≤ 3 ^ 128 - 2 ^ 128 := by norm_num
+      -- use `Nat.le_antisymm` to get $3 ^ 128 - 2 ^ 128 = 3 ^ 128 - 2 ^ 128$
+      apply Nat.le_antisymm
+     . solve
+     . decide
+
+    have : (3 ^ 64 - 2 ^ 64) * p = 3 ^ 128 - 2 ^ 128 := by
+      rw [mul_comm _ p, Eq.symm hp]
+      rw [Finset.prod_mul_distrib, Finset.prod_eq_fold]
+      simp
+      rw [mul_sub, mul_sub, mul_sub, mul_sub, mul_sub, mul_sub]
+      convert this using 1
+     . rw [mul_comm]
+     . norm_num
+
+    -- if $a \neq 0$ and $a \cdot b = a \cdot c$ then $b = c$
+    -- here, $3 ^ 128 - 2 ^ 128 \neq 0$
+    apply mul_right_cancel₀ (by norm_num)
+    rw [←this]
+
+  rw [hp]
+  norm_num
+```

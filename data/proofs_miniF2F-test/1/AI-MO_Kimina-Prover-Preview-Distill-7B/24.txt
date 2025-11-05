@@ -1,0 +1,66 @@
+-- Proof by contradiction
+  by_contra h
+
+  -- Simplify the equation
+  have h1 : 4 * x ^ 3 = 7 * y ^ 3 + 2003 := by omega
+
+  -- Transform the equation to modulo 7
+  have h2 : 4 * x ^ 3 ≡ 2003 [ZMOD 7] := by omega
+
+  -- Show that 2003 is congruent to 0 modulo 7
+  have h3 : 2003 ≡ 0 [ZMOD 7] := by rfl
+
+  -- Substitute h3 into h2
+  rw [h3] at h2
+
+  -- Simplify the expression
+  simp at h2
+
+  -- Therefore, we have:
+  -- `4 * (x ^ 3 % 7) ≡ 0 [ZMOD 7]`
+  have h4 : 4 * (x ^ 3 % 7) ≡ 0 [ZMOD 7] := by
+    have : x ^ 3 % 7 = (4 * (x ^ 3 % 7) % 7) / 4 := by
+      symm
+      exact Int.ediv_emod_unique (x ^ 3 % 7) 4
+    simp [this]
+    omega
+
+  -- Show that 4 and 7 are coprime
+  have h5 : IsCoprime (4 : ℤ) 7 := by norm_num
+
+  -- Apply the property of coprime numbers
+  replace h4 := Int.ModEq.dvd h4
+  simp [h5] at h4
+
+  -- Show that x ^ 3 % 7 = 0
+  have h6 : x ^ 3 % 7 = 0 := by omega
+
+  -- Show that x % 7 = 0
+  have h7 : x % 7 = 0 := by
+    have : x % 7 = 0 ∨ x % 7 = 1 ∨ x % 7 = 2 ∨ x % 7 = 3 ∨ x % 7 = 4 ∨ x % 7 = 5 ∨ x % 7 = 6 := by
+      omega
+    rcases this with (h | h | h | h | h | h | h) <;> simp [h, pow_succ, Int.add_emod, Int.mul_emod, Int.sub_emod]
+
+  -- Show that x is a multiple of 7
+  replace h7 : ∃ k : ℤ, x = 7 * k := by
+    exact Int.modEq_zero_iff_dvd.mp h7
+  rcases h7 with ⟨k, hk⟩
+
+  -- Substitute x = 7k into the original equation
+  rw [hk] at h1
+
+  -- Simplify the equation
+  replace h1 : 4 * (7 ^ 3 * k ^ 3) - 7 * y ^ 3 = 2003 := by omega
+  replace h1 : 7 * (4 * 7 ^ 2 * k ^ 3 - y ^ 3) = 2003 := by omega
+
+  -- Show that 7 divides 2003
+  have h8 : 7 ∣ 2003 := by
+    use (4 * 7 ^ 2 * k ^ 3 - y ^ 3)
+    omega
+
+  -- Show that 7 does not divide 2003, leading to a contradiction
+  have h9 : ¬(7 ∣ 2003) := by norm_num
+
+  -- Contradiction arises from the two different conclusions about whether 7 divides 2003
+  exact h9 h8
+```

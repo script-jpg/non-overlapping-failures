@@ -1,0 +1,49 @@
+-- We need to compute the prime factors of 80325.
+
+  -- 80325 = 80325 / 5 * 5 = 16065 * 5
+  have h2 : 80325 = 16065 * 5 := by norm_num
+
+  -- 16065 = 16065 / 5 * 5 = 3213 * 5
+  have h3 : 16065 = 3213 * 5 := by norm_num
+
+  -- 3213 = 3213 / 3 * 3 = 1071 * 3
+  have h4 : 3213 = 1071 * 3 := by norm_num
+
+  -- 1071 = 1071 / 3 * 3 = 357 * 3
+  have h5 : 1071 = 357 * 3 := by norm_num
+
+  -- 357 = 357 / 3 * 3 = 119 * 3
+  have h6 : 357 = 119 * 3 := by norm_num
+
+  -- 119 = 119 / 7 * 7 = 17 * 7
+  have h7 : 119 = 17 * 7 := by norm_num
+
+  -- Therefore, 80325 = 5^4 * 3^5 * 7 * 17
+  have h8 : 80325 = 5^4 * 3^5 * 7 * 17 := by
+    calc
+      80325 = 16065 * 5 := by rw [h2]
+      _ = (3213 * 5) * 5 := by rw [h3]
+      _ = (1071 * 3 * 5) * 5 := by rw [h4]
+      _ = (357 * 3 * 5) * 5 := by rw [h5]
+      _ = (119 * 3 * 5) * 5 := by rw [h6]
+      _ = (17 * 7 * 3 * 5) * 5 := by rw [h7]
+      _ = 5^4 * 3^5 * 7 * 17 := by ring
+
+  by_contra contra
+  push_neg at contra
+
+  -- If n < 17, then n! does not contain the factor 17.
+  have h9 : n! ⊢ 17 := by
+    calc
+      n! = n! / 17 * 17 := by
+        refine Eq.symm (Nat.div_mul_cancel?_)
+        refine Nat.dvd_factorial?_?_ 
+        exact Nat.Prime.dvd_of_dvd_pow?_ (by rw [h8]; exact Nat.dvd_mul_left 17 (3 ^ 5 * 5 ^ 4 * 7))
+        exact Nat.Prime.prime_one_lt?_
+        exact Nat.le_of_lt_succ contra
+      _ ∤ 17 := by
+        refine Nat.Prime.not_dvd?_?_
+        exact Nat.prime_one_lt?_
+        exact Nat.le_of_lt_succ contra
+  exact h9 contra
+```

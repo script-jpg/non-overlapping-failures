@@ -1,0 +1,59 @@
+-- We have $a^2b^3=\frac{32}{27}$ and $\frac{a}{b^3}=\frac{27}{4}$. Let's find $a+b$.
+
+  -- First, I need to express $a$ in terms of $b$ using the second equation.
+  have ha : a = 27 / 4 * b ^ 3 := by
+    -- $\frac{a}{b^3}=\frac{27}{4}$ implies $a = \frac{27}{4} b^3$
+    field_simp at h₁ ⊢
+    exact h₁
+
+  -- Now, I'll substitute $a = \frac{27}{4} b^3$ into $a^2b^3=\frac{32}{27}$
+  have hsub : (27 / 4 * b ^ 3) ^ 2 * b ^ 3 = 32 / 27 := by
+    rw [← ha]
+    exact h₀
+
+  -- Let's simplify $(27 / 4 * b ^ 3) ^ 2 * b ^ 3$
+  have : (27 / 4 * b ^ 3) ^ 2 * b ^ 3 = (729 / 16) * b ^ 9 := by
+    ring_nf
+
+  rw [this] at hsub
+
+  -- Now we have $\frac{729}{16} b^9 = \frac{32}{27}$
+  -- Let's solve for $b^9$
+  have hb9 : b ^ 9 = 64 / 729 := by
+    field_simp at hsub ⊢
+    linarith
+
+  -- Notice that $64 / 729 = (2/3)^9$, so $b^9 = (2/3)^9$
+  have : b ^ 9 = (2 / 3) ^ 9 := by
+    rw [hb9]
+    norm_num
+
+  -- If $b^9 = (2/3)^9$, then $b = 2/3$ since we're dealing with real numbers and the function $f(x) = x^9$ is injective for real numbers.
+  have hb : b = 2 / 3 := by
+    have h2 : b ^ 9 - (2 / 3) ^ 9 = 0 := by
+      linarith
+    have h3 : (b - 2 / 3) * (b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8) = 0 := by
+      ring_nf
+      linarith
+    cases' (mul_eq_zero.mp h3) with hb1 hb2
+    · -- If $b - 2/3 = 0$, then $b = 2/3$
+      linarith
+    · -- We need to show that the second factor cannot be zero
+      have h4 : b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8 > 0 := by
+        -- Show that each term is positive
+        nlinarith [sq_nonneg (b ^ 4), sq_nonneg (b ^ 3 - 2 / 3), sq_nonneg (b ^ 2 - 2 / 3), sq_nonneg (b - 2 / 3), sq_nonneg (b ^ 4 - 2 / 3), sq_nonneg (b ^ 3 - 2 / 3), sq_nonneg (b ^ 2 - 2 / 3), sq_nonneg (b - 2 / 3)]
+      linarith
+
+  -- Now that we have $b = 2/3$, let's find $a$ using $a = \frac{27}{4} b^3$
+  have ha2 : a = 27 / 4 * (2 / 3) ^ 3 := by
+    rw [ha, hb]
+  norm_num at ha2
+
+  -- So $a = 27/4 \cdot 8/27 = 2$
+  have ha3 : a = 2 := by
+    linarith
+
+  -- Therefore $a + b = 2 + 2/3 = 8/3$
+  rw [ha3, hb]
+  norm_num
+```

@@ -1,0 +1,106 @@
+-- We are given that $S = \{x \in \mathbb{Z} \mid |x| < 3 \pi\}$
+
+  -- First, we show that $S \subseteq \{-18,..., 18\}$.
+
+  have h₁ : ∀ x : ℤ, x ∈ S → |x| < 19 := by
+    intros x hx
+    by_contra! h₂k
+    have h₂ : 19 ≤ |x| := by
+      calc
+        19 ≤ 19 * (1 : ℝ) := by norm_num
+        _ ≤ 19 * |(x : ℝ)| := by
+          apply mul_le_mul_of_nonneg_left
+          exact abs_nonneg (x : ℝ)
+          norm_num
+        _ = |19 * (x : ℝ)| := by
+          rw [abs_mul]
+          simp [abs_of_nonneg (show (0 : ℝ) ≤ 19 by norm_num)]
+        _ = |(19 : ℤ) * x| := by
+          simp [Int.abs]
+    have h₃ : 3 * Real.pi > 19 := by
+      calc
+        3 * Real.pi > 3 * 6.283185307179586 := by
+          linarith [Real.pi_gt_31415926535, show (6.283185307179586 : ℝ) < 3.1415926535 + 3.1415926535 by norm_num]
+        _ > 19 := by norm_num
+    have h₄ : 3 * Real.pi > |x| := by
+      calc
+        3 * Real.pi > 19 := h₃
+        _ > |x| := h₂k
+    have h₅ : 3 * Real.pi ∈ Set.Ioi |x| := Set.mem_Ioi.mpr h₄
+    have h₆ : |x| ∈ Set.Ioi |x| := Set.mem_Ioi.mpr h₂
+    have h₇ : |x| ∉ Set.Ioi |x| := h₅.ne h₆
+    contradiction
+
+  -- Then, we show that $\{-18,..., 18\} \subseteq S$.
+
+  have h₂ : ∀ x : ℤ, |x| < 19 → x ∈ S := by
+    intros x h₂
+    by_contra! h₃
+    have h₄ : 3 * Real.pi ≤ |x| := by
+      calc
+        3 * Real.pi > 3 * 3.1415926535 := by
+          linarith [Real.pi_lt_31415926535]
+        _ ≥ 3 * 18 / (18 : ℝ) * |x| := by
+          apply (div_le_mul₀?_).mpr
+          rw [mul_comm, mul_div_cancel₀, mul_comm]
+          simp only [div_le_mul₀]
+          norm_num
+          norm_num
+          simp only [ abs_intCast]
+          exact h₂
+          norm_num
+        _ = |(3 : ℝ) * (18 : ℤ)| := by
+          simp only [ abs_intCast]
+          norm_num
+        _ = |(3 : ℝ) * (x : ℤ)| := by
+          simp only [ abs_intCast]
+          rw [h₃]
+    have h₅ : 3 * Real.pi ∈ Set.Ioi |x| := Set.mem_Ioi.mpr h₄
+    have h₆ : |x| ∉ Set.Ioi |x| := h₅.ne h₆
+    contradiction
+
+  -- Combining the two results, we have $S = \{-18,..., 18\}$.
+
+  have h₃ : S = Finset.Icc (-18) 18 := by
+    ext x
+    simp
+    apply Iff.intro
+    · intro hx
+      apply h₁ x at hx
+      apply h₂ x at hx
+      exact hx
+    · intro hx
+      apply h₁ x
+      apply h₂ x
+      exact hx
+
+  -- Now, we show that $|x| < 3 \pi$ for all $x \in \{-18,..., 18\}$.
+
+  have h₄ : ∀ x ∈ S, ↑(abs x) < 3 * Real.pi := by
+    intros x hx
+    rw [h₃] at hx
+    simp at hx
+    rcases hx with ⟨hx, hxp⟩
+    rw [<-h₃] at hx
+    simp at hx
+    apply le_antisymm hx
+    apply h₂ x
+    apply h₁ x
+    norm_cast
+    norm_cast at hxp
+    rw [abs_of_nonneg (show 0 ≤ 18 by norm_num)]
+    linarith
+
+  -- Finally, we compute the cardinality of $S$.
+
+  have h₅ : Nat.card S = 37 := by
+    rw [h₃, Nat.card_eq_finsetCard, Finset.card_Icc, Nat.cast_sub (by norm_num)]
+    simp
+
+  have h₆ : S.card = 19 := by
+    rw [<-Nat.card_eq_finsetCard]
+    rw [h₃]
+    simp
+
+  exact h₆
+```

@@ -1,0 +1,76 @@
+-- auxiliary lemma : if $a \equiv b \pmod{n}$, then $a \cdot c \equiv b \cdot c \pmod{n}$.
+  have aux {a b c n : ℤ} (h : a % n = b % n) : (a * c) % n = (b * c) % n := by
+    rw [Int.mul_emod, Int.mul_emod]
+    exact h
+
+  -- auxiliary lemma : if $a \equiv b \pmod{n}$, then $a \equiv b \pmod{d}$ for any $d$ dividing $n$.
+  have aux' {a b d n : ℤ} (h : a % n = b % n) (h' : d ∣ n) : a % d = b % d := by
+    exact Int.ModEq.of_dvd h' h
+
+  -- The original equation $24x \equiv 15 \pmod{1199}$ is equivalent to
+  -- $24x \equiv 15 \pmod{23}$ and $24x \equiv 15 \pmod{53}$ by the Chinese Remainder Theorem.
+  have eq₁ : 24 * x % 1199 = 15 ↔ 24 * x % 23 = 15 % 23 ∧ 24 * x % 53 = 15 % 53 := by
+    have h₁ := Int.modEq_and_modEq_iff_modEq_mul (show 23 * 53 = 1199 by norm_num).mp
+    rw [h₁]
+    omega
+  have eq₂ : 24 * x % 23 = 15 % 23 ↔ x % 23 = 12 % 23 := by
+    apply Int.ModEq.eq_of_mul_left_eq_mul_left (a := 24) (by norm_num) (by omega)
+  have eq₃ : 24 * x % 53 = 15 % 53 ↔ x % 53 = 15 % 53 := by
+    apply Int.ModEq.eq_of_mul_left_eq_mul_left (a := 24) (by norm_num) (by omega)
+  have eq₄ : x % 23 = 12 % 23 ↔ x ≡ 12 [ZMOD 23] := by exact Iff.symm Int.modEq_iff_dvd
+  have eq₅ : x % 53 = 15 % 53 ↔ x ≡ 15 [ZMOD 53] := by exact Iff.symm Int.modEq_iff_dvd
+
+  -- Since $24 \equiv 1 \pmod{23}$, the congruence $24x \equiv 15 \pmod{23}$ is equivalent to $x \equiv 15 \pmod{23}$.
+  have eq₆ : 24 * x % 23 = 15 % 23 ↔ x % 23 = 15 % 23 := by
+    have : 24 ≡ 1 [ZMOD 23] := by rfl
+    exact Int.ModEq.mul_left_cancel_iff_left (a := 24) (b := x) (n := 23) this
+  -- Since $24 \equiv 24 \pmod{53}$ and $24 \not\equiv 0 \pmod{53}$, the congruence $24x \equiv 15 \pmod{53}$
+  -- is equivalent to $x \equiv 15 \cdot 24^{-1} \pmod{53}$.
+  have eq₇ : 24 * x % 53 = 15 % 53 ↔ x % 53 = 15 * 24⁻¹ % 53 := by
+    have : 24 ≡ 24 [ZMOD 53] := by rfl
+    refine Int.ModEq.mul_left_cancel_iff_left (a := 24) (b := x) (n := 53) this
+
+  -- By the Chinese Remainder Theorem, the original equation is equivalent to
+  -- $x \equiv 15 \pmod{23}$ and $x \equiv 15 \cdot 24^{-1} \pmod{53}$.
+  have eq₈ : 24 * x % 1199 = 15 ↔ x ≡ 15 [ZMOD 23] ∧ x ≡ 15 * 24⁻¹ [ZMOD 53] := by
+    rw [eq₁, eq₂, eq₃, eq₄, eq₅]
+    exact Int.ModEq_and_modEq_iff_modEq_mul (show 23 * 53 = 1199 by norm_num).mpr
+  have eq₉ : x ≡ 15 [ZMOD 23] ∧ x ≡ 15 * 24⁻¹ [ZMOD 53] ↔ x ≡ 12 [ZMOD 23] ∧ x ≡ 42 [ZMOD 53] := by
+    constructor
+    · intro ⟨h₁, h₂⟩
+      have h₃ : 24 * x % 23 = 15 % 23 := by exact h₁
+      have h₄ : 24 * x % 53 = 15 % 53 := by exact h₂
+      have : x % 23 = 15 % 23 := by
+        exact Int.ModEq.eq_of_mul_left_eq_mul_left (a := 24) (by norm_num) (by omega)
+      have : x % 53 = 15 * (24 : ℤ)⁻¹ % 53 := by
+        exact Int.ModEq.eq_of_mul_left_eq_mul_left (a := 24) (by norm_num) (by omega)
+      rw [eq₄, eq₅]
+      exact ⟨this, ‹x % 23 = 15 % 23›⟩
+    · intro ⟨h₁, h₂⟩
+      have h₃ : x ≡ 12 [ZMOD 23] := by exact h₁
+      have h₄ : x ≡ 15 [ZMOD 53] := by exact h₂
+      have : 24 * x % 23 = 15 % 23 := by
+        exact Int.ModEq.mul_left 24 (Int.ModEq.symm h₃)
+      have : 24 * x % 53 = 15 % 53 := by
+        exact Int.ModEq.mul_left 24 (Int.ModEq.symm h₄)
+      rw [eq₆, eq₇]
+      exact ⟨‹24 * x % 23 = 15 % 23›, ‹24 * x % 53 = 15 % 53›⟩
+  have eq₁₀ : 24 * x % 1199 = 15 ↔ x ≡ -449 [ZMOD 1199] := by
+    have h₁ : 24 * (-449) % 1199 = 15 := by norm_num
+    rw [eq₈, eq₉]
+    apply Iff.symm
+    refine (Int.modEq_iff_add_fac (by omega)).mpr?_
+    omega
+
+  -- We have $x \equiv -449 \pmod{1199}$, hence $x = -449 + 1199k$ for some integer $k$.
+  rw [eq₁₀] at h₁
+  apply Int.modEq_iff_dvd.mp at h₁
+  -- Since $x < 0$, $k < 0$.
+  have : 1199 ∣ x + 449 := by exact Int.dvd_neg.mp h₁
+  rcases this with ⟨k, h₁⟩
+  have : k < 0 := by omega
+  -- Since $k < 0$, $k \leq -1$.
+  have : k ≤ -1 := by omega
+  linarith
+
+```

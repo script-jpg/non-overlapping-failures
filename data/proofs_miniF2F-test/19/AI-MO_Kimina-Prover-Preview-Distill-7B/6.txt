@@ -1,0 +1,122 @@
+-- Show that $x\geq 0$ because $1+2x\geq 0$ and $2x+1\geq 0$.
+  have hxnonneg : x ≥ 0 := by
+    have : 1 + 2 * x ≥ 0 := by linarith
+    have : 2 * x + 1 ≥ 0 := by linarith
+    nlinarith
+
+  -- Show that $(\sqrt{1+2x})^2=1+2x$ because $1+2x\geq 0$.
+  have hxx : (Real.sqrt (1 + 2 * x)) ^ 2 = 1 + 2 * x := by
+    exact Real.sq_sqrt (by linarith)
+
+  -- Show that $1-\sqrt{1+2x}\neq 0$ because $(1-\sqrt{1+2x})^2\neq 0$.
+  have hxnonzero : 1 - Real.sqrt (1 + 2 * x) ≠ 0 := by
+    by_contra! hx
+    have : (1 - Real.sqrt (1 + 2 * x)) ^ 2 = 0 := by
+      rw [hx]
+      ring
+    rw [this] at h₁
+    exact False.elim h₁
+
+  -- Show that $1-\sqrt{1+2x}<0$ because $1-\sqrt{1+2x}\neq 0$ and $1-\sqrt{1+2x}\leq 0$.
+  have hxneg : 1 - Real.sqrt (1 + 2 * x) < 0 := by
+    have : 1 - Real.sqrt (1 + 2 * x) ≤ 0 := by
+      have : Real.sqrt (1 + 2 * x) ≥ 1 := by
+        have : 1 + 2 * x ≥ 0 := by linarith
+        have : 1 + 2 * x ≥ 1 := by linarith
+        exact Real.le_sqrt_of_sq_le (by linarith)
+      linarith
+    by_contra! hx
+    have : 1 - Real.sqrt (1 + 2 * x) = 0 := by
+      exact Eq.symm (neg_eq_of_le_of_ne this hx)
+    contradiction
+
+  -- Show that $1-\sqrt{1+2x}\leq 0$ because $1-\sqrt{1+2x}\neq 0$ and $1-\sqrt{1+2x}<0$.
+  have hxnonpos : 1 - Real.sqrt (1 + 2 * x) ≤ 0 := by
+    by_contra! hx
+    have : 1 - Real.sqrt (1 + 2 * x) ≥ 0 := by linarith
+    have : 1 - Real.sqrt (1 + 2 * x) = 0 := by
+      exact le_antisymm this hx
+    exact hxneg (id (Eq.symm this))
+
+  -- Multiply both sides of the inequality by $(1-\sqrt{1+2x})^2$.
+  have h₃ : 4 * x ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+    have : 1 - Real.sqrt (1 + 2 * x) ≠ 0 := by
+      exact hxnonzero
+    have : (1 - Real.sqrt (1 + 2 * x)) ^ 2 > 0 := by
+      exact sq_pos_of_ne_zero hxnonzero
+    exact (lt_iff_mul_pos_left this).mpr h₂
+
+  -- Show that $2x+9>0$.
+  have hxpos : 2 * x + 9 > 0 := by
+    have : 1 - Real.sqrt (1 + 2 * x) < 0 := by
+      exact hxneg
+    have : (1 - Real.sqrt (1 + 2 * x)) ^ 2 > 0 := by
+      exact sq_pos_of_neg this
+    have : (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 > 0 := by
+      exact mul_pos (by linarith) this
+    exact (lt_iff_mul_pos_right this).mp h₃
+
+  -- Show that $1-\sqrt{1+2x} > -2x-9$.
+  have h₄ : -2 * x - 9 < 1 - Real.sqrt (1 + 2 * x) := by
+    have : 4 * x ^ 2 < (2 * x + 9) * (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by
+      exact h₃
+    nlinarith
+
+  -- Show that $-2x-9 < 1-\sqrt{1+2x}$ and $-2x-9 > -18$ at the same time.
+  have h₅ : -2 * x - 9 < 1 - Real.sqrt (1 + 2 * x) ∧ -2 * x - 9 > -18 := by
+    constructor
+    · exact h₄
+    · have : 1 - Real.sqrt (1 + 2 * x) < 0 := by
+        exact hxneg
+      have : 1 - Real.sqrt (1 + 2 * x) > -18 := by
+        linarith
+      linarith
+
+  -- Show that $-2x-9 > -18$, i.e., $x < 9/2$.
+  have h₆ : -2 * x - 9 > -18 := by
+    exact h₅.right
+
+  -- Show that $x < 9/2$.
+  have h₇ : x < 9 / 2 := by
+    linarith
+
+  -- Show that $-2x-9 < 1-\sqrt{1+2x}$, i.e., $x\geq -1/2$.
+  have h₈ : -2 * x - 9 < 1 - Real.sqrt (1 + 2 * x) := by
+    exact h₅.left
+
+  -- Show that $1-\sqrt{1+2x} > -2x-9$ and $1-\sqrt{1+2x} < 1$ at the same time.
+  have h₉ : 1 - Real.sqrt (1 + 2 * x) > -2 * x - 9 ∧ 1 - Real.sqrt (1 + 2 * x) < 1 := by
+    constructor
+    · exact h₈
+    · have : Real.sqrt (1 + 2 * x) ≥ 0 := by
+        exact Real.sqrt_nonneg (1 + 2 * x)
+      linarith
+
+  -- Show that $1-\sqrt{1+2x} < 1$, i.e., $\sqrt{1+2x} > 0$.
+  have h₁₀ : 1 - Real.sqrt (1 + 2 * x) < 1 := by
+    exact h₉.right
+
+  -- Show that $\sqrt{1+2x} > 0$, i.e., $1+2x > 0$.
+  have h₁₁ : Real.sqrt (1 + 2 * x) > 0 := by
+    linarith
+
+  -- Show that $1+2x > 0$, i.e., $x > -1/2$.
+  have h₁₂ : 1 + 2 * x > 0 := by
+    exact (Real.sqrt_pos_iff (by linarith)).mp h₁₁
+
+  -- Show that $-1/2 < x < 9/2$.
+  have h₁₃ : -1 / 2 < x ∧ x < 9 / 2 := by
+    constructor
+    · linarith
+    · linarith
+
+  -- Show that $-1/2 < x < 45/8$.
+  refine ⟨h₁₃.left,?_⟩
+
+  have h₁₄ : 45 / 8 = 5 * (9 / 2) - 15 / 8 := by
+    linarith
+
+  rw [h₁₄]
+  refine le_sub_of_add_le?_
+  exact le_trans (add_le_add_left h₇ (15 / 8)) (mul_le_mul_of_nonneg_left (by linarith) (by linarith))
+```

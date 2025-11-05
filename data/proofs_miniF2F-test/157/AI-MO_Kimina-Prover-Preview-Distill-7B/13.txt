@@ -1,0 +1,213 @@
+have amc12a_2021_p19_aux (x : ℝ) :
+        Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) ↔
+            Real.sin (Real.pi / 2 * Real.cos x) ^ 2 + Real.cos (Real.pi / 2 * Real.sin x) ^ 2 = 1 := by
+          constructor
+          · intro h
+            rw [h]
+            exact Real.sin_sq_add_cos_sq (Real.pi / 2 * Real.cos x)
+          · intro h
+            have hsin : -1 ≤ Real.sin (Real.pi / 2 * Real.cos x) := by
+              apply Real.neg_one_le_sin
+            have hcos : -1 ≤ Real.cos (Real.pi / 2 * Real.sin x) := by
+              apply Real.neg_one_le_cos
+            have hsin' : Real.sin (Real.pi / 2 * Real.cos x) ≤ 1 := by
+              apply Real.sin_le_one
+            have hcos' : Real.cos (Real.pi / 2 * Real.sin x) ≤ 1 := by
+              apply Real.cos_le_one
+            have : 0 ≤ Real.sin (Real.pi / 2 * Real.cos x) := by
+              nlinarith
+            have : 0 ≤ Real.cos (Real.pi / 2 * Real.sin x) := by
+              nlinarith
+            have h' : (Real.sin (Real.pi / 2 * Real.cos x) ^ 2 + Real.cos (Real.pi / 2 * Real.sin x) ^ 2) =
+              Real.sin (Real.pi / 2 * Real.cos x) ^ 2 + (1 - Real.sin (Real.pi / 2 * Real.cos x) ^ 2) := by
+              rw [hcos_sq']
+            rw [h'] at h
+            linarith
+
+    -- Prove that $S$ is the set of solutions to the equation $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$ in the closed interval $[0,\pi]$.
+
+    have h₁ : S = {x : ℝ | 0 ≤ x ∧ x ≤ Real.pi ∧ Real.sin (Real.pi / 2 * Real.cos x) ^ 2 + Real.cos (Real.pi / 2 * Real.sin x) ^ 2 = 1} := by
+      ext x
+      constructor
+      · intro hx
+        simp only [Set.mem_setOf_eq]
+        rw [h₀] at hx
+        exact ⟨hx.1, hx.2.1, amc12a_2021_p19_aux hx.2.2⟩
+      · intro hx
+        simp only [Set.mem_setOf_eq]
+        rw [h₀]
+        exact ⟨hx.1, hx.2.1, amc12a_2021_p19_aux hx.2.2⟩
+
+    -- Prove that the set of solutions is exactly $\{\frac{\pi}{4}, \frac{3\pi}{4}\}$.
+
+    have h₂ : S = {Real.pi / 4, Real.pi - Real.pi / 4} := by
+      rw [h₁]
+      ext x
+      constructor
+      · intro hx
+        simp only [Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff]
+        have h₀ := hx.2.2
+        -- Rewrite the equation $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$ to
+        -- $\sin \left( \frac{\pi}2 \cos x\right)= \pm \sqrt{1-\sin^2 \left( \frac{\pi}2 \sin x\right)}$.
+        rw [show Real.cos (Real.pi / 2 * Real.sin x) ^ 2 = 1 - Real.sin (Real.pi / 2 * Real.sin x) ^ 2 by linarith] at h₀
+        rw [show Real.sqrt (1 - Real.sin (Real.pi / 2 * Real.sin x) ^ 2) ^ 2 = 1 - Real.sin (Real.pi / 2 * Real.sin x) ^ 2 by
+          refine Real.sq_sqrt (by linarith)] at h₀
+        -- Simplify the equation to $\sin \left( \frac{\pi}2 \cos x\right)= \pm \sqrt{1-\sin^2 \left( \frac{\pi}2 \sin x\right)}$.
+        replace h₀ : Real.sin (Real.pi / 2 * Real.cos x) = Real.sqrt (1 - Real.sin (Real.pi / 2 * Real.sin x) ^ 2) ∨
+          Real.sin (Real.pi / 2 * Real.cos x) = - Real.sqrt (1 - Real.sin (Real.pi / 2 * Real.sin x) ^ 2) := by
+          apply eq_or_eq_neg_of_sq_eq_sq
+          rw [h₀]
+          ring
+        clear h₀
+        -- We get two equations:
+        -- - $\sin \left( \frac{\pi}2 \cos x\right)= \sqrt{1-\sin^2 \left( \frac{\pi}2 \sin x\right)}$.
+        -- - $\sin \left( \frac{\pi}2 \cos x\right)= -\sqrt{1-\sin^2 \left( \frac{\pi}2 \sin x\right)}$.
+        cases h₀ with
+        | inl h₀ =>
+          -- We use the fact that $\cos^2 \theta + \sin^2 \theta = 1$ for any angle $\theta$ to simplify the equation.
+          -- It simplifies to $\cos^2 \left( \frac{\pi}2 \sin x\right) + \sin^2 \left( \frac{\pi}2 \sin x\right) = 1$.
+          have h₁ : Real.cos (Real.pi / 2 * Real.sin x) ^ 2 + Real.sin (Real.pi / 2 * Real.sin x) ^ 2 = 1 := by
+            refine Real.cos_sq_add_sin_sq (Real.pi / 2 * Real.sin x)
+          -- We get $\sin \left( \frac{\pi}2 \cos x\right)= \sqrt{1-\sin^2 \left( \frac{\pi}2 \sin x\right)}$.
+          -- We square both sides to get $\sin^2 \left( \frac{\pi}2 \cos x\right)= 1-\sin^2 \left( \frac{\pi}2 \sin x\right)$.
+          have h₂ : Real.sin (Real.pi / 2 * Real.cos x) ^ 2 = 1 - Real.sin (Real.pi / 2 * Real.sin x) ^ 2 := by
+            rw [eq_sub_iff_add_eq] at h₀
+            rw [←h₀, Real.sq_sqrt]
+            linarith
+          -- We simplify to $\sin^2 \left( \frac{\pi}2 \cos x\right) + \sin^2 \left( \frac{\pi}2 \sin x\right) = 1$.
+          replace h₁ : Real.cos (Real.pi / 2 * Real.sin x) ^ 2 + Real.sin (Real.pi / 2 * Real.sin x) ^ 2 + Real.sin (Real.pi / 2 * Real.cos x) ^ 2 = 1 + Real.sin (Real.pi / 2 * Real.cos x) ^ 2 := by
+            rw [h₁]
+          -- We simplify to $\sin^2 \left( \frac{\pi}2 \cos x\right) + \sin^2 \left( \frac{\pi}2 \sin x\right) = 1$.
+          replace h₁ : Real.cos (Real.pi / 2 * Real.sin x) ^ 2 + Real.sin (Real.pi / 2 * Real.sin x) ^ 2 + Real.sin (Real.pi / 2 * Real.cos x) ^ 2 - Real.sin (Real.pi / 2 * Real.cos x) ^ 2 = 1 := by
+            rw [h₁]
+            ring
+          -- We get $\sin^2 \left( \frac{\pi}2 \cos x\right) = 1 - \sin^2 \left( \frac{\pi}2 \sin x\right)$.
+          replace h₁ : Real.cos (Real.pi / 2 * Real.sin x) ^ 2 = 1 - Real.sin (Real.pi / 2 * Real.sin x) ^ 2 := by
+            linarith
+          -- Simplify to $\sin^2 \left( \frac{\pi}2 \cos x\right) + \sin^2 \left( \frac{\pi}2 \sin x\right) = 1$.
+          have h₃ : Real.sin (Real.pi / 2 * Real.cos x) ^ 2 + Real.sin (Real.pi / 2 * Real.sin x) ^ 2 = 1 := by
+            linarith
+          -- We get that $\sin \left( \frac{\pi}2 \sin x\right) = \sin \left( \frac{\pi}2 \cos x\right)$.
+          have h₄ : Real.sin (Real.pi / 2 * Real.sin x) = Real.sin (Real.pi / 2 * Real.cos x) := by
+            nlinarith
+          -- We suppose that $\sin \left( \frac{\pi}2 \sin x\right) = \sin \left( \frac{\pi}2 \cos x\right)$, and we want to prove that $x = \frac{\pi}4$ or $x = \frac{3\pi}4$.
+          by_cases h₅ : Real.pi / 2 * Real.sin x = Real.pi / 2 * Real.cos x
+          · -- If $\frac{\pi}2 \sin x = \frac{\pi}2 \cos x$, then $\sin x = \cos x$.
+            rw [mul_right_inj' (by linarith)] at h₅
+            -- We get that $\sin x = \cos x$.
+            replace h₅ : Real.sin x = Real.cos x := by
+              linarith
+            -- We prove that $x = \frac{\pi}4$ or $x = \frac{3\pi}4$.
+            have h₆ : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := Real.sin_sq_add_cos_sq x
+            rw [←h₅] at h₆
+            -- Simplify to $\sin^2 x + \sin^2 x = 1$.
+            replace h₆ : Real.sin x ^ 2 + Real.sin x ^ 2 = 1 := by
+              linarith
+            -- Simplify to $\sin^2 x = \frac{1}2$.
+            replace h₆ : Real.sin x ^ 2 = 1 / 2 := by
+              linarith
+            -- We get that $\sin x = \pm \frac{\sqrt{2}}2$.
+            replace h₆ : Real.sin x = Real.sqrt (1 / 2) ∨ Real.sin x = - Real.sqrt (1 / 2) := by
+              apply eq_or_eq_neg_of_sq_eq_sq
+              rw [h₆]
+              refine Real.sq_sqrt (by linarith)
+            -- We simplify to $\sin x = \pm \frac{\sqrt{2}}2$.
+            cases h₆ with
+            | inl h₆ =>
+              -- If $\sin x = \frac{\sqrt{2}}2$, then $x = \frac{\pi}4$.
+              replace h₆ : Real.sin x = Real.sin (Real.pi / 4) := by
+                rw [Real.sin_pi_div_four]
+                rw [h₆]
+                refine Eq.symm (Real.sqrt_eq_iff_mul_self_eq_of_pos (by linarith)).mpr (by linarith)
+              -- We use the fact that $\sin x = \sin y$ implies $x = y + 2\pi k$ or $x = \pi - y + 2\pi k$ for some integer $k$.
+              replace h₆ := Real.sin_eq_sin_iff.mp h₆
+              cases h₆ with
+              | inl h₆ =>
+                -- We get $x = \frac{\pi}4 + 2\pi k$ for some integer $k$.
+                replace h₆ : x = Real.pi / 4 + 2 * Real.pi * (x / (2 * Real.pi)) := by
+                  linarith
+                -- We have $0 \leq x \leq \pi$.
+                rw [h₆] at hx
+                replace hx : 0 ≤ Real.pi / 4 + 2 * Real.pi * (x / (2 * Real.pi)) ∧ Real.pi / 4 + 2 * Real.pi * (x / (2 * Real.pi)) ≤ Real.pi := by
+                  linarith
+                -- We get $0 \leq \frac{\pi}4 + 2\pi k \leq \pi$.
+                replace hx : 0 ≤ (x / (2 * Real.pi)) ∧ (x / (2 * Real.pi)) ≤ 1 := by
+                  refine ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
+                -- We get $k = 0$.
+                have h₇ : (x / (2 * Real.pi)) ≥ 0 := by
+                  linarith
+                have h₈ : (x / (2 * Real.pi)) ≤ 1 := by
+                  linarith
+                have h₉ : (x / (2 * Real.pi)) = 0 := by
+                  by_contra!
+                  by_cases h₁₀ : (x / (2 * Real.pi)) > 0
+                  · -- If $0 < \frac{\pi}4 + 2\pi k$, then $k \geq 0$.
+                    have : (x / (2 * Real.pi)) ≥ 1 := by
+                      refine Int.le_natCast_iff_le.mpr?_
+                      refine (Int.le_iff_lt_or_eq).mp?_
+                      cases h₁₀ with
+                      | inl h₁₀ =>
+                        -- If $0 < \frac{\pi}4 + 2\pi k$, then $k \geq 0$.
+                        simp [h₁₀]
+                        apply lt_of_le_of_ne hx.1 this
+                        by_contra!
+                        simp [this] at h₆
+                        linarith [Real.pi_pos]
+                      | inr h₁₀ =>
+                        -- If $\frac{\pi}4 + 2\pi k = 0$, then $k = 0$.
+                        linarith [h₁₀]
+                    linarith
+                  | inr h₁₀ =>
+                    -- If $\frac{\pi}4 + 2\pi k \leq 0$, then $k \leq 0$.
+                    have : (x / (2 * Real.pi)) ≤ 0 := by
+                      refine Int.le_natCast_iff_le.mpr?_
+                      refine (Int.le_iff_lt_or_eq).mp?_
+                      cases h₁₀ with
+                      | inl h₁₀ =>
+                        -- If $\frac{\pi}4 + 2\pi k < 0$, then $k \leq 0$.
+                        simp [h₁₀]
+                        apply lt_of_le_of_ne h₆ this
+                        by_contra!
+                        simp [this] at h₆
+                        linarith [Real.pi_pos]
+                      | inr h₁₀ =>
+                        -- If $\frac{\pi}4 + 2\pi k = 0$, then $k = 0$.
+                        linarith [h₁₀]
+                    linarith
+                replace h₇ : x = Real.pi / 4 := by
+                  field_simp at h₉
+                  linarith
+                exact Or.inl h₇
+              | inr h₆ =>
+                -- We get $x = \frac{3\pi}4 + 2\pi k$ for some integer $k$.
+                replace h₆ : x = Real.pi - Real.pi / 4 + 2 * Real.pi * (x / (2 * Real.pi)) := by
+                  linarith
+                -- We have $0 \leq x \leq \pi$.
+                rw [h₆] at hx
+                replace hx : 0 ≤ Real.pi - Real.pi / 4 + 2 * Real.pi * (x / (2 * Real.pi)) ∧ Real.pi - Real.pi / 4 + 2 * Real.pi * (x / (2 * Real.pi)) ≤ Real.pi := by
+                  linarith
+                -- We get $0 \leq \frac{3\pi}4 + 2\pi k \leq \pi$.
+                replace hx : -1 ≤ (x / (2 * Real.pi)) ∧ (x / (2 * Real.pi)) ≤ 0 := by
+                  refine ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
+                -- We get $k = 0$.
+                have h₇ : (x / (2 * Real.pi)) ≥ -1 := by
+                  linarith
+                have h₈ : (x / (2 * Real.pi)) ≤ 0 := by
+                  linarith
+                have h₉ : (x / (2 * Real.pi)) = 0 := by
+                  by_contra!
+                  by_cases h₁₀ : (x / (2 * Real.pi)) > -1
+                  · -- If $-1 < \frac{3\pi}4 + 2\pi k$, then $k \geq -1$.
+                    have : (x / (2 * Real.pi)) ≥ 0 := by
+                      refine Int.le_natCast_iff_le.mpr?_
+                      refine (Int.le_iff_lt_or_eq).mp?_
+                      cases h₁₀ with
+                      | inl h₁₀ =>
+                        -- If $-1 < \frac{3\pi}4 + 2\pi k$, then $k \geq -1$.
+                        simp [h₁₀]
+                        apply lt_of_le_of_ne hx.1 this
+                        by_contra!
+                        simp [this] at h₆
+                        linarith [Real.pi_pos]
+                      | inr h₁₀ =>
+                        -- If $\frac{3\pi}4 + 2\pi k = -1$, then $k = -1$.

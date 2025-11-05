@@ -1,0 +1,168 @@
+constructor
+
+  -- (2) Let $\mathbb{Z}$ be the set of integers. Determine all functions $f : \mathbb{Z} \to \mathbb{Z}$ such that, for all
+  --  integers $a$ and $b$, $f(2a) + 2f(b) = f(f(a + b)).$
+  · intro hf
+    -- We first show that $f$ is even, i.e., $f(z) = f(-z)$ for all $z \in \mathbb{Z}$.
+    have h_even : ∀ z, f z = f (-z) := by
+      intro z
+      -- We take $a = 0$ and $b = z$ in `hf`, and get $f(f(z)) = f(2 \cdot 0) + 2f(z) = f(f(0) + z)$
+      have := hf 0 z
+      simp at this
+      -- Apply the " symmetry " of this relation for $z$ and $-z$.
+      rw [this, <-add_comm, <-add_comm, <-add_assoc, <-add_comm, <-add_assoc] at this
+      simp at this
+      exact this
+
+    -- We next show that there is a $c \in \mathbb{Z}$ such that $f(z) = 2z + c$ for all $z \geq 0$.
+    have h_f_nonneg (z : ℤ) (hz : 0 ≤ z) : ∃ c, f z = 2 * z + c := by
+
+      -- Let $c = f(0)$. We make a calculation about $f(2 \cdot 0) + 2f(0) = f(f(0 + 0))$.
+      have : f (2 * 0) + 2 * f 0 = f (f (0 + 0)) := hf 0 0
+      simp at this
+
+      -- Let $c = f(0) - 2 \cdot 0$. We prove that $f(z) = 2z + c$ by induction.
+      let c := f 0 - 2 * 0
+      have : f z = 2 * z + c ∧ f (-z) = 2 * (-z) + c := by
+        induction z using Int.induction_on with
+        | hz nonneg ih =>
+          -- If $f(z) = 2z + c$, then $f(2z) = 4z + 2c$ and $4z + 2c = f(f(z + 0)) = f(2z) = 2(2z) + 2c$.
+          -- We get $f(2z) = 2(2z) + 2c$.
+          have hz' : f z = 2 * z + c := ih.1
+          have : f (2 * z) = 2 * (2 * z) + 2 * c := by
+            calc
+              f (2 * z) = f (f (z + 0)) := by rw [hf z 0]; ring_nf
+              _ = f (2 * z + 2 * 0) := by ring_nf
+              _ = 2 * (2 * z + 2 * 0) + 2 * c := by rw [<-add_assoc, ih.1, <-add_assoc]; ring_nf
+          -- We have $2(2z) + 2c = f(2z) = 2z + f(0) - 2 \cdot 0$ and $z \geq 0$.
+          have hz_nonneg : 2 * z ≥ 0 := by omega
+          have : f (2 * z) = 2 * (2 * z) + (f 0 - 2 * 0) := by rw [add_assoc, this]; ring_nf
+          -- We get $f(2z) = 2(2z) + c$.
+          nth_rw 2 [this] at *
+          exact Eq.symm <| eq_sub_of_add_eq' this
+          -- The induction base case is trivial.
+          simp [hz]
+        | hz neg ih =>
+          -- Let $c = f(0) - 2 \cdot 0$. We prove that $f(z) = 2z + c$ and $f(-z) = 2(-z) + c$.
+          have hz' : f (-z) = 2 * (-z) + c := ih.2
+          have : f (2 * z) = 2 * (2 * z) + 2 * c := by
+            calc
+              f (2 * z) = f (f (-z + 0)) := by rw [hf (-z) 0]; rw [neg_add_cancel]; ring_nf
+              _ = f (2 * (-z) + 2 * 0) := by rw [neg_mul, add_zero]; congr; ring_nf
+              _ = 2 * (2 * (-z) + 2 * 0) + 2 * c := by rw [<-add_assoc, ih.2, <-add_assoc]; ring_nf
+          -- We have $2(-z) + 2c = f(-z) = 2z + f(0) - 2 \cdot 0$ and $-z \geq 0$.
+          have hz_nonneg : -z ≥ 0 := by omega
+          have : f (-z) = 2 * (-z) + (f 0 - 2 * 0) := by rw [sub_eq_add_neg, this]; ring_nf
+          -- We get $f(-z) = 2(-z) + c$.
+          nth_rw 2 [this] at *
+          exact Eq.symm <| eq_sub_of_add_eq' this
+          -- The induction base case is trivial.
+          simp [hz]
+        | zero =>
+          -- The base case $f(0) = 2 \cdot 0 + c$ is trivial.
+          simp [c]
+
+      -- We have shown that there is a $c \in \mathbb{Z}$ such that $f(z) = 2z + c$ for all $z \geq 0$.
+      tauto
+
+    -- We now show the converse. We need to show that the only solutions to the functional equation are
+    -- the functions of the form $f(z) = 0$ for all $z \in \mathbb{Z}$, and $f(z) = 2z + c$ for all
+    -- $z \in \mathbb{Z}$, where $c \in \mathbb{Z}$ is some constant.
+    · rintro (h | ⟨c, h⟩)
+      -- If $f(z) = 0$ for all $z \in \mathbb{Z}$, the functional equation is satisfied.
+      · intro a b
+        simp [h, add_zero, zero_add]
+      -- Assume that $f(z) = 2z + c$ for all $z \geq 0$. We first show that $f(0) = c$.
+      · have f_0 : f 0 = c := by
+          -- Take $a = 0$ and $b = 0$ in `hf`, and get $f(f(0)) = f(0) = 2 \cdot 0 + c = c$.
+          have := hf 0 0
+          simp at this
+          rw [h, h] at this
+          ring_nf at this
+          linarith only [this]
+        -- We show that $f(z) = 2z + c$ for all $z \in \mathbb{Z}$.
+        intro a b
+        -- We do this by induction on $z$.
+        have f_nonneg (z : ℤ) (hz : 0 ≤ z) : f z = 2 * z + c := by
+          induction z using Int.induction_on with
+          | hz nonneg ih =>
+            -- If $f(z) = 2z + c$, then $f(2z) = 4z + 2c$ and $4z + 2c = f(f(z + 0)) = f(2z) = 2(2z) + 2c$.
+            -- We get $f(2z) = 2(2z) + 2c$.
+            have hz' : f z = 2 * z + c := ih.1
+            have : f (2 * z) = 2 * (2 * z) + 2 * c := by
+              calc
+                f (2 * z) = f (f (z + 0)) := by rw [hf z 0]; ring_nf
+                _ = f (2 * z + 2 * 0) := by rw [add_comm]
+                _ = 2 * (2 * z + 2 * 0) + 2 * c := by rw [<-add_assoc, ih.1, <-add_assoc]; ring_nf
+            -- We have $2(2z) + 2c = f(2z) = 2z + f(0) - 2 \cdot 0$ and $z \geq 0$.
+            have hz_nonneg : 2 * z ≥ 0 := by omega
+            have : f (2 * z) = 2 * (2 * z) + c := by
+              rw [sub_eq_add_neg, this]
+              ring_nf
+              rw [f_0]
+              ring
+            -- We get $f(2z) = 2(2z) + c$.
+            nth_rw 2 [this] at *
+            exact Eq.symm <| eq_sub_of_add_eq' this
+            -- The induction base case is trivial.
+            simp [hz]
+          | hz neg ih =>
+            -- Let $c = f(0) - 2 \cdot 0$. We prove that $f(z) = 2z + c$ and $f(-z) = 2(-z) + c$.
+            have hz' : f (-z) = 2 * (-z) + c := ih.2
+            have : f (2 * z) = 2 * (2 * z) + 2 * c := by
+              calc
+                f (2 * z) = f (f (-z + 0)) := by rw [hf (-z) 0]; rw [neg_add_cancel]; ring_nf
+                _ = f (2 * (-z) + 2 * 0) := by rw [mul_comm, mul_comm 2, <-add_assoc]
+                _ = 2 * (2 * (-z) + 2 * 0) + 2 * c := by rw [<-add_assoc, ih.2, <-add_assoc]; ring_nf
+            -- We have $2(-z) + 2c = f(-z) = 2z + f(0) - 2 \cdot 0$ and $-z \geq 0$.
+            have hz_nonneg : -z ≥ 0 := by omega
+            have : f (-z) = 2 * (-z) + c := by
+              rw [sub_eq_add_neg, this]
+              ring_nf
+              rw [f_0]
+              ring
+            -- We get $f(-z) = 2(-z) + c$.
+            nth_rw 2 [this] at *
+            exact Eq.symm <| eq_sub_of_add_eq' this
+            -- The induction base case is trivial.
+            simp [hz]
+          | zero =>
+            -- The base case $f(0) = 2 \cdot 0 + c$ is trivial.
+            simp [f_0]
+
+        -- We need to show that $f(a) = 2a + c$ for all $a \in \mathbb{Z}$.
+        have f_neg (z : ℤ) (hz : z ≤ 0) : f z = 2 * z + c := by
+          -- If $z \leq 0$, then $-z \geq 0$.
+          have hz' : -z ≥ 0 := by omega
+          -- We take $f(z) = 2z + c$ and apply the symmetry property.
+          let a := -z
+          have : f a = 2 * a + c := f_nonneg a hz'
+          have : f (-a) = 2 * (-a) + c := this
+          have : f z = 2 * z + c := by
+            calc
+              f z = f (-(-z)) := by rw [neg_neg]
+              _ = f (-a) := by dsimp [a]
+              _ = 2 * (-a) + c := this
+              _ = 2 * z + c := by ring
+          exact this
+
+        -- We do this by induction on $z$.
+        by_cases z : 0 ≤ z
+        · -- If $z \geq 0$, we can apply `f_nonneg`.
+          exact f_nonneg z z
+        · -- If $z \leq 0$, we can apply `f_neg`.
+          exact f_neg z (by omega)
+
+  -- (1) We verify that the functions of the form $f(z) = 2z + c$ for all $z \in \mathbb{Z}$, where
+  -- $c \in \mathbb{Z}$ is some constant, satisfy the functional equation.
+  · rintro ⟨c, hc⟩
+    -- Introduce variables $a$ and $b$.
+    intro a b
+    -- Verify that $f(2a) + 2f(b) = f(f(a + b))$.
+    calc
+      f (2 * a) + 2 * f b = (2 * (2 * a) + c) + 2 * (2 * b + c) := by rw [hc, hc]; ring_nf
+      _ = 4 * a + 2 * c + 4 * b + 2 * c := by ring_nf
+      _ = 4 * (a + b) + 4 * c := by ring_nf
+      _ = 2 * (2 * (a + b) + c) + c := by ring_nf
+      _ = f (f (a + b)) := by rw [hc]; ring_nf
+```

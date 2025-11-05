@@ -1,0 +1,40 @@
+-- prove the Cauchy-Schwarz inequality
+  have CS_ineq (a b c d : ℝ) : (a * d - b * c) ^ 2 ≤ (a ^ 2 + b ^ 2) * (c ^ 2 + d ^ 2) := by
+    nlinarith [sq_nonneg (a * c - b * d)]
+
+  -- prove that for any positive real numbers $x$,$y$,$z$, $1/x+1/y+1/z\geq 9/(x+y+z)$
+  have h1 : 1 / (x + y) + 1 / (y + z) + 1 / (z + x) ≥ 9 / (x + y + z) := by
+    -- prove the numerator Cauchy-Schwarz inequality
+    have h1 : (1 + 1 + 1) ^ 2 ≤ (x + y) + (y + z) + (z + x) := by
+      apply Finset.card_le_card
+      simp
+      exact ⟨by linarith, by linarith, by linarith⟩
+    -- prove the denominator Cauchy-Schwarz inequality
+    have h2 : (1 ^ 2 / (x + y) + 1 ^ 2 / (y + z) + 1 ^ 2 / (z + x)) * ((x + y) + (y + z) + (z + x)) ≥ (1 + 1 + 1) ^ 2 := by
+      -- prove the Cauchy-Schwarz inequality for 3x3 matrix
+      apply CS_ineq
+      apply Finset.card_le_card
+      simp
+      exact ⟨⟨by linarith, by linarith⟩, ⟨by linarith, by linarith⟩, ⟨by linarith, by linarith⟩⟩
+    calc
+      -- use the two Cauchy-Schwarz inequalities to prove the resulted inequality
+      _ = (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) * (1 + 1 + 1) := by ring
+      _ ≥ (1 ^ 2 / (x + y) + 1 ^ 2 / (y + z) + 1 ^ 2 / (z + x)) * 3 ^ 2 / (x + y + z) := by
+        apply (div_le_div_iff_of_pos_right (by linarith)).mpr
+        apply (mul_le_mul_iff_of_pos_right (by norm_num)).mpr
+        exact h2
+        linarith
+      _ = _ := by
+        field_simp
+        ring
+
+  -- prove the final inequality
+  calc
+    -- use the inequality proved in lemma h1
+    _ = 2 * (1 / (x + y) + 1 / (y + z) + 1 / (z + x)) := by ring
+    _ ≥ 2 * (9 / (x + y + z)) := by
+      apply mul_le_mul_of_nonneg_left
+      exact h1
+      norm_num
+    _ = _ := by ring
+```

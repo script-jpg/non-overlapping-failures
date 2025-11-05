@@ -1,0 +1,57 @@
+--  Show that if $n$ is a positive integer and $2^n - 1$ is prime, then $n$ is prime.
+  --  We'll prove this by contradiction. If $n$ is not prime, then it's composite.
+  by_contra h
+  have h₂ : n ≠ 1 := by exact Nat.ne_of_lt (Nat.lt_of_le_pred_lt h₀.le)
+  rw [Nat.not_prime_iff_exists_dvd_ne] at h
+  obtain ⟨m, h₃, h₄, h₅⟩ := h
+  have h₆ : m ≠ 1 := by
+    by_contra h₆
+    rw [h₆] at h₅
+    exact h₂ h₅
+  have h₇ : m ≠ 2 := by
+    by_contra h₇
+    rw [h₇] at h₅
+    norm_num at h₅
+    exact h₄ h₅
+  -- If $n$ is not prime, then it can be written as a product of two integers $i$ and $j$ such that $1 < i < n$ and $1 < j < n$.
+  rw [Nat.not_prime_iff_exists_mul_eq] at h₆
+  obtain ⟨i, j, h₆, h₇, h₈⟩ := h₆
+  -- Substitute $n = ij$ into $2^n - 1$.
+  rw [h₆.symm] at h₈
+  rw [Nat.pow_mul] at h₈
+  -- By the properties of norm_num, we know that $2^{ij} - 1$ is divisible by $2^i - 1$.
+  have h₉ : 2 ^ i - 1 ∣ 2 ^ (i * j) - 1 := by
+    rw [Nat.pow_mul]
+    apply Nat.sub_dvd_pow_sub_pow
+  -- Because $2^{ij} - 1$ is prime, it must be equal to $1$, $2^i - 1$ or $2^j - 1$.
+  rw [h₈] at h₉
+  have h₁₀ : 2 ^ i - 1 = 1 ∨ 2 ^ i - 1 = 2 ^ (i * j) - 1 := by
+    exact (Nat.dvd_prime h₁).mp h₉
+  -- However, $2^i - 1$ is positive and $2^i - 1$ is not equal to $1$ or $2^j - 1$.
+  have h₁₁ : 2 ^ i - 1 > 0 := by
+    apply Nat.zero_lt_sub_of_lt
+    apply Nat.one_lt_pow
+    linarith
+  have h₁₂ : 2 ^ i - 1 ≠ 1 := by
+    by_contra h₁₂
+    have h₁₃ : 2 ^ i = 2 := by
+      omega
+    have h₁₄ : 2 ^ i = 2 ^ 1 := by
+      rw [h₁₃]
+      norm_num
+    have h₁₅ := Nat.pow_right_injective (by norm_num) h₁₄
+    omega
+  have h₁₆ : 2 ^ j - 1 > 0 := by
+    apply Nat.zero_lt_sub_of_lt
+    apply Nat.one_lt_pow
+    linarith
+  -- Therefore, we have a contradiction.
+  have h₁₇ : 2 ^ i - 1 = 2 ^ (i * j) - 1 := by
+    exact Nat.eq_of_le_of_lt_succ (by rw [h₈]; omega) h₁₀
+  have h₁₈ : 2 ^ i - 1 < 2 ^ (i * j) - 1 := by
+    apply Nat.sub_lt_sub_right
+    apply Nat.pow_lt_pow_right
+    linarith
+    linarith
+  omega
+```

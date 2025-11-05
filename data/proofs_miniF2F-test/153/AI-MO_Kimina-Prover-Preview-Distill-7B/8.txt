@@ -1,0 +1,101 @@
+-- We first assume $t \le 0$. Then $\frac{(2^t - 3t)t}{4^t} \le 0 \le \frac{1}{12}$.
+  by_cases t_pos : t ≤ 0
+  · simp only [div_nonpos_of_nonneg_of_nonpos, mul_nonpos_of_nonpos_of_nonneg, t_pos,
+    neg_one_mul, neg_le_zero, zero_le_one_div]
+    apply one_div_pos.mpr
+    apply Real.rpow_pos_of_pos
+    norm_num
+
+  -- If $t > 0$, we can consider the function $f(t) = \frac{(2^t - 3t)t}{4^t}$. 
+  push_neg at t_pos
+
+  -- Take the natural logarithm of both sides.
+  have log_eq : (2 ^ t - 3 * t) * t / 4 ^ t = Real.exp (Real.log ((2 ^ t - 3 * t) * t / 4 ^ t)) := by
+    rw [Real.exp_log]
+    positivity
+  rw [log_eq]
+  have log_sub : Real.log ((2 ^ t - 3 * t) * t / 4 ^ t) = Real.log (2 ^ t - 3 * t) + Real.log t - Real.log (4 ^ t) := by
+    simp only [Real.log_div, Real.log_mul]
+    all_goals
+      apply Real.log_le_sub_of_le
+      apply div_nonneg
+      positivity
+      assumption
+  rw [log_sub]
+  have log_eq' : Real.log (4 ^ t) = t * Real.log 4 := by
+    rw [Real.log_rpow_eq_mul_log]
+    simp
+  rw [log_eq']
+  have t_mul_log2_sub_three_mul_t : (2 ^ t - 3 * t) = 2 ^ (t * Real.log 2) - 3 * t := by
+    ring_nf
+    rw [Real.rpow_mul]
+    simp
+    positivity
+  rw [t_mul_log2_sub_three_mul_t]
+
+  -- Taking the derivative of $f(t)$ w.r.t. $t$ and we get 
+  -- $f'(t) = \frac{2^{t} (t \log 2 - 3) + 3 \cdot 2^{t} - 4^{t} (t \log 4 + 3) - 3 t \log 2 + 3 t \log 4}{4^{t} (t \log 4 + 3) + 3 t \log 2 - 3 t \log 4 - 3 t \log 2 + 3 t \log 4 + 3 \cdot 4^{t}}$.
+  have log_sub : Real.log ((2 ^ t - 3 * t) * t / 4 ^ t) = Real.log (2 ^ t - 3 * t) + Real.log t - Real.log (4 ^ t) := by
+    simp only [Real.log_div, Real.log_mul]
+    all_goals
+      apply Real.log_le_sub_of_le
+      apply div_nonneg
+      positivity
+      assumption
+  rw [log_eq]
+
+  -- When $t = \frac{3}{2 \log 2} = \frac{3}{2} \log 2$, the derivative $f'(t)$ equals to $0$.
+  -- And by the monotonicity of $f(t)$, we know that $t = \frac{3}{2 \log 2} = \frac{3}{2} \log 2$ is the point of maximum.
+  -- Substituting $t = \frac{3}{2 \log 2} = \frac{3}{2} \log 2$ into $f(t)$, we get $f(\frac{3}{2} \log 2) = \frac{1}{12}$.
+  -- Hence, $\frac{(2^t-3t)t}{4^t} \le \frac{1}{12}$.
+  have : (2 ^ t - 3 * t) * t / 4 ^ t ≤ 1 / 12 := by
+    cases' lt_or_eq_of_le t_pos with hne hne
+    · rw [Real.exp_max_iff]
+      simp
+      apply (Real.log_le_sub_iff_lt?_).mpr
+      have h : (1 / 12 + ↑(3 / 2 * Real.log 2 ^ 2) / Real.log 2 ^ 2) / 4 ^ t ≤ 1 / 12 + ↑(3 / 2 * Real.log 2 ^ 2) / Real.log 2 ^ 2 / 4 ^ t := by
+        apply div_le_div_of_nonneg_left
+        positivity
+        apply Real.one_le_rpow
+        simp
+        linarith only [hne]
+        apply Real.rpow_pos_of_pos
+        simp
+      apply le_trans h
+      apply le_of_eq
+      rw [←hne]
+      ring_nf
+      rw [Real.log_rpow_eq_mul_log]
+      simp
+      simp
+      have h' : Real.log 2 > 0 := by
+        apply Real.log_pos
+        apply (Real.one_lt_rpow_iff_of_pos?_).mpr
+        norm_num
+        linarith only [hne]
+      field_simp
+      apply (div_le_div_iff_of_pos_right?_).mpr
+      linarith only [hne]
+      all_goals
+        positivity
+    · rw [hne]
+      norm_num
+      rw [←hne]
+      ring_nf
+      rw [Real.log_rpow_eq_mul_log]
+      simp
+      simp
+      have h' : Real.log 2 > 0 := by
+        apply Real.log_pos
+        apply (Real.one_lt_rpow_iff_of_pos?_).mpr
+        norm_num
+        linarith only [hne]
+      field_simp
+      apply (div_le_div_iff_of_pos_right?_).mpr
+      linarith only [hne]
+      all_goals
+        positivity
+  assumption
+
+
+```

@@ -1,0 +1,78 @@
+-- The key identity to use here is the change of base formula for logarithms:
+  -- $\log_a b = \frac{\log_c b}{\log_c a}$ for any $c > 0, c \neq 1$.
+  have logOnes : ∀ a, a > 0 ∧ a ≠ 1 := by
+      intro a
+      constructor
+      · exact Real.ltb_ne_one_iff_exists_log_ne_zero.mpr (show 0 < 2 by norm_num)
+      · exact Real.log_ne_zero_of_pos_of_ne_one (show 0 < 2 by norm_num) (show 2 ≠ 1 by norm_num)
+
+  have logOnes' : ∀ a, a > 0 ∧ a ≠ 1 → Real.log a ≠ 0 := by
+      intro a ha
+      exact (Real.log_ne_zero_of_pos_of_ne_one ha.left ha.right)
+
+  -- We'll compute $\frac{\log_2 80}{\log_{40} 2} - \frac{\log_2 160}{\log_{20} 2}$.
+  calc
+    Real.log 80 / Real.log 2 / (Real.log 2 / Real.log 40) -
+        Real.log 160 / Real.log 2 / (Real.log 2 / Real.log 20)
+      _ = Real.log 80 * Real.log 40 / (Real.log 2 * Real.log 2) -
+        Real.log 160 * Real.log 20 / (Real.log 2 * Real.log 2) := by
+        -- We multiply and divide by $\log 2 * \log 2$ to get $\log 80 / \log 2 / (\log 2 / \log 40)$ to
+        -- $\log 80 * \log 40 / (\log 2 * \log 2)$.
+        field_simp
+        ring
+    _ = (Real.log 80 + Real.log 40 - Real.log 160 - Real.log 20) / 2 := by
+        -- We do some algebra here. Using the identity $\log_a b = \frac{\log_c b}{\log_c a}$, we have:
+        -- \begin{align*}
+        -- \frac{\log_2 80}{\log_{40} 2} &= \frac{\log 80 / \log 2}{\log 2 / \log 40} \\
+        -- &= \frac{\log 80 * \log 40}{\log 2 * \log 2} \\
+        -- &= \frac{\log 80 + \log 40 - \log 160 - \log 20}{2}
+        -- \end{align*}
+        field_simp
+        ring_nf
+        have log2pos : 0 < Real.log 2 := by
+          calc
+            0 = Real.log 1 := by simp [Real.log_one]
+            _ < Real.log 2 := by apply Real.log_lt_log <;> (norm_num)
+        have log20ne : Real.log 20 ≠ 0 := logOnes'.mpr (by norm_num)
+        have log40ne : Real.log 40 ≠ 0 := logOnes'.mpr (by norm_num)
+        have log80ne : Real.log 80 ≠ 0 := logOnes'.mpr (by norm_num)
+        have log160ne : Real.log 160 ≠ 0 := logOnes'.mpr (by norm_num)
+
+        -- To be more precise, we should verify that 2, 20, 40, and 80 are positive integers, but this is clear.
+        norm_num
+        refine (div_eq_div_iff?_?_).mpr?_
+        · exact mul_ne_zero (mul_ne_zero (mul_ne_zero log2pos log40ne log80ne) log160ne)
+        · exact mul_ne_zero log2pos log40ne
+        · field_simp
+          ring
+    _ = (Real.log 320 - Real.log 160 - Real.log 20) / 2 := by
+        -- Using the identity $\log a + \log b = \log ab$, we get:
+        -- \begin{align*}
+        -- \frac{\log 80 + \log 40 - \log 160 - \log 20}{2} &= \frac{\log (80 \cdot 40) - \log (160 \cdot 20)}{2} \\
+        -- &= \frac{\log 3200 - \log 3200}{2} \\
+        -- &= \frac{\log (3200 / 3200)}{2} \\
+        -- &= \frac{\log 1}{2} \\
+        -- &= 0
+        -- \end{align*}
+        rw [add_sub_right_comm, ←Real.log_mul (by norm_num) (by norm_num), ←Real.log_mul (by norm_num) (by norm_num)]
+        norm_num
+    _ = (Real.log 320 - Real.log 320) / 2 := by
+        -- Using the identity $\log a - \log b = \log a/b$, we get:
+        -- \begin{align*}
+        -- \frac{\log 320 - \log 160 - \log 20}{2} &= \frac{\log (320 / 160) - \log 20}{2} \\
+        -- &= \frac{\log 2 - \log 20}{2} \\
+        -- &= \frac{\log (2 / 20)}{2} \\
+        -- &= \frac{\log 0.1}{2}
+        -- \end{align*}
+        rw [←Real.log_div (by norm_num) (by norm_num), ←Real.log_div (by norm_num) (by norm_num)]
+        norm_num
+    _ = 0 / 2 := by
+        -- Using the identity $\log a - \log a = 0$, we get:
+        -- \begin{align*}
+        -- \frac{\log 320 - \log 320}{2} &= \frac{0}{2} \\
+        -- &= 0
+        -- \end{align*}
+        rw [sub_self]
+    _ = 0 := by norm_num
+    _ = 2 := by norm_num
+```

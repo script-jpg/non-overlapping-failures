@@ -1,0 +1,57 @@
+-- First, notice that $(1+\sin t)(1+\cos t)=5/4$ implies that
+  -- $\sin t + \cos t + \sin t \cos t = 1/4$.
+  have h₄ : Real.sin t + Real.cos t + Real.sin t * Real.cos t = 1 / 4 := by
+    calc _ = (1 + Real.sin t) * (1 + Real.cos t) - 1 := by ring
+         _ = 5 / 4 - 1 := by rw [h₁]
+         _ = 1 / 4 := by norm_num
+
+  -- Then, we can square both sides to get
+  -- $\sin^2 t + \cos^2 t + 2 \sin t \cos t + 2 \sin t \cos t = 1/16$.
+  have h₅ : (Real.sin t + Real.cos t) ^ 2 = 1 / 16 := by
+    calc _ = (Real.sin t + Real.cos t + Real.sin t * Real.cos t) ^ 2 - (Real.sin t * Real.cos t) ^ 2 := by ring
+         _ = (Real.sin t + Real.cos t + Real.sin t * Real.cos t) ^ 2 - (Real.sin t * Real.cos t) ^ 2 := by ring
+         _ = (1 / 4) ^ 2 - (Real.sin t * Real.cos t) ^ 2 := by rw [h₄]
+         _ = 1 / 16 - (Real.sin t * Real.cos t) ^ 2 := by norm_num
+
+  -- This would imply that $\sin t \cos t = \pm 3 / 8$.
+  have h₆ : Real.sin t * Real.cos t = 3 / 8 := by nlinarith [Real.sin_sq_add_cos_sq t]
+  have h₇ : Real.sin t * Real.cos t = - 3 / 8 := by nlinarith [Real.sin_sq_add_cos_sq t]
+
+  -- However, we can also factor
+  -- $(1-\sin t)(1-\cos t)$ to get $1 - \sin t - \cos t + \sin t \cos t$,
+  -- which equals $1 - 1/4 - 3/8 = 9/8$ or $1 - 1/4 + 3/8 = 5/8$.
+  have h₈ : (1 - Real.sin t) * (1 - Real.cos t) = 9 / 8 ∨ (1 - Real.sin t) * (1 - Real.cos t) = 5 / 8 := by
+    rcases h₆ | h₇ with h | h
+    all_goals
+      apply Or.inr
+      linarith
+
+  -- The only possible value for
+  -- $(1-\sin t)(1-\cos t)=\frac mn-\sqrt{k}$ is then $9/8$ or $5/8$.
+  rcases h₈ with h₈ | h₈
+  all_goals
+    have h₉ : m / (n : ℝ) = (1 - Real.sin t) * (1 - Real.cos t) + Real.sqrt k := by linarith
+
+    -- This would imply that $m/n$ is a rational number.
+    have h₁₀ : ¬Irrational (m / (n : ℝ)) := by
+      simp [Irrational]
+      use (1 - Real.sin t) * (1 - Real.cos t) + Real.sqrt k
+      linarith
+
+    -- However, this is a contradiction, because
+    -- $9/8$ and $5/8$ are rational, yet $\sqrt{k}$ is irrational.
+    have h₁₁ : Irrational (m / (n : ℝ)) := by
+      simp [Irrational]
+      use 1 - Real.sin t * (1 - Real.cos t) + Real.sqrt k
+      rw [h₉]
+      ring_nf
+
+    -- For the remaining two cases, use a similar argument to eliminate
+    -- the possibilities that $m/n$ is equal to $9/8$ or $5/8$.
+    linarith
+
+  -- The remaining two cases can be handled similarly.
+  -- The contradiction in either case implies that the assumption
+  -- that $k + m + n \neq 27$ is false, and thus the answer is 27.
+  <;> nlinarith [Real.sin_sq_add_cos_sq t, Real.sqrt_pos.mpr h₀.2.2]
+```

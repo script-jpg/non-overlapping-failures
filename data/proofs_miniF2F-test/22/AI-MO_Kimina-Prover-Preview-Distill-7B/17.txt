@@ -1,0 +1,177 @@
+-- aux lemma, if $a, b, c \ge 0$, we have $ab < (a + b)^2 / 4$
+  have l_ineq (a b c : NNReal) (ha : a ≥ c) (hb : b ≥ c) (hc : c ≥ 0) :
+      a * b < (a + b) ^ 2 / 4 := by
+    have : (a + b) ^ 2 = a^2 + 2 * a * b + b^2 := by
+      apply Eq.symm
+      apply pow_two
+    rw [this]
+    have : a^2 + b^2 > 0 := by
+      by_contra! h
+      rw [not_lt] at h
+      rw [h] at this
+      simp at this
+    have : (a - b) ^ 2 ≥ 0 := by
+      exact sq_nonneg (a - b)
+    have : a^2 - 2 * a * b + b^2 ≥ 0 := by
+      linarith
+    have : a^2 + b^2 ≥ 2 * a * b := by
+      linarith
+    have : (a^2 + b^2) / 2 > 0 := by
+      apply div_pos
+      simp [this]
+      exact this
+    have : (a - b) ^ 2 = a^2 - 2 * a * b + b^2 := by
+      ring
+    have : (a - b) ^ 2 < a^2 + b^2 := by
+      linarith
+    have : (a - b) ^ 2 / 2 < (a^2 + b^2) / 2 := by
+      apply div_lt_div_of_pos_right
+      linarith
+      simp [this]
+    linarith
+
+
+  have h₁ : 0 ≤ ∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2) := by
+    apply Finset.sum_nonneg
+    intro x hx
+    exact mul_nonneg (sq_nonneg (a (x + 1))) (by simp at hx; exact a (x + 2))
+
+  have h₂ : 0 ≤ a 100 ^ 2 * a 1 := by
+    exact mul_nonneg (sq_nonneg (a 100)) (by simp)
+
+  have h₃ : 0 ≤ ∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2) + a 100 ^ 2 * a 1 := by
+    exact add_nonneg h₁ h₂
+
+  have h₄ : ∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2) + a 100 ^ 2 * a 1 < 12 / 25 := by
+
+    let b : ℕ → NNReal := fun x => x ^ 2
+    have hb : ∀ x : ℕ, b x = x ^ 2 := by intro x; rfl
+
+    -- Since for any $x, y \ge 0$, we have $xy \le (x^2 + y^2)/2$,
+    -- $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) \le \sum_{n=0}^{98} (a_{n+1}^4 + a_{n+2}^4)/2$
+    have h₀ : ∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2) ≤ ∑ x in Finset.range 99, (a (x + 1) ^ 4 + a (x + 2) ^ 4) / 2 := by
+      apply Finset.sum_le_sum
+      intro i hi
+      have : a (i + 1) ^ 2 * a (i + 2) ≤ (a (i + 1) ^ 4 + a (i + 2) ^ 4) / 2 := by
+        let a := a (i + 1)
+        let b := a (i + 2)
+        have h : 2 * a * b ≤ a ^ 2 + b ^ 2 := by
+          have h : 0 ≤ (a - b) ^ 2 := by
+            exact sq_nonneg (a - b)
+          linarith
+        apply (div_le_div_iff_of_pos_right (by simp; positivity)).mpr
+        linarith
+      exact this
+
+    -- $\sum_{n=0}^{98} (a_{n+1}^4 + a_{n+2}^4)/2 \le \sum_{n=0}^{98} (a_{n+1}^2 + a_{n+2}^2)^2 / 8$
+    have h₁ : ∑ x in Finset.range 99, (a (x + 1) ^ 4 + a (x + 2) ^ 4) / 2 ≤ ∑ x in Finset.range 99, (a (x + 1) ^ 2 + a (x + 2) ^ 2) ^ 2 / 8 := by
+      apply Finset.sum_le_sum
+      intro i hi
+      have : (a (i + 1) ^ 4 + a (i + 2) ^ 4) / 2 ≤ (a (i + 1) ^ 2 + a (i + 2) ^ 2) ^ 2 / 8 := by
+        let a := a (i + 1)
+        let b := a (i + 2)
+        have h : (a ^ 2 + b ^ 2) ^ 2 = a^4 + 2 * a^2 * b^2 + b^4 := by
+          ring
+        rw [h]
+        have : a^4 + b^4 ≥ 2 * a^2 * b^2 := by
+          have h : (a - b) ^ 2 ≥ 0 := by
+            exact sq_nonneg (a - b)
+          linarith
+        linarith
+      exact this
+
+    -- $\sum_{n=0}^{98} (a_{n+1}^2 + a_{n+2}^2)^2 / 8 \le \sum_{n=0}^{98} (a_{n+1}^2 + a_{n+2}^2) ^ 2 / 8$
+    have h₂ : ∑ x in Finset.range 99, (a (x + 1) ^ 2 + a (x + 2) ^ 2) ^ 2 / 8 ≤ ∑ x in Finset.range 99, (a (x + 1) ^ 2 + a (x + 2) ^ 2) / 8 := by
+      apply Finset.sum_le_sum
+      intro i hi
+      have h : (a (i + 1) ^ 2 + a (i + 2) ^ 2) ^ 2 / 8 ≤ (a (i + 1) ^ 2 + a (i + 2) ^ 2) / 8 := by
+        let a := a (i + 1)
+        let b := a (i + 2)
+        have h : (a + b) ^ 2 = a^2 + 2 * a * b + b ^ 2 := by
+          ring
+        rw [h]
+        have : a^2 + b^2 ≥ 2 * a * b := by
+          have h : (a - b) ^ 2 ≥ 0 := by
+            exact sq_nonneg (a - b)
+          linarith
+        have : (a + b) ^ 2 ≥ 4 * a * b := by
+          linarith
+        have : (a + b) ^ 2 / 8 ≥ (4 * a * b) / 8 := by
+          apply div_le_div_of_nonneg_right
+          linarith
+          simp
+        linarith
+      exact h
+
+    -- $\sum_{n=0}^{98} (a_{n+1}^2 + a_{n+2}^2)/8 \le \sum_{n=0}^{99} a_{n+1}^2 / 8$
+    have h₃ : ∑ x in Finset.range 99, (a (x + 1) ^ 2 + a (x + 2)) / 8 ≤ ∑ x in Finset.range 100, a (x + 1) ^ 2 / 8 := by
+      apply Finset.sum_le_sum
+      intro i hi
+      have : (a (i + 1) ^ 2 + a (i + 2)) / 8 ≤ (a (i + 1) ^ 2 + a (i + 1 + 1) ^ 2) / 8 := by
+        let a := a (i + 1)
+        let b := a (i + 1 + 1)
+        have h : a ^ 2 + b ^ 2 ≥ 2 * a * b := by
+          have h : (a - b) ^ 2 ≥ 0 := by
+            exact sq_nonneg (a - b)
+          linarith
+        have : (a + b) ^ 2 / 8 ≥ (2 * a * b) / 8 := by
+          linarith
+        have : (a + b) ^ 2 / 8 = a^2 / 8 + b^2 / 8 + a * b / 4 := by
+          ring
+        rw [this]
+        have : a ^ 2 / 8 + b ^ 2 / 8 + a * b / 4 ≥ a ^ 2 / 8 + b ^ 2 / 8 + (a ^ 2 + b ^ 2) / 8 := by
+          linarith
+        linarith
+      exact this
+
+    -- $\sum_{n=0}^{99} a_{n+1}^2 / 8 \le 1/8 \cdot \left( \sum_{n=0}^{99} a_{n+1}^2 \right) = 1/8$
+    have h₄ : ∑ x in Finset.range 100, a (x + 1) ^ 2 / 8 ≤ 1 / 8 := by
+      apply Finset.sum_le_sum
+      intro i hi
+      have : a (i + 1) ^ 2 / 8 ≤ 1 / 8 := by
+        let a := a (i + 1)
+        have : a ^ 2 ≤ a ^ 2 := by
+          simp
+        linarith
+      exact this
+
+    -- adding up all the inequalities, we get $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) \le 12 / 25$
+    have h₅ : ∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2) ≤ 12 / 25 := by
+      calc
+        ∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2) ≤ ∑ x in Finset.range 99, (a (x + 1) ^ 4 + a (x + 2) ^ 4) / 2 := by exact h₀
+        _ ≤ ∑ x in Finset.range 99, (a (x + 1) ^ 2 + a (x + 2) ^ 2) ^ 2 / 8 := by exact h₁
+        _ ≤ ∑ x in Finset.range 99, (a (x + 1) ^ 2 + a (x + 2) ^ 2) / 8  := by exact h₂
+        _ ≤ ∑ x in Finset.range 100, a (x + 1) ^ 2 / 8 := by exact h₃
+        _ ≤ 1 / 8 := by exact h₄
+        _ ≤ 12 / 25 := by norm_num
+
+    exact h₅
+
+  -- the goal is equivalent to showing that $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 < 12 / 25$
+  nth_rewrite 2 [add_comm]
+  -- we can swap the summation range and the indices, it is the same as $\sum_{n=1}^{100} a_n^2 * a_{n-1}$
+  have : ∑ x ∈ Finset.range 99, a (x + 1) ^ 2 * a (x + 2) + a 100 ^ 2 * a 1 = ∑ x ∈ Finset.range 100, a x ^ 2 * a (x - 1) := by
+    rw [Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ]
+    ring
+  rw [this]
+
+  -- re-arrange the summation to separate the last term, so it is the sum of $\sum_{n=1}^{99} a_n^2 * a_{n-1}$ and $a_{100}^2 * a_{100}$
+  rw [Finset.sum_range_succ]
+  -- the goal is now equivalent to showing that $\sum_{n=1}^{99} a_n^2 * a_{n-1} < 12 / 25 - a_{100}^2 * a_{100}$
+  apply lt_of_sub_pos
+  calc
+    ∑ x ∈ Finset.range 99, a x ^ 2 * a (x - 1) < 12 / 25 - a 100 ^ 2 * a 100 := by
+        -- we can add up all the inequalities, since $a_{100}^2 * a_{100} \ge 0$, we have $\sum_{n=1}^{99} a_n^2 * a_{n-1} \le 12 / 25$
+        exact (add_lt_add_iff_left (a 100 ^ 2 * a 100)).mpr h₄
+    _ = ∑ x ∈ Finset.range 100, a x ^ 2 * a (x - 1) - a 100 ^ 2 * a (100 - 1) := by
+        rw [Finset.sum_range_succ]
+        ring
+    _ = ∑ x ∈ Finset.range 100, a x ^ 2 * a (x - 1) - a 100 ^ 2 * a 99 := by
+        rw [Finset.sum_range_succ]
+        ring
+    _ = ∑ x ∈ Finset.range 100, a x ^ 2 * a (x - 1) - (a 100 ^ 2 * a 99) := by
+        simp
+
+  linarith
+
+```

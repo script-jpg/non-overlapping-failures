@@ -1,0 +1,53 @@
+have h₄ (x : ℕ+) : h x = Nat.gcd (12 * x + 7) (5 * x + 2) := by rw [h₀, h₁, h₂]
+
+  -- We can find that $h(x) = h(1) = 19$ for all $x$.
+  -- So the sum of all possible values of $h(x)$ is 19.
+  have h₅ : ∀ x, h x = 19 := by
+    intro x
+    rw [h₄, Nat.gcd_rec, Nat.gcd_rec, Nat.gcd_rec, Nat.gcd_rec]
+    norm_num
+    -- Each time we use `Nat.gcd_rec` to rewrite the term `Nat.gcd (12 * x + 7) (5 * x + 2)`, it eliminates one occurrence of `x`.
+    -- So after four times, we have rewritten the term `h x` to `h 1`, and then we can use the fact that `h 1 = 19` to close the proof.
+    have h₅ : x.gcd 1 = 1 := by rw [Nat.gcd_one_right]
+    have h₆ : x.gcd (x.gcd 1) = x.gcd 1 := by exact Nat.gcd_leftid (x.gcd 1)
+    rw [h₅] at h₆
+    rw [h₆]
+    rw [h₀, h₁, h₂]
+    norm_num
+
+  -- In fact, we can prove that $h(x) = 19$ for all $x$.
+  -- So the sum of all possible values of $h(x)$ is 19.
+  --   -- We can find that $h(x) = h(1) = 19$ for all $x$.
+  --   -- So the sum of all possible values of $h(x)$ is 19.
+  have h₆ : Set.range h = Set.range (fun _ ↦ 19) := by
+    ext n
+    simp
+    -- Each proof of `h x = 19` uses four applications of `Nat.gcd_rec`, and each application eliminates one occurrence of `x`.
+    -- So we use `Nat.gcd_const_right` to eliminate all remaining occurrences of `x`.
+    rw [h₅]
+  -- Now the goal is to show that the sum of all possible values of the constant function `19` is 12.
+  rw [h₆]
+  simp
+  have h₇ : Set.range (fun _ ↦ 19) = Set.range (fun _ ↦ 0) ∪ {19} := by
+    ext n
+    simp
+    constructor
+    · intro h
+      by_cases h' : n = 0
+      · rw [h']
+      · have h' : n = 19 := by omega
+        exact Or.inr h'
+    · intro h
+      rcases h with h | h
+      · rw [h]; omega
+      · simp [h]
+  rw [h₇, Finset.sum_union]
+  · simp
+  · -- It suffices to show that the set $\{0, 19\}$ has only one element.
+    simp
+    intro h
+    simp at h
+    obtain h | h := h
+    all_goals rw [h] at h₃
+    contradiction
+```

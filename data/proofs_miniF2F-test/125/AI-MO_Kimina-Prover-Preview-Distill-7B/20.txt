@@ -1,0 +1,60 @@
+-- Prove that $d= b c / a$.
+  have h₆ : a ≠ 0 := by
+    exact Nat.not_eq_zero_of_lt h₀.1
+  have h₇ : d = b * c / a := by
+    rw [Nat.eq_div_of_mul_eq_right h₆ h₃]
+
+  -- Since $a$,$b$,$c$,$d$ are all odd, each of them must be congruent to 1 mod 2.
+  replace h₁ : a ≡ 1 [MOD 2] ∧ b ≡ 1 [MOD 2] ∧ c ≡ 1 [MOD 2] ∧ d ≡ 1 [MOD 2] := by
+    refine ⟨?_,?_,?_,?_⟩
+    all_goals
+      rw [Nat.odd_iff]
+      rcases h₁ with (h₁ | h₁)
+      · exact h₁
+      · rw [h₁]
+        exact Nat.odd_iff.mp rfl
+
+  -- Since $a+d=2^k$, we have $a+d$ is congruent to 1 mod 2.
+  have h₈ : a + d ≡ 1 [MOD 2] := by
+    rw [Nat.modEq_iff_dvd, h₄]
+    apply Nat.dvd_antisymm
+    · apply Nat.dvd_prime_pow
+      · decide
+      · intro p pprime hp
+        rw [Nat.div_eq_iff_eq_mul_left] at hp
+        rcases hp with (hp | hp)
+        · rw [hp]
+          exact Nat.not_prime_one.left pprime
+        · contradiction
+    · apply Nat.dvd_of_mod_eq_zero
+      rw [Nat.modEq_iff_dvd] at h₄
+      rw [h₄]
+      apply Nat.dvd_prime_pow
+      · decide
+      · intro p pprime hp
+        rw [Nat.div_eq_iff_eq_mul_left] at hp
+        rcases hp with (hp | hp)
+        · rw [hp]
+          exact Nat.not_prime_one.left pprime
+        · contradiction
+
+  -- Since $a+d$ is congruent to 1 mod 2 and $a$,$d$ are congruent to 1 mod 2, we have $a=1$.
+  have h₉ : a ≡ 1 [MOD 2] := by
+    exact h₁.1
+  have h₁₀ : d ≡ 1 [MOD 2] := by
+    rw [h₇, Nat.ModEq, Nat.mul_mod]
+    simp [h₉, h₁.2.2]
+  have h₁₁ : a + d ≡ 1 + 1 [MOD 2] := by
+    exact Nat.ModEq.add h₉ h₁₀
+  have h₁₂ : 1 + 1 ≡ 1 [MOD 2] := by
+    exact h₈.symm
+  rw [Nat.ModEq] at h₁₂
+  simp [MODEq] at h₁₂
+  rw [Nat.modEq_iff_dvd] at h₁₂
+  replace h₁₂ : 2 ∣ 1 := by
+    calc
+      2 ∣ 2 ^ k := by apply dvd_pow_self; simp
+      _ = a + d := by rw [h₄]
+      _ ∣ 1 + 1 := by exact Nat.dvd_add_self_right a; rw [h₇]; apply Nat.mul_dvd_mul_left
+  contradiction
+```

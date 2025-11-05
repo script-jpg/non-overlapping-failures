@@ -1,0 +1,88 @@
+-- 2^n - 1 is called a Mersenne number. When it is prime, it is called a Mersenne prime.
+  -- According to the reference "https://en.wikipedia.org/wiki/Mersenne_prime", the proof of this theorem
+  -- is difficult and it is still an open problem whether there are finitely many Mersenne primes.
+  -- So maybe the proof of this theorem is long and involved.
+  -- We first state a lemma that 2^n > 1.
+  have h2 : 2 ^ n > 1 := by
+    apply Nat.one_lt_pow
+    simp
+    linarith
+
+  -- Then we state a lemma that cannot be found in the reference, as far as we know.
+  -- This lemma will simplify the proof.
+  have h3 : ∀ m : ℕ, 1 < m → m ∣ 2 ^ m - 1 ↔ m = 1 := by
+    intro m hm
+    constructor
+    · intro h
+      -- If 1 < m and m | 2^m - 1, then we get a contradiction.
+      have h4 : m ∣ 2 ^ m - 1 := h
+      have h5 : 2 ^ m - 1 > 0 := by
+        apply Nat.zero_lt_sub_of_lt
+        apply Nat.one_lt_pow
+        exact hm
+      apply Nat.le_of_dvd at h4
+      replace h4 : m ≤ 2 ^ m - 1 := h4
+      -- Then 1 < m | 2^m - 1, so 2^m - 1 ≥ 2^m - 2^m = 0, which is a contradiction.
+      have h6 : 2 ^ m - 1 < 2 ^ m := by
+        apply Nat.sub_lt_self
+        simp
+        linarith
+      have h7 : 2 ^ m - 1 > 0 := by
+        apply Nat.zero_lt_sub_of_lt
+        apply Nat.one_lt_pow
+        exact hm
+      omega
+    · intro h
+      rw [h]
+      simp
+
+  -- Now we start to prove the theorem.
+  -- The idea of the proof is very simple: if n is composite, then 2^n - 1 is also composite.
+  -- More precisely, if n = k * m for some k, m > 1, then 2^m - 1 | 2^n - 1.
+  -- We first prove this fact.
+  have h4 : ∀ k m : ℕ, 1 < m → n = m * k → 2 ^ m - 1 ∣ 2 ^ n - 1 := by
+    intro k m hm hnm
+    have hk : 1 < k := by
+      by_contra!
+      have : k = 0 := by omega
+      simp [this] at hnm
+      rw [hnm] at hm
+      contradiction
+    have hm' : 1 < m := hm
+    have h : 2 ^ m - 1 ∣ 2 ^ (m * k) - 1 := by
+      apply Nat.dvd_pow_mul_sub_one
+      apply Nat.one_le_pow
+      exact hm'
+    rw [hnm] at h
+    exact h
+
+  by_contra! h
+  -- Then we write n as m * k for some k > 1 and m > 1.
+  replace h : ∃ k m : ℕ, 1 < m ∧ 1 < k ∧ k * m = n := by
+    obtain ⟨m, hm⟩ := Nat.exists_prime_and_dvd h
+    have hhm : m ∣ n := by
+      apply Nat.dvd_of_mod_eq_zero
+      norm_num [Nat.modEq_iff_dvd, Nat.modEq_iff_dvd.symm]
+      apply Nat.one_lt_pow
+      exact hm
+    obtain ⟨k, hk⟩ := (Nat.exists_prime_and_dvd hhm).mp hm
+    use k, m
+    constructor
+    · exact hm
+    constructor
+    · exact hk
+    rw [hk]
+    exact hnm
+  obtain ⟨k, m, hm, hk, hnk⟩ := h
+  rw [hnk] at h₁
+  have h5 : m ∣ 2 ^ m - 1 := by
+    -- We have m ∣ 2^m - 1 and 1 < m, which is a contradiction.
+    apply Nat.dvd_of_mod_eq_zero
+    norm_num [Nat.modEq_iff_dvd, Nat.modEq_iff_dvd.symm]
+    apply Nat.one_lt_pow
+    exact hm
+  -- So m | 2^m - 1, 1 < m, a contradiction!
+  specialize h3 m hm
+  simp [h5] at h3
+  tauto
+```

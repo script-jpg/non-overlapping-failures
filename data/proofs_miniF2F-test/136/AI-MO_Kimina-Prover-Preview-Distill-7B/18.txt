@@ -1,0 +1,81 @@
+have h₀ he := h₁
+  have he : he.symm ∈ Set.InjOn f :=?_
+  apply Set.InjOn.symm at he
+
+  -- Define the roots
+  set r₁ := Real.cos (2 * Real.pi / 7)
+  set r₂ := Real.cos (4 * Real.pi / 7)
+  set r₃ := Real.cos (6 * Real.pi / 7)
+
+  -- Verify that they are in the preimage set
+  have hr₁ : r₁ ∈ f ⁻¹' {0} := by
+    rw [h₀]
+    simp [r₁]
+  have hr₂ : r₂ ∈ f ⁻¹' {0} := by
+    rw [h₀]
+    simp [r₂]
+  have hr₃ : r₃ ∈ f ⁻¹' {0} := by
+    rw [h₀]
+    simp [r₃]
+
+  -- Since they are in the preimage set, apply the function definition to get equations
+  have hr₁' : f r₁ = 0 := hr₁
+  have hr₂' : f r₂ = 0 := hr₃
+  have hr₃' : f r₃ = 0 := hr₃
+
+  -- Evaluate the function at the roots to get equations
+  have h₁ : r₁ ^ 3 + a * r₁ ^ 2 + b * r₁ + c = 0 := by
+    rw [h₀] at hr₁'
+    exact hr₁'
+  have h₂ : r₂ ^ 3 + a * r₂ ^ 2 + b * r₂ + c = 0 := by
+    rw [h₀] at hr₂'
+    exact hr₂'
+  have h₃ : r₃ ^ 3 + a * r₃ ^ 2 + b * r₃ + c = 0 := by
+    rw [h₀] at hr₃'
+    exact hr₃'
+
+  -- Solve for a, b, c using the equations
+  have ha : a = -(r₁ + r₂ + r₃) := by linarith
+  have hb : b = r₁ * r₂ + r₂ * r₃ + r₃ * r₁ := by linarith
+  have hc : c = -(r₁ * r₂ * r₃) := by linarith
+
+  -- Substitute and simplify
+  rw [ha, hb, hc]
+  simp only [ge_iff_le, tsub_le_iff_right, mul_assoc]
+
+  -- Prove that the product is 1/32
+  have : r₁ * r₂ * r₃ = 1 / 32 := by
+    calc
+      r₁ * r₂ * r₃ = -8 * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by simp [r₁, r₂, r₃]; ring
+      _ = -8 * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * (-Real.cos (3 * Real.pi / 7)) := by congr; nth_rw 1 [←Real.cos_pi_sub]; ring
+      _ = 8 * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (3 * Real.pi / 7) := by ring
+      _ = 8 * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (3 * Real.pi / 7) := by rfl
+      _ = 1 / 32 := by
+        let A := Real.cos (2 * Real.pi / 7)
+        let B := Real.cos (4 * Real.pi / 7)
+        let C := Real.cos (3 * Real.pi / 7)
+        have hA : A ^ 2 = (1 + Real.cos (4 * Real.pi / 7)) / 2 := by
+          rw [Real.cos_sq]
+          ring_nf
+        have hB : B ^ 2 = (1 + Real.cos (8 * Real.pi / 7)) / 2 := by
+          rw [Real.cos_sq]
+          ring_nf
+        have hC : C ^ 2 = (1 + Real.cos (6 * Real.pi / 7)) / 2 := by
+          rw [Real.cos_sq]
+          ring_nf
+        have h₁ : Real.cos (8 * Real.pi / 7) = -Real.cos (6 * Real.pi / 7) := by
+          have : 8 * Real.pi / 7 = Real.pi + 6 * Real.pi / 7 := by ring
+          rw [this]
+          rw [Real.cos_add]
+          simp
+        rw [h₁] at hB
+        have h₂ : Real.cos (4 * Real.pi / 7) ^ 2 + Real.cos (6 * Real.pi / 7) ^ 2 = 1 + Real.cos (8 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) := by linarith
+        have h₃ : Real.cos (2 * Real.pi / 7) ^ 2 + Real.cos (4 * Real.pi / 7) ^ 2 + Real.cos (6 * Real.pi / 7) ^ 2 = 3 / 2 := by
+          have : Real.cos (2 * Real.pi / 7) ^ 2 + Real.cos (4 * Real.pi / 7) ^ 2 + Real.cos (6 * Real.pi / 7) ^ 2 = (3 + Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) + Real.cos (8 * Real.pi / 7)) / 2 := by linarith
+          rw [this]
+          linarith
+        rw [hA, hB, hC] at *
+        iterate 3 nlinarith [h₃]
+
+  linarith
+```

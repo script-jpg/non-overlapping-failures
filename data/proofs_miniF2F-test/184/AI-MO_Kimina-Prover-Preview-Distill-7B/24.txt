@@ -1,0 +1,43 @@
+have h₁ : 2 ^ (n + 1) ∣ 3 ^ 2 ^ n - 1 := by
+    induction n with
+    | zero => simp_all
+    | succ n hn =>
+      rcases hn with ⟨k, hk⟩
+      use 3 * k + 1
+      rw [pow_add]
+      rw [show 2 ^ 2 ^ (n + 1) = (2 ^ 2 ^ n) ^ 2 by refine Eq.symm (Nat.pow_pow 2 (2 ^ n) 2)]
+      rw [show 3 ^ 2 ^ (n + 1) = (3 ^ 2 ^ n) ^ 2 by refine Eq.symm (Nat.pow_pow 3 (2 ^ n) 2)]
+      rw [hk]
+      ring_nf
+      rw [show 3 * k * 2 + 3 = 3 * (2 * k + 1) by ring]
+      apply Nat.mul_dvd_mul_left
+
+  have h₂ : 3 ^ 2 ^ n - 1 < 2 ^ (n + 3) := by
+    induction n with
+    | zero => simp_all
+    | succ n hn =>
+      rcases hn with ⟨k, hk⟩
+      specialize hk (by linarith)
+      rw [pow_add, pow_add]
+      rw [show 2 ^ 2 ^ (n + 1) = (2 ^ 2 ^ n) ^ 2 by refine Eq.symm (Nat.pow_pow 2 (2 ^ n) 2)]
+      rw [show 3 ^ 2 ^ (n + 1) = (3 ^ 2 ^ n) ^ 2 by refine Eq.symm (Nat.pow_pow 3 (2 ^ n) 2)]
+      rw [hk]
+      ring_nf
+      apply Nat.lt_two_pow
+
+  have h₃ : 2 ^ (n + 2) = 2 ^ (n + 3) - 2 ^ (n + 1) := by
+    rw [pow_add, pow_add]
+    simp
+    rw [show 2 ^ 2 ^ (n + 1) = (2 ^ 2 ^ n) ^ 2 by refine Eq.symm (Nat.pow_pow 2 (2 ^ n) 2)]
+    rw [show 2 ^ 2 ^ (n + 2) = (2 ^ 2 ^ n) ^ 4 by refine Eq.symm (Nat.pow_pow 2 (2 ^ n) 4)]
+    rw [show (2 ^ 2 ^ n) ^ 4 - (2 ^ 2 ^ n) ^ 2 = (2 ^ 2 ^ n) ^ 2 * ((2 ^ 2 ^ n) ^ 2 - 1) by ring]
+    rw [show (2 ^ 2 ^ n) ^ 2 - 1 = (2 ^ 2 ^ n - 1) * (2 ^ 2 ^ n + 1) by ring]
+    rw [show 2 ^ (n + 1) = 2 * 2 ^ n by ring]
+    rw [Nat.pow_dvd_pow]
+    omega
+    exact (Nat.pow_pos (by norm_num)).trans (Nat.pow_pos (by norm_num))
+
+  rw [←h₃]
+  apply Nat.mod_eq_of_dvd
+  exact h₁
+```

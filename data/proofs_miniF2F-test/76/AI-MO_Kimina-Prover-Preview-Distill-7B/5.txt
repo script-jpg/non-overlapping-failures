@@ -1,0 +1,152 @@
+-- Let $S$ be the set of positive integers $n$ satisfying $\dfrac{n+1000}{70} = \lfloor \sqrt{n} \rfloor$.
+  -- We want to show that $S$ has $6$ elements.
+
+  have h₁ : S = {175, 224, 289, 364, 445, 532} := by
+    -- We claim that the set of positive integers $n$ satisfying the given condition is exactly
+    -- $\{175, 224, 289, 364, 445, 532\}$.
+    ext n
+    simp [h₀]
+    constructor
+    · -- First, we show that if $n$ satisfies the condition, then $n$ is in our set.
+      intro ⟨h₁, h₂⟩
+      -- $n = (\lfloor \sqrt{n} \rfloor + 1000) / 70$
+      have h₃ : n = (Int.floor (Real.sqrt n) + 1000) / 70 := by
+        -- Just do casework on whether $70$ divides $n+1000$ or not.
+        rcases h₁ with h | h
+        · -- If $70$ divides $n+1000$, then $\lfloor \sqrt{n+1000}/70\rfloor = \lfloor \sqrt{n} \rfloor$.
+          refine eq_div_of_mul_eq h.symm?_
+          rw [Int.floor_eq_iff]
+          nth_rw 2 [add_comm]
+          refine ⟨?_,?_⟩
+          · rw [h₂]
+            calc
+              _ ≤ Real.sqrt (n + 1000) := by
+                refine Real.le_sqrt_of_sq_le?_
+                rw [← h₂]
+                apply Int.le_floor
+              _ ≤ _ := by
+                refine Real.sqrt_le_sqrt?_
+                simp [h]
+          · calc
+              _ ≤ Real.sqrt (n + 1000) := by
+                refine Real.le_sqrt_of_sq_le?_
+                rw [← h₂]
+                apply Int.floor_le
+              _ ≤ _ := by
+                refine Real.sqrt_le_sqrt?_
+                simp [h]
+        · -- If $70$ does not divide $n+1000$, then $\lfloor (n+1000)/70\rfloor = \lfloor \sqrt{n} \rfloor + 1$.
+          rw [← Int.floor_eq_iff]
+          nth_rw 2 [← one_mul (Int.floor (Real.sqrt n))] at h₂
+          refine ⟨?_,?_⟩
+          · rw [h₂]
+            calc
+              _ ≤ (n + 1000) / 70 := by
+                rw [div_le_div_iff₀]
+                simp
+                rw [← h₁]
+                simp
+              _ ≤ _ := by
+                simp
+                refine Int.floor_le?_
+                simp [h]
+          · calc
+              _ ≤ (n + 1000) / 70 := by
+                rw [le_div_iff₀]
+                refine Int.floor_le?_
+                simp [h]
+              _ ≤ _ := by
+                rw [div_le_div_iff₀]
+                simp
+                rw [← h₁]
+                simp
+      -- Let $m = \lfloor \sqrt{n} \rfloor$.
+      let m := Int.floor (Real.sqrt n)
+      -- Then $m = n / 70$.
+      have h₄ : m = n / 70 := by
+        simp [m]
+      -- $m \leq \sqrt{n}$.
+      have h₅ : m ≤ Real.sqrt n := by
+        simp [m]
+        apply Int.floor_le
+      -- $\sqrt{n} < m + 1$.
+      have h₆ : Real.sqrt n < m + 1 := by
+        simp [m]
+        refine Int.lt_floor_add_one _
+      -- Squaring the two sides, we get $n < (m + 1)^2$.
+      have h₇ : n < (m + 1)^2 := by
+        rw [← Real.sqrt_lt' (by simp)]
+        simp [h₆]
+      -- We also have $70 \mid n+1000$, so $n = 70k - 1000$ for some integer $k$.
+      have ⟨k, h₈⟩ : 70 ∣ n + 1000 := by
+        rw [← h₂]
+        simp
+      rw [h₈] at h₄
+      -- Then $70 \mid (m+1)^2 - 1000$, because
+      -- $(m+1)^2 - 1000 = (m+1)^2 - (n+1000) = (m+1)^2 - 70k + 1000 = (m+1)^2 - 70k + 1000 + 70k - 1000 = 70(m+1)^2 - 70k$.
+      have h₉ : 70 ∣ (m + 1)^2 - 1000 := by
+        rw [← h₈]
+        ring_nf
+        rw [Int.dvd_add_iff_right (Int.dvd_const 70)]
+        simp
+        rw [← h₄]
+        simp
+      -- So $(m + 1)^2 - 1000 \geq 0$.
+      have h₁₀ : 0 ≤ (m + 1)^2 - 1000 := by
+        apply Int.le_of_dvd
+        · simp
+        · exact h₉
+      -- So $m \geq 31$.
+      have h₁₁ : 31 ≤ m := by
+        by_contra!
+        -- If $m \le 30$, then $(m + 1)^2 - 1000 < 0$, which is a contradiction.
+        have h₁₁ : (m + 1)^2 - 1000 < 0 := by
+          rw [Nat.pow_le_pow_iff_left (by norm_num)]
+          linarith
+        linarith only [h₉, h₁₁]
+      -- Also, $n = m \cdot 70 - 1000$.
+      replace h₄ : n = m * 70 - 1000 := by
+        rw [h₄]
+        rw [← Nat.div_mul_cancel h₈]
+      -- So $m \cdot 70 - 1000 < (m + 1)^2$.
+      replace h₇ : m * 70 - 1000 < (m + 1)^2 := by
+        rw [h₄] at h₇
+        exact h₇
+      -- So $m > 30$.
+      have h₁₂ : 30 < m := by
+        by_contra!
+        -- If $m \le 30$, then $m \cdot 70 - 1000 \geq (m + 1)^2$, which is a contradiction.
+        have h₁₂ : m * 70 - 1000 ≥ (m + 1)^2 := by
+          rw [Nat.pow_le_pow_iff_left (by norm_num)]
+          omega
+        linarith only [h₇, h₁₂]
+      -- So $31 \leq m \leq 32$.
+      have h₁₃ : m = 31 ∨ m = 32 := by
+        omega
+      -- Summarizing, we have shown that $n$ must be of the following two values:
+      -- $n = 31 \cdot 70 - 1000 = 175$ and $n = 32 \cdot 70 - 1000 = 224$.
+      rcases h₁₃ with h | h
+      · -- For $m = 31$, $n = 31 \cdot 70 - 1000 = 175$.
+        have h₁₄ : n = 31 * 70 - 1000 := by
+          rw [h] at h₄
+          rw [h₄]
+        norm_num at h₁₄
+        exact h₁₄
+      · -- For $m = 32$, $n = 32 \cdot 70 - 1000 = 224$.
+        have h₁₄ : n = 32 * 70 - 1000 := by
+          rw [h] at h₄
+          rw [h₄]
+        norm_num at h₁₄
+        exact h₁₄
+    · -- Now, we show that if $n$ is in our set, then $n$ satisfies the condition.
+      intro h
+      rcases h with h | h | h | h | h | h
+      all_goals
+        rw [h]
+        constructor
+        · norm_num
+        · norm_num
+  rw [h₁]
+  norm_num
+
+```

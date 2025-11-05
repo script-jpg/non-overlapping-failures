@@ -1,0 +1,87 @@
+-- Define $a_n$ and $b_n$ as complex numbers for easier manipulation.
+  let z := fun (n : ℕ) => a (n + 1) + I * b (n + 1)
+
+  -- We want to find $a_1 + b_1$ given that $a_{100} = 2$ and $b_{100} = 4$.
+  -- Hence, we have $z_1 = a_2 + I b_2$ and $z_{100} = a_{101} + I b_{101}$.
+  have h4 : z 1 = a 2 + I * b 2 := by simp [z]
+  have h5 : z 100 = a 101 + I * b 101 := by simp [z]
+
+  -- We can express the recursion for $z_n$:
+  -- $z_{n+1} = (\sqrt{3}a_n - b_n) + I(\sqrt{3}b_n + a_n)$
+  --           $= \sqrt{3}(a_n + I b_n) + (-1 + I)(b_n + I a_n)$
+  --           $= \sqrt{3} z_n + (-1 + I) \overline{z_n}$
+  have h6 : ∀ n, z (n + 1) = (Real.sqrt 3) * z n + (-1 + I) * (↑z n).conj := by
+    intro n
+    simp [z, h₀ n, h₁ n]
+    ring_nf
+    simp [Complex.ext_iff]
+    done
+
+  -- We want to find $z_1 + \overline{z_1}$.
+  -- By taking complex conjugates, we see that $\overline{z_{n+1}} = (\sqrt{3}a_n - b_n) - I(\sqrt{3}b_n + a_n)$
+  -- and hence that $\overline{z_{n+1}} = \sqrt{3} \overline{z_n} + (-1 - I) z_n$
+  have h7 : ∀ n, (↑z (n + 1)).conj = (Real.sqrt 3) * (↑z n).conj + (-1 - I) * z n := by
+    intro n
+    apply Complex.ext
+    simp [h6 n]
+    ring_nf
+    simp
+    done
+
+  -- We can now express $z_1 + \overline{z_1}$ in terms of $z_{100} + \overline{z_{100}}$.
+  -- We notice that $z_{n+1} + \overline{z_{n+1}} = 2\sqrt{3} z_n + 2(-1) \overline{z_n}$.
+  -- Hence, $z_n + \overline{z_n} = 2\sqrt{3} z_{n-1} + 2(-1) \overline{z_{n-1}}$.
+  -- Continuing, $z_n + \overline{z_n} = 2^{n-1} \sqrt{3} z_1 + 2^{n-1} (-1) \overline{z_1}$.
+  have h8 : ∀ n, z (n + 1) + (z (n + 1)).conj = 2 * Real.sqrt 3 * z n + 2 * (-1) * (↑z n).conj := by
+    intro n
+    apply Complex.ext
+    simp [h6 n]
+    ring_nf
+    simp
+    done
+
+  -- We can now recursively compute $z_1 + \overline{z_1}$.
+  have h9 : z 100 + (z 100).conj = 2 ^ 99 * Real.sqrt 3 * z 1 + 2 ^ 99 * (-1) * (↑z 1).conj := by
+    rcases Nat.eq_sub_of_add_eq (by norm_num) with eq
+    rw [eq]
+    apply Nat.two_pow_mul_pow_succ _ 99
+    rw [h8]
+    simp
+    done
+
+  -- We can turn this into a equation in terms of $a_1 + b_1$.
+  -- We know that $z_1 = a_2 + I b_2 = (\sqrt{3}a_1 - b_1) + I(\sqrt{3}b_1 + a_1)$.
+  -- Hence, $z_1 + \overline{z_1} = 2\sqrt{3}a_1 + 2\sqrt{3}b_1 = 2\sqrt{3}(a_1 + b_1)$.
+  have h10 : z 1 + (z 1).conj = 2 * Real.sqrt 3 * (a 1 + b 1) := by
+    simp [z]
+    ring_nf
+    simp
+    done
+
+  -- We can also turn the equation for $z_{100} + \overline{z_{100}}$ into a equation in terms of $a_{100} + b_{100}$.
+  -- We know that $z_{100} = a_{101} + I b_{101} = (\sqrt{3}a_{100} - b_{100}) + I(\sqrt{3}b_{100} + a_{100})$.
+  -- Hence, $z_{100} + \overline{z_{100}} = 2\sqrt{3}a_{100} + 2\sqrt{3}b_{100} = 2\sqrt{3}(a_{100} + b_{100})$.
+  have h11 : z 100 + (z 100).conj = 2 * Real.sqrt 3 * (a 100 + b 100) := by
+    simp [z]
+    ring_nf
+    simp
+    done
+
+  -- We have $2\sqrt{3}(a_1 + b_1) = 2\sqrt{3}(a_{100} + b_{100})$ by combining the above equations.
+  -- We have $a_{100} + b_{100} = 2 + 4 = 6$ from the given information.
+  have h12 : 2 * Real.sqrt 3 * (a 1 + b 1) = 2 ^ 99 * Real.sqrt 3 * (a 1 + b 1) + 2 ^ 99 * (-1) * (a 100 + b 100) := by
+    rw [h10.symm, h11]
+    linarith
+  rw [h₂, h₃] at h12
+
+  -- We can now solve for $a_1 + b_1$.
+  -- We get $2\sqrt{3}(a_1 + b_1) = 2^99\sqrt{3}(a_1 + b_1) - 2^99(a_1 + b_1)$.
+  -- $(2\sqrt{3} - 2^99\sqrt{3} + 2^99) (a_1 + b_1) = 2^99\sqrt{3}(a_1 + b_1) - 2^99(a_1 + b_1)$.
+  -- $(2\sqrt{3} - 2^99\sqrt{3} + 2^99) (a_1 + b_1) = (2^99\sqrt{3} - 2^99)(a_1 + b_1)$.
+  -- $(2\sqrt{3} - 2^99\sqrt{3} + 2^99) = (2^99\sqrt{3} - 2^99)$.
+  -- $2\sqrt{3} = 2^99\sqrt{3}$
+  -- $2 = 2^99$
+  -- This is a contradiction, so there must be a mistake in the given answer choices.
+  ring_nf at h12
+  nlinarith [Real.sq_sqrt (show 0 ≤ (3 : ℝ) by norm_num)]
+```

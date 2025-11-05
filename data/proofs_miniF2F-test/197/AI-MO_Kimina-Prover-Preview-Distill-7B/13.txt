@@ -1,0 +1,60 @@
+-- We have $a>0$, $b>0$, and each differ from their reciprocals by 1.
+  -- We want to find $a+b$.
+
+  -- Consider the equation $x - 1/x = 1$.
+  -- Multiplying both sides by $x$ (which is non-zero as $x>0$), we get $x^2 - 1 = x$.
+  -- Rearranging, we get $x^2 - x - 1 = 0$.
+  have h₄ (x : ℝ) : abs (x - 1 / x) = 1 → x^2 - x - 1 = 0 → 0 < x → x = (1 + Real.sqrt 5) / 2 ∨ x = (1 - Real.sqrt 5) / 2 := by
+    intro h₄ h₅ h₆
+    have h₇ : x ≠ 0 := by linarith
+    have h₈ : x^2 - 1 = x := by
+      field_simp at h₄
+      linear_combination h₄
+    have h₉ : x^2 - x - 1 = 0 := by linarith
+    have : x^2 - x - 1 = (x - (1 + Real.sqrt 5) / 2) * (x - (1 - Real.sqrt 5) / 2) := by
+      ring_nf
+      rw [Real.sq_sqrt (by norm_num)]
+      linarith
+    rw [this] at h₉
+    simp at h₉
+    rcases h₉ with h | h
+    · left
+      linarith
+    · right
+      linarith
+
+  -- Now we prove a lemma saying that if a positive number $x$ differs from its reciprocal by 1,
+  -- then $x$ is either $(1+\sqrt{5})/2$ or $(1-\sqrt{5})/2$.
+  have h₅ (x : ℝ) : 0 < x → abs (x - 1 / x) = 1 → x = (1 + Real.sqrt 5) / 2 ∨ x = (1 - Real.sqrt 5) / 2 := by
+    intro h₅ h₆
+    specialize h₄ x h₆ h₅
+    have h₇ : x = (1 + Real.sqrt 5) / 2 ∨ x = (1 - Real.sqrt 5) / 2 := by
+      tauto
+    exact h₇
+
+  -- Now we consider cases for $a$ and $b$.
+  have h₆ : a = (1 + Real.sqrt 5) / 2 ∨ a = (1 - Real.sqrt 5) / 2 := by
+    specialize h₅ a h₀.left h₂
+    exact h₅
+  have h₇ : b = (1 + Real.sqrt 5) / 2 ∨ b = (1 - Real.sqrt 5) / 2 := by
+    specialize h₅ b h₀.right h₃
+    exact h₅
+
+  -- Since $a \neq b$, we must have one of them is $(1+\sqrt{5})/2$ and the other is $(1-\sqrt{5})/2$.
+  have h₈ : (a = (1 + Real.sqrt 5) / 2 ∧ b = (1 - Real.sqrt 5) / 2) ∨ (a = (1 - Real.sqrt 5) / 2 ∧ b = (1 + Real.sqrt 5) / 2) := by
+    rcases h₆ with h₆ | h₆ <;> rcases h₇ with h₇ | h₇
+    <;> simp [h₆, h₇]
+    <;> tauto
+
+  -- Either case, $a+b$ equals to $\sqrt{5}$.
+  rcases h₈ with h₈ | h₈
+  · rw [h₈.left, h₈.right]
+    ring_nf
+    rw [Real.sq_sqrt (by norm_num)]
+    ring
+  · rw [h₈.left, h₈.right]
+    ring_nf
+    rw [Real.sq_sqrt (by norm_num)]
+    ring
+
+```

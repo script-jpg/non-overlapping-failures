@@ -1,0 +1,76 @@
+constructor
+
+  -- Forward direction: if f satisfies the functional equation, then f(z) = 0 or f(z) = 2z + c for some c
+ . intro hf
+
+    -- First, consider the case where f(0) = 0
+    have case1 : f 0 = 0 ∨ ∃ c, ∀ z, f z = 2 * z + c := by
+
+      -- If f(0) ≠ 0, then we can take c = f(0) and show that f(z) = 2z + c for all z
+      by_cases h : f 0 ≠ 0
+
+     . right
+        use f 0
+        intro z
+        have h1 := hf 0 z
+        simp at h1
+        linear_combination h1
+
+      -- If f(0) = 0, then we need to investigate further
+     . left
+        rw [not_or.mp h]
+
+    -- Now consider the case where f(0) = 0
+    rcases case1 with case1 | case1
+   . -- If f(0) = 0, then f(z) = 0 for all z
+      have h0 : f 0 = 0 := case1
+      have h1 : ∀ z, f z = 0 := by
+        intro z
+        have h1 := hf 0 z
+        simp at h1
+        rw [h0] at h1
+        simp at h1
+        exact h1
+
+      -- This corresponds to the case where f(z) = 0 for all z
+      left
+      exact h1
+
+    -- If there exists c such that f(z) = 2z + c for all z, then in particular f(0) = c
+   . rcases case1 with ⟨c, case1⟩
+      have h0 : f 0 = c := by
+        specialize case1 0
+        simp at case1
+        exact case1
+
+      -- We can use a similar method to the previous case
+      have h1 : ∀ z, f z = 0 ∨ f z = 2 * z + c := by
+        intro z
+        have h1 := hf z 0
+        simp at h1
+        rw [h0, case1] at h1
+        -- We have f(z) = f(f(z)) - 2f(0) = f(f(z)) - 2c
+        rw [←h1]
+        rw [case1]
+        simp
+        ring_nf
+      exact h1
+
+  -- Backward direction: if f(z) = 0 or f(z) = 2z + c for all z, then f satisfies the functional equation
+ . intro hf a b
+
+    rcases hf (a + b) with hf | hf
+   . -- If f(a+b) = 0, then f(2a) = f(f(a+b)) = f(0) = 0
+      rw [hf]
+      simp
+      specialize hf 0 b
+      simp at hf
+      exact hf
+   . -- If f(a+b) = 2(a+b) + c, then f(2a) = f(f(a+b)) = f(2a + 2b + c)
+      -- and 2f(b) = 2(2b + c) = 4b + 2c
+      rw [hf]
+      simp
+      rw [hf]
+      ring_nf
+
+```

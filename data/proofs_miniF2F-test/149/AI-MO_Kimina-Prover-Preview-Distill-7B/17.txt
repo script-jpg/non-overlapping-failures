@@ -1,0 +1,243 @@
+-- Set $x = 1/n$ and $y = 1 - 1/n$. --
+  let x := (1 : ℝ) / n
+  let y := 1 - (1 : ℝ) / n
+
+  -- Let $f$ be the function $t \to t^x$. --
+  let f : ℝ → ℝ := fun t => t ^ x
+
+  -- Observe that $0 \leq y$. --
+  have y_nonneg : 0 ≤ y := by
+
+    simp only [y, one_sub_nonneg]
+
+    -- Let $s = 1 + 1/n$. --
+    let s := 1 + (1 : ℝ) / n
+
+    -- Then, $s - 1 = 1/n = x$. --
+    have hs : s - 1 = x := by
+
+      simp only [s, x]
+
+      ring
+
+    -- Because $s > 1$, we have $y = 1 - x < 1$. --
+    have : s > 1 := by
+
+      simp only [s, one_add_one_div_lt]
+
+      exact Nat.zero_lt_of_ne_zero (by norm_num)
+
+    linarith
+
+  have hx : 0 ≤ x := by simp [x]
+
+  -- Then, $f(y) = (1 - x)^{1/x} = 1 + 1/x$. --
+  have hy : f y = 1 + 1 / x := by
+
+    simp only [f, y, x, Nat.cast_one, div_div_eq_mul_div]
+
+    -- Note that $0 \neq x$ because $n$ is positive. --
+    have : x ≠ 0 := by simp [x, Nat.cast_pos]
+
+    -- Use the property of the function $f$. --
+    apply Real.rpow_of_le_one
+    · linarith
+    · exact this
+    · simp only [sub_nonneg, y_nonneg, one_add_one_div_le]
+      exact Nat.zero_lt_of_ne_zero (by norm_num)
+
+  -- We have $f(0) = 0^x = 0$. --
+  have h0 : f 0 = 0 := by simp [f, x, Nat.cast_pos]
+
+  -- We have $f(1) = 1^x = 1$. --
+  have h1 : f 1 = 1 := by simp [f, x, Nat.cast_one]
+
+  -- Use the Mean Value Theorem. --
+  have h : ∃ ξ, 0 < ξ ∧ ξ < 1 ∧ (f 1 - f 0) / (1 - 0) = deriv f ξ := by
+
+    -- The derivative of $f$ is $t^{x-1}$. --
+    have df (t : ℝ) : deriv f t = t ^ (x - 1) := by
+
+      simp only [f]
+      rw [deriv_rpow_natCast]
+      · simp
+      · exact le_of_lt (Nat.cast_pos.mpr (by norm_num))
+      · simp [hx]
+
+    -- Use the Mean Value Theorem. --
+    apply differentiableOn_of_isOpen (convex_Ioo 0 1)
+    · simp
+    · simp [f]
+      apply Continuous.continuousOn
+      exact continuousOn_rpow_natCast (by simp)
+
+    -- There exists ξ s.t. f(1) - f(0) = f'(ξ) * (1 - 0). --
+    apply @ exists_ξ_mem_Ioo_eq f
+    · simp
+    · simp [f]
+      exact (DifferentiableAt.deriv_eq f 1).symm
+    · simp
+    · simp [f]
+      exact (DifferentiableAt.deriv_eq f 0).symm
+
+  -- Note that ξ > 0 because f'(0) = 0. --
+  obtain ⟨ξ, hξ, hξ1, hderiv⟩ := h
+  have hξ_pos : ξ > 0 := by
+    have := hξ
+    by_contra! h
+    simp only [not_lt, nonpos_iff_eq_zero_or_lt] at h
+    · simp [h, h0, h1] at hderiv
+      norm_num at hderiv
+    · linarith
+
+  -- We have $f'(ξ) = f(1) - f(0) = 1$. --
+  have hderiv1 : deriv f ξ = 1 := by
+    rw [h0, h1] at hderiv
+    norm_num at hderiv
+    exact hderiv
+
+  -- Simplify $f'(ξ) = 1$ to $(1 - x) ^ x / x = 1$. --
+  have h_eq_1 : (1 - x) ^ x / x = 1 := by
+    rw [← hderiv1, df, ← pow_succ, ← h_xpow, ← Real.rpow_mul, ← Real.rpow_natCast_mul, ← Nat.cast_one, mul_one_div_one, div_self]
+    · simp
+    · simp [hx]
+    · simp [hξ_pos]
+    · simp [hξ1]
+    · norm_num
+    · exact le_of_lt (Nat.cast_pos.mpr (by norm_num))
+
+  -- Case 1 : $1 - x = 1$ --
+  by_cases h : 1 - x = 1
+  · -- In this case, $x = 0$. --
+    have : x = 0 := by linarith
+    simp only [x] at this
+    norm_cast at this
+    linarith
+
+  -- Case 2 : $1 - x < 1$ --
+  · -- In this case, $(1 - x) ^ x < 1$. --
+    have h_lt_1 : (1 - x) ^ x < 1 := by
+      -- Use the lemma Real.rpow_lt_one. --
+      apply Real.rpow_lt_one
+      · simpa
+      · exact h
+      · linarith
+      · simp [hξ_pos]
+      · simp [hξ1]
+
+    -- We have $(1 - x) ^ x \neq 0$. --
+    have h_ne_0 : (1 - x) ^ x ≠ 0 := by
+      -- Use the lemma Real.rpow_ne_zero. --
+      apply Real.rpow_ne_zero
+      exact Nat.zero_lt_of_ne_zero (by norm_num)
+
+    -- We have $x \neq 0$. --
+    have h_x_ne_0 : x ≠ 0 := by exact Nat.cast_pos.mpr (by norm_num)
+
+    -- Combine the equalities and the inequality, we have $(1 - x) ^ x / x < 1/x$. --
+    have h_div_lt_1_div_x : (1 - x) ^ x / x < 1 / x := by
+      apply (div_lt_div_iff_of_pos_right h_x_ne_0).mpr
+      linarith
+
+    -- That is, $f'(ξ) < 1/x$. --
+    replace h_eq_1 : deriv f ξ < 1 / x := by linarith
+
+    -- On the other hand, $f'(ξ) = 1$. --
+    rw [df] at h_eq_1
+
+    -- Then, $t ^ (x - 1) < 1 / x$ where $t = 1 - x$. --
+    have h_t : (1 - x) ^ (x - 1) < 1 / x := by
+      linarith
+
+    -- Substitute $t = 1 - x$. --
+    rw [← h] at h_t
+    simp only [sub_sub_cancel, sub_eq_add_neg] at h_t
+
+    -- Multiply both sides by $x$ --
+    replace h_t : x * (x ^ (x - 1) : ℝ) < x * (1 / x) := by
+      apply mul_lt_mul_of_pos_left
+      · exact h_t
+      · exact Nat.cast_pos.mpr (by norm_num)
+
+    -- Use the lemma to simplify the left-hand side --
+    have h_xpomul : x * (x ^ (x - 1) : ℝ) = x ^ x := by
+      rw [Real.mul_rpow]
+      · simp
+      · exact le_of_lt (Nat.cast_pos.mpr (by norm_num))
+      · simp [h_x_ne_0]
+
+    rw [h_xpomul] at h_t
+
+    -- Multiply both sides by $-1$ --
+    replace h_t : (-1) * (x ^ x : ℝ) > (-1) * (x * (1 / x)) := by
+      apply mul_lt_mul_of_neg_left
+      · exact h_t
+      · linarith
+
+    -- Use the lemma to simplify the right-hand side --
+    have h_xpmul : (-1) * (x * (1 / x) : ℝ) = -1 := by
+      rw [mul_inv_cancel₀]
+      linarith
+
+    rw [h_xpmul] at h_t
+
+    -- Take the exponential of both sides --
+    replace h_t : Real.exp (-x ^ x : ℝ) < Real.exp (-1) := by
+      apply Real.exp_lt_exp_of_lt
+      linarith
+
+    -- Simplify the left-hand side --
+    have hxpexp : Real.exp (-x ^ x : ℝ) = (1 / (x ^ x : ℝ)) := by
+      rw [Real.exp_neg, Real.exp_rpow]
+      · exact le_of_lt (Nat.cast_pos.mpr (by norm_num))
+      · simp [hx]
+
+    -- Compare the result with $1 - (1 - x)^{1/x}$ --
+    have h_final : 1 - (1 - x) ^ (1 / x : ℝ) < Real.exp (-1) := by
+      calc
+        _ = 1 - Real.exp (-x ^ x : ℝ) := by
+          rw [hxpexp]
+          rw [Real.exp_rpow]
+          · exact le_of_lt (Nat.cast_pos.mpr (by norm_num))
+          · simp [hx]
+        _ < 1 - (-1) := by rel [h_t]
+        _ = _ := by simp
+
+    -- Thus, $1 - (1 - x)^{1/x} < \exp(-1)$. --
+    have h_final2 : 1 - (1 - x) ^ (1 / x : ℝ) < Real.exp (-1) := by
+      exact h_final
+
+    -- We have $\exp(-1) < 1$. -/
+    have h_exp_neg_one : Real.exp (-1 : ℝ) < 1 := by
+      suffices Real.exp (-1 : ℝ) < Real.exp (0 : ℝ) by
+        rw [exp_zero] at this
+        exact this
+      exact Real.exp_strictMono (by linarith)
+
+    -- We have $1 - (1 - x)^{1/x} < 1$. --
+    have h_final3 : 1 - (1 - x) ^ (1 / x : ℝ) < 1 := by
+      linarith
+
+    -- We have $(1 - x)^{1/x} > 0$. --
+    have h_final4 : 0 < (1 - x) ^ (1 / x : ℝ) := by
+      -- Use the lemma Real.rpow_pos_of_pos. --
+      apply Real.rpow_pos_of_pos
+      exact Nat.zero_lt_of_ne_zero (by norm_num)
+
+    -- Since $1 - (1 - x)^{1/x} < 1$ and $(1 - x)^{1/x} > 0$, we have $1 < (1 - x)^{1/x} + (1 - x)^{1/x}$. --
+    replace h_final3 : 1 / ((1 - x) ^ (1 / x : ℝ)) < 1 / (1 - x) ^ (1 / x : ℝ) := by
+      apply one_div_lt_one_div_of_lt
+      · exact h_final4
+      · linarith
+
+    -- That is, $1 < 2(1 - x)^{1/x}$. --
+    have h_final5 : 2 * (1 - x) ^ (1 / x : ℝ) > 1 := by
+      linarith
+
+    -- Our goal is to show $1 - (1 - x)^{1/x} < 2(1 - x)^{1/x}$. --
+    suffices 1 - (1 - x) ^ (1 / x : ℝ) < 2 * (1 - x) ^ (1 / x : ℝ) by
+      linarith
+
+    -- Since $1 - (1 - x)^{1/x} < 1$ and $1 < 2(1 - x)^{1/x}$, we have $1 - (1 - x)^{1/x} < 2(1 - x)^{1/x}$. --
+    linarith
+```

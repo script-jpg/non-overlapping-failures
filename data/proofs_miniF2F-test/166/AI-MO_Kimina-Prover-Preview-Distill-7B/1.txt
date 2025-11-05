@@ -1,0 +1,33 @@
+-- define a probability mass function $p: \mathbb{N} \to \mathbb{R}$ by $p(i) = \frac{1}{n} \cdot \mathbf{1}_{\{i < n\}}(i)$
+  set p : ℕ → ℝ := fun i => (1 / n) * (1 : i < n) with hp
+  -- show that $\sum_{i=0}^{n-1} p(i) = 1$
+  have hpsum : ∑ i ∈ Finset.range n, p i = 1 := by
+    rw [Finset.sum_const distrib] -- use Finset.sum_const to rewrite the sum
+    rw [Finset.sum_ite] -- use Finset.sum_ite to rewrite the sum
+    simp [p] -- simplify the sum
+    norm_num -- normalize the number
+  -- show that $\prod_{i=0}^{n-1} a(i) \leq \sum_{i=0}^{n-1} p(i) \cdot a(i)$
+  have h : ∏ x ∈ Finset.range n, a x ≤ ∑ i ∈ Finset.range n, p i * a i := by
+    -- use the AM-GM inequality
+    apply Real.finset_prod_le_sum
+    -- show that $\forall i \in \{0, 1, \ldots, n-1\}, p(i) \geq 0$
+   . intro i hi
+      apply mul_nonneg
+     . norm_num
+     . simp at hi
+        exact hi
+    -- show that $\forall i \in \{0, 1, \ldots, n-1\}, a(i) \geq 0$
+   . intro i hi
+      exact Nat.zero_le (a i)
+    -- show that $\sum_{i=0}^{n-1} p(i) = 1$
+   . exact hpsum
+  -- show that $\sum_{i=0}^{n-1} p(i) \cdot a(i) \leq 1$
+  have h' : ∑ i ∈ Finset.range n, p i * a i ≤ 1 := by
+    simp [p]
+    -- simplify the sum
+    rw [Finset.sum_ite] -- use Finset.sum_ite to rewrite the sum
+    -- compute the sum
+    ac_rfl
+  -- show that $\prod_{i=0}^{n-1} a(i) \leq 1$
+  exact le_trans h h'
+```

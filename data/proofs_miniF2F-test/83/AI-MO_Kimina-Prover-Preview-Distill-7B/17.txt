@@ -1,0 +1,27 @@
+-- lemma, induction base. n = 1, $(1 + 1/2) < 5/2$.
+  have l1 : (1 + (1 : ℝ) / 2) < 5 / 2 := by norm_num
+
+  -- lemma, induction step. If $(\prod_{k=1}^{n} (1 + 1/2^k)) < 5/2$, then
+  -- $(\prod_{k=1}^{n+1} (1 + 1/2^k)) < 5/2$.
+  have l2 : ∀ n, (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k) < 5 / 2 →
+      (∏ k ∈ Finset.Icc 1 (n + 1), 1 + (1 : ℝ) / 2 ^ k) < 5 / 2 := by
+    intro n hn
+    rw [Finset.prod_Icc_succ_top, hn]
+    apply (one_add_lt_one_add (by norm_num)).2
+    norm_num
+    calc
+      _ < 5 / 2 * (1 + 1 / 2 ^ (n + 1)) := by
+        apply mul_lt_mul_of_pos_right
+        exact hn
+        norm_num
+      _ < 5 / 2 * (1 + 1 / 2 ^ n) := by
+        apply mul_lt_mul_of_pos_left
+        norm_num
+        apply one_lt_add_of_pos_right
+        apply one_div_pos_of_pos
+        norm_num
+      _ = _ := by ring
+
+  -- $(\prod_{k=1}^{n} (1 + 1/2^k)) < 5/2$.
+  apply Nat.le_induction base l1 l2 n h₀
+```

@@ -1,0 +1,109 @@
+-- Show that the number of roots of the equation is at most 4.
+  have h₂ : (f ⁻¹' {0}).card ≤ 4 := by
+    rw [←pow_le_pow_iff_left₀ _ _ (show 2≠0 by simp)]
+    -- The number of roots of the equation is at most the number of roots of $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$.
+    refine le_trans?_ (by simp [h₁])
+    -- The number of roots of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$ is at most 4.
+    apply le_trans?_ (by nlinarith)
+    -- The number of roots of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$ is at most the number of roots of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$.
+    refine le_trans?_ (Finset.card_nodup_of_mem_finite _)
+    -- The number of roots of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$ is at most the degree of the polynomial $x^4 + 18x^3 + 45x^2 - 12x - 60$.
+    apply le_trans?_ (Polynomial.nodup_roots _)
+    -- The degree of the polynomial $x^4 + 18x^3 + 45x^2 - 12x - 60$ is at most 4.
+    simp [show (45:ℝ) = 5*9 by simp, show (45:ℝ) = 5*((9:ℝ) : ℤ) by simp, show (18:ℝ) = ((9:ℝ):ℤ)*2 by simp, show (18:ℝ) = ((9:ℝ):ℤ)*2 by simp]
+    simp
+
+  -- Show that the number of roots of the equation is at least 2.
+  have h₃ : 2 ≤ (f ⁻¹' {0}).card := by
+    -- It is enough to show that the set of roots of the equation is infinite.
+    suffices (f ⁻¹' {0}).Infinite by aesop
+    -- It is enough to show that the set of roots of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$ is infinite.
+    suffices (f ⁻¹' {0}).toFinset.Infinite by aesop
+    rw [Set.infinite_iff_exists_gt]
+    intro a
+    -- Let $w$ be a root of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$ such that $w > a$.
+    let w := max (a + 1) ((f ⁻¹' {0}).toFinset).max' (by simp)
+    have hw₁ : w ∈ (f ⁻¹' {0}).toFinset := by
+      refine Finset.mem_toFinset.mpr?_
+      exact Finset.mem_max' (w - 1) (by simp) (by simp [w])
+    have hw₂ : w ≥ a + 1 := by simp [w]
+    have hw₃ : f w = 0 := by simp [h₀, hw₁]
+    -- Let $z = \sqrt{w}$. The $z$ is a root of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$.
+    let z := Real.sqrt w
+    have hz₁ : z^4 + 18*z^3 + 45*z^2 - 12*z - 60 = 0 := by
+      calc
+        _ = (w) := by rw [←Real.sqrt_eq_iff_eq_sq (by simp) (by nonneg_of_lt hw₂), hz₁]; ring
+        _ = _ := by simp [hw₁]
+    -- Let $y = z - 3$. The $y$ is a root of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$.
+    let y := z - 3
+    have hy₁ : y^4 + 18*y^3 + 45*y^2 - 12*y - 60 = 0 := by
+      calc
+        _ = (z - 3)^4 + 18*(z - 3)^3 + 45*(z - 3)^2 - 12*(z - 3) - 60 := by ring
+        _ = _ := by rw [hz₁]; ring
+    -- Let $x = y - 3$. The $x$ is a root of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$.
+    let x := y - 3
+    have hx₁ : x^4 + 18*x^3 + 45*x^2 - 12*x - 60 = 0 := by
+      calc
+        _ = (y - 3)^4 + 18*(y - 3)^3 + 45*(y - 3)^2 - 12*(y - 3) - 60 := by ring
+        _ = _ := by rw [hy₁]; ring
+    -- Show that $x$ is a root of the original equation.
+    have hx₂ : f x = 0 := by
+      rw [h₀]
+      -- Show that $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$.
+      have hx₃ : x^2 + 18*x + 30 = 2 * Real.sqrt (x^2 + 18*x + 45) := by
+        calc
+          _ = (y - 3)^2 + 18*(y - 3) + 30 := by rw [show y = z-3 by simp [y]]
+          _ = (z - 3)^2 - 18 + 18*(z - 3) + 30 := by ring
+          _ = z^2 - 18*z + 9 + 18*z - 54 + 30 := by ring
+          _ = z^2 - 54 + 30 := by rw [←z^2-18*z+9, ←(show z^2-18*z+9 = (z-3)^2-18 by ring)]
+          _ = _ := by rw [←z^2-18*z+9, ←(show z^2-18*z+9 = (z-3)^2-18 by ring), show (z-3)^2 = w by rw [←Real.sq_sqrt (by simp)]; exact hw₁]
+      -- Show that $x^2 + 18x + 30 \geq 0$ and $2 \sqrt{x^2 + 18x + 45} \geq 0$.
+      have hx₄ : x^2 + 18*x + 30 ≥ 0 := by
+        calc
+          _ = (y - 3)^2 + 18*(y - 3) + 30 := by rw [show y = z-3 by simp [y]]
+          _ = (z - 3)^2 - 18 + 18*(z - 3) + 30 := by ring
+          _ = z^2 - 18*z + 9 + 18*z - 54 + 30 := by ring
+          _ = z^2 - 54 + 30 := by rw [←z^2-18*z+9, ←(show z^2-18*z+9 = (z-3)^2-18 by ring)]
+          _ = _ := by rw [show z^2 = w*z^2-54+30 by rw [←Real.sq_sqrt (by simp)];ring; exact hw₁]
+      have hx₅ : 2 * Real.sqrt (x^2 + 18*x + 45) ≥ 0 := by
+        apply mul_nonneg
+        · norm_num
+        · apply Real.sqrt_nonneg
+      -- Show that $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$.
+      apply (sq_eq_sq_iff_abs_eq_abs (show x^2 + 18*x + 30 ≥ 0 by linarith) (show 2 * √(x^2 + 18*x + 45) ≥ 0 by positivity)).mp
+      rw [←hx₃]
+      apply (sq_eq_sq_iff_abs_eq_abs _ (show 2 * √(x ^ 2 + 18 * x + 45) ≥ 0 by positivity)).mp
+      rw [show (2 * √(x ^ 2 + 18 * x + 45))^2 = 4 * (√(x ^ 2 + 18 * x + 45))^2 by ring]
+      · rw [show (x^2+18*x+30)^2 = (x^2+18*x+30)*(x^2+18*x+30) by ring]
+        rw [show (√(x^2+18*x+45))^2 = x^2+18*x+45 by refine Real.sq_sqrt (by nlinarith)]
+        linarith
+      · linarith
+      · linarith
+    -- Show that $x$ is in the set of roots of the equation $f(x) = 0$.
+    have hx₃ : x ∈ (f ⁻¹' {0}) := by
+      rw [Set.mem_preimage]
+      simp [hx₂]
+    -- Show that $x \neq w$.
+    have hx₄ : x ≠ w := by
+      nlinarith [show z > 0 by simp [z]; exact Real.sqrt_pos_of_pos (by nlinarith : 0 < w)]
+    -- Show that $w \leq x$.
+    have hx₅ : w ≤ x := by
+      rw [Set.mem_toFinset] at hx₃
+      simp at hx₃
+      exact hx₃
+    -- Conclude that $a + 1 ≤ x$.
+    linarith
+  -- Show that the number of roots of the equation is exactly 4.
+  have h₄ : (f ⁻¹' {0}).card = 4 := by
+    linarith
+  -- Show that the product of the roots of the equation $x^4 + 18x^3 + 45x^2 - 12x - 60 = 0$ is 4! = 24.
+  have h₅ : (∏ x in (f ⁻¹' {0}).toFinset, x) = 24 := by
+    rw [←Polynomial.prod_roots_eq_factorial (show (45:ℝ) = 5*9 by simp) (show (45:ℝ) = 5*((9:ℝ) : ℤ) by simp) (show (18:ℝ) = ((9:ℝ):ℤ)*2 by simp) (show (18:ℝ) = ((9:ℝ):ℤ)*2 by simp)]
+    simp [h₄]
+  -- Show that the product of the roots of the equation is 20.
+  have h₆ : (∏ x in (f ⁻¹' {0}).toFinset, x) = 20 := by
+    calc
+      _ = (∏ x in (f ⁻¹' {0}).toFinset, x) := by rfl
+      _ = _ := by rw [h₅]; nlinarith
+  exact h₆
+```

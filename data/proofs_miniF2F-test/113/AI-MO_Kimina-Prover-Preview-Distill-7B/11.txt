@@ -1,0 +1,87 @@
+-- Since $\left( \frac{1}{\sqrt{x}} \right)$ is a decreasing function on $(0, +\infty)$,
+  -- we have $\int_{1}^{N} \frac{1}{\sqrt{x}} \, dx \leq \sum_{k=1}^{N} \frac{1}{\sqrt{k}}$.
+  have h₁ {N : ℕ} (hN : 1 ≤ N) : ∫ x ∈ Finset.Ico 1 N, 1 / Real.sqrt x ≤ ∑ k ∈ Finset.Icc 1 N, 1 / Real.sqrt k := by
+    -- Since $(\sqrt{x})' = \frac{1}{2\sqrt{x}}$, we have $(\sqrt{x})'' = -\frac{1}{4\sqrt{x}^3}$.
+    have h₂ : ∀ x ∈ Finset.Ico 1 N, (1 / Real.sqrt x) ≥ (1 / Real.sqrt (x + 1)) := by
+      intro x hx
+      simp at hx
+      -- The proof is similar to `Real.sqrt_le_sqrt`.
+      suffices Real.sqrt (x + 1) ≤ Real.sqrt x + (Real.sqrt x) / 2 by
+        rw [div_le_div_iff₀ (by positivity) (by positivity)] at this
+        linarith only [this]
+        apply Real.sqrt_pos_of_pos (by linarith)
+      apply (Real.sqrt_le_iff_le_sq (by linarith) (by linarith)).mpr
+      simp
+      have h₃ : (Real.sqrt x + (Real.sqrt x) / 2) ^ 2 = (5 / 4) * (Real.sqrt x) ^ 2 := by
+        rw [add_pow_two (Real.sqrt x) (Real.sqrt x / 2)]
+        ring
+      suffices (Real.sqrt (x + 1)) ^ 2 ≤ (Real.sqrt x + (Real.sqrt x) / 2) ^ 2 by
+        rw [←h₃] at this
+        nlinarith
+      convert Real.sq_sqrt (by linarith) using 1
+      convert Real.sq_sqrt (by linarith)
+      nlinarith
+
+    convert Finset.integral_le_sum_of_nonincreasing (Finset.Ico 1 N) (fun x => 1 / Real.sqrt x) h₂ using 1
+    simp
+
+  -- Since $\frac{d}{dx}(\sqrt{x}) = \frac{1}{2\sqrt{x}}$, we have $\sqrt{x} = \int_{0}^{x} \frac{1}{2\sqrt{t}} \, dt$.
+  -- Therefore, $\sum_{k=1}^{N} \frac{1}{\sqrt{k}} = \sum_{k=1}^{N} \int_{k-1}^{k} \frac{1}{2\sqrt{t}} \, dt \leq \int_{0}^{N} \frac{1}{2\sqrt{t}} \, dt$.
+  have h₃ : ∀ N ∈ Finset.Ici 1, ∑ k ∈ Finset.Icc 1 N, 1 / Real.sqrt k ≤ ∫ x ∈ Finset.Ico 0 (N + 1), 1 / Real.sqrt x := by
+    intro N hN
+    induction N with
+    | zero => linarith
+    | succ N ih =>
+      by_cases hN' : N = 0
+      · simp [hN']
+      · simp at hN'
+        simp [Finset.mem_Ici] at hN
+        specialize ih (by linarith)
+        convert ih using 1
+        simp
+        have h₄ : ∫ x ∈ Finset.Ico 0 (N + 1 + 1), 1 / Real.sqrt x = ∫ x ∈ Finset.Ico 0 (N + 1), 1 / Real.sqrt x + 1 / Real.sqrt (N + 1) := by
+          rw [Finset.sum_Ico_succ_top (by linarith)]
+          simp
+        rw [h₄]
+        linarith
+
+  -- Set $N = 10000$.
+  specialize h₃ 10000 (by simp)
+  specialize h₁ 10000 (by simp)
+  rw [h₄] at h₃
+  -- We have $\int_{1}^{10000} \frac{1}{\sqrt{x}} \, dx = 2\sqrt{10000} - 2\sqrt{1} = 198$.
+  have h₅ : ∫ x ∈ Finset.Ico 1 (10000 + 1), 1 / Real.sqrt x = 198 := by
+    -- Since $\frac{d}{dx}(\sqrt{x}) = \frac{1}{2\sqrt{x}}$, we have $\sqrt{x} = \int_{0}^{x} \frac{1}{2\sqrt{t}} \, dt$.
+    -- Therefore, $\int_{1}^{10000} \frac{1}{\sqrt{x}} \, dx = \left[ 2\sqrt{x} \right]_{1}^{10000} = 2\sqrt{10000} - 2\sqrt{1} = 198$.
+    norm_num
+    calc ∫ x ∈ Finset.Ico 1 (10000 + 1), 1 / Real.sqrt x
+      _ = ∫ x ∈ Finset.Ico 0 (10000 + 1), 1 / Real.sqrt x - ∫ x ∈ Finset.Ico 0 1, 1 / Real.sqrt x := by
+        rw [←Finset.integral_Ico_add (Finset.Ico 0 1) (fun x => 1 / Real.sqrt x) (by linarith)]
+        simp
+      _ = 2 * Real.sqrt (10000 + 1) - 2 * Real.sqrt 0 - (2 * Real.sqrt 1 - 2 * Real.sqrt 0) := by
+        rw [h₃]
+        rw [show ∫ x ∈ Finset.Ico 0 1, 1 / Real.sqrt x = 2 * Real.sqrt 1 - 2 * Real.sqrt 0 by on_goal 2 {rw [←h₃]}; simp]
+        rw [show ∫ x ∈ Finset.Ico 0 (10000 + 1), 1 / Real.sqrt x = 2 * Real.sqrt (10000 + 1) - 2 * Real.sqrt 0 by on_goal 2 {rw [←h₃]}; simp]
+        congr 1
+        · rw [Finset.Ico_congr (by rfl) (fun _ => rfl)]
+          simp
+        · simp
+      _ = 198 := by
+        rw [Real.sqrt_eq_iff_eq_sq (by positivity) (by norm_num)]
+        norm_num
+
+  -- Since $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} = \sum_{k=1}^{10000} \frac{1}{\sqrt{k}} - 1$ and $\int_{1}^{10000} \frac{1}{\sqrt{x}} \, dx \leq \sum_{k=1}^{10000} \frac{1}{\sqrt{k}}$, we have $\sum_{k=2}^{10000} \frac{1}{\sqrt{k}} \leq 198 - 1 = 197 < 198$.
+  suffices ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k ≤ 197 by
+    linarith
+  calc ∑ k ∈ Finset.Icc 2 10000, 1 / Real.sqrt k
+    _ = ∑ k ∈ Finset.Icc 1 10000, 1 / Real.sqrt k - 1 / Real.sqrt 1 := by
+      rw [Finset.sum_Ico_succ_top (by norm_num)]
+      simp
+    _ ≤ ∫ x ∈ Finset.Ico 0 (10000 + 1), 1 / Real.sqrt x - 1 / Real.sqrt 1 := by
+      linarith only [h₁]
+    _ = 198 - 1 := by
+      rw [h₅]
+      norm_num
+    _ = 197 := by norm_num
+
+```

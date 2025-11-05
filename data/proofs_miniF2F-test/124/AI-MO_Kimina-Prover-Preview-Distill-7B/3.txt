@@ -1,0 +1,85 @@
+-- Let $x = |a|$ and $y = |b|$.
+  let x := abs a
+  let y := abs b
+
+  -- Then $x \geq 0$ and $y \geq 0$.
+  have hx : x ≥ 0 := abs_nonneg a
+  have hy : y ≥ 0 := abs_nonneg b
+
+  -- Let $z = |a+b|$.
+  let z := abs (a + b)
+
+  -- Then $z \geq 0$.
+  have hz : z ≥ 0 := abs_nonneg (a + b)
+
+  -- Because $|a+b| \leq |a| + |b|$, we have $z \leq x + y$.
+  have hz.le : z ≤ x + y := abs_add_le a b
+
+  -- Function $f(t) = \frac{t}{1+t}$ is monotone on $[0, \infty)$.
+  have fmono : MonotoneOn (fun t : ℝ => t / (1 + t)) (Set.Ici 0) := by
+    intro t hx s hy hts
+    simp only [Set.mem_Ici] at hx hy
+    simp only [Function.comp_apply]
+    refine div_le_div_of_nonneg_right (by positivity)?_
+    apply add_le_add
+   . exact hx
+   . exact hy
+   . apply le_of_eq
+      ring_nf
+      rw [mul_add, add_mul, mul_comm, <-mul_assoc, mul_left_comm, <-mul_assoc]
+      congr 1
+      exact hts
+      all_goals positivity
+
+  -- Because $z \leq x + y$ and $f$ is monotone, we have $f(z) \leq f(x+y)$.
+  have hz.le.bf : z / (1 + z) ≤ (x + y) / (1 + (x + y)) := by
+    apply fmono
+   . simp only [Set.mem_Ici, add_nonneg]
+      exact add_nonneg hx hy
+   . simp only [Set.mem_Ici]
+      apply le_of_eq
+      exact hz.le
+   . simp only [Set.mem_Ici]
+      apply le_of_eq
+      exact hz.le
+
+  -- We have $f(x) = \frac{|a|}{1+|a|}$ and $f(y) = \frac{|b|}{1+|b|}$.
+  have hxa : x / (1 + x) = abs a / (1 + abs a) := by
+    simp only [x]
+    exact Eq.symm (div_self (by positivity))
+  have hya : y / (1 + y) = abs b / (1 + abs b) := by
+    simp only [y]
+    exact Eq.symm (div_self (by positivity))
+
+  -- Function $f(t) = \frac{t}{1+t}$ is subadditive on $[0, \infty)$.
+  have fsubadd : SubAdditiveOn (fun t : ℝ => t / (1 + t)) (Set.Ici 0) := by
+    intro x hx y hy hxy
+    simp only [Set.mem_Ici] at hx hy
+    simp only [Function.comp_apply]
+    -- To prove the inequality, we use the fact that $f(x+y) - f(y) = \frac{x}{1+x+y}$.
+    have : (x + y) / (1 + (x + y)) - y / (1 + y) = x / (1 + x + y) := by
+      field_simp
+      ring_nf
+    -- We have $x \geq 0$ and $1 + x + y > 0$.
+    have h1 : x ≥ 0 := hx
+    have h2 : 1 + x + y > 0 := by positivity
+    -- So, $\frac{x}{1+x+y} \geq 0$.
+    have h3 : x / (1 + x + y) ≥ 0 := by positivity
+    -- So, $\frac{x}{1+x+y} \geq 0$.
+    linarith
+
+  -- Because $x \geq 0$, $y \geq 0$ and $f$ is subadditive, we have $f(x) + f(y) \geq f(x+y)$.
+  have hxy.le.bf : x / (1 + x) + y / (1 + y) ≥ (x + y) / (1 + (x + y)) := by
+    apply le_of_sub_nonneg
+    simp only [Function.comp_apply]
+    apply fsubadd
+   . exact hx
+   . exact hy
+   . simp only [Set.mem_Ici]
+      apply le_of_eq
+      exact hxy.le
+
+  -- So, $\frac{|a+b|}{1+|a+b|}\leq \frac{|a|}{1+|a|}+\frac{|b|}{1+|b|}$.
+  linarith
+
+```

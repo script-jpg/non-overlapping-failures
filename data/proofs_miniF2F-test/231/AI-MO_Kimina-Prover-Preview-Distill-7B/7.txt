@@ -1,0 +1,165 @@
+-- Notice that if the number of divisors of n is greater than the number of divisors of n+1, then f(n) > f(n+1)
+  have h₂ : ∀ n, (Nat.divisors n).card > (Nat.divisors (n + 1)).card → f n > f (n + 1) := by
+    intro n hn
+    by_contra! h
+    specialize h₁ (n + 1) (by omega) (by omega)
+    rw [h₀, h₀] at h₁
+    simp at h₁
+    absurd h₁
+    simp
+    exact h
+  -- If n is a prime number, then n has exactly two divisors.
+  have h₃ : ∀ n, Nat.Prime n → (Nat.divisors n).card = 2 := by
+    intro n hn
+    rw [Nat.divisors_prime hn]
+    simp
+  -- Special case: when n = 1
+  have h₄ : (Nat.divisors 1).card = 1 := by
+    simp
+  -- The case when n = 2
+  have h₅ : (Nat.divisors 2).card = 2 := by
+    rw [Nat.divisors_prime (Nat.prime_two)]
+    simp
+  -- By the above two facts, we know that f(1) < f(2)
+  have h₆ : f 1 < f 2 := by
+    specialize h₂ 1 (by simp)
+    simp at h₂
+    rw [h₄, h₅] at h₂
+    norm_num at h₂
+    exact h₂
+  -- We claim that if n > 2, then f(n) > f(1) = 1
+  have h₇ : ∀ n, n > 2 → f n > f 1 := by
+    intro n hn
+    by_cases hnp : n = 1
+    · rw [hnp, h₄]
+      simp
+    by_cases hnz : n = 2
+    · rw [hnz, h₅]
+      norm_num
+    have h₈ : n > 2 := by omega
+    specialize h₁ n (by omega) (by omega)
+    rw [h₀, h₀] at h₁
+    simp at h₁
+    have h₉ : (Nat.divisors n).card ≥ 3 := by
+      have h₁₀ : Nat.Prime n ∨ n = 1 ∨ 2 := by
+        by_cases hn : Nat.Prime n
+        · tauto
+        · by_cases hn' : n = 1
+          · tauto
+          · by_cases hn'' : n = 2
+            · tauto
+            · have h₁₁ : n > 2 := by omega
+              have h₁₂ : (Nat.divisors n).card > 2 := by
+                apply h₂
+                have h₁₃ : Nat.Prime n := by
+                  tauto
+                exact h₁₃
+              linarith
+      rcases h₁₀ with h | h | h <;> (rw [h]; simp)
+    have h₁₀ : n ^ ((1 : ℝ) / 3) > 0 := by positivity
+    rw [h₁₀] at h₁
+    have h₁₁ : f 1 = 1 := by
+      rw [h₀]
+      simp
+    rw [h₁₁] at h₁
+    linarith
+  -- By the above fact, f(1) < f(n) for all n > 2
+  have h₈ : ∀ n, n > 2 → f 1 < f n := by
+    intro n hn
+    specialize h₇ n hn
+    exact h₇
+  -- We claim that f(1) < f(4)
+  have h₉ : f 1 < f 4 := by
+    specialize h₂ 4 (by simp)
+    simp at h₂
+    rw [h₄, Nat.divisors_prime (Nat.prime_two)] at h₂
+    tauto
+  -- We claim that f(4) < f(25)
+  have h₁₀ : f 4 < f 25 := by
+    specialize h₂ 25 (by simp)
+    simp at h₂
+    rw [Nat.divisors_prime (Nat.prime_two)] at h₂
+    norm_num at h₂
+    exact h₂
+  -- By transitivity, we know that f(1) < f(25)
+  have h₁₁ : f 1 < f 25 := by
+    linarith
+  -- We claim that f(25) < f(2)
+  have h₁₂ : f 25 < f 2 := by
+    specialize h₁ 2 (by simp) (by simp)
+    rw [h₀] at h₁
+    rw [h₀] at h₆
+    simp at h₁
+    rw [show Nat.divisors 2 = {1, 2} by rfl] at h₆
+    simp at h₆
+    linarith
+  -- By transitivity, we know that f(1) < f(2)
+  have h₁₃ : f 1 < f 2 := by
+    linarith
+  -- We claim that for all n ≠ 2, f(n) ≤ f(25)
+  have h₁₄ : ∀ n, n ≠ 2 → f n ≤ f 25 := by
+    intro n hn
+    by_contra! h
+    specialize h₁ n (by omega) (by omega)
+    specialize h₁₂ n hn
+    linarith
+  -- We claim that 25 is the unique number that maximizes f(n)
+  have h₁₅ : ∀ n, 0 < n → n ≠ 25 → f n ≤ f 25 := by
+    intro n hn
+    by_contra! h
+    specialize h₁₄ n (by omega)
+    linarith
+  -- Consider the special case when n = 100
+  have h₁₆ : f 100 ≤ f 25 := by
+    specialize h₁₅ 100 (by simp) (by omega)
+    exact h₁₅
+  -- We claim that f(100) > f(99)
+  have h₁₇ : f 100 > f 99 := by
+    specialize h₂ 99 (by simp)
+    simp at h₂
+    rw [show Nat.divisors 99 = {1, 3, 9, 11, 33, 99} by rfl] at h₂
+    simp at h₂
+    norm_num at h₂
+    exact h₂
+  -- Consider the special case when n = 99
+  have h₁₈ : f 99 ≤ f 25 := by
+    specialize h₁₅ 99 (by simp) (by omega)
+    exact h₁₅
+  -- By transitivity, we know that f(99) ≤ f(25)
+  have h₁₉ : f 99 ≤ f 25 := by
+    linarith
+  -- We claim that for all n > 2 and n ≠ 100, we have f(n) ≤ f(99)
+  have h₂₀ : ∀ n, n > 2 → n ≠ 100 → f n ≤ f 99 := by
+    intro n hn hn'
+    by_cases hn'' : n = 1
+    · rw [hn'', h₄]
+      simp
+    by_cases hn''' : n = 2
+    · rw [hn''', h₅]
+      norm_num
+    by_cases hn'''' : n = 100
+    · rw [hn'''']
+      simp
+    have h₂₁ : n > 2 := by omega
+    have h₂₂ : f n ≤ f 25 := by
+      specialize h₁₅ n h₂₁ hn''
+      exact h₁₅
+    have h₂₃ : f 25 ≤ f 99 := by
+      specialize h₁₈ 99 (by simp) (by omega)
+      exact h₁₈
+    linarith
+  -- By transitivity, we know that f(n) ≤ f(99) for all n > 2 and n ≠ 100
+  have h₂₂ : ∀ n, n > 2 → n ≠ 100 → f n ≤ f 99 := by
+    intro n hn hn'
+    specialize h₂₀ n hn hn'
+    exact h₂₀
+  -- We claim that N = 99
+  have h₂₃ : N = 99 := by
+    by_contra! h
+    specialize h₁₆ (by omega)
+    specialize h₂₂ 100 (by omega) (by omega)
+    linarith
+  -- The sum of the digits of 99 is 9 + 9 = 18
+  rw [h₂₃]
+  norm_num
+```

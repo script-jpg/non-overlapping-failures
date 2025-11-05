@@ -1,0 +1,67 @@
+-- We have $a^2 b^3 = \frac{32}{27}$ and $\frac{a}{b^3} = \frac{27}{4}$. Let's manipulate these equations to find $a + b$.
+
+  -- From $\frac{a}{b^3} = \frac{27}{4}$, we get $a = \frac{27}{4} b^3$.
+  have ha : a = 27 / 4 * b ^ 3 := by
+    field_simp at h₁
+    linarith
+
+  -- Substitute $a = \frac{27}{4} b^3$ into $a^2 b^3 = \frac{32}{27}$.
+  rw [ha] at h₀
+  have : (27 / 4 * b ^ 3) ^ 2 * b ^ 3 = 32 / 27 := h₀
+
+  -- Simplify $(\frac{27}{4} b^3)^2 b^3$:
+  -- $(\frac{27}{4} b^3)^2 = \frac{729}{16} b^6$
+  -- $(\frac{27}{4} b^3)^2 b^3 = \frac{729}{16} b^9$
+  have : 729 / 16 * b ^ 9 = 32 / 27 := by linarith
+
+  -- Solve for $b^9$:
+  -- $b^9 = \frac{32/27}{729/16} = \frac{32/27} \cdot \frac{16}{729} = \frac{32 \cdot 16}{27 \cdot 729}$
+  have : b ^ 9 = 32 * 16 / (27 * 729) := by
+    field_simp
+    linarith
+
+  -- Notice that $32 = 2^5$ and $729 = 3^6$, so:
+  -- $b^9 = \frac{2^5 \cdot 16}{3^3 \cdot 3^6} = \frac{2^5 \cdot 2^4}{3^3 \cdot 3^6} = \frac{2^9}{3^9}$
+  have : b ^ 9 = 2 ^ 9 / 3 ^ 9 := by
+    rw [this]
+    norm_num
+
+  -- Therefore, $b = \frac{2}{3}$ since $b$ is a real number and we're working with odd powers.
+  have hb : b = 2 / 3 := by
+    have : b ^ 9 - (2 / 3) ^ 9 = 0 := by linarith
+    have : (b - 2 / 3) * (b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8) = 0 := by ring_nf at this ⊢; linarith
+    cases' (mul_eq_zero.mp this) with hb1 hb2
+    · -- If $b - 2/3 = 0$, then $b = 2/3$.
+      linarith
+    · -- If the sum equals zero, we'll show this is impossible for real $b$.
+      have : b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8 > 0 := by
+        have h : b ^ 8 + b ^ 7 * (2 / 3) + b ^ 6 * (2 / 3) ^ 2 + b ^ 5 * (2 / 3) ^ 3 + b ^ 4 * (2 / 3) ^ 4 + b ^ 3 * (2 / 3) ^ 5 + b ^ 2 * (2 / 3) ^ 6 + b * (2 / 3) ^ 7 + (2 / 3) ^ 8 = (b ^ 4 + b ^ 3 * (2 / 3) + b ^ 2 * (2 / 3) ^ 2 + b * (2 / 3) ^ 3 + (2 / 3) ^ 4) ^ 2 := by ring_nf
+        rw [h]
+        have h' : b ^ 4 + b ^ 3 * (2 / 3) + b ^ 2 * (2 / 3) ^ 2 + b * (2 / 3) ^ 3 + (2 / 3) ^ 4 > 0 := by
+          apply add_pos
+          apply add_pos
+          apply add_pos
+          apply add_pos
+          positivity
+          positivity
+          norm_num
+          positivity
+          norm_num
+        positivity
+      linarith
+
+  -- Substitute $b = \frac{2}{3}$ into $a = \frac{27}{4} b^3$ to find $a$.
+  rw [hb] at ha
+  have ha' : a = 27 / 4 * (2 / 3) ^ 3 := ha
+  norm_num at ha'
+  have ha'' : a = 27 / 4 * 8 / 27 := by
+    rw [ha']
+    norm_num
+  have ha''' : a = 2 := by
+    norm_num at ha''
+    exact ha''
+
+  -- With $a = 2$ and $b = \frac{2}{3}$, we find $a + b = 2 + \frac{2}{3} = \frac{8}{3}$.
+  rw [ha''', hb]
+  norm_num
+```

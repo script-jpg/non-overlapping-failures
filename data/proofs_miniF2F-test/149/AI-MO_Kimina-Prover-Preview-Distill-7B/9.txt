@@ -1,0 +1,101 @@
+-- Define a helper lemma: a form of Taylor's theorem for $(1+x)^n$ where $-1<x\leq 0$ and $m\geq 0$.
+  have h1 : ∀ (x : ℝ) (m : ℕ), (1 + x) ^ m ≤ 1 + m * x := by
+    intro x m
+    induction m with
+    | zero => simp
+    | succ m ih =>
+      by_cases hx : x = 0
+      · rw [hx]; simp
+      · have : (1 + x) ^ m * (1 + x) ≤ (1 + m * x) * (1 + x) := by
+          apply mul_le_mul
+          · exact ih
+          · simp
+          · simp
+          · linarith
+        convert_to (1 + x) ^ m * (1 + x) ≤ 1 + (m + 1) * x
+        · ring
+        · ring
+        · assumption
+
+  -- Prove that for any $n \geq 2$, the $n$-th root of $n$ is less than $2 - 1/n$.
+  have h2 : ∀ (n : ℕ), 2 < n → (n : ℝ) ^ ((1 : ℝ) / n) < 2 - 1 / n := by
+    intro n hn
+    have : (2 : ℝ) ^ (n : ℝ) > 2 := by
+      rw [Real.rpow_natCast]
+      apply Real.one_lt_rpow
+      · norm_num
+      · norm_cast
+      · linarith
+    have : (2 : ℝ) ^ (n : ℝ) - 2 > 0 := by linarith
+    have : (2 : ℝ) ^ (n : ℝ) - 2 = (2 : ℝ) ^ (n : ℝ) * ((1 : ℝ) / 2) * (1 + (1 : ℝ) / (2 : ℝ) * (2 : ℝ) ^ (n : ℝ) - 2) := by field_simp; ring
+    have : (1 : ℝ) / 2 > 0 := by norm_num
+    have h3 : (1 : ℝ) / (2 : ℝ) * (2 : ℝ) ^ (n : ℝ) - 2 > 0 := by linarith
+    have h4 : 0 < (((1 : ℝ) / 2) ^ ((1 : ℝ) / n)) ^ n := by
+      simp
+      rw [Real.rpow_natCast]
+      simp
+      · norm_num
+      · norm_cast
+      · linarith
+    have : 0 ≤ (1 / (2 : ℝ)) := by norm_num
+    have : 0 ≤ ((1 : ℝ) / 2) ^ ((1 : ℝ) / n) := by apply Real.rpow_nonneg; assumption
+    have h5 : (1 / (2 : ℝ)) ^ ((1 : ℝ) / n) < 1 := by
+      rw [Real.one_rpow]
+      have : (1 : ℝ) / 2 > 0 := by norm_num
+      have : (1 : ℝ) / 2 < 1 := by norm_num
+      exact Real.rpow_lt_one_iff' this (by linarith) (by linarith)
+    have h6 : (1 + (1 / (2 : ℝ)) ^ ((1 : ℝ) / n) * (2 : ℝ) ^ (n : ℝ) - 2) > 0 := by
+      have : ((1 : ℝ) / 2) ^ ((1 : ℝ) / n) < (((1 : ℝ) / 2) ^ ((1 : ℝ) / n)) ^ n := by
+        rw [Real.rpow_natCast]
+        apply Real.rpow_lt_rpow_of_exponent_lt
+        · norm_num
+        · linarith
+        · norm_cast; linarith
+      set x := ((1 : ℝ) / 2) ^ ((1 : ℝ) / n) with hx
+      set y := ((1 : ℝ) / 2) ^ ((1 : ℝ) / n)) ^ n with hy
+      rw [← hy] at this
+      convert_to 1 + x * (y - 2) > 0 at this
+      · ring
+      · exact h4
+      · have : 0 ≤ x * (y - 2) := by
+          apply mul_nonneg
+          · apply Real.rpow_nonneg
+            norm_num
+          · rw [hy]
+            apply sub_nonneg.mpr
+            apply Real.rpow_le_one_of_one_le_of_nonpos
+            · norm_num
+            · norm_cast
+            · linarith
+        linarith
+    -- Apply the helper lemma with $x = 1 / (2 : ℝ)$ and $m = n$.
+    specialize h1 (1 / (2 : ℝ)) n
+    -- Substitute $1 + x = (1 + 1 / (2 : ℝ)) ^ n$ into the inequality.
+    rw [show 1 + (1 / (2 : ℝ)) = (1 + 1 / (2 : ℝ)) ^ n by rw [h1]; simp] at h1
+    -- Take the $n$-th root of both sides.
+    rw [← Real.rpow_mul] at h1
+    rw [← Real.rpow_mul] at h1
+    -- Simplify the expression.
+    simp at h1
+    -- Substitute $1 + 1 / (2 : ℝ) = 2 - 1 / (2 : ℝ)$ and $1 + (1 + (1 / (2 : ℝ)) ^ ((1 / n) * (n : ℝ)) - 2) = (2 - 1 / n) ^ ((1 : ℝ) / n)$ into the inequality.
+    rw [show 1 + 1 / (2 : ℝ) = 2 - 1 / (2 : ℝ) by ring, show 1 + (1 / (2 : ℝ)) ^ ((1 / n) * (n : ℝ)) - 2 = (2 - 1 / n) ^ ((1 : ℝ) / n) - 2 by field_simp; ring] at h1
+    -- Rearrange the terms.
+    rw [show 2 - 1 / (2 : ℝ) = (2 - 1 / n) * (1 - (1 / (2 : ℝ)) * (2 - 1 / n)) by field_simp; ring] at h1
+    rw [show (2 - 1 / n) * (1 - (1 / (2 : ℝ)) * (2 - 1 / n)) - 2 = (2 - 1 / n) ^ ((1 : ℝ) / n) - 2 by field_simp] at h1
+    -- Move one term to the right side.
+    have h7 : (2 - 1 / n) ^ ((1 : ℝ) / n) < 2 - 1 / n := by linarith
+    -- The goal follows if we can show that $(2 - 1 / n) ^ ((1 : ℝ) / n) < 2 - 1 / n$ implies $(2 - 1 / n) ^ ((1 : ℝ) / n) < 2 - 1 / n$.
+    exact h7
+
+  -- Consider the cases $n = 0$, $n = 1$, and $n \geq 2$.
+  cases' n with n
+  · -- When $n = 0$, the inequality is undefined and trivially true.
+    simp
+  cases' n with n
+  · -- When $n = 1$, the inequality is undefined and trivially true.
+    simp
+  · -- When $n \geq 2$, we use the lemma `h2` to prove the inequality.
+    specialize h2 n (by linarith)
+    exact h2
+
+```

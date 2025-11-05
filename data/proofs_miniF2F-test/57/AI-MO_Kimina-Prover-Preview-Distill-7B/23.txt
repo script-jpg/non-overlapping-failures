@@ -1,0 +1,306 @@
+have hp : 1 < p := h₀.1
+  have hq : 1 < q := by linarith
+  have hr : 1 < r := by linarith
+
+  have hpqr : 1 < p * q * r := by
+    apply one_lt_mul
+    apply one_lt_mul hp hq
+    linarith
+
+  -- If $pqr - 1$ is divisible by $(p - 1)(q - 1)(r - 1)$, then it is also divisible by $(p - 1)(q - 1)$
+  have h₂ : (p - 1) * (q - 1) ∣ p * q * r - 1 := by
+    apply Dvd.dvd.mul_right
+    exact h₁
+
+  -- It is also divisible by $(p - 1)(r - 1)$
+  have h₃ : (p - 1) * (r - 1) ∣ p * q * r - 1 := by
+    apply Dvd.dvd.mul_left
+    apply Dvd.dvd.mul_right
+    exact h₁
+
+  -- and it is also divisible by $(q - 1)(r - 1)$
+  have h₄ : (q - 1) * (r - 1) ∣ p * q * r - 1 := by
+    apply Dvd.dvd.mul_left
+    exact h₁
+
+  have hpqr' : 1 < p * q := by
+    apply one_lt_mul hp hq
+
+  -- It is also divisible by $p - 1$
+  have h₅ : p - 1 ∣ p * q * r - 1 := by
+    apply Dvd.dvd.mul_left
+    apply Dvd.dvd.mul_right
+    exact h₁
+
+  -- and it is also divisible by $q - 1$
+  have h₆ : q - 1 ∣ p * q * r - 1 := by
+    apply Dvd.dvd.mul_left
+    apply Dvd.dvd.mul_right
+    exact h₁
+
+  -- and it is also divisible by $r - 1$
+  have h₇ : r - 1 ∣ p * q * r - 1 := by
+    apply Dvd.dvd.mul_right
+    exact h₁
+
+  have hpqr'' : 1 < r - 1 := by
+    linarith
+
+  -- It is also divisible by $p - 1$ and $r - 1$ implies it is also divisible by $p - 1$ and $(r - 1)$
+  have h₈ : (p - 1) ∣ p * q * r - 1 := by
+    exact h₅
+
+  -- It is also divisible by $q - 1$ and $(r - 1)$ implies it is also divisible by $(q - 1)$ and $(r - 1)$
+  have h₉ : (r - 1) ∣ p * q * r - 1 := by
+    exact h₇
+
+  have h₈₉ : (p - 1) * (r - 1) ∣ p * q * r - 1 := by
+    exact Nat.dvd_gcd_mul h₈ h₉
+
+  -- If $p - 1$ and $r - 1$ are coprime, then their product is equal to gcd of $(p - 1)$ and $(r - 1)$
+  have h₁₀ : p - 1 ⊥ r - 1 → (p - 1) * (r - 1) = p.gcd r - 1 := by
+    intro hpqr
+    exact (Int.gcd_eq_iff_eq_mul_left (by linarith) (by linarith)).mp hpqr
+
+  -- It is also divisible by $p - 1$ and $(q - 1)$ implies it is also divisible by $(p - 1)$ and $(q - 1)$
+  have h₁₁ : (p - 1) * (q - 1) ∣ p * q * r - 1 := by
+    exact Nat.dvd_gcd_mul h₈ h₄
+
+  -- If $p - 1$ and $q - 1$ are coprime, then their product is equal to gcd of $(p - 1)$ and $(q - 1)$
+  have h₁₂ : p - 1 ⊥ q - 1 → (p - 1) * (q - 1) = p.gcd q - 1 := by
+    intro hpqr
+    exact (Int.gcd_eq_iff_eq_mul_left (by linarith) (by linarith)).mp hpqr
+
+  -- If $p - 1$ and $q - 1$ are coprime, then $(p - 1)(q - 1)(r - 1)$ is equal to $(p.gcd q - 1) * (q - 1) * (r - 1)$
+  have h₁₃ : p - 1 ⊥ q - 1 → (p - 1) * (q - 1) * (r - 1) = (p.gcd q - 1) * (q - 1) * (r - 1) := by
+    intro hpqr
+    calc
+      _ = (p - 1) * (r - 1) * (q - 1) := by ring
+      _ = _ := by rw [h₁₀ hpqr, h₁₂ hpqr]
+
+  -- If $p - 1$ and $r - 1$ are coprime, then $(p - 1)(q - 1)(r - 1)$ is equal to $(p.gcd r - 1) * (q - 1) * (r - 1)$
+  have h₁₄ : p - 1 ⊥ r - 1 → (p - 1) * (q - 1) * (r - 1) = (p.gcd r - 1) * (q - 1) * (r - 1) := by
+    intro hpqr
+    calc
+      _ = (p - 1) * (q - 1) * (r - 1) := by ring
+      _ = _ := by rw [h₁₀ hpqr, h₁₃ hpqr]
+
+  -- Then we can get $(p.gcd q - 1) * (q - 1) * (r - 1) = (p.gcd r - 1) * (q - 1) * (r - 1)$
+  have h₁₅ : (p.gcd q - 1) * (q - 1) * (r - 1) = (p.gcd r - 1) * (q - 1) * (r - 1) := by
+    have hpqr : (p - 1) * (q - 1) * (r - 1) = (p - 1) * (r - 1) * (q - 1) := by ring
+    rw [h₁₄, h₁₃] at hpqr
+    exact hpqr
+
+  -- It is equal to $(q - 1) * ((p.gcd r - 1) * (r - 1))$
+  have h₁₆ : (q - 1) * ((p.gcd r - 1) * (r - 1)) = (q - 1) * (p.gcd r - 1) * (r - 1) := by ring
+  rw [h₁₆] at h₁₅
+
+  -- Then we can get $(q - 1) * ((p.gcd r - 1) * (r - 1)) = (q - 1) * ((p.gcd q - 1) * (r - 1))$
+  have h₁₇ : (q - 1) * ((p.gcd r - 1) * (r - 1)) = (q - 1) * ((p.gcd q - 1) * (r - 1)) := by
+    ring_nf
+    rw [mul_comm (p.gcd r - 1), mul_assoc]
+    nth_rw 2 [mul_comm (r - 1)]
+    exact h₁₅
+
+  -- Canceling $(r - 1)$ gives $q - 1$ is equal to $(p.gcd q - 1) $ or $(q - 1)$ is equal to $(p.gcd r - 1) $
+  have h₁₈ : q - 1 = p.gcd q - 1 + (q - 1 - p.gcd q - 1) := by ring
+  have h₁₉ : p.gcd r - 1 = p.gcd q - 1 + (p.gcd r - 1 - p.gcd q - 1) := by ring
+  rw [h₁₈, h₁₉] at h₁₇
+
+  -- If $p.gcd q - 1$ is greater than 0
+  by_cases h₂₀ : 0 < p.gcd q - 1
+  -- and $p.gcd r - 1$ is greater than 0
+  by_cases h₂₁ : 0 < p.gcd r - 1
+
+  -- Then we can get $(q - 1) = (p.gcd q - 1) $ or $(q - 1) = (p.gcd r - 1) $
+  apply_fun (fun x => x / (p.gcd q - 1)) at h₁₇
+  nth_rw 2 [mul_comm (p.gcd q - 1)] at h₁₇
+  rw [← mul_assoc] at h₁₇
+  simp [Int.ediv_mul_cancel, h₂₀, h₂₁] at h₁₇
+
+  -- Since $p.gcd q - 1$ and $p.gcd r - 1$ are both positive, the only possible relation is $(q - 1) = (p.gcd q - 1) $
+  have h₂₂ : q - 1 = p.gcd q - 1 := by
+    have : q - 1 ≥ p.gcd q - 1 := by
+      calc
+        _ ≥ p.gcd r - 1 := by apply Int.le_of_dvd; apply Dvd.dvd.mul_right h₉
+        _ ≥ _ := by apply Int.le_of_dvd; apply Dvd.dvd.mul_left h₈
+    linarith
+  rw [h₂₂] at h₁₇
+
+  -- Then we can get $p.gcd q - 1 = 1$
+  have h₂₃ : p.gcd q - 1 = 1 := by
+    apply Int.eq_one_of_mul_eq_self_left
+    linarith
+
+  have h₂₄ : p.gcd q = 2 := by
+    linarith
+
+  have h₂₅ : q.gcd r = 2 := by
+    apply Int.eq_one_of_mul_eq_self_left
+    linarith
+
+  have h₂₆ : q.gcd r - 1 = 1 := by
+    linarith
+
+  -- Then we can get $p = 2$
+  apply Int.eq_two_of_gcd_eq_two_right at h₂₄
+  apply h₂₄
+
+  -- Then we can get $q = 4$
+  apply Int.eq_four_of_gcd_eq_four_right at h₂₅
+  apply h₂₅
+
+  -- and $r = 8$
+  apply Int.eq_eight_of_gcd_eq_eight_right at h₂₆
+  apply h₂₆
+
+  -- or $p = 3$, $q = 5$, and $r = 15$
+  -- Because of the symmetry, we can get 2 cases
+  -- First case, $p.gcd q - 1 = 0$
+  -- So we can get $p.gcd r - 1 = p.gcd q - 1$
+  -- and $q - 1 = p.gcd q - 1$
+  by_cases h₂₇ : p.gcd q - 1 = 0
+  simp at h₂₇
+  have h₂₈ : p.gcd r - 1 = p.gcd q - 1 := by
+    rw [← h₁₇]
+    simp [h₂₇]
+  have h₂₉ : q - 1 = p.gcd q - 1 := by
+    rw [← h₁₇]
+    simp [h₂₇]
+
+  -- Then we can get $p.gcd r - 1 = 1$
+  have h₃₀ : p.gcd r - 1 = 1 := by
+    apply Int.eq_one_of_mul_eq_self_left
+    linarith
+
+  have h₃₁ : p.gcd r = 2 := by
+    linarith
+
+  have h₃₂ : p = 3 := by
+    apply Int.eq_three_of_gcd_eq_three_right
+    linarith
+
+  have h₃₃ : q.gcd r = 3 := by
+    apply Int.eq_three_of_gcd_eq_three_right
+    linarith
+
+  have h₃₄ : q = 5 := by
+    apply Int.eq_five_of_gcd_eq_five_right
+    linarith
+
+  have h₃₅ : r = 15 := by
+    apply Int.eq fifteen_of_gcd_eq_fifteen_right
+    linarith
+
+  -- We can get $q.gcd r = 3$
+  -- So $q$ is equal to 3 or 9
+  have h₃₆ : q.gcd r - 1 = 1 := by
+    apply Int.eq_one_of_mul_eq_self_left
+    linarith
+
+  have h₃₇ : q.gcd r = 2 := by
+    linarith
+
+  have h₃₈ : q = 3 := by
+    apply Int.eq_two_of_gcd_eq_two_right
+    linarith
+
+  have h₃₉ : q.gcd r - 1 = 1 := by
+    apply Int.eq_one_of_mul_eq_self_left
+    linarith
+
+  have h₄₀ : q.gcd r = 4 := by
+    linarith
+
+  have h₄₁ : q = 4 := by
+    apply Int.eq_four_of_gcd_eq_four_right
+    linarith
+
+  -- Then we can get $p = 3$
+  have h₄₂ : p = 3 := by
+    apply Int.eq_three_of_gcd_eq_three_right
+    linarith
+
+  -- Then we can get $r = 15$
+  have h₄₃ : r = 15 := by
+    apply Int.eq fifteen_of_gcd_eq_fifteen_right
+    linarith
+
+  -- Then we can get $p = 2$ or $p = 3$
+  -- $q = 4$ or $q = 5$
+  -- $r = 8$ or $r = 15$
+  -- We have 8 cases in total
+  -- But most of them are impossible
+  -- Because of the symmetry, we can get at least one of $p$, $q$, $r$ is true
+  by_cases h₂₇ : p.gcd q - 1 = 0
+  simp at h₂₇
+  have h₂₈ : p.gcd r - 1 = p.gcd q - 1 := by
+    rw [← Nat.dvd_trans h₂₈ h₃]
+    exact h₅
+  have h₂₉ : q - 1 = p.gcd q - 1 := by
+    rw [← Nat.dvd_trans h₂₈ h₃]
+    exact h₄
+
+  -- Then we can get $p.gcd r - 1 = 1$
+  have h₃₀ : p.gcd r - 1 = 1 := by
+    apply Int.eq_one_of_mul_eq_self_left
+    linarith
+
+  have h₃₁ : p.gcd r = 2 := by
+    linarith
+
+  have h₃₂ : p = 2 := by
+    apply Int.eq_two_of_gcd_eq_two_right
+    linarith
+
+  have h₃₃ : q.gcd r = 3 := by
+    apply Int.eq_three_of_gcd_eq_three_right
+    linarith
+
+  have h₃₄ : q = 3 := by
+    apply Int.eq_three_of_gcd_eq_three_right
+    linarith
+
+  have h₃₅ : r = 4 := by
+    apply Int.eq_four_of_gcd_eq_four_right
+    linarith
+
+  -- $p = 2$, $q = 3$, $r = 4$ is impossible
+  -- Because of the symmetry of $p$, $q$, $r$, we can get other relations
+  -- Then we can get $q.gcd r = 3$
+  -- So $q$ is equal to 3 or 9
+  have h₃₆ : q.gcd r - 1 = 1 := by
+    apply Int.eq_one_of_mul_eq_self_left
+    linarith
+
+  have h₃₇ : q.gcd r = 2 := by
+    linarith
+
+  have h₃₈ : q = 3 := by
+    apply Int.eq_two_of_gcd_eq_two_right
+    linarith
+
+  have h₃₉ : q.gcd r - 1 = 1 := by
+    apply Int.eq_one_of_mul_eq_self_left
+    linarith
+
+  have h₄₀ : q.gcd r = 4 := by
+    linarith
+
+  have h₄₁ : q = 4 := by
+    apply Int.eq_four_of_gcd_eq_four_right
+    linarith
+
+  -- $p = 2$, $q = 4$, $r = 8$ is impossible
+  -- Then we can get $p = 3$
+  have h₄₂ : p = 3 := by
+    apply Int.eq_three_of_gcd_eq_three_right
+    linarith
+
+    -- Then we can get $r = 15$
+  have h₄₃ : r = 15 := by
+    apply Int.eq fifteen_of_gcd_eq_fifteen_right
+    linarith
+
+  -- $p = 3$, $q = 5$, $r = 15$ is impossible
+  -- Because of the symmetry, we can get $p =

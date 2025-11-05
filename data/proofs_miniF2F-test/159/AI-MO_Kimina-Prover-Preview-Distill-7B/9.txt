@@ -1,0 +1,64 @@
+-- We simplify the expression step by step.
+
+  -- First, calculate $16^{17} \bmod 10$.
+  have mod1 : 16 ^ 17 % 10 = 6 ^ 17 % 10 := by
+    rw [(by rfl : 16 = 6 + 10)]
+    rw [Nat.pow_add_mod 6 10 17]
+  have mod1' : 6 ^ 17 % 10 = 6 % 10 := by
+    rw [(by rfl : 6 = 6 ^ 1)]
+    rw [Nat.pow_mod 6 10 17]
+  have mod1'' : 6 ^ 17 % 10 = 6 := by
+    rw [mod1, mod1']
+    omega
+  clear mod1 mod1'
+
+  -- Next, calculate $17^{18} \bmod 10$.
+  have mod2 : 17 ^ 18 % 10 = 7 ^ 18 % 10 := by
+    rw [(by rfl : 17 = 7 + 10)]
+    rw [Nat.pow_add_mod 7 10 18]
+  have mod2' : 7 ^ 18 % 10 = 7 ^ 1 % 10 := by
+    rw [(by rfl : 7 = 7 ^ 1)]
+    rw [Nat.pow_mod 7 10 18]
+  have mod2'' : 7 ^ 18 % 10 = 7 := by
+    rw [mod2, mod2']
+    omega
+  clear mod2 mod2'
+
+  -- Finally, calculate $18^{19} \bmod 10$.
+  have mod3 : 18 ^ 19 % 10 = 8 ^ 19 % 10 := by
+    rw [(by rfl : 18 = 8 + 10)]
+    rw [Nat.pow_add_mod 8 10 19]
+  have mod3' : 8 ^ 19 % 10 = 8 ^ 3 % 10 := by
+    rw [(by rfl : 19 = 3 + 16)]
+    rw [Nat.pow_add_mod 8 10 19]
+    rw [(by rfl : 8 = 8 ^ 1)]
+    rw [Nat.pow_mod 8 10 16]
+  have mod3'' : 8 ^ 19 % 10 = 2 ^ 19 % 10 := by
+    rw [mod3, mod3']
+    rw [(by rfl : 8 = 2 ^ 3)]
+    rw [Nat.pow_mod 2 10 3 * 19]
+    have : 2 ^ 3 % 10 = 2 ^ 1 % 10 := by
+      rw [(by rfl : 3 = 1 + 2)]
+      rw [Nat.pow_add_mod 2 10 2]
+    rw [this]
+  have mod3''' : 2 ^ 19 % 10 = 2 ^ 3 % 10 := by
+    rw [(by rfl : 19 = 3 + 16)]
+    rw [Nat.pow_add_mod 2 10 3 16]
+    rw [(by rfl : 2 = 2 ^ 1)]
+    rw [Nat.pow_mod 2 10 1 * 16]
+  have mod3'''' : 2 ^ 19 % 10 = 2 := by
+    rw [mod3'', mod3''']
+    rw [mod3'''']
+  clear mod3 mod3' mod3'' mod3''' mod3''''
+
+
+  -- Now put them all together.
+  calc
+    16 ^ 17 * 17 ^ 18 * 18 ^ 19 % 10 = (16 ^ 17 % 10) * (17 ^ 18 % 10) * (18 ^ 19 % 10) % 10 := by
+      rw [Nat.mul_mod]
+      rw [Nat.mul_mod]
+    _ = 6 * 7 * 2 % 10 := by
+      rw [mod1'', mod2'', mod3'''']
+    _ = 8 := by
+      omega
+```

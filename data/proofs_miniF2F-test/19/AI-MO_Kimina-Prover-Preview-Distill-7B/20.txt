@@ -1,0 +1,118 @@
+-- It suffices to show that those $x$ satisfies the inequality is $[-1 / 2, 45 / 8)$.
+  suffices : {x | 0 ≤ 1 + 2 * x ∧ (1 - Real.sqrt (1 + 2 * x)) ^ 2 ≠ 0 ∧ 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 2 * x + 9} = Set.Ico (-1 / 2) (45 / 8)
+  · ext x
+    simp only [Set.mem_setOf_eq, Set.mem_Ico]
+    constructor
+    · intro ⟨h₀, h₁, h₂⟩
+      exact (this h₀ h₁ h₂).2
+    · intro ⟨h₀, h₁⟩
+      exact ⟨h₀, h₁, this h₀ h₁ h₁⟩
+
+  -- Now it suffices to show that the set we want to prove is $[-1 / 2, 45 / 8)$.
+  ext x
+  simp only [Set.mem_setOf_eq, Set.mem_Ico]
+
+  constructor
+
+  -- We first show that the condition implies $x \geq -1 / 2$. This is quite trivial.
+  · rintro ⟨h₀, h₁, h₂⟩
+    linarith
+
+  -- Now it remains to show that the condition implies $x < 45 / 8$. This is harder.
+  · intro h
+    clear h₀ h₂
+
+    -- We make some definitions for later use.
+    let a := 1 + 2 * x
+    let b := Real.sqrt a
+    let d := 1 - b
+    let y := d ^ 2
+    let z := 4 * x ^ 2
+
+    -- All of these definitions are just for easier reference.
+    have ha : a = 1 + 2 * x := by rfl
+    have hb : b = Real.sqrt a := by rfl
+    have hd : d = 1 - b := by rfl
+    have hy : y = d ^ 2 := by rfl
+    have hz : z = 4 * x ^ 2 := by rfl
+
+    -- We show that $x \neq 45 / 8$ by contradiction. Assume on the contrary that $x = 45 / 8$. Then $a = 1 + 2 * 45 / 8 = 23 / 4$.
+    have hne : x < 45 / 8 := by
+      by_contra! hge
+      suffices : x = 45 / 8
+      · subst x
+        norm_num at h₂
+        specialize h₂ (by positivity)
+        norm_num at h₂
+
+      -- We have $b = \sqrt{23 / 4}$.
+      let b' := Real.sqrt (23 / 4)
+      have hbb : b = b' := by
+        rw [hb, ha]
+        norm_num
+      -- We have $d = 1 - \sqrt{23 / 4}$.
+      let d' := 1 - b'
+      have hdd : d = d' := by
+        rw [hd, hbb, hbd]
+      -- We have $y = (1 - \sqrt{23 / 4})^2 = 23 / 4 - 2 * \sqrt{23 / 4}$
+      let y' := (1 - b') ^ 2
+      have hyh : y = y' := by
+        rw [hy, hd, hbb]
+        norm_num
+        rw [hbd]
+      -- We have $z = 4 * x ^ 2 = 4 * (45 / 8) ^ 2 = 253125 / 1024$.
+      let z' := 253125 / 1024
+      have hzz : z = z' := by
+        rw [hz]
+        norm_num
+        rw [ha, hbd]
+        norm_num
+      -- Then we have $253125 / 1024 < 23 / 4 + 9 = 145 / 4$.
+      have hge : z' < 145 / 4 := by norm_num
+      rw [← hzz, hyh]
+      norm_num
+      linarith
+
+    -- We have $0 \leq d$.
+    have hbd : 0 ≤ d := by
+      rw [hd, hb]
+      apply Real.sqrt_nonneg
+
+    -- We have $d < 1$.
+    have hdi : d < 1 := by
+      suffices : b < 1
+      · linarith
+      rw [hb]
+      apply Real.sqrt_lt_one.mpr
+      linarith
+
+    -- We have $0 \leq y$.
+    have hyd : 0 ≤ y := by
+      rw [hy]
+      exact sq_nonneg d
+
+    -- We have $y < 1$.
+    have hii : y < 1 := by
+      suffices : d ^ 2 < 1
+      · linarith
+      nlinarith only [hbd, hdi]
+
+    -- We have $0 \leq z$.
+    have hzr : 0 ≤ z := by
+      rw [hz]
+      positivity
+
+    -- We have $z < 253125 / 1024$.
+    have hii : z < 253125 / 1024 := by
+      suffices : 4 * x ^ 2 < 253125 / 1024
+      · linarith
+      nlinarith only [ha, hii, hge]
+
+    -- This implies $x < 45 / 8$.
+    norm_num at hii
+    nlinarith only [hz, hii]
+
+    -- We have $45 / 8 < 45 / 8$.
+    linarith
+
+```

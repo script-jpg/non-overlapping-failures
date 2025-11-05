@@ -1,0 +1,72 @@
+have ha : a = 2 ^ k - d := by omega
+
+  -- We cannot have $a>1$
+  by_contra! ha'
+  -- We cannot have $a=1$ as $a$ is even
+  replace ha' : a = 2 := by
+    have ⟨n, hn⟩ := ha'
+    have : Even a := by
+      rw [hn]
+      apply Even.add_left
+      exact Nat.even_two
+    have : a % 2 = 0 := by exact Nat.even_iff.mp this
+    have : ¬ Odd a := by exact Nat.not_odd_iff_even.mpr this
+    contradiction
+
+  -- We have $d>1$
+  have hd : d > 1 := by
+    by_contra! hd'
+    have : d = 1 := by omega
+    have : a = 2 ^ k - 1 := by rw [this] at ha; exact ha
+    have : a > 1 := by rw [this]; apply Nat.one_lt_pow; omega
+    omega
+
+  -- We have $a+d$ even
+  have hadd : Even (a + d) := by
+    apply Even.add_left
+    exact Nat.even_two_pow k
+
+  -- We have $a-d$ even
+  have had : Even (a - d) := by
+    apply Even.sub_left
+    exact Nat.even_two_pow k
+
+  -- We have $a$ even
+  have ha_even : Even a := by
+    rw [ha]
+    apply Even.add_left
+    exact had
+
+  -- We have $d$ even
+  have hd_even : Even d := by
+    by_contra! hd_odd
+    have : Odd d := by exact Nat.not_even_iff_odd.mp hd_odd
+    have : Odd (a + d) := by apply Odd.add_odd ha' this
+    have : ¬ Odd (a + d) := by exact Nat.not_odd_iff_even.mpr hadd
+    contradiction
+
+  -- We have $a+d$ odd
+  have hadd_odd : Odd (a + d) := by
+    apply Odd.add.mpr
+    refine ⟨a - d, by rw [Nat.add_sub_cancel a d]; exact had⟩
+
+  -- We have $a$ odd
+  have ha_odd : Odd a := by
+    by_contra! ha_even'
+    have : Even a := by exact Nat.not_odd_iff_even.mp ha_even'
+    have : Odd d := by
+      by_contra! hd_even'
+      have : Even d := by exact Nat.not_odd_iff_even.mp hd_even'
+      have : Even (a + d) := by apply Even.add Even ha_even' Even hd_even'
+      have : ¬ Even (a + d) := by exact Nat.not_even_iff_odd.mpr hadd_odd
+      contradiction
+    have : Even (a - d) := by apply Even.sub_left ha_even'
+    have : ¬ Even (a - d) := by exact Nat.not_even_iff_odd.mpr had
+    contradiction
+
+  -- We have $a=1$
+  have : a % 2 = 1 := by exact Nat.odd_iff.mp ha_odd
+  have : a % 2 = 0 := by exact Nat.even_iff.mp ha_even
+  omega
+
+```

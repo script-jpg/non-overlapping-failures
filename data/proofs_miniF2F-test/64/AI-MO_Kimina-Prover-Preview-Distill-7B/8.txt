@@ -1,0 +1,70 @@
+have : ∀ x, Nat.gcd (12 * x + 7) (5 * x + 2) ∣ x * 57 + 29 := by
+    intro x
+    apply Nat.gcd_dvd_gcd
+   . apply Nat.gcd_dvd_gcd
+     . norm_num
+     . use 5 * (12 * x + 7) - 12 * (5 * x + 2)
+        simp
+     . use 1
+        simp
+   . apply Nat.gcd_dvd_gcd
+     . use 2 * (12 * x + 7) - 12 * (5 * x + 2)
+        simp
+     . use 1
+        simp
+
+  have : ∀ x, Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 29 := by
+    intro x
+    have : x * 57 + 29 = Nat.gcd (12 * x + 7) (5 * x + 2) * (57 * (x / Nat.gcd (12 * x + 7) (5 * x + 2)) + 29 / Nat.gcd (12 * x + 7) (5 * x + 2)) := by
+      apply Eq.symm
+      apply (Nat.div_add_mod _ _).symm
+      have h : Nat.gcd (12 * x + 7) (5 * x + 2) ∣ 57 * (x / Nat.gcd (12 * x + 7) (5 * x + 2)) + 29 / Nat.gcd (12 * x + 7) (5 * x + 2) := by
+        apply Nat.dvd_add
+       . apply Nat.dvd_mul_left
+       . apply Nat.dvd_mul_left
+      apply Nat.dvd_of_dvd_mul_left h
+    rw [this]
+    apply Nat.dvd_mul_right
+
+  have : ∀ x, Nat.gcd (12 * x + 7) (5 * x + 2) ∈ Set.range (fun x ↦ x.gcd (12 * x + 7) (5 * x + 2)) := by
+    intro x
+    simp
+    use x
+    rfl
+
+  have : ∀ x, Nat.gcd (12 * x + 7) (5 * x + 2) ∈ Set.range h := by
+    intro x
+    simp
+    exact (h₂ x).symm ▸ this x
+
+  have h₄ : ∀ x, Nat.gcd (12 * x + 7) (5 * x + 2) ∈ (Set.range h).toFinset := by
+    intro x
+    simp
+    exact this x
+
+  have h₅ : 29 ∈ (Set.range h).toFinset := by
+    have : 29 ∈ Set.range h := by
+      use 1
+      simp
+      exact (h₂ 1).symm ▸ this
+    simp [Set.mem_toFinset]
+
+  have h₆ : Set.range h = {x | Nat.gcd (12 * x + 7) (5 * x + 2) ∈ (Set.range h).toFinset} := by
+    ext x
+    simp
+    constructor
+   . exact fun a ↦ this a x
+   . intro hx
+      have : ∃ x, x = x ∧ h x = x := by
+        use x
+        simp [hx]
+      obtain ⟨x, hx⟩ := this
+      have : x ∈ (Set.range h).toFinset := by
+        simp [Set.mem_toFinset]
+        exact hx ▸ h₃ x
+      exact hx ▸ this
+
+  rw [h₆, Finset.sum_mem_finset]
+  simp [h₄, h₅]
+  decide
+```

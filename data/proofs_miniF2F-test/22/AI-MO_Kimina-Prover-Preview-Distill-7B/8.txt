@@ -1,0 +1,66 @@
+-- $\sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 < \frac{12}{25}$
+  have h₁ : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 12 / 25 := by
+    -- $\sum_{n=0}^{99} a_{n+1}^2 = 1$
+    have h₂ : (∑ x in Finset.range 100, a (x + 1) ^ 2) = 1 := h₀
+    -- $a_{100}^2 \leq 1$
+    have h₃ : a 100 ^ 2 ≤ 1 := by
+      suffices a 100 ^ 2 ≤ ∑ x ∈ Finset.range 100, a (x + 1) ^ 2 by
+        rw [h₂] at this
+        exact this
+      apply Finset.sum_le_sum
+      intro i hi
+      exact le_of_lt (a_pos (100 + 1))
+    -- $a_{1}^2 \leq 1$
+    have h₄ : a 1 ^ 2 ≤ 1 := by
+      suffices a 1 ^ 2 ≤ ∑ x ∈ Finset.range 100, a (x + 1) ^ 2 by
+        rw [h₂] at this
+        exact this
+      apply Finset.sum_le_sum
+      intro i hi
+      exact le_of_lt (a_pos (1 + 1))
+    -- $2 * \sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) \leq (\sum_{n=0}^{98} a_{n+1}^2) * (\sum_{n=0}^{98} a_{n+2}^2) \leq (\sum_{n=0}^{98} a_{n+1}^2) * (\sum_{n=0}^{99} a_{n+1}^2) = 99 / 100$
+    have h₅ : 2 * (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) ≤ 99 / 100 := by
+      rw [Finset.mul_sum]
+      have h₆ : ∑ x in Finset.range 99, a (x + 2) ^ 2 ≤ ∑ x in Finset.range 100, a (x + 1) ^ 2 := by
+        apply Finset.sum_le_sum
+        intro i hi
+        · exact * (a_pos (99 + 1))
+        · simp at hi
+          simp
+      rw [h₂] at h₆
+      rw [h₂]
+      calc
+        ∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2) ^ 2 ≤ (∑ x in Finset.range 99, a (x + 1) ^ 2) * (∑ x in Finset.range 99, a (x + 2) ^ 2) := by
+          apply Finset.sum_mul_sum_le
+          intro i hi
+          exact a_pos (99 + 1)
+        _ ≤ (∑ x in Finset.range 99, a (x + 1) ^ 2) * (∑ x in Finset.range 100, a (x + 1) ^ 2) := by
+          apply mul_le_mul_of_nonneg_left
+          · exact h₆
+          · apply Finset.sum_nonneg
+            intros
+            exact (a_nonneg (99 + 1)).mpr (a_pos (99 + 1))
+        _ = 99 / 100 := by
+          rw [h₂]
+          norm_num
+    -- $2 * \sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 < 2 * \sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_{100} < 2 * \sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * (a_1 + a_{100})$
+    have h₇ : 2 * (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * a 1 < 2 * (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * (a 1 + a 100) := by
+      suffices a 100 ^ 2 * a 1 < a 100 ^ 2 * (a 1 + a 100) by
+        linarith
+      apply mul_lt_mul_of_pos_left
+      · linarith
+      · exact a_pos (100 + 1)
+    -- $2 * \sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * (a_1 + a_{100}) ≤ 99 / 100 + 1 * (1 + 1) = 12 / 25$
+    have h₈ : 2 * (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) + a 100 ^ 2 * (a 1 + a 100) ≤ 12 / 25 := by
+      have h₉ : a 100 ^ 2 * (a 1 + a 100) ≤ (1 : NNReal) * (1 + 1) := by
+        apply mul_le_mul
+        apply h₃
+        apply add_le_add
+        · apply le_of_lt
+          exact a_pos 1
+        · exact h₄
+      linarith
+    -- $2 * \sum_{n=0}^{98} (a_{n+1}^2 a_{n+2}) + a_{100}^2 * a_1 < 12 / 25$
+    linarith
+  exact h₁
+```

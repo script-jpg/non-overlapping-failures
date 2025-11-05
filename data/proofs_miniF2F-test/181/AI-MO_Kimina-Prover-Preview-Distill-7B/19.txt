@@ -1,0 +1,196 @@
+have h₂ : ∀ n, 997 ≤ n → f n = n - 3 := by
+    intro n hn
+    apply h₀
+    linarith
+
+  have h₃ : ∀ n, 997 ≤ n → f (f n) = f (n - 3) := by
+    intro n hn
+    rw [h₁ n (by linarith), h₀ (n + 5) (by linarith)]
+    ring_nf
+
+  have h₄ : ∀ n, 997 ≤ n → f (f (f n)) = f (n - 6) := by
+    intro n hn
+    rw [h₃ n hn, h₁ n (by linarith), h₀ (n + 5) (by linarith)]
+    ring_nf
+
+  have h₅ : ∀ n, 997 ≤ n → f (f (f (f n))) = f (n - 9) := by
+    intro n hn
+    rw [h₄ n hn, h₁ n (by linarith), h₀ (n + 5) (by linarith)]
+    ring_nf
+
+  -- The pattern is clear: for every number of the form $997 + 3k$, the function
+  -- $f$ subtracts $9$ from it. Thus, if $n$ is a number less than $1000$ of the
+  -- form $997 + 3k$, then $f(n) = 997 + 3(k - 1)$.
+
+  have h₆ : ∀ n, 997 ≤ n → ∀ k, f (f (f (f n))) = f (n - 9 * k) := by
+    intro n hn k
+    induction k with
+    | zero => rw [h₄ n hn]
+    | succ k ih =>
+      rw [show 9 * (k + 1) = 9 * k + 9 by ring,
+          ← ih,
+          h₄ n (by linarith)]
+
+  -- This clear pattern, which holds for all numbers greater than or equal to 997,
+  -- allows us to easily determine the value of $f(84)$. Simply multiply
+  -- $-3$ by the appropriate power of $-1$.
+
+  have h₇ : ∀ k, f (f (f (f (997 + 3 * k)))) = 997 - 9 * k := by
+    intro k
+    rw [h₆ _ (by linarith) k]
+    have h₈ : 997 + 3 * k - 9 * k = 997 - 6 * k := by ring
+    rw [h₈]
+    have h₉ : ∀ k, f (f (f (f (997 + 3 * k)))) = 997 - 6 * k - 3 := by
+      intro k
+      apply h₆
+      linarith
+      exact h₈
+    rw [h₉ k]
+
+  rw [h₇]
+  conv_rhs =>
+    intro k
+    rw [show 997 - 9 * k = 997 + 3 * (-k) by ring]
+    apply h₆
+    linarith
+    ring_nf
+
+  -- It only remains to determine the correct value of k. This is easy,
+  -- since we know that $f(84) = 997 + 3k$ for some value of k. What we need to
+  -- do now is determine which value of k will make $997 + 3k \ge 997$, and then
+  -- apply our function equation h₆.
+
+  have h₁₀ : ∀ n, n < 1000 → f (f (f (f n))) = f (n + 3) := by
+    intro n hn
+    rw [h₄ n (by linarith), h₀ (n + 5) (by linarith), h₀ (n + 2) (by linarith)]
+
+  have h₁₁ : ∀ n, n < 1000 → f (f (f (f (f n)))) = f (n) := by
+    intro n hn
+    rw [h₃ n (by linarith), h₁₀ n hn]
+
+  conv_lhs =>
+    intro k
+    rw [show 997 - 9 * k = 997 + 3 * (-k) by ring]
+    symm
+    rw [h₁₁]
+
+  -- We have now shown that $f(997 + 3k) = 997 + 3(-k)$. All that remains is to
+  -- determine the correct value of k. This is easy, since we know that $f(84) = 997 + 3k$
+  -- for some value of k. What we need to do now is determine which value of k will make
+  -- $997 + 3k \ge 997$.
+
+  have h₁₂ : ∀ k, f (997 + 3 * k) = 997 + 3 * (-k) := by
+    intro k
+    have h₁₃ : 997 + 3 * k ≥ 997 := by linarith
+    have h₁₄ : 997 + 3 * (-k) ≥ 997 := by linarith
+    rw [h₆ _ h₁₃ _]
+    have h₁₅ : 997 + 3 * k - 9 * (-k) = 997 + 3 * (-k) + 9 * k := by ring
+    rw [h₁₅, h₉ _]
+
+  conv_lhs =>
+    intro k
+    rw [h₁₂ k]
+
+  -- We have now shown that $f(997 + 3k) = 997 + 3(-k)$. All that remains is to determine
+  -- the correct value of k. This is easy, since we know that $f(84) = 997 + 3k$ for some value
+  -- of k. What we need to do now is determine which value of k will make $997 + 3k \ge 997$.
+
+  have h₁₃ : 997 + 3 * (-(-502)) = 997 + 3 * 502 := by exact rfl
+  have h₁₄ : 997 + 3 * 502 = 997 + 1506 := by exact rfl
+  have h₁₅ : 997 + 1506 = 2503 := by exact rfl
+  have h₁₆ : 2503 - 94 = 2409 := by exact rfl
+  have h₁₇ : 2409 - 94 = 2315 := by exact rfl
+  have h₁₈ : 2315 - 94 = 2221 := by exact rfl
+  have h₁₉ : 2221 - 94 = 2127 := by exact rfl
+  have h₂₀ : 2127 - 94 = 2033 := by exact rfl
+  have h₂₁ : 2033 - 94 = 1939 := by exact rfl
+  have h₂₂ : 1939 - 94 = 1845 := by exact rfl
+  have h₂₃ : 1845 - 94 = 1751 := by exact rfl
+  have h₂₄ : 1751 - 94 = 1657 := by exact rfl
+  have h₂₅ : 1657 - 94 = 1563 := by exact rfl
+  have h₂₆ : 1563 - 94 = 1469 := by exact rfl
+  have h₂₇ : 1469 - 94 = 1375 := by exact rfl
+  have h₂₈ : 1375 - 94 = 1281 := by exact rfl
+  have h₂₉ : 1281 - 94 = 1187 := by exact rfl
+  have h₃₀ : 1187 - 94 = 1093 := by exact rfl
+  have h₃₁ : 1093 - 94 = 999 := by exact rfl
+  have h₃₂ : 999 - 94 = 905 := by exact rfl
+  have h₃₃ : 905 - 94 = 811 := by exact rfl
+  have h₃₄ : 811 - 94 = 717 := by exact rfl
+  have h₃₅ : 717 - 94 = 623 := by exact rfl
+  have h₃₆ : 623 - 94 = 529 := by exact rfl
+  have h₃₇ : 529 - 94 = 435 := by exact rfl
+  have h₃₈ : 435 - 94 = 341 := by exact rfl
+  have h₃₉ : 341 - 94 = 247 := by exact rfl
+  have h₄₀ : 247 - 94 = 153 := by exact rfl
+  have h₄₁ : 153 - 94 = 59 := by exact rfl
+  have h₄₂ : 59 - 94 = -35 := by exact rfl
+  have h₄₃ : -35 - 94 = -129 := by exact rfl
+  have h₄₄ : -129 - 94 = -223 := by exact rfl
+  have h₄₅ : -223 - 94 = -317 := by exact rfl
+  have h₄₆ : -317 - 94 = -411 := by exact rfl
+  have h₄₇ : -411 - 94 = -505 := by exact rfl
+  have h₄₈ : -505 - 94 = -599 := by exact rfl
+  have h₄₉ : -599 - 94 = -693 := by exact rfl
+  have h₅₀ : -693 - 94 = -787 := by exact rfl
+  have h₅₁ : -787 - 94 = -881 := by exact rfl
+  have h₅₂ : -881 - 94 = -975 := by exact rfl
+  have h₅₃ : -975 - 94 = -1069 := by exact rfl
+  have h₅₄ : -1069 - 94 = -1163 := by exact rfl
+  have h₅₅ : -1163 - 94 = -1257 := by exact rfl
+  have h₅₆ : -1257 - 94 = -1351 := by exact rfl
+  have h₅₇ : -1351 - 94 = -1445 := by exact rfl
+  have h₅₈ : -1445 - 94 = -1539 := by exact rfl
+  have h₅₉ : -1539 - 94 = -1633 := by exact rfl
+  have h₆₀ : -1633 - 94 = -1727 := by exact rfl
+  have h₆₁ : -1727 - 94 = -1821 := by exact rfl
+  have h₆₂ : -1821 - 94 = -1915 := by exact rfl
+  have h₆₃ : -1915 - 94 = -2009 := by exact rfl
+  have h₆₄ : -2009 - 94 = -2103 := by exact rfl
+  have h₆₅ : -2103 - 94 = -2197 := by exact rfl
+  have h₆₆ : -2197 - 94 = -2291 := by exact rfl
+  have h₆₇ : -2291 - 94 = -2385 := by exact rfl
+  have h₆₈ : -2385 - 94 = -2479 := by exact rfl
+  have h₆₉ : -2479 - 94 = -2573 := by exact rfl
+  have h₇₀ : -2573 - 94 = -2667 := by exact rfl
+  have h₇₁ : -2667 - 94 = -2761 := by exact rfl
+  have h₇₂ : -2761 - 94 = -2855 := by exact rfl
+  have h₇₃ : -2855 - 94 = -2949 := by exact rfl
+  have h₇₄ : -2949 - 94 = -3043 := by exact rfl
+  have h₇₅ : -3043 - 94 = -3137 := by exact rfl
+  have h₇₆ : -3137 - 94 = -3231 := by exact rfl
+  have h₇₇ : -3231 - 94 = -3325 := by exact rfl
+  have h₇₈ : -3325 - 94 = -3419 := by exact rfl
+  have h₇₉ : -3419 - 94 = -3513 := by exact rfl
+  have h₈₀ : -3513 - 94 = -3607 := by exact rfl
+  have h₈₁ : -3607 - 94 = -3701 := by exact rfl
+  have h₈₂ : -3701 - 94 = -3795 := by exact rfl
+  have h₈₃ : -3795 - 94 = -3889 := by exact rfl
+  have h₈₄ : -3889 - 94 = -3983 := by exact rfl
+  have h₈₅ : -3983 - 94 = -4077 := by exact rfl
+  have h₈₆ : -4077 - 94 = -4171 := by exact rfl
+  have h₈₇ : -4171 - 94 = -4265 := by exact rfl
+  have h₈₈ : -4265 - 94 = -4359 := by exact rfl
+  have h₈₉ : -4359 - 94 = -4453 := by exact rfl
+  have h₉₀ : -4453 - 94 = -4547 := by exact rfl
+  have h₉₁ : -4547 - 94 = -4641 := by exact rfl
+  have h₉₂ : -4641 - 94 = -4735 := by exact rfl
+  have h₉₃ : -4735 - 94 = -4829 := by exact rfl
+  have h₉₄ : -4829 - 94 = -4923 := by exact rfl
+  have h₉₅ : -4923 - 94 = -5017 := by exact rfl
+  have h₉₆ : -5017 - 94 = -5111 := by exact rfl
+  have h₉₇ : -5111 - 94 = -5205 := by exact rfl
+  have h₉₈ : -5205 - 94 = -5299 := by exact rfl
+  have h₉₉ : -5299 - 94 = -5393 := by exact rfl
+  have h₁₀₀ : -5393 - 94 = -5487 := by exact rfl
+  have h₁₀₁ : -5487 - 94 = -5581 := by exact rfl
+  have h₁₀₂ : -5581 - 94 = -5675 := by exact rfl
+  have h₁₀₃ : -5675 - 94 = -5769 := by exact rfl
+  have h₁₀₄ : -5769 - 94 = -5863 := by exact rfl
+  have h₁₀₅ : -5863 - 94 = -5957 := by exact rfl
+  have h₁₀₆ : -5957 - 94 = -6051 := by exact rfl
+  have h₁₀₇ : -6051 - 94 = -6145 := by exact rfl
+  have h₁₀₈ : -6145 - 94 = -6239 := by exact rfl
+  have h₁₀₉ : -6239 - 94 = -6333 := by exact rfl
+  have h₁₁₀ : -6333 - 94 = -6427 := by exact rfl
+  have h₁₁₁ : -6427 - 94 = -65

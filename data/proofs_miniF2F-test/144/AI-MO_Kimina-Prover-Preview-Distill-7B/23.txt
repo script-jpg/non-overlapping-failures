@@ -1,0 +1,48 @@
+-- A trivial lemma that may help simplifying the goal.
+  have h' (z : ℂ) : z + 6 / z = -2 ↔ z^2 + 6 + (-2) * z = 0 := by
+    field_simp
+    by_cases h : z = 0
+    · simp [h]
+    · rw [← mul_div_cancel_right₀]
+      by_cases h' : z + 6 / z = 0
+      · have : z ≠ 0 := by
+          by_contra! h'' 
+          rw [h''] at h'
+          simp at h'
+        rw [← mul_div_cancel_right₀ h this]
+        ring
+      · have : z ≠ 0 := by
+          by_contra! h'' 
+          rw [h''] at h'
+          simp at h'
+        rw [mul_div_cancel_right₀ h this]
+        field_simp at h'
+        rw [← h']
+        ring
+
+  rw [h']
+
+  -- Simplify the expressions using the norm squared formula.
+  have h₁ (z : ℂ) : Complex.normSq (z + 2) = Complex.normSq z + 4 * Complex.re z + 4 := by
+    simp [Complex.normSq]
+    ring
+
+  have h₂ (z : ℂ) : Complex.normSq (z ^ 2 + 1) = Complex.normSq (z ^ 2) + 2 * Complex.re (z ^ 2) + 1 := by
+    simp [Complex.normSq]
+    ring
+
+  have h₃ (z : ℂ) : Complex.normSq (z ^ 2) = Complex.normSq z ^ 2 := by
+    simp [Complex.normSq]
+
+  have h₄ (z : ℂ) : Complex.normSq (z ^ 2) = 2 * Complex.normSq z - 2 * z * Complex.re z := by
+    rw [Complex.normSq, sq, Complex.mul_re, Complex.mul_im, sq, sq,
+      Complex.ofReal_re, Complex.ofReal_im]
+    ring
+
+  have h₅ (z : ℂ) : Complex.normSq z ≥ 0 := by simp [Complex.normSq]
+
+  -- Use these formulas to rewrite the equation and solve for z.
+  rw [h₁, h₂, h₃, h₄, h₅]
+  nlinarith [sq_nonneg (Complex.normSq z - 4), sq_nonneg (Complex.re z - 1),
+    sq_nonneg (z * Complex.im z - 2)]
+```

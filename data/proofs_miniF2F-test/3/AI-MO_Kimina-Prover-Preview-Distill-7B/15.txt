@@ -1,0 +1,174 @@
+-- Simplify the goal using the definition of `!`.
+  simp [Nat.factorial_def]
+
+  -- Put everything over a common denominator.
+  congr
+  · congr
+    -- Let $E = \{n < 5000 \mid n \text{ is odd}\}$. Let $O = \{n < 5000 \mid n \text{ is odd}\}$.
+    -- Let $E' = \{n < 5000 \mid n \text{ is even}\}$. Let $O' = \{n < 5000 \mid n \text{ is odd}\}$.
+    -- We want $\prod_{o \in O} (o \cdot 2) \prod_{e \in E} (e + 1)$.
+    let E := Finset.filter (fun x => ¬Even x) (Finset.range 5000)
+    let O := Finset.filter (fun x => Even x) (Finset.range 5000)
+    let E' := Finset.filter (fun x => Even x) (Finset.range 5000)
+    let O' := Finset.filter (fun x => ¬Even x) (Finset.range 5000)
+
+    -- Show that $O = \{n \in \mathbb{N} \mid n \text{ is odd} \land n < 5000\}$.
+    have hO : O = Finset.filter (fun x => Even x) (Finset.range 5000) := by rfl
+
+    -- Show that $E = \{n \in \mathbb{N} \mid n \text{ is odd} \land n < 5000\}$.
+    have hE : E = Finset.filter (fun x => ¬Even x) (Finset.range 5000) := by rfl
+
+    -- Show that $E' = \{n \in \mathbb{N} \mid n \text{ is even} \land n < 5000\}$.
+    have hE' : E' = Finset.filter (fun x => Even x) (Finset.range 5000) := by rfl
+
+    -- Show that $O' = \{n \in \mathbb{N} \mid n \text{ is odd} \land n < 5000\}$.
+    have hO' : O' = Finset.filter (fun x => ¬Even x) (Finset.range 5000) := by rfl
+
+    -- Show that $E \times 2 \times O'$ parameterizes all the factors.
+    have h : (E' ×ˢ (O' ×ˢ (E ×ˢ O))).image (fun x => x.1 * (2 * x.2.1) * x.2.2) =
+      Finset.image (fun x => x) (Finset.range 10000) := by
+      ext n
+      simp
+      constructor
+      · intro ⟨o, eveno, e, evene, h⟩
+        use o
+        use ⟨eveno, eveni⟩
+        use e
+        use ⟨eveni, ⟨⟨m, hm⟩, hx⟩⟩
+        (repeat rw [←Nat.div_add_mod m?_])
+        rw [←eveno, ←eveni, mul_assoc, mul_comm, mul_assoc, mul_assoc, mul_comm, ←mul_assoc]
+        simp [hm, hx]
+      · intro ⟨o, eveno, e, evene, h⟩
+        use o
+        use ⟨eveno,?_⟩
+        use e
+        use ⟨eveni, ⟨⟨m, hm⟩, hx⟩⟩
+        have : Even (o + o) := by simp [eveno]
+        omega
+
+    -- Use the above parameterization to simplify the goal.
+    rw [h]
+
+    -- We want $\prod_{o \in O} o \cdot \prod_{e \in E} (e + 1) \cdot 2^{5000}$.
+    -- Separate the $2^{5000}$ factor from the product.
+    rw [Finset.prod_image]
+    rw [Finset.prod_product]
+    simp [Nat.two_pow]
+    rw [Finset.prod_congr hE]
+    · intro x
+      simp [hO', hO]
+      intro _ _
+      rfl
+
+    -- We want $\prod_{o \in O} o \cdot \prod_{e \in E} (e + 1) = \dfrac{5000!}{2^{5000}}$.
+    -- We can do this by computing each part separately.
+    -- First, show that $\prod_{o \in O} o = \dfrac{5000!}{2^{5000}}$.
+    -- Then, show that $\prod_{e \in E} (e + 1) = 1$.
+
+    -- Write $E = \{n \in \mathbb{N} \mid n \text{ is odd} \land n < 5000\}$.
+    have hE : E = Finset.filter (fun x => ¬Even x) (Finset.range 5000) := by rfl
+
+    -- Write $O = \{n \in \mathbb{N} \mid n \text{ is even} \land n < 5000\}$.
+    have hO : O = Finset.filter (fun x => Even x) (Finset.range 5000) := by rfl
+
+    -- parameterize all the factors.
+    have h : (E ×ˢ O).image (fun x => (x.1 + 1) * x.2) = Finset.image (fun x => x) (Finset.range 5000) := by
+      ext n
+      simp
+      constructor
+      · intro ⟨o, eveno, e, eveni, h⟩
+        use o
+        use ⟨eveno, eveni⟩
+        use e
+        use ⟨⟨m, hm⟩, hx⟩⟩
+        simp [hm, hx]
+      · intro ⟨o, eveno, e, eveni, h⟩
+        use o
+        use ⟨eveno,?_⟩
+        use e
+        use ⟨eveni, ⟨⟨m, hm⟩, hx⟩⟩
+        have : Even (o - o) := by simp [eveno]
+        omega
+
+    -- Use the above parameterization to simplify the goal.
+    rw [h]
+
+    -- We want $\prod_{e \in E} (e + 1) = 1$.
+    -- To do this, we must show that $\prod_{o \in O} o = \dfrac{5000!}{2^{5000}}$.
+
+    -- Write $O = \{n \in \mathbb{N} \mid n \text{ is even} \land n < 5000\}$.
+    have hO : O = Finset.filter (fun x => Even x) (Finset.range 5000) := by rfl
+
+    -- Let $O' = \{n \in \mathbb{N} \mid n \text{ is even} \land n < 5000 \land n \neq 0\}$.
+    -- We can write $O = O' \cup \{0\}$.
+    let O'' := Finset.filter (fun x => Even x ∧ ¬x = 0) (Finset.range 5000)
+    have h : O = O'' ∪ {0} := by
+      ext n
+      simp
+      constructor
+      · intro ⟨eveno, _⟩
+        by_cases h : eveno = 0
+        · right; exact h
+        · left; exact ⟨eveno, h⟩
+      · intro h
+        rcases h with h | h <;> simp [h]
+
+    -- Write $O' = \{n \in \mathbb{N} \mid n \text{ is even} \land n < 5000 \land n \neq 0\}$.
+    -- We want $\prod_{o \in O} o = \prod_{o \in O'} o$.
+    have h_prod_O : Finset.prod O id = Finset.prod O'' id := by
+      rw [h]
+      rw [Finset.prod_union]
+      rw [Finset.prod_singleton]
+      simp
+
+    -- Let $E = \{n \in \mathbb{N} \mid n \text{ is odd} \land n < 5000\}$.
+    have hE : E = Finset.filter (fun x => ¬Even x) (Finset.range 5000) := by rfl
+
+    -- Write $E = \{n \in \mathbb{N} \mid n \text{ is odd} \land n < 5000\}$.
+    let E' := Finset.filter (fun x => ¬Even x ∧ x ≠ 0) (Finset.range 5000)
+    have h_prod_E : Finset.prod E id = Finset.prod E' id := by
+      rw [hE]
+      rw [Finset.prod_filter]
+      simp
+      apply Finset.prod_congr rfl
+      intro x _ _ _ _
+      by_cases h : x = 0
+      · rw [h]
+        simp
+      · exact Nat.ne_zero_iff_zero_lt.mpr (Nat.zero_lt_of_ne_zero h)
+
+    -- Let $O'' = \{n \in \mathbb{N} \mid n \text{ is even} \land n < 5000 \land n \neq 0\}$.
+    -- Let $E' = \{n \in \mathbb{N} \mid n \text{ is odd} \land n < 5000 \land n \neq 0\}$.
+    -- We can write $E \times O = E' \times O''$.
+    have h : (E' ×ˢ O'').image (fun x => x.1 * x.2) = Finset.image (fun x => x) (Finset.range 5000 \ {0}) := by
+      ext n
+      simp
+      constructor
+      · intro ⟨o, eveno, e, eveni, h⟩
+        use o
+        use ⟨eveno, eveni⟩
+        use e
+        use ⟨⟨m, hm⟩, hx⟩⟩
+        (repeat rw [←Nat.div_add_mod m?_])
+        rw [←eveno, ←eveni, mul_assoc, mul_comm, mul_assoc, mul_assoc, mul_comm]
+        simp [hm, hx, h]
+      · intro ⟨o, eveno, e, eveni, h⟩
+        use o
+        use ⟨eveno,?_⟩
+        use e
+        use ⟨eveni, ⟨⟨m, hm⟩, hx⟩⟩
+        have : Even (o - o) := by simp [eveno]
+        omega
+
+    -- Use the above parameterization to simplify the goal.
+    rw [h_prod_E, h_prod_O, ←Finset.prod_image, ←Finset.prod_image]
+    simp [Nat.two_pow]
+    rw [←hE', ←hO'']
+
+    -- What is left is to show that $\prod_{o \in O''} o = \dfrac{5000!}{2^{5000}}$.
+    -- But this is true by definition of the factorial.
+    rw [Finset.prod_filter]
+    simp
+    intro m
+    exact ⟨Nat.even_iff.mpr rfl, Nat.even_iff.mpr rfl⟩
+```

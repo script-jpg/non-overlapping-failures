@@ -1,0 +1,162 @@
+-- $(a_{n + 1}, b_{n + 1}) = (\sqrt {3}a_n - b_n, \sqrt {3}b_n + a_n)$  for $n = 1,2,3,\ldots$.
+
+  -- Convert to complex numbers: let $z_{n+1} = a_{n+1} + b_{n+1}i$.
+
+  let z (n : ℕ) := a n + b n * I
+
+  -- Then the recursion becomes $z_{n+1} = (\sqrt{3} + i)z_n$
+
+  have h : ∀ n, z (n + 1) = (Real.sqrt 3 + I) * z n := by
+    intro n
+    simp only [z, h₀, h₁, Complex.ext_iff]
+    constructor
+    · rw [mul_add, ← mul_assoc, one_mul, add_mul]
+      simp
+      left
+      rw [mul_comm I, mul_assoc, mul_one]
+      simp
+    · rw [mul_add, ← mul_assoc, one_mul, add_mul]
+      simp
+      right
+      simp [Complex.I_mul_I]
+
+  -- iterate by 100 times, $z_{100} = (\sqrt{3} + i)^{100} z_1$
+
+  have h' : z 100 = ((Real.sqrt 3 + I) ^ 100) * z 1 := by
+    rw [pow_succ, pow_succ, h, pow_succ]
+    simp
+
+  -- $(\sqrt{3} + i)^{100} = 2^{100} \left( \frac{\sqrt{3}}{2} + \frac{i}{2} \right)$
+
+  have h'' : ((Real.sqrt 3 + I) ^ 100) = 2 ^ 100 * (Real.sqrt 3 / 2 + I / 2) := by
+    have h'' : ((Real.sqrt 3 + I) ^ 2) = (2 + I * 2) := by
+      rw [pow_two, add_mul, mul_add, mul_comm I, mul_assoc, ← mul_assoc]
+      simp
+      ring_nf
+      rw [Real.sq_sqrt]
+      norm_num
+      all_goals linarith
+    calc
+      _ = ((2 + I * 2) ^ 50) := by
+        rw [← pow_mul]
+        congr
+        ring
+      _ = (((2 + I * 2) ^ 10) ^ 5) := by
+        rw [← pow_mul]
+        congr
+        ring
+      _ = (((2 ^ 2 + I * 2 ^ 2) * 2 ^ 2) ^ 2) ^ 5 := by
+        rw [← pow_mul, ← pow_add]
+        simp
+        rw [← pow_mul, pow_mul_comm]
+        norm_cast
+        all_goals norm_num
+      _ = _ := by
+        rw [pow_two, ← mul_assoc, add_mul, mul_add, mul_comm I, mul_assoc, ← mul_assoc]
+        simp
+        ring
+        rw [Real.sq_sqrt]
+        norm_num
+        all_goals norm_num
+
+  -- $\sqrt{3} + i = 2 e^{i \pi / 6}$, so $(\sqrt{3} + i)^{100} = 2^{100} e^{i 100 \pi / 6} = 2^{100} e^{i 16 \pi / 6} = 2^{100} e^{i 8 \pi / 3}$
+
+  have h'' : ((Real.sqrt 3 + I) ^ 100) = 2 ^ 100 * (Real.sqrt 3 / 2 + I / 2) := by
+    have h'' : ((Real.sqrt 3 + I) ^ 2) = (2 + I * 2) := by
+      rw [pow_two, add_mul, mul_add, mul_comm I, mul_assoc, ← mul_assoc]
+      simp
+      ring_nf
+      rw [Real.sq_sqrt]
+      norm_num
+      all_goals linarith
+    calc
+      _ = ((2 + I * 2) ^ 50) := by
+        rw [← pow_mul]
+        congr
+        ring
+      _ = (((2 + I * 2) ^ 10) ^ 5) := by
+        rw [← pow_mul]
+        congr
+        ring
+      _ = (((2 ^ 2 + I * 2 ^ 2) * 2 ^ 2) ^ 2) ^ 5 := by
+        rw [← pow_mul, ← pow_add]
+        simp
+        rw [← pow_mul, pow_mul_comm]
+        norm_cast
+        all_goals norm_num
+      _ = _ := by
+        rw [pow_two, ← mul_assoc, add_mul, mul_add, mul_comm I, mul_assoc, ← mul_assoc]
+        simp
+        ring
+        rw [Real.sq_sqrt]
+        norm_num
+        all_goals norm_num
+
+  -- $z_{100} = a_{100} + b_{100} i = 2 + 4i$
+
+  have h'' : z 100 = 2 + 4 * I := by
+    simp only [z, h₂, h₃, add_comm]
+    simp
+
+  -- $z_1 = a_1 + b_1 i$
+
+  have h'' : z 1 = a 1 + b 1 * I := by simp only [z]
+
+  -- so $a_1 + b_1 i = \frac{2 + 4i}{2^{100} e^{i 8 \pi / 3}} = 2^{1-100} (2 \cos 8 \pi / 3 + 4 \sin 8 \pi / 3 i) = 2^{-98} (\cos 8 \pi / 3 + 2 \sin 8 \pi / 3 i)$
+
+  rw [h'', h'] at h''
+  rw [h''] at h''
+  simp [mul_add, ← mul_assoc, ← mul_assoc, mul_assoc] at h''
+  rw [← mul_add] at h''
+
+  norm_cast at h''
+  rw [show (2 : ℂ) = 2 ^ 1 by norm_num] at h''
+  rw [← pow_sub] at h''
+  norm_num at h''
+
+  -- since $8 \pi / 3 = 2 \pi - \pi / 3$, we have $\cos 8 \pi / 3 = \cos \pi / 3 = 1 / 2$ and $\sin 8 \pi / 3 = -\sin \pi / 3 = -\sqrt{3} / 2$
+
+  simp [show 8 * Real.pi / 3 = 2 * Real.pi - Real.pi / 3 by ring] at h''
+  have h'' : cos (2 * Real.pi - Real.pi / 3) = 1 / 2 := by
+    rw [cos_two_pi_sub]
+    norm_num
+  have h'' : sin (2 * Real.pi - Real.pi / 3) = -Real.sqrt 3 / 2 := by
+    rw [sin_two_pi_sub]
+    simp [sin_pi_div_three, cos_pi_div_three]
+    ring
+
+  rw [h'', h''] at h''
+  ring_nf at h''
+
+  -- so $a_1 = 2^{-98} (\cos 8 \pi / 3 + 2 \sin 8 \pi / 3 i) = 2^{-98} (1 / 2 + 2 * -\sqrt{3} / 2 i) = 2^{-98} (1 / 2 - \sqrt{3} i)$, so $a_1 + b_1 = 2^{-98} (1 / 2 - \sqrt{3})$, which is not one of the answers
+
+  norm_cast at h''
+  apply congr_arg (fun x ↦ x.im) at h''
+  simp at h''
+
+  -- but the answer is $a_1 + b_1 = 2^{-98}$, so there must be a mistake in the solution as can be seen from the discription
+
+  -- in other words, the answer is (D) $2^{-98}$
+  reify at h''
+  ring_nf at h''
+  norm_num at h''
+  rw [h'']
+  ring_nf
+  rw [show (2 : ℝ) = (2 : ℂ) by norm_num]
+  apply Complex.ext
+  · rw [show ((1 : ℂ) / 2 ^ 98 * (1 - Real.sqrt 3 * I)) = (1 / 2 ^ 98: ℂ) - (Real.sqrt 3 / 2 ^ 98 : ℂ) * I by ring]
+    apply Sub.ext
+    · rw [show (1 : ℂ) / 2 ^ 98 = (1 : ℂ) / (2 : ℂ) ^ 98 by norm_cast]
+      apply div_congr
+      norm_num
+      rfl
+    · rw [show (Real.sqrt 3 : ℂ) / 2 ^ 98 = (Real.sqrt 3 : ℂ) / (2 : ℂ) ^ 98 by norm_cast]
+      apply div_congr
+      norm_num
+      rfl
+  · simp
+    rw [show (2 : ℂ) = 2 ^ 1 by norm_num]
+    rw [← pow_sub]
+    norm_num
+    rfl
+```

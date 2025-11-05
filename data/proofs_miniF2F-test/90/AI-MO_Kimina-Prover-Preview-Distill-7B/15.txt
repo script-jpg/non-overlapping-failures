@@ -1,0 +1,47 @@
+-- Let `a n` be the product we are interested in.
+  let a (n : ℕ) : ℝ := ∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / k ^ 3
+
+  -- We will show that `a n <= 3 - 1 / n` by induction on `n`.
+  have hn : a n ≤ 3 - 1 / n := by
+    induction n with
+    -- The base case `n = 0` does not interest us as we assume `n > 0`.
+    | zero => linarith
+    | succ n ih =>
+      -- The case `n = 1` is simple enough to check by hand.
+      induction n with
+      | zero =>
+        norm_num
+        <;> try simp [a]
+        <;> linarith
+      -- For `n > 1`, we can use the inductive hypothesis and multiply both sides by
+      -- `1 + 1 / (n + 1)^3`.
+      | succ n =>
+        -- The inductive step itself is not difficult to prove.
+        rw [Finset.prod_Icc_succ_top (by linarith)]
+        push_cast at ih ⊢
+        calc
+          _ ≤ (3 - 1 / (↑n + 1)) * (1 + (1 : ℝ) / (↑n + 1) ^ 3) := by
+            apply mul_le_mul
+           . exact ih
+           . positivity
+           . norm_num
+           . positivity
+          _ = 3 * (1 + (1 : ℝ) / (↑n + 1) ^ 3) - (1 / (↑n + 1)) * (1 + (1 : ℝ) / (↑n + 1) ^ 3) := by ring
+          _ = 3 * (1 + (1 : ℝ) / (↑n + 1) ^ 3) - (1 / (↑n + 1) + 1 / (↑n + 1) ^ 4) := by ring
+          _ = 3 * (1 + (1 : ℝ) / (↑n + 1) ^ 3) - 1 / (↑n + 1) * (1 + 1 / (↑n + 1) ^ 3) := by ring
+          _ ≤ 3 * (1 + (1 : ℝ) / (↑n + 1) ^ 3) - 1 / (↑n + 1) * (1 + 0) := by
+            apply sub_le_sub_left
+            rw [mul_add, mul_one]
+            apply mul_le_mul
+           . norm_num
+           . positivity
+           . norm_num
+           . positivity
+          _ = 3 * (1 + (1 : ℝ) / (↑n + 1) ^ 3) - 1 / (↑n + 1) := by ring
+          _ = 3 - 1 / (↑n + 1) := by ring
+
+  -- After establishing the inequality, we can rearrange it to the form given in the statement.
+  rw [show 3 - 1 / (↑n : ℝ) = (3 : ℝ) - 1 / n by field_simp] at hn
+  exact hn
+
+```

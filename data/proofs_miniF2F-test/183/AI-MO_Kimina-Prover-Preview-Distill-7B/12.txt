@@ -1,0 +1,102 @@
+-- It is more convenient to use finite types here
+  have h₀' (x : ℝ) : f x = 0 ↔ x ^ 2 + (18 * x + 30) = 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by
+    simp [h₀]
+  simp_rw [h₀']
+
+  -- All the roots are real, so the finite type is also the set of roots
+  have h₁' : (f ⁻¹' {0}).toFinset.toSet = f ⁻¹' {0} := by
+    rw [Set.toFinset_toSet]
+    refine Eq.symm (Set.toFinset_subset?_)
+    refine Finite.Set.subset (f ⁻¹' {0})?_
+    rw [←h₁]
+    apply Finite.subset_univ
+  simp_rw [h₁']
+  rw [←Finset.coe_toFinset]
+
+  -- Replace the equation to an equivalent equation without square roots
+  have h₂ (x : ℝ) : x ^ 2 + (18 * x + 30) = 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) ↔
+      x ^ 2 + (18 * x + 30) ^ 2 = 4 * (x ^ 2 + (18 * x + 45)) ∧ -18 ≤ x := by
+    constructor
+    · intro h
+      have h' : (x ^ 2 + (18 * x + 30))^2 = 4 * (x ^ 2 + (18 * x + 45)) := by
+        calc
+          (x ^ 2 + (18 * x + 30))^2 = (2*Real.sqrt (x ^ 2 + (18 * x + 45)))^2 := by rw [h]
+          _ = 4 * (Real.sqrt (x ^ 2 + (18 * x + 45))^2) := by ring
+          _ = 4 * (x ^ 2 + (18 * x + 45)) := by rw [Real.sq_sqrt]; positivity
+      constructor
+      · exact h'
+      · have h'' : x ^ 2 + (18 * x + 30) ≥ 0 := by
+          calc
+            x ^ 2 + (18 * x + 30) = 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by rw [h]
+            _ ≥ 0 := by apply mul_nonneg (by norm_num) (Real.sqrt_nonneg _)
+        positivity
+    · intro ⟨h', h''⟩
+      let x' : ℝ := x + 9
+      have hx' : x = x' - 9 := by ring
+      rw [hx'] at h''
+      have h'' : x' ^ 2 + 18 * x' + 30 ≥ 0 := by
+        calc
+          x' ^ 2 + 18 * x' + 30 = x' ^ 2 - 144 + 18 * x' + 162 + 30 := by ring
+          _ ≥ 0 := by
+            apply add_nonneg
+            · apply add_nonneg
+              · exact sq_nonneg x'
+              · norm_num
+            · exact Real.sqrt_nonneg (x' ^ 2 + (18 * x' + 45))
+      have h''' : Real.sqrt (x' ^ 2 + (18 * x' + 45)) ≥ 0 := Real.sqrt_nonneg (x' ^ 2 + (18 * x' + 45))
+      apply (sq_eq_sq₀ h'' h''') |>.mp at h'
+      rw [hx'] at h'
+      exact h'
+
+  simp_rw [h₂]
+  clear h₂
+
+  -- Now we use the function $s \mapsto s^2 - 4t$ with $s = x^2 + 18x + 30$ and $t = x^2 + 18x + 45$
+  have h₃ (x : ℝ) : x ^ 2 + (18 * x + 30) ^ 2 = 4 * (x ^ 2 + (18 * x + 45)) ↔
+      (x ^ 2 + (18 * x + 30) - (x ^ 2 + (18 * x + 45))) * (x ^ 2 + (18 * x + 30) + (x ^ 2 + (18 * x + 45))) - 4 * (x ^ 2 + (18 * x + 45)) = 0 := by
+    ring_nf
+  simp_rw [h₃]
+
+  -- We can now linear factor the equation
+  have h₄ (x : ℝ) : (x ^ 2 + (18 * x + 30) - (x ^ 2 + (18 * x + 45))) * (x ^ 2 + (18 * x + 30) + (x ^ 2 + (18 * x + 45))) - 4 * (x ^ 2 + (18 * x + 45)) = 0 ↔
+      (x + 15) * (x + 3) * (2 * x - 6) = 0 := by
+    ring_nf
+  simp_rw [h₄]
+
+  -- Now we can find the roots of the equation
+  have h₅ : f ⁻¹' {0} = {-15, -3, 3} := by
+    ext x
+    constructor
+    · intro hx
+      simp_rw [Set.mem_preimage] at hx
+      simp_rw [Set.mem_insert_iff, Set.mem_singleton_iff, and_or_left] at hx
+      cases' hx with hx hx
+      · left
+        linarith
+      · cases' hx with hx hx
+        · right
+          left
+          linarith
+        · right
+          right
+          linarith
+    · intro hx
+      simp_rw [Set.mem_preimage]
+      simp_rw [Set.mem_insert_iff, Set.mem_singleton_iff, and_or_left]
+      cases' hx with hx hx
+      · rw [hx]
+        norm_num
+      · cases' hx with hx hx
+        · rw [hx]
+          norm_num
+        · rw [hx]
+          norm_num
+
+  simp_rw [h₅]
+
+  -- The product of the roots is 20
+  rw [Finset.prod_insert, Finset.prod_insert, Finset.prod_singleton]
+  norm_num
+  norm_num
+  norm_num
+```

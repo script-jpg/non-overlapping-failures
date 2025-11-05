@@ -1,0 +1,73 @@
+-- Let $a$ and $b$ be real numbers.
+
+  -- First, we recall the triangle inequality for real numbers, which states that $|a + b| \leq |a| + |b|$.
+  have t1 : abs (a + b) ≤ abs a + abs b := abs_add a b
+
+  -- The function $f(x) = \frac{x}{1+x}$ is increasing for $x \geq 0$.
+  -- To see this, we can calculate its derivative, which is $f'(x) = \frac{1}{(x+1)^2} > 0$ for all $x \geq 0$.
+  have t2 : abs (a + b) / (1 + abs (a + b)) ≤ (abs a + abs b) / (1 + (abs a + abs b)) := by
+    apply div_le_div_of_nonneg_left
+    · -- The numerator of the left side is $|a+b|$, and the numerator of the right side is $|a| + |b|$.
+      -- We know that $|a+b| \leq |a| + |b|$ by the triangle inequality.
+      apply le_trans t1
+      -- The function $f(x) = \frac{x}{1+x}$ is increasing for $x \geq 0$.
+      -- Therefore, $|a+b| \leq |a| + |b|$ implies that $f(|a+b|) \leq f(|a| + |b|)$.
+      trans (abs (a + b) : ℝ)
+      · ring
+      · apply le_of_eq
+        rw [← abs_add a b]
+    · -- The denominator of both sides are positive.
+      -- This is because $1 + |a+b| > 0$ and $1 + |a| + |b| > 0$.
+      apply add_pos
+      · simp
+      · simp
+
+  -- Now, we need to show that $(|a| + |b|) / (1 + (|a| + |b|)) \leq |a| / (1 + |a|) + |b| / (1 + |b|)$.
+  have t3 : (abs a + abs b) / (1 + (abs a + abs b)) ≤ abs a / (1 + abs a) + abs b / (1 + abs b) := by
+    -- To prove this inequality, we can try to find an upper bound for the right side.
+    -- The right side can be written as $\frac{|a|}{1 + |a| + |b|} + \frac{|b|}{1 + |a| + |b|}$.
+    -- This is less than or equal to $\frac{|a|}{1 + |a|} + \frac{|b|}{1 + |b|}$ because $1 + |a| + |b| > 0$.
+    -- We can make this more rigorous by manipulating the inequality algebraically.
+    have h1 : 1 + abs a > 0 := by
+      simp
+    have h2 : 1 + abs b > 0 := by
+      simp
+    have h3 : 1 + abs a + abs b > 0 := by
+      simp
+
+    -- Multiply both sides by $(1 + |a| + |b|)$ to clear the denominator.
+    suffices (abs a + abs b) / (1 + (abs a + abs b)) * (1 + (abs a + abs b)) ≤ (abs a / (1 + abs a) + abs b / (1 + abs b)) * (1 + (abs a + abs b)) by
+      rw [div_mul_cancel₀ _ h3] at this
+      exact this
+
+    -- The left side simplifies to $|a| + |b|$.
+    simp
+
+    -- The right side can be expanded using the distributive property.
+    have : (abs a / (1 + abs a) + abs b / (1 + abs b)) * (1 + (abs a + abs b)) = (abs a / (1 + abs a) * (1 + (abs a + abs b)) + abs b / (1 + abs b) * (1 + (abs a + abs b))) := by
+      ring
+    rw [this]
+
+    -- Now, we can try to simplify each term.
+    -- For the first term, we have: $|a| / (1 + |a|) \cdot (1 + |a| + |b|) = |a| / (1 + |a|) \cdot (1 + |a|) \cdot (1 + |b|) / (1 + |b|) = |a| \cdot (1 + |b|) / (1 + |b|)$
+    have : abs a / (1 + abs a) * (1 + (abs a + abs b)) = abs a * (1 + abs b) / (1 + abs b) := by
+      field_simp
+      ring
+    rw [this]
+
+    -- For the second term, we have: $|b| / (1 + |b|) \cdot (1 + |a| + |b|) = |b| / (1 + |b|) \cdot (1 + |a|) \cdot (1 + |b|) / (1 + |a|) = |b| \cdot (1 + |a|) / (1 + |a|)$
+    have : abs b / (1 + abs b) * (1 + (abs a + abs b)) = abs b * (1 + abs a) / (1 + abs a) := by
+      field_simp
+      ring
+    rw [this]
+
+    -- After simplification, the right side becomes $|a| + |b|$.
+    simp
+
+    -- Therefore, we have $|a| + |b| \leq |a| + |b|$, which is trivially true.
+    apply le_refl
+
+  -- Therefore, we can transitivity to conclude that $\frac{|a+b|}{1+|a+b|}\leq \frac{|a|}{1+|a|}+\frac{|b|}{1+|b|}$.
+  apply le_trans t2
+  exact t3
+```

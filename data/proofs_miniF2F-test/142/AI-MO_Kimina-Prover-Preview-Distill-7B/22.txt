@@ -1,0 +1,269 @@
+-- $p^3$ is a square if and only if $p = q^2$ for some prime $q$.
+  have h₀ (p : ℕ) : p ^ 3 = k ^ 2 ↔ ∃ q : ℕ, q ^ 2 = p ∧ k = q ^ 3 := by
+    constructor
+    · intro h
+      use p.sqrt
+      constructor
+      · rw [Nat.pow_left_inj (by norm_num)]
+        exact h
+      · rw [←h, pow_two, ←Nat.pow_mul, Nat.pow_left_inj (by norm_num)]
+        rfl
+    · rintro ⟨q, hq, hk⟩
+      rw [hk, pow_two, ←Nat.pow_mul, Nat.pow_right_inj (by norm_num), hq]
+      rfl
+
+  -- For a prime $p$, the exponent of $p$ in the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is
+  -- \sum_{i=1}^{9} \left\lfloor \frac{9}{p^i} \right\rfloor.
+  have h₁ (p : ℕ) : (p ^ 3 ∣ ∏ i in Finset.Icc 1 9, i!) ↔ ∃ k : ℕ, 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i! ∧ ((p ^ 3).factorization ∏ i in Finset.Icc 1 9, i!) ≤ (p ^ 2).factorization ∏ i in Finset.Icc 1 9, i! := by
+    constructor
+    · rintro ⟨k, hk₁, hk₂⟩
+      have hk₃ : 0 < k := hk₁
+      have ⟨hk₄, hk₅⟩ := hk₂
+      refine ⟨?_, hk₄, hk₅⟩
+      rw [Nat.pow_dvd_iff_le_factorization]
+      have hle : (p ^ 3).factorization ∏ i in Finset.Icc 1 9, i! ≤ (p ^ 2).factorization ∏ i in Finset.Icc 1 9, i! := by
+        calc
+          (p ^ 3).factorization ∏ i in Finset.Icc 1 9, i! ≤ k * k.factorization ∏ i in Finset.Icc 1 9, i! := by
+            apply Nat.mul_le_mul_left
+            rw [←hk₅]
+            apply Nat.le_of_dvd
+            exact hk₄
+          _ = k * (k.factorization ∏ i in Finset.Icc 1 9, i!) := by
+            rw [←mul_pow]
+            apply Nat.pow_dvd_pow
+            exact hk₄
+          _ ≤ ((p ^ 2).factorization ∏ i in Finset.Icc 1 9, i!) := by
+            apply Nat.mul_le_mul_right
+            apply Nat.le_of_dvd
+            rw [Nat.pow_dvd_pow_iff]
+            exact hk₃
+            norm_num
+      exact hle
+    · rintro ⟨k, hk₁, hk₂, hk₃⟩
+      have h₄ : 0 < k := hk₁
+      refine ⟨k, h₄,?_⟩
+      suffices (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i! by
+        apply dvd_trans this
+        apply dvd_trans?_ hk₃
+        rw [Nat.pow_dvd_pow_iff]
+        exact hk₄
+        norm_num
+      apply Nat.Coprime.mul_dvd_of_dvd_of_dvd (by norm_num)
+      · apply Nat.pow_dvd_pow _ hk₂
+      · apply dvd_trans (by apply dvd_trans?_ hk₃)
+        rw [Nat.pow_dvd_pow_iff]
+        exact hk₄
+        norm_num
+
+  -- Let $a$ be the number of primes whose square is a divisor of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  set a := (Finset.filter (fun p ↦ p ^ 2 ∣ ∏ i in Finset.Icc 1 9, i!) (Finset.Icc 2 9)).card with ha
+  -- Let $b$ be the number of primes whose cube is a divisor of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+  set b := (Finset.filter (fun p ↦ p ^ 3 ∣ ∏ i in Finset.Icc 1 9, i!) (Finset.Icc 2 9)).card with hb
+
+  -- The number of perfect square divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is $2a + 1$.
+  have h₂ : S.card = 2 * a + 1 := by
+    apply_fun fun t ↦ (t : Finset ℕ)
+    rw [Finset.coe_card, Nat.cast_inj]
+    ext p
+    simp [h₀, -Nat.reducePow]
+    constructor
+    · rintro ⟨hp₁, hp₂⟩
+      suffices ∃ k : ℕ, 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i! ∧ p = k ^ 2 by
+        obtain ⟨k, hk₁, hk₂, hk₃⟩ := this
+        use k
+        rw [hk₃]
+        simp [hk₁, -Nat.reducePow]
+      rw [show p ^ 3 = p ^ 2 * p by ring]
+      apply dvd_trans _ hp₂
+      apply dvd_trans?_ (Finset.dvd_prod_iff?_ p (by norm_num))
+      · rw [←Nat.pow_mul]
+        exact Finset.dvd_pow_iff_dvd (p!) (show 2 ≤ 9 by norm_num) (by norm_num)
+      · calc
+          p ∣ ∏ i ∈ Finset.Icc 1 9, i! := by
+            apply Finset.dvd_prod_iff.mpr
+            exact fun i _ ↦ (Nat.dvd_factorial (by norm_num) (by norm_num))
+          _ ∣ _ := by
+            apply Finset.dvd_pow
+            simp
+            norm_num
+    · rintro ⟨k, hk₁, hk₂, hk₃⟩
+      suffices (k ^ 3 : ℕ) ∣ ∏ i in Finset.Icc 1 9, i! by
+        apply dvd_trans this
+        apply dvd_trans?_ hk₃
+        rw [Nat.pow_dvd_pow_iff]
+        exact hk₁
+        norm_num
+      suffices (k ^ 2 : ℕ) ∣ ∏ i in Finset.Icc 1 9, i! by
+        apply dvd_trans _ this
+        apply dvd_trans?_ (Finset.dvd_prod_iff?_ (k ^ 2) (by norm_num))
+        · rw [←Nat.pow_mul]
+          apply Finset.dvd_pow_iff_dvd (k!) (show 2 ≤ 9 by norm_num) (by norm_num)
+        · norm_num
+      apply Nat.Coprime.mul_dvd_of_dvd_of_dvd (by norm_num)
+      · apply Nat.pow_dvd_pow _ hk₂
+      · apply dvd_trans (by apply dvd_trans?_ hk₃)
+        rw [Nat.pow_dvd_pow_iff]
+        exact hk₁
+        norm_num
+
+  -- The number of perfect cube divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is $2b + 1$.
+  have h₃ : S.card = 2 * b + 1 := by
+    apply_fun fun t ↦ (t : Finset ℕ)
+    rw [Finset.coe_card, Nat.cast_inj]
+    ext p
+    simp [h₁, -Nat.reducePow]
+    constructor
+    · rintro ⟨hp₁, hp₂⟩
+      suffices ∃ k : ℕ, 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i! ∧ p = k ^ 3 by
+        obtain ⟨k, hk₁, hk₂, hk₃⟩ := this
+        use k
+        rw [hk₃]
+        simp [hk₁, -Nat.reducePow]
+      apply Nat.dvd_trans _ hp₂
+      apply Nat.dvd_trans _ (Finset.dvd_pow_iff_dvd (p!) (show 2 ≤ 9 by norm_num) (by norm_num))
+      apply Finset.dvd_pow_iff.mpr
+      exact fun i _ ↦ (Nat.dvd_factorial (by norm_num) (by norm_num))
+    · rintro ⟨k, hk₁, hk₂, hk₃⟩
+      suffices (k ^ 3 : ℕ) ∣ ∏ i in Finset.Icc 1 9, i! by
+        apply dvd_trans this
+        apply dvd_trans?_ hk₃
+        rw [Nat.pow_dvd_pow_iff]
+        exact hk₁
+        norm_num
+      apply Nat.Coprime.mul_dvd_of_dvd_of_dvd (by norm_num)
+      · apply Nat.pow_dvd_pow _ hk₂
+      · apply dvd_trans (by apply dvd_trans?_ hk₃)
+        rw [Nat.pow_dvd_pow_iff]
+        exact hk₁
+        norm_num
+
+  -- The number of perfect square divisors of the product $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$ is $a + b + 1$.
+  have h₄ : S.card = a + b + 1 := by
+    apply_fun fun t ↦ (t : Finset ℕ)
+    rw [Finset.coe_card, Nat.cast_inj]
+    ext p
+    simp [h₀, h₁, -Nat.reducePow]
+    constructor
+    · rintro ⟨hp₁, hp₂⟩
+      refine ⟨?_, hp₂⟩
+      by_cases h₅ : p ^ 3 ∣ ∏ i in Finset.Icc 1 9, i!
+      · refine ⟨p ^ 2,?_,?_⟩
+        · apply dvd_trans (by apply dvd_trans?_ hp₂)?_
+          exact dvd_trans (by apply dvd_trans?_ h₅) (Finset.dvd_prod_iff?_ p (by norm_num))
+          apply Finset.dvd_pow_iff.mpr
+          exact fun i _ ↦ (Nat.dvd_factorial (by norm_num) (by norm_num))
+        · apply Nat.pow_dvd_pow _ hp₂
+          rfl
+      · refine ⟨p,?_,?_⟩
+        · apply dvd_trans (by apply dvd_trans?_ hp₂)?_
+          exact dvd_trans (by apply dvd_trans?_ (by rw [Nat.pow_three]; apply dvd_trans?_ h₅) ) (Finset.dvd_prod_iff?_ p (by norm_num))
+          apply Finset.dvd_pow_iff.mpr
+          exact fun i _ ↦ (Nat.dvd_factorial (by norm_num) (by norm_num))
+        · apply Nat.pow_dvd_pow _ hp₂
+          rfl
+    · rintro ⟨k, hk₁, hk₂, hk₃⟩
+      by_cases h₅ : k ^ 3 ∣ ∏ i in Finset.Icc 1 9, i!
+      · suffices p ^ 2 = k ^ 2 by
+          rw [this]
+          apply Nat.pow_left_inj (by norm_num)
+        apply Nat.pow_left_inj (by norm_num)
+        calc
+          p ^ 3 = k ^ 3 := by
+            rw [hk₃]
+          _ = (k ^ 3 : ℕ) := by
+            norm_cast
+            rw [Nat.cast_pow, Nat.cast_pow]
+            simp
+            rw [hk₁]
+      · suffices p = k by
+          rw [this]
+        apply Nat.dvd_left_of_dvd_of_pow_dvd _ h₅ hk₂
+        norm_num
+
+  -- We will now show that $a = 24$ and $b = 20$, which will complete the proof.
+  suffices a = 24 ∧ b = 20 by
+    rw [this.1, this.2] at h₄
+    linarith only [h₂, h₃, h₄]
+
+  -- We know that $b \leq 24$ from the above.
+  have h₅ : b ≤ 24 := by
+    calc
+      b = (Finset.filter (fun p ↦ p ^ 3 ∣ ∏ i ∈ Finset.Icc 1 9, i!) (Finset.Icc 2 9)).card := by
+        rw [hb]
+      _ ≤ (Finset.filter (fun p ↦ p ^ 3 ∣ ∏ i ∈ Finset.Icc 1 9, i!) (Finset.Icc 1 99)).card := by
+        apply Finset.card_le_card
+        intro x hx
+        simp at hx ⊢
+        omega
+      _ = (Finset.filter (fun p ↦ p ^ 3 ∣ ∏ i ∈ Finset.Icc 1 9, i!) (Finset.Icc 1 99)).card := by
+        norm_num
+      _ ≤ _ := by
+        apply Finset.card_le_card
+        intro x hx
+        simp at hx
+        obtain ⟨hx, hxdvd⟩ := hx
+        have hdvd : x ^ 3 ∣ ∏ i ∈ Finset.Icc 1 9, i! := by
+          exact hxdvd
+        have hle : x ^ 2 ∣ ∏ i ∈ Finset.Icc 1 9, i! := by
+          apply Nat.Coprime.mul_dvd_of_dvd_of_dvd (by norm_num)
+          · apply Nat.pow_dvd_pow _ hxdvd
+          · norm_num
+          · apply dvd_trans (by apply dvd_trans?_ hxdvd) (Finset.dvd_prod_iff?_ x (by norm_num))
+            apply Finset.dvd_pow_iff.mpr
+            exact fun i _ ↦ (Nat.dvd_factorial (by norm_num) (by norm_num))
+        refine ⟨x, hx, hle,?_⟩
+        rw [show x ^ 3 = x ^ 2 * x by ring]
+        apply dvd_trans (by apply dvd_trans?_ hle)?_
+        exact dvd_trans (by apply dvd_trans?_ hdvd) (Finset.dvd_prod_iff?_ x (by norm_num))
+        apply Finset.dvd_pow_iff.mpr
+        exact fun i _ ↦ (Nat.dvd_factorial (by norm_num) (by norm_num))
+
+  -- We know that $a \leq 30$ from the above.
+  have h₆ : a ≤ 30 := by
+    calc
+      a = (Finset.filter (fun p ↦ p ^ 2 ∣ ∏ i ∈ Finset.Icc 1 9, i!) (Finset.Icc 2 9)).card := by
+        rw [ha]
+      _ ≤ (Finset.filter (fun p ↦ p ^ 2 ∣ ∏ i ∈ Finset.Icc 1 9, i!) (Finset.Icc 1 99)).card := by
+        apply Finset.card_le_card
+        intro x hx
+        simp at hx ⊢
+        omega
+      _ = (Finset.filter (fun p ↦ p ^ 2 ∣ ∏ i ∈ Finset.Icc 1 9, i!) (Finset.Icc 1 99)).card := by
+        norm_num
+      _ ≤ _ := by
+        apply Finset.card_le_card
+        intro x hx
+        simp at hx
+        obtain ⟨hx, hxdvd⟩ := hx
+        have hdvd : x ^ 2 ∣ ∏ i ∈ Finset.Icc 1 9, i! := by
+          exact hxdvd
+        refine ⟨x, hx, hdvd,?_⟩
+        apply dvd_trans (by apply dvd_trans?_ hdvd) (Finset.dvd_prod_iff?_ x (by norm_num))
+        apply Finset.dvd_pow_iff.mpr
+        exact fun i _ ↦ (Nat.dvd_factorial (by norm_num) (by norm_num))
+
+  -- We will now show that $a \geq 24$ and $b \geq 20$, which will complete the proof.
+  suffices a ≥ 24 ∧ b ≥ 20 by
+    refine ⟨?_,?_⟩
+    · omega
+    · omega
+
+  -- Let's first show that $a \geq 24$.
+  suffices a ≥ 24 by omega
+
+  -- The primes $p$ such that $p^2 \mid 9!$ are $2, 3, 5, 7$.
+  have h₇ : Finset.filter (fun p ↦ p ^ 2 ∣ ∏ i ∈ Finset.Icc 1 9, i!) (Finset.Icc 2 9) = {2, 3, 5, 7} := by
+    apply Finset.ext
+    intro p
+    simp
+    constructor
+    · rintro ⟨hp₁, hp₂, hp₃⟩
+      have hle : p ^ 2 ∣ 9 * 8 * 7 * 6 * 5 * 4 * 3 * 2 * 1 := by
+        calc
+          p ^ 2 ∣ ∏ i ∈ Finset.Icc 1 9, i! := by
+            exact hp₃
+          _ = 9 * 8 * 7 * 6 * 5 * 4 * 3 * 2 * 1 := by
+            rw [Finset.prod_Icc_succ_top (by norm_num), Finset.prod_Icc_succ_top (by norm_num),
+              Finset.prod_Icc_succ_top (by norm_num), Finset.prod_Icc_succ_top (by norm_num),
+              Finset.prod_Icc_succ_top (by norm_num), Finset.prod_Icc_succ_top (by norm_num),
+              Finset.prod_Icc_succ_top

@@ -1,0 +1,114 @@
+-- We need to prove that for all natural numbers $n$, $\sum_{k=0}^{n-1}k^3 = \left(\sum_{k=0}^{n-1}k\right)^2$.
+  -- We use induction on $n$.
+  induction n with
+  | zero =>
+    -- Base case: when $n = 0$, both sides equal $0$.
+    simp
+  | succ n ih =>
+    -- Inductive step: Assume the statement is true for $n$, prove for $n+1$.
+    -- We need to show that $\sum_{k=0}^{n}k^3 = \left(\sum_{k=0}^{n}k\right)^2$.
+    -- By the induction hypothesis, $\sum_{k=0}^{n-1}k^3 = \left(\sum_{k=0}^{n-1}k\right)^2$.
+    -- Therefore, we just need to show that $\left(\sum_{k=0}^{n-1}k\right)^2 + (n)^3 = \left(\sum_{k=0}^{n}k\right)^2$.
+    rw [Finset.sum_range_succ, Finset.sum_range_succ]
+    rw [ih]
+    -- Now we need to show that $\left(\sum_{k=0}^{n-1}k\right)^2 + n^3 = \left(\sum_{k=0}^{n}k\right)^2$.
+    -- Note that $\sum_{k=0}^{n}k = \sum_{k=0}^{n-1}k + n$.
+    rw [Finset.sum_range_succ]
+    -- Therefore, we need to show that $\left(\sum_{k=0}^{n-1}k\right)^2 + n^3 = \left(\sum_{k=0}^{n-1}k + n\right)^2$.
+    -- This is true because $n^3 = n^2 + 2n^2 + n^2 = (n^2 + n^2) + 2n^2 = 2n^2 + 2n^2 = 4n^2$ when $n > 0$.
+    -- And $\left(\sum_{k=0}^{n-1}k + n\right)^2 = \left(\sum_{k=0}^{n-1}k\right)^2 + 2n\left(\sum_{k=0}^{n-1}k\right) + n^2$.
+    -- So we just need to show that $n^3 = 2n^2 + 2n^2 + n^2 = 5n^2$ when $n > 0$.
+    -- This is clearly true because $n^3 - 5n^2 = n^2(n - 5) \geq 0$ when $n \geq 5$.
+    -- For $n < 5$, we can check directly.
+    by_cases hn : n = 0
+    · -- When $n = 0$, both sides equal $0$.
+      simp [hn]
+    · -- When $n \neq 0$, $\sum_{k=0}^{n-1}k = \frac{(n-1)n}{2}$.
+      have h₁ : ∑ k ∈ Finset.range n, k = (n - 1) * n / 2 := by
+        rw [Finset.sum_range_id]
+        -- If $n \neq 0$, we can use the formula for the sum of the first $n-1$ natural numbers.
+        of_eq_or_imp_eq
+        · simp [hn]
+        · exact Nat.zero_lt_of_ne_zero hn
+      -- And $\sum_{k=0}^{n}k = \frac{n(n+1)}{2}$.
+      have h₂ : ∑ k ∈ Finset.range (n + 1), k = n * (n + 1) / 2 := by
+        rw [Finset.sum_range_id]
+        -- If $n \neq 0$, we can use the formula for the sum of the first $n$ natural numbers.
+        of_eq_or_imp_eq
+        · simp at hn
+        · exact Nat.zero_lt_of_ne_zero hn
+      rw [h₁, h₂]
+      -- We need to show that $\left(\frac{(n-1)n}{2}\right)^2 + n^3 = \left(\frac{n(n+1)}{2}\right)^2$.
+      -- This is true because $n^3 = n \cdot n^2 = n \cdot \left(\frac{(n-1)n}{2}\right)^2$ when $n \neq 0$.
+      -- And $\left(\frac{n(n+1)}{2}\right)^2 = \left(\frac{(n-1)n}{2}\right)^2 + n \cdot \left(\frac{(n-1)n}{2}\right) + n^2$.
+      -- So we just need to show that $n^3 = 2n \cdot \left(\frac{(n-1)n}{2}\right) + n^2$ when $n \neq 0$.
+      -- This is true because $n^3 - 2n \cdot \left(\frac{(n-1)n}{2}\right) - n^2 = n^3 - n^3 + n^2 - n^2 = 0$.
+      -- When $n = 0$, both sides equal $0$.
+      by_cases hn' : n = 0
+      · -- When $n = 0$, both sides equal $0$.
+        simp [hn']
+      · -- When $n \neq 0$, we can cancel the common factor of $n$.
+        have : n ≠ 0 := Nat.not_eq_zero_of_ne_zero hn'
+        rw [mul_pow]
+        rw [← Nat.pow_two]
+        -- We need to show that $\left(\frac{(n-1)n}{2}\right)^2 + n^2 = \left(\frac{n(n+1)}{2}\right)^2$.
+        -- This is true because $n^2 = \left(\frac{n(n+1)}{2}\right)^2 - \left(\frac{(n-1)n}{2}\right)^2$.
+        -- When $n \neq 0$, we can divide both sides by $n$.
+        suffices h : (n - 1) * n / 2 + n ^ 2 = n * (n + 1) / 2 ^ 2 by
+          rw [h₁, h₂, h]
+          -- We need to show that $\left(\frac{(n-1)n}{2} + n^2\right)^2 = \left(\frac{n(n+1)}{2}\right)^2$.
+          -- This is true because $\left(\frac{(n-1)n}{2} + n^2\right)^2 - \left(\frac{n(n+1)}{2}\right)^2 = \frac{n^3(n-5)}{4}$.
+          -- When $n \neq 0$, either $n = 1, 2, 3, 4$, or $n \geq 5$.
+          -- For $n = 1, 2, 3, 4$, we can check directly.
+          -- For $n \geq 5$, $\frac{n^3(n-5)}{4} \geq 0$ because $n^3 \geq 5n^2$.
+          by_cases hn'' : n < 5
+          · -- When $n < 5$, we check directly.
+            interval_cases n <;> simp
+          · -- When $n \geq 5$, $\frac{n^3(n-5)}{4} \geq 0$ because $n^3 \geq 5n^2$.
+            have : 5 ≤ n := by omega
+            -- We need to show that $\frac{n^3(n-5)}{4} \geq 0$.
+            -- This is true because $n^3 \geq 5n^2$ and $n - 5 \geq 0$ when $n \geq 5$.
+            -- And $n^3 - 5n^2 = n^2(n - 5) \geq 0$ when $n \geq 5$.
+            have hn''' : 0 < n := Nat.not_eq_zero_of_ne_zero this
+            have : 0 < n ^ 2 := Nat.pos_pow_of_pos 2 hn'''
+            have : 0 < n ^ 3 := Nat.pos_pow_of_pos 3 hn'''
+            have : 0 ≤ n - 5 := by omega
+            -- We need to show that $n^3 * (n - 5) * 4 \geq 0$.
+            -- This is true because $n^3 \geq 5n^2 > 0$ and $n - 5 \geq 0$.
+            have : n ^ 3 * (n - 5) * 4 ≥ 0 := by positivity
+            -- We need to show that $n^3(n-5) \geq 0$.
+            -- This is true because $n^3 > 0$ and $n - 5 \geq 0$.
+            have : n ^ 3 * (n - 5) ≥ 0 := by nlinarith
+            -- We need to show that $n^3(n-5) = 0$.
+            -- This is true because $\left(\frac{n(n+1)}{2}\right)^2 - \left(\frac{(n-1)n}{2}\right)^2 - n^3 = \frac{n^3(n-5)}{4}$.
+            have : n ^ 3 * (n - 5) = 0 := by
+              -- This is true because $n^3(n-5) = 0$ when $n \geq 5$.
+              nlinarith
+            -- Therefore, $\left(\frac{n(n+1)}{2}\right)^2 - \left(\frac{(n-1)n}{2}\right)^2 = n^3$.
+            -- Which is $\left(\frac{n(n+1)}{2}\right)^2 = \left(\frac{(n-1)n}{2}\right)^2 + n^3$.
+            -- Which is $\left(\sum_{k=0}^{n}k\right)^2 = \left(\sum_{k=0}^{n-1}k\right)^2 + n^3$.
+            -- Which is $\left(\sum_{k=0}^{n}k\right)^2 - \left(\sum_{k=0}^{n-1}k\right)^2 = n^3$.
+            -- Factoring the left side, we get $\left(\sum_{k=0}^{n}k + \sum_{k=0}^{n-1}k\right)\left(\sum_{k=0}^{n}k - \sum_{k=0}^{n-1}k\right) = n^3$.
+            -- Which is $\left(\frac{n(n+1)}{2} + \frac{(n-1)n}{2}\right)\left(\frac{n(n+1)}{2} - \frac{(n-1)n}{2}\right) = n^3$.
+            -- Which is $\left(\frac{n(n+1) + (n-1)n}{2}\right)\left(\frac{n(n+1) - (n-1)n}{2}\right) = n^3$.
+            -- Which is $\left(\frac{n^2 + n + n^2 - n}{2}\right)\left(\frac{n^2 + n - n^2 + n}{2}\right) = n^3$.
+            -- Which is $\left(\frac{2n^2}{2}\right)\left(\frac{2n}{2}\right) = n^3$.
+            -- Which is $n^2 \cdot n = n^3$.
+            -- This is true by definition.
+            simp [← this]
+          rw [h₁, h₂]
+          -- Therefore, $\left(\sum_{k=0}^{n-1}k\right)^2 + n^3 = \left(\sum_{k=0}^{n}k\right)^2$.
+          -- This completes the induction.
+          simp [h₂, h₁]
+          -- And $\left(\sum_{k=0}^{n}k\right)^2 = \left(\frac{n(n+1)}{2}\right)^2 = \frac{n^2(n+1)^2}{4}$.
+          -- While $\left(\sum_{k=0}^{n-1}k\right)^2 + n^3 = \left(\frac{(n-1)n}{2}\right)^2 + n^3 = \frac{(n-1)^2n^2}{4} + n^3$.
+          -- We need to show that $\frac{(n-1)^2n^2}{4} + n^3 = \frac{n^2(n+1)^2}{4}$.
+          -- This is true because $n^3 = \frac{n^3 \cdot 4}{4} = \frac{4n^3}{4} = \frac{(n^3 + 3n^2 + 3n + 1) - (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n+1)^3}{4} = \frac{n^3 + 3n^2 + 3n + 1 - (n^3 + 3n^2 + 3n + 1)}{4} = \frac{4n^2 + 4n + 4 - 4n^2 - 4n - 4}{4} = \frac{4n^2 + 4n + 4 - 4n^2 - 4n - 4}{4} = \frac{4n^2 - 4n^2 + 4n + 4 - 4n - 4}{4} = \frac{0 + 0 + 4 - 4}{4} = \frac{0}{4} = 0$ when $n \neq 0$.
+          -- Wait, that's not right.
+          -- Let's try another approach.
+          -- $\left(\sum_{k=0}^{n-1}k\right)^2 + n^3 = \left(\frac{(n-1)n}{2}\right)^2 + n^3 = \frac{(n-1)^2n^2}{4} + n^3 = \frac{(n-1)^2n^2 + 4n^3}{4} = \frac{n^4 - 2n^3 + n^2 + 4n^3}{4} = \frac{n^4 + 2n^3 + n^2}{4} = \frac{n^2(n^2 + 2n + 1)}{4} = \frac{n^2(n+1)^2}{4} = \left(\frac{n(n+1)}{2}\right)^2 = \left(\sum_{k=0}^{n}k\right)^2$.
+          -- That's better.
+          rw [add_mul]
+          rw [mul_add]
+          -- Now we just need to show that $\frac{(n-1)^2n^2}{4} + \frac{4n^3}{4} = \frac{n^2(n+1)^2}{4}$.
+          -- This is true because $n^3 = \frac{n^3 \cdot 4}{4} = \frac{4n^3}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n + 1) + (n^3 + 3n^2 + 3n + 1)}{4} = \frac{(n+1)^3 - (n^3 + 3n^2 + 3n

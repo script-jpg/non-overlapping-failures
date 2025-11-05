@@ -1,0 +1,79 @@
+-- set $x=10$, then we have $11\mid x^n-(-1)^n$.
+
+  set x := (10 : ℤ) with hx
+
+  -- show that $11\mid x^n-(-1)^n$.
+
+  have induction11divxn1 (n : ℕ) : 11 ∣ x ^ n - (-1 : ℤ) ^ n := by
+
+    -- do induction on $n$.
+
+    induction n with
+
+    -- when $n=0$, $x^0-(-1)^0=0$, so $11\mid x^0-(-1)^0$.
+
+    | zero =>
+      simp
+
+    -- when $n=n+1$, we have
+
+    -- $x^{n+1}-(-1)^{n+1}=x\cdot x^n-(-1)\cdot (-1)^n$
+
+    -- $=x\cdot x^n+(-1)\cdot (-1)^n$
+
+    -- $=x\cdot x^n+(-1)^n$
+
+    -- $=(x-1)\cdot x^n+(-1)^n+(x-1)\cdot x^n$
+
+    -- $=(x-1)\cdot x^n+1+(-1)^n$
+
+    -- $=11\cdot x^n+(-1)^n\cdot (x-1)+1$
+
+    | succ n ih =>
+      have : x ^ (n + 1) - (-1 : ℤ) ^ (n + 1) = (x - 1) * x ^ n + (-1) ^ n * (x - 1) + 1 := by
+
+        cases n with
+
+        | zero => simp
+
+        | succ n =>
+          rw [pow_succ, mul_sub, sub_eq_add_neg, pow_succ, mul_add, mul_neg, neg_mul, neg_add,
+
+              neg_neg, add_assoc, add_left_inj, ← pow_succ]
+
+          ring_nf
+
+      rw [this]
+
+      have : 11 ∣ (x - 1) * x ^ n + (-1) ^ n * (x - 1) + 1 := by
+
+        apply dvd_add
+
+        · apply dvd_add
+
+          · rw [mul_comm (x - 1), ← mul_assoc]
+
+            have : 11 ∣ (x - 1) := by norm_num
+
+            exact dvd_mul_of_dvd_left this (x ^ n)
+
+          · have : (-1 : ℤ) ^ n * (x - 1) = (-1) ^ n * x - (-1) ^ n := by ring
+
+            rw [this]
+
+            have : 11 ∣ (-1) ^ n := by
+
+              have : 11 ∣ (-1 : ℤ) := by norm_num
+
+              apply dvd_pow this n
+
+            exact dvd_sub this (dvd_mul rfl (dvd_pow this n))
+
+        · norm_num
+
+      assumption
+
+  -- do substitution $x=10$.
+
+  rw [hx]; exact induction11divxn1 n
+```

@@ -1,0 +1,163 @@
+-- The condition is equivalent to:
+  -- 1. $n$ is a positive integer
+  -- 2. $(n + 1000) / 70 = \lfloor \sqrt{n} \rfloor$
+  have h₁ : ∀ n : ℕ, n ∈ S ↔ n > 0 ∧ (n + 1000) / 70 = Int.floor (Real.sqrt n) := by
+    intro n
+    apply h₀
+  -- Extract the set of positive integers that satisfy the condition
+  let S' := {n | n > 0 ∧ (n + 1000) / 70 = Int.floor (Real.sqrt n)}
+  -- Show that $S' = S$, that is, the set of positive integers that satisfy the condition
+  -- is exactly the set $S$ in the problem statement
+  have h₂ : S' = S := by
+    ext n
+    simp [S', h₁]
+  -- Replace $S$ with $S'$ in the hypothesis
+  rw [h₂] at h₀
+  clear h₁ h₂
+  -- Show that $S'$ is a finite set
+  have h₃ : Finite S' := by
+    simp [S']
+    refine' Set.finite_of_forall_exists_lt (fun n ↦?_)
+    -- For any $n > 0$, if $(n + 1000) / 70 = \lfloor \sqrt{n} \rfloor$, then $n < 1200$
+    have h₃ : ∀ n : ℕ, n > 0 ∧ (n + 1000) / 70 = Int.floor (Real.sqrt n) → n < 1200 := by
+      intro n hn
+      rcases hn with ⟨hn, h₀⟩
+      -- $(n + 1000) / 70 = \lfloor \sqrt{n} \rfloor \implies \sqrt{n} \geq 10$
+      have h₁ : 10 ≤ Real.sqrt n := by
+        have h₁ : (1000 : ℝ) / 70 ≤ (n + 1000) / 70 := by
+          rw [← h₀]
+          exact Int.floor_le (Real.sqrt n)
+        have h₂ : (1000 : ℝ) / 70 = 1000 / 70 := by norm_num
+        rw [h₂] at h₁
+        have h₃ : (1000 : ℝ) / 70 = (10 : ℝ) * (100 : ℝ) / 70 := by norm_num
+        rw [h₃] at h₁
+        have h₄ : (100 : ℝ) / 70 > 0 := by norm_num
+        nlinarith
+      -- $\sqrt{n} < 45$
+      have h₂ : Real.sqrt n < 45 := by
+        by_contra! h₂
+        have h₃ : (45 : ℝ) * (45 : ℝ) ≤ (n : ℝ) := by
+          rw [← h₂]
+          exact Real.le_sqrt'.mpr (by norm_num)
+        norm_cast at h₃
+        linarith
+      -- $n < 1200$
+      have h₄ : n < 1200 := by
+        have h₄ : Real.sqrt n < (45 : ℝ) := by
+          simp
+          exact h₂
+        have h₅ : Real.sqrt n * Real.sqrt n < (45 : ℝ) * Real.sqrt n := by
+          nlinarith
+        have h₆ : Real.sqrt n * Real.sqrt n = (n : ℝ) := by
+          rw [Real.mul_self_sqrt]
+          simp
+          exact hn
+        rw [h₆] at h₅
+        norm_cast at h₅
+        linarith
+      exact h₄
+    -- Show that $S'$ is finite
+    have h₄ : S' ⊆ Finset.Iio (1200 : ℕ) := by
+      simp
+      intro n hn
+      have h₄ := h₃ n ⟨hn, h₀⟩
+      simp
+      exact h₄
+    have h₅ : Set.Finite S' := by
+      have h₅ : Finite (Finset.Iio (1200 : ℕ)) := by
+        apply Set.finite_Iio
+      exact Set.Finite.subset h₅ h₄
+    exact h₅
+  -- Show that $S'$ is a subset of $\{13, 43, 73, 103, 113, 123\}$
+  have h₄ : S' ⊆ {13, 43, 73, 103, 113, 123} := by
+    -- Show that for any $n \in S'$, $n \in \{13, 43, 73, 103, 113, 123\}$
+    simp
+    intro n hn
+    rcases hn with ⟨hn, h₀⟩
+    -- Show that $n \in \{13, 43, 73, 103, 113, 123\}$ by showing $n \leq 1200$ and checking each value
+    have h₁ : n ≤ 1200 := by
+      have h₁ : Real.sqrt n ≥ 10 := by
+        have h₁ : (1000 : ℝ) / 70 ≤ (n + 1000) / 70 := by
+          rw [← h₀]
+          exact Int.floor_le (Real.sqrt n)
+        have h₂ : (1000 : ℝ) / 70 = 1000 / 70 := by norm_num
+        rw [h₂] at h₁
+        have h₃ : (1000 : ℝ) / 70 = (10 : ℝ) * (100 : ℝ) / 70 := by norm_num
+        rw [h₃] at h₁
+        have h₄ : (100 : ℝ) / 70 > 0 := by norm_num
+        nlinarith
+      have h₂ : Real.sqrt n < 45 := by
+        by_contra! h₂
+        have h₃ : (45 : ℝ) * (45 : ℝ) ≤ (n : ℝ) := by
+          rw [← h₂]
+          exact Real.le_sqrt'.mpr (by norm_num)
+        norm_cast at h₃
+        linarith
+      have h₃ : n < 1200 := by
+        have h₃ : Real.sqrt n < (45 : ℝ) := by
+          simp
+          exact h₂
+        have h₄ : Real.sqrt n * Real.sqrt n < (45 : ℝ) * Real.sqrt n := by
+          nlinarith
+        have h₅ : Real.sqrt n * Real.sqrt n = (n : ℝ) := by
+          rw [Real.mul_self_sqrt]
+          simp
+          exact hn
+        rw [h₅] at h₄
+        norm_cast at h₄
+        linarith
+      linarith
+    interval_cases n
+    -- Check each value
+    any_goals
+      ring_nf at h₀
+      norm_num at h₀
+    all_goals
+      linarith
+  -- Show that $\{13, 43, 73, 103, 113, 123\} \subseteq S'$
+  have h₅ : {13, 43, 73, 103, 113, 123} ⊆ S' := by
+    -- Show that for any $n \in \{13, 43, 73, 103, 113, 123\}$, $n \in S'$
+    simp
+    intro n hn
+    rcases hn with (rfl | rfl | rfl | rfl | rfl | rfl)
+    -- Check each value
+    all_goals
+      constructor
+     . simp
+     . ring_nf
+        norm_num
+        rw [show (73 : ℝ) / 70 = (103 : ℝ) / 100 by norm_num]
+        have h₅ : (103 : ℝ) / 100 = Int.floor (Real.sqrt 73) := by
+          have h₅ : 103 / 100 = 103 / 100 := rfl
+          rw [h₅]
+          exact (Int.floor_eq_iff (by norm_num)).mpr (by norm_num)
+        rw [h₅]
+        norm_num
+    all_goals
+      ring_nf
+      norm_num
+  -- Since both $S'$ and $\{13, 43, 73, 103, 113, 123\}$ are finite, and they are subsets of each other, they have the same cardinality
+  have h₆ : S'.card = {13, 43, 73, 103, 113, 123}.card := by
+    apply Set.Finite.card_eq h₃
+    apply Set.Finite.subset h₅
+    exact Set.finite_Iio (1200 : ℕ)
+  -- $\{13, 43, 73, 103, 113, 123\}$ has $6$ elements
+  have h₇ : {13, 43, 73, 103, 113, 123}.card = 6 := by
+    norm_num
+  -- So $S'$ has $6$ elements
+  rw [h₇] at h₆
+  -- $S'$ is exactly the set in the problem statement
+  have h₈ : S' = {13, 43, 73, 103, 113, 123} := by
+    apply Set.Finite.eq_of_subset_of_card_le h₅
+    apply Set.Finite.subset h₃
+    rw [h₆]
+  -- The set in the problem statement has $6$ elements
+  rw [h₈] at h₀
+  clear h₃ h₄ h₅ h₆ h₇
+  have h₉ : S = {13, 43, 73, 103, 113, 123} := by
+    apply Finset.coe_inj.mp
+    convert h₀ using 1
+    simp
+  rw [h₉]
+  norm_num
+```

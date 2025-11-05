@@ -1,0 +1,72 @@
+-- We will prove that $\sqrt{\log_2{6}+\log_3{6}} = \sqrt{\log_2{3}}+\sqrt{\log_3{2}}$.
+  have h1 : 0 < Real.log 2 < Real.log 3 := by
+    -- We know that $2 < 3$, so $\log 2 < \log 3$.
+    let f : ℝ → ℝ := Real.log
+    have h1 : f 2 < f 3 := by
+      have h2 : f 2 < f 3 := Real.strictMonoOn_log (by norm_num) (by norm_num) (by norm_num)
+      exact h2
+    exact h1
+  have h2 : 0 < Real.log 3 := by
+    -- $\log 3 > 0$ because $3 > 1$.
+    let f : ℝ → ℝ := Real.log
+    have h2 : f 3 > f 1 := by
+      have h3 : f 3 > f 1 := Real.strictMonoOn_log (by norm_num) (by norm_num) (by norm_num)
+      exact h3
+    have h3 : f 1 = 0 := Real.log_one
+    linarith
+  -- $\log_2{6} = \frac{\log 6}{\log 2}$
+  have h3 : Real.log 6 / Real.log 2 = Real.log 2 + Real.log 3 := by
+    -- $\log_2{6} = \frac{\log 6}{\log 2}$ by change of base formula.
+    have h3 : Real.log 6 / Real.log 2 = Real.log 2 + Real.log 3 := by
+      have h4 : Real.log 6 = Real.log 2 + Real.log 3 := by
+        rw [show (6 : ℝ) = 2 * 3 by norm_num]
+        exact Real.log_mul (by norm_num) (by norm_num)
+      rw [h4]
+      field_simp [h2.ne']
+    exact h3
+  -- $\log_3{6} = \frac{\log 6}{\log 3} = \log_2{6} - \log_2{3} = \log_2{3} + \log_3{2}$
+  have h4 : Real.log 6 / Real.log 3 = Real.log 3 + Real.log 2 := by
+    -- Similar to the previous, but using $\log_3{6} = \frac{\log 6}{\log 3}$ and $\log_3{2} = \frac{\log 2}{\log 3}$.
+    have h4 : Real.log 6 / Real.log 3 = Real.log 3 + Real.log 2 := by
+      have h5 : Real.log 6 = Real.log 3 + Real.log 2 := by
+        rw [show (6 : ℝ) = 3 * 2 by norm_num]
+        exact Real.log_mul (by norm_num) (by norm_num)
+      rw [h5]
+      field_simp [h2.ne']
+    exact h4
+  -- $\sqrt{\log_2{6}+\log_3{6}} = \sqrt{\log_2{3}}+\sqrt{\log_3{2}}$
+  have h5 : Real.sqrt (Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3) =
+    Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3) := by
+    -- Using the previous results, we know that $\log_2{6} = \log_2{3} + \log_3{2}$ and $\log_3{6} = \log_3{2} + \log_2{3}$, so the sum is equal to $(\log_2{3} + \log_3{2}) + (\log_3{2} + \log_2{3}) = 2(\log_2{3} + \log_3{2})$.
+    rw [h3, h4]
+    -- Simplify the expression to get the desired equality.
+    have h5 : Real.log 2 / Real.log 3 = (Real.log 3 / Real.log 2)⁻¹ := by
+      field_simp [h2.ne', h1.ne']
+    rw [h5]
+    have h6 : Real.log 3 / Real.log 2 + (Real.log 3 / Real.log 2)⁻¹ = (Real.log 3 / Real.log 2)⁻¹ * (Real.log 3 / Real.log 2 + 1) := by
+      field_simp
+    rw [h6]
+    have h7 : (Real.log 3 / Real.log 2)⁻¹ * (Real.log 3 / Real.log 2 + 1) = (Real.log 3 / Real.log 2)⁻¹ * (Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3) := by
+      rw [show Real.log 2 / Real.log 3 = (Real.log 3 / Real.log 2)⁻¹ by field_simp [h2.ne', h1.ne']]
+    rw [h7]
+    have h8 : (Real.log 3 / Real.log 2)⁻¹ * (Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3) = (Real.sqrt (Real.log 3 / Real.log 2) - Real.sqrt (Real.log 2 / Real.log 3)) * (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3)) := by
+      ring_nf
+      field_simp [h1.ne', h2.ne']
+      ring
+    rw [h8]
+    rw [show x * y = Real.sqrt x * Real.sqrt y by cases x <;> cases y <;> try positivity | case ⊥ <;> try linarith] -- For $\sqrt{a}\sqrt{b} = \sqrt{ab}$, use the condition $a \ge 0$ and $b \ge 0$.
+    have h9 : Real.log 3 / Real.log 2 ≥ 0 := by
+      apply div_nonneg
+      linarith
+      linarith
+    have h10 : Real.log 2 / Real.log 3 ≥ 0 := by
+      apply div_nonneg
+      linarith
+      linarith
+    rw [show Real.sqrt ((Real.log 3 / Real.log 2)⁻¹ * (Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3)) = Real.sqrt ((Real.sqrt (Real.log 3 / Real.log 2) - Real.sqrt (Real.log 2 / Real.log 3)) * (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3))) by rw [show (Real.sqrt (Real.log 3 / Real.log 2) - Real.sqrt (Real.log 2 / Real.log 3)) * (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3)) = (Real.sqrt (Real.log 3 / Real.log 2)) ^ 2 - (Real.sqrt (Real.log 2 / Real.log 3)) ^ 2 by ring]; simp] -- For $\sqrt{a}\sqrt{b} = \sqrt{ab}$, use the condition $a \ge 0$ and $b \ge 0$.
+    rw [show Real.sqrt ((Real.sqrt (Real.log 3 / Real.log 2) - Real.sqrt (Real.log 2 / Real.log 3)) * (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3))) = Real.sqrt (Real.sqrt (Real.log 3 / Real.log 2) - Real.sqrt (Real.log 2 / Real.log 3)) * Real.sqrt (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3)) by rw [show (Real.sqrt (Real.log 3 / Real.log 2) - Real.sqrt (Real.log 2 / Real.log 3)) * (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3)) = (Real.sqrt (Real.log 3 / Real.log 2)) ^ 2 - (Real.sqrt (Real.log 2 / Real.log 3)) ^ 2 by ring]; simp] -- For $\sqrt{a}\sqrt{b} = \sqrt{ab}$, use the condition $a \ge 0$ and $b \ge 0$.
+    rw [show Real.sqrt (Real.sqrt (Real.log 3 / Real.log 2) - Real.sqrt (Real.log 2 / Real.log 3)) * Real.sqrt (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3)) = Real.sqrt (Real.sqrt (Real.log 3 / Real.log 2) - Real.sqrt (Real.log 2 / Real.log 3)) * Real.sqrt (Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3)) by rfl]
+    symm
+    apply Real.sqrt_mul (by positivity) (by positivity)
+  exact h5
+```

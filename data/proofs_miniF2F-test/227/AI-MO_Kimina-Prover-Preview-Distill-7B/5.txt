@@ -1,0 +1,71 @@
+-- multiply h₁ by y, h₂ by z, and h₃ by x
+  -- add the three equations
+  have : (x + 1 / y) * y + (y + 1 / z) * z + (z + 1 / x) * x = 4 * y + 1 * z + 7 / 3 * x := by
+    rw [h₁, h₂, h₃]
+  simp [add_mul] at this
+  rw [mul_inv_cancel₀ (by positivity), mul_inv_cancel₀ (by positivity), mul_inv_cancel₀ (by positivity)] at this
+
+  -- now we get a equation of $x,y,z$.
+  -- substitute $y = \frac 1{4 - \frac 1y}$ from h₁ into h₂
+  have : (4 * (1 / (4 - 1 / y)) + 1 / z) + (z + 1 / x) = 1 + (z + 1 / x) := by simp [h₁]
+  rw [this] at h₂
+  -- now we can solve for $z$ in terms of $x$
+  rw [eimplify] at h₂
+  have : 4 * (1 / (4 - 1 / y)) + 1 / z + (z + 1 / x) - 1 - (z + 1 / x) = 1 - 1 := by
+    simp only [add_sub_cancel_right, sub_self, add_zero, h₂]
+  rw [mul_div_cancel_right₀ (by positivity)] at this
+  have : 4 / (4 - 1 / y) = 4 - 1 / x := by
+    calc
+      4 / (4 - 1 / y) = 4 - 1 / z + 1 / x := by simp [h₂]
+      _ = 4 - 1 / x := by simp [this]
+  have : 4 / (4 - 1 / y) - 4 = - 1 / x := by
+    calc
+      4 / (4 - 1 / y) - 4 = -1 / z + 1 / x := by simp [h₂]
+      _ = -1 / x := by simp [this]
+  have : (4 - 1 / y) / (4 - 1 / y) = (4 - 1 / x) / (4 - 1 / y) := by
+    rw [this]
+  simp [div_self (by positivity)] at this
+  have : 4 * y / (4 - 1 / y) = 4 * x / (4 - 1 / x) := by
+    calc
+      4 * y / (4 - 1 / y) = 4 * y / (4 - 1 / y) - 4 + 4 := by simp [div_self (by linarith)]
+      _ = -4 / (4 - 1 / y) + 4 := by rw [this]
+      _ = -4 / (4 - 1 / x) + 4 := by rw [this]
+      _ = 4 * x / (4 - 1 / x) := by ring
+  have : 4 * (y / (4 - 1 / y)) = 4 * (x / (4 - 1 / x)) := by
+    calc
+      4 * (y / (4 - 1 / y)) = 4 * y / (4 - 1 / y) := by simp [mul_div_assoc]
+      _ = 4 * x / (4 - 1 / x) := by rw [this]
+      _ = 4 * (x / (4 - 1 / x)) := by simp [mul_div_assoc]
+  -- now we cancel the $4$ and get a function of $x$
+  have : (y / (4 - 1 / y)) = (x / (4 - 1 / x)) := by
+    calc
+      (y / (4 - 1 / y)) = 4 * (y / (4 - 1 / y)) / 4 := by simp [mul_div_cancel_left₀ (by linarith)]
+      _ = 4 * (x / (4 - 1 / x)) / 4 := by rw [this]
+      _ = (x / (4 - 1 / x)) := by ring
+  replace this : 4 - 1 / x = 4 - 1 / y := by
+    calc
+      4 - 1 / x = 4 - 1 / x / y * y := by simp [div_mul_cancel₀ (by positivity)]
+      _ = (4 - 1 / y) * (x / y) / y * y := by rw [this]
+      _ = (4 - 1 / y) * (x / y) * (y / y) := by ring
+      _ = (4 - 1 / y) * (x / y) * 1 := by simp [div_self (by positivity)]
+      _ = 4 - 1 / y := by ring
+  -- so $x = y$
+  rw [eimplify] at this
+  have hx : x = y := by
+    calc
+      x = 4 * x / 4 := by simp [mul_div_cancel_left₀ (by linarith)]
+      _ = 4 * y / 4 := by rw [this]
+      _ = y := by ring
+
+  -- now plug in $x = y$ and get value of $z$
+  rw [hx, e simplify] at h₂
+  have : z = 1 / (4 - 1 / z) := by
+    calc
+      z = 1 / (4 - 1 / y) := by rw [this]; ring
+      _ = 1 / (4 - 1 / z) := by ring
+  -- now we get value of $xyz$.
+  rw [hx, this]
+  apply div_eq_iff (by linarith)
+  apply div_eq_iff (by linarith)
+  linarith
+```

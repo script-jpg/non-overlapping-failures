@@ -1,0 +1,180 @@
+obtain ⟨k, hk0, hk1⟩ := h₁
+
+  -- suppose on the contrary that $a \neq 1$, then $a \geq 2$
+  by_contra ha; push_neg at ha
+  have a_lower_bound : 2 ^ (by omega : 1) ≤ a := by
+    obtain ⟨a', ha'⟩ := Nat.exists_eq_add_of_le' ha
+    rw [ha'] at ha; simp at ha
+    exact ha
+
+  have a8_le : 8 ≤ a ^ 2 := by
+    obtain ⟨a', ha'⟩ := Nat.exists_eq_add_of_le' ha
+    rw [ha'] at ha; simp at ha
+    nlinarith
+
+  have b4_le : 4 ≤ b ^ 2 := by
+    obtain ⟨b', hb'⟩ := Nat.exists_eq_add_of_le' h₀.right
+    rw [hb'] at h₀; simp at h₀
+    nlinarith
+
+  have lower_bound_of_prod : 2 ^ (4 + 4) = 2 ^ 8 ≤ (a + b ^ 2) * (b + a ^ 2) := by
+    calc
+      2 ^ (4 + 4) = 2 ^ 8 := by simp
+      _ ≤ 2 * 2 * 2 * 2 * (a + b ^ 2) := by
+        apply mul_le_mul
+        · norm_num
+        · norm_num
+        · apply Nat.add_le_add
+          · exact Nat.pow_le_pow_of_le_left a8_le 2
+          · exact Nat.pow_le_pow_of_le_left b4_le 2
+        · norm_num
+      _ ≤ 2 * 2 * 2 * 2 * (a + b ^ 2) * (b + a ^ 2) := by
+        apply mul_le_mul
+        · norm_num
+        · exact Nat.add_le_add (a + b ^ 2) (a + b ^ 2)
+        · apply Nat.add_le_add (b + a ^ 2) (b + a ^ 2)
+          · exact Nat.pow_le_pow_of_le_left a8_le 2
+          · exact Nat.pow_le_pow_of_le_left b4_le 2
+        · norm_num
+      _ = (a + b ^ 2) * (b + a ^ 2) := by ring
+
+  rw [hk1] at lower_bound_of_prod
+  have k2 : 2 ^ k = 2 ^ 8 := by linarith
+  have k_eq : k = 8 := by
+    apply Nat.pow_right_injective (by norm_num : 1 < 2) at k2
+    exact k2
+
+  have ab product_of_ab_not_prime : ¬ Nat.Prime ((a + b ^ 2) * (b + a ^ 2)) := by
+    simp [Nat.Prime]
+    use 2 ^ k
+    rw [hk1]
+    nlinarith
+
+  have a_add_b_pow_two_eq_sum_of_squares : a + b ^ 2 = a ^ 2 + b ^ 2 + 2 * (a * b) - 2 * (a * b) + a + b ^ 2 := by ring
+  have b_add_a_pow_two_eq_sum_of_squares : b + a ^ 2 = b ^ 2 + a ^ 2 + 2 * (a * b) - 2 * (a * b) + b + a ^ 2 := by ring
+
+  have sum_of_squares_not_prime :
+      ¬ Nat.Prime (a ^ 2 + b ^ 2 + 2 * (a * b) - 2 * (a * b) + a + b ^ 2) ∨
+      ¬ Nat.Prime (b ^ 2 + a ^ 2 + 2 * (a * b) - 2 * (a * b) + b + a ^ 2) := by
+    by_cases h : a ^ 2 + b ^ 2 + 2 * (a * b) - 2 * (a * b) + a + b ^ 2 = 2 ^ k
+    · rw [hk1] at h
+      have : 2 * (a * b) = 2 * 2 ^ k - a - b ^ 2 := by omega
+      have : 2 ∣ 2 * (a * b) := by
+        rw [this]
+        apply Nat.dvd_sub'
+        · apply Nat.two_dvd_pow
+          rw [← this]; exact Nat.le_refl (2 ^ k)
+        · omega
+      have ab_not_prime : 2 ∣ (a ^ 2 + b ^ 2 + 2 * (a * b) - 2 * (a * b) + a + b ^ 2) := by
+        rw [← this]
+        apply Nat.dvd_add
+        · apply Nat.dvd_mul_left
+        · rw [← this]
+          apply Nat.dvd_sub'
+          · apply Nat.two_dvd_pow
+            rw [← this]; exact Nat.le_refl (2 ^ k)
+          · omega
+      rw [← this]
+      left
+      exact (Nat.Prime.dvd_mul ab_not_prime).mp this
+    · right
+      exact Nat.Prime.ne_one (Nat.prime_pow k 2)
+
+  have not_equality : (a ^ 2 + b ^ 2 + 2 * (a * b) - 2 * (a * b) + a + b ^ 2) ≠ (b ^ 2 + a ^ 2 + 2 * (a * b) - 2 * (a * b) + b + a ^ 2) := by
+    by_contra h
+    have : a = b := by
+      calc
+        a = a * 2 - a := by omega
+        _ = b * 2 - b := by rw [h]
+        _ = b := by omega
+    rw [this] at hk1
+    have : 2 ^ k = 2 * b ^ 2 := by omega
+    have : 2 ∣ 2 * b ^ 2 := by
+      rw [this]
+      apply Nat.dvd_mul_left
+    have : 2 ∣ b ^ 2 := by
+      exact Nat.Prime.dvd_mul_left (Nat.prime_two) this
+    have : 2 ∣ b := by
+      apply Nat.Prime.dvd_of_dvd_pow (Nat.prime_two) this
+    have : 2 ∣ (a + b ^ 2) * (b + a ^ 2) := by
+      rw [hk1]
+      apply Nat.dvd_mul_left
+    have : 2 ∣ (a + b ^ 2) ∨ 2 ∣ (b + a ^ 2) := by
+      exact (Nat.Prime.dvd_mul (Nat.prime_two)).mp this
+    rcases this with h | h
+    · have : ¬ (a + b ^ 2) = 2 ^ k := by
+        intro h'
+        have : a + b ^ 2 = 2 ∨ a + b ^ 2 = 2 ^ k := by
+          omega
+        rcases this with h'' | h''
+        · omega
+        · exact h''
+      have : a + b ^ 2 = a + b ^ 2 := by rfl
+      rw [this] at h'
+      have : ¬ a = 2 ^ k - b ^ 2 := by
+        intro h'
+        have : a + b ^ 2 = 2 ∨ a + b ^ 2 = 2 ^ k := by
+          omega
+        rcases this with h'' | h''
+        · omega
+        · exact h''
+      contradiction
+    · have : ¬ (b + a ^ 2) = 2 ^ k := by
+        intro h'
+        have : b + a ^ 2 = 2 ∨ b + a ^ 2 = 2 ^ k := by
+          omega
+        rcases this with h'' | h''
+        · omega
+        · exact h''
+      have : b + a ^ 2 = b + a ^ 2 := by rfl
+      rw [this] at h'
+      have : ¬ b = 2 ^ k - a ^ 2 := by
+        intro h'
+        have : b + a ^ 2 = 2 ∨ b + a ^ 2 = 2 ^ k := by
+          omega
+        rcases this with h'' | h''
+        · omega
+        · exact h''
+      contradiction
+
+  -- we have $a + b^2 = 2^k - 1$ and $b + a^2 = 2^k - 1$
+  have a_add_b_pow_two_eq_two_pow_minus_one : a + b ^ 2 = 2 ^ k - 1 := by
+    have : 2 ^ k - 1 = 2 ^ k - 1 := by rfl
+    rw [hk1] at this
+    exact this
+  have b_add_a_pow_two_eq_two_pow_minus_one : b + a ^ 2 = 2 ^ k - 1 := by
+    have : 2 ^ k - 1 = 2 ^ k - 1 := by rfl
+    rw [hk1] at this
+    exact this
+
+  have a_pow_two_add_b_pow_two_eq_two_two_pow_minus_one : a ^ 2 + b ^ 2 = 2 ^ k - 1 := by
+    have : a ^ 2 + b ^ 2 = (a + b ^ 2) * (b + a ^ 2) - a * b * 2 + a + b ^ 2 := by
+      simp only [mul_add, add_mul, mul_assoc]
+      rw [add_assoc]
+      simp only [Nat.add_sub_cancel, mul_comm a b]
+      apply Nat.sub_eq_of_eq_add
+      rw [← add_assoc]
+      apply Nat.add_right_cancel
+      rw [← a_add_b_pow_two_eq_two_pow_minus_one, ← b_add_a_pow_two_eq_two_pow_minus_one]
+      omega
+    rw [this, hk1]
+    nlinarith
+
+  have a_mul_b_eq_1 : a * b = 1 := by
+    have : a * b = a * b - 2 * (a * b) + 2 * (a * b) := by omega
+    rw [this]
+    calc
+      _ = (a + b ^ 2) * (b + a ^ 2) - 2 * (a * b) + 2 * (a * b) - (a ^ 2 + b ^ 2) := by omega
+      _ = 2 ^ k - 1 - 2 * (a * b) + 2 * (a * b) - (a ^ 2 + b ^ 2) := by rw [a_add_b_pow_two_eq_two_pow_minus_one, b_add_a_pow_two_eq_two_pow_minus_one, a_pow_two_add_b_pow_two_eq_two_two_pow_minus_one]
+      _ = 2 ^ k - (a ^ 2 + b ^ 2) := by omega
+      _ = 2 ^ k - (2 ^ k - 1) := by rw [a_pow_two_add_b_pow_two_eq_two_two_pow_minus_one]
+      _ = 1 := by omega
+
+  have : a = 1 ∧ b = 1 := by
+    constructor
+    · apply Nat.eq_one_of_mul_eq_one_right a_mul_b_eq_1
+    · apply Nat.eq_one_of_mul_eq_one_left a_mul_b_eq_1
+
+  tauto
+
+```

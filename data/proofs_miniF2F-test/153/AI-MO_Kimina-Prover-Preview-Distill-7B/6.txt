@@ -1,0 +1,97 @@
+-- We first suppose $t \le 0.$
+  by_cases h : t ≤ 0
+  · -- When $t \le 0,$ we have $2^t ≤ 1$ and $4^t ≤ 1,$ so $(2^t - 3t)t ≤ 0.$
+    have ht : (2 ^ t - 3 * t) * t / 4 ^ t ≤ 0 := by
+
+      -- We have $2^t ≤ 1.$
+      have h1 : 2 ^ t ≤ 1 := by
+        calc
+
+          _ ≤ (2 : ℝ) ^ (0 : ℝ) := by
+            apply Real.rpow_le_rpow_of_exponent_le (by linarith) (by linarith)
+          _ = _ := by
+            norm_num
+
+      -- We have $4^t ≤ 1.$
+      have h2 : 4 ^ t ≤ 1 := by
+        calc
+
+          _ ≤ (4 : ℝ) ^ (0 : ℝ) := by
+            apply Real.rpow_le_rpow_of_exponent_le (by linarith) (by linarith)
+          _ = _ := by
+            norm_num
+
+      -- We have $(2^t - 3t) ≤ 0.$
+      have h3 : 2 ^ t - 3 * t ≤ 0 := by
+        apply sub_nonpos.mpr
+        calc
+
+          _ ≤ 0 + 0 := by
+            apply add_le_add (le_rpow_zero 2 t) (le_mul_of_nonpos_right (le_rpow_zero 4 t) (by linarith))
+          _ = _ := by
+            norm_num
+
+      -- We have $t ≤ 0.$
+      exact nonpos_mul_nonpos_of_nonneg_of_nonpos (by linarith) h
+
+    -- Since $(2^t - 3t)t \le 0$ and $4^t > 0$, we have $(2^t - 3t)t / 4^t ≤ 0 ≤ 1/12.$
+    calc
+
+      _ ≤ 0 := by
+        exact ht
+      _ ≤ (1 / 12 : ℝ) := by
+        norm_num
+
+  · -- When $t > 0,$ we have $2^t > 1$ and $4^t > 1.$
+    simp at h
+
+    -- We have $4^t = (2^2)^t = 2^{2t}.$
+    have h1 : (4 ^ t : ℝ) = 2 ^ (2 * t) := by
+      rw [show (4 : ℝ) = 2 ^ (2 : ℝ) by norm_num]
+      rw [← Real.rpow_mul (by linarith)]
+      ring
+
+    -- We have $t(2^t - 3t) = t \cdot 2^t - 3t^2.$
+    have h2 : t * (2 ^ t - 3 * t) = t * (2 ^ t) - 3 * t ^ 2 := by
+      ring
+
+    -- Substituting $t(2^t - 3t)$ and $4^t$ with the equivalent expressions, we now
+    -- need to prove that $\frac{t(2^t) - 3t^2}{2^{2t}}$ < $\frac{1}{12}.$
+    rw [h1, h2]
+
+    -- We use the AM-GM inequality.
+    have h3 : 1 / 12 - ((t * (2 ^ t) - 3 * t ^ 2) / (2 ^ (2 * t)) : ℝ) ≤ 1 / 12 - ((2 ^ (t * 2) - 6 * t ^ 2) / (2 ^ (2 * t))) := by
+      apply sub_le_sub_left
+      apply div_le_div_of_nonneg_right
+      linarith
+      apply pow_two_nonneg
+
+    -- We now need to prove that $\frac{t(2^t) - 3t^2}{2^{2t}}$ ≤ $\frac{2^{2t} - 6t^2}{2^{2t}}.$
+    suffices ((t * (2 ^ t) - 3 * t ^ 2) / (2 ^ (2 * t)) : ℝ) ≤ (2 ^ (t * 2) - 6 * t ^ 2) / (2 ^ (2 * t)) by
+      linarith
+
+    -- Multiplying both sides by $2^{2t}$, we need to prove that $t(2^t) - 3t^2 ≤ 2^{2t} - 6t^2.$
+    apply (div_le_div_iff_of_pos_right (by positivity)).mp
+
+    -- We have $2^{2t} = (2^t)^2.$
+    have h4 : (2 ^ (t * 2) : ℝ) = (2 ^ t) ^ 2 := by
+      rw [show (2 * t : ℝ) = t + t by ring]
+      rw [Real.rpow_add (by linarith)]
+      ring
+
+    -- We have $t(2^t) - 3t^2 ≤ (2^t)^2 - 3t^2.$
+    rw [h4]
+    have h5 : t * (2 ^ t) - 3 * t ^ 2 - (2 ^ t) ^ 2 + 6 * t ^ 2 ≤ 0 := by
+      calc
+
+        _ ≤ (2 ^ t) ^ 2 - 3 * t ^ 2 - (2 ^ t) ^ 2 + 6 * t ^ 2 := by
+          apply sub_le_sub_right
+          apply sub_le_sub_left
+          linarith [le_rpow_self (by linarith) (by linarith)]
+        _ = _ := by
+          ring
+
+    -- We have $t(2^t - 3t) ≤ 2^{2t} - 6t^2.$
+    linarith
+
+```

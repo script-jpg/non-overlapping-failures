@@ -1,0 +1,263 @@
+-- Prove that the solution set is exactly $\left\{ \frac{\pi}{4}, \frac{3\pi}{4} \right\}$.
+  have h₁ : S = {Real.pi / 4, Real.pi - Real.pi / 4} := by
+    ext x
+    constructor
+    · -- If $x \in S$, then $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$.
+      intro hx
+      rcases hx with ⟨hx, hx₁, hx₂⟩
+      -- If $x \in S$, then $0 \leq x \leq \pi$ and
+      -- $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$.
+      have h₀ : 0 ≤ x ∧ x ≤ Real.pi := ⟨hx₁, hx₂⟩
+      -- Since $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$, we have
+      -- $\sin \left( \frac{\pi}2 \cos x\right)= \frac{\pi}2 \cos x$ or $\sin \left( \frac{\pi}2 \sin x\right)= \frac{\pi}2 \sin x$.
+      have h₁ :
+        Real.sin (Real.pi / 2 * Real.cos x) = Real.pi / 2 * Real.cos x ∨
+        Real.cos (Real.pi / 2 * Real.sin x) = Real.pi / 2 * Real.sin x := by
+        by_contra! h
+        -- Assume that $\sin \left( \frac{\pi}2 \cos x\right) < \frac{\pi}2 \cos x$ and
+        -- $\cos \left( \frac{\pi}2 \sin x\right) > \frac{\pi}2 \sin x$.
+        push_neg at h
+        -- Since $\sin y \leq y$ and $(\pi/2) \cos x \leq \pi/2$, we have
+        -- $\sin \left( \frac{\pi}2 \cos x\right) \leq \frac{\pi}2 \cos x$,
+        -- which is a contradiction.
+        have hsin : Real.sin (Real.pi / 2 * Real.cos x) ≤ Real.pi / 2 * Real.cos x := by
+          calc
+            Real.sin (Real.pi / 2 * Real.cos x) ≤ Real.pi / 2 * Real.cos x := by
+              apply Real.sin_le
+              positivity
+              nlinarith [Real.pi_pos, Real.cos_sq_add_sin_sq x]
+            _ ≤ Real.pi / 2 * Real.cos x := by
+              apply mul_le_mul_of_nonneg_right
+              · norm_num
+              · exact Real.cos_sq_add_sin_sq x
+        linarith
+      -- Since $0 \leq x \leq \pi$, we have $\cos x \leq 1$ and $\sin x \leq 1$.
+      have h₂ : Real.cos x ≤ 1 ∧ Real.sin x ≤ 1 := by
+        refine ⟨?_,?_⟩
+        · apply Real.cos_le_one
+        · apply Real.sin_le_one
+      -- If $\sin \left( \frac{\pi}2 \cos x\right)= \frac{\pi}2 \cos x$,
+      cases h₁ with
+      | inl h₁ =>
+        -- then $\frac{\pi}2 \cos x = 0$, because
+        -- $\frac{\pi}2 \cos x = \sin \left( \frac{\pi}2 \cos x\right) \leq \frac{\pi}2$.
+        have h₃ : Real.pi / 2 * Real.cos x = 0 := by
+          rw[← h₁]
+          apply Real.sin_eq_zero_iff.mpr
+          apply Or.inl
+          simp
+        simp at h₃
+        -- Hence, $\cos x = 0$, so $x = \frac{\pi}{2}$.
+        replace h₃ : Real.cos x = 0 := by
+          nth_rw 2 [← mul_one (Real.pi / 2)] at h₃
+          rw[mul_assoc] at h₃
+          apply (mul_eq_zero.mp h₃).resolve_left
+          positivity
+        -- Using $\cos x = 0$, we get $x = \frac{\pi}{2}$.
+        symm at h₃
+        rw[← h₃] at h₀
+        rw[Real.sin_pi_div_two] at h₀
+        replace h₀ : x = Real.pi / 2 := by
+          linarith
+        rw[← h₀]
+        -- It is easy to show that $\frac{\pi}{2} = \frac{\pi}{4} + \frac{\pi}{4}$.
+        ring_nf
+      -- If $\sin \left( \frac{\pi}2 \cos x\right) < \frac{\pi}2 \cos x$,
+      | inr h₁ =>
+        -- then $\sin \left( \frac{\pi}2 \sin x\right) > \frac{\pi}2 \sin x$.
+        have h₃ : Real.sin (Real.pi / 2 * Real.sin x) > Real.pi / 2 * Real.sin x := by
+          -- We know that $\sin y > y$ for $0 < y < \pi/2$.
+          have hsin : ∀ y : ℝ, 0 < y ∧ y < Real.pi / 2 → Real.sin y > y := by
+            intro y ⟨h₁, h₂⟩
+            refine Real.sin_gt_of_gt_of_le_pi_div_two?_ h₂
+            linarith
+          -- Apply this fact to $\frac{\pi}2 \sin x$.
+          have hsin := hsin (Real.pi / 2 * Real.sin x) ⟨h₁,?_⟩
+          -- Since $\sin x \leq 1$, we have $\frac{\pi}2 \sin x \leq \frac{\pi}2$.
+          have h₂ : Real.pi / 2 * Real.sin x ≤ Real.pi / 2 := by
+            apply mul_le_mul_of_nonneg_left
+            · apply Real.sin_le_one
+            · positivity
+          -- Hence, $\sin \left( \frac{\pi}2 \sin x\right) > \frac{\pi}2 \sin x$.
+          exact hsin ⟨by positivity, h₂⟩
+        -- Since $\sin \left( \frac{\pi}2 \sin x\right) > \frac{\pi}2 \sin x$,
+        -- $\frac{\pi}2 \sin x \leq \sin \left( \frac{\pi}2 \sin x\right) \leq \frac{\pi}2$,
+        -- and thus $\frac{\pi}2 \sin x \leq \frac{\pi}2$.
+        have h₄ : Real.pi / 2 * Real.sin x ≤ Real.pi / 2 := by
+          have hsin : Real.sin (Real.pi / 2 * Real.sin x) ≤ Real.pi / 2 := by
+            calc
+              Real.sin (Real.pi / 2 * Real.sin x) ≤ Real.pi / 2 := by
+                apply Real.sin_le
+                positivity
+                nlinarith [Real.pi_pos, Real.cos_sq_add_sin_sq x]
+              _ ≤ Real.pi / 2 := by
+                apply le_trans hsin
+                simp
+          linarith
+        -- We have $\sin x \leq 1$ and $\frac{\pi}2 > 0$, so $\frac{\pi}2 \sin x \leq \frac{\pi}2$.
+        have h₅ : Real.sin x ≤ 1 := by
+          apply Real.sin_le_one
+        split_ands
+        -- It is easy to show that $\frac{\pi}2 \sin x \leq \frac{\pi}2$ implies $x \leq \frac{\pi}{4}$.
+        · nlinarith [Real.pi_pos, h₄, h₅]
+        -- We also have $\frac{\pi}2 \sin x > \frac{\pi}2 \cdot \frac{\sqrt 2}{2} > 0$,
+        have h₆ : Real.pi / 2 * Real.sin x > 0 := by
+          apply mul_pos
+          · positivity
+          -- because $\frac{\pi}2 > 0$ and $\sin x > \frac{\sqrt 2}{2} > 0$.
+          · -- Since $x \in [0, \pi] \setminus \{\frac{\pi}{2}\}$, $\sin x > 0$.
+            have hsin : Real.sin x > 0 := by
+              apply Real.sin_pos_of_mem_Ioo
+              simp[Real.sin_pi_div_two]
+              let y := min (Real.pi / 2) (max (Real.pi / 2) x)
+              -- It is easy to show that $\sin x \geq \sin y$.
+              have hsin : Real.sin x ≥ Real.sin y := by
+                apply Real.sin_le_sin_of_le_of_le_pi_div_two
+                -- Since $x \in [0, \pi] \setminus \{\frac{\pi}{2}\}$, $y \in [\frac{\pi}{2}, \pi]$.
+                · simp[y]
+                  exact ⟨by positivity, by linarith⟩
+                -- We have $y \leq \frac{\pi}{2}$.
+                · simp[y]
+                  exact ⟨by positivity, by linarith⟩
+                -- We also have $y \geq \frac{\pi}{2}$.
+                · simp[y]
+                  exact ⟨by linarith, by linarith⟩
+              -- Hence, $x = y$, which is a contradiction.
+              have hneq : x = y := by
+                rwa[Real.sin_eq_sin_iff] at hsin
+              simp[y] at hneq
+              linarith
+            -- It is easy to show that $\sin x > \frac{\sqrt 2}{2$ implies $\frac{\pi}2 \sin x > \frac{\pi}2 \cdot \frac{\sqrt 2}{2$.
+            have hsin : Real.sin x > Real.sqrt 2 / 2 := by
+              -- Since $x \in [0, \pi] \setminus \{\frac{\pi}{2}\}$, $\sin x > 0$.
+              have hsin : Real.sin x > 0 := by
+                apply Real.sin_pos_of_mem_Ioo
+                simp[Real.sin_pi_div_two]
+                let y := min (Real.pi / 2) (max (Real.pi / 2) x)
+                have hsin : Real.sin x ≥ Real.sin y := by
+                  apply Real.sin_le_sin_of_le_of_le_pi_div_two
+                  -- Since $x \in [0, \pi] \setminus \{\frac{\pi}{2}\}$, $y \in [\frac{\pi}{2}, \pi]$.
+                  · simp[y]
+                    exact ⟨by positivity, by linarith⟩
+                  -- We have $y \leq \frac{\pi}{2}$.
+                  · simp[y]
+                    exact ⟨by positivity, by linarith⟩
+                  -- We also have $y \geq \frac{\pi}{2}$.
+                  · simp[y]
+                    exact ⟨by linarith, by linarith⟩
+              -- Hence, $x = y$, which is a contradiction.
+              have hneq : x = y := by
+                rwa[Real.sin_eq_sin_iff] at hsin
+              simp[y] at hneq
+              linarith
+            -- Since $\sin x > \frac{\sqrt 2}{2$ and $\frac{\pi}2 > 0$, $\frac{\pi}2 \sin x > \frac{\pi}2 \cdot \frac{\sqrt 2}{2$.
+            calc
+              Real.pi / 2 * Real.sin x > Real.pi / 2 * (Real.sqrt 2 / 2) := by
+                apply mul_lt_mul_of_pos_left
+                · exact hsin
+                · positivity
+              _ > 0 := by
+                apply mul_pos
+                · positivity
+                ·
+                  have hmin : 0 < Real.sqrt 2 := by
+                    refine Real.sqrt_pos_of_pos?_
+                    norm_num
+                  linarith
+          linarith
+        -- Now, it is easy to show that $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$.
+        have h₇ : x = Real.pi / 4 ∨ x = Real.pi - Real.pi / 4 := by
+          -- Introduce $y = x - \frac{\pi}{4}$.
+          let y := x - Real.pi / 4
+          -- If $x = \frac{\pi}{4}$, then $y = 0$.
+          have h₈ : x = Real.pi / 4 ↔ y = 0 := by
+            simp[y]
+            constructor
+            · intro hx
+              linarith
+            · intro hy
+              linarith
+          -- If $x = \frac{3\pi}{4}$, then $y = \frac{\pi}{2}$.
+          have h₉ : x = Real.pi - Real.pi / 4 ↔ y = Real.pi / 2 := by
+            simp[y]
+            constructor
+            · intro hx
+              linarith
+            · intro hy
+              linarith
+          -- Then, $y = 0$ or $y = \frac{\pi}{2$.
+          rw[h₈, h₉]
+          -- It is easy to show that $\cos y = \frac{\sqrt 2}{2$ and $\sin y = \frac{\sqrt 2}{2$.
+          have h₁₀ : Real.cos y = Real.sqrt 2 / 2 := by
+            rw[Real.cos_eq_sqrt_div_two] <;> linarith
+          have h₁₁ : Real.sin y = Real.sqrt 2 / 2 := by
+            rw[Real.sin_eq_sqrt_div_two] <;> linarith
+          -- Then, $y = 0$ or $y = \frac{\pi}{2$.
+          have h₁₂ : y = 0 ∨ y = Real.pi / 2 := by
+            apply Real.cos_eq_cos_iff.mp
+            simp[← h₁₀, ← h₁₁]
+          rw[← h₈, ← h₉]
+          exact h₁₂
+        -- Hence, $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$.
+        tauto
+    · -- If $x = \frac{\pi}{4}$ or $x = \frac{3\pi}{4}$, then $x \in S$.
+      intro hx
+      -- Since $x \in [\frac{\pi}{4}, \frac{3\pi}{4}]$,
+      have hx₁ : 0 ≤ x := by
+        cases hx with
+        | inl h =>
+          rw[← h]
+          positivity
+        | inr h =>
+          rw[← h]
+          linarith[Real.pi_pos]
+      have hx₂ : x ≤ Real.pi := by
+        cases hx with
+        | inl h =>
+          rw[← h]
+          linarith[Real.pi_pos]
+        | inr h =>
+          rw[← h]
+          linarith[Real.pi_pos]
+      -- it is easy to show that $\sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$.
+      rcases hx with hx | hx <;> simp[hx] <;> try
+        -- Move $\cos (\pi/2 \cdot \sin x)$ to the RHS.
+        rw[← Real.sin_pi_div_two_sub]
+        -- Use $\sin x = \cos (\pi/2 - x)$.
+        rw[← Real.cos_pi_div_two_sub x]
+        -- Use $\sin (\pi/2 - x) = \cos x$.
+        rw[← Real.sin_pi_div_two_sub]
+        -- Trivial calculations.
+        ring_nf; positivity
+        rw[Real.sin_eq_one_iff]
+        use 0
+        rw[← h]
+        ring_nf
+        positivity
+    -- It is left to show that $\frac{\pi}{4}, \frac{3\pi}{4} \in S$.
+  · -- $\frac{\pi}{4} \in S$.
+    rw[Finset.coe_eq_cast, Finset.mem_insert, Finset.mem_singleton]
+    constructor
+    · rw[Real.pi_pos]
+      norm_num
+    · constructor
+      · linarith
+      · have h₀ : 0 < Real.pi := Real.pi_pos
+        linarith
+  -- $\frac{3\pi}{4} \in S$.
+  · rw[Finset.coe_eq_cast, Finset.mem_insert, Finset.mem_singleton]
+    constructor
+    · have h₀ : 0 < Real.pi := Real.pi_pos
+      linarith
+    · constructor
+      · linarith
+      · have h₀ : 0 < Real.pi := Real.pi_pos
+        linarith
+
+  -- It is left to show that $\frac{\pi}{4} \neq \frac{3\pi}{4}$.
+  rw[h₁]
+  -- It is enough to show that $\pi > 0$.
+  suffices Real.pi > 0 by
+    linarith
+  exact Real.pi_pos
+```

@@ -1,0 +1,174 @@
+-- A small definition. A number $n$ is called odd if $n \equiv 1 \pmod{2}$.
+  let Odd (n : ℕ) : Prop := n ≡ 1 [MOD 2]
+
+  -- Odd numbers are exactly $2k + 1$ for some $k$.
+  have h_odd_iff (n : ℕ) : Odd n ↔ ∃ k, n = 2 * k + 1 := by
+    simp [Odd]
+    constructor
+   . intro h
+      have := Nat.modEq_iff_dvd.mp h
+      obtain ⟨c, hc⟩ := this
+      have : Even c := by
+        have : c % 2 = 1 := by
+          have : 2 ∣ (n - c) := by
+            apply Nat.dvd_sub'
+            omega
+            exact hc
+          apply Nat.dvd_iff_mod_eq_zero.mp at this
+          omega
+          rw [Nat.sub_mod_of_le]
+          omega
+        have := Nat.modEq_iff_dvd.mp this
+        omega
+      obtain ⟨d, hd⟩ := this
+      use d
+      omega
+   . intro h
+      obtain ⟨k, hk⟩ := h
+      rw [hk]
+      simp [Odd]
+      rw [Nat.ModEq]
+      omega
+
+  -- For all $n$, $6n+5$ is relatively prime to $6n+3$, $6n+2$, and $6n+1$.
+  have h₄ (n : ℕ) : Nat.gcd (6 * n + 5) (6 * n + 3) = 1 := by
+    have : 6 * n + 5 ≡ 2 [MOD 3] := by
+      apply Nat.ModEq.add_right
+      omega
+      rfl
+    have : 6 * n + 3 ≡ 0 [MOD 3] := by
+      apply Nat.ModEq.add_right
+      omega
+      rfl
+    have := Nat.Coprime.dvd_mul_left (Nat.coprime_of_dvd (h_modEq this) (by omega)) (6 * n + 3)
+    simp at this
+    exact this
+
+  have h₅ (n : ℕ) : Nat.gcd (6 * n + 5) (6 * n + 2) = 1 := by
+    have : 6 * n + 5 ≡ 3 [MOD 4] := by
+      apply Nat.ModEq.add_right
+      omega
+      rfl
+    have : 6 * n + 2 ≡ 2 [MOD 4] := by
+      apply Nat.ModEq.add_right
+      omega
+      rfl
+    have := Nat.Coprime.dvd_mul_left (Nat.coprime_of_dvd (h_modEq this) (by omega)) (6 * n + 2)
+    simp at this
+    exact this
+
+  have h₆ (n : ℕ) : Nat.gcd (6 * n + 5) (6 * n + 1) = 1 := by
+    have : 6 * n + 5 ≡ 4 [MOD 5] := by
+      apply Nat.ModEq.add_right
+      omega
+      rfl
+    have : 6 * n + 1 ≡ 1 [MOD 5] := by
+      apply Nat.ModEq.add_right
+      omega
+      rfl
+    have := Nat.Coprime.dvd_mul_left (Nat.coprime_of_dvd (h_modEq this) (by omega)) (6 * n + 1)
+    simp at this
+    exact this
+
+  -- For all $n$, if $k$ is relatively prime to $6n+3$, $6n+2$, and $6n+1$, then $k$ is relatively prime to $6n+5$.
+  have h₇ (n : ℕ) (h₄ : Nat.gcd (k) (6 * n + 3) = 1) (h₅ : Nat.gcd (k) (6 * n + 2) = 1) (h₆ : Nat.gcd (k) (6 * n + 1) = 1) : Nat.gcd (k) (6 * n + 5) = 1 := by
+    -- To prove this, we first show that $6n+5$ is odd.
+    have h_odd : Odd (6 * n + 5) := by
+      apply Nat.odd_add.mpr
+      simp [Odd]
+      rw [Nat.ModEq]
+      omega
+    have h₈ : ∃ m, 6 * n + 5 = 2 * m + 1 := h_odd_iff.mp h_odd
+    obtain ⟨m, h₈⟩ := h₈
+    -- Substitute $6n+5 = 2m+1$ into the gcds.
+    rw [h₈] at h₄ h₅ h₆ h₈
+    have h₈ : m + 3 = 3 * n + 2 := by
+      omega
+    have h₉ : m + 2 = 3 * n + 1 := by
+      omega
+    have h₁₀ : m + 1 = 3 * n := by
+      omega
+    -- Replace $m$ with $3n-1$ in $m+3 = 3n+2$.
+    rw [show m = 3 * n - 1 by omega] at h₈ h₄
+    -- Replace $m$ with $3n-2$ in $m+2 = 3n+1$.
+    rw [show m = 3 * n - 2 by omega] at h₉ h₅
+    -- Replace $m$ with $3n-1$ in $m+1 = 3n$.
+    rw [show m = 3 * n - 1 by omega] at h₁₀ h₆
+    -- Factor out $3n$ from the three equations.
+    have h₇ : 3 * n + 1 ∣ (k ^ (3 * n + 2) - 1) := by
+      apply @Nat.Prime.pow_dvd_of_dvd (3 * n + 1) (by omega) (k ^ (3 * n + 2) - 1)
+     . use k
+        simp
+     . rw [<-Nat.pow_add_one']
+        apply Nat.dvd_sub (pow_succ _ _) (pow_succ _ _)
+       . rw [<-h₄]
+          ring
+       . rw [Nat.pow_dvd_pow _ (by omega)]
+    have h₈ : 3 * n + 1 ∣ (k ^ (3 * n + 1) - k) := by
+      apply @Nat.Prime.pow_dvd_of_dvd (3 * n + 1) (by omega) (k ^ (3 * n + 1) - k)
+     . use k
+        simp
+     . rw [<-Nat.pow_add_one']
+        apply Nat.dvd_sub (pow_succ _ _) (pow_succ _ _)
+       . rw [<-h₅]
+          ring
+       . rw [Nat.pow_dvd_pow _ (by omega)]
+    have h₉ : 3 * n + 1 ∣ (k ^ (3 * n) - k ^ 2) := by
+      apply @Nat.Prime.pow_dvd_of_dvd (3 * n + 1) (by omega) (k ^ (3 * n) - k ^ 2)
+     . use k
+        simp
+     . rw [<-Nat.pow_add_one']
+        apply Nat.dvd_sub (pow_succ _ _) (pow_succ _ _)
+       . rw [<-h₆]
+          ring
+       . rw [Nat.pow_dvd_pow _ (by omega)]
+    -- Because $3n+1$ divides $k^{3n+2}-1$, $k^{3n+1}-k$, and $k^{3n}-k^2$, it divides $k^2-1$.
+    have h₁₀ : 3 * n + 1 ∣ k ^ 2 - 1 := by
+      rw [show k ^ 2 - 1 = (k ^ (3 * n + 2) - 1) - (k ^ (3 * n + 1) - k) - (k ^ (3 * n) - k ^ 2) by ring]
+      apply Nat.dvd_sub (Nat.dvd_sub h₇ h₈) h₉
+    -- Because $3n+1$ and $3n+3$ are relatively prime, $3n+3$ divides $k^2-1$.
+    have h₁₁ : 3 * n + 3 ∣ k ^ 2 - 1 := by
+      have : Nat.gcd (3 * n + 1) (3 * n + 3) = 1 := by
+        have : 3 * n + 3 = (3 * n + 1) + 2 := by omega
+        rw [this]
+        apply Nat.coprime_add_one_right.mpr
+        use 3 * n + 1
+        omega
+      apply Nat.Coprime.dvd_of_dvd_mul_right this at h₁₀
+      exact h₁₀
+    -- Because $3n+3$ and $6n+5$ are relatively prime, $6n+5$ divides $k^2-1$.
+    have h₁₂ : 6 * n + 5 ∣ k ^ 2 - 1 := by
+      have : Nat.gcd (3 * n + 3) (6 * n + 5) = 1 := by
+        have : 6 * n + 5 = 2 * (3 * n + 3) - 1 := by omega
+        rw [this]
+        apply Nat.Coprime.dvd_of_dvd_sub (by omega)
+        use 3 * n + 3
+        omega
+      apply Nat.Coprime.dvd_of_dvd_mul_left this at h₁₁
+      exact h₁₁
+    -- Because $6n+5$ and $k$ are relatively prime, $6n+5$ divides $k-1$.
+    have h₁₃ : 6 * n + 5 ∣ k - 1 := by
+      apply Nat.Coprime.dvd_of_dvd_pow_sub_dvd (by omega) at h₁₂
+      apply Nat.dvd_of_dvd_pow at h₁₂
+      replace h₁₂ := Nat.dvd_gcd h₁₂ (Nat.dvd_refl k)
+      simp [Nat.gcd_self, Nat.gcd_comm k (6 * n + 5)] at h₁₂
+      exact h₁₂
+    -- Because $6n+5$ is a linear function of $n$ and $6n+5 \geq 11 > 5$, it is impossible that $6n+5$ divides $k-1$ unless $k-1 = 0$.
+    by_cases h : k - 1 = 0
+   . omega
+   . simp at h
+      have : 0 < k - 1 := by omega
+      have : 1 ≤ (6 * n + 5) := by omega
+      have : 6 * n + 5 ≤ 5 := by
+        apply Nat.le_of_dvd (by omega) h₁₃
+        omega
+      omega
+
+  -- We show that $5$ is the smallest number satisfying the condition.
+  by_contra h
+  absurd h₁
+ . omega
+ . omega
+ . omega
+
+```

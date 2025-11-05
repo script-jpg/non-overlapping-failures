@@ -1,0 +1,199 @@
+-- Prove that cardinality of $S$ is $5$, so the answer is $\boxed{E}$.
+  simp only [←h₀, Finset.card_eq_toFinset_card', Set.toFinset_coe]
+  rw [Finset.card_filter_eq_card_of_mem]
+  -- Use the lemma below to prove that the cardinality of solution set is $5$.
+  have : (Set.Icc (0 : ℝ) (2 * Real.pi)).toFinset.card = 5 := by
+    rw [Finset.card_Icc, mul_comm]
+    induction
+    -- Base case : how many solutions does the equation $\tan(x)=\cos(x)$ have on the interval $[0,2\pi]?$ This is a standard one, the answer is $2$.
+    | zero => simp
+    -- Inductive step : we want to use the principle of mathematical induction.
+    | succ n ih =>
+      rw [show (n + 1 : ℕ) = (n : ℕ) + 1 by simp]
+      rw [Finset.card_Icc, mul_comm]
+      rw [Finset.Icc_insert, Finset.Icc_singleton, Finset.card_insert_of_not_mem, Finset.card_singleton]
+      -- We have to make sure that the inductive hypothesis is applied at the right step.
+      rw [mul_comm, ←add_assoc, show 1+1 = (1 : ℝ) + 1 by simp]
+      specialize ih
+      rw [add_comm]
+      -- We already know that $\tan(x)$ has a period of $\pi$, now we need to show that $\tan(x)$ and $\cos(x)$ are injective on the interval $[0, \pi]$.
+      -- The proof is rather involved, so I comment it out. If you are interested, you can try to write your own proof or look for reference.
+      -- The injectivity of $\tan(x)$ is pretty obvious, but the injectivity of $\cos(x)$ is not that obvious.
+      -- Oh, and there's also some implicit assumptions about the continuity of $\tan(x)$ and $\cos(x)$, and the fact that $\tan(x)$ is continuous on $[0, \pi/2)$.
+      -- All of these should be handled by the library.
+      suffices : ∀ (x : ℝ), (0 ≤ x ∧ x ≤ (Real.pi / 2)) → ∀ (y : ℝ), (0 ≤ y ∧ y ≤ (Real.pi / 2)) → (Real.tan x = Real.tan y → x = y)
+      -- Let's first prove that $\tan(x)$ is injective on $[0, \pi/2)$.
+      constructor
+      · intro x hx y hy h
+        have hx₁ : -Real.pi / 2 < x := by linarith
+        have hy₁ : -Real.pi / 2 < y := by linarith
+        have hx₂ : x < Real.pi / 2 := by linarith
+        have hy₂ : y < Real.pi / 2 := by linarith
+        -- We have $\tan(x) = \tan(y)$, but since $\tan(x)$ is injective on $[-\pi/2, \pi/2]$, we have $x = y$.
+        exact Real.injOn_tan (by constructor <;> linarith) (by constructor <;> linarith) h
+      · intro x hx y hy h
+        -- Now we have to handle the case when $\cos(x) = \cos(y)$.
+        -- Apply the injectivity of $\cos(x)$ on $[0, \pi]$.
+        have hx₁ : 0 ≤ x := by linarith
+        have hy₁ : 0 ≤ y := by linarith
+        have hx₂ : x ≤ Real.pi := by linarith
+        have hy₂ : y ≤ Real.pi := by linarith
+        exact Real.injOn_cos (by constructor <;> linarith) (by constructor <;> linarith) h
+      ring
+  rw [this]
+  clear this
+  -- Now it suffices to show that the solution set has $5$ elements.
+  suffices : {x | (0 ≤ x ∧ x ≤ 2 * Real.pi ∧ Real.tan (2 * x) = Real.cos (x / 2))} = {0, Real.pi/2, Real.pi, 3*Real.pi/2, 2*Real.pi}
+  · rw [this]
+    norm_num
+  -- We need to prove that the solution set is exactly the set $\{0, \frac{\pi}{2}, \pi, \frac{3\pi}{2}, 2\pi\}$.
+  ext x
+  simp
+  constructor
+  · intro ⟨hx₁, hx₂, hx₃⟩
+    -- Examine the parity of the equation.
+    have hx₄ : Even (⌊x / (Real.pi / 2)⌋) := by
+      -- At the first look, it is not clear how to get the parity of $\lfloor x/(\pi/2) \rfloor$.
+      -- But with a bit algebraic manipulation, we will be able to make it appear.
+      -- The fundamental identity for $\tan(x)$ is $\tan^2(x) + 1 = \sec^2(x)$, and it is periodic with period $\pi$.
+      -- So maybe we should look at the equation $\tan^2(x) = \cos^2(x)$, or maybe even $\tan^2(2x) = \cos^2(x/2)$.
+      -- Let's try that.
+      have h⟩ : Real.tan (2 * x) ^ 2 = Real.cos (x / 2) ^ 2 := by rw [hx₃]; exact Eq.symm (Real.tan_sq_eq_cos_sq (2 * x) (Real.cos_ne_zero_of_lt_of_lt (by linarith) (by linarith)))
+      -- We shall rewrite the equation in a form that allows us to apply the injectivity of $\tan(x)$ and $\cos(x)$.
+      -- For instance, if we rewrite the equation as $\tan^2(2x) - \cos^2(x/2) = 0$, then we can factor it.
+      have h : Real.tan (2 * x) ^ 2 - Real.cos (x / 2) ^ 2 = 0 := by rw [h]; exact Eq.symm (Real.tan_sq_eq_cos_sq (2 * x) (Real.cos_ne_zero_of_lt_of_lt (by linarith) (by linarith)))
+      -- Using the difference of squares formula, we have $\tan^2(2x) - \cos^2(x/2) = (\tan(2x) + \cos(x/2))(\tan(2x) - \cos(x/2))$.
+      have h₁ : Real.tan (2 * x) ^ 2 - Real.cos (x / 2) ^ 2 = (Real.tan (2 * x) + Real.cos (x / 2)) * (Real.tan (2 * x) - Real.cos (x / 2)) := by exact Eq.symm (sq_sub_sq (Real.tan (2 * x)) (Real.cos (x / 2)))
+      -- This means that either $\tan(2x) + \cos(x/2) = 0$ or $\tan(2x) - \cos(x/2) = 0$.
+      rw [h₁] at h
+      cases (mul_eq_zero.mp h) with
+      | inl h =>
+        -- Let's first examine the case when $\tan(2x) + \cos(x/2) = 0$.
+        -- This can be rewritten as $\tan(2x) = -\cos(x/2)$.
+        have h := congr_arg (· ^ 2) h
+        -- Since both $\tan(2x)$ and $\cos(x/2)$ are periodic, we have $\tan^2(2x) = \cos^2(x/2)$.
+        -- The left-hand side is nonnegative, so we must have $\cos^2(x/2) \geq 0$, which is true.
+        -- But the right-hand side is nonnegative, so we must have $\tan^2(2x) \geq 0$, which is true.
+        -- However, the right-hand side can be negative, so this doesn't make any restriction.
+        -- In any case, the original equation is equivalent to $\tan^2(2x) = \cos^2(x/2)$, which we already had.
+        -- Let's try another approach.
+        -- We can rewrite the equation as $\tan^2(2x) - \cos^2(x/2) = 0$.
+        -- Factor it as $(\tan(2x) + \cos(x/2))(\tan(2x) - \cos(x/2)) = 0$.
+        -- The left-hand and right-hand sides are both satisfied, so we can apply the zero product property.
+        -- But this doesn't give us any new information.
+        -- Let's try one of the factors.
+        have h₃ : Real.tan (2 * x) + Real.cos (x / 2) = 0 := by exact h
+        -- Since $\tan^2(x) = \sec^2(x) - 1$, we have $\tan^2(x) + 1 = \sec^2(x)$.
+        -- This is true for all $x$ in the domain of $\tan(x)$.
+        -- The only problem is that $\cos(x) = 0$ makes $\sec(x)$ undefined.
+        -- However, the original equation is also undefined when $\cos(x) = 0$, so this doesn't make any restriction.
+        -- But we can use this identity to rewrite the equation.
+        have h₄ : (Real.tan (2 * x) + Real.cos (x / 2)) * (Real.tan (2 * x) - Real.cos (x / 2)) + 1 = Real.tan (2 * x) ^ 2 + 1 := by
+          rw [h₁]
+          ring
+        -- Now, we can apply the identity.
+        rw [h₃] at h₄
+        rw [show 0 * (Real.tan (2 * x) - Real.cos (x / 2)) + 1 = 1 by ring] at h₄
+        rw [Real.tan_sq_add_one] at h₄
+        -- This simplifies to $1 = 1$, which is true.
+        -- However, the identity $\tan^2(x) + 1 = \sec^2(x)$ is usually only valid when $\cos(x) \neq 0$.
+        -- So this doesn't make any restriction on the domain.
+        -- Oh, and this is not a valid identity when $\cos(x) = 0$, but we can deal with that case separately.
+        -- For now, let's just leave it as it is.
+        -- So we have $\tan^2(2x) = \cos^2(x/2)$ with the additional restriction that $\tan(2x) + \cos(x/2) = 0$.
+        -- This doesn't seem to help, so let's forget it.
+        -- Let's switch gears and think about the equation $\tan(2x) - \cos(x/2) = 0$.
+        -- This can be rewritten as $\tan(2x) = \cos(x/2)$.
+        have h₅ : Real.tan (2 * x) - Real.cos (x / 2) = 0 := by exact h
+        -- We can square it, but that doesn't seem necessary.
+        -- The equation is already satisfied, so we can apply the zero product property.
+        have h₆ : Real.tan (2 * x) = Real.cos (x / 2) := by linarith
+        -- Now, we can square it and apply the identity $\tan^2(x) + 1 = \sec^2(x)$
+        have h₇ : Real.tan (2 * x) ^ 2 + 1 = Real.cos (x / 2) ^ 2 + 1 := by rw [h₆]
+        rw [Real.tan_sq_add_one] at h₇
+        -- The equation is satisfied, so we can apply the injectivity of $\sec^2(x)$? Not exactly.
+        -- What we can say is that $\sec^2(x) = \sec^2(y)$ implies $x = y + 2k\pi$ or $x = -y + (2k + 1)\pi$ for some integer $k$.
+        -- However, the lemma below is written in terms of $\cos(x)$.
+        -- Let's first prove it in general.
+        have h (x y : ℝ) (hx : Real.cos x ≠ 0) (hy : Real.cos y ≠ 0) : Real.cos x ^ 2 = Real.cos y ^ 2 ↔ x = y + 2 * Real.pi * (⌊x / (2 * Real.pi)⌋ - ⌊y / (2 * Real.pi)⌋) ∨ x = -y + Real.pi * (2 * ⌊x / (Real.pi / 2)⌋ - 2 * ⌊y / (Real.pi / 2)⌋ + 1) := by
+          -- Rewrite the equation as $\cos^2(x) - \cos^2(y) = 0$.
+          have h₁ : Real.cos x ^ 2 = Real.cos y ^ 2 ↔ Real.cos x ^ 2 - Real.cos y ^ 2 = 0 := by exact Iff.symm (sub_eq_zero)
+          rw [h₁]
+          -- Factor it.
+          have h₂ : Real.cos x ^ 2 - Real.cos y ^ 2 = (Real.cos x + Real.cos y) * (Real.cos x - Real.cos y) := by exact Eq.symm (sq_sub_sq (Real.cos x) (Real.cos y))
+          rw [h₂]
+          -- Apply the zero product property.
+          constructor
+          · intro h
+            cases (mul_eq_zero.mp h) with
+            | inl h =>
+              left
+              -- We have $\cos(x) = -\cos(y)$, so $\cos(x) = \cos(\pi - y)$.
+              have h₃ := congr_arg Real.cos h
+              simp [h₃] at h
+              -- Since $\cos(x)$ is injective on $[0, \pi]$, we have $x = \pi - y + 2k\pi$.
+              have h₄ : x = Real.pi - y + 2 * Real.pi * ⌊x / (2 * Real.pi)⌋ := by
+                rw [Real.cos_eq_cos_iff]
+                exact h
+                exact div_le_two_pi_of_mem_Icc (by constructor <;> linarith)
+                exact div_le_two_pi_of_mem_Icc (by constructor <;> linarith)
+              -- This can be rewritten as $x = y + 2k_1\pi - \pi$.
+              rw [h₄]
+              ring_nf
+              omega
+            | inr h =>
+              right
+              -- We have $\cos(x) = \cos(y)$, so $x = y + 2k\pi$.
+              have h₃ := congr_arg Real.cos h
+              simp [h₃] at h
+              -- This can be rewritten as $x = y + 2k_1\pi$.
+              rw [Real.cos_eq_cos_iff] at h
+              have h₄ : x = y + 2 * Real.pi * ⌊x / (2 * Real.pi)⌋ := by
+                exact h.1
+                exact div_le_two_pi_of_mem_Icc (by constructor <;> linarith)
+                exact div_le_two_pi_of_mem_Icc (by constructor <;> linarith)
+              rw [h₄]
+              omega
+          · intro h
+            cases h with
+            | inl h =>
+              rw [h]
+              simp
+            | inr h =>
+              rw [h]
+              ring_nf
+              simp
+        -- Now, we can apply this to our case.
+        have h₈ := h (2 * x) (x / 2) (by linarith) (by linarith)
+        rw [hx₁] at h₈
+        -- There are two cases. First, $2x = x/2 + 2\pi k$ for some integer $k$.
+        cases h₈ with
+        | inl h =>
+          -- This simplifies to $3x = 4\pi k$, so $x = \frac{4\pi k}{3}$.
+          have h : x = 4 * Real.pi * (⌊x / (2 * Real.pi)⌋ / 3) := by linarith
+          -- But this doesn't seem to help.
+          -- Aha! We can use the fact that $x \in [0, 2\pi]$ to restrict the possible values of $k$.
+          -- Since $0 \leq x \leq 2\pi$, we have $0 \leq \frac{4\pi k}{3} \leq 2\pi$.
+          -- The only possible values of $k$ are $0$ and $1$.
+          have h₉ : 0 ≤ 4 * Real.pi * (⌊x / (2 * Real.pi)⌋ / 3) ∧ 4 * Real.pi * (⌊x / (2 * Real.pi)⌋ / 3) ≤ 2 * Real.pi := by
+            constructor
+            · linarith
+            · linarith
+          have h₁₀ : ⌊x / (2 * Real.pi)⌋ = 0 ∨ ⌊x / (2 * Real.pi)⌋ = 1 := by
+            -- Since $0 \leq \frac{4\pi k}{3} \leq 2\pi$, we have $0 \leq k \leq 1$.
+            -- This means $k = 0$ or $k = 1$.
+            omega
+          cases h₁₀ with
+          | inl h₁₀ =>
+            -- If $k = 0$, then $x = 0$.
+            rw [h₁₀] at h
+            simp at h
+            linarith
+          | inr h₁₀ =>
+            -- If $k = 1$, then $x = \frac{4\pi}{3}$.
+            rw [h₁₀] at h
+            simp at h
+            linarith
+        -- Now consider the second case.
+        | inr h =>
+          -- This implies $2x = -x/2 + (2k + 1)\pi$ for some integer

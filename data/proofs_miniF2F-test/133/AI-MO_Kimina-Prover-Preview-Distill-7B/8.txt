@@ -1,0 +1,31 @@
+-- The first lemma is a generalization of Fermat's Little Theorem.
+  have H (d : ℕ) : d > 0 → (∀ p, Nat.Prime p → p ∣ d ^ p - d) := by
+    intro hd
+    lift d to ℤ
+    have d_pos : (d : ℤ) > 0 := by exact_mod_cast hd
+    have d_ne_zero : (d : ℤ) ≠ 0 := by linarith
+    have h (p : ℕ) (hp : Nat.Prime p) : (p ∣ (↑d : ℤ) ^ p - ↑d) := by
+      -- A stronger version of Fermat's Little Theorem.
+      have hfermat : (↑d : ℤ) ^ (p - 1) - 1 ≡ 0 [ZMOD ↑p] := by
+        refine Int.ModEq.sub?_ (by simp)
+        -- Here we use the Euler's totient function
+        have heuler : ↑p.Coprime (↑d : ℤ) := by simp; exact Nat.Prime.coprime_iff_not_dvd h₁ d_pos
+        have h := Int.ModEq.pow_card_sub_one_eq_one_of_coprime heuler
+        push_cast at h
+        convert h
+        ring_nf
+        rw [mul_comm, Int.reduceMul, Int.mul_emod_self, eq_comm]
+        -- Verify that `p` divides `d^p-d`
+        exact Nat.Prime.dvd_of_dvd_pow h₁ (by rw [Nat.cast_sub]; exact Nat.Prime.one_le h₁)
+      simp at hfermat
+      -- Transform `d^p-d` to `d*(d^(p-1)-1)`
+      have heq : (↑d : ℤ) ^ p - ↑d = ↑d * (↑d : ℤ) ^ (p - 1) - 1) := by ring
+      rw [heq]
+      exact Int.dvd_mul_of_dvd_right hfermat _
+    exact h
+
+  -- Return to the problem.
+  have h := H a h₀ h₁
+  exact h
+
+```

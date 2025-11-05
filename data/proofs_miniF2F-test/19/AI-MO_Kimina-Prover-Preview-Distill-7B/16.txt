@@ -1,0 +1,144 @@
+-- Show that $(1 - \sqrt {1 + 2x})^2 > 0$ so that we can multiply it to both sides of the inequality.
+  have h₃ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 > 0 := by
+    apply sq_pos_of_ne_zero
+    exact h₁
+
+  -- Change the inequality to $(1 - \sqrt {1 + 2x})^2 < \dfrac{4x^2}{2x + 9}$
+  have h₄ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 < (4 * x ^ 2) / (2 * x + 9) := by
+    calc _ = 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 * ((1 - Real.sqrt (1 + 2 * x)) ^ 2 / (4 * x ^ 2)) := by field_simp
+         _ < (2 * x + 9) * ((1 - Real.sqrt (1 + 2 * x)) ^ 2 / (4 * x ^ 2)) := by rel [h₂, h₃]
+         _ = (1 - Real.sqrt (1 + 2 * x)) ^ 2 := by field_simp
+
+  -- Let $y = \sqrt {1 + 2x}$. Then $1 + 2x = y^2$ so that $x = \dfrac{y^2 - 1} 2$.
+  set y := Real.sqrt (1 + 2 * x)
+  have h₅ : 1 + 2 * x = y ^ 2 := by
+    simp [y]
+    rw [Real.sq_sqrt]
+    linarith only [h₀]
+
+  -- Since $1 + 2x = y^2$, the inequality becomes $(1 - y)^2 < \dfrac{4x^2}{2x + 9} = \dfrac{(y^2 - 1)^2}{2y^2 + 9}$.
+  -- Clear the denominators by multiplying it to both sides.
+  have h₆ : (1 - y) ^ 2 * (2 * y ^ 2 + 9) < (4 * (y ^ 2 - 1) ^ 2) := by
+    calc _ = (1 - y) ^ 2 * ((1 - y) ^ 2 / (4 * x ^ 2)) * (4 * x ^ 2) := by field_simp; ring
+         _ < (2 * y ^ 2 + 9) * ((1 - y) ^ 2 / (4 * x ^ 2)) * (4 * x ^ 2) := by rel [h₄]
+         _ = (1 - y) ^ 2 * (4 * (y ^ 2 - 1) ^ 2) := by field_simp; ring
+         _ = _ := by ring
+
+  -- Show that $(1 - y)^2 > 0$ so that we can divide it to both sides of the inequality.
+  have h₇ : (1 - y) ^ 2 > 0 := by
+    apply sq_pos_of_ne_zero
+    apply ne_of_gt
+    apply lt_of_le_of_ne h₀
+    linarith only [h₀, h₁]
+
+  -- Change the inequality to $2 * y ^ 2 + 9 < \dfrac{4 * (y ^ 2 - 1) ^ 2}{(1 - y) ^ 2}$
+  have h₈ : 2 * y ^ 2 + 9 < (4 * (y ^ 2 - 1) ^ 2) / (1 - y) ^ 2 := by
+    calc _ = (2 * y ^ 2 + 9) * ((1 - y) ^ 2 / (1 - y) ^ 2) := by field_simp
+         _ < (1 - y) ^ 2 * (4 * (y ^ 2 - 1) ^ 2) / (1 - y) ^ 2 := by rel [h₆, h₇]
+         _ = (4 * (y ^ 2 - 1) ^ 2) / (1 - y) ^ 2 := by field_simp
+
+  -- Let $a = y - 1$.
+  set a := y - 1
+  -- Then $2 * y ^ 2 + 9 = 2 * (a + 1) ^ 2 + 9 = 2 * a^2 + 4 * a + 11$
+  have h₉ : 2 * y ^ 2 + 9 = 2 * a ^ 2 + 4 * a + 11 := by
+    simp [a]
+    ring_nf
+    rw [Real.sq_sqrt]
+    linarith only [h₀]
+
+  -- Since $2 * y ^ 2 + 9 > 0$, we have $2 * a^2 + 4 * a + 11 > 0$.
+  have h₁₀ : 2 * a ^ 2 + 4 * a + 11 > 0 := by linarith only [h₉, h₇]
+
+  -- The inequality can be rewritten as $2 * a^2 + 4 * a + 11 < \dfrac{4 * (y ^ 2 - 1) ^ 2}{(1 - y) ^ 2}$
+  -- where $a = y - 1$.
+  have h₁₁ : 2 * a ^ 2 + 4 * a + 11 < 4 * (y ^ 2 - 1) ^ 2 / (1 - y) ^ 2 := by
+    simp [a]
+    exact h₈
+
+  -- Notice that $4 * (y ^ 2 - 1) ^ 2 / (1 - y) ^ 2 = 4 * (y + 1) ^ 2 = 4 * (-a + y + 2) ^ 2 = 4 * (-a + a + 2) ^ 2 = 4 * (a + 1) ^ 2 = 4 * a^2 + 8 * a + 4$,
+  have h₁₂ : 4 * (y ^ 2 - 1) ^ 2 / (1 - y) ^ 2 = 4 * a ^ 2 + 8 * a + 4 := by
+    simp [a]
+    calc _ = 4 * (y + 1) ^ 2 := by
+          rw [show y + 1 = y - 1 + 2 by ring, add_pow_two, pow_two, mul_assoc, <-mul_add, mul_assoc, mul_assoc]
+          rw [mul_left_comm, <-mul_assoc, <-pow_two, <-sq, Real.sq_sqrt]
+          rw [sq, sub_add, add_sub_cancel]
+          linarith only [h₀]
+          apply add_nonneg
+          linarith only [h₀]
+          norm_num
+        _ = 4 * (-a + y + 2) ^ 2 := by ring
+        _ = 4 * (-a + a + 2) ^ 2 := by ring
+        _ = 4 * (a + 1) ^ 2 := by ring
+        _ = _ := by ring
+
+  -- Then the inequality can be rewritten as $2 * a^2 + 4 * a + 11 < 4 * a^2 + 8 * a + 4$.
+  rw [h₁₂] at h₁₁
+
+  -- Clear the quadratic terms to get $0 < 2 * a^2 + 4 * a + 11$ which is true.
+  have h₁₃ : 0 < 2 * a ^ 2 + 4 * a + 11 := by linarith only [h₁₀]
+
+  -- Show that $0 < 2 * a + 1$.
+  have h₁₄ : 0 < 2 * a + 1 := by nlinarith only [h₁₁, h₁₃]
+
+  -- Since $0 < 2 * a + 1$, we have $-1 < a$.
+  replace h₁₄ : -1 < a := by linarith only [h₁₄]
+
+  -- Since $-1 < a = y - 1$, we have $0 < y$.
+  replace h₁₄ := lt_of_le_of_lt (Real.sqrt_nonneg (1 + 2 * x)) h₁₄
+  simp [y] at h₁₄
+
+  -- Since $0 < y$, we have $1 + 2x > 0$.
+  replace h₀ := lt_of_le_of_lt h₀ h₁₄
+  replace h₀ : 2 * x > -1 := by linarith only [h₀]
+  replace h₀ : x > -(1 / 2) := by linarith only [h₀]
+
+  -- Since $2 * a ^ 2 + 4 * a + 11 < 4 * a ^ 2 + 8 * a + 4$, we have $0 < 2 * a ^ 2 + 4 * a + 11$ which is true.
+  -- We can rewrite it as $0 < 2 * a^2 + 4 * a + 11$.
+  have h₁₅ : 0 < 2 * a ^ 2 + 4 * a + 11 := by linarith only [h₁₀]
+
+  -- Clear the quadratic terms to get $0 < 2 * a^2 + 4 * a + 11$ which is true.
+  replace h₁₅ : 0 < 2 * a ^ 2 + 4 * a + 11 := by linarith only [h₁₀]
+
+  -- Since $0 < 2 * a^2 + 4 * a + 11$, we have $-2 < a$.
+  have h₁₆ : -2 < a := by nlinarith only [h₁₅]
+
+  -- Since $-2 < a = y - 1$, we have $-1 < y$.
+  replace h₁₆ := lt_of_le_of_lt (Real.sqrt_nonneg (1 + 2 * x)) h₁₆
+  simp [y] at h₁₆
+
+  -- Since $-1 < y$, we have $1 + 2x > 1$.
+  replace h₀ := lt_of_le_of_lt h₀ h₁₆
+  replace h₀ : 2 * x > 0 := by linarith only [h₀]
+  replace h₀ : x > 0 := by linarith only [h₀]
+
+  -- Since $x > 0$, we have $1 + 2x > 1$.
+  replace h₀ : 1 + 2 * x > 1 := by linarith only [h₀]
+
+  -- Since $1 + 2x > 0$, we have $x > -\frac 1 2$.
+
+  constructor
+  · linarith only [h₀]
+  · -- Show that $x < 5.832506...$
+    -- We have $0 < 2 * a^2 + 4 * a + 11$.
+    -- Clear the quadratic terms to get $0 < 2 * a^2 + 4 * a + 11$ which is true.
+    -- Since $0 < 2 * a^2 + 4 * a + 11$, we have $-4 < a$.
+    have h₁₇ : -4 < a := by nlinarith only [h₁₅]
+
+    -- Since $-4 < a = y - 1$, we have $-3 < y$.
+    replace h₁₇ := lt_of_le_of_lt (Real.sqrt_nonneg (1 + 2 * x)) h₁₇
+    simp [y] at h₁₇
+
+    -- Since $-3 < y$, we have $1 + 2x > 9$.
+    replace h₀ := lt_of_le_of_lt h₀ h₁₇
+    replace h₀ : 2 * x > 8 := by linarith only [h₀]
+    replace h₀ : x > 4 := by linarith only [h₀]
+
+    -- Since $x > 4$, we have $1 + 2x > 9$.
+    replace h₀ : 1 + 2 * x > 9 := by linarith only [h₀]
+
+    -- Since $1 + 2x > 0$, we have $x > -\frac 1 2$.
+
+    -- Since $1 + 2x > 9$, we have $x > 4$.
+    linarith only [h₀]
+  -- The answer is $-5.832506... < x < 5.832506...$.
+```

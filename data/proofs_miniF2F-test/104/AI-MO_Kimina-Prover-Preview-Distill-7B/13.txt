@@ -1,0 +1,541 @@
+have pge1 : 1 ≤ p := by exact Nat.Prime.one_le h₀
+
+  have pge2 : 2 ≤ p := by exact Nat.Prime.two_le h₀
+
+  have pge3 : 3 ≤ p := by exact Nat.Prime.le_of_dvd (Nat.Prime.one_le h₀) (by rw [← Nat.div_eq_of_eq_mul_right]; exact Nat.prime_mul_dvd_prime h₀ h₁)
+
+  have pge4 : 4 ≤ p := by exact Nat.Prime.le_of_dvd (Nat.Prime.one_le h₀) (by rw [← Nat.div_eq_of_eq_mul_right]; exact Nat.prime_mul_dvd_prime h₀ h₁)
+
+  have pge5 : 5 ≤ p := by exact Nat.Prime.le_of_dvd (Nat.Prime.one_le h₀) (by rw [← Nat.div_eq_of_eq_mul_right]; exact Nat.prime_mul_dvd_prime h₀ h₁)
+
+  have pge6 : 6 ≤ p := by exact Nat.Prime.le_of_dvd (Nat.Prime.one_le h₀) (by rw [← Nat.div_eq_of_eq_mul_right]; exact Nat.prime_mul_dvd_prime h₀ h₁)
+
+  have pge7 : 7 ≤ p := h₁
+
+  have p7 : Nat.Prime 7 := by decide
+
+  have Nat7modp : Nat.Prime 7 := by exact Nat.prime_iff_prime_int.mp p7
+
+  have ab_modp : Nat.Prime 7 := by exact Nat.prime_iff_prime_int.mp p7
+
+  have Nat7modp' : 7.Prime := by exact Nat.prime_iff_prime_int.mp p7
+
+  have not7eq0modp : 7 ≠ 0 := by exact Nat.not_eq_zero_of_lt h₁
+
+  -- The inverse function is bijective on ZMod p
+
+  have invbij : Function.Bijective (fun x => x⁻¹) (Set.univ : Set (ZMod p)) := by
+
+    -- The inverse function is injective
+
+    have invinj : Function.Injective (fun x => x⁻¹) (Set.univ : Set (ZMod p)) := by
+
+      intro x y hxy
+
+      simp at hxy
+
+      exact hxy
+
+    -- The inverse function is surjective
+
+    have invsurj : Function.Surjective (fun x => x⁻¹) (Set.univ : Set (ZMod p)) := by
+
+      intro y
+
+      simp
+
+      use y⁻¹
+
+      rw [← inv_inv y]
+
+      simp
+
+    exact Function.bijective_iff.mp ⟨invinj, invsurj⟩
+
+  -- Compute the sum of the series of inverse products
+
+  -- Transform the sum into a telescoping series
+
+  have h1 : (∑ k in Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) = (1 : ZMod p) / 2 := by
+
+    -- The sum is equal to half the difference of the telescoping series
+
+    have h1 : (∑ k in Finset.Icc 1 (p - 2), (k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) = (1 * (1 : ZMod p)⁻¹ - (p - 1 : ZMod p)⁻¹ * ((p - 1 : ZMod p) + 1)⁻¹) / 2 := by
+
+      -- Transform the sum into a telescoping series
+
+      rw [← Finset.sum_div]
+
+      -- Use the identity for the sum of a telescoping series
+
+      have h1 : ∑ k ∈ Finset.Icc 1 (p - 2), ((k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) =
+          ∑ k ∈ Finset.Icc 1 (p - 2), ((1 : ZMod p) / (k * (k + 1))) := by
+
+        congr
+
+        funext k
+
+        simp
+
+      rw [h1]
+
+      rw [Finset.sum_Icc_succ_top (by linarith)]
+
+      simp
+
+      -- Use the identity for the sum of a telescoping series
+
+      have h2 : ∀ k ∈ Finset.Icc 1 (p - 2), ((1 : ZMod p) / (k * (k + 1))) =
+          ((1 : ZMod p) / k - (1 : ZMod p) / ((k + 1) * (k + 2))) * (1 : ZMod p) := by
+
+        intro k hk
+
+        rw [← mul_assoc, mul_sub, sub_mul, mul_one, mul_inv_cancel₀, sub_mul, one_mul, mul_inv_cancel₀]
+
+        simp
+
+        simp at hk
+
+        linarith
+
+        linarith
+
+        -- Show that k is not equal to -1 mod p
+
+        have hkne : k ≠ (-1 : ZMod p) := by
+
+          by_contra hkne
+
+          rw [← hkne] at hk
+
+          simp at hk
+
+          have hp := Nat.mod_add_div p 3
+
+          rw [Nat.modEq_iff_dvd' (by linarith)] at hp
+
+          have hppos : 0 < p := by exact Nat.Prime.pos h₀
+
+          have hpdvd : p ∣ 3 := by
+
+            apply Nat.dvd_of_mod_eq_zero
+
+            exact hp
+
+          have hpdvd' : p ∣ 1 := by
+
+            apply Nat.dvd_trans _ hpdvd
+
+            apply Nat.dvd_prime
+
+            all_goals linarith
+
+          have h1 : p ≤ 1 := by exact Nat.le_of_dvd (by linarith) hpdvd'
+
+          linarith
+
+        -- Show that k + 1 is not equal to -1 mod p
+
+        have hkne' : k + 1 ≠ (-1 : ZMod p) := by
+
+          by_contra hkne'
+
+          rw [← hkne'] at hk
+
+          simp at hk
+
+          have hp := Nat.mod_add_div p 3
+
+          rw [Nat.modEq_iff_dvd' (by linarith)] at hp
+
+          have hppos : 0 < p := by exact Nat.Prime.pos h₀
+
+          have hpdvd : p ∣ 3 := by
+
+            apply Nat.dvd_of_mod_eq_zero
+
+            exact hp
+
+          have hpdvd' : p ∣ 2 := by
+
+            apply Nat.dvd_trans _ hpdvd
+
+            apply Nat.dvd_prime
+
+            all_goals linarith
+
+          have h2 : p ≤ 2 := by exact Nat.le_of_dvd (by linarith) hpdvd'
+
+          linarith
+
+        field_simp
+
+        have hkpos : (k : ZMod p) ≠ 0 := by
+
+          by_contra hkpos
+
+          rw [← hkpos] at hk
+
+          simp at hk
+
+          have hppos : (0 : ZMod p) ≠ 1 := by exact ZMod.natCast_ne_zero_cast.mpr h₀
+
+          have h1 : (1 : ZMod p) = (0 : ZMod p) := by
+
+            rw [← hk]
+
+            simp
+
+          contradiction
+
+        have hkp1pos : ((k : ZMod p) + 1) ≠ 0 := by
+
+          by_contra hkp1pos
+
+          rw [← hkp1pos] at hk
+
+          simp at hk
+
+          have hppos : (0 : ZMod p) ≠ 1 := by exact ZMod.natCast_ne_zero_cast.mpr h₀
+
+          have h1 : (1 : ZMod p) = (0 : ZMod p) := by
+
+            rw [← hk]
+
+            simp
+
+          contradiction
+
+        have h2 : ((k : ZMod p) + 1) ≠ (-1 : ZMod p) := by
+
+          by_contra h2
+
+          rw [← h2] at hk
+
+          field_simp at hk
+
+          have hppos : (0 : ZMod p) ≠ 1 := by exact ZMod.natCast_ne_zero_cast.mpr h₀
+
+          have h1 : (1 : ZMod p) = (0 : ZMod p) := by
+
+            rw [← hk]
+
+            simp
+
+          contradiction
+
+        have h3 : ((k : ZMod p) + 1) * ((k : ZMod p) + 2) ≠ 0 := by
+
+          have h3 : ((k : ZMod p) + 1) ≠ 0 := by exact hkp1pos
+
+          have h4 : ((k : ZMod p) + 2) ≠ 0 := by
+
+            by_contra h4
+
+            have h5 : ((k : ZMod p) + 1) = (-1 : ZMod p) := by
+
+              rw [← h4]
+
+              simp
+
+            contradiction
+
+          exact mul_ne_zero h3 h4
+
+        field_simp
+
+        have h4 : ((k : ZMod p) + 1) * ((k : ZMod p) + 2) ≠ -((k : ZMod p) * ((k : ZMod p) + 1)) := by
+
+          by_contra h4
+
+          have h5 : ((k : ZMod p) + 1) ≠ 0 := by exact hkp1pos
+
+          have h6 : ((k : ZMod p) + 2) = -((k : ZMod p)) := by
+
+            apply mul_right_cancel₀ h5
+            linarith
+
+          have h7 : ((k : ZMod p) + 1) = (-1 : ZMod p) := by
+
+            rw [← h6]
+
+            simp
+
+          contradiction
+
+        have h5 : ((k : ZMod p) + 1) * ((k : ZMod p) + 2) + ((k : ZMod p) * ((k : ZMod p) + 1)) ≠ 0 := by
+
+          have h5 : ((k : ZMod p) + 1) * ((k : ZMod p) + 2) ≠ 0 := by exact h3
+
+          have h6 : ((k : ZMod p) * ((k : ZMod p) + 1)) ≠ 0 := by
+
+            apply mul_ne_zero_iff.mpr
+
+            constructor
+
+            exact hkpos
+
+            exact hkp1pos
+
+          apply Ne.symm (NeZero.add_ne_zero h5 h6)
+
+      simp at hk
+
+      have hkpos : ((k : ZMod p) + 1) ≠ 0 := by
+
+        by_contra hkpos
+
+        rw [← hkpos] at hk
+
+        simp at hk
+
+        have hppos : (0 : ZMod p) ≠ 1 := by exact ZMod.natCast_ne_zero_cast.mpr h₀
+
+        have h1 : (1 : ZMod p) = (0 : ZMod p) := by
+
+          rw [← hk]
+
+          simp
+
+        contradiction
+
+      rw [← mul_assoc, mul_sub, sub_mul, mul_one, mul_inv_cancel₀, mul_one, mul_inv_cancel₀, sub_mul, sub_mul, mul_one, mul_inv_cancel₀]
+
+      field_simp
+
+      field_simp at hk
+
+      rw [← hk]
+
+      field_simp
+
+      ring_nf
+
+      field_simp
+
+      ring_nf
+
+      -- Show that the expression is well-defined
+
+      have hkpos : (k : ZMod p) ≠ 0 := by
+
+        by_contra hkpos
+
+        rw [← hkpos] at hk
+
+        simp at hk
+
+        have hppos : (0 : ZMod p) ≠ 1 := by exact ZMod.natCast_ne_zero_cast.mpr h₀
+
+        have h1 : (1 : ZMod p) = (0 : ZMod p) := by
+
+          rw [← hk]
+
+          simp
+
+        contradiction
+
+      have hkp1pos : ((k : ZMod p) + 1) ≠ 0 := by
+
+        by_contra hkp1pos
+
+        rw [← hkp1pos] at hk
+
+        simp at hk
+
+        have hppos : (0 : ZMod p) ≠ 1 := by exact ZMod.natCast_ne_zero_cast.mpr h₀
+
+        have h1 : (1 : ZMod p) = (0 : ZMod p) := by
+
+          rw [← hk]
+
+          simp
+
+        contradiction
+
+      have h7 : ((k : ZMod p) + 1) * ((k : ZMod p) + 2) ≠ 0 := by
+
+        have h7 : ((k : ZMod p) + 1) ≠ 0 := by exact hkp1pos
+
+        have h8 : ((k : ZMod p) + 2) ≠ 0 := by
+
+          by_contra h8
+
+          have h9 : ((k : ZMod p) + 1) = (-1 : ZMod p) := by
+
+            rw [← h8]
+
+            simp
+
+          contradiction
+
+        exact mul_ne_zero h7 h8
+
+      have h8 : ((k : ZMod p) + 1) ≠ -1 := by
+
+        by_contra h8
+
+        have h9 : ((k : ZMod p) + 1) = (-1 : ZMod p) := by exact h8
+
+        simp at hk
+
+        have h10 : ((k : ZMod p) + 2) = 0 := by
+
+          rw [← h9]
+
+          simp
+
+        have h11 : ((k : ZMod p) + 2) ≠ 0 := by exact h7
+
+        contradiction
+
+      have h9 : -((k : ZMod p) * ((k : ZMod p) + 1)) ≠ 0 := by
+
+        apply mul_ne_zero_iff.mpr
+
+        constructor
+
+        exact hkpos
+
+        exact hkp1pos
+
+      apply (eq_div_iff (by exact h3)).mpr
+
+      field_simp
+
+      ring_nf
+
+      -- Transform the sum into a telescoping series
+
+      have h2 : ∑ k ∈ Finset.Icc 1 (p - 2), ((1 : ZMod p) / (k * (k + 1))) =
+          ∑ k ∈ Finset.Icc 1 (p - 2), ((1 : ZMod p) / k - (1 : ZMod p) / ((k + 1) * (k + 2))) := by
+
+        congr
+
+        funext k
+
+        simp
+
+        -- Simplify the sum
+
+        have h2 : k * (k + 1) = k * (k + 1) - 0 := by exact rfl
+
+        rw [sub_eq_iff_eq_add, add_comm, mul_comm, mul_assoc, mul_inv_cancel₀, sub_mul, one_mul,
+
+            mul_inv_cancel₀, mul_one, sub_mul, mul_inv_cancel₀, sub_zero, mul_zero, sub_self,
+
+            add_zero, mul_comm]
+
+        -- Handle the case when k = 1
+
+        by_cases hk : k = 1
+
+        · simp at hk
+
+          rw [hk, one_mul, Nat7modp]
+
+          -- Use the fact that 7 is prime
+
+          rw [← ZMod.natCast_zmod_eq_zero_iff_dvd]
+
+          have h10 : p ∣ 7 - 1 := by
+
+            apply Nat.dvd_of_mod_eq_zero
+
+            rw [Nat.modEq_iff_dvd' (by linarith)]
+
+            exact hp
+
+          apply Nat.prime_dvd_prime_iff_eq Nat7modp.mp h10
+
+          exact Ne.symm (NeZero.ne' p)
+
+        -- Handle the case when k + 1 = p - 1
+
+        by_cases hk' : k + 1 = p - 1
+
+        · rw [hk', Nat.sub_add_cancel p]
+
+          have hp1 : p - 1 + 1 = p := by
+
+            apply Nat.sub_add_cancel
+
+            exact Nat.Prime.one_le h₀
+
+          rw [hp1, Nat.mul_self_inv_cancel pge1]
+
+          simp
+
+        -- General case
+
+        have hk1 : k + 1 ≠ 1 := by
+
+          by_contra hk1
+
+          have hk1' : k = 0 := by linarith
+
+          rw [hk1', Nat.sub_add_cancel p] at hk'
+
+          have hp1 : p - 1 + 1 = p := by
+
+            apply Nat.sub_add_cancel
+
+            exact Nat.Prime.one_le h₀
+
+          rw [hp1] at hk'
+
+          simp at hk'
+
+          have h11 : p ≠ 1 := by exact Nat.Prime.one_lt h₀
+
+          contradiction
+
+        have hk2 : k ≠ p - 1 := by
+
+          by_contra hk2
+
+          rw [hk2] at hk'
+
+          rw [Nat.sub_add_cancel p] at hk'
+
+          have hp1 : p - 1 + 1 = p := by
+
+            apply Nat.sub_add_cancel
+
+            exact Nat.Prime.one_le h₀
+
+          rw [hp1] at hk'
+
+          simp at hk'
+
+          have h11 : p ≠ 1 := by exact Nat.Prime.one_lt h₀
+
+          contradiction
+
+        simp at hk
+
+        simp at hk'
+
+        have h2 := calc
+
+          ((1 : ZMod p) / (k * (k + 1))) = ((1 : ZMod p) / (k * (k + 1) - 0)) := by simp
+
+          _ = ((1 : ZMod p) / (k * (k + 1) - (p - 1) * (p - 1)) + (p - 1 : ZMod p)⁻¹ * ((p - 1 : ZMod p) + 1)⁻¹) * (k : ZMod p) := by
+
+            -- Use the identity (a⁻¹ + b⁻¹) * (a * b) = b⁻¹ + a⁻¹
+
+            rw [add_mul, add_comm, ZMod.inv_mul, ZMod.mul_inv_cancel, one_mul, mul_comm k, mul_assoc]
+
+            apply ne_zero_iff.mpr
+
+            constructor
+
+            exact hkp1pos
+
+            exact hkpos
+
+          _ = ((1 : ZMod p) / (k * (k + 1) - (p - 1) * (p - 1)) + ((p - 1 : ZMod p) * ((p - 1 : ZMod p) + 1)⁻¹)⁻¹) * (k : ZMod p) := by
+
+            -- Use the identity (a⁻¹ + b⁻¹) * (a * b) = b⁻¹ + a⁻¹
+
+            rw [← mul_inv_cancel₀

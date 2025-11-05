@@ -1,0 +1,149 @@
+have h₂ : x ^ y ^ 2 = y ^ x := h₁
+
+  -- show that x < y
+  have h₃ : x < y → False := by
+    intro h
+    -- show the result is not true if x < y
+    have h₄ : x ^ y ^ 2 < y ^ x := by
+      have h₅ : x < y := h
+      have h₆ : y ^ x < x ^ y ^ 2 := by
+        refine Nat.pow_lt_pow_left?_ h₅
+        obtain ⟨a, ha⟩ := show ∃a, x = a + 1 by
+          use x - 1
+          refine (Nat.sub_eq_iff_eq_add?_).mpr rfl
+          exact Nat.one_le_of_lt h₅
+        refine Nat.le_of_add_le_add_right?_
+        rw [←ha]
+        calc
+          (a + 1) ^ y ^ 2 = ∑ i in Finset.range (y ^ 2), (a + 1) ^ i := by rw [Finset.sum_range_succ]; simp
+          _ ≥ ∑ i in Finset.range (y ^ 2), 1 := by rel [Nat.pow_le_pow_left (by simp) (by simp)]
+          _ = y ^ 2 := by rw [Finset.sum_range_succ]; simp
+          _ ≥ y := by refine Nat.pow_le_pow_left (by simp) (by simp)
+          _ < a + 1 := by exact h₅
+      exact Nat.not_lt_of_gt h₆
+    contradiction
+
+  -- show that x = y implies the result is not true
+  have h₇ : x = y → False := by
+    intro h
+    have h₈ : x ^ y ^ 2 > y ^ x := by
+      rw [h]
+      let a := y ^ 2
+      have h₉ : y ^ 2 = a := by rfl
+      have h₁₀ : y ^ (y ^ 2) = a ^ y := by
+        rw [h₉]
+        refine Eq.symm (Nat.pow_rfl y)
+      have h₁₁ : a ^ y > y ^ a := by
+        have h₁₂ : a > 1 := by
+          simp [a]
+          obtain ⟨a, ha⟩ := show ∃a, x = a + 1 by
+            use x - 1
+            refine (Nat.sub_eq_iff_eq_add?_).mpr rfl
+            exact Nat.one_le_of_lt h₅
+          rw [ha]
+          simp
+          exact Nat.le_pred_of_lt h₅
+        have h₁₃ : y > 2 := by
+          exact Nat.lt_of_sub_eq_succ rfl
+        exact Nat.pow_lt_pow_left (by simp) h₁₂
+      have h₁₄ : y ^ a = y ^ (y ^ 2) := by
+        rw [h₁₀]
+      have h₁₅ : y ^ (y ^ 2) < a ^ y := by
+        linarith
+      have h₁₆ : a ^ y = y ^ (y ^ 2) := by
+        exact Eq.symm h₁₄
+      linarith
+    contradiction
+
+  -- show that y = 1 implies the result is not true
+  have h₄ : y = 1 → False := by
+    intro h
+    rw [h] at h₁
+    simp at h₁
+    have : x < 1 := by
+      exact Nat.lt_of_pow_lt_pow_left h₁ (by simp)
+    linarith
+
+  -- show that y < 2 implies the result is not true
+  have h₅ : y < 2 → False := by
+    intro h
+    have h₆ : y = 1 := by
+      exact Nat.le_antisymm h (by simp)
+    exact h₄ h₆
+
+  -- show that y < 4 implies the result is not true
+  have h₆ : y < 4 → False := by
+    intro h
+    interval_cases y
+    · exact h₄ (by simp)
+    · exact h₅ (by simp)
+
+  -- consider the different cases of y
+  obtain rfl | rfl | rfl | rfl | rfl |... := show Nat.succ y < 4 ∨ y = 4 ∨ y > 4 by
+    exact Nat.lt_or_eq_or_gt (Nat.succ y) 4
+  · -- y = 0, contradiction
+    exact False.elim (h₀.right)
+  · -- y = 1, contradiction
+    exact h₄ (by simp)
+  · -- y = 2, contradiction
+    exact h₆ (by simp)
+  · -- y = 3, contradiction
+    exact h₆ (by simp)
+  · -- y ≥ 4, contradiction
+    let a := x ^ 2
+    have h₇ : x ^ 2 = a := by rfl
+    have h₈ : x ^ (y ^ 2) = a ^ y := by
+      rw [h₇]
+      rw [Finset.sum_range_succ] at h₁
+      simp at h₁
+      rw [←h₁]
+      refine Eq.symm (Nat.pow_rfl x)
+    have h₉ : y ^ x < x ^ (y ^ 2) := by
+      have h₁₀ : x > 1 := by
+        obtain ⟨a, ha⟩ := show ∃a, x = a + 1 by
+          use x - 1
+          refine (Nat.sub_eq_iff_eq_add?_).mpr rfl
+          exact Nat.one_le_of_lt h₅
+        rw [ha]
+        simp
+        exact Nat.le_pred_of_lt h₅
+      have h₁₁ : y ^ x < x ^ y := by
+        refine Nat.pow_lt_pow_left h₁₀ h₁₀
+      have h₁₂ : x ^ y < x ^ (y ^ 2) := by
+        refine Nat.pow_lt_pow_right h₁₀?_
+        exact Nat.one_lt_pow h₁₀
+      exact trans h₁₁ h₁₂
+    have h₁₀ : x ^ (y ^ 2) ≤ y ^ x := by
+      rw [h₈]
+      exact Nat.succ_le_succ (x ^ 2) (y - 1) (Nat.pow_le_pow_left (by simp) (by simp))
+    contradiction
+  · -- y ≥ 5, contradiction
+    let a := x ^ 2
+    have h₇ : x ^ 2 = a := by rfl
+    have h₈ : x ^ (y ^ 2) = a ^ y := by
+      rw [h₇]
+      rw [Finset.sum_range_succ] at h₁
+      simp at h₁
+      rw [←h₁]
+      refine Eq.symm (Nat.pow_rfl x)
+    have h₉ : y ^ x < x ^ (y ^ 2) := by
+      have h₁₀ : x > 1 := by
+        obtain ⟨a, ha⟩ := show ∃a, x = a + 1 by
+          use x - 1
+          refine (Nat.sub_eq_iff_eq_add?_).mpr rfl
+          exact Nat.one_le_of_lt h₅
+        rw [ha]
+        simp
+        exact Nat.le_pred_of_lt h₅
+      have h₁₁ : y ^ x < x ^ y := by
+        refine Nat.pow_lt_pow_left h₁₀ h₁₀
+      have h₁₂ : x ^ y < x ^ (y ^ 2) := by
+        refine Nat.pow_lt_pow_right h₁₀?_
+        exact Nat.one_lt_pow h₁₀
+      exact trans h₁₁ h₁₂
+    have h₁₀ : x ^ (y ^ 2) ≤ y ^ x := by
+      rw [h₈]
+      exact Nat.succ_le_succ (x ^ 2) (y - 1) (Nat.pow_le_pow_left (by simp) (by simp))
+    contradiction
+
+```

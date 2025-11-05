@@ -1,0 +1,48 @@
+have h₄ : (k : ℤ) ^ 2 - m * k + n = 0 := by norm_cast
+  have h₅ : (t : ℤ) ^ 2 - m * t + n = 0 := by norm_cast
+
+  -- The problem gives us a system of 4 equations.
+
+  -- Subtracting the two equations, we get $(k-t)(k+t - m) = 0.$
+  have h₆ : (k : ℤ) - t = 0 ∨ (k : ℤ) + t - m = 0 := by
+    apply mul_eq_zero.mp
+    linear_combination -h₄ + h₅
+
+  rcases h₆ with h₆ | h₆
+ . -- If $k = t$, it contradicts the fact that $k > t$.
+    exfalso
+    exact Nat.not_lt_of_le (le_of_eq h₆) h₁
+ . -- Thus, we get $m = k + t.$
+    have h₇ : m = k + t := by linear_combination h₆
+    rw [h₇] at h₄
+
+    -- Substituting $m = k + t$ into the equation, we get $n = k t.$
+    have h₈ : n = k * t := by linear_combination -h₄
+
+    -- Both $k$ and $t$ are positive integers, so $k t$ is positive.
+    have h₉ : 0 < k * t := by nlinarith
+
+    -- Since $m$ and $n$ are prime numbers, one of $k$ and $t$ is equal to 1.
+    have h₁₀ : k = 1 ∨ t = 1 := by
+      rw [Nat.prime_mul_iff] at h₈
+      tauto
+
+    rcases h₁₀ with h₁₀ | h₁₀
+   . -- If $k = 1$, then $t$ is equal to $n$, and so $t > 1$, which contradicts the fact that $n$ is prime.
+      exfalso
+      calc
+        1 < k := by norm_num [h₁₀]
+        _ < t := by exact lt_of_lt_of_le h₁ h₁₀
+        _ < n := by exact (Nat.prime_def_lt' h₈).mpr tauto
+        _ ∣ k * t := by norm_num [Nat.Prime.dvd_mul h₈]
+        _ = n := by rw [h₈]
+   . -- If $t = 1$, then $k$ is equal to $m$, and so $k > t$ cannot be true, which is a contradiction.
+      exfalso
+      rw [h₁₀] at h₇
+      calc
+        t = 1 := by exact h₁₀
+        _ < k := by exact h₁
+        _ = m := by rw [h₇]
+        _ > m := by rw [h₇]; omega
+
+```

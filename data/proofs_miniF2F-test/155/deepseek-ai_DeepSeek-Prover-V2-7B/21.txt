@@ -1,0 +1,43 @@
+have step₁ : S.card = 5 := by
+    have h₁ : S = {0, Real.pi / 2, Real.pi, (3 * Real.pi) / 2, 2 * Real.pi} := by
+      ext x
+      simp only [h₀, Finset.mem_insert, Finset.mem_singleton, eq_self_iff_true, and_true]
+      constructor
+      · intro h
+        have h₂ : 0 ≤ x := by tauto
+        have h₃ : x ≤ 2 * Real.pi := by tauto
+        have h₄ : Real.tan (2 * x) = Real.cos (x / 2) := by tauto
+        have h₅ : Real.tan (2 * x) = Real.sin (2 * x) / Real.cos (2 * x) := by rw [Real.tan_eq_sin_div_cos]
+        rw [h₅] at h₄
+        have h₆ : Real.cos (2 * x) = 2 * Real.cos (x) ^ 2 - 1 := by rw [Real.cos_two_mul]
+        have h₇ : Real.sin (2 * x) = 2 * Real.sin (x) * Real.cos (x) := by rw [Real.sin_two_mul]
+        rw [h₆, h₇] at h₄
+        have h₈ : Real.cos (x / 2) = Real.cos (x / 2) := by rfl
+        have h₉ : Real.cos (x) ≠ 0 ∨ Real.cos (x) = 0 := by by_cases h : Real.cos (x) = 0 <;> [right; left] <;> exact h
+        cases h₉ with
+        | inl h₉ =>
+          have h₁₀ : (2 * Real.sin (x) * Real.cos (x)) / (2 * Real.cos (x) ^ 2 - 1) = Real.cos (x / 2) := by simp_all [div_eq_mul_inv]
+          have h₁₁ : 2 * Real.cos (x) ^ 2 - 1 ≠ 0 := by aesop
+          have h₁₂ : (2 * Real.sin (x) * Real.cos (x)) / (2 * Real.cos (x) ^ 2 - 1) = Real.cos (x / 2) := by simp_all [div_eq_mul_inv]
+          field_simp at h₁₂
+          have h₁₃ : x = 0 ∨ x = Real.pi / 2 ∨ x = Real.pi ∨ x = (3 * Real.pi) / 2 ∨ x = 2 * Real.pi := by
+            apply or_iff_not_imp_left.mpr
+            intro h₁₄
+            apply or_iff_not_imp_left.mpr
+            intro h₁₅
+            apply or_iff_not_imp_left.mpr
+            intro h₁₆
+            apply or_iff_not_imp_left.mpr
+            intro h₁₇
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₄)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₅)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₆)
+            apply mul_left_cancel₀ (sub_ne_zero.mpr h₁₇)
+            ring_nf at *
+            norm_num at *
+            <;>
+            (try
+              simp_all [Real.cos_two_mul, Real.sin_two_mul, Real.cos_sub, Real.sin_sub, Real.cos_pi_div_two,
+                Real.sin_pi_div_two, Real.cos_pi, Real.sin_pi, Real.cos_two_pi, Real.sin_two_pi]) <;>
+            (try
+              nlinarith [Real.sin_sq_add_cos_sq x, Real.sin_le_one x, Real.cos_le_one x, sq_nonneg (Real.sin x - Real.

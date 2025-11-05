@@ -1,0 +1,54 @@
+obtain ⟨k, hk, h⟩ := h₁
+
+  have hkpos : 0 < k := hk
+
+  have hneq : ¬(a = b) := by
+    by_contra! h_contra
+    rw [h_contra] at h
+    have : 2 ^ k = (b + b ^ 2) * (b + b ^ 2) := by rw [h]; ring
+    have : 2 ^ k ≥ 4 := by calc
+      2 ^ k = (b + b ^ 2) * (b + b ^ 2) := by assumption
+      _ ≥ 2 * 2 := by match b with
+        | 0 => simp at h_contra; linarith
+        | 1 => simp
+        | x + 2 => simp; ring_nf; simp; linarith
+      _ = 4 := by simp
+    have : 2 ^ k < 2 ^ (k + 1) := by apply Nat.pow_lt_pow_succ; omega
+    rw [this] at h_contra
+    have : 2 ^ (k + 1) = 2 ^ k * 2 := by ring
+    rw [this] at h_contra
+    have : 2 ^ k * 2 < 2 ^ k * 4 := by calc
+      2 ^ k * 2 < 2 ^ k * 2 ^ 1 := by apply Nat.mul_lt_mul_left; apply Nat.pow_lt_pow_succ; omega
+      _ < 2 ^ k * (2 ^ 1 + 2 ^ 2) := by apply Nat.mul_lt_mul_right; simp; omega
+      _ = 2 ^ k * 6 := by simp
+      _ < 2 ^ k * 16 := by calc
+        2 ^ k * 6 < 2 ^ k * 4 ^ 1 := by apply Nat.mul_lt_mul_left; rw [show 6 = 2 * 3 by simp]; rw [show 4 ^ 1 = 2 * 2 by simp]; apply Nat.mul_lt_mul_right; simp; omega
+        _ < 2 ^ k * (2 * 2) ^ 2 := by rw [show 4 ^ 1 = (2 * 2) ^ 2 by simp]; apply Nat.mul_lt_mul_right; simp; omega
+        _ = 2 ^ k * 16 := by simp
+    linarith
+
+  have hlt : a < b → 2 ^ k < (a + b ^ 2) * (b + a ^ 2) := by
+    intro h
+    have : (a + b ^ 2) * (b + a ^ 2) > (b + b ^ 2) * (b + b ^ 2) := by calc
+      (a + b ^ 2) * (b + a ^ 2) > (a + a ^ 2) * (b + b ^ 2) := by apply Nat.mul_lt_mul_right; apply Nat.pow_lt_pow_succ; linarith; omega
+      _ ≥ (b + b ^ 2) * (b + b ^ 2) := by simp; omega
+    linarith
+
+  have hgt : a > b → (a + b ^ 2) * (b + a ^ 2) > 2 ^ k := by
+    intro h
+    have : (a + b ^ 2) * (b + a ^ 2) > (b + b ^ 2) * (b + b ^ 2) := by calc
+      (a + b ^ 2) * (b + a ^ 2) > (b + b ^ 2) * (b + a ^ 2) := by apply Nat.mul_lt_mul_right; apply Nat.pow_lt_pow_succ; omega; linarith
+      _ > (b + b ^ 2) * (b + b ^ 2) := by apply Nat.mul_lt_mul_left; simp; omega
+    linarith
+
+  rcases h₀ with ⟨ha, hb⟩
+
+  by_cases h : a < b
+ . specialize hlt h
+    linarith
+ . by_cases h' : a > b
+   . specialize hgt h'
+      linarith
+   . have : a = b := by omega
+      contradiction
+```

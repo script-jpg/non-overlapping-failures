@@ -1,0 +1,240 @@
+-- First, notice that $\sin^2 t + \cos^2 t = 1$.
+  have h₄ : Real.sin t ^ 2 + Real.cos t ^ 2 = 1 := by
+    exact Real.sin_sq_add_cos_sq t
+
+  -- Expanding the first equation, we get:
+  have h₅ : (Real.sin t + Real.cos t) ^ 2 = 1 / 4 + Real.sin t * Real.cos t := by
+    linarith
+
+  -- Expanding the second equation, we get:
+  have h₆ : (Real.sin t - Real.cos t) ^ 2 = 1 - Real.sin t * Real.cos t := by
+    linarith
+
+  -- Notice that squaring both equations and adding them together, we get:
+  have h₇ : (Real.sin t + Real.cos t) ^ 2 + (Real.sin t - Real.cos t) ^ 2 = 1 / 4 + Real.sin t * Real.cos t + (1 - Real.sin t * Real.cos t) := by
+    exact h₅ ▸ h₆ ▸ by linarith
+
+  -- By the difference of squares formula, the left-hand side is equal to $2((\sin t+\cos t)^2-(\sin t - \cos t)^2)$.
+  have h₈ : (Real.sin t + Real.cos t) ^ 2 + (Real.sin t - Real.cos t) ^ 2 = 4 * Real.sin t * Real.cos t := by
+    calc
+      (Real.sin t + Real.cos t) ^ 2 + (Real.sin t - Real.cos t) ^ 2 = ((Real.sin t + Real.cos t) ^ 2 - (Real.sin t - Real.cos t) ^ 2) * 2 := by linarith
+      _ = (Real.sin t + Real.cos t + Real.sin t - Real.cos t) * (Real.sin t + Real.cos t - (Real.sin t - Real.cos t)) * 2 := by
+        ring
+      _ = 4 * Real.sin t * Real.cos t := by ring
+
+  -- Therefore, $4\sin t\cos t = 1/4 + \sin t\cos t + 1 - \sin t\cos t$, or $\sin t\cos t = 5/16$.
+  have h₉ : Real.sin t * Real.cos t = 5 / 16 := by
+    linarith
+
+  -- We can expand $(\sin t+\cos t)^2$ and substitute $\sin t\cos t = 5/16$ into it to get:
+  have h₁₀ : (Real.sin t + Real.cos t) ^ 2 = 21 / 16 := by
+    linarith
+  have h₁₁ : Real.sin t + Real.cos t = √ (21 / 16) ∨ Real.sin t + Real.cos t = - √ (21 / 16) := by
+    exact sq_eq_sq_iff_eq_or_eq_neg.mp (h₅ ▸ h₁₀)
+
+  -- We can expand $(\sin t - \cos t)^2$ and substitute $\sin t\cos t = 5/16$ into it to get:
+  have h₁₂ : (Real.sin t - Real.cos t) ^ 2 = 11 / 16 := by
+    linarith
+  have h₁₃ : Real.sin t - Real.cos t = √ (11 / 16) ∨ Real.sin t - Real.cos t = - √ (11 / 16) := by
+    exact sq_eq_sq_iff_eq_or_eq_neg.mp (h₆ ▸ h₁₂)
+
+  -- Using the formula $a^2 - b^2 = (a+b)(a-b)$ with $a=\cos t$ and $b=\sin t$:
+  have h₁₄ : Real.cos t ^ 2 - Real.sin t ^ 2 = (Real.cos t + Real.sin t) * (Real.cos t - Real.sin t) := by
+    ring
+  have h₁₅ : Real.cos t ^ 2 - Real.sin t ^ 2 = 1 / 4 := by
+    linarith
+
+  -- Noting that:
+  have h₁₆ : (Real.cos t + Real.sin t) * (Real.cos t - Real.sin t) = 1 / 4 := by
+    linarith
+
+  -- We can use the quadratic formula to get:
+  have h₁₇ : Real.cos t + Real.sin t = 1 / 2 ∨ Real.cos t + Real.sin t = - 1 / 2 := by
+    obtain h | h := h₁₁ ▸ h₁₃
+    all_goals
+      rw [h] at h₁₆
+      have h₁₈ : (Real.cos t + Real.sin t) * (Real.cos t + Real.sin t) = 1 / 4 := by
+        linarith
+      have h₁₉ : (Real.cos t + Real.sin t) = 1 / 2 ∨ (Real.cos t + Real.sin t) = - 1 / 2 := by
+        have : (Real.cos t + Real.sin t) * (Real.cos t + Real.sin t) - 1 / 4 = 0 := by linarith
+        have : ((Real.cos t + Real.sin t) - 1 / 2) * ((Real.cos t + Real.sin t) + 1 / 2) = 0 := by
+          ring_nf
+          linarith
+        cases mul_eq_zero.mp this <;> linarith
+      tauto
+
+  -- Since $\sin^2 t + \cos^2 t = 1$, we must have:
+  have h₁₈ : Real.cos t + Real.sin t = 1 / 2 := by
+    obtain h | h := h₁₇
+    · exact h
+    · exfalso
+      linarith
+
+  -- We can use the quadratic formula to get:
+  have h₁₉ : Real.cos t - Real.sin t = 1 / 2 ∨ Real.cos t - Real.sin t = - 1 / 2 := by
+    have h₈ : (Real.cos t - Real.sin t) ^ 2 = 1 / 4 := by
+      linarith
+    have h : (Real.cos t - Real.sin t) = 1 / 2 ∨ (Real.cos t - Real.sin t) = - 1 / 2 := by
+      have : (Real.cos t - Real.sin t) ^ 2 - 1 / 4 = 0 := by linarith
+      have : (Real.cos t - Real.sin t - 1 / 2) * (Real.cos t - Real.sin t + 1 / 2) = 0 := by
+        ring_nf
+        linarith
+      cases mul_eq_zero.mp this <;> linarith
+    tauto
+
+  -- Now we consider cases:
+  obtain h | h := h₁₉ ▸ h₁₁
+  · have h₂₀ : Real.cos t = 1 / 2 + Real.sin t := by
+      linarith
+    have h₂₁ : Real.sin t = 1 / 2 - Real.cos t := by
+      linarith
+    -- and substitute into $(1 - \sin t)(1 - \cos t)$:
+    have h₂₃ : (1 - Real.sin t) * (1 - Real.cos t) = 1 - Real.sin t - Real.cos t + Real.sin t * Real.cos t := by
+      ring
+    rw [h₂₀] at h₂₃
+    rw [h₂₁] at h₂₃
+    have h₂₄ : (1 - Real.sin t) * (1 - Real.cos t) = 5 / 4 - Real.sqrt (21 / 16) := by
+      rw [h₂₃, h₁₈]
+      linarith
+    -- as well as into the expression for $\sin t\cos t$:
+    have h₂₅ : Real.sin t * Real.cos t = (1 / 2 + Real.sin t) * Real.sin t := by
+      rw [h₂₀]
+    have h₂₆ : Real.sin t * Real.cos t = (1 / 2 - Real.cos t) * Real.cos t := by
+      rw [h₂₁]
+    have h₂₇ : Real.sin t * Real.cos t = 5 / 16 := by
+      linarith
+    have h₂₈ : (1 / 2 + Real.sin t) * Real.sin t = (1 / 2 - Real.cos t) * Real.cos t := by
+      linarith
+    have h₂₉ : Real.cos t = 1 / 2 + Real.sin t := by
+      linarith
+    have h₃₀ : Real.sin t = 1 / 2 - Real.cos t := by
+      linarith
+    have h₃₁ : (1 - Real.sin t) * (1 - Real.cos t) = 5 / 4 - Real.sqrt (21 / 16) := by
+      rw [h₂₃, h₅]
+      linarith
+    -- Now, we use the quadratic formula to get:
+    have h₃₂ : Real.cos t = 1 / 2 ∨ Real.cos t = - 1 / 2 := by
+      have h₈ : (Real.cos t) ^ 2 - (1 / 2) * (Real.cos t) + (1 / 2) * (Real.sin t) = 0 := by
+        linarith
+      have h₉ : (Real.cos t) ^ 2 - (1 / 2) * (Real.cos t) + (1 / 2) * (Real.sin t) = (Real.cos t - 1 / 2) * (Real.cos t - (- 1 / 2)) := by
+        ring_nf
+      rw [h₉] at h₈
+      have h₁₀ : (Real.cos t - 1 / 2) = 0 ∨ (Real.cos t - (- 1 / 2)) = 0 := by
+        exact mul_eq_zero.mp h₈
+      cases h₁₀ with
+      | inl h₁₁ =>
+        left
+        linarith
+      | inr h₁₂ =>
+        right
+        linarith
+    have h₃₃ : Real.cos t = 1 / 2 := by
+      obtain h | h := h₃₂
+      · exact h
+      · exfalso
+        linarith
+    -- Now, we can compute $(1 - \sin t)(1 - \cos t)$:
+    have h₃₄ : (1 - Real.sin t) * (1 - Real.cos t) = 1 / 4 - Real.sqrt (21 / 16) := by
+      rw [h₃₃, h₃₆] at h₃₅
+      linarith
+    -- and into the expression for $\sin t\cos t$:
+    have h₃₅ : Real.sin t * Real.cos t = 1 / 4 := by
+      rw [h₃₃, h₃₆]
+      linarith
+    -- This is a contradiction, since $\sin t\cos t = 5/16$:
+    linarith
+  · have h₂₀ : Real.cos t = - 1 / 2 - Real.sin t := by
+      linarith
+    have h₂₁ : Real.sin t = - 1 / 2 - Real.cos t := by
+      linarith
+    -- and substitute into $(1 - \sin t)(1 - \cos t)$:
+    have h₂₃ : (1 - Real.sin t) * (1 - Real.cos t) = 1 - Real.sin t - Real.cos t + Real.sin t * Real.cos t := by
+      ring
+    rw [h₂₀] at h₂₃
+    rw [h₂₁] at h₂₃
+    have h₂₄ : (1 - Real.sin t) * (1 - Real.cos t) = 5 / 4 + Real.sqrt (21 / 16) := by
+      rw [h₂₃, h₅]
+      linarith
+    -- as well as into the expression for $\sin t\cos t$:
+    have h₂₅ : Real.sin t * Real.cos t = ( - 1 / 2 - Real.sin t) * Real.sin t := by
+      rw [h₂₀]
+    have h₂₆ : Real.sin t * Real.cos t = ( - 1 / 2 - Real.cos t) * Real.cos t := by
+      rw [h₂₁]
+    have h₂₇ : Real.sin t * Real.cos t = 5 / 16 := by
+      linarith
+    have h₂₈ : ( - 1 / 2 - Real.sin t) * Real.sin t = ( - 1 / 2 - Real.cos t) * Real.cos t := by
+      linarith
+    have h₂₉ : Real.cos t = - 1 / 2 - Real.sin t := by
+      linarith
+    have h₃₀ : Real.sin t = - 1 / 2 - Real.cos t := by
+      linarith
+    have h₃₁ : (1 - Real.sin t) * (1 - Real.cos t) = 5 / 4 + Real.sqrt (21 / 16) := by
+      rw [h₂₃, h₅]
+      linarith
+    -- Now, we use the quadratic formula to get:
+    have h₃₂ : Real.cos t = - 1 / 2 ∨ Real.cos t = 1 / 2 := by
+      have h₈ : (Real.cos t) ^ 2 + (1 / 2) * (Real.cos t) + (1 / 2) * (Real.sin t) = 0 := by
+        linarith
+      have h₉ : (Real.cos t) ^ 2 + (1 / 2) * (Real.cos t) + (1 / 2) * (Real.sin t) = (Real.cos t + 1 / 2) * (Real.cos t + (- 1 / 2)) := by
+        ring_nf
+      rw [h₉] at h₈
+      have h₁₀ : (Real.cos t + 1 / 2) = 0 ∨ (Real.cos t + (- 1 / 2)) = 0 := by
+        exact mul_eq_zero.mp h₈
+      cases h₁₀ with
+      | inl h₁₁ =>
+        left
+        linarith
+      | inr h₁₂ =>
+        right
+        linarith
+    have h₃₃ : Real.cos t = - 1 / 2 := by
+      obtain h | h := h₃₂
+      · exact h
+      · exfalso
+        linarith
+    -- Now, we can compute $(1 - \sin t)(1 - \cos t)$:
+    have h₃₄ : (1 - Real.sin t) * (1 - Real.cos t) = 1 / 4 + Real.sqrt (21 / 16) := by
+      rw [h₃₃, h₃₆] at h₃₅
+      linarith
+    -- and into the expression for $\sin t\cos t$:
+    have h₃₅ : Real.sin t * Real.cos t = - 1 / 4 := by
+      rw [h₃₃, h₃₆]
+      linarith
+    -- This is a contradiction, since $\sin t\cos t = 5/16$:
+    linarith
+
+  -- Therefore, we must have $\cos t - \sin t = -1/2$ and $\cos t + \sin t = 1/2$.
+  -- Solving the system of equations, we get $\cos t = 1/4$ and $\sin t = 3/4$.
+  have h₃₆ : Real.cos t = 1 / 4 := by
+    linarith
+  have h₃₇ : Real.sin t = 3 / 4 := by
+    linarith
+
+  -- Substituting this into the equation $(1 - \sin t)(1 - \cos t) = \frac mn-\sqrt{k}$,
+  -- we get $\frac mn = \frac 34 + \sqrt{\frac {21} {16}} = \frac {3 + \sqrt {21}} 4$.
+  have h₃₈ : (1 - Real.sin t) * (1 - Real.cos t) = 3 / 4 - Real.sqrt (21 / 16) := by
+    rw [h₃₆, h₃₇] at h₃₄
+    linarith
+  rw [h₃₈] at h₃
+  have h₃₉ : m = 3 + Real.sqrt 21 := by
+    have h₄₀ : (m : ℝ) = n * (3 + Real.sqrt 21) / 4 := by
+      rw [←h₃]
+      field_simp
+      linarith
+    have h₄₁ : n * (3 + Real.sqrt 21) / 4 = m := by
+      exact (div_eq_iff (by linarith)).mpr h₄₀
+    have h₄₂ : (n * (3 + Real.sqrt 21) / 4 : ℝ) ≥ 0 := by
+      positivity
+    have h₄₃ : m ≥ 0 := by
+      exact Int.cast_nonneg.mpr h₄₂
+    have h₄₄ : (m : ℝ) = (n : ℝ) * ((3 : ℝ) + Real.sqrt 21) / (4 : ℝ) := by
+      exact_mod_cast h₄₀
+    have h : (3 : ℝ) + Real.sqrt 21 > 0 := by
+      positivity
+    have h' : (4 : ℝ) > 0 := by
+      positivity
+    have h₄₅ : (n : ℝ) = (4 : ℝ) := by
+      apply (mul_left_inj' (ne_of_gt h)).mp
+      apply (div_eq_iff (by linarith)).mpr
+      exact_mod_cast h₄₄
+    norm_cast at h₄

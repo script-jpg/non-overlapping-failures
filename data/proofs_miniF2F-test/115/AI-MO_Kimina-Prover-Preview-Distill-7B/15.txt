@@ -1,0 +1,132 @@
+-- We need to count the numbers in the range $[1000, 9999]$ with only even digits that are divisible by $5$.
+  have h₁ : S.card = 100 := by
+    -- We will find a bijection between a set of $100$ numbers and our set.
+    apply Eq.symm
+    apply Finset.card_eq_of_bijective (f := fun i _ ↦ 1000 + 375 * i)
+    -- The numbers $1000 + 375i$ are all in the range $[1000, 9999]$ with only even digits that are divisible by $5$.
+    pick_goal 2
+    · simp only [Finset.mem_insert, Finset.mem_singleton]
+      intro iset_mem
+      obtain ⟨i, hi, hige, hile, h3⟩ := iset_mem
+      interval_cases i
+      all_goals
+        simp only [Nat.reduceAdd] at hige hile h3
+        simp only [Finset.mem_insert, Finset.mem_singleton]
+        simp at *
+        norm_num at *
+        trivial
+    -- There are $100$ such numbers.
+    pick_goal 2
+    · rw [Finset.card_add_distrib]
+      rw [Finset.card_filter]
+      simp only [Finset.card_const, Finset.card_Icc, Nat.reduceAdd, Set.mem_setOf_eq, Nat.reduceEqDiff,
+        Finset.card_map]
+      rfl
+    -- The function $f(i) = 1000 + 375i$ is injective on the range $0 ≤ i < 27$.
+    pick_goal 3
+    · intro i j hi hj hij
+      simp only [Finset.mem_Icc, Finset.mem_singleton] at hi hj
+      simp only [Finset.mem_add_distrib, Finset.mem_filter, Finset.mem_map, Finset.mem_Icc,
+        Set.mem_setOf_eq, Nat.reduceEqDiff] at hij
+      omega
+    -- The function $f(i) = 1000 + 375i$ is surjective onto its image.
+    pick_goal 3
+    · intro n
+      simp only [Finset.mem_filter, Finset.mem_map, Finset.mem_Icc, Set.mem_setOf_eq,
+        Finset.mem_add_distrib, Finset.mem_Icc, Nat.reduceEqDiff]
+      intro ⟨⟨hnge, hnle⟩, hne, hnd, h5⟩
+      -- The number $n$ has only even digits.
+      have h₀ : ∀ d : ℕ, d ∈ Nat.digits 10 n → Even d := by
+        intro d hd
+        apply hnd
+        simp only [Nat.mem_digits, List.mem_cons, List.mem_singleton, Nat.reduceMod,
+          Nat.reduceDiv, and_true]
+        exact hd
+      -- The number $n$ is divisible by $5$.
+      have hnmod5 : n % 5 = 0 := by
+        apply Nat.dvd_iff_mod_eq_zero.mp
+        exact h5
+      -- We claim that $n = 1000 + 375i$ for some $i$.
+      have h₂ : ∃ i : ℕ, n = 1000 + 375 * i := by
+        -- The number $n$ is in the range $[1000, 9999]$.
+        have hn : 1000 ≤ n ∧ n ≤ 9999 := by
+          exact ⟨hnge, hnle⟩
+        -- The number $n$ is in the set $\{1000 + 375i \mid i \leq 26\}$.
+        have hnn : filter (fun x : ℕ ↦ 5 ∣ x ∧ ∀ d : ℕ, d ∈ Nat.digits 10 x → Even d) (Finset.Icc 1000 9999) = Finset.map (fun i ↦ 1000 + 375 * i) (Finset.Icc 0 26) := by
+          -- We prove this by showing that every element of the left side is in the right side and vice versa.
+          apply Finset.eq_of_subset_of_subset
+          -- We show that the left side is a subset of the right side.
+          pick_goal 2
+          · intro x hx
+            simp only [Finset.mem_filter, Finset.mem_Icc, Set.mem_setOf_eq, Finset.mem_map,
+              Finset.mem_Icc, Nat.reduceEqDiff] at hx
+            obtain ⟨⟨hxnge, hxnle⟩, hxdvd, hxeven⟩ := hx
+            -- The number $x$ has only even digits.
+            have h₀ : ∀ d : ℕ, d ∈ Nat.digits 10 x → Even d := by
+              intro d hd
+              apply hxeven
+              simp only [Nat.mem_digits, List.mem_cons, List.mem_singleton, Nat.reduceMod,
+                Nat.reduceDiv, and_true]
+              exact hd
+            -- The number $x$ is divisible by $5$.
+            have hxmod5 : x % 5 = 0 := by
+              apply Nat.dvd_iff_mod_eq_zero.mp
+              exact hxdvd
+            -- The number $x$ is in the range $[1000, 9999]$.
+            have hxn : 1000 ≤ x ∧ x ≤ 9999 := by
+              exact ⟨hxnge, hxnle⟩
+            -- We conclude that $x = 1000 + 375i$ for some $i ≤ 26$.
+            have hx digits :=
+              Nat.mod_lt x (show 375 > 0 by norm_num)
+              have hxmod375 : x % 375 = 0 := by
+                apply Nat.dvd_iff_mod_eq_zero.mp
+                exact hxdvd
+              have hx : x = 375 * (x / 375) := by
+                rw [Nat.div_mul_cancel]
+                exact hxmod375
+              interval_cases (x / 375)
+              · linarith only [hxn.1]
+              · linarith only [hxn.2]
+              · rw [hx]
+                exact ⟨by norm_num, rfl⟩
+              · rw [hx]
+                omega
+              · rw [hx]
+                omega
+              · rw [hx]
+                omega
+          -- We show that the right side is a subset of the left side.
+          pick_goal 2
+          · intro x hx
+            simp only [Finset.mem_map, Finset.mem_Icc, Nat.reduceEqDiff, Finset.mem_filter,
+              Finset.mem_Icc, Set.mem_setOf_eq] at hx
+            obtain ⟨i, hi, hx⟩ := hx
+            simp only [Finset.mem_add_distrib, Finset.mem_filter, Finset.mem_map, Finset.mem_Icc,
+              Finset.mem_Icc, Set.mem_setOf_eq, Nat.reduceEqDiff, and_true] at hi
+            constructor
+            · exact ⟨by omega, by omega⟩
+            · constructor
+              · exact Nat.dvd_of_mod_eq_zero hx
+              · intro d hd
+                apply Even.mod_even h₀
+                simp only [Nat.mem_digits, List.mem_cons, List.mem_singleton, Nat.reduceMod,
+                  Nat.reduceDiv, and_true]
+                exact hd
+        -- The set on the left is a subset of the set on the right.
+        apply Finset.subset_iff_forall_mem.mpr
+        intro x hx
+        rw [hnn] at hx
+        simp only [Finset.mem_filter, Finset.mem_map, Finset.mem_Icc, Set.mem_setOf_eq,
+          Finset.mem_add_distrib, Finset.mem_Icc, Nat.reduceEqDiff] at hx
+        obtain ⟨i, hi, hx⟩ := hx
+        rw [←hx]
+        simp only [Finset.mem_singleton, Finset.mem_filter, Finset.mem_Icc, Set.mem_setOf_eq,
+          Finset.mem_map, Finset.mem_Icc, Nat.reduceEqDiff]
+        exact ⟨hi, by omega⟩
+      -- We conclude that $n = 1000 + 375i$ for some $i$.
+      obtain ⟨i, hi⟩ := h₂
+      simp only [Finset.mem_Icc, Finset.mem_singleton] at hi
+      omega
+    -- We conclude that the number of $4$-digit positive integers having only even digits that are divisible by $5$ is $100$.
+  exact h₁
+```

@@ -1,0 +1,92 @@
+-- We will show that n = 42. This obviously makes (E) false.
+  suffices n = 42 by
+    assumption
+
+  -- Let's first think about what the problem is asking. We have
+  --
+  --    1   1   1   1
+  --   - + - + - + - = integer
+  --    2   3   7   n
+  --
+  -- This means that
+  --
+  --      3  7   1   1
+  --     - - + - + - = integer
+  --      42 42  6  n-6
+  --
+  -- Let's break this into two cases. Either n = 6, or n ≠ 6.
+  obtain h | h := (eq_or_ne n 6).elim
+  -- For the sake of contradiction, assume n = 6. Then the last two terms cancel out,
+  -- and we are left with 3/42 + 1/(n-6) = 1/14 + 1/0 = 1/14 + something. This cannot
+  -- be an integer. Hence, n ≠ 6.
+  · rw[h] at h₁
+    norm_num at h₁
+  -- Now assume n ≠ 6. Then the last two terms do not cancel out, and we have
+  -- 3/42 + 1/(n-6) = integer
+  -- This means that n-6 divides 42.
+  push_neg at h
+  replace h₁ : (1 /. 2 + 1 /. 3 + 1 /. 7 + 1 /. ↑n).num = (1 /. 2 + 1 /. 3 + 1 /. 7 + 1 /. ↑n) * (1 /. 2 + 1 /. 3 + 1 /. 7 + 1 /. ↑n).den := by
+    rw[Nat.div_eq_iff_eq_mul_right]
+    exact h₁
+  norm_num at h₁; rw[add_assoc] at h₁; norm_num at h₁
+  -- This means that n - 6 divides 42.
+  have h₂ : (n - 6).den ∣ 42 := by
+    rw[Nat.div_eq_iff_eq_mul_right] at h₁
+    have h₂ : (↑(n - 6) : ℚ).den * (1 / 2 + 1 / 3 + 1 / 7 + 1 / ↑n).den = 42 := by
+      qify
+      field_simp
+      rw[mul_assoc, h₁]
+      norm_num
+    apply Nat.dvd_of_mul_dvd_mul_left (by norm_num) at h₂
+    exact h₂
+  -- Thus, n - 6 divides 42, and n is one of 7, 8, 9, 12, 14, 18, 21, 42.
+  have h₃ : n - 6 ∈ (42).divisors := by
+    rw[←Nat.mem_divisors]
+    constructor
+    · apply Nat.gcd_eq_one_iff_coprime.mpr
+      refine (Nat.coprime_div_gcd h₂?_).mpr?_
+      any_goals
+      norm_num
+    exact h₂
+  rw[←Nat.mem_divisors] at h₃
+  have h₄ : n ∈ ({7, 8, 9, 12, 14, 18, 21, 42} : Finset ℕ) := by
+    have h₄ : (n - 6) ∈ ({1, 2, 3, 6, 7, 14, 21, 42} : Finset ℕ) := by
+      apply Finset.mem_of_mem_singleton.mpr
+      exact h₃
+    apply Finset.mem_of_mem_singleton.mpr
+    simp only [Finset.mem_insert, Finset.mem_singleton]
+    have : n = 42 ∨ n = 21 + 6 := by
+      have : n - 6 = 42 ∨ n - 6 = 21 := by
+        exact h₄
+      cases this with
+      | inl h₅ =>
+        apply Nat.eq_add_of_sub_eq h₅
+      | inr h₅ =>
+        apply Nat.eq_add_of_sub_eq h₅
+    cases this with
+    | inl h₅ => exact h₅
+    | inr h₅ =>
+      rw[h₅]
+      rfl
+  -- We have narrowed down the possible values of n to a set of 8 values. However,
+  -- we know that n > 84 from the assumption h, so we immediately get n = 42.
+  simp only [Finset.mem_insert, Finset.mem_singleton] at h₄
+  cases h₄ with
+  | inl h₅ => exact h₅
+  | inr h₅ =>
+    cases h₅ with
+    | inl h₅ => exact h₅
+    | inr h₅ =>
+      cases h₅ with
+      | inl h₅ => exact h₅
+      | inr h₅ =>
+        cases h₅ with
+        | inl h₅ => exact h₅
+        | inr h₅ =>
+          cases h₅ with
+          | inl h₅ => exact h₅
+          | inr h₅ =>
+            cases h₅ with
+            | inl h₅ => exact h₅
+            | inr h₅ => linarith
+```

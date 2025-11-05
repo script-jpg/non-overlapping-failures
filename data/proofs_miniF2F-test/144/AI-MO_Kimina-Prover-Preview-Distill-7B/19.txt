@@ -1,0 +1,191 @@
+-- A trivial fact for complex numbers.
+  have {z : ℂ} (hz : z ≠ 0) : z + 6 / z = (z ^ 2 + 6) / z := by
+    field_simp
+    ring
+
+  -- Set $w=z+\frac 6z.$ We may assume that $z$ is not $0$.
+  set w := z + 6 / z
+  have h₀' : z ≠ 0 := by
+    rintro rfl
+    norm_num at h₀
+
+  -- Then $z^2+6z+9=(z+\frac 6z)z=z^2w$.
+  have h₁ : z ^ 2 + 6 * z + 9 = z ^ 2 * w := by
+    rw [show z ^ 2 + 6 * z + 9 = (z + 6 / z) * z ^ 2 by field_simp; ring]
+    field_simp [hz]
+    ring
+
+  -- We can rewrite this as $(z+3)^2=z^2w$.
+  have h₂ : (z + 3) ^ 2 = z ^ 2 * w := by
+    ring_nf at h₁ ⊢
+    exact h₁
+
+  -- Note that $(z+3)^2=(z+2)^2+2(z+2)+1$, so we get $(z+2)^2+2(z+2)+1=z^2w$.
+  have h₃ : (z + 2) ^ 2 + 2 * (z + 2) + 1 = z ^ 2 * w := by
+    rwa [← Complex.normSq_eq_conj_mul_self, ← Complex.normSq_eq_conj_mul_self, pow_two] at h₂
+
+  -- We can rewrite this as $(z+2)^2+2(z+2)+1=(z+2)^2w$.
+  have h₄ : (z + 2) ^ 2 + 2 * (z + 2) + 1 = (z + 2) ^ 2 * w := by
+    ring_nf at h₃ ⊢
+    exact h₃
+
+  -- Note that $|a|^2=a\overline{a}$, so we get $(z+2)\overline{(z+2)}+2(z+2)+1=(z+2)^2w$.
+  have h₅ : (z + 2) * conj (z + 2) + 2 * (z + 2) + 1 = (z + 2) ^ 2 * w := by
+    apply_fun fun z => z * conj z at h₄
+    rw [Complex.mul_conj, normSq_eq_conj_mul_self] at h₄
+    exact h₄
+
+  -- We can rewrite this as $(z+2)\overline{(z+2)}+2(z+2)+1=(z+2)(z+2)w$.
+  have h₆ : (z + 2) * conj (z + 2) + 2 * (z + 2) + 1 = (z + 2) * (z + 2) * w := by
+    ring_nf at h₅ ⊢
+    rw [← pow_two] at h₅
+    exact h₅
+
+  -- Note that $(z+2)\overline{(z+2)}=|z+2|^2$, so we get $|z+2|^2+2(z+2)+1=(z+2)|z+2|^2$.
+  have h₇ : Complex.normSq (z + 2) + 2 * (z + 2) + 1 = (z + 2) * Complex.normSq (z + 2) := by
+    apply_fun fun z => Complex.normSq (z + 2) at h₆
+    simp [Complex.normSq_eq_conj_mul_self] at h₆
+    exact h₆
+
+  -- We can rewrite this as $(z+2)\overline{(z+2)}+2(z+2)+1=(z+2)\overline{(z+2)}w$.
+  have h₈ : Complex.normSq (z + 2) + 2 * (z + 2) + 1 = Complex.normSq (z + 2) * w := by
+    calc
+      Complex.normSq (z + 2) + 2 * (z + 2) + 1 = (z + 2) * Complex.normSq (z + 2) := h₇
+      _ = Complex.normSq (z + 2) * w := by ring
+
+  -- Note that $(z+2)\overline{(z+2)}=|z+2|^2$, so we get $|z+2|^2+2(z+2)+1=|z+2|^2w$.
+  replace h₈ : Complex.normSq (z + 2) + 2 * (z + 2) + 1 = Complex.normSq (z + 2) * w := by
+    exact h₈
+
+  -- We can rewrite the LHS to $2|z+2|^2+2(z+2)+1$.
+  have h₉ : 2 * Complex.normSq (z + 2) + 2 * (z + 2) + 1 = Complex.normSq (z + 2) * w := by
+    calc
+      2 * Complex.normSq (z + 2) + 2 * (z + 2) + 1 = Complex.normSq (z + 2) + Complex.normSq (z + 2) + 2 * (z + 2) + 1 := by ring
+      _ = Complex.normSq (z + 2) + (Complex.normSq (z + 2) + 2 * (z + 2) + 1) := by ring
+      _ = Complex.normSq (z + 2) + Complex.normSq (z + 2) * w := by rw [h₈]
+      _ = Complex.normSq (z + 2) * (1 + w) := by ring
+      _ = Complex.normSq (z + 2) * w := by ring
+
+  -- Note that $w^2=(z+\frac 6z)^2=z^2+2\cdot 6+z^{-2}$, so we get $w^2=|z+2|^2+2\cdot 6+z^{-2}$.
+  have h₁₀ : w ^ 2 = Complex.normSq (z + 2) + 12 + 1 / (z ^ 2) := by
+    rw [show w = z ^ 2 + 6 + 1 / z ^ 2 by field_simp; ring]
+    ring
+
+  -- We can rewrite this as $w^2=2|z+2|^2+2\cdot 6+z^{-2}$.
+  have h₁₁ : w ^ 2 = 2 * Complex.normSq (z + 2) + 12 + 1 / (z ^ 2) := by
+    calc
+      w ^ 2 = Complex.normSq (z + 2) + 12 + 1 / (z ^ 2) := h₁₀
+      _ = Complex.normSq (z + 2) + Complex.normSq (z + 2) + 12 + 1 / (z ^ 2) := by ring
+      _ = 2 * Complex.normSq (z + 2) + 12 + 1 / (z ^ 2) := by ring
+
+  -- Note that $z^{-2}$ is a real number.
+  have h₁₂ : z ^ 2 * (1 / (z ^ 2)) = 1 := by
+    field_simp
+
+  -- We can rewrite this as $w^2=2|z+2|^2+2\cdot 6+\frac{1}{z^{-2}}$.
+  have h₁₃ : w ^ 2 = 2 * Complex.normSq (z + 2) + 12 + z ^ 2 := by
+    calc
+      w ^ 2 = 2 * Complex.normSq (z + 2) + 12 + 1 / (z ^ 2) := h₁₁
+      _ = 2 * Complex.normSq (z + 2) + 12 + (z ^ 2 * (1 / (z ^ 2))) := by ring
+      _ = 2 * Complex.normSq (z + 2) + 12 + 1 := by rw [h₁₂]
+      _ = 2 * Complex.normSq (z + 2) + 13 := by ring
+
+  -- Note that $|a+b|^2=|a|^2+2\text{Re}(a\overline{b})+|b|^2$, so we can rewrite $|z+2|^2$ as $|z|^2+2\text{Re}(z\overline{2})+|2|^2$.
+  have h₁₄ : Complex.normSq (z + 2) = Complex.normSq z + 2 * (z * conj 2 + conj z * conj 2) + Complex.normSq 2 := by
+    simp [Complex.normSq_eq_conj_mul_self, ← Complex.add_re]
+    ring
+
+  -- We can rewrite $2\text{Re}(z\overline{2})$ as $2\cdot 2\text{Re}(z)$.
+  have h₁₅ : 2 * (z * conj 2 + conj z * conj 2) = 4 * z.re := by
+    simp [conj_ofReal]
+    ring
+
+  -- We can rewrite $|z+2|^2$ as $|z|^2+4\text{Re}(z)+4$.
+  have h₁₆ : Complex.normSq (z + 2) = Complex.normSq z + 4 * z.re + 4 := by
+    rw [h₁₄, h₁₅]
+    simp [Complex.normSq_eq_conj_mul_self]
+    ring
+
+  -- Note that $w^2=2|z+2|^2+2\cdot 6+\frac{1}{z^{-2}}$, so we get $w^2=2|z|^2+8\text{Re}(z)+14$.
+  have h₁₇ : w ^ 2 = 2 * Complex.normSq z + 8 * z.re + 14 := by
+    calc
+      w ^ 2 = 2 * Complex.normSq (z + 2) + 13 := h₁₃
+      _ = 2 * Complex.normSq z + 2 * 4 * z.re + 2 * 4 + 13 := by rw [h₁₆]
+      _ = 2 * Complex.normSq z + 8 * z.re + 14 := by ring
+
+  -- Note that $z+\frac 6z$ is a real number, so we can take the real part of both sides.
+  have h₁₈ : (w ^ 2).re = (2 * Complex.normSq z + 8 * z.re + 14).re := by
+    rw [h₁₇]
+
+  -- The LHS is $w^2$.
+  have h₁₉ : (w ^ 2).re = w ^ 2 := by
+    simp [Complex.ofReal_re, Complex.add_re, Complex.mul_re, Complex.normSq_eq_conj_mul_self]
+    ring
+
+  -- The RHS is $2|z|^2+8\text{Re}(z)+14$.
+  have h₁₁₀ : (2 * Complex.normSq z + 8 * z.re + 14).re = 2 * Complex.normSq z + 8 * z.re + 14 := by
+    simp [Complex.ofReal_re, Complex.add_re, Complex.mul_re, Complex.normSq_eq_conj_mul_self]
+    ring
+
+  -- We can rewrite $w^2$ as $2|z|^2+8\text{Re}(z)+14$.
+  rw [h₁₉, h₁₁₀] at h₁₈
+
+  -- Note that $z+\frac 6z$ is a real number, so its imaginary part is $0$.
+  have h₂₀ : w.im = 0 := by
+    rw [← Complex.ofReal_re, ← Complex.add_re, ← Complex.mul_re, ← Complex.normSq_eq_conj_mul_self]
+    ring_nf; simp
+
+  -- Note that $w^2=2|z|^2+8\text{Re}(z)+14$, so we get $w\overline{w}=2|z|^2+8\text{Re}(z)+14$.
+  have h₂₁ : w * conj w = 2 * Complex.normSq z + 8 * z.re + 14 := by
+    calc
+      w * conj w = (w ^ 2).re := by
+        rw [Complex.mul_conj, normSq_eq_conj_mul_self]
+      _ = (2 * Complex.normSq z + 8 * z.re + 14).re := by rw [h₁₈]
+      _ = 2 * Complex.normSq z + 8 * z.re + 14 := by simp [Complex.ofReal_re, Complex.add_re, Complex.mul_re, Complex.normSq_eq_conj_mul_self]; ring
+
+  -- The RHS is $w\overline{w}$.
+  have h₂₂ : w * conj w = 2 * Complex.normSq z + 8 * z.re + 14 := by
+    exact h₂₁
+
+  -- Note that $z+\frac 6z$ is a real number, so $z+\frac 6z=z\overline{z}$.
+  have h₂₃ : z + 6 / z = z * conj z := by
+    rw [← Complex.ofReal_re, ← Complex.add_re, ← Complex.mul_re, ← Complex.normSq_eq_conj_mul_self]
+    ring_nf; simp
+
+  -- We can rewrite $z+\frac 6z$ as $w$.
+  rw [h₂₃]
+
+  -- Note that $w^2=2|z|^2+8\text{Re}(z)+14$, so we get $w^2-2|z|^2-8\text{Re}(z)-14=0$.
+  have h₂₄ : w ^ 2 - 2 * Complex.normSq z - 8 * z.re - 14 = 0 := by
+    ring_nf
+    simp
+    exact h₁₈
+
+  -- Note that $w^2-2wz-8zw-14=0$.
+  have h₂₅ : w ^ 2 - 2 * w * z - 8 * z * w - 14 = 0 := by
+    calc
+      w ^ 2 - 2 * w * z - 8 * z * w - 14 = w ^ 2 - 2 * Complex.normSq z - 8 * z.re - 14 := by
+        rw [Complex.normSq_eq_conj_mul_self]
+        ring_nf
+      _ = 0 := h₂₄
+
+  -- Note that $(w-2z-8w)$ is a factor of $w^2-2wz-8zw-14$.
+  have h₂₆ : (w - 2 * z) * (w - 8 * z) = 0 := by
+    ring_nf
+    exact h₂₅
+
+  -- So $w=2z+8z$.
+  -- The problem is asking for $w$, so we can rewrite $w=2z+8z$ to $w=2z+8z$.
+  suffices w = 2 * z + 8 * z by
+    rw [this]
+    field_simp; ring_nf; simp
+
+  -- It suffices to show that $w-2z=0$.
+  suffices w - 2 * z = 0 by
+    rw [← mul_eq_zero, mul_sub, this]
+    simp
+
+  -- Note that $w-2z$ is a factor of $w^2-2wz-8zw-14$, so it is sufficient to show that $w^2-2wz-8zw-14=0$.
+  apply mul_eq_zero.1 h₂₆
+
+```

@@ -1,0 +1,56 @@
+-- A number theory lemma: m * n = gcd m n * lcm m n
+  have h (m n : ℕ) : m * n = Nat.gcd m n * Nat.lcm m n := by
+    rw [Nat.gcd_mul_lcm]
+
+  -- Use the number theory lemma to get m * n = 6 * 126
+  rw [h₀, h₁] at h
+
+  -- Let m = 6a and n = 6b, where a and b are coprime
+  have ⟨a, ha⟩ : ∃ a, m = 6 * a := by
+    use m.gcd n
+    omega
+  have h₃ : m.gcd n ∣ m := by
+    exact Nat.gcd_dvd_left m n
+  rcases ha with ⟨ha, h₃⟩
+
+  have ⟨b, hb⟩ : ∃ b, n = 6 * b := by
+    use m.gcd n
+    omega
+  have h₄ : m.gcd n ∣ n := by
+    exact Nat.gcd_dvd_right m n
+  rcases hb with ⟨hb, h₄⟩
+
+  -- Substitute m = 6a and n = 6b
+  rw [ha, hb] at h
+  have : 6 * a * (6 * b) = 6 * 126 := by
+    exact h
+  ring_nf at this
+  simp at this
+
+  -- Now a * b = 21
+  have h₅ : a * b = 21 := by
+    linarith
+
+  -- (a, b) = 1
+  have h₆ : a.gcd b = 1 := by
+    rw [ha, hb, h₀]
+    ring_nf
+    omega
+
+  -- Now we need to find the minimum of m + n = 6(a + b)
+  have h₇ : 60 ≤ 6 * (a + b) := by
+    -- We have a * b = 21 and (a, b) = 1
+    -- So a and b are the divisors of 21
+    -- The possible values of (a, b) are (1, 21), (3, 7), (7, 3), (21, 1)
+    -- The minimum of a + b is 3 + 7 = 10
+    -- Thus the minimum of 6(a + b) is 60
+    have : a ≤ 21 := by
+      exact Nat.le_of_dvd (by omega) (Dvd.intro b h₅)
+    have : b ≤ 21 := by
+      exact Nat.le_of_dvd (by omega) (Dvd.intro a h₅)
+    interval_cases a <;> interval_cases b <;> omega
+
+  -- The minimum of m + n is 60
+  linarith
+
+```

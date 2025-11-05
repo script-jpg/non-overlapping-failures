@@ -1,0 +1,235 @@
+have hp : 1 < p := h₀.1
+  have hq : 1 < q := by linarith
+  have hr : 1 < r := by linarith
+
+  have hpqr : 1 < p * q * r := by
+    apply lt_mul_of_pos_right
+    apply mul_lt_mul_of_pos
+    all_goals linarith
+
+  have le : p * q * r - 1 ≥ 0 := by omega
+
+  have hp1 : 0 < p - 1 := by omega
+  have hq1 : 0 < q - 1 := by omega
+  have hr1 : 0 < r - 1 := by omega
+
+  let s := (p - 1) * (q - 1) * (r - 1)
+  have hs : s ∣ p * q * r - 1 := h₁
+
+  have div_s : ∃ k : ℤ, p * q * r - 1 = s * k := hs
+  rcases div_s with ⟨k, hk⟩
+
+  have div_s' : 0 < s := by
+    have : 0 < p - 1 := hp1
+    have : 0 < q - 1 := hq1
+    have : 0 < r - 1 := hr1
+    have : 0 < (p - 1) * (q - 1) := mul_pos this this
+    have : 0 < ((p - 1) * (q - 1)) * (r - 1) := mul_pos this this
+    exact this
+
+  have one_le_k : 1 ≤ k := by
+    have : 0 < s := div_s'
+    have : 0 < p * q * r - 1 := by omega
+    have : 1 ≤ k := by
+      by_contra! klt
+      have : p * q * r - 1 = s * k := hk
+      have : p * q * r - 1 < s := by
+        rw [hk]
+        have : k < 0 := by omega
+        have : s * k < 0 := by
+          apply mul_neg_of_pos_of_neg
+          all_goals assumption
+        linarith
+      linarith
+    exact this
+
+  have hk1 : k < p * q * r := by
+    by_contra! key
+    have : p * q * r - 1 = s * k := hk
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : s * k ≥ s * (p * q * r) := by
+      apply mul_le_mul_of_nonneg_left
+      linarith
+      linarith
+    linarith
+
+  have hk2 : k < (p - 1) * (q - 1) * (r - 1) + 1 := by
+    by_contra! key
+    have : p * q * r - 1 = s * k := hk
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : s * k ≥ s * ((p - 1) * (q - 1) * (r - 1) + 1) := by
+      apply mul_le_mul_of_nonneg_left
+      linarith
+      linarith
+    linarith
+
+  haveles : k ≤ (p - 1) * (q - 1) * (r - 1) := by linarith
+
+  have pqr1 : p * q * r - 1 = (p - 1) * (q - 1) * (r - 1) * k := by rw [hk]
+
+  -- To start, a series of inequalities and equalities to simplify the subsequent expressions, this is primarily for going through the solution more smoothly.
+
+  haveles2 : k < p := by
+    by_contra! c
+    have : p * q * r - 1 = (p - 1) * (q - 1) * (r - 1) * k := pqr1
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : (p - 1) * (q - 1) * (r - 1) * k ≥ (p - 1) * (q - 1) * (r - 1) * p := by
+      apply mul_le_mul_of_nonneg_left
+      linarith
+      linarith
+    have : p * q * r - 1 ≥ (p - 1) * (q - 1) * (r - 1) * p := by linarith
+    have : p * q * r ≥ p * q * r := by rfl
+    have : p * (q * (r - 1)) ≥ p * (q * (r - 1)) := by rfl
+    have : p * q * r - p * q ≥ p * q * r - p * q := by linarith
+    have : p * q * (r - 1) ≥ p * q * (r - 1) := by rfl
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : p * q * r - p * q ≥ p * q * r - 1 := by linarith
+    have : p * q * r ≥ p * q * r + 1 := by linarith
+    linarith
+
+  have g₀ : k < q := by
+    by_contra! c
+    have : p * q * r - 1 = (p - 1) * (q - 1) * (r - 1) * k := pqr1
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : (p - 1) * (q - 1) * (r - 1) * k ≥ (p - 1) * (q - 1) * (r - 1) * q := by
+      apply mul_le_mul_of_nonneg_left
+      linarith
+      linarith
+    have : p * q * r - 1 ≥ (p - 1) * (q - 1) * (r - 1) * q := by linarith
+    have : p * q * r ≥ p * q * r := by rfl
+    have : q * (p * (r - 1)) ≥ q * (p * (r - 1)) := by rfl
+    have : p * q * r - q * p ≥ p * q * r - q * p := by linarith
+    have : p * (q * (r - 1)) ≥ p * (q * (r - 1)) := by rfl
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : p * q * r - q * p ≥ p * q * r - 1 := by linarith
+    have : p * q * r ≥ p * q * r + q * p := by linarith
+    have : p * q * r ≥ p * q * r + 1 * (q * p) := by linarith
+    have : p * q * r ≥ p * q * r + 1 := by
+      apply le_of_mul_le_mul_right
+     . linarith
+     . linarith
+    linarith
+
+  have g₁ : k < r := by
+    by_contra! c
+    have : p * q * r - 1 = (p - 1) * (q - 1) * (r - 1) * k := pqr1
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : (p - 1) * (q - 1) * (r - 1) * k ≥ (p - 1) * (q - 1) * (r - 1) * r := by
+      apply mul_le_mul_of_nonneg_left
+      linarith
+      linarith
+    have : p * q * r - 1 ≥ (p - 1) * (q - 1) * (r - 1) * r := by linarith
+    have : p * q * r ≥ p * q * r := by rfl
+    have : (p * q) * (r - 1) ≥ (p * q) * (r - 1) := by rfl
+    have : p * q * r - p * q ≥ p * q * r - p * q := by linarith
+    have : p * (q * (r - 1)) ≥ p * (q * (r - 1)) := by rfl
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : p * q * r - p * q ≥ p * q * r - 1 := by linarith
+    have : p * q * r ≥ p * q * r + 1 := by linarith
+    linarith
+
+  have g₂ : k < p - 1 := by
+    by_contra! c
+    have : p * q * r - 1 = (p - 1) * (q - 1) * (r - 1) * k := pqr1
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : (p - 1) * (q - 1) * (r - 1) * k ≥ (p - 1) * (q - 1) * (r - 1) * (p - 1) := by
+      apply mul_le_mul_of_nonneg_left
+      linarith
+      linarith
+    have : p * q * r - 1 ≥ (p - 1) * (q - 1) * (r - 1) * (p - 1) := by linarith
+    have : p * q * r ≥ p * q * r := by rfl
+    have : (q * (p * (r - 1))) - q * (r - 1) ≥ (q * (p * (r - 1))) - q * (r - 1) := by rfl
+    have : q * (p * (r - 1)) - q * (r - 1) ≥ q * (p * (r - 1)) - q * (r - 1) := by linarith
+    have : q * ((p * (r - 1)) - (r - 1)) ≥ q * ((p * (r - 1)) - (r - 1)) := by rfl
+    have : q * (p - 1) * (r - 1) ≥ q * (p - 1) * (r - 1) := by linarith
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : p * q * r - (p - 1) * (q - 1) * (r - 1) ≥ p * q * r - (p - 1) * (q - 1) * (r - 1) := by linarith
+    have : p * q * r ≥ p * q * r + (p - 1) * (q - 1) * (r - 1) - p * q := by linarith
+    have : p * q * r ≥ p * q * r + 1 := by
+      apply le_of_mul_le_mul_right
+     . linarith
+     . linarith
+    linarith
+
+  have g₃ : k < q - 1 := by
+    by_contra! c
+    have : p * q * r - 1 = (p - 1) * (q - 1) * (r - 1) * k := pqr1
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : (p - 1) * (q - 1) * (r - 1) * k ≥ (p - 1) * (q - 1) * (r - 1) * (q - 1) := by
+      apply mul_le_mul_of_nonneg_left
+      linarith
+      linarith
+    have : p * q * r - 1 ≥ (p - 1) * (q - 1) * (r - 1) * (q - 1) := by linarith
+    have : p * q * r ≥ p * q * r := by rfl
+    have : (p * (q * (r - 1))) - p * (r - 1) ≥ (p * (q * (r - 1))) - p * (r - 1) := by rfl
+    have : p * (q * (r - 1)) - p * (r - 1) ≥ p * (q * (r - 1)) - p * (r - 1) := by linarith
+    have : p * ((q * (r - 1)) - (r - 1)) ≥ p * ((q * (r - 1)) - (r - 1)) := by linarith
+    have : p * (q - 1) * (r - 1) ≥ p * (q - 1) * (r - 1) := by linarith
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : p * q * r - (p - 1) * (q - 1) * (r - 1) ≥ p * q * r - (p - 1) * (q - 1) * (r - 1) := by linarith
+    have : p * q * r ≥ p * q * r + (p - 1) * (q - 1) * (r - 1) - p * r := by linarith
+    have : p * q * r ≥ p * q * r + 1 := by
+      apply le_of_mul_le_mul_right
+     . linarith
+     . linarith
+    linarith
+
+  have g₄ : k < r - 1 := by
+    by_contra! c
+    have : p * q * r - 1 = (p - 1) * (q - 1) * (r - 1) * k := pqr1
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : (p - 1) * (q - 1) * (r - 1) * k ≥ (p - 1) * (q - 1) * (r - 1) * (r - 1) := by
+      apply mul_le_mul_of_nonneg_left
+      linarith
+      linarith
+    have : p * q * r - 1 ≥ (p - 1) * (q - 1) * (r - 1) * (r - 1) := by linarith
+    have : p * q * r ≥ p * q * r := by rfl
+    have : (p * q) * (r - 1) ≥ (p * q) * (r - 1) := by rfl
+    have : p * q * r - p * q ≥ p * q * r - p * q := by linarith
+    have : p * (q * (r - 1)) ≥ p * (q * (r - 1)) := by linarith
+    have : p * q * r - 1 ≥ p * q * r - 1 := by rfl
+    have : p * q * r - (p - 1) * (q - 1) * (r - 1) ≥ p * q * r - (p - 1) * (q - 1) * (r - 1) := by linarith
+    have : p * q * r ≥ p * q * r + (p - 1) * (q - 1) * (r - 1) - p * q := by linarith
+    have : p * q * r ≥ p * q * r + 1 := by
+      apply le_of_mul_le_mul_right
+     . linarith
+     . linarith
+    linarith
+
+  -- Now we use the old trick of factorization to get the actual values of the three variables, starting with $p$.
+
+  have p_val : p = 2 ∨ p = 3 := by
+    have ppr : p * q = 2 * q ∨ p * q = 3 * q := by
+      have : p * q * r = p * q * 8 := by rw [mul_assoc, mul_assoc, h₁.1]; norm_num
+      have : p * q * r = 2 * (p * q * 4) := by ring
+      rw [this] at h₁
+      have : 2 ∣ p * q * r := by
+        rw [h₁]
+        exact ⟨p * q * 4, by ring⟩
+      have : 2 ∣ p * q := by
+        have : 2 ∣ 8 := by norm_num
+        have : 2 ∣ r * (p * q) := by
+          rw [← this]
+          exact Dvd.dvd.mul_left (2 : ℤ) (p * q * 4)
+        have : 2 ∣ r := by
+          apply Prime.dvd_or_dvd (Nat.prime_two)
+          intro h
+          apply Int.Prime.dvd_of_dvd_pow (by norm_cast) h
+          have : 2 ≠ 1 := by norm_num
+          exact Int.prime_two_ne_one
+        tauto
+      tauto
+    rcases ppr with _|ppr
+    have : q * r = q * 4 := by omega
+    have : r = 4 := by
+      apply mul_left_cancel₀
+      tauto
+    have : p * q = 2 * q := by omega
+    have : p = 2 := by
+      apply mul_left_cancel₀
+      tauto
+    tauto
+    have : p * q = 3 * q := by omega
+    have : p = 3 := by
+      apply mul_left_cancel₀
+      tauto

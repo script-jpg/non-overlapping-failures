@@ -1,0 +1,47 @@
+-- First, we try to understand the problem. We need to find the number of integer values of $x$ that satisfy $|x| < 3\pi$.
+
+  -- The first lemma ensures that $3\pi$ is approximately 9.42.
+  have h₁ : 3 * Real.pi < 10 := by
+    have : Real.pi < 3.15 := Real.pi_lt_315
+    norm_num at this
+    linarith
+
+  -- The second lemma ensures that $3\pi > 9$.
+  have h₂ : 9 < 3 * Real.pi := by
+    have : 3.14 < Real.pi := Real.pi_gt_314
+    norm_num at this
+    linarith
+
+  -- The third lemma proves that the set of integers $x$ where $|x| < 3\pi$ is exactly the set of integers $x$ where $-9 \leq x \leq 9$.
+  have h₃ : S = {x : ℤ | -9 ≤ x ∧ x ≤ 9} := by
+    ext x
+    simp [h₀]
+    rw [abs_lt]
+    constructor
+   . -- If $|x| < 3\pi$, then $-9 \leq x \leq 9$.
+      intro hx
+      rcases hx with ⟨hx, hx'⟩
+      rw [mul_comm] at hx'
+      apply mul_lt_mul_of_pos_right at hx'
+      norm_cast at hx' ⊢
+      simp
+      rw [Int.lt_add_one_iff] at hx'
+      exact hx'
+      exact h₁
+   . -- If $-9 \leq x \leq 9$, then $|x| < 3\pi$.
+      intro hx
+      rcases hx with ⟨hx, hx'⟩
+      apply mul_lt_mul_of_pos_right
+     . simp
+        rw [Int.lt_add_one_iff]
+        exact hx
+     . exact h₂
+     . exact (show (0 : ℝ) < 3 * Real.pi by positivity)
+
+  -- Using the third lemma, we can calculate the number of elements in $S$.
+  calc _ = {x : ℤ | -9 ≤ x ∧ x ≤ 9}.card := by rw [h₃]
+       _ = (9 - (-9) + 1) := by rw [Finset.card_eq_prime_iff]; rfl
+       _ = 19 := by norm_num
+
+  -- The answer is $\boxed{19}$.
+```

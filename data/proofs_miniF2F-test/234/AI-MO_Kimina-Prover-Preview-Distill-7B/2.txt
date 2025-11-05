@@ -1,0 +1,156 @@
+-- Let's write down the matrix of coefficients and compute its determinant.
+  let A :=!![1, 4, 9, 16, 25, 36, 49; 4, 9, 16, 25, 36, 49, 64; 9, 16, 25, 36, 49, 64, 81]
+  let detA := A.det
+
+  -- By computing the determinant directly, we get that $\det(A) = 7^3$.
+  have hdet : detA = 7^3 := by
+    simp only [A, det_fin_three, Fin.isValue, Matrix.det_fin_three, Matrix.det_fin_two, Matrix.det_fin_two]
+    simp only [Matrix.det_fin_two, Matrix.det_fin_two]
+    ring
+  norm_num at hdet
+
+  -- Let me write down the system of linear equations.
+  let eq1 := h₀
+  let eq2 := h₁
+  let eq3 := h₂
+
+  let b :=!![1; 12; 123]
+
+  let eq4 := b 0
+  let eq5 := b 1
+  let eq6 := b 2
+
+  -- The determinant of the coefficient matrix is non-zero, so the system has a unique solution.
+  have hinv : A.Invertible := by
+    simp only [Invertible, Matrix.Injective, Matrix.det_fin_two, Matrix.det_fin_two]
+    simp only [Matrix.det_fin_two, Matrix.det_fin_two]
+    rw [hdet, ne_of_gt]
+    norm_num
+
+  -- Let me write down the augmented matrix and the reduced echelon form.
+  let M :=!![1, 4, 9, 16, 25, 36, 49, 1; 4, 9, 16, 25, 36, 49, 64, 12; 9, 16, 25, 36, 49, 64, 81, 123]
+  let M_rref :=!![1, 0, 0, 0, 0, 0, 0, 547/343; 0, 1, 0, 0, 0, 0, 0, -1138/343; 0, 0, 1, 0, 0, 0, 0, 969/343]
+
+  -- By computing the product of M and the reduced echelon form, we get the identity matrix.
+  have hrref : M ≤;> M_rref =!![1, 0, 0, 0, 0, 0, 0, 0; 0, 1, 0, 0, 0, 0, 0, 0; 0, 0, 1, 0, 0, 0, 0, 0; 0, 0, 0, 1, 0, 0, 0, 0; 0, 0, 0, 0, 1, 0, 0, 0; 0, 0, 0, 0, 0, 1, 0, 0; 0, 0, 0, 0, 0, 0, 1, 0; 0, 0, 0, 0, 0, 0, 0, 1] := by
+    simp only [M, M_rref, Matrix.cons_val', Matrix.head_cons, Matrix.cons_val_zero, Matrix.empty_val', Matrix.cons_val_zero, Nat.succ_eq_add_one, Nat.reduceAdd, Matrix.head_cons, Matrix.cons_val_zero, Matrix.empty_val', Matrix.cons_val_zero, Nat.succ_eq_add_one, Nat.reduceAdd, Matrix.head_cons, Matrix.cons_val_zero, Matrix.empty_val', Matrix.cons_val_zero, Nat.succ_eq_add_one, Nat.reduceAdd, Matrix.head_cons, Matrix.cons_val_zero, Matrix.empty_val', Matrix.cons_val_zero, Nat.succ_eq_add_one, Nat.reduceAdd, Matrix.head_cons, Matrix.cons_val_zero, Matrix.empty_val', Matrix.cons_val_zero, Nat.succ_eq_add_one, Nat.reduceAdd]
+    norm_num
+
+  -- The first three columns of the reduced echelon form are the pivot columns.
+  let P :=!![1, 0, 0, 0, 0, 0, 0; 0, 1, 0, 0, 0, 0, 0; 0, 0, 1, 0, 0, 0, 0; 0, 0, 0, 1, 0, 0, 0; 0, 0, 0, 0, 1, 0, 0; 0, 0, 0, 0, 0, 1, 0; 0, 0, 0, 0, 0, 0, 1; 0, 0, 0, 0, 0, 0, 0]
+
+  -- The reduced row echelon form of the augmented matrix is the product of the pivot columns and the reduced echelon form of the coefficient matrix.
+  have hrref' := M_rref ≤;> P >-;> A =!![1, 0, 0, 0, 0, 0, 0, 547/343; 0, 1, 0, 0, 0, 0, 0, -1138/343; 0, 0, 1, 0, 0, 0, 0, 969/343]
+
+  -- The first three columns of the reduced row echelon form are the pivot columns.
+  let Q :=!![1, 0, 0, 0, 0, 0, 0; 0, 1, 0, 0, 0, 0, 0; 0, 0, 1, 0, 0, 0, 0; 0, 0, 0, 1, 0, 0, 0; 0, 0, 0, 0, 1, 0, 0; 0, 0, 0, 0, 0, 1, 0; 0, 0, 0, 0, 0, 0, 1; 0, 0, 0, 0, 0, 0, 0]
+
+  -- The reduced row echelon form of the augmented matrix is the product of the pivot columns and the reduced row echelon form of the coefficient matrix.
+  have hrref'' : P >-;> A ≤;> Q =!![1, 0, 0, 0, 0, 0, 0, 547/343; 0, 1, 0, 0, 0, 0, 0, -1138/343; 0, 0, 1, 0, 0, 0, 0, 969/343]
+
+  -- The (i,j)-th entry of the reduced row echelon form of the augmented matrix is zero if and only if the (i,j)-th entry of the reduced echelon form is zero.
+  have hred : (P >-;> M_rref ≤;> Q) i j = (M_rref ≤;> P >-;> Q) i j := by
+    induction i with
+    | zero => simp only [Nat.reduceEqDiff, mul_zero, zero_add, mul_one, Matrix.cons_val', Matrix.head_cons, zero_ne_zero, Matrix.cons_val_zero, Matrix.empty_val', Matrix.head_empty, Matrix.zero_val', OfNat.zero_ne_ofNat, or_false, or_true]
+    | succ i => induction j with
+    | zero => simp only [Nat.reduceEqDiff, mul_zero, zero_add, mul_one, Matrix.cons_val', Matrix.head_cons, zero_ne_zero, Matrix.cons_val_one, Matrix.head_empty, Matrix.empty_val', OfNat.zero_ne_ofNat, or_false, or_true]
+    | succ j => simp only [Matrix.cons_val', Matrix.head_cons, Matrix.cons_val_zero, Matrix.empty_val', Matrix.head_empty, Matrix.cons_val', Matrix.head_cons, zero_ne_zero, Nat.succ_eq_add_one, Nat.reduceAdd, Matrix.cons_val_one, Matrix.head_add, add_zero, Matrix.head_add, Matrix.add_apply, Matrix.cons_val_zero, add_zero, zero_add, mul_zero, zero_mul, add_zero, Matrix.empty_val', OfNat.zero_ne_ofNat, or_false, or_true]
+
+  -- The (i,j)-th entry of the reduced row echelon form of the augmented matrix is zero if and only if the (i,j)-th entry of the coefficient matrix is zero.
+  have hred' : (P >-;> A ≤;> Q) i j = (A ≤;> P >-;> Q) i j := by
+    induction i with
+    | zero => simp only [Nat.reduceEqDiff, mul_zero, zero_add, mul_one, Matrix.cons_val', Matrix.head_cons, zero_ne_zero, Matrix.cons_val_zero, Matrix.empty_val', Matrix.head_empty, Matrix.zero_val', OfNat.zero_ne_ofNat, or_false, or_true]
+    | succ i => induction j with
+    | zero => simp only [Nat.reduceEqDiff, mul_zero, zero_add, mul_one, Matrix.cons_val', Matrix.head_cons, zero_ne_zero, Matrix.cons_val_one, Matrix.head_empty, Matrix.empty_val', OfNat.zero_ne_ofNat, or_false, or_true]
+    | succ j => simp only [Matrix.cons_val', Matrix.head_cons, Matrix.cons_val_zero, Matrix.empty_val', Matrix.head_empty, Matrix.cons_val', Matrix.head_cons, zero_ne_zero, Nat.succ_eq_add_one, Nat.reduceAdd, Matrix.cons_val_one, Matrix.head_add, add_zero, Matrix.head_add, Matrix.add_apply, Matrix.cons_val_zero, add_zero, zero_add, mul_zero, zero_mul, add_zero, Matrix.empty_val', OfNat.zero_ne_ofNat, or_false, or_true]
+
+  -- The (i,j)-th entry of the reduced row echelon form of the augmented matrix is zero if and only if the (i,j)-th entry of the coefficient matrix is zero.
+  have hred'' : (M_rref ≤;> P >-;> A) i j = (P >-;> A ≤;> Q) i j := by
+    rw [←hred', hred]
+
+  -- The (i,j)-th entry of the reduced row echelon form of the augmented matrix is zero if and only if the (i,j)-th entry of the coefficient matrix is zero.
+  have hred''' : (M_rref ≤;> P >-;> A) i j = (A ≤;> P >-;> Q) i j := by
+    rw [hred'']
+
+  -- The first three columns of the reduced row echelon form are the pivot columns.
+  have hP : P i j = if i ∈ ({0, 1, 2} : Finset ℕ) then 1 else 0 := by
+    simp only [P, Matrix.cons_val', Matrix.head_cons, Nat.reduceAdd, Matrix.cons_val_zero, Matrix.empty_val', zero_ne_zero, Matrix.head_empty, Matrix.zero_val', OfNat.zero_ne_ofNat, ne_eq, hQ, ↓reduceIte, hR, hS]
+
+  -- The (i,j)-th entry of the reduced row echelon form of the augmented matrix is zero if and only if the (i,j)-th entry of the coefficient matrix is zero.
+  have h entries_of_coefficient_matrix_eq_zero_of_not_inominator (i j : ℕ) (h : ¬ (i ∈ ({0, 1, 2} : Finset ℕ) ∧ j ∈ ({0, 1, 2} : Finset ℕ))) : ¬ ((M_rref ≤;> P >-;> A) i j = 0) ↔ ¬ (A i j = 0) := by
+    have hi : i ∈ ({0, 1, 2} : Finset ℕ) := by
+      simp only [P, Matrix.cons_val', Matrix.head_cons, Nat.reduceAdd, Matrix.cons_val_zero, Matrix.empty_val', zero_ne_zero, Matrix.head_empty, Matrix.zero_val', OfNat.zero_ne_ofNat, ne_eq, h, ↓reduceIte, hR, hS]
+    have hj : j ∈ ({0, 1, 2} : Finset ℕ) := by
+      simp only [P, Matrix.cons_val', Matrix.head_cons, Nat.reduceAdd, Matrix.cons_val_zero, Matrix.empty_val', zero_ne_zero, Matrix.head_empty, Matrix.zero_val', OfNat.zero_ne_ofNat, ne_eq, h, ↓reduceIte, hR, hS]
+    split_ands
+    · intro h₀
+      apply hred''' at h₀
+      rw [hP] at h₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self] at h₀
+      intro j₀
+      apply hred'' at j₀
+      rw [hP] at j₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self] at j₀
+      exact j₀
+    · intro h₀
+      apply hred'' at h₀
+      rw [hP] at h₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self] at h₀
+      intro j₀
+      apply hred''' at j₀
+      rw [hP] at j₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self] at j₀
+      exact j₀
+    · intro h₀
+      apply hred''' at h₀
+      rw [hP] at h₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self] at h₀
+      intro j₀
+      apply hred'' at j₀
+      rw [hP] at j₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self] at j₀
+      exact j₀
+
+  -- The (i,j)-th entry of the reduced row echelon form of the augmented matrix is zero if and only if the (i,j)-th entry of the coefficient matrix is zero.
+  have entries_of_coefficient_matrix_eq_zero_of_not_inominator (i j : ℕ) (h : ¬ (i ∈ ({0, 1, 2} : Finset ℕ) ∧ j ∈ ({0, 1, 2} : Finset ℕ))) : ((M_rref ≤;> P >-;> A) i j = 0) ↔ (A i j = 0) := by
+    simp only [P, Matrix.cons_val', Matrix.head_cons, Nat.reduceAdd, Matrix.cons_val_zero, Matrix.empty_val', zero_ne_zero, Matrix.head_empty, Matrix.zero_val', OfNat.zero_ne_ofNat, ne_eq, ↓reduceIte, hR, hS]
+    have hj : j ∈ ({0, 1, 2} : Finset ℕ) := by
+      simp only [Matrix.cons_val', Matrix.head_cons, Nat.reduceAdd, Matrix.cons_val_zero, Matrix.empty_val', zero_ne_zero, Set.mem_insert_iff, Set.mem_singleton_iff, or_self, not_false_eq_true, Set.mem_setOf_eq]
+    have hi : i ∈ ({0, 1, 2} : Finset ℕ) := by
+      simp only [Matrix.cons_val', Matrix.head_cons, Nat.reduceAdd, Matrix.cons_val_zero, Matrix.empty_val', zero_ne_zero, Set.mem_insert_iff, Set.mem_singleton_iff, or_self, not_false_eq_true, Set.mem_setOf_eq]
+    rw [h P i j]
+    split_ands
+    · intro h₀
+      apply hred''' at h₀
+      rw [hP] at h₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self]
+      intro j₀
+      apply hred'' at j₀
+      rw [hP] at j₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self] at j₀
+      exact j₀
+    · intro h₀
+      apply hred'' at h₀
+      rw [hP] at h₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self]
+      intro j₀
+      apply hred''' at j₀
+      rw [hP] at j₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self] at j₀
+      exact j₀
+    · intro h₀
+      apply hred''' at h₀
+      rw [hP] at h₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self]
+      intro j₀
+      apply hred'' at j₀
+      rw [hP] at j₀
+      simp only [not_and_or, not_not, not_or, or_self, not_false_eq_true, imp_self] at j₀
+      exact j₀
+
+  -- The (i,j)-th entry of the reduced row echelon form of the augmented matrix is zero if and only if the (i,j)-th entry of the coefficient matrix is zero.
+  have entries_of_coefficient_matrix_eq_zero (i j : ℕ) (h : ¬ (i ∈ ({0, 1, 2} : Finset ℕ) ∧ j ∈ ({0, 1, 2} : Finset ℕ))) : ((M_rref ≤;> A ≤;> Q) i j = 0) ↔ (A i j = 0) := by
+    apply hred''
+
+  -- The (i,j)-th entry of the reduced row echelon form of the augmented matrix is zero if and only if the (i,j)-th entry of the coefficient matrix is zero.
+  have entries_of_coefficient_matrix_eq_zero' (i j : ℕ) (h : ¬ (i ∈ ({0, 1, 2} : Finset ℕ

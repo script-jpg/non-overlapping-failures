@@ -1,0 +1,67 @@
+have h₄ : (k - t) ∣ (m * (k - t)) := by
+    apply Nat.dvd_mul_right
+
+  have h₅ : (k - t) ∣ (k ^ 2 - t ^ 2) := by
+    apply Nat.dvd_sub
+    · ring_nf
+    · ring_nf
+
+  have h₆ : (k - t) ∣ (m * (k - t) - (k ^ 2 - t ^ 2)) := by
+    exact Nat.dvd_sub h₄ h₅
+
+  have h₇ : m * (k - t) - (k ^ 2 - t ^ 2) = 0 := by
+    apply Nat.eq_zero_of_dvd_of_lt
+    · exact h₆
+    · nlinarith
+
+  have h₈ : m = k + t := by
+    nlinarith
+
+  have h₉ : t = 1 ∧ k = 2 := by
+    have h₁₀ : n = k * t - m * (k - 1) / 2 := by
+      zify
+      have h₁₁ : (2 * (k ^ 2 - m * k + n) + (k - 1) * (m - k) * m) / 2 = k * t - m * (k - 1) / 2 := by
+        rw [h₂]
+        norm_num
+        ring_nf
+      omega
+    rw [h₈] at h₁₀
+    have h₁₁ : (2 * (k ^ 2 - m * k + n) + (2 * k - 1) * (m - 2 * k) * m) / 2 = m := by
+      rw [h₈] at h₁₀
+      rw [h₁₀]
+      ring_nf
+      rw [show k * (2 * k - m * 2) = 2 * (k ^ 2 - m * k) by ring]
+      omega
+    have h₁₂ : m * (2 * k - m * 2) = 2 * (2 * k - m) * m - m * (2 * k - m * 2) := by
+      rw [show 2 * (2 * k - m) * m = m * (2 * (2 * k - m)) by ring]
+      nth_rw 2 [show 2 * k - m * 2 = 2 * (k - m) by ring]
+      rw [Nat.sub_add_eq]
+      · ring_nf
+      · apply Nat.le_mul_of_pos_left
+        exact h₈
+    rw [h₁₂] at h₁₁
+    have h₁₃ : (2 * k - m * 2) * (m - 2) = 0 := by
+      zify
+      have h₁₄ : (2 * (2 * k - m * 2) * m - m * (2 * k - m * 2)) / (2 * k - m * 2) = 2 * (m - 2) := by
+        rw [show 2 * (2 * k - m * 2) ≠ 0 by nlinarith]
+        omega
+      omega
+    have h₁₅ : 2 * k - m * 2 ∣ (2 * k - m * 2) ∧ 2 * k - m * 2 ∣ (m - 2) := by
+      constructor
+      · exact Dvd.intro_left (m - 2) rfl
+      · exact Nat.dvd_of_mod_eq_zero h₁₃
+    rcases h₁₅ with ⟨h₁₅, h₁₆⟩
+    have h₁₇ : 2 * k - m * 2 = 1 ∨ 2 * k - m * 2 = 0 := by
+      apply (Nat.dvd_prime h₇).mp h₁₅
+    rcases h₁₇ with h₁₇ | h₁₇
+    · replace h₁₇ : m = k + 1 := by
+        omega
+      apply Nat.le_one_iff_eq_zero_or_eq_one.mp at h₈
+      rcases h₈ with h₈ | h₈
+      · omega
+      · rw [h₈, h₁₇]
+        omega
+    · omega
+  omega
+
+```

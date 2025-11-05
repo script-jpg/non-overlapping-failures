@@ -1,0 +1,91 @@
+have h₂ : ∀ x : ℝ, f x = (x ^ 2 + (18 * x + 45)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) + 15 + (x + 9) ^ 2 := by
+    intro x
+    calc
+      _ = (x ^ 2 + (18 * x + 30)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by rw [h₀]
+      _ = (x ^ 2 + (18 * x + 45)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) + 15 + ((x + 9) ^ 2 - 15 - 81) := by ring
+      _ = _ := by ring
+
+  have h₃ : ∀ x : ℝ, f x = (Real.sqrt (x ^ 2 + (18 * x + 45)) - (x + 9)) ^ 2 := by
+    intro x
+    rw [h₂ x]
+    calc
+      _ = (Real.sqrt (x ^ 2 + (18 * x + 45)) - (x + 9)) ^ 2 := by
+        ring_nf
+        simp
+        ring
+
+  -- the equation $x^2 + 18x + 30 = 2 \sqrt{x^2 + 18x + 45}$ is equivalent to
+  -- $(x + 9)^2 = 2 \sqrt{x^2 + 18x + 45}$
+  -- or equivalently $(x + 9)^4 = 4(x^2 + 18x + 45)$
+  -- the last equation can be written as $(x^2 + 18x + 30)^2 = 4(x^2 + 18x + 45)$
+  -- so the equation has at most 4 roots, and the product of the roots is $4 * (45/30) = 6$
+  have h₄ : ∀ x : ℝ, f x = 0 ↔ x = Real.sqrt (Real.sqrt (45 / 2) + 9) - 9 ∨ x = -Real.sqrt (Real.sqrt (45 / 2) + 9) - 9 := by
+    intro x
+    constructor
+   . intro hx
+      rw [h₃ x, sq_eq_zero_iff] at hx
+      have hx' : Real.sqrt (x ^ 2 + (18 * x + 45)) = x + 9 := by
+        linarith only [hx]
+      have h₀ : x ^ 2 + (18 * x + 45) = (x + 9) ^ 2 := by
+        rw [←hx']
+        field_simp
+      have h₁ : x + 9 ≥ 0 := by
+        rw [←hx']
+        positivity
+      have h₂ : x ^ 2 + (18 * x + 45) ≥ 0 := by positivity
+      have : x = Real.sqrt (45 / 2) ∨ x = -Real.sqrt (45 / 2) - 9 := by
+        apply mul_self_eq_mul_self_iff.mp
+        rw [←add_sq, h₀, Real.sq_sqrt]
+        linarith only [h₁, h₂]
+        linarith only [h₁]
+      cases' this with h₃ h₃
+     . left
+        calc
+          _ = Real.sqrt (45 / 2) - 9 := by linarith only [h₃]
+          _ = Real.sqrt (Real.sqrt (45 / 2) + 9) - 9 := by
+            congr
+            rw [add_comm, Real.sqrt_add, ←mul_self, mul_comm ((9 : ℝ) / 2), ←div_mul, div_self (by norm_num), zero_mul, add_zero, Real.sqrt_mul_self]
+            norm_num
+            norm_num
+            linarith only [show 0 ≤ (45 / 2 : ℝ) by norm_num]
+     . right
+        calc
+          _ = -Real.sqrt (45 / 2) - 9 := by linarith only [h₃]
+          _ = -Real.sqrt (Real.sqrt (45 / 2) + 9) - 9 := by
+            congr
+            rw [←add_mul, ←Real.sqrt_mul, mul_comm ((9 : ℝ) / 2), ←div_mul, div_self (by norm_num), zero_mul, add_zero, Real.sqrt_mul_self]
+            norm_num
+            norm_num
+            linarith only [show 0 ≤ (45 / 2 : ℝ) by norm_num]
+   . intro hx
+      cases' hx with hx hx
+     . rw [hx, h₃, add_sq, Real.sq_sqrt, div_self, zero_mul, add_zero]
+        norm_num
+        linarith only [show 0 ≤ (45 / 2 : ℝ) by norm_num]
+     . rw [hx, h₃, add_sq, Real.sq_sqrt, div_self, zero_mul, add_zero]
+        norm_num
+        linarith only [show 0 ≤ (45 / 2 : ℝ) by norm_num]
+
+  -- so the equation has at most 4 roots, and the product of the roots is $4 * (45/30) = 6$
+  have h₅ : Fintype (f ⁻¹' {0}) := by
+    apply Fintype.subtype f
+    simp
+    intro x
+    obtain hx | hx := h₄ x
+   . simp [hx]
+   . simp [hx]
+
+  have h₆ : ∏ x in (f ⁻¹' {0}).toFinset, x = Real.sqrt (Real.sqrt (45 / 2) + 9) - 9 :=
+    calc
+      _ = (∏ x in ({x | x = Real.sqrt (45 / 2) ∨ x = -Real.sqrt (45 / 2) - 9} : Finset ℝ), x) := by
+        congr
+        ext x
+        simp
+        intro _ _
+        exact h₄ x
+      _ = _ := by
+        rw [Finset.prod_pair (by linarith only [Real.sqrt_pos.mpr (show (0:ℝ) < (45 / 2) by norm_num]) (by norm_num)]
+        positivity
+
+  simp [h₅, h₆, show Real.sqrt (Real.sqrt (45 / 2) + 9) - 9 ≠ -Real.sqrt (45 / 2) - 9 by positivity]
+```

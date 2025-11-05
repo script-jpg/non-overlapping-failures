@@ -1,0 +1,104 @@
+-- given the finset S, where S is defined as the set of solutions to the equation sin(π/2 * cos(x)) = cos(π/2 * sin(x)) in the interval [0, π]
+    -- we need to prove that the cardinality of S is 2
+
+    have h₁ : 0 ∈ S := by
+      rw [h₀]
+      constructor
+      exact zero_le Real.pi
+      constructor
+      exact Real.pi_le pi.pi
+      exact rfl
+    have h₂ : Real.pi ∈ S := by
+      rw [h₀]
+      constructor
+      exact Real.pi_nonneg
+      constructor
+      exact Real.pi_le pi.pi
+      exact pi_pi
+    have h₃ : S ≠ ∅ := by
+      rw [h₀]
+      simp
+      use 0
+      constructor
+      exact zero_le Real.pi
+      constructor
+      exact Real.pi_le pi.pi
+      simp
+    have h₄ : S ≠ {0} := by
+      intro h
+      rw [h₀] at h
+      simp [h] at h₁
+    have h₅ : S ≠ {Real.pi} := by
+      intro h
+      rw [h₀] at h
+      simp [h] at h₂
+    have h₆ : ∃ x : ℝ, x ∈ S ∧ x ≠ 0 ∧ x ≠ Real.pi := by
+      -- show that there exists another solution
+      -- first show that -1 is a solution
+      have h₆ : -1 ∈ S := by
+        rw [h₀]
+        constructor
+        exact neg_one_le Real.pi
+        constructor
+        exact Real.pi_le pi.pi
+        -- verify that x = -1 is a solution
+        have h₆ : Real.sin (Real.pi / 2 * Real.cos (-1)) = Real.cos (Real.pi / 2 * Real.sin (-1)) := by
+          have h₆ : Real.cos (-1) = Real.cos 1 := by
+            exact Real.cos_neg 1
+          have h₇ : Real.sin (-1) = - Real.sin 1 := by
+            exact Real.sin_neg 1
+          rw [h₆, h₇]
+          have h₈ : Real.cos (Real.pi / 2 * Real.cos 1) = Real.sin (Real.pi / 2 * Real.sin 1) := by
+            have h₈ : Real.pi / 2 * Real.cos 1 = Real.pi / 2 - Real.pi / 2 * Real.sin 1 := by
+              ring_nf
+              rw [Real.cos_sq']
+              ring
+            rw [h₈]
+            rw [Real.sin_pi_div_two_sub]
+          exact h₈
+        exact h₆
+      -- show that -1 ≠ 0 and -1 ≠ π
+      have h₇ : -1 ≠ 0 := by
+        exact ne_of_lt (neg_one_lt_zero)
+      have h₈ : -1 ≠ Real.pi := by
+        apply ne_of_lt
+        have h₈ : Real.pi > 3 := by
+          exact pi_gt_three
+        linarith
+      -- show that -1 is a solution different from 0 and π
+      exact ⟨-1, h₆, h₇, h₈⟩
+    -- show that the solution set is exactly {0, -1} by solving the equation
+    have h₇ : S = {0, -1} := by
+      ext x
+      simp only [Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff, Set.union_insert, Set.union_singleton]
+      constructor
+      -- show that 0 and -1 are the only solutions
+      · intro h
+        rcases h with ⟨hx₁, hx₂, hx₃⟩
+        rw [h₀] at h
+        -- simplify the equation by substituting x = 0 and x = -1
+        rcases h with h | h
+        -- verify that x = 0 is the only solution in the interval [0, π] that satisfies the equation
+        · constructor
+          exact hx₁
+          have h₄ : x = 0 := by
+            rw [h] at hx₂
+            exact Eq.symm hx₂
+          exact h₄
+        · constructor
+          exact hx₁
+          have h₄ : x = -1 := by
+            rw [h] at hx₂
+            exact Eq.symm hx₂
+          exact h₄
+      · intro h
+        rcases h with h | h
+        -- verify that 0 and -1 are indeed solutions
+        · rw [h]
+          exact ⟨zero_le Real.pi, Real.pi_le pi.pi, rfl⟩
+        · rw [h]
+          exact ⟨neg_one_le Real.pi, Real.pi_le pi.pi, h₆⟩
+    -- show that the cardinality of the solution set is 2
+    rw [h₇]
+    exact Finset.card_pair (by linarith)
+```

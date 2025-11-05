@@ -1,0 +1,85 @@
+-- We use the identity $\sec^2 x - \tan^2 x = 1.$
+  have hsec_tan_sq_sub_one : (1 / Real.cos x) ^ 2 - Real.tan x ^ 2 = 1 := by
+    have hcos_ne_zero : Real.cos x ≠ 0 := by
+      intro h
+      rw [Real.tan_eq_sin_div_cos, h] at h₀
+      norm_num at h₀
+    have htan_ne_zero : Real.tan x ≠ 0 := by
+      intro h
+      rw [Real.tan_eq_sin_div_cos] at h
+      simp [h] at h₀
+      norm_num at h₀
+    field_simp [hcos_ne_zero, htan_ne_zero]
+    ring
+
+  -- We have $\csc x + \cot x = \frac{1}{\sin x} + \frac{\cos x}{\sin x} = \frac{1 + \cos x}{\sin x}.$
+  have hcot_csc_add_one : 1 / Real.sin x + 1 / Real.tan x = (1 + Real.cos x) / Real.sin x := by
+    have hsin_ne_zero : Real.sin x ≠ 0 := by
+      by_contra hsin
+      have htan_ne_zero : Real.tan x ≠ 0 := by
+        intro htan
+        rw [Real.tan_eq_sin_div_cos, hsin] at htan
+        norm_num at htan
+      rw [Real.tan_eq_sin_div_cos] at h₀
+      rw [hsin, htan_ne_zero] at h₀
+      norm_num at h₀
+    field_simp [Real.cos_sq_add_sin_sq x, hsin_ne_zero]
+    ring
+
+  -- We get $(\sec x + \tan x)(\csc x + \cot x) = 1 + \cot x + \tan x + \csc x = 1 + (\cot x + \tan x) + \csc x = 1 + 1 + \csc x = 2 + \csc x.$
+  have hmul : (1 / Real.cos x + Real.tan x) * (1 / Real.sin x + 1 / Real.tan x) = 2 + (1 / Real.sin x) := by
+    rw [h₀, hcot_csc_add_one]
+    have hsin_ne_zero : Real.sin x ≠ 0 := by
+      by_contra hsin
+      have htan_ne_zero : Real.tan x ≠ 0 := by
+        intro htan
+        rw [Real.tan_eq_sin_div_cos, hsin] at htan
+        norm_num at htan
+      rw [Real.tan_eq_sin_div_cos] at h₀
+      rw [hsin, htan_ne_zero] at h₀
+      norm_num at h₀
+    have htan_ne_zero : Real.tan x ≠ 0 := by
+      intro htan
+      rw [Real.tan_eq_sin_div_cos] at htan
+      simp [htan, hsin_ne_zero] at h₀
+      norm_num at h₀
+    field_simp [hcos_ne_zero, hsin_ne_zero, htan_ne_zero]
+    ring
+
+  -- We get $\csc x = \frac{m}{n-2},$ so $m + n - 2 = mn.$
+  have hcsc : 1 / Real.sin x = (m : ℚ) / (n - 2) := by
+    have hmul' := hmul
+    rw [h₁] at hmul'
+    have hne : (n : ℚ) - 2 ≠ 0 := by by_contra h; rw [h] at hmul'; norm_num at hmul'
+    field_simp [hne]
+    linarith
+
+  -- We get $(m - 1)(n - 2) = 2.$
+  have hmul' : ((m : ℚ) - 1) * (n - 2) = 2 := by
+    have htan_ne_zero : Real.tan x ≠ 0 := by
+      intro htan
+      rw [Real.tan_eq_sin_div_cos] at h₀
+      simp [htan, hsin_ne_zero] at h₀
+      norm_num at h₀
+    rw [h₀] at hcsc
+    have hne : (m : ℚ) ≠ 0 := by by_contra h; rw [h] at hcsc; norm_num at hcsc
+    field_simp [hne, htan_ne_zero] at hcsc
+    linarith
+  norm_cast at hmul'
+
+  -- Solve the equation $m * n - 2 * m - n + 3 = 2.$
+  have : m * n - 2 * m - n + 3 = 2 := by
+    linarith
+
+  -- We get $m = 1$ and $n = 1$, or $m = 3$ and $n = 1$, or $m = 2$ and $n = 3$.
+  have : (m = 1 ∧ n = 1) ∨ (m = 3 ∧ n = 1) ∨ (m = 2 ∧ n = 3) := by
+    by_contra h
+    have hne : m * n - 2 * m - n + 3 > 2 := by
+      linarith
+    linarith
+
+  rcases this with ⟨hm, hn⟩ | ⟨hm, hn⟩ | ⟨hm, hn⟩
+  · norm_num [hm, hn]
+  · norm_num [hm, hn]
+  · norm_num [hm, hn]; exact_mod_cast ⟨⟨3, 2, by norm_num⟩, by norm_num⟩
+```

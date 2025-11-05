@@ -1,0 +1,123 @@
+-- the condition is equivalent to m = 8x and n = 8y and gcd(x, y) = 1 and lcm(x, y) = 14.
+  have h₃ (x y : ℕ) (hxy : 0 < x ∧ 0 < y) : Nat.gcd x y = 1 ∧ Nat.lcm x y = 14 ↔
+      Nat.gcd (8 * x) (8 * y) = 8 ∧ Nat.lcm (8 * x) (8 * y) = 112 := by
+    constructor
+    · intro ⟨hgcd, hlcm⟩
+      have h1 := Nat.gcd_mul_left 8 hgcd
+      have h2 := Nat.gcd_mul_right 8 hgcd
+      have h3 := Nat.lcm_mul_left 8 hlcm
+      have h4 := Nat.lcm_mul_right 8 hlcm
+      rw [h1, h2, h3, h4]
+      omega
+    · intro ⟨hgcd, hlcm⟩
+      have h1 := Nat.gcd_mul_left 8 hgcd
+      have h2 := Nat.gcd_mul_right 8 hgcd
+      have h3 := Nat.lcm_mul_left 8 hlcm
+      have h4 := Nat.lcm_mul_right 8 hlcm
+      have h5 : 8 * (8 * x) = 64 * x := by ring
+      have h6 : 8 * (8 * y) = 64 * y := by ring
+      have h7 : 112 * (8 * x) = 896 * x := by ring
+      have h8 : 112 * (8 * y) = 896 * y := by ring
+      rw [h5, h6, h7, h8] at *
+      omega
+
+  -- now coprime condition is equivalent to x y gcd is 1, we can use this to simplify.
+  rw [h₃] at h₁ h₂
+  simp only [Nat.reduceLeDiff, not_false_eq_true, and_true] at h₁ h₂
+
+  -- given coprime condition, how to minimize x + y? obviously, one of them must be 14's factor.
+  have y14 : 14 ∣ y := by
+    have : y ∣ 14 := by
+      apply Nat.dvd_lcm_left
+      omega
+    exact Nat.dvd_of_dvd_mul_right_of_gcd_one this h₁
+  rcases y14 with ⟨y', hy'⟩
+
+  -- if y = 14, then x = 1 and m = n = 8, but it does not meet the condition.
+  have hy1 : y' ≠ 0 := by
+    intro hy1
+    rw [hy1] at hy'
+    simp only [mul_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true] at hy'
+  have hy1' : 1 ≤ y' := Nat.zero_lt_of_ne_zero hy1
+  have : 14 * x = 14 * y' := by
+    rw [hy'] at hlcm
+    exact hlcm
+  have hx1 (h : x = y') : x = 1 := by
+    omega
+  rw [hx1] at hy'
+  simp only [mul_one, and_self] at h₁
+
+  -- if y = 7, then x = 2 and m = 16 and n = 56 and m + n = 72.
+  have hy2 : 2 * x = 14 := by
+    rw [hy'] at hlcm
+    have : 14 * x = 14 * 7 := by
+      omega
+    omega
+  have hy7 : y' = 7 := by
+    omega
+  rw [hy7] at hy'
+  simp only [mul_eq_mul_left_iff, OfNat.ofNat_ne_zero, or_false] at hy'
+  have h1 : x = 7 := by
+    omega
+  have h2 : m = 16 := by
+    omega
+  have h3 : n = 56 := by
+    omega
+  have h4 : m + n = 72 := by
+    omega
+  rw [h4]
+  -- to prove 72 is the least, we must show x + y ≥ 72.
+  have : 7 ≤ x ∨ 7 ≤ y' := by
+    by_contra! hx1
+    have : x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 ∨ x = 6 := by omega
+    rcases this with (hx | hx | hx | hx | hx | hx)
+    · rw [hx] at hy'
+      simp only [mul_one, false_or] at hy'
+    · rw [hx] at hy'
+      simp only [mul_two, false_or] at hy'
+    · rw [hx] at hy'
+      have : y' ^ 2 * 9 = 49 := by
+        rw [hy']
+        omega
+      have : 9 ∣ 49 := by
+        rw [← this]
+        exact Nat.dvd_mul_right 9 (y' ^ 2)
+      have : 3 ∣ 7 := by
+        exact Nat.Coprime.dvd_of_dvd_pow (by norm_num) this
+      norm_num at this
+    · rw [hx] at hy'
+      have : y' ^ 2 * 16 = 64 := by
+        rw [hy']
+        omega
+      have : 16 ∣ 64 := by
+        rw [← this]
+        exact Nat.dvd_mul_right 16 (y' ^ 2)
+      have : 4 ∣ 8 := by
+        exact Nat.Coprime.dvd_of_dvd_pow (by norm_num) this
+      norm_num at this
+    · rw [hx] at hy'
+      have : y' ^ 2 * 25 = 100 := by
+        rw [hy']
+        omega
+      have : 25 ∣ 100 := by
+        rw [← this]
+        exact Nat.dvd_mul_right 25 (y' ^ 2)
+      have : 5 ∣ 10 := by
+        exact Nat.Coprime.dvd_of_dvd_pow (by norm_num) this
+      norm_num at this
+    · rw [hx] at hy'
+      have : y' ^ 2 * 36 = 144 := by
+        rw [hy']
+        omega
+      have : 36 ∣ 144 := by
+        rw [← this]
+        exact Nat.dvd_mul_right 36 (y' ^ 2)
+      have : 6 ∣ 12 := by
+        exact Nat.Coprime.dvd_of_dvd_pow (by norm_num) this
+      norm_num at this
+  rcases this with (hx | hy)
+  · have : 7 + x ≤ 14 := by omega
+    omega
+  · have : 7 + y' ≤ 14 := by omega
+    omega
+```

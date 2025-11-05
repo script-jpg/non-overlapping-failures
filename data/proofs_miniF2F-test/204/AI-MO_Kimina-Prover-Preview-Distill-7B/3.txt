@@ -1,0 +1,115 @@
+-- First, we need to find how many integer values of $x$ satisfy $|x|<3\pi$.
+
+  -- Since the condition is $|x| < 3\pi$, we can split it into two inequalities: $x < 3\pi$ and $-x < 3\pi$.
+  -- Then, we can rewrite it as $-3\pi < x < 3\pi$.
+  -- Since $\pi \approx 3.14159$, we have $3\pi \approx 9.42477$.
+  -- Therefore, the integers $x$ that satisfy the inequality are those between $-9$ and $9$ inclusive.
+
+  -- Now, let's start building our proof in Lean 4. We need to prove that the set $S$ of integers satisfying $|x| < 3\pi$ has 19 elements.
+
+  -- We can use `le_of_lt (Real.pi_gt_three.mpr (by norm_num : (3 : ℝ) < 3 * Real.pi))` to get the fact that $3 < 3\pi$.
+  have h₁ : 3 < 3 * Real.pi := by
+    have h₂ : Real.pi > 3 := Real.pi_gt_three
+    linarith
+
+  -- We can use `Int.floor_lt` to get an integer $x$ such that $x < 3\pi$.
+  have h₂ : ∀ x : ℤ, x < 3 * Real.pi ↔ ↑x ≤ 3 * Real.pi - 1 := by
+    intro x
+    constructor
+   . intro h
+      have : x ≤ (3 * Real.pi - 1 : ℝ) := by
+        linarith
+      exact Int.floor_lt.mpr this
+   . intro h
+      exact Int.lt_floor.mpr h
+
+  -- Also, we can use `Int.ceil_lt` to get an integer $x$ such that $-x < 3\pi$.
+  have h₃ : ∀ x : ℤ, -x < 3 * Real.pi ↔ -(3 * Real.pi + 1 : ℝ) < x := by
+    intro x
+    constructor
+   . intro h
+      have : (-(3 * Real.pi + 1) : ℝ) < x := by
+        linarith
+      exact Int.ceil_lt.mpr this
+   . intro h
+      exact Int.lt_ceil.mpr h
+
+  -- Now, let's use these facts to show that the set $S$ is precisely the set of integers from $-(3\pi-1)$ to $3\pi-1$.
+  have h₄ : ∀ x : ℤ, x ∈ S ↔ x ≤ 3 * Real.pi - 1 ∧ -(3 * Real.pi - 1) ≤ x := by
+    intro x
+    rw [h₀ x]
+    constructor
+   . rintro ⟨h₁, h₂⟩
+      rw [h₂, h₁]
+      exact ⟨h₁, h₂⟩
+   . rintro ⟨h₁, h₂⟩
+      rcases h₂ with h₂ | h₂
+     . rw [←h₂, h₁]
+     . rwa [h₂, abs_of_nonpos (by linarith)]
+
+  -- Now, we need to find the cardinality of this set. The integers from $-(3\pi-1)$ to $3\pi-1$ inclusive form a sequence of integers with a common difference of 1.
+  -- The number of terms is equal to the difference between the last and first term plus 1.
+  -- The first term is $-(3\pi-1)$ and the last term is $3\pi-1$.
+  -- Therefore, the number of terms is $(3\pi-1) - (-(3\pi-1)) + 1 = 3\pi-1 + 3\pi-1 + 1 = 6\pi-1$.
+  -- Since $\pi \approx 3.14159$, we have $6\pi-1 \approx 18.8495$.
+  -- Since the number of terms must be an integer, we round up to the nearest integer, which is 19.
+
+  -- However, we need to be careful about the type of $3\pi-1$. It is important to note that $3\pi-1$ is not an integer, but a real number.
+  -- Therefore, we need to use `Int.cast_le` and `Int.cast_neg` to properly convert between real numbers and integers.
+  have h₅ : S = Finset.Icc (-(3 * Real.pi - 1 : ℤ)) (3 * Real.pi - 1 : ℤ) := by
+    ext x
+    simp [h₄, Int.cast_le, Int.cast_neg]
+    ac_rfl
+
+  -- Now that we have the set $S$ expressed as a closed interval of integers, we can use Lean's built-in function to calculate its cardinality.
+  rw [h₅, Finset.Icc]
+
+  -- The cardinality of a set of consecutive integers from $a$ to $b$ inclusive is $b - a + 1$.
+  -- In our case, $a = -(3\pi-1)$ and $b = 3\pi-1$.
+  -- So the cardinality is $(3\pi-1) - (-(3\pi-1)) + 1 = 3\pi-1 + 3\pi-1 + 1 = 6\pi-1$.
+  -- Since $\pi \approx 3.14159$, we have $6\pi-1 \approx 18.8495$.
+  -- Rounding up to the nearest integer, we get 19.
+
+  -- However, we need to be careful about the type of $3\pi-1$. It is important to note that $3\pi-1$ is not an integer, but a real number.
+  -- Therefore, we need to use `Int.cast_le` and `Int.cast_neg` to properly convert between real numbers and integers.
+  rw [Finset.card_Icc, Int.cast_sub, Int.cast_sub, Int.cast_neg, Int.cast_ofNat, Int.cast_ofNat]
+
+  -- The key fact that makes this work is that $3\pi-1 < 3\pi$.
+  -- This is because $3\pi-1 < 3\pi$ and $3\pi-1 > 3\pi - 1$.
+  -- Therefore, when we take the ceiling of $3\pi-1$, we get $3\pi$.
+  -- However, since $3\pi$ is not an integer, we need to round up to the nearest integer, which is $3\pi+1$.
+  -- This is a matter of type coercions: the ceiling function returns an integer, while $3\pi$ is a real number.
+  suffices (((3 : ℤ) * Real.pi - 1) : ℤ) - (-((3 : ℤ) * Real.pi - 1) : ℤ) + 1 = 6 * Real.pi - 1 by
+    norm_cast at this
+    rw [this]
+    linarith
+
+  -- Now, we need to compute the cardinality of the set of integers from $-(3\pi-1)$ to $3\pi-1$.
+  -- The cardinality of a set of consecutive integers from $a$ to $b$ inclusive is $b - a + 1$.
+  -- In our case, $a = -(3\pi-1)$ and $b = 3\pi-1$.
+  -- So the cardinality is $(3\pi-1) - (-(3\pi-1)) + 1 = 3\pi-1 + 3\pi-1 + 1 = 6\pi-1$.
+  -- Since $\pi \approx 3.14159$, we have $6\pi-1 \approx 18.8495$.
+  -- Rounding up to the nearest integer, we get 19.
+
+  -- However, we need to be careful about the type of $3\pi-1$. It is important to note that $3\pi-1$ is not an integer, but a real number.
+  -- Therefore, we need to use `Int.cast_le` and `Int.cast_neg` to properly convert between real numbers and integers.
+  simp [Int.cast_sub, Int.cast_mul, Int.cast_ofNat, Int.cast_neg, Int.cast_ofNat]
+
+  -- The key fact that makes this work is that $3\pi-1 < 3\pi$.
+  -- This is because $3\pi-1 < 3\pi$ and $3\pi-1 > 3\pi - 1$.
+  -- Therefore, when we take the ceiling of $3\pi-1$, we get $3\pi$.
+  -- However, since $3\pi$ is not an integer, we need to round up to the nearest integer, which is $3\pi+1$.
+  -- This is a matter of type coercions: the ceiling function returns an integer, while $3\pi$ is a real number.
+  suffices (3 * Real.pi - 1) - (- (3 * Real.pi - 1)) + 1 = 6 * Real.pi - 1 by
+    linarith
+  simp
+
+  -- Finally, we need to prove that $6\pi-1$ is indeed equal to $19$.
+  -- Since $\pi \approx 3.14159$, we have $6\pi-1 \approx 18.8495$.
+  -- Rounding up to the nearest integer, we get 19.
+  suffices (Real.pi - 1 / 3 : ℤ) ≤ 3 * Real.pi + 1 / 3 by
+    norm_cast at this
+    linarith
+  linarith
+
+```

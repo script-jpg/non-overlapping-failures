@@ -1,0 +1,38 @@
+have h₂ : n ≠ 1 := by
+    intro h
+    rw [h] at h₁
+    norm_num at h₁
+  -- We need to show that if n is not prime, then 2^n - 1 is not prime.
+  -- If n is not prime, then n = a * b for some a, b > 1.
+  -- We will use the fact that 2^ab - 1 = (2^a)^b - 1 = (2^a - 1)((2^a)^(b-1) + (2^a)^(b-2) +... + 2^a + 1).
+  have h₃ : Nat.Prime n := by
+    by_contra h
+    -- If n is not prime, then n = a * b for some a, b > 1.
+    have h₄ : n = 0 ∨ n = 1 ∨ (∃ a b : ℕ, a > 1 ∧ b > 1 ∧ n = a * b) := by
+      by_cases h₅ : n = 0
+      · exact Or.inl h₅
+      by_cases h₆ : n = 1
+      · exact Or.inr (Or.inl h₆)
+      right
+      right
+      have h₇ : n ≠ 0 := h₅
+      have h₈ : n ≠ 1 := h₆
+      have h₉ : n > 1 := by
+        omega
+      have h₁₀ : ∃ a b : ℕ, a > 1 ∧ b > 1 ∧ n = a * b := by
+        have h₁₁ : ∃ a b : ℕ, a > 1 ∧ b > 1 ∧ n = a * b := by
+          -- We use the fact that n is not prime to find its divisors.
+          have h₁₂ := Nat.exists_dvd_of_not_prime2 (by omega) h
+          obtain ⟨a, ha⟩ := h₁₂
+          use a, n / a
+          have h₁₃ := Nat.mul_div_cancel' ha.1
+          have h₁₄ : a > 1 := by
+            nlinarith
+          have h₁₅ : n / a > 1 := by
+            nlinarith
+          exact ⟨h₁₄, h₁₅, by nlinarith⟩
+        exact h₁₁
+      exact h₁₀
+    rcases h₄ with (h₄ | h₄ | h₄) <;> simp_all [Nat.Prime]
+    <;> omega
+  exact h₃

@@ -1,0 +1,28 @@
+have h₁ : ∀ k : ℕ, (∑ x in Finset.range k, a x) = k → (∏ x in Finset.range k, a x) ≤ 1 := by
+    intro k hk
+    induction' k with k ih
+    · simp
+    · cases k with
+      | zero => simp_all [Finset.prod_range_succ, Finset.sum_range_succ]
+      | succ k =>
+        simp_all [Finset.prod_range_succ, Finset.sum_range_succ, Nat.cast_add, Nat.cast_one, Nat.cast_zero]
+        have h₂ : a k.succ ≤ 1 := by
+          have h₃ : (∑ x in Finset.range k.succ, a x) = k.succ := by simp_all
+          have h₄ : a k.succ ≤ 1 := by
+            calc
+              a k.succ ≤ ∑ x in Finset.range k.succ, a x := by
+                apply Finset.single_le_sum (fun i _ => by exact zero_le (a i)) (Finset.mem_range.mpr (by linarith))
+              _ = k.succ := by simp_all
+              _ = k.succ := by simp
+          exact h₄
+        exact
+          calc
+            (∏ x in Finset.range k.succ, a x) = (∏ x in Finset.range k.succ, a x) := by rfl
+            _ = (∏ x in Finset.range k, a x) * a k.succ := by
+              simp [Finset.prod_range_succ]
+            _ ≤ 1 * 1 := by
+              gcongr
+              <;> simp_all [Finset.prod_range_succ]
+              <;> nlinarith
+            _ = 1 := by simp
+  exact h₁ n h₀

@@ -1,0 +1,39 @@
+-- We use the built-in inverse formula in ZMod.
+  rw [ZMod.inv_eq_of_mul_eq_one]
+
+  -- Since $0\leq n<1399$, we use `Nat.modEq_iff_lt` to convert it to a congruence relation on natural numbers.
+  have : 0 ≤ n := by
+    apply Nat.zero_le
+  rw [← ZMod.natCast_modEq_iff, Nat.modEq_iff_lt] at this
+  constructor
+  · exact this
+  -- To find the inverse of 160 modulo 1399, we use the extended Euclidean algorithm.
+  -- Rewrite the equation `160 * n ≡ 1 [MOD 1399]` to `160 * n + 1399 * (-k) = 1` for some natural number $k$.
+  · use n
+    rw [Nat.modEq_iff_dvd, ← ZMod.val_inj]
+    -- Now we start the Euclidean algorithm.
+    rw [show 1399 = 160 * 8 + 119 by norm_num]
+    rw [show 160 = 119 * 1 + 41 by norm_num]
+    rw [show 119 = 41 * 2 + 37 by norm_num]
+    rw [show 41 = 37 * 1 + 4 by norm_num]
+    rw [show 37 = 4 * 9 + 1 by norm_num]
+    -- We have found that 1 = 37 - 4 * 9 = 37 - (160 - 37 * 1) * 9 = 37 * 10 - 160 * 9
+    -- so we have -9 * 160 ≡ 1 [MOD 37]
+    rw [show 4 = 160 - 37 * 4 by norm_num]
+    rw [show 1 = 37 - 4 * 9 by norm_num]
+    -- With a second application of the Euclidean algorithm, we now find 1 = 119 - 41 * 2
+    -- so we have 2 * 41 ≡ 1 [MOD 119]
+    rw [show 37 = 119 - 41 * 2 by norm_num]
+    -- We rewrite 41 in terms of 160 and 37, and substitute.
+    rw [show 41 = 160 - 37 by norm_num]
+    ring
+    -- With a third application of the Euclidean algorithm, we now find 1 = 1399 - 160 * 8
+    -- so we have 8 * 160 ≡ 1 [MOD 1399].
+    rw [show 119 = 1399 - 160 * 8 by norm_num]
+    -- In order to find the inverse of 160, we need a positive witness.
+    -- So we use the fact that -9 * 160 ≡ 1 [MOD 37] implies 9 * 160 ≡ 1 [MOD 1399]
+    -- and 9 + 160 * 8 = 1058
+    use 9 + 160 * 8
+    ring
+
+```

@@ -1,0 +1,104 @@
+have hf (a : ℕ+) : f a = 12 * a + 7 := by simp [h₀]
+  have hg (a : ℕ+) : g a = 5 * a + 2 := by simp [h₁]
+  have hh (a : ℕ+) : h a = Nat.gcd (12 * a + 7) (5 * a + 2) := by simp [h₂, hf, hg]
+
+  -- The possible values of $h(x)$ are 1 and 5 and 7 and 11.
+  have hrange : Set.range h = {1, 5, 7, 11} := by
+    ext x
+    constructor
+    · intro hx
+      simp at hx
+      rcases hx with ⟨a, ha⟩
+      have : h a = 1 ∨ h a = 5 ∨ h a = 7 ∨ h a = 11 := by
+        rw [hh]
+        have : Nat.gcd (12 * a + 7) (5 * a + 2) = 1 ∨ Nat.gcd (12 * a + 7) (5 * a + 2) = 5 ∨
+          Nat.gcd (12 * a + 7) (5 * a + 2) = 7 ∨ Nat.gcd (12 * a + 7) (5 * a + 2) = 11 := by
+          have h₁ : 12 * a + 7 ≡ 1 [MOD 5] := by
+            calc
+              12 * a + 7 ≡ 2 * a + 2 [MOD 5] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ 2 * (a + 1) [MOD 5] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ 2 * 1 [MOD 5] := by rw [Nat.modEq_iff_dvd']; omega; omega; omega
+              _ ≡ 2 [MOD 5] := by simp
+              _ ≡ 1 + 1 [MOD 5] := by simp
+              _ ≡ 1 + 2 * 2 [MOD 5] := by rw [Nat.modEq_iff_dvd']; omega; omega; omega
+              _ ≡ 1 [MOD 2] := by simp
+          have h₂ : 12 * a + 7 ≡ 1 [MOD 7] := by
+            calc
+              12 * a + 7 ≡ 5 * a + 7 [MOD 7] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ 5 * a [MOD 7] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ a * 5 [MOD 7] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ a * 5 [MOD 35] := by rw [Nat.modEq_iff_dvd']; omega
+              _ ≡ 1 [MOD 35] := by rw [Nat.modEq_iff_dvd']; omega
+              _ ≡ 1 [MOD 7] := by simp
+          have h₃ : 5 * a + 2 ≡ 2 [MOD 5] := by
+            calc
+              5 * a + 2 ≡ 2 * a + 2 [MOD 5] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ 2 * (a + 1) [MOD 5] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ 2 * 1 [MOD 5] := by rw [Nat.modEq_iff_dvd']; omega; omega; omega
+              _ ≡ 2 [MOD 5] := by simp
+          have h₄ : 5 * a + 2 ≡ 4 [MOD 7] := by
+            calc
+              5 * a + 2 ≡ 5 * a + 7 - 5 [MOD 7] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ 5 * a + 7 [MOD 7] := by rw [Nat.modEq_iff_dvd']; omega
+              _ ≡ 5 * a [MOD 7] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ a * 5 [MOD 7] := by simp [Nat.ModEq, Nat.add_mod, Nat.mul_mod]; omega
+              _ ≡ a * 5 [MOD 35] := by rw [Nat.modEq_iff_dvd']; omega
+              _ ≡ 1 * 5 [MOD 35] := by rw [Nat.modEq_iff_dvd']; omega
+              _ ≡ 5 [MOD 35] := by simp
+              _ ≡ 4 [MOD 7] := by simp
+          have : Nat.gcd (12 * a + 7) (5 * a + 2) ∣ 12 * a + 7 := by
+            apply Nat.gcd_dvd_left
+          have : Nat.gcd (12 * a + 7) (5 * a + 2) ∣ 5 * a + 2 := by
+            apply Nat.gcd_dvd_right
+          have : Nat.gcd (12 * a + 7) (5 * a + 2) = 1 ∨ Nat.gcd (12 * a + 7) (5 * a + 2) = 5 ∨
+            Nat.gcd (12 * a + 7) (5 * a + 2) = 7 ∨ Nat.gcd (12 * a + 7) (5 * a + 2) = 11 := by
+            have : Nat.gcd (12 * a + 7) (5 * a + 2) ∣ 1 := by
+              calc
+                Nat.gcd (12 * a + 7) (5 * a + 2) ∣ 12 * a + 7 := by exact this
+                _ ∣ 12 * a + 7 - 2 * (5 * a + 2) := by apply Nat.dvd_sub'; apply Nat.dvd_trans this; norm_num
+                _ = 1 := by omega
+            apply (Nat.dvd_prime Nat.prime_one).mp at this
+            rcases this with this | this | this | this | this
+            · simp [this]
+            · rw [this] at h₁
+              simp [h₁]
+            · rw [this] at h₂
+              simp [h₂]
+              rw [Nat.modEq_iff_dvd'] at h₃
+              omega
+              rw [Nat.modEq_iff_dvd'] at h₄
+              omega
+            · rw [this] at h₃
+              simp [h₃]
+              rw [Nat.modEq_iff_dvd'] at h₁
+              omega
+            · rw [this] at h₄
+              simp [h₄]
+              rw [Nat.modEq_iff_dvd'] at h₂
+              omega
+          assumption
+        tauto
+      tauto
+    · intro hx
+      simp at hx
+      rcases hx with hx | hx | hx | hx
+      · use 1
+        simp [hx, hh]
+        norm_num
+      · use 2
+        simp [hx, hh]
+        norm_num
+      · use 3
+        simp [hx, hh]
+        norm_num
+      · use 4
+        simp [hx, hh]
+        norm_num
+
+  -- The sum of all possible values of $h(x)$ is 12.
+  have hsum : ∑ k in (Set.range h).toFinset, k = 12 := by
+    rw [hrange]
+    simp
+    norm_num
+  exact hsum
+```

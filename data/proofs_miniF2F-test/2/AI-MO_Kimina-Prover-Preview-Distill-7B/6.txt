@@ -1,0 +1,45 @@
+-- Convert the logarithm equations to expressions about w
+  have hx := congr_arg (fun t => t * Real.log x) h0
+  simp at hx
+  have hy := congr_arg (fun t => t * Real.log y) h1
+  simp at hy
+  have hxyz := congr_arg (fun t => t * Real.log (x * y * z)) h2
+  simp at hxyz
+
+  -- Show that none of the logarithms can be zero or negative
+  have h_log_x_pos : 0 < Real.log x := by
+    apply Real.log_pos
+    simp
+    exact ht.1
+  have h_log_y_pos : 0 < Real.log y := by
+    apply Real.log_pos
+    simp
+    exact ht.2.1
+  have h_log_z_pos : 0 < Real.log z := by
+    apply Real.log_pos
+    simp
+    exact ht.2.2
+  have h_log_w_pos : 0 < Real.log w := by
+    linarith
+
+  -- Convert the multiplication to a sum in the logarithm world
+  rw [Real.log_mul (by linarith) (by linarith)] at hxyz
+  rw [Real.log_mul (by linarith) (by linarith)] at hxyz
+
+  -- Put all the equations together
+  have h : Real.log w * (1 / Real.log x) + Real.log w * (1 / Real.log y) + Real.log w * (1 / Real.log z) =
+      Real.log w * (1 / Real.log (x * y * z)) := by
+    rw [hx, hy, hxyz]
+  field_simp at h
+
+  -- Eliminate factors and simplify
+  rw [mul_add, add_assoc, ← mul_assoc (Real.log w), mul_comm (Real.log w), mul_assoc, mul_assoc,
+      mul_right_inj' (by linarith), ← add_assoc, mul_comm, mul_assoc, ← mul_assoc (Real.log w)] at h
+  norm_num at h
+  rw [← h]
+
+  -- Final steps: prove that the log of w is indeed 60
+  calc
+    _ = 60 * (Real.log w / Real.log z) := by ring
+    _ = 60 := by rw [← h]; ring
+```

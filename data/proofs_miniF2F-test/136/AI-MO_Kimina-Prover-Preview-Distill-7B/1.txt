@@ -1,0 +1,130 @@
+-- We will show that
+  -- 1. a = -3/4
+  -- 2. b = -3/8
+  -- 3. c = 1/64
+  -- Therefore abc = -3/4 * -3/8 * 1/64 = 9/2048 ≠ 1/32
+
+  -- First, we prove that X^3 + aX^2 + bX + c = (X - cos(2π/7))(X - cos(4π/7))(X - cos(6π/7))
+  suffices X ^ 3 + a * X ^ 2 + b * X + c = (X - Real.cos (2 * Real.pi / 7)) * (X - Real.cos (4 * Real.pi / 7)) * (X - Real.cos (6 * Real.pi / 7)) by
+    -- Then we can show that X^3 + aX^2 + bX + c has only three real roots, which are cos(2π/7), cos(4π/7) and cos(6π/7)
+    -- So Vieta's formula can be applied
+    have h₂ : X ^ 3 + a * X ^ 2 + b * X + c = (X - Real.cos (2 * Real.pi / 7)) * (X - Real.cos (4 * Real.pi / 7)) * (X - Real.cos (6 * Real.pi / 7)) := by assumption
+    replace h₂ : (X - Real.cos (2 * Real.pi / 7)) * (X - Real.cos (4 * Real.pi / 7)) * (X - Real.cos (6 * Real.pi / 7)) ≠ 0 := by
+      rw [<-h₂]
+      by_contra!
+      simp at this
+      obtain (h | h | h) := this
+      all_goals {
+        rw [h] at h₀
+        simp at h₀
+        absurd h₁
+        simp [h₀]
+        norm_num
+      }
+    -- We can also prove that X^3 + aX^2 + bX + c has only three real roots, which are cos(2π/7), cos(4π/7) and cos(6π/7)
+    -- So Vieta's formula can be applied
+    have h₃ : f ⁻¹' {0} = {Real.cos (2 * Real.pi / 7), Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} := by assumption
+    have h₄ : ∀ x : ℝ, f x = x ^ 3 + a * x ^ 2 + b * x + c := by assumption
+    have h₅ (x : ℝ) : f x = (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7)) := by
+      rw [<-h₂]
+      simp [h₄]
+    -- We can now use Vieta's formula to calculate a, b and c
+    have h₆ : a = -3 * Real.cos (2 * Real.pi / 7) - 3 * Real.cos (4 * Real.pi / 7) - 3 * Real.cos (6 * Real.pi / 7) := by
+      have h₆ := vieta_formula_quadratic (show (fun x => f x) = (fun x => (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7))) by simp [h₄, h₅, h₂]) (show 0 ∈ {x | f x = 0} by simp [h₁])
+      simp [<-h₅] at h₆
+      linear_combination h₆
+    have h₇ : b = 3 * Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) + 3 * Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) + 3 * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+      have h₇ := vieta_formula_quadratic (show (fun x => f x) = (fun x => (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7))) by simp [h₄, h₅, h₂]) (show 0 ∈ {x | f x = 0} by simp [h₁])
+      simp [<-h₅] at h₇
+      linear_combination h₇
+    have h₈ : c = -Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+      have h₈ := vieta_formula_quadratic (show (fun x => f x) = (fun x => (x - Real.cos (2 * Real.pi / 7)) * (x - Real.cos (4 * Real.pi / 7)) * (x - Real.cos (6 * Real.pi / 7))) by simp [h₄, h₅, h₂]) (show 0 ∈ {x | f x = 0} by simp [h₁])
+      simp [<-h₅] at h₈
+      linear_combination h₈
+    -- We still need to simplify the expressions of a, b and c
+    -- We start with a
+    have h₉ : a = -3 / 4 := by
+      rw [h₆]
+      -- We have cos(2π/7), cos(4π/7) and cos(6π/7) are the roots of the polynomial X^3 + aX^2 + bX + c
+      -- So they are algebraic numbers
+      have h₉ : ∀ x : ℝ, x ∈ {Real.cos (2 * Real.pi / 7), Real.cos (4 * Real.pi / 7), Real.cos (6 * Real.pi / 7)} → x ^ 3 + a * x ^ 2 + b * x + c = 0 := by
+        intro x hx
+        simp [<-h₄]
+        simp [h₁] at hx
+        simp [hx]
+      -- We will use this to show that cos(2π/7), cos(4π/7) and cos(6π/7) are roots of the polynomial X^3 + aX^2 + bX + c
+      have h₁₀ : (X - Real.cos (2 * Real.pi / 7)) * (X - Real.cos (4 * Real.pi / 7)) * (X - Real.cos (6 * Real.pi / 7)) = X ^ 3 + a * X ^ 2 + b * X + c := by
+        ring_nf
+        simp [h₉]
+        ring_nf
+      -- We know that cos(2π/7), cos(4π/7) and cos(6π/7) are distinct
+      specialize h₁₀ (Real.cos (2 * Real.pi / 7))
+      replace h₁₀ := h₁₀.symm
+      simp at h₁₀
+      -- We know that X^3 + aX^2 + bX + c = (X - cos(2π/7))(X - cos(4π/7))(X - cos(6π/7))
+      -- We can write X^3 + aX^2 + bX + c = (X - cos(2π/7))(X - cos(4π/7))(X - cos(6π/7))
+      -- So we can calculate a, b and c
+      have h₁₁ : (X - Real.cos (4 * Real.pi / 7)) * (X - Real.cos (6 * Real.pi / 7)) = X ^ 2 - (Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7)) * X + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) := by
+        ring
+      replace h₁₀ : (X - Real.cos (2 * Real.pi / 7)) * ((X - Real.cos (4 * Real.pi / 7)) * (X - Real.cos (6 * Real.pi / 7))) = (X - Real.cos (2 * Real.pi / 7)) * (X ^ 2 - (Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7)) * X + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7)) := by
+        rw [h₁₁]
+      ring_nf at h₁₀
+      -- We have X^3 - (cos(4π/7) + cos(6π/7))X^2 + cos(4π/7)cos(6π/7)X^2 - cos(2π/7)X^2 + (cos(2π/7)cos(4π/7) + cos(2π/7)cos(6π/7))X - cos(2π/7)cos(4π/7)cos(6π/7) = X^3 + aX^2 + bX + c
+      -- We can now equate the coefficients
+      -- -cos(4π/7) - cos(6π/7) - cos(2π/7) = a
+      -- cos(2π/7)cos(4π/7) + cos(2π/7)cos(6π/7) + cos(4π/7)cos(6π/7) = b
+      -- -cos(2π/7)cos(4π/7)cos(6π/7) = c
+      rw [show -(Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7)) - Real.cos (2 * Real.pi / 7) = -3 / 4 by linarith] at h₁₀
+      norm_num at h₁₀
+      -- We need to show that cos(2π/7)cos(4π/7) + cos(2π/7)cos(6π/7) + cos(4π/7)cos(6π/7) = -3/8
+      -- and that -cos(2π/7)cos(4π/7)cos(6π/7) = 1/64
+      have h₁₂ : Real.cos (2 * Real.pi / 7) * Real.cos (4 * Real.pi / 7) + Real.cos (2 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) * Real.cos (6 * Real.pi / 7) = -3 / 8 := by
+        have h₁₂ : (7 : ℝ) ≠ 0 := by norm_num
+        have h₁₃ (x : ℝ) (hx : x ≠ 0) : Real.cos (2 * Real.pi / x) + Real.cos (4 * Real.pi / x) + Real.cos (6 * Real.pi / x) = -1 / 2 := by
+          -- We know that X^3 + aX^2 + bX + c = (X - cos(2π/7))(X - cos(4π/7))(X - cos(6π/7))
+          -- So we can calculate a, b and c
+          ring_nf
+          -- We have cos(2π/7), cos(4π/7) and cos(6π/7) are the roots of the polynomial X^3 + aX^2 + bX + c
+          -- So they are algebraic numbers
+          have h₁₃ : ∀ x : ℝ, x ∈ {Real.cos (2 * Real.pi / x), Real.cos (4 * Real.pi / x), Real.cos (6 * Real.pi / x)} → x ^ 3 + a * x ^ 2 + b * x + c = 0 := by
+            intro x hx
+            simp [<-h₄]
+            simp [hx]
+          -- We will use this to show that cos(2π/7), cos(4π/7) and cos(6π/7) are roots of the polynomial X^3 + aX^2 + bX + c
+          have h₁₄ : (X - Real.cos (2 * Real.pi / x)) * (X - Real.cos (4 * Real.pi / x)) * (X - Real.cos (6 * Real.pi / x)) = X ^ 3 + a * X ^ 2 + b * X + c := by
+            ring_nf
+            simp [h₁₃]
+            ring_nf
+          -- We know that cos(2π/7), cos(4π/7) and cos(6π/7) are distinct
+          specialize h₁₄ (Real.cos (2 * Real.pi / x))
+          replace h₁₄ := h₁₄.symm
+          simp at h₁₄
+          -- We know that X^3 + aX^2 + bX + c = (X - cos(2π/7))(X - cos(4π/7))(X - cos(6π/7))
+          -- So we can calculate a, b and c
+          have h₁₅ : (X - Real.cos (4 * Real.pi / x)) * (X - Real.cos (6 * Real.pi / x)) = X ^ 2 - (Real.cos (4 * Real.pi / x) + Real.cos (6 * Real.pi / x)) * X + Real.cos (4 * Real.pi / x) * Real.cos (6 * Real.pi / x) := by
+            ring
+          replace h₁₄ : (X - Real.cos (2 * Real.pi / x)) * ((X - Real.cos (4 * Real.pi / x)) * (X - Real.cos (6 * Real.pi / x))) = (X - Real.cos (2 * Real.pi / x)) * (X ^ 2 - (Real.cos (4 * Real.pi / x) + Real.cos (6 * Real.pi / x)) * X + Real.cos (4 * Real.pi / x) * Real.cos (6 * Real.pi / x)) := by
+            rw [h₁₅]
+          ring_nf at h₁₄
+          -- We have X^3 - (cos(4π/7) + cos(6π/7))X^2 + cos(4π/7)cos(6π/7)X^2 - cos(2π/7)X^2 + (cos(2π/7)cos(4π/7) + cos(2π/7)cos(6π/7))X - cos(2π/7)cos(4π/7)cos(6π/7) = X^3 + aX^2 + bX + c
+          -- We can now equate the coefficients
+          -- -cos(4π/7) - cos(6π/7) - cos(2π/7) = a
+          -- cos(2π/7)cos(4π/7) + cos(2π/7)cos(6π/7) + cos(4π/7)cos(6π/7) = b
+          -- -cos(2π/7)cos(4π/7)cos(6π/7) = c
+          -- We need to show that cos(2π/7)cos(4π/7) + cos(2π/7)cos(6π/7) + cos(4π/7)cos(6π/7) = -3/8
+          -- and that -cos(2π/7)cos(4π/7)cos(6π/7) = 1/64
+          rw [show -(Real.cos (4 * Real.pi / x) + Real.cos (6 * Real.pi / x)) - Real.cos (2 * Real.pi / x) = a by linarith] at h₁₄
+          -- Substitute x = 7
+          replace h₁₄ := h₁₄
+          simp [h₁₂]
+          -- Trigonometric identity
+          have h₁₆ : Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) = -1 / 2 := by
+            have h₁₆ : Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (6 * Real.pi / 7) = Real.cos (2 * Real.pi / 7) + Real.cos (4 * Real.pi / 7) + Real.cos (-(4 * Real.pi / 7)) := by
+              ring_nf
+            rw [h₁₆]
+            simp [Real.cos_neg, <-Complex.re_add_im (a := (2 * Real.pi / 7 : ℝ)), <-Complex.add_re (a := (2 * Real.pi / 7 : ℝ)), <-Complex.cos_ofReal_mul_two, <-Complex.cos_pi_sub, <-Complex.cos_ofReal_ofNat, <-Complex.add_re (a := (4 * Real.pi / 7 : ℝ)), <-Complex.cos_add, <-Complex.cos_ofReal_mul_two, <-Complex.cos_pi_sub, <-Complex.cos_ofReal_ofNat, <-Complex.add_re (a := (-4 * Real.pi / 7 : ℝ)), <-Complex.cos_add, <-Complex.cos_ofReal_mul_two, <-Complex.cos_pi_sub, <-Complex.cos_ofReal_ofNat]
+            ring_nf
+            have h₁₇ : Real.pi + IsSquare root 7 * (Real.pi * (-2)) = 0 := by
+              exact Complex.sq_sqrt (by linarith)
+            ring_nf at h₁₇
+            rw [Complex.add_re (a := (IsSquare root 7 * Complex.I) + Complex.I * (Real.pi * (-2))), <-Complex.re_add_im (a := (IsSquare root 7 * Complex.I) + Complex.I * (Real.pi * (-2))), <-Complex.add_re (a := (IsSquare root 7 * Complex.I) +

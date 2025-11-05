@@ -1,0 +1,275 @@
+rcases h₀ with ⟨hx, hy⟩
+
+  -- Show that $x$ and $y$ are co-prime.
+  have h₂ : Nat.Coprime x y := by
+    -- Assume on the contrary that $x$ and $y$ are not co-prime.
+    by_contra! h₂
+    -- Then there exists a prime number $p$ that divides both $x$ and $y$.
+    obtain ⟨p, hp, h₃, h₄⟩ := Nat.exists_prime_and_dvd h₂
+    qify at h₃ h₄
+    rw [Nat.cast_inj] at h₃ h₄
+    obtain ⟨p', hp'⟩ := Nat.find_spec (Nat.exists_prime_and_dvd h₂) -- prime $p'$ is the smallest prime that divides both $x$ and $y$
+    have g₀ : p ≤ p' := by
+      rw [<-Nat.find_spec (Nat.exists_prime_and_dvd h₂)]
+      exact Nat.le_find_of_eq hp'
+    -- Let $x = p^a \cdot x'$ and $y = p^b \cdot y'$, where $a$ and $b$ are positive integers, and $x'$ and $y'$ are co-prime to $p$.
+    have g₁ : x = p ^ a * x' := by
+      rw [dvd_iff_exists_eq_mul_left] at h₃
+      obtain ⟨x', h₃⟩ := h₃
+      by_cases h₅ : x' = 0
+      · rw [h₅, mul_zero] at h₃
+        rw [h₃, pow_one] at hp
+        absurd hp
+        simp
+        exact Nat.Prime.ne_one hp'
+      have h₆ : x' ≠ 0 := by
+        by_contra! h₆
+        rw [h₆] at h₃
+        simp at h₃
+        rw [h₃] at hp
+        simp at hp
+        rw [Nat.Prime.dvd_iff_eq] at hp
+        · have g₀ : p ≤ x := by
+            rw [dvd_iff_exists_eq_mul_left] at hp
+            obtain ⟨k, hk⟩ := hp
+            have h₇ : 1 ≤ k := by
+              by_contra! h₇
+              simp at h₇
+              rw [h₇, mul_zero] at hk
+              simp [hk]
+            linarith
+          linarith
+        · exact hp'
+      obtain ⟨x', h₃⟩ := dvd_def.mp h₃
+      use x'
+      rw [h₃]
+    have g₂ : y = p ^ b * y' := by
+      rw [dvd_iff_exists_eq_mul_left] at h₄
+      obtain ⟨y', h₄⟩ := h₄
+      by_cases h₇ : y' = 0
+      · rw [h₇, mul_zero] at h₄
+        rw [h₄, pow_one] at hp
+        absurd hp
+        simp
+        exact Nat.Prime.ne_one hp'
+      have h₈ : y' ≠ 0 := by
+        by_contra! h₈
+        rw [h₈] at h₄
+        simp at h₄
+        rw [h₄] at hp
+        simp at hp
+        rw [Nat.Prime.dvd_iff_eq] at hp
+        · have g₀ : p ≤ y := by
+            rw [dvd_iff_exists_eq_mul_left] at hp
+            obtain ⟨k, hk⟩ := hp
+            have h₉ : 1 ≤ k := by
+              by_contra! h₉
+              simp at h₉
+              rw [h₉, mul_zero] at hk
+              simp [hk]
+            linarith
+          linarith
+        · exact hp'
+      obtain ⟨y', h₄⟩ := dvd_def.mp h₄
+      use y'
+      rw [h₄]
+    -- Show that $x' ^ {p^b * y'^2} = y' ^ {p^a * x'}$.
+    have g₃ : x' ^ (p ^ b * y' ^ 2) = y' ^ (p ^ a * x') := by
+      calc
+        _ = (p ^ a * x') ^ y' ^ 2 := by
+          rw [<-Nat.pow_mul, g₁, pow_two]
+        _ = _ := by
+          rw [<-g₂, <-Nat.pow_mul, <-Nat.pow_mul, mul_comm x' y']
+          rw [Nat.pow_left_comm]
+          apply Nat.gcd_mul_dvd_mul_gcd
+          norm_num
+    -- Since $x'$ and $y'$ are co-prime to $p$, they are also co-prime to $p^a$ and $p^b$.
+    have g₄ : Nat.Coprime (p ^ a) x' := by
+      apply Nat.Coprime.pow_left
+      exact (Nat.coprime_primes hp') h₆
+    have g₅ : Nat.Coprime (p ^ b) y' := by
+      apply Nat.Coprime.pow_left
+      exact (Nat.coprime_primes hp') h₇
+    -- Since $x' ^ {p^b * y'^2} = y' ^ {p^a * x'}$, we have $y' \mid x'$.
+    have g₆ : y' ∣ x' := by
+      apply Nat.Coprime.dvd_of_dvd_pow g₄ at g₃
+      apply Nat.Coprime.dvd_of_dvd_pow g₅ at g₃
+      exact g₃
+    -- Since $y' \mid x'$, we have $y' \leq x'$.
+    have g₇ : y' ≤ x' := by
+      apply Nat.le_of_dvd hx
+      exact g₆
+    -- Since $x' \mid y'^2$, we have $x' \mid y'$.
+    have g₈ : x' ∣ y' ^ 2 := by
+      apply Nat.Coprime.dvd_of_dvd_pow g₅ at g₃
+      exact g₃
+    have g₉ : x' ∣ y' := by
+      rw [Nat.pow_dvd_pow_iff (show 2 ≠ 0 by norm_num)]
+      exact g₈
+    -- Since $x' \mid y'$ and $y' \leq x'$, we have $x' = y'$.
+    have g₁₀ : x' = y' := by
+      apply Nat.le_antisymm
+      exact g₇
+      exact g₉
+    -- Since $x' = y'$, we have $x = p^a \cdot x'$ and $y = p^b \cdot x'$.
+    have g₁₁ : x = y := by
+      rw [g₁, g₂, g₁₀]
+      ring
+    -- Since $x = y$, we have $x^2 = x$, which means $x = 1$.
+    have g₁₂ : x = 1 := by
+      rw [<-g₁₁] at h₁
+      apply Nat.eq_one_of_mul_eq_one_right at h₁
+      exact h₁
+    -- Since $x = 1$, we have $y = 1$.
+    have g₁₃ : y = 1 := by
+      rw [g₁₂] at h₁
+      simp at h₁
+      rw [<-g₁₁] at h₁
+      exact h₁
+    -- Since $y = 1$, we have $x = 1$ and $y = 1$, which is a contradiction with the fact that $x$ and $y$ are positive integers.
+    have g₁₄ : x = 1 := g₁₂
+    have g₁₅ : y = 1 := g₁₃
+    linarith
+
+  -- Prove by cases based on whether $x$ is 1 or not.
+  cases (Nat.eq_one_or_ne x 1) with
+  | inl g₀ =>
+    -- If $x = 1$, then we have $1 = y^x = y^1 = y$.
+    have g₁ : y = 1 := by
+      rw [g₀] at h₁
+      simp at h₁
+      linarith
+    -- Since $x = 1$ and $y = 1$, we have $(x, y) = (1, 1)$.
+    left
+    exact Prod.ext g₀ g₁
+  | inr g₀ =>
+    -- If $x \neq 1$, then we have $x > 1$.
+    have g₁ : x > 1 := by
+      exact Nat.one_lt_iff_ne_zero_and_ne_one.mpr g₀
+    -- Since $x > 1$, we have $x^2 > 1$.
+    have g₂ : x ^ 2 > 1 := by
+      exact Nat.one_lt_pow (show 2 ≠ 0 by norm_num) g₀
+    -- We have $y \neq 1$.
+    have g₃ : y ≠ 1 := by
+      by_contra! g₃
+      rw [g₃] at h₁
+      simp at h₁
+      rw [<-g₀] at h₁
+      simp at h₁
+    -- Since $y \neq 1$, we have $y \geq 2$.
+    have g₄ : y ≥ 2 := by
+      omega
+    -- We have $y^2 \geq 4$.
+    have g₅ : y ^ 2 ≥ 4 := by
+      nlinarith
+    -- Since $x^2 > 1$ and $y^2 \geq 4$, we have $x^2 \cdot y^2 > 1$.
+    have g₆ : x ^ 2 * y ^ 2 > 1 := by
+      nlinarith
+    -- We have $x \cdot y \geq 2$.
+    have g₇ : x * y ≥ 2 := by
+      nlinarith
+    -- Since $x \cdot y \geq 2$ and $x \cdot y \mid y^x = x^y$, we have $x \mid y$.
+    have g₈ : x ∣ y := by
+      apply Nat.dvd_of_mul_dvd_mul_right g₇
+      have g₁₀ : x ^ 2 * y ^ 2 = (x * y) ^ 2 := by
+        rw [<-Nat.pow_two, <-Nat.pow_two, mul_assoc]
+      rw [g₁₀] at g₆
+      have g₉ : (x * y) ^ 2 > (x * y) := by
+        exact Nat.lt_self_pow g₇ g₁
+      exact Nat.dvd_of_pow_dvd_pow_left g₉ g₆
+    -- Since $x \mid y$ and $x > 1$, we have $y \geq x$.
+    have g₉ : y ≥ x := by
+      apply Nat.le_of_dvd hy
+      exact g₈
+    -- Since $y \geq x$ and $x \neq 1$, we have $y \geq 2$.
+    have g₁₀ : y ≥ 2 := by
+      by_contra! g₁₀
+      have g₁₁ : y = 1 := by
+        omega
+      exact g₃ (by linarith)
+    -- We have $x \geq 2$.
+    have g₁₁ : x ≥ 2 := by
+      exact Nat.le_of_dvd hx g₈
+    -- Since $x \geq 2$ and $y \geq 2$, we have $\min(x, y) \geq 2$.
+    have g₁₂ : min x y ≥ 2 := by
+      simp [min]
+      omega
+    -- Since $x \neq 1$ and $y \neq 1$, we have $xy \neq 1$.
+    have g₁₃ : x * y ≠ 1 := by
+      by_contra! g₁₃
+      have g₁₄ : x = 1 := by
+        nlinarith
+      exact g₀ g₁₄
+    -- Since $x^y = y^x$ and $xy \neq 1$, we have $\min(x, y) \mid \min(x, y)^{\min(x, y) - 1}$.
+    have g₁₄ : min x y ∣ min x y ^ (min x y - 1) := by
+      have g₁₅ : min x y ^ (min x y - 1) * min x y = min x y ^ (min x y - 1) * (x * y) := by
+        nth_rw 1 [<-Nat.pow_one (min x y)]
+        calc
+          _ = (min x y) ^ (min x y - 1 + 1) := by
+            rw [Nat.pow_add]
+            congr
+            exact g₁₂
+          _ = (min x y) ^ (min x y) := by
+            rw [Nat.sub_add_cancel g₁₃]
+          _ = _ := by
+            nth_rw 2 [mul_comm]
+            rw [<-Nat.pow_add]
+            congr
+            exact g₁₃
+      have g₁₆ : min x y ^ (min x y - 1) * (x * y) = (min x y ^ (min x y - 1) * x) * y := by
+        ring
+      rw [g₁₅, g₁₆] at g₁₄
+      apply Nat.dvd_of_mul_dvd_mul_right
+      · have g₁₇ : min x y ^ (min x y - 1) * x = (min x y ^ (min x y - 1)) * x := by
+          rw [mul_comm]
+        nth_rw 1 [g₁₇] at g₁₄
+        rw [<-Nat.mul_assoc] at g₁₄
+        apply Nat.dvd_of_mul_dvd_mul_right
+        omega
+      omega
+    -- Since $\min(x, y) \mid \min(x, y)^{\min(x, y) - 1}$, we have $\min(x, y) \leq \min(x, y)^{\min(x, y) - 1}$.
+    have g₁₅ : min x y ≤ min x y ^ (min x y - 1) := by
+      apply Nat.le_of_dvd g₁₂
+      exact g₁₄
+    -- Since $\min(x, y) \leq \min(x, y)^{\min(x, y) - 1}$, we have $\min(x, y) \leq 1$.
+    have g₁₆ : min x y ≤ 1 := by
+      apply Nat.le_of_dvd hy
+      by_contra! g₁₆
+      have g₁₇ : min x y ≥ 2 := by
+        exact g₁₂
+      have g₁₈ : min x y ^ (min x y - 1) < min x y ^ min x y := by
+        apply Nat.pow_lt_pow_of_lt
+        · exact g₁₇
+        · exact Nat.le_of_pred_lt g₁₇
+        · apply Nat.zero_lt_sub_of_lt g₁₇
+      have g₁₉ : min x y ^ min x y = min x y ^ (min x y - 1) * min x y := by
+        rw [Nat.pow_add]
+        congr
+        exact g₁₃
+      rw [g₁₉] at g₁₈
+      have g₁₁₀ : min x y ^ (min x y - 1) * min x y > min x y ^ (min x y - 1) * 1 := by
+        nth_rw 2 [<-Nat.one_mul (min x y ^ (min x y - 1))] at g₁₈
+        exact Nat.mul_lt_mul_of_pos_left g₁₈ (by simp)
+      have g₁₁₁ : min x y ^ (min x y - 1) * 1 = min x y ^ (min x y - 1) := by
+        ring
+      rw [g₁₁₁] at g₁₁₀
+      omega
+    -- Since $\min(x, y) \leq 1$ and $y \geq x \geq 2$, we have $y = x = 2$.
+    have g₁₇ : min x y = 2 := by
+      omega
+    -- Since $\min(x, y) = 2$, we have $x = 2$ and $y = 2$.
+    have g₁₈ : x = 2 := by
+      rw [<-g₁₇] at g₁₂
+      omega
+    have g₁₉ : y = 2 := by
+      rw [<-g₁₇] at g₁₂
+      omega
+    -- Since $x = 2$ and $y = 2$, we have $(x, y) = (2, 2)$, which is a contradiction with the fact that $x \neq 1$.
+    have g₂₀ : x = 2 := g₁₈
+    have g₂₁ : y = 2 := g₁₉
+    linarith
+
+  -- If $y = 1$, then we have $x = y^x = 1^x = 1$.
+  <;> simp_all
+
+```

@@ -1,0 +1,201 @@
+-- We will use the Intermediate Value Theorem on each interval
+  -- $\left(\frac{i\pi}{4},\frac{(i+1)\pi}{4}\right)$ for $i=0,1,2,3,4,5,6,7$ to show that there
+  -- is at least one root on each interval.
+  have h₁ (i : ℕ) (hi : i ∈ Finset.Icc 0 8) :
+      ∃ x, 0 < x ∧ x ≤ 2 * Real.pi ∧ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) = 0 ∧
+      ∀ j : ℕ, j ∈ Finset.Icc 0 8 → j ≠ i →
+      ¬ (0 < (Real.pi * (j : ℝ) / 4) ∧ (Real.pi * (j : ℝ) / 4) ≤ 2 * Real.pi ∧
+          1 - 3 * Real.sin (Real.pi * (j : ℝ) / 4) + 5 * Real.cos (3 * (Real.pi * (j : ℝ) / 4)) = 0 →
+          False) := by
+
+    -- First, we list all the properties that the number $x$ we are looking for must satisfy.
+    let ⟨p, hp⟩ : Finset ℝ :=
+      ((Finset.Ioo (Real.pi * (i : ℝ) / 4) +
+        Finset.Iic (Real.pi * (i : ℝ) / 4 + Real.pi / 4)).filter (fun x ↦
+        0 < x ∧ x ≤ 2 * Real.pi ∧ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) = 0)) ≠ Finset.empty :=
+      by
+      -- There are only finitely many values of $\theta$ that satisfy the given equation.
+      have : ((Finset.Ioo (Real.pi * (i : ℝ) / 4) +
+          Finset.Iic (Real.pi * (i : ℝ) / 4 + Real.pi / 4)).filter (fun x ↦
+          0 < x ∧ x ≤ 2 * Real.pi ∧ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) = 0)) ≠ Finset.empty :=
+        by
+          -- This can be proved by using the fact that the set $\{\theta\mid 0<\theta\leq 2\pi\}$ is compact,
+          -- and that the equation has only finitely many solutions.
+          apply Finset.Nonempty.exists_mem_finset_filter at *
+          rw [Finset.one_le_card] at *
+          apply finset_le_finset_iff.mpr at *
+          rw [Finset.subset_univ_iff] at *
+          apply Finset.le_finset_iff_forall_mem.mpr at *
+          rintro x ⟨⟨h₀, h₁⟩, h₂, h₃⟩
+          simp only [Finset.mem_Ioo, Finset.mem_Iic, Finset.mem_filter, Finset.mem_univ,
+            Nat.succ_ne_zero, true_and, and_imp, h₂, forall_eq_or_imp, forall_eq,
+            and_imp] at *
+          refine ⟨?_, h₁, h₃⟩
+          suffices 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) ≠ 0 by
+            rw [h₃] at this
+            contradiction
+          apply ne_of_lt
+          apply lt_of_le_of_lt h₃
+          apply Real.sin_le_one
+          apply le_of_lt
+          apply Real.cos_lt_one
+          -- Using calculus, we can show that the function $f(\theta)=1-3\sin\theta+5\cos3\theta$ is
+          -- strictly increasing on the interval $\left(0,\frac{\pi}{4}\right]$. It is continuous on this
+          -- interval and continuous at the point $\frac{\pi}{4}$.
+          have h₂ (x : ℝ) (h₃ : x ∈ Finset.Ioo (Real.pi * (i : ℝ) / 4) +
+              Finset.Iic (Real.pi * (i : ℝ) / 4 + Real.pi / 4)) : 1 - 3 * Real.sin x +
+              5 * Real.cos (3 * x) < 1 - 3 * Real.sin (Real.pi * (i : ℝ) / 4) + 5 *
+              Real.cos (3 * (Real.pi * (i : ℝ) / 4)) := by
+            simp only [Finset.mem_add, Finset.mem_Iic, Finset.mem_filter, Finset.mem_univ,
+              Nat.succ_ne_zero, true_and, and_imp] at h₃
+            rcases h₃ with ⟨⟨h₃, h₄⟩, h₅, h₆⟩
+            -- The derivative of $f(\theta)$ is $f'(\theta)=-3\cos\theta-15\sin3\theta$.
+            set f : ℝ → ℝ := fun x ↦ 1 - 3 * Real.sin x + 5 * Real.cos (3 * x)
+            set f' : ℝ → ℝ := fun x ↦ -3 * Real.cos x - 15 * Real.sin (3 * x)
+            have hf' (x : ℝ) : deriv f x = f' x := by
+              simp only [f, deriv_sub, deriv_add, deriv_const, mul_comm, mul_assoc,
+                Real.deriv_sin, Real.deriv_cos, mul_comm (3 * _), mul_assoc (3 * _), h₅]
+              -- We know that $\cos(\theta)$ is differentiable and its derivative is $-\sin(\theta)$.
+              -- We also know that $\sin(\theta)$ is differentiable and its derivative is $\cos(\theta)$.
+              -- Hence, $\cos(3\theta)$ is differentiable and its derivative is $3\cos(3\theta)$.
+              iterate 2 rw [Real.deriv_cos]; simp
+              ring
+            -- On the interval $\left(0,\frac{\pi}{4}\right]$, $f'(\theta)>0$.
+            have hf'_pos (x : ℝ) (h₇ : x ∈ Finset.Ioo (Real.pi * (i : ℝ) / 4) +
+                Finset.Iic (Real.pi * (i : ℝ) / 4 + Real.pi / 4)) : f' x > 0 := by
+              simp only [Finset.mem_add, Finset.mem_Iic, Finset.mem_filter, Finset.mem_univ,
+                Nat.succ_ne_zero, true_and, and_imp] at h₇
+              rcases h₇ with ⟨⟨h₇, h₈⟩, h₉, h₁₀⟩
+              rw [hf']
+              -- Using basic calculus, we can show that $f'(\theta)>0$ on the interval
+              -- $\left(0,\frac{\pi}{4}\right]$.
+              apply Real strictMonoOn_Icc_of_deriv_pos
+              { to prove the continuous differentiability of $f$ on the interval
+                apply Real.strictMonoOn_of_deriv_pos
+                exact convex_Ioo_subset_Icc (a := Real.pi * (i : ℝ) / 4 + Real.pi / 4)
+                  (b := Real.pi * (i : ℝ) / 4 + Real.pi / 2) (f := f)
+                exact continuousOn_sin
+                exact continuousOn_cos
+                exact differentiableOn_sin
+                exact differentiableOn_cos
+                exact (DifferentiableAt.mul (by
+                  exact differentiableAt_const 5) (by exact differentiableAt_cos (3 * x))).trans
+                  differentiableAt_const 3
+              }
+              -- We need the inequality $\cos x > \sqrt{2}/2$ on the interval
+              -- $\left(0,\frac{\pi}{4}\right]$.
+              have h (h₇ : 0 < x) (h₈ : x ≤ Real.pi * (i : ℝ) / 4 + Real.pi / 4) :
+                  Real.cos x > Real.sqrt 2 / 2 := by
+                have h (h₇ : 0 < x) (h₈ : x ≤ Real.pi / 4) : Real.cos x > Real.sqrt 2 / 2 := by
+                  -- This can be shown using basic calculus.
+                  -- The function $f(x)=\cos x - \sqrt{2}/2$ is continuous on the closed interval
+                  -- $\left[0,\frac{\pi}{4}\right]$, continuous differentiable on the open interval
+                  -- $\left(0,\frac{\pi}{4}\right)$, and its derivative $f'(x)=-\sin x - \sqrt{2}/2<0$ on
+                  -- $\left(0,\frac{\pi}{4}\right)$.
+                  apply Real.strictAntiOn_of_deriv_neg
+                  exact convex_Icc_subset_Ioi (b := Real.pi / 4) (f := f)
+                  exact continuousOn_sin
+                  exact differentiableOn_cos
+                  have hf' (x : ℝ) : deriv f x = -Real.sin x - Real.sqrt 2 / 2 := by
+                    simp only [f, deriv_sub, deriv_add, deriv_const, mul_comm, mul_assoc,
+                      Real.deriv_sin, Real.deriv_cos, mul_comm (3 * _), mul_assoc (3 * _),
+                      show 3 * (Real.pi * (i : ℝ) / 4 + x) = 3 * (Real.pi * (i : ℝ) / 4) + 3 * x by ring]
+                    rw [Real.deriv_sin, Real.deriv_cos]; simp
+                  rw [hf']
+                  -- We know that $f(0) = \cos(0) - \sqrt{2}/2 = 1 - \sqrt{2}/2 > 0$ and
+                  -- $f(\frac{\pi}{4})=\cos(\frac{\pi}{4})-\sqrt{2}/2=\frac{\sqrt{2}}{2}-\frac{\sqrt{2}}{2}=0$.
+                  group
+                  apply strictAntiOn_of_deriv_neg
+                  exact convex_Ioc_subset_Ioi (a := 0) (b := Real.pi / 4) (f := f)
+                  exact continuousOn_sin
+                  exact differentiableOn_cos
+                  have hf' (x : ℝ) : deriv f x = -Real.cos x - 3 * Real.cos (3 * x) := by
+                    simp only [f, deriv_sub, deriv_add, deriv_const, mul_comm, mul_assoc,
+                      Real.deriv_sin, Real.deriv_cos, mul_comm (3 * _), mul_assoc (3 * _),
+                      show 3 * (Real.pi * (i : ℝ) / 4 + x) = 3 * (Real.pi * (i : ℝ) / 4) + 3 * x by ring]
+                    rw [Real.deriv_sin, Real.deriv_cos]; simp
+                  rw [hf']
+                  -- The derivative $f'(x)=-\sin x - 3\cos(3x)$ is negative on the interval
+                  -- $\left(0,\frac{\pi}{4}\right)$.
+                  have hsin (h₇ : 0 < x) : Real.sin x > 0 := by
+                    apply Real.sin_pos_of_pos_of_lt_pi
+                    exact h₇
+                    linarith
+                  have hcos (h₈ : x ≤ Real.pi / 4) : Real.cos x > Real.sqrt 2 / 2 := by
+                    rw [Real.cos_sq]
+                    linarith
+                  have hcos3 (h₈ : x ≤ Real.pi / 4) : Real.cos (3 * x) > 0 := by
+                    apply Real.cos_pos_of_mem_Ioo
+                    simp only [Ioo, Set.mem_setOf_eq]
+                    constructor
+                   . linarith
+                   . linarith
+                  linarith
+                -- Since $x \in \left(0,\frac{\pi}{4}\right]$, it is enough to show that
+                -- $\cos x > \cos \frac{\pi}{4} = \sqrt{2}/2$.
+                have h (h₇ : 0 < x) (h₈ : x ≤ Real.pi * (i : ℝ) / 4 + Real.pi / 4) :
+                    Real.cos x > Real.cos (Real.pi * (i : ℝ) / 4 + Real.pi / 4) := by
+                  apply Real.cos_lt_cos_of_nonneg_of_le_pi
+                 . linarith
+                 . linarith
+                 . have h (h₈ : i ≤ 8) : Real.pi * (i : ℝ) / 4 ≤ 2 * Real.pi := by
+                      suffices (i : ℝ) ≤ (8 : ℝ) by
+                        linarith
+                      exact Nat.cast_le_ofNat.mpr hi
+                    linarith
+                apply h
+                exact h₇
+                have h (h₈ : i ≤ 8) : Real.pi * (i : ℝ) / 4 + Real.pi / 4 ≤ Real.pi / 4 + Real.pi / 4 := by
+                  linarith
+                linarith
+              exact h h₇ h₈
+            -- This shows that $f$ is strictly increasing on the interval
+            -- $\left(0,\frac{\pi}{4}\right]$.
+            have hf'_strictmono (h₇ : x ∈ Finset.Ioo (Real.pi * (i : ℝ) / 4) +
+                Finset.Iic (Real.pi * (i : ℝ) / 4 + Real.pi / 4)) : StrictMonoOn f
+                (Finset.Ioo (Real.pi * (i : ℝ) / 4) :=
+              { x | 0 < x ∧ x ≤ Real.pi * (i : ℝ) / 4 + Real.pi / 4} := by
+              apply strictMonoOn_of_deriv_pos
+              exact convex_Ioo (a := Real.pi * (i : ℝ) / 4) (b := Real.pi * (i : ℝ) / 4 + Real.pi / 4)
+              exact continuousOn_sin
+              exact continuousOn_cos
+              exact differentiableOn_sin
+              exact differentiableOn_cos
+              exact (DifferentiableAt.mul (by
+                exact differentiableAt_const 5) (by exact differentiableAt_cos (3 * x))).trans
+              differentiableAt_const 3
+            -- Now, we can apply the Intermediate Value Theorem to show that
+            -- $f(\theta)=1-3\sin\theta+5\cos3\theta$ takes all values in the interval
+            -- $\left(1-3\sin\frac{\pi i}{4}+5\cos\frac{3\pi i}{4},1-3\sin\frac{\pi(i+1)}{4}+5\cos\frac{3\pi(i+1)}{4}\right)$
+            -- on the interval $\left(\frac{i\pi}{4},\frac{(i+1)\pi}{4}\right)$.
+            apply intermediate_value_Ioo
+            { to show that $f$ is continuous on the interval
+              exact strictMonoOn_continuous hf'_strictmono
+            }
+            -- The values of the function $f(\theta)=1-3\sin\theta+5\cos3\theta$ at the endpoints of the
+            -- intervals $\left(\frac{i\pi}{4},\frac{(i+1)\pi}{4}\right)$ are given by the list
+            -- $\begin{pmatrix}i & -1 & 0 & 1 & 2 & 3 & 4 & 5\\-3 & 1+5\sqrt{2} & 1-5\sqrt{2} & -3 & 1-5\sqrt{2} & 1+5\sqrt{2} & 3 & 1\end{pmatrix}$
+            -- The values of the function $f(\theta)=1-3\sin\theta+5\cos3\theta$ at the endpoints of the
+            -- intervals $\left(\frac{i\pi}{4},\frac{(i+1)\pi}{4}\right)$ are given by the list
+            -- $\begin{pmatrix}i & -1 & 0 & 1 & 2 & 3 & 4 & 5\\-3 & 1+5\sqrt{2} & 1-5\sqrt{2} & -3 & 1-5\sqrt{2} & 1+5\sqrt{2} & 3 & 1\end{pmatrix}$
+            -- The signs of the numbers in the second row indicates the values of the function
+            -- $f(\theta)=1-3\sin\theta+5\cos3\theta$ are positive on the intervals
+            -- $\left(\frac{i\pi}{4},\frac{(i+1)\pi}{4}\right)$.
+            norm_num
+            repeat rw [Finset.mem_Ioo]
+            constructor
+           . repeat intro h
+              linarith
+           . repeat intro h
+              linarith
+          -- Using the Intermediate Value Theorem, we can show that there
+          -- is at least one root on each interval.
+          have h₇ (i : ℕ) (h₈ : i ∈ Finset.Icc 0 8) : 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) ≠ 0 := by
+            have h (h₉ : 0 < x) (h₁₀ : x ≤ 2 * Real.pi) : 1 - 3 * Real.sin x + 5 * Real.cos (3 * x) ≠ 0 := by
+              -- We know that $1-3\sin x+5\cos3x$ is continuous on the interval $(0,2\pi]$.
+              -- Using the Intermediate Value Theorem, we can show that it takes all values in
+              -- the interval $(1-3\sin\frac{\pi i}{4}+5\cos\frac{3\pi i}{4},1-3\sin\frac{\pi(i+1)}{4}+5\cos\frac{3\pi(i+1)}{4})$ on
+              -- $\left(\frac{i\pi}{4},\frac{(i+1)\pi}{4}\right)$.
+              apply intermediate_value_Ioo
+              { to show that $1-3\sin x+5\cos3x$ is continuous on the interval $(0,2\pi]$,
+                exact fun x ↦ 1 - 3 * Real.sin x + 5

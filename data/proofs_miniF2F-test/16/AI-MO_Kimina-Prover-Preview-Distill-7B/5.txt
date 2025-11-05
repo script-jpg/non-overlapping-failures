@@ -1,0 +1,66 @@
+-- we begin by showing that the image of $f$ is unbounded.
+  have h₂ : ∀ n, 0 < n → ∃ m, n < m ∧ f n < f m := by
+    intro n hn
+    have h₁' := h₁ n hn
+    have h₂' : f n < f (n + 1) := by
+      specialze h₁ n hn
+      simp at h₁
+      exact h₁
+    refine ⟨n + 1, by simp, h₂'⟩
+
+  -- then we show that the image of $f$ is strictly increasing.
+  have h₃ : ∀ n, 0 < n → ∀ m, 0 < m → n < m → f n < f m := by
+    intro n hn m hm hnm
+    induction hnm with
+    | refl => linarith [h₁ m hm]
+    | step h =>
+      have h₁' := h₁ m hm
+      have h₂' : f m < f (m + 1) := by
+        specialize h₁ m hm
+        simp at h₁
+        exact h₁
+      linarith [h₁', h₂', h]
+
+  -- next, we show that $f(n) \geq n$ for all $n \geq 1$.
+  have h₄ : ∀ n, 0 < n → f n ≥ n := by
+    intro n hn
+    induction n with
+    | zero => linarith
+    | succ n ih =>
+      by_cases h : n = 0
+      · simp [h]; linarith [h₁ 1 (by simp)]
+      · have : n > 0 := by
+          exact Nat.pos_of_ne_zero h
+        have hn' := ih this
+        have h₃' := h₃ n (by simp) (n + 1) (by simp) (by simp)
+        linarith [h₃', hn']
+
+  -- finally, we show that $f(n) \leq n$ for all $n \geq 1$.
+  have h₅ : ∀ n, 0 < n → f n ≤ n := by
+    intro n hn
+    have h₆ : ∃ m, 0 < m ∧ f m < f (m + 1) := by
+      specialize h₂ n hn
+      exact h₂
+    obtain ⟨m, hm, h₆⟩ := h₆
+    have h₇ : ∀ k, 0 < k → f m < f (m + k) := by
+      intro k hk
+      induction k with
+      | zero => linarith
+      | succ k ih =>
+        cases k with
+        | zero => linarith [h₆]
+        | succ k =>
+          have : m + k > 0 := by
+            exact Nat.add_pos_left m k
+          exact Trans.trans ih (h₃ m (by simp) (m + (k + 1)) (by simp) (by simp))
+
+    specialize h₇ (n - m) (Nat.sub_pos_iff_lt.mpr hn)
+    have : m + (n - m) = n := by
+      exact Nat.add_sub_of_le hn
+    simp [this] at h₇
+    linarith [h₇]
+
+  -- and combining these two results, we get $f(n) = n$ for all $n \geq 1$.
+  intro n hn
+  linarith [h₄ n hn, h₅ n hn]
+```

@@ -1,0 +1,253 @@
+-- If n is a element of S, then n is positive and (n + 1000) / 70 = ⌊√n⌋.
+  have h₁ : ∀ n : ℕ, n ∈ S → 0 < n ∧ (↑n + (1000 : ℝ)) / 70 = Int.floor (Real.sqrt n) := by
+    intro n hn
+    rw [h₀] at hn
+    exact hn
+
+  -- It is enough to show that S is the set {196, 392, 832, 1568, 2028, 2388}.
+  suffices S = {196, 392, 832, 1568, 2028, 2388} by rw [this]; simp
+
+  -- We prove that by showing that S is a subset of {196, 392, 832, 1568, 2028, 2388} and
+  -- {196, 392, 832, 1568, 2028, 2388} is a subset of S.
+  apply Finset.ext
+  intro n
+  apply Iff.intro
+  · intro h
+    have hn : 0 < n := by
+      have h' := h₁ n h
+      rw [h'] at h
+      exact h.1
+    have hn' : (↑n + (1000 : ℝ)) / 70 = Int.floor (Real.sqrt n) := by
+      have h' := h₁ n h
+      rw [h'] at h
+      exact h.2
+    have d := congr_arg (fun x => x * 70 - 1000) hn'
+    simp at d
+    rw [Int.floor_eq_iff] at d
+    -- We have √n ≥ 14, otherwise the right hand side is too small.
+    have n_ge_14 : 14 ≤ Real.sqrt n := by
+      by_contra! lt
+      have : Int.floor (Real.sqrt n) ≤ 13 := by
+        have : Real.sqrt n < 14 := by
+          calc
+            Real.sqrt n < lt := by assumption
+            _ ≤ (14 : ℝ) := by norm_num
+        exact Int.floor_le_of_lt this
+      have : n < 14 ^ 2 := by apply (Real.lt_sqrt (by norm_num)).mp at lt; norm_cast at lt
+      have : n < 196 := by trans 14 ^ 2; norm_num; exact this
+      have : (196 : ℝ) ≤ (n : ℝ) := by exact Int.cast_le.mpr this
+      have : 196 ≤ 0 + 1000 / 70 * 70 - 1000 := by
+        trans (n : ℝ)
+        · exact this
+        · rw [←@Int.cast_le ℝ]
+          norm_cast
+          exact (Int.le_floor real_ofNat_le.mp hn').symm
+      norm_num at this
+    -- We have √n ≤ 20, otherwise the right hand side is too big.
+    have n_le_20 : Real.sqrt n ≤ 20 := by
+      by_contra! gt
+      have : 1600 < n := by
+        have : 20 < Real.sqrt n := by
+          calc
+            (20 : ℝ) < gt := by assumption
+            _ ≤ Real.sqrt n := by exact gt
+        exact (Real.lt_sqrt (by norm_num)).mp this
+        norm_cast
+      have : 1600 < 0 + 1000 / 70 * 70 - 1000 := by
+        trans (n : ℝ)
+        · exact this
+        · rw [←@Int.cast_lt ℝ]
+          norm_cast
+          exact Int.le_floor.mp hn'
+      norm_num at this
+    -- We have 14 ≤ ⌊√n⌋, otherwise the right hand side is too small.
+    have n_floor_ge_14 : 14 ≤ Int.floor (Real.sqrt n) := by
+      have : 14 ≤ Real.sqrt n := by exact n_ge_14
+      have := Int.le_floor.mpr this
+      exact this
+    -- We have ⌊√n⌋ ≤ 20, otherwise the right hand side is too big.
+    have n_floor_le_20 : Int.floor (Real.sqrt n) ≤ 20 := by
+      have : Real.sqrt n ≤ 20 := by exact n_le_20
+      exact Int.floor_le.mpr this
+    -- We have n = (√n)^2, this will let us determine the value of √n.
+    have : (Real.sqrt n) ^ 2 = (n : ℝ) := by
+      rw [Real.sq_sqrt]
+      exact Nat.cast_nonneg n
+    have : (Int.floor (Real.sqrt n)) ^ 2 ≤ n := by
+      rw [←this]
+      have : (Int.floor (Real.sqrt n)) ^ 2 ≤ (Real.sqrt n) ^ 2 := by
+        exact (Int.floor_le Real.sqrt n).trans (Real.sqrt_le_sqrt (Nat.cast_le_ofNat n))
+      exact this
+    have : 14 ^ 2 ≤ (Int.floor (Real.sqrt n)) ^ 2 := by
+      have h' : 14 ≤ Int.floor (Real.sqrt n) := by exact n_floor_ge_14
+      exact h'.trans (Nat.pow_le_pow_of_le_left 2 h')
+    rw [Nat.pow_le_pow_iff_left] at this
+    rw [Nat.pow_le_pow_iff_left] at this
+    norm_num at this
+    interval_cases _ = m <;> norm_cast at d <;> rw [←@Int.cast_inj ℝ] at d <;> norm_cast at *
+    -- We have m = 14, 15, 16, 17, 18, 19, or 20.
+    have : m = 14 ∨ m = 15 ∨ m = 16 ∨ m = 17 ∨ m = 18 ∨ m = 19 ∨ m = 20 := by omega
+    rcases this with (rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+    -- If √n = 14, then n = 196.
+    · left
+      norm_num
+    -- If √n = 15, then n = 392.
+    · right
+      left
+      norm_num
+    -- If √n = 16, then n = 832.
+    · right
+      right
+      left
+      norm_num
+    -- If √n = 17, then n = 1568.
+    · right
+      right
+      right
+      left
+      norm_num
+    -- If √n = 18, then n = 2028.
+    · right
+      right
+      right
+      right
+      left
+      norm_num
+    -- If √n = 19, then n = 2388.
+    · right
+      right
+      right
+      right
+      right
+      left
+      norm_num
+    -- If √n = 20, then n = 4000.
+    · right
+      right
+      right
+      right
+      right
+      right
+      norm_num
+    any_goals
+    rw [h]
+    norm_num
+  · intro h
+    have hn : 0 < n := by
+      rcases h with (rfl | rfl | rfl | rfl | rfl | rfl)
+      all_goals norm_num
+    have hn' : (↑n + (1000 : ℝ)) / 70 = Int.floor (Real.sqrt n) := by
+      rcases h with (rfl | rfl | rfl | rfl | rfl | rfl)
+      all_goals
+        norm_cast
+        norm_num
+        rw [Int.floor_eq_iff]
+        constructor
+        all_goals
+          norm_num
+    have d := congr_arg (fun x => x * 70 - 1000) hn'
+    simp at d
+    rw [Int.floor_eq_iff] at d
+    have : 14 ≤ Real.sqrt n := by
+      by_contra! lt
+      have : Int.floor (Real.sqrt n) ≤ 13 := by
+        have : Real.sqrt n < 14 := by
+          calc
+            Real.sqrt n < lt := by assumption
+            _ ≤ (14 : ℝ) := by norm_num
+        exact Int.floor_le_of_lt this
+      have : n < 14 ^ 2 := by apply (Real.lt_sqrt (by norm_num)).mp at lt; norm_cast at lt
+      have : n < 196 := by trans 14 ^ 2; norm_num; exact this
+      have : (196 : ℝ) ≤ (n : ℝ) := by exact Int.cast_le.mpr this
+      have : 196 ≤ 0 + 1000 / 70 * 70 - 1000 := by
+        trans (n : ℝ)
+        · exact this
+        · rw [←@Int.cast_le ℝ]
+          norm_cast
+          exact (Int.le_floor real_ofNat_le.mp hn').symm
+      norm_num at this
+    have : Real.sqrt n ≤ 20 := by
+      by_contra! gt
+      have : 20 < Real.sqrt n := by
+        calc
+          (20 : ℝ) < gt := by assumption
+          _ ≤ Real.sqrt n := by exact gt
+      have : 20 ^ 2 < n := by apply (Real.sqrt_lt (by norm_num)).mp at this; norm_cast at this
+      norm_num at this
+      have : 1600 < 0 + 1000 / 70 * 70 - 1000 := by
+        trans (n : ℝ)
+        · exact this
+        · rw [←@Int.cast_lt ℝ]
+          norm_cast
+          exact Int.le_floor.mp hn'
+      norm_num at this
+    have : 14 ≤ Int.floor (Real.sqrt n) := by
+      have : 14 ≤ Real.sqrt n := by exact this
+      exact Int.le_floor.mpr this
+    have : Int.floor (Real.sqrt n) ≤ 20 := by
+      have : Real.sqrt n ≤ 20 := by exact this
+      exact Int.floor_le.mpr this
+    have : (Real.sqrt n) ^ 2 = (n : ℝ) := by
+      rw [Real.sq_sqrt]
+      exact Nat.cast_nonneg n
+    have : (Int.floor (Real.sqrt n)) ^ 2 ≤ n := by
+      rw [←this]
+      have : (Int.floor (Real.sqrt n)) ^ 2 ≤ (Real.sqrt n) ^ 2 := by
+        exact (Int.floor_le Real.sqrt n).trans (Real.sqrt_le_sqrt (Nat.cast_le_ofNat n))
+      exact this
+    have : 14 ^ 2 ≤ (Int.floor (Real.sqrt n)) ^ 2 := by
+      have h' : 14 ≤ Int.floor (Real.sqrt n) := by exact this
+      exact h'.trans (Nat.pow_le_pow_of_le_left 2 h')
+    rw [Nat.pow_le_pow_iff_left] at this
+    rw [Nat.pow_le_pow_iff_left] at this
+    norm_num at this
+    interval_cases _ = m <;> norm_cast at d <;> rw [←@Int.cast_inj ℝ] at d <;> norm_cast at *
+    -- We have m = 14, 15, 16, 17, 18, 19, or 20.
+    have : m = 14 ∨ m = 15 ∨ m = 16 ∨ m = 17 ∨ m = 18 ∨ m = 19 ∨ m = 20 := by omega
+    rcases this with (rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+    -- If √n = 14, then n = 196.
+    · left
+      norm_num
+    -- If √n = 15, then n = 392.
+    · right
+      left
+      norm_num
+    -- If √n = 16, then n = 832.
+    · right
+      right
+      left
+      norm_num
+    -- If √n = 17, then n = 1568.
+    · right
+      right
+      right
+      left
+      norm_num
+    -- If √n = 18, then n = 2028.
+    · right
+      right
+      right
+      right
+      left
+      norm_num
+    -- If √n = 19, then n = 2388.
+    · right
+      right
+      right
+      right
+      right
+      left
+      norm_num
+    -- If √n = 20, then n = 4000.
+    · right
+      right
+      right
+      right
+      right
+      right
+      norm_num
+    any_goals
+    rw [h]
+    norm_num
+
+```

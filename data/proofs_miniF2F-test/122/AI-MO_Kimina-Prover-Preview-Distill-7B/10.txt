@@ -1,0 +1,27 @@
+-- prove the Cauchy-Schwarz inequality
+  have CS_ineq (x1 y1 z1 x2 y2 z2 : ℝ) : (x1 * x2 + y1 * y2 + z1 * z2) ^ 2 ≤ (x1 ^ 2 + y1 ^ 2 + z1 ^ 2) * (x2 ^ 2 + y2 ^ 2 + z2 ^ 2) := by
+    nlinarith [sq_nonneg (x1 * y2 - y1 * x2), sq_nonneg (y1 * z2 - z1 * y2), sq_nonneg (z1 * x2 - x1 * z2)]
+
+  -- apply CS_ineq on (1/√(x+y)), (1/√(y+z)), (1/√(z+x)) and √(x+y), √(y+z), √(z+x)
+  specialize CS_ineq (1 / √(x + y)) (1 / √(y + z)) (1 / √(z + x)) (√(x + y)) (√(y + z)) (√(z + x))
+  simp [div_pow, Real.sq_sqrt (by positivity)] at CS_ineq
+
+  -- simplify the terms
+  rw [show 1 ^ 2 = 1 by simp, show √(x + y) ^ 2 = x + y by simp] at CS_ineq
+  rw [show 1 ^ 2 = 1 by simp, show √(y + z) ^ 2 = y + z by simp] at CS_ineq
+  rw [show 1 ^ 2 = 1 by simp, show √(z + x) ^ 2 = z + x by simp] at CS_ineq
+
+  -- manipulate the inequality to get the final result
+  calc
+    9 / (x + y + z) = 1 / (x + y + z) * 9 := by ring
+    _ ≤ 1 / (x + y + z) * (x + y + z + 2 * (√((x + y) * (y + z)) + √((y + z) * (z + x)) + √((z + x) * (x + y)))) := by
+      apply mul_le_mul_of_nonneg_left
+      · apply add_le_add
+        · apply add_le_add
+          · exact CS_ineq
+          · exact CS_ineq
+        · exact CS_ineq
+      · positivity
+    _ = 2 / (x + y) + 2 / (y + z) + 2 / (z + x) := by ring
+
+```

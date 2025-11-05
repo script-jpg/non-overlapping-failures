@@ -1,0 +1,129 @@
+-- Prove that $f(x) \in [\frac{1}{2}, 1]$ for all $x \in \mathbb{R}$.
+  have h₂ : ∀ x, 1 / 2 ≤ f x ∧ f x ≤ 1 := by
+    intro x
+    induction' x using Int.induction_on with x ind_x hx
+    · specialize h₁ 0
+      simp at h₁
+      rw [<-h₁]
+      constructor
+      · apply Real.le_add_of_nonneg_right
+        apply Real.le_sqrt_of_sq_le
+        linarith
+      · apply le_of_eq
+        rw [<-Real.sq_sqrt (by linarith)]
+        linarith
+    · specialize h₁ (a * ind_x)
+      simp at h₁
+      rw [<-h₁]
+      constructor
+      · calc
+          1 / 2 ≤ 1 / 2 + Real.sqrt (f (a * ind_x) - f (a * ind_x) ^ 2) := by
+            apply add_le_add_left
+            apply Real.sqrt_nonneg
+          _ = f (a * (ind_x + 1)) := by rw [h₁]
+          _ ≤ 1 := by
+            apply le_of_eq
+            rw [<-Real.sq_sqrt (by linarith [hx])]
+            linarith
+      · apply le_of_eq
+        rw [<-Real.sq_sqrt (by linarith [hx])]
+        linarith
+
+  -- Show that $f$ is periodic with period $2a$.
+  have h₃ : ∀ x, f (x + 2 * a) = f x := by
+    intro x
+    calc
+      f (x + 2 * a) = 1 / 2 + Real.sqrt (f (x + a) - f (x + a) ^ 2) := by
+        rw [show x + 2 * a = x + a + a by ring, h₁]
+      _ = 1 / 2 + Real.sqrt (1 / 2 + Real.sqrt (f x - f x ^ 2) - (1 / 2 + Real.sqrt (f x - f x ^ 2)) ^ 2) := by
+        rw [h₁]
+      _ = f x := by
+        have t₁ : 1 / 2 + Real.sqrt (f x - f x ^ 2) - (1 / 2 + Real.sqrt (f x - f x ^ 2)) ^ 2 = f x - f x ^ 2 := by
+          ring_nf
+          rw [Real.sq_sqrt (by linarith [h₂ x])]
+          linarith
+        rw [t₁]
+        rw [<-Real.sqrt_sq (by linarith [h₂ x])]
+        rw [<-sub_add_cancel (1 / 2) (Real.sqrt (f x - f x ^ 2))]
+        ring_nf
+        rw [<-Real.sq_sqrt (by linarith [h₂ x])]
+        linarith
+
+  -- Define the set of fundamental periods of $f$.
+  let P := {b | b > 0 ∧ ∀ x, f (x + b) = f x}
+
+  -- Show that $P$ is nonempty.
+  have h₄ : P.Nonempty := by
+    use 2 * a
+    constructor
+    · linarith [h₀]
+    · exact h₃
+
+  -- Show that $P$ has a minimum element.
+  have h₅ : Pmin P := by
+    -- Show that $P$ is bounded below.
+    have h₅ : ∀ b ∈ P, 2 * a ≤ b := by
+      intro b hb
+      have ⟨hb₁, hb₂⟩ := hb
+      specialize hb₂ 0
+      simp at hb₂
+      rw [h₃] at hb₂
+      replace hb₂ : a = 0 := by
+        linarith
+      linarith [h₀]
+    -- Use the lemma `Subset.minPmin` to show that $P$ has a minimum element.
+    apply Subset.minPmin
+    simp [P]
+    apply h₅
+
+  -- Show that $P$ has a unique element.
+  have h₆ : Pun P := by
+    -- Show that $P$ has only one element.
+    apply le_antisymm
+    · exact h₅.2
+    · -- Show that if $b$ is the minimum element of $P$, then $b$ is the only element of $P$.
+      intro b hb
+      simp [P] at hb
+      rcases hb with ⟨hb₁, hb₂⟩
+      -- Show that $b \leq 2a$.
+      have h₇ : b ≤ 2 * a := by
+        specialize hb₂ a
+        simp at hb₂
+        rw [h₃] at hb₂
+        replace hb₂ : b = 2 * a := by
+          linarith
+        linarith
+      -- Show that $2a \leq b$.
+      have h₈ : 2 * a ≤ b := by
+        specialize hb₂ 0
+        simp at hb₂
+        rw [h₃] at hb₂
+        replace hb₂ : a = 0 := by
+          linarith
+        linarith [h₀]
+      linarith
+
+  -- Get the minimum element of $P$.
+  let b := h₅.1
+
+  -- Show that $b$ is the unique element of $P$.
+  have h₇ : ∀ x, f (x + b) = f x := by
+    simp [b]
+    apply h₅.2
+  have h₈ : ∀ b' ∈ P, b' = b := by
+    intro b' hb'
+    simp [P] at hb'
+    rcases hb' with ⟨hb'_pos, hb'_period⟩
+    have hb : b = b' := by
+      apply h₆.1
+      simp [b, hb']
+      use 0
+      simp [h₇, hb'_period]
+    rw [hb]
+
+  -- Show that $b$ is the desired element.
+  use b
+  split_ands
+  · apply h₅.1
+  · simp [b]
+```

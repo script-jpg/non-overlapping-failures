@@ -1,0 +1,320 @@
+-- Show that if $x^y = 1$, then $x = 1$ and $y = 1$.
+  have h₂ (h : x ^ y = 1) : x = 1 ∧ y = 1 := by
+    refine ⟨?_,?_⟩
+    · classical
+    · -- If $y = 0$, then $x ^ y = 1$ is not possible.
+      by_contra!
+      rw [Nat.pow_zero] at h
+      -- If $y \neq 0$, then $x = 1$.
+      classical
+
+  -- Show that if $y^2 = 1$, then $y = 1$.
+  have h₃ (h : y ^ 2 = 1) : y = 1 := by
+    rw [Nat.pow_eq_one_iff] at h
+    -- The only possibility is $y = 1$.
+    rcases h with h | h
+    · -- $y = 1$ is not possible.
+      exfalso
+      have : y = 0 := by
+        omega
+      classical
+    · exact h
+
+  -- Consider the minimum of $x$ and $y$.
+  have h₄ : x = y := by
+    -- Suppose that $x < y$.
+    by_cases h : x < y
+    · have h₅ : x ^ y ^ 2 < y ^ x := by
+        calc
+          _ = x ^ (y * y) := by
+            rw [Nat.pow_mul]
+            -- $x < y \implies x^y < x^{y^2}$.
+            exact Nat.pow_lt_pow_left h (by omega)
+          _ < x ^ x := by
+            calc
+              _ < y ^ y := by
+                exact Nat.pow_lt_pow_self (by omega) (by omega)
+              _ = x ^ x := by
+                rw [h]
+          _ = y ^ x := by
+            rw [Nat.pow_left_comm]
+      -- This is a contradiction.
+      linarith only [h₁, h₅]
+    -- Suppose that $y ≤ x$.
+    · by_cases h' : y < x
+      · have h₅ : y ^ x < x ^ y ^ 2 := by
+          calc
+            _ = y ^ (x * x) := by
+              rw [Nat.pow_mul]
+              -- $y < x \implies y^x < y^{x^2}$.
+              exact Nat.pow_lt_pow_left h' (by omega)
+            _ < y ^ y := by
+              calc
+                _ < x ^ x := by
+                  exact Nat.pow_lt_pow_self (by omega) (by omega)
+                _ = y ^ y := by
+                  rw [h]
+            _ = x ^ y ^ 2 := by
+              rw [Nat.pow_left_comm]
+        -- This is a contradiction.
+        linarith only [h₁, h₅]
+      · -- Suppose that $y = x$.
+        classical
+
+  -- We have $x = y$.
+  simp [h₄] at h₁
+  -- We have $x^x^2 = x^x$.
+  rw [show x ^ x ^ 2 = x ^ x ^ (2 : ℕ) by
+    rw [Nat.pow_succ]
+    rw [Nat.pow_zero]
+  ] at h₁
+
+  -- Consider the case where $x = 0$.
+  by_cases h : x = 0
+  · -- This is not possible.
+    rw [h] at h₁
+    -- We have $0^0^2 = 0^0$, but $0^0^2 = 0$ and $0^0 = 1$.
+    simp at h₁
+  · -- We have $x \neq 0$.
+    have h₅ : x ^ x = x ^ x ^ (2 : ℕ) := by
+      rw [h₁]
+    -- We have $x = 2$ or $x = 3$ or $x = 16$.
+    have h₆ : x = 2 ∨ x = 3 ∨ x = 16 := by
+      by_contra!
+      -- Derive a contradiction.
+      have h₇ : 2 ≤ x := by
+        omega
+      -- Consider the remainder of $x$ when divided by 4.
+      have h₈ : x % 4 = 0 ∨ x % 4 = 1 ∨ x % 4 = 2 ∨ x % 4 = 3 := by
+        omega
+      cases h₈ with
+      | inl h₈ =>
+        -- If $x \equiv 0 \pmod{4}$, then $x \neq 2$ implies $x \neq 0$.
+        have h₉ : 4 ∣ x := by
+          exact Nat.dvd_of_mod_eq_zero h₈
+        have h₁₀ : 4 ∣ x ^ x := by
+          apply Nat.dvd_pow h₉
+        -- Consider the remainder of $x^x$ when divided by 4.
+        have h₁₁ : x ^ x % 4 = 0 ∨ x ^ x % 4 = 1 ∨ x ^ x % 4 = 2 ∨ x ^ x % 4 = 3 := by
+          omega
+        cases h₁₁ with
+        | inl h₁₁ =>
+          -- If $x^x \equiv 0 \pmod{4}$, then $x^x = 0$.
+          rw [Nat.pow_eq_zero_iff] at h₁₁
+          -- This is not possible.
+          simp [h₈] at h₁₁
+        | inr h₁₁ =>
+          -- If $x^x \equiv 1, 2, 3 \pmod{4}$, then $x^x < x^x$.
+          have h₁₂ : x ^ x < x ^ x := by
+            calc
+              _ < x ^ x ^ 2 := by
+                exact Nat.pow_lt_pow_self (by omega) (by omega)
+              _ = x ^ x := by
+                rw [Nat.pow_left_comm]
+          -- This is not possible.
+          linarith only [h₁₁, h₁₂]
+      | inr h₈ =>
+        cases h₈ with
+        | inl h₈ =>
+          -- If $x \equiv 1 \pmod{4}$, then $x = 1$.
+          have h₉ : x ^ x % 4 = 1 ^ x % 4 := by
+            apply Nat.ModEq.pow x h₈
+          -- Then $x = 1$.
+          replace h₉ : x ^ x % 4 = 1 := by
+            simp at h₉
+            exact h₉
+          have h₁₀ : x = 1 := by
+            by_contra!
+            -- If $x \neq 1$, then $x \geq 2$.
+            have h₁₁ : 2 ≤ x := by
+              omega
+            -- Consider the remainder of $x^x$ when divided by 4.
+            have h₁₂ : x ^ x % 4 = 0 ∨ x ^ x % 4 = 1 ∨ x ^ x % 4 = 2 ∨ x ^ x % 4 = 3 := by
+              omega
+            cases h₁₂ with
+            | inl h₁₂ =>
+              -- If $x^x \equiv 0 \pmod{4}$, then $x^x = 0$.
+              rw [Nat.pow_eq_zero_iff] at h₁₂
+              -- This is not possible.
+              simp [h₈] at h₁₂
+            | inr h₁₂ =>
+              -- If $x^x \equiv 1, 2, 3 \pmod{4}$, then $x^x < x^x$.
+              have h₁₃ : x ^ x < x ^ x := by
+                calc
+                  _ < x ^ x ^ 2 := by
+                    exact Nat.pow_lt_pow_self (by omega) (by omega)
+                  _ = x ^ x := by
+                    rw [Nat.pow_left_comm]
+              -- This is not possible.
+              linarith only [h₁₂, h₁₃]
+          -- Then $x = 1$.
+          simp [h₁₀] at h₅
+          -- We have $1 = 1^1$.
+          simp at h₅
+        | inr h₈ =>
+          cases h₈ with
+          | inl h₈ =>
+            -- If $x \equiv 2 \pmod{4}$, then $x = 2$.
+            have h₉ : x ^ x % 4 = 2 ^ x % 4 := by
+              apply Nat.ModEq.pow x h₈
+            -- Then $x = 2$.
+            replace h₉ : x ^ x % 4 = 2 := by
+              simp at h₉
+              exact h₉
+            have h₁₀ : x = 2 := by
+              by_contra!
+              -- If $x \neq 2$, then $x \geq 3$.
+              have h₁₁ : 3 ≤ x := by
+                omega
+              -- Consider the remainder of $x^x$ when divided by 4.
+              have h₁₂ : x ^ x % 4 = 0 ∨ x ^ x % 4 = 1 ∨ x ^ x % 4 = 2 ∨ x ^ x % 4 = 3 := by
+                omega
+              cases h₁₂ with
+              | inl h₁₂ =>
+                -- If $x^x \equiv 0 \pmod{4}$, then $x^x = 0$.
+                rw [Nat.pow_eq_zero_iff] at h₁₂
+                -- This is not possible.
+                simp [h₈] at h₁₂
+              | inr h₁₂ =>
+                -- If $x^x \equiv 1, 2, 3 \pmod{4}$, then $x^x < x^x$.
+                have h₁₃ : x ^ x < x ^ x := by
+                  calc
+                    _ < x ^ x ^ 2 := by
+                      exact Nat.pow_lt_pow_self (by omega) (by omega)
+                    _ = x ^ x := by
+                      rw [Nat.pow_left_comm]
+                -- This is not possible.
+                linarith only [h₁₂, h₁₃]
+            -- Then $x = 2$.
+            simp [h₁₀] at h₅
+            -- We have $2 = 2^2$.
+            simp at h₅
+          | inr h₈ =>
+            -- If $x \equiv 3 \pmod{4}$, then $x = 3$.
+            have h₉ : x ^ x % 4 = 3 ^ x % 4 := by
+              apply Nat.ModEq.pow x h₈
+            -- Then $x = 3$.
+            replace h₉ : x ^ x % 4 = 3 := by
+              simp at h₉
+              exact h₉
+            have h₁₀ : x = 3 := by
+              by_contra!
+              -- If $x \neq 3$, then $x \geq 4$.
+              have h₁₁ : 4 ≤ x := by
+                omega
+              -- Consider the remainder of $x^x$ when divided by 4.
+              have h₁₂ : x ^ x % 4 = 0 ∨ x ^ x % 4 = 1 ∨ x ^ x % 4 = 2 ∨ x ^ x % 4 = 3 := by
+                omega
+              cases h₁₂ with
+              | inl h₁₂ =>
+                -- If $x^x \equiv 0 \pmod{4}$, then $x^x = 0$.
+                rw [Nat.pow_eq_zero_iff] at h₁₂
+                -- This is not possible.
+                simp [h₈] at h₁₂
+              | inr h₁₂ =>
+                -- If $x^x \equiv 1, 2, 3 \pmod{4}$, then $x^x < x^x$.
+                have h₁₃ : x ^ x < x ^ x := by
+                  calc
+                    _ < x ^ x ^ 2 := by
+                      exact Nat.pow_lt_pow_self (by omega) (by omega)
+                    _ = x ^ x := by
+                      rw [Nat.pow_left_comm]
+                -- This is not possible.
+                linarith only [h₁₂, h₁₃]
+            -- Then $x = 3$.
+            simp [h₁₀] at h₅
+            -- We have $3 = 3^3$.
+            simp at h₅
+    -- We have $x = 2$ or $x = 3$ or $x = 16$.
+    rcases h₆ with h₆ | h₆ | h₆
+    · -- If $x = 2$, then $y = 2$.
+      have h₇ : y = 2 := by
+        rw [h₆] at h₄
+        omega
+      -- Then $(x, y) = (2, 2)$.
+      right
+      right
+      simp [h₄, h₅, h₆, h₇]
+    · -- If $x = 3$, then $y = 3$.
+      have h₇ : y = 3 := by
+        rw [h₆] at h₄
+        omega
+      -- Then $(x, y) = (3, 3)$.
+      right
+      right
+      simp [h₄, h₅, h₆, h₇]
+    · -- If $x = 16$, then $y = 16$.
+      have h₇ : y = 16 := by
+        rw [h₆] at h₄
+        omega
+      -- Then $(x, y) = (16, 16)$.
+      right
+      left
+      simp [h₄, h₅, h₆, h₇]
+
+  -- We have $x = 1$ or $x = 2$ or $x = 3$ or $x = 16$.
+  have h₆ : x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 16 := by
+    by_contra!
+    -- Derive a contradiction.
+    have h₇ : x < 1 := by
+      omega
+    -- We have $x \neq 0$.
+    simp at h₇
+    -- Consider the remainder of $x$ when divided by 4.
+    have h₈ : x % 4 = 0 ∨ x % 4 = 1 ∨ x % 4 = 2 ∨ x % 4 = 3 := by
+      omega
+    cases h₈ with
+    | inl h₈ =>
+      -- If $x \equiv 0 \pmod{4}$, then $x \neq 1$ implies $x \neq 0$.
+      have h₉ : 4 ∣ x := by
+        exact Nat.dvd_of_mod_eq_zero h₈
+      have h₁₀ : 4 ∣ x ^ x := by
+        apply Nat.dvd_pow h₉
+      -- Consider the remainder of $x^x$ when divided by 4.
+      have h₁₁ : x ^ x % 4 = 0 ∨ x ^ x % 4 = 1 ∨ x ^ x % 4 = 2 ∨ x ^ x % 4 = 3 := by
+        omega
+      cases h₁₁ with
+      | inl h₁₁ =>
+        -- If $x^x \equiv 0 \pmod{4}$, then $x^x = 0$.
+        rw [Nat.pow_eq_zero_iff] at h₁₁
+        -- This is not possible.
+        simp [h₈] at h₁₁
+      | inr h₁₁ =>
+        -- If $x^x \equiv 1, 2, 3 \pmod{4}$, then $x^x < x^x$.
+        have h₁₂ : x ^ x < x ^ x := by
+          calc
+            _ < x ^ x ^ 2 := by
+              exact Nat.pow_lt_pow_self (by omega) (by omega)
+            _ = x ^ x := by
+              rw [Nat.pow_left_comm]
+        -- This is not possible.
+        linarith only [h₁₁, h₁₂]
+    | inr h₈ =>
+      cases h₈ with
+      | inl h₈ =>
+        cases h₈ with
+        | inl h₈ =>
+          -- If $x \equiv 1 \pmod{4}$, then $x = 1$.
+          have h₉ : x ^ x % 4 = 1 ^ x % 4 := by
+            apply Nat.ModEq.pow x h₈
+          -- Then $x = 1$.
+          replace h₉ : x ^ x % 4 = 1 := by
+            simp at h₉
+            exact h₉
+          have h₁₀ : x = 1 := by
+            by_contra!
+            -- If $x \neq 1$, then $x \geq 2$.
+            have h₁₁ : 2 ≤ x := by
+              omega
+            -- Consider the remainder of $x^x$ when divided by 4.
+            have h₁₂ : x ^ x % 4 = 0 ∨ x ^ x % 4 = 1 ∨ x ^ x % 4 = 2 ∨ x ^ x % 4 = 3 := by
+              omega
+            cases h₁₂ with
+            | inl h₁₂ =>
+              -- If $x^x \equiv 0 \pmod{4}$, then $x^x = 0$.
+              rw [Nat.pow_eq_zero_iff] at h₁₂
+              -- This is not possible.
+              simp [h₈] at h₁₂
+            | inr h₁₂ =>
+              -- If $x^x \equiv 1, 2, 3 \pmod{4}$, then $x^x < x^x$.
+              have h₁₃ : x ^ x < x ^

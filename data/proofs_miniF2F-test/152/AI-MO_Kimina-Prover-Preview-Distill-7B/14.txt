@@ -1,0 +1,42 @@
+have h₃ : m = 8 * Nat.div m 8 ∧ 0 < Nat.div m 8 := by
+    constructor
+    · exact Nat.eq_mul_of_div_eq_right (lcm_gcd_rec m n).1 h₁
+    · apply Nat.pos_of_mul_pos_right
+      exact h₀.1
+
+  have h₄ : n = 8 * Nat.div n 8 ∧ 0 < Nat.div n 8 := by
+    constructor
+    · exact Nat.eq_mul_of_div_eq_right (lcm_gcd_rec m n).1 h₁
+    · apply Nat.pos_of_mul_pos_right
+      exact h₀.2
+
+  have : (m = 8 ∧ n = 8) ∨ (m = 16 ∧ n = 8) ∨ (m = 8 ∧ n = 16) ∨ (m = 16 ∧ n = 16)
+    ∨ (m = 8 ∧ n = 32) ∨ (m = 32 ∧ n = 8) ∨ (m = 16 ∧ n = 32) ∨ (m = 32 ∧ n = 16)
+    ∨ (m = 8 ∧ n = 64) ∨ (m = 64 ∧ n = 8) ∨ (m = 16 ∧ n = 64) ∨ (m = 64 ∧ n = 16)
+    ∨ (m = 32 ∧ n = 32) ∨ (m = 16 ∧ n = 128) ∨ (m = 128 ∧ n = 16) ∨ (m = 64 ∧ n = 64)
+    ∨ (m = 32 ∧ n = 128) ∨ (m = 128 ∧ n = 32) ∨ (m = 128 ∧ n = 128) := by
+
+    rcases h₃ with ⟨h₃, h₃⟩
+    rcases h₄ with ⟨h₄, h₄⟩
+
+    have : Nat.div m 8 * Nat.div n 8 = 14 := by
+      calc
+        Nat.div m 8 * Nat.div n 8 = (m / 8) * (n / 8) := by simp
+        _ = m * n / 64 := by rw [Nat.mul_div_assoc]
+        _ = (m * n).gcd 64 / 64 := by rw [gcd_eq_nat_gcd]; norm_cast
+        _ = 112 / 64 := by rw [h₂]
+        _ = 14 := by norm_num
+
+    have h₅ : Nat.div m 8 ≤ 14 := by exact Nat.le_of_dvd (by norm_num) (Dvd.intro _ this)
+    have h₆ : Nat.div n 8 ≤ 14 := by exact Nat.le_of_dvd (by norm_num) (Dvd.intro _ this)
+
+    interval_cases Nat.div m 8 <;> interval_cases Nat.div n 8 <;> omega
+
+  rcases this with
+  | inl h =>
+    rw [h.1, h.2]
+    norm_num
+  | inr h =>
+    rw [h.1, h.2]
+    norm_num
+```

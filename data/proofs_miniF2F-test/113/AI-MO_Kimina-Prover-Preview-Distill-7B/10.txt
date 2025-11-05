@@ -1,0 +1,55 @@
+-- estimate the sum by integral
+  have integral : ∫ k ∈ Set.Icc (2 : ℝ) 10000, 1 / Real.sqrt k ≤ 198 := by
+    simp only [Set.Icc, Set.mem_Icc, Nat.cast_ofNat, le_real_iff,
+      Set.mem_setOf_eq, Nat.ofNat_pos, true_and]
+    -- show that the integral is bounded by 196
+    calc ∫ k ∈ Set.Icc (2 : ℝ) 10000, 1 / Real.sqrt k
+      _ ≤ ∫ k ∈ Set.Ico 2 10001, 1 / Real.sqrt k := by
+        apply integral_le_integral_of_le
+        · simp only [Set.mem_Icc, Nat.cast_ofNat, le_real_iff]
+          exact fun x => Nat.le_of_sub_ne_zero (id (Ne.symm x))
+        · simp only [Set.mem_Icc, Nat.cast_ofNat, le_real_iff]
+          exact fun x => Nat.succ_le_of_lt (id (lt_of_le_of_ne x (Ne.symm x)))
+      _ = ∫ k ∈ Set.Ico 2 10001, 1 / Real.sqrt k := by
+        rw [integral_eq_substituting]
+        · rw [Nat.cast_ofNat, Nat.cast_ofNat]
+          norm_num
+        · simp only [Set.mem_Icc, Nat.cast_ofNat, le_real_iff]
+          exact fun x => Nat.le_of_sub_ne_zero (id (Ne.symm x))
+        · simp only [Set.mem_Icc, Nat.cast_ofNat, le_real_iff]
+          exact fun x => Nat.succ_le_of_lt (id (lt_of_le_of_ne x (Ne.symm x)))
+      _ = 196 + 1 / Real.sqrt 10000 := by
+        rw [← integral_eq_substituting]
+        · rw [show (10001 : ℝ) = 10000 + 1 by norm_num, add_comm]
+          norm_num
+          rw [integral_eq_substituting]
+          · rw [Nat.cast_ofNat, Nat.cast_ofNat]
+            norm_num
+          · simp only [Set.mem_Icc, Nat.cast_ofNat, le_real_iff]
+            exact fun x => Nat.le_of_sub_ne_zero (id (Ne.symm x))
+          · simp only [Set.mem_Icc, Nat.cast_ofNat, le_real_iff]
+            exact fun x => Nat.succ_le_of_lt (id (lt_of_le_of_ne x (Ne.symm x)))
+        · norm_num
+      _ ≤ 198 := by
+        simp only [Set.mem_Icc, Nat.cast_ofNat, le_real_iff]
+        norm_num
+
+  -- convert the integral to sum
+  have integral_eq : ∫ k ∈ Set.Icc (2 : ℝ) 10000, 1 / Real.sqrt k = ∑ k in Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k := by
+    rw [integral_eq_sum]
+    -- show that the sum and integral are equal
+    · simp only [Set.mem_Icc, Nat.cast_ofNat, ne_eq, Set.mem_setOf_eq,
+        Nat.ofNat_pos, true_and]
+      intro x hx
+      rw [← Nat.cast_nonneg]
+      apply Real.sqrt_nonneg
+    · simp only [Set.mem_Icc, Nat.cast_ofNat, ne_eq, Set.mem_setOf_eq,
+        Nat.ofNat_pos, true_and]
+      intro x hx
+      rw [← Nat.cast_nonneg]
+      apply Real.sqrt_nonneg
+
+  -- combine the results
+  rw [integral_eq] at integral
+  exact integral
+```

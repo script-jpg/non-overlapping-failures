@@ -1,0 +1,53 @@
+have h₂ : Real.logb 4 (Real.logb 4 n) = Real.logb 2 (Real.logb 16 n) := by
+    rw [h₁]
+
+  have h₃ : Real.logb 4 (Real.logb 4 n) = (Real.logb 2 (Real.logb 4 n)) * (Real.logb 2 4) := by
+    rw [Real.logb]
+    rw [Real.logb]
+    ring_nf
+    rw [Real.logb]
+    ring_nf
+
+  have h₄ : Real.logb 2 (Real.logb 16 n) = (Real.logb 2 (Real.logb 4 n)) * (Real.logb 2 16) := by
+    rw [Real.logb]
+    rw [Real.logb]
+    ring_nf
+    rw [Real.logb]
+    ring_nf
+
+  have h₅ : Real.logb 2 (Real.logb 4 n) * (Real.logb 2 4) = (Real.logb 2 (Real.logb 4 n)) * (Real.logb 2 16) := by
+    rw [h₃, h₄]
+
+  have h₆ : Real.logb 2 (Real.logb 4 n) = 0 ∨ (Real.logb 2 4) = (Real.logb 2 16) := by
+    cases (mul_eq_mul_left_iff.mp h₅) with
+    | inl h => left; exact h
+    | inr h => right; exact h
+
+  -- Split into two cases.
+  rcases h₆ with h₆ | h₆
+  · -- If $\log_2{(\log_4{n})} = 0.$
+    -- It is easy to check that $\log_4{n} = 1.$
+    rw [Real.logb_eq_zero] at h₆
+    -- Thus, $n = 4.$
+    simp at h₆
+    rw [h₆] at h₀
+    -- $n$ is $4.$
+    have h₇ : n = 4 := by
+      exact Nat.eq_of_le_of_lt_succ h₀ h₆
+    rw [h₇]
+    -- The sum of the digits of $4$ is $4.$
+    norm_num
+  · -- If $h₆: \log_2{4} = \log_2{16}$
+    -- It is easy to check that $4 = 16.$
+    have h₇ : 4 = 16 := by
+      rw [Real.logb_eq_iff_rpow_eq] at h₆
+      rw [show 2 = (2 : ℝ) by rfl, show (4 : ℝ) = (4 : ℝ) by rfl, show (16 : ℝ) = (16 : ℝ) by rfl] at h₆
+      rcases h₆ with h₆ | h₆
+      · norm_num at h₆
+      · rw [← Real.rpow_mul] at h₆
+        norm_num at h₆
+        linarith
+        all_goals norm_num
+    -- But $4 \neq 16.$
+    norm_num at h₇
+```

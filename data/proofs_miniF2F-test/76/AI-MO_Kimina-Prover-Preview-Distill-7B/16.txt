@@ -1,0 +1,186 @@
+-- First, we prove that the set of positive integers $n$ satisfying the equation is exactly
+  -- $\{13, 36, 61, 98, 103, 122\}$.
+  have h₁ : S = {13, 36, 61, 98, 103, 122} := by
+    -- To prove set equality, we show that an element is in the left set if and only if it is in
+    -- the right set.
+    ext n
+    simp only [Finset.mem_insert, Finset.mem_singleton, h₀, Set.mem_setOf_eq, and_imp]
+
+    constructor
+    -- Let's first take the forward direction: if $n$ is in the left set, then it is in the
+    -- right set, meaning $n$ satisfies the equation and is positive.
+    · intro ⟨h₁, h₂⟩
+      have h₃ : n < 1300 := by
+        -- We make the observation that $(n+1000) / 70 = \lfloor \sqrt{n} \rfloor \leq \sqrt{n}$.
+        -- Then, squaring both sides, we get $(n+1000)^2 / 70^2 \leq n$.
+        have h : (n + 1000) / 70 = ⌊Real.sqrt n⌋ := by
+          norm_cast at h₂
+          rw [show (↑n : ℝ) = n by simp] at h₂
+          exact h₂
+        have h' : Real.sqrt n ≥ 0 := by apply Real.sqrt_nonneg
+        rw [←h] at h'
+        have h'' : (Real.sqrt n) ^ 2 ≥ 0 := by
+          apply sq_nonneg
+        have h''' : (↑n : ℝ) ≥ 0 := by simp
+        have : (↑n : ℝ) + 1000 ≥ 70 * ⌊Real.sqrt n⌋ := by
+          calc
+            (↑n : ℝ) + 1000 ≥ 70 * (Real.sqrt n) := by
+              rw [ge_iff_le, mul_le_mul_right (by norm_num)]
+              apply Real.sqrt_le_left (by norm_num)
+            _ ≥ 70 * ⌊Real.sqrt n⌋ := by
+              rw [mul_comm]
+              apply (mul_le_mul_iff_of_pos_right (by norm_num)).mpr h'
+        rw [←h] at this
+        have this' : ⌊Real.sqrt n⌋ ≥ 0 := by
+          rify
+          exact h'
+        apply Int.le_floor.mp this
+        apply lt_of_le_of_lt this' (by norm_num)
+      -- We divide into cases based on the value of $\lfloor \sqrt{n} \rfloor$.
+      interval_cases h : ⌊Real.sqrt n⌋
+      -- When $\lfloor \sqrt{n} \rfloor = 0$, the equation becomes $(n+1000) / 70 = 0$,
+      -- which has no solution.
+      · exfalso
+        floor_eq_zero.mpr (by simp) at h
+        have : n ≤ 0 := by
+          rw [Real.sqrt_le_iff] at h
+          norm_num at h
+          exact h
+        linarith
+      -- When $\lfloor \sqrt{n} \rfloor = 1$, the equation becomes $(n+1000) / 70 = 1$,
+      -- which implies $n = 13$.
+      · left
+        exfalso
+        floor_eq_iff.mpr (by simp) at h
+        have : n ≤ 1 := by
+          rw [Real.sqrt_le_iff] at h
+          norm_num at h
+          exact h
+        rw [show n = 1 by omega] at h₁
+        norm_num at h₁
+      -- When $\lfloor \sqrt{n} \rfloor = 2$, the equation becomes $(n+1000) / 70 = 2$,
+      -- which implies $n = 36$.
+      · right
+        left
+        exfalso
+        floor_eq_iff.mpr (by simp) at h
+        have : n ≤ 3 := by
+          rw [Real.sqrt_le_iff] at h
+          norm_num at h
+          exact h
+        rw [show n = 3 by omega] at h₁
+        norm_num at h₁
+      -- When $\lfloor \sqrt{n} \rfloor = 3$, the equation becomes $(n+1000) / 70 = 3$,
+      -- which implies $n = 61$.
+      · right
+        right
+        left
+        exfalso
+        floor_eq_iff.mpr (by simp) at h
+        have : n ≤ 8 := by
+          rw [Real.sqrt_le_iff] at h
+          norm_num at h
+          exact h
+        rw [show n = 8 by omega] at h₁
+        norm_num at h₁
+      -- When $\lfloor \sqrt{n} \rfloor = 4$, the equation becomes $(n+1000) / 70 = 4$,
+      -- which implies $n = 98$.
+      · right
+        right
+        right
+        left
+        exfalso
+        floor_eq_iff.mpr (by simp) at h
+        have : n ≤ 15 := by
+          rw [Real.sqrt_le_iff] at h
+          norm_num at h
+          exact h
+        rw [show n = 15 by omega] at h₁
+        norm_num at h₁
+      -- When $\lfloor \sqrt{n} \rfloor = 5$, the equation becomes $(n+1000) / 70 = 5$,
+      -- which implies $n = 103$.
+      · right
+        right
+        right
+        right
+        left
+        exfalso
+        floor_eq_iff.mpr (by simp) at h
+        have : n ≤ 24 := by
+          rw [Real.sqrt_le_iff] at h
+          norm_num at h
+          exact h
+        rw [show n = 24 by omega] at h₁
+        norm_num at h₁
+      -- When $\lfloor \sqrt{n} \rfloor = 6$, the equation becomes $(n+1000) / 70 = 6$,
+      -- which implies $n = 122$.
+      · right
+        right
+        right
+        right
+        right
+        exfalso
+        floor_eq_iff.mpr (by simp) at h
+        have : n ≤ 35 := by
+          rw [Real.sqrt_le_iff] at h
+          norm_num at h
+          exact h
+        rw [show n = 35 by omega] at h₁
+        norm_num at h₁
+      -- When $\lfloor \sqrt{n} \rfloor = 7$, the equation becomes $(n+1000) / 70 = 7$,
+      -- which has no solution.
+      · exfalso
+        floor_eq_iff.mpr (by simp) at h
+        have : n ≥ 49 := by
+          rw [Real.sqrt_le_iff] at h
+          norm_num at h
+          exact h
+        linarith
+    -- Now, we take the reverse direction. If $n$ is in the right set, then it is in the
+    -- left set.
+    · intro h
+      simp at h
+      rcases h with h | h | h | h | h | h
+      -- When $n = 13$, we verify that it satisfies the equation.
+      · rw [h]
+        norm_num
+        have : Real.sqrt (13 : ℝ) ≥ 0 := by apply Real.sqrt_nonneg
+        refine ⟨(by simp),?_⟩
+        linarith
+      -- When $n = 36$, we verify that it satisfies the equation.
+      · rw [h]
+        norm_num
+        have : Real.sqrt (36 : ℝ) ≥ 0 := by apply Real.sqrt_nonneg
+        refine ⟨(by simp),?_⟩
+        linarith
+      -- When $n = 61$, we verify that it satisfies the equation.
+      · rw [h]
+        norm_num
+        have : Real.sqrt (61 : ℝ) ≥ 0 := by apply Real.sqrt_nonneg
+        refine ⟨(by simp),?_⟩
+        linarith
+      -- When $n = 98$, we verify that it satisfies the equation.
+      · rw [h]
+        norm_num
+        have : Real.sqrt (98 : ℝ) ≥ 0 := by apply Real.sqrt_nonneg
+        refine ⟨(by simp),?_⟩
+        linarith
+      -- When $n = 103$, we verify that it satisfies the equation.
+      · rw [h]
+        norm_num
+        have : Real.sqrt (103 : ℝ) ≥ 0 := by apply Real.sqrt_nonneg
+        refine ⟨(by simp),?_⟩
+        linarith
+      -- When $n = 122$, we verify that it satisfies the equation.
+      · rw [h]
+        norm_num
+        have : Real.sqrt (122 : ℝ) ≥ 0 := by apply Real.sqrt_nonneg
+        refine ⟨(by simp),?_⟩
+        linarith
+
+  -- Now, we use the fact that $S = \{13, 36, 61, 98, 103, 122\}$ to compute the cardinality of $S$.
+  rw [h₁]
+  rw [show ({13, 36, 61, 98, 103, 122} : Finset ℕ) = ({13, 36, 61, 98, 103, 122} : Finset (ℕ : ℝ)) by simp]
+  simp
+
+```

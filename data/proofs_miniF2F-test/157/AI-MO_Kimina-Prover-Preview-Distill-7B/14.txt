@@ -1,0 +1,153 @@
+-- Prove that $2 \in S$.
+  have h2 : 2 ∈ S := by
+    rw [h₀]
+    simp only [Finset.mem_insert, Finset.mem_singleton, Nat.ofNat_nonneg, Real.pi_nonneg, mul_nonneg,
+      Real.cos_sq_add_sin_sq]
+    norm_num
+
+  -- Prove that $2 + \frac{\pi}2 \in S$.
+  have h2pi : 2 + Real.pi / 2 ∈ S := by
+    rw [h₀]
+    simp only [Finset.mem_insert, Finset.mem_singleton, Nat.ofNat_nonneg, Real.pi_nonneg, mul_nonneg,
+      Real.cos_sq_add_sin_sq]
+    ring_nf
+    norm_num
+
+  -- Prove that $S=\{2, 2+\frac{\pi}2\}$.
+  have hS : S = {2, 2 + Real.pi / 2} := by
+    ext x
+    constructor
+    · intro hx
+      -- Show that $x \in [0,\pi] \implies x = 2$ or $x = 2 + \frac{\pi}2$.
+      have hx0 : x ∈ S := hx
+      rw [h₀] at hx0
+      rcases hx0 with ⟨hx0, hx1, hx2⟩
+      have hx2 : 0 ≤ Real.cos x ∧ 0 ≤ Real.sin x := by
+        constructor
+        · apply Real.cos_nonneg_of_mem_Icc
+          simp only [Finset.mem_Icc, hx1, hx0]
+          exact ⟨by linarith, by linarith⟩
+        · apply Real.sin_nonneg_of_mem_Icc
+          simp only [Finset.mem_Icc, hx1, hx0]
+          exact ⟨by linarith, by linarith⟩
+      -- Show that $\cos x = \sin x$.
+      have hcos : Real.cos x = Real.sin x := by
+        have h₁ : Real.cos x ^ 2 = Real.sin x ^ 2 := by
+          have h₂ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := hx2
+          rw [Real.sin_eq_cos] at h₂
+          linarith
+        -- Show that $\cos x = \sin x$.
+        have h₃ : 0 ≤ Real.cos x := hx2.1
+        have h₄ : 0 ≤ Real.sin x := hx2.2
+        have h₅ : Real.cos x ^ 2 - Real.sin x ^ 2 = 0 := by
+          linarith
+        have h₆ : (Real.cos x - Real.sin x) * (Real.cos x + Real.sin x) = 0 := by
+          linarith
+        have h₇ : Real.cos x - Real.sin x = 0 ∨ Real.cos x + Real.sin x = 0 := by
+          rw [mul_eq_zero] at h₆
+          exact h₆
+        rcases h₇ with h₇ | h₇
+        · linarith
+        · linarith
+
+      -- Let $t = \cos x = \sin x$.
+      let t := Real.cos x
+      have ht : t = Real.cos x := rfl
+      rw [←ht] at hx2
+      have h1 : t ^ 2 + t ^ 2 = 1 := by
+        rw [←ht]
+        exact Real.cos_sq_add_sin_sq x
+      have h2 : t ≠ 0 := by
+        linarith
+      have htan : t = 1 / Real.sqrt 2 ∨ t = -1 / Real.sqrt 2 := by
+        refine (Real.tan_eq half_pi_div_iff?_).mp?_
+        · linarith
+        · simp only [tan_half_pi_div, Real.sqrt_div, Real.sqrt_one, div_self h2]
+      rcases htan with htan | htan
+      · -- If $t = \frac1{\sqrt2}$, then $\cos x = \frac{\sqrt2}2$.
+        rw [htan, div_div_eq_mul_div] at ht
+        have htan := congrArg ( fun (x : ℝ) ↦ x * Real.sqrt 2) ht
+        rw [div_mul_cancel₀ _ h2, mul_one, ←mul_assoc, Real.mul_self_sqrt (by linarith)] at htan
+        have htansq : t^2 = (1 / 2 : ℝ) := by
+          rw [htan]
+          ring_nf
+          norm_num
+        have hx3 : Real.cos x ^ 2 = (1 / 2 : ℝ) := by
+          rw [htansq]
+          rw [ht]
+          ring_nf
+        have hx4 : Real.sin x ^ 2 = (1 / 2 : ℝ) := by
+          have h := Real.cos_sq_add_sin_sq x
+          rw [hx3] at h
+          linarith
+        have hx5 : Real.sin x = Real.cos x := by
+          rw [←hx4, ←hx3]
+          ring
+        have h2pi : 2 * Real.pi = (2 * Real.pi : ℝ) := rfl
+        have h3pi : 0 < 2 * Real.pi := by
+          linarith [Real.pi_pos]
+        have hx6 : 0 ≤ x ∧ x ≤ 2 * Real.pi := by
+          constructor
+          · linarith
+          · apply le_trans hx1
+            linarith
+        have hx7 : x = 2 ∨ x = 2 + Real.pi / 2 := by
+          apply Real.sq_eq_sq_iff_abs_eq_abs.mp
+          rw [hx5]
+          congr
+          · exact Real.abs_cos_eq_abs_sin_iff_cos_eq_sin.mp htan
+          · exact Real.abs_cos_eq_abs_sin_iff_cos_eq_neg_sin.mp (by linarith)
+        tauto
+      · -- If $t = -\frac1{\sqrt2}$, then $\cos x = -\frac{\sqrt2}2$.
+        rw [htan, div_div_eq_mul_div] at ht
+        have htan := congrArg ( fun (x : ℝ) ↦ x * Real.sqrt 2) ht
+        rw [div_mul_cancel₀ _ h2, mul_one, ←mul_assoc, Real.mul_self_sqrt (by linarith)] at htan
+        have htansq : t^2 = (1 / 2 : ℝ) := by
+          rw [htan]
+          ring_nf
+          norm_num
+        have hx3 : Real.cos x ^ 2 = (1 / 2 : ℝ) := by
+          rw [htansq]
+          rw [ht]
+          ring_nf
+        have hx4 : Real.sin x ^ 2 = (1 / 2 : ℝ) := by
+          have h := Real.cos_sq_add_sin_sq x
+          rw [hx3] at h
+          linarith
+        have hx5 : Real.sin x = -Real.cos x := by
+          rw [←hx4, ←hx3]
+          ring
+        have h2pi : 2 * Real.pi = (2 * Real.pi : ℝ) := rfl
+        have h3pi : 0 < 2 * Real.pi := by
+          linarith [Real.pi_pos]
+        have hx6 : 0 ≤ x ∧ x ≤ 2 * Real.pi := by
+          constructor
+          · linarith
+          · apply le_trans hx1
+            linarith
+        have hx7 : x = 2 ∨ x = 2 + Real.pi / 2 := by
+          apply Real.sq_eq_sq_iff_abs_eq_abs.mp
+          rw [hx5]
+          congr
+          · exact Real.abs_cos_eq_abs_sin_iff_cos_eq_neg_sin.mp (by linarith)
+          · exact Real.abs_cos_eq_abs_sin_iff_cos_eq_sin.mp htan
+        tauto
+
+    · -- Show that $x \in S \implies x \in [0,\pi] \land \sin \left( \frac{\pi}2 \cos x\right)=\cos \left( \frac{\pi}2 \sin x\right)$.
+      intro hx
+      have hSx : hx ∈ S := by
+        rw [hS]
+        simp only [Finset.mem_insert, Finset.mem_singleton]
+        linarith
+      rw [h₀] at hSx
+      rcases hSx with ⟨hx1, hx2, hx3⟩
+      simp only [hx2, hx3]
+      constructor
+      · linarith
+      · linarith
+
+  -- Show that $S=\{2, 2+\frac{\pi}2\}$.
+  rw [hS]
+  simp
+
+```

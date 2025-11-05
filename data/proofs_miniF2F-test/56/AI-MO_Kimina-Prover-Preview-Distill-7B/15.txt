@@ -1,0 +1,210 @@
+-- A lemma that the sum of two even numbers is even.
+  have h_sum_of_two_even Numbers (a b : ℕ) (ha : Even a) (hb : Even b) : Even (a + b) := by
+    rw [Nat.even_add] at *
+    omega
+
+  -- A lemma that the sum of two multiples of k is a multiple of k.
+  have h_sum_of_two_mul_of_mul {k a b : ℕ} (ha : k ∣ a) (hb : k ∣ b) : k ∣ a + b := by
+    exact Nat.dvd_add ha hb
+
+  -- A lemma that 3 divides $2^k + 1$ if and only if $k$ is odd.
+  have h_3_dvd_2powkadd1 {k : ℕ} : 3 ∣ (2 ^ k + 1) ↔ Odd k := by
+    ring_nf
+    constructor
+   . intro h
+      rw [← Nat.modEq_iff_dvd' (by omega)] at h
+      rw [Nat.modEq_iff_dvd] at h
+      revert h
+      induction k with
+      | zero => simp
+      | succ k ih =>
+        simp
+        constructor
+       . intro h
+          rw [Nat.add_mod, ih, Nat.mul_mod]
+          simp at h
+          rw [← h]
+          rfl
+       . intro h
+          rw [Nat.add_mod, ih, Nat.mul_mod]
+          simp at h
+          rw [h]
+          rfl
+   . intro h
+      rw [Nat.even_iff] at h
+      cases h with
+      | inl h =>
+        rw [Nat.even_iff] at h
+        constructor
+       . intro
+          rw [Nat.add_mod, Nat.mul_mod, h, Nat.mul_mod]
+          simp
+       . simp
+      | inr h =>
+        simp at h
+        constructor
+       . intro
+          rw [Nat.add_mod, Nat.mul_mod, h, Nat.mul_mod]
+          simp
+       . simp
+
+  -- A lemma that 9 divides $3^k + 3$ if and only if $k$ is odd.
+  have h_9_dvd_3powkadd3 {k : ℕ} : 9 ∣ (3 ^ k + 3) ↔ Odd k := by
+    ring_nf
+    constructor
+   . intro h
+      rw [← Nat.modEq_iff_dvd' (by omega)] at h
+      rw [Nat.modEq_iff_dvd] at h
+      revert h
+      induction k with
+      | zero => simp
+      | succ k ih =>
+        simp
+        constructor
+       . intro h
+          rw [Nat.add_mod, ih, Nat.mul_mod]
+          simp at h
+          rw [← h]
+          rfl
+       . intro h
+          rw [Nat.add_mod, ih, Nat.mul_mod]
+          simp at h
+          rw [h]
+          rfl
+   . intro h
+      rw [Nat.even_iff] at h
+      cases h with
+      | inl h =>
+        rw [Nat.even_iff] at h
+        constructor
+       . intro
+          rw [Nat.add_mod, Nat.mul_mod, h, Nat.mul_mod]
+          simp
+       . simp
+      | inr h =>
+        simp at h
+        constructor
+       . intro
+          rw [Nat.add_mod, Nat.mul_mod, h, Nat.mul_mod]
+          simp
+       . simp
+
+  -- A lemma that 4 divides $2^k + 2$ if and only if $k$ is odd.
+  have h_4_dvd_2powkadd2 {k : ℕ} : 4 ∣ (2 ^ k + 2) ↔ Odd k := by
+    ring_nf
+    constructor
+   . intro h
+      rw [← Nat.modEq_iff_dvd' (by omega)] at h
+      rw [Nat.modEq_iff_dvd] at h
+      revert h
+      induction k with
+      | zero => simp
+      | succ k ih =>
+        simp
+        constructor
+       . intro h
+          rw [Nat.add_mod, ih, Nat.mul_mod]
+          simp at h
+          rw [← h]
+          rfl
+       . intro h
+          rw [Nat.add_mod, ih, Nat.mul_mod]
+          simp at h
+          rw [h]
+          rfl
+   . intro h
+      rw [Nat.even_iff] at h
+      cases h with
+      | inl h =>
+        rw [Nat.even_iff] at h
+        constructor
+       . intro
+          rw [Nat.add_mod, Nat.mul_mod, h, Nat.mul_mod]
+          simp
+       . simp
+      | inr h =>
+        simp at h
+        constructor
+       . intro
+          rw [Nat.add_mod, Nat.mul_mod, h, Nat.mul_mod]
+          simp
+       . simp
+
+  -- A lemma that if $p$ is a prime number and $n$ is not divisible by $p$,
+  -- then Fermat's Little Theorem says $a^{p-1} \equiv 1 \pmod{p}$.
+  have h_fermat {p n : ℕ} (hp : Nat.Prime p) (hn : n.Coprime p) : n ^ (p - 1) ≡ 1 [MOD p] := by
+    exact Nat.ModEq.pow_totient hn.symm
+
+  -- A lemma that the totient function is multiplicative.
+  have h_totient_mul {m n : ℕ} (hn : n.Coprime m) : m.totient * n.totient = (m * n).totient := by
+    exact Nat.totient_mul hn
+
+  -- A lemma that if $x$ is a real number and $n$ is a positive integer,
+  -- then $x^n + y^n$ is divisible by $x + y$.
+  have h_xpowaddypow {x y n : ℝ} (hn : 0 < n) : x ^ n + y ^ n = (x + y) * ∑ i ∈ Finset.range n, (-1) ^ i * x ^ i * y ^ (n - i - 1) := by
+    cases' n with n
+   . simp
+   . rw [add_pow]
+      simp only [Finset.range_succ, Finset.sum_insert]
+      rw [add_mul, sub_mul, ← pow_succ', ← pow_succ']
+      congr 1
+     . rw [← mul_assoc, add_mul, sub_mul, mul_assoc]
+        congr 1
+        ring
+     . exact Nat.zero_lt_of_ne_zero hn
+        exact Nat.zero_lt_of_ne_zero hn
+
+  -- If $f(x) = 4^x + 6^x + 9^x$, then $f(2^m)$ divides $f(2^n)$.
+  have lm (m n : ℕ) (f : ℕ → ℕ) (h₀ : ∀ x, f x = 4 ^ x + 6 ^ x + 9 ^ x) (h₁ : 0 < m ∧ 0 < n) (h₂ : m ≤ n) :
+      f (2 ^ m) ∣ f (2 ^ n) := by
+    have h₃ : 0 < m := h₁.1
+    have h₄ : 0 < n := h₁.2
+    have h₅ : 0 < 2 ^ m := by exact Nat.pos_pow_of_pos h₃
+    have h₆ : 0 < 2 ^ n := by exact Nat.pos_pow_of_pos h₄
+    have h₇ : 2 ^ m ∣ 2 ^ n := by exact Nat.pow_dvd_pow h₂
+    rw [h₀, h₀]
+    rw [show 4 ^ (2 ^ n) = (2 ^ 2) ^ (2 ^ n) by rw [show 4 = 2 ^ 2 by omega]]
+    rw [show 9 ^ (2 ^ n) = (3 ^ 2) ^ (2 ^ n) by rw [show 9 = 3 ^ 2 by omega]]
+    rw [← pow_mul, ← pow_mul]
+    have : 2 ^ (2 * (2 ^ n)) = (2 ^ 2) ^ (2 ^ n) := by rw [show 2 * (2 ^ n) = (2 ^ n) * 2 by ring]
+    rw [this]
+    have : 3 ^ (2 * (2 ^ n)) = (3 ^ 2) ^ (2 ^ n) := by rw [show 2 * (2 ^ n) = (2 ^ n) * 2 by ring]
+    rw [this]
+    -- Move all the terms to the RHS of the divisibility relation.
+    suffices 2 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m) + 3 ^ (2 * (2 ^ m)) ∣ 2 ^ (2 * (2 ^ n)) + 3 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) by
+      convert this using 1
+      rw [show 2 ^ (2 * (2 ^ n)) + 3 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) = 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) + 3 ^ (2 * (2 ^ n)) by ring]
+    rw [show 2 ^ (2 * (2 ^ m)) + 3 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m) = (2 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m) + 3 ^ (2 * (2 ^ m))) by ring]
+    rw [show 2 ^ (2 * (2 ^ n)) + 3 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) = (2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) + 3 ^ (2 * (2 ^ n))) by ring]
+    -- We have $2 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m) + 3 ^ (2 * (2 ^ m))$ divides itself.
+    exists 1
+    -- We have $2 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ n) + 3 ^ (2 * (2 ^ m))$ divides itself.
+    exists 1
+    -- We have $6 ^ (2 ^ m) + 2 ^ (2 * (2 ^ m)) + 3 ^ (2 * (2 ^ m))$ divides $3 ^ (2 * (2 ^ n)) + 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n)$.
+    exists 2 ^ (2 * (2 ^ m)) + 3 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m)
+    -- We have $3 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m) + 2 ^ (2 * (2 ^ m))$ divides $3 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) + 2 ^ (2 * (2 ^ n))$.
+    exists 2 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m) + 3 ^ (2 * (2 ^ m))
+    rw [show 2 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m) + 3 ^ (2 * (2 ^ m)) = 2 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m) + 3 ^ (2 * (2 ^ m)) by rfl]
+    -- We have $3 ^ (2 * (2 ^ m)) + 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n)$ divides $3 ^ (2 * (2 ^ n)) + 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n)$.
+    exists 3 ^ (2 * (2 ^ m)) + 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n)
+    -- We have $2 ^ (2 * (2 ^ m)) + 3 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ n)$ divides $2 ^ (2 * (2 ^ n)) + 3 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n)$.
+    exists 2 ^ (2 * (2 ^ m)) + 3 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ n)
+    rw [show 2 ^ (2 * (2 ^ m)) + 3 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ n) = 2 ^ (2 * (2 ^ m)) + 3 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ n) by rfl]
+    -- We have $2 ^ (2 * (2 ^ n)) + 3 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ m)$ divides $3 ^ (2 * (2 ^ n)) + 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n)$.
+    exists 3 ^ (2 * (2 ^ n)) + 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ m)
+    -- We have $3 ^ (2 * (2 ^ m)) + 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ m)$ divides $3 ^ (2 * (2 ^ n)) + 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n)$.
+    exists 3 ^ (2 * (2 ^ m)) + 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ m)
+    -- We have $6 ^ (2 ^ m) + 3 ^ (2 * (2 ^ m)) + 2 ^ (2 * (2 ^ m))$ divides $6 ^ (2 ^ n) + 3 ^ (2 * (2 ^ n)) + 2 ^ (2 * (2 ^ n))$.
+    exists 6 ^ (2 ^ m) + 3 ^ (2 * (2 ^ m)) + 2 ^ (2 * (2 ^ m))
+    -- We have $2 ^ (2 * (2 ^ m)) + 6 ^ (2 ^ m) + 3 ^ (2 * (2 ^ m))$ divides $2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) + 3 ^ (2 * (2 ^ n))$.
+    exists 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) + 3 ^ (2 * (2 ^ n))
+    rw [show 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) + 3 ^ (2 * (2 ^ n)) = 2 ^ (2 * (2 ^ n)) + 6 ^ (2 ^ n) + 3 ^ (2 * (2 ^ n)) by rfl]
+
+  constructor
+  -- The theorem is proved if $m = n$.
+ . rw [Nat.pow_le_pow_iff_right (by omega)]
+    exact lm m n f h₀ ⟨h₃, h₄⟩ rfl
+  -- Assume $m < n$.
+  omega
+
+```

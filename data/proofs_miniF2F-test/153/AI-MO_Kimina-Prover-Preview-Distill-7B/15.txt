@@ -1,0 +1,151 @@
+-- We first prove that the maximum value is attained at $t = 2$.
+  have h1 (t : ℝ) : (2 ^ t - 3 * t) * t / 4 ^ t ≤ (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2 := by
+
+    -- Since $e^t$ is increasing, we consider the cases $t < 2$ and $t > 2$.
+    by_cases h : t ≤ 2
+    · have h' : 2 ^ t ≤ 2 ^ 2 := by
+        apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
+        exact h
+      have h'' : 3 * t ≤ 3 * 2 := by
+        apply mul_le_mul_of_nonneg_left
+        exact h
+        norm_num
+      simp only [div_eq_mul_inv, ← mul_assoc, mul_inv_cancel_right₀, one_div,
+        Nat.ofNat_nonneg, mul_nonneg_iff_of_pos_right, inv_nonneg, one_nonneg, and_true,
+        true_and]
+      refine (mul_le_mul_iff_of_pos_right?_).mpr?_
+      · exact h'
+      · exact h''
+
+    · push_neg at h
+      have h' : 2 ^ t > 2 ^ 2 := by
+        apply Real.rpow_lt_rpow_of_exponent_lt (by norm_num)
+        exact h
+      have h'' : 3 * t > 3 * 2 := by
+        apply mul_lt_mul_of_nonneg_left
+        exact h
+        norm_num
+      simp only [div_eq_mul_inv, ← mul_assoc, mul_inv_cancel_right₀, one_div,
+        Nat.ofNat_nonneg, mul_nonneg_iff_of_pos_right, inv_nonneg, one_nonneg, and_true,
+        true_and]
+      refine (mul_le_mul_iff_of_pos_right?_).mpr?_
+      · exact h'
+      · exact h''
+
+  -- Next, we show that $\frac{(2^t-3t)t}{4^t}$ is always less than or equal to $\frac{1}{12}$.
+  have h2 (t : ℝ) : (2 ^ t - 3 * t) * t / 4 ^ t ≤ 1 / 12 := by
+
+    -- We split into cases based on whether $t$ is nonnegative.
+    by_cases h : t ≤ 0
+    · -- If $t \le 0$, the result is clear since $(2^t-3t)t$ is nonpositive and $4^t$ is positive.
+      have h' : (2 ^ t - 3 * t) * t ≤ 0 := by
+        apply mul_nonpos_of_nonpos_of_nonneg
+        · apply sub_nonpos.mpr
+          apply Real.rpow_le_one_of_one_le_of_nonpos
+          norm_num
+          exact le_of_not_lt h
+        · linarith [show 0 ≤ t by linarith]
+      apply div_nonpos_of_nonpos_of_nonneg at h'
+      apply le_of_nonpos h'
+      positivity
+
+    · push_neg at h
+      replace h' : t > 0 := by
+        exact lt_of_not_ge h'
+
+      -- Since $t > 0$ and $2 > 1$, we have $2^t > 1$.
+      have h1 : 1 < (2 : ℝ) ^ t := by
+        refine Real.one_lt_rpow?_?_
+        norm_num
+        exact h'
+
+      -- We prove that $4^t = (2^2)^t = 2^{2t}$.
+      have h2 : (4 : ℝ) ^ t = 2 ^ (t * 2) := by
+        rw [show (4 : ℝ) = 2 ^ (2 : ℝ) by norm_num]
+        rw [← Real.rpow_mul]
+        ring
+        norm_num
+
+      -- We prove that $2^{t + t} = 2^{2t}$.
+      have h3 : 2 ^ (t + t) = 2 ^ (t * 2) := by
+        nth_rw 1 [← mul_one 2, ← mul_assoc, ← pow_mul]
+        ring_nf
+
+      -- We rewrite the expression in a form amenable to calculus.
+      rw [h2, h3]
+      simp only [div_eq_mul_inv, ← mul_assoc, mul_inv_cancel_right₀, one_div,
+        Nat.ofNat_nonneg, mul_nonneg_iff_of_pos_right, inv_nonneg, one_nonneg, and_true,
+        true_and]
+      rw [mul_comm]
+
+      -- We consider the cases $t < 2$ and $t > 2$.
+      by_cases h : t < 2
+      · -- If $t < 2$, we use the fact that $e^t$ is increasing to show that $2^t < 2^2$.
+        have h1 : (2 : ℝ) ^ t < 2 ^ 2 := by
+          refine Real.rpow_lt_rpow_of_exponent_lt (by norm_num)?_
+          exact h
+        -- We also show that $t < 2$ implies $(2^t - 3t) < (2^2 - 3*2)$.
+        have h2 : (2 : ℝ) ^ t - 3 * t < 2 ^ 2 - 3 * 2 := by
+          apply sub_lt_sub
+          · exact h1
+          · linarith [show (3 : ℝ) * t < 3 * 2 by linarith]
+        -- We rewrite the inequality in a form amenable to calculus.
+        rw [mul_comm, ← mul_lt_mul_right (by positivity)]
+        apply lt_of_lt_of_le h2
+        -- We show that the inequality is of the form $2^t - t * 4^t \le 0$.
+        have h3 : (2 : ℝ) ^ (t * 2) ≤ t * 4 ^ t := by
+          -- We rewrite $4^t$ as $2^{2t}$ to prepare for using calculus.
+          rw [show (4 : ℝ) ^ t = 2 ^ (t * 2) by rw [h2]]
+          -- We show that $2^{2t} \le t * 2^{2t}$ since $t \ge 1$ and $2^{2t} > 0$.
+          nth_rw 1 [← mul_one (2 ^ (t * 2))]
+          rw [mul_le_mul_right]
+          linarith [h']
+          positivity
+        -- We rearrange to get the form $2^{t + t} + 1 \le 2 * 2^t$.
+        rw [← mul_add, ← pow_add, ← mul_pow]
+        apply div_le_of_le_mul₀ (by positivity)
+        -- We show that the inequality is of the form $2^t * (2^t - 2) \le 0$.
+        have h4 : 2 ^ t * (2 ^ t - 2) ≤ 0 := by
+          -- We show that $2^t > 0$ and $2^t - 2 \le 0$.
+          apply mul_nonpos_of_nonneg_of_nonpos
+          · positivity
+          · linarith [h1]
+        linarith [h3, h4]
+
+      · -- If $t \ge 2$, we use the fact that $e^t$ is increasing to show that $2^t \ge 2^2$.
+        simp only [le_neg_iff_add_nonpos_right, add_tsub_cancel_right]
+        have h1 : 2 ^ 2 ≤ (2 : ℝ) ^ t := by
+          refine Real.rpow_le_rpow_of_exponent_le (by norm_num)?_
+          exact h
+        -- We also show that $t \ge 2$ implies $(2^t - 3t) \ge (2^2 - 3*2)$.
+        have h2 : 2 ^ 2 - 3 * 2 ≤ (2 : ℝ) ^ t - 3 * t := by
+          apply sub_le_sub
+          · exact h1
+          · linarith [show (3 : ℝ) * t ≥ 3 * 2 by linarith]
+        -- We rewrite the inequality in a form amenable to calculus.
+        rw [mul_comm, ← mul_le_mul_right (by positivity)]
+        apply le_of_lt_of_le h2
+        -- We show that the inequality is of the form $2^t - t * 4^t \ge 0$.
+        have h3 : t * 4 ^ t ≤ (2 : ℝ) ^ (t * 2) := by
+          -- We rewrite $4^t$ as $2^{2t}$ to prepare for using calculus.
+          rw [show (4 : ℝ) ^ t = 2 ^ (t * 2) by rw [h2]]
+          -- We show that $t * 2^{2t} \le 2^{2t}$ since $t \le 2^{2t}$ and $2^{2t} > 0$.
+          rw [mul_le_mul_right]
+          linarith [h']
+          positivity
+        -- We rearrange to get the form $2^{t + t} + 1 \ge 2 * 2^t$.
+        rw [← mul_add, ← pow_add, ← mul_pow]
+        apply div_le_of_le_mul₀ (by positivity)
+        -- We show that the inequality is of the form $2^t * (2^t - 2) \ge 0$.
+        have h4 : 0 ≤ 2 ^ t * (2 ^ t - 2) := by
+          -- We show that $2^t > 0$ and $2^t - 2 \ge 0$.
+          apply mul_nonneg
+          · positivity
+          · linarith [h1]
+        linarith [h3, h4]
+
+  -- Since the maximum value is attained at $t = 2$ and the value at $t = 2$ is $\frac{1}{12}$, the maximum value of the function is $\frac{1}{12}$.
+  trans (2 ^ 2 - 3 * 2) * 2 / 4 ^ 2
+  · apply h1
+  · apply h2
+```

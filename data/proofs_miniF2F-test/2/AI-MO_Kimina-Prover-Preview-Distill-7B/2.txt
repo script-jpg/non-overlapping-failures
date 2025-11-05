@@ -1,0 +1,64 @@
+-- From the change of base formula, we have that $\log_x w = \frac{\log w}{\log x} = 24$ so $\log w = 24 \log x$.
+  have h_s0 : Real.log w = 24 * Real.log x := by
+    have := Real.log_div_log_eq_log_rpow ht.1 ht.2.1 hw
+    rw [← h0] at this
+    linear_combination this
+
+  -- Similarly, $\log w = 40 \log y$.
+  have h_s1 : Real.log w = 40 * Real.log y := by
+    have := Real.log_div_log_eq_log_rpow ht.2.1 ht.2.2 hw
+    rw [← h1] at this
+    linear_combination this
+
+  -- And $\log w = 12 \log (x y z)$.
+  have h_s2 : Real.log w = 12 * Real.log (x * y * z) := by
+    have := Real.log_div_log_eq_log_rpow ht.2.2 (by simp [ht.1, ht.2.1]) hw
+    rw [← h2] at this
+    linear_combination this
+
+  -- Expressing $\log (x y z)$ as $\log x + \log y + \log z$ and substituting into the previous equation,
+  have h_s2' : Real.log w = 12 * (Real.log x + Real.log y + Real.log z) := by
+    rw [Real.log_mul (by linarith [ht.1]) (by linarith [ht.2.1]) (by linarith [ht.2.2]),
+        Real.log_mul (by linarith [ht.1]) (by linarith [ht.2.1]), ht.2.2, ht.2.1, ht.1] at h_s2
+    linear_combination h_s2
+
+  -- we have that $\log w = 24 \log x = 40 \log y = 12 \log x + 12 \log y + 12 \log z$.
+  have h3 : 24 * Real.log x = 40 * Real.log y := by linarith [h_s0, h_s1]
+  have h4 : 24 * Real.log x = 12 * Real.log x + 12 * Real.log y + 12 * Real.log z := by linarith [h_s0, h_s2']
+
+  -- Hence, $24 \log x = 40 \log y$ implies that $3 \log x = 5 \log y$ which implies that $\log x = \frac{5}{3} \log y$.
+  have h5 : Real.log x = 5 / 3 * Real.log y := by
+    suffices h : 3 * Real.log x = 5 * Real.log y from by linear_combination h / 3
+    linarith [h3]
+
+  -- Substituting $\log x = \frac{5}{3} \log y$ into $24 \log x + 12 \log y = 12 \log w$ gives us $24 \cdot \frac{5}{3} \log y + 12 \log y = 12 \log w$.
+  have h6 : 24 * (5 / 3 * Real.log y) + 12 * Real.log y = 12 * (Real.log x + Real.log y + Real.log z) := by
+    rw [← h_s2', h5]
+    ring
+
+  -- Substituting $\log x = \frac{5}{3} \log y$ into $24 \log x = 40 \log y$ gives us $24 \cdot \frac{5}{3} \log y = 40 \log y$ which is true.
+  have h7 : 24 * (5 / 3 * Real.log y) = 40 * Real.log y := by
+    rw [← h3]
+    linarith [h5]
+
+  -- From $24 \cdot \frac{5}{3} \log y + 12 \log y = 12 \log w$, we have $50 \log y = 12 \log w$.
+  have h8 : 50 * Real.log y = 12 * Real.log w := by
+    linarith [h6, h7]
+
+  -- Rearranging, we have $\log w = \frac{25}{6} \log y$.
+  have h9 : Real.log w = 25 / 6 * Real.log y := by
+    linarith [h8]
+
+  -- Substituting this into $24 \log y = 40 \log y$ which is equivalent to $\log y = 0$ which implies that $y = 1$ which is a contradiction.
+  have h10 : Real.log y = 0 := by
+    linarith [h9, h1]
+
+  -- However, $y > 1$ which is a contradiction.
+  have h11 : Real.log y > 0 := by
+    apply Real.log_pos
+    linarith [ht.2.1]
+
+  -- The contradiction proves that $\log_z w = 060$.
+  linarith [h10, h11]
+
+```

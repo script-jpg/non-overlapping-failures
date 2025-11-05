@@ -1,0 +1,97 @@
+-- If $n = 40$, then $p(n) = 40^2 - 40 + 41 = 1600 - 40 + 41 = 1601$ and $p(n+1) = 41^2 - 41 + 41 = 1681$.
+  by_cases h : n = 40
+  · subst h
+    norm_num [h₀] at h₁
+
+  -- If $n < 40$, then we will show that $p(n)$ and $p(n+1)$ are coprime.
+  · by_contra! h₂
+    have h₃ : n < 40 := by
+      by_contra! h₃
+      push_neg at h₃
+      have h₄ : n = 40 := by omega
+      trivial
+
+    -- If $1 \leq n$, then $0 \leq n-1$.
+    have h₄ : 0 < n := by
+      by_contra! h₄
+      have h₄ : n = 0 := by omega
+      subst h₄
+      norm_num [h₀] at h₁
+    have h₅ : n - 1 < 40 := by omega
+
+    -- Let $d$ be the greatest common divisor of $p(n)$ and $p(n+1)$.
+    set d := Nat.gcd (p n) (p (n + 1))
+
+    -- Because $d \mid p(n)$ and $d \mid p(n+1)$, it follows that $d \mid p(n+1) - p(n)$.
+    have h₆ : d ∣ p (n + 1) - p n := Nat.dvd_sub (by linarith) (Nat.dvd_iff_mod_eq_zero.mp (Nat.gcd_dvd_left (p n) (p (n + 1))) ) (Nat.dvd_iff_mod_eq_zero.mp (Nat.gcd_dvd_right (p n) (p (n + 1))) )
+    have h₇ : p (n + 1) - p n = 2 * n + 1 := by
+      rw [h₀]
+      ring_nf
+
+    -- Because $d \mid 2n+1$ and $d \mid p(n)$, it follows that $d \mid 2n+1 - 2 \cdot (p(n) - n + 41)$.
+    have h₈ : d ∣ (2 * n + 1) - 2 * (p n - n + 41) := by
+      apply Nat.dvd_sub (by omega)
+      · exact h₇
+      · calc
+          2 * (p n - n + 41) = 2 * (n^2 - n + 41 - n + 41) := by rw [h₀]
+          _ = 2 * (n^2 - 2 * n + 82) := by ring_nf
+          _ = 2 * n^2 - 4 * n + 164 := by ring_nf
+          _ = 2 * n^2 - 4 * n + 2 * n + 164 - (2 * n + 1) := by omega
+          _ = (2 * n^2 - 2 * n + 1) - (2 * n + 1) := by omega
+          _ = ↑(2 * n + 1) - 2 * (p n - n + 41) := by rw [h₇]
+    have h₉ : (2 * n + 1) - 2 * (p n - n + 41) = 82 - n ^ 2 := by
+      rw [h₀]
+      ring_nf
+
+    -- Because $d \mid 82-n^2$ and $d \mid 2n+1$, it follows that $d \mid (82-n^2) + n \cdot (2n+1)$.
+    have h₁₀ : d ∣ (82 - n ^ 2) + n * (2 * n + 1) := by
+      apply Nat.dvd_add
+      · exact h₉
+      · exact h₈
+    have h₁₁ : (82 - n ^ 2) + n * (2 * n + 1) = n^2 + 2 * n + 82 := by
+      ring_nf
+
+    -- Because $d \mid n^2+2n+82$ and $d \mid 82-n^2$, it follows that $d \mid (n^2+2n+82) + (82-n^2)$.
+    have h₁₂ : d ∣ (n^2 + 2 * n + 82) + (82 - n^2) := by
+      apply Nat.dvd_add
+      · exact h₁₁
+      · exact h₉
+    have h₁₃ : (n^2 + 2 * n + 82) + (82 - n^2) = 2 * n + 164 := by
+      ring_nf
+
+    -- Because $d \mid 2n+164$ and $d \mid 2n+1$, it follows that $d \mid 2n+164 - (2n+1) = 163$.
+    have h₁₄ : d ∣ 163 := by
+      calc
+        d ∣ 2 * n + 164 - (2 * n + 1) := by apply Nat.dvd_sub (by omega); exact h₁₂; exact h₇
+        _ = 163 := by omega
+
+    -- Because $163$ is a prime number, it follows that either $d=1$ or $d=163$.
+    have h₁₅ : d = 1 ∨ d = 163 := by
+      rw [Nat.dvd_prime (by norm_num)] at h₁₄
+      exact h₁₄
+
+    -- But we are given that $d > 1$, so we must have $d = 163$.
+    have h₁₆ : d = 163 := by
+      rcases h₁₅ with h₁₆ | h₁₆
+      · rw [h₁₆] at h₁
+        omega
+      · exact h₁₆
+
+    -- However, $163 > 82 = p(n) - n + 41$, which is a contradiction.
+    have h₁₇ : 163 > p n - n + 41 := by
+      rw [h₀]
+      ring_nf
+      omega
+
+    -- Moreover, $163 > 82 = p(n+1) - (n+1) + 41$, which is also a contradiction.
+    have h₁₈ : 163 > p (n + 1) - (n + 1) + 41 := by
+      rw [h₀]
+      ring_nf
+      omega
+
+    have h₁₉ : d ≤ p n := Nat.gcd_le_left _ _
+    have h₂₀ : d ≤ p (n + 1) := Nat.gcd_le_right _ _
+    have h₂₁ : n < 41 := by omega
+
+    linarith [h₁₇, h₁₈, h₁₉, h₂₀, h₁₃, h₁₄, h₁₆, h₂₁]
+```

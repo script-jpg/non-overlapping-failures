@@ -1,0 +1,54 @@
+-- We can rewrite the equation as : $(a + b - c + d)(-a + b + c + d) = (a - c)(b + d)$.
+  have : (a + b - c + d) * (-a + b + c + d) = (a - c) * (b + d) := by
+    zify
+    have : (↑a : ℤ) * ↑c + ↑b * ↑d = (↑b + ↑d + ↑a - ↑c) * (↑b + ↑d + ↑c - ↑a) := by
+      exact_mod_cast h₄
+    ring_nf at this ⊢
+    linarith
+
+  -- Expand the left-hand side and simplify.
+  have : (a + b - c + d) * (-a + b + c + d) = (b + d) ^ 2 - (a - c) ^ 2 := by
+    ring_nf
+
+  -- We can deduce that: $(b + d - a - c)(b + d + a - c) = (b + d - a + c)(b + d + a + c) $.
+  have : (b + d - a - c) * (b + d + a - c) = (b + d - a + c) * (b + d + a + c) := by
+    rw [←this, ←Divisors.eq_iff_dvd]
+    ring_nf
+    omega
+
+  -- From this, we can conclude that $b + d - a + c = 0$.
+  have : b + d - a + c = 0 := by
+    -- Rewrite the above equation, we have $(b + d - a + c) * (b + d + a - c) = (b + d - a + c) * (b + d + a + c) $.
+    have : (b + d - a + c) * (b + d + a - c - (b + d + a + c)) = 0 := by
+      ring_nf
+      omega
+    simp at this
+    -- We have $b + d - a + c = 0$ or $a + c = 0$.
+    rcases this with h | h
+    · exact h
+    · -- It is impossible that $a + c = 0$.
+      have : a + c = 0 := by
+        omega
+      omega
+
+  -- We can conclude that $a + c = b + d$.
+  have : a + c = b + d := by
+    omega
+
+  -- Substitute $a + c = b + d$ to `h₄ : a * c + b * d = (a - c) * (b + d)`.
+  rw [show (a - c) * (b + d) = (a - c) * (a + c) by rw [←this]] at h₄
+  ring_nf at h₄
+
+  -- From $a * c + b * d = a ^ 2 - c ^ 2$, we can deduce that $a ^ 2 - c ^ 2 > b * d$.
+  have : a ^ 2 - c ^ 2 > b * d := by
+    rw [←h₄]
+    omega
+
+  -- We have $b * d > d * d$, it means that $b > d$.
+  have : b * d > d * d := by
+    omega
+
+  -- It is impossible that $b > d$, contradiction.
+  omega
+
+```

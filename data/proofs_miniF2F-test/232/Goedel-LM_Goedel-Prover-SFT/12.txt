@@ -1,0 +1,35 @@
+have ha : 0 < a.num := by
+    obtain ⟨k, h₂⟩ := a.exists_eq_add_mul_div_den
+    rw [Rat.cast_pos]
+    refine' add_pos_of_pos_of_nonneg _ (div_nonneg (Rat.cast_nonneg _) (Rat.cast_nonneg _))
+    rw [← Rat.cast_zero, Rat.cast_lt]
+    exact h₂
+  have hd : a.den ≠ 0 := fun hd => by
+    rw [hd, Rat.cast_zero] at h₀
+    rw [Finset.sum_eq_zero_iff_of_nonneg (fun x _ => mul_nonneg (Int.cast_nonneg _) (sub_nonneg.2
+      (Int.cast_le.2 (Int.floor_le _))))] at h₁
+    exact (h₁.trans_lt <| by norm_num) (zero_le_one' ℝ)
+  have h₁ : (⌊a.num / a.den⌋ : ℝ) = 1 := by
+    apply Rat.floor_eq_iff.2
+    constructor
+    · apply le_of_lt (Rat.lt_coe_iff.2 <| Or.inl _)
+      refine' lt_of_le_of_ne (Rat.coe_int_num_div_den_le_num_div_den a) fun H => _
+      simp only [div_eq_iff (Rat.cast_ne_zero.2 hd), Int.cast_inj] at H
+      rw [← H] at h₀
+      simpa only [Int.cast_floor, Int.cast_one, one_mul, Int.cast_eq_zero, sub_self] using
+        h₀ ((a.num : ℝ) / a.den)
+    · rw [Rat.cast_one, one_mul]
+      apply lt_of_le_of_ne (Rat.coe_int_num_div_den_le_num_div_den a) fun H => _
+      simp only [Int.cast_inj, one_mul] at H
+      rw [H] at h₀
+      simpa only [(a.den : ℝ) * Int.cast_floor, Int.cast_sub, Int.cast_one, div_one, Int.cast_ne_zero]
+        using h₀ a.num
+  simp only [div_eq_mul_inv, Rat.cast_mul, Rat.cast_inv, Rat.cast_div, Int.cast_sub,
+    Rat.cast_coe_int] at h₁
+  have h₂ : a.num / a.den < ⌊a.num / a.den⌋ + 1 := by
+    rw [Rat.cast_sub, Rat.cast_one, Rat.cast_coe_int]
+    exact Int.sub_lt_iff_lt_add'.2 (Rat.lt_coe_int_floor a.num / a.den)
+  rw [h₁, Int.cast_one] at h₂
+  simpa only [one_mul, sub_eq_add_neg, Int.cast_neg, Int.cast_floor] using
+    add_left_cancel₀ (sub_ne_zero_of_ne (Rat.floor_ne_int _).symm) h₂
+```

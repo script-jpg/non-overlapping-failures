@@ -1,0 +1,92 @@
+-- We shall rewrite the equation in a more useful form.
+  have h₁ : 3 * (x ^ 2 * y ^ 2) = 30 * x ^ 2 + 517 - y ^ 2 := by linarith
+
+  -- We shall now obtain an upper bound for $x^2$.
+  have h₂ : 3 * (x ^ 2 * y ^ 2) = 30 * x ^ 2 + 517 - y ^ 2 := by linarith
+
+  -- Since $x$ and $y$ are integers, $x^2$ cannot be negative.
+  have h₃ : 0 ≤ x ^ 2 := by nlinarith
+
+  -- We shall now show that $y^2 ≤ 22$.
+  have h₄ : 0 ≤ 15 * x ^ 2 + 278 := by nlinarith
+  have h₅ : 15 * x ^ 2 + 278 ≤ 30 * x ^ 2 + 517 := by linarith
+  have h₆ : y ^ 2 ≤ 22 := by nlinarith
+
+  -- We shall now write $y^2$ as $22 - 15x^2$.
+  have h₇ : 3 * (x ^ 2 * y ^ 2) = 30 * x ^ 2 + 517 - (22 - 15 * x ^ 2) :=
+     calc
+       3 * (x ^ 2 * y ^ 2) = 30 * x ^ 2 + 517 - y ^ 2 := by linarith
+       _ = 30 * x ^ 2 + 517 - (22 - 15 * x ^ 2) := by linarith
+  rw [h₇]
+  simp
+
+  -- From the equation, we now that $x^2$ cannot be 0.
+  have h₈ : 0 < x ^ 2 := by
+    -- Proof by contradiction
+    by_contra! h₈
+    -- Since $x^2$ is negative, it must be 0.
+    have h₈ : x ^ 2 = 0 := by linarith
+    -- Substituting $x^2 = 0$ into the original equation, we get $y^2 = 22$.
+    have h₉ : y ^ 2 = 22 := by linarith
+    -- $22$ is not a perfect square.
+    have h₁₀ : ¬ (∃ y : ℤ, y ^ 2 = 22) := by
+      by_contra! h₁₀
+      obtain ⟨y, h₁₀⟩ := h₁₀
+      have h₁₁ : 4 ^ 2 < y ^ 2 := by linarith
+      have h₁₂ : y ^ 2 < 5 ^ 2 := by linarith
+      nlinarith
+    exact h₁₀ ⟨y, h₉⟩
+
+  -- We divide the quadratic equation by $x^2$.
+  have h₉ : 3 * (y ^ 2) = 30 + (517 - 22) / x ^ 2 := by
+    -- Proof by contradiction
+    by_contra! h₉
+    -- The right-hand side of the equation is an integer, so the left-hand side must be an integer.
+    have h₁₀ : ¬ (∃ k : ℤ, k = (517 - 22) / x ^ 2) := by
+      by_contra! h₁₀
+      obtain ⟨k, h₁₀⟩ := h₁₀
+      have h₁₁ : x ^ 2 ∣ 517 - 22 := by rw [h₁₀]; exact Int.dvd_mul_right (x ^ 2) y
+      have h₁₂ : 517 - 22 ≠ 0 := by norm_num
+      have h₁₃ : x ^ 2 ∣ 517 - 22 := by exact h₁₁
+      have h₁₄ : x ^ 2 ∣ 0 := by
+        calc
+          x ^ 2 ∣ 517 - 22 := by exact h₁₃
+          _ ∣ 0 := by exact Int.dvd_zero _
+      have h₁₅ : x ^ 2 = 0 := by exact Int.eq_zero_of_dvd_zero h₁₄
+      linarith
+    have h₁₁ : 3 * (y ^ 2) ≠ 30 + (517 - 22) / x ^ 2 := by
+      by_contra! h₁₁
+      obtain ⟨k, h₁₁⟩ := h₁₀
+      have h₁₂ : 3 * (y ^ 2) = 30 + k := by linarith
+      have h₁₃ : 3 * (y ^ 2) = 30 + (517 - 22) / x ^ 2 := by linarith
+      linarith
+    exact h₁₁ h₉
+
+  -- We now know that $y^2 = 18$, $x^2 = 16$, and $x^2$ is positive.
+  have h₁₀ : x ^ 2 = 16 ∧ y ^ 2 = 18 := by
+    -- Proof by contradiction
+    by_contra! h₁₀
+    have h₁₁ : y ^ 2 ≤ 1 := by
+      calc
+        y ^ 2 ≤ 22 := by exact h₆
+        _ = 18 + 1 := by norm_num
+        _ ≤ 18 + 2 := by linarith
+        _ = 19 + 1 := by norm_num
+        _ ≤ 19 + 2 := by linarith
+        _ = 21 + 1 := by norm_num
+        _ ≤ 21 + 2 := by linarith
+        _ = 23 := by norm_num
+        _ ≤ 22 := by linarith
+    have h₁₂ : y ^ 2 ≥ 10 := by
+      calc
+        y ^ 2 ≥ 22 - 15 * x ^ 2 := by linarith
+        _ = 22 - 15 * 0 := by linarith
+        _ ≤ 22 := by linarith
+        _ ≤ 19 := by linarith
+        _ ≤ 10 := by linarith
+    linarith
+
+  -- We substitute the values of $x^2$ and $y^2$ into the equation.
+  rw [h₁₀.1, h₁₀.2]
+  norm_num
+```

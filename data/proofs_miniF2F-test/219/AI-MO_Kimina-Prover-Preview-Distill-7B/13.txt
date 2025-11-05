@@ -1,0 +1,91 @@
+have cast (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * (2 ^ 3) ^ k := by
+    conv =>
+      rhs
+      congr
+      ext k
+      rw [Nat.pow_mul]
+      rfl
+
+  have cast2 (n : ℕ) : ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * (2 ^ 3) ^ k = ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * ((3 + 1) ^ k) := by
+    conv =>
+      rhs
+      congr
+      ext k
+      rw [Nat.pow_mul]
+      have : 2 ^ 3 = 3 + 1 := by rfl
+      rw [this]
+      rfl
+
+  -- By calculating the generating function of the sequence $\left\{\binom{2n+1}{2k+1}\right\}$, we get the following identity.
+  have n <|> calc
+    ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * ((3 + 1) ^ k) = (3 + 1) ^ (2 * n + 1) - 1 / (3 + 1) * (1 - (3 + 1) ^ (2 * n + 1)) * (1 - 3) := by
+      induction n with
+      | zero => simp [Nat.choose_zero_right]
+      | succ n hn =>
+        rw [Finset.sum_range_succ, hn]
+        iterate 2 rw [Nat.choose_two_mul]
+        rw [mul_assoc, ← Nat.choose_two_mul, add_assoc]
+        iterate 2 rw [mul_assoc]
+        rw [← mul_add, mul_assoc, mul_assoc, mul_comm (3 + 1) (2 * n + 1), ← pow_add, Nat.add_sub_cancel, div_mul_cancel₀]
+        ring
+        omega
+        omega
+        apply Nat.pow_le_pow_of_le_right
+        omega
+        simp
+        apply Nat.choose_pos_of_pos_left
+        omega
+        simp
+        ring_nf
+        rw [add_assoc, div_mul_cancel₀, sub_mul, div_mul_cancel₀, div_mul_cancel₀]
+        ring
+        omega
+        omega
+        simp
+        have : 1 ≤ (3 + 1 : ℝ) := by norm_num
+        apply geom_sum_eq
+        exact this
+        norm_num
+        norm_num
+    _ = (3 + 1) ^ (2 * n + 1) - 1 / (3 + 1) * (1 - (3 + 1) ^ (2 * n + 1)) * (-2) := by
+      congr
+      ring
+    _ = (3 + 1) ^ (2 * n + 1) + 1 / (3 + 1) * (1 - (3 + 1) ^ (2 * n + 1)) * 2 := by
+      congr
+      ring
+    _ = (((3 + 1) ^ (2 * n + 1) + 1) * (3 + 1) + (3 + 1) ^ (2 * n + 1) - 1) / (3 + 1) * 2 := by
+      rw [mul_div_assoc, mul_div_assoc]
+      ring
+    _ = ((3 + 1) ^ (2 * n + 1) * 4 + (3 + 1) ^ (2 * n + 1) - 1) / (3 + 1) * 2 := by
+      ring
+    _ = ((3 + 1) ^ (2 * n + 1) * 5 + (3 + 1) ^ (2 * n + 1) - 1) / (3 + 1) * 2 := by
+      congr 2
+      rw [add_assoc, add_assoc, <-Nat.cast_mul, show (3 + 1 : ℝ) = (4 : ℕ) by norm_num, Nat.cast_pow]
+      norm_num
+    _ = 5 * (((3 + 1) ^ (2 * n + 1) + (3 + 1) ^ (2 * n + 1) - 1) / (3 + 1)) * 2 := by
+      rw [<-Nat.cast_mul, show (5 : ℝ) = (5 : ℕ) by rfl, Nat.cast_add, Nat.cast_add, Nat.cast_pow, Nat.cast_pow]
+      ring
+    _ = 5 * ((3 + 1) ^ (2 * n + 1) + (3 + 1) ^ (2 * n + 1) - 1) / (3 + 1) * 2 := by
+      rw [mul_div_assoc]
+    _ = 5 * (2 * n + 1 + 1) * 2 := by
+      congr
+      rw [Nat.div_self]
+      omega
+      simp
+      apply Nat.choose_pos_of_pos_left
+      omega
+      simp
+    _ = 5 * (2 * n + 2) * 2 := by
+      simp
+    _ = 10 * (n + 1) := by
+      rw [mul_assoc, mul_assoc, mul_comm, mul_assoc, mul_assoc, Nat.mul_sub, Nat.mul_sub]
+      ring
+    _ = 10 * (n + 1) := by
+      rfl
+
+  rw [cast, cast2, n]
+  clear n cast cast2
+  -- For any $n\ge0$, $10(n+1)$ is divisible by $5$ but $\sum^n_{k=0}\binom{2n+1}{2k+1}2^{3k}$ is not, this proves the result.
+  omega
+
+```

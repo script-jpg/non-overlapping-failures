@@ -1,0 +1,232 @@
+-- We have a quadratic in two variables. Let's try to factor it.
+
+  -- We can re-write the given equation as $y^2 (1 + 3x^2) = 30x^2 + 517$.
+  have h₁ : y ^ 2 * (1 + 3 * x ^ 2) = 30 * x ^ 2 + 517 := by linarith only [h₀]
+
+  -- The left hand side is positive, so we have $30x^2 + 517 \geq 0$, which is true no matter what integer $x$ is.
+
+  have h₂ : 1 + 3 * x ^ 2 ∣ 30 * x ^ 2 + 517 := ⟨y ^ 2, h₁.symm⟩
+
+  -- We can use the above divisor relation to find a bound on $x$.
+
+  have h₃ : 1 + 3 * x ^ 2 ≤ 30 * x ^ 2 + 517 := by apply Int.le_of_dvd (by linarith) h₂
+
+  -- We have a quadratic inequality. Let's try to factor it.
+
+  -- We can re-write the inequality as $(30 - 3x^2)x^2 + 517 \geq 0$.
+
+  have h₄ : (30 - 3 * x ^ 2) * x ^ 2 + 517 ≥ 0 := by linarith only [h₃]
+
+  have h₅ : 30 - 3 * x ^ 2 ≥ 0 := by nlinarith only [h₄]
+
+  have h₆ : x ^ 2 ≤ 10 := by nlinarith only [h₅]
+
+  have h₇ : x ∣ 517 := by
+    -- We can re-write the given equation as $3x^2 (y^2 - 10) = 517 - y^2$.
+
+    have h₈ : 3 * x ^ 2 * (y ^ 2 - 10) = 517 - y ^ 2 := by linarith only [h₁]
+
+    -- Both $517 - y^2$ and $y^2 - 10$ are integers, so... actually, that's not very useful.
+
+    -- Let's try another approach. We know that $y^2 \equiv 1 \pmod{3}$, so $y^2 - 10 \equiv 1 - 10 \equiv -9 \equiv 0 \pmod{3}$. So $3x^2 (y^2 - 10) \equiv 0 \pmod{9}$, which means $517 - y^2 \equiv 0 \pmod{9}$.
+
+    have h₉ : 517 - y ^ 2 ≡ 0 [ZMOD 9] := by
+
+      have h₁₀ : y ^ 2 ≡ 1 [ZMOD 3] := by
+        have h₁₀ : y % 3 = 0 ∨ y % 3 = 1 ∨ y % 3 = 2 := by omega
+
+        rcases h₁₀ with (h₁₀ | h₁₀ | h₁₀)
+
+        · -- If $y \equiv 0 \pmod{3}$, then $y^2 \equiv 0 \pmod{3}$.
+
+          simp [Int.ModEq, h₁₀, pow_two, Int.mul_emod, Int.add_emod, Int.sub_emod]
+
+        · -- If $y \equiv 1 \pmod{3}$, then $y^2 \equiv 1 \pmod{3}$.
+
+          simp [Int.ModEq, h₁₀, pow_two, Int.mul_emod, Int.add_emod, Int.sub_emod]
+
+        · -- If $y \equiv 2 \pmod{3}$, then $y^2 \equiv 4 \equiv 1 \pmod{3}$.
+
+          simp [Int.ModEq, h₁₀, pow_two, Int.mul_emod, Int.add_emod, Int.sub_emod]
+
+      have h₁₁ : 517 ≡ 1 [ZMOD 9] := by decide
+
+      have h₁₂ : 517 - y ^ 2 ≡ 1 - 1 [ZMOD 9] := by
+        apply Int.ModEq.sub h₁₁
+        apply Int.ModEq.trans h₁₀
+        apply Int.ModEq.symm
+        apply Int.ModEq.trans h₁₁
+        apply Int.ModEq.symm
+        exact Int.ModEq.refl 1
+
+      simp at h₁₂
+      exact h₁₂
+
+    have h₁₁ : 9 ∣ 517 - y ^ 2 := by
+      rw [Int.dvd_iff_emod_eq_zero]
+      exact h₉
+
+    have h₁₂ : 3 ∣ 9 := by decide
+    have h₁₃ : 3 ∣ 517 - y ^ 2 := by
+      exact Int.dvd_trans h₁₂ h₁₁
+
+    simp [Int.dvd_iff_emod_eq_zero] at h₁₃
+    exact h₁₃
+
+  have h₈ : x ^ 2 ≤ 7 := by nlinarith only [h₇]
+
+  -- Now we can use casework on $x$ to find the value of $3x^2 y^2$.
+
+  -- $x \neq 0$, because otherwise the original equation becomes $y^2 = 517$, which is impossible.
+
+  have h₉ : x ≠ 0 := by
+    by_contra! h₉
+    simp [h₉] at h₁
+    have h₁₀ : 517 = y ^ 2 + 3 * (0:ℤ) ^ 2 * y ^ 2 := by linarith only [h₁]
+    norm_num at h₁₀
+
+  -- If $x = 1$, then $y^2 (1 + 3) = 30 + 517 = 547$, which is impossible.
+
+  have h₁₀ : x ≠ 1 := by
+    by_contra! h₁₀
+    simp [h₁₀] at h₁
+    have h₁₁ : 547 = y ^ 2 * (1 + 3 * (1:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₁
+    have h₁₂ : 17 = y := by nlinarith only [h₁₁]
+    have h₁₃ : 18 = 17 * 1 := by nlinarith only [h₁₂]
+    omega
+
+  -- If $x = -1$, then $y^2 (1 + 3) = 30 + 517 = 547$, which is impossible.
+
+  have h₁₁ : x ≠ -1 := by
+    by_contra! h₁₁
+    simp [h₁₁] at h₁
+    have h₁₂ : 547 = y ^ 2 * (1 + 3 * (-1:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₂
+    have h₁₃ : 17 = y := by nlinarith only [h₁₂]
+    have h₁₄ : 18 = 17 * 1 := by nlinarith only [h₁₃]
+    omega
+
+  -- If $x = 2$, then $y^2 (1 + 12) = 120 + 517 = 637$, which is impossible.
+
+  have h₁₂ : x ≠ 2 := by
+    by_contra! h₁₂
+    simp [h₁₂] at h₁
+    have h₁₃ : 637 = y ^ 2 * (1 + 3 * (2:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₃
+    have h₁₄ : 13 = y := by nlinarith only [h₁₃]
+    have h₁₅ : 16 = 13 * 1 := by nlinarith only [h₁₄]
+    omega
+
+  -- If $x = -2$, then $y^2 (1 + 12) = 120 + 517 = 637$, which is impossible.
+
+  have h₁₃ : x ≠ -2 := by
+    by_contra! h₁₃
+    simp [h₁₃] at h₁
+    have h₁₄ : 637 = y ^ 2 * (1 + 3 * (-2:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₄
+    have h₁₅ : 13 = y := by nlinarith only [h₁₄]
+    have h₁₆ : 16 = 13 * 1 := by nlinarith only [h₁₅]
+    omega
+
+  -- If $x = 3$, then $y^2 (1 + 27) = 300 + 517 = 817$, which is impossible.
+
+  have h₁₄ : x ≠ 3 := by
+    by_contra! h₁₄
+    simp [h₁₄] at h₁
+    have h₁₅ : 817 = y ^ 2 * (1 + 3 * (3:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₅
+    have h₁₆ : 16 = y := by nlinarith only [h₁₅]
+    have h₁₇ : 17 = 16 * 1 := by nlinarith only [h₁₆]
+    omega
+
+  -- If $x = -3$, then $y^2 (1 + 27) = 300 + 517 = 817$, which is impossible.
+
+  have h₁₅ : x ≠ -3 := by
+    by_contra! h₁₅
+    simp [h₁₅] at h₁
+    have h₁₆ : 817 = y ^ 2 * (1 + 3 * (-3:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₆
+    have h₁₇ : 16 = y := by nlinarith only [h₁₆]
+    have h₁₈ : 17 = 16 * 1 := by nlinarith only [h₁₇]
+    omega
+
+  -- If $x = 4$, then $y^2 (1 + 48) = 480 + 517 = 997$, which is impossible.
+
+  have h₁₆ : x ≠ 4 := by
+    by_contra! h₁₆
+    simp [h₁₆] at h₁
+    have h₁₇ : 997 = y ^ 2 * (1 + 3 * (4:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₇
+    have h₁₈ : 15 = y := by nlinarith only [h₁₇]
+    have h₁₉ : 16 = 15 * 1 := by nlinarith only [h₁₈]
+    omega
+
+  -- If $x = -4$, then $y^2 (1 + 48) = 480 + 517 = 997$, which is impossible.
+
+  have h₁₇ : x ≠ -4 := by
+    by_contra! h₁₇
+    simp [h₁₇] at h₁
+    have h₁₈ : 997 = y ^ 2 * (1 + 3 * (-4:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₈
+    have h₁₉ : 15 = y := by nlinarith only [h₁₈]
+    have h₁₂₀ : 16 = 15 * 1 := by nlinarith only [h₁₉]
+    omega
+
+  -- If $x = 5$, then $y^2 (1 + 75) = 750 + 517 = 1267$, which is impossible.
+
+  have h₁₈ : x ≠ 5 := by
+    by_contra! h₁₈
+    simp [h₁₈] at h₁
+    have h₁₉ : 1267 = y ^ 2 * (1 + 3 * (5:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₉
+    have h₁₂₀ : 16 = y := by nlinarith only [h₁₉]
+    have h₁₂₁ : 17 = 16 * 1 := by nlinarith only [h₁₂₀]
+    omega
+
+  -- If $x = -5$, then $y^2 (1 + 75) = 750 + 517 = 1267$, which is impossible.
+
+  have h₁₉ : x ≠ -5 := by
+    by_contra! h₁₉
+    simp [h₁₉] at h₁
+    have h₁₂₀ : 1267 = y ^ 2 * (1 + 3 * (-5:ℤ) ^ 2) := by linarith only [h₁]
+    norm_num at h₁₂₀
+    have h₁₂₁ : 16 = y := by nlinarith only [h₁₂₀]
+    have h₁₂₂ : 17 = 16 * 1 := by nlinarith only [h₁₂₁]
+    omega
+
+  -- If $x = 6$, then $x^2 = 36$, and hence $3x^2 y^2 = 360 + 517 = 837$.
+
+  have h₂₀ : x = 6 ∨ x = -6 := by
+    have h₂₀ : x ^ 2 = 6 ^ 2 := by nlinarith only [h₈, h₇]
+    rw [pow_two, pow_two] at h₂₀
+    have h₂₁ : x = 6 ∨ x = -6 := by
+      rw [Int.pow_eq_pow_iff_of_ne_zero (show 2 ≠ 0 by norm_num)]
+      exact h₂₀
+    exact h₂₁
+  rw [h₂₀] at h₁
+
+  -- If $x = -6$, then $y^2 (1 + 108) = 1080 + 517 = 1597$, which is impossible.
+
+  have h₂₁ : x = 6 := by
+    have h₂₁ : x ≠ -6 := by
+      by_contra! h₂₁
+      simp [h₂₁] at h₁
+      have h₂₂ : 1597 = y ^ 2 * (1 + 3 * (-6:ℤ) ^ 2) := by linarith only [h₁]
+      norm_num at h₂₂
+      have h₂₃ : 16 = y := by nlinarith only [h₂₂]
+      have h₂₄ : 17 = 16 * 1 := by nlinarith only [h₂₃]
+      omega
+    omega
+  simp [h₂₁] at h₁
+
+  -- Plugging $x = 6$ into the original equation, we get $y^2 = 31$.
+
+  have h₂₂ : y ^ 2 = 31 := by linarith only [h₁]
+
+  -- Now we can compute the value of $3x^2 y^2$.
+
+  have h₂₃ : 3 * (x ^ 2 * y ^ 2) = 3 * (6 ^ 2 * 31) := by rw [h₂₁, h₂₂]
+  norm_num at h₂₃
+  exact h₂₃
+```

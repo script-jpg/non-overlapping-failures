@@ -1,0 +1,128 @@
+-- We need to find a formula for the sum of angles
+  -- We know that
+  -- $\sum_{k=1}^{n} \sin(kx) = \cot(x/2) \sin(nx/2) \cos(x/2)$
+  -- Let's prove it with induction.
+  have h (n : ℕ) (x : ℝ) : ∑ i ∈ Finset.Icc 1 n, Real.sin (i * x) = Real.cot (x / 2) * Real.sin (n * x / 2) * Real.cos (x / 2) := by
+    induction n with
+    | zero => simp_all
+    | succ n ih =>
+      rw [Finset.sum_Icc_succ_top (by linarith), ih]
+      rw [Real.cot_eq_cos_div_sin, ← Real.cos_sq_add_sin_sq]
+      field_simp
+      ring_nf
+      rw [mul_assoc, ← Real.cos_sq_add_sin_sq]
+      ring_nf
+     . rw [mul_comm (n + 1), ← mul_assoc]
+        ring_nf
+     . exact Real.cos_sq_add_sin_sq (x / 2)
+
+  -- Set $x=5^\circ$ and $n=35$ to get $\sum_{k=1}^{35} \sin(5k) = \cot(5/2) \sin(35 \cdot 5 / 2) \cos(5/2)$
+  have h' := h 35 (Real.pi / 36)
+  have h'' : ∑ k ∈ Finset.Icc 1 35, Real.sin (5 * k * Real.pi / 180) = Real.cot (Real.pi / 72) * Real.sin (35 * (Real.pi / 36)) * Real.cos (Real.pi / 72) := by
+    specialize h' (Real.pi / 36)
+    simp_rw [mul_comm, ← mul_assoc, mul_div_assoc] at h'
+    norm_num at h'
+    exact h'
+
+  -- $\sin(35 \cdot 5 / 2) = \sin(87.5^\circ) = \cos(3.5^\circ) = \cos(7/2^\circ)$
+  have h''' : Real.sin (35 * (Real.pi / 36)) = Real.cos (Real.pi / 72) := by
+    rw [mul_assoc, ← Real.sin_pi_div_two_sub]
+    ring_nf
+
+  -- $\cot(5/2) \cos(7/2^\circ) \cos(5/2^\circ) = \frac{\cos^2(5/2^\circ)}{\sin(5/2^\circ)} \cos(7/2^\circ) = \frac{\cos(7/2^\circ) \cos(5/2^\circ)}{\sin(5/2^\circ)}$
+  have h'''' : Real.cot (Real.pi / 72) * Real.cos (Real.pi / 36) * Real.cos (Real.pi / 72) = Real.cos (Real.pi / 72) * Real.cos (Real.pi / 36) * Real.sin (Real.pi / 72)⁻¹ := by
+    rw [Real.cot_eq_cos_div_sin]
+    ring_nf
+
+  -- Substitute these into the equation and cancel out the $\cos$ terms (which are all nonzero)
+  rw [h'', h''', h''''] at h₁
+  -- We get $\cos(7/2^\circ) \cos(5/2^\circ) \csc(5/2^\circ) = \tan(m/180^\circ)$
+  have h'''' : Real.cos (Real.pi / 72) * Real.cos (Real.pi / 36) * Real.sin (Real.pi / 72)⁻¹ = Real.tan (m * Real.pi / 180) := by
+    exact h₁.symm
+  have h''''' : Real.cos (Real.pi / 72) ≠ 0 := by
+    apply ne_of_gt
+    apply Real.cos_pos_of_mem_Ioo
+    constructor
+   . linarith [Real.pi_pos]
+   . linarith [Real.pi_pos]
+  have h'''''' : Real.cos (Real.pi / 36) ≠ 0 := by
+    apply ne_of_gt
+    apply Real.cos_pos_of_mem_Ioo
+    constructor
+   . linarith [Real.pi_pos]
+   . linarith [Real.pi_pos]
+  have h'''''' : Real.sin (Real.pi / 72) ≠ 0 := by
+    apply ne_of_gt
+    apply Real.sin_pos_of_pos_of_lt_pi
+   . linarith [Real.pi_pos]
+   . linarith [Real.pi_pos]
+
+  -- $\tan(m/180^\circ) = \tan(175/2^\circ)$
+  have h'''' : m * Real.pi / 180 = Real.pi - Real.pi / 72 := by
+    rw [Real.tan_eq_tan_iff]
+    use -1
+    constructor
+   . inl (by linarith [Real.pi_pos])
+   . inr (by linarith [Real.pi_pos])
+
+  -- $m/180 = 175/2$
+  have h''''': m / 180 = 175 / 2 := by
+    apply_fun (fun x => x * 180 / Real.pi) at h''''
+    field_simp at h''''
+    ring_nf at h''''
+   . exact h''''
+   . linarith [Real.pi_pos]
+
+  -- $m = 175/2$
+  have h'' : m = 175 / 2 := by
+    ring_nf at h''''
+    rw [← h'''']
+    field_simp
+  norm_cast at h''
+
+
+  rw [h'']
+
+  have h (d : ℤ) (n : ℤ) : (↑(d.num) : ℝ) / ↑d.den = n / 2 := by
+    norm_cast
+    rw [h'']
+    group
+    rw [← h]
+    norm_cast
+
+  -- $m$ is an integer and $2$ divides $n$
+  have h' : 2 ∣ n := by
+    have g : (2 : ℤ) ∣ (↑m.num : ℤ) := by
+      rw [h]
+      apply dvd_mul_right
+    rwa [Prime.dvd_mul (Nat.Prime.prime (by norm_num))] at g
+
+  -- Since $m$ and $n$ are relatively prime, we have $m = 175$ and $n = 36$
+  let d := m / 2
+  have h' : m = 2 * d := by
+    exact Int.ediv_mul_cancel h'
+  nth_rw 1 [h'] at h''
+  have h''': (↑(d.num) : ℝ) / ↑d.den = 175 / 36 := by
+    rw [h'']
+    group
+    rw [Int.mul_ediv_cancel, Int.mul_ediv_cancel]
+   . exact h'''
+   . exact h
+   . norm_num
+
+  have h'''' : ↑↑d.num / ↑↑d.den = 175 / 36 := by
+    norm_cast at h'''
+    exact h'''
+  have h''''' : (↑↑d.num : ℝ) / ↑↑d.den = 175 / 36 := by
+    exact h''''
+  have h'''''' : (↑(↑d.num : ℤ) : ℝ) = (↑(↑d.num : ℤ) : ℤ) := by
+    norm_cast
+  have h''''''' : ↑↑d.num = 175 := by
+    rwa [← Int.cast_inj] at h''''
+  have h'''''''' : ↑↑d.den = 36 := by
+    rwa [← Int.cast_inj] at h''''''
+
+  rw [h''''''',h'''''''']
+  clear h' h'' h''' h'''' h'''''' h h''
+  norm_num
+```

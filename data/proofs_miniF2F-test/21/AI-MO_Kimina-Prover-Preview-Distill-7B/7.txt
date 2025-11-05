@@ -1,0 +1,67 @@
+-- We prove that the equation $x^5 = y^2 + 4$ has no integer solutions.
+  intro h
+
+  -- We consider the equation modulo 11.
+  -- So we claim that for any $x$ and $y$, either $x^5 \ne y^2 + 4$ or $x^5 \equiv y^2 + 4 \pmod{11}$.
+  have h1 : x ^ 5 % 11 = y ^ 2 % 11 + 4 % 11 := by
+    calc
+      _ = (y ^ 2 + 4) % 11 := by
+        rw [←h]
+        simp only [Int.add_emod, Int.mul_emod]
+      _ = _ := by
+        rw [Int.add_emod, ←h1]
+        simp only [Int.mul_emod]
+
+  -- Next, we show that for every integer $x$, $x^5 \equiv 0$, $1$ or $10 \pmod{11}$.
+  have h2 : x ^ 5 % 11 = 0 ∨ x ^ 5 % 11 = 1 ∨ x ^ 5 % 11 = 10 := by
+    have : x % 11 = 0 ∨ x % 11 = 1 ∨ x % 11 = 2 ∨ x % 11 = 3 ∨ x % 11 = 4 ∨ x % 11 = 5 ∨ x % 11 = 6 ∨ x % 11 = 7 ∨ x % 11 = 8 ∨ x % 11 = 9 ∨ x % 11 = 10 := by
+      omega
+    rcases this with (h | h | h | h | h | h | h | h | h | h | h) <;> simp [h, pow_succ, Int.mul_emod, Int.add_emod]
+
+  -- Next, we show that for every integer $y$, $y^2 \equiv 0$, $1$ $3$ or $9 \pmod{11}$.
+  have h3 : y ^ 2 % 11 = 0 ∨ y ^ 2 % 11 = 1 ∨ y ^ 2 % 11 = 3 ∨ y ^ 2 % 11 = 9 := by
+    have : y % 11 = 0 ∨ y % 11 = 1 ∨ y % 11 = 2 ∨ y % 11 = 3 ∨ y % 11 = 4 ∨ y % 11 = 5 ∨ y % 11 = 6 ∨ y % 11 = 7 ∨ y % 11 = 8 ∨ y % 11 = 9 ∨ y % 11 = 10 := by
+      omega
+    rcases this with (h | h | h | h | h | h | h | h | h | h | h) <;> simp [h, pow_succ, Int.mul_emod, Int.add_emod]
+
+  -- Then we show that $y^2 + 4 \equiv 4$, $5$ or $7 \pmod{11}$.
+  have h4 : (y ^ 2 % 11 + 4 % 11) % 11 = 4 % 11 ∨ (y ^ 2 % 11 + 4 % 11) % 11 = 5 % 11 ∨ (y ^ 2 % 11 + 4 % 11) % 11 = 7 % 11 := by
+    rcases h3 with (h3 | h3 | h3 | h3) <;> simp [h3, Int.add_emod, Int.mul_emod]
+
+  -- However, we have shown that $x^5 \equiv 0$, $1$ or $10 \pmod{11}$.
+  -- So the possible remainders of $x^5$ and $y^2 + 4$ are not the same.
+  -- We have a contradiction.
+  rcases h2 with (h2 | h2 | h2) <;> rcases h4 with (h4 | h4 | h4) <;> simp [h2, h4] at h1
+
+
+/-- Show that for any two integers $x$ and $y$, $x^5 \ne y^2 + 4$.-/
+
+theorem numbertheory_x5neqy2p4' (x y : ℤ) : x ^ 5 ≠ y ^ 2 + 4 := by
+  -- Convert the integer problem to a natural number problem.
+  convert numbertheory_x5neqy2p4 (x.natAbs) (y.natAbs)
+  -- Use ` dvd_iff_emod_eq_zero ` to prepare for the proof by contradiction.
+ . rw [Int.natAbs_eq_iff_sq_eq, sq_eq_sq_iff_eq_or_eq_neg]
+    -- Consider the cases where $x = 0$ or $x \ne 0$.
+    cases eq_or_ne x 0 with
+    | inl h =>
+      simp_all
+    | inr h =>
+      convert h2 using 1
+     . simp_all
+     . ring_nf
+        convert h using 1
+        simp_all
+  -- Use ` dvd_iff_emod_eq_zero ` to prepare for the proof by contradiction.
+ . rw [Int.natAbs_eq_iff_sq_eq, sq_eq_sq_iff_eq_or_eq_neg]
+    -- Consider the cases where $y = 0$ or $y \ne 0$.
+    cases eq_or_ne y 0 with
+    | inl h =>
+      simp_all
+    | inr h =>
+      convert h3 using 1
+     . simp_all
+     . ring_nf
+        convert h using 1
+        simp_all
+
+```

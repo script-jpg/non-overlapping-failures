@@ -1,0 +1,78 @@
+-- First, we notice that $2001 = 3 \cdot 23 \cdot 29$.  To show that the largest possible
+  -- value of $I + M + O$ is $671$, we split this into two cases.  First, if one of $I, M, O$
+  -- is $3$, then the other two must be $23$ and $29$.
+  have case1 : i + m + o ≤ 3 + 23 + 29 := by
+    -- Without loss of generality, assume that $I = 3$.
+    wlog h2 : i = 3
+    · -- Then $M = 23$ and $O = 29$, so $I + M + O = 3 + 23 + 29$.
+      wlog h3 : m = 23
+      · -- without loss of generality, we can assume that $i = 3$ and $m = 23$.
+        wlog h4 : o = 29
+        · -- In this case, $i + m + o = 3 + 23 + 29$.
+          omega
+        · -- Otherwise, $o < 29$.
+          have h4 : o ≤ 28 := by omega
+          -- We can then show that $i + m + o \leq 3 + 23 + 29$.
+          nlinarith
+      · -- If $o < 23$, then $i + m + o \leq 3 + 29 + 29$.
+        have h3 : o ≤ 22 := by omega
+        nlinarith
+    · -- If $m < 3$, then $i + m + o \leq 29 + 29 + 29$.
+      have h2 : m ≤ 2 := by omega
+      nlinarith
+
+  -- Otherwise, all of $I, M, O$ are greater than $3$.
+  have case2 : i + m + o ≤ 99 + 99 + 99 := by
+    -- Since $2001 = 3 \cdot 23 \cdot 29$, each of $I, M, O$ is divisible by $3$.
+    have h2 : i ∣ 2001 := by rw [← h₁]; exact Nat.dvd_mul_right i o
+    have h3 : i ∣ 3 := by
+      rw [show 2001 = 3 * 667 by norm_num]
+      apply Nat.dvd_trans h2
+      apply Nat.dvd_mul_right
+    have h4 : i = 3 ∨ i = 667 := by
+      apply (Nat.dvd_prime Nat.prime_three).mp
+      · exact h3
+      · by_contra!
+        have h4 : 3 < i := by omega
+        have h5 : 3 * 3 ≤ i * 3 := by nlinarith
+        have h6 : 9 ≤ 667 := by norm_num
+        nlinarith
+
+    -- We use similar reasoning for $M$ and $O$.
+    have h5 : m ∣ 2001 := by rw [← h₁]; exact Nat.dvd_mul_left m i
+    have h6 : m ∣ 3 := by
+      rw [show 2001 = 3 * 667 by norm_num]
+      apply Nat.dvd_trans h5
+      apply Nat.dvd_mul_right
+    have h7 : m = 3 ∨ m = 667 := by
+      apply (Nat.dvd_prime Nat.prime_three).mp
+      · exact h6
+      · by_contra!
+        have h7 : 3 < m := by omega
+        have h8 : 3 * 3 ≤ m * 3 := by nlinarith
+        have h9 : 9 ≤ 667 := by norm_num
+        nlinarith
+
+    have h10 : o ∣ 2001 := by rw [← h₁]; exact Nat.dvd_mul_left o (i * m)
+    have h11 : o ∣ 3 := by
+      rw [show 2001 = 3 * 667 by norm_num]
+      apply Nat.dvd_trans h10
+      apply Nat.dvd_mul_right
+    have h12 : o = 3 ∨ o = 667 := by
+      apply (Nat.dvd_prime Nat.prime_three).mp
+      · exact h11
+      · by_contra!
+        have h12 : 3 < o := by omega
+        have h13 : 3 * 3 ≤ o * 3 := by nlinarith
+        have h14 : 9 ≤ 667 := by norm_num
+        nlinarith
+
+    -- Now, we consider all possible cases, and show that each case is less than or equal to
+    -- $99 + 99 + 99$.
+    rcases h4 with (h4 | h4) <;> rcases h7 with (h7 | h7) <;> rcases h12 with (h12 | h12) <;> subst h4 h7 h12 <;> norm_num
+
+  -- From these two cases, we see that the largest possible value of $I + M + O$ is $671$.
+  rcases case1 with (h | h)
+  · exact h
+  · linarith
+```

@@ -1,0 +1,104 @@
+-- gcd x y * lcm x y = x * y
+  have lcm_gcd_mul m n : Nat.gcd m n * Nat.lcm m n = m * n := by
+    rw [h₁, h₂]
+    norm_num
+
+  -- Nat.gcd m n = 8, Nat.lcm m n = 112
+  have h₃ : m * n = 8 * 112 := by
+    rw [← lcm_gcd_mul m n]
+
+  -- m > 0, n > 0
+  obtain ⟨hm, hn⟩ := h₀
+
+  -- m = 8 * x, n = 8 * y
+  have dvd_gcd m n : 8 ∣ m ∧ 8 ∣ n := by
+    apply And.intro
+    · exact Nat.dvd_of_mod_eq_zero rfl
+    · exact Nat.dvd_of_mod_eq_zero rfl
+
+  obtain ⟨⟨x, hx⟩, ⟨y, hy⟩⟩ := dvd_gcd m n
+
+  -- x * y = 14
+  have h₄ : x * y = 14 := by
+    rw [hx, hy] at h₃
+    linarith only [h₃]
+
+  -- x > 0, y > 0
+  have h₅ : 0 < x ∧ 0 < y := by
+    apply And.intro
+    · apply Nat.pos_of_mul_pos_left
+      linarith only [hm]
+    · apply Nat.pos_of_mul_pos_left
+      linarith only [hn]
+
+  -- x + y ≥ 8
+  have h₆ : x + y ≥ 8 := by
+    -- x * y = 14
+    have h₆ : x * y = 14 := h₄
+
+    -- x ≤ 14
+    have h₇ : x ≤ 14 := by
+      rw [h₆]
+      exact Nat.le_of_mul_le_mul_right (by linarith only [h₅.left]) rfl
+
+    -- y ≤ 14
+    have h₈ : y ≤ 14 := by
+      rw [h₆]
+      exact Nat.le_of_mul_le_mul_left (by linarith only [h₅.right]) rfl
+
+    -- x + y ≤ 28
+    have h₉ : x + y ≤ 28 := by
+      linarith only [h₇, h₈]
+
+    -- x ≥ 2, y ≥ 2
+    have h₁₀ : 2 ≤ x := by
+      by_contra! h₁₀
+      have : x = 1 := by
+        linarith only [h₅.left, h₁₀]
+      rw [this] at h₆
+      omega
+
+    have h₁₁ : 2 ≤ y := by
+      by_contra! h₁₁
+      have : y = 1 := by
+        linarith only [h₅.right, h₁₁]
+      rw [this] at h₆
+      omega
+
+    -- x ≤ 14, y ≤ 14, x + y ≤ 28
+    -- x ≥ 2, y ≥ 2
+    -- -> x + y ≥ 8
+    have h₁₂ : 8 ≤ x + y := by
+      by_contra! h₁₂
+      have h₁₃ : 7 ≤ x + y := by
+        omega
+
+      have h₁₄ : x < 8 := by
+        linarith only [h₁₃, h₁₀]
+
+      have h₁₅ : y < 8 := by
+        linarith only [h₁₃, h₁₁]
+
+      have h₁₆ : x * y < 14 := by
+        calc
+          x * y < 8 * 8 := by exact Nat.mul_lt_mul_of_lt_of_lt h₁₄ h₁₅
+          _ = 64 := rfl
+          _ < 14 := by norm_num
+
+      rw [h₆] at h₁₆
+      omega
+
+    exact h₁₂
+
+  -- m + n = 8 * (x + y)
+  have h₇ : m + n = 8 * (x + y) := by
+    rw [hx, hy]
+    ring
+
+  -- 72 ≤ m + n
+  calc
+    72 = 8 * 9 := rfl
+    _ ≤ 8 * (x + y) := by exact Nat.mul_le_mul_left 8 h₆
+    _ = m + n := h₇.symm
+
+```

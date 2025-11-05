@@ -1,0 +1,114 @@
+-- 2^n - 1 is called a Mersenne number, and if it is prime, it is called a Mersenne prime.
+  -- To prove that n is prime given that 2^n - 1 is prime, we will first give a factorization of 2^n - 1.
+  -- First, we prove a lemma that 2^n - 1 = 1 + 2 + 2^2 +... + 2^(n-1), which gives a factorization of 2^n - 1.
+  have h2 : (2 ^ n - 1) = (∑ i in Finset.range n, 2 ^ i) := by
+    rw [Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ]
+    simp
+    rw [Finset.sum_range_succ]
+    change 1 + (∑ k ∈ Finset.range n, 2 ^ k) * 2 = 2 ^ n
+    rw [add_mul, one_mul, add_comm, mul_comm, Finset.sum_mul]
+    simp only [Finset.sum_range_succ, add_mul, one_mul, add_comm, mul_comm]
+    rw [Finset.sum_range_succ]
+    simp only [Finset.sum_range_zero, add_zero, mul_zero, Finset.sum_add_distrib, pow_zero]
+    have : 1 + 1 = 2 := by norm_num
+    rw [this]
+    nth_rw 1 [pow_one]
+    rw [← Nat.sub_add_comm, Nat.add_one_sub_one]
+    exact (Nat.one_le_two_pow).mp h₀
+    exact (Nat.one_le_two_pow).mp h₀
+
+  -- Next, we note that 2^n - 1 is divisible by 2^k - 1 for all k ≤ n.
+  have h3 : ∀ k, k ≤ n → (2 ^ k - 1) ∣ (2 ^ n - 1) := by
+    intro k hk
+    rw [h2]
+    rw [Finset.sum_range_succ]
+    rw [Finset.sum_range_succ]
+    rw [Finset.sum_range_succ]
+    rw [Finset.sum_range_succ]
+    simp only [Finset.sum_range_zero, add_zero, mul_zero, Finset.sum_add_distrib, pow_zero]
+    have : 1 + 1 = 2 := by norm_num
+    rw [this]
+    nth_rw 1 [pow_one]
+    rw [← Nat.sub_add_comm, Nat.add_one_sub_one]
+    exact Nat.one_le_two_pow h₀
+    exact Nat.two_pow_le_self_pow (by linarith)
+
+  -- However, we can say more. If k is a proper divisor of n, then 2^k - 1 is a proper divisor of 2^n - 1.
+  have h4 : ∀ k, 1 < k → k ∣ n → (2 ^ k - 1) < (2 ^ n - 1) ∧ (2 ^ k - 1) ∣ (2 ^ n - 1) := by
+    intro k h1 hk
+    constructor
+    · rw [Nat.lt_sub_one_iff_add_lt]
+      rw [Nat.sub_one, Nat.sub_one]
+      simp only [lt_add_iff_pos_right]
+      exact Nat.one_lt_two_pow h1
+      exact Nat.one_lt_two_pow hk
+    · exact h3 k hk
+      exact h3 k hk
+
+  -- Therefore, if 2^n - 1 is prime, then n must be 1 or prime, because if n = k * l with k, l > 1, then 2^k - 1 and 2^l - 1 are both greater than 1 and divide 2^n - 1.
+  by_contra h5
+  have h6 : n ≠ 1 := by exact Nat.not_one_iff_zero_lt.mpr h₀
+  have h7 : ¬Nat.Prime n := h5 h6
+  rw [Nat.prime_def_lt] at h7
+  obtain ⟨m, h7, h8, h9⟩ := h7
+  have h10 : m ≥ 2 := by
+    by_contra h10
+    simp only [gt_iff_lt, Nat.le_zero, or_false] at h10
+    rw [h10] at h9
+    have : m ∣ n := by exact Dvd.intro l h9
+    have h11 : 1 < m := by exact Nat.lt_of_dvd (Nat.one_lt_two_pow h₀) this
+    have h12 : 1 < m := by exact Nat.lt_of_dvd (Nat.one_lt_two_pow h₀) this
+    have h13 : (2 ^ m - 1) < (2 ^ n - 1) := by exact Nat.sub_one_lt_pow_of_lt h10
+    have h14 : (2 ^ m - 1) ∣ (2 ^ n - 1) := h3 m h11
+    have h15 := h9 this
+    have h16 : 2 ^ m - 1 = 2 ^ n - 1 := by exact Nat.eq_of_dvd_of_le h14 h13
+    have h17 : 2 ^ m = 2 ^ n := by
+      calc
+        2 ^ m = 2 ^ m - 1 + 1 := by rw [Nat.sub_add_cancel]; exact Nat.one_le_two_pow h10
+        _ = 2 ^ n - 1 + 1 := by rw [h15]
+        _ = 2 ^ n := by rw [Nat.sub_add_cancel]; exact Nat.one_le_two_pow h₀
+    have h18 : m = n := by
+      have : 2 ^ m < 2 ^ n := by exact Nat.lt_pow_self h2 h10
+      have h19 : 2 ^ m > 2 ^ n := by
+        calc
+          2 ^ m = 2 ^ n := by exact h17
+          _ > 2 ^ n := by exact Nat.lt_pow_self h2 h10
+      rw [h18] at h19
+      exact Nat.not_lt_of_le h19
+    rw [h18] at h9
+    have : l = 1 := by
+      calc
+        l = n / m := by exact h9
+        _ = m / m := by rw [h17]
+        _ = 1 := by exact Nat.div_self h6
+    rw [this] at h9
+    exact h6 h9
+  have h11 : 1 < m := by exact Nat.lt_of_dvd (Nat.one_lt_two_pow h₀) h3
+  have h12 : 1 < m := by exact Nat.lt_of_dvd (Nat.one_lt_two_pow h₀) h3
+  have h13 : (2 ^ m - 1) < (2 ^ n - 1) := by exact Nat.sub_one_lt_pow_of_lt h10
+  have h14 : (2 ^ m - 1) ∣ (2 ^ n - 1) := h3 m h11
+  have h15 := h9 this
+  have h16 : 2 ^ m - 1 = 2 ^ n - 1 := by exact Nat.eq_of_dvd_of_le h14 h13
+  have h17 : 2 ^ m = 2 ^ n := by
+    calc
+      2 ^ m = 2 ^ m - 1 + 1 := by rw [Nat.sub_add_cancel]; exact Nat.one_le_two_pow h10
+      _ = 2 ^ n - 1 + 1 := by rw [h15]
+      _ = 2 ^ n := by rw [Nat.sub_add_cancel]; exact Nat.one_le_two_pow h₀
+  have h18 : m = n := by
+    have : 2 ^ m < 2 ^ n := by exact Nat.lt_pow_self h2 h10
+    have h19 : 2 ^ m > 2 ^ n := by
+      calc
+        2 ^ m = 2 ^ n := by exact h17
+        _ > 2 ^ n := by exact Nat.lt_pow_self h2 h10
+    rw [h18] at h19
+    exact Nat.not_lt_of_le h19
+  rw [h18] at h9
+  have : l = 1 := by
+    calc
+      l = n / m := by exact h9
+      _ = m / m := by rw [h17]
+      _ = 1 := by exact Nat.div_self h6
+  rw [this] at h9
+  exact h6 h9
+
+```

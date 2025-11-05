@@ -1,0 +1,76 @@
+have pge3 : 3 ≤ p := by linarith
+
+  have pmod3 : p ≡ 1 [MOD 3] ∨ p ≡ 2 [MOD 3] := by
+    have h : p % 3 < 3 := by
+      apply Nat.mod_lt
+      norm_num
+    have h₁ : p % 3 > 0 := by
+      by_contra h₂
+      push_neg at h₂
+      have h₂ : p % 3 = 0 := by omega
+      have h₃ : 3 ∣ p := by
+        exact Nat.dvd_of_mod_eq_zero h₂
+      have h₄ : 3 ≤ p := by
+        exact Nat.Prime.dvd_iff_le h₀ h₃
+      linarith
+    omega
+
+  have not3divp : ¬3 ∣ p := by
+    by_contra h
+    have : 3 ∣ p := by omega
+    have : p % 3 = 0 := by omega
+    have pmod3 : p ≡ 0 [MOD 3] := by
+      exact Nat.modEq_zero_iff_dvd.mpr this
+    have := Nat.Prime.modEq_iff_dvd h₀ this
+    norm_num at this
+    contradiction
+
+  have : Fact (Nat.Prime 3) := by
+    exact { out := (show Nat.Prime 3 by decide) }
+
+  have ZMod3 : IsUnit (ZMod 3) := by
+    exact isUnit_iff_ne_zero.mpr (by decide)
+
+  have not3divp' : (p : ZMod 3) ≠ 0 := by
+    exact ne_of_beq_false rfl
+
+  have ZMod3ˣ : IsUnit (ZMod p) := by
+    exact IsUnit.of_ne_zero (not3divp')
+
+  have sum_eq : ∑ k in Finset.Icc 1 (p - 2), ((k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) = ∑ k ∈ Finset.Icc 1 (p - 2), ((k : ZMod 3)⁻¹ * ((k : ZMod 3) + 1)⁻¹) := by
+    refine Finset.sum_congr rfl?_
+    intro k hk
+    have hk' : (k : ZMod p) + 1 ≠ 0 := by
+      by_contra h
+      have : (k : ZMod p) = -1 := by
+        exact eq_neg_of_add_eq_zero_left h
+      rw [this] at hk
+      have : k > p - 1 := by
+        exact Nat.lt_of_le_of_ne hk.1 (id (Ne.symm hk.2))
+      have : ¬ k ≤ p - 1 := by
+        exact not_le_of_lt this
+      contradiction
+    rw [ZMod.val_inv] at inv
+    rw [ZMod.val_inv]
+    simp only [ZMod.val_add, ZMod.val_one, ZMod.val_ofNat, Nat.cast_add, Nat.cast_one,
+      ZMod.val_zero, Nat.cast_zero, add_zmod_eq_zero_iff]
+    refine Eq.symm (ZMod.eq_iff_modEq_nat (↑(p - 2)) (by simp) (id (ZMod.eq_iff_modEq_nat.mpr?_)))
+    rw [←Nat.cast_sub (by omega)]
+    congr
+    norm_cast
+    exact hk.1
+
+  rw [sum_eq]
+
+  have : Fact (Nat.Prime 3) := by
+    exact { out := (show Nat.Prime 3 by decide) }
+
+  have ZMod3ˣ : IsUnit (ZMod 3) := by
+    exact IsUnit.of_ne_zero (by decide)
+
+  have mul_eq : ∑ k ∈ Finset.Icc 1 (p - 2), ((k : ZMod 3)⁻¹ * ((k : ZMod 3) + 1)⁻¹) = 2 := by
+    interval_cases p % 3 + 1 <;> simp [Finset.sum_Icc_succ_top, Finset.sum_Icc_succ_top, add_comm, ←add_assoc] <;> decide
+
+  exact mul_eq
+
+```

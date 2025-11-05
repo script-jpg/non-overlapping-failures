@@ -1,0 +1,235 @@
+-- Factorize $z^3 - 8 = 0$ as $(z-2)(z^2 + 2z + 4) = 0$
+  have hz3 : ∀ z : ℂ, z ^ 3 - 8 = (z - 2) * (z ^ 2 + 2 * z + 4) := by
+    intro z
+    ring
+
+  -- Factorize $z^3 - 8z^2 - 8z + 64 = 0$ as $(z-8)(z^2 + 0z + 8) = 0$
+  have hz3' : ∀ z : ℂ, z ^ 3 - 8 * z ^ 2 - 8 * z + 64 = (z - 8) * (z ^ 2 + 0 * z + 8) := by
+    intro z
+    ring
+
+  -- It suffices to prove that $A$ and $B$ have the greatest distance of $2\sqrt{21}$
+  suffices max (A := Set.image (fun (a : ℂ) => a - b) (Set.Finite.toFinset $ Set.Icc (-8) 8 ×ˢ Set.Icc (-8) 8)) (B := Set.image (fun (a : ℂ) => a - b) (Set.Finite.toFinset $ Set.Icc (-8) 8 ×ˢ Set.Icc (-8) 8)) = 2 * Real.sqrt 21 by
+    -- $A$ and $B$ are subsets of the closed square $[-8,8] \times [-8,8]$
+    have hA : Set.Finite.toFinset $ Set.Icc (-8) 8 ×ˢ Set.Icc (-8) 8 ⊇ A := by
+      simp [A]
+      rw [Set.subset_def]
+      intro a ha
+      rcases ha with ⟨x, hx, rfl⟩
+      simp [hx]
+    have hB : Set.Finite.toFinset $ Set.Icc (-8) 8 ×ˢ Set.Icc (-8) 8 ⊇ B := by
+      simp [B]
+      rw [Set.subset_def]
+      intro a ha
+      rcases ha with ⟨y, hy, rfl⟩
+      simp [hy]
+    -- $A$ and $B$ are compact subsets of $\mathbb{C}$
+    have hA' : Set.Finite.toFinset $ Set.Icc (-8) 8 ×ˢ Set.Icc (-8) 8 ⊇ A := by
+      simp [A]
+      rw [Set.subset_def]
+      intro a ha
+      rcases ha with ⟨x, hx, rfl⟩
+      simp [hx]
+    have hB' : Set.Finite.toFinset $ Set.Icc (-8) 8 ×ˢ Set.Icc (-8) 8 ⊇ B := by
+      simp [B]
+      rw [Set.subset_def]
+      intro a ha
+      rcases ha with ⟨y, hy, rfl⟩
+      simp [hy]
+    -- the square is compact and the distance is lower semiconsecutive, so the infimum is achieved at some point of $A \times B$
+    have h : Nonempty (A ×ˢ B) := by
+      simp [A, B]
+      use ⟨2, 0, 8, 0⟩
+      simp
+      norm_num
+    have hinf : IsInf (MetricTheory.dist A B) (2 * Real.sqrt 21) := by
+      simp [MetricTheory.dist]
+      rw [IsInf, lowerBounds]
+      simp
+      intro ax ay bx by h
+      simp [Complex.abs]
+      -- $a - b = 2 - 8 = -6$ when $a = 2, b = 8$
+      have h₀ : a - b = 2 - 8 := by
+        rw [<-h]
+        simp [hA', hB']
+      norm_num at h₀
+      rw [h₀]
+      -- $2\sqrt{21} \leq 6$ because $21 < 9$
+      have h₁ : 2 * Real.sqrt 21 ≤ 2 * 3 := by
+        apply mul_le_mul
+        rfl
+        simp
+        exact Real.sqrt_le_sqrt (by norm_num)
+        simp
+        norm_num
+      norm_num at h₁
+      linarith
+    -- the distance is upper semiconsecutive, so the supremum is achieved at some point of $A \times B$
+    have h : Nonempty (A ×ˢ B) := by
+      simp [A, B]
+      use ⟨2, 0, -5, 0⟩
+      simp
+      norm_num
+    have hsup : IsSup (MetricTheory.dist A B) (2 * Real.sqrt 21) := by
+      simp [MetricTheory.dist]
+      rw [IsSup, upperBounds]
+      simp
+      intro ax ay bx by h
+      simp [Complex.abs]
+      -- $a - b = 2 - (-5) = 7$ when $a = 2, b = -5$
+      have h₀ : a - b = 2 - (-5) := by
+        rw [<-h]
+        simp [hA', hB']
+      norm_num at h₀
+      rw [h₀]
+      -- $2\sqrt{21} \geq 7$ because $21 > 49/2$
+      have h₁ : 2 * Real.sqrt 21 ≥ 2 * Real.sqrt (49 / 2) := by
+        apply mul_le_mul
+        rfl
+        simp
+        exact Real.sqrt_le_sqrt (by norm_num)
+        simp
+        norm_num
+      have h₂ : 2 * Real.sqrt (49 / 2) ≥ 7 := by
+        rw [show (49 / 2 : ℝ) = (7 / √2) ^ 2 by ring_nf; norm_num]
+        simp
+        ring_nf
+        norm_num
+        linarith
+      linarith
+    -- The greatest distance between a point of $A$ and a point of $B$ is $2\sqrt{21}$
+    exact by
+      aesop
+
+  rw [<-Complex.abs]
+  simp [Complex.dist]
+  rw [Complex.abs, <-Complex.normSq]
+  simp
+  -- $A = \{2, -1 + \sqrt{3}i, -1 - \sqrt{3}i\}$
+  have hA : A = {2, -1 + √3 * I, -1 - √3 * I} := by
+    rw [Set.ext_iff]
+    intro a
+    constructor
+    · intro ha
+      -- $a^3 - 8 = 0$ implies $a^3 - 8 = 0$
+      have h₀ : (a - 2) * (a ^ 2 + 2 * a + 4) = 0 := by
+        rw [hz3 a] at ha
+        exact ha
+      rw [mul_eq_zero] at h₀
+      rcases h₀ with h₀ | h₀
+      · -- if $a - 2 = 0$ then $a = 2$
+        rw [sub_eq_zero] at h₀
+        exact h₀
+      · -- if $a^2 + 2a + 4 = 0$ then $a = -1 \pm \sqrt{3}i$
+        have h₁ : a ^ 2 + 2 * a + 4 = (a - (-1 + √3 * I)) * (a - (-1 - √3 * I)) := by
+          ring_nf
+          rw [<-Complex.I_sq]
+          ring_nf
+          simp
+          norm_num
+        rw [h₁] at h₀
+        rw [mul_eq_zero] at h₀
+        rcases h₀ with h₀ | h₀
+        · -- if $a - (-1 + \sqrt{3}i) = 0$ then $a = -1 + \sqrt{3}i$
+          rw [sub_eq_zero] at h₀
+          exact h₀
+        · -- if $a - (-1 - \sqrt{3}i) = 0$ then $a = -1 - \sqrt{3}i$
+          rw [sub_eq_zero] at h₀
+          exact h₀
+    · intro ha
+      -- $a = 2, -1 \pm \sqrt{3}i$ implies $a^3 - 8 = 0$
+      rcases ha with rfl | rfl | rfl
+      · -- if $a = 2$ then $a^3 - 8 = 0$
+        rw [hz3 a]
+        ring
+      · -- if $a = -1 + \sqrt{3}i$ then $a^3 - 8 = 0$
+        rw [hz3 a]
+        ring_nf
+        rw [show √3 ^ 4 = (√3 ^ 2) ^ 2 by ring]
+        norm_num
+      · -- if $a = -1 - \sqrt{3}i$ then $a^3 - 8 = 0$
+        rw [hz3 a]
+        ring_nf
+        rw [show √3 ^ 4 = (√3 ^ 2) ^ 2 by ring]
+        norm_num
+  rw [hA]
+  -- $B = \{8, 4 + 4i, 4 - 4i\}$
+  have hB : B = {8, 4 + 4 * I, 4 - 4 * I} := by
+    rw [Set.ext_iff]
+    intro a
+    constructor
+    · intro ha
+      -- $a^3 - 8a^2 - 8a + 64 = 0$ implies $(a - 8)(a^2 + 0a + 8) = 0$
+      have h₀ : (a - 8) * (a ^ 2 + 0 * a + 8) = 0 := by
+        rw [hz3' a] at ha
+        exact ha
+      rw [mul_eq_zero] at h₀
+      rcases h₀ with h₀ | h₀
+      · -- if $a - 8 = 0$ then $a = 8$
+        rw [sub_eq_zero] at h₀
+        exact h₀
+      · -- if $a^2 + 0a + 8 = 0$ then $a = 4 \pm 4i$
+        have h₁ : a ^ 2 + 0 * a + 8 = (a - (4 + 4 * I)) * (a - (4 - 4 * I)) := by
+          ring_nf
+          rw [<-Complex.I_sq]
+          ring_nf
+          simp
+          norm_num
+        rw [h₁] at h₀
+        rw [mul_eq_zero] at h₀
+        rcases h₀ with h₀ | h₀
+        · -- if $a - (4 + 4i) = 0$ then $a = 4 + 4i$
+          rw [sub_eq_zero] at h₀
+          exact h₀
+        · -- if $a - (4 - 4i) = 0$ then $a = 4 - 4i$
+          rw [sub_eq_zero] at h₀
+          exact h₀
+    · intro ha
+      -- $a = 8, 4 \pm 4i$ implies $a^3 - 8a^2 - 8a + 64 = 0$
+      rcases ha with rfl | rfl | rfl
+      · -- if $a = 8$ then $a^3 - 8a^2 - 8a + 64 = 0$
+        rw [hz3' a]
+        ring
+      · -- if $a = 4 + 4i$ then $a^3 - 8a^2 - 8a + 64 = 0$
+        rw [hz3' a]
+        ring_nf
+        norm_num
+      · -- if $a = 4 - 4i$ then $a^3 - 8a^2 - 8a + 64 = 0$
+        rw [hz3' a]
+        ring_nf
+        norm_num
+  rw [hB]
+  simp
+  -- The greatest distance between a point of $A$ and a point of $B$ is $2\sqrt{21}$
+  norm_num
+  1
+  -- If $a = 2, b = 8$ then $|a - b| = 6$
+  -- If $a = 2, b = 4 + 4i$ then $|a - b| = 2\sqrt{5}$
+  -- If $a = 2, b = 4 - 4i$ then $|a - b| = 2\sqrt{5}$
+  -- If $a = -1 + \sqrt{3}i, b = 8$ then $|a - b| = \sqrt{113 - 16\sqrt{3}}$
+  -- If $a = -1 + \sqrt{3}i, b = 4 + 4i$ then $|a - b| = \sqrt{83 - 2\sqrt{3} - 16\sqrt{21}}$
+  -- If $a = -1 + \sqrt{3}i, b = 4 - 4i$ then $|a - b| = \sqrt{83 + 2\sqrt{3} - 16\sqrt{21}}$
+  -- If $a = -1 - \sqrt{3}i, b = 8$ then $|a - b| = \sqrt{113 + 16\sqrt{3}}$
+  -- If $a = -1 - \sqrt{3}i, b = 4 + 4i$ then $|a - b| = \sqrt{83 + 2\sqrt{3} - 16\sqrt{21}}$
+  -- If $a = -1 - \sqrt{3}i, b = 4 - 4i$ then $|a - b| = \sqrt{83 - 2\sqrt{3} - 16\sqrt{21}}$
+  rw [<-Real.sqrt_sq (by norm_num)]
+  rw [<-Real.sqrt_mul (by norm_num)]
+  -- $2\sqrt{21}$ is the greatest among the distances
+  norm_num
+  -- $2\sqrt{21} \leq 6$ because $21 < 9$
+  have h₁ : 2 * Real.sqrt 21 ≤ 2 * Real.sqrt 9 := by
+    apply mul_le_mul
+    rfl
+    simp
+    exact Real.sqrt_le_sqrt (by norm_num)
+    simp
+    norm_num
+  -- $2\sqrt{9} = 6$
+  have h₂ : 2 * Real.sqrt 9 = 6 := by
+    rw [Real.sqrt_eq_cases]
+    norm_num
+  rw [h₂] at h₁
+  -- $2\sqrt{21} \leq 6$
+  exact h₁
+
+```

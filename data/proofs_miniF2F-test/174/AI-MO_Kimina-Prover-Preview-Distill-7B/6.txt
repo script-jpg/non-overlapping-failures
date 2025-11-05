@@ -1,0 +1,103 @@
+obtain ⟨hp, hq⟩ := h₀
+
+  have hp' : 2 < p := Nat.Prime.gt_one hp
+  have hq' : 2 < q := Nat.Prime.gt_one hq
+
+  -- $p \neq q$
+  have hpq : p ≠ q := by
+    rintro hpq
+    rw [← hpq] at hp
+    rw [hp] at hq
+    absurd hp
+    exact hq
+
+  -- $p * q - (p + q) = (p - 1) * (q - 1) - 1$ 
+  have heq : p * q - (p + q) = (p - 1) * (q - 1) - 1 := by
+    zify
+    rw [Nat.cast_sub (by linarith), Nat.cast_sub (by linarith)]
+    push_cast
+    ring
+
+  -- then $p - 1$ and $q - 1$ are prime numbers
+  have hp1 : Nat.Prime (p - 1) := by
+    rw [Nat.prime_iff_natAbs_prime]
+    norm_cast
+    rw [← Int.natCast_add_one]
+    apply Int.natCast_prime_iff.mpr
+    rw [← hp, Nat.prime_iff_natAbs_prime]
+    norm_cast
+    rw [← Int.natCast_add_one]
+    apply Int.natCast_prime_iff.mpr
+    exact hq'
+  have hq1 : Nat.Prime (q - 1) := by
+    rw [Nat.prime_iff_natAbs_prime]
+    norm_cast
+    rw [← Int.natCast_add_one]
+    apply Int.natCast_prime_iff.mpr
+    rw [← hq, Nat.prime_iff_natAbs_prime]
+    norm_cast
+    rw [← Int.natCast_add_one]
+    apply Int.natCast_prime_iff.mpr
+    exact hp'
+
+  -- We need to show that it is impossible to obtain 194 as the difference of the product and the sum of two prime numbers in the given range.
+  intro h
+  rw [← heq] at h
+
+  -- Notice that $194 = 2 \cdot 97$, and look for the possible values of $p - 1$ and $q - 1$.
+  have h1 : p - 1 = 1 ∧ q - 1 = 194 ∨ p - 1 = 2 ∧ q - 1 = 97 ∨ p - 1 = 97 ∧ q - 1 = 2 ∨ p - 1 = 194 ∧ q - 1 = 1 := by
+    have : p - 1 ∣ 194 := by
+      rw [← h]
+      apply Nat.dvd_mul_right
+    have : p - 1 ≤ 194 := by
+      apply Nat.le_of_dvd (by norm_num) this
+    have : p - 1 ≠ 194 := by
+      by_contra!
+      have : p = 195 := by omega
+      norm_num [this] at h
+    have : p - 1 = 1 ∨ p - 1 = 2 ∨ p - 1 = 97 ∨ p - 1 = 194 := by
+      interval_cases p - 1 <;> norm_num at this <;> tauto
+    rcases this with (h | h | h | h) <;> simp [h] <;> try omega
+    · simp [h] at h1
+    · simp [h] at h1
+      omega
+    · rw [h] at h1
+      omega
+    · rw [h] at h1
+      omega
+
+  -- The possible values of $p, q$ are $p = 2, q = 98$, $p = 3, q = 99$, $p = 98, q = 3$ or $p = 99, q = 2$. 
+  have h2 : (p = 2 ∧ q = 98) ∨ (p = 3 ∧ q = 99) ∨ (p = 98 ∧ q = 2) ∨ (p = 99 ∧ q = 3) := by
+    omega
+
+  -- However, 98 and 99 are not prime numbers, so all cases are impossible.
+  have h3 : p = 2 ∨ p = 3 := by omega
+  have h4 : p = 2 ∨ p = 3 := by omega
+  rcases h3 with (h3 | h3)
+  · left; omega
+  · right; omega
+  have h5 : q = 98 ∨ q = 99 := by omega
+  rcases h5 with (h5 | h5)
+  · rw [h3, h5] at hpq
+    absurd hpq
+    norm_num
+  · rw [h3, h5] at hpq
+    absurd hpq
+    norm_num
+  have h6 : p = 98 ∨ p = 99 := by omega
+  rcases h6 with (h6 | h6)
+  · rw [h6, h5] at hpq
+    absurd hpq
+    norm_num
+  · rw [h6, h5] at hpq
+    absurd hpq
+    norm_num
+  have h7 : q = 2 ∨ q = 3 := by omega
+  rcases h7 with (h7 | h7)
+  · rw [h6, h7] at hpq
+    absurd hpq
+    norm_num
+  · rw [h6, h7] at hpq
+    absurd hpq
+    norm_num
+```

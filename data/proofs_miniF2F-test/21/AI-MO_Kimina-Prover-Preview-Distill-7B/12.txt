@@ -1,0 +1,55 @@
+-- We prove that for any two integers $x$ and $y$, $x^5 \ne y^2 + 4$.
+  -- First, consider the case when $x$ is even.
+  by_cases hx : Even x
+  · -- If $x$ is even, then $5x^4$ is divisible by $16$.
+    have h1 : 16 ∣ 5 * x ^ 4 := by
+      rcases hx with ⟨k, hk⟩
+      rw [hk]
+      ring_nf
+      omega
+    -- On the other hand, we have $y^2 + 4 \equiv 5 \pmod{8}$.
+    have h2 : y ^ 2 + 4 ≡ 5 [ZMOD 8] := by
+      -- We have $y \equiv 0, 1, 2, 3, 4, 5, 6, 7 \pmod{8}$.
+      mod_cases y % 8
+      all_goals {
+        -- For each case, we can calculate $y^2 \pmod{8}$.
+        simp [Int.ModEq, pow_two, Int.add_emod, Int.mul_emod]
+      }
+    -- We have $y^2 + 4 \equiv 5 \pmod{8}$, but $x^5 \equiv 0 \pmod{16}$, and hence $x^5 \not\equiv 5 \pmod{8}$.
+    have h3 : x ^ 5 ≡ 0 [ZMOD 8] := by
+      -- We have $x \equiv 0 \pmod{2}$.
+      rcases hx with ⟨k, hk⟩
+      rw [hk]
+      symm
+      apply Int.ModEq.mul_left
+      exact Int.zero_modEq_int 8
+    -- This is a contradiction.
+    have h4 (a b : ℤ) : a ≡ b [ZMOD 8] → a ≡ b [ZMOD 16] := by
+      intro h
+      exact Int.ModEq.of_dvd h (Int.dvd_trans (Int.dvd_prime_pow (by norm_num) (by norm_num)) (Int.dvd_mul_right 8 (x ^ 4) (y ^ 2)))
+    by_contra!
+    have := h4 (x ^ 5) (y ^ 2 + 4) this
+    simp [Int.ModEq, Int.add_emod, Int.mul_emod, pow_succ, pow_zero, Int.reduceMul] at this
+  · -- Now, consider the case when $x$ is odd.
+    simp at hx
+    -- If $x$ is odd, then $5x^4$ is odd.
+    have h1 : Odd (5 * x ^ 4) := by
+      apply Odd.mul_left
+      exact Int.odd_iff.mpr rfl
+      exact Int.odd_iff.mpr hx
+    -- In particular, $x^5 \equiv 5 \pmod{2}$.
+    have h2 : x ^ 5 ≡ 5 [ZMOD 2] := by
+      refine Int.ModEq.symm (Int.modEq_of_dvd?_)
+      exact Int.dvd_add (Dvd.dvd.mul_right (Int.odd_iff.mpr rfl) (x ^ 4)) (Int.odd_iff.mpr hx)
+    -- We have $y^2 + 4 \equiv 0 \pmod{2}$.
+    have h3 : y ^ 2 + 4 ≡ 0 [ZMOD 2] := by
+      simp [Int.ModEq, Int.add_emod, Int.mul_emod, pow_two, Int.reducePow]
+    -- This is a contradiction.
+    have h4 (a b : ℤ) : a ≡ b [ZMOD 2] → a ≡ b [ZMOD 4] := by
+      intro h
+      exact Int.ModEq.of_dvd h (by exact Int.dvd_trans (by exact Int.dvd_prime_pow (by norm_num) (by norm_num)) (by exact Int.dvd_mul_right 2 (x ^ 4) (y ^ 2)))
+    by_contra!
+    have := h4 (x ^ 5) (y ^ 2 + 4) this
+    simp [Int.ModEq, Int.add_emod, Int.mul_emod, pow_succ, pow_zero, Int.reduceMul] at this
+
+```

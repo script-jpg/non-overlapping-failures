@@ -1,0 +1,161 @@
+-- The greatest common divisor of positive integers $m$ and $n$ is 6.
+  -- The least common multiple of $m$ and $n$ is 126. What is the least possible value of $m+n$? Show that it is 60.
+
+  have dvd_m : 6 ∣ m := by
+    have : Nat.gcd m n ∣ m := by
+      exact Nat.gcd_dvd_left m n
+    rw [h₀] at this
+    exact this
+
+  have dvd_n : 6 ∣ n := by
+    have : Nat.gcd m n ∣ n := by
+      exact Nat.gcd_dvd_right m n
+    rw [h₀] at this
+    exact this
+
+  have mize : ∃ t : ℕ, m = 6 * t := by
+    exact dvd_m
+  obtain ⟨t, ht⟩ := mize
+
+  have nize : ∃ t : ℕ, n = 6 * t := by
+    exact dvd_n
+  obtain ⟨s, hs⟩ := nize
+
+  rw [h₀] at h₁
+  rw [ht, hs] at h₁
+
+  have := Nat.lcm_gcd 6 * 6 * t * s = 6 * 6 * (t * s)
+  rw [← h₁] at this
+  have h₂ : (6 * 6 * (t * s)) / 6 = 6 * (t * s) := by
+    rw [Nat.mul_div_cancel_left]
+    have : 0 < (6 * 6) := by
+      exact Nat.zero_lt_of_ne_zero (6 * 6)
+    exact this
+  have h₃ : 126 / 6 = 21 := by
+    exact Nat.div_eq_of_eq_mul_right (by exact rfl) rfl
+  rw [h₂, h₃] at this
+
+  -- The greatest common divisor of positive integers $m$ and $n$ is 6. The least common multiple of $m$ and $n$ is 126. What is the least possible value of $m+n$? Show that it is 60.
+
+  have t_s_dvd : t * s ∣ 21 := by
+    have : (6 * 6 * (t * s)) / (6 * (t * s)) = 21 := by
+      rw [this]
+    rw [Nat.mul_div_cancel_left] at this
+    have : 0 < (6 * (t * s)) := by
+      have : 0 < t := by
+        by_contra h
+        push_neg at h
+        have : t = 0 := by
+          exact Nat.eq_zero_of_le_zero h
+        rw [this] at ht
+        have : m = 0 := by
+          rw [ht]
+          exact Nat.mul_eq_zero this
+        have : n > 0 := by
+          by_contra h
+          push_neg at h
+          have : n = 0 := by
+            exact Nat.eq_zero_of_le_zero h
+          rw [this] at hs
+          have : m = 0 := by
+            rw [hs]
+            exact Nat.mul_eq_zero this
+          have : m.gcd n = 0 := by
+            exact Nat.gcd_eq_zero_left this
+          rw [this] at h₀
+          have : m.gcd n > 0 := by
+            exact Nat.gcd_pos_of_pos_left m (by exact Nat.zero_lt_of_ne_zero n)
+          linarith
+        have : n.gcd m > 0 := by
+          exact Nat.gcd_pos_of_pos_left n (by exact Nat.zero_lt_of_ne_zero m)
+        rw [h₀] at this
+        have : n.gcd m = 0 := by
+          exact Nat.eq_zero_of_le_zero this
+        linarith
+      have : 0 < s := by
+        by_contra h
+        push_neg at h
+        have : s = 0 := by
+          exact Nat.eq_zero_of_le_zero h
+        rw [this] at hs
+        have : n = 0 := by
+          rw [hs]
+          exact Nat.mul_eq_zero this
+        have : m > 0 := by
+          by_contra h
+          push_neg at h
+          have : m = 0 := by
+            exact Nat.eq_zero_of_le_zero h
+          rw [this] at ht
+          have : m.gcd n = 0 := by
+            exact Nat.gcd_eq_zero_right this
+          rw [this] at h₀
+          have : m.gcd n > 0 := by
+            exact Nat.gcd_pos_of_pos_right m (by exact Nat.zero_lt_of_ne_zero n)
+          linarith
+        have : m.gcd n > 0 := by
+          exact Nat.gcd_pos_of_pos_right m (by exact Nat.zero_lt_of_ne_zero n)
+        rw [h₀] at this
+        have : m.gcd n = 0 := by
+          exact Nat.eq_zero_of_le_zero this
+        linarith
+    exact Nat.dvd_of_mul_left_dvd this
+
+  have t_s_dvd' : (t * s).gcd 21 ∣ t * s := by
+    exact Nat.gcd_dvd_right (t * s) 21
+
+  have t_s_dvd'' : (t * s).gcd 21 ∣ 21 := by
+    exact Nat.gcd_dvd_left (t * s) 21
+
+  have : (t * s).gcd 21 = 1 ∨ (t * s).gcd 21 = 3 ∨ (t * s).gcd 21 = 7 ∨ (t * s).gcd 21 = 21 := by
+    have : (t * s).gcd 21 ∣ 21 := by
+      exact t_s_dvd''
+    have : (t * s).gcd 21 ≤ 21 := by
+      exact Nat.le_of_dvd (by exact Nat.zero_lt_of_ne_zero 21) this
+    have : (t * s).gcd 21 = 1 ∨ (t * s).gcd 21 = 3 ∨ (t * s).gcd 21 = 7 ∨ (t * s).gcd 21 = 21 := by
+      interval_cases (t * s).gcd 21 <;> tauto
+    exact this
+
+  rcases this with (h | h | h | h)
+
+  · -- (t * s).gcd 21 = 1
+    have t_s_eq_1 : t * s = 1 := by
+      tauto
+    rw [t_s_eq_1] at hs
+    rw [ht, hs]
+    norm_num
+
+  · -- (t * s).gcd 21 = 3
+    have t_s_eq_3 : t * s = 3 := by
+      tauto
+    rw [t_s_eq_3] at hs
+    rw [ht, hs]
+    norm_num
+
+  · -- (t * s).gcd 21 = 7
+    have t_s_eq_7 : t * s = 7 := by
+      tauto
+    rw [t_s_eq_7] at hs
+    rw [ht, hs]
+    norm_num
+
+  · -- (t * s).gcd 21 = 21
+    have t_s_eq_21 : t * s = 21 := by
+      tauto
+    rw [t_s_eq_21] at hs
+    rw [ht, hs]
+    have : m = 6 * 21 := by
+      exact ht
+    have : n = 6 * 1 := by
+      exact hs
+    norm_num at this
+    norm_num at this
+    have : m.gcd n = 6 * 1 := by
+      rw [this, ‹n = 6 * 1›]
+      exact Nat.mul_gcd_right 6 1 (by norm_num)
+    rw [this] at h₀
+    have : m.gcd n > 0 := by
+      exact Nat.gcd_pos_of_pos_left m (by exact Nat.zero_lt_of_ne_zero n)
+    linarith
+
+```

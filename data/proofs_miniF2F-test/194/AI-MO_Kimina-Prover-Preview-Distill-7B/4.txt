@@ -1,0 +1,235 @@
+-- First, notice that all the roots are positive integers, so we can express the polynomial as
+  -- $z^6-10z^5+Az^4+Bz^3+Cz^2+Dz+16 = (z - r_1)(z - r_2)(z - r_3)(z - r_4)(z - r_5)(z - r_6)$
+  -- where $r_i$ are positive integers.
+  have eq1 (z : ℂ) : f z = z ^ 6 - 10 * z ^ 5 + a * z ^ 4 + b * z ^ 3 + c * z ^ 2 + d * z + 16 := by
+    exact h₀ z
+
+  -- From the polynomial definition, we can expand and compare coefficients to get equations
+  -- relating $a, b, c, d$ to the sums of the roots, the sums of the products of the roots taken
+  -- two at a time, etc.
+  have h₂ (z : ℂ) : f z = 0 → z.im = 0 ∧ 0 < z.re ∧ ↑(Int.floor z.re) = z.re := by
+    exact h₁ z
+
+  -- First, we know that the sum of the roots $r_1 + r_2 + r_3 + r_4 + r_5 + r_6 = 10$ from the coefficient
+  -- of $z^5$ in the polynomial, which is $-10$ (since it's monic).
+  have sum_roots : (10 : ℂ) = 10 := by
+    simp
+  have sum_roots' : (a : ℂ) = a := by
+    simp
+
+  -- We need to show that $b = -88$. The coefficient $b$ is related to the sum of the products of
+  -- the roots taken three at a time. Let's compute this sum and show that it equals $-88$.
+  have eq2 (z : ℂ) : f z = 0 → b = -88 := by
+    intro hz
+    have hzim := (h₂ z hz).1
+    have hzre_pos := (h₂ z hz).2.1
+    have hzre_floor_eq := (h₂ z hz).2.2
+
+    have r1 : z.re = 1 ∨ z.re = 2 ∨ z.re = 4 ∨ z.re = 8 := by
+      have hzre : 0 < z.re ∧ z.re < 16 := by
+        have h1 : 0 < z.re := hzre_pos
+        have h2 : z.re < 16 := by
+          have : z.im = 0 := hzim
+          have : z.re = 1 ∨ z.re = 2 ∨ z.re = 4 ∨ z.re = 8 ∨ z.re = 16 := by
+            have hz_re : z.re = 1 ∨ z.re = 2 ∨ z.re = 4 ∨ z.re = 8 ∨ z.re = 16 := by
+              have hzre : z.re < 16 := by
+                have : z.im = 0 := hzim
+                have : z.re = 1 ∨ z.re = 2 ∨ z.re = 4 ∨ z.re = 8 ∨ z.re = 16 := by
+                  have hz_floor : ↑(Int.floor z.re) = z.re := by simpa using hzre_floor_eq
+                  have : z.re < Int.floor z.re + 1 := Int.lt_floor_add_one z.re
+                  rw [hz_floor] at this
+                  omega
+                exact this
+              exact hz_re
+            exact hz_re
+          omega
+        omega
+      have : z.re ≤ 16 := by linarith
+      have : z.re ≥ 1 := by
+        have h1 : z.re > 0 := hzre_pos
+        omega
+      have : (z.re : ℤ) ≥ 1 := by
+        have h1 : (z.re : ℤ) > 0 := by
+          have : z.re > (0 : ℤ) := by
+            have : z.re.im = 0 := by
+              rw [Complex.re_im] at *
+              simp
+            have : z.re > (0 : ℤ) := by
+              refine (Complex.ofReal_lt Complex.ofReal_pos?_).mp?_
+              simp
+              exact this
+            exact this
+          exact this
+        omega
+      have : (z.re : ℤ) < 16 := by
+        have h1 : (z.re : ℤ) < 16 := by
+          have : z.re < (16 : ℤ) := by
+            exact (Complex.ofReal_lt Complex.ofReal_pos?_).mp this
+          exact this
+        exact h1
+      interval_cases (z.re : ℤ)
+      repeat' (rw [Complex.ofReal_re] at *)
+      all_goals norm_num at *
+    rcases r1 with r1 | r1 | r1 | r1 <;> rcases sum_roots with sum_roots | sum_roots | sum_roots | sum_roots
+    -- If $r_1 = 1$, then we have $r_2 + r_3 + r_4 + r_5 + r_6 = 9$ and $r_2r_3 + r_2r_4 + \dots + r_5r_6 = a$.
+    · have r2 : r2 + r3 + r4 + r5 + r6 = 9 := by
+        rw [r1, show (1 : ℂ) = (1 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r3 : r2 * r3 + r2 * r4 + r2 * r5 + r2 * r6 + r3 * r4 + r3 * r5 + r3 * r6 + r4 * r5 + r4 * r6 + r5 * r6 = a := by
+        rw [r1, show (1 : ℂ) = (1 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r4 : r2 * r3 * r4 + r2 * r3 * r5 + r2 * r3 * r6 + r2 * r4 * r5 + r2 * r4 * r6 + r2 * r5 * r6 + r3 * r4 * r5 + r3 * r4 * r6 + r3 * r5 * r6 + r4 * r5 * r6 = -b := by
+        rw [r1, show (1 : ℂ) = (1 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r5 : r2 * r3 * r4 * r5 + r2 * r3 * r4 * r6 + r2 * r3 * r5 * r6 + r2 * r4 * r5 * r6 + r3 * r4 * r5 * r6 = -c := by
+        rw [r1, show (1 : ℂ) = (1 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r6 : r2 * r3 * r4 * r5 * r6 = 16 := by
+        rw [r1, show (1 : ℂ) = (1 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      rw [r1] at hzre_floor_eq
+      have hzre : z.re = 1 := by
+        norm_cast at hzre_floor_eq
+        rw [hzre_floor_eq]
+        omega
+      rw [hzre, one_pow, one_mul] at eq2
+      simp at eq2
+      norm_cast at eq2
+      rw [eq2] at r4
+      norm_cast at r4
+      rw [r6] at r4
+      norm_cast at r4
+      have : r2 * r3 * r4 * r5 * r6 < 0 := by
+        rw [r6]
+        norm_cast
+        omega
+      have : r2 * r3 * r4 * r5 < 0 := by
+        linarith
+      have : r2 * r3 * r4 < 0 := by
+        linarith
+      have : r2 * r3 < 0 := by
+        linarith
+      have : r2 < 0 := by
+        nlinarith
+      linarith
+    -- If $r_1 = 2$, then we have $r_2 + r_3 + r_4 + r_5 + r_6 = 8$ and $r_2r_3 + r_2r_4 + \dots + r_5r_6 = a$.
+    · have r2 : r2 + r3 + r4 + r5 + r6 = 8 := by
+        rw [r1, show (2 : ℂ) = (2 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r3 : r2 * r3 + r2 * r4 + r2 * r5 + r2 * r6 + r3 * r4 + r3 * r5 + r3 * r6 + r4 * r5 + r4 * r6 + r5 * r6 = a := by
+        rw [r1, show (2 : ℂ) = (2 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r4 : r2 * r3 * r4 + r2 * r3 * r5 + r2 * r3 * r6 + r2 * r4 * r5 + r2 * r4 * r6 + r2 * r5 * r6 + r3 * r4 * r5 + r3 * r4 * r6 + r3 * r5 * r6 + r4 * r5 * r6 = -b := by
+        rw [r1, show (2 : ℂ) = (2 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r5 : r2 * r3 * r4 * r5 + r2 * r3 * r4 * r6 + r2 * r3 * r5 * r6 + r2 * r4 * r5 * r6 + r3 * r4 * r5 * r6 = -c := by
+        rw [r1, show (2 : ℂ) = (2 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r6 : r2 * r3 * r4 * r5 * r6 = 16 := by
+        rw [r1, show (2 : ℂ) = (2 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      rw [r1] at hzre_floor_eq
+      have hzre : z.re = 2 := by
+        norm_cast at hzre_floor_eq
+        rw [hzre_floor_eq]
+        omega
+      rw [hzre, two_pow, two_mul] at eq2
+      simp at eq2
+      norm_cast at eq2
+      rw [eq2] at r4
+      norm_cast at r4
+      rw [r6] at r4
+      norm_cast at r4
+      have : r2 * r3 * r4 * r5 * r6 < 0 := by
+        rw [r6]
+        norm_cast
+        omega
+      have : r2 * r3 * r4 * r5 < 0 := by
+        linarith
+      have : r2 * r3 * r4 < 0 := by
+        linarith
+      have : r2 * r3 < 0 := by
+        nlinarith
+      have : r2 < 0 := by
+        nlinarith
+      linarith
+    -- If $r_1 = 4$, then we have $r_2 + r_3 + r_4 + r_5 + r_6 = 6$ and $r_2r_3 + r_2r_4 + \dots + r_5r_6 = a$.
+    · have r2 : r2 + r3 + r4 + r5 + r6 = 6 := by
+        rw [r1, show (4 : ℂ) = (4 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r3 : r2 * r3 + r2 * r4 + r2 * r5 + r2 * r6 + r3 * r4 + r3 * r5 + r3 * r6 + r4 * r5 + r4 * r6 + r5 * r6 = a := by
+        rw [r1, show (4 : ℂ) = (4 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r4 : r2 * r3 * r4 + r2 * r3 * r5 + r2 * r3 * r6 + r2 * r4 * r5 + r2 * r4 * r6 + r2 * r5 * r6 + r3 * r4 * r5 + r3 * r4 * r6 + r3 * r5 * r6 + r4 * r5 * r6 = -b := by
+        rw [r1, show (4 : ℂ) = (4 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r5 : r2 * r3 * r4 * r5 + r2 * r3 * r4 * r6 + r2 * r3 * r5 * r6 + r2 * r4 * r5 * r6 + r3 * r4 * r5 * r6 = -c := by
+        rw [r1, show (4 : ℂ) = (4 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r6 : r2 * r3 * r4 * r5 * r6 = 16 := by
+        rw [r1, show (4 : ℂ) = (4 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      rw [r1] at hzre_floor_eq
+      have hzre : z.re = 4 := by
+        norm_cast at hzre_floor_eq
+        rw [hzre_floor_eq]
+        omega
+      rw [hzre, show (4 : ℂ) = (4 : ℕ) by simp, ←sum_roots, sum_roots] at eq2
+      simp at eq2
+      norm_cast at eq2
+      have : 0 < r2 := by
+        have h1 : (0 : ℂ) < z.re := by
+          have : 0 < (z.re : ℝ) := hzre_pos
+          exact (Complex.ofReal_lt Complex.ofReal_zero?_).mp this
+        rw [hzre] at h1
+        omega
+      have : 0 < r3 := by
+        have h1 : (0 : ℂ) < z.re := by
+          have : 0 < (z.re : ℝ) := hzre_pos
+          exact (Complex.ofReal_lt Complex.ofReal_zero?_).mp this
+        rw [hzre] at h1
+        omega
+      have : 0 < r4 := by
+        have h1 : (0 : ℂ) < z.re := by
+          have : 0 < (z.re : ℝ) := hzre_pos
+          exact (Complex.ofReal_lt Complex.ofReal_zero?_).mp this
+        rw [hzre] at h1
+        omega
+      have : 0 < r5 := by
+        have h1 : (0 : ℂ) < z.re := by
+          have : 0 < (z.re : ℝ) := hzre_pos
+          exact (Complex.ofReal_lt Complex.ofReal_zero?_).mp this
+        rw [hzre] at h1
+        omega
+      have : 0 < r6 := by
+        have h1 : (0 : ℂ) < z.re := by
+          have : 0 < (z.re : ℝ) := hzre_pos
+          exact (Complex.ofReal_lt Complex.ofReal_zero?_).mp this
+        rw [hzre] at h1
+        omega
+      nlinarith
+    -- If $r_1 = 8$, then we have $r_2 + r_3 + r_4 + r_5 + r_6 = 2$ and $r_2r_3 + r_2r_4 + \dots + r_5r_6 = a$.
+    · have r2 : r2 + r3 + r4 + r5 + r6 = 2 := by
+        rw [r1, show (8 : ℂ) = (8 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r3 : r2 * r3 + r2 * r4 + r2 * r5 + r2 * r6 + r3 * r4 + r3 * r5 + r3 * r6 + r4 * r5 + r4 * r6 + r5 * r6 = a := by
+        rw [r1, show (8 : ℂ) = (8 : ℕ) by simp, ←sum_roots, sum_roots] at *
+        simp at *
+        norm_cast at *
+      have r4 : r2 * r3 * r4 + r2 * r3 * r5 + r2 * r3 * r6 + r2

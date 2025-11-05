@@ -1,0 +1,207 @@
+-- prepare some simple facts for later use
+  have hn : 0 < (n : ℝ) := by norm_cast
+  have hn1 : 0 < (n : ℝ) + 1 := by norm_cast; omega
+  have hn2 : 0 < (n : ℝ) - 1 := by
+    norm_cast;
+    have : 1 < n := by
+      induction n with
+      | zero => norm_num
+      | succ n ih => omega
+    omega
+  have hn3 : 0 ≤ (n : ℝ) - 2 := by
+    norm_cast;
+    have : 2 ≤ n := by
+      induction n with
+      | zero => norm_num
+      | succ n ih => omega
+    omega
+  have nge1 : n ≥ 1 := by
+    induction n with
+    | zero => norm_num
+    | succ n ih => omega
+  have ngt1 : n > 1 := by
+    induction n with
+    | zero => norm_num
+    | succ n ih => omega
+  have nsub1ge1 : n - 1 ≥ 1 := by
+    have : n ≥ 2 := by
+      induction n with
+      | zero => norm_num
+      | succ n ih => omega
+    omega
+  have nsub1gt1 : n - 1 > 1 := by
+    have : n > 2 := by
+      induction n with
+      | zero => norm_num
+      | succ n ih => omega
+    omega
+  have nsub2ge1 : n - 2 ≥ 1 := by
+    omega
+
+  -- consider the function $f(x) = (x)^{1/x}$, we want to show that $f(n) < 2 - 1/n$
+  -- take the logarithm on both sides, it is equivalent to show that $\log((n)^{1/n}) < \log(2 - 1/n)$
+  suffices Mathlib.logb (n : ℝ) (n : ℝ) / n < Mathlib.logb (n : ℝ) ((2 : ℝ) - 1 / (n : ℝ)) by
+    have h1 : (Mathlib.logb (n : ℝ) (n : ℝ) / n) = Mathlib.logb (n : ℝ) ((n : ℝ) ^ ((1 : ℝ) / n)):= by
+      rw [Mathlib.logb_rpow hn (by norm_num)]
+      congr
+      field_simp
+    have h2 : Mathlib.logb (n : ℝ) ((2 : ℝ) - 1 / (n : ℝ)) = Mathlib.logb (n : ℝ) ((2 : ℝ) - 1 / n) := by
+      norm_cast
+    have h3 : Mathlib.logb (n : ℝ) ((2 : ℝ) - 1 / n) = Mathlib.logb (n : ℝ) (2 - 1 / n) := by
+      norm_cast
+    rw [h1, h2, h3]
+    clear h1 h2 h3
+
+  -- we will show that $f(n) < f(n-1)$, and by induction we can show that $f(n) < f(2) = 2 - 1/2 < 2 - 1/n$
+  have h1 : ((2 : ℝ) - 1 / n) ≥ (n : ℝ) := by
+    have : 2 ≤ n + 1 := by
+      induction n with
+      | zero => norm_num
+      | succ n ih => omega
+    norm_cast
+    linarith
+  have h2 : ((2 : ℝ) - 1 / n) > 0 := by
+    have : 2 - 1 / n > 0 := by
+      suffices 2 / (n : ℝ) > 0 from by linarith
+      apply div_pos
+      norm_num
+      norm_cast
+      omega
+    linarith
+  have h3 : (n : ℝ) > 0 := by norm_cast
+  have h4 : (n : ℝ) - 1 > 0 := by
+    norm_cast
+    omega
+  have h5 : (n : ℝ) - 1 - 1 ≥ 1 := by
+    omega
+  have h6 : ((2 : ℝ) - 1 / n) - 1 ≥ 1 := by
+    have : 2 - 1 / n - 1 ≥ 1 := by
+      suffices 1 / n ≤ 1 from by linarith
+      have : n ≥ 1 := by
+        induction n with
+        | zero => norm_num
+        | succ n ih => omega
+      norm_cast at this
+      linarith
+    linarith
+  have h7 : ((2 : ℝ) - 1 / n) - 1 > 0 := by
+    have : 2 - 1 / n - 1 > 0 := by
+      suffices 1 / n < 1 from by linarith
+      have : n > 1 := by
+        induction n with
+        | zero => norm_num
+        | succ n ih => omega
+      norm_cast at this
+      linarith
+    linarith
+
+  -- we have $n^{1/n} < (n-1)^{1/(n-1)}$
+  have hf : (n : ℝ) ^ ((1 : ℝ) / n) < (n - 1 : ℝ) ^ ((1 : ℝ) / (n - 1 : ℝ)) := by
+    -- take the logarithm on both sides
+    suffices (Mathlib.logb (n : ℝ) (n : ℝ) / n) < (Mathlib.logb (n - 1 : ℝ) (n - 1 : ℝ) / (n - 1 : ℝ)) by
+      have h1 : (Mathlib.logb (n : ℝ) (n : ℝ) / n) = Mathlib.logb (n : ℝ) ((n : ℝ) ^ ((1 : ℝ) / n)):= by
+        rw [Mathlib.logb_rpow hn (by norm_num)]
+        congr
+        field_simp
+      have h2 : (Mathlib.logb (n - 1 : ℝ) (n - 1 : ℝ) / (n - 1 : ℝ)) = Mathlib.logb (n - 1 : ℝ) ((n - 1 : ℝ) ^ ((1 : ℝ) / (n - 1 : ℝ))) := by
+        rw [Mathlib.logb_rpow h4 (by norm_num)]
+        congr
+        field_simp
+      rw [h1, h2]
+      clear h1 h2
+    -- it is equivalent to show that $\log(n)/n < \log(n-1)/(n-1)$
+    suffices (Mathlib.logb (n : ℝ) (n : ℝ)) / (n : ℝ) < (Mathlib.logb (n - 1 : ℝ) (n - 1 : ℝ)) / (n - 1 : ℝ) by
+      clear h6
+      linarith
+    -- consider the difference of the two items
+    have hf1 : (Mathlib.logb (n : ℝ) (n : ℝ)) / (n : ℝ) - (Mathlib.logb (n - 1 : ℝ) (n - 1 : ℝ)) / (n - 1 : ℝ) < 0 := by
+      have h1 : (Mathlib.logb (n : ℝ) (n : ℝ)) / (n : ℝ) - (Mathlib.logb (n - 1 : ℝ) (n - 1 : ℝ)) / (n - 1 : ℝ) = (n - 1 : ℝ) * (Mathlog (1 / (n : ℝ)) - Mathlog (1 / (n - 1 : ℝ))) / (n : ℝ) / (n - 1 : ℝ) := by
+        have : (1 / (n : ℝ)) = ((1 : ℝ) / n) := by norm_cast
+        have : (1 / (n - 1 : ℝ)) = ((1 : ℝ) / (n - 1 : ℝ)) := by norm_cast
+        rw [Mathlog_rpow hn (by norm_num), Mathlog_rpow h4 (by norm_num)]
+        congr
+        simp
+        ring
+        all_goals norm_cast
+        · field_simp
+        · have : n - (1 : ℝ) > 0 := by
+            norm_cast
+            omega
+          exact one_div_pos.mpr this
+        · exact one_div_pos.mpr h4
+      rw [h1]
+      apply div_neg_of_neg_of_pos
+      · apply mul_neg_of_neg_of_pos
+        · exact Mathlog.sub_neg_of_lt (by norm_cast) (by norm_cast)
+        · norm_cast
+          apply one_div_pos.mpr
+          norm_cast
+          omega
+      · apply one_div_pos.mpr
+        norm_cast
+        omega
+    linarith
+
+  -- by induction, we can show that $2 - 1/n < (n-1)^{1/(n-1)}$
+  have h3 : ((2 : ℝ) - 1 / n) < (n - 1 : ℝ) ^ ((1 : ℝ) / (n - 1 : ℝ)) := by
+    induction n with
+    | zero => norm_num
+    | succ n ih =>
+      have : n - 1 - 1 = n - 2 := by ring
+      rw [this] at ih
+      have : (n - 1 : ℝ) - 1 - 1 = (n - 2 : ℝ) := by norm_cast; omega
+      rw [this] at ih
+      have hn3 : 0 ≤ (n : ℝ) - 2 := by
+        norm_cast
+        have : 2 ≤ n := by
+          induction n with
+          | zero => norm_num
+          | succ n ih => omega
+        omega
+      have hn4 : (n - 2 : ℝ) > 0 := by
+        norm_cast
+        omega
+      have hn5 : (n - 2 : ℝ) - 1 > 0 := by
+        norm_cast
+        omega
+      have hn6 : (n - 2 : ℝ) - 1 - 1 ≥ 0 := by
+        norm_cast
+        omega
+      apply (Real.rpow_lt_rpow_iff hn4 hn5?_).mpr
+      rw [one_div, one_div, one_div, one_div]
+      linarith
+      linarith
+      linarith
+      linarith
+      simp
+      simp
+      simp
+      apply one_div_pos.mpr
+      norm_cast
+      omega
+      apply one_div_pos.mpr
+      norm_cast
+      omega
+      norm_cast
+      omega
+      simp
+      simp
+      simp
+      apply one_div_pos.mpr
+      norm_cast
+      omega
+      linarith
+      linarith
+      linarith
+      linarith
+      simp
+      simp
+      simp
+      apply one_div_pos.mpr
+      norm_cast
+      omega
+      norm_cast
+      omega
+  linarith
+
+```

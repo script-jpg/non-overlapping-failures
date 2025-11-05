@@ -1,0 +1,93 @@
+-- Apply Cauchy-Schwarz inequality, we have
+
+  -- $\left(\sum_{n=0}^{98} a_{n+1}^2 a_{n+2}\right)^2 \leq \left(\sum_{n=0}^{98} a_{n+1}^2\right)\left(\sum_{n=0}^{98} a_{n+2}^2\right)$.
+
+  have CS : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) ^ 2 ≤
+    (∑ x in Finset.range 99, a (x + 1) ^ 2) * (∑ x in Finset.range 99, a (x + 2) ^ 2) := by
+
+    -- because $0 \leq \left(a_{99} - \frac{a_{100}^2}{a_{99}}\right)^2$,
+    -- by expanding it we have $a_{99}^2 \geq 2 a_{99} a_{100} + \frac{a_{100}^4}{a_{99}^2}$,
+    -- so $a_{99}^2 - 2 a_{99} a_{100} \geq \frac{a_{100}^4}{a_{99}^2}$,
+    -- and $\frac{a_{99}^2 - 2 a_{99} a_{100}}{a_{99}^2} \geq \frac{a_{100}^4}{a_{99}^4}$,
+    -- simplify it, we have $1 - 2 \frac{a_{100}^2}{a_{99}^2} \geq \frac{a_{100}^4}{a_{99}^4}$,
+    -- multiply $a_{99}^4$ we have $a_{99}^4 - 2 a_{100}^2 a_{99}^2 \geq a_{100}^4$,
+    -- so $a_{99}^4 - 2 a_{100}^2 a_{99}^2 + a_{100}^4 \geq 0$,
+    -- it is same as $(a_{99}^2 - a_{100}^2)^2 \geq 0$.
+    have h₁ (n : ℕ) : 0 ≤ (a (n + 1) ^ 2 - a (n + 2) ^ 2) ^ 2 := by
+      apply sq_nonneg
+
+    have h₂ : (@Finset.sum_range_add_sum_Ico _ _ Finset.range 99 (fun n => a (n + 2) ^ 2) (98 : ℕ) a) = ∑ x in Finset.range 99, a (x + 2) ^ 2 := by
+      rw [Nat.range_add, Nat.add_one_sub_one]
+      simp
+    have h₃ : (@Finset.sum_range_add_sum_Ico _ _ Finset.range 99 (fun n => a (n + 1) ^ 2) (98 : ℕ) a) = ∑ x in Finset.range 99, a (x + 1) ^ 2 := by
+      rw [Nat.range_add, Nat.add_one_sub_one]
+      simp
+
+    calc
+      (∑ x ∈ Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) ^ 2
+        = (∑ x ∈ Finset.range 99, a (x + 1) ^ 2) * (∑ x ∈ Finset.range 99, a (x + 2) ^ 2) - ∑ x ∈ Finset.range 99, (a (x + 1) ^ 2 - a (x + 2) ^ 2) ^ 2 := by
+          rw [←Finset.sum_sub_distrib]
+          rw [Finset.sum_sq]
+          rw [Finset.sum_add_distrib]
+          rw [Finset.sum_const, Finset.card_range]
+          ring
+      _ ≤ (∑ x ∈ Finset.range 99, a (x + 1) ^ 2) * (∑ x ∈ Finset.range 99, a (x + 2) ^ 2) := by
+          have h₄ : ∑ x ∈ Finset.range 99, (a (x + 1) ^ 2 - a (x + 2) ^ 2) ^ 2 ≥ 0 := by
+            apply Finset.sum_nonneg
+            intro i hi
+            exact h₁ i
+          linarith
+
+  -- set $a_{100}^2 = x$, $a_{99}^2 = y$,
+  set y := a 99 ^ 2 with hy
+  set x := a 100 ^ 2 with hx
+
+  -- and $\sum_{n=0}^{98} a_{n+1}^2 = 1 - y$,
+  have sum_range_99 (z : ℕ → NNReal) : ∑ x ∈ Finset.range 99, z x = 1 - y := by
+    calc
+      ∑ x ∈ Finset.range 99, z x = ∑ x ∈ Finset.range 99, z x + y - y := by
+        simp [hy]
+      _ = ∑ x ∈ Finset.range 100, z x - y := by
+        rw [Finset.sum_range_succ', Nat.sub_add_cancel]
+       . congr
+          ext n
+          rw [show n + 1 + 99 = n + 100 by ring_nf]
+       . apply Nat.le_of_ble_eq_true
+          rfl
+      _ = 1 - y := by
+        rw [h₀]
+
+  -- $\sum_{n=0}^{98} a_{n+2}^2 = 1 - x$.
+  have sum_range_99' (z : ℕ → NNReal) : ∑ x ∈ Finset.range 99, z (x + 2) = 1 - x := by
+    calc
+      ∑ x ∈ Finset.range 99, z (x + 2) = ∑ x ∈ Finset.range 99, z (x + 2) + x - x := by
+        simp [hx]
+      _ = ∑ x ∈ Finset.range 101, z x - x := by
+        rw [Finset.sum_range_succ', Nat.sub_add_cancel]
+       . congr
+          ext n
+          rw [show n + 2 - 100 = n - 98 by ring_nf]
+          apply Nat.le_of_ble_eq_true
+          norm_num
+       . rfl
+      _ = 1 - x := by
+        rw [h₀]
+
+  -- so $\sum_{n=0}^{98} a_{n+1}^2 a_{n+2} \leq \sqrt{(1 - y) (1 - x)}$.
+  have : (∑ x in Finset.range 99, a (x + 1) ^ 2 * a (x + 2)) ^ 2 ≤ (1 - y) * (1 - x) := by
+    rw [CS, sum_range_99, sum_range_99']
+  apply nonneg_le_nonneg_of_sq_le_sq
+  all_goals
+    positivity
+
+  -- $x + y + xy < 12 / 25$.
+  have : x + y + x * y < 12 / 25 := by
+    -- $x + y + xy = (1 - y) + (1 - x) - (1 - y) (1 - x)$.
+    have : x + y + x * y = (1 - y) + (1 - x) - (1 - y) * (1 - x) := by
+      ring
+    rw [this]
+    -- $ (1 - y) + (1 - x) - (1 - y) (1 - x) < (1 - y) + (1 - x) = 2 - x - y$.
+    linarith
+  linarith
+
+```

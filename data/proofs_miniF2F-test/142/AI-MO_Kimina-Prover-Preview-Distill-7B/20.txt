@@ -1,0 +1,239 @@
+-- We can see how many square numbers divide $1!2!3!\hdots9!$ by counting the number of
+  -- times each prime appears in the product. Each square must have an even number of
+  -- each prime in its prime factorization.
+  have h₁ : S.card = Nat.card {k : ℕ | 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i!} := by
+    refine eq_of_cast_inj.mpr?_
+    -- We can make a bijection between S and the set of all positive natural numbers
+    -- that are squares divisors of $1!2!3!\hdots9!$.
+    apply Equiv.ofBijective?_
+    -- To see this, first, we need to show that the function
+    -- $k \mapsto (k \cdot k) \mid (1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!)$ is
+    -- surjective on the set of all positive natural numbers that are squares divisors
+    -- of $1! \cdot 2! \cdot 3! \cdot \hdots \cdot 9!$.
+    · intro ⟨k, hk⟩
+      exact h₀ k hk
+    -- Next, we need to show that if a square number divides $1! \cdot 2! \cdot 3! \cdot
+    -- \hdots \cdot 9!$, then it is in S. We do this by showing that the function is
+    -- injective.
+    · intro ⟨k, hk⟩
+      exact ⟨k,?_⟩
+      exact (h₀ k).mp hk
+    -- Finally, we need to show that the function is surjective.
+    · intro n
+      use (Nat.sqrt n)
+      -- We need to show that $(\sqrt{n} \cdot \sqrt{n}) \mid (1! \cdot 2! \cdot 3! \cdot
+      -- \hdots \cdot 9!)$ and that $\sqrt{n} > 0$.
+      rw [Nat.sqrt_mul_self]
+      apply Nat.le_of_dvd
+      exact (h₀ (Nat.sqrt n)).mp?_
+      rw [← Nat.divisors_mul]
+      -- We can compute the prime factorization of the product $1! \cdot 2! \cdot 3! \cdot
+      -- \hdots \cdot 9!$.
+      have h₂ := Finset.prod_Icc_succ_top (fun k => k!) 9
+      simp only [Nat.factorization_prod] at h₂
+      -- Let $p$ be a prime number. Let $e_1$ be the number of times $p$ appears in $1!$,
+      -- $e_2$ be the number of times $p$ appears in $2!$,..., and $e_9$ be the number of
+      -- times $p$ appears in $9!$. Let $e$ be the number of times $p$ appears in $1! \cdot
+      -- 2! \cdot 3! \cdot \hdots \cdot 9!$.
+      have h₃ : ∀ x ∈ n.primeFactors, Nat.factorization n x ≤ 7 := by
+        intro x hx
+        rw [Nat.mem_primeFactors] at hx
+        obtain ⟨⟨hx, _⟩, hx⟩ := hx
+        -- We know that $x \leq 9$ because $x$ is a prime number that appears in $1! \cdot
+        -- 2! \cdot 3! \cdot \hdots \cdot 9!$.
+        have hx' : x ≤ 9 := by
+          apply hx
+          exact Nat.prime_le_of_dvd hx (by decide)
+        -- We know that $x \neq 2$ because all the prime factors of $n$ are odd.
+        have hx'' : x ≠ 2 := by
+          by_contra!
+          rw [Nat.prime_dvd_prime_iff_eq] at this
+          simp [this] at hx
+        -- Let $p_1, p_2, \ldots, p_k$ be the list of prime factors of $n$.
+        -- Let $e_1$ be the number of times $p_1$ appears in $1!$, $e_2$ be the number of
+        -- times $p_1$ appears in $2!$,..., and $e_9$ be the number of times $p_1$ appears
+        -- in $9!$.
+        -- Let $e_1' = \sum_{i=1}^9 \left\lfloor \frac{i}{p_1} \right\rfloor$.
+        -- Similarly, let $e_2' = \sum_{i=1}^9 \left\lfloor \frac{i}{p_2} \right\rfloor$,
+        --..., $e_k' = \sum_{i=1}^9 \left\lfloor \frac{i}{p_k} \right\rfloor$.
+        set e_1' := Nat.factorization n p_1
+        have e_1'_def : e_1' = Nat.factorization n p_1 := rfl
+        set e_2' := Nat.factorization n p_2
+        have e_2'_def : e_2' = Nat.factorization n p_2 := rfl
+        -- Let $e' = \sum_{i=1}^k e_i'$.
+        -- We need to show that $e' \leq 7$.
+        set e' := ∑ p_1 ∈ n.primeFactors, Nat.factorization n p_1
+        have e'_def : e' = ∑ p_1 ∈ n.primeFactors, Nat.factorization n p_1 := rfl
+        -- Let $e$ be the number of times $p$ appears in $1! \cdot 2! \cdot 3! \cdot \hdots
+        -- \cdot 9!$.
+        -- By the definition of $h₂$, $e = n.factorization\ p + e_1' + e_2' + \cdots +
+        -- e_k'$.
+        have e_def : n.factorization x = n.factorization p + e_1' + e_2' + e_3' + e_4' +
+          e_5' + e_6' + e_7' + e_8' + e_9' := by
+          rw [h₂]
+          simp only [Finset.mem_Icc, Finset.mem_insert, Finset.mem_singleton, Nat.reduceLeDiff,
+            Finsupp.coe_add, Finsupp.coe_smul, nsmul_eq_mul, Nat.mul_add, Nat.mul_comm,
+            Nat.mul_assoc, Nat.add_mul, Nat.mul_sub, Nat.add_comm, Nat.add_left_comm,
+            Nat.add_right_comm, Nat.sub_add_comm, Nat.sub_left_comm, Nat.sub_right_comm,
+            mul_zero, add_zero, Nat.factorization_mul_nat, Nat.factorization_pow, Finsupp.coe_add,
+            Nat.cast_pow, Finsupp.coe_mul, Nat.cast_mul, Nat.cast_ofNat, Pi.natCast_def,
+            Nat.cast_id, Nat.cast_one, Finsupp.add_apply, Finsupp.mul_apply, Finsupp.ofNat_apply]
+          simp only [← Nat.factorization_def, Nat.cast_factorization_apply, factorization_factorial,
+            Finsupp.smul_apply, Finsupp.single_apply, Nat.reduceFinsetSum, Finset.sum_insert,
+            Finset.sum_singleton, Nat.cast_ofNat, Nat.cast_id, Nat.cast_mul, Nat.cast_pow,
+            Nat.cast_sum, Nat.cast_add, Nat.cast_one, Nat.reduceSub, Nat.reduceMul, Nat.reduceAdd,
+            Nat.sub_zero, Nat.mul_zero, Nat.reduceMul, Nat.add_zero, Nat.reduceAdd, Nat.reduceSub]
+          rw [Nat.factorization_def, Nat.cast_factorization_apply]
+          apply Nat.factorization_eq_zero_iff.mpr
+          constructor
+          · by_contra!
+            -- We know that $n > 0$.
+            -- So, $p_1 > 0$.
+            have hp₁ : p_1 > 0 := by
+              apply Nat.Prime.pos
+              apply Nat.prime_iff.mp
+              apply (Nat.mem_primeFactors (n := n) (p := p_1)).mp
+              simp [hx]
+            -- We know that $n \neq 0$.
+            -- So, $p_1 \neq 0$.
+            have hp₁' : p_1 ≠ 0 := by
+              by_contra!
+              rw [this] at hp₁
+              omega
+            -- Let $e_1$ be the number of times $p_1$ appears in $1!$.
+            -- Let $e_2$ be the number of times $p_1$ appears in $2!$,...
+            -- Let $e_9$ be the number of times $p_1$ appears in $9!$.
+            let e_1 := Nat.factorization (1!) p_1
+            have e_1_def : e_1 = Nat.factorization (1!) p_1 := rfl
+            let e_2 := Nat.factorization (2!) p_1
+            have e_2_def : e_2 = Nat.factorization (2!) p_1 := rfl
+            let e_3 := Nat.factorization (3!) p_1
+            have e_3_def : e_3 = Nat.factorization (3!) p_1 := rfl
+            let e_4 := Nat.factorization (4!) p_1
+            have e_4_def : e_4 = Nat.factorization (4!) p_1 := rfl
+            let e_5 := Nat.factorization (5!) p_1
+            have e_5_def : e_5 = Nat.factorization (5!) p_1 := rfl
+            let e_6 := Nat.factorization (6!) p_1
+            have e_6_def : e_6 = Nat.factorization (6!) p_1 := rfl
+            let e_7 := Nat.factorization (7!) p_1
+            have e_7_def : e_7 = Nat.factorization (7!) p_1 := rfl
+            let e_8 := Nat.factorization (8!) p_1
+            have e_8_def : e_8 = Nat.factorization (8!) p_1 := rfl
+            let e_9 := Nat.factorization (9!) p_1
+            have e_9_def : e_9 = Nat.factorization (9!) p_1 := rfl
+            -- $e_1 + e_2 + \cdots + e_9 = 0$ because there are no factors of $p_1$ in $n$.
+            have h_sum : e_1 + e_2 + e_3 + e_4 + e_5 + e_6 + e_7 + e_8 + e_9 = 0 := by
+              rw [e_1_def, e_2_def, e_3_def, e_4_def, e_5_def, e_6_def, e_7_def, e_8_def,
+                e_9_def]
+              apply Nat.factorization_add_eq_zero_iff.mpr
+              simp only [Nat.cast_ofNat, Nat.ofNat_pos, Nat.prime_iff.mp, Nat.mem_primeFactors,
+                Finsupp.coe_add, Finsupp.coe_smul, nsmul_eq_mul, Nat.mul_add, Nat.mul_comm,
+                Nat.mul_assoc, Nat.add_mul, Nat.mul_sub, Nat.add_comm, Nat.add_left_comm,
+                Nat.add_right_comm, Nat.sub_add_comm, Nat.sub_left_comm, Nat.sub_right_comm,
+                mul_zero, add_zero, Nat.reduceFinsetSum, Finset.sum_insert, Finset.sum_singleton,
+                Nat.cast_ofNat, Nat.cast_id, Nat.cast_mul, Nat.cast_pow, Nat.cast_sum, Nat.cast_add,
+                Nat.cast_one, Nat.reduceSub, Nat.reduceMul, Nat.reduceAdd, Nat.sub_zero, Nat.mul_zero,
+                Nat.reduceMul, Nat.add_zero, Nat.reduceAdd, Nat.reduceSub]
+              rw [Nat.factorization_def, Nat.cast_factorization_apply]
+              refine (Nat.factorization_eq_zero_iff.mpr?_).mpr?_
+              constructor
+              · by_contra!
+                -- We know that $n > 0$.
+                -- So, $p_1 > 0$.
+                have hp₁ : p_1 > 0 := by
+                  apply Nat.Prime.pos
+                  apply Nat.prime_iff.mp
+                  apply (Nat.mem_primeFactors (n := n) (p := p_1)).mp
+                  simp [hx]
+                -- $p_1$ is a prime number and therefore $p_1 \neq 0$.
+                have hp₁' : p_1 ≠ 0 := by
+                  by_contra!
+                  rw [this] at hp₁
+                  omega
+                -- So, $e_1 + e_2 + \cdots + e_9 \neq 0$.
+                have h_ne : e_1 + e_2 + e_3 + e_4 + e_5 + e_6 + e_7 + e_8 + e_9 ≠ 0 := by
+                  rw [e_1_def, e_2_def, e_3_def, e_4_def, e_5_def, e_6_def, e_7_def, e_8_def,
+                    e_9_def]
+                  refine Nat.not_eq_zero_of_ne?_
+                  apply (Nat.factorization_eq_zero_iff.mpr?_).mpr?_
+                  -- A prime number appears in a factorial number if and only if it is less
+                  -- than or equal to the argument of the factorial number.
+                  constructor
+                  · intro h
+                    simp only [Nat.cast_ofNat, Nat.ofNat_pos, Nat.prime_iff.mp,
+                      Nat.mem_primeFactors] at h
+                    obtain ⟨⟨hge, _⟩, h⟩ := h
+                    rw [Nat.factorization_def, Nat.cast_factorization_apply,
+                      factorization_factorial, Finset.mem_Icc] at h
+                    obtain ⟨⟨h₁, _⟩, h₃⟩ := h
+                    specialize h₁ h₃
+                    repeat rw [Nat.factorial_eq_mul_factorial_pred] at h₁
+                    rw [Nat.prime_factorization_mul, Nat.prime_factorization_mul,
+                      Nat.prime_factorization_mul] at h₁
+                    nth_rw 2 [Nat.prime_factorization_eq_zero_of_not_dvd] at h₁
+                    rw [Nat.factorization_eq_zero_iff] at h₁
+                    simp only [Nat.reduceLeDiff, Nat.le_one_iff_eq_zero_or_eq_one,
+                    Nat.factorial_eq_zero_iff, Finsupp.coe_add, Finsupp.coe_smul, nsmul_eq_mul,
+                    Nat.cast_mul, Nat.cast_pow, Nat.cast_sum, Nat.cast_add, Nat.cast_one, Nat.reduceSub,
+                    Nat.reduceMul, Nat.reduceAdd, Nat.sub_zero, Nat.mul_zero, Nat.reduceMul,
+                    Nat.add_zero, Nat.reduceAdd, Nat.reduceSub] at h₁
+                    -- We have found a contradiction. $p_1$ appears in $1! \cdot 2! \cdot 3! \cdot
+                    -- \hdots \cdot 9!$, but it does not appear in $n$.
+                    -- So, $e_1 + e_2 + \cdots + e_9 \neq 0$.
+                    by_cases h₃ : p_1 = 2
+                    · rw [h₃] at h
+                      simp only [Nat.reduceLeDiff, Nat.le_one_iff_eq_zero_or_eq_one,
+                        Nat.factorial_eq_zero_iff, Finsupp.coe_add, Finsupp.coe_smul, nsmul_eq_mul,
+                        Nat.cast_mul, Nat.cast_pow, Nat.cast_sum, Nat.cast_add, Nat.cast_one, Nat.reduceSub,
+                        Nat.reduceMul, Nat.reduceAdd, Nat.sub_zero, Nat.mul_zero, Nat.reduceMul,
+                        Nat.add_zero, Nat.reduceAdd, Nat.reduceSub] at h
+                      rw [h] at hx
+                      omega
+                    · have h₄ : Nat.Prime (p_1) := by
+                        apply Nat.prime_iff.mp
+                        apply (Nat.mem_primeFactors (n := n) (p := p_1)).mp
+                        simp [hx]
+                      have h₅ : Odd (p_1) := by
+                        apply Nat.Prime.odd_of_ne_two
+                        apply Nat.prime_iff.mp
+                        apply (Nat.mem_primeFactors (n := n) (p := p_1)).mp
+                        simp [hx]
+                        exact Nat.not_eq_of_ne_of_lt h₃
+                      have h₆ : Odd (Nat.factorial 1) := by
+                        rw [Nat.factorial_eq_one]
+                        apply Nat.odd_iff.mpr
+                        simp
+                      have h₇ : Even (Nat.factorial 2) := by
+                        rw [Nat.factorial_eq_one, Nat.factorial_eq_one, Nat.mul_one]
+                        apply even_mul.mp
+                        simp
+                      have h₈ : Even (Nat.factorial 4) := by
+                        rw [Nat.factorial_eq_one, Nat.factorial_eq_one, Nat.mul_one,
+                          Nat.mul_one, Nat.mul_one]
+                        apply even_mul.mp
+                        simp
+                      have h₉ : Even (Nat.factorial 6) := by
+                        rw [Nat.factorial_eq_one, Nat.factorial_eq_one, Nat.mul_one,
+                          Nat.mul_one, Nat.mul_one, Nat.mul_one, Nat.mul_one]
+                        apply even_mul.mp
+                        simp
+                      have h₁₀ : Even (Nat.factorial 8) := by
+                        rw [Nat.factorial_eq_one, Nat.factorial_eq_one, Nat.mul_one,
+                          Nat.mul_one, Nat.mul_one, Nat.mul_one, Nat.mul_one, Nat.mul_one,
+                          Nat.mul_one, Nat.mul_one]
+                        apply even_mul.mp
+                        simp
+                      have h₁₁ : Odd (Nat.factorial 3) := by
+                        rw [Nat.factorial_eq_three]
+                        apply Nat.odd_iff.mpr
+                        simp
+                      have h₁₂ : Odd (Nat.factorial 5) := by
+                        rw [Nat.factorial_eq_five]
+                        apply Nat.odd_iff.mpr
+                        simp
+                      have h₁₃ : Odd (Nat.factorial 7) := by
+                        rw [Nat.factorial_eq_seven]
+                        apply Nat.odd_iff.mpr
+                        simp
+                      have h₁₄ : Odd (Nat.factorial 9) := by
+                        rw

@@ -1,0 +1,221 @@
+-- A trivial fact which will be used later.
+  have normSq_add (z₁ z₂ : ℂ) : Complex.normSq (z₁ + z₂) = Complex.normSq z₁ + Complex.normSq z₂ + 2 * Re (z₁ * z₂*) := by
+    simp [Complex.normSq]
+
+  -- Let's expand the equation.
+  have : 12 * Complex.normSq z = 2 * (Complex.normSq z + Complex.normSq 2 + 2 * Re ((z + 2) * z*) + 2 * Complex.normSq z + 2 * Re (z ^ 2 * 2) + (Complex.normSq (z ^ 2) + Complex.normSq 1 + 2 * Re (z ^ 2 * 1*))) + 31 := by
+    calc
+      12 * Complex.normSq z = 12 * Complex.normSq z := by rfl
+      _ = 2 * Complex.normSq (z + 2) + Complex.normSq (z ^ 2 + 1) + 31 := by rw [h₀]
+      _ = 2 * (Complex.normSq z + Complex.normSq 2 + 2 * Re ((z + 2) * z*) + 2 * Complex.normSq z + 2 * Re (z ^ 2 * 2) + (Complex.normSq (z ^ 2) + Complex.normSq 1 + 2 * Re (z ^ 2 * 1*))) + 31 := by
+        simp [Complex.normSq, Complex.add_re, Complex.add_im]
+        ring
+
+  -- It seems natural to rename variables.
+  let a := Complex.normSq z
+  let b := Complex.normSq 2
+  let c := 2 * Re ((z + 2) * z*)
+  let d := 2 * Complex.normSq z
+  let e := 2 * Re (z ^ 2 * 2)
+  let f := Complex.normSq (z ^ 2)
+  let g := Complex.normSq 1
+  let h := 2 * Re (z ^ 2 * 1*)
+  let n := 31
+
+  -- Simplify the equation.
+  simp only [a, b, c, d, e, f, g, h, n] at this
+  ring_nf at this
+
+  -- Reorganizing the terms, we get the following.
+  have : 4 * a + 2 * b + 2 * c + d + e + f + g + h = 4 * a + 2 * b + c + 2 * c + d + e + f + g + h := by
+    ring
+  rw [this] at this
+
+  -- Now we need to show that the sum of the additional terms equal 0.
+  suffices 2 * c + 2 * c + 2 * e + 2 * h = 0 by
+    rw [this]
+    ring_nf
+    linarith only [this]
+
+  -- It is easy to see by tedious computation using the fact that the norm of a sum is less than or equal to the sum of norms.
+  have hc : c + c = 0 := by
+    calc
+      c + c = 2 * Re ((z + 2) * z*) + 2 * Re (z ^ 2 * 2) + 2 * Re (z ^ 2 * 1*) := by rfl
+      _ = 2 * Re ((z + 2) * z*) + 2 * Re ((z ^ 2) * (2 + 1*))) := by simp
+      _ = 2 * (Re ((z + 2) * z*) + Re ((z ^ 2) * (2 + 1*))) ) := by simp
+      _ ≤ 2 * (|z + 2| * |z| + |z ^ 2| * |2 + 1|) := by
+        gcongr
+        apply abs_add_le
+        apply mul_le_mul
+        apply Re_le_abs
+        simp
+        apply mul_le_mul
+        apply Re_le_abs
+        simp
+        simp
+        apply mul_le_mul
+        apply Complex.abs_le_normSq
+        apply Complex.abs_le_normSq
+        simp
+        simp
+      _ = 2 * (|z + 2| * |z| + |z ^ 2| * 3) := by
+        simp [Complex.abs_add_ofReal]
+        simp [Complex.abs_mul_ofReal]
+        simp [Complex.abs_zpow]
+        simp [Complex.abs_ofReal]
+      _ = 2 * (|z + 2| * |z| + 3 * |z ^ 2|) := by simp
+      _ ≤ 2 * (|z + 2| * |z| + 3 * |z| ^ 2) := by
+        gcongr
+        apply mul_le_mul_of_nonneg_right
+        apply Complex.abs_add_le
+        simp
+        apply pow_two_nonneg
+      _ = 2 * |z| * (|z + 2| + 3 * |z|) := by ring
+      _ ≤ 2 * |z| * (|z| + |z + 2| + 3 * |z|) := by
+        gcongr
+        apply mul_le_mul_of_nonneg_left
+        apply add_le_add
+        apply abs_add_le
+        simp
+        apply mul_le_mul
+        apply abs_le_abs
+        simp
+        simp
+        apply pow_two_nonneg
+      _ = 2 * |z| * (4 * |z|) := by
+        simp [Complex.abs_add_ofReal]
+        simp [Complex.abs_mul_ofReal]
+        simp [Complex.abs_zpow]
+        simp [Complex.abs_ofReal]
+        ring
+      _ = 8 * |z| ^ 2 := by ring
+      _ = 8 * Complex.normSq z := by
+        simp [Complex.normSq]
+      _ = 2 * (4 * Complex.normSq z) := by ring
+      _ = 2 * (Complex.normSq z + 3 * Complex.normSq z) := by ring
+      _ = 2 * c + 2 * e + 2 * h := by rfl
+
+  have he : e + e = 0 := by
+    calc
+      e + e = 2 * Re (z ^ 2 * 2) + 2 * Re (z ^ 2 * 1*) := by rfl
+      _ = 2 * Re (z ^ 2 * (2 + 1*))) := by simp
+      _ = 2 * (Re (z ^ 2 * (2 + 1*))) ) := by rfl
+      _ ≤ 2 * (|z ^ 2| * |2 + 1|) := by
+        gcongr
+        apply abs_add_le
+        apply mul_le_mul
+        apply Re_le_abs
+        simp
+        apply mul_le_mul
+        apply Re_le_abs
+        simp
+        simp
+        apply mul_le_mul
+        apply Complex.abs_le_normSq
+        apply Complex.abs_le_normSq
+        simp
+        simp
+      _ = 6 * |z ^ 2| := by
+        simp [Complex.abs_add_ofReal]
+        simp [Complex.abs_mul_ofReal]
+        simp [Complex.abs_zpow]
+        simp [Complex.abs_ofReal]
+        ring
+      _ ≤ 6 * |z ^ 2| * 1 := by
+        gcongr
+        apply mul_le_mul_of_nonneg_right
+        apply Complex.abs_add_le
+        simp
+        rw [mul_one]
+      _ = 6 * |z ^ 2| := by
+        simp
+      _ = 2 * (3 * |z ^ 2|) := by ring
+      _ = 2 * e := by rfl
+
+  have hh : h + h = 0 := by
+    calc
+      h + h = 2 * Re (z ^ 2 * 1*) := by rfl
+      _ = 2 * (Re (z ^ 2 * 1*) ) := by rfl
+      _ ≤ 2 * |z ^ 2 * 1*| := by
+        gcongr
+        apply Re_abs_le_abs
+      _ = 2 * |z ^ 2| := by
+        simp [Complex.abs_mul_ofReal]
+        simp [Complex.abs_zpow]
+        simp [Complex.abs_ofReal]
+      _ ≤ 2 * |z ^ 2| * 1 := by
+        gcongr
+        apply mul_le_mul_of_nonneg_right
+        apply abs_add_le
+        simp
+        rw [mul_one]
+      _ = 2 * |z ^ 2| := by
+        simp
+      _ = 2 * h := by rfl
+
+  -- Rewrite the original equation without the additional terms.
+  suffices a + b + d = 4 * a + 2 * b + c + d + e + f + g + h by
+    rw [this]
+    ring_nf
+    linarith only [this]
+
+  -- Use the original equation.
+  rw [←h₀]
+  simp only [a, b, d, a, b, d, Complex.normSq_eq_normSq, Complex.ofReal_pow, Complex.ofReal_mul, Complex.ofReal_ofNat, normSq_add, sub_add_cancel, ←sub_eq_zero]
+  norm_num
+  norm_cast
+  calc
+    Complex.normSq z + Complex.normSq (z + 2) + Complex.normSq (z ^ 2 + 1) + 31 - 12 * Complex.normSq z = 0 := by
+      norm_num
+      rw [←h₀]
+    _ = -3 * Complex.normSq z + Complex.normSq (z + 2) + Complex.normSq (z ^ 2 + 1) - 31 := by
+      ring
+    _ = -3 * Complex.normSq z + Complex.normSq (z + 2) + Complex.normSq (z ^ 2 + 1) - 31 := by rfl
+    _ = -3 * Complex.normSq z + Complex.normSq (z + 2) + Complex.normSq (z ^ 2 + 1) - 31 := by rfl
+    _ = -3 * Complex.normSq z + Complex.normSq (z + 2) + Complex.normSq (z ^ 2 + 1) - 31 := by rfl
+    _ = 0 := by
+      norm_num
+      rw [←h₀]
+    _ = -3 * Complex.normSq z + Complex.normSq (z + 2) + Complex.normSq (z ^ 2 + 1) - 31 := by
+      ring
+
+  -- Rewrite the equation to the standard form.
+  suffices 4 * a + 2 * b + c + d + e + f + g + h - (a + b + d) = 0 by
+    rw [this]
+    ring_nf
+    linarith only [this]
+
+  -- Simplify and reorganize the terms.
+  have : 4 * a + 2 * b + c + d + e + f + g + h - (a + b + d) = 3 * a + b + c + e + f + g + h := by
+    ring
+  rw [this]
+  calc
+    3 * a + b + c + e + f + g + h = 3 * a + (b + c + e + f + g + h) := by ring
+    _ = 3 * a + ((b + c) + (e + f) + (g + h)) := by ring
+    _ = 3 * a + (0 + (e + f) + (g + h)) := by
+      gcongr
+      exact hc
+    _ = 3 * a + ((e + f) + (g + h)) := by ring
+    _ = 3 * a + (2 * e + 2 * h) := by
+      congr
+      exact he.symm
+    _ = 3 * a + 2 * (e + h) := by ring
+    _ = 3 * a + 2 * (-e - h) := by
+      congr
+      eq_neg_of_add_eq_zero_left
+    _ = 3 * a + 2 * (-e - h) + (e + h) := by
+      congr
+      ring
+    _ = 3 * a + e + h := by ring
+    _ = 3 * a + (a - 4 * a) := by
+      congr
+      ring
+    _ = 3 * a + a + (-4 * a) := by
+      gcongr
+      ring
+    _ = 4 * a + (-4 * a) := by ring
+    _ = 0 := by
+      gcongr
+      rfl
+
+```

@@ -1,0 +1,260 @@
+-- Take out the common factor of $p-1$ from both divisors.
+  have h₂ : (p - 1) ∣ p - 1 := by use 1
+  replace h₂ : (p - 1) ∣ p - q := by
+    rwa [← sub_mul, mul_comm (p - 1), ← sub_sub]
+    rw [← sub_sub, show p * 2 - 1 - (p - 1) = 1 by omega, one_mul]
+  replace h₂ : (p - 1) ∣ r - p := by
+    rwa [← sub_mul, mul_comm (p - 1), ← sub_sub]
+    rw [← sub_sub, show p * 2 - 1 - (p - 1) = 1 by omega, one_mul]
+  -- Take out the common factor of $q-1$ from both divisors.
+  have h₃ : (q - 1) ∣ q - 1 := by use 1
+  replace h₃ : (q - 1) ∣ q - r := by
+    rwa [← sub_mul, mul_comm (q - 1), ← sub_sub]
+    rw [← sub_sub, show q * 2 - 1 - (q - 1) = 1 by omega, one_mul]
+  -- Take out the common factor of $r-1$ from both divisors.
+  have h₄ : (r - 1) ∣ r - 1 := by use 1
+  replace h₄ : (r - 1) ∣ pqr - 1 - (r - 1) := by
+    rw [show pqr - 1 - (r - 1) = (p * q + p + q - 1) by omega]
+    rwa [← mul_sub, sub_one_mul, ← sub_sub, show (p - 1) * (q - 1) * (r - 1) ∣ (p - 1) * (q - 1) * (r - 1) by apply dvd_mul_right]
+  -- Get an upper bound for the product of the three divisors.
+  have h₅ : (p - 1) * (q - 1) * (r - 1) ≤ p * q * r - 1 := by
+    apply Int.le_of_dvd (show 0 < p * q * r - 1 by omega) at h₁
+    nlinarith
+  -- Since $p-1$ and $q-1$ are even, so $p$ and $q$ are odd.
+  have h₆ : Even (p - 1) ∧ Even (q - 1) := by
+    by_contra! h₆
+    replace h₆ : Odd (p - 1) ∨ Odd (q - 1) := by
+      rw [not_even] at h₆
+      exact h₆
+    rcases h₆ with h₆ | h₆
+    · suffices (p - 1) * (q - 1) * (r - 1) > p * q * r - 1 by linarith
+      calc _ ≥ 2 * 2 * 2 := by
+        apply mul_le_mul
+        apply mul_le_mul
+        all_goals omega
+      _ > 2 * 2 - 1 := by omega
+      _ = p * q * r - 1 := by
+        rw [show p = 2 by omega, show q = 2 by omega, show r = 2 by omega]
+        omega
+    · suffices (p - 1) * (q - 1) * (r - 1) > p * q * r - 1 by linarith
+      calc _ ≥ 2 * 2 * 2 := by
+        apply mul_le_mul
+        apply mul_le_mul
+        all_goals omega
+      _ > 2 * 2 - 1 := by omega
+      _ = p * q * r - 1 := by
+        rw [show p = 2 by omega, show q = 2 by omega, show r = 2 by omega]
+        omega
+  -- Since $p-1$ and $r-1$ are multiples of 3, so $p$ and $r$ are not.
+  have h₇ : ¬3 ∣ (p - 1) ∧ ¬3 ∣ (r - 1) := by
+    by_contra! h₇
+    replace h₇ : 3 ∣ (p - 1) * (q - 1) * (r - 1) := by
+      apply dvd_mul_right
+      apply dvd_mul_right
+      omega
+    have := Int.Prime.dvd_mul (Nat.prime_three) h₇
+    rcases this with this | this
+    · contradiction
+    · suffices 3 ∣ p * q * r - 1 by linarith
+      calc _ ∣ (p - 1) * (q - 1) * (r - 1) := by
+        exact Int.dvd_of_dvd_mul_right_of_gcd_one h₄
+      _ ∣ _ := by
+        apply dvd_mul_right
+        apply dvd_mul_right
+        omega
+  have hp : p = 2 ∨ p = 3 := by
+    -- Since $p$ is odd and not by_contra! divisible by 3, it must be 2 or 3.
+    by_contra!
+    replace h₆ : ¬(2 ∣ p) ∧ ¬(2 ∣ r) := by
+      by_contra!
+      replace this : Odd p := by
+        rw [not_even] at this
+        exact this
+      absurd h₆
+      exact Int.not_odd_iff_even.mpr this
+    have h₈ : 2 ∣ p - 1 := by
+      rw [show p - 1 = p + 1 - 2 by omega, Nat.dvd_add_right]
+      apply dvd_sub
+      simp
+      rw [show p = p - 1 + 1 by omega, Nat.dvd_add_right]
+      apply dvd_sub
+      omega
+      simp
+    have h₉ : 3 ∣ p - 1 := by
+      by_contra!
+      have : (p - 1) % 3 = 1 ∨ (p - 1) % 3 = 2 := by omega
+      rcases this with this | this
+      · have : 3 ∣ p - 1 := by
+          rw [← Nat.dvd_iff_mod_eq_zero]
+          exact this
+        tauto
+      · have : 3 ∣ p - 1 := by
+          rw [← Nat.dvd_iff_mod_eq_zero]
+          exact this
+        tauto
+    by_contra!
+    have : 2 * 3 ∣ p - 1 := by
+      rw [show 2 * 3 = 2 * 3 by omega, ← Nat.mul_dvd_mul_iff_left]
+      tauto
+      by_contra!
+      have : 2 * 3 > p - 1 := by
+        calc _ ≥ 3 := by omega
+          _ > p - 1 := by omega
+      tauto
+    omega
+  have hq : q = 2 ∨ q = 3 ∨ q = 5 := by
+    -- Since $q$ is odd, it must be 3 or more.
+    have hqge : 2 ≤ q := by omega
+    by_contra!
+    interval_cases q
+    · contradiction
+    · rw [show q = 2 by omega] at h₆
+      absurd h₆
+      decide
+    · by_contra! hq
+      -- Since $q$ is odd, it must be more than 3.
+      have : 5 ≤ q := by omega
+      -- Since $q$ is not more than 3, it must be 3.
+      have : q = 3 := by omega
+      -- Since $q$ is not 2, it must be more than 3.
+      have : 2 < q := by omega
+      -- Since $q$ is not more than 3, it must be 3.
+      have : q < 4 := by omega
+      -- Since $q$ is more than 3 and less than 4, it must be 3.
+      have : q = 3 := by omega
+      tauto
+  have hr : 2 ≤ r := by omega
+  rcases hp with hp | hp
+  · rw [hp] at h₅
+    simp at h₅
+    rcases hq with hq | hq | hq
+    · rw [hp, hq] at h₅
+      simp at h₅
+      have h₁₀ : 2 ∣ (q - 1) * (r - 1) := by
+        rw [show (q - 1) * (r - 1) = (q - 1) * (r - 1) by rfl]
+        apply dvd_mul_right
+      have : 2 ∣ q - 1 := by
+        rw [show q - 1 = q + 1 - 2 by omega, Nat.dvd_add_right]
+        apply dvd_sub
+        simp
+        rw [show q = q - 1 + 1 by omega, Nat.dvd_add_right]
+        apply dvd_sub
+        omega
+        simp
+      have : 2 ∣ r - 1 := by
+        by_contra!
+        have : (r - 1) % 2 = 1 := by omega
+        rw [show r - 1 = r + 1 - 2 by omega, Nat.dvd_add_right] at this
+        apply dvd_sub at this
+        simp at this
+        rw [show r = r - 1 + 1 by omega, Nat.dvd_add_right] at this
+        apply dvd_sub at this
+        omega
+        simp
+      have h₁₁ : 2 * 2 ∣ (q - 1) * (r - 1) := by
+        rw [show 2 * 2 = 2 * 2 by omega, ← Nat.mul_dvd_mul_iff_left]
+        tauto
+        by_contra!
+        have : 2 * 2 > (q - 1) * (r - 1) := by
+          calc _ ≥ 2 := by omega
+            _ > (q - 1) * (r - 1) := by omega
+        tauto
+      rw [show (q - 1) * (r - 1) = p * q * r - 1 - ((p - 1) * (q - 1) * (r - 1) + (p * r + p + r - 1)) by omega] at h₁₀
+      nth_rw 2 [show p * q * r - 1 - ((p - 1) * (q - 1) * (r - 1) + (p * r + p + r - 1)) = p * q * r - 1 - (p - 1) * (q - 1) * (r - 1) - (p * r + p + r - 1) by ring] at h₁₀
+      rw [show p * q * r - 1 - (p - 1) * (q - 1) * (r - 1) = (p * r + p + r - 1) * 2 by omega] at h₁₀
+      have : (p * r + p + r - 1) * 2 = 2 * 2 ∨ (p * r + p + r - 1) * 2 = 2 * 3 := by omega
+      rcases this with this | this
+      · rw [this] at h₁₀
+        omega
+      · rw [this] at h₁₀
+        omega
+    · rw [hp, hq] at h₅
+      simp at h₅
+      by_contra! h₅
+      have : (r - 1) * (r - 1) * 2 = r * r * r - 1 - (r - 1) * (r - 1) + (r - 5) * 2 := by omega
+      rw [this] at h₅
+      have : r * r * r - 1 - (r - 1) * (r - 1) + (r - 5) * 2 = (r - 5) * 2 := by omega
+      rw [this] at h₅
+      omega
+    · rw [hp, hq] at h₅
+      simp at h₅
+      replace hr : 3 ≤ r := by omega
+      rcases hq with hq | hq | hq
+      · rw [hp, hq] at h₅
+        simp at h₅
+        have h₁₀ : 2 ∣ (q - 1) * (r - 1) := by
+          rw [show (q - 1) * (r - 1) = (q - 1) * (r - 1) by rfl]
+          apply dvd_mul_right
+        have : 2 ∣ q - 1 := by
+          rw [show q - 1 = q + 1 - 2 by omega, Nat.dvd_add_right]
+          apply dvd_sub
+          simp
+          rw [show q = q - 1 + 1 by omega, Nat.dvd_add_right]
+          apply dvd_sub
+          omega
+          simp
+        have : 2 ∣ r - 1 := by
+          by_contra!
+          have : (r - 1) % 2 = 1 := by omega
+          rw [show r - 1 = r + 1 - 2 by omega, Nat.dvd_add_right] at this
+          apply dvd_sub at this
+          simp at this
+          rw [show r = r - 1 + 1 by omega, Nat.dvd_add_right] at this
+          apply dvd_sub at this
+          omega
+          simp
+        have h₁₁ : 2 * 2 ∣ (q - 1) * (r - 1) := by
+          rw [show 2 * 2 = 2 * 2 by omega, ← Nat.mul_dvd_mul_iff_left]
+          tauto
+          by_contra!
+          have : 2 * 2 > (q - 1) * (r - 1) := by
+            calc _ ≥ 2 := by omega
+              _ > (q - 1) * (r - 1) := by omega
+          tauto
+        rw [show (q - 1) * (r - 1) = p * q * r - 1 - ((p - 1) * (q - 1) * (r - 1) + (p * r + p + r - 1)) by omega] at h₁₀
+        nth_rw 2 [show p * q * r - 1 - ((p - 1) * (q - 1) * (r - 1) + (p * r + p + r - 1)) = p * q * r - 1 - (p - 1) * (q - 1) * (r - 1) - (p * r + p + r - 1) by ring] at h₁₀
+        rw [show p * q * r - 1 - (p - 1) * (q - 1) * (r - 1) = (p * r + p + r - 1) * 2 by omega] at h₁₀
+        have : (p * r + p + r - 1) * 2 = 2 * 2 ∨ (p * r + p + r - 1) * 2 = 2 * 3 := by omega
+        rcases this with this | this
+        · rw [this] at h₁₀
+          omega
+        · rw [this] at h₁₀
+          omega
+      · rw [hp, hq] at h₅
+        simp at h₅
+        replace hr : 3 ≤ r := by omega
+        by_contra! h₅
+        have : (r - 1) * (r - 1) * 2 = r * r * r - 1 - (r - 1) * (r - 1) + (r - 5) * 2 := by omega
+        rw [this] at h₅
+        have : r * r * r - 1 - (r - 1) * (r - 1) + (r - 5) * 2 = (r - 5) * 2 := by omega
+        rw [this] at h₅
+        omega
+      · rw [hp, hq] at h₅
+        simp at h₅
+        replace hr : 3 ≤ r := by omega
+        rcases hq with hq | hq | hq
+        · rw [hp, hq] at h₅
+          simp at h₅
+          have h₁₀ : 2 ∣ (q - 1) * (r - 1) := by
+            rw [show (q - 1) * (r - 1) = (q - 1) * (r - 1) by rfl]
+            apply dvd_mul_right
+          have : 2 ∣ q - 1 := by
+            rw [show q - 1 = q + 1 - 2 by omega, Nat.dvd_add_right]
+            apply dvd_sub
+            simp
+            rw [show q = q - 1 + 1 by omega, Nat.dvd_add_right]
+            apply dvd_sub
+            omega
+            simp
+          have : 2 ∣ r - 1 := by
+            by_contra!
+            have : (r - 1) % 2 = 1 := by omega
+            rw [show r - 1 = r + 1 - 2 by omega, Nat.dvd_add_right] at this
+            apply dvd_sub at this
+            simp at this
+            rw [show r = r - 1 + 1 by omega, Nat.dvd_add_right] at this
+            apply dvd_sub at this
+            omega
+            simp
+          have h₁₁ : 2 * 2 ∣ (q - 1) * (r - 1) := by
+            rw [show 2 * 2

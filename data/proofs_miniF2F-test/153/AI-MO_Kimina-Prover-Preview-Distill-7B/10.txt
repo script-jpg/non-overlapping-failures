@@ -1,0 +1,72 @@
+-- We first change the expression to a more convenient form.
+  suffices h :∀ t : ℝ, ((2:ℝ)^t-3*t)*t*(4^t)⁻¹ ≤ 1/12
+  · intro t
+    calc ((2:ℝ)^t-3*t)*t/4^t
+      _ = ((2:ℝ)^t-3*t)*t*(4^t)⁻¹ := by field_simp
+      _ ≤ 1/12 := h t
+
+  -- We use the AM-GM inequality.
+  intro t
+  have h1 := Real.geom_mean_le_arith_mean2_weighted (by norm_num) (by norm_num) (by norm_num) (by
+    -- The last term is positive, so the inequality still holds.
+    linarith [show (3:ℝ) * t * t ≤ (2:ℝ) ^ t * 4 ^ t from by
+      have : 0 < (2:ℝ) := by norm_num
+      have : 0 < (4:ℝ) := by norm_num
+      exact (mul_le_mul_iff_of_pos_left this).mpr (by linarith [show (2:ℝ) ^ t * 3 * t * t ≤ (4:ℝ) ^ t by rw [show (4:ℝ) ^ t = (2:ℝ) ^ (2 * t) by ring_nf]; apply Real.rpow_le_rpow_of_exponent_le (by norm_num) (by linarith)]))]
+    )
+  -- Plug in $a = \frac{2^t}{2}$, $b = \frac{2^t}{2}$, $c = \frac{2^t}{4}$, $x = 2$,
+  -- $y = 3$ and $z = 3$.
+  have h2 : 1/12 = (√((2:ℝ)^t/2)*√((2:ℝ)^t/2)*√((2:ℝ)^t/4))^(1:ℝ)/2 := by
+    rw [Real.mul_rpow, Real.mul_rpow, Real.rpow_mul, Real.rpow_natCast,
+    Real.rpow_mul, Real.rpow_natCast, Real.rpow_mul, Real.rpow_natCast]
+    norm_num
+    ring_nf
+    rw [mul_assoc, pow_two, sqrt_mul, sqrt_mul, sqrt_mul, sqrt_mul, sqrt_sq, sqrt_sq, sqrt_sq, sqrt_sq]
+    norm_num
+    rw [show √2*√2*√2*√2 = 2^(1:ℝ)/2^(1:ℝ)/2^(1:ℝ)/2^(1:ℝ) by norm_num, ← Real.rpow_add]
+    norm_num
+    norm_num
+    refine (Real.rpow_le_rpow_iff?_?_).mpr?_
+    norm_num
+    norm_num
+    norm_num
+    refine Real.rpow_pos_of_pos (by norm_num)
+    norm_num
+    norm_num
+    norm_num
+    rw [show (4:ℝ) = 2^2 by norm_num, pow_mul]
+    rw [← Real.rpow_mul]
+    norm_num
+    norm_num
+  rw [h2]
+  specialize h1 ((2:ℝ) ^ t / 2) ((2:ℝ) ^ t / 2) ((2:ℝ) ^ t / 4) (by norm_num) (by linarith) (by linarith)
+  rw [show ((2:ℝ) ^ t / 2) * ((2:ℝ) ^ t / 2) * ((2:ℝ) ^ t / 4) = ((2:ℝ) ^ t / 2)^(1:ℝ) * ((2:ℝ) ^ t / 2)^(1:ℝ) * ((2:ℝ) ^ t / 4)^(1:ℝ) by simp] at h1
+  rw [Real.finset_prod_rpow] at h1
+  have : ((2:ℝ) ^ t / 2) ^ (2:ℝ) = (2:ℝ) ^ t / 4 := by
+    rw [← Real.rpow_natCast, ← Real.rpow_add]
+    norm_num
+    rw [Real.rpow_mul]
+    norm_num
+    norm_num
+    exact (Real.rpow_pos_of_pos (by norm_num)).mpr (by norm_num)
+  rw [this] at h1
+  have : ((2:ℝ) ^ t / 4) ^ (3:ℝ) = (2:ℝ) ^ t / 64 := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul]
+    norm_num
+    norm_num
+    exact (Real.rpow_pos_of_pos (by norm_num)).mpr (by norm_num)
+  rw [this] at h1
+  have : ((2:ℝ) ^ t / 2) ^ (1:ℝ) * ((2:ℝ) ^ t / 2) ^ (1:ℝ) * ((2:ℝ) ^ t / 4) ^ (3:ℝ) = ((2:ℝ) ^ t / 2) * ((2:ℝ) ^ t / 2) * ((2:ℝ) ^ t / 64) := by simp
+  rw [this]
+  ring_nf
+  calc (√((2:ℝ) ^ t / 4) ^ (2:ℝ))^(1:ℝ) / 2
+    _ = ((2:ℝ) ^ t / 4)^(1:ℝ)/2 := by rw [← Real.rpow_natCast, Real.rpow_mul]; norm_num
+    _ = ((2:ℝ) ^ t / 4)/2 := by rw [← Real.rpow_natCast]; norm_num
+    _ = (2:ℝ) ^ t / 8 / 2 := by ring_nf
+    _ = (2:ℝ) ^ t / 16 / 2 := by ring_nf
+    _ = (2:ℝ) ^ t / 32 / 2 := by ring_nf
+    _ = (2:ℝ) ^ t / 64 := by ring_nf
+  norm_num
+  exact h1
+
+```

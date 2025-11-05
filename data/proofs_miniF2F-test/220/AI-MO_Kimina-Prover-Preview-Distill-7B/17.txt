@@ -1,0 +1,89 @@
+-- We turn the hypotheses into equations in $\sin x$ and $\cos x$
+  have h₂ : Real.cos x ≠ 0 := by
+    intro h
+    rw [Real.tan_eq_sin_div_cos, h] at h₀
+    norm_num at h₀
+  have h₃ : Real.sin x ≠ 0 := by
+    intro h
+    rw [Real.tan_eq_sin_div_cos, h] at h₀
+    norm_num at h₀
+  have h₄ : Real.cos x > 0 := by
+    by_contra h
+    have : 1 / Real.cos x ≤ 0 := by positivity
+    have : Real.tan x < 0 := by linarith
+    have : 1 / Real.cos x + Real.tan x < 0 := by linarith
+    linarith
+  have h₅ : 0 < Real.sin x := by
+    by_contra h
+    have : Real.sin x ≤ 0 := by linarith
+    have : 1 / Real.sin x ≤ 0 := by positivity
+    have : 1 / Real.tan x ≤ 0 := by
+      rw [Real.tan_eq_sin_div_cos, Real.div_le_iff₀, (by linarith : 0 < Real.cos x)]
+      positivity
+    linarith
+
+  -- We turn the hypotheses into equations in $\sin x$ and $\cos x$
+  have h₆ : 1 / Real.cos x + Real.tan x = 1 / Real.cos x + Real.sin x / Real.cos x := by
+    rw [Real.tan_eq_sin_div_cos]
+  have h₇ : 1 / Real.sin x + 1 / Real.tan x = 1 / Real.sin x + Real.cos x / Real.sin x := by
+    rw [Real.tan_eq_sin_div_cos, Real.div_div]
+    congr
+    · ring
+    · ring
+  have h₈ : m = 1 / Real.sin x + Real.cos x / Real.sin x := by rw [←h₇, h₁]
+  have h₉ : 1 / Real.cos x + Real.sin x / Real.cos x = (1 + Real.sin x) / Real.cos x := by ring
+  have h₁₀ : 1 / Real.sin x + Real.cos x / Real.sin x = (1 + Real.cos x) / Real.sin x := by ring
+
+  -- We turn the goal into a equation in $\sin x$ and $\cos x$
+  rw [h₆, h₈, h₉, h₁₀] at h₁
+  rw [eq_div_iff (by linarith : 0 < Real.sin x)] at h₁
+  rw [eq_div_iff (by linarith : 0 < Real.cos x)] at h₁
+  norm_cast at h₁
+  norm_cast
+  have h₁₁ : (1 + Real.sin x) * Real.sin x = (1 + Real.cos x) * Real.cos x := by linarith
+  have h₁₂ : Real.sin x ^ 2 + Real.sin x - Real.cos x ^ 2 - Real.cos x = 0 := by linarith
+  have h₁₃ : (Real.sin x - Real.cos x) * (Real.sin x + Real.cos x - 1) = 0 := by rw [←h₁₂]; ring
+
+  -- Either $\sin x=\cos x$ or $\sin x+\cos x=1$
+  cases' (mul_eq_zero.mp h₁₃) with h₁₄ h₁₅
+  · -- If $\sin x=\cos x$, then $\sin x=\cos x=\frac{\sqrt{2}}{2}$, which is a contradiction
+    have h₁₆ : Real.sin x = Real.cos x := by linarith
+    have h₁₇ : Real.sin x ^ 2 + Real.cos x ^ 2 = 1 := Real.sin_sq_add_cos_sq x
+    have h₁₈ : Real.sin x ^ 2 + Real.cos x ^ 2 = 2 * Real.sin x ^ 2 := by rw [h₁₆]; ring
+    have h₁₉ : 2 * Real.sin x ^ 2 = 1 := by trans (Real.sin_sq_add_cos_sq x); assumption
+    have h₂₀ : (Real.sin x - 1 / √2) * (Real.sin x + 1 / √2) = 0 := by
+      ring_nf
+      field_simp
+      linarith
+    cases' (mul_eq_zero.mp h₂₀) with h₂₁ h₂₂
+    · -- If $\sin x=\frac{\sqrt{2}}{2}$, then $\cos x=\frac{\sqrt{2}}{2}$, which is a contradiction
+      have h₂₃ : Real.sin x = 1 / √2 := by linarith
+      have h₂₄ : Real.cos x = 1 / √2 := by linarith
+      have h₂₅ : Real.sin x ^ 2 + Real.cos x ^ 2 = 3 / 2 := by
+        rw [h₂₃, h₂₄, Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
+        norm_num
+      linarith
+    · -- If $\sin x=-\frac{\sqrt{2}}{2}$, then $\sin x < 0$, which is a contradiction
+      have h₂₃ : Real.sin x = - 1 / √2 := by linarith
+      have h₂₄ : Real.sin x < 0 := by
+        rw [h₂₃]
+        apply div_neg_of_neg_of_pos (by norm_num) (by norm_num)
+      linarith
+  · -- If $\sin x+\cos x=1$, then $\sin x=1$ or $\cos x=1$
+    have h₁₇ : Real.sin x + Real.cos x = 1 := by linarith
+    have h₁₈ : Real.sin x = 1 ∨ Real.cos x = 1 := by
+      by_contra h
+      have : Real.sin x < 1 := by
+        apply lt_of_le_of_ne (Real.sin_le_one x) h.1
+      have : Real.cos x < 1 := by
+        apply lt_of_le_of_ne (Real.cos_le_one x) h.2
+      have : Real.sin x + Real.cos x < 1 + 1 := by linarith
+      linarith
+    cases' h₁₈ with h₁₈ h₁₈
+    · -- If $\sin x=1$, then $\cos x=0$, which is a contradiction
+      have h₁₉ : Real.cos x = 0 := by linarith
+      linarith
+    · -- If $\cos x=1$, then $\sin x=0$, which is a contradiction
+      have h₁₉ : Real.sin x = 0 := by linarith
+      linarith
+```

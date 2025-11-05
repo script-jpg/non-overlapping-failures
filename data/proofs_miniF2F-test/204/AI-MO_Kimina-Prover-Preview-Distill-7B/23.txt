@@ -1,0 +1,83 @@
+-- We can obtain the following fact from Mathlib.
+  have h₁ : 3 * Real.pi > 9 := by
+    calc
+      3 * Real.pi > 3 * 3.1415 > 9 := by
+        apply mul_lt_mul_of_pos_left
+        norm_num
+        apply Real.pi_lt_315
+
+  -- We can obtain the following fact from Mathlib.
+  have h₂ : 3 * Real.pi < 10 := by
+    calc
+      3 * Real.pi < 3 * 3.1416  := by
+        apply mul_lt_mul_of_pos_left
+        norm_num
+        apply Real.pi_lt_31416
+      _ < 10 := by norm_num
+
+  -- Because $3\pi$ is less than 10, we have $|x| < 3\pi$ implies $|x| < 10$.
+  have h₃ {x : ℤ} : ↑(abs x) < 3 * Real.pi → abs x < 10 := by
+    intro h
+    linarith only [h₂, h]
+
+  -- Because $3\pi$ is greater than 9, we have $|x| < 3\pi$ implies $|x| \leq 9$.
+  have h₄ {x : ℤ} : ↑(abs x) < 3 * Real.pi → abs x ≤ 9 := by
+    intro h
+    linarith only [h₁, h]
+
+  -- Because $3\pi$ is greater than 9, we have $|x| < 3\pi$ implies $|x| < 10$.
+  have h₅ {x : ℤ} : ↑(abs x) < 3 * Real.pi → abs x < 10 := by
+    intro h
+    linarith only [h₁, h]
+
+  -- So we have $|x| < 3\pi$ implies $|x| \leq 9$.
+  have h₆ {x : ℤ} : ↑(abs x) < 3 * Real.pi → abs x ≤ 9 := by
+    intro h
+    linarith only [h₁, h]
+
+  -- So we have $|x| \leq 9$ implies $|x| < 3\pi$.
+  have h₇ {x : ℤ} : abs x ≤ 9 → ↑(abs x) < 3 * Real.pi := by
+    intro h
+    linarith only [h₃ h]
+
+  -- So the set of all integers $x$ such that $|x| \leq 9$ is a subset of the set of all integers $x$ such that $|x| < 3\pi$.
+  have h₈ : S superset (Finset.filter (abs ≤ 9) (Finset.Icc (-9) 9)) := by
+    simp [Finset.Icc, Finset.filter, Finset.supset_iff]
+    intro x hx₁ hx₂ hx₃
+    simp [abs_le] at hx₂
+    have := h₇ hx₂
+    rw [← hx₁] at this
+    exact this
+
+  -- So the set of all integers $x$ such that $|x| \leq 9$ is equal to the set of all integers $x$ such that $|x| < 3\pi$.
+  have h₉ : S = (Finset.filter (abs ≤ 9) (Finset.Icc (-9) 9)) := by
+    ext x
+    simp
+    have h₁₀ : (↑(abs x) < 3 * Real.pi ↔ abs x ≤ 9) := by
+      constructor
+      · exact h₄
+      · exact h₃
+    rw [h₁₀, Finset.mem_filter, Finset.mem_Icc, h₀]
+    intro hx
+    exact hx
+
+  -- So the cardinality of the set of all integers $x$ such that $|x| < 3\pi$ is equal to the cardinality of the set of all integers $x$ such that $|x| \leq 9$.
+  rw [h₉, Finset.card_filter, Finset.card_filter]
+  simp
+
+  -- The set of all integers $x$ such that $|x| \leq 9$ is equal to the set $\{-9, -8, \dots, 8, 9\}$.
+  have h₁₁ : Finset.filter (abs ≤ 9) (Finset.Icc (-9) 9) = (Finset.Icc (-9) 9).filter (abs ≤ 9) := by
+    simp
+
+  rw [h₁₁]
+
+  -- We can enumerate the set of all integers $x$ such that $|x| \leq 9$.
+  have h₁₂ :
+      (Finset.Icc (-9) 9).filter (abs ≤ 9) = {-9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9} := by
+    repeat rw [Finset.filter_insert, Finset.filter_singleton, Finset.filter_empty]
+    simp
+    rfl
+
+  rw [h₁₂]
+  simp
+```

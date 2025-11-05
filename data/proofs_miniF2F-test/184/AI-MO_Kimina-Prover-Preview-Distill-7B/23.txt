@@ -1,0 +1,130 @@
+have A (n : ℕ) : (3 ^ 2 ^ n - 1) % 2 ^ (n + 2) = 2 ^ n * 2 := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [pow_add]
+      rw [Nat.add_one_sub_one]
+      rw [pow_succ]
+      rw [mul_comm, Nat.mul_sub, Nat.pow_le_pow_iff_right]
+      norm_num
+      rw [ih]
+      norm_num
+
+      -- ($2^n\cdot 2$) / ($2^{n+1}$) = 2, mod ($2^{n+1}$) = ($2^n\cdot 2$) - ($2^n\cdot 2$) / ($2^{n+1}$) * ($2^{n+1}$) = ($2^n\cdot 2$) - ($2^n\cdot 2$) / ($2^{n+1}$) * ($2^{n+1}$) = 0
+      have eq_aux : (2 ^ n * 2) % (2 ^ (n + 1)) = 0 := by
+        rw [Nat.mod_eq_zero_iff_dvd]
+        rw [(Nat.pow_dvd_pow_iff_le _).mpr]
+        simp
+        linarith
+      rw [eq_aux]
+
+      -- 2 ^ (n + 1) + (2 ^ n * 2) = 2(2 ^ n) + (2 ^ n * 2) = 2 ^ n(2 + 2) = 2 ^ n * 4 = 2 ^ (n + 2)
+      have eq_aux : 2 ^ (n + 1) + (2 ^ n * 2) = 2 ^ (n + 2) := by
+        rw [(by ring : 2 ^ (n + 1) = 2 ^ n * 2)]
+        rw [← mul_add]
+        ring
+        rw [(by ring : 2 ^ n * 2 = 2 ^ n * 2)]
+        have eq_aux : 2 ^ n * 2 + 2 ^ n * 2 = 2 ^ n * 4 := by
+          rw [(by ring : 2 ^ n * 2 + 2 ^ n * 2 = 2 ^ n * (2 + 2))]
+          rw [mul_comm]
+          have eq_aux : 2 ^ n * 2 = 2 ^ n * 2 := by rfl
+          rw [eq_aux]
+        rw [eq_aux]
+        have eq_aux : 2 ^ n * 4 = 2 ^ (n + 2) := by
+          rw [(by ring : 2 ^ (n + 2) = 2 ^ n * 4)]
+        rw [eq_aux]
+      rw [eq_aux]
+
+      -- 2 ^ (n + 1) + (2 ^ n * 2) = 2 ^ (n + 2)
+      have eq_aux : 2 ^ (n + 1) + (2 ^ n * 2) = 2 ^ (n + 2) := by
+        rw [(by ring : 2 ^ (n + 1) = 2 ^ n * 2)]
+        rw [← mul_add]
+        ring
+        rw [(by ring : 2 ^ n * 2 = 2 ^ n * 2)]
+        have eq_aux : 2 ^ n * 2 + 2 ^ n * 2 = 2 ^ n * 4 := by
+          rw [(by ring : 2 ^ n * 2 + 2 ^ n * 2 = 2 ^ n * (2 + 2))]
+          rw [mul_comm]
+          have eq_aux : 2 ^ n * 2 = 2 ^ n * 2 := by rfl
+          rw [eq_aux]
+        rw [eq_aux]
+        have eq_aux : 2 ^ n * 4 = 2 ^ (n + 2) := by
+          rw [(by ring : 2 ^ (n + 2) = 2 ^ n * 4)]
+        rw [eq_aux]
+      rw [eq_aux]
+
+      -- 2 ^ (n + 1) + (2 ^ n * 2) - (2 ^ (n + 1) + (2 ^ n * 2)) % (2 ^ (n + 2)) = 2 ^ (n + 2) - 2 ^ (n + 2) % (2 ^ (n + 2)) = 2 ^ (n + 2) - 0 = 2 ^ (n + 2)
+      have eq_aux : 2 ^ (n + 1) + (2 ^ n * 2) - (2 ^ (n + 1) + (2 ^ n * 2)) % (2 ^ (n + 2)) = 2 ^ (n + 2) := by
+        rw [Nat.add_sub_assoc]
+        rw [Nat.mod_eq_of_lt]
+        linarith
+        linarith
+      rw [eq_aux]
+
+      -- (2 ^ n * 2) % (2 ^ (n + 1)) = 0
+      have eq_aux : (2 ^ n * 2) % (2 ^ (n + 1)) = 0 := by
+        rw [Nat.mod_eq_zero_iff_dvd]
+        rw [(Nat.pow_dvd_pow_iff_le _).mpr]
+        simp
+        linarith
+      rw [eq_aux]
+      linarith
+
+  have A1 : (3 ^ 2 ^ n - 1) % (2 ^ (n + 3)) = 2 ^ (n + 2) := by
+    have eq_aux : (3 ^ 2 ^ n - 1) % (2 ^ (n + 3)) = (3 ^ 2 ^ n - 1) % (2 ^ (n + 2)) := by
+      have h₀ : 2 ^ (n + 2) > 0 := by
+        apply Nat.pow_pos
+        norm_num
+      rw [Nat.mod_eq_mod_add_mod h₀]
+      simp
+      have h₁ : (2 ^ (n + 2) % 2 ^ (n + 3)) = 2 ^ (n + 2) := by
+        rw [Nat.mod_eq_of_lt]
+        simp
+        linarith
+      rw [h₁]
+      simp
+      have h₂ : ((2 ^ (n + 2) * 2) % 2 ^ (n + 3)) = 2 ^ (n + 2) * 2 % 2 ^ (n + 3) := by
+        exact Nat.mul_mod (2 ^ (n + 2)) 2 (2 ^ (n + 3))
+      rw [h₂]
+      have h₃ : ((2 ^ (n + 2) + (2 ^ (n + 2) * 2)) % 2 ^ (n + 3)) = (2 ^ (n + 2) + (2 ^ (n + 2) * 2)) % 2 ^ (n + 3) := by
+        exact Nat.add_mod (2 ^ (n + 2)) (2 ^ (n + 2) * 2) (2 ^ (n + 3))
+      rw [h₃]
+      have h₄ : (2 ^ (n + 1) + (2 ^ n * 2)) % 2 ^ (n + 3) = 2 ^ (n + 2) := by
+        rw [Nat.add_mod]
+        have eq_aux₁ : 2 ^ (n + 1) % 2 ^ (n + 3) = 2 ^ (n + 1) := by
+          rw [Nat.mod_eq_of_lt]
+          simp
+          linarith
+        have eq_aux₂ : (2 ^ n * 2) % 2 ^ (n + 3) = 2 ^ (n + 2) := by
+          rw [Nat.mod_eq_of_lt]
+          simp
+          linarith
+        rw [eq_aux₁, eq_aux₂]
+        linarith
+      rw [h₄]
+    rw [eq_aux]
+    have eq_aux₁ : 2 ^ (n + 2) = 2 ^ n * 2 * 2 := by
+      rw [(by ring : 2 ^ (n + 2) = 2 ^ n * 2 ^ 2)]
+      rw [pow_add]
+      ring
+    have eq_aux₂ : 2 ^ (n + 1) = 2 ^ n * 2 := by
+      rw [(by ring : 2 ^ (n + 1) = 2 ^ n * 2 ^ 1)]
+      rw [pow_add]
+      ring
+    have eq_aux₃ : 2 ^ n * 2 - (2 ^ n * 2) % (2 ^ (n + 2)) = 2 ^ n * 2 := by
+      have h₀ : 2 ^ n * 2 % (2 ^ (n + 2)) < 2 ^ (n + 2) := by
+        apply Nat.mod_lt
+        simp
+      rw [Nat.sub_eq_iff_eq_add h₀]
+      have h₁ : 2 ^ n * 2 + (2 ^ n * 2 % (2 ^ (n + 2))) = 2 ^ n * 2 + (2 ^ n * 2 % (2 ^ (n + 2))) := by rfl
+      have h₂ : 2 ^ n * 2 - (2 ^ n * 2 % (2 ^ (n + 2))) + (2 ^ n * 2 % (2 ^ (n + 2))) = 2 ^ n * 2 := by
+        rw [Nat.sub_add_cancel]
+        have h₃ : 2 ^ n * 2 % (2 ^ (n + 2)) < 2 ^ (n + 2) := by
+          apply Nat.mod_lt
+          simp
+        linarith
+      have h₃ : 2 ^ n * 2 + (2 ^ n * 2 % (2 ^ (n + 2))) = 2 ^ n * 2 + (2 ^ n * 2 % (2 ^ (n + 2))) := by rfl
+      rw [h₁, h₂]
+    rw [eq_aux₁, eq_aux₂, eq_aux₃]
+  rw [A1]
+
+```

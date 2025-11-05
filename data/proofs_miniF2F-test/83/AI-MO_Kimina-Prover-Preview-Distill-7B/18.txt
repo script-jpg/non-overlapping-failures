@@ -1,0 +1,73 @@
+-- According to the reference answer, we prove that the product is less than $1 + 3/4 + 4/8 + 4/16 + \cdots$.
+  have h : (∏ k ∈ Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k) ≤
+      1 + (∑ k ∈ Finset.Icc 1 n, (1 : ℝ) / 2 ^ k) := by
+    -- According to the reference answer, we prove that the product is less than $1 + 3/4 + 4/8 + 4/16 + \cdots$.
+    -- Since $1 + 1/2^k \leq 1 + 3/4 + 4/8 + 4/16 + \cdots$, we take sum of the both sides.
+    induction' n with n ih
+    · simp
+    · rw [Finset.prod_Icc_succ_top, ih]
+      -- By induction, we have $(\prod_{k=1}^{n} (1 + 1/2^k)) \leq 1 + \sum_{k=1}^{n} \frac 1 {2^k}$.
+      -- So it suffices to prove that $1 + \sum_{k=1}^{n} \frac 1 {2^k} \leq 1 + \sum_{k=1}^{n+1} \frac 1 {2^k}$.
+      -- We may assume $n \geq 1$ since the inequality is clear if $n = 0$.
+      wlog h₁ : n ≥ 1
+      · simp at h₁
+        simp at h₀
+        absurd h
+        simp
+        exact h₀
+      · simp
+        calc
+          1 + ∑ x ∈ Finset.Icc 1 n, (1 : ℝ) / 2 ^ x ≤ 1 + ∑ x ∈ Finset.Icc 1 n, (1 : ℝ) / 2 ^ x + 1 / 2 ^ (n + 1) := by
+            apply add_le_add_right
+            apply Finset.sum_nonneg
+            intro i _
+            positivity
+          _ = 1 + ∑ x ∈ Finset.Icc 1 (n + 1), (1 : ℝ) / 2 ^ x := by
+            rw [Finset.sum_Ico_add_eq_sum_Icc]
+            rw [Finset.sum_Icc_succ_top]
+            ring
+
+  -- According to the reference answer, we prove that $\sum_{k=1}^{n} \frac 1 {2^k} < 3/4 + 4/8 + 4/16 + \cdots$.
+  have h' : ∑ k ∈ Finset.Icc 1 n, (1 : ℝ) / 2 ^ k ≤ 3 / 4 + (∑ k ∈ Finset.Icc 1 n, (1 : ℝ) / 2 ^ (k + 2)) := by
+    -- According to the reference answer, we prove that $\sum_{k=1}^{n} \frac 1 {2^k} < 3/4 + 4/8 + 4/16 + \cdots$.
+    -- Because $1/2^k \leq 3/4 \times (1/2)^{k-1}$, we take sum of the both sides.
+    induction' n with n ih
+    · simp
+    · rw [Finset.sum_Icc_succ_top, ih]
+      -- By induction, we have $\sum_{k=1}^{n} \frac 1 {2^k} \leq 3/4 + \sum_{k=1}^{n+1} \frac 1 {2^{k+2}}$.
+      -- Since $1/2^{n+1} + 1/2^{n+2} = 3/2^{n+1} \times 1/2$, we take out the common factor $1/2$ and simplify.
+      have : (1 : ℝ) / 2 ^ (n + 1) + 1 / 2 ^ (n + 2) = (1 / 2) * (1 / 2 ^ n + 1 / 2 ^ (n + 1)) := by
+        ring
+      rw [this]
+      simp
+      ring
+
+  -- According to the reference answer, we prove that $ 1 + 3/4 + 4/8 + 4/16 + \cdots = 2$.
+  have h'' : (fun n : ℕ => 1 + (∑ k ∈ Finset.Icc 1 n, (1 : ℝ) / 2 ^ k)) n = 2 - (1 : ℝ) / 2 ^ n := by
+    -- According to the reference answer, we prove that $ 1 + 3/4 + 4/8 + 4/16 + \cdots = 2$.
+    -- We use induction on $n$ to prove that the partial sum equals $2 - 1/2^n$.
+    induction' n with n ih
+    · simp
+    · rw [Finset.sum_Icc_succ_top, ih]
+      -- By induction, we have $1 + \sum_{k=1}^{n} \frac 1 {2^k} = 2 - \frac 1 {2^n} $.
+      -- So $1 + \sum_{k=1}^{n+1} \frac 1 {2^k} = 2 - \frac 1 {2^n} + \frac 1 {2^{n+1}}$.
+      -- We simplify the expression to $2 - \frac 1 {2^{n+1}}$.
+      ring
+
+  -- We shall prove that $1 + 3/4 + 4/8 + 4/16 + \cdots < 5/2$.
+  have h''' : 1 + ∑ k ∈ Finset.Icc 1 n, (1 : ℝ) / 2 ^ k < 5 / 2 := by
+    -- According to the reference answer, we prove that $1 + 3/4 + 4/8 + 4/16 + \cdots = 2$.
+    -- So it suffices to prove that $2 < 5/2$.
+    have h'' := h''
+    have h'' :=
+      calc
+        1 + ∑ k ∈ Finset.Icc 1 n, (1 : ℝ) / 2 ^ k = 2 - (1 : ℝ) / 2 ^ n := by
+          exact h''
+        _ < 2 := by
+          norm_num
+        _ < 5 / 2 := by
+          norm_num
+
+  linarith only [h, h', h''']
+
+```

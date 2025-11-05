@@ -1,0 +1,29 @@
+have h₁ : ∀ n : ℕ, ¬5 ∣ ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+    intro n
+    rw [← Nat.mod_add_div (∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)) 5]
+    norm_num
+    have h₂ : (∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)) % 5 = 2 ^ (n % 4) % 5 := by
+      have h₃ : ∀ n : ℕ, (∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)) % 5 = 2 ^ (n % 4) % 5 := by
+        intro n
+        induction n using Nat.strong_induction_on with
+        | h n ih =>
+          match n with
+          | 0 => norm_num [Finset.sum_range_succ]
+          | 1 => norm_num [Finset.sum_range_succ, Nat.choose_succ_succ]
+          | 2 => norm_num [Finset.sum_range_succ, Nat.choose_succ_succ]
+          | 3 => norm_num [Finset.sum_range_succ, Nat.choose_succ_succ]
+          | n + 4 =>
+            have h₄ := ih (n + 3) (by omega)
+            have h₅ := ih (n + 2) (by omega)
+            have h₆ := ih (n + 1) (by omega)
+            have h₇ := ih n (by omega)
+            simp [Finset.sum_range_succ, Nat.choose_succ_succ, pow_add, pow_mul, Nat.mul_mod, Nat.add_mod, Nat.pow_mod] at h₄ h₅ h₆ h₇ ⊢
+            ring_nf at h₄ h₅ h₆ h₇ ⊢
+            omega
+      exact h₃ n
+    have h₃ : 2 ^ (n % 4) % 5 ≠ 0 := by
+      have h₄ : n % 4 = 0 ∨ n % 4 = 1 ∨ n % 4 = 2 ∨ n % 4 = 3 := by omega
+      rcases h₄ with (h₄ | h₄ | h₄ | h₄) <;> simp [h₄, pow_succ, Nat.mul_mod, Nat.pow_mod]
+    omega
+  exact h₁ n
+```

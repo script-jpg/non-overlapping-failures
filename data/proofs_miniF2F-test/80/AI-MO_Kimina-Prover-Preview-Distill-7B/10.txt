@@ -1,0 +1,219 @@
+-- auxiliary lemma : for any positive real numbers x,y, $(x-y)^2 \geq 0$.
+  have hsqnonneg {x y : ℝ} (xpos : 0 < x) (ypos : 0 < y) : (x - y) ^ 2 ≥ 0 := by
+    exact sq_nonneg (x - y)
+
+  -- Let $x=\sqrt{b+c}, y=\sqrt{c+a}, z=\sqrt{a+b}$.
+  let x := Real.sqrt (b + c)
+  let y := Real.sqrt (c + a)
+  let z := Real.sqrt (a + b)
+
+  -- auxiliary lemma : for any positive real numbers x,y, $2xy \leq x^2 + y^2$.
+  have hmulxy {x y : ℝ} (xpos : 0 < x) (ypos : 0 < y) : 2 * x * y ≤ x ^ 2 + y ^ 2 := by
+    have h : 0 ≤ (x - y) ^ 2 := by apply sq_nonneg
+    ring_nf at h
+    linarith
+
+  -- auxiliary lemma : for positive real numbers x,y, $(x-y)^2 \geq 0$.
+  have hsqnonneg {x y : ℝ} (xpos : 0 < x) (ypos : 0 < y) : (x - y) ^ 2 ≥ 0 := by
+    exact sq_nonneg (x - y)
+
+  have hxpos : 0 < x := by
+    apply Real.sqrt_pos_of_pos
+    linarith
+
+  have hypos : 0 < y := by
+    apply Real.sqrt_pos_of_pos
+    linarith
+
+  have hzpos : 0 < z := by
+    apply Real.sqrt_pos_of_pos
+    linarith
+
+  have hx2 : x ^ 2 = b + c := by
+    exact Real.sq_sqrt (by linarith)
+
+  have hy2 : y ^ 2 = c + a := by
+    exact Real.sq_sqrt (by linarith)
+
+  have hz2 : z ^ 2 = a + b := by
+    exact Real.sq_sqrt (by linarith)
+
+  have hmulxy_ge_sqrt {x y : ℝ} (xpos : 0 < x) (ypos : 0 < y) : 2 * x * y ≥ 2 * x * y * Real.sqrt (x ^ 2 + y ^ 2) / (x ^ 2 + y ^ 2) := by
+    have h := hmulxy xpos ypos
+    have hxy : 0 < x ^ 2 + y ^ 2 := by positivity
+    suffices hmul : 2 * x * y * (x ^ 2 + y ^ 2) ≥ 2 * x * y * Real.sqrt (x ^ 2 + y ^ 2) by exact (le_div_iff₀ hxy).mpr hmul
+    suffices hmul : 2 * x * y * (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2) ≥ 2 * x * y * Real.sqrt (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2) by exact le_of_mul_le_mul_right this hxy
+    rw [show (2 * x * y * Real.sqrt (x ^ 2 + y ^ 2)) * (x ^ 2 + y ^ 2) = (2 * x * y) * (Real.sqrt (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2)) by ring]
+    suffices hmul : (2 * x * y) * (Real.sqrt (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2)) ≥ (2 * x * y) * (x ^ 2 + y ^ 2) by exact le_of_mul_le_mul_left hmul (by positivity)
+    rw [show Real.sqrt (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2) = (Real.sqrt (x ^ 2 + y ^ 2)) ^ 2 by ring]
+    suffices hmul : (2 * x * y) * (Real.sqrt (x ^ 2 + y ^ 2)) ^ 2 ≥ (2 * x * y) * (x ^ 2 + y ^ 2) by exact le_of_mul_le_mul_left hmul (by positivity)
+    simp [←Real.sqrt_mul hxy]
+    exact Real.sq_sqrt (by positivity)
+
+  -- By the AM-GM inequality, $3\sqrt{2} \leq \sqrt{a+b} + \sqrt{b+c} + \sqrt{c+a}$.
+  have hAMGM : 3 * Real.sqrt 2 ≤ z + x + y := by
+    have h := hmulxy_ge_sqrt hxpos hypos
+    have h' := hmulxy_ge_sqrt hypos hzpos
+    have h'' := hmulxy_ge_sqrt hzpos hxpos
+    have hab := mul_pos h₀.1 h₀.2.1
+    have hbc := mul_pos h₀.2.1 h₀.2.2
+    have hca := mul_pos h₀.2.2 h₀.1
+    have habc := mul_pos hab hbc
+    have h := (h₀.1 * h₀.2.1 * h₀.2.2 * Real.sqrt 2) / (a * b * c)
+    field_simp at h
+    have h'' := calc
+      3 * Real.sqrt 2 = 2 * x * y * Real.sqrt 2 / (x ^ 2 + y ^ 2) + 2 * y * z * Real.sqrt 2 / (y ^ 2 + z ^ 2) + 2 * z * x * Real.sqrt 2 / (z ^ 2 + x ^ 2) := by
+        rw [hx2, hy2, hz2]
+        field_simp
+        ring
+      _ ≤ 2 * x * y + 2 * y * z + 2 * z * x := by
+        apply add_le_add
+        apply add_le_add
+        apply (div_le_div_iff_of_pos_right (by positivity)).mpr h
+        apply (div_le_div_iff_of_pos_right (by positivity)).mpr h'
+        apply (div_le_div_iff_of_pos_right (by positivity)).mpr h''
+        positivity
+        positivity
+        positivity
+        positivity
+        positivity
+        positivity
+      _ = z + x + y := by ring
+
+  -- Since $3 \leq ab+bc+ca$, we have $9 \leq (ab+bc+ca)(x^2+y^2+z^2)$.
+  have hineq : 9 ≤ (a * b + b * c + c * a) * (x ^ 2 + y ^ 2 + z ^ 2) := by
+    have h := mul_le_mul_of_nonneg h₁
+   . nlinarith [hx2, hy2, hz2]
+   . positivity
+   . positivity
+   . positivity
+
+  -- Notice that $(ab+bc+ca)(x^2+y^2+z^2) = (ab+bc+ca)(2xy+2yz+2zx)$, we have $ab+bc+ca \geq 3\sqrt{2}$.
+  have heq : (a * b + b * c + c * a) * (x ^ 2 + y ^ 2 + z ^ 2) = (a * b + b * c + c * a) * (2 * x * y + 2 * y * z + 2 * z * x) := by
+    rw [hx2, hy2, hz2]
+    ring
+  rw [heq] at hineq
+  have hge : 3 * Real.sqrt 2 ≤ a * b + b * c + c * a := by
+    nlinarith [hineq, hAMGM]
+
+  -- The proof is complete.
+  have h := mul_le_mul_of_nonneg hge
+ . field_simp at h
+    nth_rw 1 [←Real.sqrt_sq (by positivity)] at h
+    exact h
+   . positivity
+   . positivity
+   . positivity
+ . positivity
+ . positivity
+ . positivity
+ . positivity
+
+
+/-- For positive real numbers a, b, c, such that $3 \leq ab+bc+ca$, show that $3/\sqrt{2} \leq a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}$. -/
+theorem algebra_abpbcpcageq3_sumaonsqrtapbgeq3onsqrt2 (a b c : ℝ) (h₀ : 0 < a ∧ 0 < b ∧ 0 < c)
+    (h₁ : 3 ≤ a * b + b * c + c * a) :
+    3 / Real.sqrt 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+
+  -- Let $x=\sqrt{b+c}, y=\sqrt{c+a}, z=\sqrt{a+b}$.
+  let x := Real.sqrt (b + c)
+  let y := Real.sqrt (c + a)
+  let z := Real.sqrt (a + b)
+
+  -- auxiliary lemma : for any positive real numbers x,y, $(x-y)^2 \geq 0$.
+  have hsqnonneg {x y : ℝ} (xpos : 0 < x) (ypos : 0 < y) : (x - y) ^ 2 ≥ 0 := by
+    exact sq_nonneg (x - y)
+
+  have hxpos : 0 < x := by
+    apply Real.sqrt_pos_of_pos
+    linarith
+
+  have hypos : 0 < y := by
+    apply Real.sqrt_pos_of_pos
+    linarith
+
+  have hzpos : 0 < z := by
+    apply Real.sqrt_pos_of_pos
+    linarith
+
+  have hx2 : x ^ 2 = b + c := by
+    exact Real.sq_sqrt (by linarith)
+
+  have hy2 : y ^ 2 = c + a := by
+    exact Real.sq_sqrt (by linarith)
+
+  have hz2 : z ^ 2 = a + b := by
+    exact Real.sq_sqrt (by linarith)
+
+  have hmulxy_ge_sqrt {x y : ℝ} (xpos : 0 < x) (ypos : 0 < y) : 2 * x * y ≥ 2 * x * y * Real.sqrt (x ^ 2 + y ^ 2) / (x ^ 2 + y ^ 2) := by
+    have h := hmulxy xpos ypos
+    have hxy : 0 < x ^ 2 + y ^ 2 := by positivity
+    suffices hmul : 2 * x * y * (x ^ 2 + y ^ 2) ≥ 2 * x * y * Real.sqrt (x ^ 2 + y ^ 2) by exact (le_div_iff₀ hxy).mpr hmul
+    suffices hmul : 2 * x * y * (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2) ≥ 2 * x * y * Real.sqrt (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2) by exact le_of_mul_le_mul_right this hxy
+    rw [show (2 * x * y * Real.sqrt (x ^ 2 + y ^ 2)) * (x ^ 2 + y ^ 2) = (2 * x * y) * (Real.sqrt (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2)) by ring]
+    suffices hmul : (2 * x * y) * (Real.sqrt (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2)) ≥ (2 * x * y) * (x ^ 2 + y ^ 2) by exact le_of_mul_le_mul_left hmul (by positivity)
+    rw [show Real.sqrt (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2) = (Real.sqrt (x ^ 2 + y ^ 2)) ^ 2 by ring]
+    suffices hmul : (2 * x * y) * (Real.sqrt (x ^ 2 + y ^ 2)) ^ 2 ≥ (2 * x * y) * (x ^ 2 + y ^ 2) by exact le_of_mul_le_mul_left hmul (by positivity)
+    simp [←Real.sqrt_mul hxy]
+    exact Real.sq_sqrt (by positivity)
+
+  -- By the AM-GM inequality, $3\sqrt{2} \leq \sqrt{a+b} + \sqrt{b+c} + \sqrt{c+a}$.
+  have hAMGM : 3 * Real.sqrt 2 ≤ z + x + y := by
+    have h := hmulxy_ge_sqrt hxpos hypos
+    have h' := hmulxy_ge_sqrt hypos hzpos
+    have h'' := hmulxy_ge_sqrt hzpos hxpos
+    have hab := mul_pos h₀.1 h₀.2.1
+    have hbc := mul_pos h₀.2.1 h₀.2.2
+    have hca := mul_pos h₀.2.2 h₀.1
+    have habc := mul_pos hab hbc
+    have h := (h₀.1 * h₀.2.1 * h₀.2.2 * Real.sqrt 2) / (a * b * c)
+    field_simp at h
+    have h'' := calc
+      3 * Real.sqrt 2 = 2 * x * y * Real.sqrt 2 / (x ^ 2 + y ^ 2) + 2 * y * z * Real.sqrt 2 / (y ^ 2 + z ^ 2) + 2 * z * x * Real.sqrt 2 / (z ^ 2 + x ^ 2) := by
+        rw [hx2, hy2, hz2]
+        field_simp
+        ring
+      _ ≤ 2 * x * y + 2 * y * z + 2 * z * x := by
+        apply add_le_add
+        apply add_le_add
+        apply (div_le_div_iff_of_pos_right (by positivity)).mpr h
+        apply (div_le_div_iff_of_pos_right (by positivity)).mpr h'
+        apply (div_le_div_iff_of_pos_right (by positivity)).mpr h''
+        positivity
+        positivity
+        positivity
+        positivity
+        positivity
+        positivity
+      _ = z + x + y := by ring
+
+  -- Since $3 \leq ab+bc+ca$, we have $9 \leq (ab+bc+ca)(x^2+y^2+z^2)$.
+  have hineq : 9 ≤ (a * b + b * c + c * a) * (x ^ 2 + y ^ 2 + z ^ 2) := by
+    have h := mul_le_mul_of_nonneg h₁
+   . nlinarith [hx2, hy2, hz2]
+   . positivity
+   . positivity
+   . positivity
+
+  -- Notice that $(ab+bc+ca)(x^2+y^2+z^2) = (ab+bc+ca)(2xy+2yz+2zx)$, we have $ab+bc+ca \geq 3\sqrt{2}$.
+  have heq : (a * b + b * c + c * a) * (x ^ 2 + y ^ 2 + z ^ 2) = (a * b + b * c + c * a) * (2 * x * y + 2 * y * z + 2 * z * x) := by
+    rw [hx2, hy2, hz2]
+    ring
+  rw [heq] at hineq
+  have hge : 3 * Real.sqrt 2 ≤ a * b + b * c + c * a := by
+    nlinarith [hineq, hAMGM]
+
+  -- The proof is complete.
+  have h := mul_le_mul_of_nonneg hge
+ . field_simp at h
+    nth_rw 1 [←Real.sqrt_sq (by positivity)] at h
+    exact h
+   . positivity
+   . positivity
+   . positivity
+ . positivity
+ . positivity
+ . positivity
+ . positivity
+
+```

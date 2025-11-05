@@ -1,0 +1,102 @@
+-- We have $a>0$, $b>0$, $a \neq b$, $|a-1 / a|=1$, and $|b-1 / b|=1$.
+  -- We want to prove that $a + b = \sqrt{5}$.
+
+  -- First, we note that $a - 1 / a = \pm 1$, so $a^2 - 1 = \pm a$, so $a^2 \pm a - 1 = 0$.
+  have ha : a^2 + a - 1 = 0 ∨ a^2 - a - 1 = 0 := by
+    cases abs_cases (a - 1 / a) with
+    | inl h =>
+      -- case $a - 1 / a = -1$
+      right
+      field_simp at h
+      nlinarith
+    | inr h =>
+      -- case $a - 1 / a = 1$
+      left
+      field_simp at h
+      nlinarith
+
+  -- The two equations $a^2 + a - 1 = 0$ and $a^2 - a - 1 = 0$ have respective positive roots
+  -- $\frac{-1 + \sqrt{5}}{2}$ and $\frac{1 + \sqrt{5}}{2}$.
+  have ha' : (a = (-1 + √5) / 2 ∨ a = (1 + √5) / 2) := by
+    cases ha with
+    | inl ha =>
+      -- $a^2 + a - 1 = 0$
+      have : 0 < a := h₀.left
+      have : a^2 + a - 1 = 0 := ha
+      have : a^2 + a - 1 = (a - (-1 + √5) / 2) * (a - (-1 - √5) / 2) := by
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+      rw [this] at ha
+      cases mul_eq_zero.mp ha
+      {
+        -- $a = (-1 + \sqrt{5}) / 2$
+        left
+        linarith
+      }
+      {
+        -- $a = (-1 - \sqrt{5}) / 2$, but this is not possible since $a>0$
+        right
+        linarith
+      }
+    | inr ha =>
+      -- $a^2 - a - 1 = 0$
+      have : 0 < a := h₀.left
+      have : a^2 - a - 1 = 0 := ha
+      have : a^2 - a - 1 = (a - (1 + √5) / 2) * (a - (1 - √5) / 2) := by
+        ring_nf
+        rw [Real.sq_sqrt (by norm_num)]
+        linarith
+      rw [this] at ha
+      cases mul_eq_zero.mp ha
+      {
+        -- $a = (1 + \sqrt{5}) / 2$
+        right
+        linarith
+      }
+      {
+        -- $a = (1 - \sqrt{5}) / 2$, but this is not possible since $a>0$
+        left
+        linarith
+      }
+
+  -- Similarly, we have $b = (-1 + \sqrt{5}) / 2$ or $b = (1 + \sqrt{5}) / 2$.
+  have hb' : (b = (-1 + √5) / 2 ∨ b = (1 + √5) / 2) := by
+    have : 0 < b := h₀.right
+    analogous to ha' using h₃
+    <;> linarith
+
+  -- Since $a \neq b$, we have $a = (-1 + \sqrt{5}) / 2$ and $b = (1 + \sqrt{5}) / 2$ or $a = (1 + \sqrt{5}) / 2$ and $b = (-1 + \sqrt{5}) / 2$.
+  have hab : (a = (-1 + √5) / 2 ∧ b = (1 + √5) / 2) ∨ (a = (1 + √5) / 2 ∧ b = (-1 + √5) / 2) := by
+    cases ha' with
+    | inl ha' =>
+      cases hb' with
+      | inl hb' =>
+        -- $a = (-1 + \sqrt{5}) / 2$ and $b = (-1 + \sqrt{5}) / 2$, but this is not possible since $a \neq b$
+        exfalso
+        exact h₁ (by linarith)
+      | inr hb' =>
+        -- $a = (-1 + \sqrt{5}) / 2$ and $b = (1 + \sqrt{5}) / 2$
+        left
+        exact ⟨ha', hb'⟩
+    | inr ha' =>
+      cases hb' with
+      | inl hb' =>
+        -- $a = (1 + \sqrt{5}) / 2$ and $b = (-1 + \sqrt{5}) / 2$
+        right
+        exact ⟨ha', hb'⟩
+      | inr hb' =>
+        -- $a = (1 + \sqrt{5}) / 2$ and $b = (1 + \sqrt{5}) / 2$, but this is not possible since $a \neq b$
+        exfalso
+        exact h₁ (by linarith)
+
+  -- In either case, $a + b = \sqrt{5}$.
+  cases hab with
+  | inl hab =>
+    -- $a = (-1 + \sqrt{5}) / 2$ and $b = (1 + \sqrt{5}) / 2$
+    linarith
+  | inr hab =>
+    -- $a = (1 + \sqrt{5}) / 2$ and $b = (-1 + \sqrt{5}) / 2$
+    linarith
+
+```

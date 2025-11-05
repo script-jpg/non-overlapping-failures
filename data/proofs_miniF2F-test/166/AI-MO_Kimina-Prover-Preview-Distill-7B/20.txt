@@ -1,0 +1,60 @@
+-- Definition of geometric mean.
+  have gms (b : ℕ → NNReal) (n : ℕ) : NNReal := iteratedMultiplication b n
+  -- When $p = 0$, $f(x) = 1$.
+  have h_nsmul_eq_one (x : NNReal) : iteratedMultiplication x 0 = 1 := rfl
+
+  -- The geometric mean is less than or equal to the arithmetic mean.
+  have amgm (b : ℕ → NNReal) (n : ℕ) : (∏ x in Finset.range n, b x) ^ (1 / n : ℝ) ≤ (∑ x in Finset.range n, b x) / n := by
+    induction n with
+    | zero =>
+      -- Base case: The geometric mean is less than or equal to the arithmetic mean.
+      simp
+    | succ n ih =>
+      -- Inductive step: Assume the theorem holds for n, prove it for n+1.
+      rw [Finset.sum_range_succ, Finset.prod_range_succ]
+      -- The geometric mean of n+1 numbers is the geometric mean of the first n numbers times the (n+1)th number.
+      rw [iteratedMultiplication_range_succ, geom_mean_iteratedMultiplication]
+      -- The arithmetic mean of n+1 numbers is the arithmetic mean of the first n numbers plus the (n+1)th number divided by n+1.
+      rw [add_div]
+      -- The geometric mean of n+1 numbers is less than or equal to the arithmetic mean of the first n numbers plus the (n+1)th number.
+      apply le_trans?_ ih
+      -- How much the geometric mean of n+1 numbers exceeds the arithmetic mean of the first n numbers is less than or equal to the arithmetic mean of the first n numbers.
+      apply le_of_lt
+      rw [lt_div_iff₀]
+      -- The arithmetic mean of the first n numbers is greater than 0.
+      suffices 0 < (∑ x ∈ Finset.range n, b x) / n by
+        exact this
+      apply div_pos
+      -- The sum of the first n numbers is greater than 0.
+      apply Finset.sum_pos
+      intro i hi
+      -- All the numbers are nonnegative.
+      exact b_i_nonneg i
+      -- Not all the numbers are zero.
+      exact Ne.symm (NeZero.ne' n)
+      -- The sum of the first n numbers is greater than 0.
+      exact Finset.sum_pos
+      intro i hi
+      -- All the numbers are nonnegative.
+      exact b_i_nonneg i
+      -- The (n+1)th number is nonnegative.
+      exact b_i_nonneg (n := n + 1) (i := 0) (by linarith)
+
+  -- The geometric mean of $a_i$ is less than or equal to the arithmetic mean of $a_i$.
+  have hab := amgm a n
+  -- The arithmetic mean of $a_i$ is 1.
+  rw [h₀] at hab
+  -- The geometric mean of $a_i$ is less than or equal to 1.
+  simp at hab
+  -- The geometric mean of $a_i$ is nonnegative.
+  have : 0 ≤ (∏ x ∈ Finset.range n, a x) ^ (1 / n : ℝ) := by
+    apply Real.rpow_nonneg
+    -- The product of nonnegative numbers is nonnegative.
+    apply Finset.prod_nonneg
+    intro i hi
+    -- All the numbers are nonnegative.
+    exact a_i_nonneg i
+  -- The geometric mean of $a_i$ is less than or equal to 1.
+  exact (Real.rpow_le_one_iff_of_nonneg this).mp hab
+
+```

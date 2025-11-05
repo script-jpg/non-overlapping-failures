@@ -1,0 +1,92 @@
+-- The values $a, b, c$ are positive.
+  obtain ⟨ ha, hb, hc ⟩ := h₀
+
+  -- Solve the system of equations.
+  have h₄ : a = 152 / (b + c) := by
+    -- Since $b + c \neq 0$, we can divide both sides of the equation by it.
+    field_simp [show b + c ≠ 0 by nlinarith]
+    linarith
+
+  have h₅ : b = 162 / (c + a) := by
+    -- Since $c + a \neq 0$, we can divide both sides of the equation by it.
+    field_simp [show c + a ≠ 0 by nlinarith]
+    linarith
+
+  have h₆ : c = 170 / (a + b) := by
+    -- Since $a + b \neq 0$, we can divide both sides of the equation by it.
+    field_simp [show a + b ≠ 0 by nlinarith]
+    linarith
+
+  -- Substituting these equations into $abc$ gives $\frac{152 \cdot 162 \cdot 170}{(b + c)(c + a)(a + b)}$.
+  calc _ = a * b * c := by rfl
+       _ = 152 / (b + c) * (162 / (c + a)) * (170 / (a + b)) := by
+          rw [h₄, h₅, h₆]
+       _ = 152 / (b + c) * (162 / (c + a)) * (170 / (a + b)) := by rfl
+       _ = 720 := by
+          -- The result can be calculated by hand.
+          calc _
+              = 152 * 162 * 170 / ((b + c) * (c + a) * (a + b)) := by ring_nf
+              _ = 720 := by
+                -- The denominators contain the same factors with the same multiplicities, so they are equal.
+                calc _
+                    152 * 162 * 170 / ((b + c) * (c + a) * (a + b))
+                        = (8 * 19) * (8 * 20) * (17 * 10) / ((b + c) * (c + a) * (a + b)) := by norm_num
+                    _ = (8 * 8 * 17 * 19 * 20 * 10) / ((b + c) * (c + a) * (a + b)) := by ring
+                    _ = (8 * 8 * 17 * 19 * 20 * 10) / (17 * 19 * 20 * 10) := by
+                        congr
+                        -- We prove that $(b + c) * (c + a) * (a + b) = 17 * 19 * 20 * 10$.
+                        -- First, we expand the left-hand side.
+                        rw [show (b + c) * (c + a) * (a + b) = (a * b * c * 2) + (a ^ 2 * b) + (a * b ^ 2) + (a ^ 2 * c) + (a * c ^ 2) + (b * c ^ 2) + (b ^ 2 * c) + (b ^ 2 * a) + (c ^ 2 * a) + (c ^ 2 * b) by ring]
+                        -- We group some terms.
+                        _ = ((a * b * c * 2) + (a * b ^ 2 + a ^ 2 * b)) + ((a * c ^ 2 + a ^ 2 * c) + (b * c ^ 2 + b ^ 2 * c)) + (b ^ 2 * a + c ^ 2 * a) := by ring
+                        -- Factor each group.
+                        _ = a * b * c * 2 + a * b * (b + c) + a * c * (c + a) + b * c * (c + b) + a * (b ^ 2 + c ^ 2) + b * (b ^ 2 + c ^ 2) := by ring
+                        _ = a * b * c * 2 + a * (b + c) * (b + c) + b * (b + c) * (c + a) + a * (b ^ 2 + c ^ 2) + b * (b ^ 2 + c ^ 2) := by
+                          congr
+                          -- Substitute equations to get the values of the terms.
+                          rw [h₁]
+                          congr
+                          -- We prove that $a * (b ^ 2 + c ^ 2) + b * (b ^ 2 + c ^ 2) = 7524$.
+                          -- Factor the left-hand side.
+                          _ = (a + b) * (b ^ 2 + c ^ 2) := by ring
+                          -- Substitute equations to get the values of the terms.
+                          _ = (a + b) * (b + c) ^ 2 - (a + b) * b * c := by ring
+                          _ = 170 * 17 ^ 2 - 170 * b * c := by
+                            congr
+                            -- Substitute the values of $a + b$ and $b + c$.
+                            rw [h₃, h₁]
+                          -- Rearrange, then substitute the values of $a * b * c$ and $b + c$.
+                          _ = 170 * (17 ^ 2 - b * c) := by ring
+                          _ = 7524 := by
+                            congr
+                            -- Substitute the values of $a * b * c$ and $b + c$.
+                            nlinarith [h₃, h₁, h₀, show a * b * c * (b + c) = a * b * 170 by simp [h₃]]
+                          -- Factor the left-hand side.
+                          _ = 17 * 7524 := by ring
+                          -- Substitute the values of $a + b$ and $b + c$.
+                          _ = 17 * 170 * 7524 / 17 := by
+                            congr
+                            -- Simplify the expression.
+                            symm
+                            rw [show 17 * 7524 = 17 * (170 * 7524 / 17) by nth_rw 2 [← Nat.div_mul_cancel (by nlinarith)]; ring]
+                            -- Simplify the expression.
+                            apply Nat.div_mul_cancel
+                          -- Substitute the values of $a + b$ and $b + c$.
+                          _ = 17 * 170 * 7524 / 17 / 17 := by
+                            congr
+                            -- Simplify the expression.
+                            symm
+                            rw [show 17 * 7524 = 17 * (17 * (7524 / 17)) by nth_rw 2 [← Nat.div_mul_cancel (by nlinarith)]; ring]
+                            -- Simplify the expression.
+                            apply Nat.div_mul_cancel
+                          _ = 17 * 19 * 20 * 10 := by
+                            -- Simplify the expression.
+                            symm
+                            rw [show 7524 = 19 * 20 * 10 by norm_num]
+                            -- Simplify the expression.
+                            apply mul_left_cancel₀ (by nlinarith)
+    -- The denominators contain the same factors with the same multiplicities, so they are equal.
+    rw [show (b + c) * (c + a) * (a + b) = 17 * 19 * 20 * 10 by nth_rw 2 [← Nat.mul_assoc]; exact Nat.mul_right_cancel (by nlinarith)]
+  -- The value of $abc$ is 720.
+  norm_num
+```

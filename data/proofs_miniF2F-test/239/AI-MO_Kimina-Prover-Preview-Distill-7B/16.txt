@@ -1,0 +1,161 @@
+-- First, square both equations to get
+  -- $(1+\sin t)^2(1+\cos t)^2=25/16$ and
+  -- $(1-\sin t)^2(1-\cos t)^2=(m/n-\sqrt{k})^2$.
+  have h₁_left: (1 + Real.sin t)^2 * (1 + Real.cos t)^2 = 25/16 := by
+    calc (1 + Real.sin t)^2 * (1 + Real.cos t)^2
+      _ = (1 + Real.sin t) * (1 + Real.cos t) * ((1 + Real.sin t) * (1 + Real.cos t)) := by ring
+      _ = 5/4 * (5/4) := by rw [h₁]
+      _ = 25/16 := by norm_num
+  have h₁_right: (1 - Real.sin t)^2 * (1 - Real.cos t)^2 = (m / n - Real.sqrt k)^2 := by
+    calc (1 - Real.sin t)^2 * (1 - Real.cos t)^2
+      _ = ((1 - Real.sin t) * (1 - Real.cos t))^2 := by ring
+      _ = (m / n - Real.sqrt k)^2 := by rw [h₃]
+
+  -- multiply out the first equation to get
+  -- $1 + 2(\sin t + \cos t) + \sin 2t = 25/16$.
+  have h₁_left': 1 + 2*Real.sin t + 2*Real.cos t + Real.sin (2*t) = 25/16 := by
+    calc 1 + 2*Real.sin t + 2*Real.cos t + Real.sin (2*t)
+      _ = (1 + Real.sin t)^2 * (1 + Real.cos t)^2 := by
+        congr 1; congr 1; ring
+      _ = 25/16 := by rw [h₁_left]
+  -- multiply out the second equation to get
+  -- $1 - 2(\sin t + \cos t) + \sin 2t = m^2/n^2-2\sqrt{k}-k$.
+  have h₁_right': 1 - 2*Real.sin t - 2*Real.cos t + Real.sin (2*t) = (m / n)^2 - 2*Real.sqrt k - k := by
+    calc 1 - 2*Real.sin t - 2*Real.cos t + Real.sin (2*t)
+      _ = (1 - Real.sin t)^2 * (1 - Real.cos t)^2 := by
+        congr 1; congr 1; ring
+      _ = (m / n - Real.sqrt k)^2 := by rw [h₁_right]
+      _ = (m / n)^2 - 2*Real.sqrt k - k := by ring
+
+  -- eliminate the sin 2t term by subtracting
+  -- the second equation from the first one to get
+  -- $4(\sin t + \cos t) = 25/16-(m^2/n^2-2\sqrt{k}-k)$.
+  have h₁_left_right: 4*(Real.sin t + Real.cos t) = 25/16 - ((m / n)^2 - 2*Real.sqrt k - k) := by
+    calc 4*(Real.sin t + Real.cos t)
+      _ = 1 + 2*Real.sin t + 2*Real.cos t + Real.sin (2*t) - (1 - 2*Real.sin t - 2*Real.cos t + Real.sin (2*t)) := by ring
+      _ = 25/16 - ((m / n)^2 - 2*Real.sqrt k - k) := by rw [h₁_left', h₁_right']
+  -- multiply by 2 to get
+  -- $8(\sin t + \cos t) = 25/8-(m^2/n^2-2\sqrt{k}-k)$.
+  have h₁_left_right': 8*(Real.sin t + Real.cos t) = 25/8 - ((m / n)^2 - 2*Real.sqrt k - k) := by
+    calc 8*(Real.sin t + Real.cos t)
+      _ = 2*(4*(Real.sin t + Real.cos t)) := by ring
+      _ = 2*(25/16 - ((m / n)^2 - 2*Real.sqrt k - k)) := by rw [h₁_left_right]
+      _ = 25/8 - ((m / n)^2 - 2*Real.sqrt k - k) := by ring
+
+  -- now square both equations to get
+  -- $64(\sin t + \cos t)^2 = 625/64 - (m^2/n^2-2\sqrt{k}-k)^2$.
+  have h₁_left_right': 64*(Real.sin t + Real.cos t)^2 = 625/64 - ((m / n)^2 - 2*Real.sqrt k - k)^2 := by
+    calc 64*(Real.sin t + Real.cos t)^2
+      _ = 64*(Real.sin t^2 + Real.cos t^2 + 2*Real.sin t*Real.cos t) := by ring
+      _ = 64*((Real.sin t^2 + Real.cos t^2) + 2*Real.sin t*Real.cos t) := by ring
+      _ = 64*(1 + 2*Real.sin t*Real.cos t) := by rw [Real.sin_sq_add_cos_sq t]
+      _ = 64*(1 + Real.sin (2*t)) := by rw [Real.sin_two_mul t]
+      _ = 64 - (64*(Real.sin t + Real.cos t))^2 := by
+        congr 1; ring
+      _ = 625/64 - (64*(Real.sin t + Real.cos t)^2) := by ring
+      _ = 625/64 - ((m / n)^2 - 2*Real.sqrt k - k)^2 := by rw [h₁_left_right']
+
+  -- using the identity sin^2 t + cos^2 t = 1 and the first equation,
+  -- it simplifies to $1 + 2(\sin t + \cos t) + \sin 2t = 25/16$.
+  have h₁_left'': 1 + 2*(Real.sin t + Real.cos t) + Real.sin (2*t) = 25/16 := by
+    calc 1 + 2*(Real.sin t + Real.cos t) + Real.sin (2*t)
+      _ = (Real.sin t^2 + Real.cos t^2) + 2*Real.sin t*Real.cos t + 2*(Real.sin t + Real.cos t) + Real.sin (2*t) := by
+        rw [Real.sin_sq_add_cos_sq t]
+      _ = Real.sin t^2 + Real.cos t^2 + 2*(Real.sin t + Real.cos t) + Real.sin (2*t) := by ring
+      _ = 25/16 := by
+        linarith only [h₁_left']
+
+  -- so $8(\sin t + \cos t) = 25/8 - (m^2/n^2-2\sqrt{k}-k)$.
+  have h₁_left_right'': 8*(Real.sin t + Real.cos t) = 25/8 - ((m / n)^2 - 2*Real.sqrt k - k) := by
+    calc 8*(Real.sin t + Real.cos t)
+      _ = 2*(1 + 2*(Real.sin t + Real.cos t) + Real.sin (2*t)) := by ring
+      _ = 2*(25/16) := by rw [h₁_left'']
+      _ = 25/8 := by norm_num
+      _ = 25/8 - ((m / n)^2 - 2*Real.sqrt k - k) := by
+        linarith only [h₁_left_right']
+
+  -- Rearrange to get the following equation.
+  have h₄ : ((m / n)^2 - 2*Real.sqrt k - k) = 25/8 - 8*(Real.sin t + Real.cos t) := by
+    linarith only [h₁_left_right'']
+  have h₅ : ((m / n)^2 - k) = 25/8 - 8*(Real.sin t + Real.cos t) + 2*Real.sqrt k := by
+    linarith only [h₄]
+  have h₆ : (m / n)^2 - k = 25/8 - 8*(Real.sin t + Real.cos t) + 2*Real.sqrt k := by
+    linarith only [h₅]
+
+  -- Isolate the square root term.
+  have h₇ : 2*Real.sqrt k = (m / n)^2 - k + 8*(Real.sin t + Real.cos t) - 25/8 := by
+    linarith only [h₆]
+  have h₈ : (Real.sqrt k)^2 = ((m / n)^2 - k + 8*(Real.sin t + Real.cos t) - 25/8)^2 / 4 := by
+    calc (Real.sqrt k)^2
+      _ = (2*Real.sqrt k)^2 / 4 := by ring
+      _ = ((m / n)^2 - k + 8*(Real.sin t + Real.cos t) - 25/8)^2 / 4 := by
+        rw [h₇]; ring
+
+  have h₉ : k = ((m / n)^2 - k + 8*(Real.sin t + Real.cos t) - 25/8)^2 / 4 := by
+    rw [←h₈]
+    rw [Real.sq_sqrt]
+    linarith only [show 0 ≤ k by positivity]
+  have h₁₀ : (Real.sqrt k)^2 = (((m / n) - 2*Real.sqrt k - k)^2 : ℝ) / 4 := by
+    calc (Real.sqrt k)^2
+      _ = ((m / n)^2 - k + 8*(Real.sin t + Real.cos t) - 25/8)^2 / 4 := by rw [h₈]
+      _ = (((m / n) - 2*Real.sqrt k - k)^2 : ℝ) / 4 := by
+        congr 1
+        ring
+
+  -- Get two expressions for $(Real.sqrt k)^2$ to get
+  -- $((m / n) - 2*Real.sqrt k - k)^2 = (m / n)^2 - k$.
+  have h₁₁ : ((m / n) - 2*Real.sqrt k - k)^2 = (m / n)^2 - k := by
+    calc ((m / n) - 2*Real.sqrt k - k)^2
+      _ = ((Real.sqrt k)^2 * 4) := by
+        rw [h₁₀]
+        ring
+      _ = ((m / n)^2 - k) := by
+        rw [h₉]; ring
+
+  -- Factor the left-hand side to get
+  -- $((m / n) - 2*Real.sqrt k - k) * ((m / n) + 2*Real.sqrt k + k) = (m / n)^2 - k$.
+  have h₁₂ : ((m / n) - 2*Real.sqrt k - k) * ((m / n) + 2*Real.sqrt k + k) = (m / n)^2 - k := by
+    calc ((m / n) - 2*Real.sqrt k - k) * ((m / n) + 2*Real.sqrt k + k)
+      _ = ((m / n) - k)^2 - (2*Real.sqrt k)^2 := by ring
+      _ = ((m / n) - k)^2 - 4*(Real.sqrt k)^2 := by ring
+      _ = ((m / n) - k)^2 - 4*(Real.sqrt k)^2 := by ring
+      _ = ((m / n) - k)^2 - 4*((Real.sqrt k)^2) := by ring
+      _ = ((m / n) - k)^2 - 4*((Real.sqrt k)^2) := by ring
+      _ = (m / n)^2 - k := by
+        rw [h₉]; ring
+
+  -- Notice that the right-hand sides are equal, so the left-hand sides must be equal, i.e.,
+  -- $((m / n) - 2*Real.sqrt k - k) = ((m / n) + 2*Real.sqrt k + k)$.
+  have h₁₃ : (m / n) - 2*Real.sqrt k - k = (m / n) + 2*Real.sqrt k + k := by
+    have : (m / n) - 2*Real.sqrt k - k ≤ 0 := by
+      have : (m / n)^2 - k ≥ 0 := by
+        linarith only [h₃, show 0 ≤ k by positivity]
+      have : ((m / n) - 2*Real.sqrt k - k) * ((m / n) + 2*Real.sqrt k + k) ≥ 0 := by
+        linarith only [h₁₂, show 0 ≤ ((m / n) + 2*Real.sqrt k + k)^2 by positivity]
+      apply nonpos_of_mul_nonpos_right this
+      positivity
+    have : 0 ≤ (m / n) + 2*Real.sqrt k + k := by
+      apply add_nonneg
+      apply add_nonneg
+      positivity
+      positivity
+      positivity
+    linarith only [this, ‹(m / n) - 2*Real.sqrt k - k ≤ 0›]
+
+  -- Simplify to get $4*Real.sqrt k + 2*k = 0$.
+  have h₁₄ : 4*Real.sqrt k + 2*k = 0 := by
+    calc 4*Real.sqrt k + 2*k
+      _ = 2*((m / n) + 2*Real.sqrt k + k) - 2*((m / n) - 2*Real.sqrt k - k) := by ring
+      _ = 2*((m / n) + 2*Real.sqrt k + k) - 2*((m / n) + 2*Real.sqrt k + k) := by rw [h₁₃]; ring
+      _ = 0 := by ring
+
+  -- Since $k$ is a positive integer, we have $Real.sqrt k > 0$.
+  have h₁₅ : 0 < Real.sqrt k := by
+    apply Real.sqrt_pos.mpr
+    positivity
+  -- So $4*Real.sqrt k > 0$ and $2*k > 0$, their sum cannot be $0$.
+  have h₁₆ : 0 < 4*Real.sqrt k + 2*k := by
+    linarith only [h₁₅, show 0 < 2*k by positivity]
+  linarith only [h₁₄, h₁₆]
+
+```

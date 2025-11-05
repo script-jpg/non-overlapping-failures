@@ -1,0 +1,88 @@
+-- a % 6 = 2, b % 6 = 4
+  have r1 : a % 6 = 2 := by
+    have : 6 = Nat.gcd a b := h₃
+    rw [this]
+    exact Nat.mod_mod_of_dvd a (Nat.dvd_gcd (Nat.dvd_refl a) (Nat.dvd_refl b))
+  have r2 : b % 6 = 4 := by
+    have : 6 = Nat.gcd a b := h₃
+    rw [this]
+    exact Nat.mod_mod_of_dvd b (Nat.dvd_gcd (Nat.dvd_refl a) (Nat.dvd_refl b))
+
+  -- a = 6c, b = 6d
+  have r3 : 6 ∣ a := by
+    have : 6 = Nat.gcd a b := h₃
+    rw [this]
+    exact Nat.dvd_gcd (Nat.dvd_refl a) (Nat.dvd_refl b)
+  have r4 : 6 ∣ b := by
+    have : 6 = Nat.gcd a b := h₃
+    rw [this]
+    exact Nat.dvd_gcd (Nat.dvd_refl a) (Nat.dvd_refl b)
+
+  -- c % 10 = 4, d % 10 = 8
+  have r5 : a / 6 % 10 = 4 := by
+    have : a % 60 = 4 * 6 := by
+      have : 6 * 10 = 60 := by norm_num
+      have : a % 60 = 4 * 6 := by
+        have : a % 6 = 2 := r1
+        apply Nat.mod_eq_of_modEq?_ this
+        refine Nat.modEq_of_dvd?_
+        have : 6 ∣ 60 := by norm_num
+        exact Nat.dvd_trans (Nat.dvd_gcd (Nat.dvd_refl a) (Nat.dvd_refl b)) this
+      assumption
+    have : 60 = 10 * 6 := by norm_num
+    rw [this] at this
+    exact Nat.mod_mul_right_cancel this 4
+  have r6 : b / 6 % 10 = 8 := by
+    have : b % 60 = 8 * 6 := by
+      have : b % 6 = 4 := r2
+      have : b % 60 = 8 * 6 := by
+        have := Nat.mod_eq_of_modEq?_ this
+        refine Nat.modEq_of_dvd?_
+        have : 6 ∣ 60 := by norm_num
+        exact Nat.dvd_trans (Nat.dvd_gcd (Nat.dvd_refl a) (Nat.dvd_refl b)) this
+      assumption
+    have : 60 = 10 * 6 := by norm_num
+    rw [this] at this
+    exact Nat.mod_mul_right_cancel this 8
+
+  -- c % 10 = 2, d % 10 = 4
+  have r7 : a / 6 / 6 % 10 = 2 := by
+    have : a % 60 = 2 * 6 := by
+      have : a % 6 = 2 := r1
+      apply Nat.mod_eq_of_modEq?_ this
+      refine Nat.modEq_of_dvd?_
+      have : 6 ∣ 60 := by norm_num
+      exact Nat.dvd_trans (Nat.dvd_gcd (Nat.dvd_refl a) (Nat.dvd_refl b)) this
+    have : 60 = 10 * 6 := by norm_num
+    rw [this] at this
+    exact Nat.mod_mul_right_cancel this 2
+  have r8 : b / 6 / 6 % 10 = 4 := by
+    have : b % 60 = 4 * 6 := by
+      have : b % 6 = 4 := r2
+      apply Nat.mod_eq_of_modEq?_ this
+      refine Nat.modEq_of_dvd?_
+      have : 6 ∣ 60 := by norm_num
+      exact Nat.dvd_trans (Nat.dvd_gcd (Nat.dvd_refl a) (Nat.dvd_refl b)) this
+    have : 60 = 10 * 6 := by norm_num
+    rw [this] at this
+    exact Nat.mod_mul_right_cancel this 4
+
+  -- a = 6c, b = 6d, c % 10 = 4, d % 10 = 8, then d ≥ 4c
+  have r9 : b ≥ 4 * a / 6 := by
+    have : a / 6 / 6 % 10 = 2 := r7
+    have : b / 6 % 10 = 8 := r6
+    omega
+
+  -- lcm(a,b) ≥ lcm(6,4) = 12
+  have r10 : 12 ≤ Nat.lcm a b := by
+    have : 6 = a.gcd b := h₃
+    rw [this]
+    have : Nat.lcm a b = a * b / 6 := by
+      rw [← Nat.gcd_mul_lcm a b, h₃]
+      omega
+    rw [this]
+    nlinarith only [r9, h₀, r1, r2]
+
+  by_contra!
+  interval_cases a <;> interval_cases b <;> omega
+```

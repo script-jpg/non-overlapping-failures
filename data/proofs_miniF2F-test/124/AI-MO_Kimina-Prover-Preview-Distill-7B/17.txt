@@ -1,0 +1,82 @@
+-- Let $a$ and $b$ be real numbers.
+
+  let x := abs a
+  let y := abs b
+  let z := abs (a + b)
+
+  -- Note that $|a| = x$, $|b| = y$, and $|a+b| = z$.
+
+  have hz : z = abs (a + b) := rfl
+
+  -- We can observe that $z \leq x + y$.
+
+  have hxy : z ≤ x + y := by
+    have : abs (a + b) ≤ abs a + abs b := abs_add a b
+    rw [hz] at this
+    exact this
+
+  have hx : 0 ≤ x := abs_nonneg a
+  have hy : 0 ≤ y := abs_nonneg b
+  have hz_nonneg : 0 ≤ z := abs_nonneg (a + b)
+
+  -- We have $x \geq 0$, $y \geq 0$, and $z \leq x + y$.
+
+  -- Let's analyze the function $f(t) = \frac{t}{1+t}$ for $t \geq 0$.
+
+  -- The function $f(t) = \frac{t}{1+t}$ is monotonically increasing for $t \geq 0$.
+
+  have hmono : ∀ x y : ℝ, 0 ≤ x → 0 ≤ y → x ≤ y → (x / (1 + x)) ≤ (y / (1 + y)) := by
+    intro x y hx hy hxy
+    have : 1 + x > 0 := by
+      linarith [hx]
+    have : 1 + y > 0 := by
+      linarith [hy]
+    have : (x / (1 + x)) - (y / (1 + y)) ≤ 0 := by
+      have : (x / (1 + x)) - (y / (1 + y)) = (x - y) / ((1 + x) * (1 + y)) := by
+        field_simp
+        ring
+      rw [this]
+      have : 0 ≤ (1 + x) * (1 + y) := by
+        nlinarith
+      have : 0 ≤ (x - y) / ((1 + x) * (1 + y)) := by
+        apply div_nonneg
+        linarith [hx]
+        nlinarith
+      linarith [hxy]
+    linarith
+
+  -- Since $z \leq x + y$, and $f(t) = \frac{t}{1+t}$ is monotonically increasing for $t \geq 0$,
+
+  -- we have $\frac{z}{1+z} \leq \frac{x+y}{1+x+y}$.
+
+  have : z / (1 + z) ≤ (x + y) / (1 + x + y) := by
+    apply hmono
+   . exact hz_nonneg
+   . apply add_nonneg
+     . exact hx
+     . exact hy
+   . exact hxy
+
+  rw [hz] at this
+
+  -- We also know that $\frac{x}{1+x} + \frac{y}{1+y} \geq \frac{x+y}{1+x+y}$.
+
+  have : x / (1 + x) + y / (1 + y) ≥ (x + y) / (1 + x + y) := by
+    have : 1 + x > 0 := by
+      linarith [hx]
+    have : 1 + y > 0 := by
+      linarith [hy]
+    have : (x / (1 + x) + y / (1 + y)) - (x + y) / (1 + x + y) ≥ 0 := by
+      have : x / (1 + x) + y / (1 + y) - (x + y) / (1 + x + y) = (x * y) / ((1 + x) * (1 + y)) := by
+        field_simp
+        ring
+      rw [this]
+      have : 0 ≤ (x * y) / ((1 + x) * (1 + y)) := by
+        apply div_nonneg
+        nlinarith
+        nlinarith
+      linarith
+    linarith
+
+  linarith
+```

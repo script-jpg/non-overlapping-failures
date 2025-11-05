@@ -1,0 +1,152 @@
+-- First, establish the bounds for sin t and cos t
+  have ht₁ : -1 < Real.sin t := by
+    linarith [Real.neg_one_le_sin t, Real.sin_le_one t, h₁.left]
+  have ht₂ : Real.sin t < 1 := by
+    linarith [Real.sin_le_one t, h₁.left]
+  have ht₃ : -1 < Real.cos t := by
+    linarith [Real.neg_one_le_cos t, Real.cos_le_one t, h₁.right]
+  have ht₄ : Real.cos t < 1 := by
+    linarith [Real.cos_le_one t, h₁.right]
+
+  -- Prove that the square of sin t plus the square of cos t equals 1
+  have h₄ : Real.sin t ^ 2 + Real.cos t ^ 2 = 1 := by
+    exact Real.sin_sq_add_cos_sq t
+
+  -- Using the identity (1 + sin t)(1 + cos t) = 1 + sin t + cos t + sin t cos t,
+  -- expand the left-hand side of h₂
+  have h₅ : (1 + Real.sin t) * (1 + Real.cos t) = 1 + Real.sin t + Real.cos t + Real.sin t * Real.cos t := by
+    ring
+  rw [h₅] at h₂
+
+  -- Using the identity (1 - sin t)(1 - cos t) = 1 - sin t - cos t + sin t cos t,
+  -- expand the left-hand side of h₃
+  have h₆ : (1 - Real.sin t) * (1 - Real.cos t) = 1 - Real.sin t - Real.cos t + Real.sin t * Real.cos t := by
+    ring
+  rw [h₆] at h₃
+
+  -- Prove that 1 - sin t - cos t + sin t cos t = (1 + sin t)(1 + cos t) - 4 sin t cos t
+  have h₇ : 1 - Real.sin t - Real.cos t + Real.sin t * Real.cos t = (1 + Real.sin t) * (1 + Real.cos t) - 4 * Real.sin t * Real.cos t := by
+    linarith
+  rw [h₇] at h₃
+
+  -- Substitute h₂ into h₃
+  rw [h₂] at h₃
+
+  -- Rearrange h₃ to get 1 - sin t - cos t + sin t cos t = 1/4 - √k
+  have h₈ : 1 - Real.sin t - Real.cos t + Real.sin t * Real.cos t = 1 / 4 - Real.sqrt k := by
+    linarith
+  rw [h₈] at h₃
+
+  -- Rearrange h₃ to get √k = 3/4 - (1 + sin t)(1 + cos t)
+  have h₉ : Real.sqrt k = 3 / 4 - (1 + Real.sin t) * (1 + Real.cos t) := by
+    linarith
+  have hk : k = (3 / 4 - (1 + Real.sin t) * (1 + Real.cos t)) ^ 2 := by
+    calc
+      k = (Real.sqrt k) ^ 2 := by rw [Real.sq_sqrt]; linarith
+      _ = (3 / 4 - (1 + Real.sin t) * (1 + Real.cos t)) ^ 2 := by rw [h₉]
+
+  -- Prove that 3/4 - (1 + sin t)(1 + cos t) is rational
+  have h₉ : 3 / 4 - (1 + Real.sin t) * (1 + Real.cos t) ∈ Set.range Rat.cast := by
+    simp
+    use (3 : ℚ) / 4 - (1 + Real.sin t) * (1 + Real.cos t)
+    norm_cast
+
+  -- Since √k is rational, it must be an integer
+  have h₁₀ : k ∈ Set.range (fun x : ℤ => (x : ℝ)) := by
+    rw [← Set.range_intCast, Set.mem_range] -- Re write Range asmem
+    use 3 / 4 - (1 + Real.sin t) * (1 + Real.cos t)
+    rw [hk] -- Use the equation for k
+    norm_cast -- Simplify the type
+    rw [← hk] -- Re write again, this time to show quadratic equality of k
+    exact ⟨3 / 4 - (1 + Real.sin t) * (1 + Real.cos t), rfl⟩.trans?_
+    rw [pow_two] -- Eliminate the square root
+    rw [Real.sq_sqrt] -- Change to 0 ≤ k
+    linarith -- Add k ≥ 0 and close the goal
+    linarith -- Remove the repetition of 0 ≤ k
+
+  -- Convert the range membership to integer equality
+  rcases h₁₀ with ⟨a, ha⟩
+  have ha₁ : a = k := by
+    exact Int.eq_ofNat_of_zero_le (by linarith) (by linarith)
+
+  -- Substitute the integer a to the range condition to get more inequalities
+  have h₁₁ : 0 ≤ a := by
+    rw [← ha₁] -- Re write k
+    linarith -- Use the previous inequality
+
+  have h₁₂ : a ≤ 3 := by
+    rw [← ha₁] -- Re write k
+    linarith -- Use the previous inequality
+
+  -- such integer a must be 0, 1, 2, or 3, so check each case
+  have h₁₃ : a = 0 ∨ a = 1 ∨ a = 2 ∨ a = 3 := by
+    omega
+  rcases h₁₃ with ha₀ | ha₁ | ha₂ | ha₃
+ . -- If a = 0, then k = 0 and √k = 0
+    simp [ha₀] at ha₁
+    simp [ha₁] at h₉
+    norm_num at h₉
+    have hk : 0 ≤ Real.sqrt k := by
+      exact Real.sqrt_nonneg k
+    rw [← h₉] at hk
+    linarith -- close the goal
+ . -- If a = 1, then k = 1 and √k = 1
+    simp [ha₁] at ha₂
+    simp [ha₂] at h₉
+    norm_num at h₉
+    have hk : 0 ≤ Real.sqrt k := by
+      exact Real.sqrt_nonneg k
+    rw [← h₉] at hk
+    linarith -- close the goal
+ . -- If a = 2, then k = 4 and √k = 2
+    simp [ha₂] at ha₃
+    simp [ha₃] at h₉
+    norm_num at h₉
+    have hk : 0 ≤ Real.sqrt k := by
+      exact Real.sqrt_nonneg k
+    rw [← h₉] at hk
+    linarith -- close the goal
+ . -- If a = 3, then k = 9 and √k = 3
+    simp [ha₃] at ha₄
+    -- Substitute k = 9 to hk
+    simp [ha₄] at h₉
+    norm_num at h₉
+    rw [Real.sqrt_eq_cases] at h₉
+    -- For the remaining goals, try linarith
+    any_goals try linarith
+    -- Finish the rest by linarith
+    any_goals omega
+
+  -- Substitute k = 9 to h₃
+  rw [ha₁, ha₀] at h₃
+  norm_num at h₃
+  -- From h₃, we get m = 98 and n = 16
+  have hm : (m : ℝ) = 98 := by
+    linarith
+  have hn : (n : ℝ) = 16 := by
+    linarith
+
+  -- Convert the type of m and n
+  rcases hm with hm | hm
+ . -- If m is integer, then it must be 98
+    norm_cast at hm
+    -- Substitute m = 98 to hn
+    rw [hm] at hn
+    norm_num at hn
+    -- Now we have 98 = 16 * n, and we can derive the contradiction
+    have hn' : 98 = 16 * n := by
+      exact_mod_cast hn
+    have n_le : n ≤ 6 := by
+      linarith
+    have n_gt : n ≥ 5 := by
+      linarith
+    omega
+ . -- If m is not integer, then it is not possible
+    linarith
+
+  -- Substitute n = 16 to hm
+  rw [hn] at hm
+  norm_num at hm
+  -- Finally, we get m = 98, n = 16, k = 9 and their sum is 27
+  rw [hm, hn, ha₁]
+```

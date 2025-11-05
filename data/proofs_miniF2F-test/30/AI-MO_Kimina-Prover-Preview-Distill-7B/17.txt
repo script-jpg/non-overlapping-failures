@@ -1,0 +1,292 @@
+have h₂ : x ^ y ^ 2 = y ^ x := h₁
+
+  rcases h₀ with ⟨hx, hy⟩
+
+  have h₃ : x ≠ 0 := by exact Nat.pos_iff_ne_zero.mp hx
+
+  have h₄ : y ≠ 0 := by exact Nat.pos_iff_ne_zero.mp hy
+
+  -- Take logarithm of both sides, we have $y^2 \log x = x \log y$. -/
+  apply_fun (Real.logb x) at h₂
+
+  -- Use the property that $\log x^y = y \log x$ and $\log (x^y) = y \log x$. -/
+  rw [Real.logb_rpow] at h₂
+  rw [Real.logb_rpow] at h₂
+
+  -- Simplify the equation using congruence. -/
+  simp [h₃, h₄] at h₂
+
+  -- Rearrange the equation, we have $\frac{\log x}{\log y} = \frac{x}{y^2}$. -/
+  replace h₂ : Real.log x / Real.log y = x / y ^ 2 := by
+    field_simp [h₃, h₄]
+    linarith only [h₂]
+
+  -- Let $p$ be a prime number such that $p \mid x$. -/
+  -- We will show that $p \mid y$ and $p \mid \frac{x}{p}$. -/
+  have h₅ (p : ℕ) (h₅ : p.Prime) (h₆ : p ∣ x) : p ∣ y ∧ p ∣ x / p := by
+    -- First, show that $p \mid y$ by applying the lemma Nat.Prime.dvd_of_dvd_pow. -/
+    apply Nat.Prime.dvd_of_dvd_pow h₅
+    -- Apply the lemma to $x^y$ and $y^x$. -/
+    rw [← Nat.pow_dvd_pow_iff] at h₂ ⊢
+    -- Cast the natural numbers to reals. -/
+    norm_cast at h₂ ⊢
+    -- Use the fact that $\log y \neq 0$ and $\frac{x}{y^2} \neq 0$. -/
+    have h₇ : Real.log y ≠ 0 := by
+      apply Real.log_ne_zero_of_pos_of_ne_one hy
+      norm_num
+    have h₈ : x / y ^ 2 ≠ 0 := by
+      rw [← @Nat.cast_inj Real]
+      norm_cast
+      simp [h₃, h₄]
+    -- Apply the lemma and finish the proof. -/
+    field_simp [h₇, h₈] at h₂ ⊢
+    nth_rewrite 1 [← h₂] at h₆
+    apply h₆
+
+  -- Note that $\frac{x}{p}$ is an integer if $p \mid x$. -/
+  have h₆ (p : ℕ) (h₆ : p ∣ x) : x / p ∈ Set.range Nat.cast := by
+    -- Use the fact that $x/p$ is a natural number. -/
+    simp
+    -- Use the lemma Nat.cast_div_of_dvd. -/
+    apply Nat.cast_div_of_dvd h₆
+
+  -- Note that $\frac{x}{p}$ is a positive number. -/
+  have h₇ (p : ℕ) (h₇ : p ∣ x) : x / p > 0 := by
+    -- Since $x$ is positive and $p \mid x$, apply Nat.div_pos. -/
+    apply Nat.div_pos
+    · linarith only [h₇.pos]
+    · exact Nat.Prime.pos h₆
+
+  -- Let $k$ be the number of prime factors of $x$. -/
+  -- We will show that $x = y^2$. -/
+  -- Let $p_1, p_2, \dots, p_k$ be the prime factors of $x$. -/
+  -- We have $\prod_{i=1}^k \frac{\log p_i}{\log y} = \prod_{i=1}^k \frac{p_i}{p_i^2}$. -/
+  have h₈ : x = y ^ 2 := by
+    -- Let $p$ be a prime number such that $p \mid x$. -/
+    have h₈ (p : ℕ) (h₈ : p.Prime) (h₉ : p ∣ x) : p ∣ y ^ 2 := by
+      -- Let $t$ be the number of prime factors of $p$. -/
+      have h₁₀ : p = 1 ∨ p = y ∨ p ∈ x.primeFactors := by
+        -- Let $t$ be the number of prime factors of $p$. -/
+        omega
+      rcases h₁₀ with h₁₀ | h₁₀ | h₁₀
+      -- If $p = 1$, it is a contradiction. -/
+      · contradiction
+      -- If $p = y$, we have $p \mid y$. -/
+      · exact h₁₀
+      -- If $p \in x.primeFactors$, we have $p \mid x$. -/
+      · have h₁₁ : p ∣ x := h₉
+        -- Apply the lemma and finish the proof. -/
+        apply Nat.dvd_trans h₁₁
+        apply Nat.dvd_prime_pow h₈ h₁₀
+
+    -- Let $t$ be the number of prime factors of $x$. -/
+    have h₉ : x = y ^ 2 := by
+      -- We will show that $x = y^2$ by using the fact that $p \mid y$ for all $p \in x.primeFactors$. -/
+      apply Nat.eq_of_primeFactors_eq h₃
+      · simp
+      · simp
+        exact h₁
+      · simp [h₆]
+      · simp
+        intro p h₆ h₇
+        -- Show that $p \mid y^2$ for all $p \in x.primeFactors$. -/
+        exact h₈ p h₆ h₇
+    -- Add the remaining goals. -/
+    exact h₉
+
+  -- Note that $y^2$ is a positive number. -/
+  have h₉ : 0 < y ^ 2 := by
+    rw [Nat.pos_iff_ne_zero]
+    exact Nat.pow_ne_zero 2 hy
+
+  -- We have $x \log y^2 = y^x \log y$. -/
+  apply_fun (x * ·) at h₂
+
+  -- Simplify the equation using congruence. -/
+  simp [h₃, h₄, h₈] at h₂
+
+  -- We have $x \log y^2 = x y^2 \log y / y^2 = x \log y$. -/
+  -- We get $x = 1$ or $y^2 = 1$. -/
+  rw [mul_comm, ← mul_div_assoc, Nat.cast_inj, mul_comm] at h₂
+  rw [Nat.mul_div_cancel _ h₉] at h₂
+  simp [h₃, h₄] at h₂
+
+  rcases h₂ with h₂ | h₂
+
+  -- If $x = 1$, then $y^2 = 1$ from $x \log y^2 = y^x \log y$. -/
+  · apply_fun (· / x) at h₂
+    simp [h₃, h₄, h₈, h₂] at h₂
+    rw [h₂] at h₈
+    simp [h₃, h₄, h₈]
+
+  -- If $y^2 = 1$, then $y = 1$ and $x = 1$. -/
+  · simp [h₃, h₄, h₈, h₂] at h₂
+    rw [h₂] at h₈
+    simp [h₃, h₄, h₈]
+
+  -- Note that if $x$ and $y$ are prime numbers, then the equation $x^y^2 = y^x$ becomes $p_1^{p_2^2} = p_2^{p_1}$. -/
+  -- We will show that the only solutions are $(1, 1)$, $(16, 2)$, and $(27, 3)$. -/
+  -- Since $x = y^2$, we have $p_1^{p_2^2} = p_2^{p_1}$. -/
+  -- Take logarithm of both sides, we have $p_2^2 \log p_1 = p_1 \log p_2$. -/
+  -- We have $\frac{\log p_1}{\log p_2} = \frac{p_1}{p_2^2}$. -/
+  -- Let $p$ be a prime number such that $p \mid p_1$. -/
+  have h₉ (p q : ℕ) (hp : p.Prime) (hq : q.Prime) (hp' : p ∣ q) : p = q := by
+    -- Since $p \mid q$ and $q$ is a prime number, $p = q$. -/
+    exact Nat.prime_dvd_prime_iff_eq hp hq |>.mp hp'
+
+  -- We will show that $x = 1$ or $(x, y) = (16, 2), (27, 3)$. -/
+  by_cases h₁₀ : x = 1
+  · simp [h₁₀, h₈]
+
+  -- Since $x \neq 1$, $y^2 \neq 1$ and $y \neq 1$. -/
+  have h₁₁ : y ≠ 1 := by
+    -- Assume $y = 1$. -/
+    by_contra! h₁₁
+    -- We have $x = 1$ from $x = y^2$. -/
+    rw [h₁₁] at h₈
+    simp [h₈]
+
+  -- Note that $y^2$ is a positive number. -/
+  have h₁₂ : 0 < y ^ 2 := by
+    rw [Nat.pos_iff_ne_zero]
+    exact Nat.pow_ne_zero 2 h₁₁
+
+  -- Since $x \neq 1$, we have $\log x \neq 0$. -/
+  have h₁₃ : Real.log x ≠ 0 := by
+    -- Assume $\log x = 0$. -/
+    by_contra! h₁₃
+    -- We have $x = 1$ from $\log x = 0$. -/
+    have h₁₄ : x = 1 := by
+      linarith only [h₁₃, h₃]
+    contradiction
+
+  -- Since $y^2 \neq 1$, we have $\log y^2 \neq 0$. -/
+  have h₁₄ : Real.log (y ^ 2) ≠ 0 := by
+    -- Assume $\log y^2 = 0$. -/
+    by_contra! h₁₄
+    -- We have $y^2 = 1$ from $\log y^2 = 0$. -/
+    have h₁₅ : y ^ 2 = 1 := by
+      linarith only [h₁₄, h₁₂]
+    simp at h₁₅
+    contradiction
+
+  -- We have $\frac{\log x}{\log y^2} = 1$. -/
+  -- We have $\frac{\log x}{\log y^2} = \frac{x \log y^2}{y^2 \log y^2} = \frac{x}{y^2}$. -/
+  -- Since $x = y^2$, we have $\frac{x}{y^2} = 1$. -/
+  have h₁₅ : Real.log x / Real.log (y ^ 2) = 1 := by
+    -- The first equality is from $\frac{\log x}{\log y^2} = 1$. -/
+    field_simp [h₁₃, h₁₄]
+    -- Simplify the equation using congruence. -/
+    rw [h₈]
+    -- The second equality is from $\frac{\log x}{\log y^2} = \frac{x \log y^2}{y^2 \log y^2} = \frac{x}{y^2}$. -/
+    field_simp [h₃, h₁₂]
+    -- The third equality is from $x = y^2$. -/
+    <;> linarith only [h₈]
+
+  -- We have $x = y^2$. -/
+  have h₁₆ : x = y ^ 2 := by
+    -- Take the exponential of both sides. -/
+    apply_fun (Real.exp) at h₁₅
+    -- Simplify the equation using congruence. -/
+    rw [Real.exp_log] at h₁₅
+    -- Use the fact that $x > 0$ and $y^2 > 0$. -/
+    rw [Real.exp_log] at h₁₅
+    simp [h₃, h₁₂] at h₁₅
+    -- The exponential function is injective. -/
+    have h₁₇ : Real.exp (Real.log x) = Real.exp (Real.log (y ^ 2)) := by
+      rw [h₁₅]
+    -- Simplify the equation using congruence. -/
+    rw [Real.exp_log] at h₁₇
+    rw [Real.exp_log] at h₁₇
+    simp [h₃, h₁₂] at h₁₇
+    exact h₁₇
+
+  -- We have $y \neq 1$. -/
+  have h₁₇ : y ≠ 1 := by
+    -- Assume $y = 1$. -/
+    by_contra! h₁₇
+    -- We have $x = 1$ from $x = y^2$. -/
+    rw [h₁₇] at h₁₆
+    simp [h₃] at h₁₆
+    -- This is a contradiction. -/
+    contradiction
+
+  rcases h₁ with h₁ | h₁
+  -- If $x = 1$, it is a contradiction. -/
+  · contradiction
+  -- If $x \neq 1$, then $x$ has a prime factor. -/
+  · -- Let $p$ be a prime factor of $x$. -/
+    have h₁₈ : x.primeFactors.Nonempty := by
+      -- Use the fact that $x \neq 1$. -/
+      apply Nat.exists_prime_and_dvd h₃ h₁
+    -- Let $p$ be a prime factor of $x$. -/
+    rcases h₁₈ with ⟨p, h₁₈, h₁₉⟩
+    -- Note that $p \mid x$. -/
+    have h₂₀ : p ∣ x := by
+      -- Since $p \in x.primeFactors$, $p \mid x$. -/
+      exact h₁₉
+    -- Note that $p \mid y^2$. -/
+    have h₂₁ : p ∣ y ^ 2 := by
+      -- Since $p \mid x$ and $x = y^2$, $p \mid y^2$. -/
+      apply Nat.dvd_trans h₂₀
+      apply Nat.dvd_prime_pow h₈ h₁₈
+    -- Note that $p \mid y$. -/
+    have h₂₂ : p ∣ y := by
+      -- Since $p \mid y^2 = y \cdot y$, $p \mid y$ or $p \mid y$. -/
+      rw [Nat.dvd_pow] at h₂₁
+      -- Since $p$ is prime number, $p \mid y$ or $p \mid y$. -/
+      apply Nat.Prime.dvd_mul h₈ at h₂₁
+      -- Since $p$ is prime number, we have $p \mid y$. -/
+      cases h₂₁ with
+      | inl h₂₁ =>
+        -- $p \mid y$
+        exact h₂₁
+      | inr h₂₁ =>
+        -- $p \mid y$
+        exact h₂₁
+
+    -- Note that $p \mid p_1$. -/
+    have h₂₃ : p ∣ p := by
+      -- $p \mid p$ from $p \mid y$ and $p \mid y^2$. -/
+      apply Nat.dvd_trans h₂₂
+      apply Nat.dvd_prime_pow h₈ h₁₈
+
+    -- Since $p \mid p$ and $p$ is a prime number, $p = p$. -/
+    exact Nat.prime_dvd_prime_iff_eq h₈ h₈ |>.mp h₂₃
+
+  -- We have $y^2 = 1$. -/
+  · simp [h₃, h₁₂] at h₁
+    -- We have $y = 1$ from $y^2 = 1$. -/
+    have h₁₈ : y = 1 := by
+      rw [Nat.pow_eq_one_iff] at h₁
+      cases h₁ with
+      | inl h₁ =>
+        -- $y = 1$
+        exact h₁
+      | inr h₁ =>
+        -- $y = 0$, but $y > 0$
+        omega
+    -- This is a contradiction. -/
+    contradiction
+
+  -- Note that $y^2$ is a positive number. -/
+  have h₁₃ : 0 < y ^ 2 := by
+    rw [Nat.pos_iff_ne_zero]
+    exact Nat.pow_ne_zero 2 hy
+
+  -- We have $x \log y^2 = x y^2 \log y / y^2 = x \log y$. -/
+  -- We get $x = 1$ or $y^2 = 1$. -/
+  apply_fun (x * ·) at h₂
+
+  -- Simplify the equation using congruence. -/
+  simp [h₃, h₄, h₁₃, h₈] at h₂
+
+  -- We have $x \log y^2 = x y^2 \log y / y^2 = x \log y$. -/
+  -- We get $x = 1$ or $y^2 = 1$. -/
+  rw [mul_comm, ← mul_div_assoc, Nat.cast_inj, mul_comm] at h₂
+  rw [Nat.mul_div_cancel _ h₁₃] at h₂
+  simp [h₃, h₄, h₁₃] at h₂
+
+  rcases h₂ with h₂ | h₂
+
+  -- If

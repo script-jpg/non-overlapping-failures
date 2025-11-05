@@ -1,0 +1,124 @@
+-- an auxiliary lemma that is useful for later
+  have h₂ : 0 < a * b + b * c + c * a := by
+    rcases h₀ with ⟨ha, hb, hc⟩
+    exact mul_pos (mul_pos ha hb) hc
+
+  -- transform the goal by `Real.sqrt_le_left`
+  have h₃ : 0 < Real.sqrt 2 := by norm_num
+  suffices 3 * Real.sqrt 2 / 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) by
+    apply (div_le_iff₀ h₃).mpr at this
+    rw [mul_comm, div_eq_mul_inv, ←this]
+    field_simp
+
+  -- establish the following inequality by `linarith`
+  have h₄ : 3 * Real.sqrt 2 / 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) := by
+    -- rewrite `Real.sqrt 2` into `Real.sqrt (2 ^ 2)`
+    rw [show Real.sqrt 2 = Real.sqrt (2 ^ 2) by norm_num] at *
+    -- remove `Real.sqrt` by `Real.sq_le_sq`
+    apply (Real.sqrt_le_sqrt_iff (by positivity)).mpr at *
+    -- transform the goal by `mul_le_mul_left`
+    suffices Real.sqrt (3 * 2 ^ 2) / 2 * Real.sqrt 2 ≤ a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) / Real.sqrt 2 by
+      apply (div_le_iff₀ h₃).mpr at this
+      rw [mul_comm, ←this]
+      apply div_eq_of_eq_mul
+      norm_num
+      norm_num
+    ring_nf
+    -- turn the goal into an multiplication form
+    rw [show Real.sqrt (3 * 2 ^ 2) = Real.sqrt (2 ^ 2 * 3) by ring_nf]
+    rw [Real.sqrt_mul (by norm_num)]
+    rw [show Real.sqrt (2 ^ 2) = (2 : ℝ) by refine Real.sqrt_sq (by norm_num)]
+
+    -- establish the following inequality by `nlinarith`
+    have h₅ : 0 ≤ (a - b) ^ 2 := by positivity
+    have h₆ : 0 ≤ (b - c) ^ 2 := by positivity
+    have h₇ : 0 ≤ (c - a) ^ 2 := by positivity
+    have h₈ : 0 ≤ (a - b) * (b - c) * (c - a) := by nlinarith
+
+    -- transform the goal into a multiplication form
+    rw [show (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) / Real.sqrt 2) = ((a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) * Real.sqrt 2) / Real.sqrt 2 by field_simp, mul_comm, mul_assoc]
+    -- transform the goal by `mul_le_mul_right`
+    suffices ((a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) * Real.sqrt 2) ^ 2 ≤ 9 * (a + b + c) / 2 * (a * b + b * c + c * a) by
+      apply (div_le_div_iff_of_pos_right (by positivity) (by positivity)).mpr at this
+      rw [mul_comm, ←this]
+      apply div_eq_of_eq_mul
+      norm_num
+      -- show `0 < 2 * 3 / (2 * 3 - 1) * (a + b + c) * (a * b + b * c + c * a) * Real.sqrt 2`
+      apply div_pos?_ (by positivity)
+      apply mul_pos (by norm_num)
+      apply mul_pos (by norm_num)
+      positivity
+    apply (div_le_iff₀ (by positivity)).mpr at *
+
+    -- rewrite the left side into a multiplication form
+    rw [show ((a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) * Real.sqrt 2) ^ 2 = ((a / Real.sqrt (a + b) * Real.sqrt 2) ^ 2 + (b / Real.sqrt (b + c) * Real.sqrt 2) ^ 2 + (c / Real.sqrt (c + a) * Real.sqrt 2) ^ 2 + 2 * (a / Real.sqrt (a + b) * Real.sqrt 2) * (b / Real.sqrt (b + c) * Real.sqrt 2) * (c / Real.sqrt (c + a) * Real.sqrt 2)) ^ 2 by ring_nf]
+    rw [show (a / Real.sqrt (a + b) * Real.sqrt 2) ^ 2 = (a / Real.sqrt (a + b)) ^ 2 * (Real.sqrt 2) ^ 2 by ring]
+    rw [show (b / Real.sqrt (b + c) * Real.sqrt 2) ^ 2 = (b / Real.sqrt (b + c)) ^ 2 * (Real.sqrt 2) ^ 2 by ring]
+    rw [show (c / Real.sqrt (c + a) * Real.sqrt 2) ^ 2 = (c / Real.sqrt (c + a)) ^ 2 * (Real.sqrt 2) ^ 2 by ring]
+    rw [Real.sq_sqrt (by norm_num)]
+    -- transform the left side into a multiplication form
+    rw [show (a / Real.sqrt (a + b) * Real.sqrt 2) ^ 2 * (b / Real.sqrt (b + c) * Real.sqrt 2) ^ 2 * (c / Real.sqrt (c + a) * Real.sqrt 2) ^ 2 = ((a / Real.sqrt (a + b)) * (b / Real.sqrt (b + c)) * (c / Real.sqrt (c + a))) ^ 2 * (Real.sqrt 2) ^ 3 by ring]
+    rw [show (a / Real.sqrt (a + b)) * (b / Real.sqrt (b + c)) * (c / Real.sqrt (c + a)) = (a * b * c) / (Real.sqrt ((a + b) * (b + c) * (c + a))) by field_simp]
+    rw [show (Real.sqrt 2) ^ 3 = (Real.sqrt 2) ^ 2 * Real.sqrt 2 by ring]
+    rw [Real.sq_sqrt (by norm_num)]
+
+    -- transform the goal into a multiplication form
+    rw [show ((a / Real.sqrt (a + b) * Real.sqrt 2) ^ 2 + (b / Real.sqrt (b + c) * Real.sqrt 2) ^ 2 + (c / Real.sqrt (c + a) * Real.sqrt 2) ^ 2 + 2 * (a / Real.sqrt (a + b) * Real.sqrt 2) * (b / Real.sqrt (b + c) * Real.sqrt 2) * (c / Real.sqrt (c + a) * Real.sqrt 2)) ^ 2 = ((a / Real.sqrt (a + b)) ^ 2 + (b / Real.sqrt (b + c)) ^ 2 + (c / Real.sqrt (c + a)) ^ 2 + 2 * ((a / Real.sqrt (a + b)) * (b / Real.sqrt (b + c)) * (c / Real.sqrt (c + a)))) ^ 2 by ring_nf]
+    -- deal with the left part
+    have h₉ : ((a / Real.sqrt (a + b)) ^ 2 + (b / Real.sqrt (b + c)) ^ 2 + (c / Real.sqrt (c + a)) ^ 2 + 2 * ((a / Real.sqrt (a + b)) * (b / Real.sqrt (b + c)) * (c / Real.sqrt (c + a)))) ^ 2 ≤ (3 * (a + b + c) / 2) ^ 2 := by
+      -- rewrite the left side into a multiplication form
+      rw [show ((a / Real.sqrt (a + b)) ^ 2 + (b / Real.sqrt (b + c)) ^ 2 + (c / Real.sqrt (c + a)) ^ 2 + 2 * ((a / Real.sqrt (a + b)) * (b / Real.sqrt (b + c)) * (c / Real.sqrt (c + a)))) = ((a ^ 2) / (a + b) + (b ^ 2) / (b + c) + (c ^ 2) / (c + a) + 2 * (a * b * c) / (Real.sqrt ((a + b) * (b + c) * (c + a)))) by field_simp; ring]
+      -- remove `Real.sqrt` by `Real.sq_le_sq`
+      suffices ((a ^ 2) / (a + b) + (b ^ 2) / (b + c) + (c ^ 2) / (c + a) + 2 * (a * b * c) / (Real.sqrt ((a + b) * (b + c) * (c + a)))) ^ 2 ≤ (3 * (a + b + c) / 2) ^ 2 by
+        apply (div_le_iff₀ (by positivity)).mpr at this
+        rw [mul_comm, ←this]
+        apply (div_le_iff₀ (by positivity)).mpr
+        rw [mul_comm, mul_comm (a ^ 2), mul_assoc]
+        simp only [mul_nonneg_iff_of_pos_right]
+        positivity
+      -- transform the goal by `x ^ 2 ≤ y ^ 2 ↔ |x| ≤ |y|`
+      suffices |((a ^ 2) / (a + b) + (b ^ 2) / (b + c) + (c ^ 2) / (c + a) + 2 * (a * b * c) / (Real.sqrt ((a + b) * (b + c) * (c + a))))| ≤ |(3 * (a + b + c) / 2)| by
+        apply sq_le_sq.mpr at this
+        exact this
+      rw [abs_of_nonneg (by positivity)]
+      rw [abs_of_nonneg (by positivity)]
+      -- transform the left side into a multiplication form
+      rw [show ((a ^ 2) / (a + b) + (b ^ 2) / (b + c) + (c ^ 2) / (c + a) + 2 * (a * b * c) / (Real.sqrt ((a + b) * (b + c) * (c + a)))) = ((a ^ 2) / (a + b) + (b ^ 2) / (b + c) + (c ^ 2) / (c + a)) + 2 * (a * b * c) / (Real.sqrt ((a + b) * (b + c) * (c + a))) by ring]
+      -- combine the left side into a square form
+      rw [show (x + y) ^ 2 ≤ (x ^ 2 + y ^ 2 + 2 * x * y) by positivity]
+      apply add_le_add
+      -- transform the goal into the form of algebra_abpbcpcageq3_sumaonsqrtapbgeq3onsqrt2
+      exact algebra_abpbcpcageq3_sumaonsqrtapbgeq3onsqrt2 (a ^ 2 / (a + b) + b ^ 2 / (b + c) + c ^ 2 / (c + a)) (by positivity) (by positivity) (by linarith)
+      -- transform the right side into a square form
+      suffices (2 * (a * b * c) / Real.sqrt ((a + b) * (b + c) * (c + a))) ^ 2 ≤ (3 * (a + b + c) / 2) * (a * b + b * c + c * a) by
+        apply add_le_add_left
+        simp only [sq, Nat.ofNat_nonneg, mul_le_mul_left]
+        exact this
+      rw [show (2 * (a * b * c) / Real.sqrt ((a + b) * (b + c) * (c + a))) ^ 2 = 4 * ((a * b * c) ^ 2 / ((a + b) * (b + c) * (c + a))) by ring]
+      have h₉ : 0 ≤ (a * b * c) ^ 2 := by positivity
+      rw [show 4 * ((a * b * c) ^ 2 / ((a + b) * (b + c) * (c + a))) = 4 * ((a * b * c) / Real.sqrt ((a + b) * (b + c) * (c + a))) ^ 2 by
+        field_simp
+        rw [mul_pow, mul_assoc, Real.sq_sqrt (by positivity)]
+      ]
+      -- transform the right side into a multiplication form
+      rw [show (3 * (a + b + c) / 2) * (a * b + b * c + c * a) = (3 / 2) * ((a + b + c) * (a * b + b * c + c * a)) by ring]
+      -- transform the right side into a multiplication form
+      rw [show ((a + b + c) * (a * b + b * c + c * a)) = (a * b + b * c + c * a) + (a * c + c * b + b * a) + (a * b * c) * (1 / a + 1 / b + 1 / c) by field_simp; ring]
+      -- combine the right side into a square form
+      suffices (a * b + b * c + c * a) + (a * c + c * b + b * a) + (a * b * c) * (1 / a + 1 / b + 1 / c) ≤ 3 / 2 * ((a + b + c) * (a * b + b * c + c * a)) by
+        apply mul_le_mul_of_nonneg_left this (by positivity)
+      -- transform the goal into a multiplication form
+      rw [show ((a + b + c) * (a * b + b * c + c * a)) = (a + b + c) * (a * b + b * c + c * a) by ring]
+      -- transform the goal into a multiplication form
+      rw [show (a * b + b * c + c * a) + (a * c + c * b + b * a) + (a * b * c) * (1 / a + 1 / b + 1 / c) = (a + b + c) * (a * b + b * c + c * a) / 2 + (a * b * c) * (1 / a + 1 / b + 1 / c) / 2 + (a * b * c) * (1 / a + 1 / b + 1 / c) / 2 by field_simp; ring]
+      -- use `linarith` to find a contradictory inequality
+      linarith
+    -- transform the left side into a multiplication form
+    rw [show ((a / Real.sqrt (a + b)) * (b / Real.sqrt (b + c)) * (c / Real.sqrt (c + a))) = (a * b * c) / ((a + b) * (b + c) * (c + a)) by field_simp]
+    rw [show ((a * b * c) / ((a + b) * (b + c) * (c + a))) * Real.sqrt ((a + b) * (b + c) * (c + a)) = a * b * c by field_simp]
+    -- transform the left side into a multiplication form
+    rw [show ((a / Real.sqrt (a + b)) * Real.sqrt 2) * ((b / Real.sqrt (b + c)) * Real.sqrt 2) * ((c / Real.sqrt (c + a)) * Real.sqrt 2) = (a / Real.sqrt (a + b)) * (b / Real.sqrt (b + c)) * (c / Real.sqrt (c + a)) * Real.sqrt 2 * Real.sqrt 2 by ring]
+    rw [show Real.sqrt 2 * Real.sqrt 2 = 2 by norm_num]
+
+  exact h₄
+```

@@ -1,0 +1,97 @@
+-- Note that the factorial of a number $n$ is the product of all positive integers from 1 to $n$.
+  -- To solve the problem, we need to find the smallest such $n$ where $80325$ divides $n!$.
+  -- We will approach this by:
+  -- 1. Understanding the prime factorization of 80325
+  -- 2. Determining how these prime factors appear in factorials
+  -- 3. Finding the smallest $n$ such that all prime factors of 80325 appear in $n!$
+
+  -- Step 1: Factorize 80325
+  -- Let's start by factorizing 80325. After dividing by 5, we get:
+  -- $80325 = 5 \cdot 16065$
+  -- Continuing to factorize 16065:
+  -- $16065 = 5 \cdot 3213$
+  -- So $80325 = 5^2 \cdot 3213$
+  -- Now, factorizing 3213:
+  -- $3213 = 3 \cdot 1071$
+  -- And $1071 = 3 \cdot 357$
+  -- So $80325 = 5^2 \cdot 3^2 \cdot 357$
+  -- Continuing to factorize 357:
+  -- $357 = 3 \cdot 119$
+  -- And $119 = 7 \cdot 17$
+  -- So $80325 = 5^2 \cdot 3^3 \cdot 7 \cdot 17$
+  -- Thus, the prime factorization of 80325 is $3^3 \cdot 5^2 \cdot 7 \cdot 17$
+
+  have factorization_80325: Nat.PrimeFactors 80325 = {3, 5, 7, 17} := by native_decide
+
+  -- Step 2: Determine how these prime factors appear in factorials
+  -- For a prime number $p$, it will appear in $n!$ if and only if $n \geq p$.
+  -- So for our factors {3, 5, 7, 17}, we need $n \geq 17$.
+
+  -- Step 3: Finding the smallest $n$ such that all prime factors appear
+  -- Since 17 is the largest prime factor of 80325, we need $n \geq 17$.
+  -- To confirm that 17 is sufficient, let's check:
+  -- - $3$ appears in $17!$ (since $17 \geq 3$)
+  -- - $5$ appears in $17!$ (since $17 \geq 5$)
+  -- - $7$ appears in $17!$ (since $17 \geq 7$)
+  -- - $17$ appears in $17!$ (since $17 \geq 17$)
+  -- And indeed, $17!$ contains all the prime factors of 80325 with sufficient multiplicity
+
+  -- However, we need to be careful with the Lean proof. The approach above is correct, but Lean's library
+  -- might not have a direct way to compute prime factors of a natural number.
+  -- So we need to approach this differently using Lean's tools.
+
+  have h₂ : n ≥ 17 := by
+    -- We need to show that $n \geq 17$ given that $80325 \mid n!$.
+    -- One approach is to show that $17!$ divides $n!$ which implies $n \geq 17$.
+    have dvd : n! ∣ 80325! := by
+      apply Nat.factorial_dvd_factorial
+      exact h₁
+    -- Now, if $n! \mid 80325!$, then all prime factors of $n!$ are in $80325!$.
+    -- But $80325 = 3^3 \cdot 5^2 \cdot 7 \cdot 17$, so the prime factors are {3, 5, 7, 17}.
+    -- Since 17 is prime, it must appear in $80325!$ if and only if $80325! \geq 17$.
+    -- But $80325!$ is much larger than 17, so this is trivially true.
+    -- However, Lean's library might not have a way to extract prime factors directly.
+    -- So we need another approach.
+    -- We can use the fact that if $p$ is a prime and $p \mid n!$, then $p \leq n$.
+    -- So if $17 \mid n!$, then $17 \leq n$.
+    by_contra! h
+    -- To show that $17 \leq n$ is necessary, we need to prove that if $n < 17$, then $80325 \nmid n!$.
+    -- We can do this by contradiction. Assume $n < 17$ and $80325 \mid n!$.
+    -- Since $n < 17$, $n!$ does not include 17 as a factor.
+    -- But $80325 = 3^3 \cdot 5^2 \cdot 7 \cdot 17$, so $17 \mid 80325$ and thus $17 \mid n!$ if $80325 \mid n!$.
+    -- However, as we noted, Lean might not have a direct way to compute prime factors.
+    -- So we need to take another approach.
+    -- We can use the fact that if $p$ is a prime and $p \mid n!$, then $p \leq n$.
+    -- So if $17 \mid n!$, then $17 \leq n$.
+    -- Since we assume $n < 17$, this would be a contradiction.
+    -- But Lean might not have a way to directly prove this.
+    -- So we need to think about another approach.
+    -- We can use the fact that $80325 = 3^3 \cdot 5^2 \cdot 7 \cdot 17$.
+    -- So $80325 \mid n!$ implies that $n!$ contains at least one factor of 17.
+    -- But $n!$ contains 17 as a factor if and only if $n \geq 17$.
+    -- So we need to show that if $80325 \mid n!$, then $17 \mid n!$.
+    -- And $17 \mid n!$ if and only if $n \geq 17$.
+    have h₃ : Nat.Prime 17 := by norm_num
+    have h₄ : 17 ∣ n! := by
+      -- Lean has a theorem that if $a \mid b$ and $b \mid c$, then $a \mid c$ (transitivity of divisibility).
+      -- We know that $80325 \mid n!$ (h₁) and $17 \mid 80325$ (since 17 is prime and appears in the factorization),
+      -- so $17 \mid n!$.
+      have h₅ : 17 ∣ 80325 := by
+        native_decide
+      exact dvd.trans h₅
+    -- Now, we need to show that $17 \mid n!$ implies $17 \leq n$.
+    -- This is a standard number theory result: if $p$ is prime and $p \mid n!$, then $p \leq n$.
+    -- Because $n! = 1 \cdot 2 \cdot 3 \cdot... \cdot n$ and $p$ is prime, $p$ must appear as one of the factors in the product.
+    -- So $p \leq n$.
+    have h₆ : 17 ≤ n := by
+      have h₇ : Nat.Prime 17 := h₃
+      have h₈ : 17 ∣ n! := h₄
+      -- Lean has a theorem exactly for this: if $p$ is prime and $p \mid n!$, then $p \leq n$.
+      apply Nat.Prime.dvd_factorial h₇ at h₈
+      linarith
+    -- But this contradicts our assumption that $n < 17$.
+    linarith
+  -- Therefore, $17 \leq n$ as required.
+
+  exact h₂
+```

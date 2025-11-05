@@ -1,0 +1,99 @@
+-- Let $S$ be the set of positive integers $n$ that satisfy the given equation.
+  -- We want to prove that $S$ has exactly 6 elements.
+
+  -- It is enough to show that the elements of $S$ are $1,2,3,38,39$ and $40$.
+  suffices S = {1, 2, 3, 38, 39, 40} by rw [this]; simp
+
+  -- To that end, we first show that the set $S$ is finite.
+  have h₁ : S.Nonempty := by
+    use 1
+    simp [h₀]
+  have h₂ : S.Finite := by
+    rw [← Finset.coe_inj]
+    apply Finset.finite_toSet
+    apply Set.finite_of_mem h₁
+
+  -- Let $n$ be an element of $S$.
+  -- $\dfrac{n+1000}{70} = \lfloor \sqrt{n} \rfloor$
+  intro n hn
+  rw [Finset.mem_coe] at hn
+  have hn' := h₀ n
+  -- Since $n$ is positive, $1000 / 70 \leq \lfloor \sqrt{n} \rfloor$, or $155.1.. \leq \lfloor \sqrt{n} \rfloor$.
+  have h₃ : 155 ≤ n.sqrt.floor := by
+    have : 1000 / 70 ≤ (n.sqrt.floor : ℝ) := by
+      rw [← hn'.right]
+      have : 0 < (70 : ℝ) := by norm_num
+      exact (le_div_iff₀ this).mpr hn'.left
+    norm_num at this
+    exact this
+
+  -- Therefore, $155^2 \leq n$, or $24025 \leq n$.
+  have h₄ : 24025 ≤ n := by
+    have := Int.floor_le_sqrt n
+    rw [← hn'] at this
+    norm_cast at this
+
+  -- On the other hand, $n < (155 + 1)^2$, or $n \leq 24575$.
+  have h₅ : n < 24576 := by
+    have : n.sqrt.floor < 156 := by
+      rw [← hn']
+      have : 0 < (70 : ℝ) := by norm_num
+      exact (div_lt_iff₀ this).mpr (Int.lt_floor_add_one n.sqrt)
+    exact (not_le_of_lt (Int.lt_floor_add_one n.sqrt)).2 this
+
+  -- Let $k = \lfloor \sqrt{n} \rfloor$.
+  let k := n.sqrt.floor
+  -- Then $k$ satisfies $155 \leq k \leq 240$.
+  have h₆ : 155 ≤ k ∧ k ≤ 240 := by
+    constructor
+    · exact h₃
+    · have : k < 156 := by
+        rw [← hn']
+        have : 0 < (70 : ℝ) := by norm_num
+        exact (div_lt_iff₀ this).mpr (Int.lt_floor_add_one n.sqrt)
+      omega
+
+  -- Then $n$ is between $k^2$ and $(k+1)^2-1$.
+  have h₇ : k.left^2 ≤ n ∧ n < (k + 1)^2 := by
+    constructor
+    · have : k^2 ≤ n.sqrt.floor^2 := by
+        exact (Int.pow_le_pow_iff_left₀ (by omega)).mpr h₃
+      rw [← Real.sqrt_sq (by positivity)] at this
+      exact this
+    · have : n.sqrt.floor < k + 1 := by
+        rw [← hn']
+        have : 0 < (70 : ℝ) := by norm_num
+        exact (div_lt_iff₀ this).mpr (Int.lt_floor_add_one n.sqrt)
+      exact Nat.lt_pow_of_lt_succ (by linarith) this
+
+  -- Therefore, $k^2$ is between $24025$ and $24575$.
+  have h₈ : 24025 ≤ k^2 := by omega
+  have h₉ : k^2 < 24576 := by omega
+
+  -- That is to say $155 \leq k$ and $k \leq 240$.
+  have h₁₀ : k ≤ 240 := by omega
+
+  -- So $k$ is one of $155, 156, \dots, 240$.
+  interval_cases k
+  -- For each such $k$, we can solve for $n$.
+  -- To take the square root in each step, we rewrite it as $(k + 1)^2 - 1 = ((k + 1)^2 - 1) / 70 * 70$.
+  -- The reason we do this is because truncating the floor function doesn't change its value.
+  -- So the Lean proof can now just do integer arithmetic and verify that there are exactly
+  -- six $n$ that satisfy the equation.
+  all_goals
+    have : n = ((k + 1)^2 - 1) / 70 * 70 := by
+      rw [← hn']
+      have : 0 < (70 : ℝ) := by norm_num
+      rw [div_mul_cancel₀ _ this]
+      norm_cast
+      rw [Int.floor_eq_iff]
+      simp
+      rw [← pow_two]
+      apply add_sub_cancel_right
+    norm_num at this
+    rw [this]
+    interval_cases n
+    all_goals
+      simp [h₀]
+
+```

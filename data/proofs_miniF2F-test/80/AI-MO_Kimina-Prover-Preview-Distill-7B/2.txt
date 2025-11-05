@@ -1,0 +1,143 @@
+-- The key lemma is the following.
+  -- Let x, y be positive real numbers such that $1 \leq x + y$, then $2/\sqrt{3} \leq x/\sqrt{x+y} + y/\sqrt{y+x}$.
+  have key (x y : ℝ) (hx : 0 < x) (hy : 0 < y) (hxy : 1 ≤ x + y) : 2 / Real.sqrt 3 ≤ x / Real.sqrt (x + y) + y / Real.sqrt (y + x) := by
+    -- The key lemma is proved by the Cauchy-Schwarz inequality, combining with the fact that $(x+y)^2 \geq 4xy$.
+    have h₀ : (x / Real.sqrt (x + y) + y / Real.sqrt (y + x)) ^ 2 = (x + y) / (x + y) + (x * y) / ((x + y) * (y + x)) * ((x / y + y / x) - (Real.sqrt (x / y) - Real.sqrt (y / x)) ^ 2) := by
+      field_simp
+      ring_nf
+      field_simp
+      ring
+    -- Now we have $(x+y)^2 \geq 4xy$.
+    have h₁ : (x + y) ^ 2 ≥ 4 * x * y := by
+      have h₁ : (x - y) ^ 2 ≥ 0 := by positivity
+      linarith
+    -- Equality holds if and only if x = y.
+    have h₂ : (x + y) * (y + x) ≥ 4 * x * y := by
+      nlinarith
+    have h₃ : (x / y + y / x) - (Real.sqrt (x / y) - Real.sqrt (y / x)) ^ 2 ≥ 0 := by
+      have h₃ : (Real.sqrt x - Real.sqrt y) ^ 2 ≥ 0 := by positivity
+      have h₄ : (Real.sqrt x + Real.sqrt y) ^ 2 ≥ 0 := by positivity
+      nlinarith
+    -- Apply the Cauchy-Schwarz inequality.
+    have h₄ : x / Real.sqrt (x + y) + y / Real.sqrt (y + x) ≥ 2 * Real.sqrt (x * y / (x + y)) := by
+      nlinarith
+    -- Now plug in the values.
+    have h₅ : 2 / Real.sqrt 3 = 2 * Real.sqrt (1 / 3) := by field_simp
+    have h₆ : x / Real.sqrt (x + y) + y / Real.sqrt (y + x) ≥ 2 * Real.sqrt (1 / 3) := by
+      trans 2 * Real.sqrt (x * y / (x + y))
+     . linarith only [h₄]
+     . have h₆ : (x * y / (x + y)) ≥ (1 / 3) := by
+          calc
+            x * y / (x + y) ≥ 4 * x * y / (x + y) ^ 2 := by
+              field_simp
+              nlinarith
+            _ ≥ (1 / 3) := by
+              rw [show 4 * x * y / (x + y) ^ 2 = 4 * x * y * (1 / (x + y) ^ 2) by ring]
+              have h₆ : 4 * x * y * (1 / (x + y) ^ 2) ≥ (1 / 3) * (4 * x * y) := by
+                nlinarith
+              have h₇ : 4 * x * y ≥ 1 / 3 := by
+                calc
+                  4 * x * y ≥ 4 * (1 / 3) := by nlinarith
+                  _ = 1 / 3 := by ring
+              exact mul_le_mul_of_nonneg_left h₆ h₇ (by positivity)
+            _ = 1 / 3 := by field_simp
+        rw [h₅]
+        replace h₆ : Real.sqrt (x * y / (x + y)) ≥ Real.sqrt (1 / 3) := by exact Real.sqrt_le_sqrt h₆
+        exact mul_le_mul_of_nonneg_left h₆ (by positivity)
+    -- Now we have the lemma.
+    exact h₆
+
+  -- Return to the main theorem.
+  -- We have $3 \leq ab + bc + ca$.
+  -- We need to prove that $3/\sqrt{2} \leq a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}$.
+  -- Clear the denominators.
+  have h₂ : 3 / Real.sqrt 2 = 3 * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (2 * (a * b + b * c + c * a)) := by
+    field_simp
+    ring_nf
+    field_simp
+    ring
+  rw [h₂]
+  -- Now we need to prove that $3 * \sqrt{ab + bc + ca} / \sqrt{2(ab + bc + ca)} \leq a/\sqrt{a+b} + b/\sqrt{b+c} + c/\sqrt{c+a}$.
+  have h₃ : a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) ≥ 3 * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (2 * (a * b + b * c + c * a)) := by
+    -- We split the proof into three steps.
+
+    -- Step 1: Split the sum into three parts.
+    -- Clear the denominators.
+    have h₃ : a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a) = a * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((a + b) * (a * b + b * c + c * a)) + b * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((b + c) * (a * b + b * c + c * a)) + c * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((c + a) * (a * b + b * c + c * a)) := by
+      field_simp
+      ring_nf
+      field_simp
+      ring
+    rw [h₃]
+
+    -- Step 2: Prove that $a * \sqrt{ab + bc + ca} / \sqrt{(a + b)(ab + bc + ca)} \geq \sqrt{a * b / (a + b)} * \sqrt{ab + bc + ca} / \sqrt{a + b}$.
+    have h₄ : a * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((a + b) * (a * b + b * c + c * a)) ≥ a * Real.sqrt (a * b / (a + b)) * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (a + b) := by
+      -- Clear the denominators.
+      have h₄ : a * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((a + b) * (a * b + b * c + c * a)) = a * Real.sqrt (a * b / (a + b)) * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (a + b) := by
+        field_simp
+        rw [show a * Real.sqrt (a * b + b * c + c * a) * Real.sqrt ((a + b) * (a * b + b * c + c * a)) = a * (Real.sqrt (a * b + b * c + c * a) * Real.sqrt ((a + b) * (a * b + b * c + c * a))) by ring]
+        have h₄ : Real.sqrt ((a + b) * (a * b + b * c + c * a)) = Real.sqrt (a + b) * Real.sqrt (a * b + b * c + c * a) := by
+          rw [Real.sqrt_mul]
+          linarith only [h₀]
+        rw [h₄]
+        ring
+      -- Now we use the key lemma.
+      have h₅ := key (a * b / (a + b)) (a * c / (a + b)) (by positivity) (by positivity) (by positivity)
+      rw [show a * b / (a + b) + a * c / (a + b) = a * (b + c) / (a + b) by ring] at h₅
+      rw [show a * b / (a + b) * (a * c / (a + b)) = a ^ 2 * (b * c) / (a + b) ^ 2 by ring] at h₅
+      replace h₅ : a * Real.sqrt (a * b / (a + b)) * Real.sqrt (a * c / (a + b)) / Real.sqrt (a + b) ≥ a * Real.sqrt (a * b / (a + b)) * Real.sqrt (a * c / (a + b)) / Real.sqrt (a * b + b * c + c * a) := by
+        field_simp
+        nlinarith
+      linarith only [h₅]
+    -- Step 3: Prove that $b * \sqrt{ab + bc + ca} / \sqrt{(b + c)(ab + bc + ca)} \geq \sqrt{b * c / (b + c)} * \sqrt{ab + bc + ca} / \sqrt{b + c}$ and $c * \sqrt{ab + bc + ca} / \sqrt{(c + a)(ab + bc + ca)} \geq \sqrt{c * a / (c + a)} * \sqrt{ab + bc + ca} / \sqrt{c + a}$.
+    have h₅ : b * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((b + c) * (a * b + b * c + c * a)) ≥ b * Real.sqrt (b * c / (b + c)) * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (b + c) := by
+      -- Clear the denominators.
+      have h₅ : b * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((b + c) * (a * b + b * c + c * a)) = b * Real.sqrt (b * c / (b + c)) * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (b + c) := by
+        field_simp
+        rw [show b * Real.sqrt (a * b + b * c + c * a) * Real.sqrt ((b + c) * (a * b + b * c + c * a)) = b * (Real.sqrt (a * b + b * c + c * a) * Real.sqrt ((b + c) * (a * b + b * c + c * a))) by ring]
+        have h₅ : Real.sqrt ((b + c) * (a * b + b * c + c * a)) = Real.sqrt (b + c) * Real.sqrt (a * b + b * c + c * a) := by
+          rw [Real.sqrt_mul]
+          linarith only [h₀]
+        rw [h₅]
+        ring
+      -- Now we use the key lemma.
+      have h₆ := key (b * c / (b + c)) (b * a / (b + c)) (by positivity) (by positivity) (by positivity)
+      rw [show b * c / (b + c) + b * a / (b + c) = b * (c + a) / (b + c) by ring] at h₆
+      rw [show b * c / (b + c) * (b * a / (b + c)) = b ^ 2 * (c * a) / (b + c) ^ 2 by ring] at h₆
+      replace h₆ : b * Real.sqrt (b * c / (b + c)) * Real.sqrt (b * a / (b + c)) / Real.sqrt (b + c) ≥ b * Real.sqrt (b * c / (b + c)) * Real.sqrt (b * a / (b + c)) / Real.sqrt (a * b + b * c + c * a) := by
+        field_simp
+        nlinarith
+      linarith only [h₆]
+    have h₆ : c * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((c + a) * (a * b + b * c + c * a)) ≥ c * Real.sqrt (c * a / (c + a)) * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (c + a) := by
+      -- Clear the denominators.
+      have h₆ : c * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((c + a) * (a * b + b * c + c * a)) = c * Real.sqrt (c * a / (c + a)) * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (c + a) := by
+        field_simp
+        rw [show c * Real.sqrt (a * b + b * c + c * a) * Real.sqrt ((c + a) * (a * b + b * c + c * a)) = c * (Real.sqrt (a * b + b * c + c * a) * Real.sqrt ((c + a) * (a * b + b * c + c * a))) by ring]
+        have h₆ : Real.sqrt ((c + a) * (a * b + b * c + c * a)) = Real.sqrt (c + a) * Real.sqrt (a * b + b * c + c * a) := by
+          rw [Real.sqrt_mul]
+          linarith only [h₀]
+        rw [h₆]
+        ring
+      -- Now we use the key lemma.
+      have h₇ := key (c * a / (c + a)) (c * b / (c + a)) (by positivity) (by positivity) (by positivity)
+      rw [show c * a / (c + a) + c * b / (c + a) = c * (a + b) / (c + a) by ring] at h₇
+      rw [show c * a / (c + a) * (c * b / (c + a)) = c ^ 2 * (a * b) / (c + a) ^ 2 by ring] at h₇
+      replace h₇ : c * Real.sqrt (c * a / (c + a)) * Real.sqrt (c * b / (c + a)) / Real.sqrt (c + a) ≥ c * Real.sqrt (c * a / (c + a)) * Real.sqrt (c * b / (c + a)) / Real.sqrt (a * b + b * c + c * a) := by
+        field_simp
+        nlinarith
+      linarith only [h₇]
+
+    -- Now we can finish the proof.
+    calc
+      a * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((a + b) * (a * b + b * c + c * a)) + b * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((b + c) * (a * b + b * c + c * a)) + c * Real.sqrt (a * b + b * c + c * a) / Real.sqrt ((c + a) * (a * b + b * c + c * a)) ≥ a * Real.sqrt (a * b / (a + b)) * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (a + b) + b * Real.sqrt (b * c / (b + c)) * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (b + c) + c * Real.sqrt (c * a / (c + a)) * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (c + a) := by rel [h₄, h₅, h₆]
+      _ = (a / Real.sqrt (a + b) + b / Real.sqrt (b + c) + c / Real.sqrt (c + a)) * Real.sqrt (a * b + b * c + c * a) := by
+        field_simp
+        repeat rw [Real.sqrt_mul]
+        field_simp
+        ring
+      _ ≥ 3 * Real.sqrt (a * b + b * c + c * a) / Real.sqrt (2 * (a * b + b * c + c * a)) := by
+        -- We are done by plugging in the inequality we proved in the key lemma.
+        specialize key (a * b / (a + b)) (b * c / (b + c)) (c * a / (c + a)) (by positivity) (by positivity) (by positivity)
+        rw [show a * b / (a + b) * (b * c / (b + c)) * (c * a / (c + a)) = (a * b * c) ^ 2 / ((a + b) * (b + c) * (c + a)) by field_simp; ring] at key
+        rw [show a * b / (a + b) + b * c / (b + c) + c * a / (c + a) = (a * b * c) * (1 / (a + b) + 1 / (b + c) + 1 / (c + a))) by ring] at key
+        rw [show 2 * (a * b + b * c + c * a) = 2 *

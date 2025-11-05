@@ -1,0 +1,281 @@
+-- determine f(1,y)
+  have h₃ (x y : ℕ) : f 1 y = 2 ^ (x + 2) - 3 := by
+    -- determine f(1,0)
+    have h₃₁ := h₁ 0
+    simp only [zero_add, Nat.reduceAdd, add_zero, f_zero_add, h₀] at h₃₁
+    -- determine f(1,y+1)
+    have h₃₂ := h₂ 0 y
+    rw [show 0 + 1 = 1 by norm_num, show 0 + 1 = 1 by norm_num, h₃₁] at h₃₂
+    rw [h₃₂, Nat.pow_add]
+    -- determine f(1,1)
+    have h : f 1 1 = 3 := by
+      simp only [h₁, h₀]
+      exact Nat.succ_ne_zero 1
+    rw [h]
+    rw [add_left_inj]
+    replace h₃₁ : f 1 0 = 2 := by
+      rw [h₃₁, h₀]
+      exact Eq.symm (Nat.succ_zero 1)
+    rw [h₃₁, zero_add, add_zero, Nat.add_sub_assoc]
+    have : 2 ^ (y + 1 + 1) - 3 = 2 ^ (y + 1) * 2 - 3 := by
+      rw [Nat.pow_add]
+      ring
+    rw [this]
+    rw [Nat.mul_sub_right_distrib, add_left_inj]
+    rw [Nat.add_sub_assoc]
+    congr
+    -- determine f(1,y+1)-f(1,y)
+    replace h₃₂ : f 1 (y + 1) - f 1 y = 2 ^ (y + 1) := by
+      rw [h₃₂, Nat.pow_add, add_tsub_cancel_right]
+      rw [Nat.mul_sub_right_distrib]
+      have : 3 - 1 = 2 := by
+        exact Nat.succ_ne_zero 1
+      rw [this]
+      ring
+    refine Nat.eq_of_sub_eq_zero?_
+    refine Nat.eq_of_sub_eq_zero?_
+    -- determine f(1,y+1)=2f(1,y)+2
+    replace h₃₂ : f 1 (y + 1) = 2 * f 1 y + 2 := by
+      omega
+    -- solve the equation f(1,y+1)=2f(1,y)+2
+    have h₄ : ∀ y, f 1 (y + 1) = 2 ^ (y + 2) - 3 := by
+      intro y
+      induction y with
+      | zero => norm_num
+        rw [h₃₁, h₀, Nat.cast_one, zero_add, add_zero, Nat.add_sub_assoc, add_left_inj, Nat.add_sub_self]
+        norm_num
+      | succ y ih =>
+        calc
+          f 1 (y + 1 + 1) = 2 * f 1 (y + 1) + 2 := h₃₂
+          _ = 2 * (2 ^ (y + 2) - 3) + 2 := by rw [ih]
+          _ = 2 ^ (y + 1 + 2) - 3 := by
+            rw [Nat.mul_sub_right_distrib]
+            rw [Nat.mul_sub_right_distrib]
+            have : 2 ^ (y + 2) - 3 = 2 ^ (y + 1 + 1) - 3 := by
+              congr
+              rw [Nat.sub_add_comm]
+              rw [add_comm]
+              exact Nat.sub_add_cancel (y + 1)
+              exact Nat.one_le_two_pow
+            rw [this]
+            ring
+    exact h₄ y
+
+  -- determine f(2,y)
+  have h₄ (x y : ℕ) : f 2 y = 2 ^ (x + 3) - 3 := by
+    -- determine f(2,0)
+    have h₄₁ := h₁ 1
+    simp only [add_tsub_cancel_right, Nat.reduceSub, one_add_one_eq_two, f_one_add, h₃] at h₄₁
+    -- determine f(2,y+1)
+    have h₄₂ := h₂ 1 y
+    rw [show 1 + 1 = 2 by norm_num, show 1 + 1 = 2 by norm_num, h₄₁] at h₄₂
+    rw [h₄₂, Nat.pow_add]
+    -- determine f(2,1)
+    have h : f 2 1 = 5 := by
+      simp only [h₁, h₀]
+      exact Nat.succ_ne_zero 2
+    rw [h]
+    rw [add_left_inj]
+    replace h₄₁ : f 2 0 = 3 := by
+      rw [h₄₁, h₀]
+      exact Eq.symm (Nat.succ_zero 2)
+    rw [h₄₁, zero_add, add_zero, Nat.add_sub_assoc]
+    have : 2 ^ (y + 1 + 2) - 3 = 2 ^ (y + 1) * 4 - 3 := by
+      rw [Nat.pow_add]
+      ring
+    rw [this]
+    rw [Nat.mul_sub_right_distrib,add_left_inj]
+    rw [Nat.add_sub_assoc]
+    congr
+    -- determine f(2,y+1)-f(2,y)
+    replace h₄₂ : f 2 (y + 1) - f 2 y = 4 ^ (y + 1) * 2 := by
+      rw [h₄₂, Nat.pow_add, add_tsub_cancel_right]
+      rw [Nat.mul_sub_right_distrib]
+      have : 4 - 3 = 1 := by
+        exact Nat.sub_eq_of_eq_add (by exact Nat.one_le_two_pow)
+      rw [this]
+      ring
+    refine Nat.eq_of_sub_eq_zero?_
+    refine Nat.eq_of_sub_eq_zero?_
+    -- determine f(2,y+1)=f(2,y)+4^(y+1)·2
+    replace h₄₂ : f 2 (y + 1) = 2 * f 2 y + 2 * 4 ^ (y + 1):= by
+      omega
+    -- solve the equation f(2,y+1)=f(2,y)+4^(y+1)·2
+    have h₅ : ∀ y, f 2 (y + 1) = 2 ^ (y + 3) - 3 := by
+      intro y
+      induction y with
+      | zero => norm_num
+        rw [h₄₁, h₀, Nat.cast_one, zero_add, add_zero, Nat.add_sub_assoc, add_left_inj, Nat.add_sub_self]
+        norm_num
+      | succ y ih =>
+        calc
+          f 2 (y + 1 + 1) = 2 * f 2 (y + 1) + 2 * 4 ^ (y + 1) := h₄₂
+          _ = 2 * (2 ^ (y + 3) - 3) + 2 * 4 ^ (y + 1) := by rw [ih]
+          _ = 2 ^ (y + 1 + 3) - 3 := by
+            rw [Nat.mul_sub_right_distrib]
+            rw [Nat.mul_sub_right_distrib]
+            have : 2 ^ (y + 3) - 3 = 2 ^ (y + 1 + 2) - 3 := by
+              congr
+              rw [Nat.sub_add_comm]
+              rw [add_comm]
+              exact Nat.sub_add_cancel (y + 1)
+              exact Nat.one_le_two_pow
+            rw [this]
+            have : 4 ^ (y + 1) = 2 ^ (2 * (y + 1)) := by
+              rw [<-Nat.pow_mul]
+              ring
+            rw [this]
+            rw [Nat.mul_sub_right_distrib]
+            rw [<-Nat.pow_add_one]
+            rw [show 2 + 1 = 3 by norm_num]
+            rw [Nat.mul_sub_right_distrib]
+            ring
+    exact h₅ y
+
+  -- determine f(3,y)
+  have h₅ (x y : ℕ) : f 3 y = 2 ^ (x + 4) - 3 := by
+    -- determine f(3,0)
+    have h₅₁ := h₁ 2
+    simp only [add_tsub_cancel_right, Nat.reduceSub, two_add_one_eq_three, f_two_add, h₄] at h₅₁
+    -- determine f(3,y+1)
+    have h₅₂ := h₂ 2 y
+    rw [show 2 + 1 = 3 by norm_num, show 2 + 1 = 3 by norm_num, h₅₁] at h₅₂
+    rw [h₅₂, Nat.pow_add]
+    -- determine f(3,1)
+    have h : f 3 1 = 13 := by
+      simp only [h₁, h₀]
+      exact Nat.succ_ne_zero 3
+    rw [h]
+    rw [add_left_inj]
+    replace h₅₁ : f 3 0 = 5 := by
+      rw [h₅₁, h₀]
+      exact Eq.symm (Nat.succ_zero 3)
+    rw [h₅₁, zero_add, add_zero, Nat.add_sub_assoc]
+    have : 2 ^ (y + 1 + 3) - 3 = 2 ^ (y + 1) * 8 - 3 := by
+      rw [Nat.pow_add]
+      ring
+    rw [this]
+    rw [Nat.mul_sub_right_distrib,add_left_inj]
+    rw [Nat.add_sub_assoc]
+    congr
+    -- determine f(3,y+1)-f(3,y)
+    replace h₅₂ : f 3 (y + 1) - f 3 y = 8 ^ (y + 1) * 2 := by
+      rw [h₅₂, Nat.pow_add, add_tsub_cancel_right]
+      rw [Nat.mul_sub_right_distrib]
+      have : 8 - 3 = 5 := by
+        exact Nat.sub_eq_of_eq_add (by exact Nat.one_le_two_pow)
+      rw [this]
+      ring
+    refine Nat.eq_of_sub_eq_zero?_
+    refine Nat.eq_of_sub_eq_zero?_
+    -- determine f(3,y+1)=f(3,y)+8^(y+1)·2
+    replace h₅₂ : f 3 (y + 1) = 2 * f 3 y + 2 * 8 ^ (y + 1):= by
+      omega
+    -- solve the equation f(3,y+1)=f(3,y)+8^(y+1)·2
+    have h₆ : ∀ y, f 3 (y + 1) = 2 ^ (y + 4) - 3 := by
+      intro y
+      induction y with
+      | zero => norm_num
+        rw [h₅₁, h₀, Nat.cast_one, zero_add, add_zero, Nat.add_sub_assoc, add_left_inj, Nat.add_sub_self]
+        norm_num
+      | succ y ih =>
+        calc
+          f 3 (y + 1 + 1) = 2 * f 3 (y + 1) + 2 * 8 ^ (y + 1) := h₅₂
+          _ = 2 * (2 ^ (y + 4) - 3) + 2 * 8 ^ (y + 1) := by rw [ih]
+          _ = 2 ^ (y + 1 + 4) - 3 := by
+            rw [Nat.mul_sub_right_distrib]
+            rw [Nat.mul_sub_right_distrib]
+            have : 2 ^ (y + 4) - 3 = 2 ^ (y + 1 + 3) - 3 := by
+              congr
+              rw [Nat.sub_add_comm]
+              rw [add_comm]
+              exact Nat.sub_add_cancel (y + 1)
+              exact Nat.one_le_two_pow
+            rw [this]
+            have : 8 ^ (y + 1) = 2 ^ (3 * (y + 1)) := by
+              rw [<-Nat.pow_mul]
+              ring
+            rw [this]
+            rw [Nat.mul_sub_right_distrib]
+            rw [<-Nat.pow_add_one]
+            rw [show 3 + 1 = 4 by norm_num]
+            rw [Nat.mul_sub_right_distrib]
+            ring
+    exact h₆ y
+
+  -- determine f(4,y)
+  have h₆ (x y : ℕ) : f 4 y = 2 ^ (x + 5) - 3 := by
+    -- determine f(4,0)
+    have h₆₁ := h₁ 3
+    simp only [add_tsub_cancel_right, Nat.reduceSub, three_add_one_eq_four, f_three_add, h₅] at h₆₁
+    -- determine f(4,y+1)
+    have h₆₂ := h₂ 3 y
+    rw [show 3 + 1 = 4 by norm_num, show 3 + 1 = 4 by norm_num, h₆₁] at h₆₂
+    rw [h₆₂, Nat.pow_add]
+    -- determine f(4,1)
+    have h : f 4 1 = 65 := by
+      simp only [h₁, h₀]
+      exact Nat.succ_ne_zero 4
+    rw [h]
+    rw [add_left_inj]
+    replace h₆₁ : f 4 0 = 17 := by
+      rw [h₆₁, h₀]
+      exact Eq.symm (Nat.succ_zero 4)
+    rw [h₆₁, zero_add, add_zero, Nat.add_sub_assoc]
+    have : 2 ^ (y + 1 + 4) - 3 = 2 ^ (y + 1) * 16 - 3 := by
+      rw [Nat.pow_add]
+      ring
+    rw [this]
+    rw [Nat.mul_sub_right_distrib,add_left_inj]
+    rw [Nat.add_sub_assoc]
+    congr
+    -- determine f(4,y+1)-f(4,y)
+    replace h₆₂ : f 4 (y + 1) - f 4 y = 16 ^ (y + 1) * 2 := by
+      rw [h₆₂, Nat.pow_add, add_tsub_cancel_right]
+      rw [Nat.mul_sub_right_distrib]
+      have : 16 - 3 = 13 := by
+        exact Nat.sub_eq_of_eq_add (by exact Nat.one_le_two_pow)
+      rw [this]
+      ring
+    refine Nat.eq_of_sub_eq_zero?_
+    refine Nat.eq_of_sub_eq_zero?_
+    -- determine f(4,y+1)=f(4,y)+16^(y+1)·2
+    replace h₆₂ : f 4 (y + 1) = 2 * f 4 y + 2 * 16 ^ (y + 1):= by
+      omega
+    -- solve the equation f(4,y+1)=f(4,y)+16^(y+1)·2
+    have h₇ : ∀ y, f 4 (y + 1) = 2 ^ (y + 5) - 3 := by
+      intro y
+      induction y with
+      | zero => norm_num
+        rw [h₆₁, h₀, Nat.cast_one, zero_add, add_zero, Nat.add_sub_assoc, add_left_inj, Nat.add_sub_self]
+        norm_num
+      | succ y ih =>
+        calc
+          f 4 (y + 1 + 1) = 2 * f 4 (y + 1) + 2 * 16 ^ (y + 1) := h₆₂
+          _ = 2 * (2 ^ (y + 5) - 3) + 2 * 16 ^ (y + 1) := by rw [ih]
+          _ = 2 ^ (y + 1 + 5) - 3 := by
+            rw [Nat.mul_sub_right_distrib]
+            rw [Nat.mul_sub_right_distrib]
+            have : 2 ^ (y + 5) - 3 = 2 ^ (y + 1 + 4) - 3 := by
+              congr
+              rw [Nat.sub_add_comm]
+              rw [add_comm]
+              exact Nat.sub_add_cancel (y + 1)
+              exact Nat.one_le_two_pow
+            rw [this]
+            have : 16 ^ (y + 1) = 2 ^ (4 * (y + 1)) := by
+              rw [<-Nat.pow_mul]
+              ring
+            rw [this]
+            rw [Nat.mul_sub_right_distrib]
+            rw [<-Nat.pow_add_one]
+            rw [show 4 + 1 = 5 by norm_num]
+            rw [Nat.mul_sub_right_distrib]
+            ring
+    exact h₇ y
+
+  -- determine f(4,1981)
+  have h₈ := h₆ 4 1980
+  rw [show 4 + 1980 = 1984 by norm_num, Nat.sub_add_cancel] at h₈
+  exact h₈
+```

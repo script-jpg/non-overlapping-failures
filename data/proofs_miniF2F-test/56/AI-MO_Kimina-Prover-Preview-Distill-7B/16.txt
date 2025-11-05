@@ -1,0 +1,62 @@
+-- Some basic facts for us to remember.
+  have ⟨ hm, hn ⟩ : 2 ^ m ≤ 2 ^ n ∧ 1 ≤ 2 ^ m := by
+    apply And.intro
+    exact Nat.pow_le_pow_of_le_right two_pos h₂
+    exact Nat.two_pow_pos m
+
+  have : 0 < 2 ^ m := by apply Nat.two_pow_pos
+
+  -- We need to turn $f(2^m)$ and $f(2^n)$ into $2^n + 3^n + 2^m + 3^m$.
+  have : f (2 ^ m) = 2 ^ (2 ^ m) + 3 ^ (2 ^ m) + 2 ^ (2 ^ m) * 3 ^ (2 ^ m) := by
+    rw [h₀]
+    congr
+    rw [← Nat.pow_mul, ← Nat.pow_mul]
+    ring
+
+  rw [this]
+
+  have : f (2 ^ n) = 2 ^ (2 ^ n) + 3 ^ (2 ^ n) + 2 ^ (2 ^ n) * 3 ^ (2 ^ n) := by
+    rw [h₀]
+    congr
+    rw [← Nat.pow_mul, ← Nat.pow_mul]
+    ring
+
+  rw [this]
+
+  clear h₀ this
+
+  -- Let $a = 2 ^ m$ and $b = 2 ^ n$. We can see that $f(2^m) = a^2 - a + 1$ and $f(2^n) = b^2 - b + 1$.
+  let a := 2 ^ m
+  let b := 2 ^ n
+
+  have : f (2 ^ m) = a ^ 2 - a + 1 := by
+    simp [a]
+    rw [add_assoc, Nat.add_sub_cancel]
+    ring
+
+  rw [this]
+
+  have : f (2 ^ n) = b ^ 2 - b + 1 := by
+    simp [b]
+    rw [add_assoc, Nat.add_sub_cancel]
+    ring
+
+  rw [this]
+
+  -- Notice that $b = 2 ^ n \geq 2 ^ m = a$.
+  have h : b ≥ a := by simp [a, b]; exact Nat.pow_le_pow_of_le_right two_pos h₂
+
+  -- We can see that $b ^ 2 - b + 1 = (a ^ 2 - a + 1)(1 + b(a - 1))$.
+  have : b ^ 2 - b + 1 = (a ^ 2 - a + 1) * (1 + (b - 1) * a) := by
+    ring_nf
+    rw [show a * b = b * a by ring]
+    rw [← Nat.mul_assoc, Nat.mul_sub, mul_one, Nat.sub_mul]
+    ring
+    apply Nat.le_mul_of_pos_left
+    exact Nat.one_le_iff_ne_zero.mpr (Nat.two_pow_pos n)
+  rw [this]
+
+  -- It suffices to show that $1 + (b - 1) * a$ is an integer, which is obvious.
+  apply Nat.dvd_mul_right
+
+```

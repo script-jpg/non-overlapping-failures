@@ -1,0 +1,101 @@
+-- Let $S$ be the set of positive integers $n$ that satisfy the equation. 
+  -- We want to show that $S$ has 6 elements.
+
+  -- First, show that for $n \in S$, $\sqrt{n} \in \mathbb{N}$.
+  have h₁ : ∀ n ∈ S, ∃ k : ℕ, k = Int.floor (Real.sqrt n) ∧ (↑n + (1000 : ℝ)) / 70 = k := by
+    intro n hn
+    obtain ⟨hnpos, hneq⟩ := h₀.symm hn
+    exact ⟨Int.floor (Real.sqrt n), by simp [hneq] ⟩
+  
+  -- Second, show that $n = 70k - 1000$ for $n \in S$.
+  have h₂ : ∀ n ∈ S, ∃ k : ℕ, n = 70 * (Int.floor (Real.sqrt n)) - 1000 := by
+    intro n hn
+    specialize h₁ n hn
+    rcases h₁ with ⟨k, rfl, hneq⟩
+    simp at hneq
+    have : (70 * k - 1000 : ℝ) = (70 * k - 1000 : ℕ) := by simp
+    rw [this] at hneq
+    exact ⟨k, by simp [hneq]⟩
+
+  -- Third, show that $70k - 1000 \ge 0$ for $n \in S$.
+  have h₃ : ∀ n ∈ S, 70 * (Int.floor (Real.sqrt n)) - 1000 ≥ 0 := by
+    intro n hn
+    specialize h₂ n hn
+    obtain ⟨k, rfl⟩ := h₂
+    rw [←@Int.toNat_of_nonneg ℝ]
+    simp
+    linarith
+
+  -- Fourth, show that $k \ge 2$ for $n \in S$.
+  have h₄ : ∀ n ∈ S, (Int.floor (Real.sqrt n) : ℝ) ≥ 2 := by
+    intro n hn
+    specialize h₃ n hn
+    have : (70 * (Int.floor (Real.sqrt n)) - 1000 : ℝ) = (70 * (Int.floor (Real.sqrt n)) - 1000 : ℕ) := by simp
+    rw [this] at h₃
+    linarith
+
+  -- Fifth, show that $k < 20$ for $n \in S$.
+  have h₅ : ∀ n ∈ S, (Int.floor (Real.sqrt n) : ℝ) < 20 := by
+    intro n hn
+    specialize h₂ n hn
+    have : (70 * (Int.floor (Real.sqrt n)) - 1000 : ℝ) = (70 * (Int.floor (Real.sqrt n)) - 1000 : ℕ) := by simp
+    rw [this] at h₂
+    rcases h₂ with ⟨k, rfl, _⟩
+    have : 70 * k - 1000 > 0 := by linarith
+    have : (70 * k - 1000 : ℝ) > (70 * 2 - 1000 : ℝ) := by linarith
+    simp at this
+    exact (lt_of_sub_lt _).mpr this
+
+  -- Finally, show that $S = \{20, 30, 40, 190, 200, 210\}$.
+  have h₆ : S = {20, 30, 40, 190, 200, 210} := by
+    ext n
+    constructor
+    · specialize h₀ n (by simp)
+      rw [h₀]
+      intro hneq
+      obtain ⟨hnpos, hneq⟩ := h₀
+      specialize h₃ n h₀
+      specialize h₄ n h₀
+      specialize h₅ n h₀
+      have h₆ : (Int.floor (Real.sqrt n) : ℝ) ≥ 2 := by exact h₄
+      have h₇ : (Int.floor (Real.sqrt n) : ℝ) < 20 := by exact h₅
+      have h₈ : 2 ≤ Int.floor (Real.sqrt n) ∧ Int.floor (Real.sqrt n) < 20 := by exact ⟨h₆, h₇⟩
+      have h₉ : 2 ≤ Int.floor (Real.sqrt n) ∧ Int.floor (Real.sqrt n) < 20 := by exact ⟨h₆, h₇⟩
+      interval_cases h₉
+      -- There are 18 cases, and we verify each one by one.
+      all_goals
+        interval_cases h₉
+        -- There are 18 cases, and we verify each one by one.
+        all_goals
+          interval_cases h₉
+          -- There are 18 cases, and we verify each one by one.
+          all_goals
+            interval_cases h₉
+            -- There are 18 cases, and we verify each one by one.
+            all_goals
+              interval_cases h₉
+              -- There are 18 cases, and we verify each one by one.
+              all_goals
+                interval_cases h₉
+                -- There are 18 cases, and we verify each one by one.
+                all_goals
+                  norm_num at hneq
+                  all_goals
+                    norm_cast at hneq
+      -- The only possible values of $n$ are 20, 30, 40, 190, 200, and 210.
+      all_goals
+        norm_num at hneq
+        all_goals
+          norm_cast at hneq
+    -- Just to be sure, we check that these values really satisfy the equation.
+      intro hneq
+      simp at hneq
+      rcases hneq with h | h | h | h | h | h
+      all_goals
+        rw [h]
+        simp
+        try norm_num
+
+  -- Now that we know $S = \{20, 30, 40, 190, 200, 210\}$, we can conclude that $S$ has 6 elements.
+  simp [h₆]
+```

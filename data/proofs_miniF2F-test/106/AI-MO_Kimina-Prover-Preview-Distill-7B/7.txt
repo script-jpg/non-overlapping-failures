@@ -1,0 +1,63 @@
+have h₃ : Real.sqrt (3 - x) - Real.sqrt (x + 1) > 0 := by linarith
+
+  -- Show that $x < 1$.
+  have h₄ : x < 1 := by
+    by_contra! h₄
+    have h₅ : 1 / 2 < 0 := by
+      calc
+        1 / 2 < Real.sqrt (3 - 1) - Real.sqrt (1 + 1) := by norm_num
+        _ = 0 := by norm_num
+    linarith only [h₅]
+
+  -- Show that $3 - x > 0$.
+  have h₆ : 3 - x > 0 := by
+    by_contra! h₆
+    have h₇ : 1 / 2 < 0 := by
+      calc
+        1 / 2 < Real.sqrt (3 - x) - Real.sqrt (x + 1) := h₂
+        _ ≤ 0 := by apply sub_nonpos_of_le; apply Real.sqrt_le_sqrt; linarith only [h₆]
+    linarith only [h₇]
+
+  -- Show that $1 + x > 0$.
+  have h₈ : 1 + x > 0 := by
+    by_contra! h₈
+    have h₉ : 1 / 2 < 0 := by
+      calc
+        1 / 2 < Real.sqrt (3 - x) - Real.sqrt (x + 1) := h₂
+        _ ≤ 0 := by apply sub_nonpos_of_le; apply Real.sqrt_le_sqrt; linarith only [h₈]
+    linarith only [h₉]
+
+  -- Show that $1 - \sqrt{3-x} < \sqrt{x+1}$.
+  have h₁₀ : 1 - Real.sqrt (3 - x) < Real.sqrt (x + 1) := by
+    calc
+      1 - Real.sqrt (3 - x) < 0 := by linarith only [h₃]
+      _ < Real.sqrt (x + 1) := by apply Real.sqrt_pos_of_pos; linarith only [h₁]
+
+  -- Show that $1 + \sqrt{3-x} > -\sqrt{x+1}$.
+  have h₁₁ : 1 + Real.sqrt (3 - x) > -Real.sqrt (x + 1) := by
+    calc
+      1 + Real.sqrt (3 - x) > 0 := by linarith only [h₃]
+      _ > -Real.sqrt (x + 1) := by apply neg_lt; apply Real.sqrt_pos_of_pos; linarith only [h₁]
+
+  -- Square both sides of the inequality.
+  have h₁₂ : (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 > 1 / 4 := by
+    calc
+      (Real.sqrt (3 - x) - Real.sqrt (x + 1)) ^ 2 > (1 / 2) ^ 2 := by apply sq_lt_sq_of_pos; linarith only [h₃]; norm_num
+      _ = 1 / 4 := by norm_num
+
+  rw [sub_sq, Real.sq_sqrt h₆, Real.sq_sqrt h₈] at h₁₂
+  rw [mul_assoc, <-Real.sqrt_mul h₆] at h₁₂
+  rw [mul_assoc, <-Real.sqrt_mul h₆] at h₁₁
+  rw [mul_assoc, <-Real.sqrt_mul h₆] at h₁₀
+
+  -- We get
+  -- $1 - 2\sqrt{3-x}\sqrt{1+x} + 1+x > 1/4$.
+  replace h₁₂ : 2 * Real.sqrt 31 / 8 + x * 2 < 1 := by
+    linarith only [h₁₂]
+
+  -- The result follows.
+  constructor
+  · linarith only [h₈]
+  · linarith only [h₁₂]
+
+```

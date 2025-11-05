@@ -1,0 +1,217 @@
+rcases h₀ with ⟨hx, hy⟩
+
+  -- Show that $x$ and $y$ are not equal
+  have hne : x ≠ y := by
+    by_contra h
+    rw [←h] at h₁
+    have : x ^ x ^ 2 ≠ x ^ x := by
+      refine Nat.ne_of_lt?_
+      apply Nat.lt_self_pow?_?_ (by linarith)
+      exact Nat.not_eq_zero_of_lt hy
+      exact Nat.not_eq_zero_of_lt hx
+    exact this h₁
+
+  -- Show that $x$ and $y$ are coprime
+  have hcoprime : x.Coprime y := by
+    -- Assume that $x$ and $y$ have a common prime factor $p$
+    by_contra h
+    rw [Nat.not_coprime_iff_exists_prime_dvd] at h
+    obtain ⟨p, hp, hpdvd, hpnvda, hpnvdb⟩ := h
+    -- Show that $p$ divides both $x$ and $y$
+    have hpdvd' : p ∣ x ∧ p ∣ y := by
+      exact ⟨hpdvd.trans (Nat.Coprime.dvd_of_dvd_mul_right hp hpnvda), hpdvd.trans (Nat.Coprime.dvd_of_dvd_mul_left hp hpnvdb)⟩
+    -- Show that $p$ divides $x^y$ and $y^x$
+    have hpx : p ∣ x ^ y := by
+      apply dvd_pow hpdvd'
+    have hpy : p ∣ y ^ x := by
+      apply dvd_pow hpdvd'
+    have hpxy : p ∣ x ^ y ^ 2 := by
+      exact Dvd.dvd.trans hpx hpy
+    rw [h₁] at hpxy
+    have : p ∣ x ^ x := by
+      exact (Nat.Coprime.dvd_of_dvd_mul_right (by exact hp) hpxy).trans (Nat.dvd_refl x)
+    have : p ∣ x := by
+      exact Nat.Prime.dvd_of_dvd_pow (by exact hp) this
+    have : p ∣ y ^ x := by
+      exact (Nat.Coprime.dvd_of_dvd_mul_left (by exact hp) hpxy).trans (Nat.dvd_refl y)
+    have : p ∣ y := by
+      exact Nat.Prime.dvd_of_dvd_pow (by exact hp) this
+    -- Show that $p$ cannot divide both $x$ and $y$
+    have : p ∣ x ∧ p ∣ y := ⟨this, ‹p ∣ y›⟩
+    have : p ∣ x.gcd y := by
+      exact (Nat.dvd_gcd_iff ‹p ∣ x›).mpr ‹p ∣ y›
+    have : x.gcd y ≠ 1 := by
+      symm
+      rw [Nat.ne_iff_lt_or_gt]
+      have h := Nat.gcd_pos_of_pos_left y (by linarith)
+      rcases h with h | h
+      · exact Or.inl h
+      · apply Nat.lt_of_lt_of_le?_ h
+        exact Nat.gcd_le_left y x
+    exfalso
+    exact Nat.not_coprime_iff_exists_prime_dvd.elim hcontra ‹p ∣ x.gcd y› this
+
+  -- If $x$ and $y$ are coprime, then $x^2$ divides $y$
+  have h₂ : x ^ 2 ∣ y := by
+    obtain ⟨k, hk⟩ := Nat.coprime_iff_gcd_eq_one.mp hcoprime
+    have h₂ := @Nat.pow_dvd_pow_iff_right (x : ℤ) (y : ℤ) (by linarith) (by linarith) (by linarith)
+    rw [hk, pow_add] at h₁
+    norm_cast at h₁
+    exact h₁
+
+  -- Show that $x$ is a square
+  have h₃ : ∃ z : ℕ, x = z ^ 2 := by
+    have h₃ : x ^ 2 ∣ y := by assumption
+    have h₄ : x ^ 2 ∣ y ^ (x.gcd y) := by
+      apply Nat.dvd_pow
+      apply Nat.gcd_pos_of_pos_left
+      linarith
+    have h₅ := Nat.Coprime.dvd_of_dvd_mul_left hcoprime h₃
+    have h₆ : x ∣ y ^ x.gcd y := by
+      apply Nat.Coprime.dvd_of_dvd_mul_right
+      exact Nat.coprime_comm.mp hcoprime
+      exact Dvd.dvd.mul_left h₅ y
+    have h₇ : x ∣ y := by
+      refine Nat.le_of_dvd (by linarith)?_
+      apply Nat.dvd_gcd_iff.mpr
+      apply And.intro
+      · exact h₆
+      · exact Dvd.dvd.trans (Dvd.dvd.pow h₅) (Nat.dvd_refl y)
+    have h₈ : x.gcd y ∣ y := by
+      exact Nat.gcd_dvd_right y x
+    have h₉ : x.gcd y ∣ x := by
+      exact Nat.gcd_dvd_left x y
+    have h₁₀ : x.gcd y = 1 := by
+      rw [Nat.coprime_iff_gcd_eq_one]
+      exact hcoprime
+    rw [h₁₀] at h₇ h₈
+    have h₁₁ : x ∣ y := by
+      exact Nat.dvd_of_dvd_mul_left h₇ y
+    have h₁₂ : x ∣ y ^ 2 := by
+      apply Nat.dvd_pow
+      linarith
+    have h₁₃ : x ∣ y ^ 3 := by
+      calc
+        x ∣ y ^ 2 := by assumption
+        _ ∣ y ^ 3 := by exact Dvd.dvd.mul_left h₈ y
+    have h₁₄ : x ∣ y ^ (x.gcd y) := by
+      apply Nat.Coprime.dvd_of_dvd_mul_left hcoprime
+      exact Dvd.dvd.trans h₃ (Nat.dvd_refl y)
+    have h₁₅ : x.gcd y = 2 := by
+      symm
+      rw [Nat.ne_iff_lt_or_gt]
+      have h := Nat.gcd_pos_of_pos_left y (by linarith)
+      rcases h with h | h
+      · exact Or.inl h
+      · apply Nat.lt_of_lt_of_le?_ h
+        apply Nat.le_of_dvd (by linarith)
+        exact Nat.gcd_le_right y x
+    -- Substitute the value of x.gcd y
+    rw [h₁₅] at h₉ h₁₃ h₁₄
+    have h₁₆ : y ≠ 0 := by
+      exact Nat.ne_zero_iff_zero_lt.mpr hy
+    have h₁₇ : ∃ z : ℕ, y = z ^ 2 := by
+      have : 2 ∣ y := by
+        apply Nat.Prime.dvd_of_dvd_pow (by norm_num) h₃
+      have ⟨z, hz⟩ := this
+      use z
+      rw [hz]
+      ring
+    exact h₁₇
+
+  obtain ⟨z, hz⟩ := h₃
+
+  -- Show that $y$ is a cube
+  have h₄ : y ^ 3 ∣ x ^ y ^ 2 := by
+    rw [←h₁]
+    apply Nat.pow_dvd_pow
+    simp
+
+  -- Show that $y$ is a perfect cube
+  have h₅ : ∃ z : ℕ, y = z ^ 3 := by
+    by_contra h
+    rw [Nat.not_exists_sq] at h
+    obtain ⟨z, hz⟩ := h
+    have hz' := calc
+      z ^ 3 = (z ^ 2) ^ 3 := by ring
+      _ = (z ^ 3) ^ 2 := by ring
+      _ = y ^ 2 := by rw [hz]
+    obtain ⟨w, hw⟩ := Nat.coprime_iff_gcd_eq_one.mp hcoprime
+    have : w ∣ x.gcd y := by
+      rw [hw, hz', h₁] at hz
+      rw [Nat.Coprime.dvd_mul] at hz
+      exact hz
+      exact Nat.coprime_comm.mp hcoprime
+    have : w ∣ x := by
+      exact Nat.dvd_of_dvd_gcd_iff.mpr ‹w ∣ x.gcd y›
+    have : w ∣ y ^ 3 := by
+      apply Nat.dvd_pow
+      linarith
+    have : w ∣ x ^ y ^ 2 := by
+      apply Nat.dvd_pow
+      apply Nat.gcd_pos_of_pos_left
+      linarith
+    have : w ∣ y := by
+      exact Nat.Coprime.dvd_of_dvd_mul_left hw this
+    rw [hz', h₁] at this
+    have : w ∣ y ^ 2 := by
+      exact Dvd.dvd.trans (Dvd.dvd.pow this) (Nat.dvd_refl y)
+    have : w ∣ x.gcd y := by
+      exact Nat.dvd_gcd_right x y
+    have : w ∣ y ^ 3 := by
+      exact Dvd.dvd.trans (Dvd.dvd.pow this) (Nat.dvd_refl y)
+    have : w = 1 := by
+      rw [Nat.coprime_iff_gcd_eq_one] at hw
+      exact hw ‹w ∣ x.gcd y› ‹w ∣ y ^ 3›
+    rw [this] at hz'
+    exfalso
+    exact Nat.not_exists_sq h hz'
+
+  -- Obtain the values of $x$ and $y$
+  obtain ⟨y, hy⟩ := h₅
+  obtain ⟨x, hx⟩ := h₃
+
+  -- Substituting the values of $x$ and $y$
+  subst x y
+  -- Show that $t ^ 6 = = t ^ 9$
+  have h₆ : (t : ℤ) ^ 6 = t ^ 9 := by
+    ring_nf
+    simp
+    ring
+  -- Show that $t ^ 9 = t ^ 18$
+  have h₇ : (t : ℤ) ^ 9 = t ^ 18 := by
+    ring_nf
+    simp
+    ring
+  -- Show that $t ^ 18 = t ^ 27$
+  have h₈ : (t : ℤ) ^ 18 = t ^ 27 := by
+    ring_nf
+    simp
+    ring
+  -- Show that $t ^ 6 = t ^ 27$
+  have h₉ : (t : ℤ) ^ 6 = t ^ 27 := by
+    rw [h₆, h₇, h₈]
+  -- Show that $t = 1$
+  have h₁₀ : (t : ℤ) = 1 := by
+    have : (t : ℤ) ^ 6 = (t : ℤ) ^ 27 := by assumption
+    have : (t : ℤ) ^ 6 = (t : ℤ) ^ (6 + 21) := by
+      ring_nf
+      rw [h₉]
+    rw [pow_add] at this
+    have : (t : ℤ) ^ 6 * ((t : ℤ) ^ 21 - 1) = 0 := by
+      linarith
+    have : (t : ℤ) ^ 6 = 0 ∨ ((t : ℤ) ^ 21 - 1) = 0 := by
+      exact mul_eq_zero.mp this
+    rcases this with this | this
+    · have : (t : ℤ) = 0 := by
+        apply pow_eq_zero
+        exact this
+      exfalso
+      exact Nat.not_eq_zero_of_lt hx this
+    · apply eq_one_of_pow_eq_one 
+      exact sub_eq_zero.mp this
+
+  -- Substituting the value of $t$
+  subst t
+  simp
+```

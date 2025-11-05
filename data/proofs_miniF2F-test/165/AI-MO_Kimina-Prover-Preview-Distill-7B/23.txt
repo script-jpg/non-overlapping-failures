@@ -1,0 +1,41 @@
+-- set $x=10$, then $x^n-(-1)^n$ can be divided by $x+1$.
+  let x : ℕ := 10
+
+  have hx : 11 ∣ x ^ n - (-1 : ℤ) ^ n := by
+
+    -- using mathlib's induction to prove.
+    induction' n with n ih
+
+    -- when $n=1$, this is obivious.
+    · norm_num
+
+    -- when $n=n+1$, we calculate $x^(n+1)-(-1)^{n+1}$.
+    · norm_cast at ih ⊢
+
+      -- by induction, $x^n-(-1)^n$ can be divided by $x+1$.
+      -- so $x^n-(-1)^n = k(x+1)$.
+      rcases ih with ⟨k, hk⟩
+
+      -- so $x^(n+1)-(-1)^{n+1} = x(x^n-(-1)^n) + (-1)^n(x-1)$
+      --                    $= xk(x+1) + (-1)^n(x-1)$
+      --                    $= xk(x+1) + (-1)^n(x+1) - (-1)^n(x+1) + (-1)^n(x-1)$
+      --                    $= (xk+(-1)^n)(x+1) - (-1)^n·2$
+      --                    $= (xk+(-1)^n)(x+1) + (-1)^{n+1}·2$
+      have : x ^ (n + 1) - (-1 : ℤ) ^ (n + 1) = (x * k + (-1 : ℤ) ^ n) * (x + 1) + (-1 : ℤ) ^ (n + 1) * 2 := by ring_nf; rw [←pow_mul]; norm_num
+
+      -- thus $x^(n+1)-(-1)^{n+1}$ can also be divided by $x+1$.
+      rcases Nat.even_or_odd n with he | ho
+      · use x * k + (-1 : ℤ) ^ n + (-1 : ℤ) ^ (n + 1)
+        rw [this]
+        ring
+      · use x * k + (-1 : ℤ) ^ n - (-1 : ℤ) ^ (n + 1)
+        rw [this]
+        ring
+
+  -- change $x=10$ to $11\mid x^n-(-1)^n$.
+  change 11 ∣ (10 : ℤ) ^ n - (-1 : ℤ) ^ n
+  rw [show (11 : ℤ) = (11 : ℕ) by norm_num]
+  rw [show (10 : ℤ) = (10 : ℕ) by norm_num]
+  exact hx
+
+```

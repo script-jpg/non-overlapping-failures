@@ -1,0 +1,46 @@
+-- Proof by contradiction
+  by_contra h
+
+  -- Rewrite $2003$ as $2000 + 3$
+  rw [show 2003 = 2000 + 3 by ring] at h
+
+  -- Simplify the expression $4 * x ^ 3 - 7 * y ^ 3 - 2000 - 3$
+  apply_fun (fun x => x - 2000 - 3) at h
+  simp only [add_sub_cancel_right, add_sub_cancel_left, sub_eq_iff_eq_add] at h
+
+  -- Factor the expression $(x + 1) * (4 * x ^ 2 - 4 * x + 4 * y ^ 3 - 7 * y ^ 2 + 7 * y - 2000)$
+  rw [show 4 * x ^ 3 - 7 * y ^ 3 - 2000 - 3 = (x + 1) * (4 * x ^ 2 - 4 * x + 4 * y ^ 3 - 7 * y ^ 2 + 7 * y - 2000) by ring] at h
+
+  -- Since the product equals $0$, one of the factors must be $0$
+  have : (x + 1 = 0 ∨ 4 * x ^ 2 - 4 * x + 4 * y ^ 3 - 7 * y ^ 2 + 7 * y - 2000 = 0) := Int.mul_eq_zero.mp h
+
+  -- Consider two cases: $x + 1 = 0$ or $4 * x ^ 2 - 4 * x + 4 * y ^ 3 - 7 * y ^ 2 + 7 * y - 2000 = 0$
+  rcases this with (h | h)
+
+  -- Case $1$: $x + 1 = 0$, which means $x = -1$
+  · have hx : x = -1 := by linarith
+    rw [hx] at h
+    norm_num at h
+    obtain rfl : y ^ 3 = 501 := by linarith
+    -- Show that $501$ is not a cubic number
+    have : IsUnit (501 : ℤ) := ⟨501, by norm_num⟩
+    rw [Int.isUnit_iff] at this
+    absurd this
+    norm_num
+
+  -- Case $2$: $4 * x ^ 2 - 4 * x + 4 * y ^ 3 - 7 * y ^ 2 + 7 * y - 2000 = 0$
+  · -- Rewrite the expression $4 * x ^ 2 - 4 * x + 4 * y ^ 3 - 7 * y ^ 2 + 7 * y - 2000$ as $(2 * x - 1 + 2 * y)^2  + 2000 * (y - 1) + 2003$
+    rw [show 4 * x ^ 2 - 4 * x + 4 * y ^ 3 - 7 * y ^ 2 + 7 * y - 2000 = (2 * x - 1 + 2 * y) ^ 2 + 2000 * (y - 1) + 2003 by ring] at h
+    -- Since the sum equals $0$, each factor must be negation of another
+    have : (2 * x - 1 + 2 * y) ^ 2 = -2000 * (y - 1) - 2003 := by linarith
+    -- Show that the right side is negative
+    have : -2000 * (y - 1) - 2003 < 0 := by
+      calc
+        _ ≤ -2000 := by linarith
+        _ < 0 := by norm_num
+    -- Show that the left side is nonnegative
+    have : (2 * x - 1 + 2 * y) ^ 2 ≥ 0 := sq_nonneg (2 * x - 1 + 2 * y)
+    -- The previous two inequalities lead to a contradiction
+    linarith
+
+```

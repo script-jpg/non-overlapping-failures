@@ -1,0 +1,76 @@
+-- Lemma: For any positive integer $k$, $k$ is a divisor of $n!$ if and only if $k$ is less than or equal to $n$.
+  have h1 k n : (∀ k : ℕ, k ∈ S ↔ 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i!) : (∀ k : ℕ, k ∈ S ↔ k ≤ 9) := by
+    -- Since k is a positive integer, we know that k = 1, 2,..., 9.
+    have h1 : ∀ k ∈ S, k ≤ 9 := by
+      intro k hk
+      obtain ⟨hk, h⟩ := h₀ k
+      have h' : k * k ∣ ∏ i ∈ Finset.Icc 1 9, i! := h
+      -- Since k * k is a divisor of the product, k must be less than or equal to 9.
+      by_contra!
+      have : ¬ k * k ∣ ∏ i ∈ Finset.Icc 1 9, i! := by
+        have : ∀ i ∈ Finset.Icc 1 9, k ∣ i! := by
+          intro i hi
+          calc
+            k ∣ k * k := by exact Nat.dvd_mul_left k k
+            _ ∣ ∏ i ∈ Finset.Icc 1 9, i! := by exact dvd_trans this h'
+        calc
+          k * k ∣ k! := by exact Nat.mul_dvd_factorial (by omega) (by omega)
+          _ ∣ ∏ i ∈ Finset.Icc 1 9, i! := by exact Nat.mul_dvd_mul_left (k!) (∏ i ∈ Finset.Icc 1 9, i!)
+      contradiction
+    -- Prove that k ≤ 9 if and only if k ∈ S.
+    have h2 : ∀ k ≤ 9, k ∈ S := by
+      intro k hk
+      have hk : 0 < k := by omega
+      have h : ∀ (k : ℕ), k ∈ S ↔ 0 < k ∧ (k * k : ℕ) ∣ ∏ i ∈ Finset.Icc 1 9, i! := by
+        intro k
+        exact h₀ k
+      simp [h]
+      -- Since k ≤ 9, we can deduce that k! ∣ ∏ i ∈ Finset.Icc 1 9, i! by using theorem Nat.factorial_dvd_factorial.
+      have : ∏ i ∈ Finset.Icc 1 9, i! = (∏ i ∈ Finset.Icc 1 k, i!) * (∏ i ∈ Finset.Icc (k + 1) 9, i!) := by
+        have : Finset.Icc 1 9 = (Finset.Icc 1 k) ∪ (Finset.Icc (k + 1) 9) := by
+          ext i
+          simp
+          omega
+        rw [this]
+        rw [Finset.prod_union]
+        rw [Finset.disjoint_iff_ne]
+        intro i hi j hj
+        simp at hi hj
+        omega
+      -- We know that k ∈ S if and only if k! ∣ ∏ i ∈ Finset.Icc 1 9, i!, we can rewrite it as k ∈ S if and only if k! ∣ ∏ i ∈ Finset.Icc 1 k, i! * ∏ i ∈ Finset.Icc (k + 1) 9, i!.
+      simp [this]
+      have : k! ∣ ∏ i ∈ Finset.Icc 1 k, i! := by
+        exact Nat.factorial_dvd_factorial (by omega) (by omega)
+      -- It's obvious that k! ∣ ∏ i ∈ Finset.Icc 1 k, i! * ∏ i ∈ Finset.Icc (k + 1) 9, i!.
+      have ⟨_, h'⟩ := dvd_mul_of_dvd_left this (↑(Finset.prod_Icc_succ_top (by omega) (k + 1) 9))
+      rw [←this] at h'
+      exact h'
+    -- Combine the two implications, we have k ∈ S if and only if k ≤ 9.
+    biimp
+    · intro hk
+      have := h1 k hk
+      omega
+    · intro hk
+      exact h2 k hk
+
+  -- Lemma: For any positive integer $k$, $k$ is a divisor of $n!$ if and only if $k$ is less than or equal to $n$.
+  have h2 k n : (∀ k : ℕ, k ∈ S ↔ 0 < k ∧ (k * k : ℕ) ∣ ∏ i in Finset.Icc 1 9, i!) : (k ∈ S ↔ k ≤ 9) := by
+    have h3 := h1 k
+    exact h3
+
+  -- Step 1: Use the lemma above to prove that S = {1, 2,..., 9}.
+  have h3 : S = Finset.Icc 1 9 := by
+    ext k
+    simp
+    constructor
+    · intro ⟨hk1, hk2⟩
+      exact (h2 k 9).mp hk1
+    · intro hk
+      exact ⟨(h2 k 9).mpr hk, by omega⟩
+
+  -- Step 2: Use h3 to calculate the cardinality of S.
+  rw [h3]
+  -- Use the formula of factorial to compute the cardinality of S.
+  rw [Finset.card_Icc 1 9]
+
+```

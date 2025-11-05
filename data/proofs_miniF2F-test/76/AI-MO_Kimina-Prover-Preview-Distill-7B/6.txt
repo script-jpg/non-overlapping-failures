@@ -1,0 +1,184 @@
+-- Notice that $\sqrt{n+1} > \sqrt{n} \geq \sqrt{\lfloor n\rfloor}$, so $\lfloor \sqrt{n+1} \rfloor  \geq \lfloor \sqrt{n} \rfloor$.
+  have h_ceil : ∀ n : ℕ, 0 < n →  Nat.floor (Real.sqrt (n + 1)) ≥ Nat.floor (Real.sqrt n) := by
+    intro n hn
+    have h1 : Nat.floor (Real.sqrt (n + 1)) ≥  Nat.floor (Real.sqrt n) := by
+      apply Nat.floor_le_floor
+      have h2 : Real.sqrt (n + 1) ≥ Real.sqrt n := Real.sqrt_le_sqrt (by norm_cast)
+      have h3 : 0 ≤ Real.sqrt (n + 1) := Real.sqrt_nonneg (n + 1)
+      have h4 : 0 ≤ Real.sqrt n := Real.sqrt_nonneg n
+      apply le_of_lt
+      apply Real.lt_sqrt_of_sq_lt (by norm_cast)
+      simp_all
+    exact h1
+
+  -- Since $70  \lfloor \sqrt{n} \rfloor \leq n+1000$, we have $\lfloor \sqrt{n} \rfloor \leq \lfloor \frac{n+1000}{70} \rfloor$.
+  have h_floor : ∀ n : ℕ, 0 < n → Nat.floor (Real.sqrt n) ≤ Nat.floor ((n + 1000) / 70) := by
+    intro n hn
+    have h1 : Nat.floor (Real.sqrt n) ≤ Nat.floor ((n + 1000) / 70) :=
+      Nat.floor_le_floor.mpr
+      (le_of_lt (lt_div_iff (by norm_cast)).mpr (by linarith [Real.sqrt_pos.mpr (show (0:ℝ) < n by norm_cast)]))
+    exact h1
+
+  -- Since $\lfloor \sqrt{n} \rfloor  \leq \frac{n+1000}{70} < \frac{n + 1 + 1000}{70} \leq \lfloor \sqrt{n+1} \rfloor$, we have $ 70(\lfloor \sqrt{n} \rfloor + 1) \leq n + 1 + 1000$.
+  have h_ceil' : ∀ n : ℕ, 0 < n → 70 * (Nat.floor (Real.sqrt n) + 1) ≤ n + 1 + 1000 := by
+    intro n hn
+    have h1 : 70 * (Nat.floor (Real.sqrt n) + 1) ≤ (n + 1 + 1000) / (Nat.floor ((n + 1000) / 70)) := by
+      apply Nat.mul_le_mul_left
+      apply Nat.floor_le_floor.mpr
+      rw [div_le_iff₀]
+      have h2 : Nat.floor ((n + 1000) / 70) ≤ Nat.floor (Real.sqrt n) + 1 := by
+        apply Nat.floor_lt.mpr
+        rw [← lt_add_one_iff, Nat.floor_lt]
+        have h3 : (n + 1000) / 70 ≤ Real.sqrt n + 1 := by
+          trans (↑n + 1000) / 70 + (1:ℝ) / 70
+          · apply div_le_div₀
+            all_goals linarith
+          · rw [← div_div, div_one]
+            apply add_lt_add_of_le_of_lt
+            · exact Nat.toReal_natCast_le n
+            · norm_num
+        rw [← Nat.cast_add_one, lt_div_iff₀] at h3
+        have h4 : 0 < ((n:ℝ) + 1000) / 70 := by
+          apply div_pos
+          all_goals linarith
+        have h5 : 0 < (n:ℝ) + 1000 := by
+          linarith
+        have h6 : 0 ≤ (1:ℝ) / 70 := by
+          norm_num
+        apply lt_of_le_of_lt (le_trans h3 (by linarith [h4]))
+        apply lt_of_le_of_lt (div_lt_div₀ h5 (by linarith) h6)
+      linarith [h2]
+    have h2 : 70 * (Nat.floor (Real.sqrt n) + 1) > 70 * Nat.floor (Real.sqrt n) := by
+      linarith [Nat.mul_lt_mul_right (show 70 > 0 by norm_num) (show Nat.floor (Real.sqrt n) < Nat.floor (Real.sqrt n) + 1 by norm_num)]
+    linarith [h1, h2]
+
+  -- which implies $70  \lfloor \sqrt{n} \rfloor \leq  n+1000 < 70(\lfloor \sqrt{n} \rfloor + 1)$.
+  have h_n_ceil : ∀ n : ℕ, 0 < n → 70 * Nat.floor (Real.sqrt n) ≤ n + 1000 ∧ n + 1000 < 70 * (Nat.floor (Real.sqrt n) + 1) := by
+    intro n hn
+    constructor
+    · have h1 : 70 * Nat.floor (Real.sqrt n) ≤ n + 1000 :=
+        Nat.le_of_lt_succ (h_floor n hn)
+      exact Nat.mul_le_mul_right n (show 70 > 0 by norm_num).trans h1
+    · have h1 : n + 1000 < 70 * (Nat.floor (Real.sqrt n) + 1) :=
+        Nat.lt_of_le_of_lt (h_ceil' n hn) (h_floor n hn)
+      exact h1
+
+  -- Therefore, $ n \in [70\lfloor\sqrt{n}\rfloor - 1000,70(\lfloor\sqrt{n}\rfloor + 1) - 1000)$.
+  have h_n_range : ∀ n : ℕ, 0 < n → n ∈ Finset.Ico (70 * Nat.floor (Real.sqrt n) - 1000) (70 * (Nat.floor (Real.sqrt n) + 1) - 1000) := by
+    intro n hn
+    have h1 : n ≥ 70 * Nat.floor (Real.sqrt n) := Nat.le_of_lt_succ (h_floor n hn)
+    have h2 : n < 70 * (Nat.floor (Real.sqrt n) + 1) := Nat.lt_of_le_of_lt (h_ceil' n hn) (h_floor n hn)
+    exact ⟨by linarith, by linarith⟩
+
+  -- This also means that $70(\lfloor \sqrt{n} \rfloor + 1) - 1000  \leq n + 1000$.
+  have h_ceil'' : ∀ n : ℕ, 0 < n → 70 * (Nat.floor (Real.sqrt n) + 1) ≤ n + 1000 + 1000 := by
+    intro n hn
+    have h1 : 70 * (Nat.floor (Real.sqrt n) + 1) ≤ (n + 1000) + 1000 := by
+      trans ((n:ℝ) + 1000) / (Nat.floor ((n + 1000) / 70)) * (70:ℝ)
+      · simp only [Nat.cast_mul, Nat.cast_ofNat]
+        apply div_mul_le_mul_of_nonneg_right
+        linarith
+        norm_num
+      · apply le_of_lt
+        rw [lt_div_iff₀]
+        have h2 : 0 < (n:ℝ) + 1000 := by
+          linarith
+        have h3 : 0 < (70:ℝ) := by
+          norm_num
+        apply lt_of_lt_of_le (div_lt_iff₀ h2) h2
+    linarith [h1]
+
+  -- Since $70(\lfloor \sqrt{n} \rfloor + 1) - 1000  \leq n + 1000 \leq 70(\lfloor \sqrt{n} \rfloor + 1) - 1000$, we have $\lfloor \sqrt{n} \rfloor  = \frac{n+1000}{70} - 1$.
+  have h_floor' : ∀ n : ℕ, 0 < n → Nat.floor (Real.sqrt n) = (n + 1000) / 70 - 1 := by
+    intro n hn
+    have h1 : Nat.floor (Real.sqrt n) = Nat.floor ((n + 1000) / 70) - 1 := by
+      have h2 : 70 * Nat.floor (Real.sqrt n) ≤ n + 1000 := (h_n_ceil n hn).left
+      have h3 : n + 1000 < 70 * (Nat.floor (Real.sqrt n) + 1) := (h_n_ceil n hn).right
+      have h4 : Nat.floor ((n + 1000) / 70) = Nat.floor (Real.sqrt n) + 1 := by
+        have h5 : (n + 1000) / 70 > Real.sqrt n := by
+          trans (↑n + 1000) / 70 + (1:ℝ) / 70
+          · apply div_le_div₀
+            all_goals linarith
+          · rw [← div_div, div_one]
+            apply add_lt_add_of_le_of_lt
+            · exact Nat.toReal_natCast_le n
+            · norm_num
+        rw [← Nat.div_lt_iff_lt_mul (show 0 < (70:ℝ) by norm_num), ← Nat.le_div_iff_mul_le]
+        have h6 : 0 < ((n:ℝ) + 1000) / 70 := by
+          apply div_pos
+          all_goals linarith
+        have h7 : 0 < (n:ℝ) + 1000 := by
+          linarith
+        apply lt_of_le_of_lt (le_trans h2 (by linarith [h6])) (lt_of_lt_of_le (h3) h6)
+      rw [h4]
+      apply Nat.le_antisymm
+      · exact (Nat.floor_le ((n + 1000) / 70)).trans h2
+      · exact h4
+    have h2 : (n + 1000) / 70 = (n + 1000) / 70 - 1 + 1 := by
+      rw [Nat.sub_add_cancel]
+      apply Nat.div_lt_iff_lt_mul' (show 0 < (70:ℝ) by norm_num)
+      all_goals linarith
+    rw [h2, h1]
+    rw [Nat.sub_add_cancel]
+    apply Nat.floor_le
+    rw [Nat.sub_lt_iff_lt_add, Nat.sub_le_iff_le_add, ← Nat.sub_add_comm]
+    exact Nat.floor_le ((n + 1000) / 70)
+
+  -- Since $\lfloor \sqrt{n} \rfloor  = \frac{n+1000}{70} - 1$, we have $70\lfloor \sqrt{n} \rfloor + 1 =  n + 1000 + 1$.
+  have h_n_floor : ∀ n : ℕ, 0 < n → n = 70 * Nat.floor (Real.sqrt n) + 1 - 1000 := by
+    intro n hn
+    have h1 : n = 70 * Nat.floor (Real.sqrt n) + 1 - 1000 :=
+      Nat.eq_sub_of_add_eq (h_floor' n hn)
+    exact h1
+
+  -- Therefore, $n$ is of the form $70k + 1 - 1000$.
+  have h_n_k : ∀ n : ℕ, 0 < n → ∃ k : ℕ, n = 70 * k + 1 - 1000 := by
+    intro n hn
+    have h1 : ∃ k : ℕ, n = 70 * k + 1 - 1000 := by
+      use Nat.floor (Real.sqrt n)
+      exact h_n_floor n hn
+    exact h1
+
+  -- Notice that the function $n \mapsto 70(\lfloor \sqrt{n} \rfloor + 1) - 1000$ is strictly increasing from $301$ to $310$ as $n$ increases from $1$ to $1000$.
+  have h_incr : ∀ n : ℕ, 0 < n → n < n + 1000 := by
+    intro n hn
+    constructor
+    · exact h_floor' n hn
+    · linarith [h_floor' (n + 1) (by linarith)]
+
+  -- Therefore, once $n$ exceeds $1000$, $\lfloor \sqrt{n} \rfloor$ increases by $1$ each time $n$ increases by $70$.
+  have h_incr' : ∀ n : ℕ, 0 < n → n + 1000 < n + 1 := by
+    intro n hn
+    linarith [h_incr n hn]
+
+  -- So, the set of $n$ that satisfy the equation is $[1,301] \cup [1001,310] \cup [1901,320] \cup [2801,330] \cup [3701,340] \cup [4601,450]$.
+  have h_set : S = ((Finset.Icc 1 300).filter (fun n => 70 ∣ (n + 1000) ∧ n / 70 = (n + 1000) / 70 - 1)) ∪
+      ((Finset.Icc 1001 310).filter (fun n => 70 ∣ (n + 1000) ∧ n / 70 = (n + 1000) / 70 - 1)) ∪
+      ((Finset.Icc 1901 320).filter (fun n => 70 ∣ (n + 1000) ∧ n / 70 = (n + 1000) / 70 - 1)) ∪
+      ((Finset.Icc 2801 330).filter (fun n => 70 ∣ (n + 1000) ∧ n / 70 = (n + 1000) / 70 - 1)) ∪
+      ((Finset.Icc 3701 340).filter (fun n => 70 ∣ (n + 1000) ∧ n / 70 = (n + 1000) / 70 - 1)) ∪
+      ((Finset.Icc 4601 450).filter (fun n => 70 ∣ (n + 1000) ∧ n / 70 = (n + 1000) / 70 - 1)) := by
+
+    ext n
+    constructor
+    · intro hn
+      have h_sub : n ∈ Finset.Icc 1 450 ∨ n ∈ Finset.Icc 1001 1045 ∨ n ∈ Finset.Icc 1901 1945 ∨ n ∈ Finset.Icc 2801 2845 ∨ n ∈ Finset.Icc 3701 3745 ∨ n ∈ Finset.Icc 4601 4645 := by
+        have h1 : n ∈ Finset.Ico (70 * Nat.floor (Real.sqrt n) - 1000) (70 * (Nat.floor (Real.sqrt n) + 1) - 1000) := by
+          exact h_n_range n hn
+        have h2 : n ∈ Finset.Icc 1 450 ∨ n ∈ Finset.Icc 1001 1045 ∨ n ∈ Finset.Icc 1901 1945 ∨ n ∈ Finset.Icc 2801 2845 ∨ n ∈ Finset.Icc 3701 3745 ∨ n ∈ Finset.Icc 4601 4645 := by
+          simp only [Finset.mem_Icc, Finset.mem_Ico]
+          have h3 : 70 * Nat.floor (Real.sqrt n) - 1000 ≤ 450 := by
+            by_contra! h_contra
+            have h4 : 70 * Nat.floor (Real.sqrt n) ≤ 1450 := by
+              have h5 : Nat.floor (Real.sqrt n) ≤ Nat.floor ((n + 1000) / 70) := (h_floor n hn)
+              have h6 : 70 * Nat.floor ((n + 1000) / 70) ≤ 1450 := by
+                norm_num at h_contra
+                calc
+                  _ = (70 * (Nat.floor ((n + 1000) / 70) + 1) - 1000) - 70 := by ring
+                  _ ≤ (n + 1000) - 70 := by linarith [h_ceil'' n hn]
+                  _ ≤ 1450 := by linarith
+              have h7 : 70 * Nat.floor (Real.sqrt n) ≤ 70 * Nat.floor ((n + 1000) / 70) := by
+                apply Nat.mul_le_mul_left
+                apply Nat.floor_le_floor.mpr
+                rw [div_le_iff₀]
+                have h8 : 0 ≤ Real.sqrt n := Real.sqrt_non

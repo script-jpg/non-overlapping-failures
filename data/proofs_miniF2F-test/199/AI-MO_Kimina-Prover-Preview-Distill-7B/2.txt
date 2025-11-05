@@ -1,0 +1,122 @@
+have h₄ : (k - t) ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr h₁
+
+  have h₅ : (k + t) * (k - t) = (m * k - m * t) := by
+    calc
+      (k + t) * (k - t) = k ^ 2 - t ^ 2 := by rw [Nat.sq_sub_sq]
+      _ = m * k - m * t := by rw [h₂, h₃]; simp; rw [mul_comm, ← mul_sub, mul_comm m t, ← mul_sub]
+  rw [mul_comm, Nat.mul_ne_zero_iff] at h₅
+  have h₆ : k + t ≠ 0 := by exact Nat.not_eq_zero_of_lt h₁
+  have h₇ : m * (k - t) = m * (k + t) - m * t := by rw [mul_sub, mul_comm, ← mul_sub]; ring
+  rw [← h₇] at h₅
+  have h₈ : m * (k + t) = m * (m * t - t ^ 2 + t) := by
+    calc
+      m * (k + t) = m * k - m * t + m * t + m * t - m * t ^ 2 + m * t := by ring
+      _ = m * (k - t) + m * (k + t) - m * t ^ 2 + m * t := by ring
+      _ = m * (k - t + k + t) - m * t ^ 2 + m * t := by rw [Nat.add_assoc]
+      _ = m * (m * t - t ^ 2 + t) := by rw [← h₅]; ring
+  rw [mul_comm] at h₈
+  have h₉ : m ∣ m * (m * t - t ^ 2 + t) := by exact Dvd.intro (k + t) h₈
+  have h₁₀ : m ∣ m * t := by apply dvd_mul_right
+  have h₁₁ : m ∣ m * (m * t - t ^ 2 + t) - m * t := by exact (Nat.dvd_sub h₉ h₁₀).mpr rfl
+  have h₁₂ : m ∣ m * t ^ 2 - m * t := by exact Dvd.intro (m - 1) h₁₁
+  have h₁₃ : m ∣ m * t * (t - 1) := by rw [← h₁₂]; ring
+
+  have h₁₄ : m = 2 ∨ m = 3 := by
+    by_contra! h₁₄
+    have h₁₅ : Nat.Prime m := h₁₄.1
+    have h₁₆ : m > 3 := h₁₄.2
+    have h₁₇ : ¬(m = 2 ∨ m = 3) := by exact Nat.not_or_iff_imp_not.mpr h₁₆
+    contradiction
+
+  have h₁₈ : (m = 2 ∨ m = 3) ∧ (n = 2 ∨ n = 3) := by
+    have h₁₈ : Nat.Prime n := h₀.2
+    have h₁₉ : n > 3 := by
+      by_contra! h₁₉
+      have h₂₀ : n = 2 ∨ n = 3 := by exact Nat.le_of_lt_succ h₁₉
+      contradiction
+    have h₂₁ : ¬(n = 2 ∨ n = 3) := by exact Nat.not_or_iff_imp_not.mpr h₁₉
+    exact ⟨h₁₄, Nat.prime_three_iff.mpr h₁₈.2⟩
+
+  have h₁₉ : m * (m - 1) = m ^ 2 - m := by rw [← Nat.mul_sub, Nat.mul_one, Nat.sub_mul]; apply Nat.mul_le_mul_right
+  have h₂₀ : m * (m - 1) = m * t ^ 2 - m * t := by rw [← h₁₈.2, h₁₂]
+  have h₂₁ : m * t ^ 2 - m * t = n * (n - 1) := by
+    calc
+      m * t ^ 2 - m * t = m * (m * t - t ^ 2 + t) - m * t := by rw [h₈]
+      _ = n * (n - 1) := by rw [h₁₈.1, h₁₈.2]; ring
+  rw [← h₁₉, h₂₀] at h₂₁
+  rw [Nat.sub_sub_self, Nat.mul_le_mul_right] at h₂₁
+  have h₂₂ : Nat.Prime n := h₁₈.2
+  have h₂₃ : n > 3 := by
+    by_contra! h₂₃
+    have h₂₄ : n = 2 ∨ n = 3 := by exact Nat.le_of_lt_succ h₂₃
+    contradiction
+  have h₂₅ : ¬(n = 2 ∨ n = 3) := by exact Nat.not_or_iff_imp_not.mpr h₂₃
+  have h₂₆ : t ^ 2 = n * (t - 1) + t := by
+    calc
+      t ^ 2 = m * t ^ 2 - m * t + m * t - m * t ^ 2 + m * t := by ring
+      _ = n * (n - 1) + m * t - m * t ^ 2 + m * t := by rw [h₂₁]
+      _ = n * (t - 1) + t := by
+        rw [Nat.mul_sub, Nat.mul_one, Nat.sub_mul, Nat.mul_sub, Nat.mul_one, Nat.sub_mul]
+        rw [Nat.mul_sub_right_comm]
+        rw [Nat.mul_sub_self]
+        have h₂₇ : t < m := by exact Nat.lt_of_sub_eq_succ h₁
+        have h₂₈ : t - 1 < m - 1 := by exact Nat.sub_lt_sub_right h₁ h₂₇
+        have h₂₉ : (m - 1) * (t - 1) < m * (m - 1) := by apply Nat.mul_lt_mul_of_pos_right; exact h₂₈; exact Nat.zero_lt_sub_of_lt h₂₇
+        linarith
+  have h₂₇ : t = n ∨ t = n + 1 := by
+    have h₂₈ : t ≤ n := by
+      by_contra! h₂₈
+      have h₂₉ : t > n := by exact Nat.lt_of_le_of_ne h₂₈ h₂₇
+      have h₃₀ : n * (t - 1) ≥ n * (n - 1) := by apply Nat.mul_le_mul_right; exact h₂₉
+      have h₃₁ : n * (t - 1) = n * (n - 1) := by linarith
+      have h₃₂ : t - 1 = n - 1 := by exact Nat.eq_of_mul_eq_mul_left h₂₂.1 h₃₁
+      have h₃₃ : t = n := by exact Nat.eq_of_sub_eq_zero h₃₂
+      contradiction
+    have h₂₈ : ¬(t < n) := by exact Nat.not_lt.mpr h₂₈
+    have h₂₉ : t > n := by exact Nat.lt_of_le_of_ne h₂₈ h₂₇
+    linarith
+
+  have h₂₈ : t * (t - 1) = t ^ 2 - t := by rw [← Nat.mul_sub, Nat.mul_one, Nat.sub_mul]; apply Nat.mul_le_mul_right
+  have h₂₉ : t * (t - 1) = n * (n - 1) := by rw [h₂₆, h₁₈.2]
+  rw [← h₂₈, h₂₉] at h₂₁
+  have h₂₇ : t < m := by exact Nat.lt_of_sub_eq_succ h₁
+  have h₂₈ : t - 1 < m - 1 := by exact Nat.sub_lt_sub_right h₁ h₂₇
+  have h₂₉ : (m - 1) * (t - 1) < m * (m - 1) := by apply Nat.mul_lt_mul_of_pos_right; exact h₂₈; exact Nat.zero_lt_sub_of_lt h₂₇
+  have h₃₀ : m * (m - 1) = m * (t - 1) + m * t - m * t ^ 2 + m * t := by rw [← h₁₈.1, ← h₂₁]
+  have h₃₁ : m * (m - 1) = m * n := by rw [h₃₀, h₂₆]; ring
+  have h₃₂ : m - 1 = n := by
+    calc
+      m - 1 = (m - 1) * (t - 1) + m * t - m * t ^ 2 + m * t - (m - 1) * (t - 1) := by ring
+      _ = m * n - (m - 1) * (t - 1) := by rw [h₃₁, h₂₆]
+      _ = n := by
+        rw [Nat.mul_sub_right_comm]
+        rw [Nat.mul_sub_self]
+        have h₃₃ : m - 1 < m := by exact Nat.sub_one_lt_of_lt h₁
+        have h₃₄ : t - 1 < m - 1 := by exact Nat.sub_lt_sub_right h₁ h₃₃
+        have h₃₅ : (m - 1) * (t - 1) < m * (m - 1) := by apply Nat.mul_lt_mul_of_pos_right; exact h₃₄; exact Nat.zero_lt_sub_of_lt h₃₃
+        linarith
+  have h₃₃ : m = n + 1 := by exact Nat.eq_of_sub_eq_zero h₃₂
+
+  rcases h₁₈ with ⟨h₁₈, h₁₉⟩ | ⟨h₁₈, h₁₉⟩
+  · rw [h₁₈, Nat.pow_eq_self_iff] at h₂₆
+    have h₂₇ : t > 1 := by exact Nat.lt_of_lt_of_le (Nat.one_lt_of_lt h₁) h₂₃
+    linarith
+  · rw [h₁₉, Nat.pow_eq_self_iff] at h₂₆
+    have h₂₇ : t > 1 := by exact Nat.lt_of_lt_of_le (Nat.one_lt_of_lt h₁) h₂₃
+    have h₂₈ : t ≠ 2 := by
+      by_contra! h₂₈
+      rw [h₂₈] at h₂₆
+      linarith
+    have h₂₉ : t = 3 := by
+      have h₃₀ : t < 4 := by
+        by_contra! h₃₀
+        have h₃₁ : t > 3 := by exact Nat.lt_of_le_of_ne h₃₀ h₂₈
+        have h₃₂ : t ^ 2 > 4 ^ 2 := by exact Nat.pow_lt_pow_left h₂₇ h₃₁
+        linarith
+      interval_cases t
+      · rw [h₂₆] at h₂₈
+        contradiction
+      · rfl
+    rw [h₂₉, h₁₈] at h₂₁
+    linarith
+```

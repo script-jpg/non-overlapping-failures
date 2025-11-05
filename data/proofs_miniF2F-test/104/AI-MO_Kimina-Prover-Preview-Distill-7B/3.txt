@@ -1,0 +1,49 @@
+have hp : Fact (Nat.Prime p) := ⟨h₀⟩
+
+  have h2 : Fact (Nat.Prime (2 : ℕ)) := ⟨Nat.prime_two⟩
+
+  have h3 : Fact (Nat.Prime (3 : ℕ)) := ⟨Nat.prime_three⟩
+
+  have h5 : Fact (Nat.Prime (5 : ℕ)) := ⟨Nat.prime_five⟩
+
+  have h7 : Fact (Nat.Prime (7 : ℕ)) := ⟨Nat.prime_seven⟩
+
+  have hp' : p ≠ 2 := by
+    rcases Nat.Prime.ne_zero h₀ with _ | _ <;> linarith
+
+  have hp'' : p ≠ 3 := by
+    rcases Nat.Prime.ne_zero h₀ with _ | _ <;> linarith
+
+  have hp''' : p ≠ 5 := by
+    rcases Nat.Prime.ne_zero h₀ with _ | _ <;> linarith
+
+  have hp'''' : p ≠ 7 := by
+    rcases Nat.Prime.ne_zero h₀ with _ | _ <;> linarith
+
+  -- the sum is 1 / 2 (1 / 1 + 2 / 1 + 3 / 1 + \cdots + (p - 1) / 1) ^ 2,
+  -- we should make use of the `Finset.sum_div`.
+  have : ∑ k in Finset.Icc 1 (p - 2), ((k : ZMod p)⁻¹ * ((k : ZMod p) + 1)⁻¹) =
+      1 / 2 * (∑ k in Finset.Icc 1 (p - 1), (k : ZMod p)⁻¹) ^ 2 := by
+    symm
+    rw [Finset.sum_div, Finset.sum_add_distrib, card_Icc, Nat.cast_sub (by linarith),
+      Nat.cast_one, card_Icc, card_Ico, Nat.cast_sub (by linarith), Nat.cast_one,
+      add_zero, mul_zero, sub_zero]
+    rfl
+
+  rw [this]
+
+  -- `ZMod p` instance `AddCommRing` and `Multiplicative` are both used here.
+  have : ∑ k in Finset.Icc 1 (p - 1), (k : ZMod p)⁻¹ = -1 := by
+    refine Wilsons_lemma p?_?_ <;> (try simp)
+
+  rw [this]
+
+  -- The `ZMod 2` instance `Multiplicative` is used here.
+  have : (2 : ZMod p) = 0 := by
+    rw [ZMod.natCast_zmod_eq_zero_iff_dvd]
+    rw [dvd_iff_mod_eq_zero]
+    rw [ZMod.natCast_zmod_eq_zero_iff_dvd]
+    simp
+
+  simp [this]
+```

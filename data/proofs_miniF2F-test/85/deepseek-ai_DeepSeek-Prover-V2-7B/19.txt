@@ -1,0 +1,36 @@
+have h₂ : n ≠ 1 := by
+    intro h
+    rw [h] at h₁
+    norm_num at h₁
+    <;> contradiction
+  have h₃ : Nat.Prime n := by
+    have h₄ : n.Prime := by
+      by_contra h
+      -- If n is not prime, then n = ab for some 1 < a, b < n
+      have h₅ : n = 0 ∨ n = 1 ∨ n > 1 := by omega
+      rcases h₅ with (h₅ | h₅ | h₅) <;> simp_all [Nat.Prime, Nat.succ_le_iff]
+      <;>
+      (try { omega }) <;>
+      (try {
+        -- For n > 1, we use the fact that 2^n - 1 is not prime
+        have h₆ : 2 ^ n - 1 > 1 := by
+          have h₇ : 2 ^ n ≥ 2 ^ 2 := by
+            apply Nat.pow_le_pow_of_le_right
+            linarith
+            omega
+          omega
+        have h₇ : 2 ^ n - 1 = (2 ^ a - 1) * (2 ^ (n - a) + 2 ^ (n - 2 * a) + 1) := by
+          -- This factorization shows that 2^n - 1 is not prime
+          rcases n with (_ | _ | n) <;>
+          rcases a with (_ | _ | a) <;>
+          simp_all [Nat.pow_succ, Nat.mul_sub_left_distrib, Nat.mul_sub_right_distrib, Nat.mul_add, Nat.add_mul]
+          <;>
+          ring_nf at * <;>
+          omega
+        simp_all [Nat.Prime]
+        <;>
+        omega
+      }) <;>
+      omega
+    exact h₄
+  exact h₃

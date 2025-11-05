@@ -1,0 +1,205 @@
+-- Define a sequence of complex numbers from the given recurrence.
+  let z : ℕ → ℂ := fun n => a n + I * b n
+
+  -- Show that the recurrence can be expressed in terms of complex multiplication.
+  have h (n : ℕ) : z (n + 1) = (Complex.sqrt 3 + I) * z n := by
+    simp [z, h₀, h₁]
+    ring_nf
+    rw [mul_add, mul_assoc, Complex.I_mul_I]
+    ring_nf
+
+  -- Prove that the complex number associated with the sequence has an explicit form.
+  have h' (n : ℕ) : z n = z 0 * (Complex.sqrt 3 + I) ^ n := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [h, pow_succ, ih]
+      ring
+
+  -- Take norm of both sides to simplify.
+  have h'' (n : ℕ) : Complex.norm z n = Complex.norm z 0 * Complex.abs (Complex.sqrt 3 + I) ^ n := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [h'', pow_succ, ih]
+      simp [Complex.norm_mul, Complex.norm_I, Complex.abs_eq_sqrt_sq_add_sq]
+
+  -- Take argument of both sides.
+  have h''' (n : ℕ) : (z n).arg = (z 0).arg + n * Real.arccos (Real.sqrt 3 / 2) := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [h'']
+      simp [Complex.arg_mul, Complex.arg_pow, Complex.arg_I, Complex.abs_eq_sqrt_sq_add_sq]
+      field_simp
+      rw [mul_add]
+      nth_rw 2 [← mul_one (Real.sqrt 3 + I).arg]
+      rw [Complex.arg_add_ofReal_mul_I (a := Real.sqrt 3) (b := 1)]
+      have : (Complex.abs (I * Complex.abs (I * 1)))⁻¹ = 1 / 2 := by
+        simp [Complex.abs_I, Complex.normSq_I]
+        norm_num
+      rw [this]
+      field_simp
+      ring
+
+  -- We have the following relation for the square of the distance from the origin.
+  have h'''' (n : ℕ) : Complex.norm z n ^ 2 = (Complex.norm z 0 ^ 2) * 2 ^ n := by
+    calc
+      Complex.norm z n ^ 2 = (z n).argim.
+
+
+
+# Informal Proof:
+We rewrite the recurrence as
+\[(a_{n+1},b_{n+1})=M(a_n,b_n),\]
+where \(M\) is the matrix \(\begin{pmatrix}\sqrt3&-1\\1&\sqrt3\end{pmatrix}\).
+This can be rewritten as
+\[(a_{n+1}+bi_{n+1},a_{n+1}-bi_{n+1})=M(a_n+bi_n,a_n-bi_n),\]
+where \(i\) is the imaginary unit.
+This can be further rewritten as
+\[\left((a_{n+1}+bi_{n+1})^{*},(a_{n+1}-bi_{n+1})^{*}\right)=\left((a_n+bi_n)^{*},(a_n-bi_n)^{*}\right)M^{*},\]
+where \(^{*}\) denotes the conjugate.
+We find that the eigenvalues of \(M^{*}\) are \(2\) and \(1\), with corresponding eigenvectors \((1,-i)\) and \((1,i)\).
+We choose to quotient out the eigenvector \((1,i)\), and thus take the limit as \(n\) approaches \(\infty\) of \((a_n+bi_n)^{-1}\), which is the same as \((a_n+bi_n)^{*}\cdot (1,-i)\).
+This gives us the solution
+\[(a_{100},b_{100})=\left(2^{-98},-2^{-98}\right),\]
+yielding \((a,b)=\left(2^{-97},-2^{-97}\right)\) and \((a,b)=-2^{-97}\left(1,-1\right)\).
+The matrix \(M\) then becomes \(2^{-97}\cdot\left(\begin{pmatrix}1&-1\\1&1\end{pmatrix}\right)\), confirming our answer.
+
+# Formal Proof in Lean 4:
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+```
+# Informal Proof:
+We note that \((a_{n+1} + \sqrt{3} b_{n+1}) = ((1 + \sqrt{3}i) (a_n + b_n i))\) and therefore by induction 
+\[
+(a_{n+1} + \sqrt{3} b_{n+1}, a_{n+1} - \sqrt{3} b_{n+1}) = ((1 + \sqrt{3}i) (a_n + b_n i), (a_n - b_n i) (1 - \sqrt{3}i))
+\]
+We can iterate this to get
+\[
+(a_{100} + \sqrt{3} b_{100}, a_{100} - \sqrt{3} b_{100}) = ((1 + \sqrt{3}i)(a_1 + b_1 i), (a_1 - b_1 i) (1 - \sqrt{3}i))^{99}
+\]
+We than need to work with the `^ 99` to get the comeconjugation and get rid of the square root in thedenominator.
+
+# Formal Proof in Lean 4:
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+
+
+/-- A sequence $(a_1,b_1)$, $(a_2,b_2)$, $(a_3,b_3)$, $\ldots$ of points in the coordinate plane satisfies
+
+$(a_{n + 1}, b_{n + 1}) = (\sqrt {3}a_n - b_n, \sqrt {3}b_n + a_n)$  for $n = 1,2,3,\ldots$.
+
+Suppose that $(a_{100},b_{100}) = (2,4)$.  What is $a_1 + b_1$?
+
+$\mathrm{(A)}\ -\frac{1}{2^{97}}\qquad\mathrm{(B)}\ -\frac{1}{2^{99}}\qquad\mathrm{(C)}\ 0\qquad\mathrm{(D)}\ \frac{1}{2^{98}}\qquad\mathrm{(E)}\ \frac{1}{2^{96}}$ Show that it is \mathrm{(D)}.-/
+
+theorem amc12a_2008_p25 (a b : ℕ → ℝ) (h₀ : ∀ n, a (n + 1) = Real.sqrt 3 * a n - b n)
+    (h₁ : ∀ n, b (n + 1) = Real.sqrt 3 * b n + a n) (h₂ : a 100 = 2) (h₃ : b 100 = 4) :
+    a 1 + b 1 = 1 / 2 ^ 98 := by
+  -- Define a sequence of complex numbers from the given recurrence.
+  let z : ℕ → ℂ := fun n => a n + I * b n
+  -- Show that the recurrence can be expressed in terms of complex multiplication.
+  have h (n : ℕ) : z (n + 1) = (Complex.sqrt 3 + I) * z n := by
+    simp [z, h₀, h₁]
+    ring_nf
+    rw [mul_add, mul_assoc, Complex.I_mul_I]
+    ring_nf
+  -- Prove that the complex number associated with the sequence has an explicit form.
+  have h' (n : ℕ) : z n = z 0 * (Complex.sqrt 3 + I) ^ n := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [h, pow_succ, ih]
+      ring
+  -- Take norm of both sides to simplify.
+  have h'' (n : ℕ) : Complex.norm z n = Complex.norm z 0 * Complex.abs (Complex.sqrt 3 + I) ^ n := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [h'', pow_succ, ih]
+      simp [Complex.norm_mul, Complex.norm_I, Complex.abs_eq_sqrt_sq_add_sq]
+      norm_num
+  -- Take argument of both sides.
+  have h''' (n : ℕ) : (z n).arg = (z 0).arg + n * Real.arccos (Real.sqrt 3 / 2) := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [h'']
+      simp [Complex.arg_mul, Complex.arg_pow, Complex.arg_I, Complex.abs_eq_sqrt_sq_add_sq]
+      field_simp
+      ring_nf
+      rw [mul_add, add_assoc, mul_add]
+      nth_rw 2 [← mul_one (Real.sqrt 3 + I).arg]
+      rw [Complex.arg_add_ofReal_mul_I (a := Real.sqrt 3) (b := 1)]
+      have : (Complex.abs (I * Complex.abs (I * 1)))⁻¹ = 1 / 2 := by
+        simp [Complex.abs_I, Complex.normSq_I]
+        norm_num
+      rw [this]
+      field_simp
+      ring
+  -- We have the following relation for the square of the distance from the origin.
+  have h'''' (n : ℕ) : Complex.norm z n ^ 2 = (Complex.norm z 0 ^ 2) * 2 ^ n := by
+    calc
+      Complex.norm z n ^ 2 = (z n).argim := by
+        simp [Complex.normSq_eq_abs, Complex.abs_eq_sqrt_sq_add_sq]
+        rw [arg_eq_arccos_of_nonneg]
+        apply div_nonneg
+        <;> norm_num
+        <;> apply Real.sqrt_nonneg
+      _ = (z 0).argim * (Complex.sqrt 3 + I).argim ^ n := by rw [h'']
+      _ = ((z 0).argim * 2 ^ n) * (Complex.sqrt 3 + I).argim ^ n := by
+        congr
+        rw [mul_pow, ← norm_eq_sqrt_sq]
+        ring
+        simp
+      _ = ((z 0).argim * (Complex.sqrt 3 + I).argim * 2) ^ n * (z 0).argim := by
+        congr
+        rw [mul_pow, ← norm_eq_sqrt_sq]
+        ring
+        simp
+      _ = (Complex.norm z 0 ^ 2) * 2 ^ n := by
+        rw [← Complex.normSq_eq_abs, Complex.abs_eq_sqrt_sq_add_sq]
+        simp
+        ring
+  -- Note that `z 100 = 2 + 4 * I`.
+  have h' (n : ℕ) : z (n + 1) = 2 * I ^ n := by
+    rw [h₂, h₃, pow_succ] at *
+    rw [← h', h]
+    ring
+  -- Note further that `Complex.norm z 0 ^ 2 = 2 ^ 2`.
+  have h'' : Complex.norm z 0 ^ 2 = 2 ^ 2 := by
+    simp [Complex.normSq_eq_abs, Complex.abs_eq_sqrt_sq_add_sq, h₂, h₃]
+    norm_num
+  -- Combine `h''` and `h''''`, we get `Complex.norm z 0 = 2 ^ 98`.
+  have h''' : Complex.norm z 0 = 2 ^ 98 := by
+    rw [h'''']
+    simp
+    rw [h'']
+    norm_num
+  -- Combine `h'''` and `h'`, we get `a 1 + I * b 1 = 2 ^ 98 * 2 * I ^ 98`.
+  rw [h', h'''] at *
+  simp [Complex.abs_eq_sqrt_sq_add_sq] at *
+  ring_nf at *
+  rw [← Complex.ofReal_pow, ← Complex.ofReal_mul] at *
+  field_simp at *
+  rw [← Complex.ofReal_pow, ← Complex.ofReal_mul] at *
+  ring_nf at *
+  -- As a corollary, we get `a 1 + b 1 = 1 / 2 ^ 97`.
+  simp [Complex.ofReal_pow] at *
+  ring_nf at *
+  symm at *
+  apply eq_div_of_mul_eq
+  norm_num
+```

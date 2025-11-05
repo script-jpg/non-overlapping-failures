@@ -1,0 +1,198 @@
+-- On convient de avoir un terme pour $1 /k^3$, avec un 1 au lieu du +.
+  have aux : ∀ k : ℕ, 1 + (1 : ℝ) / k ^ 3 = 1 - (- (1 : ℝ) / k ^ 3) := by intro; ring
+  nth_rw 1 [aux]
+
+  -- On aimerait montrer que  $\prod_{k=1}^n (1 - 1/k^3) \leq 3 - 1/n$.
+  -- Pour cela, on va montrer que $1 - 1/k^3 = (1 - 1/k) (1 + 1/k + 1/k^2)$.
+  have : ∀ k : ℕ, 1 - (1 : ℝ) / k ^ 3 = (1 - (1 : ℝ) / k) * (∑ i ∈ Finset.Icc 0 2, 1 / k ^ i) := by
+    intro k
+    rw [Finset.mul_sum, ← Finset.mul_sum, ← pow_add]
+    · simp [Finset.sum_Icc_succ_top]
+      rw [add_comm, ← sub_eq_add_neg]
+      exact Eq.symm (pow_div_pow 1 (by simp) (by simp) 3)
+    · simp
+    · simp [Finset.sum_Icc_succ_top]
+      rw [add_comm, ← sub_eq_add_neg]
+      exact Eq.symm (pow_div_pow 1 (by simp) (by simp) 3)
+  -- On aimerait montrer que  $\prod_{k=1}^n (1 - 1/k) \leq 3 - 1/n$.
+  -- Pour cela, on va montrer que $1 - 1/k = (1 - 1/(k(k-1))) (1 - 1/k(k-1))$.
+  have : ∀ k : ℕ, 1 - (1 : ℝ) / (k + 1) = (1 - (1 : ℝ) / (k + 1) / (k : ℝ)) * (1 - 1 / ((k : ℝ) * (k + 1))) := by
+    intro k
+    rw [← mul_sub, ← mul_div, div_eq_mul_inv, mul_sub, sub_eq_add_neg, ← neg_mul, mul_comm, ← mul_neg]
+    · simp [mul_assoc]
+    · simp
+    · simp [mul_assoc]
+    · simp [mul_comm]
+
+  -- On aimerait donc montrer que $\prod_{k=1}^n (1 - 1/(k(k-1))) \leq 3 - 1/n$.
+  -- Mais il faut traiter le cas $k = 1$ avant de 1 ne pas diviser par 0.
+  match n with
+  | 0 => linarith
+  | 1 => simp
+  | k + 2 =>
+    rename_i k
+    -- On aimerait montrer que $\prod_{k=1}^{n+2} (1 - 1/k(k-1)) = (\prod_{k=1}^n (1 - 1/k(k-1))) (1 - 1/((n+1)(n+2))) (1 - 1/((n+2)(n+3)))$.
+    have : ∏ k ∈ Finset.Icc 1 (k + 2), (1 - (1 : ℝ) / (k + 1) / (k : ℝ)) = (∏ k ∈ Finset.Icc 1 k, (1 - (1 : ℝ) / (k + 1) / (k : ℝ))) * (1 - 1 / ((k : ℝ) + 1) * (1 - 1 / ((k : ℝ) + 2) * (↑k + 3))) := by
+      rw [Finset.prod_Icc_succ_top, Finset.prod_Icc_succ_top, Finset.prod_Icc_succ_top]
+      · ring_nf
+      · simp
+      · simp
+    -- On aimerait donc montrer que $\prod_{k=1}^n (1 - 1/k(k-1)) \leq 3 - 1/n$.
+    -- Comme $1 - 1/k(k-1) \leq 1$, on a $\prod_{k=1}^n (1 - 1/k(k-1)) \leq 1$.
+    have : (∏ k ∈ Finset.Icc 1 k, (1 - (1 : ℝ) / (k + 1) / (k : ℝ))) ≤ 1 := by
+      induction k with
+      | zero => simp
+      | succ k ih =>
+        rw [Finset.prod_Icc_succ_top]
+        conv =>
+          arg 1
+          arg 1
+          simp
+        rw [← Finset.prod_Icc_succ_top, ih]
+        apply mul_le_mul
+        · simp
+        · simp
+        · apply sub_nonneg.mpr
+          apply div_le_one.mpr
+          simp
+          linarith
+        · apply one_le_div.mpr
+          simp
+          linarith
+    rw [this, add_assoc, mul_assoc, ← mul_add]
+    apply add_le_add
+    · exact inductive_hypothesis k (by linarith)
+    · rw [← neg_div]
+      apply mul_le_mul
+      · simp
+      · simp
+      · apply sub_nonneg.mpr
+        linarith
+      · apply one_le_div.mpr
+        linarith
+    · simp
+    · rw [show ((k : ℝ) + 1) * ((k : ℝ) + 2) * ((↑k : ℝ) + 3) = (k : ℝ) ^ 3 + 6 * (k : ℝ) ^ 2 + 11 * (k : ℝ) + 6 by ring]
+      rw [show ((k : ℝ) + 1) * ((k : ℝ) + 2) = (k : ℝ) ^ 2 + 3 * (k : ℝ) + 2 by ring]
+      rw [show ((k : ℝ) + 1) * ((k : ℝ) + 3) = (k : ℝ) ^ 2 + 4 * (k : ℝ) + 3 by ring]
+      rw [show ((k : ℝ) + 2) * ((k : ℝ) + 3) = (k : ℝ) ^ 2 + 5 * (k : ℝ) + 6 by ring]
+      apply mul_le_mul
+      · apply pow_le_pow_left₀
+        linarith
+        linarith
+        linarith
+      · apply pow_le_pow_left₀
+        linarith
+        linarith
+        linarith
+      · apply one_le_div.mpr
+        apply pow_pos
+        linarith
+      · apply one_le_div.mpr
+        linarith
+      · simp
+      · simp
+    · apply sub_nonneg.mpr
+      apply div_le_one.mpr
+      simp
+      linarith
+    · apply one_le_div.mpr
+      linarith
+
+  -- On aimerait montrer que $\prod_{k=1}^n (1 + 1/k^3) \leq 3 - 1/n$.
+  -- Pour cela, on va montrer que $1 + 1/k^3 = (1 + 1/k) (1 - 1/k + 1/k^2)$.
+  have : ∀ k : ℕ, 1 + (1 : ℝ) / k ^ 3 = (1 + (1 : ℝ) / k) * (∑ i ∈ Finset.Icc 0 2, (-1 : ℝ) / k ^ i) := by
+    intro k
+    rw [← Finset.mul_sum, ← pow_add]
+    · simp [Finset.sum_Icc_succ_top]
+      rw [add_comm, ← sub_eq_add_neg]
+      exact Eq.symm (pow_div_pow 1 (by simp) (by simp) 3)
+    · simp
+    · simp [Finset.sum_Icc_succ_top]
+      rw [add_comm, ← sub_eq_add_neg]
+      exact Eq.symm (pow_div_pow 1 (by simp) (by simp) 3)
+  -- On aimerait montrer que $\prod_{k=1}^n (1 - 1/k) \leq 3 - 1/n$.
+  -- Pour cela, on va montrer que $1 - 1/k = (1 - 1/(k(k-1))) (1 - 1/k(k-1))$.
+  have : ∀ k : ℕ, 1 - (1 : ℝ) / (k + 1) = (1 - (1 : ℝ) / (k + 1) / (k : ℝ)) * (1 - 1 / ((k : ℝ) * (k + 1))) := by
+    intro k
+    rw [← mul_sub, ← mul_div, div_eq_mul_inv, mul_sub, sub_eq_add_neg, ← neg_mul, mul_comm, ← mul_neg]
+    · simp [Finset.prod_Icc_succ_top, Finset.prod_Icc_succ_top]
+      · ring_nf
+      · simp
+      · simp
+    · simp
+    · simp [Finset.prod_Icc_succ_top, Finset.prod_Icc_succ_top]
+      · ring_nf
+      · simp
+      · simp
+  -- On aimerait donc montrer que $\prod_{k=1}^n (1 - 1/(k(k-1))) \leq 3 - 1/n$.
+  -- Mais il faut traiter le cas $k = 1$ avant de 1 ne pas diviser par 0.
+  match n with
+  | 0 => linarith
+  | 1 => simp
+  | k + 2 =>
+    rename_i k
+    -- On aimerait montrer que $\prod_{k=1}^{n+2} (1 - 1/k(k-1)) = (\prod_{k=1}^n (1 - 1/k(k-1))) (1 - 1/((n+1)(n+2))) (1 - 1/((n+2)(n+3)))$.
+    have : ∏ k ∈ Finset.Icc 1 (k + 2), (1 - (1 : ℝ) / (k + 1) / (k : ℝ)) = (∏ k ∈ Finset.Icc 1 k, (1 - (1 : ℝ) / (k + 1) / (k : ℝ))) * (1 - 1 / ((k : ℝ) + 1) * (1 - 1 / ((k : ℝ) + 2) * (↑k + 3))) := by
+      rw [Finset.prod_Icc_succ_top, Finset.prod_Icc_succ_top, Finset.prod_Icc_succ_top]
+      · ring_nf
+      · simp
+      · simp
+    -- On aimerait donc montrer que $\prod_{k=1}^n (1 - 1/k(k-1)) \leq 3 - 1/n$.
+    -- Comme $1 - 1/k(k-1) \leq 1$, on a $\prod_{k=1}^n (1 - 1/k(k-1)) \leq 1$.
+    have : (∏ k ∈ Finset.Icc 1 k, (1 - (1 : ℝ) / (k + 1) / (k : ℝ))) ≤ 1 := by
+      induction k with
+      | zero => simp
+      | succ k ih =>
+        rw [Finset.prod_Icc_succ_top]
+        conv =>
+          arg 1
+          arg 1
+          simp
+        rw [← Finset.prod_Icc_succ_top, ih]
+        apply mul_le_mul
+        · simp
+        · simp
+        · apply sub_nonneg.mpr
+          linarith
+        · apply one_le_div.mpr
+          linarith
+    rw [this, add_assoc, mul_assoc, ← mul_add]
+    apply add_le_add
+    · exact inductive_hypothesis k (by linarith)
+    · rw [← neg_div]
+      apply mul_le_mul
+      · simp
+      · simp
+      · apply sub_nonneg.mpr
+        linarith
+      · apply one_le_div.mpr
+        linarith
+    · simp
+    · rw [show ((k : ℝ) + 1) * ((k : ℝ) + 2) * ((↑k : ℝ) + 3) = (k : ℝ) ^ 3 + 6 * (k : ℝ) ^ 2 + 11 * (k : ℝ) + 6 by ring]
+      rw [show ((k : ℝ) + 1) * ((k : ℝ) + 2) = (k : ℝ) ^ 2 + 3 * (k : ℝ) + 2 by ring]
+      rw [show ((k : ℝ) + 1) * ((k : ℝ) + 3) = (k : ℝ) ^ 2 + 4 * (k : ℝ) + 3 by ring]
+      rw [show ((k : ℝ) + 2) * ((k : ℝ) + 3) = (k : ℝ) ^ 2 + 5 * (k : ℝ) + 6 by ring]
+      apply mul_le_mul
+      · apply pow_le_pow_left₀
+        linarith
+        linarith
+        linarith
+      · apply pow_le_pow_left₀
+        linarith
+        linarith
+        linarith
+      · apply one_le_div.mpr
+        apply pow_pos
+        linarith
+      · apply one_le_div.mpr
+        linarith
+      · simp
+      · simp
+    · apply sub_nonneg.mpr
+      apply div_le_one.mpr
+      simp
+      linarith
+    · apply one_le_div.mpr
+      linarith
+
+```

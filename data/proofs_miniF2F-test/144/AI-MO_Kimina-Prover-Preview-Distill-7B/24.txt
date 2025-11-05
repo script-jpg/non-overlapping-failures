@@ -1,0 +1,81 @@
+-- A lemma that may be of use to us when expanding norms.
+  have h₁ (z w : ℂ) : Complex.normSq (z + w) = Complex.normSq z + Complex.normSq w + 2 * Re (z * w) := by
+    simp [Complex.normSq, Complex.add_re, Complex.add_im]
+   ring
+
+  -- Another lemma, this time about multiplying norms.
+  have h₂ (z w : ℂ) : Complex.normSq (z * w) = Complex.normSq z * Complex.normSq w := by
+    simp [Complex.normSq, Complex.mul_re, Complex.mul_im]
+    ring
+
+  -- Re-arranging the equation given to us, we get:
+  have h₃ : 2 * Complex.normSq z - 2 * Complex.normSq (z + 2) + 2 * Complex.normSq (z ^ 2 + 1) = 31 := by
+    calc
+      2 * Complex.normSq z - 2 * Complex.normSq (z + 2) + 2 * Complex.normSq (z ^ 2 + 1) = 12 * Complex.normSq z - 2 * Complex.normSq (z + 2) + 2 * Complex.normSq (z ^ 2 + 1) - 12 * Complex.normSq z := by ring
+      _ = 31 := by rw [h₀]; ring
+
+  -- Use the two lemmas above to expand the norms in our equation.
+  have h₄ : 2 * Complex.normSq z - 2 * (Complex.normSq z + Complex.normSq 2 + 2 * Re (z * 2)) + 2 * (Complex.normSq z * Complex.normSq 2 + Complex.normSq 1) = 31 := by
+    rw [h₁, h₂] at h₃
+    exact h₃
+
+  -- Simplify the equation.
+  have h₅ : 2 * Complex.normSq z - 2 * Complex.normSq z - 6 * Complex.normSq 2 - 4 * Re (z * 2) + 2 * Complex.normSq z * Complex.normSq 2 + 2 * Complex.normSq 1 = 31 := by
+    calc
+      2 * Complex.normSq z - 2 * Complex.normSq z - 6 * Complex.normSq 2 - 4 * Re (z * 2) + 2 * Complex.normSq z * Complex.normSq 2 + 2 * Complex.normSq 1 = 2 * Complex.normSq z - 2 * (Complex.normSq z + Complex.normSq 2 + 2 * Re (z * 2)) + 2 * (Complex.normSq z * Complex.normSq 2 + Complex.normSq 1) := by ring
+      _ = 31 := by rw [h₄]; ring
+
+  -- Simplify further.
+  have h₆ : - 6 * Complex.normSq 2 - 4 * Re (z * 2) + 2 * Complex.normSq z * Complex.normSq 2 + 2 * Complex.normSq 1 = 31 := by
+    calc
+      - 6 * Complex.normSq 2 - 4 * Re (z * 2) + 2 * Complex.normSq z * Complex.normSq 2 + 2 * Complex.normSq 1 = 2 * Complex.normSq z - 2 * Complex.normSq z - 6 * Complex.normSq 2 - 4 * Re (z * 2) + 2 * Complex.normSq z * Complex.normSq 2 + 2 * Complex.normSq 1 := by ring
+      _ = 31 := by rw [h₅]; ring
+
+  -- Simplify once more.
+  have h₇ : 2 * Complex.normSq z * Complex.normSq 2 - 4 * Re (z * 2) = 31 - 2 * Complex.normSq 1 + 6 * Complex.normSq 2 := by
+    calc
+      2 * Complex.normSq z * Complex.normSq 2 - 4 * Re (z * 2) = - 6 * Complex.normSq 2 - 4 * Re (z * 2) + 2 * Complex.normSq z * Complex.normSq 2 + 2 * Complex.normSq 1 - 2 * Complex.normSq 1 + 6 * Complex.normSq 2 := by ring
+      _ = 31 := by rw [h₆]; ring
+
+  -- Let's take a step back and analyze what we're trying to prove.
+  -- We want to find the value of $z + \frac 6z$.
+  -- Let's simplify it just a bit.
+  have h₈ : z + 6 / z = (z ^ 2 + 6) / z := by
+    field_simp
+    ring
+
+  rw [h₈]
+
+  -- Since $z \ne 0$ (because norms are positive), we can multiply both sides by $z$.
+  suffices  z ^ 2 + 6 = (31 - 2 * Complex.normSq 1 + 6 * Complex.normSq 2) / (2 * Complex.normSq 2) * z by
+    field_simp [this]
+
+  -- Now we can multiply both sides by $z$.
+  suffices  2 * Complex.normSq 2 * (z ^ 2 + 6) = (31 - 2 * Complex.normSq 1 + 6 * Complex.normSq 2) * z by
+    rw [←this]
+    ring
+
+  -- Use the two lemmas from the start.
+  have h₉ : 2 * Complex.normSq 2 * (z ^ 2 + 6) = 2 * Complex.normSq 2 * Complex.normSq z * Complex.normSq z + 12 * Complex.normSq 2 := by
+    rw [h₂, ←h₁]
+    ring
+
+  rw [h₉]
+
+  -- Re-arrange, this almost solves the problem.
+  suffices  2 * Complex.normSq 2 * Complex.normSq z * Complex.normSq z - (31 - 2 * Complex.normSq 1 + 6 * Complex.normSq 2) * z + 12 * Complex.normSq 2 = 0 by
+    rw [this]; ring
+
+  -- Use the lemma yet again.
+  have h₁₀ : 2 * Complex.normSq 2 * Complex.normSq z * Complex.normSq z - (31 - 2 * Complex.normSq 1 + 6 * Complex.normSq 2) * z + 12 * Complex.normSq 2 = (2 * Complex.normSq 2 * Complex.normSq z - 4 * Re (z * 2)) * z + (2 * Complex.normSq 1 - 6 * Complex.normSq 2 - 31) := by
+    ring_nf
+    rw [Complex.ext_iff]
+    simp
+    ring_nf
+    rw [Complex.ext_iff]
+    simp
+    ring
+
+  rw [h₁₀]
+  simp_all
+```

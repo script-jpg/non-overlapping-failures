@@ -1,0 +1,111 @@
+-- We have $p(n) = n^2 - n + 41$ and $p(n+1) = (n+1)^2 - (n+1) + 41$.
+  simp [h₀] at h₁
+
+  -- We can show that $p(n)$ and $p(n+1)$ always have a common factor.
+  -- $p(n+1) - p(n) = (n+1)^2 - (n+1) + 41 - (n^2 - n + 41) = 2n$
+  have h₂ : n.gcd (2 * n) ≤ Nat.gcd (n ^ 2 - n + 41) ((n + 1) ^ 2 - (n + 1) + 41) := by
+    have c1 : Nat.gcd (n ^ 2 - n + 41) ((n + 1) ^ 2 - (n + 1) + 41) = Nat.gcd (n ^ 2 - n + 41) (2 * n + 41) := by
+      have c2 : (n + 1) ^ 2 - (n + 1) + 41 = 2 * n + 41 + (n ^ 2 - n + 41) := by omega
+      rw [c2]
+      exact Nat.gcd_add_self_right (n ^ 2 - n + 41) (2 * n + 41)
+    have c3 : Nat.gcd (n ^ 2 - n + 41) (2 * n + 41) = Nat.gcd (n ^ 2 - n + 41) (2 * n) := by
+      nth_rw 2 [show 41 = 41 - 1 + 1 by norm_num]
+      have c4 : Nat.gcd (n ^ 2 - n + 41) 1 = 1 := by
+        rw [Nat.gcd_one_right]
+      rw [← Nat.gcd_add_mul_right_right (n ^ 2 - n + 41) (2 * n) 41]
+      rw [show 41 = 41 - 1 + 1 by norm_num, ← Nat.add_sub_assoc (n ^ 2 - n) 1 41, ← Nat.add_sub_assoc (n ^ 2 - n) (n + 1) 41]
+      rw [Nat.add_sub_cancel]
+      exact c4
+    rw [c1, c3]
+    exact Nat.gcd_dvd_gcd (n ^ 2 - n + 41) (2 * n)
+
+  -- We can show that $n$ and $2n$ have a common factor.
+  have h₃ : n.gcd (2 * n) > 1 := by
+    by_cases h₄ : n = 0
+    · rw [h₄] at h₁
+      simp at h₁
+    · have c1 : n.gcd (2 * n) ≥ 2 := by
+        by_cases h₅ : n < 2
+        · interval_cases n <;> simp
+        · push_neg at h₅
+          have h₆ : 2 * n > 2 * 2 := by omega
+          have h₇ : 2 * 2 ≤ 2 * n := by omega
+          exact Nat.gcd_ge_of_dvd_left (by omega) (by omega)
+      linarith
+
+  -- The common factor must be at least $41$.
+  by_cases h₄ : n ≥ 41
+  · linarith
+  · push_neg at h₄
+    -- This means that $p(n)$ and $p(n+1)$ don't have a common factor greater than 1, which is a contradiction.
+    have c1 : Nat.gcd (n ^ 2 - n + 41) ((n + 1) ^ 2 - (n + 1) + 41) = 1 := by
+      have c2 : Nat.gcd (n ^ 2 - n + 41) ((n + 1) ^ 2 - (n + 1) + 41) = Nat.gcd (n ^ 2 - n + 41) (2 * n + 41) := by
+        have c3 : (n + 1) ^ 2 - (n + 1) + 41 = 2 * n + 41 + (n ^ 2 - n + 41) := by omega
+        rw [c3]
+        exact Nat.gcd_add_self_right (n ^ 2 - n + 41) (2 * n + 41)
+      have c4 : Nat.gcd (n ^ 2 - n + 41) (2 * n + 41) = Nat.gcd (n ^ 2 - n + 41) (2 * n) := by
+        have c5 : Nat.gcd (n ^ 2 - n + 41) (2 * n + 41) = Nat.gcd (n ^ 2 - n + 41) (2 * n) := by
+          nth_rw 2 [show 41 = 41 - 1 + 1 by norm_num]
+          have c6 : Nat.gcd (n ^ 2 - n + 41) 1 = 1 := by
+            rw [Nat.gcd_one_right]
+          rw [← Nat.gcd_add_mul_right_right (n ^ 2 - n + 41) (2 * n) 41]
+          rw [show 41 = 41 - 1 + 1 by norm_num, ← Nat.add_sub_assoc (n ^ 2 - n) 1 41, ← Nat.add_sub_assoc (n ^ 2 - n) (n + 1) 41]
+          rw [Nat.add_sub_cancel]
+          exact c6
+        exact c5
+      have c6 : Nat.gcd (n ^ 2 - n + 41) (2 * n) = 1 := by
+        have c7 : Nat.gcd (n ^ 2 - n + 41) (2 * n) ∣ 2 * n := by
+          apply Nat.gcd_dvd_right
+        have c8 : n.gcd (2 * n) ∣ n := by
+          apply Nat.gcd_dvd_left
+        have c9 : n.gcd (2 * n) > 1 := by
+          by_cases h₁₀ : n = 0
+          · rw [h₁₀] at h₁
+            simp at h₁
+          · have h₁₁ : 2 ≤ n := by omega
+            have h₁₂ : 1 < n.gcd (2 * n) := by
+              refine Nat.one_lt_iff_ne_zero_and_ne_one.mpr?_
+              constructor
+              · by_contra h₁₃
+                rw [h₁₃] at h₁
+                simp at h₁
+              · exact h₃
+            linarith
+        have c10 : n.gcd (2 * n) ∣ 41 := by
+          have h₁₁ : n.gcd (2 * n) ∣ 2 * n + 41 := by
+            exact Nat.dvd_add (Nat.gcd_dvd_right (n ^ 2 - n + 41) (2 * n)) (Nat.gcd_dvd_left (n ^ 2 - n + 41) (2 * n))
+          have h₁₂ : n.gcd (2 * n) ∣ (n + 1) ^ 2 - (n + 1) + 41 := by
+            refine Nat.dvd_add (Nat.gcd_dvd_left (n ^ 2 - n + 41) (2 * n))?_
+            apply Nat.dvd_trans (Nat.gcd_dvd_right (n ^ 2 - n + 41) (2 * n)) (show (2 * n) ∣ (n + 1) ^ 2 - (n + 1) + 41 by omega)
+          rw [show (n + 1) ^ 2 - (n + 1) + 41 = 2 * n + 41 + (n ^ 2 - n + 41) by omega] at h₁₂
+          exact Nat.dvd_add h₁₁ h₁₂
+        have c11 : n.gcd (2 * n) = 1 := by
+          have h₁₃ : n.gcd (2 * n) < 41 := by
+            by_contra h₁₄
+            push_neg at h₁₄
+            have h₁₅ : 41 ≤ n.gcd (2 * n) := by
+              omega
+            have h₁₆ : n.gcd (2 * n) ≤ 41 := by
+              exact Nat.gcd_le_right (n ^ 2 - n + 41) (2 * n)
+            rw [show n.gcd (2 * n) = 41 by omega] at c9
+            linarith
+          interval_cases (n.gcd (2 * n))
+          · exact h₃
+          · norm_num at c9
+          · rw [c9]
+          · norm_num at c9
+          · norm_num at c9
+          · norm_num at c9
+          · norm_num at c9
+          · norm_num at c9
+          · norm_num at c9
+          · norm_num at c9
+          · norm_num at c9
+          · norm_num at c9
+          · norm_num at c9
+          · norm_num at c9
+        exact c6
+      rw [c2, c4, c6]
+    rw [c1] at h₁
+    linarith
+```

@@ -1,0 +1,93 @@
+-- Notice that if $f(k) \leq f(n)$ for all $n$, then $g(k) \leq g(n)$ for all $n$, where $g(n) = \frac{d(n)}{n^{1 / 3}}$.
+  -- And if $g(k) > g(n)$ for all $n$, then $f(k) > f(n)$ for all $n$.
+  have h₂ : ∀ (k n : ℕ), 0 < k → 0 < n → f k < f n ↔ g k < g n := by
+    intro k n hk hn
+    rw [h₀ k hk, h₀ n hn]
+    rw [<-Real.rpow_mul_natCast]
+    rw [<-Real.rpow_mul_natCast]
+    simp only [one_div]
+    conv => lhs; arg 1; rw [Nat.cast_sub, Nat.cast_pow]
+    conv => rhs; arg 1; rw [Nat.cast_sub, Nat.cast_pow]
+    rw [<-Real.rpow_mul, <-Real.rpow_mul]
+    swap; rw [Real.rpow_natCast]
+    swap; rw [Real.rpow_natCast]
+    norm_cast
+    norm_cast
+    apply (Real.rpow_lt_rpow_iff (by norm_num) (by norm_num) (by norm_num)).mp
+
+  -- Then, suppose that $f(N) > f(n)$ for all $n \neq N$.
+  -- We get that $g(N) > g(n)$ for all $n \neq N$.
+  have h₃ : ∀ (n : ℕ), n ≠ N → 0 < n → g n < g N := by
+    intro n ne hn
+    specialize h₁ n ne hn
+    specialize h₂ N n (by positivity) hn
+    rw [<-h₂] at h₁
+    exact h₁
+
+  -- From the problem, we have that $g(N) > g(n)$ for all $n \neq N$.
+  -- We claim that $N = 288$.
+  have h₄ : N = 288 := by
+    -- We prove this by contradiction.
+    by_contra! h₄
+    -- If $N \neq 288$, then there exists some prime $p$ such that $p^3$ divides $N$.
+    have h₅ : ∃ p : ℕ, p.Prime ∧ p ^ 3 ∣ N ∧ p ^ 4 ∣ N := by
+      -- If $N \neq 288$, then there exists a prime $p$ such that $p^3$ divides $N$.
+      by_contra! h₅
+      -- otherwise, $N$ can be written as $n \cdot 2^a \cdot 3^b$, where $a, b \in \{0, 1, 2\}$.
+      have h₆ : N = 2 ^ a * 3 ^ b * n := by
+        use n := by
+          simp only [exists_and_right]
+          rw [h₄]
+          exact Nat.zero_lt_of_ne_zero rfl
+        apply Nat.eq_mul_of_div_eq
+        · exact h₄
+        · exact h₄
+      -- where $a, b \in \{0, 1, 2\}$.
+      have h₇ : a ≤ 2 := by
+        by_contra! h₇
+        -- if $a > 2$, then $2^3 \cdot 3^b \cdot n \mid N$
+        have h₈ : 2 ^ 3 ∣ 2 ^ a * 3 ^ b * n := by
+          rw [<-h₅]
+          exact Nat.dvd_mul_left (2 ^ 3) (2 ^ (a - 3) * 3 ^ b * n)
+        rw [h₆] at h₈
+        -- but $2^3 \cdot 3^b \cdot n \neq 2^3 \cdot 3^b \cdot n$ because $N \neq 2^3 \cdot 3^b \cdot n$
+        exact ne_of_ne_of_dvd (h₈) (h₅)
+      have h₈ : b ≤ 2 := by
+        by_contra! h₈
+        -- if $b > 2$, then $2^a \cdot 3^3 \cdot n \mid N$
+      have h₉ : 3 ^ 3 ∣ 2 ^ a * 3 ^ b * n := by
+        rw [<-h₅]
+        exact Nat.dvd_mul_left (3 ^ 3) (2 ^ a * 3 ^ (b - 3) * n)
+      rw [h₆] at h₉
+      -- but $2^a \cdot 3^3 \cdot n \neq 2^a \cdot 3^3 \cdot n$ because $N \neq 2^a \cdot 3^3 \cdot n$
+      exact ne_of_ne_of_dvd (h₉) (h₅)
+    obtain ⟨p, hp, hp₁, hp₂⟩ := h₅
+    -- For this prime $p$, we have $g(p^3) > g(N)$.
+    have h₆ : g (p ^ 3) > g N := by
+      -- As $p^3$ is not equal to $N$, we have $g(p^3) \neq g(N)$.
+      have h₆ : p ^ 3 ≠ N := by
+        by_contra! h₆
+        rw [h₆] at hp₂
+        exact ne_of_gt hp₂
+      specialize h₃ (p ^ 3) h₆ (by positivity)
+      exact lt_of_le_of_ne h₃ hp₂.symm
+    -- But $g(p^3) \leq g(p^4)$, because $p^4$ divides $p^3$.
+    have h₇ : g (p ^ 4) ≥ g (p ^ 3) := by
+      have h₇ : p ^ 3 ∣ p ^ 4 := by exact Nat.pow_dvd_pow 2 (by omega)
+      exact Monotone.map_le (Nat.dvd implies_le) h₇
+    -- So, $g(p^4) > g(N)$.
+    have h₈ : g (p ^ 4) > g N := by
+      exact lt_of_le_of_lt h₇ h₆
+    -- This is a contradiction.
+    have h₉ : g N > g N := by
+      calc
+        _ = g N + (g (p ^ 4) - g (p ^ 4)) := by simp
+        _ = g (p ^ 4) - g N := by rw [<-Nat.add_sub_cancel]
+        _ > g N - g N := by rel [h₈]
+        _ = 0 := by simp
+        _ > 0 := by simp
+    exact ne_of_gt h₉ (h₄ ▸ h₅ ▸ g_pos)
+
+  -- The sum of the digits of $288$ is $2 + 8 + 8 = \boxed{\textbf{(E) }9}$.
+  simp [h₄]
+```

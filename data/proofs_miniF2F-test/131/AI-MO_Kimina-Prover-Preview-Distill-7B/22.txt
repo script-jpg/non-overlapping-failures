@@ -1,0 +1,59 @@
+-- The function $f$ satisfies the property $f(a \cdot b) = f(a) + f(b)$ for all positive rational numbers $a$ and $b$.
+  have hf_mul : ∀ a > 0 b > 0, f (a * b) = f a + f b := by
+    intro a ha b hb
+    exact h₀ a ha b hb
+
+  -- $f$ also has the property that $f(p) = p$ for every prime number $p$.
+  have hf_prime (p : ℕ) (hp : Nat.Prime p) : f p = p := by
+    exact h₁ p hp
+
+  -- We need to show that $f\left(\frac{25}{11}\right) < 0$.
+  have h : f (25 /. 11) < 0 := by
+    -- We start by writing $\frac{25}{11}$ as $25 \cdot \frac{1}{11}$.
+    rw [div_eq_mul_inv]
+    -- Then, $f\left(\frac{25}{11}\right) = f(25) + f\left(\frac{1}{11}\right)$.
+    have h1 := hf_mul 25 (by norm_num) (1 / 11) (by norm_num)
+    -- Rearranging, we get $f\left(\frac{1}{11}\right) = f\left(\frac{25}{11}\right) - f(25)$.
+    replace h1 : f (1 / 11) = f (25 /. 11) - f 25 := by linarith
+    -- Also, $f(1) = f(1 \cdot 1) = f(1) + f(1)$, which implies $f(1) = 0$.
+    have f1_eq_0 : f 1 = 0 := by
+      specialize hf_mul 1 (by norm_num) 1 (by norm_num)
+      simp at hf_mul
+      linarith
+    -- So, $f\left(\frac{1}{11}\right) = 0 - f(25) = -f(25)$.
+    replace h1 : f (1 / 11) = - f 25 := by
+      calc
+        f (1 / 11) = f (25 /. 11) - f 25 := h1
+        _ = f (1 / 11) - f 25 := by rw [← f1_eq_0]
+        _ = 0 - f 25 := by rw [← hf_mul (1/11) (by norm_num) (1/11) (by norm_num)]
+        _ = - f 25 := by ring
+    -- Then, $f\left(\frac{25}{11}\right) = f(25) + f\left(\frac{1}{11}\right) = f(25) - f(25) = 0$.
+    have f25eq0 : f 25 = 0 := by
+      specialize hf_mul (1/11) (by norm_num) (1/11) (by norm_num)
+      simp at hf_mul
+      rw [h1] at hf_mul
+      ring_nf at hf_mul
+      rw [← hf_mul]
+      ring
+    -- However, we notice that $f(11) = 11$ since $11$ is a prime number, and $f(11) = f\left(\frac{121}{11}\right) = f(121) + f\left(\frac{1}{11}\right) = f(11) + 2 f(11) + f\left(\frac{1}{11}\right)$, which means $f(11) = -f\left(\frac{1}{11}\right) = -2$.
+    have f11ne : f 11 ≠ 0 := by
+      specialize hf_mul 11 (by norm_num) 11 (by norm_num)
+      simp at hf_mul
+      have hf11 := hf_prime 11 (by norm_num)
+      rw [hf11] at hf_mul
+      ring_nf at hf_mul
+      by_contra h
+      rw [h] at hf_mul
+      linarith
+    -- This shows that $f(x) < 0$ for $x = \frac{25}{11}$, which is our answer.
+    by_contra h2
+    have : f 25 ≥ 0 := by
+      rw [f25eq0]
+      linarith
+    have : f (1 / 11) ≤ 0 := by linarith
+    have : f (1 / 11) = 0 := by linarith
+    contradiction
+
+  exact h
+
+```

@@ -1,0 +1,321 @@
+-- aux lemma, for a / b in the range (0, 1), there holds a < b iff a < b
+  have l_rfl {a b : ℝ} (h : 0 < a) (h' : a < b) : a ≪ b := by
+    exact (div_lt_div_iff₀ (by positivity) (by positivity)).mp h'
+
+  -- aux lemma, trigonometric sum is tan (pi / 8)
+  have l_tan : ∑ k in Finset.Icc 1 8, Real.sin (5 * k * Real.pi / 180) = Real.tan (Real.pi / 8) := by
+    have r1 : Real.sin (Real.pi / 8) = Real.tan (Real.pi / 8) / (1 + Real.tan (Real.pi / 8)) := by
+      have : Real.cos (Real.pi / 8) ≠ 0 := by
+        apply ne_of_gt
+        apply Real.cos_pos_of_mem_Ioo
+        constructor <;> linarith [Real.pi_pos]
+      rw [Real.tan_eq_sin_div_cos]
+      field_simp
+    have r2 : Real.sin (3 * Real.pi / 8) = Real.tan (Real.pi / 8) / (1 - Real.tan (Real.pi / 8)) := by
+      have : Real.cos (3 * Real.pi / 8) ≠ 0 := by
+        apply ne_of_gt
+        apply Real.cos_pos_of_mem_Ioo
+        constructor <;> linarith [Real.pi_pos]
+      rw [Real.tan_eq_sin_div_cos]
+      field_simp
+      rw [show (3 * Real.pi / 8) = Real.pi - (5 * Real.pi / 8) by ring, Real.sin_pi_sub]
+      rw [show (5 * Real.pi / 8) = Real.pi / 2 + (3 * Real.pi / 8) by ring, Real.sin_add, Real.sin_pi_div_two]
+      ring
+    have r3 : Real.sin (5 * Real.pi / 8) = -Real.tan (Real.pi / 8) / (1 + Real.tan (Real.pi / 8)) := by
+      have : Real.cos (5 * Real.pi / 8) ≠ 0 := by
+        apply ne_of_lt
+        apply Real.cos_neg
+        apply Real.cos_pos_of_mem_Ioo
+        constructor <;> linarith [Real.pi_pos]
+      rw [Real.tan_eq_sin_div_cos]
+      field_simp
+      rw [show (5 * Real.pi / 8) = Real.pi - (3 * Real.pi / 8) by ring, Real.sin_pi_sub]
+      rw [show (3 * Real.pi / 8) = Real.pi / 2 + (Real.pi / 8) by ring, Real.sin_add, Real.sin_pi_div_two]
+      ring
+    have r4 : Real.sin (7 * Real.pi / 8) = -Real.tan (Real.pi / 8) / (1 - Real.tan (Real.pi / 8)) := by
+      have : Real.cos (7 * Real.pi / 8) ≠ 0 := by
+        apply ne_of_lt
+        apply Real.cos_neg
+        apply Real.cos_pos_of_mem_Ioo
+        constructor <;> linarith [Real.pi_pos]
+      rw [Real.tan_eq_sin_div_cos]
+      field_simp
+      rw [show (7 * Real.pi / 8) = Real.pi - (Real.pi / 8) by ring, Real.sin_pi_sub]
+      rw [show (Real.pi / 8) = Real.pi / 2 - (Real.pi / 8) by ring, Real.sin_sub, Real.sin_pi_div_two]
+      ring
+    rw [Finset.sum_Icc_succ_top (by linarith), Finset.sum_Icc_succ_top (by linarith), Finset.sum_Icc_succ_top (by linarith), Finset.sum_Icc_succ_top (by linarith)]
+    simp [r1, r2, r3, r4]
+    field_simp
+    ring
+
+  -- aux lemma, tan is injective on (-90, 90)
+  have l_inj {x y : ℝ} (h1 : x ∈ Set.Ioo (-(90 : ℝ)) (90)) (h2 : y ∈ Set.Ioo (-(90 : ℝ)) (90)) (h3 : Real.tan x = Real.tan y) : x = y := by
+    -- According to mathlib's definition, arctan is the inverse of tan on (-90, 90)
+    have r1 : Real.tan (Real.arctan x) = x := by
+      exact Real.tan_arctan x
+    have r2 : Real.tan (Real.arctan y) = y := by
+      exact Real.tan_arctan y
+    -- multiple conditions, combine them by cases
+    rcases h1 with ⟨h1l, h1u⟩
+    rcases h2 with ⟨h2l, h2u⟩
+    by_cases h4 : x < y
+    · -- x < y
+      have h5 : Real.arctan x ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
+        simp
+        constructor
+        · linarith [Real.pi_pos]
+        · linarith [Real.pi_pos]
+      have h6 : Real.arctan y ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
+        simp
+        constructor
+        · linarith [Real.pi_pos]
+        · linarith [Real.pi_pos]
+      have h7 : Real.arctan x < Real.arctan y := by
+        simp
+        apply Real.arctan_strictMono
+        linarith
+      rw [r1, r2] at h3
+      rw [←Real.arctan (Real.tan x)] at h3
+      rw [←Real.arctan (Real.tan y)] at h3
+      exact (Real.injOn_arctan h5 h6 h7).mp h3
+    · -- y < x
+      rw [eq_comm] at h4
+      have h5 : Real.arctan y ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
+        simp
+        constructor
+        · linarith [Real.pi_pos]
+        · linarith [Real.pi_pos]
+      have h6 : Real.arctan x ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
+        simp
+        constructor
+        · linarith [Real.pi_pos]
+        · linarith [Real.pi_pos]
+      have h7 : Real.arctan y < Real.arctan x := by
+        simp
+        apply Real.arctan_strictMono
+        linarith
+      rw [eq_comm] at h3
+      rw [r1, r2] at h3
+      rw [←Real.arctan (Real.tan y)] at h3
+      rw [←Real.arctan (Real.tan x)] at h3
+      exact (Real.injOn_arctan h5 h6 h7).mp h3
+
+  -- aux lemma, tan is positive on (0, 90)
+  have l_pos {x : ℝ} (h : 0 < x ∧ x < 90) : 0 < Real.tan x := by
+    simp
+    apply Real.tan_pos_of_pos_of_lt_pi_div_two
+    · linarith
+    · linarith
+
+  -- aux lemma, integers are relatively prime
+  have l_gcd_eq_one {a b : ℤ} (h : a.gcd b = 1) : Nat.gcd a b = 1 := by
+    have r : Nat.gcd (a.num : ℤ) (b.num : ℤ) = a.gcd b := by
+      have : (a.num : ℤ) = a.gcd * a.num := by
+        exact Eq.symm (Int.gcd_mul_left a b)
+      rw [this]
+      have : (b.num : ℤ) = b.gcd * b.num := by
+        exact Eq.symm (Int.gcd_mul_right a b)
+      rw [this]
+      simp
+      ac_rfl
+    rw [r] at h
+    exact_mod_cast h
+
+  -- aux lemma, m / n < 90 implies m < n * 90
+  have l_num_lt_den_mul (m n : ℤ) (h : (m : ℝ) / n < 90) : m < n * 90 := by
+    have : (m : ℝ) / n < 90 := by
+      linarith
+    rw [div_lt_iff₀'] at this
+    norm_cast at this
+    omega
+
+  -- aux lemma, m / n < 90 implies m < n * 90
+  have l_num_le_den_mul (m n : ℤ) (h : (m : ℝ) / n < 90) : m < n * 90 := by
+    have : (m : ℝ) / n < 90 := by
+      linarith
+    rw [div_lt_iff₀'] at this
+    norm_cast at this
+    omega
+
+  -- Given that $\sum_{k=1}^{35}\sin 5k=\tan \frac mn,$ where angles are measured in degrees, and $m_{}$ and $n_{}$ are relatively prime positive integers that satisfy $\frac mn<90,$ find $m+n.$ Show that it is 177.
+  have r1 : m.num < 90 * m.den := by
+    apply l_num_lt_den_mul
+    have r1 : (m * Real.pi / 180) ∈ Set.Ioo (-(90 : ℝ)) (90) := by
+      simp
+      constructor
+      · rw [Real.pi_pos]
+        linarith
+      · rw [Real.pi_pos]
+        linarith
+    rcases r1 with ⟨r1l, r1u⟩
+    have r2 : Real.tan (m * Real.pi / 180) ∈ Set.Ioo (-(90 : ℝ)) (90) := by
+      simp
+      constructor
+      · apply l_pos
+        constructor
+        · linarith
+        · linarith
+      · apply l_pos
+        constructor
+        · linarith
+        · linarith
+    rcases r2 with ⟨r2l, r2u⟩
+    have r3 : m * Real.pi / 180 = Real.arctan (Real.tan (m * Real.pi / 180)) := by
+      rw [Real.arctan_tan]
+      constructor
+      · simp
+        constructor
+        · linarith
+        · linarith
+      · simp
+        constructor
+        · linarith
+        · linarith
+    rw [h₁] at r3
+    have : m.num < 90 * m.den := by
+      by_contra! h3
+      have h4 : (m.num : ℝ) / m.den ≥ 90 * m.den / m.den := by
+        rw [div_le_div_iff_of_pos_right (by positivity)]
+        linarith
+      rw [div_mul_eq_mul_div, mul_comm, ←mul_div_assoc] at h4
+      nth_rw 3 [mul_comm] at h4
+      rw [div_mul_cancel₀ _ (by positivity), mul_comm] at h4
+      nth_rw 2 [mul_comm] at h4
+      rw [div_mul_cancel₀ _ (by positivity), mul_comm] at h4
+      linarith
+    exact this
+
+  have r2 : m.num ≤ 90 * m.den := by
+    apply l_num_le_den_mul
+    have r1 : (m * Real.pi / 180) ∈ Set.Ioo (-(90 : ℝ)) (90) := by
+      simp
+      constructor
+      · rw [Real.pi_pos]
+        linarith
+      · rw [Real.pi_pos]
+        linarith
+    rcases r1 with ⟨r1l, r1u⟩
+    have r2 : Real.tan (m * Real.pi / 180) ∈ Set.Ioo (-(90 : ℝ)) (90) := by
+      simp
+      constructor
+      · apply l_pos
+        constructor
+        · linarith
+        · linarith
+      · apply l_pos
+        constructor
+        · linarith
+        · linarith
+    rcases r2 with ⟨r2l, r2u⟩
+    have r3 : m * Real.pi / 180 = Real.arctan (Real.tan (m * Real.pi / 180)) := by
+      rw [Real.arctan_tan]
+      constructor
+      · simp
+        constructor
+        · linarith
+        · linarith
+      · simp
+        constructor
+      · linarith
+      · linarith
+    rw [h₁] at r3
+    have : m.num ≤ 90 * m.den := by
+      by_contra! h3
+      have h4 : (m.num : ℝ) / m.den > 90 * m.den / m.den := by
+        rw [div_lt_div_iff_of_pos_right (by positivity)]
+        linarith
+      rw [div_mul_eq_mul_div, mul_comm, ←mul_div_assoc] at h4
+      nth_rw 3 [mul_comm] at h4
+      rw [div_mul_cancel₀ _ (by positivity), mul_comm] at h4
+      nth_rw 2 [mul_comm] at h4
+      rw [div_mul_cancel₀ _ (by positivity), mul_comm] at h4
+      linarith
+    exact this
+
+  have r3 : m.den < 16 := by
+    by_contra! h3
+    have h4 : m.num ≥ 90 * m.den - 90 := by
+      omega
+    have h5 : m.num ≥ 90 * m.den - 90 := by
+      omega
+    have h6 : m.num ≥ 90 * 16 - 90 := by
+      rel [h3, h4]
+    have h7 : m.num ≥ 90 * 16 - 90 := by
+      rel [h6, h5]
+    have h8 : m.num ≥ 90 * 16 - 90 := by
+      rel [h7, h5]
+    have h9 : m.num ≥ 90 * 16 - 90 := by
+      rel [h8, h5]
+    have h10 : m.num ≥ 90 * 16 - 90 := by
+      rel [h9, h5]
+    have h11 : m.num ≥ 90 * 16 - 90 := by
+      rel [h10, h5]
+    have h12 : m.num ≥ 90 * 16 - 90 := by
+      rel [h11, h5]
+    simp at h12
+    linarith
+
+  -- Given that $\sum_{k=1}^{35}\sin 5k=\tan \frac mn,$ where angles are measured in degrees, and $m_{}$ and $n_{}$ are relatively prime positive integers that satisfy $\frac mn<90,$ find $m+n.$ Show that it is 177.
+  have r4 : m.den > 8 := by
+    by_contra! h4
+    have h5 : m.num < 90 * m.den := by
+      apply l_num_lt_den_mul
+      have r1 : (m * Real.pi / 180) ∈ Set.Ioo (-(90 : ℝ)) (90) := by
+        simp
+        constructor
+        · rw [Real.pi_pos]
+          linarith
+        · rw [Real.pi_pos]
+          linarith
+      rcases r1 with ⟨r1l, r1u⟩
+      have r2 : Real.tan (m * Real.pi / 180) ∈ Set.Ioo (-(90 : ℝ)) (90) := by
+        simp
+        constructor
+        · apply l_pos
+          constructor
+          · linarith
+          · linarith
+        · apply l_pos
+          constructor
+          · linarith
+          · linarith
+      rcases r2 with ⟨r2l, r2u⟩
+      have r3 : m * Real.pi / 180 = Real.arctan (Real.tan (m * Real.pi / 180)) := by
+        rw [Real.arctan_tan]
+        constructor
+        · simp
+          constructor
+          · linarith
+          · linarith
+        · simp
+          constructor
+          · linarith
+          · linarith
+      rw [h₁] at r3
+      have : m.num < 90 * m.den := by
+        by_contra! h3
+        have h4 : (m.num : ℝ) / m.den ≥ 90 * m.den / m.den := by
+          rw [div_le_div_iff_of_pos_right (by positivity)]
+          linarith
+        rw [div_mul_eq_mul_div, mul_comm, ←mul_div_assoc] at h4
+        nth_rw 3 [mul_comm] at h4
+        rw [div_mul_cancel₀ _ (by positivity), mul_comm] at h4
+        nth_rw 2 [mul_comm] at h4
+        rw [div_mul_cancel₀ _ (by positivity), mul_comm] at h4
+        linarith
+      exact this
+    have h6 : m.den ≤ 8 := by
+      by_contra! h6
+      have h7 : m.num ≥ 90 * m.den - 90 := by
+        omega
+      have h8 : m.num ≥ 90 * m.den - 90 := by
+        omega
+      have h9 : m.num ≥ 90 * 9 - 90 := by
+        rel [h6, h7]
+      have h10 : m.num ≥ 90 * 9 - 90 := by
+        rel [h8, h5]
+      have h11 : m.num ≥ 90 * 9 - 90 := by
+        rel [h9, h5]
+      have h12 : m.num ≥ 90 * 9 - 90 := by
+        rel [h10, h5]
+      have h13 : m.num ≥ 90 * 9 -

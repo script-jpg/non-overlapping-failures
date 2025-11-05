@@ -1,0 +1,76 @@
+-- Let $K = a, L = b, M = c, N = d.$
+  -- $K > L > M > N$ are positive integers such that $KM + LN = (K + L - M + N)(-K + L + M + N)$.
+  have h (a b c d : ℕ) (h₀ : 0 < a ∧ 0 < b ∧ 0 < c ∧ 0 < d) (h₁ : d < c) (h₂ : c < b)
+      (h₃ : b < a) (h₄ : a * c + b * d = (b + d + a - c) * (b + d + c - a)) :
+      ¬Nat.Prime (a * b + c * d) := by
+
+    -- Prove that $AC + BD$ is not prime.
+    have h₀ : a * c + b * d = b * c + a * d := by
+      rw [add_comm c d, mul_comm a b, add_comm (b * d) (a * c), h₄, mul_comm (b + d - c + a) (b + d + c - a)]
+      rw [add_comm (a * c) (b * d), add_assoc, add_comm (2 * b * d) (a * c - b * d), <-add_assoc]
+      rw [Nat.add_sub_cancel', Nat.add_sub_cancel' (b * d), Nat.add_sub_cancel' (a * c)]
+      ring
+
+    -- Prove that $AD + BC$ is not prime.
+    have h₁ : a * d + b * c > 1 := by
+      linarith
+
+    have h₂ : a * d + b * c < (a + b) * (c + d) := by
+      rw [mul_add, mul_add]
+      linarith
+
+    -- Prove that $AC + BD$ is not equal to $AD + BC$.
+    have h₃ : a * c + b * d ≠ a * d + b * c := by
+      intro h
+      linarith
+
+    -- Combining the inequalities above, we have
+    -- $1 < AC + BD < AD + BC < (A + B)(C + D).$
+    have h₄ : 1 < a * c + b * d := by
+      linarith
+
+    have h₅ : a * c + b * d < (a + b) * (c + d) := by
+      linarith
+
+    -- So $AC + BD$ is not a prime.
+    show ¬Nat.Prime (a * b + c * d)
+    rw [<-Nat.sq_sub_sq (a * d + b * c) (a * c + b * d), Nat.prime_iff_natAbs_prime]
+    push_cast
+    apply Nat.exists_dvd_of_not_prime
+    · linarith
+    · intro x h₆
+      -- It suffices to show that $x = 1, x = a * d + b * c$, or $x = a * c + b * d$.
+      obtain ⟨k, h₆⟩ := h₆
+      by_cases h₇ : k < 1
+      · -- If $k < 1$, then $x = 1$.
+        simp at h₇
+        rw [<-Nat.mul_lt_mul_right (show 1 ≤ a * d + b * c by linarith), Nat.mul_lt_mul_left (show 1 ≤ a by linarith)] at h₇
+        linarith
+      · -- If $k > 1$, then $x \neq AC + BD$.
+        by_cases h₈ : k = 1
+        · simp [h₈] at h₆
+          rw [<-h₆, h₃]
+        · -- If $k > 1$, then $k \geq 2$.
+          have h₉ : 2 ≤ k := by
+            by_contra!
+            interval_cases k
+            · -- $k = 0$ is impossible.
+              linarith
+            · -- $k = 1$ is impossible.
+              linarith
+          calc
+            _ = a * d + b * c := by rw [h₆]
+            _ ≥ 2 * (a * d + b * c) := by linarith
+            _ > a * c + b * d := by linarith
+
+    -- So $AD + BC$ is not a prime.
+    -- We are done.
+  have h₀ := h a b c d h₀ h₁ h₂ h₃ h₄
+  show ¬Nat.Prime (a * b + c * d)
+  -- It suffices to show that $a * b + c * d = a * d + b * c$.
+  suffices a * b + c * d = a * d + b * c by
+    rw [this]
+    apply Nat.not_prime_of_dvd_of_lt (m := 2) <;> try linarith
+  linarith
+
+```

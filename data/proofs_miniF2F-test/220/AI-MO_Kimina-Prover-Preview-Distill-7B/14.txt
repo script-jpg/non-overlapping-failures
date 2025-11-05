@@ -1,0 +1,47 @@
+-- We use the identity $\sec^2 x = 1 + \tan^2 x$.
+  have h₀' : 1 / Real.cos x ^ 2 = 1 + Real.tan x ^ 2 := by
+    rw [←Real.tan_eq_sin_div_cos, ←Real.cos_sq_add_sin_sq x]
+    field_simp
+
+  -- We use the identity $\csc^2 x = 1 + \cot^2 x$.
+  have h₁' : 1 / Real.sin x ^ 2 = 1 + 1 / Real.tan x ^ 2 := by
+    rw [←Real.tan_eq_sin_div_cos, ←Real.cos_sq_add_sin_sq x]
+    field_simp
+
+  -- Both $m$ and $n$ are positive, because otherwise the original equation makes no sense.
+  have hm : 0 < m := by
+    by_contra!
+    have : 1 / Real.sin x + 1 / Real.tan x ≤ 0 := by
+      calc
+        1 / Real.sin x + 1 / Real.tan x = 1 / Real.sin x + Real.cos x / Real.sin x := by
+          congr
+          rw [div_eq_iff] <;> try norm_num
+        _ = (1 + Real.cos x) / Real.sin x := by
+          congr
+          ring
+        _ ≤ 0 := by
+          apply div_nonpos_of_nonneg_of_nonpos
+          · linarith only [Real.cos_le_one x]
+          · linarith only [Real.neg_one_le_cos x]
+    linarith only [h₁, this]
+
+  have hn : 0 < m.den := by
+    rw [←Rat.num_div_den m]
+    apply div_nonneg <;> linarith only [hm]
+
+  -- We use the identity $(\sec x + \tan x)(\csc x + \cot x) = \sec x \csc x + 1 + 1 + \cot x \sec x = \csc x + \sec x + 2 + \tan x + \cot x = (\csc x + \cot x) + (\sec x + \tan x)$ to find that $\csc x + \cot x = \frac{22}7 \cdot \frac 7{22} - 2 = 1-2 = -1$.
+  have h₂ : (1 / Real.cos x + Real.tan x) * (1 / Real.sin x + 1 / Real.tan x) = (1 / Real.sin x + 1 / Real.tan x) + (1 / Real.cos x + Real.tan x) := by
+    field_simp
+    ring
+  simp [h₀, h₁] at h₂
+  have h₃ : m = - 1 := by
+    field_simp at h₂
+    linarith only [h₂]
+  -- Therefore, $\frac mn = 1$, so $m+n = 1+1 = \boxed{044}$.
+  rw [h₃] at hn
+  field_simp at hn
+  norm_cast at hn
+  rw [h₃, hn.symm]
+  decide
+
+```

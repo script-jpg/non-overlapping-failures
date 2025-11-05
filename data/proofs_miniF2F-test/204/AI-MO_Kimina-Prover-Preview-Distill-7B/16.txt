@@ -1,0 +1,63 @@
+-- We will prove that the set $S$ of integers $x$ such that $|x| < 3\pi$ has cardinality 19.
+
+  -- The proof relies on the fact that $3\pi$ is approximately 9.42.
+  have h₁ : 3 * Real.pi < 10 := by
+    calc
+      3 * Real.pi < 3 * 3.15 := by linarith [Real.pi_lt_315]
+      _ < 9.45 := by norm_num
+      _ < 10 := by norm_num
+
+  -- This means that the integer part of $3\pi$ is less than 10.
+  have h₂ : ⌊3 * Real.pi⌋ < 10 := by
+    calc
+      ⌊3 * Real.pi⌋ ≤ 3 * Real.pi := by exact Int.floor_le (3 * Real.pi)
+      _ < 10 := by linarith
+
+  -- We know that $S$ is the set of integers $x$ such that $|x| < 3\pi$.
+  -- We will show that this is equivalent to $|x| ≤ 9$.
+  have h₃ : S = { x : ℤ | abs x ≤ 9 } := by
+    ext x
+    simp [h₀]
+    rw [abs_le]
+
+    constructor
+    · intro hx
+      -- If $|x| < 3\pi$, then $|x| ≤ 9$.
+      have hx' : abs x < 10 := by
+        calc
+          abs x < 3 * Real.pi := by exact hx
+          _ < 10 := by linarith
+      exact hx'
+    · intro hx
+      -- If $|x| ≤ 9$, then $|x| < 3\pi$.
+      have hx' : abs x < 10 := by exact hx
+      calc
+        abs x < 10 := hx'
+        _ < 3 * Real.pi := by linarith [h₁]
+
+  -- Now, we will show that $S$ is the set of integers from $-9$ to $9$.
+  have h₄ : S = Icc (-9) 9 := by
+    rw [h₃]
+    ext x
+    simp
+
+    constructor
+    · intro hx
+      -- If $|x| ≤ 9$, then $-9 ≤ x ≤ 9$.
+      have : -9 ≤ x ∧ x ≤ 9 := by
+        constructor
+        · linarith [abs_le.mp hx]
+        · linarith [abs_le.mp hx]
+      exact this
+    · intro hx
+      -- If $-9 ≤ x ≤ 9$, then $|x| ≤ 9$.
+      have : abs x ≤ 9 := by
+        rw [abs_le]
+        constructor <;> linarith
+      exact this
+
+  -- The cardinality of $S$ is the same as the cardinality of the set of integers from $-9$ to $9$.
+  rw [h₄]
+  rw [Finset.card_Icc]
+  rfl
+```

@@ -1,0 +1,277 @@
+-- lemma about sequence of NNreals
+  have l_0 (x : NNReal) : x ≥ 1 := by
+    induction x with
+    | zero => norm_num
+    | succ x => simp [x]
+
+  -- lemma about sequence of NNreals
+  have l_1 (x y : NNReal) (hx : x ≥ 1) (hy : y ≥ 1) : x ≤ y → (x + y) ≤ (x * y) := by
+    intro hxy
+    rw [show x + y = (x + y) * 1 by simp]
+    rw [show x * y = x * y + 0 by simp]
+    apply add_le_add
+   . apply left.mul_le_mul
+     . exact hxy
+     . exact hy
+     . exact zero_le_one x
+     . exact zero_le_one y
+   . apply right.mul_le_mul
+     . exact add_zero x
+     . exact add_zero y
+     . exact zero_le_one x
+     . exact zero_le_one y
+
+  -- lemma about sequence of NNreals
+  have l_2 (x y : NNReal) (hx : x ≥ 1) (hy : y ≥ 1) : x < y → x * (x + 1) < y * (y + 1) := by
+    intro hxy
+    have : x * (x + 1) + 0 < y * (y + 1) + 0 := by
+      apply add_lt_add_right
+     . exact mul_lt_mul_of_pos_left hxy (show 1 > 0 by norm_num)
+     . exact zero_lt_one _
+    simp at this
+    exact this
+
+  -- prove that if x > 1 then x + 1/x > 2
+  have l_3 (x : NNReal) (hx : x ≥ 1) : 2 * x ≤ x * x + 1 := by
+    apply le_of_sub_nonneg
+    rw [show x * x + 1 - 2 * x = (x - 1) ^ 2 by ring]
+    exact sq_nonneg _
+
+  -- prove that if x > 1 then x + 1/x > 1
+  have l_3' (x : NNReal) (hx : x ≥ 1) : 1 < x + 1 / x := by
+    have : 1 < x := by exact lt_of_le_of_ne hx (by norm_num)
+    have : 0 < 1 / x := by exact one_div_pos.mpr this
+    exact add_lt_add_of_le_of_lt (le_of_lt this) (le_of_lt this)
+
+  -- prove that if x > 1 then x * (x + 1/x) > x + 1/x
+  have l_4 (x : NNReal) (hx : x ≥ 1) : x * (x + 1 / x) > x + 1 / x := by
+    exact lt_of_lt_of_le (l_3' x hx) (mul_le_mul_right (l_3 x hx) (by norm_num))
+
+  -- prove that for any x ≥ 1, f n x will grow to infinity when n → infinity
+  have h_0 (x y : NNReal) (hx : x ≥ 1) (hy : y ≥ 1) (hxy : x ≤ y) : ∃ N, ∀ n ≥ N, y < f n x := by
+    induction y with
+    | zero => norm_num
+    | succ y => by_cases h : x = y
+     . rw [h]
+        use 1
+        intro n hn
+        induction n with
+        | zero => simp [hxy]
+        | succ n ih => simp
+     . use 1
+        intro n hn
+        induction n with
+        | zero => simp [hxy]; linarith
+        | succ n ih =>
+          have : 1 < f n x := by
+            apply lt_of_le_of_lt (h_0 x x hx hx) (l_3' x hx)
+          constructor
+         . apply lt_trans this
+            exact ih
+         . apply lt_trans (l_4 x hx)
+            exact this
+
+  -- prove that for any x ≥ 1, f n x will grow to infinity when n → infinity
+  have h_1 (x : NNReal) (hx : x ≥ 1) : ∃ N, ∀ n ≥ N, 1 < f n x := by
+    induction x with
+    | zero => norm_num
+    | succ x => by_cases h : x = 0
+     . rw [h]
+        use 1
+        intro n hn
+        induction n with
+        | zero => simp [hx]
+        | succ n ih => simp
+     . use 1
+        intro n hn
+        induction n with
+        | zero => simp [hx]
+        | succ n ih =>
+          have : 1 < f n x := by
+            apply lt_of_le_of_lt (h_1 x hx) (l_3' x hx)
+          constructor
+         . apply lt_trans this
+            exact ih
+         . apply lt_trans (l_4 x hx)
+            exact this
+
+  -- prove that for any x ≥ 1, f n x will grow to infinity when n → infinity
+  have h_2 (x : NNReal) (hx : x ≥ 1) : ∃ N, ∀ n ≥ N, 1 < f n x ∧ f n x < f (n + 1) x := by
+    use 1
+    intro n hn
+    induction n with
+    | zero => simp; exact hx
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_1 x hx
+      refine ⟨hn₁.trans (lt_trans (ih.2) (l_4 x hx)),?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact ih.1.trans (l_3 x hx)
+
+  -- prove that for any x ≥ 1, f n x will grow to infinity when n → infinity
+  have h_3 (x : NNReal) (hx : x ≥ 1) : ∃ N, ∀ n ≥ N, 1 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1 + f n x := by
+    use 1
+    intro n hn
+    induction n with
+    | zero => simp; exact hx
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_1 x hx
+      refine ⟨hn₁.trans (lt_trans (ih.2) (l_4 x hx)), (lt_trans (ih.2) (l_4 x hx)),?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact ih.1.trans (l_3' x hx)
+
+  -- prove the existence of a < 1 such that f n a > 1 for all n > 0
+  have h_4 (x : NNReal) (hx : x ≥ 1) (h : 1 < x) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 + f n a := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact h
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_3 x hx
+      refine ⟨hn₁.trans (lt_trans (ih.2) (l_4 x hx)), (lt_trans (ih.2) (l_4 x hx)),?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact ih.2.trans (h_0 x x hx hx h)
+
+  -- prove the existence of a < 1 such that f n a > 1 for all n > 0
+  have h_5 (x y : NNReal) (hx : x ≥ 1) (hy : y ≥ 1) (hxy : x ≤ y) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < y := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hxy
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_3 x hx
+      refine ⟨hn₁.trans (lt_trans (ih.2) (l_4 x hx)), (lt_trans (ih.2) (l_4 x hx)),?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact ih.2.trans (h_0 x y hx hy hxy)
+
+  -- prove the existence of a < 1 such that f n a > 1 for all n > 0
+  have h_6 (x : NNReal) (hx : x ≥ 1) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hx
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_5 x x hx hx (l_3' x hx)
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₁.trans (lt_trans (ih.2) (l_4 x hx))
+
+  -- prove the existence of a < 1 such that f n a > 1 for all n > 0
+  have h_7 (x : NNReal) (hx : x ≥ 1) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ 1 < f (n + 1) a := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hx
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_4 x hx (l_3' x hx)
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₁.trans (lt_trans (ih.2) (l_4 x hx))
+
+  -- prove the existence of a < 1 such that 0 < f n a < 1 for all n > 0
+  have h_8 (x : NNReal) (hx : x ≥ 1) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f (n + 1) a < 1 ∧ f n a < f (n + 1) a := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hx
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_7 x hx
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₂.trans (l_4 x hx)
+
+  -- prove the existence of a < 1 such that 0 < f n a < 1 for all n > 0
+  have h_9 (x y : NNReal) (hx : x ≥ 1) (hy : y ≥ 1) (hxy : x ≤ y) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f (n + 1) a < 1 ∧ f n a < f (n + 1) a := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hxy
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_8 x hx
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₁.trans (lt_trans (ih.2) (l_4 x hx))
+
+  -- prove the existence of a < 1 such that 0 < f n a < 1 for all n > 0
+  have h_10 (x : NNReal) (hx : x ≥ 1) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < 1 ∧ f (n + 1) a < 1 + f n a := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hx
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_9 x x hx hx (l_3' x hx)
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₁.trans (lt_trans (ih.2) (l_4 x hx))
+
+  -- prove the existence of a < 1 such that 0 < f n a < 1 for all n > 0
+  have h_11 (x : NNReal) (hx : x ≥ 1) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < 1 ∧ 1 < f (n + 1) a := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hx
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_6 x hx
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₁.trans (lt_trans (ih.2) (l_4 x hx))
+
+  -- prove the existence of a < 1 such that 0 < f n a < 1 for all n > 0
+  have h_12 (x y : NNReal) (hx : x ≥ 1) (hy : y ≥ 1) (hxy : x ≤ y) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < 1 ∧ f (n + 1) a < y := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hxy
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_10 x hx
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₁.trans (lt_trans (ih.2) (l_4 x hx))
+
+  -- prove the existence of a < 1 such that 0 < f n a < 1 for all n > 0
+  have h_13 (x : NNReal) (hx : x ≥ 1) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ 1 < f (n + 1) a ∧ f (n + 1) a < 1 + f n a := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hx
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_11 x hx
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₁.trans (lt_trans (ih.2) (l_4 x hx))
+
+  -- prove the existence of a < 1 such that 0 < f n a < 1 for all n > 0
+  have h_14 (x : NNReal) (hx : x ≥ 1) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hx
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_8 x hx
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₂.trans (l_4 x hx)
+
+  -- prove the existence of a < 1 such that 0 < f n a < 1 for all n > 0
+  have h_15 (x y : NNReal) (hx : x ≥ 1) (hy : y ≥ 1) (hxy : x ≤ y) : ∃ a, a ≥ 1 ∧ ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < y := by
+    use 1
+    refine ⟨by simp, fun n hn =>?_⟩
+    induction n with
+    | zero => simp; exact hxy
+    | succ n ih =>
+      obtain ⟨hn₁, hn₂⟩ := h_14 x hx
+      use 1
+      refine ⟨by simp,?_⟩
+      rw [eq_comm, Nat.add_one_sub_one]
+      exact hn₁.trans (lt_trans (ih.2) (l_4 x hx))
+
+  -- prove the existence of a < 1 such that 0 < f n a < 1 for all n > 0
+  have h_16 (x : NNReal) (hx : x ≥

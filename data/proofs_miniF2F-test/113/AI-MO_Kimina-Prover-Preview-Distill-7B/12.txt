@@ -1,0 +1,132 @@
+-- Note on the formalization of the problem:
+  -- We need to show that the sum of 1/√k from k=2 to k=10000 is less than 198.
+
+  -- The key idea is to use an integral approximation. For large N, the sum ∑_{k=2}^N 1/√k
+  -- is approximately equal to the integral ∫_{2}^N 1/√x dx.
+  -- We have ∫ 1/√x dx = 2√x + C, so ∫_{2}^N 1/√x dx = 2√N - 2√2.
+  -- Thus, for large N, ∑_{k=2}^N 1/√k ≈ 2√N - 2√2.
+
+  -- Let's proceed with the formal proof:
+
+  -- We will use the fact that for any a < b, ∑_{k=a}^b 1/√k < ∫_{a-1}^b 1/√x dx.
+  -- This is because the sum is a lower Riemann sum for the integral ∫_{a-1}^b 1/√x dx.
+  -- So it is sufficient to show that ∫_{198}^10000 1/√x dx > ∑_{k=2}^10000 1/√k.
+  -- Using our approximation, this becomes 2√10000 - 2√198 > 2√2 - ∑_{k=2}^10000 1/√k.
+  -- Simplifying, 200 - 2√198 > 2√2 - ∑_{k=2}^10000 1/√k.
+  -- Further, 100 - √198 > √2 - ∑_{k=2}^10000 1/√k.
+  -- Thus, it is sufficient to show that 100 - √198 > √2, or equivalently, 100 > √198 + √2.
+
+  -- In the formal proof, we will use a similar approach but more directly:
+  -- We will show that the sum is less than 198 by comparing it to a constant function.
+  -- Consider the set {2, 3,..., 10000} and compare the sum to ∑_{k=2}^10000 1/√2.
+  -- Since √k is increasing, 1/√k is decreasing, so 1/√k ≤ 1/√2 for all k ≥ 2.
+  -- Thus, ∑_{k=2}^10000 1/√k ≤ ∑_{k=2}^10000 1/√2 = 9999/√2 < 198.
+
+  have integral_ineq {a b : ℕ} (ha : 2 ≤ a) (hb : b ≥ a) :
+      ∑ k ∈ Finset.Icc a b, (1 / Real.sqrt (a : ℝ)) ≤ (b - a + 1) * (1 / Real.sqrt (a : ℝ)) := by
+    -- This is a simple fact about sums of constant functions.
+    -- The sum of a constant over a range is just the constant times the number of elements.
+    apply Finset.sum_le_sum
+    intros k hk
+    simp at hk ⊢
+    linarith
+
+  -- The sum ∑_{k=2}^10000 1/√k is less than ∑_{k=2}^10000 1/√2 because 1/√k is decreasing.
+  -- And ∑_{k=2}^10000 1/√2 = 9999/√2.
+  -- So it is sufficient to show that 9999/√2 < 198.
+  -- But 9999/√2 < 9999/√198, and 9999/√198 < 198 is equivalent to 9999 < 198√198.
+  -- Since 198√198 < 10000, and 9999 < 10000, we are done.
+
+  have h integral_ineq' {a b : ℕ} (ha : 2 ≤ a) (hb : b ≥ a) :
+      (b - a + 1) * (1 / Real.sqrt (a : ℝ)) ≤ 198 := by
+    -- Here we will use the fact that 1/√a ≤ 1/√2 because √a ≥ √2 and 1/x is decreasing for x > 0.
+    -- We will also use the fact that √k is increasing to establish the inequality.
+    have ha' : Real.sqrt (a : ℝ) ≥ Real.sqrt 2 := by
+      apply Real.sqrt_le_sqrt
+      norm_cast
+      exact ha
+    -- We need to show that 1/√a ≤ 1/√2, which follows from √a ≥ √2.
+    have h : 1 / Real.sqrt (a : ℝ) ≤ 1 / Real.sqrt 2 := by
+      apply one_div_le_one_div_of_le
+      · norm_num
+      · exact ha'
+    -- The number of terms in the sum is (b - a + 1).
+    -- The sum is less than or equal to (b - a + 1) * (1/√2).
+    -- But (b - a + 1) ≤ (10000 - 2 + 1) = 9999.
+    -- And 9999 * (1/√2) < 198.
+    have h' : (b - a + 1 : ℝ) ≤ (9999 : ℝ) := by
+      norm_cast
+      calc
+        _ ≤ 10000 - 2 + 1 := by rel [hb]
+        _ = 10000 - 1 := by norm_num
+        _ = 9999 := by norm_num
+    gcongr
+    apply mul_le_mul_of_nonneg_left h'
+    · apply one_div_nonneg.mpr
+      norm_num
+    · exact h
+
+  -- The sum ∑_{k=2}^10000 1/√k is less than 198.
+  -- We use the simple fact that a sum of non-negative terms is less than or equal to the integral
+  -- over the same range, and then use the fundamental theorem of calculus to evaluate the integral.
+  -- The integral is equal to 2√10000 - 2√2 = 200 - 2√2 < 200 < 198, which is a contradiction.
+  -- Therefore, the sum must be less than 198.
+
+  -- We will use a similar approach with the formal proof.
+  -- We will use the fact that the sum is a lower Riemann sum for the integral ∫_{2}^10000 1/√x dx.
+  -- We will evaluate this integral using the fundamental theorem of calculus.
+  -- We know that ∫ 1/√x dx = 2√x + C, so ∫_{2}^10000 1/√x dx = 2√10000 - 2√2 = 200 - 2√2.
+  -- We have 200 - 2√2 < 198, so the sum must be less than 198.
+
+  have Riemann_ineq :
+      ∑ k ∈ Finset.Icc (2 : ℕ) 10000, 1 / Real.sqrt k ≤ ∫ x in ((2 : ℝ) : ℝ)..(10000 : ℝ), 1 / Real.sqrt x := by
+    -- This is a fundamental property of Riemann sums.
+    -- A sum of a decreasing function over a range is less than or equal to the integral over the same range.
+    apply Finset.sum_le_sum_of_nonempty
+    · intro k hk
+      simp at hk
+      obtain ⟨hk1, hk2⟩ := hk
+      apply one_div_le_one_div_of_le
+      · rw [←Real.sqrt_le_sqrt_iff]
+        norm_cast
+        norm_num
+        exact hk1
+      · norm_num
+      · norm_cast
+        exact hk2
+    · norm_num
+
+  -- The integral ∫ x in [2, 10000], 1/√x dx = 2√10000 - 2√2 = 200 - 2√2.
+  have integral_eq : ∫ x in ((2 : ℝ) : ℝ)..(10000 : ℝ), 1 / Real.sqrt x = 200 - 2 * Real.sqrt 2 := by
+    -- We evaluate this integral using the fundamental theorem of calculus.
+    -- We know that ∫ 1/√x dx = 2√x + C, so ∫_{2}^10000 1/√x dx = 2√10000 - 2√2.
+    -- And √10000 = 100, so the integral equals 200 - 2√2.
+    norm_num
+    simp [intervalIntegral.integral_const, Real.sqrt_eq_rpow]
+    rw [←Real.rpow_mul]
+    norm_num
+    rw [Real.sqrt_eq_rpow]
+    norm_num
+    rw [←Real.rpow_mul]
+    norm_num
+    rw [Real.rpow_natCast]
+    rw [Real.rpow_mul]
+    rw [Real.rpow_one]
+    norm_num
+    all_goals
+      rw [Real.sqrt_eq_rpow]
+      norm_num
+
+  -- We have 200 - 2√2 < 198, so the sum must be less than 198.
+  have : 200 - 2 * Real.sqrt 2 < 198 := by
+    -- This inequality is equivalent to 100 - √2 * 100 < 99.
+    -- Or √2 > 1/100.
+    -- This is true because √2 > 1.4 > 1/100.
+    have h : 1 / 100 < Real.sqrt 2 := by
+      rw [Real.lt_sqrt]
+      norm_num
+      norm_num
+    linarith
+
+  linarith
+```

@@ -1,0 +1,78 @@
+-- set a = √2
+  use Real.sqrt 2
+
+  -- set b = √2
+  use Real.sqrt 2
+
+  constructor
+
+  · -- a is irrational
+    apply irrational_sqrt_two
+
+  constructor
+
+  · -- b is irrational
+    apply irrational_sqrt_two
+
+  · -- a^b is rational
+    -- (√2) ^ (√2) = exp(√2 * log √2) = exp(√2 * (1/2 * log 2)) = exp((√2 / 2) * log 2)
+    -- Let's call s = (√2) ^ (√2), then log s = (√2 / 2) * log 2
+    -- If log s is rational, then we are done.
+    -- If log s is irrational, then s = exp(log s) is irrational.
+    -- So we need the irrationality of (√2 / 2) * log 2.
+    -- Note that √2 / 2 = 1 / √2.
+    -- Assume log 2 is irrational (which is true), and assume for contradiction that (√2 / 2) * log 2 is rational.
+    -- This is equivalent to √2 * log 2 is rational.
+    -- Then √2 * log 2 * 2 / log 2 = 2√2 / 2 = √2 is rational.
+    -- Contradiction!
+    apply (pow_and_conj _ _).irrationality
+
+    -- aux lemma : log √2 is irrational.
+    have irrational_log_sqrt_two : Irrational (log (Real.sqrt 2)) := by
+
+      -- log √2 = 1/2 * log 2
+      rw [irrational_iff_exists_rat]
+      constructor
+      · intro q
+        rw [show log (Real.sqrt 2) = (1 / 2) * log 2 by rw [log_sqrt]; positivity]
+        have : ¬Irrational (1 / 2 * log 2) := by
+          rw [irrational_mul_rat_iff]
+          · apply log_irrational
+            norm_num
+          · norm_num
+        contradiction
+      · use (1 / 2).toRat
+        simp
+
+    -- aux lemma : √2 / 2 is irrational.
+    have irrational_sqrt_div_two : Irrational (Real.sqrt 2 / 2) := by
+      rw [irrational_iff_exists_rat]
+      constructor
+      · intro q
+        have : ¬Irrational (Real.sqrt 2 / 2) := by
+          rw [irrational_div_nat_iff]
+          · apply irrational_sqrt_two
+          · norm_num
+        contradiction
+      · use 1
+        simp
+
+    rw [irrational_iff_exists_rat]
+    constructor
+    · intro q
+      -- a^b = 2^(1/2 * 1/2) = 2^(1/4) is irrational.
+      have : ¬Irrational ((Real.sqrt 2) ^ (Real.sqrt 2 / 2)) := by
+        rw [irrational_pow_iff]
+        · use (1 / 4).toRat
+          rw [←Real.sqrt_eq_rpow]
+          simp
+        · apply log_irrational
+          norm_num
+        · norm_num
+      contradiction
+    · use (1 / 2).toRat
+      simp [show (1 : ℝ) / 2 = (1 / 2 : ℕ) by simp]
+      rw [←Real.sqrt_eq_rpow]
+      simp
+
+```

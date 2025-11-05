@@ -1,0 +1,104 @@
+obtain ⟨x, hx⟩ := h₁
+  obtain ⟨t, ht⟩ := h₂
+
+  -- The condition `x ^ 3 = n` means that `n` is a perfect cube.
+  -- The condition `t ^ 4 = n` means that `n` is a perfect fourth power.
+  -- We want to prove that `4096 ≤ n`.
+
+  -- We have `t ^ 4 = x ^ 3`. This means that `x` must be a multiple of `t`.
+  -- Let `x = t * y`. Substituting, we get `t ^ 4 = (t * y) ^ 3 = t ^ 3 * y ^ 3`.
+  -- Dividing both sides by `t ^ 3`, we get `t = y ^ 3`.
+  -- This means that `t` is a perfect cube.
+  have h cube : ∃ y, t = y ^ 3 := by
+    have : t ^ 4 = x ^ 3 := by rw [ht, hx]
+    have : t ^ 3 = x ^ 3 / t := by
+      refine Nat.eq_div_of_mul_eq_right?h₀?h₁
+      · apply Nat.gcd_pos_of_pos_left
+        apply Nat.zero_lt_of_lt h₀
+      · rw [this]
+        ring
+    have : t = t ^ 3 / t ^ 2 := by
+      rw [Nat.div_eq_iff_eq_mul_left]
+      ring
+      symm
+      apply Nat.gcd_pos_of_pos_left
+      apply Nat.zero_lt_of_lt h₀
+    have : t ^ 3 / t ^ 2 = (t ^ 3 / t) / t := by
+      rw [Nat.div_eq_iff_eq_mul_left]
+      ring
+      symm
+      apply Nat.gcd_pos_of_pos_left
+      apply Nat.zero_lt_of_lt h₀
+    have : (t ^ 3 / t) / t = (t ^ 3 / t ^ 2) / t := by
+      rw [this]
+    have : t ^ 3 / t ^ 2 ≠ 0 := by
+      refine Nat.ne_zero_iff_zero_lt.mpr?_
+      exact Nat.pos_pow_of_pos 2 h₀
+    rw [← this] at this
+    have : t = (t ^ 3 / t ^ 2) / t * t := by
+      rw [Nat.div_mul_cancel this]
+    have : t ^ 3 / t ^ 2 / t = t ^ (3 - 2 - 1) := by
+      rw [Nat.pow_div, Nat.pow_div]
+      ring
+      · exact Nat.zero_lt_of_lt h₀
+      · exact Nat.zero_lt_of_lt h₀
+    rw [Nat.mul_div_assoc] at this
+    have : t = t ^ (3 - 2 - 1) * t := by
+      exact Eq.symm (Nat.mul_div_assoc.mp this)
+    have : t ^ (3 - 2 - 1) = t ^ 1 := by
+      norm_num
+    rw [this] at this
+    exact ⟨t ^ 1 / t, by rw [this]; ring⟩
+  obtain ⟨y, hy⟩ := cube
+
+  -- Now, `x = t * y` and `t = y ^ 3`.
+  -- So, `x = y ^ 3 * y = y ^ 4`.
+  have hxy : x = y ^ 4 := by
+    rw [hy] at hx
+    rw [ht] at hx
+    rw [← Nat.pow_mul] at hx
+    simp at hx
+    exact hx
+
+  -- This means that `y ^ 4` is a perfect cube.
+  -- So, `y ^ 3` divides `y ^ 4`.
+  have hy4 : y ^ 3 ∣ y ^ 4 := by
+    rw [hxy] at hx
+    rw [ht] at hx
+    exact Dvd.intro x hx
+
+  -- This means that `y` is a perfect cube.
+  have hy_cube : ∃ y', y = y' ^ 3 := by
+    have : y ^ 3 ∣ y ^ 4 := by
+      exact hy4
+    rcases this with ⟨z, hz⟩
+    have : y ^ 3 ∣ z ^ 3 := by
+      rw [hz]
+      exact Nat.pow_dvd_pow 3 this
+    have : y ∣ z := by
+      exact Nat.dvd_of_pow_dvd_pow_left 3 this
+    have : y ^ 4 = y * y ^ 3 := by
+      rw [Nat.mul_comm y y ^ 3]
+      exact Eq.symm (Nat.pow_succ_self 3 y)
+    rw [this] at hz
+    exact ⟨z / y, by rw [hz]; apply Nat.eq_mul_of_div_eq_right; exact this⟩
+
+  -- Now, `y = y' ^ 3` for some `y'`.
+  -- This means that `x = y ^ 4 = y' ^ 12`.
+  -- Also, `n = x ^ 3 = (y' ^ 12) ^ 3 = y' ^ 36`.
+  obtain ⟨y', hy'⟩ := hy_cube
+  have h36 : 36 = 3 * 12 := by
+    norm_num
+  rw [← hxy, ht, hy', ← h36, Nat.pow_mul] at hx
+  clear h36
+  -- So, `n = y' ^ 36`.
+  -- This means that `n` is a perfect 36th power.
+  -- So, `n ≥ 2^36 = 68719476736`.
+  -- But, `4096 = 2 ^ 12`.
+  suffices 2 ^ 12 ≤ y' ^ 36 from by
+    rw [← Nat.pow_le_pow_iff_left (by norm_num)] at this
+    exact this
+  norm_num
+  exact Nat.pow_le_pow_of_le_left (by apply Nat.zero_lt_of_lt h₀) 12
+
+```

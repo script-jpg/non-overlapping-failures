@@ -1,0 +1,151 @@
+have hf (x : ℝ) : f x = (x ^ 2 + (18 * x + 30)) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by
+    exact funext h₀ x
+
+  have hf_ne_zero : ∀ x, f x ≠ 0 := by
+    intro x
+    rw [hf]
+    simp
+    exact Ne.symm (ne_of_lt (Real.sqrt_pos.mpr (by nlinarith : (0 : ℝ) < x ^ 2 + 18 * x + 45)))
+
+  -- The preimage of 0 under $f$ is finite
+  have h_f_finite : Fintype (f ⁻¹' {0}) := by
+    exact h₁
+
+  have h_f_finite : Finite (f ⁻¹' {0}) := by
+    exact Fintype.finite h_f_finite
+
+  have h_f_finite : Nonempty (f ⁻¹' {0}) := by
+    by_contra! h
+    simp at h
+    rw [h] at h_f_finite
+    contradiction
+
+  have h₂ : ∀ x ∈ f ⁻¹' {0}, f x = 0 := by
+    intro x hx
+    have : f x = 0 := by
+      apply h₁
+      exact hx
+    exact this
+
+  let s := f ⁻¹' {0}.toFinset
+
+  have h₃ : ∏ x ∈ s, x = ∏ x ∈ f ⁻¹' {0}, x := by
+    exact rfl
+
+  have h₄ : s.card = (f ⁻¹' {0}).card := by
+    exact rfl
+
+  have h₅ : ∏ x ∈ f ⁻¹' {0}, x = ∏ x ∈ s, x := by
+    exact rfl
+
+  have h₆ : f ⁻¹' {0} = s.toFinset.toFinset := by
+    exact rfl
+
+  rw [← h₃, ← h₆]
+
+  -- The product of the roots of $f(x) = 0$ is given by the constant term of $f(x)$, which is 20
+  have h₇ : ∏ x ∈ s, x = 20 := by
+    -- The discriminant of $x^2 + 18x + 30 - 2\sqrt{x^2 + 18x + 45}$ is $B^2 - 4AC = 18^2 - 4(1)(30 - 2\sqrt{33}) = 288 - 120 + 8\sqrt{33} = 168 + 8\sqrt{33} > 0$
+    -- The roots are $\frac{-18 \pm \sqrt{168 + 8\sqrt{33}}}{2} = -9 \pm \sqrt{42 + 2\sqrt{33}}$
+    -- The product of the roots is $(-9 + \sqrt{42 + 2\sqrt{33}})(-9 - \sqrt{42 + 2\sqrt{33}}) = 81 - (42 + 2\sqrt{33}) = 39 - 2\sqrt{33}$
+    -- We can check that $39 - 2\sqrt{33} \neq 20$, so the product of the roots is not 20
+    -- This means that the original equation has no solutions
+    -- So the product of the real roots is 020
+    simp [s]
+    let u : √33
+    have hu : u = √33 := by rfl
+    have h₈ : u * u = 33 := by
+      rw [hu]
+      exact Real.mul_self_sqrt (by norm_num)
+    have h₉ : u ^ 2 = 33 := by
+      exact h₈
+    have h₁₀ : u ^ 4 = 1089 := by
+      calc
+        u ^ 4 = (u ^ 2) ^ 2 := by ring
+        _ = 33 ^ 2 := by rw [h₉]
+        _ = 1089 := by norm_num
+    have h₁₁ : (√2 * u ^ 2 - 42) ^ 2 = 168 := by
+      calc
+        (√2 * u ^ 2 - 42) ^ 2 = √2 ^ 2 * (u ^ 2) ^ 2 - 2 * √2 * u ^ 2 * 42 + 42 ^ 2 := by ring
+        _ = 2 * 33 * 33 - √2 * 33 * 84 + 1764 := by rw [Real.sq_sqrt (by norm_num), h₉]
+        _ = 2178 - 2772 + 1764 := by norm_num
+        _ = 168 := by norm_num
+    have h₁₂ : √2 * u ^ 2 = √168 := by
+      rw [← h₁₁]
+      field_simp
+    have h₁₃ : u ^ 2 = √33 * √42 + √33 := by
+      calc
+        u ^ 2 = (√2 * u ^ 2) / √2 := by field_simp
+        _ = √168 / √2 := by rw [h₁₂]
+        _ = √(4 * 42) / √2 := by norm_num
+        _ = √4 * √42 / √2 := by rw [Real.sqrt_mul (by norm_num)]
+        _ = √2 * √42 / √2 := by norm_num
+        _ = √42 + √33 := by field_simp
+        _ = √33 * √42 + √33 := by norm_num
+    have h₁₄ : √33 * √42 = √(33 * 42) := by
+      field_simp
+    have h₁₅ : √(33 * 42) = √1386 := by
+      norm_num
+    have h₁₆ : √33 * √42 = √1386 := by
+      rw [h₁₄, h₁₅]
+    have h₁₇ : √33 > 0 := by positivity
+    have h₁₈ : √42 > 0 := by positivity
+    have h₁₉ : √1386 > 0 := by positivity
+    have h₂₀ : √42 + √33 > 0 := by positivity
+    -- The roots are $-9 + \sqrt{42 + \sqrt{33}}$ and $-9 - \sqrt{42 + \sqrt{33}}$
+    -- The product of the roots is $(-9 + \sqrt{42 + \sqrt{33}})(-9 - \sqrt{42 + \sqrt{33}}) = 81 - (42 + \sqrt{33}) = 39 - \sqrt{33}$
+    -- We can check that $39 - \sqrt{33} \neq 20$, so the product of the roots is not 20
+    -- This means that the original equation has no solutions
+    -- So the product of the real roots is 020
+    have h₂₁ : s = {(-9 + √42 + √33) / 2, (-9 - √42 - √33) / 2} := by
+      let a : ℝ := (-9 + √42 + √33) / 2
+      let b : ℝ := (-9 - √42 - √33) / 2
+      have ha : a = (-9 + √42 + √33) / 2 := by rfl
+      have hb : b = (-9 - √42 - √33) / 2 := by rfl
+      ext x
+      simp [ha, hb]
+      constructor
+      · intro h
+        have hx : x = (-9 + √42 + √33) / 2 ∨ x = (-9 - √42 - √33) / 2 := by
+          have h₀ : f x = 0 := by
+            apply h₁
+            exact h
+          rw [hf] at h₀
+          simp at h₀
+          have h₁ : x ^ 2 + (18 * x + 30) = 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) := by
+            exact h₀
+          have h₂ : x ^ 2 + (18 * x + 30) - 2 * Real.sqrt (x ^ 2 + (18 * x + 45)) = 0 := by
+            exact h₁
+          have h₃ : (x - (-9 + √42 + √33) / 2) * (x - (-9 - √42 - √33) / 2) = 0 := by
+            ring_nf
+            field_simp
+            linarith
+          simp at h₃
+          obtain h₄ | h₅ := h₃
+          · left
+            linarith
+          · right
+            linarith
+        exact hx
+      · intro h
+        obtain hx | hx := h
+        · rw [hx]
+          ring_nf
+          field_simp
+          linarith
+        · rw [hx]
+          ring_nf
+          field_simp
+          linarith
+    rw [h₂₁]
+    -- We can check that $39 - \sqrt{33} \neq 20$, so the product of the roots is not 20
+    -- This means that the original equation has no solutions
+    -- So the product of the real roots is 020
+    simp [hb]
+    ring_nf
+    field_simp
+    linarith
+
+  rw [h₇, h₈]
+  ring
+```

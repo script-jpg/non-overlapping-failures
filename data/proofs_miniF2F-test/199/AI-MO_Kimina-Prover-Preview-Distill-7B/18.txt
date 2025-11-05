@@ -1,0 +1,140 @@
+have h₄ : (k - t) • (k + t - m) = m • t := by
+    trans (k ^ 2 - t ^ 2) - m • (k - t)
+    · ring
+    · rw [←h₃, sub_self, ←sub_eq_zero]
+      ring
+  simp at h₄
+  set c := m • t
+
+  -- The positive divisors of $c$ are $1, t, m, m • t$.
+  have h₅ : Nat.divisors c = {1, t, m, c} := by
+    ext x
+    constructor
+    · intro hx
+      simp at hx
+      apply Nat.dvd_iff_mod_eq_zero at hx
+      rcases hx with hx | hx | hx | hx
+      · rw [hx, one_mul]
+        simp
+      · exact Nat.dvd_of_mod_eq_zero hx
+      · exact Nat.dvd_of_mod_eq_zero hx
+      · rw [hx]
+        simp
+        apply Nat.mul_dvd_mul
+        all_goals {
+          intro h
+          try simp at h
+          linarith
+        }
+    · intro hx
+      simp at hx
+      rcases hx with hx | hx | hx | hx
+      · rw [hx]; norm_num
+      · rw [hx]
+        simp
+        apply Nat.dvd_mul_right
+      · rw [hx]
+        simp
+        apply Nat.dvd_mul_right
+      · rw [hx]
+        simp
+        apply Nat.dvd_mul_right
+
+  -- $t$ is a prime number.
+  have h₆ : Nat.Prime t := by
+    have hc : c ≠ 0 := by
+      intro h
+      rw [h] at h₄
+      simp at h₄
+      linarith
+    rw [h₅, Nat.prime_divisors] at hc
+    simp at hc
+    rcases hc with hc | hc
+    · exact hc
+    · -- $t = 1$ is impossible.
+      linarith
+
+  -- $t = 2$.
+  have h₇ : t = 2 := by
+    have hp : Nat.Prime m := h₀.left
+    have hn : Nat.Prime n := h₀.right
+    rcases h₅ with h₅ | h₅ | h₅ | h₅
+    · -- $t = 1$ is impossible.
+      linarith
+    · -- $t = 2$ is the only solution.
+      exact h₅
+    · -- $t = m$ is impossible.
+      have hneq : t ≠ m := by
+        intro h
+        rw [h] at h₄
+        ring_nf at h₄
+        rw [h₄] at h₃
+        simp at h₃
+        linarith
+      contradiction
+    · -- $t = c$ is impossible.
+      have hneq : t ≠ c := by
+        intro h
+        rw [h] at h₄
+        simp at h₄
+        linarith
+      contradiction
+
+  -- $m = 2$.
+  have h₈ : m = 2 := by
+    have : m ≠ 1 := by
+      intro h
+      rw [h] at h₅
+      simp at h₅
+      linarith
+    have : m ≠ m * t := by
+      intro h
+      rw [h] at h₄
+      ring_nf at h₄
+      rw [h₄] at h₃
+      simp at h₃
+      linarith
+    have : m * t ≠ 1 := by
+      intro h
+      rw [h] at h₄
+      simp at h₄
+      linarith
+    have : m * t ≠ m := by
+      intro h
+      rw [h] at h₄
+      ring_nf at h₄
+      rw [h₄] at h₃
+      simp at h₃
+      linarith
+    have : m * t ≠ t := by
+      intro h
+      rw [h] at h₄
+      ring_nf at h₄
+      rw [h₄] at h₃
+      simp at h₃
+      linarith
+    simp [h₇] at this
+    have hneq : m ≠ 1 := by
+      intro h
+      rw [h] at h₄
+      ring_nf at h₄
+      rw [h₄] at h₃
+      simp at h₃
+      linarith
+    have p2 : Nat.Prime 2 := by norm_num
+    rcases h₀ with ⟨hp, hn⟩
+    have tneq : t ≠ 2 := by
+      intro h
+      rw [h] at h₅
+      simp at h₅
+      linarith
+    rw [Nat.prime_dvd_prime_iff_eq h₆ p2] at hneq
+    exact hneq
+  rw [h₈, h₇] at h₅
+  norm_num at h₅
+  have h₉ : k = 4 := by
+    omega
+  rw [h₇, h₈, h₉]
+  norm_num
+
+```

@@ -1,0 +1,107 @@
+-- We start by calculating the value of the given expression. We will simplify it step by step.
+
+  -- First, we note that $\log_2{6} = \frac{\log{6}}{\log{2}}$ and $\log_3{6} = \frac{\log{6}}{\log{3}}$ by the change of base formula.
+
+  -- So our expression becomes $\sqrt{\frac{\log{6}}{\log{2}} + \frac{\log{6}}{\log{3}}}$.
+
+  -- We can factor out $\log{6}$ from the sum: $\sqrt{\log{6} \left( \frac{1}{\log{2}} + \frac{1}{\log{3}} \right)}$.
+
+  -- Further simplification gives $\sqrt{\log{6} \cdot \frac{\log{3} + \log{2}}{\log{2} \cdot \log{3}}}$.
+
+  -- Using the property that $\log{a} + \log{b} = \log{ab}$, we get $\sqrt{\log{6} \cdot \frac{\log{6}}{\log{2} \cdot \log{3}}}$.
+
+  -- This simplifies to $\sqrt{\frac{(\log{6})^2}{\log{2} \cdot \log{3}}}$.
+
+  -- Now, we note that $\log{6} = \log{2} + \log{3}$, so we have $\sqrt{\frac{(\log{2} + \log{3})^2}{\log{2} \cdot \log{3}}}$.
+
+  -- Using the identity $(a+b)^2 = a^2 + 2ab + b^2$, we get $\sqrt{\frac{(\log{2})^2 + 2\log{2}\log{3} + (\log{3})^2}{\log{2} \cdot \log{3}}}$.
+
+  -- Splitting the fraction, we have $\sqrt{\frac{(\log{2})^2}{\log{2} \cdot \log{3}} + \frac{2\log{2}\log{3}}{\log{2} \cdot \log{3}} + \frac{(\log{3})^2}{\log{2} \cdot \log{3}}}$.
+
+  -- Simplifying each term gives $\sqrt{\frac{\log{2}}{\log{3}} + 2 + \frac{\log{3}}{\log{2}}}$.
+
+  -- Rearranging, we get $\sqrt{\frac{\log{2}}{\log{3}} + \frac{\log{3}}{\log{2}} + 2}$.
+
+  -- Now, we recognize that $\frac{\log{2}}{\log{3}} + \frac{\log{3}}{\log{2}} = (\sqrt{\frac{\log{2}}{\log{3}}})^2 + (\sqrt{\frac{\log{3}}{\log{2}}})^2$.
+
+  -- Using the identity $a^2 + b^2 = (a+b)^2 - 2ab$, we get $\sqrt{(\sqrt{\frac{\log{2}}{\log{3}}} + \sqrt{\frac{\log{3}}{\log{2}}})^2 - 2 + 2}$.
+
+  -- Simplifying gives $\sqrt{(\sqrt{\frac{\log{2}}{\log{3}}} + \sqrt{\frac{\log{3}}{\log{2}}})^2}$.
+
+  -- Since the square root of a square returns the absolute value, and $\sqrt{\frac{\log{2}}{\log{3}}} + \sqrt{\frac{\log{3}}{\log{2}}} > 0$, we get $\sqrt{\frac{\log{2}}{\log{3}}} + \sqrt{\frac{\log{3}}{\log{2}}}$.
+
+  -- Therefore, $\sqrt{\log_2{6}+\log_3{6}} = \sqrt{\log_2{3}}+\sqrt{\log_3{2}}$, which corresponds to answer choice (D).
+
+  have h1 : Real.log 6 = Real.log 2 + Real.log 3 := by
+    rw [show (6 : ℝ) = 2 * 3 by norm_num]
+    exact Real.log_mul (by norm_num) (by norm_num)
+
+  have h2 : Real.log 2 > 0 := by
+    apply Real.log_pos
+    norm_num
+
+  have h3 : Real.log 3 > 0 := by
+    apply Real.log_pos
+    norm_num
+
+  have h4 : Real.log 6 > 0 := by
+    rw [h1]
+    linarith
+
+  have h5 : Real.log 6 * (Real.log 3 + Real.log 2) = Real.log 6 * Real.log 6 := by
+    rw [h1]
+    ring
+
+  Real.sqrt (Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3) = Real.sqrt (Real.log 3 / Real.log 2) + Real.sqrt (Real.log 2 / Real.log 3) := by
+    -- rewrite h1 in terms of log 6, then factor it out
+    rw [show Real.log 2 + Real.log 3 = Real.log 6 by rw [←h1]]
+    rw [show Real.log 6 / Real.log 2 + Real.log 6 / Real.log 3 = Real.log 6 * (Real.log 3 + Real.log 2) / (Real.log 2 * Real.log 3) by field_simp; ring]
+    rw [h5, h1]
+    -- now use the identity (a + b)^2 = a^2 + 2ab + b^2
+    have h6 : (Real.log 6)^2 = (Real.log 2)^2 + 2 * Real.log 2 * Real.log 3 + (Real.log 3)^2 := by
+      rw [←h1]
+      ring_nf
+    rw [h6]
+    clear h1 h2 h3 h4 h5 h6
+    -- transform into sum of logs
+    have h1 : Real.log 2 * Real.log 3 > 0 := by
+      apply mul_pos
+      all_goals linarith
+    have h2 : Real.log 3 * Real.log 6 > 0 := by
+      apply mul_pos
+      all_goals linarith
+    have h3 : Real.log 2 * Real.log 6 > 0 := by
+      apply mul_pos
+      all_goals linarith
+    have h4 : Real.log 3 > 0 := by
+      apply Real.log_pos
+      norm_num
+    have h5 : Real.log 2 > 0 := by
+      apply Real.log_pos
+      norm_num
+    have h6 : Real.log 6 > 0 := by
+      rw [h1]
+      linarith
+    have h7 : Real.log 3 + Real.log 2 > 0 := by
+      linarith
+    -- use the identity a^2 + b^2 = (a + b)^2 - 2ab
+    have h8 : (Real.log 3 - Real.log 2)^2 = (Real.log 3 + Real.log 2)^2 - 4 * Real.log 2 * Real.log 3 := by
+      ring_nf
+    have h9 : (Real.log 3 + Real.log 2)^2 = (Real.log 6)^2 := by
+      rw [h1]
+    rw [h9, ←h8]
+    clear h2 h3 h4 h5 h6 h7 h8 h9
+    -- simplify fractions
+    field_simp
+    -- square root of square is absolute value, and quantity is positive
+    rw [show Real.sqrt (Real.log 3 ^ 2 * Real.log 2 ^ 2 * (1 / (Real.log 2 * Real.log 3)) ^ 2) = Real.log 3 * Real.log 2 * (1 / Real.log 3 * (1 / Real.log 2)) by
+      field_simp
+      ring]
+    -- simplify
+    ring_nf
+    -- factor out the solution
+    use (Real.log 3 / Real.log 2 + Real.log 2 / Real.log 3)
+    -- square is itself
+    field_simp
+    ring
+```

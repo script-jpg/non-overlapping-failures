@@ -1,0 +1,49 @@
+-- proof by contradiction
+  by_contra h
+
+  -- consider the equation modulo 7
+  have h1 (a b : ℤ) : a * b ≡ a * b % 7 [ZMOD 7] := by
+    exact Int.ModEq.symm (Int.mod_modEq a b)
+  have h2 (a b : ℤ) : a - b ≡ a - b [ZMOD 7] := by
+    exact Int.ModEq.symm (Int.mod_modEq (a - b) 7)
+  have h3 (a b : ℤ) : a * b - b ≡ a * b - b [ZMOD 7] := by
+    exact Int.ModEq.symm (Int.mod_modEq (a * b - b) 7)
+
+  -- we have $4x^3 ≡ 2003 [MOD 7]$
+  have h4 : 4 * x ^ 3 ≡ 2003 [ZMOD 7] := by
+    have hh1 : 4 * x ^ 3 ≡ 2003 [ZMOD 7] := by
+      calc
+        4 * x ^ 3 ≡ 4 * x ^ 3 - 7 * y ^ 3 [ZMOD 7] := by
+          apply Int.ModEq.add_right
+          apply Int.ModEq.sub
+          apply h1
+          apply pow_three
+          apply Int.ModEq.mul_right
+          apply Int.ModEq.pow
+          apply h2
+        _ ≡ 2003 [ZMOD 7] := by
+          apply Int.ModEq.symm
+          apply Int.ModEq.trans (id (Int.ModEq.symm h))
+          exact Int.ModEq.symm (id (Int.ModEq.trans (Int.ModEq.symm (Int.mod_modEq (4 * x ^ 3) 7)) rfl))
+    exact hh1
+
+  -- but $2003 ≡ 6 [MOD 7]$
+  have h5 : 2003 ≡ 6 [ZMOD 7] := by
+    exact Int.modEq_of_dvd (by norm_num)
+
+  -- so $4x^3 ≡ 6 [MOD 7]$
+  have h6 : 4 * x ^ 3 ≡ 6 [ZMOD 7] := by
+    exact Int.ModEq.trans h4 h5
+
+  -- consider the possible values of $x$
+  have h7 : x % 7 = 0 ∨ x % 7 = 1 ∨ x % 7 = 2 ∨ x % 7 = 3 ∨ x % 7 = 4 ∨ x % 7 = 5 ∨ x % 7 = 6 := by
+    omega
+
+  -- consider each case and show that $4x^3 ≢ 6 [MOD 7]$
+  rcases h7 with (h7 | h7 | h7 | h7 | h7 | h7 | h7) <;> ( -- do the 7 cases
+    rw [Int.ModEq] at h6
+    simp [h7, pow_three, Int.mul_emod, Int.sub_emod] at h6
+    <;> omega
+  )
+
+```

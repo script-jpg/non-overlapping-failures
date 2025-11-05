@@ -1,0 +1,84 @@
+-- set $x = 1$ and $y = 2$ in `number_theory.sum_choose` to get the identity
+  -- $\sum_{k=0}^{n} \binom{2n+1}{2k+1} 2^{3k} = 3^{2n+1} - \binom{2n+1}{1}}{2}$
+  have h1 :=
+    number_theory.sum_choose (a := 1) (b := 2) (n := 2 * n + 1) (by simp) (by simp)
+  simp at h1
+  -- simplify the expression
+  rw [show 1 + 2 * 2 = 3 by simp, show 2 * n + 1 + 1 = 2 * (n + 1) by simp, <-Nat.mul_pow] at h1
+  rw [show 2 * (2 * n + 1) = 2 * n + 1 + 2 * n + 1 by simp, <-Nat.add_mul] at h1
+  rw [show 2 * n + 1 + 2 * n + 1 + 1 = 2 * (n + 1) + 1 by simp, <-Nat.add_mul] at h1
+  -- set $x = 1$ and $y = 2$ in `number_theory.sum_choose` to get the identity
+  -- $\sum_{k=0}^{n} \binom{2n+1}{2k} 2^{3k} = (3^{2n+1} + \binom{2n+1}{1}) / 2$
+  have h2 :=
+    number_theory.sum_choose (a := 1) (b := 2) (n := 2 * n) (by simp) (by simp)
+  simp at h2
+  -- simplify the expression
+  rw [show 1 + 2 * 2 = 3 by simp, show 2 * n + 1 + 1 = 2 * (n + 1) by simp, <-Nat.mul_pow] at h2
+  rw [show 2 * (2 * n) = 2 * n + 2 * n by simp, <-Nat.add_mul] at h2
+  rw [show 2 * n + 2 * n + 1 = 2 * (n + 1) + 1 by simp, <-Nat.add_mul] at h2
+  -- get the identity $\sum_{k=0}^{n} \binom{2n+1}{2k+1}2^{3k} = 3^{2n+1} - \binom{2n+1}{1}) / 2$
+  have h3 : ∑ k ∈ Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) = (3 ^ (2 * n + 1) - (2 * n + 1 + 1)) / 2 := by
+    calc
+      _ = 3 ^ (2 * n + 1) / 2 - (2 * n + 1 + 1) / 2 := by rw [h1, h2]; omega
+      _ = (3 ^ (2 * n + 1) - (2 * n + 1 + 1)) / 2 := by omega
+
+  -- prove that $3^{2n+1} \equiv 3 \pmod{5}$ and $\binom{2n+1}{1} \equiv 2n+1 \pmod{5}$
+  have h4 : 3 ^ (2 * n + 1) ≡ 3 [MOD 5] := by
+    rw [Nat.ModEq, <-Nat.mod_modEq]
+    -- use the fact that $3^4 \equiv 1 \pmod{5}$
+    have h4 : 3 ^ 4 ≡ 1 [MOD 5] := rfl
+    -- we have $3^{2n+1} = 3 \cdot 9^n$
+    replace h4 : 3 ^ (2 * n + 1) = 3 * (3 ^ 2) ^ n := by ring
+    rw [h4]
+    -- we have $9^n \equiv 1^n \pmod{5}$
+    replace h4 : (3 ^ 2) ^ n ≡ 1 ^ n [MOD 5] := by
+      apply Nat.ModEq.pow n
+      apply Nat.ModEq.trans h4 rfl
+    -- the result is obvious
+    simp at h4
+    rw [h4]
+    omega
+
+  have h5 : 2 * n + 1 + 1 ≡ 2 * n + 1 + 1 [MOD 5] := rfl
+  have h6 : 2 * n + 1 + 1 ≡ 2 * n + 2 [MOD 5] := by
+    calc
+      _ ≡ 2 * n + 1 + 1 [MOD 5] := h5
+      _ ≡ 2 * n + 2 [MOD 5] := by ring_nf; rfl
+
+  -- we have $2n+2 \equiv 2 \pmod{5}$, so $3^{2n+1} - \binom{2n+1}{1}) / 2 \equiv (3-2)/2 \equiv 1/2 \equiv 3 \pmod{5}$
+  have h7 : (3 ^ (2 * n + 1) - (2 * n + 1 + 1)) / 2 ≡ 3 [MOD 5] := by
+    rw [Nat.ModEq, <-Nat.mod_modEq]
+    -- use h4 and h6 to simplify the expression
+    replace h4 : 3 ^ (2 * n + 1) ≡ 3 [MOD 5] := h4
+    replace h6 : 2 * n + 1 + 1 ≡ 2 [MOD 5] := by
+      calc
+        _ ≡ 2 * n + 2 [MOD 5] := h6
+        _ ≡ 2 [MOD 5] := by
+          rw [Nat.ModEq, <-Nat.mod_modEq]
+          simp
+          omega
+    -- we have $3 - 2 \equiv 3 \pmod{5}$
+    replace h4 : 3 ^ (2 * n + 1) - (2 * n + 1 + 1) ≡ 3 - 2 [MOD 5] := by
+      apply Nat.ModEq.sub h4 h6
+    simp at h4
+    rw [h4]
+    -- we have $2 \equiv 2 \pmod{5}$
+    have h8 : 2 ≡ 2 [MOD 5] := rfl
+    -- we have $3 - 2 \equiv 3 - 2 \pmod{5}$
+    replace h8 : 3 - 2 ≡ 3 - 2 [MOD 5] := by
+      exact Nat.ModEq.sub h4 rfl
+    simp at h8
+    rw [h8]
+    -- it is easy to show that $3-2 \equiv 3 \pmod{5}$
+    rfl
+
+  -- the result is clear
+  rw [h3]
+  by_contra!
+  rw [Nat.dvd_iff_mod_eq_zero] at this
+  -- we get $3 \equiv 0 \pmod{5}$
+  have h8 : 3 ≡ 0 [MOD 5] := this
+  -- so $3 \equiv 0 \pmod{5}$
+  simp [Nat.ModEq] at h8
+  omega
+```

@@ -1,0 +1,56 @@
+have h₂ : 0 < a ^ n := by exact pow_pos (h₀.left) n
+  have h₃ : 0 < b ^ n := by exact pow_pos (h₀.right) n
+
+  -- The arithmetic mean of two numbers is greater than or equal to the square root of their product.
+  have h₄ : ((a + b) / 2) ^ 2 ≥ a * b := by
+    ring_nf
+    have : 0 ≤ (a - b) ^ 2 := sq_nonneg (a - b)
+    linarith
+
+  -- The arithmetic mean of two numbers is greater than or equal to the square root of their product.
+  have h₅ : ((a + b) / 2) ^ n ≥ (a * b) ^ (n / 2 : ℝ) := by
+    have : n / 2 > 0 := by exact div_pos h₁ (by norm_num)
+
+    have h₆ : ((a + b) / 2) ^ 2 ≥ a * b := by
+      ring_nf
+      have : 0 ≤ (a - b) ^ 2 := sq_nonneg (a - b)
+      linarith
+
+    have h₇ : ((a + b) / 2) ≥ 0 := by
+      apply div_nonneg
+      apply add_nonneg
+      all_goals exact pow_nonneg (h₀.left) *
+      norm_num
+
+    have h₈ : (a * b) ^ ((2 : ℝ)⁻¹) ≤ ((a + b) / 2) := by
+      apply Real.geom_mean_le_arith_mean2_weighted
+      all_goals
+        (try norm_num); (try linarith); (try apply pow_nonneg; linarith)
+
+    have h₉ : (a * b) ^ (n / 2 : ℝ) = ((a * b) ^ ((2 : ℝ)⁻¹)) ^ (n : ℝ) := by
+      rw [Real.rpow_mul (by linarith), (by ring)]
+      norm_num
+
+    rw [h₉]
+    apply Real.rpow_le_rpow
+    all_goals
+      (try linarith); (try apply pow_nonneg; linarith)
+
+  have h₇ : (a * b) ^ (n / 2 : ℝ) ≤ (a ^ n + b ^ n) / 2 := by
+    have : (a ^ n + b ^ n) / 2 ≥ (a * b) ^ (n / 2 : ℝ) := by
+      by_cases h₁₀ : n % 2 = 0
+      · have h₁₁ : n / 2 ∈ ℕ := by exact Nat.div_dvd_of_dvd h₁ h₁₀
+        rw [Nat.div_def]
+        rw [←h₁₁]
+        rw [Real.rpow_natCast, Real.rpow_mul (by linarith)]
+        simp
+        exact geom_mean_le_arith_mean2_weighted' h₂ h₃ (by norm_num) h₀
+      · have h₁₁ : n ∈ ℕ := by exact Nat.dvd_iff_lt_or_eq (by linarith).mp h₁
+        rw [←h₁₁]
+        rw [Real.rpow_natCast]
+        exact geom_mean_le_arith_mean2_weighted' h₂ h₃ (by norm_num) h₀
+    linarith
+
+  linarith
+
+```

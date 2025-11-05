@@ -1,0 +1,163 @@
+-- Prove that $f$ is injective.
+  have h₂ : Injective f := by
+    -- Assume $f(a) = f(b)$ and show that $a = b$.
+    intro a b h
+    wlog h' : a < b
+    · push_neg at h'
+      wlog h' : a > b
+      · apply le_antisymm at h'
+        apply h' at h
+        tauto
+      · apply h₂ at h
+        linarith
+
+    -- Prove that $f(a+i) = f(b+i)$ for $i = 0, 1, 2, 3, \dots$ by induction.
+    have h₂ (m : ℕ) : f (a + m) = f (b + m) := by
+      induction m with
+      | zero =>
+        simp [h]
+      | succ m ih =>
+        simp at ih
+        specialize h₁ (a + m) (by omega)
+        specialize h₁ (b + m) (by omega)
+        rw [ih] at h₁
+        apply h₁
+
+    -- For each $a \leq n$, we have $f(a+1) = f(f(a)) + 1$ by induction.
+    have h₃ (n : ℕ) : f (a + n + 1) = f (f (a + n)) + 1 := by
+      induction n with
+      | zero =>
+        simp
+        specialize h₁ (a + 0) (by omega)
+        simp at h₁
+        exact h₁.symm
+      | succ n ih =>
+        simp at ih
+        specialize h₁ (a + n + 1) (by omega)
+        rw [add_assoc]
+        apply h₁.symm
+        rw [add_assoc, ih]
+
+    -- We have $f(a + n + 1) = f(b + n + 1)$ for $n = 0, 1, 2, \dots$ by induction.
+    have h₄ (n : ℕ) : f (a + n + 1) = f (b + n + 1) := by
+      induction n with
+      | zero =>
+        simp
+        specialize h₂ 1
+        simp at h₂
+        rw [h₂]
+      | succ n ih =>
+        simp at ih
+        specialize h₂ (n + 1)
+        simp at h₂
+        specialize h₃ n
+        specialize h₃ (n + 1)
+        rw [add_assoc] at h₃
+        rw [add_assoc]
+        apply h₃.symm
+        rw [ih, add_assoc, add_assoc, h₂]
+
+    -- More precisely, we have $f(a + n + 1) = f(b + n + 1)$ for $n = 0, 1, 2, \dots$ by induction.
+    have h₅ (n : ℕ) : f (a + n + 1) = f (b + n + 1) := by
+      induction n with
+      | zero =>
+        simp
+        specialize h₂ 1
+        simp at h₂
+        rw [h₂]
+      | succ n ih =>
+        simp at ih
+        specialize h₂ (n + 1)
+        simp at h₂
+        specialize h₃ n
+        specialize h₃ (n + 1)
+        rw [add_assoc] at h₃
+        rw [add_assoc]
+        rw [h₃.symm]
+        rw [ih, add_assoc, add_assoc, h₂]
+
+    -- Prove that $f(a) = a$ by contradiction.
+    by_contra h₆
+    -- Let $t$ be the minimum value of $n - f(n)$.
+    let t := Nat.find (fun n => n - f n = 0)
+    -- Prove that $t$ is a natural number.
+    have h₇ : t > 0 := by
+      simp [t]
+      by_contra h
+      simp at h
+      specialize h₁ 1 (by simp)
+      omega
+
+    -- Prove that $f(n) < n$ for $n < t$ by induction.
+    have h₈ : ∀ n < t, f n < n := by
+      intro n hn
+      induction n with
+      | zero => omega
+      | succ n ih =>
+        by_cases h : n < t
+        · specialize ih (by omega)
+          specialize h₁ (n + 1) h
+          omega
+        · simp at h
+          simp [t] at h
+          omega
+
+    -- Prove that $f(t) = t$.
+    have h₉ : f t = t := by
+      specialize h₅ (t - 1)
+      rw [Nat.sub_add_cancel (by omega)] at h₅
+      rw [h₅]
+      specialize h₈ (t - 1) (by omega)
+      have := h₁ t (by omega)
+      omega
+
+    -- Prove that $f(n) = n$ for $n \leq t$ by contradiction.
+    replace h₈ : ∀ n ≤ t, f n = n := by
+      intro n hn
+      by_contra h
+      simp at h
+      specialize h₁ (n + 1) (by omega)
+      specialize h₈ (n + 1) (by omega)
+      omega
+
+    -- Prove that $f(n) = n$ for $n < t + 1$ by induction.
+    replace h₈ : ∀ n < t + 1, f n = n := by
+      intro n hn
+      induction n with
+      | zero =>
+        simp
+      | succ n ih =>
+        by_cases h : n < t
+        · specialize h₈ (n + 1) (by omega)
+          exact h₈
+        · simp at h
+          simp [t] at h
+          rw [h]
+          symm
+          specialize h₉ (by omega)
+          exact h₉
+
+    -- Prove that $f(a + t + 1) = f(b + t + 1)$ by contradiction.
+    specialize h₁ (a + t + 1) (by omega)
+    specialize h₈ (a + t + 1) (by omega)
+    specialize h₈ (b + t + 1) (by omega)
+    specialize h₅ (t + 1)
+    simp [t] at h₅
+    have : f (b + t + 1) = b + t + 1 + 1 := by
+      specialize h₉ (b + t + 1) (by omega)
+      rw [h₉]
+      omega
+    rw [this] at h₅
+    rw [h₅] at h₁
+    specialize h₈ (a + t + 1) (by omega)
+    omega
+
+  -- Prove that $f(n) = n$ for all $n$ by contradiction.
+  intro n hn
+  by_contra h
+  specialize h₂ (n + 1)
+  simp at h₂
+  specialize h₀ (n + 1)
+  omega
+
+```

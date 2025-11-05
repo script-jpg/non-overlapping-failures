@@ -1,0 +1,158 @@
+-- some boring calculations, just expand the 'one-dimensional' square terms
+  have eq_aux₁ (f : ℕ → ℝ) : (∑ x in Finset.range 100, f (x + 1)) ^ 2 = (∑ x in Finset.range 100, f (x + 1)^2) + 2 * ∑ x in Finset.range 99, (∑ y in Finset.range (x + 1), f (y + 1) * f (y + 2)) := by
+    rw [Finset.sum_add_distrib, <-Finset.sum_range_add_sum_Ico (fun x => x ^ 2) (fun x => 2 * f (x + 1) * f (x + 2)) (by norm_num)]
+    simp only [add_mul, Finset.sum_range_succ, add_sub_cancel'_right]
+    ring
+  have eq_aux₂ (f : ℕ → ℝ) : (∑ x in Finset.range 99, f (x + 1) ^ 2) + 2 * ∑ x in Finset.range 99, (f (x + 1) * f (x + 2)) = (∑ x in Finset.range 100, f (x + 1)^2) + 2 * ∑ x in Finset.range 99, (f (x + 1) * f (x + 2)) - f 100 ^ 2 := by
+    rw [Finset.sum_range_succ]
+    ring
+  have eq_aux₃ (f : ℕ → ℝ) : (∑ x in Finset.range 99, f (x + 1) ^ 2) + 2 * ∑ x in Finset.range 99, (f (x + 1) * f (x + 2)) + f 1 ^ 2 = (∑ x in Finset.range 100, f (x + 1)^2) + 2 * ∑ x in Finset.range 99, (f (x + 1) * f (x + 2)) + f 1 ^ 2 - f 100 ^ 2 := by
+    rw [Finset.sum_range_succ]
+    ring
+  have eq_aux₄ (f : ℕ → ℝ) : (∑ x in Finset.range 98, f (x + 1) ^ 2) + 2 * ∑ x in Finset.range 98, (f (x + 1) * f (x + 2)) + f 100 ^ 2 = (∑ x in Finset.range 100, f (x + 1)^2) + 2 * ∑ x in Finset.range 98, (f (x + 1) * f (x + 2)) + f 1 ^ 2 - f 99 ^ 2 := by
+    rw [Finset.sum_range_succ, Finset.sum_range_succ]
+    ring
+
+  -- for ease of proving, series are always shifted to start from 0
+  -- so we add a 0 in the beginning for convenience
+  let a' : ℕ → NNReal := fun x => if x ≠ 0 then a x else 0
+  have h_a' : ∀ x, a' (x + 1) = a (x + 1) := by intro x; simp [a']
+  -- we need to add the first term in the sum, so we shift the range to 0 to 99
+  have h₁ : (∑ x in Finset.range 100, a' (x + 1) ^ 2) = 1 := by
+    rw [Finset.sum_congr rfl (fun x hx => h_a') =]
+    exact h₀
+  -- the target inequality is shifted, too
+  suffices (∑ x in Finset.range 99, a' (x + 1) ^ 2 * a' (x + 2)) + a' 100 ^ 2 * a' 1 < 12 / 25 by
+    rw [Finset.sum_congr rfl (fun x hx => h_a') =] at this
+    exact this
+
+  -- we move the single term a 100 ^ 2 * a 1 to the LHS
+  suffices (∑ x in Finset.range 99, a' (x + 1) ^ 2 * a' (x + 2)) + a' 100 ^ 2 * a' 1 - a' 100 ^ 2 * a' 1 < 12 / 25 - a' 100 ^ 2 * a' 1 by
+    linarith only [this]
+
+  -- this is where we apply the Cauchy-Schwarz inequality
+  have h₂ : (∑ x in Finset.range 99, a' (x + 1) ^ 2 * a' (x + 2)) ≤ ((∑ x in Finset.range 99, a' (x + 1) ^ 2) * (∑ x in Finset.range 99, a' (x + 2) ^ 2)) := by
+    apply Finset.sum_mul_sq_le_sq_mul_sq
+
+  -- we use the identity (sum of squares) * (sum of squares) = sum of squares + 2 * sum of products to continue
+  have h₃ : ((∑ x in Finset.range 99, a' (x + 1) ^ 2) * (∑ x in Finset.range 99, a' (x + 2) ^ 2)) = (∑ x in Finset.range 100, a' (x + 1) ^ 2) + 2 * ∑ x in Finset.range 99, (a' (x + 1) ^ 2 * a' (x + 2)) - a' 100 ^ 2 := by
+    rw [eq_aux₂]
+    conv => rhs; rw [Finset.sum_range_succ]
+    rw [← eq_aux₃]
+    rw [Finset.sum_range_succ]
+    ring
+  have h₄ : (∑ x in Finset.range 99, a' (x + 1) ^ 2 * a' (x + 2)) = (∑ x in Finset.range 100, a' (x + 1) ^ 2) + 2 * ∑ x in Finset.range 99, (a' (x + 1) ^ 2 * a' (x + 2)) - a' 100 ^ 2 - (∑ x in Finset.range 99, a' (x + 1) ^ 2) - a' 1 ^ 2 + a' 100 ^ 2 := by
+    conv =>
+      lhs
+      rw [eq_aux₁]
+      arg 1
+      rw [Finset.sum_range_succ]
+      arg 2
+      rw [Finset.range_succ]
+      ring
+    rw [eq_aux₄]
+    ring
+  -- the final step is to use inequality chain
+  calc
+    (∑ x in Finset.range 99, a' (x + 1) ^ 2 * a' (x + 2)) + a' 100 ^ 2 * a' 1 - a' 100 ^ 2 * a' 1
+    _ = ((∑ x in Finset.range 99, a' (x + 1) ^ 2) * (∑ x in Finset.range 99, a' (x + 2) ^ 2))  - a' 100 ^ 2 * a' 1 - a' 100 ^ 2 * a' 1 := by
+      rw [h₃]
+      ring
+    _ ≤ ((∑ x in Finset.range 100, a' (x + 1) ^ 2) + 2 * ∑ x in Finset.range 99, (a' (x + 1) ^ 2 * a' (x + 2)) - a' 100 ^ 2 - (∑ x in Finset.range 99, a' (x + 1) ^ 2) - a' 1 ^ 2 + a' 100 ^ 2) - a' 100 ^ 2 * a' 1 - a' 100 ^ 2 * a' 1 := by
+      gcongr
+      rw [h₄]
+      gcongr
+      simp
+    _ = (∑ x in Finset.range 100, a' (x + 1) ^ 2) + 2 * (∑ x in Finset.range 99, a' (x + 1) ^ 2 * a' (x + 2) - a' 100 ^ 2 - a' 1 ^ 2) := by ring
+    _ < 1 + 2 * ((1 - a' 100 ^ 2 - a' 1 ^ 2) / 2) := by
+      gcongr
+      -- this is where we use the fact that sum of squares is positive
+      -- apply the inequality x ^ 2 + y ^ 2 + z ^ 2 ≥ xy + yz + zx
+      have h₅ : 0 ≤ ∑ x in Finset.range 99, (a' (x + 1) ^ 2 * a' (x + 2) - a' 100 ^ 2 - a' 1 ^ 2) := by
+        apply Finset.sum_nonneg (fun _ hx => by positivity)
+        -- we are sums non-negative terms, so sum is non-negative
+        intro _ hx
+        simp at hx
+        exact Nat.cast_nonneg' (a' (hx + 1) ^ 2 * a' (hx + 2) - a' 100 ^ 2 - a' 1 ^ 2)
+      linarith only [h₅, h₁]
+    _ = 1 + (1 - a' 100 ^ 2 - a' 1 ^ 2) - (1 - a' 100 ^ 2 - a' 1 ^ 2) := by ring
+    _ < 1 + (1 - a' 100 ^ 2 - a' 1 ^ 2) := by
+      gcongr
+      -- a' 100 ^ 2 > 0 and a' 1 ^ 2 > 0, so subtracting them from 1 gives a number less than 1
+      have h₆ : 0 < a' 100 ^ 2 := by
+        simp [a']
+        exact Nat.zero_lt_of_ne_zero (by norm_num)
+      have h₇ : 0 < a' 1 ^ 2 := by
+        simp [a']
+        exact Nat.zero_lt_of_ne_zero (by norm_num)
+      linarith only [h₆, h₇]
+    _ = 1 + (1 - a' 100 ^ 2 - a' 1 ^ 2) - (1 - a' 100 ^ 2 - a' 1 ^ 2) := by ring
+    _ < 12 / 25 := by
+      -- the final step is to prove that 1 + (1 - a' 100 ^ 2 - a' 1 ^ 2) - (1 - a' 100 ^ 2 - a' 1 ^ 2) < 12 / 25
+      -- this is equivalent to proving that 1 - a' 100 ^ 2 - a' 1 ^ 2 < 12 / 25
+      -- or a' 100 ^ 2 + a' 1 ^ 2 > 13 / 25
+      have h₈ : a' 100 ^ 2 + a' 1 ^ 2 > 13 / 25 := by
+        -- this is the only part where we really need induction
+        -- we divide the sequence a' into "even" and "odd" parts
+        let even_part : ℕ → NNReal := fun x => a' (2 * x + 1)
+        let odd_part : ℕ → NNReal := fun x => a' (2 * x + 2)
+        -- is_even_iff_two_mul_succ_two_mul (a' 100) gives us that a' 100 = a' (2 * 49 + 2)
+        have h₉ : a' 100 = a' (2 * 49 + 2) := by
+          rw [show 100 = 2 * 49 + 2 by norm_num]
+        -- so a' 100 = odd_part 49
+        have h₁₀ : a' 100 = odd_part 49 := by
+          simp [odd_part, h₉]
+        -- and a' 1 = a' (2 * 0 + 1) = even_part 0
+        have h₁₁ : a' 1 = even_part 0 := by
+          simp [even_part, h₁₀]
+        -- we can apply the induction hypothesis to both even_part and odd_part, which are sequences of length 50
+        have h₁₂ : (∑ x ∈ Finset.range 50, even_part x ^ 2) + (∑ x ∈ Finset.range 50, odd_part x ^ 2) > 13 / 25 := by
+          rcases Nat.even_or_odd 100 with h | h
+          -- if 100 is even, then 100 = 2 * 50, so a' 100 = even_part 49
+         . have h₁₃ : 100 = 2 * 50 := by norm_num
+            rw [h₁₃, h₉, h₁₀]
+            replace h : ¬Odd (2 * 50 + 2) := by
+              rw [Nat.not_odd_iff_even]
+              rw [even_iff_two_dvd] at h
+              exact ⟨2 * 50 + 1, by ring⟩
+            have h₁₄ : Odd (2 * 50 + 1) := by
+              apply Nat.odd_add.mpr
+              simp [even_iff_two_dvd]
+            replace h : Even (2 * 50) := by
+              rw [Nat.even_add_one]
+              rw [even_iff_two_dvd] at h
+              exact ⟨2 * 49, by ring⟩
+            -- so we apply the induction hypothesis to the even_part
+            replace h₁₂ : (∑ x ∈ Finset.range 50, even_part x ^ 2) + (∑ x ∈ Finset.range 50, odd_part x ^ 2) > 13 / 25 := by
+              apply h even_part odd_part
+             . rw [h₁₁]
+             . rw [h₁₀]
+             . exact h
+             . exact h₁₄
+            exact h₁₂
+          -- if 100 is odd, then 100 = 2 * 49 + 2, so a' 100 = odd_part 49
+         . simp [h]
+            rw [h₁₃, h₉, h₁₀]
+            replace h : Odd (2 * 49 + 2) := by
+              apply Nat.odd_add.mpr
+              simp [even_iff_two_dvd]
+            replace h₁₂ : (∑ x ∈ Finset.range 50, even_part x ^ 2) + (∑ x ∈ Finset.range 50, odd_part x ^ 2) > 13 / 25 := by
+              rcases Nat.even_or_odd 100 with h' | h'
+              -- if 100 is even, then 100 = 2 * 50, so a' 100 = even_part 49
+             . have h₁₃ : 100 = 2 * 50 := by norm_num
+                rw [h₁₃, h₉, h₁₀]
+                simp [h', h₁₁]
+                exact h₁₂
+              -- if 100 is odd, then 100 = 2 * 49 + 2, so a' 100 = odd_part 49
+             . simp [h']
+            exact h₁₂
+        rw [Finset.sum_range_add_sum_Ico (fun x => x ^ 2) (fun x => even_part x ^ 2 + odd_part x ^ 2) (by norm_num)] at h₁₂
+        -- we have that sum of all terms is sum of even_part terms + sum of odd_part terms
+        have h₁₃ : ∑ x ∈ Finset.range 100, (a' x ^ 2) = ∑ x ∈ Finset.range 50, even_part x ^ 2 + ∑ x ∈ Finset.range 50, odd_part x ^ 2 := by
+          rw [Finset.sum_range_add_sum_Ico (fun x => x ^ 2) (fun x => even_part x ^ 2 + odd_part x ^ 2) (by norm_num)]
+        -- so we can substitute the sum in h₁₂ using h₁₃
+        rw [h₁₃] at h₁₂
+        linarith only [h₁₂]
+      linarith only [h₈]
+
+```

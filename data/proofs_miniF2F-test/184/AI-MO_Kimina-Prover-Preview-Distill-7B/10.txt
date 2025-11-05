@@ -1,0 +1,41 @@
+have p : 2 ^ (n + 3) = 8 * 2 ^ n := by
+    ring
+
+  have q : 2 ^ (n + 2) = 4 * 2 ^ n := by
+    ring
+
+  rw [p, q]
+
+  have h₁ : 3 ≡ 1 \MOD 2 := by rfl
+  have h₂ : 3 ^ 2 ^ n ≡ 1 \MOD 2 ^ (n + 3) := by
+    apply Nat.ModEq.pow
+    exact h₁
+    apply Nat.one_le_pow
+    omega
+  apply Nat.ModEq.sub_right 1 at h₂
+  rw [Nat.modEq_iff_dvd'] at h₂
+  have h₃ : 2 ^ (n + 3) ∣ 3 ^ 2 ^ n - 1 := h₂
+  have dvd1 : 2 ^ n ∣ 3 ^ 2 ^ n - 1 := by
+    have : 2 ^ n ∣ 2 ^ (n + 3) := by
+      apply Nat.pow_dvd_pow
+      omega
+    apply Nat.dvd_trans this h₃
+  have dvd2 : 2 ^ n ∣ 2 ^ (n + 2) := by
+    apply Nat.pow_dvd_pow
+    omega
+  have dvd3 : 2 ^ (n + 2) + 2 ^ n ∣ 3 ^ 2 ^ n - 1 := by
+    have : 2 ^ (n + 2) + 2 ^ n ∣ 2 ^ (n + 2) := by
+      apply Nat.dvd_add
+      apply dvd2
+      apply dvd2
+    apply Nat.dvd_trans this h₃
+  apply Nat.modEq_iff_dvd' at dvd3
+  have : 3 ^ 2 ^ n - 1 ≡ 2 ^ (n + 2) + 2 ^ n \MOD 2 ^ (n + 3) := by
+    exact Nat.modEq_of_dvd dvd3
+  apply Nat.ModEq.trans this
+  refine Nat.ModEq.symm (Nat.modEq_of_dvd?_)
+  apply Nat.dvd_sub
+  apply Nat.pow_dvd_pow
+  omega
+  exact h₃
+```

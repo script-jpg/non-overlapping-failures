@@ -1,0 +1,38 @@
+have h₁ : ∀ n ∈ S, 2010 ≤ n ∧ n ≤ 2019 ∧ ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+    intro n hn
+    exact h₀ n hn
+
+  have h₂ : ∀ n ∈ S, 2010 ≤ n ∧ n ≤ 2019 := by
+    intro n hn
+    exact (h₁ n hn).left
+
+  have h₃ : ∀ n ∈ S, ∃ m, (Nat.divisors m).card = 4 ∧ (∑ p in Nat.divisors m, p) = n := by
+    intro n hn
+    exact (h₁ n hn).right
+
+  have h₄ : (∑ k in S, k) = 2016 := by
+    calc
+      (∑ k in S, k) = ∑ k ∈ S, (if k = 2016 then k else 0) + ∑ k ∈ S, (if k ≠ 2016 then k else 0) := by
+        rw [Finset.sum_eq_add_sum_diff_singleton]
+        simp only [ne_eq, imp_false, not_true_eq_false]
+        ring
+      _ = 2016 + ∑ k ∈ S, (if k ≠ 2016 then k else 0) := by
+        simp only [ne_eq, imp_false, not_true_eq_false, mul_ite, mul_zero, add_zero]
+      _ = 2016 := by
+        clear * - h₃
+        -- ∀ n ∈ S, n ≠ 2016 ∨ n = 2016
+        have h₅ : ∀ n ∈ S, n ≠ 2016 ∨ n = 2016 := by
+          intro n hn
+          exact (h₃ n hn).elim (fun a ↦ a) (fun b ↦ (h₂ n hn).trans (by linarith))
+
+        -- ∑ k ∈ S, (if k ≠ 2016 then k else 0) = 0
+        have h₆ : ∑ k ∈ S, (if k ≠ 2016 then k else 0) = 0 := by
+          apply Finset.sum_eq_zero
+          intro x hx
+          simp only [ne_eq, imp_false, not_true_eq_false, mul_ite, mul_zero, add_zero]
+          exact (h₅ x hx)
+
+        rw [h₆]
+
+  exact h₄
+```

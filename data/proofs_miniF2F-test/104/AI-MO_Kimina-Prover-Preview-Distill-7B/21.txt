@@ -1,0 +1,193 @@
+have pge3 : 3 ≤ p := by linarith
+
+  have pmod3 : p ≡ 1 [MOD 3] ∨ p ≡ 2 [MOD 3] := by
+    have := Nat.mod_three_eq_or_eq_two_add_one p
+    rw [Nat.modEq_iff_dvd] at this
+    cases this with
+    | inl h => left; rw [h]; rw [Nat.dvd_iff_mod_eq_zero]; decide
+    | inr h => right; rw [h]; rw [Nat.dvd_iff_mod_eq_zero]; decide
+
+  have not3divp : ¬ 3 ∣ p := by
+    have : 3 ≤ p := by linarith
+    have : p ≠ 3 := by linarith
+    rw [Nat.not_dvd_iff_between_consec_multiples]
+    refine ⟨this,?_, by linarith⟩
+    rw [Nat.dvd_iff_mod_eq_zero]
+    have : p % 3 < 3 := by apply Nat.mod_lt; norm_num
+    have : 1 < p % 3 := by
+      have : 1 < p := by linarith
+      rw [← Nat.one_mod p]
+      apply Nat.one_lt_mod_iff.mpr
+      exact Nat.Prime.two_lt h₀
+    omega
+
+  have pge2 : 2 ≤ p := by linarith
+
+  have pmod2 : p ≡ 1 [MOD 2] := by
+    rw [Nat.modEq_iff_dvd, Nat.mod_two_eq_one]
+    simp
+    rw [Nat.dvd_iff_mod_eq_zero]
+    have : 2 ≤ p := by linarith
+    have : p ≠ 2 := by linarith
+    exact ⟨this, ‹¬ 2 ∣ p›⟩
+
+  have not2divp : ¬ 2 ∣ p := by
+    have : 2 ≤ p := by linarith
+    have : p ≠ 2 := by linarith
+    rw [Nat.not_dvd_iff_between_consec_multiples]
+    refine ⟨this,?_, by linarith⟩
+    rw [Nat.dvd_iff_mod_eq_zero]
+    have : p % 2 < 2 := by apply Nat.mod_lt; norm_num
+    have : 1 < p % 2 := by
+      have : 1 < p := by linarith
+      rw [← Nat.one_mod p]
+      apply Nat.one_lt_mod_iff.mpr
+      exact Nat.Prime.two_lt h₀
+    omega
+
+  have pne2 : p ≠ 2 := by linarith
+
+  have pne3 : p ≠ 3 := by linarith
+
+  have pmod6 : p ≡ 1 [MOD 6] ∨ p ≡ 5 [MOD 6] := by
+    have : p % 6 < 6 := by apply Nat.mod_lt; norm_num
+    have h : 1 ≤ p % 6 := by
+      have : 1 ≤ p := by linarith
+      rw [← Nat.one_mod p]
+      exact Nat.one_le_mod p 1
+    interval_cases p % 6 <;> simp [Nat.modEq_iff_dvd] at h ⊢; omega
+
+  refine (ZMod.eq_iff_modEq_nat?_).mpr?_
+  · push_cast
+    rw [show 1 = 2 - 1 by norm_num]
+    apply Finset.sum_congr rfl
+    intro k hk
+    have : 1 ≤ k := by
+      have : 1 ∈ Finset.Icc 1 (p - 2) := by
+        simp; rw [Finset.mem_Icc]; constructor
+        · linarith
+        · apply (Nat.le_sub_iff_add_le _).mpr; linarith
+      rw [← Finset.mem_Icc] at this; exact this.left
+    have : k ≤ p - 2 := by
+      have : p - 2 ∈ Finset.Icc 1 (p - 2) := by
+        simp; rw [Finset.mem_Icc]; constructor
+        · apply (Nat.le_sub_iff_add_le _).mpr; linarith
+        · linarith
+      rw [← Finset.mem_Icc] at this; exact this.right
+    rw [Finset.mem_Icc] at hk
+    have : k + 1 ∈ Finset.Icc 1 (p - 2) := by
+      simp; rw [Finset.mem_Icc]; constructor
+      · linarith
+      · rw [← Nat.sub_le_iff_le_add]; omega
+    rw [← Finset.mem_Icc] at this; exact this.left
+    rw [Finset.mem_Icc] at hk
+    have : k + 1 ≤ p - 2 := by omega
+    have h7 : p - 2 + 1 = p - 1 := by
+      rw [Nat.sub_add_cancel]; linarith
+    have h8 : k + 1 < p := by linarith
+    rw [← Nat.lt_sub_iff_add_lt]; rw [h8]; omega
+    rw [Finset.mem_Icc] at hk
+    have : 1 ≤ k + 1 := by omega
+    have : k + 1 ≤ p - 2 := by omega
+    have h9 : p - 2 + 1 = p - 1 := by
+      rw [Nat.sub_add_cancel]; linarith
+    rw [h9] at this
+    rw [← Finset.mem_Icc]; constructor; omega; linarith
+
+  simp [ZMod.eq_iff_modEq_nat]
+  · push_cast
+    have aux : ∀ a b : ℕ, a ≤ b → (a : ZMod p)⁻¹ * (b : ZMod p)⁻¹ = (b * b - a * a : ZMod p)⁻¹ := by
+      intro a b hab
+      have : b * a⁻¹ * (b⁻¹ * a) = (b * b⁻¹) * (a * a⁻¹) := by rw [mul_assoc, mul_assoc]
+      rw [ZMod.inv_mul_inv a b, mul_comm, mul_assoc, this, ZMod.mul_inv_cancel a hab, one_mul]
+      rw [ZMod.inv_mul_inv b a, mul_comm, mul_assoc, mul_assoc, mul_comm a b, ← mul_assoc, one_mul, one_mul]
+      rw [mul_comm]
+    rw [Finset.sum_congr rfl]
+    intro k hk
+    have : k ∈ Finset.Icc 1 (p - 2) := by
+      simp; rw [Finset.mem_Icc]; constructor
+      · linarith
+      · apply (Nat.le_sub_iff_add_le _).mpr; linarith
+    rw [← Finset.mem_Icc] at this; have h1 := this.left; have h2 := this.right
+    have : k + 1 ∈ Finset.Icc 1 (p - 2) := by
+      simp; rw [Finset.mem_Icc]; constructor
+      · linarith
+      · rw [← Nat.sub_le_iff_le_add]; omega
+    rw [← Finset.mem_Icc] at this; have h3 := this.left; have h4 := this.right
+    rw [show k + 1 - 1 = k by rw [Nat.add_sub_cancel']; linarith]
+    rw [← Nat.lt_sub_iff_add_lt, Nat.lt_sub_iff_add_lt]; omega
+    simp at hk
+    have : k + 1 ≤ p - 2 + 1 := by omega
+    rw [show p - 2 + 1 = p - 1 by rw [Nat.sub_add_cancel]; linarith] at this
+    have : k + 1 ≤ p - 1 := by omega
+    have : p - 1 + 1 = p := by rw [Nat.sub_add_cancel]; linarith
+    rw [this] at hk
+    simp at hk
+    have : k + 1 < p := by omega
+    rw [Finset.mem_Icc] at hk
+    have : 1 ≤ k + 1 := by omega
+    rw [show k + 1 + 1 = k + 2 by ring] at hk
+    have : k + 2 ≤ p - 1 + 1 := by omega
+    rw [show p - 1 + 1 = p by rw [Nat.sub_add_cancel]; linarith] at this
+    have : k + 2 ≤ p := by omega
+    have : p - 1 < p := by apply Nat.sub_one_lt_of_lt; linarith
+    have : k + 2 < p := by omega
+    have : k + 1 ≥ 1 := by omega
+    have : k + 1 ≤ k + 2 := by omega
+    have : k + 2 - (k + 1) = 1 := by omega
+    rw [add_comm, ← Nat.sub_add_comm, this, Nat.add_one_sub_one]
+    rw [mul_comm, mul_assoc, aux k (k + 1) (by omega), add_comm]
+    have : k + 1 + 1 = k + 2 := by ring
+    rw [this]
+    rw [← Nat.succ_le_succ_iff, Nat.lt_add_one_iff]
+    exact hk
+    linarith
+    linarith
+    rfl
+  simp [ZMod.eq_iff_modEq_nat]
+  · push_cast
+    have : 2 * (p + 1) * (p + 1) - 2 * p * p = 2 := by
+      rw [show 2 * p * p = 2 * p^2 by ring]
+      rw [show 2 * (p + 1) * (p + 1) = 2 * (p + 1)^2 by ring]
+      rw [Nat.two_mul, Nat.two_mul]
+      rw [Nat.add_sub_assoc]; simp
+      rw [Nat.add_sub_assoc]; simp
+      rw [Nat.two_mul, Nat.two_mul]
+      rw [Nat.sub_add_comm]; rw [Nat.add_sub_assoc]; simp
+      have : p + 1 - 1 = p := by rw [Nat.sub_add_cancel]; linarith
+      rw [this]; simp
+    rw [show 2 = 2 * 1 by simp]
+    apply (ZMod.inv_mul_cancel_iff _).mpr
+    rw [this]
+    rw [show 2 * (p + 1) * (p + 1) - 2 * p * p = 2 * ((p + 1) * (p + 1) - p * p) by ring]
+    have : p * p ≤ (p + 1) * (p + 1) := by
+      rw [Nat.mul_le_mul_iff_right]
+      linarith
+      linarith
+    have : (p + 1) * (p + 1) - p * p = 2 * p + 1 := by
+      rw [Nat.mul_sub, Nat.sub_mul, Nat.mul_add, Nat.add_mul]
+      ring_nf
+      rw [Nat.mul_one, Nat.one_mul, Nat.add_assoc, Nat.add_sub_assoc, Nat.sub_add_cancel]
+      linarith
+      linarith
+      linarith
+      linarith
+    rw [this, show 2 * (2 * p + 1) = 4 * p + 2 by ring]
+    have : 4 * p + 2 - (2 * p + 1) = 2 * p + 1 := by
+      rw [Nat.sub_add_comm]; simp
+      linarith
+      linarith
+    rw [this, show 2 * p + 1 + 1 = 2 * p + 2 by ring]
+    have : 2 * (p + 1) = 2 * p + 2 := by ring
+    rw [this]
+    rw [show 2 * p + 2 - (2 * p + 1) = 1 by simp]
+    simp
+    linarith
+    exact not3divp
+    linarith
+    linarith
+    exact not2divp
+    linarith
+    linarith
+
+```

@@ -1,0 +1,279 @@
+-- Prove that $2 * x = \pi + x / 2 + 2 * \pi * k$ iff $x = \pi/3 + 2\pi * k$.
+  have h₁ (x : ℝ) (hx : 2 * x = Real.pi + x / 2 + 2 * Real.pi * (k : ℤ)) : x = Real.pi / 3 + 2 * Real.pi * k := by
+    field_simp at hx
+    have h₁ := congr_arg (fun x ↦ x - 2 * Real.pi * (k : ℝ)) hx
+    simp at h₁
+    have h₂ : x * (11 / 6) = (Real.pi / 3) * 11 := by
+      exact congr_arg (fun x ↦ x * (11 / 6)) h₁
+    have h₃ : x = (Real.pi / 3) * 11 / (11 / 6) := by
+      refine Eq.symm (mul_div_cancel_of_invertible _ _)
+      norm_num
+      exact h₂
+    norm_num at h₃
+    exact h₃
+
+  -- Prove that $2 * x = \pi - x / 2 + 2 * \pi * k$ iff $x = 2 * \pi / 3 + 2\pi * k$.
+  have h₁' (x : ℝ) (hx : 2 * x = Real.pi - x / 2 + 2 * Real.pi * (k : ℤ)) : x = 2 * Real.pi / 3 + 2 * Real.pi * k := by
+    field_simp at hx
+    have h₁ := congr_arg (fun x ↦ x - 2 * Real.pi * (k : ℝ)) hx
+    simp at h₁
+    have h₂ : x * (7 / 6) = (2 * Real.pi / 3) * 7 := by
+      exact congr_arg (fun x ↦ x * (7 / 6)) h₁
+    have h₃ : x = (2 * Real.pi / 3) * 7 / (7 / 6) := by
+      refine Eq.symm (mul_div_cancel_of_invertible _ _)
+      norm_num
+      exact h₂
+    norm_num at h₃
+    exact h₃
+
+  -- Prove that the solutions of $\tan(2x)=\cos(\tfrac{x}{2})$ on the interval $[0,2\pi]$ are:
+  -- $x = \pi/3, 2\pi/3, \pi, 4\pi/3, 5\pi/3$.
+  have h₂ (x : ℝ) (hx : x ∈ S) : x = Real.pi / 3 ∨ x = 2 * Real.pi / 3 ∨ x = Real.pi ∨ x = 4 * Real.pi / 3 ∨ x = 5 * Real.pi / 3 := by
+    rcases hx with ⟨hx, hx', heq⟩
+    have hx'' : 0 ≤ x ∧ x ≤ 2 * Real.pi := by
+      exact hx
+    have h₂ : 0 ≤ Real.tan (2 * x) := by
+      rw [← heq]
+      exact Real.cos_nonneg_of_neg_pi_div_two_le_of_le (by linarith) (by linarith)
+    have h₃ : 2 * x ≠ Real.pi / 2 + Real.pi * (2 * (k : ℤ)) := by
+      by_contra!
+      have : 2 * x = 2 * x - Real.pi * (2 * (k : ℤ)) + Real.pi * (2 * (k : ℤ)) := by
+        ring
+      rw [this, ← sub_add_eq_add_sub, add_zero] at this
+      rw [← this, tan_pi_add] at h₂
+      simp [-pi_div_two] at h₂
+    have h₄ : 2 * x ≠ 3 * Real.pi / 2 + Real.pi * (2 * (k : ℤ)) := by
+      by_contra!
+      have : 2 * x = 2 * x - Real.pi * (2 * (k : ℤ)) + Real.pi * (2 * (k : ℤ)) := by
+        ring
+      rw [this, ← sub_add_eq_add_sub, add_zero] at this
+      rw [← this, tan_pi_add] at h₂
+      simp [pi_div_two] at h₂
+    -- Using the equalities $\tan(\pi/2 + k\pi) = \cot(k\pi) = 0$ and $\tan(3\pi/2 + k\pi) = \cot(k\pi + \pi/2) = 0$, we get that $\cos(x/2) = 0$.
+    have h₅ : Real.cos (x / 2) = 0 := by
+      have h₅ : Real.tan (2 * x) = 0 := by
+        rw [heq]
+        exact tan_eq_zero_of_cos_eq_zero h₃ h₄
+      rw [tan_eq_sin_div_cos] at h₅
+      have h₆ : Real.cos (x / 2) ≠ 0 := by
+        by_contra!
+        simp [this] at h₅
+      field_simp at h₅
+      exact h₅
+    have h₆ : x / 2 = Real.pi / 2 + Real.pi * (k : ℤ) ∨ x / 2 = 3 * Real.pi / 2 + Real.pi * (k : ℤ) := by
+      have h₆ : (x / 2) % Real.pi = Real.pi / 2 % Real.pi := by
+        rw [← h₅]
+        exact Eq.symm (cos_eq_zero_iff.1 (by linarith))
+      have h₇ : x / 2 = (x / 2) % Real.pi + Real.pi * (x / (Real.pi * 2)) := by
+        refine div_add_mod (x / 2) Real.pi
+      have h₈ : x / 2 = Real.pi / 2 + Real.pi * (k : ℤ) ∨ x / 2 = 3 * Real.pi / 2 + Real.pi * (k : ℤ) := by
+        refine (cos_eq_cos_iff.1 h₆).mp?_
+        rw [h₇]
+        have : (x / 2) % Real.pi = Real.pi / 2 % Real.pi := by
+          exact h₆
+        rw [this]
+        norm_num
+      exact h₈
+    rcases h₆ with h₆ | h₆
+    · have h₇ : x = Real.pi / 3 + 2 * Real.pi * k := by
+        rw [eq_div_iff (by norm_num)] at h₆
+        exact h₁ x h₆
+      right
+      left
+      exact h₇
+    · have h₇ : x = 2 * Real.pi / 3 + 2 * Real.pi * k := by
+        rw [eq_div_iff (by norm_num)] at h₆
+        exact h₁' x h₆
+      right
+      right
+      left
+      exact h₇
+
+  -- Show that the solutions of $\tan(2x)=\cos(\tfrac{x}{2})$ on the interval $[0,2\pi]$ are distinct.
+  have h₃ (x : ℝ) (hx : x ∈ S) : ∀ y ∈ S, y ≠ x := by
+    intro y hy
+    rcases hx with ⟨hx, hx', heq⟩
+    rcases hy with ⟨hy, hy', hey⟩
+    rw [hx'] at hy
+    rcases hy with h₀ | h₀ | h₀ | h₀ | h₀
+    · rw [h₀] at heq
+      have : Real.cos (Real.pi / 3 / 2) ≠ 0 := by
+        exact Real.cos_ne_zero_of_mem_Ioo (by constructor <;> linarith [Real.pi_pos])
+      simp [this] at heq
+    · rw [h₀] at heq
+      have : Real.cos (2 * Real.pi / 3 / 2) ≠ 0 := by
+        have : 0 < Real.pi := by exact Real.pi_pos
+        ring_nf
+        simp [this]
+        exact Ne.symm (ne_of_lt (by linarith : 0 < Real.pi / 3 + Real.pi / 3))
+      simp [this] at heq
+    · rw [h₀] at heq
+      simp [Real.cos_pi_div_three] at heq
+    · rw [h₀] at heq
+      ring_nf at heq
+      rw [show 4 * Real.pi / 3 = Real.pi + Real.pi / 3 by ring] at heq
+      rw [tan_pi_add, tan_pi_div_three] at heq
+      simp at heq
+    · rw [h₀] at heq
+      ring_nf at heq
+      rw [show 5 * Real.pi / 3 = 2 * Real.pi - Real.pi / 3 by ring] at heq
+      rw [tan_two_pi_sub, tan_pi_div_three] at heq
+      simp at heq
+
+  -- Show that $S$ has at least $5$ elements.
+  have h₄ : S.card ≥ 5 := by
+    have h₄ : (Finset.filter (fun x ↦ x ∈ S) (Finset.Icc 0 (2 * Real.pi))).card ≥ 5 := by
+      apply Finset.card_le_card
+      refine Finset.filter_le_of_forall_mem?_?_
+      · simp [h₀]
+      · intro x hx
+        simp at hx
+        rcases hx with ⟨hx, hx', heq⟩
+        have hx'' : 0 ≤ x ∧ x ≤ 2 * Real.pi := by
+          exact hx
+        have h₄ : 0 ≤ Real.tan (2 * x) := by
+          rw [← heq]
+          exact Real.cos_nonneg_of_neg_pi_div_two_le_of_le (by linarith) (by linarith)
+        have h₅ : Real.tan (2 * x) ≠ 0 := by
+          by_contra!
+          rw [this, Real.tan_eq_zero_iff] at hx''
+          rcases hx'' with hx'' | hx''
+          · exact lt_irrefl 0 hx''
+          · exact lt_irrefl (2 * Real.pi) hx''
+        have h₆ : x / 2 ∉ {Real.pi / 2, 3 * Real.pi / 2} := by
+          by_contra!
+          rcases this with (h | h)
+          · rw [h] at h₅
+            simp at h₅
+          · rw [h] at h₅
+            simp at h₅
+        have h₇ : (x / 2) % Real.pi ∉ {Real.pi / 2, 3 * Real.pi / 2} := by
+          by_contra!
+          rcases this with (h | h)
+          · rw [h] at h₆
+            simp at h₆
+          · rw [h] at h₆
+            simp at h₆
+        have h₈ : ∀ k ∈ Finset.Icc 0 4, x ≠ Real.pi / 3 + 2 * Real.pi * k := by
+          intro k hk
+          simp at hk
+          intro hx'
+          rcases h₂ x (by rw [hx']) with h₂ | h₂ | h₂ | h₂ | h₂
+          · rw [h₂] at hx'
+            simp [Real.pi_pos] at hx'
+            linarith
+          · rw [h₂] at hx'
+            simp [Real.pi_pos] at hx'
+            linarith
+          · rw [h₂] at hx'
+            simp [Real.pi_pos] at hx'
+            linarith
+          · rw [h₂] at hx'
+            simp [Real.pi_pos] at hx'
+            linarith
+          · rw [h₂] at hx'
+            simp [Real.pi_pos] at hx'
+            linarith
+        have h₉ : Finset.filter (fun x ↦ x ∈ {Real.pi / 3 + 2 * Real.pi * k | k ∈ Finset.Icc 0 4}) (Finset.Icc 0 (2 * Real.pi)) = Finset.image (fun k ↦ Real.pi / 3 + 2 * Real.pi * k) (Finset.Icc 0 4) := by
+          refine Finset.filter_eq_image_of_mem_forall?_
+          intro x hx
+          simp at hx
+          rcases hx with ⟨hx, hx', hx''⟩
+          simp [hx'']
+          intro y hy
+          simp at hy
+          rcases hy with (hx | hx | hx | hx | hx)
+          · rw [hx]
+            exact ⟨⟨by linarith, by linarith⟩, rfl⟩
+          · rw [hx]
+            exact ⟨⟨by linarith, by linarith⟩, rfl⟩
+          · rw [hx]
+            exact ⟨⟨by linarith, by linarith⟩, rfl⟩
+          · rw [hx]
+            exact ⟨⟨by linarith, by linarith⟩, rfl⟩
+          · rw [hx]
+            exact ⟨⟨by linarith, by linarith⟩, rfl⟩
+        have h₁₀ : Finset.card (Finset.filter (fun x ↦ x ∈ S) (Finset.Icc 0 (2 * Real.pi))) ≥ Finset.card (Finset.filter (fun x ↦ x ∈ {Real.pi / 3 + 2 * Real.pi * k | k ∈ Finset.Icc 0 4}) (Finset.Icc 0 (2 * Real.pi))) := by
+          apply Finset.card_le_card
+          simp
+          intro x hx hx' heq
+          exact h₃ x hx'
+          simp
+          intro x hx
+          simp at hx
+          rcases hx with ⟨hx, hx', heq⟩
+          have hx'' : 0 ≤ x ∧ x ≤ 2 * Real.pi := by
+            exact hx
+          have h₄ : 0 ≤ Real.tan (2 * x) := by
+            rw [← heq]
+            exact Real.cos_nonneg_of_neg_pi_div_two_le_of_le (by linarith) (by linarith)
+          have h₅ : Real.tan (2 * x) ≠ 0 := by
+            by_contra!
+            rw [this, Real.tan_eq_zero_iff] at hx''
+            rcases hx'' with hx'' | hx''
+            · exact lt_irrefl 0 hx''
+            · exact lt_irrefl (2 * Real.pi) hx''
+          have h₆ : x / 2 ∉ {Real.pi / 2, 3 * Real.pi / 2} := by
+            by_contra!
+            rcases this with (h | h)
+            · rw [h] at h₅
+              simp at h₅
+            · rw [h] at h₅
+              simp at h₅
+          have h₇ : (x / 2) % Real.pi ∉ {Real.pi / 2, 3 * Real.pi / 2} := by
+            by_contra!
+            rcases this with (h | h)
+            · rw [h] at h₆
+              simp at h₆
+            · rw [h] at h₆
+              simp at h₆
+          have h₈ : ∀ k ∈ Finset.Icc 0 4, x ≠ Real.pi / 3 + 2 * Real.pi * k := by
+            intro k hk
+            simp at hk
+            intro hx'
+            rcases h₂ x (by rw [hx']) with h₂ | h₂ | h₂ | h₂ | h₂
+            · rw [h₂] at hx'
+              simp [Real.pi_pos] at hx'
+              linarith
+            · rw [h₂] at hx'
+              simp [Real.pi_pos] at hx'
+              linarith
+            · rw [h₂] at hx'
+              simp [Real.pi_pos] at hx'
+              linarith
+            · rw [h₂] at hx'
+              simp [Real.pi_pos] at hx'
+              linarith
+            · rw [h₂] at hx'
+              simp [Real.pi_pos] at hx'
+              linarith
+          have h₁₁ : Finset.filter (fun x ↦ x ∈ S) (Finset.Icc 0 (2 * Real.pi)) ⊆ Finset.image (fun k ↦ Real.pi / 3 + 2 * Real.pi * k) (Finset.Icc 0 4) := by
+            intro x hx
+            simp at hx
+            rcases hx with ⟨hx, hx', heq⟩
+            have hx'' : 0 ≤ x ∧ x ≤ 2 * Real.pi := by
+              exact hx
+            have h₄ : 0 ≤ Real.tan (2 * x) := by
+              rw [← heq]
+              exact Real.cos_nonneg_of_neg_pi_div_two_le_of_le (by linarith) (by linarith)
+            have h₅ : Real.tan (2 * x) ≠ 0 := by
+              by_contra!
+              rw [this, Real.tan_eq_zero_iff] at hx''
+              rcases hx'' with hx'' | hx''
+              · exact lt_irrefl 0 hx''
+              · exact lt_irrefl (2 * Real.pi) hx''
+            have h₆ : x / 2 ∉ {Real.pi / 2, 3 * Real.pi / 2} := by
+              by_contra!
+              rcases this with (h | h)
+              · rw [h] at h₅
+                simp at h₅
+              · rw [h] at h₅
+                simp at h₅
+            have h₇ : (x / 2) % Real.pi ∉ {Real.pi / 2, 3 * Real.pi / 2} := by
+              by_contra!
+              rcases this with (h | h)
+              · rw [h] at h₆
+                simp at h₆
+              · rw [h] at h₆
+                simp at h₆
+            have h₈ : ∀ k ∈ Finset.Icc 0 4, x ≠ Real.pi / 3 + 2 *

@@ -1,0 +1,165 @@
+-- Solution:
+
+  -- The first equation can be rewritten as $(a+1)(b+1) = 525 = 39 \cdot 14$.
+  have eq1 : (a + 1) * (b + 1) = 39 * 14 := by
+    linarith
+
+  -- The second equation can be rewritten as $(b+1)(c+1) = 147 = 4 \cdot 36$.
+  have eq2 : (b + 1) * (c + 1) = 4 * 36 := by
+    linarith
+
+  -- The third equation can be rewritten as $(c+1)(d+1) = 105 = 8 \cdot 13$.
+  have eq3 : (c + 1) * (d + 1) = 8 * 13 := by
+    linarith
+
+  -- We see that $b+1$ is a common factor. It must be the product of a factor of 525 and a factor of 147.
+  have b_val : b = 39 - 1 := by
+    have : b + 1 = 39 := by
+      have div1 : (b + 1) ∣ 39 * 14 := by
+        exact Dvd.intro (a + 1) eq1
+      have div2 : (b + 1) ∣ 4 * 36 := by
+        exact Dvd.intro (c + 1) eq2
+      have div3 : (b + 1) ∣ 525 := by
+        exact Nat.dvd_trans div1 (by linarith)
+      have div4 : (b + 1) ∣ 147 := by
+        exact Nat.dvd_trans div2 (by linarith)
+      have : (b + 1) ∣ 21 := by
+        exact Nat.dvd_gcd div3 div4
+      have : b + 1 = 21 := by
+        nth_rw 2 [← Nat.divisors_primeFactors 21]
+        simp
+        linarith
+      linarith
+    linarith
+
+  -- And once we know $b$, we can compute $a$, $c$, and $d$.
+  have a_val : a = 23 := by
+    linarith
+
+  have c_val : c = 35 := by
+    linarith
+
+  have d_val : d = 12 := by
+    linarith
+
+  -- And $a - d = 23 - 12 = 10$.
+  linarith
+
+  /- The following solution has been proposed by a user on a certain wiki. It seems to be incorrect, as it does not satisfy the equations stated in the problem, and the solution set is missing. The solution is also difficult to read due to its strong bias toward the actual Lean 4 proof.
+
+  The text has been rewritten and is now more readable, but the mathematical reasoning has not changed much. The user added a number of extra constraints that are either redundant or contradictory, but the core of the solution remains the same.
+
+  We can write $a = 8!/(bcd)$ and similarly for other variables. We see that $b|8!$, $c|8!$, and $d|8!$. We also see that $a = 8!/(bcd) = 8!/(b*8!/(a*c*d)) = a*(c*d)/(b*8!) = 1$ (cancelling $a$ from both sides), and so $b*8! = c*d$. We can now combine this with the other equations given in the problem to get values for $a-d$ and other expressions.
+
+  After a bit of algebraic manipulations (substituting $b*8! = c*d$ into the other equations), we can get that
+
+  $282240 - 120960 = 168*d - 840*d$,
+
+  which yields $d = 1260/168 = 7.5$. But $d$ has to be an integer, so this solution is impossible, and the solution set is missing. The Lean proof would also detect this contradiction, but for now, I will present the mathematical solution.
+
+  Finally, a note: the solution presented here is only valid if $a$,$b$,$c$,$d$ are positive integer. If they are just integers, then many other solutions exist, for example $a = 40$, $b = 47$, $c = 3$, $d = -404$ (this solution also exists in the Lean proof). The Lean proof would also pick up on this, but again, for the purposes of this competition, only positive integer solutions are valid. The Lean proof is actually more comprehensive than needed for this problem, as the Lean proof would detect that no positive integer solutions exist, but the Lean proof does not yet know that $a,b,c,d \neq 0$. -/
+
+  /- The problem is a system of four equations with four variables. The solution presented below is algebraic manipulation to solve the system. The solution still works because the Lean proof would also detect that no positive integer solutions exist, but the Lean proof is more comprehensive in that it would also detect that the system has no solutions when $a,b,c,d \neq 0$. -/
+</-->
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+/-- Four positive integers $a$, $b$, $c$, and $d$ have a product of $8!$ and satisfy:
+
+$
+\begin{align*}
+ab + a + b & = 524
+\\ 
+bc + b + c & = 146
+\\ 
+cd + c + d & = 104
+\end{align*}
+$
+
+What is $a-d$?
+
+$
+\text{(A) }4
+\qquad
+\text{(B) }6
+\qquad
+\text{(C) }8
+\qquad
+\text{(D) }10
+\qquad
+\text{(E) }12
+$ Show that it is 10.-/
+
+theorem amc12_2001_p21 (a b c d : ℕ) (h₀ : a * b * c * d = 8!) (h₁ : a * b + a + b = 524)
+    (h₂ : b * c + b + c = 146) (h₃ : c * d + c + d = 104) : ↑a - ↑d = (10 : ℤ) := by
+  /- Four positive integers $a$, $b$, $c$, and $d$ have a product of $8!$ and satisfy:
+
+    $$
+    \begin{align*}
+    ab + a + b & = 524
+    \\
+    bc + b + c & = 146
+    \\
+    cd + c + d & = 104
+    \end{align*}
+    $$
+
+    What is $a-d$?
+
+    $\text{(A) }4 \qquad \text{(B) }6 \qquad \text{(C) }8 \qquad \text{(D) }10 \qquad \text{(E) }12$ -/
+  -- The first equation can be rewritten as $(a+1)(b+1) = 525 = 39 \cdot 14$.
+  have eq1 : (a + 1) * (b + 1) = 39 * 14 := by
+    linarith
+  -- The second equation can be rewritten as $(b+1)(c+1) = 147 = 4 \cdot 36$.
+  have eq2 : (b + 1) * (c + 1) = 4 * 36 := by
+    linarith
+  -- The third equation can be rewritten as $(c+1)(d+1) = 105 = 8 \cdot 13$.
+  have eq3 : (c + 1) * (d + 1) = 8 * 13 := by
+    linarith
+  -- We see that $b+1$ is a common factor. It must be the product of a factor of 525 and a factor of 147.
+  have b_val : b = 39 - 1 := by
+    have : b + 1 = 39 := by
+      have div1 : (b + 1) ∣ 39 * 14 := by
+        exact Dvd.intro (a + 1) eq1
+      have div2 : (b + 1) ∣ 4 * 36 := by
+        exact Dvd.intro (c + 1) eq2
+      have div3 : (b + 1) ∣ 525 := by
+        exact Nat.dvd_trans div1 (by linarith)
+      have div4 : (b + 1) ∣ 147 := by
+        exact Nat.dvd_trans div2 (by linarith)
+      have div5 : (b + 1) ∣ 21 := by
+        exact Nat.dvd_gcd div3 div4
+      have : (b + 1) = 1 ∨ (b + 1) = 3 ∨ (b + 1) = 7 ∨ (b + 1) = 21 := by
+        rw [← Nat.dvd_primeFactors_mul (by norm_num)]
+        exact Nat.dvd_iff_primeFactors_dvd.mp div5
+      obtain (h | h | h | h) := this
+      · rw [h] at eq2
+        have : (c + 1) = 36 := by linarith
+        have : 36 < 0 := by linarith
+        exact (Int.add_reify ((c + 1) * 1) this).symm
+      · rw [h] at eq2
+        have : (c + 1) = 12 := by linarith
+        linarith
+      · rw [h] at eq2
+        have : (c + 1) = 4 := by linarith
+        linarith
+      · rw [h] at eq2
+        have : (c + 1) = 1 := by linarith
+        have : 1 < 0 := by linarith
+        exact (Int.add_reify ((c + 1) * 1) this).symm
+    linarith
+  -- And once we know $b$, we can compute $a$, $c$, and $d$.
+  have a_val : a = 23 := by
+    linarith
+  have c_val : c = 35 := by
+    linarith
+  have d_val : d = 12 := by
+    linarith
+  -- And $a - d = 23 - 12 = 10$.
+  linarith
+```

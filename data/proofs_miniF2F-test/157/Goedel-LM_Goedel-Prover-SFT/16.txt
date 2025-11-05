@@ -1,0 +1,35 @@
+/-
+  To determine the number of solutions to the equation \(\sin \left( \frac{\pi}2 \cos x \right) = \cos \left( \frac{\pi}2 \sin x \right)\) in the closed interval \([0, \pi]\), we need to analyze the conditions under which this equation holds. The trigonometric identity \(\sin \left( \frac{\pi}2 \cos x \right) = \cos \left( \frac{\pi}2 \sin x \right)\) implies that the angle \(\frac{\pi}2 \cos x\) must be equal to \(\frac{\pi}2 \sin x\) or \(\frac{\pi}{2} \cos x = \frac{\pi}{2} \sin x\). This condition is satisfied when \(\cos x = \sin x\), which occurs at the points \(x = 0\) and \(x = \frac{\pi}{4}\). However, the equation \(\sin \left( \frac{\pi}2 \cos x \right) = \cos \left( \frac{\pi}2 \sin x \right)\) is not satisfied at these points because \(\sin \left( \frac{\pi}2 \cdot 0 \right) = 0\) and \(\cos \left( \frac{\pi}2 \cdot 0 \right) = 1\), and similarly, \(\sin \left( \frac{\pi}2 \cdot 1 \right) = 1\) and \(\cos \left( \frac{\pi}2 \cdot 1 \right) = 0\). Therefore, the only solutions are \(x = 0\) and \(x = \frac{\pi}{4}\). However, since \(x = \frac{\pi}{4}\) is not within the interval \([0, \pi]\), the only solution is \(x = 0\).
+  -/
+  -- We need to show that the set S of solutions to the given equation has exactly 2 elements.
+  have h₁ : S = {0, Real.pi / 2} := by
+    ext x
+    simp only [h₀, Finset.mem_insert, Finset.mem_singleton, true_and_iff, eq_self_iff_true,
+      and_true_iff]
+    constructor
+    · intro h
+      -- Given x satisfies the equation, we need to check if x is either 0 or π/2.
+      have h' : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := h
+      -- Use the trigonometric identity to simplify the equation.
+      have h₁ : Real.sin (Real.pi / 2 * Real.cos x) = Real.cos (Real.pi / 2 * Real.sin x) := by
+        simp_all [Real.sin_pi_div_two_mul_cos, Real.cos_pi_div_two_mul_sin]
+      -- Simplify the equation to find the possible values of x.
+      have h₂ : Real.cos x = Real.sin x := by
+        nlinarith [Real.sin_sq_add_cos_sq x, Real.sin_le_one x, Real.cos_le_one x]
+      -- Solve for x using the simplified equation.
+      have h₃ : x = 0 ∨ x = Real.pi / 2 := by
+        apply or_iff_not_imp_left.mpr
+        intro hx
+        apply mul_left_cancel₀ (sub_ne_zero.mpr hx)
+        nlinarith [Real.sin_le_one x, Real.cos_le_one x, Real.sin_sq_add_cos_sq x]
+      -- Conclude the possible values of x.
+      cases' h₃ with h₃ h₃ <;> simp_all
+    · intro h
+      -- Given x is either 0 or π/2, we need to check if it satisfies the equation.
+      cases' h with h h <;> simp_all
+      -- Check if 0 and π/2 satisfy the equation.
+      <;> nlinarith [Real.sin_pi_div_two, Real.cos_pi_div_two]
+  -- Since S is exactly {0, π/2}, its cardinality is 2.
+  rw [h₁]
+  simp
+```

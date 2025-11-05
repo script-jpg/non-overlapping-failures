@@ -1,0 +1,38 @@
+have step : ¬5 ∣ ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) := by
+    rw [Nat.dvd_iff_mod_eq_zero]
+    have h : ∀ n : ℕ, ∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k) % 5 = 2 ^ (2 * n + 1) % 5 := by
+      intro n
+      induction n using Nat.strong_induction_on with
+      | h n ih =>
+        match n with
+        | 0 =>
+          norm_num [Finset.sum_range_succ, Nat.choose_succ_succ]
+        | 1 =>
+          norm_num [Finset.sum_range_succ, Nat.choose_succ_succ, pow_add, pow_mul, pow_one]
+        | n + 2 =>
+          have h₁ := ih n (by linarith)
+          have h₂ := ih (n + 1) (by linarith)
+          simp [Finset.sum_range_succ, Nat.choose_succ_succ, pow_add, pow_mul, pow_one, Nat.mul_mod,
+            Nat.add_mod, Nat.pow_mod] at h₁ h₂ ⊢
+          ring_nf at *
+          omega
+    have h2 : 2 ^ (2 * n + 1) % 5 ≠ 0 := by
+      intro h3
+      have h4 : 2 ^ (2 * n + 1) % 5 = 0 := h3
+      have h5 : 2 ^ (2 * n + 1) % 5 = 2 ^ (2 * n + 1 % 4) % 5 := by
+        rw [← Nat.mod_add_div (2 * n + 1) 4]
+        simp [pow_add, pow_mul, Nat.pow_mod, Nat.mul_mod, Nat.pow_mod]
+        <;> norm_num
+        <;> omega
+      rw [h5] at h4
+      have h6 : 2 ^ (2 * n + 1 % 4) % 5 ≠ 0 := by
+        have : 2 * n + 1 % 4 = 1 ∨ 2 * n + 1 % 4 = 3 := by
+          omega
+        rcases this with (h | h) <;> simp [h, pow_one, pow_succ, Nat.mul_mod, Nat.pow_mod] <;> omega
+      omega
+    have h3 : (∑ k in Finset.range (n + 1), Nat.choose (2 * n + 1) (2 * k + 1) * 2 ^ (3 * k)) % 5 = 2 ^ (2 * n + 1) % 5 := by
+      rw [h]
+    omega
+  
+  exact step
+```
